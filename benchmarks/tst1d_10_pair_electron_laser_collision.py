@@ -180,7 +180,7 @@ RadiationReaction(
 )
 
 MultiphotonBreitWheeler(
-    table_path = "./"
+    #table_path = "./"
 )
 
 # ----------------------------------------------------------------------------------------

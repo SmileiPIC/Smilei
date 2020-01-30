@@ -5,7 +5,7 @@ On a large cluster, refer to the administrator to install the requirements
 and to choose the compilation options.
 
 For a few machines, we have compiled the instructions in dedicated
-files in the folder ``scripts/CompileTools/machine``:
+files in the folder ``scripts/compile_tools/machine``:
 
 - Cori, Haswell partition: `cori_hsw`
 - Cori, Knights Landing partition: `cori_knl`

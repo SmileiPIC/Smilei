@@ -112,7 +112,7 @@ Such instructions may be included, from a file of your choice, via the ``machine
 
   make machine=my_machine_file
 
-where ``my_machine_file`` is a file, located in ``scripts/CompileTools/machine``, containing
+where ``my_machine_file`` is a file, located in ``scripts/compile_tools/machine``, containing
 the lines of command to be executed before compilation.
 
 If you successfully write such a file for a common supercomputer, please share it

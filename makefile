@@ -14,23 +14,23 @@ PYTHONEXE ?= python
 #-----------------------------------------------------
 # check whether to use a machine specific definitions
 ifneq ($(machine),)
-    ifneq ($(wildcard scripts/CompileTools/machine/$(machine)),)
-    -include scripts/CompileTools/machine/$(machine)
+    ifneq ($(wildcard scripts/compile_tools/machine/$(machine)),)
+    -include scripts/compile_tools/machine/$(machine)
     else
 define errormsg
 ERROR: Cannot find machine file for "$(machine)"
 Available machines are:
-$(shell ls -1 scripts/CompileTools/machine)
+$(shell ls -1 scripts/compile_tools/machine)
 endef
     $(error $(errormsg))
     endif
 endif
 
-PYTHONCONFIG := $(PYTHONEXE) scripts/CompileTools/python-config.py
+PYTHONCONFIG := $(PYTHONEXE) scripts/compile_tools/python-config.py
 
 #-----------------------------------------------------
 # Git information
-VERSION:=$(shell $(PYTHONEXE) scripts/CompileTools/get-version.py )
+VERSION:=$(shell $(PYTHONEXE) scripts/compile_tools/get-version.py )
 
 #-----------------------------------------------------
 # Directories and files
@@ -166,7 +166,7 @@ distclean: clean uninstall_happi
 $(BUILD_DIR)/%.pyh: %.py
 	@echo "Creating binary char for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(PYTHONEXE) scripts/CompileTools/hexdump.py "$<" "$@"
+	$(Q) $(PYTHONEXE) scripts/compile_tools/hexdump.py "$<" "$@"
 
 # Calculate dependencies
 $(BUILD_DIR)/%.d: %.cpp
@@ -296,7 +296,7 @@ help:
 	@echo '  make config="debug noopenmp"'
 	@echo
 	@echo 'Machine options:'
-	@echo '  make machine=XXX      : include machine file in scripts/CompileTools/machine/XXX'
+	@echo '  make machine=XXX      : include machine file in scripts/compile_tools/machine/XXX'
 	@echo '  make machine=XXX help : print help for machine'
 	@echo
 	@echo 'OTHER PURPOSES:'
@@ -324,5 +324,5 @@ help:
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
-	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine)|| echo "None"; fi
-	@if [ -f scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/CompileTools/machine; fi
+	@if [ -f  scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine)|| echo "None"; fi
+	@if [ -f scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/compile_tools/machine; fi
