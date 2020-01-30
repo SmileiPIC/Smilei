@@ -549,7 +549,7 @@ class RadiationReaction(SmileiComponent):
     table_path = ""
 
     # Parameters for computing the tables
-    h_computation_method = "table"
+    Niel_computation_method = "table"
 
 # MutliphotonBreitWheeler pair creation
 class MultiphotonBreitWheeler(SmileiComponent):

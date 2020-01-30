@@ -1123,7 +1123,7 @@ It is optionnally specified in the ``Species`` block::
   :default: ``True``
 
   :red:`[for experts]` Activates the accumulation correction
-  (see :ref:`vranic_accululation_effect` for more information).
+  (see :doc:`particle_merging` for more information).
   The correction only works in linear scale.
 
 
@@ -2083,11 +2083,9 @@ tables.
     table_path = "../databases/",
 
     # Parameters for Niel et al.
-    h_computation_method = "table",
+    Niel_computation_method = "table",
 
   )
-
-
 
 .. py:data:: minimum_chi_continuous
 
@@ -2106,12 +2104,14 @@ tables.
 
 .. py:data:: table_path
 
-  :default: ``"./"``
+  :default: ``""``
 
   Path to the external tables for the radiation losses.
-  Default tables are located in ``databases``.
+  If empty, the default tables are used.
+  Default tables are embedded in the code.
+  External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
 
-.. py:data:: h_computation_method
+.. py:data:: Niel_computation_method
 
   :default: "table"
 
@@ -2140,9 +2140,10 @@ Multiphoton Breit-Wheeler
 
 The block ``MultiphotonBreitWheeler`` enables to tune parameters of the
 multiphoton Breit-Wheeler process and particularly the table generation.
+For more information on this physical mechanism, see :doc:`multiphoton_Breit_Wheeler`.
 
-There are two tables used for the multiphoton Breit-Wheeler refers to as the
-*T* table and the *xip* table.
+There are three tables used for the multiphoton Breit-Wheeler refers to as the
+*integration_dT_dchi*, *min_particle_chi_for_xi* and *xi* table.
 
 ::
 
@@ -2155,36 +2156,12 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
 
 .. py:data:: table_path
 
-  :default: ``"./"``
+  :default: ``""``
 
   Path to the external tables for the multiphoton Breit-Wheeler.
-  Default tables are located in ``databases``.
-
-.. py:data:: xip_power
-
-  :default: 4
-
-  Maximum decrease in order of magnitude for the search for the minimum value
-  of the photon quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_threshold
-
-  :default: 1e-3
-
-  Minimum value of *xip* to compute the minimum value of the photon
-  quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_chiph_dim
-
-  :default: 128
-
-  Discretization of the *chimin* and *xip* tables in the *photon_chi* direction.
-
-.. py:data:: xip_chipa_dim
-
-  :default: 128
-
-  Discretization of the *xip* tables in the *particle_chi* direction.
+  If empty, the default tables are used.
+  Default tables are embedded in the code.
+  External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
 
 --------------------------------------------------------------------------------
 

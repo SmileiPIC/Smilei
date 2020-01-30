@@ -148,7 +148,7 @@ public:
             // Species with another radiation loss model
             else if( ( radiation_model=="ll" )
                      || ( radiation_model=="cll" )
-                     || ( radiation_model=="niel_" ) ) {
+                     || ( radiation_model=="niel" ) ) {
                 this_species->particles->isQuantumParameter = true;
                 this_species->radiating_ = true;
             } else if( radiation_model != "none" ) {
@@ -156,7 +156,7 @@ public:
                        << " radiation_model must be 'none',"
                        << " 'Landau-Lifshitz' ('ll'),"
                        << " 'corrected-Landau-Lifshitz' ('cll'),"
-                       << " 'Niel' ('niel_') or 'Monte-Carlo' ('mc')" );
+                       << " 'Niel' ('niel') or 'Monte-Carlo' ('mc')" );
             }
 
             this_species->radiation_model_ = radiation_model;
@@ -165,7 +165,7 @@ public:
                 MESSAGE( 2, "> Radiating species with the classical Landau-Lifshitz radiating model" );
             } else if( radiation_model == "cll" ) {
                 MESSAGE( 2, "> Radiating species with the quantum corrected Landau-Lifshitz radiating model" );
-            } else if( radiation_model == "niel_" ) {
+            } else if( radiation_model == "niel" ) {
                 MESSAGE( 2, "> Radiating species with the stochastic model of Niel et al." );
             } else if( radiation_model == "mc" ) {
                 MESSAGE( 2, "> Radiating species with the stochastic Monte-Carlo model" );
@@ -178,7 +178,7 @@ public:
                     && ( radiation_model=="mc"
                          || radiation_model=="ll"
                          || radiation_model=="cll"
-                         || radiation_model=="niel_" ) ) {
+                         || radiation_model=="niel" ) ) {
                 ERROR( "For species `" << species_name
                        << "` radiation_model `"
                        << radiation_model

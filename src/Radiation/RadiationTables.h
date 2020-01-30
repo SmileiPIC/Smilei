@@ -140,16 +140,16 @@ public:
     double inline getHNielFitOrder10( double particle_chi )
     {
         // Max relative error ~2E-4
-        return exp( -3.231764974833856e-08 * pow( log( particle_chi ), 10 )
-                    -7.574417415366786e-07 * pow( log( particle_chi ), 9 )
-                    -5.437005218419013e-06 * pow( log( particle_chi ), 8 )
-                    -4.359062260446135e-06 * pow( log( particle_chi ), 7 )
-                    + 5.417842511821415e-05 * pow( log( particle_chi ), 6 )
-                    -1.263905701127627e-04 * pow( log( particle_chi ), 5 )
-                    + 9.899812622393002e-04 * pow( log( particle_chi ), 4 )
-                    + 1.076648497464146e-02 * pow( log( particle_chi ), 3 )
-                    -1.624860613422593e-01 * pow( log( particle_chi ), 2 )
-                    + 1.496340836237785e+00 * log( particle_chi )
+        return exp( -3.231764974833856e-08 * pow( std::log( particle_chi ), 10 )
+                    -7.574417415366786e-07 * pow( std::log( particle_chi ), 9 )
+                    -5.437005218419013e-06 * pow( std::log( particle_chi ), 8 )
+                    -4.359062260446135e-06 * pow( std::log( particle_chi ), 7 )
+                    + 5.417842511821415e-05 * pow( std::log( particle_chi ), 6 )
+                    -1.263905701127627e-04 * pow( std::log( particle_chi ), 5 )
+                    + 9.899812622393002e-04 * pow( std::log( particle_chi ), 4 )
+                    + 1.076648497464146e-02 * pow( std::log( particle_chi ), 3 )
+                    -1.624860613422593e-01 * pow( std::log( particle_chi ), 2 )
+                    + 1.496340836237785e+00 * std::log( particle_chi )
                     -2.756744141581370e+00 );
     }
 
@@ -162,11 +162,11 @@ public:
     double inline getHNielFitOrder5( double particle_chi )
     {
         // Max relative error ~0.02
-        return exp( 1.399937206900322e-04 * pow( log( particle_chi ), 5 )
-                    + 3.123718241260330e-03 * pow( log( particle_chi ), 4 )
-                    + 1.096559086628964e-02 * pow( log( particle_chi ), 3 )
-                    -1.733977278199592e-01 * pow( log( particle_chi ), 2 )
-                    + 1.492675770100125e+00 * log( particle_chi )
+        return exp( 1.399937206900322e-04 * pow( std::log( particle_chi ), 5 )
+                    + 3.123718241260330e-03 * pow( std::log( particle_chi ), 4 )
+                    + 1.096559086628964e-02 * pow( std::log( particle_chi ), 3 )
+                    -1.733977278199592e-01 * pow( std::log( particle_chi ), 2 )
+                    + 1.492675770100125e+00 * std::log( particle_chi )
                     -2.748991631516466e+00 );
     }
 
@@ -179,7 +179,7 @@ public:
     double inline getHNielFitRidgers( double particle_chi )
     {
         return pow( particle_chi, 3 )*1.9846415503393384*pow( 1. +
-                ( 1. + 4.528*particle_chi )*log( 1.+12.29*particle_chi ) + 4.632*pow( particle_chi, 2 ), -7./6. );
+                ( 1. + 4.528*particle_chi )*std::log( 1.+12.29*particle_chi ) + 4.632*pow( particle_chi, 2 ), -7./6. );
     }
 
     // -----------------------------------------------------------------------------
@@ -252,19 +252,6 @@ private:
     // Table h for the
     // stochastic diffusive operator of Niel et al.
     // ---------------------------------------------
-
-
-    //! Log10 of the minimum boundary of the table h
-    double h_log10_chipa_min;
-
-    //! Maximum boundary of the table h
-    double h_chipa_max;
-
-    //! Delta chi for the table h
-    double h_chipa_delta;
-
-    //! Dimension of the array h
-    int h_dim;
     
     struct Niel {
         
@@ -275,11 +262,23 @@ private:
         //! Minimum boundary of the table h
         double chipa_min;
         
+        //! Maximum boundary of the table h
+        double chipa_max;
+        
         //! Inverse delta chi for the table h
         double chipa_inv_delta;
         
+        //! Delta chi for the table h
+        double chipa_delta;
+        
+        //! Log10 of the minimum boundary of the table h
+        double log10_chipa_min;
+        
         //! Method to be used to get the h values (table, fit5, fit10)
         std::string computation_method;
+        
+        //! Dimension of the array h
+        int size_particle_chi;
         
     };
     
@@ -321,7 +320,7 @@ private:
     struct IntegrationFoverChi integfochi;
 
     // ---------------------------------------------
-    // Table photon_chi min for xip table
+    // Table photon_chi min table
     // ---------------------------------------------
 
     //! Table containing the photon_chi min values
@@ -330,15 +329,21 @@ private:
     std::vector<double > xip_chiphmin_table;
 
     // ---------------------------------------------
-    // Table xip
+    // Table min_photon_chi_for_xi and xi
     // ---------------------------------------------
+
+    struct Xi {
+        
+        //! Minimum boundary for particle_chi in the table xip and xip_chiphmin
+        double chipa_min;
+        
+    };
+    
+    struct Xi xi_;
 
     //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
     //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
     std::vector<double> xip_table ;
-
-    //! Minimum boundary for particle_chi in the table xip and xip_chiphmin
-    double xip_chipa_min;
 
     //! Logarithm of the minimum boundary for particle_chi in the table xip
     //! and xip_chiphmin
