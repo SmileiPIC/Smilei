@@ -700,7 +700,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                    || radiation_model=="corrected-landau-lifshitz"
                    || radiation_model=="cll" ) {
             this->hasLLRadiation = true;
-        } else if( radiation_model=="niel" ) {
+        } else if( radiation_model=="niel_" ) {
             this->hasNielRadiation = true;
         }
     }

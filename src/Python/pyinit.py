@@ -557,24 +557,7 @@ class MultiphotonBreitWheeler(SmileiComponent):
     Photon decay into electron-positron pairs
     """
     # Path the tables/databases
-    table_path = "./"
-    # Flag to recompute the tables
-    compute_table = False
-
-    # Parameters for computing the tables
-    # Table T parameters
-    T_chiph_min = 1e-2
-    T_chiph_max = 1e1
-    T_dim = 128
-    # Table xip parameters
-    xip_chiph_min = 1e-2
-    xip_chiph_max = 1e1
-    xip_power = 4
-    xip_threshold = 1e-3
-    xip_chipa_dim = 128
-    xip_chiph_dim = 128
-    # Output format, can be "ascii", "binary", "hdf5"
-    output_format = "hdf5"
+    table_path = ""
 
 # Smilei-defined
 smilei_mpi_rank = 0

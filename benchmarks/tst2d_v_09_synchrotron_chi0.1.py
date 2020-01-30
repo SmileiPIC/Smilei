@@ -138,7 +138,7 @@ for i,radiation in enumerate(radiation_list):
 # Global parameters for the radiation reaction models
 RadiationReaction(
     minimum_chi_discontinuous = 1e-3,
-    table_path = "./"
+    #table_path = "./"
 )
 
 # ----------------------------------------------------------------------------------------

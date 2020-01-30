@@ -7,7 +7,7 @@ compile:
   only:
     - develop
     - AMsorting
-    - smilei_table_refactoring
+    #- smilei_table_refactoring
 
   script:
     # Force workdir cleaning in case of retried

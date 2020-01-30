@@ -168,11 +168,11 @@ Species(
 
 RadiationReaction(
     minimum_chi_discontinuous = 1e-3,
-    table_path = "./"
+    #table_path = "./"
 )
 
 MultiphotonBreitWheeler(
-    table_path = "./"
+    #table_path = "./"
 )
 
 # ----------------------------------------------------------------------------------------

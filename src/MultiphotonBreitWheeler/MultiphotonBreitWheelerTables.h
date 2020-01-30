@@ -17,6 +17,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <iomanip>
 
 #include "Params.h"
 #include "H5.h"
@@ -50,70 +51,13 @@ public:
     //! Computation of the production rate of pairs per photon
     //! \param photon_chi photon quantum parameter
     //! \param gamma photon normalized energy
-    double compute_dNBWdt( double photon_chi, double gamma );
-
-    //! Computation of the value T(photon_chi) using the approximated
-    //! formula of Erber
-    //! \param photon_chi photon quantum parameter
-    //! \param nb_iterations number of iteration for the Bessel evaluation
-    //! \param eps epsilon for the Bessel evaluation
-    double compute_Erber_T( double photon_chi, int nb_iterations,
-                            double eps );
-
-    //! Computation of the value T(photon_chi) using the formula of Ritus
-    //! \param photon_chi photon quantum parameter
-    //! \param particle_chi particle quantum parameter for integration (=0.5*photon_chi for full integration)
-    //! \param nb_iterations number of iteration for the Gauss-Legendre integration
-    //! \param eps epsilon for the Bessel evaluation
-    double compute_integration_Ritus_dTdchi( double photon_chi,
-            double particle_chi,
-            int nb_iterations,
-            double eps );
-
-    //! Computation of the value T(photon_chi) using the formula of Ritus
-    //! \param photon_chi photon quantum parameter
-    //! \param nb_iterations number of iteration for the Gauss-Legendre integration
-    //! \param eps epsilon for the Bessel evaluation
-    double compute_Ritus_dTdchi( double photon_chi,
-                                 double particle_chi, int nb_iterations, double eps );
+    double computeBreitWheelerPairProductionRate( double photon_chi, double gamma );
 
     //! Computation of the electron and positron quantum parameters for
     //! the multiphoton Breit-Wheeler pair creation
     //! \param photon_chi photon quantum parameter
-    double *compute_pair_chi( double photon_chi );
+    double *computePairQuantumParameter( double photon_chi );
 
-    // ---------------------------------------------------------------------
-    // TABLE COMPUTATION
-    // ---------------------------------------------------------------------
-
-    //! Computation of the minimum particle quantum parameter chipamin
-    //! for the photon xip array and computation of the photon xip array.
-    //! \details Under the minimum particle_chi value, the particle kinetic energy is
-    //! considered negligible. All energy goes to the other.
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void computeXipTable( SmileiMPI *smpi );
-
-    //! Output the computed tables so that thay can be read at the next run.
-    //! \param params list of simulation parameters
-    //! \param smpi MPI parameters
-    void computeTables( Params &params,
-                         SmileiMPI *smpi );
-
-    // ---------------------------------------------------------------------
-    // TABLE OUTPUTS
-    // ---------------------------------------------------------------------
-
-    //! Ouput in a file of the table values of T for the
-    //! mutliphoton Breit-Wheeler process
-    void outputTableT();
-
-    //! File output of xip_chipamin_table and xip_table
-    void outputXipTable();
-
-    //! Output the computed tables so that thay can be read at the next run.
-    //! Table output by the master MPI rank
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void outputTables( SmileiMPI *smpi );
 
     // ---------------------------------------------------------------------
     // TABLE READING
@@ -125,7 +69,7 @@ public:
 
     //! Read the external table xip_chipamin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void readTableXip( SmileiMPI *smpi );
+    void readTableXi( SmileiMPI *smpi );
 
     //! Read all external tables
     //! \param smpi Object of class SmileiMPI containing MPI properties
@@ -141,7 +85,7 @@ public:
 
     //! Bcast of the external table xip_chipamin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcastTableXip( SmileiMPI *smpi );
+    void bcastTableXi( SmileiMPI *smpi );
 
 private:
 
@@ -149,14 +93,8 @@ private:
     // General parameters
     // ---------------------------------------------
 
-    //! Output format of the tables
-    std::string output_format_;
-
     //! Path to the tables
     std::string table_path_;
-
-    //! Flag that activate the table computation
-    bool compute_table_;
 
     // ---------------------------------------------
     // Table T for the
@@ -182,10 +120,7 @@ private:
     double T_chiph_inv_delta;
 
     //! Dimension of the array T
-    int T_dim;
-
-    //! This variable is true if the table is computed, false if read
-    bool T_computed;
+    int T_chiph_dim;
 
     // ---------------------------------------------
     // Table particle_chi min for xip table
@@ -237,9 +172,6 @@ private:
 
     //! xip threshold
     double xip_threshold;
-
-    //! This variable is true if the table is computed, false if read
-    bool xip_computed;
 
     // ---------------------------------------------
     // Factors

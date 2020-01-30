@@ -51,7 +51,7 @@ dy = Rsync/res                              # space step
 dt  = 1./math.sqrt(1./(dx*dx) + 1./(dy*dy)) # timestep (CFL)
 dt *= dt_factor
 
-Tsim = 1000*dt                              # duration of the simulation
+Tsim = 300*dt                              # duration of the simulation
 
 pusher = "boris"                            # dynamic type
 
@@ -167,14 +167,14 @@ RadiationReaction(
 )
 
 MultiphotonBreitWheeler(
-    table_path = "./"
+    #table_path = "./"
 )
 
 # ----------------------------------------------------------------------------------------
 # Diagnostics
 
 DiagScalar(
-    every = 100,
+    every = 5,
     vars=['Uelm','Ukin','Utot','Uexp','Ubal',
           'Urad',
           'UmBWpairs',
@@ -188,7 +188,7 @@ DiagScalar(
 
 DiagParticleBinning(
     deposited_quantity = "weight",
-    every = 1000,
+    every = 300,
     time_average = 1,
     species = ["electron"],
     axes = [ ["gamma",    0.,  gamma,  50] ]
@@ -196,7 +196,7 @@ DiagParticleBinning(
 
 DiagParticleBinning(
     deposited_quantity = "weight",
-    every = 1000,
+    every = 300,
     time_average = 1,
     species = ["positron"],
     axes = [ ["gamma",    0.,  gamma,  50] ]

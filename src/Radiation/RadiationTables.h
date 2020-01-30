@@ -69,7 +69,7 @@ public:
     double computeHNiel( double particle_chi, int nb_iterations, double eps );
 
     //! Return the value of the function h(particle_chi) of Niel et al.
-    //! from the computed table niel.table
+    //! from the computed table niel_.table
     //! \param particle_chi particle quantum parameter
     double getHNielFromTable( double particle_chi );
 
@@ -122,13 +122,13 @@ public:
     //#pragma omp declare simd
     double inline computeRidgersFit( double particle_chi )
     {
-        return pow( 1. + 4.8*( 1.+particle_chi )*log( 1. + 1.7*particle_chi )
-                    + 2.44*particle_chi*particle_chi, -2./3. );
+        return std::pow( 1.0 + 4.8*( 1.0+particle_chi )*std::log( 1.0 + 1.7*particle_chi )
+                    + 2.44*particle_chi*particle_chi, -2.0/3.0 );
     };
 
     std::string inline getNielHComputationMethod()
     {
-        return this->h_computation_method;
+        return this->niel_.computation_method;
     }
 
     // -----------------------------------------------------------------------------
@@ -224,7 +224,7 @@ public:
 
     //! Bcast of the external table xip_chiphmin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcastTableXip( SmileiMPI *smpi );
+    void bcastTableXi( SmileiMPI *smpi );
 
 private:
 
@@ -265,13 +265,6 @@ private:
 
     //! Dimension of the array h
     int h_dim;
-
-    //! Inverse delta chi for the table h
-    double h_chipa_inv_delta;
-
-    //! Method to be used to get the h values (table, fit5, fit10)
-    std::string h_computation_method;
-
     
     struct Niel {
         
@@ -282,9 +275,15 @@ private:
         //! Minimum boundary of the table h
         double chipa_min;
         
+        //! Inverse delta chi for the table h
+        double chipa_inv_delta;
+        
+        //! Method to be used to get the h values (table, fit5, fit10)
+        std::string computation_method;
+        
     };
     
-    struct Niel niel;
+    struct Niel niel_;
 
     // ---------------------------------------------
     // Table integfochi

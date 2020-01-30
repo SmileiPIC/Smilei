@@ -224,7 +224,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
             // If epsilon_tau_ > 0
             else if( tau[ipart] > epsilon_tau_ ) {
                 // from the cross section
-                temp = MultiphotonBreitWheelerTables.compute_dNBWdt( photon_chi[ipart], ( *gamma )[ipart] );
+                temp = MultiphotonBreitWheelerTables.computeBreitWheelerPairProductionRate( photon_chi[ipart], ( *gamma )[ipart] );
                 
                 // Time to decay
                 // If this time is above the remaining iteration time,
@@ -304,7 +304,7 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
     inv_chiph_gammaph = ( gammaph-2. )/particles.chi( ipart );
     
     // Get the pair quantum parameters to compute the energy
-    chi = MultiphotonBreitWheelerTables.compute_pair_chi( particles.chi( ipart ) );
+    chi = MultiphotonBreitWheelerTables.computePairQuantumParameter( particles.chi( ipart ) );
     
     // pair propagation direction // direction of the photon
     for( k = 0 ; k<3 ; k++ ) {

@@ -2111,18 +2111,6 @@ tables.
   Path to the external tables for the radiation losses.
   Default tables are located in ``databases``.
 
-.. py:data:: h_chipa_max
-
-  :default: 1e1
-
-  Maximum value of the quantum parameter :math:`\chi` for the table *h* of Niel `et al`.
-
-.. py:data:: h_dim
-
-  :default: 128
-
-  Dimension of the table *h* of Niel `et al`.
-
 .. py:data:: h_computation_method
 
   :default: "table"
@@ -2143,68 +2131,6 @@ tables.
   Table access prevent total vectorization.
   Fits are vectorizable.
 
-.. py:data:: integfochi_chipa_min
-
-  :default: 1e-3
-
-  Minimum value of the quantum parameter c for the table containing
-  the integration of :math:`F/\chi`.
-
-.. py:data:: integfochi_chipa_max
-
-  :default: 1e1
-
-  Maximum value of the quantum parameter :math:`\chi` for the table containing
-  the integration of :math:`F/\chi`.
-
-.. py:data:: integfochi_dim
-
-  :default: 128
-
-  Discretization of the table containing
-  the integration of :math:`F/\chi`.
-
-.. py:data:: xip_chipa_min
-
-  :default: 1e-3
-
-  Minimum particle quantum parameter for the computation of the *chimin*
-  and *xip* tables.
-
-.. py:data:: xip_chipa_max
-
-  :default: 1e1
-
-  Maximum particle quantum parameter for the computation of the *chimin*
-  and *xip* tables.
-
-.. py:data:: xip_power
-
-  :default: 4
-
-  Maximum decrease in order of magnitude for the search for the minimum value
-  of the photon quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_threshold
-
-  :default: 1e-3
-
-  Minimum value of *xip* to compute the minimum value of the photon
-  quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_chipa_dim
-
-  :default: 128
-
-  Discretization of the *chimin* and *xip* tables in the *particle_chi* direction.
-
-.. py:data:: xip_chiph_dim
-
-  :default: 128
-
-  Discretization of the *xip* tables in the *photon_chi* direction.
-
-
 --------------------------------------------------------------------------------
 
 .. _MultiphotonBreitWheeler:
@@ -2222,27 +2148,8 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
 
   MultiphotonBreitWheeler(
 
-    # Table output format, can be "ascii", "binary", "hdf5"
-    output_format = "hdf5",
-
     # Path to the tables
     table_path = "../databases/",
-
-    # Flag to compute the tables
-    compute_table = False,
-
-    # Table T parameters
-    T_chiph_min = 1e-2,
-    T_chiph_max = 1e1,
-    T_dim = 128,
-
-    # Table xip parameters
-    xip_chiph_min = 1e-2,
-    xip_chiph_max = 1e1,
-    xip_power = 4,
-    xip_threshold = 1e-3,
-    xip_chipa_dim = 128,
-    xip_chiph_dim = 128,
 
   )
 
@@ -2252,54 +2159,6 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
 
   Path to the external tables for the multiphoton Breit-Wheeler.
   Default tables are located in ``databases``.
-
-.. py:data:: compute_table
-
-  :default: False
-
-  If True, the tables for the selected radiation model are computed
-  with the requested parameters and stored at the path `table_path`.
-
-.. py:data:: output_format
-
-  :default: ``"hdf5"``
-
-  Output format of the tables:
-    * ``"hdf5"``: ``multiphoton_Breit_Wheeler_tables.h5``
-    * ``"binary"``: ``tab_T.bin`` and ``tab_mBW_xip.bin``
-    * ``"ascii"``: ``tab_T.dat`` and ``tab_mBW_xip.dat``
-
-.. py:data:: T_chiph_min
-
-  :default: 1e-2
-
-  Minimum value of the photon quantum parameter :math:`\chi_\gamma` for the table *T*.
-
-.. py:data:: T_chiph_max
-
-  :default: 1e1
-
-  Maximum value of the photon quantum parameter :math:`\chi_\gamma` for the table *T*.
-
-.. py:data:: T_dim
-
-  :default: 128
-
-  Dimension of the table *T*.
-
-.. py:data:: xip_chiph_min
-
-  :default: 1e-2
-
-  Minimum photon quantum parameter for the computation of the *chimin*
-  and *xip* tables.
-
-.. py:data:: xip_chiph_max
-
-  :default: 1e1
-
-  Maximum photon quantum parameter for the computation of the *chimin*
-  and *xip* tables.
 
 .. py:data:: xip_power
 

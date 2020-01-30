@@ -26,14 +26,14 @@ RadiationTables::RadiationTables()
     minimum_chi_discontinuous_ = 1e-2;
     
     // Default parameters for table `h`
-    niel.chipa_min = 1e-3;
+    niel_.chipa_min = 1e-3;
     h_chipa_max = 1e3;
     h_dim = 128;
-    h_log10_chipa_min = log10( niel.chipa_min );
+    h_log10_chipa_min = log10( niel_.chipa_min );
     h_chipa_delta = ( log10( h_chipa_max ) - h_log10_chipa_min )/( h_dim-1 );
-    h_chipa_inv_delta = 1.0/h_chipa_delta;
-    niel.table.resize( h_dim );
-    niel.table = {
+    niel_.chipa_inv_delta = 1.0/h_chipa_delta;
+    niel_.table.resize( h_dim );
+    niel_.table = {
         1.95702144082e-09, 1.95702144082e-09, 1.95702144082e-09, 1.95702144082e-09, 1.95702144082e-09, 1.95702144082e-09, 1.95702144082e-09, 1.95702144082e-09, 1.95702144082e-09, 1.95702144082e-09,
         4.97933182534e-08, 4.97933182534e-08, 4.97933182534e-08, 4.97933182534e-08, 4.97933182534e-08, 4.97933182534e-08, 4.97933182534e-08, 4.97933182534e-08, 4.97933182534e-08, 4.97933182534e-08,
         1.20577723619e-06, 1.20577723619e-06, 1.20577723619e-06, 1.20577723619e-06, 1.20577723619e-06, 1.20577723619e-06, 1.20577723619e-06, 1.20577723619e-06, 1.20577723619e-06, 1.20577723619e-06,
@@ -280,7 +280,7 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
 
         if( params.hasNielRadiation ) {
             // How to handle the h function (table or fit)
-            PyTools::extract( "h_computation_method", h_computation_method, "RadiationReaction" );
+            PyTools::extract( "h_computation_method", niel_.computation_method, "RadiationReaction" );
         }
 
         // If Monte-Carlo radiation loss is requested
@@ -341,11 +341,11 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
         }
     }
     if( params.hasNielRadiation ) {
-        if( h_computation_method == "table" ||
-                h_computation_method == "fit5"  ||
-                h_computation_method == "fit10" ||
-                h_computation_method == "ridgers" ) {
-            MESSAGE( 1,"Niel h function computation method: " << h_computation_method )
+        if( niel_.computation_method == "table" ||
+                niel_.computation_method == "fit5"  ||
+                niel_.computation_method == "fit10" ||
+                niel_.computation_method == "ridgers" ) {
+            MESSAGE( 1,"Niel h function computation method: " << niel_.computation_method )
         } else {
             ERROR( " The parameter `h_computation_method` must be `table`, `fit5`, `fit10` or `ridgers`." )
         }
@@ -385,7 +385,7 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
         MESSAGE( 2,"Dimension quantum parameter: "
                  << h_dim );
         MESSAGE( 2,"Minimum particle quantum parameter chi: "
-                 << niel.chipa_min );
+                 << niel_.chipa_min );
         MESSAGE( 2,"Maximum particle quantum parameter chi: "
                  << h_chipa_max );
     }
@@ -552,7 +552,7 @@ double RadiationTables::computePhotonProductionYield( double particle_chi, doubl
 
 // -----------------------------------------------------------------------------
 //! Return the value of the function h(particle_chi) of Niel et al.
-//! from the computed table niel.table
+//! from the computed table niel_.table
 //! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
 double RadiationTables::getHNielFromTable( double particle_chi )
@@ -560,15 +560,15 @@ double RadiationTables::getHNielFromTable( double particle_chi )
     int ichipa;
     double d;
 
-    // Position in the niel.table
-    d = ( log10( particle_chi )-h_log10_chipa_min )*h_chipa_inv_delta;
+    // Position in the niel_.table
+    d = ( log10( particle_chi )-h_log10_chipa_min )*niel_.chipa_inv_delta;
     ichipa = int( floor( d ) );
 
     // distance for interpolation
     d = d - floor( d );
 
     // Linear interpolation
-    return niel.table[ichipa]*( 1.-d ) + niel.table[ichipa+1]*( d );
+    return niel_.table[ichipa]*( 1.-d ) + niel_.table[ichipa+1]*( d );
 }
 
 // -----------------------------------------------------------------------------
@@ -628,17 +628,17 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
 
                 // First, we read attributes
                 H5::getAttr( dataset_id, "size_particle_chi", h_dim );
-                H5::getAttr( dataset_id, "min_particle_chi", niel.chipa_min );
+                H5::getAttr( dataset_id, "min_particle_chi", niel_.chipa_min );
                 H5::getAttr( dataset_id, "max_particle_chi", h_chipa_max );
 
                 // Resize of the array integfochi.table before reading
-                niel.table.resize( h_dim );
+                niel_.table.resize( h_dim );
 
                 // then the dataset
                 H5Dread( dataset_id,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
-                         &niel.table[0] );
+                         &niel_.table[0] );
 
                 H5Dclose( dataset_id );
                 H5Fclose( fileId );
@@ -655,8 +655,8 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
     }
 
     // checks
-    if( minimum_chi_continuous_ < niel.chipa_min ) {
-        ERROR( "Parameter `minimum_chi_continuous_` is below `niel.chipa_min`,"
+    if( minimum_chi_continuous_ < niel_.chipa_min ) {
+        ERROR( "Parameter `minimum_chi_continuous_` is below `niel_.chipa_min`,"
                << "the lower bound of the h table should be equal or below"
                << "the radiation threshold on chi." )
     }
@@ -790,7 +790,7 @@ void RadiationTables::readXiTable( SmileiMPI *smpi )
         // MPI_Bcast( &table_exists, 1, MPI_INT, 0, smpi->getGlobalComm() );
 
         // Bcast the table to all MPI ranks
-        RadiationTables::bcastTableXip( smpi );
+        RadiationTables::bcastTableXi( smpi );
         
     }
     // Else, the table can not be found, we throw an error
@@ -810,7 +810,7 @@ void RadiationTables::readTables( Params &params, SmileiMPI *smpi )
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
     // And if the h values are not computed from a numerical fit
-    if( params.hasNielRadiation && this->h_computation_method == "table" ) {
+    if( params.hasNielRadiation && this->niel_.computation_method == "table" ) {
         RadiationTables::readHTable( smpi );
     }
     if( params.hasMCRadiation ) {
@@ -851,7 +851,7 @@ void RadiationTables::bcastHTable( SmileiMPI *smpi )
         buf_size += position;
     }
 
-    MESSAGE( 2,"Buffer size: " << buf_size );
+    //MESSAGE( 2,"Buffer size: " << buf_size );
 
     // Exchange buf_size with all ranks
     MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );
@@ -864,12 +864,12 @@ void RadiationTables::bcastHTable( SmileiMPI *smpi )
         position = 0;
         MPI_Pack( &h_dim,
                   1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
-        MPI_Pack( &niel.chipa_min,
+        MPI_Pack( &niel_.chipa_min,
                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
         MPI_Pack( &h_chipa_max,
                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
-        MPI_Pack( &niel.table[0], h_dim,
+        MPI_Pack( &niel_.table[0], h_dim,
                   MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
     }
@@ -883,28 +883,28 @@ void RadiationTables::bcastHTable( SmileiMPI *smpi )
         MPI_Unpack( buffer, buf_size, &position,
                     &h_dim, 1, MPI_INT, smpi->getGlobalComm() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &niel.chipa_min, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &niel_.chipa_min, 1, MPI_DOUBLE, smpi->getGlobalComm() );
         MPI_Unpack( buffer, buf_size, &position,
                     &h_chipa_max, 1, MPI_DOUBLE, smpi->getGlobalComm() );
 
         // Resize table before unpacking values
-        niel.table.resize( h_dim );
+        niel_.table.resize( h_dim );
 
-        MPI_Unpack( buffer, buf_size, &position, &niel.table[0],
+        MPI_Unpack( buffer, buf_size, &position, &niel_.table[0],
                     h_dim, MPI_DOUBLE, smpi->getGlobalComm() );
 
     }
 
     delete[] buffer;
 
-    h_log10_chipa_min = log10( niel.chipa_min );
+    h_log10_chipa_min = log10( niel_.chipa_min );
 
     // Computation of the delta
     h_chipa_delta = ( log10( h_chipa_max )
                       - h_log10_chipa_min )/( h_dim-1 );
 
     // Inverse delta
-    h_chipa_inv_delta = 1./h_chipa_delta;
+    niel_.chipa_inv_delta = 1./h_chipa_delta;
 }
 
 // -----------------------------------------------------------------------------
@@ -935,7 +935,7 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
         buf_size += position;
     }
 
-    MESSAGE( 2,"Buffer size: " << buf_size );
+    //MESSAGE( 2,"Buffer size: " << buf_size );
 
     // Exchange buf_size with all ranks
     MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );
@@ -996,7 +996,7 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-void RadiationTables::bcastTableXip( SmileiMPI *smpi )
+void RadiationTables::bcastTableXi( SmileiMPI *smpi )
 {
     // Position for MPI pack and unack
     int position = 0;
@@ -1022,7 +1022,7 @@ void RadiationTables::bcastTableXip( SmileiMPI *smpi )
         buf_size += position;
     }
 
-    MESSAGE( 2,"Buffer size for MPI exchange: " << buf_size );
+    //MESSAGE( 2,"Buffer size for MPI exchange: " << buf_size );
 
     // Exchange buf_size with all ranks
     MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );
