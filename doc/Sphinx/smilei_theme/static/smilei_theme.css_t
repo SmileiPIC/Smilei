@@ -148,6 +148,14 @@ div.body p, div.body li {
 	line-height: 1.4em;
 }
 
+div.body li > ul {
+	padding-bottom: 0.7em;
+}
+
+div.body li > p {
+	margin: 0;
+}
+
 div.admonition {
 	padding:7px;
 	background-color: {{ theme_warn_bg }};

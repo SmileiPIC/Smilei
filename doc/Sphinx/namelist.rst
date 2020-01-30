@@ -1123,7 +1123,7 @@ It is optionnally specified in the ``Species`` block::
   :default: ``True``
 
   :red:`[for experts]` Activates the accumulation correction
-  (see :ref:`vranic_accululation_effect` for more information).
+  (see :ref:`vranic_accumulation_effect` for more information).
   The correction only works in linear scale.
 
 
