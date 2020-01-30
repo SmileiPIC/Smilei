@@ -461,6 +461,7 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
     
     // Save data for LaserProfileFile (i.e. LaserOffset)
     for( unsigned int ii = 0; ii < 2; ii++ ) {
+        if( ! EMfields->emBoundCond[ii] ) continue;
         std::vector<Laser *> * veclaser = & EMfields->emBoundCond[ii]->vecLaser;
         for( unsigned int ilas = 0; ilas < veclaser->size(); ilas++ ) {
             Laser * las = (*veclaser)[ilas];
@@ -808,6 +809,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
     
     // Load data for LaserProfileFile (i.e. LaserOffset)
     for( unsigned int ii = 0; ii < 2; ii++ ) {
+        if( ! EMfields->emBoundCond[ii] ) continue;
         std::vector<Laser *> * veclaser = & EMfields->emBoundCond[ii]->vecLaser;
         for( unsigned int ilas = 0; ilas < veclaser->size(); ilas++ ) {
             Laser * las = (*veclaser)[ilas];
