@@ -284,8 +284,6 @@ tables: tables_folder $(TABLES_EXEC)
 	
 tables_folder:
 	@echo "Installing smilei_tables tool"
-	@echo $(TABLES_BUILD_DIR)
-	@echo $(TABLES_SRCS)
 	@mkdir -p $(TABLES_BUILD_DIR)
 
 # Calculate dependencies

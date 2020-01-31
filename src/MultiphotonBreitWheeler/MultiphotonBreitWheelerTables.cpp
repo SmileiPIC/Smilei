@@ -26,7 +26,7 @@ MultiphotonBreitWheelerTables::MultiphotonBreitWheelerTables()
     // T table parameters
     T_chiph_min = 1e-2;
     T_chiph_max = 1e2;
-    T_chiph_dim = 128;
+    T_chiph_dim = 256;
     T_log10_chiph_min = std::log10( T_chiph_min );
     T_chiph_delta = ( std::log10( T_chiph_max )
                       - T_log10_chiph_min )/( T_chiph_dim-1 );
