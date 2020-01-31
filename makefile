@@ -10,6 +10,7 @@ SMILEICXX ?= mpicxx
 HDF5_ROOT_DIR ?= $(HDF5_ROOT)
 BUILD_DIR ?= build
 PYTHONEXE ?= python
+TABLES_BUILD_DIR ?= tools/tables/build
 
 #-----------------------------------------------------
 # check whether to use a machine specific definitions
@@ -34,11 +35,21 @@ VERSION:=$(shell $(PYTHONEXE) scripts/compile_tools/get-version.py )
 
 #-----------------------------------------------------
 # Directories and files
+
+# Smilei
 DIRS := $(shell find src -type d)
 SRCS := $(shell find src/* -name \*.cpp)
 OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
 DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
 SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
+
+# Smilei tools
+TABLES_DIR := tools/tables
+TABLES_SRCS := $(shell find tools/tables/* -name \*.cpp | rev | cut -d '/' -f1 | rev)
+TABLES_DEPS := $(addprefix $(TABLES_BUILD_DIR)/, $(SRCS:.cpp=.d))
+TABLES_OBJS := $(addprefix $(TABLES_BUILD_DIR)/, $(TABLES_SRCS:.cpp=.o))
+TABLES_SRCS := $(shell find tools/tables/* -name \*.cpp)
+
 
 #-----------------------------------------------------
 # Flags
@@ -257,7 +268,6 @@ uninstall_happi:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
 	$(Q) rm -f "$(SITEDIR)/smilei.pth"
 
-
 #-----------------------------------------------------
 # Info rules
 print-% :
@@ -265,6 +275,35 @@ print-% :
 
 env: print-SMILEICXX print-PYTHONEXE print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
 
+#-----------------------------------------------------
+# Smilei tables
+
+TABLES_EXEC = smilei_tables
+
+tables: tables_folder $(TABLES_EXEC)
+	
+tables_folder:
+	@echo "Installing smilei_tables tool"
+	@echo $(TABLES_BUILD_DIR)
+	@echo $(TABLES_SRCS)
+	@mkdir -p $(TABLES_BUILD_DIR)
+
+# Calculate dependencies
+$(TABLES_BUILD_DIR)/%.d: %.cpp
+	@echo "Checking dependencies for $<"
+	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+
+# Compile cpps
+$(TABLES_BUILD_DIR)/%.o : $(TABLES_DIR)/%.cpp
+	@echo "Compiling $<"
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -c $< -o $@
+
+# Link the main program
+$(TABLES_EXEC): $(TABLES_OBJS)
+	@echo "Linking $@"
+	$(Q) $(SMILEICXX) $(TABLES_OBJS) -o $(TABLES_BUILD_DIR)/$@ $(LDFLAGS)
+	$(Q) cp $(TABLES_BUILD_DIR)/$@ $@
 
 #-----------------------------------------------------
 # help
