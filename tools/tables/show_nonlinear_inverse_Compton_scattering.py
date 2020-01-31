@@ -59,7 +59,7 @@ if if_file_exist('./radiation_tables.h5'):
     if 'integfochi' in f:
 
         fig = figure(figsize=(10, 6))
-        gs = GridSpec(2, :)
+        gs = GridSpec(2, 2)
         ax0 = subplot(gs[:,:])
 
         dataset = f['integfochi']
@@ -94,7 +94,7 @@ if if_file_exist('./radiation_tables.h5'):
     if 'min_photon_chi_for_xi' in f:
         
         fig = figure(figsize=(10, 6))
-        gs = GridSpec(2, :)
+        gs = GridSpec(2, 2)
         ax0 = subplot(gs[:,:])
         
         dataset = f['min_photon_chi_for_xi']
