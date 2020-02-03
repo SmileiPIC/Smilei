@@ -9,8 +9,8 @@
 #}
 {%- extends "layout.html" %}
 {% set title = _('Search') %}
-{% set script_files = script_files + ['_static/searchtools.js'] %}
 {% block extrahead %}
+  <script type="text/javascript" src="_static/searchtools.js"></script>
   <script type="text/javascript">
     jQuery(function() { Search.loadIndex("{{ pathto('searchindex.js', 1) }}"); });
   </script>
