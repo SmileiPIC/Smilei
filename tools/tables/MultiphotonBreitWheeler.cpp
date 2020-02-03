@@ -276,7 +276,7 @@ void MultiphotonBreitWheeler::createTables(int argc, std::string * arguments)
         for( i_photon_chi = 0 ; i_photon_chi < size_photon_chi  ; i_photon_chi += 8 ) {
             std::cout << " ";
             for (int i = i_photon_chi ; i< std::min(i_photon_chi+8,size_photon_chi) ; i++) {
-                std::cout << table_1d[i_photon_chi] << ", ";
+                std::cout << table_1d[i] << ", ";
             }
             std::cout << std::endl;
         }
@@ -386,7 +386,7 @@ void MultiphotonBreitWheeler::createTables(int argc, std::string * arguments)
         for( i_photon_chi = 0 ; i_photon_chi < size_photon_chi  ; i_photon_chi += 8 ) {
             std::cout << " ";
             for (int i = i_photon_chi ; i< std::min(i_photon_chi+8,size_photon_chi) ; i++) {
-                std::cout << table_1d[i_photon_chi] << ", ";
+                std::cout << table_1d[i] << ", ";
             }
             std::cout << std::endl;
         }

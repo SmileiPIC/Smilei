@@ -256,6 +256,18 @@ void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
         }
     }
     
+    // Output of the tables
+    if (verbose && rank == 0) {
+        std:: cout << "\n table integfochi: " << std::setprecision(std::numeric_limits<double>::digits10 + 1) <<std::endl;
+        for( i_particle_chi = 0 ; i_particle_chi < size_particle_chi  ; i_particle_chi += 8 ) {
+            std::cout << " ";
+            for (int i = i_particle_chi ; i< std::min(i_particle_chi+8,size_particle_chi) ; i++) {
+                std::cout << table_1d[i] << ", ";
+            }
+            std::cout << std::endl;
+        }
+    }
+    
     // Output of the vector
     if (rank==0) {
         fileId  = H5Fcreate( path.c_str(),
@@ -322,6 +334,18 @@ void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
     MPI_Allgatherv( &buffer[0], rank_indexes[rank], MPI_DOUBLE,
                     &table_1d[0], &rank_indexes[0], &rank_first_index[0],
                     MPI_DOUBLE, MPI_COMM_WORLD );
+    
+    // Output of the tables
+    if (verbose && rank == 0) {
+        std:: cout << "\n table h for Niel: " << std::setprecision(std::numeric_limits<double>::digits10 + 1) <<std::endl;
+        for( i_particle_chi = 0 ; i_particle_chi < size_particle_chi  ; i_particle_chi += 8 ) {
+            std::cout << " ";
+            for (int i = i_particle_chi ; i< std::min(i_particle_chi+8,size_particle_chi) ; i++) {
+                std::cout << table_1d[i] << ", ";
+            }
+            std::cout << std::endl;
+        }
+    }
     
     // Output of the vector
     if (rank==0) {
@@ -415,6 +439,18 @@ void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
     MPI_Allgatherv( &buffer[0], rank_indexes[rank], MPI_DOUBLE,
                     &table_1d[0], &rank_indexes[0], &rank_first_index[0],
                     MPI_DOUBLE, MPI_COMM_WORLD );
+
+    // Output of the tables
+    if (verbose && rank == 0) {
+        std:: cout << "\n table min_photon_chi_for_xi: " << std::setprecision(std::numeric_limits<double>::digits10 + 1) <<std::endl;
+        for( i_particle_chi = 0 ; i_particle_chi < size_particle_chi  ; i_particle_chi += 8 ) {
+            std::cout << " ";
+            for (int i = i_particle_chi ; i< std::min(i_particle_chi+8,size_particle_chi) ; i++) {
+                std::cout << table_1d[i] << ", ";
+            }
+            std::cout << std::endl;
+        }
+    }
 
     // Output
     if (rank==0) {
@@ -534,6 +570,21 @@ void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
     MPI_Allgatherv( &buffer[0], rank_indexes[rank], MPI_DOUBLE,
                     &table_2d[0], &rank_indexes[0], &rank_first_index[0],
                     MPI_DOUBLE, MPI_COMM_WORLD );
+
+    // Output of the tables
+    if (verbose && rank == 0) {
+        //std::string message = "";
+        std:: cout << "\n table xi: " << std::setprecision(std::numeric_limits<double>::digits10 + 1) <<std::endl;
+        for( i_particle_chi = 0 ; i_particle_chi < size_particle_chi  ; i_particle_chi++ ) {
+            std::cout << " ";
+            for( i_photon_chi = 0 ; i_photon_chi < size_photon_chi ; i_photon_chi ++ ) {
+                //message += std::to_string(table_2d[i_photon_chi*size_particle_chi + i_particle_chi]) + ", ";
+                std::cout << table_2d[i_particle_chi*size_photon_chi + i_photon_chi] << ", ";
+            }
+            //message += "\n";
+            std::cout << std::endl;
+        }
+    }
 
     // Output
     if (rank==0) {

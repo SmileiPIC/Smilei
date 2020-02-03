@@ -292,6 +292,10 @@ tables_folder:
 	@echo "Installing smilei_tables tool"
 	@mkdir -p $(TABLES_BUILD_DIR)
 
+tables_clean:
+	@echo "Cleaning $(TABLES_BUILD_DIR)"
+	@rm -r $(TABLES_BUILD_DIR)
+
 # Calculate dependencies
 $(TABLES_BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"
