@@ -123,16 +123,7 @@ private:
     int T_chiph_dim;
 
     // ---------------------------------------------
-    // Table particle_chi min for xip table
-    // ---------------------------------------------
-
-    //! Table containing the particle_chi min values
-    //! Under this value, electron kinetic energy of the pair is
-    //! considered negligible
-    std::vector<double > xip_chipamin_table;
-
-    // ---------------------------------------------
-    // Structure for xip
+    // Structure for xi and particle_chi min for xip table
     // ---------------------------------------------
 
     struct Xi {
@@ -143,22 +134,27 @@ private:
         //! This enables to compute the energy repartition between the electron and the positron
         std::vector<double> table;
         
+        //! Table containing the particle_chi min values
+        //! Under this value, electron kinetic energy of the pair is
+        //! considered negligible
+        std::vector<double > chipamin_table;
+        
+        //! Minimum boundary for photon_chi in the table xi and xi_.chipamin
+        double chiph_min;
+        
+        //! Logarithm of the minimum boundary for photon_chi in the table xi
+        //! and xi_.chipamin
+        double log10_chiph_min;
+        
+        //! Maximum boundary for photon_chi in the table xip and xip_chipamin
+        double chiph_max;
+        
+        //! Delta for the photon_chi discretization in the table xip and xip_chipamin
+        double chiph_delta;
+        
     };
     
     struct Xi xi_;
-
-    //! Minimum boundary for photon_chi in the table xip and xip_chipamin
-    double xip_chiph_min;
-
-    //! Logarithm of the minimum boundary for photon_chi in the table xip
-    //! and xip_chipamin
-    double xip_log10_chiph_min;
-
-    //! Maximum boundary for photon_chi in the table xip and xip_chipamin
-    double xip_chiph_max;
-
-    //! Delta for the photon_chi discretization in the table xip and xip_chipamin
-    double xip_chiph_delta;
 
     //! Inverse of the delta for the photon_chi discretization
     //! in the table xip and xip_chipamin

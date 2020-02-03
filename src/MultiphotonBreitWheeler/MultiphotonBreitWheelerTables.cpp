@@ -68,22 +68,22 @@ MultiphotonBreitWheelerTables::MultiphotonBreitWheelerTables()
     };
     
     // Tables `min_particle_chi_for_xi` and `xi`
-    xip_chiph_min = 1e-2;
-    xip_chiph_max = 1e2;
+    xi_.chiph_min = 1e-2;
+    xi_.chiph_max = 1e2;
     xip_chiph_dim = 128;
     xip_chipa_dim = 128;
-    // Log10 of xip_chiph_min for efficiency
-    xip_log10_chiph_min = log10( xip_chiph_min );
+    // Log10 of xi_.chiph_min for efficiency
+    xi_.log10_chiph_min = log10( xi_.chiph_min );
     // Computation of the delta
-    xip_chiph_delta = ( log10( xip_chiph_max )
-                        - xip_log10_chiph_min )/( xip_chiph_dim-1 );
+    xi_.chiph_delta = ( log10( xi_.chiph_max )
+                        - xi_.log10_chiph_min )/( xip_chiph_dim-1 );
     // Inverse of delta
-    xip_chiph_inv_delta = 1.0/xip_chiph_delta;
+    xip_chiph_inv_delta = 1.0/xi_.chiph_delta;
     // Inverse particle_chi discetization (regularly used)
     xip_inv_chipa_dim_minus_one = 1./( xip_chipa_dim - 1. );
-    xip_chipamin_table.resize( xip_chiph_dim );
+    xi_.chipamin_table.resize( xip_chiph_dim );
     xi_.table.resize( xip_chiph_dim*xip_chipa_dim );
-    xip_chipamin_table = {
+    xi_.chipamin_table = {
         -2.426529995663981, -2.400033932671856, -2.37383786967973, -2.347841806687603, -2.321945743695478, -2.296449680703352, -2.271053617711223, -2.245957554719098,
         -2.221161491726972, -2.196665428734845, -2.17236936574272, -2.148373302750595, -2.124777239758471, -2.101381176766344, -2.078385113774217, -2.05558905078209,
         -2.033292987789965, -2.011296924797841, -1.989600861805713, -1.968404798813587, -1.947508735821461, -1.927012672829335, -1.906916609837209, -1.887220546845084,
@@ -308,8 +308,8 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
         MESSAGE( 2,"Reading of the external database" );
         MESSAGE( 2,"Dimension photon chi: " << xip_chiph_dim );
         MESSAGE( 2,"Dimension particle chi: " << xip_chipa_dim );
-        MESSAGE( 2,"Minimum photon chi: " << xip_chiph_min );
-        MESSAGE( 2,"Maximum photon chi: " << xip_chiph_max );
+        MESSAGE( 2,"Minimum photon chi: " << xi_.chiph_min );
+        MESSAGE( 2,"Maximum photon chi: " << xi_.chiph_max );
         
     }
 
@@ -396,17 +396,17 @@ double *MultiphotonBreitWheelerTables::computePairQuantumParameter( double photo
     logchiph = log10( photon_chi );
 
     // Lower boundary of the table
-    if( photon_chi < xip_chiph_min ) {
+    if( photon_chi < xi_.chiph_min ) {
         ichiph = 0;
     }
     // Upper boundary of the table
-    else if( photon_chi >= xip_chiph_max ) {
+    else if( photon_chi >= xi_.chiph_max ) {
         ichiph = xip_chiph_dim-1;
     }
     // Inside the table
     else {
         // Use floor so that photon_chi corresponding to ichiph is <= given photon_chi
-        ichiph = int( floor( ( logchiph-xip_log10_chiph_min )*( xip_chiph_inv_delta ) ) );
+        ichiph = int( floor( ( logchiph-xi_.log10_chiph_min )*( xip_chiph_inv_delta ) ) );
     }
 
     // ---------------------------------------
@@ -441,12 +441,12 @@ double *MultiphotonBreitWheelerTables::computePairQuantumParameter( double photo
     }
 
     // Delta for the particle_chi dimension
-    delta_chipa = ( log10( 0.5*photon_chi )-xip_chipamin_table[ichiph] )
+    delta_chipa = ( log10( 0.5*photon_chi )-xi_.chipamin_table[ichiph] )
                   * xip_inv_chipa_dim_minus_one;
 
     ixip = ichiph*xip_chipa_dim + ichipa;
 
-    log10_chipam = ichipa*delta_chipa + xip_chipamin_table[ichiph];
+    log10_chipam = ichipa*delta_chipa + xi_.chipamin_table[ichiph];
     log10_chipap = log10_chipam + delta_chipa;
 
     d = ( xipp - xi_.table[ixip] ) / ( xi_.table[ixip+1] - xi_.table[ixip] );
@@ -562,18 +562,18 @@ void MultiphotonBreitWheelerTables::readTableXi( SmileiMPI *smpi )
                 // First, we read attributes
                 H5::getAttr( dataset_id_xip, "size_photon_chi", xip_chiph_dim );
                 H5::getAttr( dataset_id_xip, "size_particle_chi", xip_chipa_dim );
-                H5::getAttr( dataset_id_xip, "min_photon_chi", xip_chiph_min );
-                H5::getAttr( dataset_id_xip, "max_photon_chi", xip_chiph_max );
+                H5::getAttr( dataset_id_xip, "min_photon_chi", xi_.chiph_min );
+                H5::getAttr( dataset_id_xip, "max_photon_chi", xi_.chiph_max );
 
                 // Allocation of the array xip
-                xip_chipamin_table.resize( xip_chiph_dim );
+                xi_.chipamin_table.resize( xip_chiph_dim );
                 xi_.table.resize( xip_chipa_dim*xip_chiph_dim );
 
                 // then the dataset for chipamin
                 H5Dread( dataset_id_chipamin,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
-                         &xip_chipamin_table[0] );
+                         &xi_.chipamin_table[0] );
 
                 // then the dataset for xip
                 H5Dread( dataset_id_xip,
@@ -754,12 +754,12 @@ void MultiphotonBreitWheelerTables::bcastTableXi( SmileiMPI *smpi )
                   1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
         MPI_Pack( &xip_chipa_dim,
                   1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
-        MPI_Pack( &xip_chiph_min,
+        MPI_Pack( &xi_.chiph_min,
                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
-        MPI_Pack( &xip_chiph_max,
+        MPI_Pack( &xi_.chiph_max,
                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
-        MPI_Pack( &xip_chipamin_table[0], xip_chiph_dim,
+        MPI_Pack( &xi_.chipamin_table[0], xip_chiph_dim,
                   MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
         MPI_Pack( &xi_.table[0], xip_chipa_dim*xip_chiph_dim,
@@ -777,15 +777,15 @@ void MultiphotonBreitWheelerTables::bcastTableXi( SmileiMPI *smpi )
         MPI_Unpack( buffer, buf_size, &position,
                     &xip_chipa_dim, 1, MPI_INT, smpi->getGlobalComm() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &xip_chiph_min, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &xi_.chiph_min, 1, MPI_DOUBLE, smpi->getGlobalComm() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &xip_chiph_max, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &xi_.chiph_max, 1, MPI_DOUBLE, smpi->getGlobalComm() );
 
         // Resize tables before unpacking values
-        xip_chipamin_table.resize( xip_chiph_dim );
+        xi_.chipamin_table.resize( xip_chiph_dim );
         xi_.table.resize( xip_chipa_dim*xip_chiph_dim );
 
-        MPI_Unpack( buffer, buf_size, &position, &xip_chipamin_table[0],
+        MPI_Unpack( buffer, buf_size, &position, &xi_.chipamin_table[0],
                     xip_chiph_dim, MPI_DOUBLE, smpi->getGlobalComm() );
 
         MPI_Unpack( buffer, buf_size, &position, &xi_.table[0],
@@ -794,15 +794,15 @@ void MultiphotonBreitWheelerTables::bcastTableXi( SmileiMPI *smpi )
 
     delete[] buffer;
 
-    // Log10 of xip_chiph_min for efficiency
-    xip_log10_chiph_min = log10( xip_chiph_min );
+    // Log10 of xi_.chiph_min for efficiency
+    xi_.log10_chiph_min = log10( xi_.chiph_min );
 
     // Computation of the delta
-    xip_chiph_delta = ( log10( xip_chiph_max )
-                        - xip_log10_chiph_min )/( xip_chiph_dim-1 );
+    xi_.chiph_delta = ( log10( xi_.chiph_max )
+                        - xi_.log10_chiph_min )/( xip_chiph_dim-1 );
 
     // Inverse of delta
-    xip_chiph_inv_delta = 1./xip_chiph_delta;
+    xip_chiph_inv_delta = 1./xi_.chiph_delta;
 
     // Inverse particle_chi discetization (regularly used)
     xip_inv_chipa_dim_minus_one = 1./( xip_chipa_dim - 1. );

@@ -94,9 +94,6 @@ SMILEI_SCRIPTS = SMILEI_ROOT+"scripts"+s
 SMILEI_VALIDATION = SMILEI_ROOT+"validation"+s
 SMILEI_REFERENCES = SMILEI_VALIDATION+"references"+s
 SMILEI_BENCHS = SMILEI_ROOT+"benchmarks"+s
-# Path to external databases
-# For instance, the radiation loss
-SMILEI_DATABASE = ''
 
 # SCRIPTS VARIABLES
 EXEC_SCRIPT = 'exec_script.sh'
@@ -395,6 +392,8 @@ os.chdir(SMILEI_ROOT)
 WORKDIR_BASE = SMILEI_ROOT+"validation"+s+"workdirs"
 SMILEI_W = WORKDIR_BASE+s+"smilei"
 SMILEI_R = SMILEI_ROOT+s+"smilei"
+SMILEI_TOOLS_W = WORKDIR_BASE+s+"smilei_tables"
+SMILEI_TOOLS_R = SMILEI_ROOT+s+"smilei_tables"
 if os.path.exists(SMILEI_R):
 	STAT_SMILEI_R_OLD = os.stat(SMILEI_R)
 else :
@@ -413,16 +412,16 @@ if JOLLYJUMPER in HOSTNAME :
 	#NPERSOCKET = int(math.ceil(MPI/NODES/2.))
 	NPERSOCKET = 1
 	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_JOLLYJUMPER
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
 	#CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	COMPILE_COMMAND = 'make -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
-	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_POINCARE
 # Local computers
@@ -440,8 +439,8 @@ else:
 		MPIRUN = "mpirun -np "
 
 	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+MPIRUN+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_OTHER
 
@@ -459,12 +458,14 @@ try :
 		os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
 	# Compile
 	RUN( COMPILE_COMMAND, SMILEI_ROOT )
+	RUN( COMPILE_TOOLS_COMMAND, SMILEI_ROOT )
 	os.rename(COMPILE_OUT_TMP, COMPILE_OUT)
-	if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R):
+	if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R) or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
 		# if new bin, archive the workdir (if it contains a smilei bin)  and create a new one with new smilei and compilation_out inside
-		if os.path.exists(SMILEI_W):
+		if os.path.exists(SMILEI_W) and os.path.exists(SMILEI_TOOLS_W):
 			workdir_archiv(SMILEI_W)
 		shutil.copy2(SMILEI_R,SMILEI_W)
+		shutil.copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
 		if COMPILE_ONLY:
 			if VERBOSE:
 				print(  "Smilei validation succeed.")
@@ -482,6 +483,7 @@ except CalledProcessError as e:
 		print( "Smilei validation cannot be done : compilation failed. " + str(e.returncode))
 	sys.exit(3)
 if VERBOSE: print( "")
+
 
 def findReference(bench_name):
 	try:

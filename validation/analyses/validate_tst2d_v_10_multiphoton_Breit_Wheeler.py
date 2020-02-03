@@ -58,9 +58,9 @@ Validate("Maximal relative error total energy: ", max(abs(utot[:] - utot[0]))/ut
 # ______________________________________________________________________________
 # Read energy spectrum
 
-if False:
+if True:
 
-    PartDiag = S.ParticleDiagnostic(diagNumber=0,timesteps = 1000)
+    PartDiag = S.ParticleBinning(diagNumber=0,timesteps = 300)
     gamma = np.array(PartDiag.get()["gamma"])
     density = np.array(PartDiag.get()["data"][0])
     integral = sum(density)*(gamma[1] - gamma[0])
@@ -68,9 +68,9 @@ if False:
     print( ' Electron energy from spectrum: ' + str(integral))
     print( ' Max from spectrum: ' + str(max(density/integral)))
 
-    Validate("Electron energy spectrum: ", density/integral, 1e-5 )
+    # Validate("Electron energy spectrum: ", density/integral, 1e-5 )
 
-    PartDiag = S.ParticleDiagnostic(diagNumber=1,timesteps = 1000)
+    PartDiag = S.ParticleBinning(diagNumber=1,timesteps = 300)
     gamma = np.array(PartDiag.get()["gamma"])
     density = np.array(PartDiag.get()["data"][0])
     integral = sum(density)*(gamma[1] - gamma[0])
@@ -78,4 +78,4 @@ if False:
     print( ' Positron energy from spectrum: ' + str(integral))
     print( ' Max from spectrum: ' + str(max(density/integral)))
 
-    Validate("Positron energy spectrum: ", density/integral, 1e-5 )
+    # Validate("Positron energy spectrum: ", density/integral, 1e-5 )
