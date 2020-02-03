@@ -62,6 +62,8 @@ void MultiphotonBreitWheeler::createTables(int argc, std::string * arguments)
     
     int number_of_draws;
     
+    bool verbose;
+    
     // Vector for 1d tables
     std::vector <double> table_1d;
     std::vector <double> table_2d;
@@ -74,13 +76,19 @@ void MultiphotonBreitWheeler::createTables(int argc, std::string * arguments)
     xi_power               = 5;
     xi_threshold           = 1e-9;
     number_of_draws        = 0;
+    verbose                = false;
     
     std::string help_message;
     help_message =  "\n Help page specific to the multiphoton Breit-Wheeler:\n";
     help_message += "\n";
     help_message += " List of available commands:\n";
-    help_message += " -h, --help           print a help message and exit.\n";
-    help_message += " -s, --size int int   respective size of the photon and particle chi axis.\n";
+    help_message += " -h, --help                       print a help message and exit.\n";
+    help_message += " -s, --size       int int         respective size of the photon and particle chi axis. (default 128 128)\n";
+    help_message += " -b, --boundaries double double   min and max of the photon chi axis. (default 1e-2 1e2)\n";
+    help_message += " -e, --error      int             compute error due to discretization and use the provided int as a number of draws. (default 0)\n";
+    help_message += " -t, --threshold  double          Minimum targeted value of xi in the computation the minimum photon quantum parameter. (default 1e-3)\n";
+    help_message += " -p, --power      int             Maximum decrease in order of magnitude for the search for the minimum photon quantum parameter. (default 4)\n";
+    help_message += " -v, --verbose                    Dump the tables\n";
     
     // Read from command line
     int i_arg = 2;
@@ -102,9 +110,12 @@ void MultiphotonBreitWheeler::createTables(int argc, std::string * arguments)
         } else if (arguments[i_arg] == "-p" || arguments[i_arg] == "--power") {
             xi_power = std::stod(arguments[i_arg+1]);
             i_arg+=2;
+        } else if (arguments[i_arg] == "-v" || arguments[i_arg] == "--verbose") {
+            verbose = true;
+            i_arg+=1;
         } else if (arguments[i_arg] == "-h" || arguments[i_arg] == "--help") {
             if (rank == 0) {
-                std::cout << help_message << std::endl;
+                std::cerr << help_message << std::endl;
             }
             //MPI_Abort(MPI_COMM_WORLD,error);
             exit(0);
@@ -259,6 +270,18 @@ void MultiphotonBreitWheeler::createTables(int argc, std::string * arguments)
         }
     }
     
+    // Output of the tables
+    if (verbose && rank == 0) {
+        std:: cout << "\n table integration_dt_dchi: " << std::setprecision(std::numeric_limits<double>::digits10 + 1) <<std::endl;
+        for( i_photon_chi = 0 ; i_photon_chi < size_photon_chi  ; i_photon_chi += 8 ) {
+            std::cout << " ";
+            for (int i = i_photon_chi ; i< std::min(i_photon_chi+8,size_photon_chi) ; i++) {
+                std::cout << table_1d[i_photon_chi] << ", ";
+            }
+            std::cout << std::endl;
+        }
+    }
+    
     // Output of the vector
     if (rank==0) {
         fileId  = H5Fcreate( path.c_str(),
@@ -357,6 +380,18 @@ void MultiphotonBreitWheeler::createTables(int argc, std::string * arguments)
         std::cout << " Total time: " << t1 - t0 << " s" << std::endl;
     }
     
+    // Output of the tables
+    if (verbose && rank == 0) {
+        std:: cout << "\n table min_particle_chi_for_xi: " << std::setprecision(std::numeric_limits<double>::digits10 + 1) <<std::endl;
+        for( i_photon_chi = 0 ; i_photon_chi < size_photon_chi  ; i_photon_chi += 8 ) {
+            std::cout << " ";
+            for (int i = i_photon_chi ; i< std::min(i_photon_chi+8,size_photon_chi) ; i++) {
+                std::cout << table_1d[i_photon_chi] << ", ";
+            }
+            std::cout << std::endl;
+        }
+    }
+    
     // Output of the vector
     if (rank==0) {
         fileId = H5Fopen( path.c_str(),
@@ -400,7 +435,7 @@ void MultiphotonBreitWheeler::createTables(int argc, std::string * arguments)
     percentage = 0;
     t0 = MPI_Wtime();
 
-    for( int i_photon_chi = 0 ; i_photon_chi < rank_indexes[rank] ; i_photon_chi++ ) {
+    for( i_photon_chi = 0 ; i_photon_chi < rank_indexes[rank] ; i_photon_chi++ ) {
         
         // log10(photon_chi) for the current ichiph
         photon_chi = ( rank_first_index[rank] + i_photon_chi )*delta_photon_chi
@@ -462,6 +497,21 @@ void MultiphotonBreitWheeler::createTables(int argc, std::string * arguments)
     MPI_Allgatherv( &buffer[0], rank_indexes[rank], MPI_DOUBLE,
                     &table_2d[0], &rank_indexes[0], &rank_first_index[0],
                     MPI_DOUBLE, MPI_COMM_WORLD );
+
+    // Output of the tables
+    if (verbose && rank == 0) {
+        //std::string message = "";
+        std:: cout << "\n table xi: " << std::setprecision(std::numeric_limits<double>::digits10 + 1) <<std::endl;
+        for( i_photon_chi = 0 ; i_photon_chi < size_photon_chi  ; i_photon_chi++ ) {
+            std::cout << " ";
+            for( i_particle_chi = 0 ; i_particle_chi < size_particle_chi ; i_particle_chi ++ ) {
+                //message += std::to_string(table_2d[i_photon_chi*size_particle_chi + i_particle_chi]) + ", ";
+                std::cout << table_2d[i_photon_chi*size_particle_chi + i_particle_chi] << ", ";
+            }
+            //message += "\n";
+            std::cout << std::endl;
+        }
+    }
 
     // Output
     if (rank==0) {

@@ -62,6 +62,8 @@ void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
     std::vector <double> table_1d;
     std::vector <double> table_2d;
     
+    bool verbose;
+    
     // Parameter default initialization
     size_particle_chi      = 4;
     size_photon_chi        = 4;
@@ -70,13 +72,19 @@ void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
     xi_power               = 4;
     xi_threshold           = 1e-3;
     number_of_draws        = 0;
+    verbose                = false;
     
     std::string help_message;
     help_message =  "\n Help page specific to the nonlinear inverse Compton Scattering:\n";
     help_message += "\n";
     help_message += " List of available commands:\n";
-    help_message += " -h, --help           print a help message and exit.\n";
-    help_message += " -s, --size int int   respective size of the particle and photon chi axis.\n";
+    help_message += " -h, --help                       print a help message and exit.\n";
+    help_message += " -s, --size       int int         respective size of the particle and photon chi axis. (default 128 128)\n";
+    help_message += " -b, --boundaries double double   min and max of the particle chi axis. (default 1e-3 1e3)\n";
+    help_message += " -e, --error      int             compute error due to discretization and use the provided int as a number of draws. (default 0)\n";
+    help_message += " -t, --threshold  double          Minimum targeted value of xi in the computation the minimum particle quantum parameter. (default 1e-3)\n";
+    help_message += " -p, --power      int             Maximum decrease in order of magnitude for the search for the minimum particle quantum parameter. (default 4)\n";
+    help_message += " -v, --verbose                    Dump the tables\n";
     
     // Read from command line
     int i_arg = 2;
@@ -98,6 +106,9 @@ void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
         } else if (arguments[i_arg] == "-p" || arguments[i_arg] == "--power") {
             xi_power = std::stod(arguments[i_arg+1]);
             i_arg+=2;
+        } else if (arguments[i_arg] == "-v" || arguments[i_arg] == "--verbose") {
+            verbose = true;
+            i_arg+=1;
         } else if (arguments[i_arg] == "-h" || arguments[i_arg] == "--help") {
             if (rank == 0) {
                 std::cout << help_message << std::endl;
