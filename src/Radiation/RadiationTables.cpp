@@ -19,8 +19,6 @@
 // -----------------------------------------------------------------------------
 RadiationTables::RadiationTables()
 {
-    // xip_chiphmin_table.resize( 0 );
-    // xip_table.resize( 0 );
 
     minimum_chi_continuous_ = 1e-3;
     minimum_chi_discontinuous_ = 1e-2;
@@ -106,13 +104,13 @@ RadiationTables::RadiationTables()
     xip_chipa_max = 1e3;
     xip_chipa_dim = 128;
     xip_chiph_dim = 128;
-    xip_log10_chipa_min = log10( xi_.chipa_min );
+    xi_.log10_chipa_min = log10( xi_.chipa_min );
     xip_chipa_delta = ( log10( xip_chipa_max )
-                        - xip_log10_chipa_min )/( xip_chipa_dim-1 );
+                        - xi_.log10_chipa_min )/( xip_chipa_dim-1 );
     xip_chipa_inv_delta = 1.0/xip_chipa_delta;
     xip_inv_chiph_dim_minus_one = 1.0/( xip_chiph_dim - 1. );
-    xip_chiphmin_table.resize(xip_chipa_dim);
-    xip_chiphmin_table = {
+    xi_.min_photon_chi_table.resize(xip_chipa_dim);
+    xi_.min_photon_chi_table = {
         -15.096, -15.096, -15.096, -15.096, -15.096, -15.096, -15.096, -15.096, -15.096, -15.096,
         -14.1535590551, -14.1535590551, -14.1535590551, -14.1535590551, -14.1535590551, -14.1535590551, -14.1535590551, -14.1535590551, -14.1535590551, -14.1535590551,
         -13.2151181102, -13.2151181102, -13.2151181102, -13.2151181102, -13.2151181102, -13.2151181102, -13.2151181102, -13.2151181102, -13.2151181102, -13.2151181102,
@@ -129,8 +127,8 @@ RadiationTables::RadiationTables()
     };
     
     // Default parameters for table `xi`
-    xip_table.resize( xip_chipa_dim*xip_chiph_dim );
-    xip_table =
+    xi_.table.resize( xip_chipa_dim*xip_chiph_dim );
+    xi_.table =
     {
         0.00100038419076, 0.0010762541804, 0.00115787821471, 0.00124569268532, 0.00134016708017, 0.0014418064936, 0.00155115432667, 0.00166879519246, 0.00179535804159, 0.00193151952478, 0.00207800761049, 0.00223560547689, 0.00240515569894, 0.0025875647531, 0.00278380786361, 0.00299493421632, 0.00322207256786, 0.00346643728023, 0.00372933481298, 0.00401217070761, 0.00431645710164, 0.00464382081221, 0.00499601203263, 0.00537491368796, 0.0057825514996, 0.00622110481234, 0.0066929182414, 0.00720051420106, 0.0077466063812, 0.00833411424238, 0.00896617860569, 0.00964617841808, 0.0103777487799, 0.0111648003265, 0.0120115400619, 0.0129224937471, 0.013902529953, 0.0149568858914, 0.0160911951448, 0.0173115174203, 0.0186243704602, 0.0200367642494, 0.0215562376719, 0.0231908977877, 0.0249494619274, 0.0268413028448, 0.0288764972219, 0.0310658778892, 0.0334210901783, 0.0359546528405, 0.0386800238727, 0.0416116713425, 0.0447651489031, 0.0481571752632, 0.051805716769, 0.0557300727838, 0.0599509646833, 0.0644906302325, 0.0693729248059, 0.0746234292999, 0.0802695630724, 0.0863407001087, 0.0928682872733, 0.0998859636907, 0.107429679778, 0.115537813711, 0.124251282301, 0.133613642333, 0.14367117725, 0.154472962594, 0.166070901824, 0.178519721788, 0.191876914332, 0.206202606927, 0.221559340821, 0.238011729737, 0.255625965451, 0.274469128325, 0.294608250878, 0.316109070438, 0.339034392632, 0.363441970904, 0.389381788586, 0.416892610155, 0.445997648855, 0.476699182497, 0.508971944122, 0.542755130113, 0.57794292271, 0.614373543988, 0.651817084241, 0.689962734688, 0.728406669852, 0.766642734498, 0.804059318341, 0.839947252602, 0.873524879015, 0.903986818858, 0.930581004602, 0.952712376393, 0.970059893507, 0.98267736752, 0.991034878861, 0.995959661797, 0.998467099301, 0.999530828757, 0.99989022828, 0.999981659817, 0.999997993135, 0.999999871178, 0.999999995788, 0.999999999942, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
         0.00100030223225, 0.00107586036893, 0.00115712581267, 0.00124452966667, 0.00133853559761, 0.00143964229539, 0.00154838611859, 0.00166534393977, 0.00179113620575, 0.00192643022894, 0.00207194372737, 0.00222844863207, 0.00239677518203, 0.00257781632849, 0.00277253247189, 0.00298195655656, 0.00320719955026, 0.00344945633758, 0.00371001205839, 0.00399024892499, 0.00429165355412, 0.0046158248525, 0.00496448249785, 0.00533947606008, 0.00574279481093, 0.00617657827375, 0.00664312756917, 0.00714491761604, 0.00768461025185, 0.00826506834097, 0.00888937094411, 0.00956082962727, 0.0102830059939, 0.0110597305289, 0.0118951228492, 0.0127936134603, 0.0137599671249, 0.0147993079531, 0.0159171463317, 0.0171194078124, 0.0184124640886, 0.0198031661944, 0.0212988800727, 0.0229075246755, 0.0246376127833, 0.0264982947701, 0.0284994055902, 0.0306515153285, 0.0329659837133, 0.0354550190164, 0.0381317416981, 0.0410102529493, 0.044105707907, 0.0474343929018, 0.0510138058899, 0.0548627396042, 0.0590013679684, 0.0634513373742, 0.0682358644423, 0.0733798405163, 0.0789099414964, 0.084854741174, 0.0912448268151, 0.0981129160941, 0.1054939741, 0.113425328429, 0.121946779632, 0.131100703404, 0.140932139857, 0.151488863865, 0.162821428808, 0.174983173958, 0.188030183109, 0.202021178851, 0.217017332825, 0.233081967325, 0.250280117455, 0.268677915535, 0.288341750248, 0.309337141974, 0.331727262556, 0.355571012339, 0.380920549809, 0.40781815007, 0.436292249157, 0.466352514466, 0.497983772528, 0.531138632571, 0.565728682325, 0.601614223984, 0.638592697374, 0.676386252307, 0.714629444694, 0.752858807693, 0.790507134236, 0.826906661678, 0.861306738862, 0.892912383341, 0.920949267405, 0.944756427606, 0.963898686431, 0.978276289097, 0.988193759457, 0.99434418614, 0.997683698868, 0.999219693978, 0.999794047666, 0.999959953913, 0.999994694576, 0.999999566447, 0.999999980759, 0.999999999607, 0.999999999997, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
@@ -448,10 +446,10 @@ double RadiationTables::computeRandomPhotonChi( double particle_chi )
     logchipa = log10( particle_chi );
 
     // ---------------------------------------
-    // index of particle_chi in xip_table
+    // index of particle_chi in xi_.table
     // ---------------------------------------
     // Use floor so that particle_chi corresponding to ichipa is <= given particle_chi
-    ichipa = int( floor( ( logchipa-xip_log10_chipa_min )*( xip_chipa_inv_delta ) ) );
+    ichipa = int( floor( ( logchipa-xi_.log10_chipa_min )*( xip_chipa_inv_delta ) ) );
 
     // Checking that ichipa is in the range of the tables
     // Else we use the values at the boundaries
@@ -470,27 +468,27 @@ double RadiationTables::computeRandomPhotonChi( double particle_chi )
 
     // If the randomly computed xip if below the first one of the row,
     // we take the first one which corresponds to the minimal photon photon_chi
-    if( xip <= xip_table[ichipa*xip_chiph_dim] ) {
+    if( xip <= xi_.table[ichipa*xip_chiph_dim] ) {
         ichiph = 0;
-        xip = xip_table[ichipa*xip_chiph_dim];
+        xip = xi_.table[ichipa*xip_chiph_dim];
     }
     // Above the last xip of the row, the last one corresponds
     // to the maximal photon photon_chi
-    else if( xip > xip_table[( ichipa+1 )*xip_chiph_dim-2] ) {
+    else if( xip > xi_.table[( ichipa+1 )*xip_chiph_dim-2] ) {
         ichiph = xip_chiph_dim-2;
-        xip = xip_table[( ichipa+1 )*xip_chiph_dim-1];
+        xip = xi_.table[( ichipa+1 )*xip_chiph_dim-1];
         // If nearest point: ichiph = xip_chiph_dim-1
     } else {
         // Search for the corresponding index ichiph for xip
         ichiph = userFunctions::searchValuesInMonotonicArray(
-                     &xip_table[ichipa*xip_chiph_dim], xip, xip_chiph_dim );
+                     &xi_.table[ichipa*xip_chiph_dim], xip, xip_chiph_dim );
     }
 
     // Corresponding particle_chi for ichipa
-    logchipa = ichipa*xip_chipa_delta+xip_log10_chipa_min;
+    logchipa = ichipa*xip_chipa_delta+xi_.log10_chipa_min;
 
     // Delta for the corresponding particle_chi
-    chiph_xip_delta = ( logchipa - xip_chiphmin_table[ichipa] )
+    chiph_xip_delta = ( logchipa - xi_.min_photon_chi_table[ichipa] )
                       *xip_inv_chiph_dim_minus_one;
 
     // --------------------------------------------------------------------
@@ -501,21 +499,21 @@ double RadiationTables::computeRandomPhotonChi( double particle_chi )
     ixip = ichipa*xip_chiph_dim + ichiph;
 
     // Computation of the final photon_chi by interpolation
-    if( xip_table[ixip+1] - xip_table[ixip] > 1e-15 ) {
+    if( xi_.table[ixip+1] - xi_.table[ixip] > 1e-15 ) {
         log10_chiphm = ichiph*chiph_xip_delta
-                       + xip_chiphmin_table[ichipa];
+                       + xi_.min_photon_chi_table[ichipa];
         log10_chiphp = log10_chiphm + chiph_xip_delta;
 
-        d = ( xip - xip_table[ixip] ) / ( xip_table[ixip+1] - xip_table[ixip] );
+        d = ( xip - xi_.table[ixip] ) / ( xi_.table[ixip+1] - xi_.table[ixip] );
 
         // Chiph after linear interpolation in the logarithmic scale
         photon_chi = pow( 10., log10_chiphm*( 1.0-d ) + log10_chiphp*( d ) );
     } else
-        // For integration reasons, we can have xip_table[ixip+1] = xip_table[ixip]
+        // For integration reasons, we can have xi_.table[ixip+1] = xi_.table[ixip]
         // In this case, no interpolation
     {
         photon_chi = pow( 10., ichiph*chiph_xip_delta
-                          + xip_chiphmin_table[ichipa] );
+                          + xi_.min_photon_chi_table[ichipa] );
     }
 
     // ------------------------------------------------------------
@@ -524,7 +522,7 @@ double RadiationTables::computeRandomPhotonChi( double particle_chi )
     // ------------------------------------------------------------
 
     /*photon_chi = pow(10.,ichiph*chiph_xip_delta
-           + xip_chiphmin_table[ichipa]);*/
+           + xi_.min_photon_chi_table[ichipa]);*/
 
 
     return photon_chi;
@@ -792,20 +790,20 @@ void RadiationTables::readXiTable( SmileiMPI *smpi )
                 H5::getAttr( dataset_id_xip, "max_particle_chi", xip_chipa_max );
 
                 // Allocation of the array xip
-                xip_chiphmin_table.resize( xip_chipa_dim );
-                xip_table.resize( xip_chipa_dim*xip_chiph_dim );
+                xi_.min_photon_chi_table.resize( xip_chipa_dim );
+                xi_.table.resize( xip_chipa_dim*xip_chiph_dim );
 
                 // then the dataset for chiphmin
                 H5Dread( dataset_id_chiphmin,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
-                         &xip_chiphmin_table[0] );
+                         &xi_.min_photon_chi_table[0] );
 
                 // then the dataset for xip
                 H5Dread( dataset_id_xip,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
-                         &xip_table[0] );
+                         &xi_.table[0] );
 
                 H5Dclose( dataset_id_xip );
                 H5Dclose( dataset_id_chiphmin );
@@ -1069,10 +1067,10 @@ void RadiationTables::bcastTableXi( SmileiMPI *smpi )
         MPI_Pack( &xip_chipa_max,
                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
-        MPI_Pack( &xip_chiphmin_table[0], xip_chipa_dim,
+        MPI_Pack( &xi_.min_photon_chi_table[0], xip_chipa_dim,
                   MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
-        MPI_Pack( &xip_table[0], xip_chipa_dim*xip_chiph_dim,
+        MPI_Pack( &xi_.table[0], xip_chipa_dim*xip_chiph_dim,
                   MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
     }
 
@@ -1092,24 +1090,24 @@ void RadiationTables::bcastTableXi( SmileiMPI *smpi )
                     &xip_chipa_max, 1, MPI_DOUBLE, smpi->getGlobalComm() );
 
         // Resize tables before unpacking values
-        xip_chiphmin_table.resize( xip_chipa_dim );
-        xip_table.resize( xip_chipa_dim*xip_chiph_dim );
+        xi_.min_photon_chi_table.resize( xip_chipa_dim );
+        xi_.table.resize( xip_chipa_dim*xip_chiph_dim );
 
-        MPI_Unpack( buffer, buf_size, &position, &xip_chiphmin_table[0],
+        MPI_Unpack( buffer, buf_size, &position, &xi_.min_photon_chi_table[0],
                     xip_chipa_dim, MPI_DOUBLE, smpi->getGlobalComm() );
 
-        MPI_Unpack( buffer, buf_size, &position, &xip_table[0],
+        MPI_Unpack( buffer, buf_size, &position, &xi_.table[0],
                     xip_chipa_dim*xip_chiph_dim, MPI_DOUBLE, smpi->getGlobalComm() );
     }
 
     delete[] buffer;
 
     // Log10 of xi_.chipa_min for efficiency
-    xip_log10_chipa_min = log10( xi_.chipa_min );
+    xi_.log10_chipa_min = log10( xi_.chipa_min );
 
     // Computation of the delta
     xip_chipa_delta = ( log10( xip_chipa_max )
-                        - xip_log10_chipa_min )/( xip_chipa_dim-1 );
+                        - xi_.log10_chipa_min )/( xip_chipa_dim-1 );
 
     // Inverse of delta
     xip_chipa_inv_delta = 1.0/xip_chipa_delta;

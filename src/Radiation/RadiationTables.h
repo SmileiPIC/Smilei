@@ -320,19 +320,23 @@ private:
     struct IntegrationFoverChi integfochi;
 
     // ---------------------------------------------
-    // Table photon_chi min table
-    // ---------------------------------------------
-
-    //! Table containing the photon_chi min values
-    //! Under this value, photon energy is
-    //! considered negligible
-    std::vector<double > xip_chiphmin_table;
-
-    // ---------------------------------------------
-    // Table min_photon_chi_for_xi and xi
+    // Structure for min_photon_chi_for_xi and xi
     // ---------------------------------------------
 
     struct Xi {
+        
+        //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
+        //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
+        std::vector<double> table ;
+        
+        //! Table containing the photon_chi min values
+        //! Under this value, photon energy is
+        //! considered negligible
+        std::vector<double > min_photon_chi_table;
+        
+        //! Logarithm of the minimum boundary for particle_chi in the table xip
+        //! and xip_chiphmin
+        double log10_chipa_min;
         
         //! Minimum boundary for particle_chi in the table xip and xip_chiphmin
         double chipa_min;
@@ -340,14 +344,6 @@ private:
     };
     
     struct Xi xi_;
-
-    //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
-    //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
-    std::vector<double> xip_table ;
-
-    //! Logarithm of the minimum boundary for particle_chi in the table xip
-    //! and xip_chiphmin
-    double xip_log10_chipa_min;
 
     //! Maximum boundary for particle_chi in the table xip and xip_chiphmin
     double xip_chipa_max;

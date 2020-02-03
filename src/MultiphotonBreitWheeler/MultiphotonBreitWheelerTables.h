@@ -132,14 +132,20 @@ private:
     std::vector<double > xip_chipamin_table;
 
     // ---------------------------------------------
-    // Table xip
+    // Structure for xip
     // ---------------------------------------------
 
-    //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{e^-})\f$
-    //! that gives gives the probability for a photon to decay into pair
-    //! with an electron of energy in the range \f$[0, \chi_{e^-}]\f$
-    //! This enables to compute the energy repartition between the electron and the positron
-    std::vector<double> xip_table;
+    struct Xi {
+        
+        //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{e^-})\f$
+        //! that gives gives the probability for a photon to decay into pair
+        //! with an electron of energy in the range \f$[0, \chi_{e^-}]\f$
+        //! This enables to compute the energy repartition between the electron and the positron
+        std::vector<double> table;
+        
+    };
+    
+    struct Xi xi_;
 
     //! Minimum boundary for photon_chi in the table xip and xip_chipamin
     double xip_chiph_min;
