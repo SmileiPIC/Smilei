@@ -50,24 +50,17 @@ def if_file_exist(filename):
   return flag
   
 # ______________________________________________________________________________
-# Figures
-
-fig = figure(figsize=(16, 6))
-gs = GridSpec(2, 6)
-ax0 = subplot(gs[:,0:2])
-ax1 = subplot(gs[:,2:4])
-ax2 = subplot(gs[:,4:6])
-
-# ______________________________________________________________________________
 # Read the table integfochi
 
 if if_file_exist('./radiation_tables.h5'):
     
     f = h5py.File('./radiation_tables.h5', "r")
 
-    print(f.items())
-
     if 'integfochi' in f:
+
+        fig = figure(figsize=(10, 6))
+        gs = GridSpec(2, 2)
+        ax0 = subplot(gs[:,:])
 
         dataset = f['integfochi']
 
@@ -89,6 +82,7 @@ if if_file_exist('./radiation_tables.h5'):
         ax0.set_xlabel(r'$\chi_\pm$')
         ax0.set_ylabel(r'$\int{F/\chi d\chi}$')
 
+        fig.tight_layout()
 
 # ______________________________________________________________________________
 # Read the table min photon chi for xi
@@ -98,6 +92,10 @@ if if_file_exist('./radiation_tables.h5'):
     f = h5py.File('./radiation_tables.h5', "r")
     
     if 'min_photon_chi_for_xi' in f:
+        
+        fig = figure(figsize=(10, 6))
+        gs = GridSpec(2, 2)
+        ax0 = subplot(gs[:,:])
         
         dataset = f['min_photon_chi_for_xi']
         
@@ -113,12 +111,14 @@ if if_file_exist('./radiation_tables.h5'):
 
         chipa = np.logspace(np.log10(min_particle_chi),np.log10(max_particle_chi),size_particle_chi)
 
-        ax1.plot(chipa, np.power(10,dataset))
+        ax0.plot(chipa, np.power(10,dataset))
 
-        ax1.set_xscale('log')
-        ax1.set_yscale('log')
-        ax1.set_xlabel(r'$\chi_\pm$')
-        ax1.set_ylabel(r'$\chi_{\gamma,min}$')
+        ax0.set_xscale('log')
+        ax0.set_yscale('log')
+        ax0.set_xlabel(r'$\chi_\pm$')
+        ax0.set_ylabel(r'$\chi_{\gamma,min}$')
+
+        fig.tight_layout()
 
 # ______________________________________________________________________________
 # Read the table xip

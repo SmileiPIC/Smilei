@@ -8,6 +8,7 @@
 
 SMILEICXX ?= mpicxx
 HDF5_ROOT_DIR ?= $(HDF5_ROOT)
+BOOST_ROOT_DIR ?= $(BOOST_ROOT)
 BUILD_DIR ?= build
 PYTHONEXE ?= python
 TABLES_BUILD_DIR ?= tools/tables/build
@@ -61,7 +62,12 @@ CXXFLAGS += -std=c++11 -Wall #-Wshadow
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
 CXXFLAGS += -I$(HDF5_ROOT_DIR)/include
-LDFLAGS := -L$(HDF5_ROOT_DIR)/lib $(LDFLAGS)
+LDFLAGS := -L$(HDF5_ROOT_DIR)/lib  $(LDFLAGS)
+endif
+# Boost library
+ifneq ($(strip $(BOOST_ROOT_DIR)),)
+CXXFLAGS += -I$(BOOST_ROOT_DIR)/include
+LDFLAGS := -L$(BOOST_ROOT_DIR)/lib $(LDFLAGS)
 endif
 LDFLAGS += -lhdf5
 # Include subdirs

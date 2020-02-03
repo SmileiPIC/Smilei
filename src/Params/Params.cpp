@@ -807,7 +807,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             PyTools::extract( "_angle", angle_z, "Laser", i_laser );
 
             // Make the propagation happen and write out the file
-            if( ! smpi->test_mode ) {
+            if( ! smpi->test_mode && ! restart ) {
                 propagateX( profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
             }
 

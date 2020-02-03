@@ -96,17 +96,20 @@ void LaserPropagator::init( Params *params, SmileiMPI *smpi, unsigned int side )
         L[idim] = N[idim] * params->cell_length[j];
         o[idim] = params->oversize[j] * params->cell_length[j];
     }
+    ox = params->oversize[0] * params->cell_length[0];
 
     // Set the grid temporal dimension
     N[ndim-1] = params->n_time;
     L[ndim-1] = params->simulation_time;
 
     // Make the array bigger to accommodate for the parallel FFT
+    double old_L = L[0];
     for( unsigned int idim=0; idim<ndim-1; idim++ ) {
         double old_N = ( double )N[idim];
         N[idim]  = ( ( int ) ceil( ( double )N[idim] / MPI_size ) ) * MPI_size;
         L[idim] *= ( ( double )N[idim]/old_N );
     }
+    double O = L[0] - old_L;
     
     // Calculate some array size that relates to the parallel decomposition
     Nlocal[0] = N[0] / MPI_size;
@@ -114,7 +117,7 @@ void LaserPropagator::init( Params *params, SmileiMPI *smpi, unsigned int side )
 
     // Arrays of coordinates (y, z, t) owning to the current processor
     local_x.resize( ndim );
-    local_x[0] = linspace( -o[0], L[0]-o[0], N[0], MPI_rank*Nlocal[0], ( MPI_rank+1 )*Nlocal[0] );
+    local_x[0] = linspace( -o[0]-O, L[0]-o[0]-O, N[0], MPI_rank*Nlocal[0], ( MPI_rank+1 )*Nlocal[0] );
     local_x[1] = linspace( -o[1], L[1]-o[1], N[1], 0, N[1] );
     if( ! _2D ) {
         local_x[2] = linspace( 0, L[2], N[2], 0, N[2] );
@@ -384,7 +387,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
                             }
                             z[j + i1] = complex_interpolate( &z0[i0], N[0], j_, // interpolate
                                                              abs( cz - sz * local_k[0][j]/kx ), // compensate for the k-space compression
-                                                             (offset+o[0])* kx  // add the propagation term to the phase
+                                                             (offset+ox)* kx  // add the propagation term to the phase
                                                            );
                         }
                     }
@@ -416,7 +419,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
                                 }
                                 z[j + i1] = complex_interpolate( &z0[i0], N[0], j_, // interpolate
                                                                  abs( cz - sz * local_k[0][j]/kx ), // compensate for the k-space compression
-                                                                 (offset+o[0])* kx  // add the propagation term to the phase
+                                                                 (offset+ox)* kx  // add the propagation term to the phase
                                                                );
                             }
                         }
@@ -516,21 +519,21 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         unsigned int MPI_omega_offset;
         MPI_Scan( &n_omega_local, &MPI_omega_offset, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD );
         MPI_omega_offset -= n_omega_local;
-        dims[0] = N[0]   ;
-        start[0] = 0               ;
-        count[0] = N[0]         ;
+        dims[0] = N[0];
+        start[0] = 0;
+        count[0] = N[0];
         dims[1] = n_omega;
         start[1] = MPI_omega_offset;
         count[1] = n_omega_local;
     } else {
-        dims[0] = N[0]   ;
+        dims[0] = N[0];
         start[0] = MPI_rank*Nlocal[0];
         count[0] = Nlocal[0];
-        dims[1] = N[1]   ;
-        start[1] = 0                 ;
-        count[1] = N[1]     ;
+        dims[1] = N[1];
+        start[1] = 0;
+        count[1] = N[1];
         dims[2] = n_omega;
-        start[2] = 0                 ;
+        start[2] = 0;
         count[2] = n_omega  ;
     }
 
