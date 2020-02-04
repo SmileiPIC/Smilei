@@ -4,8 +4,8 @@ Install
 Before installing :program:`Smilei`, you need to install a few dependencies:
 
 * A C++11 compiler, optionally implementing openMP version > 4.5 (gcc users: v6.0 or newer recommended)
-* an MPI library (by default a version supporting ``MPI_THREAD_MULTIPLE`` is required: v4.0 or newer recommended)
-* an HDF5 library compatible with your versions of C++ and MPI
+* A MPI library (by default a version supporting ``MPI_THREAD_MULTIPLE`` is required: v4.0 or newer recommended)
+* A HDF5 library compatible with your versions of C++ and MPI
 * Python 2.7 or Python 3 (with header files)
 
 Optional dependencies are:
@@ -203,3 +203,11 @@ There are several ways to load this module in python.
   You may add the following command in your own python script::
 
     >>> execfile("/path/to/Smilei/scripts/Diagnostics.py")
+
+----
+
+Install the `smilei_tables` tool
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Generation of the tables is handled by an external tools.
+A full documentation is available on :doc:`the dedicated page <tables>`.

@@ -28,7 +28,8 @@ We have also compiled instructions for some common architectures that you can us
 - Intel Skylake processors: `skylake`
 - Intel Knights Landing processors: `knl`
 - Intel Broadwell processors: `broadwell`
-- Intel Broadwell processors: `haswell`
+- Intel Haswell processors: `haswell`
+- Intel Ivy Bridge processors: `ivybridge`
 
 These files are composed of commands, which must be executed by the user,
 followed by compiler options automatically added to the default options of the makefile.
