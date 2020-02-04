@@ -23,30 +23,7 @@ compile:
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -c  -v
-
-compile_tools:
-  stage: compile
-  only:
-    - develop
-    - AMsorting
-    - smilei_table_refactoring
-
-  script:
-    # Force workdir cleaning in case of retried
-    - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
-    - env
-    - if [ -d /sps2/gitlab-runner/$CI_PIPELINE_ID ] ; then rm -rf /sps2/gitlab-runner/$CI_PIPELINE_ID ; fi
-    # Move in test dir
-    - mkdir -p /sps2/gitlab-runner/$CI_PIPELINE_ID
-    - cp -r $CI_PROJECT_DIR /sps2/gitlab-runner/$CI_PIPELINE_ID
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
-    # Set the environment
-    - make uninstall_happi
-    - make happi
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run validation script
-    - python validation.py -c  -v
+    - python validation.py -c  -v -p "tornado"
 
 makerun1D:
   stage: makerun
@@ -59,7 +36,7 @@ makerun1D:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1
+    - python validation.py -b "tst1d_*_*.py" -m 4 -o 9 -v -r 1 -p "tornado"
 
 makerun2D:
   stage: makerun

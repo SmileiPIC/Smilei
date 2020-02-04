@@ -344,7 +344,7 @@ def RUN_LLR(command, dir):
 	if (PARTITION=="jollyjumper"):
 		COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
 	elif (PARTITION=="tornado"):
-		COMMAND = "PBS_DEFAULT=trndlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
+		COMMAND = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+EXEC_SCRIPT
 	try:
 		check_call(COMMAND, shell=True)
 	except CalledProcessError:
