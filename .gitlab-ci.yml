@@ -23,7 +23,8 @@ compile:
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -c  -v -p "tornado"
+    # - python validation.py -c -v
+    - python validation.py -c -o 9 -v -p "tornado"
 
 makerun1D:
   stage: makerun
@@ -36,6 +37,7 @@ makerun1D:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
+    # - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1
     - python validation.py -b "tst1d_*_*.py" -m 4 -o 9 -v -r 1 -p "tornado"
 
 makerun2D:
