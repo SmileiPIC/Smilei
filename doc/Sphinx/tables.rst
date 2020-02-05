@@ -154,7 +154,7 @@ For instance:
 
 .. code-block:: bash
 
-  py ./tools/tables/show_nonlinear_inverse_Compton_scattering.py ./radiation_tables.h5
+  python ./tools/tables/show_nonlinear_inverse_Compton_scattering.py ./radiation_tables.h5
 
 Detailed description of the tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -236,7 +236,7 @@ For instance, a `xi_power` of 4 as used for our tables mean that we look for a p
   :scale: 50 %
 
   Plot of the minimal photon quantum parameter :math:`\chi_{\gamma,\min}` corresponding to the minimum boundary of the xi table
-  as a function of the particle quantum parameter :math:`\chi_\pm` for a particle quantum parameter ranging
+  as a function of the particle quantum parameter :math:`\chi_\pm` ranging
   from :math:`10^{-4}` to :math:`10^{3}`. It corresponds to the pre-computed table of 512 points.
 
 The table `xi` corresponds to the following fraction:
@@ -262,3 +262,103 @@ For a given :math:`\chi_\pm`, :math:`\chi_\gamma` ranges from :math:`\chi_{\gamm
   The :math:`\chi_\pm` axis ranges from :math:`10^{-4}` to :math:`10^{3}`.
   The :math:`\chi_\gamma` axis ranges from :math:`\chi_{\gamma,\min}` to :math:`\chi_\pm`.
   It corresponds to the pre-computed table of 512 points.
+  
+Multiphoton Breit-Wheeler
+""""""""""""""""""""""""""""""""""""
+
+The file `multiphoton_breit_wheeler_tables.h5` is used for the multiphoton Breit-Wheeler process
+described in :doc:`the dedicated section <multiphoton_Breit_Wheeler>`.
+
+It first contains the `T` table that represents
+the following integration:
+
+.. math::
+  :label: eq_mbw_T
+
+  T \left( \chi_\gamma \right) =
+  \int_{0}^{+\infty}{\int_{x}^{+\infty}{\sqrt{s} K_{1/3} \left( \frac{2}{3} s^{3/2}
+  \right) ds - \left( 2 - \chi_\gamma x^{3/2} \right) K_{2/3} \left( \frac{2}{3} x^{3/2} \right) }} d\chi_-
+
+where
+
+.. math::
+  :label: eq_mbw_x
+
+  x = \left( \chi_\gamma / (\chi_{-} \chi_{+}) \right)^{2/3}
+
+And
+
+.. math::
+  :label: eq_mbw_chi
+
+  \chi_\gamma = \chi_{-} + \chi_{+}.
+
+It is used to compute the production rate of electron-positron pairs
+from a single photon of quantum parameter :math:`\chi_\gamma`.
+In the Monte-Carlo algorithm, it is used to determine the photon decay probability.
+
+.. _mbw_T:
+
+.. figure:: _static/mbw/mbw_T.png
+  :scale: 50 %
+
+  Plot of the table `T`
+  as a function of the photon quantum parameter :math:`\chi_\gamma` ranging
+  from :math:`10^{-2}` to :math:`10^{2}`.
+  It corresponds to the pre-computed table size of 512 points.
+  
+The table `min_particle_chi_for_xi` is the minimum boundary used
+by the table `xi` for the particle quantum parameter axis.
+The particle can be either a positron or an electron.
+The mechanism is symmetric.
+
+This minimum value :math:`\chi_{\pm,\min}` is computed using the following inequality:
+
+.. math::
+  :label: eq_mbw_min_particle_chi_for_xi
+
+  \frac{\displaystyle{\int_0^{\chi_{\pm,\min}}{\frac{dT}{dx}(\chi_\gamma, x)
+  dx}}}{\displaystyle{\int_0^{\chi_\gamma}{\frac{dT}{dx}(\chi_\gamma, x) dx}}} < \varepsilon
+
+We use here :math:`\varepsilon = 10^{-9}`.
+It corresponds to the argument parameter `xi_threshold`.
+We have to determine a minimum photon quantum parameter because
+we can not have a logarithmic discretization starting from 0.
+The parameter `xi_power` is the precision of the :math:`\chi_{\pm,\min}` value.
+For instance, a `xi_power` of 4 as used for our tables mean that we look for a precision of 4 digits.
+ 
+.. _mbw_min_particle_chi:
+
+.. figure:: _static/mbw/mbw_min_particle_chi.png
+  :scale: 50 %
+
+  Plot of the minimal particle quantum parameter :math:`\chi_{\pm,\min}` corresponding to the minimum boundary of the xi table
+  as a function of the photon quantum parameter :math:`\chi_\gamma` ranging
+  from :math:`10^{-2}` to :math:`10^{2}`.
+  It corresponds to the pre-computed table of 512 points.
+
+The table `xi` corresponds to the following fraction:
+
+.. math::
+  :label: eq_mbw_xi
+  
+  \xi = \frac{\displaystyle{\int_0^{\chi_{\pm}}{\frac{dT}{dx}(\chi_\gamma, x)
+  dx}}}{\displaystyle{\int_0^{\chi_\gamma}{\frac{dT}{dx}(\chi_\gamma, x) dx}}}
+
+For a given :math:`\chi_\gamma` and a randomly drawn parameter :math:`\xi`,
+we obtain the quantum parameter :math:`\chi_\pm` of either the generated electron or positron.
+Once we have one, we deduce the second from :math:`\chi_\gamma = \chi_+ + \chi_-`
+This method is used by the Monte-Carlo method to determine the energy of the created electron and the positron.
+For a given :math:`\chi_\gamma`, :math:`\chi_\pm` ranges from :math:`\chi_{\pm,\min}` to :math:`\chi_\gamma`.
+
+.. _mbw_xi:
+
+.. figure:: _static/mbw/mbw_xi.png
+  :scale: 50 %
+
+  Plot of the xi table as a function of the photon quantum parameter :math:`\chi_\gamma`
+  and index for the :math:`\chi_\pm` axis.
+  The :math:`\chi_\gamma` axis ranges from :math:`10^{-2}` to :math:`10^{2}`.
+  The :math:`\chi_\pm` axis ranges from :math:`\chi_{\pm,\min}` to :math:`\chi_\pm`.
+  It corresponds to the pre-computed table of 512 points.
+  

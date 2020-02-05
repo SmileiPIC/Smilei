@@ -51,7 +51,7 @@ dy = Rsync/res                              # space step
 dt  = 1./math.sqrt(1./(dx*dx) + 1./(dy*dy)) # timestep (CFL)
 dt *= dt_factor
 
-Tsim = 300*dt                              # duration of the simulation
+Tsim = 350*dt                              # duration of the simulation
 
 pusher = "boris"                            # dynamic type
 

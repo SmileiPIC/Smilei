@@ -51,8 +51,8 @@ print ' Final number of positrons: ',ntot_positron[-1]
 print ' Final number of photons: ',ntot_photon[-1]
 
 Validate("Electron kinetic energy evolution: ", ukin_electron/utot[0], 1e-2 )
-Validate("Positron kinetic energy evolution: ", ukin_positron/utot[0], 1e-2 )
-Validate("Photon kinetic energy evolution: ", ukin_photon/utot[0], 1e-2 )
+Validate("Positron kinetic energy evolution: ", ukin_positron/utot[0], 2e-2 )
+Validate("Photon kinetic energy evolution: ", ukin_photon/utot[0], 2e-2 )
 Validate("Maximal relative error total energy: ", max(abs(utot[:] - utot[0]))/utot[0], 5e-3 )
 
 # ______________________________________________________________________________
