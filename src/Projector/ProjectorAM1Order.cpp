@@ -110,12 +110,13 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
    
     if (rpn < 0.){ // If particle is between 0 and dr/2.
         jp = 0;
+        Sr1[0] = Sr1[1];
         Sr1[1] = 0.; 
-        if(imode%2 == 0){ 
-            Sr1[0] = 1.;
-        } else {
-            Sr1[0] = 2.*delta - 1.; 
-        }
+        //if(imode%2 == 0){ 
+        //    Sr1[0] = 1.;
+        //} else {
+        //    Sr1[0] = 2.*delta - 1.; 
+        //}
     }
  
     ip -= i_domain_begin ;
@@ -152,9 +153,9 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     complex<double> *Jl, *Jr, *Jt, *rho;
     
     double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
-    double crt_p = charge_weight * ( particles.momentum( 2, ipart )*particles.position( 1, ipart )-particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/( rp )*invgf;
-    double crl_p = charge_weight * ( particles.momentum( 0, ipart )) *invgf;
-    double crr_p = charge_weight * ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ))/rp*invgf;
+    double crl_p =  ( particles.momentum( 0, ipart )) *invgf;
+    double crt_p =  ( particles.momentum( 2, ipart )*particles.position( 1, ipart ) - particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/rp * invgf;
+    double crr_p =  ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) )/rp * invgf;
     e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/rp;
     
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -172,14 +173,12 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
     if (ypn < 0.){ // If particle is between 0 and dr/2.
         jp = 0;
+        Sr1[0] = Sr1[1];
         Sr1[1] = 0.; // Only account for deposition above axis. Symetry is handled in interpolation.
     }
 
-
     ip  -= i_domain_begin ;
     jp  -= j_domain_begin ;
-
-    double *invR_local  = &(invR[jp]);
 
     for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
         if( imode == 1 ) {
@@ -189,13 +188,13 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             C_m *= e_theta;
         }
 
-        if (ypn < 0.){ // If particle is between 0 and dr/2.
-            if(imode%2 == 0){ 
-                Sr1[0] = 1.;
-            } else {
-                Sr1[0] = 2.*delta - 1.; 
-            }
-        }
+        //if (ypn < 0.){ // If particle is between 0 and dr/2.
+        //    if(imode%2 == 0){ 
+        //        Sr1[0] = 1.;
+        //    } else {
+        //        Sr1[0] = 2.*delta - 1.; 
+        //    }
+        //}
         
         if (!diag_flag){
             Jl =  &( *emAM->Jl_[imode] )( 0 );
@@ -212,39 +211,18 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
         }
 
-        // Rho
-        for( unsigned int i=0 ; i<2 ; i++ ) {
-            iloc = ( i+ip )*nprimr+jp;
-            for( unsigned int j=0 ; j<2 ; j++ ) {
-                linindex = iloc+j;
-                rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j]*invR_local[j];
-            }
-        }//i
-        
-        // Jl^(d,p)
-        for( unsigned int i=0 ; i<2 ; i++ ) {
-            iloc = ( i+ip )*nprimr + jp;
-            for( unsigned int j=0 ; j<2 ; j++ ) {
-                linindex = iloc+j;
-                Jl [linindex] += C_m * crl_p* Sl1[i]*Sr1[j]*invR_local[j] ;
-            }
-        }//i
-        // Jr^(p,d)
+        // Jr^(p,p) Jt^(p,p) Jl^(p,p)
         for( unsigned int i=0 ; i<2 ; i++ ) {
             iloc = ( i+ip )* nprimr + jp;
             for( unsigned int j=0 ; j<2 ; j++ ) {
                 linindex = iloc+j;
-                Jr [linindex] += C_m * crr_p* Sl1[i]*Sr1[j]*invR_local[j] ;
+                complex<double> increment =  C_m*charge_weight* Sl1[i]*Sr1[j]*invR[jp+j];
+                rho [linindex] += increment;
+                Jl [linindex] += crl_p * increment ;
+                Jr [linindex] += crr_p * increment ;
+                Jt [linindex] += crt_p * increment ;
             }
         }//i
-        // Jt^(p,p)
-        for( unsigned int i=0 ; i<2 ; i++ ) {
-            iloc = ( i+ip )*nprimr + jp;
-            for( unsigned int j=0 ; j<2 ; j++ ) {
-                linindex = iloc+j;
-                Jt [linindex] += C_m * crt_p* Sl1[i]*Sr1[j]*invR_local[j] ;
-            }
-        }
     }// end loop on modes
     
 } // END Project local current densities (Jl, Jr, Jt)
