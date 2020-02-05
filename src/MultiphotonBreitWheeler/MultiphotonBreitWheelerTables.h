@@ -97,21 +97,27 @@ private:
     std::string table_path_;
 
     // ---------------------------------------------
-    // Table T for the
+    // Structure for Table T used for the
     // pair creation Monte-Carlo process
     // ---------------------------------------------
 
-    //! Array containing tabulated values of the function T
-    std::vector<double > T_table;
+    struct T {
+        
+        //! Array containing tabulated values of the function T
+        std::vector<double > table_;
+        
+        //! Minimum boundary of the table T
+        double chiph_min;
+        
+        //! Log10 of the minimum boundary of the table T
+        double log10_chiph_min;
+        
+        //! Maximum boundary of the table T
+        double chiph_max;
+        
+    };
 
-    //! Minimum boundary of the table T
-    double T_chiph_min;
-
-    //! Log10 of the minimum boundary of the table T
-    double T_log10_chiph_min;
-
-    //! Maximum boundary of the table T
-    double T_chiph_max;
+    struct T T_;
 
     //! Delta chi for the table T
     double T_chiph_delta;
@@ -137,7 +143,7 @@ private:
         //! Table containing the particle_chi min values
         //! Under this value, electron kinetic energy of the pair is
         //! considered negligible
-        std::vector<double > chipamin_table;
+        std::vector<double > min_particle_chi_;
         
         //! Minimum boundary for photon_chi in the table xi and xi_.chipamin
         double chiph_min;
@@ -152,35 +158,36 @@ private:
         //! Delta for the photon_chi discretization in the table xip and xip_chipamin
         double chiph_delta;
         
+        //! Inverse of the delta for the photon_chi discretization
+        //! in the table xip and xip_chipamin
+        double chiph_inv_delta;
+
+        //! Dimension of the discretized parameter photon_chi
+        int chiph_dim;
+
+        //! Dimension of the discretized parameter particle_chi
+        int chipa_dim;
+        
+        //! xip power
+        double power;
+
+        //! 1/(xi_.chipa_dim - 1)
+        double inv_chipa_dim_minus_one;
+
+        //! xip threshold
+        double threshold;
+        
     };
     
     struct Xi xi_;
 
-    //! Inverse of the delta for the photon_chi discretization
-    //! in the table xip and xip_chipamin
-    double xip_chiph_inv_delta;
-
-    //! Dimension of the discretized parameter photon_chi
-    int xip_chiph_dim;
-
-    //! Dimension of the discretized parameter particle_chi
-    int xip_chipa_dim;
-
-    //! 1/(xip_chipa_dim - 1)
-    double xip_inv_chipa_dim_minus_one;
-
-    //! xip power
-    double xip_power;
-
-    //! xip threshold
-    double xip_threshold;
 
     // ---------------------------------------------
     // Factors
     // ---------------------------------------------
 
     //! Factor for the computation of dN_{BW} / dt from T
-    double factor_dNBWdt;
+    double factor_dNBW_dt_;
 
     //! Normalized reduced Compton wavelength
     double normalized_Compton_wavelength_;

@@ -338,44 +338,44 @@ private:
         //! and xip_chiphmin
         double log10_chipa_min;
         
+        //! Maximum boundary for particle_chi in the table xip and xip_chiphmin
+        double chipa_max;
+        
         //! Minimum boundary for particle_chi in the table xip and xip_chiphmin
         double chipa_min;
+        
+        //! Delta for the particle_chi discretization  in the table xip and xip_chiphmin
+        double chipa_delta;
+        
+        //! Inverse of the delta for the particle_chi discretization
+        //! in the table xip and xip_chiphmin
+        double chipa_inv_delta;
+        
+        //! Dimension of the discretized parameter particle_chi
+        int chipa_dim;
+        
+        //! Dimension of the discretized parameter photon_chi
+        int chiph_dim;
+        
+        //! 1/(xi_.chiph_dim - 1)
+        double inv_chiph_dim_minus_one;
+
+        //! xip power
+        double power;
+
+        //! xip threshold
+        double threshold;
         
     };
     
     struct Xi xi_;
-
-    //! Maximum boundary for particle_chi in the table xip and xip_chiphmin
-    double xip_chipa_max;
-
-    //! Delta for the particle_chi discretization  in the table xip and xip_chiphmin
-    double xip_chipa_delta;
-
-    //! Inverse of the delta for the particle_chi discretization
-    //! in the table xip and xip_chiphmin
-    double xip_chipa_inv_delta;
-
-    //! Dimension of the discretized parameter particle_chi
-    int xip_chipa_dim;
-
-    //! Dimension of the discretized parameter photon_chi
-    int xip_chiph_dim;
-
-    //! 1/(xip_chiph_dim - 1)
-    double xip_inv_chiph_dim_minus_one;
-
-    //! xip power
-    double xip_power;
-
-    //! xip threshold
-    double xip_threshold;
 
     // ---------------------------------------------
     // Factors
     // ---------------------------------------------
 
     //! Factor for the computation of dNphdt
-    double factor_dNphdt;
+    double factor_dNph_dt_;
 
     //! Factor for the Classical radiated power
     //! 2.*params.fine_struct_cst/(3.*normalized_Compton_wavelength_);
