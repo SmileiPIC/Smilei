@@ -705,13 +705,13 @@ double NonlinearComptonScattering::computeRitusSynchrotronEmissivity( double par
         // Iterator
         int i;
 
-        double y = photon_chi/( 3.*particle_chi*( particle_chi-photon_chi ) );
+        double y = photon_chi/( 3.0*particle_chi*( particle_chi-photon_chi ) );
 
         // Computation of Part. 1
         // Call the modified Bessel function to get K
-        K = Tools::BesselK( 2./3., 2*y);
+        K = Tools::BesselK( 2.0/3.0, 2*y);
 
-        part1 = ( 2. + 3.*photon_chi*y )*( K );
+        part1 = ( 2.0 + 3.0*photon_chi*y )*( K );
 
         // Computation of Part. 2
         // Using Gauss Legendre integration
