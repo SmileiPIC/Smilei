@@ -119,13 +119,13 @@ We have computed some tables with several levels of discretizations that you can
 
   mpirun -np <number of processes> ./smilei_tables nics -s 256 256 -b 1e-4 1e3
   
-radiation_tables.h5
+`radiation_tables.h5 <http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/tables_256/radiation_tables.h5>`_
 
 .. code-block:: bash
 
   mpirun -np <number of processes> ./smilei_tables mbw -s 256 256 -b 1e-2 1e2
 
-multiphoton_breit_wheeler.h5
+`multiphoton_breit_wheeler_tables.h5 <http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/tables_256/multiphoton_breit_wheeler_tables.h5>`_
 
 512 points
 """""""""""
@@ -145,6 +145,17 @@ multiphoton_breit_wheeler.h5
 Python visualization scripts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+You can easily visualize the tables provided by our tools using the python scripts located in the `tools/tables` folder:
+
+* `show_nonlinear_inverse_Compton_scattering.py`
+* `show_multiphoton_Breit_Wheeler.py`
+
+For instance:
+
+.. code-block:: bash
+
+  py ./tools/tables/show_nonlinear_inverse_Compton_scattering.py ./radiation_tables.h5
+
 Detailed description of the tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -153,13 +164,14 @@ Nonlinear Inverse Compton Scattering
 
 The file `radiation_tables.h5` is used for the nonlinear inverse Compton scattering radiation
 mechanism described in :doc:`the dedicated section <radiation_loss>`.
-It contains the `integfochi` table that represents
+
+It first contains the `integfochi` table that represents
 the integration of the synchortron emissivity of Ritus *et al*:
 
 .. math::
   :label: eq_integfochi
 
-  \int_{0}^{\chi_\pm} \frac{2 x}{ 3 \chi_\pm^2} \left[ \int_{2y}^{+\infty}{K_{1/3(y)}dy} - \frac{2 + 3 x y}{2} K_{2/3}(\nu) \right] dx
+  \int_{0}^{\chi_\pm}  \frac{S(\chi_\pm , x)}{x} dx = \int_{0}^{\chi_\pm} \frac{2 x}{ 3 \chi_\pm^2} \left[ \int_{2y}^{+\infty}{K_{1/3(y)}dy} - \frac{2 + 3 x y}{2} K_{2/3}(\nu) \right] dx
 
 where
 
@@ -168,12 +180,85 @@ where
   
   y = \frac{x}{3 \chi_\pm (\chi_\pm - x)}
 
-It is used by the Monte-Carlo method to compute the radiation emission cross-section.
+The :math:`x` value corresponds to the photon quantum parameter.
+We integrate the whole spectrum.
+This table is used by the Monte-Carlo method to compute the radiation emission cross-section.
 
 .. _nics_integration_F_over_chi:
 
 .. figure:: _static/nics/nics_integration_F_over_chi.png
-  :width: 15cm
+  :scale: 50 %
 
   Plot of the integfochi table for a particle quantum parameter ranging
   from :math:`\chi = 10^{-4}` to :math:`10^{3}` using the pre-computed table of 512 points.
+  
+The table `h` is used for the Niel stochastic model ([Niel2018]_).
+It is given by the following integration:
+
+.. math::
+  :label: eq_h_Nielh
+
+    h \left( \chi \right) = \frac{9 \sqrt{3}}{4 \pi} \int_0^{+\infty}{d\nu
+    \left[ \frac{2\chi^3 \nu^3}{\left( 2 + 3\nu\chi \right)^3} K_{5/3}(\nu)
+    + \frac{54 \chi^5 \nu^4}{\left( 2 + 3 \nu \chi \right)^5} K_{2/3}(\nu) \right]}
+  
+.. _nics_h_for_niel:
+
+.. figure:: _static/nics/nics_h_niel.png
+  :scale: 50 %
+
+  Plot of the h table for a particle quantum parameter ranging
+  from :math:`\chi = 10^{-4}` to :math:`10^{3}` using the pre-computed table of 512 points.
+
+The table `min_photon_chi_for_xi` is the minimum boundary used
+by the table `xi` for the photon quantum parameter axis.
+
+This minimum value :math:`\chi_{\gamma,\min}` is computed using the following inequality:
+
+.. math::
+  :label: eq_nics_min_photon_chi_for_xi
+
+    \frac{\displaystyle{\int_0^{\chi_{\gamma,\min}}{S(\chi_\pm, x) / x
+    dx}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, x) / x dx}}} < \varepsilon
+
+We generally use :math:`\varepsilon = 10^{-3}`.
+It corresponds to the argument parameter `xi_threshold`.
+We have to determine a minimum photon quantum parameter because
+we can not have a logarithmic discretization starting from 0.
+It basically means that we ignore the radiated energy below :math:`\chi_{\gamma,\min}`
+that is less than :math:`10^{-3}` of the total radiated energy.
+The parameter `xi_power` is the precision of the :math:`\chi_{\gamma,\min}` value.
+For instance, a `xi_power` of 4 as used for our tables mean that we look for a precision of 4 digits.
+
+.. _nics_min_photon_chi:
+
+.. figure:: _static/nics/nics_min_photon_chi.png
+  :scale: 50 %
+
+  Plot of the minimal photon quantum parameter :math:`\chi_{\gamma,\min}` corresponding to the minimum boundary of the xi table
+  as a function of the particle quantum parameter :math:`\chi_\pm` for a particle quantum parameter ranging
+  from :math:`10^{-4}` to :math:`10^{3}`. It corresponds to the pre-computed table of 512 points.
+
+The table `xi` corresponds to the following fraction:
+
+.. math::
+  :label: eq_nics_xi
+
+    \xi = \frac{\displaystyle{\int_0^{\chi_{\gamma}}{S(\chi_\pm, x) / x
+    dx}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, x) / x dx}}}
+
+For a given :math:`\chi_\pm` and a randomly drawn parameter :math:`\xi`,
+we obtain the quantum parameter :math:`\chi_\gamma` of the emitted photon.
+This method is used by the Monte-Carlo method to determine the radiated energy of the emitted photon.
+For a given :math:`\chi_\pm`, :math:`\chi_\gamma` ranges from :math:`\chi_{\gamma,\min}` to :math:`\chi_\pm`.
+
+.. _nics_xi:
+
+.. figure:: _static/nics/nics_xi.png
+  :scale: 50 %
+
+  Plot of the xi table as a function of the particle quantum parameter :math:`\chi_\pm`
+  and index for the :math:`\chi_\gamma` axis.
+  The :math:`\chi_\pm` axis ranges from :math:`10^{-4}` to :math:`10^{3}`.
+  The :math:`\chi_\gamma` axis ranges from :math:`\chi_{\gamma,\min}` to :math:`\chi_\pm`.
+  It corresponds to the pre-computed table of 512 points.

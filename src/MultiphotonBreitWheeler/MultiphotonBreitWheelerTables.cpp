@@ -277,7 +277,7 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
                                          / ( params.electron_mass*params.c_vacuum*params.c_vacuum );
 
         // Computation of the factor factor_dNBWdt
-        factor_dNBWdt = params.fine_struct_cst/( normalized_Compton_wavelength_ );
+        factor_dNBWdt = params.fine_struct_cst/( normalized_Compton_wavelength_ * M_PI*std::sqrt( 3.0 ) );
     }
 
     // Messages and checks
@@ -351,13 +351,14 @@ double MultiphotonBreitWheelerTables::computeBreitWheelerPairProductionRate( dou
     // An asymptotic approximation is used
     if( ichiph < 0 ) {
         ichiph = 0;
-        dNBWdt = 0.46*exp( -8.0/( 3.0*photon_chi ) );
+        // 0.46 * sqrt(3) * pi
+        dNBWdt = 2.5030431226432204*exp( -8.0/( 3.0*photon_chi ) ) * photon_chi*photon_chi;
     }
     // If photon_chi is above the upper bound of the table
     // An asymptotic approximation is used
     else if( ichiph >= T_chiph_dim-1 ) {
         ichiph = T_chiph_dim-2;
-        dNBWdt = 0.38*pow( photon_chi, -1.0/3.0 );
+        dNBWdt = 2.067731275227008*pow( photon_chi, 5.0/3.0 );
     } else {
         // Upper and lower values for linear interpolation
         logchiphm = ichiph*T_chiph_delta + T_log10_chiph_min;
@@ -367,7 +368,7 @@ double MultiphotonBreitWheelerTables::computeBreitWheelerPairProductionRate( dou
         dNBWdt = ( T_table[ichiph+1]*fabs( logchiph-logchiphm ) +
                    T_table[ichiph]*fabs( logchiphp - logchiph ) )*T_chiph_inv_delta;
     }
-    return factor_dNBWdt*dNBWdt*photon_chi/gamma;
+    return factor_dNBWdt*dNBWdt/(photon_chi*gamma);
 }
 
 // -----------------------------------------------------------------------------

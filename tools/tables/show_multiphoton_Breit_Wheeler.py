@@ -11,6 +11,7 @@ from matplotlib.pyplot import *
 from matplotlib.colors import LogNorm
 import h5py as h5py
 import numpy as np
+import sys
 
 # ______________________________________________________________________________
 # RCparams
@@ -36,6 +37,16 @@ rcParams['xtick.minor.width'] = 1.5
 rcParams['ytick.minor.width'] = 1.5
 
 # ______________________________________________________________________________
+# Checks
+
+try:
+    path = sys.argv[1]
+except:
+    print("\n Please, provide a path to the tables.\n")
+    raise
+
+
+# ______________________________________________________________________________
 # Functions
 
 def if_file_exist(filename):
@@ -53,9 +64,9 @@ def if_file_exist(filename):
 # ______________________________________________________________________________
 # Read the table integfochi
 
-if if_file_exist('./multiphoton_Breit_Wheeler_tables.h5'):
+if if_file_exist(path):
     
-    f = h5py.File('./multiphoton_Breit_Wheeler_tables.h5', "r")
+    f = h5py.File(path, "r")
 
     if 'integration_dt_dchi' in f:
     
@@ -69,7 +80,7 @@ if if_file_exist('./multiphoton_Breit_Wheeler_tables.h5'):
         chiph_min = dataset.attrs["min_photon_chi"]
         chiph_max = dataset.attrs["max_photon_chi"]
 
-        print("Table dN/dt")
+        print("Table T")
         print("Dimension: {}".format(size_photon_chi))
         print("Min particle chi: {}".format(chiph_min))
         print("Max particle chi: {}".format(chiph_max))
@@ -81,16 +92,12 @@ if if_file_exist('./multiphoton_Breit_Wheeler_tables.h5'):
         ax0.set_xscale('log')
         ax0.set_yscale('log')
         ax0.set_xlabel(r'$\chi_\gamma$')
-        ax0.set_ylabel(r'$dN_\pm/dt$')
+        ax0.set_ylabel(r'$T(\chi_\gamma)$')
         
         fig.tight_layout()
 
 # ______________________________________________________________________________
 # Read the table xip_chipamin
-
-if if_file_exist('./multiphoton_Breit_Wheeler_tables.h5'):
-
-    f = h5py.File('./multiphoton_Breit_Wheeler_tables.h5', "r")
     
     if "min_particle_chi_for_xi" in f:
     
@@ -124,10 +131,6 @@ if if_file_exist('./multiphoton_Breit_Wheeler_tables.h5'):
 
 # ______________________________________________________________________________
 # Read the table xip
-
-if if_file_exist('./multiphoton_Breit_Wheeler_tables.h5'):
-
-    f = h5py.File('./multiphoton_Breit_Wheeler_tables.h5', "r")
 
     if "xi" in f:
         

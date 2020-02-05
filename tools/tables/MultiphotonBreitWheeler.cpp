@@ -636,7 +636,7 @@ double MultiphotonBreitWheeler::computeRitusDerivative( double photon_chi,
     delete[] gauleg_x;
     delete[] weights;
 
-    return ( p2 - p1 )/( M_PI*std::sqrt( 3. )*std::pow( photon_chi, 2 ) );
+    return ( p2 - p1 ); ///( M_PI*std::sqrt( 3. )*std::pow( photon_chi, 2 ) );
 }
 
 // -----------------------------------------------------------------------------

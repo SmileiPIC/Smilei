@@ -236,7 +236,7 @@ Fokker-Planck stochastic model
 
 The Fokker-Planck approach is an extension of the corrected Landau-Lifshitz
 model with an operator that takes into account diffusive stochastic effects
-([Niel2018]_):
+([Niel2018b]_):
 
 .. math::
   :label: NielStochasticForce
@@ -829,6 +829,8 @@ References
 .. [Lobet2013] `Lobet et al., J. Phys.: Conf. Ser. 688, 012058 (2016) <http://iopscience.iop.org/article/10.1088/1742-6596/688/1/012058>`_
 
 .. [Lobet2015] `M. Lobet, Effets radiatifs et d'électrodynamique quantique dans l'interaction laser-matière ultra-relativiste (2015) <http://www.theses.fr/2015BORD0361#>`_
+
+.. [Niel2018b] `F. Niel, C. Riconda, F. Amiranoff, M. Lobet, J. Derouillat, F. Pérez, T. Vinci and M. Grech, From quantum to classical modelling of radiation reaction: a focus on the radiation spectrum, Plasma Phys. Control. Fusion 60, 094002 (2018) <http://iopscience.iop.org/article/10.1088/1361-6587/aace22>`_
 
 .. [Ritus1985] `Ritus V. (1985), Journal of Soviet Laser Research, 6, 497, ISSN 0270-2010 <https://doi.org/10.1007/BF01120220>`_
 

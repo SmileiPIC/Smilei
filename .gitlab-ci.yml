@@ -31,7 +31,7 @@ makerun1D:
   only:
     - develop
     - AMsorting
-    - smilei_table_refactoring
+    # - smilei_table_refactoring
     
   script:
     # Move in test dir
@@ -45,7 +45,7 @@ makerun2D:
   only:
     - develop
     - AMsorting
-    - smilei_table_refactoring
+    # - smilei_table_refactoring
     
   script:
     # Move in test dir

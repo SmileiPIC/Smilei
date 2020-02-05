@@ -11,6 +11,7 @@ from matplotlib.pyplot import *
 from matplotlib.colors import LogNorm
 import h5py as h5py
 import numpy as np
+import sys
 
 # ______________________________________________________________________________
 # RCparams
@@ -36,6 +37,16 @@ rcParams['xtick.minor.width'] = 1.5
 rcParams['ytick.minor.width'] = 1.5
 
 # ______________________________________________________________________________
+# Checks
+
+try:
+    path = sys.argv[1]
+except:
+    print("\n Please, provide a path to the tables.\n")
+    raise
+
+
+# ______________________________________________________________________________
 # Functions
 
 def if_file_exist(filename):
@@ -52,9 +63,9 @@ def if_file_exist(filename):
 # ______________________________________________________________________________
 # Read the table integfochi
 
-if if_file_exist('./radiation_tables.h5'):
+if if_file_exist(path):
     
-    f = h5py.File('./radiation_tables.h5', "r")
+    f = h5py.File(path, "r")
 
     if 'integfochi' in f:
 
@@ -86,10 +97,6 @@ if if_file_exist('./radiation_tables.h5'):
 
 # ______________________________________________________________________________
 # Read the table min photon chi for xi
-
-if if_file_exist('./radiation_tables.h5'):
-
-    f = h5py.File('./radiation_tables.h5', "r")
     
     if 'min_photon_chi_for_xi' in f:
         
@@ -122,10 +129,6 @@ if if_file_exist('./radiation_tables.h5'):
 
 # ______________________________________________________________________________
 # Read the table xip
-
-if if_file_exist('./radiation_tables.h5'):
-
-    f = h5py.File('./radiation_tables.h5', "r")
 
     if 'xi' in f:
         
@@ -171,10 +174,6 @@ if if_file_exist('./radiation_tables.h5'):
 
 # ______________________________________________________________________________
 # Read the table h
-
-if if_file_exist('./radiation_tables.h5'):
-    
-    f = h5py.File('./radiation_tables.h5', "r")
 
     if 'h' in f:
 
