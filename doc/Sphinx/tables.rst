@@ -43,16 +43,16 @@ The tool works with command line arguments.
 For each physical mechanism, :program:`smilei_tables` generates all tables for this mechanism.
 The first argument therefore corresonds to the physical mechanism:
 
-* Nonlinear inverse Compton scattering: `nics`
-* Multiphoton Breit-Wheeler: `mbw`
-* For help: `-h` or `--help`
+* Nonlinear inverse Compton scattering: ``nics``
+* Multiphoton Breit-Wheeler: ``mbw``
+* For help: ``-h`` or ```--help``
 
 .. code-block:: bash
 
   mpirun -np <number of processes> ./smilei_tables -h
 
 Then, once the physical mechanism selected, the following arguments are numerical parameters for the table generation.
-For each physical argument, `-h` or `--help` gives the full list of arguments.
+For each physical argument, ``-h`` or ``--help`` gives the full list of arguments.
 
 **For Nonlinear inverse Compton Scattering:**
 
@@ -104,8 +104,8 @@ For each physical argument, `-h` or `--help` gives the full list of arguments.
 
 The tables are generated where the code is executed using HDF5 with the following names:
 
-* Nonlinear inverse Compton Scattering: `radiation_tables.h5`
-* multiphoton Breit-Wheeler: `multiphoton_breit_wheeler_tables.h5`
+* Nonlinear inverse Compton Scattering: ``radiation_tables.h5``
+* multiphoton Breit-Wheeler: ``multiphoton_breit_wheeler_tables.h5``
 
 Precomputed tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -162,10 +162,10 @@ Detailed description of the tables
 Nonlinear Inverse Compton Scattering
 """"""""""""""""""""""""""""""""""""
 
-The file `radiation_tables.h5` is used for the nonlinear inverse Compton scattering radiation
+The file ``radiation_tables.h5`` is used for the nonlinear inverse Compton scattering radiation
 mechanism described in :doc:`the dedicated section <radiation_loss>`.
 
-It first contains the `integfochi` table that represents
+It first contains the ``integfochi`` table that represents
 the integration of the synchortron emissivity of Ritus *et al*:
 
 .. math::
@@ -192,7 +192,7 @@ This table is used by the Monte-Carlo method to compute the radiation emission c
   Plot of the integfochi table for a particle quantum parameter ranging
   from :math:`\chi = 10^{-4}` to :math:`10^{3}` using the pre-computed table of 512 points.
   
-The table `h` is used for the Niel stochastic model ([Niel2018]_).
+The table ``h`` is used for the Niel stochastic model ([Niel2018]_).
 It is given by the following integration:
 
 .. math::
@@ -210,8 +210,8 @@ It is given by the following integration:
   Plot of the h table for a particle quantum parameter ranging
   from :math:`\chi = 10^{-4}` to :math:`10^{3}` using the pre-computed table of 512 points.
 
-The table `min_photon_chi_for_xi` is the minimum boundary used
-by the table `xi` for the photon quantum parameter axis.
+The table ``min_photon_chi_for_xi`` is the minimum boundary used
+by the table ``xi`` for the photon quantum parameter axis.
 
 This minimum value :math:`\chi_{\gamma,\min}` is computed using the following inequality:
 
@@ -222,24 +222,25 @@ This minimum value :math:`\chi_{\gamma,\min}` is computed using the following in
     dx}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, x) / x dx}}} < \varepsilon
 
 We generally use :math:`\varepsilon = 10^{-3}`.
-It corresponds to the argument parameter `xi_threshold`.
+It corresponds to the argument parameter ``xi_threshold``.
 We have to determine a minimum photon quantum parameter because
 we can not have a logarithmic discretization starting from 0.
 It basically means that we ignore the radiated energy below :math:`\chi_{\gamma,\min}`
 that is less than :math:`10^{-3}` of the total radiated energy.
-The parameter `xi_power` is the precision of the :math:`\chi_{\gamma,\min}` value.
-For instance, a `xi_power` of 4 as used for our tables mean that we look for a precision of 4 digits.
+The parameter ``xi_power`` is the precision of the :math:`\chi_{\gamma,\min}` value.
+For instance, a ``xi_power`` of 4 as used for our tables mean that we look for a precision of 4 digits.
 
 .. _nics_min_photon_chi:
 
 .. figure:: _static/nics/nics_min_photon_chi.png
   :scale: 50 %
 
-  Plot of the minimal photon quantum parameter :math:`\chi_{\gamma,\min}` corresponding to the minimum boundary of the xi table
+  Plot of the minimal photon quantum parameter :math:`\chi_{\gamma,\min}`
+  corresponding to the minimum boundary of the ``xi`` table
   as a function of the particle quantum parameter :math:`\chi_\pm` ranging
   from :math:`10^{-4}` to :math:`10^{3}`. It corresponds to the pre-computed table of 512 points.
 
-The table `xi` corresponds to the following fraction:
+The table ``xi`` corresponds to the following fraction:
 
 .. math::
   :label: eq_nics_xi
@@ -269,7 +270,7 @@ Multiphoton Breit-Wheeler
 The file `multiphoton_breit_wheeler_tables.h5` is used for the multiphoton Breit-Wheeler process
 described in :doc:`the dedicated section <multiphoton_Breit_Wheeler>`.
 
-It first contains the `T` table that represents
+It first contains the ``T`` table that represents
 the following integration:
 
 .. math::
@@ -302,13 +303,13 @@ In the Monte-Carlo algorithm, it is used to determine the photon decay probabili
 .. figure:: _static/mbw/mbw_T.png
   :scale: 50 %
 
-  Plot of the table `T`
+  Plot of the table ``T``
   as a function of the photon quantum parameter :math:`\chi_\gamma` ranging
   from :math:`10^{-2}` to :math:`10^{2}`.
   It corresponds to the pre-computed table size of 512 points.
   
-The table `min_particle_chi_for_xi` is the minimum boundary used
-by the table `xi` for the particle quantum parameter axis.
+The table ``min_particle_chi_for_xi`` is the minimum boundary used
+by the table ``xi`` for the particle quantum parameter axis.
 The particle can be either a positron or an electron.
 The mechanism is symmetric.
 
@@ -321,11 +322,11 @@ This minimum value :math:`\chi_{\pm,\min}` is computed using the following inequ
   dx}}}{\displaystyle{\int_0^{\chi_\gamma}{\frac{dT}{dx}(\chi_\gamma, x) dx}}} < \varepsilon
 
 We use here :math:`\varepsilon = 10^{-9}`.
-It corresponds to the argument parameter `xi_threshold`.
+It corresponds to the argument parameter ``xi_threshold``.
 We have to determine a minimum photon quantum parameter because
 we can not have a logarithmic discretization starting from 0.
-The parameter `xi_power` is the precision of the :math:`\chi_{\pm,\min}` value.
-For instance, a `xi_power` of 4 as used for our tables mean that we look for a precision of 4 digits.
+The parameter ``xi_power`` is the precision of the :math:`\chi_{\pm,\min}` value.
+For instance, a ``xi_power`` of 4 as used for our tables mean that we look for a precision of 4 digits.
  
 .. _mbw_min_particle_chi:
 
@@ -337,7 +338,7 @@ For instance, a `xi_power` of 4 as used for our tables mean that we look for a p
   from :math:`10^{-2}` to :math:`10^{2}`.
   It corresponds to the pre-computed table of 512 points.
 
-The table `xi` corresponds to the following fraction:
+The table ``xi`` corresponds to the following fraction:
 
 .. math::
   :label: eq_mbw_xi
