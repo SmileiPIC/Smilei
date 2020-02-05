@@ -80,8 +80,8 @@ print(' Maximum relative error kinetic energy'+str(ukin_rel_err_Niel.max()))
 print (' Maximum relative error radiative energy'+str(urad_rel_err_Niel.max()))
 
 # Validation difference between Landau-Lifshitz and Niel methods
-Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_Niel.max(), 0.03 )
-Validate("Relative error on the radiative energy / urad max " , urad_rel_err_Niel.max(), 0.03 )
+Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_Niel.max(), 0.05 )
+Validate("Relative error on the radiative energy / urad max " , urad_rel_err_Niel.max(), 0.05 )
 
 # ______________________________________________________________________________
 # Comparison CLL and MC methods
@@ -95,8 +95,8 @@ print(' Maximum relative error kinetic energy'+str(ukin_rel_err_MC.max()))
 print(' Maximum relative error radiative energy'+str(urad_rel_err_MC.max()))
 
 # Validation difference between Landau-Lifshitz and Monte-Carlo methods
-Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_MC.max(), 0.03 )
-Validate("Relative error on the radiative energy / urad max " , urad_rel_err_MC.max(), 0.03 )
+Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_MC.max(), 0.05 )
+Validate("Relative error on the radiative energy / urad max " , urad_rel_err_MC.max(), 0.05 )
 
 # ______________________________________________________________________________
 # Checking of the particle binning
