@@ -1308,7 +1308,7 @@ void Params::print_uncoupled_params()
     MPI_Comm_size( MPI_COMM_WORLD, &sz );
 
     if (rk==0) {
-        cout << "Number of domain : ";
+        cout << "Number of regions : ";
         for ( int iDim  = 0 ; iDim < nDim_field ; iDim++ )
             cout << number_of_region[iDim] << " ";
         cout << endl;
