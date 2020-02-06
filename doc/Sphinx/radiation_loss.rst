@@ -20,33 +20,36 @@ information on the implementation of the various modules and their performances.
   the ``reference_angular_frequency_SI`` parameter (see :doc:`units` for more details).
 
   Also note that, unless specified otherwise, SI units are used throughout this section, and we use standard notations
-  with :math:`m_e`, :math:`e`, :math:`c` and :math:`\hbar` are the electron  mass, elementary charge, speed of light
-  and reduced Planck constant, respectively, and :math:`\epsilon_0` is the permittivity of vacuum.
+  with :math:`m_e`, :math:`e`, :math:`c` and :math:`\hbar` the electron  mass, elementary charge, speed of light
+  and reduced Planck constant, respectively, and :math:`\epsilon_0` the permittivity of vacuum.
 
 --------------------------------------------------------------------------------
 
 Inverse Compton scattering
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This paragraph describes the physical models and assumptions behind the different modules
+This paragraph describes the physical model and assumptions behind the different modules
 for high-energy photon emission & radiation reaction that have been implemented in :program:`Smilei`.
-The presentation is based on the research article [Niel2018a]_.
+The presentation is based on the work [Niel2018a]_.
 
-Basics
-""""""
+Assumptions
+"""""""""""
 
-All the modules developed so far assume that:
+All the modules developed so far in :program:`Smilei` assume that:
 
-- the radiating particles (either electrons or positrons) are ultra-relativistic (:math:`\gamma \gg 1`),
-  which allows us to consider that radiation is emitted in the direction given by the emitting particle velocity,
-- the electromagnetic field varies slowly over the formation time of a radiated photon, which requires
+- the radiating particles (either electrons or positrons) are ultra-relativistic (their Lorentz factor :math:`\gamma \gg 1`),
+  hence radiation is emitted in the direction given by the radiating particle velocity,
+- the electromagnetic field varies slowly over the formation time of the emitted photon, which requires
   relativistic field strengths [i.e., the field vector potential is :math:`e\vert A^{\mu}\vert/(mc^2) \gg 1`],
-  and allows us to use quasi-static models for high-energy photon emission (*locally-constant cross-field approximation*),
-- the electromagnetic fields are small with respect to the critical fields of Quantum Electrodynamics (QED),
-  and more precisely both field invariants :math:`\sqrt{c^2{\bf B}^2-{\bf E}^2}` and :math:`\sqrt{c{\bf B}\cdot{\bf E}}` are small with
+  and allows to use quasi-static models for high-energy photon emission (*locally-constant cross-field approximation*),
+- the electromagnetic fields are small with respect to the critical field of Quantum Electrodynamics (QED),
+  more precisely both field invariants :math:`\sqrt{c^2{\bf B}^2-{\bf E}^2}` and :math:`\sqrt{c{\bf B}\cdot{\bf E}}` are small with
   respect to the Schwinger field :math:`E_s = m^2 c^3 / (\hbar e) \simeq 1.3 \times 10^{18}\ \mathrm{V/m}`,
 - all (real) particles radiate independently of their neighbors (incoherent emission), which requires the emitted radiation
   wavelength to be much shorter than the typical distance between (real) particles :math:`\propto n_e^{-1/3}`.
+
+Rate of photon emission and associated quantities
+"""""""""""""""""""""""""""""""""""""""""""""""""
 
 Under these assumptions, high-energy photon emission reduces to the incoherent process of
 **nonlinear inverse Compton scattering**.
@@ -118,13 +121,28 @@ with :math:`g(\chi)` the so-called *quantum correction*:
   \frac{4 \nu \left( 3 \nu \chi\right)^2 }{\left( 2 + 3 \nu \chi \right)^4}K_{2/3}(\nu) \right]}\,.
 
 
-Regimes & models of radiation reaction
-""""""""""""""""""""""""""""""""""""""
+Regimes of radiation reaction
+"""""""""""""""""""""""""""""
 
-**Classical radiation reaction** :math:`\chi \ll 1`
+Recall here the 
 
-Quantum electrodynamics (QED) effects are negligible (classical regime).
-Radiation reaction can be treated as a continuous friction force acting on the particles.
+**For arbitrary values of the electron quantum parameter** :math:`\chi`
+
+The model of high-energy photon emission described above is generic, and apply for any value of
+the electron quantum parameter** :math:`\chi` (of course as long as the assumptions listed above hold!).
+In particular, it gives a correct description of high-energy photon emission and its back-reaction on
+the particle (electron or positron) dynamics in the quantum regime :math:`\chi \gtrsim 1`.
+In this regime, photons with energies of the order of the energy of the emitting particle can be produced.
+As a result, the particle energy/velocity can exhibit abrupt jumps, and the stochastic nature of high-energy
+photon emission is important.
+Under such conditions, a Monte-Carlo description of discrete high-energy photon emission (and their feedback
+on the radiating particle dynamics) is usually used (see [Timokhin2010]_, [Elkina2011]_, [Duclous2011]_, and [Lobet2013]_).
+
+In :program:`Smilei` the corresponding module is
+
+Quantum electrodynamics (QED) effects are negligible (classical regime) when :math:`\chi \ll 1`.
+Radiation reaction follows from the cummulative effect of incoherent photon emission.
+It can be treated as a continuous friction force acting on the particles.
 Several models for the radiation friction force have been proposed (see [DiPiazza2012]_).
 The ones used in :program:`Smilei` are based on the Landau-Lifshitz model [Landau1947]_
 approximated for high Lorentz factors (:math:`\gamma \gg 1`).
@@ -137,11 +155,7 @@ approximated for high Lorentz factors (:math:`\gamma \gg 1`).
 
 **Quantum radiation reaction** :math:`\chi \gtrsim 1`
 
-In the quantum regime, photons with energies of the order of the energies of the emitting electron can be produced.
-The stochastic nature of high-energy photon emission is important,
-and a continuous friction force can not be used anymore.
-A Monte-Carlo description of discrete high-energy photon emission is then used
-(see [Timokhin2010]_, [Elkina2011]_, [Duclous2011]_, and [Lobet2013]_).
+
 
 **Intermediate regime** :math:`\chi \lesssim 1`
 
