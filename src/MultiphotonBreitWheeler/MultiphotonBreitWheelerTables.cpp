@@ -24,14 +24,14 @@ MultiphotonBreitWheelerTables::MultiphotonBreitWheelerTables()
 {
     
     // T table parameters
-    T_.chiph_min = 1e-2;
-    T_.chiph_max = 1e2;
-    T_chiph_dim = 256;
-    T_.log10_chiph_min = std::log10( T_.chiph_min );
-    T_chiph_delta = ( std::log10( T_.chiph_max )
-                      - T_.log10_chiph_min )/( T_chiph_dim-1 );
-    T_chiph_inv_delta = 1.0/T_chiph_delta;
-    T_.table_.resize( T_chiph_dim );
+    T_.min_photon_chi_ = 1e-2;
+    T_.max_photon_chi_ = 1e2;
+    T_.size_photon_chi_ = 256;
+    T_.log10_min_photon_chi_ = std::log10( T_.min_photon_chi_ );
+    T_.photon_chi_delta_ = ( std::log10( T_.max_photon_chi_ )
+                      - T_.log10_min_photon_chi_ )/( T_.size_photon_chi_-1 );
+    T_.photon_chi_inv_delta_ = 1.0/T_.photon_chi_delta_;
+    T_.table_.resize( T_.size_photon_chi_ );
     T_.table_ = {
         1.89766425183209e-120, 2.623548288690785e-116, 2.592337897346051e-112, 1.852711004819605e-108, 9.688007878509832e-105, 3.747935717444709e-101, 1.08425096533941e-97, 2.369909337223765e-94,
         3.952963720683432e-91, 5.080124619834856e-88, 5.077024779077388e-85, 3.981139492064235e-82, 2.470645432609396e-79, 1.223564496493403e-76, 4.874574484086996e-74, 1.574330789551051e-71,
@@ -68,21 +68,21 @@ MultiphotonBreitWheelerTables::MultiphotonBreitWheelerTables()
     };
     
     // Tables `min_particle_chi_for_xi` and `xi`
-    xi_.chiph_min = 1e-2;
-    xi_.chiph_max = 1e2;
-    xi_.chiph_dim = 128;
-    xi_.chipa_dim = 128;
-    // Log10 of xi_.chiph_min for efficiency
-    xi_.log10_chiph_min = log10( xi_.chiph_min );
+    xi_.min_photon_chi_ = 1e-2;
+    xi_.max_photon_chi_ = 1e2;
+    xi_.size_photon_chi_ = 128;
+    xi_.size_particle_chi_ = 128;
+    // Log10 of xi_.min_photon_chi_ for efficiency
+    xi_.log10_min_photon_chi_ = log10( xi_.min_photon_chi_ );
     // Computation of the delta
-    xi_.chiph_delta = ( log10( xi_.chiph_max )
-                        - xi_.log10_chiph_min )/( xi_.chiph_dim-1 );
+    xi_.photon_chi_delta_ = ( log10( xi_.max_photon_chi_ )
+                        - xi_.log10_min_photon_chi_ )/( xi_.size_photon_chi_-1 );
     // Inverse of delta
-    xi_.chiph_inv_delta = 1.0/xi_.chiph_delta;
+    xi_.photon_chi_inv_delta_ = 1.0/xi_.photon_chi_delta_;
     // Inverse particle_chi discetization (regularly used)
-    xi_.inv_chipa_dim_minus_one = 1./( xi_.chipa_dim - 1. );
-    xi_.min_particle_chi_.resize( xi_.chiph_dim );
-    xi_.table.resize( xi_.chiph_dim*xi_.chipa_dim );
+    xi_.inv_size_particle_chi_minus_one_ = 1./( xi_.size_particle_chi_ - 1. );
+    xi_.min_particle_chi_.resize( xi_.size_photon_chi_ );
+    xi_.table_.resize( xi_.size_photon_chi_*xi_.size_particle_chi_ );
     xi_.min_particle_chi_ = {
         -2.426529995663981, -2.400033932671856, -2.37383786967973, -2.347841806687603, -2.321945743695478, -2.296449680703352, -2.271053617711223, -2.245957554719098,
         -2.221161491726972, -2.196665428734845, -2.17236936574272, -2.148373302750595, -2.124777239758471, -2.101381176766344, -2.078385113774217, -2.05558905078209,
@@ -101,7 +101,7 @@ MultiphotonBreitWheelerTables::MultiphotonBreitWheelerTables()
         -1.32227094054587, -1.320674877553744, -1.319078814561619, -1.317482751569492, -1.315886688577367, -1.31429062558524, -1.312694562593114, -1.311098499600988,
         -1.309602436608863, -1.308006373616736, -1.306410310624611, -1.304914247632485, -1.303318184640358, -1.301822121648232, -1.300226058656107, -1.298629995663981
     };
-    xi_.table =
+    xi_.table_ =
     {
         1.014866177224177e-09, 1.324922201914085e-09, 1.726934850867004e-09, 2.247317942883502e-09, 2.919813209379435e-09, 3.787447160279792e-09, 4.904988836488376e-09, 6.342030673513629e-09, 8.186842928419266e-09, 1.055118645796297e-08, 1.357631029842396e-08, 1.744041092666345e-08, 2.236789096842742e-08, 2.864082844529053e-08, 3.661315573267215e-08, 4.672815292534819e-08, 5.953998640275014e-08, 7.574017364811648e-08, 9.619003395509404e-08, 1.219603962937209e-07, 1.543800857155268e-07, 1.950950044015356e-07, 2.461399697214005e-07, 3.100258772983781e-07, 3.898452307418528e-07, 4.893996311500492e-07, 6.133534593539743e-07, 7.674187239678016e-07, 9.585769013816118e-07, 1.195344573730787e-06, 1.488090792489682e-06, 1.849415374256758e-06, 2.294598788216079e-06, 2.842135938665333e-06, 3.514367998295697e-06, 4.338228526326343e-06, 5.346122426724594e-06, 6.57695888241935e-06, 8.077362255675837e-06, 9.903088085498532e-06, 1.212067474938118e-05, 1.480936509406723e-05, 1.806333637874761e-05, 2.199428120692544e-05, 2.673438673803127e-05, 3.243976434027944e-05, 3.929438694028133e-05, 4.75145965939536e-05, 5.735425018469536e-05, 6.911057657293651e-05, 8.313082387406799e-05, 9.981978071924045e-05, 0.0001196482602088173, 0.0001431626396485911, 0.0001709955528628486, 0.0002038778347155164, 0.0002426518191721628, 0.0002882860925754246, 0.0003418918024579742, 0.0004047406188946999, 0.0004782844397674851, 0.0005641769230116564, 0.000664296917614167, 0.0007807738504389672, 0.000916015107529376, 0.001072735426060304, 0.001253988286181436, 0.001463199260453919, 0.00170420124208572, 0.001981271431621323, 0.002299169915013984, 0.002663179614253657, 0.003079147334772845, 0.003553525572400678, 0.004093414676748328, 0.004706604898365174, 0.005401617774506985, 0.006187746234024969, 0.007075092726552021, 0.008074604606701022, 0.009198105931610509, 0.01045832476160172, 0.01186891499167607, 0.01344447168692445, 0.01520053885124542, 0.01715360852790152, 0.01932111011423937, 0.02172138877546797, 0.02437367186372434, 0.02729802229400163, 0.03051527789678683, 0.03404697586304652, 0.03791526151991705, 0.04214278082720836, 0.04675255616631717, 0.05176784520184451, 0.05721198283551158, 0.06310820653598924, 0.06947946561658028, 0.07634821534327203, 0.08373619708104743, 0.09166420602473119, 0.1001518484053258, 0.1092172904046708, 0.1188770013494367, 0.1291454940729638, 0.1400350656317088, 0.151555541826729, 0.1637140292024741, 0.1765146783737216, 0.189958462640835, 0.2040429759187966, 0.2187622539728025, 0.2341066228745319, 0.2500625784086875, 0.2666126999119348, 0.2837356016824326, 0.3014059246857886, 0.3195943707828126, 0.3382677811386544, 0.357389259840772, 0.3769183430693565, 0.3968112134299632, 0.4170209583117598, 0.437497870350958, 0.4581897873215922, 0.4790424680196612, 0.5,
         1.024229756858331e-09, 1.336489724965987e-09, 1.74116538903549e-09, 2.264746820409554e-09, 2.94105787953729e-09, 3.813210635614432e-09, 4.936059043301268e-09, 6.379273467121129e-09, 8.231185673787592e-09, 1.060358799687035e-08, 1.363771172409686e-08, 1.751165978949592e-08, 2.244962924309696e-08, 2.873333168239159e-08, 3.67161071513991e-08, 4.684033160671976e-08, 5.965884300687392e-08, 7.586125995979035e-08, 9.630624376825893e-08, 1.220609643354107e-07, 1.544492780853132e-07, 1.951104178921486e-07, 2.460703378723389e-07, 3.098282574642055e-07, 3.894614181673904e-07, 4.887516122077249e-07, 6.123376758320403e-07, 7.658988725886961e-07, 9.563749364764418e-07, 1.192229514988843e-06, 1.483764862586919e-06, 1.843496901568176e-06, 2.286601206248335e-06, 2.831442094601411e-06, 3.500198846800997e-06, 4.319605129576559e-06, 5.321820006265393e-06, 6.545451471228309e-06, 8.036756278538667e-06, 9.85104295160263e-06, 1.205430827201942e-05, 1.472514125861993e-05, 1.795693266174362e-05, 2.186043230840702e-05, 2.65667012267494e-05, 3.223051033220258e-05, 3.903424253881262e-05, 4.719236042127135e-05, 5.695650693788033e-05, 6.862131215191364e-05, 8.253098427011571e-05, 9.908676852810424e-05, 0.0001187553623712878, 0.0001420783798289694, 0.0001696829617901489, 0.0002022936318455308, 0.000240745499225827, 0.0002859989108770345, 0.0003391556536001676, 0.0004014768041001036, 0.0004744023194636514, 0.0005595724526026927, 0.0006588510662577879, 0.0007743509048859521, 0.0009084608657332176, 0.001063875288380425, 0.001243625255617676, 0.001451111867419853, 0.001690141413810344, 0.001964962331312239, 0.002280303781451127, 0.002641415638336959, 0.003054109615806582, 0.003524801203442322, 0.004060552014896729, 0.004669112082554074, 0.005358961559865533, 0.006139351217903159, 0.007020341046990337, 0.00801283619885727, 0.009128619431278616, 0.01038037914751059, 0.01178173205889504, 0.01334723944258368, 0.01509241592054172, 0.01703372965245941, 0.01918859281638895, 0.02157534125047244, 0.02421320214762996, 0.02712224873664131, 0.0303233409483902, 0.0338380511589338, 0.03768857421956974, 0.04189762113438771, 0.0464882959233983, 0.05148395541675661, 0.05690805196342708, 0.06278395930049124, 0.06913478211769124, 0.07598315016378168, 0.08335099806866363, 0.09125933239574596, 0.09972798778908301, 0.1087753744270238, 0.1184182193374072, 0.128671304456893, 0.1395472046212085, 0.151056028947541, 0.1632051693047362, 0.1759990597479632, 0.189438950929622, 0.2035227035538629, 0.2182446049423805, 0.2335952126910237, 0.2495612292338726, 0.2661254108837893, 0.2832665145859177, 0.3009592852091328, 0.3191744856991182, 0.3378789718605917, 0.3570358128865413, 0.3766044580754591, 0.3965409494320856, 0.4167981790835543, 0.4373261896591562, 0.4580725149982196, 0.4789825577883102, 0.5,
@@ -296,20 +296,20 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
         MESSAGE( 1,"--- Table `integration_dt_dchi`:" );
         MESSAGE( 2,"Reading of the external database" );
         MESSAGE( 2,"Dimension quantum parameter: "
-                 << T_chiph_dim );
+                 << T_.size_photon_chi_ );
         MESSAGE( 2,"Minimum photon quantum parameter chi: "
-                 << T_.chiph_min );
+                 << T_.min_photon_chi_ );
         MESSAGE( 2,"Maximum photon quantum parameter chi: "
-                 << T_.chiph_max );
+                 << T_.max_photon_chi_ );
                  
         MESSAGE( "" )
         
         MESSAGE( 1,"--- Table `min_particle_chi_for_xi` and `xi`:" );
         MESSAGE( 2,"Reading of the external database" );
-        MESSAGE( 2,"Dimension photon chi: " << xi_.chiph_dim );
-        MESSAGE( 2,"Dimension particle chi: " << xi_.chipa_dim );
-        MESSAGE( 2,"Minimum photon chi: " << xi_.chiph_min );
-        MESSAGE( 2,"Maximum photon chi: " << xi_.chiph_max );
+        MESSAGE( 2,"Dimension photon chi: " << xi_.size_photon_chi_ );
+        MESSAGE( 2,"Dimension particle chi: " << xi_.size_particle_chi_ );
+        MESSAGE( 2,"Minimum photon chi: " << xi_.min_photon_chi_ );
+        MESSAGE( 2,"Maximum photon chi: " << xi_.max_photon_chi_ );
         
     }
 
@@ -344,8 +344,8 @@ double MultiphotonBreitWheelerTables::computeBreitWheelerPairProductionRate( dou
     logchiph = log10( photon_chi );
 
     // Lower index for interpolation in the table integfochi
-    ichiph = int( floor( ( logchiph-T_.log10_chiph_min )
-                         *T_chiph_inv_delta ) );
+    ichiph = int( floor( ( logchiph-T_.log10_min_photon_chi_ )
+                         *T_.photon_chi_inv_delta_ ) );
 
     // If photon_chi is below the lower bound of the table
     // An asymptotic approximation is used
@@ -356,17 +356,17 @@ double MultiphotonBreitWheelerTables::computeBreitWheelerPairProductionRate( dou
     }
     // If photon_chi is above the upper bound of the table
     // An asymptotic approximation is used
-    else if( ichiph >= T_chiph_dim-1 ) {
-        ichiph = T_chiph_dim-2;
+    else if( ichiph >= T_.size_photon_chi_-1 ) {
+        ichiph = T_.size_photon_chi_-2;
         dNBWdt = 2.067731275227008*pow( photon_chi, 5.0/3.0 );
     } else {
         // Upper and lower values for linear interpolation
-        logchiphm = ichiph*T_chiph_delta + T_.log10_chiph_min;
-        logchiphp = logchiphm + T_chiph_delta;
+        logchiphm = ichiph*T_.photon_chi_delta_ + T_.log10_min_photon_chi_;
+        logchiphp = logchiphm + T_.photon_chi_delta_;
 
         // Interpolation
         dNBWdt = ( T_.table_[ichiph+1]*fabs( logchiph-logchiphm ) +
-                   T_.table_[ichiph]*fabs( logchiphp - logchiph ) )*T_chiph_inv_delta;
+                   T_.table_[ichiph]*fabs( logchiphp - logchiph ) )*T_.photon_chi_inv_delta_;
     }
     return factor_dNBW_dt_*dNBWdt/(photon_chi*gamma);
 }
@@ -397,17 +397,17 @@ double *MultiphotonBreitWheelerTables::computePairQuantumParameter( double photo
     logchiph = log10( photon_chi );
 
     // Lower boundary of the table
-    if( photon_chi < xi_.chiph_min ) {
+    if( photon_chi < xi_.min_photon_chi_ ) {
         ichiph = 0;
     }
     // Upper boundary of the table
-    else if( photon_chi >= xi_.chiph_max ) {
-        ichiph = xi_.chiph_dim-1;
+    else if( photon_chi >= xi_.max_photon_chi_ ) {
+        ichiph = xi_.size_photon_chi_-1;
     }
     // Inside the table
     else {
         // Use floor so that photon_chi corresponding to ichiph is <= given photon_chi
-        ichiph = int( floor( ( logchiph-xi_.log10_chiph_min )*( xi_.chiph_inv_delta ) ) );
+        ichiph = int( floor( ( logchiph-xi_.log10_min_photon_chi_ )*( xi_.photon_chi_inv_delta_ ) ) );
     }
 
     // ---------------------------------------
@@ -429,28 +429,28 @@ double *MultiphotonBreitWheelerTables::computePairQuantumParameter( double photo
 
     // check boundaries
     // Lower bound
-    if( xipp < xi_.table[ichiph*xi_.chipa_dim] ) {
+    if( xipp < xi_.table_[ichiph*xi_.size_particle_chi_] ) {
         ichipa = 0;
     }
     // Upper bound
-    else if( xipp >= xi_.table[( ichiph+1 )*xi_.chipa_dim-1] ) {
-        ichipa = xi_.chipa_dim-2;
+    else if( xipp >= xi_.table_[( ichiph+1 )*xi_.size_particle_chi_-1] ) {
+        ichipa = xi_.size_particle_chi_-2;
     } else {
         // Search for the corresponding index ichipa for xip
         ichipa = userFunctions::searchValuesInMonotonicArray(
-                     &xi_.table[ichiph*xi_.chipa_dim], xipp, xi_.chipa_dim );
+                     &xi_.table_[ichiph*xi_.size_particle_chi_], xipp, xi_.size_particle_chi_ );
     }
 
     // Delta for the particle_chi dimension
     delta_chipa = ( log10( 0.5*photon_chi )-xi_.min_particle_chi_[ichiph] )
-                  * xi_.inv_chipa_dim_minus_one;
+                  * xi_.inv_size_particle_chi_minus_one_;
 
-    ixip = ichiph*xi_.chipa_dim + ichipa;
+    ixip = ichiph*xi_.size_particle_chi_ + ichipa;
 
     log10_chipam = ichipa*delta_chipa + xi_.min_particle_chi_[ichiph];
     log10_chipap = log10_chipam + delta_chipa;
 
-    d = ( xipp - xi_.table[ixip] ) / ( xi_.table[ixip+1] - xi_.table[ixip] );
+    d = ( xipp - xi_.table_[ixip] ) / ( xi_.table_[ixip+1] - xi_.table_[ixip] );
 
     // If xip > 0.5, the electron will bring more energy than the positron
     if( xip > 0.5 ) {
@@ -503,12 +503,12 @@ void MultiphotonBreitWheelerTables::readTableT( SmileiMPI *smpi )
             if( dataset_id > 0 ) {
 
                 // First, we read attributes
-                H5::getAttr( dataset_id, "size_photon_chi", T_chiph_dim );
-                H5::getAttr( dataset_id, "min_photon_chi", T_.chiph_min );
-                H5::getAttr( dataset_id, "max_photon_chi", T_.chiph_max );
+                H5::getAttr( dataset_id, "size_photon_chi", T_.size_photon_chi_ );
+                H5::getAttr( dataset_id, "min_photon_chi", T_.min_photon_chi_ );
+                H5::getAttr( dataset_id, "max_photon_chi", T_.max_photon_chi_ );
 
                 // Resize of the array integfochi_table before reading
-                T_.table_.resize( T_chiph_dim );
+                T_.table_.resize( T_.size_photon_chi_ );
 
                 // then the dataset
                 H5Dread( dataset_id,
@@ -561,14 +561,14 @@ void MultiphotonBreitWheelerTables::readTableXi( SmileiMPI *smpi )
             if( dataset_id_chipamin > 0 && dataset_id_xip > 0 ) {
 
                 // First, we read attributes
-                H5::getAttr( dataset_id_xip, "size_photon_chi", xi_.chiph_dim );
-                H5::getAttr( dataset_id_xip, "size_particle_chi", xi_.chipa_dim );
-                H5::getAttr( dataset_id_xip, "min_photon_chi", xi_.chiph_min );
-                H5::getAttr( dataset_id_xip, "max_photon_chi", xi_.chiph_max );
+                H5::getAttr( dataset_id_xip, "size_photon_chi", xi_.size_photon_chi_ );
+                H5::getAttr( dataset_id_xip, "size_particle_chi", xi_.size_particle_chi_ );
+                H5::getAttr( dataset_id_xip, "min_photon_chi", xi_.min_photon_chi_ );
+                H5::getAttr( dataset_id_xip, "max_photon_chi", xi_.max_photon_chi_ );
 
                 // Allocation of the array xip
-                xi_.min_particle_chi_.resize( xi_.chiph_dim );
-                xi_.table.resize( xi_.chipa_dim*xi_.chiph_dim );
+                xi_.min_particle_chi_.resize( xi_.size_photon_chi_ );
+                xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
 
                 // then the dataset for chipamin
                 H5Dread( dataset_id_chipamin,
@@ -580,7 +580,7 @@ void MultiphotonBreitWheelerTables::readTableXi( SmileiMPI *smpi )
                 H5Dread( dataset_id_xip,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
-                         &xi_.table[0] );
+                         &xi_.table_[0] );
 
                 H5Dclose( dataset_id_xip );
                 H5Dclose( dataset_id_chipamin );
@@ -648,7 +648,7 @@ void MultiphotonBreitWheelerTables::bcastTableT( SmileiMPI *smpi )
         buf_size = position;
         MPI_Pack_size( 2, MPI_DOUBLE, smpi->getGlobalComm(), &position );
         buf_size += position;
-        MPI_Pack_size( T_chiph_dim, MPI_DOUBLE, smpi->getGlobalComm(),
+        MPI_Pack_size( T_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm(),
                        &position );
         buf_size += position;
     }
@@ -664,14 +664,14 @@ void MultiphotonBreitWheelerTables::bcastTableT( SmileiMPI *smpi )
     // Proc 0 packs
     if( smpi->getRank() == 0 ) {
         position = 0;
-        MPI_Pack( &T_chiph_dim,
+        MPI_Pack( &T_.size_photon_chi_,
                   1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
-        MPI_Pack( &T_.chiph_min,
+        MPI_Pack( &T_.min_photon_chi_,
                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
-        MPI_Pack( &T_.chiph_max,
+        MPI_Pack( &T_.max_photon_chi_,
                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
-        MPI_Pack( &T_.table_[0], T_chiph_dim,
+        MPI_Pack( &T_.table_[0], T_.size_photon_chi_,
                   MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
     }
@@ -683,30 +683,30 @@ void MultiphotonBreitWheelerTables::bcastTableT( SmileiMPI *smpi )
     if( smpi->getRank() != 0 ) {
         position = 0;
         MPI_Unpack( buffer, buf_size, &position,
-                    &T_chiph_dim, 1, MPI_INT, smpi->getGlobalComm() );
+                    &T_.size_photon_chi_, 1, MPI_INT, smpi->getGlobalComm() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &T_.chiph_min, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &T_.min_photon_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &T_.chiph_max, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &T_.max_photon_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
 
         // Resize table before unpacking values
-        T_.table_.resize( T_chiph_dim );
+        T_.table_.resize( T_.size_photon_chi_ );
 
         MPI_Unpack( buffer, buf_size, &position, &T_.table_[0],
-                    T_chiph_dim, MPI_DOUBLE, smpi->getGlobalComm() );
+                    T_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
 
     }
 
     delete[] buffer;
 
-    T_.log10_chiph_min = log10( T_.chiph_min );
+    T_.log10_min_photon_chi_ = log10( T_.min_photon_chi_ );
 
     // Computation of the delta
-    T_chiph_delta = ( log10( T_.chiph_max )
-                      - T_.log10_chiph_min )/( T_chiph_dim-1 );
+    T_.photon_chi_delta_ = ( log10( T_.max_photon_chi_ )
+                      - T_.log10_min_photon_chi_ )/( T_.size_photon_chi_-1 );
 
     // Inverse delta
-    T_chiph_inv_delta = 1.0/T_chiph_delta;
+    T_.photon_chi_inv_delta_ = 1.0/T_.photon_chi_delta_;
 }
 
 // -----------------------------------------------------------------------------
@@ -732,10 +732,10 @@ void MultiphotonBreitWheelerTables::bcastTableXi( SmileiMPI *smpi )
         buf_size = position;
         MPI_Pack_size( 2, MPI_DOUBLE, smpi->getGlobalComm(), &position );
         buf_size += position;
-        MPI_Pack_size( xi_.chiph_dim, MPI_DOUBLE, smpi->getGlobalComm(),
+        MPI_Pack_size( xi_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm(),
                        &position );
         buf_size += position;
-        MPI_Pack_size( xi_.chiph_dim*xi_.chipa_dim, MPI_DOUBLE,
+        MPI_Pack_size( xi_.size_photon_chi_*xi_.size_particle_chi_, MPI_DOUBLE,
                        smpi->getGlobalComm(), &position );
         buf_size += position;
     }
@@ -751,19 +751,19 @@ void MultiphotonBreitWheelerTables::bcastTableXi( SmileiMPI *smpi )
     // Proc 0 packs
     if( smpi->getRank() == 0 ) {
         position = 0;
-        MPI_Pack( &xi_.chiph_dim,
+        MPI_Pack( &xi_.size_photon_chi_,
                   1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
-        MPI_Pack( &xi_.chipa_dim,
+        MPI_Pack( &xi_.size_particle_chi_,
                   1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
-        MPI_Pack( &xi_.chiph_min,
+        MPI_Pack( &xi_.min_photon_chi_,
                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
-        MPI_Pack( &xi_.chiph_max,
+        MPI_Pack( &xi_.max_photon_chi_,
                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
-        MPI_Pack( &xi_.min_particle_chi_[0], xi_.chiph_dim,
+        MPI_Pack( &xi_.min_particle_chi_[0], xi_.size_photon_chi_,
                   MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
-        MPI_Pack( &xi_.table[0], xi_.chipa_dim*xi_.chiph_dim,
+        MPI_Pack( &xi_.table_[0], xi_.size_particle_chi_*xi_.size_photon_chi_,
                   MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
     }
 
@@ -774,38 +774,38 @@ void MultiphotonBreitWheelerTables::bcastTableXi( SmileiMPI *smpi )
     if( smpi->getRank() != 0 ) {
         position = 0;
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.chiph_dim, 1, MPI_INT, smpi->getGlobalComm() );
+                    &xi_.size_photon_chi_, 1, MPI_INT, smpi->getGlobalComm() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.chipa_dim, 1, MPI_INT, smpi->getGlobalComm() );
+                    &xi_.size_particle_chi_, 1, MPI_INT, smpi->getGlobalComm() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.chiph_min, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &xi_.min_photon_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.chiph_max, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &xi_.max_photon_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
 
         // Resize tables before unpacking values
-        xi_.min_particle_chi_.resize( xi_.chiph_dim );
-        xi_.table.resize( xi_.chipa_dim*xi_.chiph_dim );
+        xi_.min_particle_chi_.resize( xi_.size_photon_chi_ );
+        xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
 
         MPI_Unpack( buffer, buf_size, &position, &xi_.min_particle_chi_[0],
-                    xi_.chiph_dim, MPI_DOUBLE, smpi->getGlobalComm() );
+                    xi_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
 
-        MPI_Unpack( buffer, buf_size, &position, &xi_.table[0],
-                    xi_.chipa_dim*xi_.chiph_dim, MPI_DOUBLE, smpi->getGlobalComm() );
+        MPI_Unpack( buffer, buf_size, &position, &xi_.table_[0],
+                    xi_.size_particle_chi_*xi_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
     }
 
     delete[] buffer;
 
-    // Log10 of xi_.chiph_min for efficiency
-    xi_.log10_chiph_min = log10( xi_.chiph_min );
+    // Log10 of xi_.min_photon_chi_ for efficiency
+    xi_.log10_min_photon_chi_ = log10( xi_.min_photon_chi_ );
 
     // Computation of the delta
-    xi_.chiph_delta = ( log10( xi_.chiph_max )
-                        - xi_.log10_chiph_min )/( xi_.chiph_dim-1 );
+    xi_.photon_chi_delta_ = ( log10( xi_.max_photon_chi_ )
+                        - xi_.log10_min_photon_chi_ )/( xi_.size_photon_chi_-1 );
 
     // Inverse of delta
-    xi_.chiph_inv_delta = 1./xi_.chiph_delta;
+    xi_.photon_chi_inv_delta_ = 1./xi_.photon_chi_delta_;
 
     // Inverse particle_chi discetization (regularly used)
-    xi_.inv_chipa_dim_minus_one = 1./( xi_.chipa_dim - 1. );
+    xi_.inv_size_particle_chi_minus_one_ = 1./( xi_.size_particle_chi_ - 1. );
 
 }

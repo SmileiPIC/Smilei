@@ -128,7 +128,7 @@ public:
 
     std::string inline getNielHComputationMethod()
     {
-        return this->niel_.computation_method;
+        return this->niel_.computation_method_;
     }
 
     // -----------------------------------------------------------------------------
@@ -257,28 +257,28 @@ private:
         
         //! Array containing tabulated values of the function h for the
         //! stochastic diffusive operator of Niel et al.
-        std::vector<double > table;
+        std::vector<double > table_;
         
         //! Minimum boundary of the table h
-        double chipa_min;
+        double min_particle_chi_;
         
         //! Maximum boundary of the table h
-        double chipa_max;
+        double max_particle_chi_;
         
         //! Inverse delta chi for the table h
-        double chipa_inv_delta;
+        double inv_particle_chi_delta_;
         
         //! Delta chi for the table h
-        double chipa_delta;
+        double particle_chi_delta_;
         
         //! Log10 of the minimum boundary of the table h
-        double log10_chipa_min;
+        double log10_min_particle_chi_;
         
         //! Method to be used to get the h values (table, fit5, fit10)
-        std::string computation_method;
+        std::string computation_method_;
         
         //! Dimension of the array h
-        int size_particle_chi;
+        int size_particle_chi_;
         
     };
     
@@ -295,25 +295,25 @@ private:
         //! (which is also the optical depth for the Monte-Carlo process).
         //! This table is the integration of the Synchrotron emissivity
         //! refers to as F over the quantum parameter Chi.
-        std::vector<double > table;
+        std::vector<double > table_;
         
         //! Minimum boundary of the table integfochi_table
-        double chipa_min;
+        double min_particle_chi_;
         
         //! Maximum boundary of the table integfochi_table
-        double chipa_max;
+        double max_particle_chi_;
         
         //! Minimum boundary of the table integfochi_table
-        double chipa_dim;
+        double size_particle_chi_;
         
         //! Log10 of the minimum boundary of the table integfochi_table
-        double log10_chipa_min;
+        double log10_min_particle_chi_;
 
         //! Delta chi for the table integfochi_table
-        double chipa_delta;
+        double particle_chi_delta_;
 
         //! Inverse delta chi for the table integfochi_table
-        double chipa_inv_delta;
+        double inv_particle_chi_delta_;
         
     };
     
@@ -327,44 +327,44 @@ private:
         
         //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
         //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
-        std::vector<double> table ;
+        std::vector<double> table_ ;
         
         //! Table containing the photon_chi min values
         //! Under this value, photon energy is
         //! considered negligible
-        std::vector<double > min_photon_chi_table;
+        std::vector<double > min_photon_chi_table_;
         
         //! Logarithm of the minimum boundary for particle_chi in the table xip
         //! and xip_chiphmin
-        double log10_chipa_min;
+        double log10_min_particle_chi_;
         
         //! Maximum boundary for particle_chi in the table xip and xip_chiphmin
-        double chipa_max;
+        double max_particle_chi_;
         
         //! Minimum boundary for particle_chi in the table xip and xip_chiphmin
-        double chipa_min;
+        double min_particle_chi_;
         
         //! Delta for the particle_chi discretization  in the table xip and xip_chiphmin
-        double chipa_delta;
+        double particle_chi_delta_;
         
         //! Inverse of the delta for the particle_chi discretization
         //! in the table xip and xip_chiphmin
-        double chipa_inv_delta;
+        double inv_particle_chi_delta_;
         
         //! Dimension of the discretized parameter particle_chi
-        int chipa_dim;
+        int size_particle_chi_;
         
         //! Dimension of the discretized parameter photon_chi
-        int chiph_dim;
+        int size_photon_chi_;
         
-        //! 1/(xi_.chiph_dim - 1)
-        double inv_chiph_dim_minus_one;
+        //! 1/(xi_.size_photon_chi_ - 1)
+        double inv_size_photon_chi_minus_one_;
 
         //! xip power
-        double power;
+        // double power_;
 
         //! xip threshold
-        double threshold;
+        // double threshold_;
         
     };
     

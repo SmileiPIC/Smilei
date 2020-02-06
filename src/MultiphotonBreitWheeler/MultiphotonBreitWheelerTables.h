@@ -107,26 +107,26 @@ private:
         std::vector<double > table_;
         
         //! Minimum boundary of the table T
-        double chiph_min;
+        double min_photon_chi_;
         
         //! Log10 of the minimum boundary of the table T
-        double log10_chiph_min;
+        double log10_min_photon_chi_;
         
         //! Maximum boundary of the table T
-        double chiph_max;
+        double max_photon_chi_;
+        
+        //! Delta chi for the table T
+        double photon_chi_delta_;
+        
+        //! Inverse delta chi for the table h
+        double photon_chi_inv_delta_;
+
+        //! Dimension of the array T
+        int size_photon_chi_;
         
     };
 
     struct T T_;
-
-    //! Delta chi for the table T
-    double T_chiph_delta;
-
-    //! Inverse delta chi for the table h
-    double T_chiph_inv_delta;
-
-    //! Dimension of the array T
-    int T_chiph_dim;
 
     // ---------------------------------------------
     // Structure for xi and particle_chi min for xip table
@@ -138,7 +138,7 @@ private:
         //! that gives gives the probability for a photon to decay into pair
         //! with an electron of energy in the range \f$[0, \chi_{e^-}]\f$
         //! This enables to compute the energy repartition between the electron and the positron
-        std::vector<double> table;
+        std::vector<double> table_;
         
         //! Table containing the particle_chi min values
         //! Under this value, electron kinetic energy of the pair is
@@ -146,36 +146,36 @@ private:
         std::vector<double > min_particle_chi_;
         
         //! Minimum boundary for photon_chi in the table xi and xi_.chipamin
-        double chiph_min;
+        double min_photon_chi_;
         
         //! Logarithm of the minimum boundary for photon_chi in the table xi
         //! and xi_.chipamin
-        double log10_chiph_min;
+        double log10_min_photon_chi_;
         
         //! Maximum boundary for photon_chi in the table xip and xip_chipamin
-        double chiph_max;
+        double max_photon_chi_;
         
         //! Delta for the photon_chi discretization in the table xip and xip_chipamin
-        double chiph_delta;
+        double photon_chi_delta_;
         
         //! Inverse of the delta for the photon_chi discretization
         //! in the table xip and xip_chipamin
-        double chiph_inv_delta;
+        double photon_chi_inv_delta_;
 
         //! Dimension of the discretized parameter photon_chi
-        int chiph_dim;
+        int size_photon_chi_;
 
         //! Dimension of the discretized parameter particle_chi
-        int chipa_dim;
+        int size_particle_chi_;
         
         //! xip power
-        double power;
+        // double power_;
 
-        //! 1/(xi_.chipa_dim - 1)
-        double inv_chipa_dim_minus_one;
+        //! 1/(xi_.size_particle_chi_ - 1)
+        double inv_size_particle_chi_minus_one_;
 
         //! xip threshold
-        double threshold;
+        // double threshold_;
         
     };
     
