@@ -127,9 +127,9 @@ void Interpolator3D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 void Interpolator3D4Order::oneField( Field *field, Particles &particles, int *istart, int *iend, double *FieldLoc )
 {
     Field3D *F = static_cast<Field3D *>( field );
-    double *coeffx = field->isDual( 0 ) ? &coeffxd_[1] : &coeffxp_[1];
-    double *coeffy = field->isDual( 1 ) ? &coeffyd_[1] : &coeffyp_[1];
-    double *coeffz = field->isDual( 2 ) ? &coeffzd_[1] : &coeffzp_[1];
+    double *coeffx = field->isDual( 0 ) ? &coeffxd_[2] : &coeffxp_[2];
+    double *coeffy = field->isDual( 1 ) ? &coeffyd_[2] : &coeffyp_[2];
+    double *coeffz = field->isDual( 2 ) ? &coeffzd_[2] : &coeffzp_[2];
     int *i = field->isDual( 0 ) ? &id_ : &ip_;
     int *j = field->isDual( 1 ) ? &jd_ : &jp_;
     int *k = field->isDual( 2 ) ? &kd_ : &kp_;
