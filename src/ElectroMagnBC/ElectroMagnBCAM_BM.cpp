@@ -75,14 +75,6 @@ ElectroMagnBCAM_BM::ElectroMagnBCAM_BM( Params &params, Patch *patch, unsigned i
     Gamma_Bt_Rmax   = ( 1 + dt_ov_dr - 0.5*CB_BM*dt*one_ov_rlocal ) * factor;
     Epsilon_Bt_Rmax = dt * one_ov_rlocal * factor;
     Delta_Bt_Rmax   = dt_ov_dl*factor;
-    
-    if (params.is_pxr)
-        if (!params.uncoupled_grids)
-            pxr_offset = params.oversize[0];
-        else
-            pxr_offset = params.region_oversize[0];
-    else
-        pxr_offset = 0;
    
 }
 
@@ -177,12 +169,6 @@ void ElectroMagnBCAM_BM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCAM_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-    if (pxr_offset) {
-        if (nl_p==nl_d) {
-            nl_p--;
-            nr_p--;
-        }
-    }
 
     //This condition can only be applied to Rmax
     

@@ -73,15 +73,6 @@ ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch *patch, unsigned i
     Gamma_SM_Xmax    = 4.0*factor;
     Delta_SM_Xmax    = - dt_ov_dr*factor;
     Epsilon_SM_Xmax  = - Icpx*factor*dt;
-    
-    
-    if (params.is_pxr)
-        if (!params.uncoupled_grids)
-            pxr_offset = params.oversize[0];
-        else
-            pxr_offset = params.region_oversize[0];
-    else
-        pxr_offset = 0;
    
 }
 
@@ -179,13 +170,6 @@ void ElectroMagnBCAM_SM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-    if (pxr_offset) {
-        if (nl_p==nl_d) {
-            nl_p--;
-            nr_p--;
-        }
-    }
-
 
     // Loop on imode
     for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {

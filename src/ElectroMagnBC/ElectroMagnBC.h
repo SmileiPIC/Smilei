@@ -37,7 +37,6 @@ protected:
     // side of BC is applied 0:xmin 1:xmax 2:ymin 3:ymax 4:zmin 5:zmax
     unsigned int min_max;
     
-    int pxr_offset;
 };
 
 #endif

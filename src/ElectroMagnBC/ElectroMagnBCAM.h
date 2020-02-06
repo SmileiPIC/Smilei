@@ -50,7 +50,9 @@ protected:
     
     //! Ratio of the spatial-step by the time-step dr/dt for AM simulations
     double dr_ov_dt;
-    
+   
+    //! Number of ghost cells of the region in the longitudinal direction 
+    int region_oversize_l;
 };
 
 #endif

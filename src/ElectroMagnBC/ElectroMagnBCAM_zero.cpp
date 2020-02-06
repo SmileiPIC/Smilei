@@ -23,10 +23,10 @@ ElectroMagnBCAM_zero::ElectroMagnBCAM_zero( Params &params, Patch *patch, unsign
     //Number of modes
     Nmode= params.nmodes;
     
-    if (params.is_pxr)
-        pxr_offset = params.oversize[0];
+    if (params.uncoupled_grids)
+        region_oversize_l = params.region_oversize[0];
     else
-        pxr_offset = 0;
+        region_oversize_l = 0;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -34,12 +34,6 @@ ElectroMagnBCAM_zero::ElectroMagnBCAM_zero( Params &params, Patch *patch, unsign
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-    if (pxr_offset) {
-        if (nl_p==nl_d) {
-            nl_p--;
-            nr_p--;
-        }
-    }
 
     // Loop on imode
     for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
@@ -53,7 +47,7 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
         
         if( min_max == 0 && patch->isXmin() ) {
                 //x= Xmin
-            for (unsigned int i=0; i < pxr_offset; i++){
+            for (unsigned int i=0; i < region_oversize_l; i++){
                 for ( unsigned int j=0 ; j<nr_p ; j++ ) {
                     ( *El )( i, j ) = 0.;
                     ( *Er )( i, j ) = 0.;
@@ -65,7 +59,7 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
             }
 
         } else if( min_max == 1 && patch->isXmax() ) {
-            for (unsigned int i=nl_p - pxr_offset; i < nl_p; i++){
+            for (unsigned int i=nl_p - region_oversize_l; i < nl_p; i++){
                 for( unsigned int j=0. ; j<nr_p ; j++ ) {
                     ( *El )( i, j ) = 0.;
                     ( *Er )( i, j ) = 0.;
