@@ -25,7 +25,7 @@ def _prepare_checkpoint_dir():
             ngroups = int((smilei_mpi_size-1)/Checkpoints.file_grouping + 1)
             ngroups_chars = int(math.log10(ngroups))+1
             for group in range(ngroups):
-                group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
+                group_dir = checkpoint_dir + '%0*d'%(ngroups_chars,group)
                 _mkdir("checkpoint", group_dir)
         else:
             _mkdir("checkpoint", checkpoint_dir)
