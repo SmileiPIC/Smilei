@@ -447,79 +447,80 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     }
 
     //Boundary conditions for currents on axis
-    if (emAM->isYmin ) {
-        complex<double> *rho, *Jl, *Jr, *Jt; 
-        double sign = 1. ;
-        for ( unsigned int imode = 0; imode < Nmode; imode++){
-            sign *= -1.;
+    if (emAM->isYmin && iend == particles.size()) { //Check if patch on axis and last bin.
+        unsigned int n_species = emAM->Jl_s.size() / Nmode;
+        if (diag_flag || ispec == n_species - 1){
+            complex<double> *rho, *Jl, *Jr, *Jt; 
+            double sign = 1. ;
+            for ( unsigned int imode = 0; imode < Nmode; imode++){
+                sign *= -1.;
 
-            if (!diag_flag){
-                Jl =  &( *emAM->Jl_[imode] )( 0 );
-                Jr =  &( *emAM->Jr_[imode] )( 0 );
-                Jt =  &( *emAM->Jt_[imode] )( 0 );
-            } else {
-                unsigned int n_species = emAM->Jl_s.size() / Nmode;
-                unsigned int ifield = imode*n_species+ispec;
-                Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
-                Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
-                Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : &( *emAM->Jt_    [imode] )( 0 ) ;
-                rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
-                //Fold rho
-                for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
+                if (!diag_flag){
+                    Jl =  &( *emAM->Jl_[imode] )( 0 );
+                    Jr =  &( *emAM->Jr_[imode] )( 0 );
+                    Jt =  &( *emAM->Jt_[imode] )( 0 );
+                } else {
+                    unsigned int ifield = imode*n_species+ispec;
+                    Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
+                    Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
+                    Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : &( *emAM->Jt_    [imode] )( 0 ) ;
+                    rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                    //Fold rho
+                    for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
+                        for( unsigned int j=1 ; j<3; j++ ) {
+                            rho[i+j] = rho[i+j] - sign * rho[i-j];
+                        }
+                        if (imode > 0) rho[i] = 0.;
+                    }//i
+                }
+
+                //Fold Jt
+                for( unsigned int i=0 ; i<npriml; i++ ) {
+                    int iloc = i*nprimr;
                     for( unsigned int j=1 ; j<3; j++ ) {
-                        rho[i+j] = rho[i+j] - sign * rho[i-j];
+                        Jt [iloc+2+j] = Jt [iloc+2+j] + sign * Jt [iloc+2-j];
                     }
-                    if (imode > 0) rho[i] = 0.;
                 }//i
-            }
-
-            //Fold Jt
-            for( unsigned int i=0 ; i<npriml; i++ ) {
-                int iloc = i*nprimr;
-                for( unsigned int j=1 ; j<3; j++ ) {
-                    Jt [iloc+2+j] = Jt [iloc+2+j] + sign * Jt [iloc+2-j];
-                }
-            }//i
-            //Fold Jl
-            for( unsigned int i=0 ; i<npriml+1; i++ ) {
-                int iloc = i*nprimr;
-                for( unsigned int j=1 ; j<3; j++ ) {
-                    Jl [iloc+2+j] = Jl [iloc+2+j] - sign * Jl [iloc+2-j];
-                 }
-            }//i
-
-            //Fold Jr
-            for( unsigned int i=0 ; i<npriml; i++ ) {
-                int ilocr = i*(nprimr+1);
-                for( unsigned int j=0 ; j<3; j++ ) {
-                    Jr [ilocr+5-j] = Jr [ilocr+5-j] + sign * Jr [ilocr+j];
-                }
-            }//i
-
-            // Jl and Jt boundaries on axis
-            int j = 2;
-            if (imode > 0){
-                // All Jl = zero on axis for imode > 0. Mode 0 is treated in general case.
+                //Fold Jl
                 for( unsigned int i=0 ; i<npriml+1; i++ ) {
                     int iloc = i*nprimr;
-                    Jl [iloc+j] = 0. ;
+                    for( unsigned int j=1 ; j<3; j++ ) {
+                        Jl [iloc+2+j] = Jl [iloc+2+j] - sign * Jl [iloc+2-j];
+                     }
                 }//i
-            }
-            if (imode == 1){
+
+                //Fold Jr
                 for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int iloc = i*nprimr;
                     int ilocr = i*(nprimr+1);
-                    //Jt [iloc+j] = -1./3.*(4.*Icpx*Jr[ilocr+j+1] + Jt[iloc+j+1]) ;
-                    Jt [iloc+j]= -Icpx/8.*( 9.*Jr[ilocr+j+1]- Jr[ilocr+j+2]);
+                    for( unsigned int j=0 ; j<3; j++ ) {
+                        Jr [ilocr+5-j] = Jr [ilocr+5-j] + sign * Jr [ilocr+j];
+                    }
                 }//i
-            } else{
-                for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int iloc = i*nprimr;
-                    Jt [iloc+j] = 0. ;
+
+                // Jl and Jt boundaries on axis
+                int j = 2;
+                if (imode > 0){
+                    // All Jl = zero on axis for imode > 0. Mode 0 is treated in general case.
+                    for( unsigned int i=0 ; i<npriml+1; i++ ) {
+                        int iloc = i*nprimr;
+                        Jl [iloc+j] = 0. ;
+                    }//i
+                }
+                if (imode == 1){
+                    for( unsigned int i=0 ; i<npriml; i++ ) {
+                        int iloc = i*nprimr;
+                        int ilocr = i*(nprimr+1);
+                        //Jt [iloc+j] = -1./3.*(4.*Icpx*Jr[ilocr+j+1] + Jt[iloc+j+1]) ;
+                        Jt [iloc+j]= -Icpx/8.*( 9.*Jr[ilocr+j+1]- Jr[ilocr+j+2]);
+                    }//i
+                } else{
+                    for( unsigned int i=0 ; i<npriml; i++ ) {
+                        int iloc = i*nprimr;
+                        Jt [iloc+j] = 0. ;
+                    }
                 }
             }
         }
-
     }
 }
 
