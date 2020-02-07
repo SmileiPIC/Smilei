@@ -28,7 +28,7 @@ public:
     
 private:
     int staggered;
-    double dt, dts2, dts4;
+    double dt, dts2, dts4, one_nineth;
 };
 
 #endif

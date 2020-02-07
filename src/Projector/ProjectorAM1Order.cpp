@@ -27,6 +27,7 @@ ProjectorAM1Order::ProjectorAM1Order( Params &params, Patch *patch ) : Projector
     dr_ov_dt  = params.cell_length[1] / params.timestep;
     dr_inv_   = 1.0 / dr;
     one_ov_dt  = 1.0 / params.timestep;
+    one_nineth = 1./9.;
     Nmode=params.nmodes;
     i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
@@ -112,11 +113,6 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
         jp = 0;
         Sr1[0] = Sr1[1];
         Sr1[1] = 0.; 
-        //if(imode%2 == 0){ 
-        //    Sr1[0] = 1.;
-        //} else {
-        //    Sr1[0] = 2.*delta - 1.; 
-        //}
     }
  
     ip -= i_domain_begin ;
@@ -187,14 +183,6 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
         if( imode > 0 ) {
             C_m *= e_theta;
         }
-
-        //if (ypn < 0.){ // If particle is between 0 and dr/2.
-        //    if(imode%2 == 0){ 
-        //        Sr1[0] = 1.;
-        //    } else {
-        //        Sr1[0] = 2.*delta - 1.; 
-        //    }
-        //}
         
         if (!diag_flag){
             Jl =  &( *emAM->Jl_[imode] )( 0 );
@@ -239,6 +227,25 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         currents( emAM, particles,  ipart, ( *invgf )[ipart], diag_flag, ispec);
     }
+
+    //Boundary conditions for Jr mode 0 near axis
+    if (emAM->isYmin ) {
+        complex<double> *Jr; 
+        if (!diag_flag){
+            Jr =  &( *emAM->Jr_[0] )( 0 );
+        } else {
+            unsigned int n_species = emAM->Jl_s.size() / Nmode;
+            unsigned int ifield = ispec;
+            Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [0] )( 0 ) ;
+        }
+
+        // Jr_0[dr/2.] = Jr_0[3dr/2.] / 9.
+        for( unsigned int i=0 ; i<npriml; i++ ) {
+            int ilocr = i*nprimr+oversizeR;
+            Jr [ilocr] = Jr [ilocr+1] * one_nineth;
+        }//i
+    }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

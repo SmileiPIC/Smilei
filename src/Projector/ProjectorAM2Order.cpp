@@ -434,9 +434,6 @@ void ProjectorAM2Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Par
 //Wrapper for projection
 void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
 {
-    if( is_spectral ) {
-        ERROR( "Not implemented" );
-    }
     
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );

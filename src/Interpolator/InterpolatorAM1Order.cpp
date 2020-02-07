@@ -174,7 +174,7 @@ void InterpolatorAM1Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
         *( BLoc+0*nparts ) += std::real( compute( &coeffxp_[0], &coeffyp_[2], Bl, ip_, jp_ ) * exp_mm_theta ) ;
         *( BLoc+1*nparts ) += std::real( compute( &coeffxp_[0], &coeffyp_[zero_on_axis_rt], Br, ip_, jp_ ) * exp_mm_theta ) ;
         *( BLoc+2*nparts ) += std::real( compute( &coeffxp_[0], &coeffyp_[zero_on_axis_rt], Bt, ip_, jp_ ) * exp_mm_theta ) ;
-        JLoc->x += std::real( compute( &coeffxp_[0], &coeffyp_[2], Jl, ip_, jp_ ) * exp_mm_theta ) ;
+        JLoc->x += std::real( compute( &coeffxp_[0], &coeffyp_[2              ], Jl, ip_, jp_ ) * exp_mm_theta ) ;
         JLoc->y += std::real( compute( &coeffxp_[0], &coeffyp_[zero_on_axis_rt], Jr, ip_, jp_ ) * exp_mm_theta ) ;
         JLoc->z += std::real( compute( &coeffxp_[0], &coeffyp_[zero_on_axis_rt], Jt, ip_, jp_ ) * exp_mm_theta ) ;
         ( *RhoLoc ) += std::real( compute( &coeffxp_[0], &coeffyp_[2], Rho, ip_, jp_ )* exp_mm_theta ) ;
