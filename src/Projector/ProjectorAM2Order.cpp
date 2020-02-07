@@ -32,8 +32,6 @@ ProjectorAM2Order::ProjectorAM2Order( Params &params, Patch *patch ) : Projector
     
     nprimr = params.n_space[1] + 2*params.oversize[1] + 1;
     npriml = params.n_space[0] + 2*params.oversize[0] + 1;
-
-    pxr = !params.is_pxr;
   
     invR = &((static_cast<PatchAM *>( patch )->invR)[0]);
     invRd = &((static_cast<PatchAM *>( patch )->invRd)[0]);
@@ -173,7 +171,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     }
 
     for( int j=3 ; j>=0 ; j-- ) {
-        jloc = j+jpo+1*pxr;
+        jloc = j+jpo+1;
         double Vd = abs( jloc + j_domain_begin + 0.5 )* invRd[jloc]*dr ;
         double tmp = crr_p * DSr[j+1] * invRd[jpo+j+1]*dr;
         for( unsigned int i=0 ; i<5 ; i++ ) {
@@ -234,7 +232,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
         // Jr^(p,d)
         for( unsigned int i=0 ; i<5 ; i++ ) {
-            iloc = ( i+ipo )*( nprimr+1*pxr )+jpo+1*pxr;
+            iloc = ( i+ipo )*( nprimr+1 )+jpo+1;
             for( unsigned int j=0 ; j<4 ; j++ ) {
                 linindex = iloc+j;
                 Jr [linindex] += C_m * Jr_p[i][j] ;
