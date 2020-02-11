@@ -23,7 +23,7 @@ compile:
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -c  -v
+    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs"
 
 makerun1D:
   stage: makerun
@@ -36,7 +36,7 @@ makerun1D:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1
+    - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerun2D:
   stage: makerun
@@ -49,7 +49,7 @@ makerun2D:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1
+    - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerun3D:
   stage: makerun
@@ -62,7 +62,7 @@ makerun3D:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1
+    - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerunAM:
   stage: makerun
@@ -74,7 +74,7 @@ makerunAM:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v
+    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -l "/sps2/gitlab-runner/logs"
 
 makerunV:
   stage: makerun
@@ -86,7 +86,7 @@ makerunV:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst?d_v_??_*.py" -m 4 -o 4 -v -r 1
+    - python validation.py -b "tst?d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerunCollisions:
   stage: makerun
@@ -98,4 +98,4 @@ makerunCollisions:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
-    - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1
+    - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
