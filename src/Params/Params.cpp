@@ -804,7 +804,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             if( profiles.size() == 0 ) {
                 ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile cannot be [None, None]" );
             }
-            for( int i=0; i<2; i++ ) {
+            for( unsigned int i=0; i<profiles.size(); i++ ) {
                 int nargs = PyTools::function_nargs( profiles[i] );
                 if( nargs<0 ) {
                     ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] not callable" );
@@ -832,7 +832,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             PyTools::extract( "_angle", angle_z, "Laser", i_laser );
 
             // Make the propagation happen and write out the file
-            if( ! smpi->test_mode ) {
+            if( ! smpi->test_mode && ! restart ) {
                 propagateX( profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
             }
 

@@ -21,6 +21,7 @@
 #include "ElectroMagnBC1D_SM.h"
 #include "ElectroMagnBC2D_SM.h"
 #include "ElectroMagnBC3D_SM.h"
+#include "Laser.h"
 #include "Species.h"
 #include "PatchesFactory.h"
 #include "DiagnosticScreen.h"
@@ -461,6 +462,34 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
         rate_multiplier[icoll] = vecCollisions[icoll]->NuclearReaction->rate_multiplier_;
     }
     H5::vect( patch_gid, "collisions_rate_multiplier", rate_multiplier );
+    
+    // Save data for LaserProfileFile (i.e. LaserOffset)
+    for( unsigned int ii = 0; ii < 2; ii++ ) {
+        if( ! EMfields->emBoundCond[ii] ) continue;
+        std::vector<Laser *> * veclaser = & EMfields->emBoundCond[ii]->vecLaser;
+        for( unsigned int ilas = 0; ilas < veclaser->size(); ilas++ ) {
+            Laser * las = (*veclaser)[ilas];
+            for( unsigned int iprof = 0; iprof < las->profiles.size(); iprof++ ) {
+                LaserProfile * prof = las->profiles[iprof];
+                if( dynamic_cast<LaserProfileFile *>( prof ) ) {
+                    LaserProfileFile *p = static_cast<LaserProfileFile *>( prof );
+                    if( p->magnitude && p->phase ) {
+                        ostringstream t1, t2, t3, t4;
+                        t1 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_mag";
+                        t2 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_phase";
+                        t3 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_omega";
+                        t4 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_dims";
+                        p->magnitude->name = t1.str();
+                        p->phase->name = t2.str();
+                        dumpFieldsPerProc( patch_gid, p->magnitude );
+                        dumpFieldsPerProc( patch_gid, p->phase );
+                        H5::vect( patch_gid, t3.str(), p->omega );
+                        H5::vect( patch_gid, t4.str(), p->magnitude->dims_ );
+                    }
+                }
+            }
+        }
+    }
 };
 
 
@@ -783,6 +812,37 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
         H5::getVect( patch_gid, "collisions_rate_multiplier", rate_multiplier, true );
         for( unsigned int icoll = 0; icoll<rate_multiplier.size(); icoll++ ) {
             vecCollisions[icoll]->NuclearReaction->rate_multiplier_ = rate_multiplier[icoll];
+        }
+    }
+    
+    // Load data for LaserProfileFile (i.e. LaserOffset)
+    for( unsigned int ii = 0; ii < 2; ii++ ) {
+        if( ! EMfields->emBoundCond[ii] ) continue;
+        std::vector<Laser *> * veclaser = & EMfields->emBoundCond[ii]->vecLaser;
+        for( unsigned int ilas = 0; ilas < veclaser->size(); ilas++ ) {
+            Laser * las = (*veclaser)[ilas];
+            for( unsigned int iprof = 0; iprof < las->profiles.size(); iprof++ ) {
+                LaserProfile * prof = las->profiles[iprof];
+                if( dynamic_cast<LaserProfileFile *>( prof ) ) {
+                    LaserProfileFile *p = static_cast<LaserProfileFile *>( prof );
+                    if( p->magnitude && p->phase ) {
+                        ostringstream t1, t2, t3, t4;
+                        t1 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_mag";
+                        t2 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_phase";
+                        t3 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_omega";
+                        t4 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_dims";
+                        p->magnitude->name = t1.str();
+                        p->phase->name = t2.str();
+                        vector<unsigned int> dims;
+                        H5::getVect( patch_gid, t4.str(), dims, true );
+                        p->magnitude->allocateDims( dims );
+                        p->phase->allocateDims( dims );
+                        restartFieldsPerProc( patch_gid, p->magnitude );
+                        restartFieldsPerProc( patch_gid, p->phase );
+                        H5::getVect( patch_gid, t3.str(), p->omega, true );
+                    }
+                }
+            }
         }
     }
 }

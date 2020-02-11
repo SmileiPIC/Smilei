@@ -69,7 +69,7 @@ public:
     void computeCharge( unsigned int ispec, ElectroMagn *EMfields ) override;
 
     //! Method used to sort particles
-    void sortParticles( Params &params ) override;
+    void sortParticles( Params &params , Patch * patch) override;
     //void countSortParticles(Params& param);
 
     //! Compute cell_keys for all particles of the current species

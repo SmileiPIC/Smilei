@@ -736,13 +736,13 @@ void Particles::createParticles( int nAdditionalParticles )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! This method compresses the particles vectors according to the provided mask
-//! between istart and iend
+//! This method erases some particles of the particles vector using a mask vector between istart and iend.
+//! This function is optimized.
 //! The mask determines which particles to keep (>= 0) and which to delete (< 0)
 //! Particle order is kept in case the vector is sorted
 //! Warning: This method do not update count, first_index and last_index in Species
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
+void Particles::eraseParticlesWithMask( int istart, int iend, vector <int> & mask ) {
 
     unsigned int idest = (unsigned int) istart;
     unsigned int isrc = (unsigned int) istart;
@@ -750,6 +750,7 @@ void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
         if (mask[idest] < 0) {
             if (mask[isrc] >= 0) {
                 overwriteParticle( isrc, idest);
+                cell_keys[idest] = cell_keys[isrc];
                 mask[idest] = 1;
                 mask[isrc] = -1;
                 idest++;
@@ -768,10 +769,11 @@ void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! This method compresses the particles vectors according to cell_keys as a mask
-//! between istart and iend
+//! This method erases some particles of the particles vector using cell_keys as a mask vector between istart and iend.
+//! This function is optimized.
+//! Warning: This method do not update count, first_index and last_index in Species
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::compressParticles( int istart, int iend) {
+void Particles::eraseParticlesWithMask( int istart, int iend) {
 
     unsigned int idest = (unsigned int) istart;
     unsigned int isrc = (unsigned int) istart;
@@ -796,6 +798,25 @@ void Particles::compressParticles( int istart, int iend) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+//! This method erases some particles of the particles vector using a mask vector.
+//! This function is not optimized.
+//! If the value of the mask is negative, then the particle is deleted.
+//! Warning: This method do not update count, first_index and last_index in Species
+// ---------------------------------------------------------------------------------------------------------------------
+// void Particles::eraseParticlesWithMask( int istart, int iend, vector <int> & mask) {
+//
+//     //unsigned int deleted_particles = 0;
+//
+//     for (int ip = istart ; ip < iend ; ip++) {
+//         if (mask[ip] < 0) {
+//             eraseParticle(ip);
+//             cell_keys.erase(cell_keys.begin()+ip);
+//             //deleted_particles += 1;
+//         }
+//     }
+// }
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! This method erases particles according to the provided mask
 //! between istart and iend
 // ---------------------------------------------------------------------------------------------------------------------
@@ -817,7 +838,6 @@ void Particles::compressParticles( int istart, int iend) {
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::createParticles( int nAdditionalParticles, int pstart )
 {
-    int nParticles = size();
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0. );
     }
@@ -829,8 +849,6 @@ void Particles::createParticles( int nAdditionalParticles, int pstart )
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0 );
     }
-    
-//MESSAGE("create2");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

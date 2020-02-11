@@ -457,13 +457,18 @@ void LaserProfileFile::createFields( Params &params, Patch *patch )
     if( params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" ) {
         ERROR( "Unknown geometry in LaserOffset (cartesian 2D or 3D only)" );
     }
-
+    
     magnitude = new Field3D();
     phase     = new Field3D();
 }
 
 void LaserProfileFile::initFields( Params &params, Patch *patch )
 {
+    // This is handled in checkpoints when restarting
+    if( params.restart ) {
+        return;
+    }
+    
     std::vector<unsigned int> n_space(params.n_space);
     if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
         n_space = params.n_space_region;
@@ -478,12 +483,13 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
     }
 
     // Define the part of the array to obtain
-    vector<hsize_t> dim( 3 ), offset( 3 );
+    vector<hsize_t> dim( 3 ), offset( 3 ), fulldim( 3 );
+    hsize_t ny_tot = params.n_space_global[1]+2+2*params.oversize[1];
     hsize_t ny_p = n_space[1]+1+2*oversize[1];
     hsize_t ny_d = ny_p+1;
     dim[0] = primal_ ? ny_p : ny_d;
     dim[1] = 1;
-    offset[0] = patch->getCellStartingGlobalIndex( 1 ) + oversize[1];
+    //offset[0] = patch->getCellStartingGlobalIndex( 1 ) + params.oversize[1];
     offset[1] = 0;
     offset[2] = 0;
 
@@ -530,6 +536,8 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
     if( H5Lexists( fid, magnitude_name.c_str(), H5P_DEFAULT ) >0 ) {
         hid_t did = H5Dopen( fid, magnitude_name.c_str(), pid );
         hid_t filespace = H5Dget_space( did );
+        H5Sget_simple_extent_dims( filespace, &fulldim[0], NULL );
+        offset[0] = fulldim[0] - ny_tot + patch->getCellStartingGlobalIndex( 1 ) + params.oversize[1];
         H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &offset[0], NULL, &dim[0], NULL );
         H5Dread( did, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &magnitude->data_[0] );
         H5Sclose( filespace );
@@ -541,6 +549,8 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
     if( H5Lexists( fid, phase_name.c_str(), H5P_DEFAULT ) >0 ) {
         hid_t did = H5Dopen( fid, phase_name.c_str(), pid );
         hid_t filespace = H5Dget_space( did );
+        H5Sget_simple_extent_dims( filespace, &fulldim[0], NULL );
+        offset[0] = fulldim[0] - ny_tot + patch->getCellStartingGlobalIndex( 1 ) + params.oversize[1];
         H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &offset[0], NULL, &dim[0], NULL );
         H5Dread( did, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &phase->data_[0] );
         H5Sclose( filespace );
@@ -560,7 +570,7 @@ double LaserProfileFile::getAmplitude( std::vector<double> pos, double t, int j,
     double amp = 0;
     unsigned int n = omega.size();
     for( unsigned int i=0; i<n; i++ ) {
-        amp += ( *magnitude )( j, k, i ) * sin( omega[i] * t + ( *phase )( j, k, i ) );
+        amp += ( *magnitude )( j, k, i ) * cos( omega[i] * t + ( *phase )( j, k, i ) );
     }
     #pragma omp critical
     {

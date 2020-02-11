@@ -30,13 +30,13 @@ void fftfreq( vector<double> &freqs, unsigned int n, double d, unsigned int star
 }
 
 // equivalent of the numpy function linspace
-// start or stop define a range where the array is actually returned
-vector<double> linspace( unsigned int n, double d, unsigned int start, unsigned int stop )
+// imin or imax define a range where the array is actually returned
+vector<double> linspace( double xmin, double xmax, unsigned int n, unsigned int imin, unsigned int imax )
 {
-    vector<double> ret( stop-start );
-    double val = d/( n-1 );
-    for( unsigned int i=start; i<stop; i++ ) {
-        ret[i-start] = val*i;
+    vector<double> ret( imax-imin );
+    double val = (xmax-xmin)/( n-1 );
+    for( unsigned int i=imin; i<imax; i++ ) {
+        ret[i-imin] = val*i + xmin;
     }
     return ret;
 }
@@ -50,10 +50,14 @@ vector<unsigned int> partial_reverse_argsort( vector<double> x, unsigned int nma
         y[i] = i;
     }
     nmax = min( nmax, n );
-    std::partial_sort( y.begin(), y.begin()+nmax, y.end(),
-    [&]( unsigned int i1, unsigned int i2 ) {
-        return x[i1] > x[i2];
-    } );
+    std::partial_sort(
+        y.begin(),
+        y.begin()+nmax,
+        y.end(),
+        [&]( unsigned int i1, unsigned int i2 ) {
+            return x[i1] > x[i2];
+        }
+    );
     y.resize( nmax );
     return y;
 }
@@ -83,36 +87,40 @@ void LaserPropagator::init( Params *params, SmileiMPI *smpi, unsigned int side )
     N     .resize( 3, 0 ); // third value not used in 2D
     L     .resize( ndim );
     Nlocal.resize( ndim );
+    o     .resize( ndim, 0. );
 
     // Set the grid spatial dimensions
     for( unsigned int idim=0; idim<ndim-1; idim++ ) {
         unsigned int j = ( side+idim+1 )%ndim;
         N[idim] = params->n_space_global[j] + 2*params->oversize[j] + 2;
         L[idim] = N[idim] * params->cell_length[j];
+        o[idim] = params->oversize[j] * params->cell_length[j];
     }
+    ox = params->oversize[0] * params->cell_length[0];
 
     // Set the grid temporal dimension
     N[ndim-1] = params->n_time;
     L[ndim-1] = params->simulation_time;
 
     // Make the array bigger to accommodate for the parallel FFT
-    double old_N = ( double )N[0];
-    N[0]  = ( ( int ) ceil( ( double )N[0] / MPI_size ) ) * MPI_size;
-    L[0] *= ( ( double )N[0]/old_N );
-    old_N = ( double )N[1];
-    N[1] = ( ( int ) ceil( ( double )N[1] / MPI_size ) ) * MPI_size;
-    L[1] *= ( ( double )N[1]/old_N );
-
+    double old_L = L[0];
+    for( unsigned int idim=0; idim<ndim-1; idim++ ) {
+        double old_N = ( double )N[idim];
+        N[idim]  = ( ( int ) ceil( ( double )N[idim] / MPI_size ) ) * MPI_size;
+        L[idim] *= ( ( double )N[idim]/old_N );
+    }
+    double O = L[0] - old_L;
+    
     // Calculate some array size that relates to the parallel decomposition
     Nlocal[0] = N[0] / MPI_size;
     Nlocal[1] = N[1] / MPI_size;
 
     // Arrays of coordinates (y, z, t) owning to the current processor
     local_x.resize( ndim );
-    local_x[0] = linspace( N[0], L[0], MPI_rank*Nlocal[0], ( MPI_rank+1 )*Nlocal[0] );
-    local_x[1] = linspace( N[1], L[1], 0., N[1] );
+    local_x[0] = linspace( -o[0]-O, L[0]-o[0]-O, N[0], MPI_rank*Nlocal[0], ( MPI_rank+1 )*Nlocal[0] );
+    local_x[1] = linspace( -o[1], L[1]-o[1], N[1], 0, N[1] );
     if( ! _2D ) {
-        local_x[2] = linspace( N[2], L[2], 0., N[2] );
+        local_x[2] = linspace( 0, L[2], N[2], 0, N[2] );
     }
 
     // Arrays of wavenumbers (ky, kz, w) owning to the current processor
@@ -174,9 +182,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     vector<PyObject *> arrays( nprofiles );
     for( unsigned int i=0; i<nprofiles; i++ ) {
         // Vectorize the profile
-        string mode( "vectorize" );
-        string bigO( "O" );
-        PyObject *profile = PyObject_CallMethod( numpy, &mode[0], &bigO[0], profiles[i] );
+        PyObject *profile = PyObject_CallMethod( numpy, "vectorize", "O", profiles[i] );
         // Apply to the mesh
         arrays[i] = PyObject_CallObject( profile, mesh );
         Py_DECREF( profile );
@@ -381,7 +387,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
                             }
                             z[j + i1] = complex_interpolate( &z0[i0], N[0], j_, // interpolate
                                                              abs( cz - sz * local_k[0][j]/kx ), // compensate for the k-space compression
-                                                             offset* kx  // add the propagation term to the phase
+                                                             (offset+ox)* kx  // add the propagation term to the phase
                                                            );
                         }
                     }
@@ -413,7 +419,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
                                 }
                                 z[j + i1] = complex_interpolate( &z0[i0], N[0], j_, // interpolate
                                                                  abs( cz - sz * local_k[0][j]/kx ), // compensate for the k-space compression
-                                                                 offset* kx  // add the propagation term to the phase
+                                                                 (offset+ox)* kx  // add the propagation term to the phase
                                                                );
                             }
                         }
@@ -513,21 +519,21 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         unsigned int MPI_omega_offset;
         MPI_Scan( &n_omega_local, &MPI_omega_offset, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD );
         MPI_omega_offset -= n_omega_local;
-        dims[0] = N[0]   ;
-        start[0] = 0               ;
-        count[0] = N[0]         ;
+        dims[0] = N[0];
+        start[0] = 0;
+        count[0] = N[0];
         dims[1] = n_omega;
         start[1] = MPI_omega_offset;
         count[1] = n_omega_local;
     } else {
-        dims[0] = N[0]   ;
+        dims[0] = N[0];
         start[0] = MPI_rank*Nlocal[0];
         count[0] = Nlocal[0];
-        dims[1] = N[1]   ;
-        start[1] = 0                 ;
-        count[1] = N[1]     ;
+        dims[1] = N[1];
+        start[1] = 0;
+        count[1] = N[1];
         dims[2] = n_omega;
-        start[2] = 0                 ;
+        start[2] = 0;
         count[2] = n_omega  ;
     }
 

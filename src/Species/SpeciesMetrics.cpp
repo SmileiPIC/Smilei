@@ -65,7 +65,7 @@ void SpeciesMetrics::get_computation_time( const std::vector<int> &count,
     for( unsigned int ic=0; ic < count.size(); ic++ ) {
         if( count[ic] > 0 ) {
             // Max of the fit
-            particle_number = fmin( double( count[ic] ), 256.0 );
+            particle_number = std::min( double( count[ic] ), 256.0 );
             // Convesion in log
             log_particle_number = log( particle_number );
             vecto_time_loc += SpeciesMetrics::get_particle_computation_time_vectorization( log_particle_number )*count[ic];
@@ -97,7 +97,7 @@ void SpeciesMetrics::get_computation_time( const std::vector<int> &count,
     for( unsigned int ic=0; ic < count.size(); ic++ ) {
         if( count[ic] > 0 ) {
             // Max of the fit
-            particle_number = fmin( float( count[ic] ), 256.0 );
+            particle_number = std::min( float( count[ic] ), float(256.0) );
             // Convesion in log
             log_particle_number = log( particle_number );
             vecto_time_loc += get_particle_computation_time_vectorization( log_particle_number )*count[ic];

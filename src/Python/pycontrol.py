@@ -22,10 +22,10 @@ def _prepare_checkpoint_dir():
     if smilei_mpi_rank == 0 and (Checkpoints.dump_step>0 or Checkpoints.dump_minutes>0.):
         checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
         if Checkpoints.file_grouping :
-            ngroups = (smilei_mpi_size-1)/Checkpoints.file_grouping + 1
+            ngroups = int((smilei_mpi_size-1)/Checkpoints.file_grouping + 1)
             ngroups_chars = int(math.log10(ngroups))+1
             for group in range(ngroups):
-                group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
+                group_dir = checkpoint_dir + '%0*d'%(ngroups_chars,group)
                 _mkdir("checkpoint", group_dir)
         else:
             _mkdir("checkpoint", checkpoint_dir)

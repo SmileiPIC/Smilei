@@ -8,15 +8,21 @@ get the latest version of Smilei on `GitHub <https://github.com/SmileiPIC/Smilei
 
 Upcoming changes
 ^^^^^^^^^^^^^^^^
-* Bug fix:
-  * Correct a weight initialization bug that was causing incoherent behaviour in AM geometry when a species was initialized on top of 
-    a regularly initialized species.
+
+* Bug fixes:
+
+  * Weight-initialization bug in AM geometry when a species was initialized
+    on top of a regularly initialized species
+  * LaserOffset was off sideways and temporally by a couple of cells
+  * LaserOffset is not recomputed after restart
+
 
 * Already available, but experimental:
 
   * Particle merging
   * Nuclear reactions
   * Interface with the PICSAR library for AM spectral solver
+
 
 * In the future:
 

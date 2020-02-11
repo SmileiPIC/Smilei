@@ -168,7 +168,7 @@ int main( int argc, char *argv[] )
 
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, 0 );
         vecPatches.sortAllParticles( params );
-        //MESSAGE ("create vector");
+
         // Initialize the electromagnetic fields
         // -------------------------------------
 
