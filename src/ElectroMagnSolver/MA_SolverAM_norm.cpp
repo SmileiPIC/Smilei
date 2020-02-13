@@ -64,6 +64,7 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                     ( *Et )( i, j )=0;
                 }
                 for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+                    ( *Er )( i, j+1 )= ( *Er )( i, j+2 ) / 9.;
                     ( *Er )( i, j )= -( *Er )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_d ; i++ ) {
@@ -85,6 +86,7 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                     ( *El )( i, j )= 0;
                 }
                 for( unsigned int  i=0 ; i<nl_p; i++ ) {
+                    ( *Er )( i, j+1 )= ( *Er )( i, j+2 ) / 9.;
                     ( *Er )( i, j )= -( *Er )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_p; i++ ) {
@@ -92,12 +94,11 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                 }
             }
             // Conditions below axis (matters for primal quantities interpolated on particles)
-            j=1;
             for( unsigned int i=0 ; i<nl_p  ; i++ ) {
-                ( *Et )( i, j )=( *Et )( i, j+2 );
+                ( *Et )( i, 1 )=( *Et )( i, 3 );
             }
             for( unsigned int i=0 ; i<nl_d ; i++ ) {
-                ( *El )( i, j )=( *El )( i, j+2 );
+                ( *El )( i, 1 )=( *El )( i, 3 );
             }
         }
     }
