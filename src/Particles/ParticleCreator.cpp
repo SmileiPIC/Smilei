@@ -287,7 +287,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                     
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical") {
+                    if( params.geometry=="AMcylindrical" && position_initialization_ != "regular") {
                         //Particles weight in regular is normalized later.
                         density( i, j, k ) *= ( *xyz[1] )( i, j, k );
                     }
@@ -844,6 +844,13 @@ void ParticleCreator::createWeight( std::string position_initialization,
     double w = n_real_particles / nPart;
     for( unsigned  p= iPart; p<iPart+nPart; p++ ) {
         particles->weight( p ) = w ;
+    }
+
+        if( params.geometry=="AMcylindrical" && position_initialization == "regular" ) {
+        //Particles in regular have a weight proportional to their position along r.
+        for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
+            particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
+        }
     }
 }
 
