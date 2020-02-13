@@ -89,6 +89,7 @@ void ParticleCreator::associate( Species * species)
     
     position_initialization_ = species->position_initialization_;
     position_initialization_on_species_ = species->position_initialization_on_species_;
+    position_initialization_on_species_type_ = species->position_initialization_on_species_type_;
     momentum_initialization_ = species->momentum_initialization_;
     velocity_profile_.resize(species->velocity_profile_.size());
     for (unsigned int i = 0 ; i < velocity_profile_.size() ; i++) {
@@ -287,7 +288,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                     
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical" && position_initialization_ != "regular") {
+                    if( params.geometry=="AMcylindrical" && position_initialization_on_species_type_ != "regular") {
                         //Particles weight in regular is normalized later.
                         density( i, j, k ) *= ( *xyz[1] )( i, j, k );
                     }
@@ -356,7 +357,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         }
                         ParticleCreator::createMomentum( momentum_initialization_, particles_, species_,  nPart, iPart, temp, vel );
                         
-                        ParticleCreator::createWeight( position_initialization_, particles_, nPart, iPart, density( i, j, k ), params );
+                        ParticleCreator::createWeight( position_initialization_on_species_type_, particles_, nPart, iPart, density( i, j, k ), params );
 
                         ParticleCreator::createCharge( particles_, species_, nPart, iPart, charge( i, j, k ) );
 

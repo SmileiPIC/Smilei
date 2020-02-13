@@ -79,6 +79,9 @@ public:
     
     //! Initialization with the positions of another species
     bool position_initialization_on_species_;
+
+    //! Initialization type of the species where position initialization is made
+    std::string position_initialization_on_species_type_;
     
     //! Flag if initialized in particles of a species
     bool initialized_in_species_;
