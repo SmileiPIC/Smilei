@@ -64,7 +64,7 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                     ( *Et )( i, j )=0;
                 }
                 for( unsigned int i=0 ; i<nl_p  ; i++ ) {
-                    ( *Er )( i, j+1 )= ( *Er )( i, j+2 ) / 9.;
+                    //( *Er )( i, j+1 )= ( *Er )( i, j+2 ) / 9.;
                     ( *Er )( i, j )= -( *Er )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_d ; i++ ) {

@@ -70,7 +70,7 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
                     ( *Br )( i, j )=0;
                 }
                 for( unsigned int i=0 ; i<nl_d ; i++ ) {
-                    ( *Bt )( i, j+1 )= ( *Bt )( i, j+2 )/9.;
+                    //( *Bt )( i, j+1 )= ( *Bt )( i, j+2 )/9.;
                     ( *Bt )( i, j )= -( *Bt )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_p ; i++ ) {

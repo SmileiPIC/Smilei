@@ -559,12 +559,13 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
             for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
                 int ifield = imode*n_species+ispec;
+                b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
                 for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                    b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
                     for( int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
                         Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
                     }
                 }
+                if (emAM->isYmin) Proj->axisBCfrozen(b_rho, imode );
             }
         }
     } // End projection for frozen particles

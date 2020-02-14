@@ -338,6 +338,29 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
     }
 } // END Project for diags local current densities
 
+// Apply boundary conditions on axis for Rho and J
+void ProjectorAM2Order::axisBCfrozen( complex<double> *rhoj,  int imode )
+{
+
+    double sign = -1.;
+    for (unsigned i=0; i< imode; i++) sign *= -1;
+   
+    //Fold rho 
+    for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
+        for( unsigned int j=1 ; j<3; j++ ) {
+            rhoj[i+j] = rhoj[i+j] - sign * rhoj[i-j];
+        }
+        if (imode == 0){
+            rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
+        } else {
+            rhoj[i] = 0.;
+        }
+        // Conditions below axis (matters for primal quantities interpolated on particles)
+        rhoj[i-1] = rhoj[i+1];
+    }//i
+    return;
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization NOT DONE YET
 // ---------------------------------------------------------------------------------------------------------------------
@@ -474,24 +497,25 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                         } else {
                             rho[i] = (4.*rho[i+1] - rho[i+2])/3.;
                         }
+                        // Conditions below axis (matters for primal quantities interpolated on particles)
+                        rho[i-1] = rho[i+1];
                     }//i
                 }
-
-                //Fold Jr
-                for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int ilocr = i*(nprimr+1);
-                    for( unsigned int j=0 ; j<3; j++ ) {
-                        Jr [ilocr+5-j] = Jr [ilocr+5-j] + sign * Jr [ilocr+j];
-                    }
-                    if (imode == 1) {
-                        //Force dJr/dr = 0 at r=0.
-                        Jr [ilocr+3] =  (25.*Jr[ilocr+4] - 9*Jr[ilocr+5])/16. ;
-                        Jr [ilocr+2] = Jr [ilocr+3];
+                
+                //Fold Jl
+                for( unsigned int i=0 ; i<npriml+1; i++ ) {
+                    int iloc = i*nprimr;
+                    for( unsigned int j=1 ; j<3; j++ ) {
+                        Jl [iloc+2+j] = Jl [iloc+2+j] - sign * Jl [iloc+2-j];
+                     }
+                     if (imode > 0){
+                         Jl [iloc+2] = 0. ;
                     } else {
-                        //Force dJr/dr = 0 and Jr=0 at r=0.
-                        Jr [ilocr+3] =  Jr [ilocr+4]/9.;
-                        Jr [ilocr+2] = -Jr [ilocr+3];
+                         //Force dJl/dr = 0 at r=0.
+                         Jl [iloc+2] =  (4.*Jl [iloc+3] - Jl [iloc+4])/3. ;
                     }
+                    // Conditions below axis (matters for primal quantities interpolated on particles)
+                    Jl[iloc+1] = Jl[iloc+3];
                 }//i
 
                 //Fold Jt
@@ -506,19 +530,25 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                     } else{
                         Jt [iloc+2] = 0. ;
                     }
+                    // Conditions below axis (matters for primal quantities interpolated on particles)
+                    Jt[iloc+1] = Jt[iloc+3];
                 }//i
 
-                //Fold Jl
-                for( unsigned int i=0 ; i<npriml+1; i++ ) {
+                //Fold Jr
+                for( unsigned int i=0 ; i<npriml; i++ ) {
+                    int ilocr = i*(nprimr+1);
                     int iloc = i*nprimr;
-                    for( unsigned int j=1 ; j<3; j++ ) {
-                        Jl [iloc+2+j] = Jl [iloc+2+j] - sign * Jl [iloc+2-j];
-                     }
-                     if (imode > 0){
-                         Jl [iloc+2] = 0. ;
+                    for( unsigned int j=0 ; j<3; j++ ) {
+                        Jr [ilocr+5-j] = Jr [ilocr+5-j] + sign * Jr [ilocr+j];
+                    }
+                    if (imode == 1) {
+                        //Force dJr/dr = 0 at r=0.
+                        //Jr [ilocr+3] =  (25.*Jr[ilocr+4] - 9*Jr[ilocr+5])/16. ;
+                        Jr [ilocr+2] = 2*Icpx*Jt[iloc+2] - Jr [ilocr+3];
                     } else {
-                         //Force dJl/dr = 0 at r=0.
-                         Jl [iloc+2] =  (4.*Jl [iloc+3] - Jl [iloc+4])/3. ;
+                        //Force dJr/dr = 0 and Jr=0 at r=0.
+                        Jr [ilocr+3] =  Jr [ilocr+4]/9.;
+                        Jr [ilocr+2] = -Jr [ilocr+3];
                     }
                 }//i
             }

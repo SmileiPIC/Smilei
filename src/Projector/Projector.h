@@ -30,6 +30,9 @@ public:
     //! Project global current charge (EMfields->rho_ , J), for initialization and diags
     virtual void basic( double               *rhoj, Particles &particles, unsigned int ipart, unsigned int type ) {};
     virtual void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) {};
+
+    //! Apply boundary conditions on axis for Rho and J in AM geometry
+    virtual void axisBCfrozen( std::complex<double> *rhoj, int imode ) {};
     
     //! Project global current densities if Ionization in Species::dynamics,
     virtual void ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion ) = 0;
