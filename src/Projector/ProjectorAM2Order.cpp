@@ -491,47 +491,43 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                     for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
                         for( unsigned int j=1 ; j<3; j++ ) {
                             rho[i+j] = rho[i+j] - sign * rho[i-j];
+                            rho[i-j] = - sign * rho[i+j];
                         }
                         if (imode > 0){
                             rho[i] = 0.;
                         } else {
                             rho[i] = (4.*rho[i+1] - rho[i+2])/3.;
                         }
-                        // Conditions below axis (matters for primal quantities interpolated on particles)
-                        rho[i-1] = rho[i+1];
                     }//i
                 }
                 
                 //Fold Jl
-                for( unsigned int i=0 ; i<npriml+1; i++ ) {
-                    int iloc = i*nprimr;
+                for( unsigned int i=2 ; i<(npriml+1)*nprimr+2; i+=nprimr ) {
                     for( unsigned int j=1 ; j<3; j++ ) {
-                        Jl [iloc+2+j] = Jl [iloc+2+j] - sign * Jl [iloc+2-j];
+                        Jl [i+j] = Jl [i+j] - sign * Jl [i-j];
+                        Jl[i-j]  = - sign * Jl[i+j];
                      }
                      if (imode > 0){
-                         Jl [iloc+2] = 0. ;
+                         Jl [i] = 0. ;
                     } else {
                          //Force dJl/dr = 0 at r=0.
-                         Jl [iloc+2] =  (4.*Jl [iloc+3] - Jl [iloc+4])/3. ;
+                         Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
                     }
-                    // Conditions below axis (matters for primal quantities interpolated on particles)
-                    Jl[iloc+1] = Jl[iloc+3];
                 }//i
 
                 //Fold Jt
                 for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int iloc = i*nprimr;
+                    int iloc = i*nprimr+2;
                     for( unsigned int j=1 ; j<3; j++ ) {
-                        Jt [iloc+2+j] = Jt [iloc+2+j] + sign * Jt [iloc+2-j];
+                        Jt [iloc+j] = Jt [iloc+j] + sign * Jt [iloc-j];
+                        Jt[iloc-1] = sign * Jt[iloc+1];
                     }
                     if (imode == 1){
-                        int ilocr = i*(nprimr+1);
-                        Jt [iloc+2]= -Icpx/8.*( 9.*Jr[ilocr+3]- Jr[ilocr+4]);
+                        int ilocr = i*(nprimr+1)+3;
+                        Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
                     } else{
-                        Jt [iloc+2] = 0. ;
+                        Jt [iloc] = 0. ;
                     }
-                    // Conditions below axis (matters for primal quantities interpolated on particles)
-                    Jt[iloc+1] = Jt[iloc+3];
                 }//i
 
                 //Fold Jr

@@ -62,6 +62,7 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
             if( imode==0 ) {
                 for( unsigned int i=0 ; i<nl_p  ; i++ ) {
                     ( *Et )( i, j )=0;
+                    ( *Et )( i, j-1 )=-( *Et )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_p  ; i++ ) {
                     //( *Er )( i, j+1 )= ( *Er )( i, j+2 ) / 9.;
@@ -69,14 +70,17 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                 }
                 for( unsigned int i=0 ; i<nl_d ; i++ ) {
                     ( *El )( i, j )+= 4.*dt_ov_dr*( *Bt )( i, j+1 )-dt*( *Jl )( i, j );
+                    ( *El )( i, j-1 )=( *El )( i, j+1 );
                 }
             } else if( imode==1 ) {
                 for( unsigned int i=0 ; i<nl_d  ; i++ ) {
                     ( *El )( i, j )= 0;
+                    ( *El )( i, j-1 )=-( *El )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_p  ; i++ ) {
                     //( *Et )( i, j )= -1./3.*( 4.*Icpx*( *Er )( i, j+1 )+( *Et )( i, j+1 ) );
                     ( *Et )( i, j )= -Icpx/8.*( 9.*( *Er )( i, j+1 )-( *Er )( i, j+2 ) );
+                    ( *Et )( i, j-1 )=( *Et )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_p ; i++ ) {
                     ( *Er )( i, j )=2.*Icpx*( *Et )( i, j )-( *Er )( i, j+1 );
@@ -84,6 +88,7 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
             } else { // mode > 1
                 for( unsigned int  i=0 ; i<nl_d; i++ ) {
                     ( *El )( i, j )= 0;
+                    ( *El )( i, j-1 )=-( *El )( i, j+1 );
                 }
                 for( unsigned int  i=0 ; i<nl_p; i++ ) {
                     ( *Er )( i, j+1 )= ( *Er )( i, j+2 ) / 9.;
@@ -91,14 +96,8 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                 }
                 for( unsigned int i=0 ; i<nl_p; i++ ) {
                     ( *Et )( i, j )= 0;
+                    ( *Et )( i, j-1 )=-( *Et )( i, j+1 );
                 }
-            }
-            // Conditions below axis (matters for primal quantities interpolated on particles)
-            for( unsigned int i=0 ; i<nl_p  ; i++ ) {
-                ( *Et )( i, 1 )=( *Et )( i, 3 );
-            }
-            for( unsigned int i=0 ; i<nl_d ; i++ ) {
-                ( *El )( i, 1 )=( *El )( i, 3 );
             }
         }
     }
