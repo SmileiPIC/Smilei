@@ -3253,18 +3253,18 @@ void VectorPatch::applyExternalFields()
 
 
 // For each patch, apply external fields
-void VectorPatch::applyExternalTimeFields(double time)
+void VectorPatch::applyPrescribedFields(double time)
 {
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-        patches_[ipatch]->EMfields->applyExternalTimeFields( ( *this )( ipatch ), time );
+        patches_[ipatch]->EMfields->applyPrescribedFields( ( *this )( ipatch ), time );
     }
 }
 
 //! Method use to reset the real value of all fields on which we imposed an external time field
-void VectorPatch::resetExternalTimeFields()
+void VectorPatch::resetPrescribedFields()
 {
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-        patches_[ipatch]->EMfields->resetExternalTimeFields();
+        patches_[ipatch]->EMfields->resetPrescribedFields();
     }
 }
 

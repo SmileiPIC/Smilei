@@ -328,7 +328,7 @@ int main( int argc, char *argv[] )
             {
                 // de-apply external time fields if requested
                 if ( vecPatches(0)->EMfields->extTimeFields.size() )
-                    vecPatches.resetExternalTimeFields();
+                    vecPatches.resetPrescribedFields();
 
                 if( time_dual > params.time_fields_frozen ) {
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
@@ -338,7 +338,7 @@ int main( int argc, char *argv[] )
                 {
                     // apply external time fields if requested
                     if ( vecPatches(0)->EMfields->extTimeFields.size() )
-                        vecPatches.applyExternalTimeFields(time_dual);
+                        vecPatches.applyPrescribedFields(time_dual);
                 }
 
             }

@@ -519,7 +519,7 @@ class ExternalField(SmileiComponent):
     profile = None
 
 # external time fields
-class ExternalTimeField(SmileiComponent):
+class PrescribedField(SmileiComponent):
     """External Time Field"""
     field = None
     profile = None

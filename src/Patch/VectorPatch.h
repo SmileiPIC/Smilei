@@ -211,10 +211,10 @@ public :
     void applyExternalFields();
     
     //! For each patch, apply external time fields
-    void applyExternalTimeFields(double time);
+    void applyPrescribedFields(double time);
 
 	//! reset all external time fields;
-    void resetExternalTimeFields();
+    void resetPrescribedFields();
     
     void saveExternalFields( Params &params );
     

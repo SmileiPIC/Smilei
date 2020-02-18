@@ -1739,7 +1739,7 @@ void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patc
     
 }
 
-void ElectroMagn3D::applyExternalTimeField( Field *my_field,  Profile *profile, Patch *patch, double time )
+void ElectroMagn3D::applyPrescribedField( Field *my_field,  Profile *profile, Patch *patch, double time )
 {
 
     Field3D *field3D = static_cast<Field3D *>( my_field );

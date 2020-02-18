@@ -1324,7 +1324,7 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
     
 }
 
-void ElectroMagnAM::applyExternalTimeFields( Patch *patch, double time )
+void ElectroMagnAM::applyPrescribedFields( Patch *patch, double time )
 {
 
 #ifdef _TODO_AM
@@ -1353,7 +1353,7 @@ void ElectroMagnAM::applyExternalTimeFields( Patch *patch, double time )
 			}
 		
 			if( field ){ 
-				applyExternalTimeField( field, extfield->profile, patch, time );
+				applyPrescribedField( field, extfield->profile, patch, time );
 			}
         }
         Bl_m[imode]->copyFrom( Bl_[imode] );
@@ -1407,7 +1407,7 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
     
 }
 
-void ElectroMagnAM::applyExternalTimeField( Field *my_field,  Profile *profile, Patch *patch, double time )
+void ElectroMagnAM::applyPrescribedField( Field *my_field,  Profile *profile, Patch *patch, double time )
 {
     cField2D *field2D=static_cast<cField2D *>( my_field );
     

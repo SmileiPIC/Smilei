@@ -35,7 +35,7 @@ def _smilei_check():
     # Verify classes were not overriden
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields",
-            "DiagTrackParticles","DiagPerformances","ExternalField","ExternalTimeField",
+            "DiagTrackParticles","DiagPerformances","ExternalField","PrescribedField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
             "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler",
             "Vectorization"]:
@@ -95,7 +95,7 @@ def _smilei_check():
         s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
     for e in ExternalField:
         e.profile         = toSpaceProfile(e.profile         )
-    for e in ExternalTimeField:
+    for e in PrescribedField:
         e.profile         = toTimeProfile(e.profile         )
     for a in Antenna:
         a.space_profile   = toSpaceProfile(a.space_profile   )
@@ -133,7 +133,7 @@ def _keep_python_running():
     if len(MovingWindow)>0:
         for e in ExternalField:
             profiles += [e.profile]
-    for e in ExternalTimeField:
+    for e in PrescribedField:
         profiles += [e.profile]
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):

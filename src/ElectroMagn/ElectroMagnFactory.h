@@ -106,22 +106,22 @@ public:
         // -----------------
         // ExtTimeFields properties
         // -----------------
-        unsigned int external_time_field_number =PyTools::nComponents( "ExternalTimeField" );
+        unsigned int external_time_field_number =PyTools::nComponents( "PrescribedField" );
         if( patch->isMaster() && external_time_field_number > 0) {
             TITLE("Initializing External Time Fields" );
         }
-        for( unsigned int n_extfield = 0; n_extfield < PyTools::nComponents( "ExternalTimeField" ); n_extfield++ ) {
+        for( unsigned int n_extfield = 0; n_extfield < PyTools::nComponents( "PrescribedField" ); n_extfield++ ) {
             ExtTimeField extField;
             PyObject *profile;
             std::string fieldName("");
-            if( !PyTools::extract( "field", fieldName, "ExternalTimeField", n_extfield ) ) {
-                ERROR( "ExternalTimeField #"<<n_extfield<<": parameter 'field' not provided'" );
+            if( !PyTools::extract( "field", fieldName, "PrescribedField", n_extfield ) ) {
+                ERROR( "PrescribedField #"<<n_extfield<<": parameter 'field' not provided'" );
             }
             // Now import the profile
             std::ostringstream name( "" );
-            name << "ExternalTimeField[" << n_extfield <<"].profile";
-            if( !PyTools::extract_pyProfile( "profile", profile, "ExternalTimeField", n_extfield ) ) {
-                ERROR( "ExternalTimeField #"<<n_extfield<<": parameter 'profile' not understood" );
+            name << "PrescribedField[" << n_extfield <<"].profile";
+            if( !PyTools::extract_pyProfile( "profile", profile, "PrescribedField", n_extfield ) ) {
+                ERROR( "PrescribedField #"<<n_extfield<<": parameter 'profile' not understood" );
             }
             extField.profile = new Profile( profile, params.nDim_field+1, name.str(), true );
             // Find which index the field is in the allFields vector
@@ -288,7 +288,7 @@ public:
         }
         
         // -----------------
-        // Clone ExternalTimeFields properties
+        // Clone PrescribedFields properties
         // -----------------
         for( unsigned int n_extfield = 0; n_extfield < EMfields->extTimeFields.size(); n_extfield++ ) {
             ExtTimeField extField;
