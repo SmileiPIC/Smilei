@@ -1670,20 +1670,29 @@ An external field can be applied using an ``ExternalField`` block::
 
 ----
 
-.. _ExternalTimeField:
+.. _PrescribedField:
 
-External time dependent fields
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Prescribed fields
+^^^^^^^^^^^^^^^^^
 
-An time dependent external field can be applied using an ``ExternalTimeField`` block::
+User-defined electromagnetic fields (with spatio-temporal dependence) can be added to the self-consistent Maxwell fields.
+These fields are projected onto the simulation grid and added before interpolation to the Maxwell fields.
+Note however that these are not self-consistent fields, and the user has to be careful when using this feature.
+They are however an excellent tool for validation, or should one want to use :program:`Smilei` to describe charged
+particles' dynamics in a given electromagnetic field.
 
-  def myExtProfile(x,t):
+This feature is accessible using the ``PrescribedField`` block::
+
+  def myPrescribedProfile(x,t):
   	return np.cos(x)*np.sin(x)
 
-  ExternalTimeField(
+  PrescribedField(
       field = "Ex",
       profile = myExtProfile
   )
+
+.. warning:: Prescribed fields are by default spatio-temporal fields, and should always be defined by a function of all
+  spatial dimensions defined on the box plus time. Constant fields are still possible, as illustrated in the example above.
 
 .. py:data:: field
 
@@ -1696,7 +1705,9 @@ An time dependent external field can be applied using an ``ExternalTimeField`` b
   The spatio-temporal profile of the applied field.
   Refer to :doc:`units` to understand the units of this field.
 
-.. note:: These fields will only be used to push particles but Maxwell solver will keep using original
+.. note:: These fields are used only at the moment of field interpolation.
+ Hence, they will appear in a ``DiagProbe``. They will also appear in a ``DiagField()``.
+ They are not used however to advance the electromagnetic fields in the Maxwell solver.
 
 
 ----
