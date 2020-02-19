@@ -17,31 +17,31 @@ IonizationTunnelEnvelope::IonizationTunnelEnvelope( Params &params, Species *spe
     atomic_number_          = species->atomic_number_;
     
     // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
-    Potential.resize( atomic_number_ );
-    Azimuthal_quantum_number.resize( atomic_number_ );
-    for( int Zstar=0; Zstar<( int )atomic_number_; Zstar++ ) {
+    Potential.resize( atomic_number_+1 );
+    Azimuthal_quantum_number.resize( atomic_number_+1 );
+    for( int Zstar=0; Zstar<( int )atomic_number_+1; Zstar++ ) {
         Potential               [Zstar] = IonizationTables::ionization_energy( atomic_number_, Zstar ) * eV_to_au;
         Azimuthal_quantum_number[Zstar] = IonizationTables::azimuthal_atomic_number( atomic_number_, Zstar );
     }
     
-    for( unsigned int i=0; i<atomic_number_; i++ ) {
+    for( unsigned int i=0; i<atomic_number_+1; i++ ) {
         DEBUG( "ioniz: i " << i << " potential: " << Potential[i] << " Az.q.num: " << Azimuthal_quantum_number[i] );
     }
     
     one_third = 1.0/3.0;
     
-    alpha_tunnel.resize( atomic_number_ );
-    beta_tunnel.resize( atomic_number_ );
-    gamma_tunnel.resize( atomic_number_ );
-    //Ip_times2_to_minus3ov4.resize( atomic_number_ );
+    alpha_tunnel.resize( atomic_number_+1 );
+    beta_tunnel.resize( atomic_number_+1 );
+    gamma_tunnel.resize( atomic_number_+1 );
+    Ip_times2_to_minus3ov4.resize( atomic_number_+1 );
     
-    for( unsigned int Z=0 ; Z<atomic_number_ ; Z++ ) {
+    for( unsigned int Z=0 ; Z<atomic_number_+1 ; Z++ ) {
         DEBUG( "Z : " << Z );
         double cst      = ( ( double )Z+1.0 ) * sqrt( 2.0/Potential[Z] );
         alpha_tunnel[Z] = cst-1.0; // 2(n^*)-1
         beta_tunnel[Z]  = pow( 2, alpha_tunnel[Z] ) * ( 8.*Azimuthal_quantum_number[Z]+4.0 ) / ( cst*tgamma( cst ) ) * Potential[Z] * au_to_w0;
         gamma_tunnel[Z] = 2.0 * pow( 2.0*Potential[Z], 1.5 );   // 2*(2I_p)^{3/2}
-        //Ip_times2_to_minus3ov4[Z] = pow(2.*Potential[Z],-0.75); // (2I_p)^{-3/4}
+        Ip_times2_to_minus3ov4[Z] = pow(2.*Potential[Z],-0.75); // (2I_p)^{-3/4}
     }
     
     ellipticity         = params.envelope_ellipticity;
@@ -113,7 +113,8 @@ void IonizationTunnelEnvelope::envelopeIonization( Particles *particles, unsigne
         delta      = gamma_tunnel[Z]*invE; // 2*(2I_p)^{3/2}/E
         ran_p = patch->xorshift32() * patch->xorshift32_invmax;
         IonizRate_tunnel_envelope[Z] = beta_tunnel[Z] * exp( -delta*one_third + alpha_tunnel[Z]*log( delta ) );
-    
+        double Ip_times2_power_minus3ov4;
+
         // k_times will give the nb of ionization events
         k_times = 0;
         Zp1=Z+1;
@@ -123,6 +124,7 @@ void IonizationTunnelEnvelope::envelopeIonization( Particles *particles, unsigne
             // -----------------------------------------------------
             if( ran_p < 1.0 -exp( -IonizRate_tunnel_envelope[Z]*dt ) ) {
                 k_times        = 1;
+                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[Zp1];
             }
     
         } else {
@@ -156,11 +158,15 @@ void IonizationTunnelEnvelope::envelopeIonization( Particles *particles, unsigne
                 Pint_tunnel             = Pint_tunnel + P_sum*Mult;
     
                 k_times++;
+    
+                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[newZ];
+
             }//END while
     
             // final ionization (of last electron)
             if( ( ( 1.0-Pint_tunnel )>ran_p ) && ( k_times==atomic_number_-Zp1 ) ) {
                 k_times++;
+                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[atomic_number_-1];
             }
         }//END Multiple ionization routine
     
@@ -176,10 +182,21 @@ void IonizationTunnelEnvelope::envelopeIonization( Particles *particles, unsigne
         // omega*t will be extracted randomly between 0 and 2*pi
           
         // draw from uniform distribution
-        ran_p_times_2pi= 2. * M_PI * patch->xorshift32() * patch->xorshift32_invmax;
+        //ran_p_times_2pi= 2. * M_PI * patch->xorshift32() * patch->xorshift32_invmax;
         
-        momentum_major_axis =               Aabs * cos(ran_p_times_2pi);
-        momentum_minor_axis = ellipticity * Aabs * sin(ran_p_times_2pi);
+        //momentum_major_axis =               Aabs * cos(ran_p_times_2pi);
+        //momentum_minor_axis = ellipticity * Aabs * sin(ran_p_times_2pi);
+
+        // Box-Müller transformation: generate a random number from a gaussian distribution
+        // starting from two random numbers from a uniform distribution
+
+        double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
+        double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
+
+        double rand_gaussian = sqrt(-2.*log(rand_1))*cos(2. * M_PI * rand_2);
+
+        // recreate rms momentum spread for linear polarization estimated by C.B. Schroeder 
+        momentum_major_axis = rand_gaussian * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;
     
         if( k_times !=0 ) {
             new_electrons.createParticle();
@@ -188,14 +205,21 @@ void IonizationTunnelEnvelope::envelopeIonization( Particles *particles, unsigne
             for( unsigned int i=0; i<new_electrons.dimension(); i++ ) {
                 new_electrons.position( i, idNew )=particles->position( i, ipart );
             }
+
+
             for( unsigned int i=0; i<3; i++ ) {
                 new_electrons.momentum( i, idNew ) = particles->momentum( i, ipart )*ionized_species_invmass;
+                
             }
+
     
             // add the momentum p=eA, back-transformed to y-z coordinates
             // no changes are made on the x momentum, as the envelope propagates in that direction
-            new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi-momentum_minor_axis*sin_phi;
-            new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi+momentum_minor_axis*cos_phi;
+            //new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi-momentum_minor_axis*sin_phi;
+            //new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi+momentum_minor_axis*cos_phi;
+
+            //new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
+            //new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
     
             new_electrons.weight( idNew )=double( k_times )*particles->weight( ipart );
             new_electrons.charge( idNew )=-1;

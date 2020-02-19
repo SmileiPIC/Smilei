@@ -218,8 +218,8 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
     
             // add the momentum p=eA, back-transformed to y-z coordinates
             // no changes are made on the x momentum, as the envelope propagates in that direction
-            new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi-momentum_minor_axis*sin_phi;
-            new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi+momentum_minor_axis*cos_phi;
+            //new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi-momentum_minor_axis*sin_phi;
+            //new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi+momentum_minor_axis*cos_phi;
     
             new_electrons.weight( idNew )=double( k_times )*particles->weight( ipart );
             new_electrons.charge( idNew )=-1;
