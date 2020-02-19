@@ -82,13 +82,13 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
         }
     }
     
-    complex<double> e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/r;
     complex<double> C_m = 1.;
     if( imode > 0 ) {
+        complex<double> e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/r;
         C_m = 2.;
-    }
-    for( unsigned int i=0; i<( unsigned int )imode; i++ ) {
-        C_m *= e_theta;
+        for( unsigned int i=0; i<( unsigned int )imode; i++ ) {
+            C_m *= e_theta;
+        }
     }
     
     double xpn, rpn;
@@ -108,7 +108,7 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     delta  = rpn - ( double )jp;
     Sr1[0] = 1. - delta;
     Sr1[1] = delta;
-   
+    
     if (rpn < 0.){ // If particle is between 0 and dr/2.
         jp = 0;
         Sr1[0] = Sr1[1];
@@ -131,17 +131,6 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
 void ProjectorAM1Order::axisBCfrozen( complex<double> *rhoj,  int imode )
 {
 
-    double sign = -1.;
-    for (unsigned i=0; i< imode; i++) sign *= -1;
-   
-    //Fold rho 
-    for( unsigned int i=0 ; i<npriml*nprimr; i+=nprimr ) {
-        if (imode == 0){
-            rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
-        } else {
-            rhoj[i] = 0.;
-        }
-    }//i
     return;
 }
 
@@ -159,7 +148,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     
     // variable declaration
-    double xpn, ypn;
+    double xpn, rpn;
     double delta;
 
     double  Sl1[2], Sr1[2],Sl1d[2], Sr1d[2];
@@ -179,13 +168,13 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     Sl1[0] = 1. - delta;
     Sl1[1] = delta;
     
-    ypn = rp *dr_inv_ -0.5 ; //-0.5 because grid is shifted by dr/2
-    int jp = floor( ypn );
-    delta  = ypn - ( double )jp;
+    rpn = rp *dr_inv_ -0.5 ; //-0.5 because grid is shifted by dr/2
+    int jp = floor( rpn );
+    delta  = rpn - ( double )jp;
     Sr1[0] = 1. - delta;
     Sr1[1] = delta;
 
-    if (ypn < 0.){ // If particle is between 0 and dr/2.
+    if (rpn < 0.){ // If particle is between 0 and dr/2.
         jp = 0;
         Sr1[0] = Sr1[1];
         Sr1[1] = 0.; // Only account for deposition above axis. Symetry is handled in interpolation.
