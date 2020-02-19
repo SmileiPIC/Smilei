@@ -135,16 +135,12 @@ void ProjectorAM1Order::axisBCfrozen( complex<double> *rhoj,  int imode )
     for (unsigned i=0; i< imode; i++) sign *= -1;
    
     //Fold rho 
-    for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
-        for( unsigned int j=1 ; j<3; j++ ) {
-            rhoj[i+j] = rhoj[i+j] - sign * rhoj[i-j];
-        }
+    for( unsigned int i=0 ; i<npriml*nprimr; i+=nprimr ) {
         if (imode == 0){
             rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
         } else {
             rhoj[i] = 0.;
         }
-        rhoj[i-1] = sign * rhoj[i+1];
     }//i
     return;
 }
