@@ -127,6 +127,28 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     }//i
 } // END Project for diags local current densities
 
+// Apply boundary conditions on axis for Rho frozen particles
+void ProjectorAM1Order::axisBCfrozen( complex<double> *rhoj,  int imode )
+{
+
+    double sign = -1.;
+    for (unsigned i=0; i< imode; i++) sign *= -1;
+   
+    //Fold rho 
+    for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
+        for( unsigned int j=1 ; j<3; j++ ) {
+            rhoj[i+j] = rhoj[i+j] - sign * rhoj[i-j];
+        }
+        if (imode == 0){
+            rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
+        } else {
+            rhoj[i] = 0.;
+        }
+        rhoj[i-1] = sign * rhoj[i+1];
+    }//i
+    return;
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for all modes, not charge conserving
 // ---------------------------------------------------------------------------------------------------------------------

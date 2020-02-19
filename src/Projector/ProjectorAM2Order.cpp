@@ -338,7 +338,7 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
     }
 } // END Project for diags local current densities
 
-// Apply boundary conditions on axis for Rho and J
+// Apply boundary conditions on axis for Rho frozen particles
 void ProjectorAM2Order::axisBCfrozen( complex<double> *rhoj,  int imode )
 {
 
@@ -355,8 +355,7 @@ void ProjectorAM2Order::axisBCfrozen( complex<double> *rhoj,  int imode )
         } else {
             rhoj[i] = 0.;
         }
-        // Conditions below axis (matters for primal quantities interpolated on particles)
-        rhoj[i-1] = rhoj[i+1];
+        rhoj[i-1] = sign * rhoj[i+1];
     }//i
     return;
 }

@@ -18,6 +18,9 @@ public:
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) override final;
     
+    //! Apply boundary conditions on Rho and J
+    void axisBCfrozen( std::complex<double> *rhoj, int imode ) override final;
+    
     //! Project global current densities if Ionization in Species::dynamics,
     void ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Particles &particles, int ipart, LocalFields Jion ) override final;
     
