@@ -85,7 +85,7 @@ ifneq ($(strip $(PYTHONHOME)),)
 endif
 
 
-PICSAR=FALSE
+PICSAR ?= FALSE
 ifeq ($(PICSAR),TRUE)
         # New environment variable
 	FFTW3_LIB ?= $(FFTW_LIB_DIR)
