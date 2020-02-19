@@ -141,7 +141,6 @@ WORKDIR = ""
 # DEFAULT VALUES FOR OPTIONS
 OMP = 12
 MPI = 4
-PPN = 12
 EXECUTION = False
 VERBOSE = False
 BENCH=""
@@ -192,9 +191,6 @@ for opt, arg in options:
 		print( "     -m <nb_MPIProcs>")
 		print( "       <nb_MPIProcs> : number of MPI processes used for the execution")
 		print( "     DEFAULT : 4")
-		print( "-p")
-		print( "     -p <partition name>")
-		print( "       <partition name>: partition name on super-computers")
 		print( "-g")
 		print( "     Generates the references")
 		print( "-s")
@@ -328,9 +324,9 @@ def RUN_POINCARE(command, dir):
 			rmtree(WORKDIR)
 		sys.exit(2)
 
-def RUN_LLR(command, dir):
+def RUN_JOLLYJUMPER(command, dir):
 	"""
-	Run the command `command` on the LLR system.
+	Run the command `command` on the Jollyjumper system.
 
 	Inputs:
 	- command: command to run
@@ -345,7 +341,7 @@ def RUN_LLR(command, dir):
 		#NODES=((int(MPI)*int(OMP)-1)/24)+1
 		NODES=int(ceil(MPI/2.))
 		exec_script_desc.write(
-			"#PBS -l nodes="+str(NODES)+":ppn="+str(PPN)+" \n"
+			"#PBS -l nodes="+str(NODES)+":ppn=24 \n"
 			+"#PBS -q default \n"
 			+"#PBS -j oe\n"
 			+"module purge\n"
@@ -369,10 +365,7 @@ def RUN_LLR(command, dir):
 			+"echo $? > exit_status_file \n"
 		)
 	# Run command
-	if (PARTITION=="jollyjumper"):
-		COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
-	elif (PARTITION=="tornado"):
-		COMMAND = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+EXEC_SCRIPT
+	COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
 	try:
 		check_call(COMMAND, shell=True)
 	except CalledProcessError:
@@ -445,23 +438,19 @@ COMPILE_OUT=WORKDIR_BASE+s+'compilation_out'
 COMPILE_OUT_TMP=WORKDIR_BASE+s+'compilation_out_temp'
 
 # Find commands according to the host
-if LLR in HOSTNAME :
-	if (PARTITION=="jollyjumper"):
-		PPN = 12
-	elif (PARTITION=="tornado"):
-		PPN = 18
-	if PPN % OMP != 0:
-		print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
+if JOLLYJUMPER in HOSTNAME :
+	if 12 % OMP != 0:
+		print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME)
 		sys.exit(4)
 	#NODES=((int(MPI)*int(OMP)-1)/24)+1
 	NODES=int(ceil(MPI/2.))
 	#NPERSOCKET = int(ceil(MPI/NODES/2.))
 	NPERSOCKET = 1
-	COMPILE_COMMAND = 'make -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN)+" -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
-	RUN = RUN_LLR
+	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+	RUN = RUN_JOLLYJUMPER
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
 	#CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
