@@ -498,8 +498,8 @@ try :
 		# if new bin, archive the workdir (if it contains a smilei bin)  and create a new one with new smilei and compilation_out inside
 		if path.exists(SMILEI_W) and path.exists(SMILEI_TOOLS_W):
 			workdir_archiv(SMILEI_W)
-		shutil.copy2(SMILEI_R,SMILEI_W)
-		shutil.copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
+		copy2(SMILEI_R,SMILEI_W)
+		copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
 		if COMPILE_ONLY:
 			if VERBOSE:
 				print(  "Smilei validation succeed.")
