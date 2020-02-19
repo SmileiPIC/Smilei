@@ -158,7 +158,7 @@ void IonizationTunnel::operator()( Particles *particles, unsigned int ipart_min,
         // (variable weights are used)
         // -----------------------------
         if( k_times !=0 ) {
-            new_electrons.create_particle();
+            new_electrons.createParticle();
             //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
             int idNew = new_electrons.size() - 1;
             for( unsigned int i=0; i<new_electrons.dimension(); i++ ) {

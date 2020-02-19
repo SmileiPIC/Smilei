@@ -111,14 +111,14 @@ public:
         }
         // iDim = 1 & 2
         else {
-            if( particles.distance2_to_axis( ipart ) >= y_max2 ) {
+            if( particles.distance2ToAxis( ipart ) >= y_max2 ) {
                 if( bc_ymax==NULL ) {
                     keep_part = 0;
                 } else {
                     keep_part *= ( *bc_ymax )( particles, ipart, -1, 2.*y_max, species, nrj_iPart );
                 }
             }
-            if( particles.distance2_to_axis( ipart ) < y_min2 ) {
+            if( particles.distance2ToAxis( ipart ) < y_min2 ) {
                 keep_part = 0; //bc_ymin is always NULL because there are no y_min BC in AM geometry for particles.
                 //std::cout<<"removed particle position"<<particles.position(0,iPart)<<" , "<< particles.position(1,iPart)<<" , "<<particles.position(2,iPart)<<std::endl;
             }
@@ -153,12 +153,10 @@ private:
     int nDim_particle;
     //! Space dimension of field
     int nDim_field;
-//<<<<<<< HEAD
+
     bool isAM;
     
-//=======
 
-//>>>>>>> develop
 };
 
 #endif

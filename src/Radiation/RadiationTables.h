@@ -16,7 +16,10 @@
 #include <fstream>
 #include <vector>
 #include <string>
-
+#include <cstring>
+#include <iomanip>
+#include <cmath>
+#include "userFunctions.h"
 #include "Params.h"
 #include "RadiationTools.h"
 #include "H5.h"
@@ -46,32 +49,10 @@ public:
     // ---------------------------------------------------------------------
     // PHYSICAL COMPUTATION
     // ---------------------------------------------------------------------
-
-    //! Synchrotron emissivity from Ritus
-    //! \param particle_chi particle quantum parameter
-    //! \param photon_chi photon quantum parameter
-    //! \param nb_iterations number of iterations for the Gauss-Legendre integration
-    //! \param eps epsilon for the modified bessel function
-    static double computeRitusSynchrotronEmissivity( double particle_chi,
-            double photon_chi,
-            int nb_iterations,
-            double eps );
-
+    
     //! Computation of the photon production yield dNph/dt which is
     //! also the cross-section for the Monte-Carlo
     double computePhotonProductionYield( double particle_chi, double particle_gamma );
-
-    //! Compute the integration of the synchrotron emissivity S/chi
-    //! refered to as K in the documentation
-    //! between min_photon_chi and max_photon_chi
-    //! using Gauss-Legendre for a given particle_chi value
-    //! \param nb_iterations number of iteration for the Gauss-Legendre
-    //! \param eps relative error on the integration
-    static double integrateSynchrotronEmissivity( double particle_chi,
-            double min_photon_chi,
-            double max_photon_chi,
-            int nb_iterations,
-            double eps );
 
     //! Determine randomly a photon quantum parameter photon_chi
     //! for an emission process
@@ -89,7 +70,7 @@ public:
     double computeHNiel( double particle_chi, int nb_iterations, double eps );
 
     //! Return the value of the function h(particle_chi) of Niel et al.
-    //! from the computed table h_table
+    //! from the computed table niel_.table
     //! \param particle_chi particle quantum parameter
     double getHNielFromTable( double particle_chi );
 
@@ -142,13 +123,13 @@ public:
     //#pragma omp declare simd
     double inline computeRidgersFit( double particle_chi )
     {
-        return pow( 1. + 4.8*( 1.+particle_chi )*log( 1. + 1.7*particle_chi )
-                    + 2.44*particle_chi*particle_chi, -2./3. );
+        return std::pow( 1.0 + 4.8*( 1.0+particle_chi )*std::log( 1.0 + 1.7*particle_chi )
+                    + 2.44*particle_chi*particle_chi, -2.0/3.0 );
     };
 
     std::string inline getNielHComputationMethod()
     {
-        return this->h_computation_method;
+        return this->niel_.computation_method_;
     }
 
     // -----------------------------------------------------------------------------
@@ -160,16 +141,16 @@ public:
     double inline getHNielFitOrder10( double particle_chi )
     {
         // Max relative error ~2E-4
-        return exp( -3.231764974833856e-08 * pow( log( particle_chi ), 10 )
-                    -7.574417415366786e-07 * pow( log( particle_chi ), 9 )
-                    -5.437005218419013e-06 * pow( log( particle_chi ), 8 )
-                    -4.359062260446135e-06 * pow( log( particle_chi ), 7 )
-                    + 5.417842511821415e-05 * pow( log( particle_chi ), 6 )
-                    -1.263905701127627e-04 * pow( log( particle_chi ), 5 )
-                    + 9.899812622393002e-04 * pow( log( particle_chi ), 4 )
-                    + 1.076648497464146e-02 * pow( log( particle_chi ), 3 )
-                    -1.624860613422593e-01 * pow( log( particle_chi ), 2 )
-                    + 1.496340836237785e+00 * log( particle_chi )
+        return exp( -3.231764974833856e-08 * pow( std::log( particle_chi ), 10 )
+                    -7.574417415366786e-07 * pow( std::log( particle_chi ), 9 )
+                    -5.437005218419013e-06 * pow( std::log( particle_chi ), 8 )
+                    -4.359062260446135e-06 * pow( std::log( particle_chi ), 7 )
+                    + 5.417842511821415e-05 * pow( std::log( particle_chi ), 6 )
+                    -1.263905701127627e-04 * pow( std::log( particle_chi ), 5 )
+                    + 9.899812622393002e-04 * pow( std::log( particle_chi ), 4 )
+                    + 1.076648497464146e-02 * pow( std::log( particle_chi ), 3 )
+                    -1.624860613422593e-01 * pow( std::log( particle_chi ), 2 )
+                    + 1.496340836237785e+00 * std::log( particle_chi )
                     -2.756744141581370e+00 );
     }
 
@@ -182,11 +163,11 @@ public:
     double inline getHNielFitOrder5( double particle_chi )
     {
         // Max relative error ~0.02
-        return exp( 1.399937206900322e-04 * pow( log( particle_chi ), 5 )
-                    + 3.123718241260330e-03 * pow( log( particle_chi ), 4 )
-                    + 1.096559086628964e-02 * pow( log( particle_chi ), 3 )
-                    -1.733977278199592e-01 * pow( log( particle_chi ), 2 )
-                    + 1.492675770100125e+00 * log( particle_chi )
+        return exp( 1.399937206900322e-04 * pow( std::log( particle_chi ), 5 )
+                    + 3.123718241260330e-03 * pow( std::log( particle_chi ), 4 )
+                    + 1.096559086628964e-02 * pow( std::log( particle_chi ), 3 )
+                    -1.733977278199592e-01 * pow( std::log( particle_chi ), 2 )
+                    + 1.492675770100125e+00 * std::log( particle_chi )
                     -2.748991631516466e+00 );
     }
 
@@ -199,7 +180,7 @@ public:
     double inline getHNielFitRidgers( double particle_chi )
     {
         return pow( particle_chi, 3 )*1.9846415503393384*pow( 1. +
-                ( 1. + 4.528*particle_chi )*log( 1.+12.29*particle_chi ) + 4.632*pow( particle_chi, 2 ), -7./6. );
+                ( 1. + 4.528*particle_chi )*std::log( 1.+12.29*particle_chi ) + 4.632*pow( particle_chi, 2 ), -7./6. );
     }
 
     // -----------------------------------------------------------------------------
@@ -209,47 +190,6 @@ public:
     {
         return factor_classical_radiated_power_;
     }
-
-
-    // ---------------------------------------------------------------------
-    // TABLE COMPUTATION
-    // ---------------------------------------------------------------------
-
-    //! Computation of the table h that is a discetization of the h function
-    //! in the stochastic model of Niel.
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void computeHTable( SmileiMPI *smpi );
-
-    //! Generate table values for Integration of F/chi: integfochi_table
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void computeIntegfochiTable( SmileiMPI *smpi );
-
-    //! Computation of the minimum photon quantum parameter for the array
-    //! xip (xip_chiphmin) and computation of the xip array.
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void computeXipTable( SmileiMPI *smpi );
-
-    //! Compute all the tables
-    void computeAndOutputTables( Params &params, SmileiMPI *smpi );
-
-    // ---------------------------------------------------------------------
-    // TABLE OUTPUTS
-    // ---------------------------------------------------------------------
-
-    //! Write in a file table values of the h table
-    void outputHTable(SmileiMPI *smpi);
-
-    //! Write in a file table values for Integration of F/chi: integfochi_table
-    void outputIntegfochiTable(SmileiMPI *smpi);
-
-    //! Write in a file the table xip_chiphmin and xip
-    void outputXipTable(SmileiMPI *smpi);
-
-    //! Output all computed tables so that they can be
-    //! read at the next run
-    //! Table output by the master MPI rank
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void outputTables( SmileiMPI *smpi );
 
     // ---------------------------------------------------------------------
     // TABLE READING
@@ -265,7 +205,7 @@ public:
 
     //! Read the external table xip_chiphmin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void readXipTable( SmileiMPI *smpi );
+    void readXiTable( SmileiMPI *smpi );
 
     //! Read the external all external tables for the radiation
     //! \param smpi Object of class SmileiMPI containing MPI properties
@@ -285,7 +225,7 @@ public:
 
     //! Bcast of the external table xip_chiphmin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcastTableXip( SmileiMPI *smpi );
+    void bcastTableXi( SmileiMPI *smpi );
 
 private:
 
@@ -313,125 +253,130 @@ private:
     // Table h for the
     // stochastic diffusive operator of Niel et al.
     // ---------------------------------------------
-
-    //! Array containing tabulated values of the function h for the
-    //! stochastic diffusive operator of Niel et al.
-    std::vector<double > h_table;
-
-    //! Minimum boundary of the table h
-    double h_chipa_min;
-
-    //! Log10 of the minimum boundary of the table h
-    double h_log10_chipa_min;
-
-    //! Maximum boundary of the table h
-    double h_chipa_max;
-
-    //! Delta chi for the table h
-    double h_chipa_delta;
-
-    //! Dimension of the array h
-    int h_dim;
-
-    //! Inverse delta chi for the table h
-    double h_chipa_inv_delta;
-
-    //! This variable is true if the table is computed, false if read
-    bool h_computed;
-
-    //! Method to be used to get the h values (table, fit5, fit10)
-    std::string h_computation_method;
+    
+    struct Niel {
+        
+        //! Array containing tabulated values of the function h for the
+        //! stochastic diffusive operator of Niel et al.
+        std::vector<double > table_;
+        
+        //! Minimum boundary of the table h
+        double min_particle_chi_;
+        
+        //! Maximum boundary of the table h
+        double max_particle_chi_;
+        
+        //! Inverse delta chi for the table h
+        double inv_particle_chi_delta_;
+        
+        //! Delta chi for the table h
+        double particle_chi_delta_;
+        
+        //! Log10 of the minimum boundary of the table h
+        double log10_min_particle_chi_;
+        
+        //! Method to be used to get the h values (table, fit5, fit10)
+        std::string computation_method_;
+        
+        //! Dimension of the array h
+        int size_particle_chi_;
+        
+    };
+    
+    struct Niel niel_;
 
     // ---------------------------------------------
     // Table integfochi
     // ---------------------------------------------
 
-    //! Array containing tabulated values for the computation
-    //! of the photon production rate dN_{\gamma}/dt
-    //! (which is also the optical depth for the Monte-Carlo process).
-    //! This table is the integration of the Synchrotron emissivity
-    //! refers to as F over the quantum parameter Chi.
-    std::vector<double > integfochi_table;
+    struct IntegrationFoverChi {
+        
+        //! Array containing tabulated values for the computation
+        //! of the photon production rate dN_{\gamma}/dt
+        //! (which is also the optical depth for the Monte-Carlo process).
+        //! This table is the integration of the Synchrotron emissivity
+        //! refers to as F over the quantum parameter Chi.
+        std::vector<double > table_;
+        
+        //! Minimum boundary of the table integfochi_table
+        double min_particle_chi_;
+        
+        //! Maximum boundary of the table integfochi_table
+        double max_particle_chi_;
+        
+        //! Minimum boundary of the table integfochi_table
+        double size_particle_chi_;
+        
+        //! Log10 of the minimum boundary of the table integfochi_table
+        double log10_min_particle_chi_;
 
-    //! Minimum boundary of the table integfochi_table
-    double integfochi_chipa_min;
+        //! Delta chi for the table integfochi_table
+        double particle_chi_delta_;
 
-    //! Log10 of the minimum boundary of the table integfochi_table
-    double integfochi_log10_chipa_min;
-
-    //! Maximum boundary of the table integfochi_table
-    double integfochi_chipa_max;
-
-    //! Delta chi for the table integfochi_table
-    double integfochi_chipa_delta;
-
-    //! Inverse delta chi for the table integfochi_table
-    double integfochi_chipa_inv_delta;
-
-    //! Dimension of the array integfochi_table
-    int integfochi_dim;
-
-    //! This variable is true if the table is computed, false if read
-    bool integfochi_computed;
-
-    // ---------------------------------------------
-    // Table photon_chi min for xip table
-    // ---------------------------------------------
-
-    //! Table containing the photon_chi min values
-    //! Under this value, photon energy is
-    //! considered negligible
-    std::vector<double > xip_chiphmin_table;
+        //! Inverse delta chi for the table integfochi_table
+        double inv_particle_chi_delta_;
+        
+    };
+    
+    struct IntegrationFoverChi integfochi;
 
     // ---------------------------------------------
-    // Table xip
+    // Structure for min_photon_chi_for_xi and xi
     // ---------------------------------------------
 
-    //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
-    //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
-    std::vector<double> xip_table;
+    struct Xi {
+        
+        //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
+        //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
+        std::vector<double> table_ ;
+        
+        //! Table containing the photon_chi min values
+        //! Under this value, photon energy is
+        //! considered negligible
+        std::vector<double > min_photon_chi_table_;
+        
+        //! Logarithm of the minimum boundary for particle_chi in the table xip
+        //! and xip_chiphmin
+        double log10_min_particle_chi_;
+        
+        //! Maximum boundary for particle_chi in the table xip and xip_chiphmin
+        double max_particle_chi_;
+        
+        //! Minimum boundary for particle_chi in the table xip and xip_chiphmin
+        double min_particle_chi_;
+        
+        //! Delta for the particle_chi discretization  in the table xip and xip_chiphmin
+        double particle_chi_delta_;
+        
+        //! Inverse of the delta for the particle_chi discretization
+        //! in the table xip and xip_chiphmin
+        double inv_particle_chi_delta_;
+        
+        //! Dimension of the discretized parameter particle_chi
+        int size_particle_chi_;
+        
+        //! Dimension of the discretized parameter photon_chi
+        int size_photon_chi_;
+        
+        //! 1/(xi_.size_photon_chi_ - 1)
+        double inv_size_photon_chi_minus_one_;
 
-    //! Minimum boundary for particle_chi in the table xip and xip_chiphmin
-    double xip_chipa_min;
+        //! xip power
+        // double power_;
 
-    //! Logarithm of the minimum boundary for particle_chi in the table xip
-    //! and xip_chiphmin
-    double xip_log10_chipa_min;
-
-    //! Maximum boundary for particle_chi in the table xip and xip_chiphmin
-    double xip_chipa_max;
-
-    //! Delta for the particle_chi discretization  in the table xip and xip_chiphmin
-    double xip_chipa_delta;
-
-    //! Inverse of the delta for the particle_chi discretization
-    //! in the table xip and xip_chiphmin
-    double xip_chipa_inv_delta;
-
-    //! Dimension of the discretized parameter particle_chi
-    int xip_chipa_dim;
-
-    //! Dimension of the discretized parameter photon_chi
-    int xip_chiph_dim;
-
-    //! 1/(xip_chiph_dim - 1)
-    double xip_inv_chiph_dim_minus_one;
-
-    //! xip power
-    double xip_power;
-
-    //! xip threshold
-    double xip_threshold;
-
-    //! This variable is true if the table is computed, false if read
-    bool xip_computed;
+        //! xip threshold
+        // double threshold_;
+        
+    };
+    
+    struct Xi xi_;
 
     // ---------------------------------------------
     // Factors
     // ---------------------------------------------
 
     //! Factor for the computation of dNphdt
-    double factor_dNphdt;
+    double factor_dNph_dt_;
 
     //! Factor for the Classical radiated power
     //! 2.*params.fine_struct_cst/(3.*normalized_Compton_wavelength_);
@@ -439,7 +384,6 @@ private:
 
     //! Normalized reduced Compton wavelength
     double normalized_Compton_wavelength_;
-
 
 };
 

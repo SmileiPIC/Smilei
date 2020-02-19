@@ -118,8 +118,8 @@ void RadiationNiel::operator()(
 
     const double minimum_chi_continuous_ = RadiationTables.getMinimumChiContinuous();
     const double factor_classical_radiated_power_      = RadiationTables.getFactorClassicalRadiatedPower();
-    const std::string h_computation_method = RadiationTables.getNielHComputationMethod();
-
+    const std::string niel_computation_method = RadiationTables.getNielHComputationMethod();
+    
     // _______________________________________________________________
     // Computation
 
@@ -216,7 +216,7 @@ void RadiationNiel::operator()(
 
     // Computation of the diffusion coefficients
     // Using the table (non-vectorized)
-    if( h_computation_method == "table" ) {
+    if( niel_computation_method == "table" ) {
         // #pragma omp simd
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
@@ -232,7 +232,7 @@ void RadiationNiel::operator()(
         }
     }
     // Using the fit at order 5 (vectorized)
-    else if( h_computation_method == "fit5" ) {
+    else if( niel_computation_method == "fit5" ) {
         #pragma omp simd private(temp)
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
@@ -246,7 +246,7 @@ void RadiationNiel::operator()(
         }
     }
     // Using the fit at order 10 (vectorized)
-    else if( h_computation_method == "fit10" ) {
+    else if( niel_computation_method == "fit10" ) {
         #pragma omp simd private(temp)
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
@@ -260,8 +260,8 @@ void RadiationNiel::operator()(
         }
     }
     // Using Ridgers
-    else if( h_computation_method == "ridgers" ) {
-
+    else if( niel_computation_method == "ridgers" ) {
+    
         #pragma omp simd private(temp)
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 

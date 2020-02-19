@@ -22,7 +22,7 @@ public:
         
         if( model == "tunnel" ) {
             
-            if( species->max_charge > ( int )species->atomic_number_ ) {
+            if( species->max_charge_ > ( int )species->atomic_number_ ) {
                 ERROR( "Charge > atomic_number for species " << species->name_ );
             }
             
@@ -30,7 +30,7 @@ public:
             
         } else if( model == "from_rate" ) {
             
-            if( species->max_charge > ( int )species->maximum_charge_state_ ) {
+            if( species->max_charge_ > ( int )species->maximum_charge_state_ ) {
                 ERROR( "For species '" << species->name_ << ": charge > maximum_charge_state" );
             }
             

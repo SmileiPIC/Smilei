@@ -94,9 +94,6 @@ SMILEI_SCRIPTS = SMILEI_ROOT+"scripts"+s
 SMILEI_VALIDATION = SMILEI_ROOT+"validation"+s
 SMILEI_REFERENCES = SMILEI_VALIDATION+"references"+s
 SMILEI_BENCHS = SMILEI_ROOT+"benchmarks"+s
-# Path to external databases
-# For instance, the radiation loss
-SMILEI_DATABASE = ''
 
 # SCRIPTS VARIABLES
 EXEC_SCRIPT = 'exec_script.sh'
@@ -109,7 +106,8 @@ import happi
 
 # OTHER VARIABLES
 POINCARE = "poincare"
-JOLLYJUMPER = "llrlsi-gw"
+LLR = "llrlsi-gw"
+PARTITION = "jollyjumper"
 HOSTNAME = socket.gethostname()
 
 # DIR VARIABLES
@@ -118,6 +116,7 @@ WORKDIR = ""
 # DEFAULT VALUES FOR OPTIONS
 OMP = 12
 MPI = 4
+PPN = 12
 EXECUTION = False
 VERBOSE = False
 BENCH=""
@@ -128,14 +127,14 @@ nb_restarts = 0
 
 # TO PRINT USAGE
 def usage():
-	print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>]' )
+	print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>] [-p <partition name>]' )
 
 # GET COMMAND-LINE OPTIONS
 try:
 	options, remainder = getopt.getopt(
 		sys.argv[1:],
-		'o:m:b:r:gshvc',
-		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS='])
+		'o:m:b:r:p:gshvc',
+		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS=', 'PARTITION='])
 except getopt.GetoptError as err:
 	usage()
 	sys.exit(4)
@@ -150,6 +149,8 @@ for opt, arg in options:
 		MPI = int(arg)
 	elif opt in ('-b', '--BENCH'):
 		BENCH = arg
+	elif opt in ('-p', '--PARTITION'):
+		PARTITION = arg
 	elif opt in ('-c', '--COMPILEONLY'):
 		COMPILE_ONLY=True
 	elif opt in ('-h', '--HELP'):
@@ -166,6 +167,9 @@ for opt, arg in options:
 		print( "     -m <nb_MPIProcs>")
 		print( "       <nb_MPIProcs> : number of MPI processes used for the execution")
 		print( "     DEFAULT : 4")
+		print( "-p")
+		print( "     -p <partition name>")
+		print( "       <partition name>: partition name on super-computers")
 		print( "-g")
 		print( "     Generates the references")
 		print( "-s")
@@ -292,9 +296,9 @@ def RUN_POINCARE(command, dir):
 			shutil.rmtree(WORKDIR)
 		sys.exit(2)
 
-def RUN_JOLLYJUMPER(command, dir):
+def RUN_LLR(command, dir):
 	"""
-	Run the command `command` on the system Jollyjumper.
+	Run the command `command` on the LLR system.
 
 	Inputs:
 	- command: command to run
@@ -306,9 +310,14 @@ def RUN_JOLLYJUMPER(command, dir):
 	exit_status_fd.close()
 	# Create script
 	with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-		NODES=((int(MPI)*int(OMP)-1)/24)+1
+		#NODES=((int(MPI)*int(OMP)-1)/24)+1
+		NODES=int(math.ceil(MPI/2.))
+		if (PARTITION == "jollyjumper"):
+			PPN = 24
+		elif (PARTITION == "tornado"):
+			PPN = 36
 		exec_script_desc.write(
-			"#PBS -l nodes="+str(NODES)+":ppn=24 \n"
+			"#PBS -l nodes="+str(NODES)+":ppn="+str(PPN)+" \n"
 			+"#PBS -q default \n"
 			+"#PBS -j oe\n"
 			+"module purge\n"
@@ -332,7 +341,10 @@ def RUN_JOLLYJUMPER(command, dir):
 			+"echo $? > exit_status_file \n"
 		)
 	# Run command
-	COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
+	if (PARTITION=="jollyjumper"):
+		COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
+	elif (PARTITION=="tornado"):
+		COMMAND = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+EXEC_SCRIPT
 	try:
 		check_call(COMMAND, shell=True)
 	except CalledProcessError:
@@ -394,6 +406,8 @@ os.chdir(SMILEI_ROOT)
 WORKDIR_BASE = SMILEI_ROOT+"validation"+s+"workdirs"
 SMILEI_W = WORKDIR_BASE+s+"smilei"
 SMILEI_R = SMILEI_ROOT+s+"smilei"
+SMILEI_TOOLS_W = WORKDIR_BASE+s+"smilei_tables"
+SMILEI_TOOLS_R = SMILEI_ROOT+s+"smilei_tables"
 if os.path.exists(SMILEI_R):
 	STAT_SMILEI_R_OLD = os.stat(SMILEI_R)
 else :
@@ -403,23 +417,29 @@ COMPILE_OUT=WORKDIR_BASE+s+'compilation_out'
 COMPILE_OUT_TMP=WORKDIR_BASE+s+'compilation_out_temp'
 
 # Find commands according to the host
-if JOLLYJUMPER in HOSTNAME :
-	if 12 % OMP != 0:
-		print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME)
+if LLR in HOSTNAME :
+	if (PARTITION=="jollyjumper"):
+		PPN = 12
+	elif (PARTITION=="tornado"):
+		PPN = 18
+	if PPN % OMP != 0:
+		print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
 		sys.exit(4)
-	NODES=((int(MPI)*int(OMP)-1)/24)+1
-	NPERSOCKET = int(math.ceil(MPI/NODES/2.))
-	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	#NODES=((int(MPI)*int(OMP)-1)/24)+1
+	NODES=int(math.ceil(MPI/2.))
+	#NPERSOCKET = int(math.ceil(MPI/NODES/2.))
+	NPERSOCKET = 1
+	COMPILE_COMMAND = 'make -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
-	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
-	RUN = RUN_JOLLYJUMPER
+	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN)+" -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+	RUN = RUN_LLR
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
 	#CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	COMPILE_COMMAND = 'make -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
-	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_POINCARE
 # Local computers
@@ -437,8 +457,8 @@ else:
 		MPIRUN = "mpirun -np "
 
 	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+MPIRUN+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
 	RUN = RUN_OTHER
 
@@ -456,12 +476,14 @@ try :
 		os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
 	# Compile
 	RUN( COMPILE_COMMAND, SMILEI_ROOT )
+	RUN( COMPILE_TOOLS_COMMAND, SMILEI_ROOT )
 	os.rename(COMPILE_OUT_TMP, COMPILE_OUT)
-	if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R):
+	if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R) or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
 		# if new bin, archive the workdir (if it contains a smilei bin)  and create a new one with new smilei and compilation_out inside
-		if os.path.exists(SMILEI_W):
+		if os.path.exists(SMILEI_W) and os.path.exists(SMILEI_TOOLS_W):
 			workdir_archiv(SMILEI_W)
 		shutil.copy2(SMILEI_R,SMILEI_W)
+		shutil.copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
 		if COMPILE_ONLY:
 			if VERBOSE:
 				print(  "Smilei validation succeed.")
@@ -479,6 +501,7 @@ except CalledProcessError as e:
 		print( "Smilei validation cannot be done : compilation failed. " + str(e.returncode))
 	sys.exit(3)
 if VERBOSE: print( "")
+
 
 def findReference(bench_name):
 	try:
@@ -558,7 +581,7 @@ class CompareToReference(object):
 			print( "" )
 			global _dataNotMatching
 			_dataNotMatching = True
-
+			
 # DEFINE A CLASS TO VIEW DIFFERENCES BETWEEN A SIMULATION AND A REFERENCE
 class ShowDiffWithReference(object):
 	def __init__(self, bench_name):
@@ -720,22 +743,24 @@ for BENCH in SMILEI_BENCH_LIST :
 
 		# Copy of the databases
 		# For the cases that need a database
-		if BENCH in [
-				"tst2d_08_synchrotron_chi1.py",
-				"tst2d_09_synchrotron_chi0.1.py",
-				"tst2d_v_09_synchrotron_chi0.1.py",
-				"tst2d_v_10_multiphoton_Breit_Wheeler.py",
-				"tst1d_09_rad_electron_laser_collision.py",
-				"tst1d_10_pair_electron_laser_collision.py",
-				"tst2d_10_multiphoton_Breit_Wheeler.py"
-			]:
-			try :
-				# Copy the database
-				check_call(['cp '+SMILEI_DATABASE+'/*.h5 '+RESTART_WORKDIR], shell=True)
-			except CalledProcessError:
-				if VERBOSE :
-					print(  "Execution failed to copy databases in ",RESTART_WORKDIR)
-				sys.exit(2)
+		# if BENCH in [
+		# 		"tst1d_09_rad_electron_laser_collision.py",
+		# 		"tst1d_10_pair_electron_laser_collision.py",
+		# 		"tst2d_08_synchrotron_chi1.py",
+		# 		"tst2d_09_synchrotron_chi0.1.py",
+		# 		"tst2d_v_09_synchrotron_chi0.1.py",
+		# 		"tst2d_v_10_multiphoton_Breit_Wheeler.py",
+		# 		"tst2d_10_multiphoton_Breit_Wheeler.py",
+		# 		"tst2d_15_qed_cascade_particle_merging.py",
+		# 		"tst3d_15_magnetic_shower_particle_merging.py"
+		# 	]:
+		# 	try :
+		# 		# Copy the database
+		# 		check_call(['cp '+SMILEI_DATABASE+'/*.h5 '+RESTART_WORKDIR], shell=True)
+		# 	except CalledProcessError:
+		# 		if VERBOSE :
+		# 			print(  "Execution failed to copy databases in ",RESTART_WORKDIR)
+		# 		sys.exit(2)
 
 		# If there are restarts, adds the Checkpoints block
 		SMILEI_NAMELISTS = SMILEI_BENCH

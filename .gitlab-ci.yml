@@ -7,7 +7,7 @@ compile:
   only:
     - develop
     - radiationSpectrum
-    - develop_externaltimefields
+    - AMsorting
 
   script:
     # Force workdir cleaning in case of retried
@@ -23,66 +23,68 @@ compile:
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -c  -v
+    - python validation.py -c -v
+    #- python validation.py -c -o 9 -v -p "tornado"
 
 makerun1D:
   stage: makerun
   only:
     - develop
     - radiationSpectrum
-    - develop_externaltimefields
-
+    - AMsorting
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1
+    # - python validation.py -b "tst1d_*_*.py" -m 4 -o 9 -v -r 1 -p "tornado"
 
 makerun2D:
   stage: makerun
   only:
     - develop
     - radiationSpectrum
-    - develop_externaltimefields
-
+    - AMsorting
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst2d_*_*.py" -m 4 -o 4  -v -r 1
+    - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1
+    # - python validation.py -b "tst2d_??_*.py" -m 4 -o 9  -v -r 1 -p "tornado"
 
 makerun3D:
   stage: makerun
   only:
     - develop
     - radiationSpectrum
-    - develop_externaltimefields
+    - AMsorting
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst3d_??_*.py" -m 4 -o 4 -v -r 1
+    - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1
 
 makerunAM:
   stage: makerun
   only:
     - develop
-    - radiationSpectrum
-    - develop_externaltimefields
+    - AMsorting
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tstAM_??_*.py" -m 4 -o 4 -v
+    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v
 
 makerunV:
   stage: makerun
   only:
     - develop
     - radiationSpectrum
-    - develop_externaltimefields
+    - AMsorting
 
   script:
     # Move in test dir
@@ -95,7 +97,7 @@ makerunCollisions:
   only:
     - develop
     - radiationSpectrum
-    - develop_externaltimefields
+    - AMsorting
     
   script:
     # Move in test dir

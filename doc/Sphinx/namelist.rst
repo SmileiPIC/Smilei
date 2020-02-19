@@ -607,7 +607,7 @@ Each species has to be defined in a ``Species`` block::
       # Merging
       merging_method = "vranic_spherical",
       merge_every = 5,
-      merge_min_particles_per_cell = 16,:q
+      merge_min_particles_per_cell = 16,
       merge_max_packet_size = 4,
       merge_min_packet_size = 2,
       merge_momentum_cell_size = [32,16,16],
@@ -1034,8 +1034,9 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 Particle Merging
 ^^^^^^^^^^^^^^^^
 
-The macro-particle merging method is documented in the :doc:`corresponding page <particle_merging>`.
-It is defined in the ``Species`` block::
+The macro-particle merging method is documented in
+the :doc:`corresponding page <particle_merging>`.
+It is optionnally specified in the ``Species`` block::
 
   Species(
       ....
@@ -1055,19 +1056,20 @@ It is defined in the ``Species`` block::
 
 .. py:data:: merging_method
 
-  :default: ``None``
+  :default: ``"none"``
 
   The particle merging method to use:
 
-  * ``none``: the merging process is not activated
-  * ``vranic_cartesian``: merging process using the method of M. Vranic with a cartesian momentum space decomposition
-  * ``vranic_spherical``: merging process using the method of M. Vranic with a spherical momentum space decomposition
+  * ``"none"``: no merging
+  * ``"vranic_cartesian"``: method of M. Vranic with a cartesian momentum-space decomposition
+  * ``"vranic_spherical"``: method of M. Vranic with a spherical momentum-space decomposition
 
 .. py:data:: merge_every
 
   :default: ``0``
 
-  The particle merging time selection (:ref:`time selection <TimeSelections>`).
+  Number of timesteps between each merging event
+  **or** a :ref:`time selection <TimeSelections>`.
 
 .. py:data:: min_particles_per_cell
 
@@ -1091,38 +1093,38 @@ It is defined in the ``Species`` block::
 
   :default: ``[16,16,16]``
 
-  The momentum space discretization.
+  A list of 3 integers defining the number of sub-groups in each direction
+  for the momentum-space discretization.
 
 .. py:data:: merge_discretization_scale
 
-  :default: ``linear``
+  :default: ``"linear"``
 
-  The momentum discretization scale. The scale can be ``linear`` or ``log``.
-  The ``log`` scale only works with the spherical discretization for the moment.
-  In logarithmic scale, Smilei needs a minimum momentum value to avoid 0.
-  This value is provided by the parameter ``merge_min_momentum``.
-  By default, this value is set to :math:`10^{-5}`.
+  The momentum discretization scale:: ``"linear"`` or ``"log"``.
+  The ``"log"`` scale only works with the spherical discretization at the moment.
 
 .. py:data:: merge_min_momentum
 
   :default: ``1e-5``
 
-  :red:`[for experts]` The minimum momentum value when the log scale is chosen (``merge_discretization_scale = log``).
-  To set a minimum value is compulsory to avoid the potential 0 value in the log domain.
+  :red:`[for experts]` The minimum momentum value when the log scale
+  is chosen (``merge_discretization_scale = log``).
+  This avoids a potential 0 value in the log domain.
 
 .. py:data:: merge_min_momentum_cell_length
 
   :default: ``[1e-10,1e-10,1e-10]``
 
-  :red:`[for experts]` The minimum momentum cell length for the discretization.
-  If the specified discretization induces smaller momentum cell length,
-  then the number of momentum cell (momentum cell size) is set to 1 in this direction.
+  :red:`[for experts]` The minimum sub-group length for the momentum-space
+  discretization (below which the number of sub-groups is set to 1).
 
 .. py:data:: merge_accumulation_correction
 
   :default: ``True``
 
-  :red:`[for experts]` Activation of the accumulation correction (see :ref:`vranic_accululation_effect` for more information). The correction only works in linear scale.
+  :red:`[for experts]` Activates the accumulation correction
+  (see :doc:`particle_merging` for more information).
+  The correction only works in linear scale.
 
 
 
@@ -2001,6 +2003,7 @@ Collisions
       coulomb_log = 5.,
       debug_every = 1000,
       ionizing = False,
+  #      nuclear_reaction = [],
   )
 
 
@@ -2053,7 +2056,7 @@ Collisions
 
 .. py:data:: ionizing
 
-  :default: False
+  :default: ``False``
 
   :ref:`Collisional ionization <CollIonization>` is set when this parameter is not ``False``.
   It can either be set to the name of a pre-existing electron species (where the ionized
@@ -2064,6 +2067,36 @@ Collisions
   one all ions of the same :py:data:`atomic_number`.
 
 
+.. rst-class:: experimental
+
+.. py:data:: nuclear_reaction
+
+  :type: a list of strings
+  :default: ``None`` (no nuclear reaction)
+
+  A list of the species names for the products of nuclear reactions
+  that may occur during collisions. You may omit product species if they are not necessary
+  for the simulation.
+
+  All members of :py:data:`species1` must be the same type of atoms, which is automatically
+  recognized by their :py:data:`mass` and :py:data:`atomic_number`. The same applies for
+  all members of :py:data:`species2`.
+
+  In the current version, only the reaction D(d,n)He³ is available.
+
+.. rst-class:: experimental
+
+.. py:data:: nuclear_reaction_multiplier
+
+  :type: a float
+  :default: 0. (automatically adjusted)
+
+  The rate multiplier for nuclear reactions. It is a positive number that artificially
+  increases the occurence of reactions so that a good statistics is obtained. The number
+  of actual reaction products is adjusted by changing their weights in order to provide
+  a physically correct number of reactions. Leave this number to ``0.`` for an automatic
+  rate multiplier: the final number of produced macro-particles will be of the same order
+  as that of reactants.
 
 
 
@@ -2091,37 +2124,11 @@ tables.
     minimum_chi_continuous = 1e-3,
     minimum_chi_discontinuous = 1e-2,
     table_path = "../databases/",
-    compute_table = False,
 
-    # Following parameters are only if you want to compute the tables
+    # Parameters for Niel et al.
+    Niel_computation_method = "table",
 
-    output_format = "hdf5",
-
-    # Parameters to generate the table h used by Niel et al.
-    h_chipa_min = 1E-3,
-    h_chipa_max = 1E1,
-    h_dim = 128,
-    h_computation_method = "table",
-
-    # Parameter to generate the table integfochi used by the Monte-Carlo model
-    integfochi_chipa_min = 1e-4,
-    integfochi_chipa_max = 1e1,
-    integfochi_dim = 128,
-
-    # Parameter to generate the table xip used by the Monte-Carlo model
-    xip_chipa_min = 1e-4,
-    xip_chipa_max = 1e1,
-    xip_power = 4,
-    xip_threshold = 1e-3,
-    xip_chipa_dim = 128,
-    xip_chiph_dim = 128,
   )
-
-.. py:data:: output_format
-
-  :default: ``"hdf5"``
-
-  Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
 
 .. py:data:: minimum_chi_continuous
 
@@ -2140,37 +2147,14 @@ tables.
 
 .. py:data:: table_path
 
-  :default: ``"./"``
+  :default: ``""``
 
   Path to the external tables for the radiation losses.
-  Default tables are located in ``databases``.
+  If empty, the default tables are used.
+  Default tables are embedded in the code.
+  External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
 
-.. py:data:: compute_table
-
-  :default: False
-
-  If True, the tables for the selected radiation model are computed
-  with the requested parameters and stored at the path `table_path`.
-
-.. py:data:: h_chipa_min
-
-  :default: 1e-3
-
-  Minimum value of the quantum parameter :math:`\chi` for the table *h* of Niel `et al`.
-
-.. py:data:: h_chipa_max
-
-  :default: 1e1
-
-  Maximum value of the quantum parameter :math:`\chi` for the table *h* of Niel `et al`.
-
-.. py:data:: h_dim
-
-  :default: 128
-
-  Dimension of the table *h* of Niel `et al`.
-
-.. py:data:: h_computation_method
+.. py:data:: Niel_computation_method
 
   :default: "table"
 
@@ -2190,68 +2174,6 @@ tables.
   Table access prevent total vectorization.
   Fits are vectorizable.
 
-.. py:data:: integfochi_chipa_min
-
-  :default: 1e-3
-
-  Minimum value of the quantum parameter c for the table containing
-  the integration of :math:`F/\chi`.
-
-.. py:data:: integfochi_chipa_max
-
-  :default: 1e1
-
-  Maximum value of the quantum parameter :math:`\chi` for the table containing
-  the integration of :math:`F/\chi`.
-
-.. py:data:: integfochi_dim
-
-  :default: 128
-
-  Discretization of the table containing
-  the integration of :math:`F/\chi`.
-
-.. py:data:: xip_chipa_min
-
-  :default: 1e-3
-
-  Minimum particle quantum parameter for the computation of the *chimin*
-  and *xip* tables.
-
-.. py:data:: xip_chipa_max
-
-  :default: 1e1
-
-  Maximum particle quantum parameter for the computation of the *chimin*
-  and *xip* tables.
-
-.. py:data:: xip_power
-
-  :default: 4
-
-  Maximum decrease in order of magnitude for the search for the minimum value
-  of the photon quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_threshold
-
-  :default: 1e-3
-
-  Minimum value of *xip* to compute the minimum value of the photon
-  quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_chipa_dim
-
-  :default: 128
-
-  Discretization of the *chimin* and *xip* tables in the *particle_chi* direction.
-
-.. py:data:: xip_chiph_dim
-
-  :default: 128
-
-  Discretization of the *xip* tables in the *photon_chi* direction.
-
-
 --------------------------------------------------------------------------------
 
 .. _MultiphotonBreitWheeler:
@@ -2261,118 +2183,28 @@ Multiphoton Breit-Wheeler
 
 The block ``MultiphotonBreitWheeler`` enables to tune parameters of the
 multiphoton Breit-Wheeler process and particularly the table generation.
+For more information on this physical mechanism, see :doc:`multiphoton_Breit_Wheeler`.
 
-There are two tables used for the multiphoton Breit-Wheeler refers to as the
-*T* table and the *xip* table.
+There are three tables used for the multiphoton Breit-Wheeler refers to as the
+*integration_dT_dchi*, *min_particle_chi_for_xi* and *xi* table.
 
 ::
 
   MultiphotonBreitWheeler(
 
-    # Table output format, can be "ascii", "binary", "hdf5"
-    output_format = "hdf5",
-
     # Path to the tables
     table_path = "../databases/",
-
-    # Flag to compute the tables
-    compute_table = False,
-
-    # Table T parameters
-    T_chiph_min = 1e-2,
-    T_chiph_max = 1e1,
-    T_dim = 128,
-
-    # Table xip parameters
-    xip_chiph_min = 1e-2,
-    xip_chiph_max = 1e1,
-    xip_power = 4,
-    xip_threshold = 1e-3,
-    xip_chipa_dim = 128,
-    xip_chiph_dim = 128,
 
   )
 
 .. py:data:: table_path
 
-  :default: ``"./"``
+  :default: ``""``
 
   Path to the external tables for the multiphoton Breit-Wheeler.
-  Default tables are located in ``databases``.
-
-.. py:data:: compute_table
-
-  :default: False
-
-  If True, the tables for the selected radiation model are computed
-  with the requested parameters and stored at the path `table_path`.
-
-.. py:data:: output_format
-
-  :default: ``"hdf5"``
-
-  Output format of the tables:
-    * ``"hdf5"``: ``multiphoton_Breit_Wheeler_tables.h5``
-    * ``"binary"``: ``tab_T.bin`` and ``tab_mBW_xip.bin``
-    * ``"ascii"``: ``tab_T.dat`` and ``tab_mBW_xip.dat``
-
-.. py:data:: T_chiph_min
-
-  :default: 1e-2
-
-  Minimum value of the photon quantum parameter :math:`\chi_\gamma` for the table *T*.
-
-.. py:data:: T_chiph_max
-
-  :default: 1e1
-
-  Maximum value of the photon quantum parameter :math:`\chi_\gamma` for the table *T*.
-
-.. py:data:: T_dim
-
-  :default: 128
-
-  Dimension of the table *T*.
-
-.. py:data:: xip_chiph_min
-
-  :default: 1e-2
-
-  Minimum photon quantum parameter for the computation of the *chimin*
-  and *xip* tables.
-
-.. py:data:: xip_chiph_max
-
-  :default: 1e1
-
-  Maximum photon quantum parameter for the computation of the *chimin*
-  and *xip* tables.
-
-.. py:data:: xip_power
-
-  :default: 4
-
-  Maximum decrease in order of magnitude for the search for the minimum value
-  of the photon quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_threshold
-
-  :default: 1e-3
-
-  Minimum value of *xip* to compute the minimum value of the photon
-  quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_chiph_dim
-
-  :default: 128
-
-  Discretization of the *chimin* and *xip* tables in the *photon_chi* direction.
-
-.. py:data:: xip_chipa_dim
-
-  :default: 128
-
-  Discretization of the *xip* tables in the *particle_chi* direction.
+  If empty, the default tables are used.
+  Default tables are embedded in the code.
+  External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
 
 --------------------------------------------------------------------------------
 
@@ -2434,8 +2266,8 @@ The full list of available scalars is given in the table below.
 +----------------+---------------------------------------------------------------------------+
 | **Space- & time-integrated Energies lost/gained at boundaries**                            |
 +----------------+---------------------------------------------------------------------------+
-| | Ukin_bnd     | | Kinetic contribution exchanged at the boundaries during the timestep    |
-| | Uelm_bnd     | | EM contribution exchanged at boundaries during the timestep             |
+| | Ukin_bnd     | | Time-accumulated kinetic energy exchanged at the boundaries             |
+| | Uelm_bnd     | | Time-accumulated EM energy exchanged at boundaries                      |
 | |              | |                                                                         |
 | | PoyXminInst  | | Poynting contribution through xmin boundary during the timestep         |
 | | PoyXmin      | | Time-accumulated Poynting contribution through xmin boundary            |

@@ -51,16 +51,16 @@ print ' Final number of positrons: ',ntot_positron[-1]
 print ' Final number of photons: ',ntot_photon[-1]
 
 Validate("Electron kinetic energy evolution: ", ukin_electron/utot[0], 1e-2 )
-Validate("Positron kinetic energy evolution: ", ukin_positron/utot[0], 1e-2 )
-Validate("Photon kinetic energy evolution: ", ukin_photon/utot[0], 1e-2 )
+Validate("Positron kinetic energy evolution: ", ukin_positron/utot[0], 2e-2 )
+Validate("Photon kinetic energy evolution: ", ukin_photon/utot[0], 2e-2 )
 Validate("Maximal relative error total energy: ", max(abs(utot[:] - utot[0]))/utot[0], 5e-3 )
 
 # ______________________________________________________________________________
 # Read energy spectrum
 
-if False:
+if True:
 
-    PartDiag = S.ParticleDiagnostic(diagNumber=0,timesteps = 1000)
+    PartDiag = S.ParticleBinning(diagNumber=0,timesteps = 300)
     gamma = np.array(PartDiag.get()["gamma"])
     density = np.array(PartDiag.get()["data"][0])
     integral = sum(density)*(gamma[1] - gamma[0])
@@ -68,9 +68,9 @@ if False:
     print ' Electron energy from spectrum: ',integral
     print ' Max from spectrum: ',max(density/integral)
 
-    Validate("Electron energy spectrum: ", density/integral, 1e-5 )
+    #Validate("Electron energy spectrum: ", density/integral, 1e-5 )
 
-    PartDiag = S.ParticleDiagnostic(diagNumber=1,timesteps = 1000)
+    PartDiag = S.ParticleBinning(diagNumber=1,timesteps = 300)
     gamma = np.array(PartDiag.get()["gamma"])
     density = np.array(PartDiag.get()["data"][0])
     integral = sum(density)*(gamma[1] - gamma[0])
@@ -78,4 +78,4 @@ if False:
     print ' Positron energy from spectrum: ',integral
     print ' Max from spectrum: ',max(density/integral)
 
-    Validate("Positron energy spectrum: ", density/integral, 1e-5 )
+    #Validate("Positron energy spectrum: ", density/integral, 1e-5 )

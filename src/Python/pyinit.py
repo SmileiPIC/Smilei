@@ -236,7 +236,7 @@ class Main(SmileiSingleton):
                 # Yee solver
                 if Main.maxwell_solver == 'Yee':
                     if (Main.geometry=="AMcylindrical"):
-                        Main.timestep = Main.timestep_over_CFL / math.sqrt(1./Main.cell_length[0]**2 + ((Main.number_of_modes-1)/Main.cell_length[1])**2 )
+                        Main.timestep = Main.timestep_over_CFL / math.sqrt(1./Main.cell_length[0]**2 + ((Main.number_of_AM-1)/Main.cell_length[1])**2 )
                     else:
                         dim = int(Main.geometry[0])
                         if dim<1 or dim>3:
@@ -440,6 +440,8 @@ class Collisions(SmileiComponent):
     coulomb_log = 0.
     debug_every = 0
     ionizing = False
+    nuclear_reaction = None
+    nuclear_reaction_multiplier = 0.
 
 
 #diagnostics
@@ -551,31 +553,12 @@ class RadiationReaction(SmileiComponent):
     minimum_chi_discontinuous = 1e-2
     # Threshold on particle_chi: if particle_chi < 1E-3 no radiation reaction
     minimum_chi_continuous = 1e-3
-    # Flag to recompute the tables
-    compute_table = False
 
     # Path to read or write the tables/databases
-    table_path = "./"
+    table_path = ""
 
     # Parameters for computing the tables
-    # Table h parameters
-    h_chipa_min = 1e-3
-    h_chipa_max = 1e1
-    h_dim = 128
-    h_computation_method = "table"
-    # Table integfochi parameters
-    integfochi_chipa_min = 1e-3
-    integfochi_chipa_max = 1e1
-    integfochi_dim = 128
-    # Table xip_chiphmin and xip parameters
-    xip_chipa_min = 1e-3
-    xip_chipa_max = 1e1
-    xip_power = 4
-    xip_threshold = 1e-3
-    xip_chipa_dim = 128
-    xip_chiph_dim = 128
-    # Output format, can be "ascii", "binary", "hdf5"
-    output_format = "hdf5"
+    Niel_computation_method = "table"
 
 # MutliphotonBreitWheeler pair creation
 class MultiphotonBreitWheeler(SmileiComponent):
@@ -583,24 +566,7 @@ class MultiphotonBreitWheeler(SmileiComponent):
     Photon decay into electron-positron pairs
     """
     # Path the tables/databases
-    table_path = "./"
-    # Flag to recompute the tables
-    compute_table = False
-
-    # Parameters for computing the tables
-    # Table T parameters
-    T_chiph_min = 1e-2
-    T_chiph_max = 1e1
-    T_dim = 128
-    # Table xip parameters
-    xip_chiph_min = 1e-2
-    xip_chiph_max = 1e1
-    xip_power = 4
-    xip_threshold = 1e-3
-    xip_chipa_dim = 128
-    xip_chiph_dim = 128
-    # Output format, can be "ascii", "binary", "hdf5"
-    output_format = "hdf5"
+    table_path = ""
 
 # Smilei-defined
 smilei_mpi_rank = 0

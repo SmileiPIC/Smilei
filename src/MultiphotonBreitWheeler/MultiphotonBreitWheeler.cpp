@@ -224,8 +224,8 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
             // If epsilon_tau_ > 0
             else if( tau[ipart] > epsilon_tau_ ) {
                 // from the cross section
-                temp = MultiphotonBreitWheelerTables.compute_dNBWdt( photon_chi[ipart], ( *gamma )[ipart] );
-
+                temp = MultiphotonBreitWheelerTables.computeBreitWheelerPairProductionRate( photon_chi[ipart], ( *gamma )[ipart] );
+                
                 // Time to decay
                 // If this time is above the remaining iteration time,
                 // There is a synchronization at the end of the pic iteration
@@ -303,8 +303,8 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
     inv_chiph_gammaph = ( gammaph-2. )/particles.chi( ipart );
 
     // Get the pair quantum parameters to compute the energy
-    chi = MultiphotonBreitWheelerTables.compute_pair_chi( particles.chi( ipart ) );
-
+    chi = MultiphotonBreitWheelerTables.computePairQuantumParameter( particles.chi( ipart ) );
+    
     // pair propagation direction // direction of the photon
     for( k = 0 ; k<3 ; k++ ) {
         u[k] = particles.momentum( k, ipart )/gammaph;
@@ -316,8 +316,8 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
     for( k=0 ; k < 2 ; k++ ) {
 
         // Creation of new electrons in the temporary array new_pair[0]
-        new_pair[k].create_particles( mBW_pair_creation_sampling[k] );
-
+        new_pair[k].createParticles( mBW_pair_creation_sampling[k] );
+        
         // Final size
         nparticles = new_pair[k].size();
 
@@ -425,7 +425,7 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
                 if( ipart < last_photon_index ) {
                     // The last existing photon comes to the position of
                     // the deleted photon
-                    particles.overwrite_part( last_photon_index, ipart );
+                    particles.overwriteParticle( last_photon_index, ipart );
                     // Overwrite bufferised data
                     for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
                         (*Epart)[iDim*nparts+ipart] = (*Epart)[iDim*nparts+last_photon_index];
@@ -452,7 +452,7 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
         nb_deleted_photon = bmax[ibin]-last_photon_index-1;
 
         if( nb_deleted_photon > 0 ) {
-            particles.erase_particle( last_photon_index+1, nb_deleted_photon );
+            particles.eraseParticle( last_photon_index+1, nb_deleted_photon );
             // Erase bufferised data
             for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
                 Epart->erase(Epart->begin()+iDim*nparts+last_photon_index+1,Epart->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);

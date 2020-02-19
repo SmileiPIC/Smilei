@@ -124,7 +124,6 @@ int main( int argc, char *argv[] )
         return 0;
     }
 
-
     // ---------------------------------------------------------------------
     // Init and compute tables for radiation effects
     // (nonlinear inverse Compton scattering)
@@ -137,8 +136,6 @@ int main( int argc, char *argv[] )
     // Init and compute tables for multiphoton Breit-Wheeler pair creation
     // ---------------------------------------------------------------------
     MultiphotonBreitWheelerTables.initialization( params, &smpi );
-    //MultiphotonBreitWheelerTables.computeTables( params, &smpi );
-    //MultiphotonBreitWheelerTables.outputTables( &smpi );
 
     // reading from dumped file the restart values
     if( params.restart ) {
@@ -167,7 +164,7 @@ int main( int argc, char *argv[] )
 
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, 0 );
         vecPatches.sortAllParticles( params );
-        //MESSAGE ("create vector");
+
         // Initialize the electromagnetic fields
         // -------------------------------------
 
@@ -191,7 +188,7 @@ int main( int argc, char *argv[] )
         // Init electric field (Ex/1D, + Ey/2D)
         if( params.solve_poisson == true && !vecPatches.isRhoNull( &smpi ) ) {
             TITLE( "Solving Poisson at time t = 0" );
-            vecPatches.solvePoisson( params, &smpi );
+            vecPatches.runNonRelativisticPoissonModule( params, &smpi,  timers );
         }
 
         // Patch reconfiguration

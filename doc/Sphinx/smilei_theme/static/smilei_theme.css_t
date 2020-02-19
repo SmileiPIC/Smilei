@@ -144,8 +144,16 @@ a.headerlink:hover {
 	background: {{ theme_anchor_hover_bg }};
 }
 
-div.body p, div.body dd, div.body li {
+div.body p, div.body li {
 	line-height: 1.4em;
+}
+
+div.body li > ul {
+	padding-bottom: 0.7em;
+}
+
+div.body li > p {
+	margin: 0;
 }
 
 div.admonition {
@@ -631,7 +639,10 @@ div.header > * {
 	font-size:1.3em;
 }
 
-div.experimental h2:first-of-type::after, dl.experimental dt:first-of-type::after {
+div.experimental > h1:first-of-type::after,
+div.experimental > h2:first-of-type::after,
+dl.experimental dt:first-of-type::after
+{
 	content: "experimental";
 	background:red;
 	color:white;
@@ -735,24 +746,53 @@ div.toctree-smilei > ul > li > ul > li > ul {
 
 /* --------------------------------------------------------------------*/
 /* Some tricks for the citations */
-table.citation td.label + td > em {
+table.citation td.label + td > em,
+span.fn-backref {
 	display:none;
 }
 table.citation td.label + td ol {
 	margin-top: 0 !important;
 }
 /* Remove the back-reference link when there is one back-reference */
-table.citation td.label a {
+table.citation td.label a,
+dl.citation dt.label a {
 	pointer-events: none;
 	cursor: default;
 	text-decoration: none;
 	color: inherit;
 }
+/* Brackets for Sphinx 2.+ */
+a.brackets::before, span.brackets > a::before,
+a.brackets::after , span.brackets > a::after {
+	content: "";
+}
+.brackets::before {
+	content: "[";
+}
+.brackets::after {
+	content: "]";
+}
+/* Margins for Sphinx 2.+ */
+dl.citation > dd > p {
+	margin: 0;
+}
+dl.citation > * {
+	margin-top: 0;
+	margin-bottom: 0;
+	padding: 0.25em 0.7em;
+}
+dl.citation p {
+	line-height: normal;
+}
 /* Make a "bigcitation" class for citations with several lines */
-table.bigcitation td.label {
+table.bigcitation td.label,
+dt.bigcitation
+{
 	max-width: 0;
 }
-table.bigcitation td.label + td {
+table.bigcitation td.label + td,
+dt.bigcitation + dd
+{
 	padding-top: 1.5em;
 }
 
