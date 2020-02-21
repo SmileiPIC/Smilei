@@ -21,7 +21,7 @@ public:
     EnvelopeBC3D_refl( Params &params, Patch *patch, unsigned int _min_max );
     ~EnvelopeBC3D_refl() {};
     
-    void apply( LaserEnvelope *envelope, double time_dual, Patch *patch ) override;
+    void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
     
     
 private:

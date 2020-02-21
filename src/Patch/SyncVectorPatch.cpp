@@ -640,6 +640,20 @@ void SyncVectorPatch::finalizeexchangeA( Params &params, VectorPatch &vecPatches
 //    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listA0_, vecPatches );
 }
 
+void SyncVectorPatch::exchangeEnvE( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
+{
+    // current envelope value
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvE_, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvE_, vecPatches );
+    // value of envelope at previous timestep
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvE_, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvE_, vecPatches );
+}
+ 
+void SyncVectorPatch::finalizeexchangeEnvE( Params &params, VectorPatch &vecPatches )
+{
+
+}
 
 void SyncVectorPatch::exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 {

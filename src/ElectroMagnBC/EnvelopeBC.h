@@ -18,7 +18,7 @@ public:
     virtual ~EnvelopeBC();
     void clean();
     
-    virtual void apply( LaserEnvelope *envelope, double time_dual, Patch *patch ) = 0;
+    virtual void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch ) = 0;
     
 protected:
 

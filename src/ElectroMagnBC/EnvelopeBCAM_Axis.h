@@ -21,7 +21,7 @@ public:
     EnvelopeBCAM_Axis( Params &params, Patch *patch, unsigned int _min_max );
     ~EnvelopeBCAM_Axis() {};
     
-    void apply( LaserEnvelope *envelope, double time_dual, Patch *patch ) override;
+    void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
     
     
 private:
