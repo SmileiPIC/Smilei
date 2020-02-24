@@ -114,6 +114,7 @@ if if_file_exist('./radiation_tables.h5'):
         message = ""
         
         for i in range(size_particle_chi):
+            message += "   "
             for j in range(size_photon_chi):
                 v = xi[i,j]
                 message += "{:}".format(v) + ", "
