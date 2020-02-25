@@ -27,7 +27,6 @@ ProjectorAM1Order::ProjectorAM1Order( Params &params, Patch *patch ) : Projector
     dr_ov_dt  = params.cell_length[1] / params.timestep;
     dr_inv_   = 1.0 / dr;
     one_ov_dt  = 1.0 / params.timestep;
-    one_nineth = 1./9.;
     Nmode=params.nmodes;
     i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
@@ -128,8 +127,24 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
 } // END Project for diags local current densities
 
 // Apply boundary conditions on axis for Rho frozen particles
-void ProjectorAM1Order::axisBCfrozen( complex<double> *rhoj,  int imode )
+void ProjectorAM1Order::axisBCfrozen( complex<double> *rho,  int imode )
 {
+
+   //const double one_ov_9  = 1./9.; 
+   //const double one_ov_16 = 1./16.; 
+   //if (imode == 0){
+   //    // drho_0/dr[r=0] = 0
+   //    for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+   //        rho[i] = (25.*rho[i+1] - 9.*rho[i+2])*one_ov_16;
+   //    }//i
+   //} else { //m > 0
+   //    // rho_m[r=0] = 0 and drho_m/dr[r=0] = 0 when m is even and !=0 when m is odd. 
+   //    // quadratic interpolation for even m and linear interpolation when m is odd
+   //    double slope = (imode%2==0 ? one_ov_9 : 1./3.);
+   //    for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+   //        rho[i] = rho[i+1] * slope;
+   //    }//i
+   //}
 
     return;
 }
@@ -235,23 +250,41 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
         currents( emAM, particles,  ipart, ( *invgf )[ipart], diag_flag, ispec);
     }
 
-    //Boundary conditions for Jr mode 0 near axis
-    if (emAM->isYmin ) {
-        complex<double> *Jr; 
-        if (!diag_flag){
-            Jr =  &( *emAM->Jr_[0] )( 0 );
-        } else {
-            unsigned int n_species = emAM->Jl_s.size() / Nmode;
-            unsigned int ifield = ispec;
-            Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [0] )( 0 ) ;
-        }
-
-        // Jr_0[dr/2.] = Jr_0[3dr/2.] / 9.
-        for( unsigned int i=0 ; i<npriml; i++ ) {
-            int ilocr = i*nprimr+oversizeR;
-            Jr [ilocr] = Jr [ilocr+1] * one_nineth;
-        }//i
-    }
+    ////Boundary conditions for Jr mode 0 near axis
+    //if (emAM->isYmin ) {
+    //    complex<double> *Jr, *Jt, *rho; 
+    //    for (int imode = 0; imode < Nmode; imode++){
+    //        if (!diag_flag){
+    //            Jr =  &( *emAM->Jr_[imode] )( 0 );
+    //            Jt =  &( *emAM->Jt_[imode] )( 0 );
+    //            rho = &( *emAM->rho_AM_[imode] )( 0 ) ; // In spectral, always project density
+    //        } else {
+    //            unsigned int n_species = emAM->Jl_s.size() / Nmode;
+    //            unsigned int ifield = imode*n_species + ispec; 
+    //            Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
+    //            Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : &( *emAM->Jt_    [imode] )( 0 ) ;
+    //            rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+    //        }
+    //        const double one_ov_9  = 1./9.; 
+    //        const double one_ov_16 = 1./16.; 
+    //        if (imode == 0){
+    //            // Jr_0[r=0] = 0 and dJr_0/dr[r=0] = 0 
+    //            // drho_0/dr[r=0] = 0
+    //            for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+    //                //Jr [i] = Jr [i+1] * one_ov_9;
+    //                //Jt [i] = Jt [i+1] * one_ov_9;
+    //                rho[i] = (25.*rho[i+1] - 9.*rho[i+2])*one_ov_16;
+    //            }//i
+    //        } else { //m > 0
+    //            // rho_m[r=0] = 0 and drho_m/dr[r=0] = 0 when m is even and !=0 when m is odd. 
+    //            // quadratic interpolation for even m and linear interpolation when m is odd
+    //            const double slope = (imode%2==0 ? one_ov_9 : 1./3.);
+    //            for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+    //                rho[i] = rho[i+1] * slope;
+    //            }//i
+    //        }
+    //    }
+    //}
 
 }
 

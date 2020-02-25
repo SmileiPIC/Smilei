@@ -31,7 +31,7 @@ public:
     
 private:
     int staggered;
-    double dt, dts2, dts4, one_nineth;
+    double dt, dts2, dts4;
 };
 
 #endif
