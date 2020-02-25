@@ -1102,6 +1102,7 @@ public:
                         returned_species[ispec1]->position_initialization_on_species_type_ = returned_species[ispec2]->position_initialization_;
                         // We copy position of species 2 (index ispec2), for position on species 1 (index ispec1)
                         returned_species[ispec1]->particles->Position=returned_species[ispec2]->particles->Position;
+                        returned_species[ispec1]->particles->Weight=returned_species[ispec2]->particles->Weight;
                     }
                 }
                 if( returned_species[ispec1]->position_initialization_on_species_index==-1 ) {

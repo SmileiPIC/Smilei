@@ -1289,6 +1289,7 @@ void Patch::copyPositions( std::vector<Species *> vecSpecies_to_update )
         }
         // We copy target_species which is the index of the species, already created, from which species_to_update particles positions are copied.
         vecSpecies_to_update[i]->particles->Position = vecSpecies_to_update[target_species]->particles->Position;
+        vecSpecies_to_update[i]->particles->Weight = vecSpecies_to_update[target_species]->particles->Weight;
     }
     return;
 }
