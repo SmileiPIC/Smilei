@@ -289,7 +289,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
                     if( params.geometry=="AMcylindrical" &&
-                        ( (position_initialization_  != "regular") ||
+                        ( (position_initialization_  != "regular") &&
                           (species_->position_initialization_on_species_type_ != "regular") ) ) {
                         //Particles weight in regular is normalized later.
                         density( i, j, k ) *= ( *xyz[1] )( i, j, k );
