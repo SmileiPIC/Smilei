@@ -1102,7 +1102,6 @@ public:
                         returned_species[ispec1]->position_initialization_on_species_type_ = returned_species[ispec2]->position_initialization_;
                         // We copy position of species 2 (index ispec2), for position on species 1 (index ispec1)
                         returned_species[ispec1]->particles->Position=returned_species[ispec2]->particles->Position;
-                        returned_species[ispec1]->particles->Weight=returned_species[ispec2]->particles->Weight;
                     }
                 }
                 if( returned_species[ispec1]->position_initialization_on_species_index==-1 ) {
@@ -1110,6 +1109,16 @@ public:
                 }
             } else {
                 returned_species[ispec1]->position_initialization_on_species_type_ = returned_species[ispec1]->position_initialization_;
+            }
+        }
+
+        // Update particles weight in specific case
+        if (params.geometry=="AMcylindrical") {
+            for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
+                if ( ( returned_species[ispec1]->position_initialization_ == "regular" ) ||
+                     ( returned_species[ispec1]->position_initialization_on_species_type_ == "regular" ) ) {
+                    ParticleCreator::regulateWeightwithPositionAM( returned_species[ispec1]->particles );
+                }
             }
         }
 
@@ -1229,6 +1238,16 @@ public:
             returned_species.push_back( new_species );
         }
         patch->copyPositions(returned_species);
+
+        // Update particles weight in specific case
+        if (params.geometry=="AMcylindrical") {
+            for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
+                if ( ( returned_species[ispec1]->position_initialization_ == "regular" ) ||
+                     ( returned_species[ispec1]->position_initialization_on_species_type_ == "regular" ) ) {
+                    ParticleCreator::regulateWeightwithPositionAM( returned_species[ispec1]->particles );
+                }
+            }
+        }
 
         // Ionization
         for( unsigned int i=0; i<returned_species.size(); i++ ) {

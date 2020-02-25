@@ -66,6 +66,9 @@ public:
                             unsigned int iPart,
                             double n_real_particles,
                             Params &params );
+
+    //! Regulate of the particle weight with particle position
+    static void regulateWeightwithPositionAM( Particles * particles );
     
     // For all particles in a mesh initialize its charge state
     static void createCharge( Particles * particles, Species * species,
