@@ -159,7 +159,7 @@ void IonizationTunnelEnvelope::envelopeIonization( Particles *particles, unsigne
     
                 k_times++;
     
-                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[newZ];
+                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[newZ-1];
 
             }//END while
     
