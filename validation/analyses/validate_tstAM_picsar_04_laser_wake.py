@@ -5,6 +5,7 @@ S = happi.Open(["./restart*"], verbose=False)
 
 
 # COMPARE THE Ey FIELD in polarization direction
-Ey = S.Probe(0, "Ey", timesteps=200.).getData()[0]
-Validate("Ey field at iteration 200", Ey, 0.01)
+rho = S.Field(0, "Rho",theta=0., timesteps=0).getData()[0]
+rho = np.abs(rho).sum
+Validate("Rho field at iteration 0", rho == 0.)
 
