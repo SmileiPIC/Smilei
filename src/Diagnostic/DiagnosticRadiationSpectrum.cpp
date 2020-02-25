@@ -141,7 +141,8 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     excluded_axes.push_back( "b" );
     excluded_axes.push_back( "theta" );
     excluded_axes.push_back( "phi" );
-    PyObject *deposited_quantity= PyString_FromString("dummy_radiation_spectrum");
+    //PyObject *deposited_quantity= PyString_FromString("dummy_radiation_spectrum");
+    PyObject *deposited_quantity= PyUnicode_FromString("dummy_radiation_spectrum");
     //histogram = HistogramFactory::create(params, NULL, pyAxes, species, patch, excluded_axes, errorPrefix);
     histogram = HistogramFactory::create(params, deposited_quantity, pyAxes, species, patch, excluded_axes, errorPrefix);
 
