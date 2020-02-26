@@ -441,12 +441,16 @@ os.chdir(SMILEI_ROOT)
 WORKDIR_BASE = SMILEI_ROOT+"validation"+s+"workdirs"
 SMILEI_W = WORKDIR_BASE+s+"smilei"
 SMILEI_R = SMILEI_ROOT+s+"smilei"
-SMILEI_TOOLS_W = WORKDIR_BASE+s+"smilei_tables"
-SMILEI_TOOLS_R = SMILEI_ROOT+s+"smilei_tables"
 if path.exists(SMILEI_R):
 	STAT_SMILEI_R_OLD = os.stat(SMILEI_R)
 else :
 	STAT_SMILEI_R_OLD = ' '
+SMILEI_TOOLS_W = WORKDIR_BASE+s+"smilei_tables"
+SMILEI_TOOLS_R = SMILEI_ROOT+s+"smilei_tables"
+if path.exists(SMILEI_TOOLS_R):
+	STAT_SMILEI_TOOLS_R_OLD = os.stat(SMILEI_TOOLS_R)
+else :
+	STAT_SMILEI_TOOLS_R_OLD = ' '
 COMPILE_ERRORS=WORKDIR_BASE+s+'compilation_errors'
 COMPILE_OUT=WORKDIR_BASE+s+'compilation_out'
 COMPILE_OUT_TMP=WORKDIR_BASE+s+'compilation_out_temp'
@@ -510,14 +514,15 @@ try :
 		os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
 	# Compile
 	RUN( COMPILE_COMMAND, SMILEI_ROOT )
-	RUN( COMPILE_TOOLS_COMMAND, SMILEI_ROOT )
+	#RUN( COMPILE_TOOLS_COMMAND, SMILEI_ROOT )
 	os.rename(COMPILE_OUT_TMP, COMPILE_OUT)
-	if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R) or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
-		# if new bin, archive the workdir (if it contains a smilei bin)  and create a new one with new smilei and compilation_out inside
-		if path.exists(SMILEI_W) and path.exists(SMILEI_TOOLS_W):
+	if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R): # or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
+		# if new bin, archive the workdir (if it contains a smilei bin)
+		# and create a new one with new smilei and compilation_out inside
+		if path.exists(SMILEI_W): # and path.exists(SMILEI_TOOLS_W):
 			workdir_archiv(SMILEI_W)
 		copy2(SMILEI_R,SMILEI_W)
-		copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
+		#copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
 		if COMPILE_ONLY:
 			if VERBOSE:
 				print(  "Smilei validation succeed.")
@@ -527,8 +532,10 @@ try :
 			if VERBOSE:
 				print(  "Smilei validation not needed.")
 			exit(0)
+
 except CalledProcessError as e:
-	# if compiling errors, archive the workdir (if it contains a smilei bin), create a new one with compilation_errors inside and exit with error code
+	# if compiling errors, archive the workdir (if it contains a smilei bin),
+    # create a new one with compilation_errors inside and exit with error code
 	workdir_archiv(SMILEI_W)
 	os.rename(COMPILE_ERRORS,WORKDIR_BASE+s+COMPILE_ERRORS)
 	if VERBOSE:
