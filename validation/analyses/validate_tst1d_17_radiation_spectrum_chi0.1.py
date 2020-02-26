@@ -1,5 +1,4 @@
 import os, re, numpy as np, math
-from scipy.interpolate import interp1d as interp
 import happi
 
 S = happi.Open(["./restart*"], verbose=False)
@@ -13,6 +12,7 @@ eps0_SI = 8.854187817e-12
 af      = e_SI**2/(4.*np.pi*eps0_SI*hbar_SI*c_SI)
 te_SI   = e_SI**2/(4.*np.pi*eps0_SI*me_SI*c_SI**3)
 Palpha  = 2./3. * af**2 / (S.namelist.wr*te_SI)
+sim_hyper_volume = S.namelist.Lx
 
 # quantum correction function g(chi) -- fit by Ridgers
 def g(chi):
@@ -58,15 +58,6 @@ Prad_FP    = np.sum(integrand)
 integrand  = dgaxis*spc_MC
 Prad_MC    = np.sum(integrand)
 
-# Compare
-print "chi0          = ", chi0
-print "g(chi0)       = ", g(chi0)
-print "Prad (theory) = ", Prad_tot
-print "Prad (noRR)   = ", Prad_noRR
-print "Prad (LL)     = ", Prad_LL
-print "Prad (cLL)    = ", Prad_cLL
-print "Prad (FP)     = ", Prad_FP
-print "Prad (MC)     = ", Prad_MC
 # Physical constants in SI units
 c_SI    = 299792458.
 me_SI   = 9.10938356e-31
@@ -134,7 +125,7 @@ print "Prad (MC)     = ", Prad_MC
 Validate("Prad (noRR)",Prad_noRR, 1.e-6*Prad_noRR)
 Validate("Prad   (LL)",  Prad_LL, 1.e-6*Prad_LL  )
 Validate("Prad  (cLL)", Prad_cLL, 1.e-6*Prad_cLL )
-Validate("Prad   (FP)",  Prad_FP, 1.e-6*Prad_FP  )
+Validate("Prad   (FP)",  Prad_FP, 1.e-2*Prad_FP  )
 Validate("Prad   (MC)",  Prad_MC, 1.e-2*Prad_MC  )
 
 # Table to check
@@ -143,4 +134,3 @@ Validate("Radiation Spectrum (noRR)", spc_noRR, 1.e-6)
 #spc_cLL
 #spc_FP
 #spc_MC
-
