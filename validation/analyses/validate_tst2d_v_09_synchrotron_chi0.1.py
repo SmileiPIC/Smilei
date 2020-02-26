@@ -1,10 +1,10 @@
 # ______________________________________________________________________________
 #
-# Validation script for the synchotron case
+# Validation script for the synchrotron case
 #
 # In this tests case, an electron bunch is initialized per radiation
 # loss models at the same positions. The magnetic field and the initial energy
-# is computed so that the initial quantum parameter is equal to 1.
+# is computed so that the initial quantum parameter is equal to 0.1.
 #
 # Validation:
 # - Discontinuous radiation loss
@@ -22,6 +22,7 @@ radiation_list = ["CLL","Niel","MC"]
 
 ukin_dict = {}
 urad_dict = {}
+utot_dict = {}
 
 # We load successively the particle track associated
 # to each radiation algorithm
@@ -29,26 +30,23 @@ for radiation in radiation_list:
 
   # Read scalar diagnostics
   ScalarUkinDiag = S.Scalar("Ukin_electron_"+radiation).get()
-  ukin = np.array(ScalarUkinDiag["data"])
+  ukin_dict[radiation] = np.array(ScalarUkinDiag["data"])
   times = np.array(ScalarUkinDiag["times"])
 
   ScalarUradDiag = S.Scalar("Urad_electron_"+radiation).get()
-  urad = np.array(ScalarUradDiag["data"])
+  urad_dict[radiation] = np.array(ScalarUradDiag["data"])
 
-  utot = ukin+urad
+  utot_dict[radiation] = ukin_dict[radiation]+urad_dict[radiation]
 
   # Validation of the kinetic energy
-  Validate("Kinetic energy evolution: ", ukin/ukin[0], 5.e-2 )
+  Validate("Kinetic energy evolution: ", ukin_dict[radiation]/ukin_dict[radiation][0], 5.e-2 )
 
   # Validation of the radiated energy
-  Validate("Radiated energy evolution: " , urad/ukin[0], 5.e-2 )
+  Validate("Radiated energy evolution: " , urad_dict[radiation]/ukin_dict[radiation][0], 5.e-2 )
 
   # Validation of the total energy
   Validate("Total energy error (max - min)/uref: " ,
-           (utot.max() - utot.min())/utot[0], 1e-2)
-
-  ukin_dict[radiation] = ukin
-  urad_dict[radiation] = urad
+           (utot_dict[radiation].max() - utot_dict[radiation].min())/utot_dict[radiation][0], 1e-2)
 
 # ______________________________________________________________________________
 # Comparison corrected Landau-Lifshitz and Niel model
@@ -56,13 +54,13 @@ for radiation in radiation_list:
 urad_rel_err = abs(urad_dict["Niel"] - urad_dict["CLL"]) / urad_dict["CLL"].max()
 ukin_rel_err = abs(ukin_dict["Niel"] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
 
-print(' Comparison Laudau-Lifshitz/Niel methods')
-print(' Maximum relative error kinetic energy' + str(ukin_rel_err.max()))
-print(' Maximum relative error radiative energy' + str(urad_rel_err.max()))
+print(" Comparison Laudau-Lifshitz/Niel methods")
+print(" Maximum relative error kinetic energy: {}".format(ukin_rel_err.max()))
+print(" Maximum relative error radiative energy: {}".format(urad_rel_err.max()))
 
 # Validation difference between continuous and discontinuous methods
-Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err.max(), 0.01 )
-Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max(), 0.01 )
+Validate("Relative error on the kinetic energy / ukin at t=0 (Niel/CLL) " , ukin_rel_err.max(), 0.01 )
+Validate("Relative error on the radiative energy / urad max (Niel/CLL) " , urad_rel_err.max(), 0.01 )
 
 # ______________________________________________________________________________
 # Comparison corrected Landau-Lifshitz and MC model
@@ -70,14 +68,14 @@ Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max
 urad_mc_rel_err = abs(urad_dict["MC"] - urad_dict["CLL"]) / urad_dict["CLL"].max()
 ukin_mc_rel_err = abs(ukin_dict["MC"] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
 
-print()
+print("")
 print(' Comparison Laudau-Lifshitz/Monte Carlo methods')
-print(' Maximum relative error kinetic energy',ukin_mc_rel_err.max())
-print(' Maximum relative error radiative energy',urad_mc_rel_err.max())
+print(' Maximum relative error kinetic energy: {}'.format(ukin_mc_rel_err.max()))
+print(' Maximum relative error radiative energy: {}'.format(urad_mc_rel_err.max()))
 
 # Validation difference between continuous and discontinuous methods
-Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_mc_rel_err.max(), 0.02 )
-Validate("Relative error on the radiative energy / urad max " , urad_mc_rel_err.max(), 0.02 )
+Validate("Relative error on the kinetic energy / ukin at t=0 (MC/CLL) " , ukin_mc_rel_err.max(), 0.01 )
+Validate("Relative error on the radiative energy / urad max (MC/CLL) " , urad_mc_rel_err.max(), 0.01 )
 
 # ______________________________________________________________________________
 # Checking of the particle binning

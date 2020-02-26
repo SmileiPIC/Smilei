@@ -59,13 +59,14 @@ for k,model in enumerate(radiation_list[1:]):
     urad_rel_err = abs(urad_dict[model] - urad_dict["CLL"]) / urad_dict["CLL"].max()
     ukin_rel_err = abs(ukin_dict[model] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
 
+    print('')
     print(' Comparison Corrected Landau-Lifshitz / {} methods'.format(model))
     print(' Maximum relative error kinetic energy: {}'.format(ukin_rel_err.max()))
     print(' Maximum relative error radiative energy: {}'.format(urad_rel_err.max()))
 
     # Validation difference between Corrected Landau-Lifshitz and Monte-Carlo methods
-    Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err.max(), 0.023 )
-    Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max(), 0.023 )
+    Validate("Relative error on the kinetic energy / ukin at t=0 ({})".format(model) , ukin_rel_err.max(), 0.02 )
+    Validate("Relative error on the radiative energy / urad max ({})".format(model) , urad_rel_err.max(), 0.02 )
 
 # ______________________________________________________________________________
 # Checking of the particle binning

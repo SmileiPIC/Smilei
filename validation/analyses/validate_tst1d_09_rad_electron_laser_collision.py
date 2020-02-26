@@ -56,13 +56,13 @@ for i,radiation in enumerate(radiation_list):
   print(' Maximum radiated energy: '+str(urad.max()))
 
   # Validation of the kinetic energy
-  Validate("Kinetic energy evolution: ", ukin/ukin[0], thresholds[i] )
+  Validate("Kinetic energy evolution for {}".format(radiation), ukin/ukin[0], thresholds[i] )
 
   # Validation of the radiated energy
-  Validate("Radiated energy evolution: " , urad/ukin[0], thresholds[i] )
+  Validate("Radiated energy evolution for {}".format(radiation) , urad/ukin[0], thresholds[i] )
 
   # Validation of the total energy
-  Validate("Total energy error (max - min)/uref: " ,
+  Validate("Total energy error (max - min)/uref for {}".format(radiation) ,
            (utot.max() - utot.min())/utot[0], 1e-2)
 
   ukin_dict[radiation] = ukin
@@ -80,8 +80,8 @@ print(' Maximum relative error kinetic energy'+str(ukin_rel_err_Niel.max()))
 print (' Maximum relative error radiative energy'+str(urad_rel_err_Niel.max()))
 
 # Validation difference between Landau-Lifshitz and Niel methods
-Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_Niel.max(), 0.05 )
-Validate("Relative error on the radiative energy / urad max " , urad_rel_err_Niel.max(), 0.05 )
+Validate("Relative error on the kinetic energy / ukin at t=0 (Niel/CLL)" , ukin_rel_err_Niel.max(), 0.05 )
+Validate("Relative error on the radiative energy / urad max (Niel/CLL)" , urad_rel_err_Niel.max(), 0.05 )
 
 # ______________________________________________________________________________
 # Comparison CLL and MC methods
@@ -95,8 +95,8 @@ print(' Maximum relative error kinetic energy'+str(ukin_rel_err_MC.max()))
 print(' Maximum relative error radiative energy'+str(urad_rel_err_MC.max()))
 
 # Validation difference between Landau-Lifshitz and Monte-Carlo methods
-Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_MC.max(), 0.05 )
-Validate("Relative error on the radiative energy / urad max " , urad_rel_err_MC.max(), 0.05 )
+Validate("Relative error on the kinetic energy / ukin at t=0 (MC/CLL)" , ukin_rel_err_MC.max(), 0.05 )
+Validate("Relative error on the radiative energy / urad max (MC/CLL)" , urad_rel_err_MC.max(), 0.05 )
 
 # ______________________________________________________________________________
 # Checking of the particle binning
