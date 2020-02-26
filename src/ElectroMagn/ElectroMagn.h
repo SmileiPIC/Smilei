@@ -395,7 +395,7 @@ public:
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField( Field *, Profile *, Patch * ) = 0 ;
     
-    //! Method used to impose external time fields (apply to a given Field)
+    //! Method used to impose a prescribed fields (apply to a given Field)
     virtual void applyPrescribedField( Field *, Profile *, Patch *, double time) = 0 ;
     
     //! Antenna

@@ -104,11 +104,11 @@ public:
         }
 
         // -----------------
-        // ExtTimeFields properties
+        // PrescribedFields properties
         // -----------------
         unsigned int external_time_field_number =PyTools::nComponents( "PrescribedField" );
         if( patch->isMaster() && external_time_field_number > 0) {
-            TITLE("Initializing External Time Fields" );
+            TITLE("Initializing Prescribed (external) Fields" );
         }
         for( unsigned int n_extfield = 0; n_extfield < PyTools::nComponents( "PrescribedField" ); n_extfield++ ) {
             ExtTimeField extField;
@@ -144,10 +144,10 @@ public:
                 }
             }
             if( extField.index > EMfields->allFields.size()-1 ) {
-                ERROR( "ExternalField #"<<n_extfield<<": field "<<fieldName<<" not found" );
+                ERROR( "PrescribedField #"<<n_extfield<<": field "<<fieldName<<" not found" );
             }
             
-            MESSAGE(1, "External field " << fieldName << ": " << extField.profile->getInfo());
+            MESSAGE(1, "Prescribed field " << fieldName << ": " << extField.profile->getInfo());
             EMfields->extTimeFields.push_back( extField );
         }
         
