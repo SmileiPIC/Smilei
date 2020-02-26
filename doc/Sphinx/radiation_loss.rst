@@ -633,7 +633,7 @@ This enables to find a lower bound to the :math:`\chi_\gamma` range
 (discretization in the log domain) so that the
 remaining part is negligible in term of radiated energy.
 The parameter :math:`\epsilon` is called ``xi_threshold`` in
-:ref:`RadiationReaction <RadiationReaction>` and the tool :program:`smilei_tables`.
+:ref:`RadiationReaction <RadiationReaction>` and the tool :program:`smilei_tables` (:doc:`tables`.).
 
 The Monte-Carlo model is accessible in the species configuration
 under the name ``Monte-Carlo`` or ``mc``.
@@ -646,7 +646,7 @@ Benchmarks
 Counter-propagating plane wave, 1D
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-In the benchmark ``benchmark/tst1d_9_rad_electron_laser_collision.py``,
+In the benchmark ``benchmark/tst1d_09_rad_electron_laser_collision.py``,
 a GeV electron bunch is initialized near the right
 domain boundary and propagates towards the left boundary from which a plane
 wave is injected. The laser has an amplitude of :math:`a_0 = 270`
@@ -714,9 +714,9 @@ the emission regime progressively move from the quantum to the classical regime.
 Similar simulation configuration can be found in the benchmarks.
 It corresponds to two different input files in the benchmark folder:
 
-* ``tst2d_8_synchrotron_chi1.py``: tests and compares the corrected
+* ``tst2d_08_synchrotron_chi1.py``: tests and compares the corrected
   Landau-Lifshitz and the Monte-Carlo model for an initial :math:`\chi = 1`.
-* ``tst2d_9_synchrotron_chi0.1.py``: tests and compares the corrected
+* ``tst2d_09_synchrotron_chi0.1.py``: tests and compares the corrected
   Landau-Lifshitz and the Niel model for an initial :math:`\chi = 0.1`.
 
 In this section, we focus on the case with initial quantum parameter

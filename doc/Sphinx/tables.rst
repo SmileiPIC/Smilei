@@ -3,6 +3,10 @@
 Generation of the external tables
 --------------------------------------------------------------------------------
 
+By default, :program:`Smilei` embebded tables directly in the sources.
+Nonetheless, a user may want to use different tables.
+For this reason, :program:`Smilei` can read external tables.
+
 Several physical mechanisms can use external tables to work:
 
 * Radiation loss and photon emission via nonlinear inverse Compton scattering (see :doc:`radiation_loss`)
@@ -115,6 +119,9 @@ We have computed some tables with several levels of discretizations that you can
 256 points
 """""""""""
 
+This table size is a good compromise between accuracy and memory cost.
+2D tables can fit in L2 cache although the pressure on the cache will be high.
+
 .. code-block:: bash
 
   mpirun -np <number of processes> ./smilei_tables nics -s 256 256 -b 1e-4 1e3
@@ -127,12 +134,17 @@ We have computed some tables with several levels of discretizations that you can
 
 `multiphoton_breit_wheeler_tables.h5 <http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/tables_256/multiphoton_breit_wheeler_tables.h5>`_
 
+This set of tables is included by default in the sources of :program:`Smilei`
+
 512 points
 """""""""""
 
+With a size of 512 points in 1D and 512x512 for 2D tables, these tables offer better accuracy at a larger memory cost.
+2D tables of this size are too large to fit in L2 cache.
+
 .. code-block:: bash
 
-  mpirun -np <number of processes> ./smilei_tables nics -s 256 256 -b 1e-4 1e3
+  mpirun -np <number of processes> ./smilei_tables nics -s 512 512 -b 1e-4 1e3
   
 `radiation_tables.h5 <http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/tables_512/radiation_tables.h5>`_
 
