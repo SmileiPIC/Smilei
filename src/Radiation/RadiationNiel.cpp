@@ -239,7 +239,7 @@ void RadiationNiel::operator()(
             // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
             if( particle_chi[ipart] > minimum_chi_continuous_ ) {
 
-                temp = RadiationTables.getHNielFitOrder5( particle_chi[ipart] );
+                temp = RadiationTools::getHNielFitOrder5( particle_chi[ipart] );
 
                 diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipart]*temp )*random_numbers[ipart];
             }
@@ -253,7 +253,7 @@ void RadiationNiel::operator()(
             // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
             if( particle_chi[ipart] > minimum_chi_continuous_ ) {
 
-                temp = RadiationTables.getHNielFitOrder10( particle_chi[ipart] );
+                temp = RadiationTools::getHNielFitOrder10( particle_chi[ipart] );
 
                 diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipart]*temp )*random_numbers[ipart];
             }
@@ -268,7 +268,7 @@ void RadiationNiel::operator()(
             // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
             if( particle_chi[ipart] > minimum_chi_continuous_ ) {
 
-                temp = RadiationTables.getHNielFitRidgers( particle_chi[ipart] );
+                temp = RadiationTools::getHNielFitRidgers( particle_chi[ipart] );
 
                 diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipart]*temp )*random_numbers[ipart];
             }

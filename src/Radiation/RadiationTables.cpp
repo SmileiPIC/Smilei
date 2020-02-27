@@ -44,7 +44,7 @@ RadiationTables::~RadiationTables()
 //
 //! \param params Object Params for the parameters from the input script
 // -----------------------------------------------------------------------------
-void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
+void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 {
 
     if( params.hasMCRadiation ||

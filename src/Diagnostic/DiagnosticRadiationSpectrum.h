@@ -11,7 +11,7 @@ class DiagnosticRadiationSpectrum : public Diagnostic {
 public :
 
     //! Default constructor
-    DiagnosticRadiationSpectrum( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticRadiationSpectrum( Params &params, SmileiMPI* smpi, Patch* patch, RadiationTables * radiation_tables_, int diagId );
     //! Cloning constructor
     DiagnosticRadiationSpectrum( DiagnosticRadiationSpectrum* );
     //! Default destructor

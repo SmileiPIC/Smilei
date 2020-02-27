@@ -74,7 +74,8 @@ public :
     void updateFieldList( SmileiMPI *smpi );
     void updateFieldList( int ispec, SmileiMPI *smpi );
     
-    void createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams & );
+    //! Create the diagnostic list
+    void createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &, RadiationTables * radiation_tables_ );
     
     //! get a particular scalar
     inline double getScalar( std::string name )

@@ -85,9 +85,9 @@ void VectorPatch::close( SmileiMPI *smpiData )
     patches_.clear();
 }
 
-void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &openPMD )
+void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &openPMD, RadiationTables * radiation_tables_ )
 {
-    globalDiags = DiagnosticFactory::createGlobalDiagnostics( params, smpi, *this );
+    globalDiags = DiagnosticFactory::createGlobalDiagnostics( params, smpi, *this, radiation_tables_ );
     localDiags  = DiagnosticFactory::createLocalDiagnostics( params, smpi, *this, openPMD );
 
     // Delete all unused fields

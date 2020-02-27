@@ -44,7 +44,7 @@ public:
 
     //! Initialization of the parmeters for the nonlinear
     //! inverse Compton scattering
-    void initializeParameters( Params &params , SmileiMPI *smpi );
+    void initialization( Params &params , SmileiMPI *smpi );
 
     // ---------------------------------------------------------------------
     // PHYSICAL COMPUTATION
@@ -130,57 +130,6 @@ public:
     inline std::string getNielHComputationMethod()
     {
         return this->niel_.computation_method_;
-    }
-
-    // -----------------------------------------------------------------------------
-    //! Return the value of the function h(particle_chi) of Niel et al.
-    //! from a polynomial numerical fit at order 10
-    //! Valid between particle_chi in 1E-3 and 1E1
-    //! \param particle_chi particle quantum parameter
-    // -----------------------------------------------------------------------------
-    inline double getHNielFitOrder10( double particle_chi )
-    {
-        // Max relative error ~2E-4
-        return exp( -3.231764974833856e-08 * std::pow( std::log( particle_chi ), 10 )
-                    -7.574417415366786e-07 * std::pow( std::log( particle_chi ), 9 )
-                    -5.437005218419013e-06 * std::pow( std::log( particle_chi ), 8 )
-                    -4.359062260446135e-06 * std::pow( std::log( particle_chi ), 7 )
-                    + 5.417842511821415e-05 * std::pow( std::log( particle_chi ), 6 )
-                    -1.263905701127627e-04 * std::pow( std::log( particle_chi ), 5 )
-                    + 9.899812622393002e-04 * std::pow( std::log( particle_chi ), 4 )
-                    + 1.076648497464146e-02 * std::pow( std::log( particle_chi ), 3 )
-                    -1.624860613422593e-01 * std::pow( std::log( particle_chi ), 2 )
-                    + 1.496340836237785e+00 * std::log( particle_chi )
-                    -2.756744141581370e+00 );
-    }
-
-    // -----------------------------------------------------------------------------
-    //! Return the value of the function h(particle_chi) of Niel et al.
-    //! from a polynomial numerical fit at order 5
-    //! Valid between particle_chi in 1E-3 and 1E1
-    //! \param particle_chi particle quantum parameter
-    // -----------------------------------------------------------------------------
-    inline double getHNielFitOrder5( double particle_chi )
-    {
-        // Max relative error ~0.02
-        return exp( 1.399937206900322e-04 * std::pow( std::log( particle_chi ), 5 )
-                    + 3.123718241260330e-03 * std::pow( std::log( particle_chi ), 4 )
-                    + 1.096559086628964e-02 * std::pow( std::log( particle_chi ), 3 )
-                    -1.733977278199592e-01 * std::pow( std::log( particle_chi ), 2 )
-                    + 1.492675770100125e+00 * std::log( particle_chi )
-                    -2.748991631516466e+00 );
-    }
-
-    // -----------------------------------------------------------------------------
-    //! Return the value of the function h(particle_chi) of Niel et al.
-    //! using the numerical fit of Ridgers in
-    //! Ridgers et al., ArXiv 1708.04511 (2017)
-    //! \param particle_chi particle quantum parameter
-    // -----------------------------------------------------------------------------
-    inline double getHNielFitRidgers( double particle_chi )
-    {
-        return std::pow( particle_chi, 3 )*1.9846415503393384*std::pow( 1. +
-                ( 1. + 4.528*particle_chi )*std::log( 1.+12.29*particle_chi ) + 4.632*std::pow( particle_chi, 2 ), -7./6. );
     }
 
     // -----------------------------------------------------------------------------

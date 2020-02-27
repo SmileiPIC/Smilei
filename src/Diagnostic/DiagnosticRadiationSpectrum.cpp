@@ -4,12 +4,14 @@
 #include "DiagnosticRadiationSpectrum.h"
 #include "HistogramFactory.h"
 #include "RadiationTools.h"
+#include "RadiationTables.h"
 
 using namespace std;
 
 
 // Constructor
-DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, SmileiMPI* smpi, Patch* patch, int diagId )
+DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, SmileiMPI* smpi, Patch* patch,
+                                                          RadiationTables * radiation_tables_, int diagId )
 {
     fileId_ = 0;
 
@@ -19,7 +21,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     if (params.reference_angular_frequency_SI<=0.) ERROR("DiagnosticRadiationSpectrum requires 'reference_angular_frequency_SI' to be defined.");
 
     // minimum chi beyond which the radiation spectrum is computed (uses minimum_chi_continuous)
-    minimum_chi_continuous_ = RadiationTools::minimum_chi_continuous_;
+    minimum_chi_continuous_ = radiation_tables_->getMinimumChiContinuous();
 
     // Normalization parameters
     two_third = 2./3.;
@@ -378,7 +380,7 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
                     nu   = two_third_ov_chi * zeta;
                     cst  = xi*zeta;
                     increment = increment0 * delta_energies[i]
-                    *             xi * RadiationTools::compute_bessel_parts_radiated_power(nu,cst);
+                    *             xi * RadiationTools::computeBesselPartsRadiatedPower(nu,cst);
                     #pragma omp atomic
                     data_sum[ind+i] += increment;
                 }
