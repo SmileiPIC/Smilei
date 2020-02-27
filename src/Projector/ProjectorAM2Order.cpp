@@ -254,7 +254,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project for diags and frozen species - mode >= 0
+//! Project for diags and frozen species -
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
 {
