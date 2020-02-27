@@ -1410,30 +1410,20 @@ void ElectroMagnAM::computeTotalRhoJ()
         cField2D *Jr     = Jr_[imode];
         cField2D *Jt     = Jt_[imode];
         cField2D *rho    = rho_AM_[imode];
-        //MESSAGE("c");
         // -----------------------------------
         // Species currents and charge density
         // -----------------------------------
         for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
         
             int ifield = imode*n_species+ispec;
-            // MESSAGE("cc");
-            // MESSAGE(Jl_s.size());
-            // MESSAGE(Jl_.size());
-            // MESSAGE(ifield);
             if( Jl_s[ifield] ) {
                 cField2D *Jl2D_s  = Jl_s[ifield];
                 for( unsigned int i=0 ; i<nl_d ; i++ ) {
-                    //MESSAGE("here");
-                    //MESSAGE(nr_p);
-                    //MESSAGE(nl_p);
                     for( unsigned int j=0 ; j<nr_p ; j++ ) {
-                        //MESSAGE("here i=" <<i << "  j="<<j);
                         ( *Jl )( i, j ) += ( *Jl2D_s )( i, j );
                     }
                 }
             }
-            //MESSAGE("or here");
             if( Jr_s[ifield] ) {
                 cField2D *Jr2D_s  = Jr_s[ifield];
                 for( unsigned int i=0 ; i<nl_p ; i++ )
@@ -1459,7 +1449,6 @@ void ElectroMagnAM::computeTotalRhoJ()
         }//END loop on species ispec
         
     }//END loop on mmodes
-    //MESSAGE("totalRj");
 } //END computeTotalRhoJ
 
 // ---------------------------------------------------------------------------------------------------------------------
