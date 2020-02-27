@@ -358,8 +358,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
             }
-            
-            if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
+
+            if( time_dual<=time_frozen_ ) continue; // Do not push frozen particles
 
             // Radiation losses
             if( Radiate ) {
@@ -433,80 +433,81 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
         } //ibin
         
-        for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++ ) {
+        if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
+            for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++ ) {
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[1] += MPI_Wtime() - timer;
-            timer = MPI_Wtime();
+                patch->patch_timers[1] += MPI_Wtime() - timer;
+                timer = MPI_Wtime();
 #endif
 
-            // Apply wall and boundary conditions
-            if( mass_>0 ) {
-                for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                    for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                        if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
-                            nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                // Apply wall and boundary conditions
+                if( mass_>0 ) {
+                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                        for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                            double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                            if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
+                                nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                            }
                         }
                     }
-                }
-                // Boundary Condition may be physical or due to domain decomposition
-                // apply returns 0 if iPart is not in the local domain anymore
-                //        if omp, create a list per thread
-                for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                    if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                        addPartInExchList( iPart );
-                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
-                        //}
-                        //else if ( partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                        //std::cout<<"removed particle position"<< particles->position(0,iPart)<<" , "<<particles->position(1,iPart)<<" ,"<<particles->position(2,iPart)<<std::endl;
-                    }
-                }
-
-            } else if( mass_==0 ) {
-                for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                    // Boundary Condition may be physical or due to domain decomposition
+                    // apply returns 0 if iPart is not in the local domain anymore
+                    //        if omp, create a list per thread
                     for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                        if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
+                        if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                            addPartInExchList( iPart );
+                            nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                            //}
+                            //else if ( partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                            //std::cout<<"removed particle position"<< particles->position(0,iPart)<<" , "<<particles->position(1,iPart)<<" ,"<<particles->position(2,iPart)<<std::endl;
+                        }
+                    }
+
+                } else if( mass_==0 ) {
+                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                        for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                            double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                            if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
+                                nrj_lost_per_thd[tid] += ener_iPart;
+                            }
+                        }
+                    }
+
+                    // Boundary Condition may be physical or due to domain decomposition
+                    // apply returns 0 if iPart is not in the local domain anymore
+                    //        if omp, create a list per thread
+                    for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                        if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                            addPartInExchList( iPart );
                             nrj_lost_per_thd[tid] += ener_iPart;
                         }
                     }
+
                 }
 
-                // Boundary Condition may be physical or due to domain decomposition
-                // apply returns 0 if iPart is not in the local domain anymore
-                //        if omp, create a list per thread
-                for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                    if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                        addPartInExchList( iPart );
-                        nrj_lost_per_thd[tid] += ener_iPart;
-                    }
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[3] += MPI_Wtime() - timer;
+#endif
+
+                //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
+
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+
+                // Project currents if not a Test species and charges as well if a diag is needed.
+                // Do not project if a photon
+                if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
+                    Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
                 }
 
-            }
-
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[3] += MPI_Wtime() - timer;
+                patch->patch_timers[2] += MPI_Wtime() - timer;
 #endif
 
-            //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
-
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-#endif
-
-            // Project currents if not a Test species and charges as well if a diag is needed.
-            // Do not project if a photon
-            if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
-                Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
-            }
-
-#ifdef  __DETAILED_TIMERS
-            patch->patch_timers[2] += MPI_Wtime() - timer;
-#endif
-
-        }// ibin
-
+            }// ibin
+        } // end if moving particle
 
         for( unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++ ) {
             nrj_bc_lost += nrj_lost_per_thd[tid];
