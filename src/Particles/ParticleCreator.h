@@ -68,7 +68,7 @@ public:
                             Params &params );
 
     //! Regulate of the particle weight with particle position
-    static void regulateWeightwithPositionAM( Particles * particles );
+    static void regulateWeightwithPositionAM( Particles * particles, std::string position_initialization_on_species_type_, double dr );
     
     // For all particles in a mesh initialize its charge state
     static void createCharge( Particles * particles, Species * species,

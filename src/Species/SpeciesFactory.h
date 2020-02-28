@@ -1115,10 +1115,7 @@ public:
         // Update particles weight in specific case
         if (params.geometry=="AMcylindrical") {
             for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
-                if ( ( returned_species[ispec1]->position_initialization_ == "regular" ) ||
-                     ( returned_species[ispec1]->position_initialization_on_species_type_ == "regular" ) ) {
-                    ParticleCreator::regulateWeightwithPositionAM( returned_species[ispec1]->particles );
-                }
+                ParticleCreator::regulateWeightwithPositionAM( returned_species[ispec1]->particles, returned_species[ispec1]->position_initialization_on_species_type_, returned_species[ispec1]->cell_length[1]  );
             }
         }
 
@@ -1242,10 +1239,7 @@ public:
         // Update particles weight in specific case
         if (params.geometry=="AMcylindrical") {
             for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
-                if ( ( returned_species[ispec1]->position_initialization_ == "regular" ) ||
-                     ( returned_species[ispec1]->position_initialization_on_species_type_ == "regular" ) ) {
-                    ParticleCreator::regulateWeightwithPositionAM( returned_species[ispec1]->particles );
-                }
+                ParticleCreator::regulateWeightwithPositionAM( returned_species[ispec1]->particles, returned_species[ispec1]->position_initialization_on_species_type_, returned_species[ispec1]->cell_length[1]);
             }
         }
 

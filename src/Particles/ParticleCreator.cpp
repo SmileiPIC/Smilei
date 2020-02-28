@@ -192,8 +192,6 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }
-            // cerr << species_->name
-            //      << " Velocity[m] : " << velocity[m](0,0,0) << " Temperature[m]: " << temperature[m](0,0,0) << endl;
         }
     } // end if momentum_initialization_array_
     
@@ -288,12 +286,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                     
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical" &&
-                        ( (position_initialization_  != "regular") &&
-                          (species_->position_initialization_on_species_type_ != "regular") ) ) {
-                        //Particles weight in regular is normalized later.
-                        density( i, j, k ) *= ( *xyz[1] )( i, j, k );
-                    }
+
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
                     // for each cell with as non-zero density
                     npart_effective += ( unsigned int ) n_part_in_cell( i, j, k );
@@ -854,12 +847,23 @@ void ParticleCreator::createWeight( std::string position_initialization,
 // ---------------------------------------------------------------------------------------------------------------------
 //! For all (nPart) particles in a mesh initialize its numerical weight (equivalent to a number density)
 // ---------------------------------------------------------------------------------------------------------------------
-void ParticleCreator::regulateWeightwithPositionAM( Particles * particles )
+void ParticleCreator::regulateWeightwithPositionAM( Particles * particles, std::string position_initialization_on_species_type_, double dr )
 {
-    //Particles in regular have a weight proportional to their position along r.
     int nParts = particles->Weight.size();
-    for (unsigned int ipart=0; ipart < nParts ; ipart++){
-        particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
+
+    if ( position_initialization_on_species_type_ == "regular" ){
+        //Particles in regular have a weight proportional to their position along r.
+        for (unsigned int ipart=0; ipart < nParts ; ipart++){
+            double radius = sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
+            particles->weight(ipart) *= radius;
+        }
+    } else {
+        //Particles in AM have a weight proportional to their intial cell radius
+        double dr_inv = 1./dr;
+        for (unsigned int ipart=0; ipart < nParts ; ipart++){
+            double cell_radius = dr * (floor ( sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart)) * dr_inv) + 0.5);
+            particles->weight(ipart) *= cell_radius;
+        }
     }
 }
 

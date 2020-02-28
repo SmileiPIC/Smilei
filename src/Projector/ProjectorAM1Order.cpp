@@ -126,29 +126,6 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     }//i
 } // END Project for diags local current densities
 
-// Apply boundary conditions on axis for Rho frozen particles
-void ProjectorAM1Order::axisBCfrozen( complex<double> *rho,  int imode )
-{
-
-   //const double one_ov_9  = 1./9.; 
-   //const double one_ov_16 = 1./16.; 
-   //if (imode == 0){
-   //    // drho_0/dr[r=0] = 0
-   //    for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
-   //        rho[i] = (25.*rho[i+1] - 9.*rho[i+2])*one_ov_16;
-   //    }//i
-   //} else { //m > 0
-   //    // rho_m[r=0] = 0 and drho_m/dr[r=0] = 0 when m is even and !=0 when m is odd. 
-   //    // quadratic interpolation for even m and linear interpolation when m is odd
-   //    double slope = (imode%2==0 ? one_ov_9 : 1./3.);
-   //    for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
-   //        rho[i] = rho[i+1] * slope;
-   //    }//i
-   //}
-
-    return;
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for all modes, not charge conserving
 // ---------------------------------------------------------------------------------------------------------------------
@@ -237,6 +214,30 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     
 } // END Project local current densities (Jl, Jr, Jt)
 
+void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode )
+{
+    const double one_ov_9  = 1./9.; 
+    const double one_ov_16 = 1./16.; 
+    if (imode == 0){
+        // Jr_0[r=0] = 0 and dJr_0/dr[r=0] = 0 
+        // drho_0/dr[r=0] = 0
+        for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+            //Jr [i] = Jr [i+1] * one_ov_9;
+            //Jt [i] = Jt [i+1] * one_ov_9;
+            rho[i] = (25.*rho[i+1] - 9.*rho[i+2])*one_ov_16;
+        }//i
+    } else { //m > 0
+        // rho_m[r=0] = 0 and drho_m/dr[r=0] = 0 when m is even and !=0 when m is odd. 
+        // quadratic interpolation for even m and linear interpolation when m is odd
+        const double slope = (imode%2==0 ? one_ov_9 : 1./3.);
+        for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+            rho[i] = rho[i+1] * slope;
+        }//i
+    }
+
+return;
+}
+
 //------------------------------------//
 //Wrapper for projection
 void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
@@ -249,43 +250,6 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         currents( emAM, particles,  ipart, ( *invgf )[ipart], diag_flag, ispec);
     }
-
-    ////Boundary conditions for Jr mode 0 near axis
-    //if (emAM->isYmin ) {
-    //    complex<double> *Jr, *Jt, *rho; 
-    //    for (int imode = 0; imode < Nmode; imode++){
-    //        if (!diag_flag){
-    //            Jr =  &( *emAM->Jr_[imode] )( 0 );
-    //            Jt =  &( *emAM->Jt_[imode] )( 0 );
-    //            rho = &( *emAM->rho_AM_[imode] )( 0 ) ; // In spectral, always project density
-    //        } else {
-    //            unsigned int n_species = emAM->Jl_s.size() / Nmode;
-    //            unsigned int ifield = imode*n_species + ispec; 
-    //            Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
-    //            Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : &( *emAM->Jt_    [imode] )( 0 ) ;
-    //            rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
-    //        }
-    //        const double one_ov_9  = 1./9.; 
-    //        const double one_ov_16 = 1./16.; 
-    //        if (imode == 0){
-    //            // Jr_0[r=0] = 0 and dJr_0/dr[r=0] = 0 
-    //            // drho_0/dr[r=0] = 0
-    //            for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
-    //                //Jr [i] = Jr [i+1] * one_ov_9;
-    //                //Jt [i] = Jt [i+1] * one_ov_9;
-    //                rho[i] = (25.*rho[i+1] - 9.*rho[i+2])*one_ov_16;
-    //            }//i
-    //        } else { //m > 0
-    //            // rho_m[r=0] = 0 and drho_m/dr[r=0] = 0 when m is even and !=0 when m is odd. 
-    //            // quadratic interpolation for even m and linear interpolation when m is odd
-    //            const double slope = (imode%2==0 ? one_ov_9 : 1./3.);
-    //            for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
-    //                rho[i] = rho[i+1] * slope;
-    //            }//i
-    //        }
-    //    }
-    //}
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
