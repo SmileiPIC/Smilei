@@ -858,6 +858,7 @@ void ParticleCreator::regulateWeightwithPositionAM( Particles * particles )
 {
     //Particles in regular have a weight proportional to their position along r.
     for (unsigned int ipart=0; ipart < particles->weight().size(); ipart++){
+        cout << "ipart = " << ipart << " " << particles->weight(ipart) << " " << particles->position(1,ipart) << " " << particles->position(2,ipart) << endl;
         particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
     }
 }

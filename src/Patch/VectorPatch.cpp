@@ -120,6 +120,8 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
             }
 
         } else {
+            
+            cout << "start create diag patch " <<ipatch << endl;
             ElectroMagnAM *EMfields = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             for( unsigned int ifield=0 ; ifield<EMfields->Jl_s.size(); ifield++ ) {
                 if( EMfields->Jl_s[ifield]->cdata_ == NULL ) {
@@ -170,6 +172,7 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
 
 
     }
+    cout << "end create diag" << endl;
 
     for( unsigned int idiag = 0 ;  idiag < globalDiags.size() ; idiag++ ) {
         diag_timers.push_back( new Timer( globalDiags[idiag]->filename ) );
@@ -181,6 +184,7 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
     for( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
         diag_timers[idiag]->init( smpi );
     }
+    cout << "end create timer " << endl;
 
 }
 
@@ -861,7 +865,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
             // Per species in global, Attention if output -> Sync / per species fields
             ( *this )( ipatch )->EMfields->computeTotalRhoJ();
         }
-    } //MESSAGE ("bug before");
+    } 
     timers.densities.update();
 
     timers.syncDens.restart();
@@ -869,12 +873,13 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
         if ( (!params.uncoupled_grids)||(itime==0) )
             SyncVectorPatch::sumRhoJ( params, ( *this ), smpi, timers, itime ); // MPI
     } else {
+
         if ( (!params.uncoupled_grids)||(itime==0) )
             for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->Jl_.size() ; imode++ ) {
                 SyncVectorPatch::sumRhoJ( params, ( *this ), imode, smpi, timers, itime );
             }
     }
-    //MESSAGE ("bug after");
+
     if( diag_flag ) {
         for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
             if( !( *this )( 0 )->vecSpecies[ispec]->particles->is_test ) {
@@ -889,13 +894,19 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
             }
         }
     }
-    //if ( ( params.geometry == "AMcylindrical" ) && (!params.uncoupled_grids) ) {
-    //    #pragma omp for schedule(static)
-    //    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-    //        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-    //        emAM->on_axis_J( diag_flag );
-    //    }
-    //}
+    //Apply boundary conditions for rho and J on axis
+    if ( ( params.geometry == "AMcylindrical" ) && (!params.uncoupled_grids) && (( *this )( 0 )->vecSpecies.size() > 0) ) {
+        #pragma omp for schedule(runtime)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            if (emAM->isYmin){
+                cout << "calling axisBC" << endl;
+                for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
+                    ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode );
+                }
+            }
+        }
+    }
     timers.syncDens.update( params.printNow( itime ) );
 } // End sumDensities
 

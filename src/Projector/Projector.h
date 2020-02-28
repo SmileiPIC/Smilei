@@ -33,6 +33,7 @@ public:
 
     //! Apply boundary conditions on axis for Rho and J in AM geometry
     virtual void axisBCfrozen( std::complex<double> *rhoj, int imode ) {};
+    virtual void axisBC( std::complex<double> *rhoj, std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, int imode ) {};
     
     //! Project global current densities if Ionization in Species::dynamics,
     virtual void ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion ) = 0;

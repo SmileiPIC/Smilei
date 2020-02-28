@@ -565,16 +565,6 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                         Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
                     }
                 }
-                //Apply boundary conditions on axis for rho if patch is Ymin and rho specific to species is asked for
-                if (emAM->isYmin ){
-                    //if Species specific diag
-                    if (emAM->rho_AM_s[ifield] ) Proj->axisBCfrozen(b_rho, imode );
-                    //On global rho only once after last species
-                    if (ispec == n_species-1) {
-                        b_rho = &( *emAM->rho_AM_[imode] )( 0 ) ;
-                        Proj->axisBCfrozen(b_rho, imode );
-                    }
-                }
             }
         }
     } // End projection for frozen particles
