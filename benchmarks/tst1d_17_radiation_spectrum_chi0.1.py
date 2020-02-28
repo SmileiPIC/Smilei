@@ -69,9 +69,9 @@ Main(
     print_every = int(Tsim/dt/20.)
 )
 
-ExternalField(
+PrescribedField(
     field   = 'Bz',
-    profile = B0
+    profile = lambda x,t: 1000.
 )
 
 Species(
@@ -163,6 +163,10 @@ RadiationReaction(
 
 ### Diagnostics
 globalEvery = int(Tsim/dt)
+
+DiagFields(
+    every = 50
+)
 
 ### (vx-vy) phase-space
 DiagParticleBinning(
@@ -286,7 +290,7 @@ DiagRadiationSpectrum(
 )
 
 def depose(particles):
-    return particles.weight*np.sqrt(particles.px**2+particles.py**2++particles.pz**2)
+    return particles.weight*np.sqrt(particles.px**2+particles.py**2+particles.pz**2)
 
 DiagParticleBinning(
     deposited_quantity = depose,

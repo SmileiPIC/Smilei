@@ -87,16 +87,16 @@ def _smilei_check():
             return tconstant()
         except: return input
     for s in Species:
-        s.number_density      = toSpaceProfile(s.number_density      )
-        s.charge_density  = toSpaceProfile(s.charge_density  )
-        s.particles_per_cell = toSpaceProfile(s.particles_per_cell )
-        s.charge          = toSpaceProfile(s.charge          )
+        s.number_density      = toSpaceProfile(s.number_density)
+        s.charge_density  = toSpaceProfile(s.charge_density)
+        s.particles_per_cell = toSpaceProfile(s.particles_per_cell)
+        s.charge          = toSpaceProfile(s.charge)
         s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
         s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
     for e in ExternalField:
-        e.profile         = toSpaceProfile(e.profile         )
+        e.profile         = toSpaceProfile(e.profile)
     for e in PrescribedField:
-        e.profile         = toTimeProfile(e.profile         )
+        e.profile         = toSpaceProfile(e.profile)
     for a in Antenna:
         a.space_profile   = toSpaceProfile(a.space_profile   )
         a.time_profile    = toTimeProfile (a.time_profile    )
@@ -106,9 +106,9 @@ def _smilei_check():
         l.space_envelope  = [ toSpaceProfile(p) for p in l.space_envelope ]
         l.phase           = [ toSpaceProfile(p) for p in l.phase          ]
     for s in ParticleInjector:
-        s.number_density      = toSpaceProfile(s.number_density      )
-        s.charge_density  = toSpaceProfile(s.charge_density  )
-        s.time_envelope  = toTimeProfile(s.time_envelope  )
+        s.number_density = toSpaceProfile(s.number_density)
+        s.charge_density = toSpaceProfile(s.charge_density)
+        s.time_envelope  = toTimeProfile(s.time_envelope)
         s.particles_per_cell = toSpaceProfile(s.particles_per_cell )
         s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
         s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]

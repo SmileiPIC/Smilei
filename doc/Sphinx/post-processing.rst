@@ -239,11 +239,7 @@ Open a Screen diagnostic
 .. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
-  * ``diagNumber``: number of the screen diagnostic (the first one has number 0).
-     | If not given, a list of available screen diagnostics is printed.
-     | It can also be an operation between several Screen diagnostics.
-     | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
-  * ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
+  * ``diagNumber``, ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
   * See also :ref:`otherkwargs`
 
 **Example**::
@@ -260,12 +256,8 @@ Open a RadiationSpectrum diagnostic
 .. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
-  * ``diagNumber``: number of the particle binning diagnostic (starts at 0).
-       | If not given, a list of available diagnostics is printed.
-       | It can also be an operation between several diagnostics.
-       | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
-    * ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
-    * See also :ref:`otherkwargs`
+  * ``diagNumber``, ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
+  * See also :ref:`otherkwargs`
 
 **Example**::
 
@@ -274,7 +266,7 @@ Open a RadiationSpectrum diagnostic
 
 .. note::
 
-  The resulting power spectrum is in units of :math:`m_e c^2 \omega_r` (per unit of normalized energy).
+  The resulting spectral power is in units of :math:`\omega_r`.
   If additional axes are used, the power spectrum is divided by the size of the bins of each axes.
 
 ----

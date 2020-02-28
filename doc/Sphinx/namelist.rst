@@ -1651,7 +1651,8 @@ the envelope model for the laser.
 External fields
 ^^^^^^^^^^^^^^^
 
-An external field can be applied using an ``ExternalField`` block::
+An constant external field can be applied over the whole box
+(at the beginning of the simulation) using an ``ExternalField`` block::
 
   ExternalField(
       field = "Ex",
@@ -1677,24 +1678,23 @@ An external field can be applied using an ``ExternalField`` block::
 Prescribed fields
 ^^^^^^^^^^^^^^^^^
 
-User-defined electromagnetic fields (with spatio-temporal dependence) can be added to the self-consistent Maxwell fields.
-These fields are projected onto the simulation grid and added before interpolation to the Maxwell fields.
-Note however that these are not self-consistent fields, and the user has to be careful when using this feature.
-They are however an excellent tool for validation, or should one want to use :program:`Smilei` to describe charged
-particles' dynamics in a given electromagnetic field.
+User-defined electromagnetic fields, with spatio-temporal dependence,
+can be superimposed to the self-consistent Maxwell fields.
+These fields push the particles but **do not participate in the Maxwell solver**:
+they are not self-consistent.
+They are however useful to describe charged particles' dynamics in a given
+electromagnetic field.
 
 This feature is accessible using the ``PrescribedField`` block::
 
+  from numpy import cos, sin
   def myPrescribedProfile(x,t):
-  	return np.cos(x)*np.sin(x)
+  	return cos(x)*sin(t)
 
   PrescribedField(
       field = "Ex",
-      profile = myExtProfile
+      profile = myPrescribedProfile
   )
-
-.. warning:: Prescribed fields are by default spatio-temporal fields, and should always be defined by a function of all
-  spatial dimensions defined on the box plus time. Constant fields are still possible, as illustrated in the example above.
 
 .. py:data:: field
 
@@ -1704,12 +1704,9 @@ This feature is accessible using the ``PrescribedField`` block::
 
   :type: float or *python* function (see section :ref:`profiles`)
 
-  The spatio-temporal profile of the applied field.
+  The spatio-temporal profile of the applied field: a *python* function
+  with arguments (*x*, *t*) or (*x*, *y*, *t*), etc.
   Refer to :doc:`units` to understand the units of this field.
-
-.. note:: These fields are used only at the moment of field interpolation.
- Hence, they will appear in a ``DiagProbe``. They will also appear in a ``DiagField()``.
- They are not used however to advance the electromagnetic fields in the Maxwell solver.
 
 
 ----
@@ -2881,17 +2878,17 @@ for instance::
 *RadiationSpectrum* diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A *radiation spectrum diagnostic* computes (at a given time) the instantaneous power energy-spectrum
-following from the incoherent emission of high-energy photons by accelerated charge (see :doc:`radiation_loss`
-for more details on the emission process and its implementation in :program:`Smilei`).
+A *radiation spectrum diagnostic* computes (at a given time) the instantaneous
+power spectrum following from the incoherent emission of high-energy
+photons by accelerated charge (see :doc:`radiation_loss` for more details
+on the emission process and its implementation in :program:`Smilei`).
 
-The instantaneous power energy-spectrum is computed as a function of the emitted photon energy defined on a grid.
-Otherwise, the diagnostics is quite similar to :ref:`particle binning diagnostics <DiagParticleBinning>`.
-In particular, the emitted power spectrum can be further discretized onto a "grid" chosen by the user.
-This grid may be of any dimension, and is defined by as many axes as defined by the user.
+It is similar to the :ref:`particle binning diagnostics <DiagParticleBinning>`,
+with an extra axis of binning: the emitted photon energy.
+The other axes remain available to the user.
 
-You can add a radiation spectrum diagnostic by including a block ``RadiationSpectrum()`` in the namelist,
-for instance::
+A radiation spectrum diagnostic is defined by a block ``RadiationSpectrum()``::
+
   DiagRadiationSpectrum(
       every = 5,
       flush_every = 1,
@@ -2921,30 +2918,31 @@ for instance::
 
   The number of time-steps during which the data is averaged before output.
 
-
 .. py:data:: species
 
-  A list of one or several species' :py:data:`name`.
+  A list of one or several species' :py:data:`name` that emit the radiation.
   All these species are combined into the same diagnostic.
 
 .. py:data:: photon_energy_axis
 
-  The axis of photon energies (in units of :math:`m_e c^2`) onto which the radiation power spectrum is projected.
-  Syntax of the axis: ``[min, max, nsteps, "logscale"]``
+  The axis of photon energies (in units of :math:`m_e c^2`).
+  The syntax is similar to that of
+  :ref:`particle binning diagnostics <DiagParticleBinning>`.
+
+  Syntax: ``[min, max, nsteps, "logscale"]``
 
 .. py:data:: axes
 
   An additional list of "axes" that define the grid.
   There may be as many axes as wanted (there may be zero axes).
-  Their syntax is the same that for "axes" of a :ref:`particle binning diagnostics <DiagParticleBinning>`.
-
-  Syntax of one axis: ``[type, min, max, nsteps, "logscale", "edge_inclusive"]``
+  Their syntax is the same that for "axes" of a
+  :ref:`particle binning diagnostics <DiagParticleBinning>`.
 
 
 **Examples of radiation spectrum diagnostics**
 
-* Time-integrated radiation spectrum.
-  Here the diagnostic is integrated over the full duration of the simulation (``Nt`` time-steps)::
+* Time-integrated over the full duration of the simulation::
+
     DiagRadiationSpectrum(
         every = Nt,
         time_average = Nt,
@@ -2952,19 +2950,25 @@ for instance::
         photon_energy_axis = [0., 1000., 100, 'logscale'],
         axes = []
     )
+
 * Angularly-resolved instantaneous radiation spectrum.
-  Here the diagnostic is considers that all electrons emit radiation in the direction of their velocity::
+  The diagnostic considers that all electrons emit radiation in
+  the direction of their velocity::
+
+    from numpy import arctan2, pi
+
     def angle(p):
-        return numpy.arctan2(p.py,p.px)
+        return arctan2(p.py,p.px)
 
     DiagRadiationSpectrum(
         every = 10,
         species = ["electrons"],
         photon_energy_axis = [0., 1000., 100, 'logscale'],
         axes = [
-            [angle,-numpy.pi,numpy.pi,90]
+            [angle,-pi,pi,90]
         ]
     )
+
 ----
 
 .. _DiagTrackParticles:

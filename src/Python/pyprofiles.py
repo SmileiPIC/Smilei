@@ -5,12 +5,12 @@ def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf"), zvacuum=-float
     if len(Main)==0:
         raise Exception("constant profile has been defined before `Main()`")
     if Main.geometry == "1Dcartesian":
-        f = lambda x  : value if x>=xvacuum else 0.
+        f = lambda x,*t: value if x>=xvacuum else 0.
     if (Main.geometry == "2Dcartesian" or Main.geometry == "AMcylindrical"):
-        f = lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
+        f = lambda x,y,*t: value if (x>=xvacuum and y>=yvacuum) else 0.
         f.yvacuum = yvacuum
     if Main.geometry == "3Dcartesian":
-        f = lambda x,y,z: value if (x>=xvacuum and y>=yvacuum and z>=zvacuum) else 0.
+        f = lambda x,y,z,*t: value if (x>=xvacuum and y>=yvacuum and z>=zvacuum) else 0.
         f.yvacuum = yvacuum
         f.zvacuum = zvacuum
     f.profileName = "constant"
