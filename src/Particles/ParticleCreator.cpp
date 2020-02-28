@@ -845,7 +845,7 @@ void ParticleCreator::createWeight( std::string position_initialization,
                                     Params &params )
 {
     double w = n_real_particles / nPart;
-    for( unsigned  p= iPart; p<iPart+nPart; p++ ) {
+    for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
         particles->weight( p ) = w ;
     }
 }
@@ -857,8 +857,8 @@ void ParticleCreator::createWeight( std::string position_initialization,
 void ParticleCreator::regulateWeightwithPositionAM( Particles * particles )
 {
     //Particles in regular have a weight proportional to their position along r.
-    for (unsigned int ipart=0; ipart < particles->weight().size(); ipart++){
-        cout << "ipart = " << ipart << " " << particles->weight(ipart) << " " << particles->position(1,ipart) << " " << particles->position(2,ipart) << endl;
+    int nParts = particles->Weight.size();
+    for (unsigned int ipart=0; ipart < nParts ; ipart++){
         particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
     }
 }
