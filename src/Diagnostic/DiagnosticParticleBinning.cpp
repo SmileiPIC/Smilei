@@ -127,6 +127,8 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI 
 
 DiagnosticParticleBinning::~DiagnosticParticleBinning()
 {
+    delete histogram;
+
     delete timeSelection;
     delete flush_timeSelection;
 } // END DiagnosticParticleBinning::~DiagnosticParticleBinning
