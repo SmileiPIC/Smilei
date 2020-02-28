@@ -19,7 +19,6 @@ public:
     void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) override final;
 
     //! Apply boundary conditions on Rho and J
-    void axisBCfrozen( std::complex<double> *rhoj, int imode ) override final;
     void axisBC( std::complex<double> *rhoj, std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, int imode ) override final;
     
     //! Project global current densities if Ionization in Species::dynamics,

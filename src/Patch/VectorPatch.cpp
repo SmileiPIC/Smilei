@@ -121,7 +121,6 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
 
         } else {
             
-            cout << "start create diag patch " <<ipatch << endl;
             ElectroMagnAM *EMfields = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             for( unsigned int ifield=0 ; ifield<EMfields->Jl_s.size(); ifield++ ) {
                 if( EMfields->Jl_s[ifield]->cdata_ == NULL ) {
@@ -172,7 +171,6 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
 
 
     }
-    cout << "end create diag" << endl;
 
     for( unsigned int idiag = 0 ;  idiag < globalDiags.size() ; idiag++ ) {
         diag_timers.push_back( new Timer( globalDiags[idiag]->filename ) );
@@ -184,7 +182,6 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
     for( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
         diag_timers[idiag]->init( smpi );
     }
-    cout << "end create timer " << endl;
 
 }
 
@@ -894,19 +891,18 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
             }
         }
     }
-    //Apply boundary conditions for rho and J on axis
-    if ( ( params.geometry == "AMcylindrical" ) && (!params.uncoupled_grids) && (( *this )( 0 )->vecSpecies.size() > 0) ) {
-        #pragma omp for schedule(runtime)
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-            if (emAM->isYmin){
-                cout << "calling axisBC" << endl;
-                for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
-                    ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode );
-                }
-            }
-        }
-    }
+    ////Apply boundary conditions for rho and J on axis
+    //if ( ( params.geometry == "AMcylindrical" ) && (!params.uncoupled_grids) && (( *this )( 0 )->vecSpecies.size() > 0) ) {
+    //    #pragma omp for schedule(runtime)
+    //    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+    //        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+    //        if (emAM->isYmin){
+    //            for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
+    //                ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode );
+    //            }
+    //        }
+    //    }
+    //}
     timers.syncDens.update( params.printNow( itime ) );
 } // End sumDensities
 
@@ -1460,9 +1456,6 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
         //The MPI rank owning it is
         int rank_XmaxYmin = smpi->hrank( patch_YminXmax );
 
-
-        //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
-
         if( smpi->getRank() == rank_XminYmax ) {
             Ex_XminYmax = ( *this )( patch_YmaxXmin-( this->refHindex_ ) )->EMfields->getEx_XminYmax();
             Ey_XminYmax = ( *this )( patch_YmaxXmin-( this->refHindex_ ) )->EMfields->getEy_XminYmax();
@@ -1574,11 +1567,9 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->initPoisson( ( *this )( ipatch ) );
-        //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
         ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
         emAM->initPoissonFields( ( *this )( ipatch ) );
     }
-    // //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
 
     std::vector<Field *> El_;
     std::vector<Field *> Er_;
@@ -1637,7 +1628,6 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
         }
         
         iteration = 0;//MESSAGE("Initial error parameter (must be 1) : "<<ctrl);
-        //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
         while( ( ctrl > error_max ) && ( iteration<iteration_max ) ) {
             iteration++;
         
@@ -1885,10 +1875,8 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->initPoisson( ( *this )( ipatch ) );
         rnew_dot_rnew_local += ( *this )( ipatch )->EMfields->compute_r();
-        //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
         ( *this )( ipatch )->EMfields->initRelativisticPoissonFields( ( *this )( ipatch ) );
     }
-    //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
     MPI_Allreduce( &rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
     std::vector<Field *> Ex_;
@@ -1965,7 +1953,6 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     if( smpi->isMaster() ) {
         DEBUG( "Starting iterative loop for CG method" );
     }
-    //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
     while( ( ctrl > error_max ) && ( iteration<iteration_max ) ) {
         iteration++;
 
@@ -2099,9 +2086,6 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
         int patch_YminXmax = domain_decomposition_->getDomainId( xcall );
         //The MPI rank owning it is
         int rank_XmaxYmin = smpi->hrank( patch_YminXmax );
-
-
-        //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
 
         if( smpi->getRank() == rank_XminYmax ) {
             Ex_XminYmax = ( *this )( patch_YmaxXmin-( this->refHindex_ ) )->EMfields->getExrel_XminYmax();
@@ -2319,10 +2303,8 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->initPoisson( ( *this )( ipatch ) );
-        //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
         ( *this )( ipatch )->EMfields->initRelativisticPoissonFields( ( *this )( ipatch ) );
     }
-    // //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
 
     std::vector<Field *> El_;
     std::vector<Field *> Er_;
@@ -2391,7 +2373,6 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         }
 
         unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
-        //if ( Ex_[0]->dims_.size()>1 ) {
         if( El_rel_[0]->dims_.size()>1 ) {
             nx_p2_global *= ( params.n_space_global[1]+1 );
             if( El_rel_[0]->dims_.size()>2 ) {
@@ -2401,7 +2382,6 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
 
         // compute control parameter
         double norm2_source_term = sqrt( std::abs(rnew_dot_rnewAM_) );
-        //double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
         double ctrl = sqrt( std::abs(rnew_dot_rnewAM_) ) / norm2_source_term; // initially is equal to one
         
         // ---------------------------------------------------------
@@ -2412,7 +2392,6 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         }
         
         iteration = 0;//MESSAGE("Initial error parameter (must be 1) : "<<ctrl);
-        //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
         while( ( ctrl > error_max ) && ( iteration<iteration_max ) ) {
             iteration++;
         
