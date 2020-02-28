@@ -403,13 +403,6 @@ int main( int argc, char *argv[] )
                     }
                 timers.syncDens.update( params.printNow( itime ) );
 
-
-                //if( params.geometry == "AMcylindrical" ) {
-                //    ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( region.vecPatch_ )( 0 )->EMfields );
-                //    emAM->on_axis_J( region.vecPatch_.diag_flag );
-                //}
-
-
                 region.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 if ( params.geometry != "AMcylindrical" )
                     DoubleGrids::syncFieldsOnPatches( region, vecPatches, params, &smpi, timers, itime );
