@@ -90,9 +90,13 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             PyTools::extract( "restart_files", restart_files, "Checkpoints" );
             
             // This will open all dumps and pick the last one
+            restart_file = "";
             for( unsigned int num_dump=0; num_dump<restart_files.size(); num_dump++ ) {
                 string dump_name=restart_files[num_dump];
                 hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
+                if( fid < 0 ) {
+                    continue;
+                }
                 unsigned int stepStartTmp=0;
                 H5::getAttr( fid, "dump_step", stepStartTmp );
                 if( stepStartTmp>this_run_start_step ) {
@@ -107,6 +111,7 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             if( restart_file.empty() ) {
                 ERROR( "Cannot find a valid restart file" );
             }
+            smpi->barrier();
             
 #ifdef  __DEBUG
             MESSAGEALL( 2, " : Restarting fields and particles, dump_number = " << dump_number << " step=" << this_run_start_step << "\n\t\t" << restart_file );
