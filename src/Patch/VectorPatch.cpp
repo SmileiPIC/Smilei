@@ -892,7 +892,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
         }
     }
     //Apply boundary conditions for rho and J on axis
-    if ( ( params.geometry == "AMcylindrical" ) && (!params.uncoupled_grids) && (( *this )( 0 )->vecSpecies.size() > 0) ) {
+    if ( ( params.geometry == "AMcylindrical" ) && (( *this )( 0 )->vecSpecies.size() > 0) ) {
         #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
