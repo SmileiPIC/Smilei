@@ -462,3 +462,104 @@ void DoubleGrids::bOnPatchesSend( ElectroMagn* globalfields, unsigned int hindex
     smpi->send( region.fake_patch->EMfields->Bz_, local_patch_rank, hindex*9+8 );
 
 }
+
+// ---------------------------------------------------------------------------
+// Scatter Currents on Patches for diags after filtering
+// ---------------------------------------------------------------------------
+void DoubleGrids::syncCurrentsOnPatches( Region &region, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
+{
+    timers.grids.restart();
+
+    // Loop / additional_patches_ ( within local vecPatches but not in local Region )
+    //                            get data from Region of others MPI
+    for ( unsigned int i=0 ; i<region.additional_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGrids::currentsOnPatchesRecv( vecPatches(ipatch)->EMfields,
+                                          region.additional_patches_[i], region.additional_patches_ranks[i], smpi,  vecPatches(ipatch) );
+
+    }
+
+    // Loop / missing_patches_ ( within local Region but not in local vecPatches,  )
+    //                         send data which do not concern local Region
+    for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
+        DoubleGrids::currentsOnPatchesSend( region.patch_->EMfields,
+                                          region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region );
+
+    }
+
+    // Loop / additional_patches_ to finalize recv ( fieldsOnPatchesRecv relies on MPI_Irecv )
+    for ( unsigned int i=0 ; i<region.additional_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGrids::currentsOnPatchesRecvFinalize( vecPatches(ipatch)->EMfields,
+                                                  region.additional_patches_[i], region.additional_patches_ranks[i], smpi, vecPatches(ipatch) );
+
+    }
+
+    // Loop / local_patches_ ( patches own by the local vePatches whose data are used by the local Region )
+    for ( unsigned int i=0 ; i<region.local_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = region.local_patches_[i]-vecPatches.refHindex_;
+
+        vecPatches(ipatch)->EMfields->Jx_->get( region.patch_->EMfields->Jx_, params, smpi, region.patch_, vecPatches(ipatch) );
+        vecPatches(ipatch)->EMfields->Jy_->get( region.patch_->EMfields->Jy_, params, smpi, region.patch_, vecPatches(ipatch) );
+        vecPatches(ipatch)->EMfields->Jz_->get( region.patch_->EMfields->Jz_, params, smpi, region.patch_, vecPatches(ipatch) );
+
+        vecPatches(ipatch)->EMfields->rho_->get( region.patch_->EMfields->rho_, params, smpi, region.patch_, vecPatches(ipatch) );
+
+    }
+
+    timers.grids.update();
+}
+
+
+void DoubleGrids::currentsOnPatchesRecv( ElectroMagn* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch )
+{
+    // irecv( Fields, sender_mpi_rank, tag, requests );
+    //        tag = *6 ? 6 communications could be are required per patch
+    //        clarify which usage need B, B_m or both
+    smpi->irecv( localfields->Jx_, recv_from_global_patch_rank, hindex*6  , patch->requests_[0] );
+    smpi->irecv( localfields->Jy_, recv_from_global_patch_rank, hindex*6+1, patch->requests_[1] );
+    smpi->irecv( localfields->Jz_, recv_from_global_patch_rank, hindex*6+2, patch->requests_[2] );
+
+    smpi->irecv( localfields->rho_, recv_from_global_patch_rank, hindex*6+3, patch->requests_[3] );
+}
+
+void DoubleGrids::currentsOnPatchesRecvFinalize( ElectroMagn* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch )
+{
+    MPI_Status status;
+    // Wait for fieldsOnPatchesRecv (irecv)
+    MPI_Wait( &(patch->requests_[0]), &status );
+    MPI_Wait( &(patch->requests_[1]), &status );
+    MPI_Wait( &(patch->requests_[2]), &status );
+
+
+    MPI_Wait( &(patch->requests_[3]), &status );
+}
+
+void DoubleGrids::currentsOnPatchesSend( ElectroMagn* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Region& region )
+{
+    // fake_patch consists in a piece of the local Region to handle naturally patches communications
+    //            need to update its hindex and coordinates to extract (get) appropriate data from the local Region data before send it
+    region.fake_patch->hindex = hindex;
+    region.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
+
+    // send( Fields, targeted_mpi_rank, tag );
+    //       tag = *6 ? 6 communications could be required per patch
+    //       clarify which usage need B, B_m or both
+    region.fake_patch->EMfields->Jx_->get( globalfields->Jx_, params, smpi, region.patch_, region.fake_patch );
+    smpi->send( region.fake_patch->EMfields->Jx_, local_patch_rank, hindex*6 );
+
+    region.fake_patch->EMfields->Jy_->get( globalfields->Jy_, params, smpi, region.patch_, region.fake_patch );
+    smpi->send( region.fake_patch->EMfields->Jy_, local_patch_rank, hindex*6+1 );
+
+    region.fake_patch->EMfields->Jz_->get( globalfields->Jz_, params, smpi, region.patch_, region.fake_patch );
+    smpi->send( region.fake_patch->EMfields->Jz_, local_patch_rank, hindex*6+2 );
+
+    region.fake_patch->EMfields->rho_->get( globalfields->rho_, params, smpi, region.patch_, region.fake_patch );
+    smpi->send( region.fake_patch->EMfields->rho_, local_patch_rank, hindex*6+3 );
+
+}

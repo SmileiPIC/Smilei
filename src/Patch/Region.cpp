@@ -143,7 +143,7 @@ void Region::solveMaxwell( Params &params, SimWindow *simWindow, int itime, doub
     vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers, smpi );
     
     // current no more used for now, reinitialized for next timestep
-    vecPatch_.resetRhoJ();
+    //vecPatch_.resetRhoJ();
 
 }
 

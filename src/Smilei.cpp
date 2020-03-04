@@ -424,20 +424,18 @@ int main( int argc, char *argv[] )
                 else {
                     // Just need to cp Bm in B for all patches
                     vecPatches.setMagneticFieldsForDiagnostic( params );
-                }
 
-                #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
-                {
-                    if( params.geometry != "AMcylindrical" ) {
-                        SyncVectorPatch::sumRhoJ( params, vecPatches, &smpi, timers, itime ); // MPI
+                    if ( params.geometry != "AMcylindrical" ) {
+                        DoubleGrids::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers, itime );
                     }
                     else {
-                        for( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
-                            SyncVectorPatch::sumRhoJ( params, vecPatches, imode, &smpi, timers, itime );
-                        }
+                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                            DoubleGridsAM::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
                     }
                 }
+
             }
+            region.vecPatch_.resetRhoJ();
         }
 
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)

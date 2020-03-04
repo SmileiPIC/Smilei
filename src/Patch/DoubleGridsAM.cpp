@@ -486,3 +486,109 @@ void DoubleGridsAM::bOnPatchesSend( ElectroMagnAM* globalfields, unsigned int hi
 
 }
 
+
+// ---------------------------------------------------------------------------
+// Scatter Currents on Patches for diags after filtering
+// ---------------------------------------------------------------------------
+void DoubleGridsAM::syncCurrentsOnPatches( Region &region, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime, unsigned int imode )
+{
+    timers.grids.restart();
+
+    // Loop / additional_patches_ ( within local vecPatches but not in local Region )
+    //                            get data from Region of others MPI
+    for ( unsigned int i=0 ; i<region.additional_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGridsAM::currentsOnPatchesRecv( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
+                                            region.additional_patches_[i], region.additional_patches_ranks[i], smpi,  vecPatches(ipatch), params, imode );
+
+    }
+
+    // Loop / missing_patches_ ( within local Region but not in local vecPatches,  )
+    //                         send data which do not concern local Region
+    for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
+        DoubleGridsAM::currentsOnPatchesSend( static_cast<ElectroMagnAM *>(region.patch_->EMfields),
+                                            region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region, imode );
+
+    }
+
+    // Loop / additional_patches_ to finalize recv ( fieldsOnPatchesRecv relies on MPI_Irecv )
+    for ( unsigned int i=0 ; i<region.additional_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = region.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGridsAM::currentsOnPatchesRecvFinalize( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
+                                                    region.additional_patches_[i], region.additional_patches_ranks[i], smpi, vecPatches(ipatch), imode );
+
+    }
+
+    ElectroMagnAM * region_fields = NULL;
+    if ( region.local_patches_.size() ) // could be empty for region_global
+        region_fields = static_cast<ElectroMagnAM *>( region.patch_->EMfields );
+
+    // Loop / local_patches_ ( patches own by the local vePatches whose data are used by the local Region )
+    for ( unsigned int i=0 ; i<region.local_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = region.local_patches_[i]-vecPatches.refHindex_;
+        ElectroMagnAM * patch_fields = static_cast<ElectroMagnAM *>( vecPatches(ipatch)->EMfields );
+
+        patch_fields->Jl_[imode]->get( region_fields->Jl_[imode], params, smpi, region.patch_, vecPatches(ipatch) );
+        patch_fields->Jr_[imode]->get( region_fields->Jr_[imode], params, smpi, region.patch_, vecPatches(ipatch) );
+        patch_fields->Jt_[imode]->get( region_fields->Jt_[imode], params, smpi, region.patch_, vecPatches(ipatch) );
+       
+        patch_fields->rho_AM_[imode]->get( region_fields->rho_AM_[imode], params, smpi, region.patch_, vecPatches(ipatch) );
+    }
+
+    timers.grids.update();
+}
+
+
+void DoubleGridsAM::currentsOnPatchesRecv( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params, unsigned int imode )
+{
+    // irecvComplex( cFields, sender_mpi_rank, tag, requests );
+    //               tag = *9 ? 9 communications could be are required per patch
+    //               clarify which usage need B, B_m or both
+    smpi->irecvComplex( localfields->Jl_[imode], recv_from_global_patch_rank, hindex*9  , patch->requests_[0] );
+    smpi->irecvComplex( localfields->Jr_[imode], recv_from_global_patch_rank, hindex*9+1, patch->requests_[1] );
+    smpi->irecvComplex( localfields->Jt_[imode], recv_from_global_patch_rank, hindex*9+2, patch->requests_[2] );
+
+    smpi->irecvComplex( localfields->rho_AM_[imode], recv_from_global_patch_rank, hindex*9+3, patch->requests_[3] );
+
+}
+
+void DoubleGridsAM::currentsOnPatchesRecvFinalize( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, unsigned int imode )
+{
+    MPI_Status status;
+    // Wait for fieldsOnPatchesRecv (irecv)
+    MPI_Wait( &(patch->requests_[0]), &status );
+    MPI_Wait( &(patch->requests_[1]), &status );
+    MPI_Wait( &(patch->requests_[2]), &status );
+    MPI_Wait( &(patch->requests_[3]), &status );
+}
+
+void DoubleGridsAM::currentsOnPatchesSend( ElectroMagnAM* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Region& region, unsigned int imode )
+{
+    ElectroMagnAM * fake_fields = static_cast<ElectroMagnAM *>( region.fake_patch->EMfields );
+
+    // fake_patch consists in a piece of the local Region to handle naturally patches communications
+    //            need to update its hindex and coordinates to extract (get) appropriate data from the local Region data before send it
+    region.fake_patch->hindex = hindex;
+    region.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
+
+    // sendComplex( cFields, targeted_mpi_rank, tag );
+    //               tag = *9 ? 9 communications could be required per patch
+    //               clarify which usage need B, B_m or both
+    fake_fields->Jl_[imode]->get( globalfields->Jl_[imode], params, smpi, region.patch_, region.fake_patch );
+    smpi->sendComplex( fake_fields->Jl_[imode], local_patch_rank, hindex*9 );
+
+    fake_fields->Jr_[imode]->get( globalfields->Jr_[imode], params, smpi, region.patch_, region.fake_patch );
+    smpi->sendComplex( fake_fields->Jr_[imode], local_patch_rank, hindex*9+1 );
+
+    fake_fields->Jt_[imode]->get( globalfields->Jt_[imode], params, smpi, region.patch_, region.fake_patch );
+    smpi->sendComplex( fake_fields->Jt_[imode], local_patch_rank, hindex*9+2 );
+
+    fake_fields->rho_AM_[imode]->get( globalfields->rho_AM_[imode], params, smpi, region.patch_, region.fake_patch );
+    smpi->sendComplex( fake_fields->rho_AM_[imode], local_patch_rank, hindex*9+3 );
+
+}
