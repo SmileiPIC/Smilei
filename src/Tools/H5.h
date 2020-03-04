@@ -52,6 +52,29 @@ class H5
 
 public:
 
+    
+    //! Attempt to open a file but does not display an error
+    static hid_t Fopen( std::string file ) {
+        // Backup default error printing
+        H5E_auto2_t old_func;
+        void *old_client_data;
+        H5Eget_auto( H5E_DEFAULT, &old_func, &old_client_data );
+        H5Eset_auto( H5E_DEFAULT, NULL, NULL );
+        
+        // Open
+        hid_t status = H5Fopen( file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
+        
+        // Check error stack size
+        if( H5Eget_num( H5E_DEFAULT ) > 0 ) {
+            status = -1;
+        }
+        
+        // Restore previous error printing
+        H5Eset_auto( H5E_DEFAULT, old_func, old_client_data );
+        
+        return status;
+    }
+    
     //! Make an empty group
     // Returns the group ID
     static hid_t group( hid_t locationId, std::string group_name )
