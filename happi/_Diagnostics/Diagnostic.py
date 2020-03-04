@@ -139,7 +139,7 @@ class Diagnostic(object):
 		l = []
 		factor = [self._xfactor, self._yfactor]
 		for i in range(self.dim):
-			l.append([min(self._centers[i])*factor[i], max(self._centers[i])*factor[i]])
+			l.append([self._centers[i].min()*factor[i], self._centers[i].max()*factor[i]])
 		return l
 
 	# Method to print info on this diag

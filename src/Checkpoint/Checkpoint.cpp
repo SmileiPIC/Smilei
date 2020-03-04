@@ -85,6 +85,8 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             MESSAGE( 1, "Code will group checkpoint files by "<< file_grouping );
         }
         
+        smpi->barrier();
+        
         if( params.restart ) {
             std::vector<std::string> restart_files;
             PyTools::extract( "restart_files", restart_files, "Checkpoints" );
@@ -93,7 +95,7 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             restart_file = "";
             for( unsigned int num_dump=0; num_dump<restart_files.size(); num_dump++ ) {
                 string dump_name=restart_files[num_dump];
-                hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
+                hid_t fid = H5::Fopen( dump_name );
                 if( fid < 0 ) {
                     continue;
                 }
@@ -108,10 +110,30 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
                 H5Fclose( fid );
             }
             
-            if( restart_file.empty() ) {
-                ERROR( "Cannot find a valid restart file" );
+            if( restart_file == "" ) {
+                ERROR( "Cannot find a valid restart file for rank "<<smpi->getRank() );
             }
-            smpi->barrier();
+            
+            // Make sure all ranks have the same dump number
+            // Different numbers can be due to corrupted restart files
+            unsigned int prev_number;
+            MPI_Sendrecv(
+                &dump_number, 1, MPI_UNSIGNED, (smpi->getRank()+1) % smpi->getSize(), smpi->getRank(),
+                &prev_number, 1, MPI_UNSIGNED, (smpi->getRank()-1) % smpi->getSize(), smpi->getRank()-1,
+                smpi->SMILEI_COMM_WORLD, NULL
+            );
+            int problem = prev_number != dump_number;
+            int any_problem;
+            MPI_Allreduce( &problem, &any_problem, 1, MPI_INT, MPI_LOR, smpi->SMILEI_COMM_WORLD );
+            if( any_problem ) {
+                if( problem ) {
+                    ostringstream t("");
+                    t << "\t[ERROR]: Issue with restart file on rank " << smpi->getRank() << endl;
+                    cout << t.str();
+                }
+                MPI_Finalize();
+                exit(EXIT_FAILURE);
+            }
             
 #ifdef  __DEBUG
             MESSAGEALL( 2, " : Restarting fields and particles, dump_number = " << dump_number << " step=" << this_run_start_step << "\n\t\t" << restart_file );
