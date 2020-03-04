@@ -21,7 +21,7 @@ def _prepare_checkpoint_dir():
     # Checkpoint: prepare dir tree
     if smilei_mpi_rank == 0 and (Checkpoints.dump_step>0 or Checkpoints.dump_minutes>0.):
         checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
-        if Checkpoints.file_grouping :
+        if Checkpoints.file_grouping:
             ngroups = int((smilei_mpi_size-1)/Checkpoints.file_grouping + 1)
             ngroups_chars = int(math.log10(ngroups))+1
             for group in range(ngroups):
