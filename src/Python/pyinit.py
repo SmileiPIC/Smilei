@@ -72,46 +72,6 @@ class SmileiComponent(object):
         # add all kwargs as internal class variables
         if kwargs is not None:
             deprecated = {
-                "maxwell_sol":"maxwell_solver",
-                "referenceAngularFrequency_SI":"reference_angular_frequency_SI",
-                "initPosition_type":"position_initialization",
-                "initMomentum_type":"momentum_initialization",
-                "thermT":"thermal_boundary_temperature",
-                "thermVelocity":"thermal_boundary_velocity",
-                "isTest":"is_test",
-                "boxSide":"box_side",
-                "polarizationPhi":"polarization_phi",
-                "dump_file_sequence":"keep_n_dumps",
-                "bc_em_type_x":"EM_boundary_conditions",
-                "bc_em_type_y":"EM_boundary_conditions",
-                "bc_em_type_z":"EM_boundary_conditions",
-                "bc_part_type_xmin":"boundary_conditions",
-                "bc_part_type_xmax":"boundary_conditions",
-                "bc_part_type_ymin":"boundary_conditions",
-                "bc_part_type_ymax":"boundary_conditions",
-                "bc_part_type_zmin":"boundary_conditions",
-                "bc_part_type_zmax":"boundary_conditions",
-                "pos"       :"origin",
-                "pos_first" :"corners or vectors",
-                "pos_second":"corners or vectors",
-                "pos_third" :"corners or vectors",
-                "track_every"      :"the block DiagTrackParticles()",
-                "track_flush_every":"the block DiagTrackParticles()",
-                "track_filter"     :"the block DiagTrackParticles()",
-                "species_type"     :"name",
-                "dynamics_type"    :"pusher",
-                "coef_cell"        :"cell_load",
-                "coef_frozen"      :"frozen_particle_load",
-                "currentFilter_int":"the block CurrentFilter()",
-                "Friedman_filter"  :"the block FieldFilter()",
-                "Friedman_theta"   :"the block FieldFilter()",
-                "n_part_per_cell"  :"particles_per_cell",
-                "poisson_iter_max" :"poisson_max_iteration",
-                "poisson_error_max":"poisson_max_error",
-                "nb_density"       :"number_density",
-                "sim_length"       :"grid_length",
-                "sim_time"         :"simulation_time",
-                "output"           :"deposited_quantity",
                 "chipa_radiation_threshold":"minimum_chi_continuous",
                 "chipa_disc_min_threshold":"minimum_chi_discontinuous",
             }
@@ -220,10 +180,6 @@ class Main(SmileiSingleton):
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
-
-        # Deprecation error for the "geometry" argument
-        if Main.geometry in ["1d3v", "2d3v", "3d3v"]:
-            raise Exception("Deprecated geometry = \""+Main.geometry+"\". Use \""+Main.geometry[0]+"Dcartesian\" instead")
 
         # Initialize timestep if not defined based on timestep_over_CFL
         if Main.timestep is None:
@@ -599,17 +555,6 @@ class MultiphotonBreitWheeler(SmileiComponent):
 smilei_mpi_rank = 0
 smilei_mpi_size = 1
 smilei_rand_max = 2**31-1
-
-# DEPRECATION ERRORS
-class DiagParticles(object):
-    def __init__(self, *args, **kwargs):
-        raise Exception("Deprecated `DiagParticles()` must be replaced by `DiagParticleBinning()`")
-class DumpRestart(object):
-    def __init__(self, *args, **kwargs):
-        raise Exception("Deprecated `DumpRestart()` must be replaced by `Checkpoints()`")
-class ExtField(object):
-    def __init__(self, *args, **kwargs):
-        raise Exception("Deprecated `ExtField()` must be replaced by `ExternalField()`")
 
 # Variable to set to False for the actual run (useful for the test mode)
 _test_mode = True

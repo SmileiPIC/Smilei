@@ -93,6 +93,8 @@ It is possible to combine arguments above within quotes, for instance:
 
 .. rubric:: Obtain some information about the compilation
 
+.. code-block:: bash
+
   make print-XXX               # Prints the value of makefile variable XXX
   make env                     # Prints the values of all makefile variables
   make help                    # Gets some help on compilation
