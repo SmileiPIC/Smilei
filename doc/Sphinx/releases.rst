@@ -9,20 +9,31 @@ get the latest version of Smilei on `GitHub <https://github.com/SmileiPIC/Smilei
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
+* Next release:
+
+  * Changed nomenclature for radiation tables: see :doc:`radiation_loss`
+  * ``AMcylindrical``: sorting, documentation
+  * LaserOffset is not recomputed after restart
+
 * Bug fixes:
 
   * Weight-initialization bug in AM geometry when a species was initialized
     on top of a regularly initialized species
   * LaserOffset was off sideways and temporally by a couple of cells
-  * LaserOffset is not recomputed after restart
-
+  * Do not project twice a frozen species
+  * Probes for species faulty when 4th order of interpolation
+  * Checkpoints ``restart_number=0`` was not used
+  * Prevent deadlock when restart files are corrupted
+  * Checkpoints ``file_grouping`` had typo with python3
+  * Scalar ``Ukin`` for ions was incorrect, thus ``Ubal`` was also wrong
+  * happi had incorrect unit conversion with a sum of two fields
 
 * Already available, but experimental:
 
+  * ``AMcylindrical`` geometry
   * Particle merging
   * Nuclear reactions
   * Interface with the PICSAR library for AM spectral solver
-
 
 * In the future:
 
