@@ -222,6 +222,7 @@ int main( int argc, char *argv[] )
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
         vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+
     }
 
     TITLE( "Species creation summary" );
@@ -288,6 +289,10 @@ int main( int argc, char *argv[] )
         if (params.is_pxr) {
             vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
         }
+    }
+
+    if( params.is_spectral ) {
+        vecPatches.saveOldRho( params );
     }
 
     timers.global.reboot();
