@@ -425,13 +425,14 @@ int main( int argc, char *argv[] )
                     // Just need to cp Bm in B for all patches
                     vecPatches.setMagneticFieldsForDiagnostic( params );
 
-                    if ( params.geometry != "AMcylindrical" ) {
-                        DoubleGrids::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers, itime );
-                    }
-                    else {
-                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-                            DoubleGridsAM::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
-                    }
+                }
+
+                if ( params.geometry != "AMcylindrical" ) {
+                    DoubleGrids::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers, itime );
+                }
+                else {
+                    for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                        DoubleGridsAM::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
                 }
 
             }
