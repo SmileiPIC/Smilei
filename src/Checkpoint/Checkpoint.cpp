@@ -120,10 +120,10 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             MPI_Status status;
             MPI_Sendrecv(
                 &dump_number, 1, MPI_UNSIGNED, (smpi->getRank()+1) % smpi->getSize(), smpi->getRank(),
-                &prev_number, 1, MPI_UNSIGNED, (smpi->getRank()-1) % smpi->getSize(), smpi->getRank()-1,
+                &prev_number, 1, MPI_UNSIGNED, (smpi->getRank()+smpi->getSize()-1) % smpi->getSize(), (smpi->getRank()+smpi->getSize()-1)%smpi->getSize(),
                 smpi->SMILEI_COMM_WORLD, &status
             );
-            int problem = prev_number != dump_number;
+            int problem = (prev_number != dump_number);
             int any_problem;
             MPI_Allreduce( &problem, &any_problem, 1, MPI_INT, MPI_LOR, smpi->SMILEI_COMM_WORLD );
             if( any_problem ) {
