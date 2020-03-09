@@ -209,6 +209,10 @@ pre, code {
 img.screenshot {
 }
 
+.line-block{
+	margin:0
+}
+
 code.descname, code.descclassname {
 	font-size: 0.95em;
 	color: {{ theme_keyword_color }};
@@ -225,18 +229,30 @@ img.screenshot {
 }
 
 table.docutils {
-	border: 1px solid #888;
+	border: 0;
 	-moz-box-shadow: none;
 	-webkit-box-shadow: none;
 	box-shadow: none;
 }
 
+table.docutils div.line-block {
+	margin-bottom:0;
+}
+
 table.docutils td, table.docutils th {
-	border: 1px solid #888;
 	padding: 0.25em 0.7em;
 }
 
-table.docutils thead {
+table.fancy {
+	border:1px solid {{ theme_main_color_med }};
+	width: min-content;
+}
+
+table.fancy * {
+	border:0 !important;
+}
+
+table.fancy tr.row-odd {
 	background-color: {{ theme_main_color_pale }};
 }
 
@@ -274,12 +290,8 @@ table.footnote td {
 	padding: 0.3em 0.5em;
 }
 
-table.nowrap {
+table.fancy {
 	white-space: nowrap;
-}
-
-table.docutils div.line-block {
-	margin-bottom:0;
 }
 
 table.noborder, table.noborder td {
@@ -385,7 +397,7 @@ div#changelog > div.section > ul > li > p:only-child {
 	margin-bottom: 0;
 }
 
-/* Hide fugly table cell borders in ..bibliography:: directive output */
+/* Hide ugly table cell borders in ..bibliography:: directive output */
 table.docutils.citation, table.docutils.citation td, table.docutils.citation th {
   border:none;
 }

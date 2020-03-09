@@ -743,28 +743,29 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     unsigned int n_laser = PyTools::nComponents( "Laser" );
     unsigned int n_laser_offset = 0;
     LaserPropagator propagateX;
-
+    
     for( unsigned int i_laser=0; i_laser<n_laser; i_laser++ ) {
         double offset = 0.;
-
+        
         // If this laser has the hidden _offset attribute
         if( PyTools::extract( "_offset", offset, "Laser", i_laser ) ) {
-
+            
+            bool propagate = false;
+            PyTools::extract( "_propagate", propagate, "Laser", i_laser );
+            if( ! propagate ) continue;
+            
             // Extract the angle
             double angle_z = 0.;
             PyTools::extract( "_angle", angle_z, "Laser", i_laser );
-            
-            // If both offset and angle are 0., then we dont propagate
-            if( offset == 0. || angle_z == 0. ) continue;
             
             // Prepare propagator
             if( n_laser_offset == 0 ) {
                 TITLE( "Pre-processing LaserOffset" );
                 propagateX.init( this, smpi, 0 );
             }
-
+            
             MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
-
+            
             // Extract the file name
             string file( "" );
             PyTools::extract( "file", file, "Laser", i_laser );
@@ -800,23 +801,22 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                     ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs );
                 }
             }
-
+            
             // Extract _keep_n_strongest_modes
             int keep_n_strongest_modes=0;
             if( !PyTools::extract( "_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser ) || keep_n_strongest_modes<1 ) {
                 ERROR( "For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer" );
             }
-
+            
             // Make the propagation happen and write out the file
             if( ! smpi->test_mode && ! restart ) {
                 propagateX( profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
             }
-
+            
             n_laser_offset ++;
         }
     }
-
-
+    
     check_consistency();
 }
 

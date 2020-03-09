@@ -48,8 +48,12 @@ class Histogram
 {
 public:
     Histogram() {};
-    ~Histogram() {};
-
+    ~Histogram() {
+        for (int iaxe=0;iaxe<axes.size();iaxe++) {
+            delete axes[iaxe];
+        }
+    };
+    
     //! Compute the index of each particle in the final histogram
     void digitize( Species *, std::vector<double> &, std::vector<int> &, SimWindow * );
     //! Calculate the quantity of each particle to be summed in the histogram
