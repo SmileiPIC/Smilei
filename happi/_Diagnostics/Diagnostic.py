@@ -66,14 +66,6 @@ class Diagnostic(object):
 			return
 		self.units.prepare(self.simulation._reference_angular_frequency_SI)
 		
-		# DEPRECATION ERRORS
-		if "slice" in kwargs:
-			self._error += ["Argument `slice` is deprecated: use `subset` instead."]
-			return
-		if "stride" in kwargs:
-			self._error += ["Argument `stride` is deprecated: use `average` or `sum` instead."]
-			return
-		
 		# Call the '_init' function of the child class
 		remaining_kwargs = self._init(*args, **kwargs)
 		if remaining_kwargs is not None and len(remaining_kwargs) > 0:

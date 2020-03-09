@@ -724,6 +724,7 @@ try:
         L._profiles = space_time_profile
         L._keep_n_strongest_modes = keep_n_strongest_modes
         L._angle = angle
+        L._propagate = True
         
         _N_LaserOffset += 1
 

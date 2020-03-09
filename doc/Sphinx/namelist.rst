@@ -2246,7 +2246,7 @@ The full list of available scalars is given in the table below.
   units are unusual, and depend on the simulation dimension.
   All details :ref:`here<integrated_quantities>`.
 
-.. rst-class:: nowrap
+.. rst-class:: fancy
 
 +----------------+---------------------------------------------------------------------------+
 | **Space-integrated energy densities**                                                      |
@@ -2336,7 +2336,7 @@ This is done by including a block ``DiagFields``::
   List of the field names that are saved. By default, they all are.
   The full list of fields that are saved by this diagnostic:
 
-  .. rst-class:: nowrap
+  .. rst-class:: fancy
 
   +----------------+-------------------------------------------------------+
   | | Bx           | |                                                     |
@@ -2370,7 +2370,7 @@ This is done by including a block ``DiagFields``::
   If a field is specified without its associated mode number, all available modes will be included.
   In summary, the list of fields reads as follows.
 
-  .. rst-class:: nowrap
+  .. rst-class:: fancy
 
   +------------------------------+-----------------------------------------+
   | | Bl_mode_0, Bl_mode_1, etc. | |                                       |
@@ -2387,7 +2387,7 @@ This is done by including a block ``DiagFields``::
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available:
 
-  .. rst-class:: nowrap
+  .. rst-class:: fancy
 
   +----------------+-------------------------------------------------------+
   | |              | | Module of laser vector potential's complex envelope |
