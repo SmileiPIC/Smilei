@@ -4,7 +4,7 @@ Azimuthal modes decomposition
 
 :program:`Smilei` can run in **cyclindrical geometry** with
 a decomposition in azimuthal modes (*AM*), as described in
-`this article <doi.org/10.1016/j.jcp.2008.11.017>`_.
+`this article <http://doi.org/10.1016/j.jcp.2008.11.017>`_.
 This requires a system with cylindrical symmetry or close to cylindrical symmetry
 (around the `x` axis in :program:`Smilei`).
 
