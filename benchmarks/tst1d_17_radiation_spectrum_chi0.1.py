@@ -69,10 +69,16 @@ Main(
     print_every = int(Tsim/dt/20.)
 )
 
-PrescribedField(
+# PrescribedField(
+#     field   = 'Bz',
+#     profile = lambda x,t: 1000.
+# )
+
+ExternalField(
     field   = 'Bz',
-    profile = lambda x,t: 1000.
+    profile = B0
 )
+
 
 Species(
     name = "electron_noRR",
