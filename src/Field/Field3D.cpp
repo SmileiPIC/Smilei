@@ -212,8 +212,8 @@ double Field3D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
 
 void Field3D::extract_slice_yz( unsigned int ix, Field2D *slice )
 {
-    DEBUGEXEC( if( dims_[1]!=slice->dims_[1] ) ERROR( name << " : " <<  dims_[1] << " and " << slice->dims_[1] ) );
-    DEBUGEXEC( if( dims_[2]!=slice->dims_[2] ) ERROR( name << " : " <<  dims_[2] << " and " << slice->dims_[2] ) );
+    DEBUGEXEC( if( dims_[1]!=slice->dims_[0] ) ERROR( name << " : " <<  dims_[1] << " and " << slice->dims_[0] ) );
+    DEBUGEXEC( if( dims_[2]!=slice->dims_[1] ) ERROR( name << " : " <<  dims_[2] << " and " << slice->dims_[1] ) );
     
     for( unsigned int j=0; j<dims_[1]; j++ ) {
         for( unsigned int k=0; k<dims_[2]; k++ ) {
@@ -226,7 +226,7 @@ void Field3D::extract_slice_yz( unsigned int ix, Field2D *slice )
 void Field3D::extract_slice_xz( unsigned int iy, Field2D *slice )
 {
     DEBUGEXEC( if( dims_[0]!=slice->dims_[0] ) ERROR( name << " : " <<  dims_[0] << " and " << slice->dims_[0] ) );
-    DEBUGEXEC( if( dims_[2]!=slice->dims_[2] ) ERROR( name << " : " <<  dims_[2] << " and " << slice->dims_[2] ) );
+    DEBUGEXEC( if( dims_[2]!=slice->dims_[1] ) ERROR( name << " : " <<  dims_[2] << " and " << slice->dims_[1] ) );
     
     for( unsigned int i=0; i<dims_[0]; i++ ) {
         for( unsigned int k=0; k<dims_[2]; k++ ) {

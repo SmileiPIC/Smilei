@@ -69,7 +69,7 @@ This script may run anywhere: you can define a SMILEI_ROOT environment variable
 
 
 # IMPORTS
-import sys, os, re
+import sys, os, re, json
 import pickle
 import numpy as np
 from os import path
@@ -702,56 +702,59 @@ class ShowDiffWithReference(object):
 
 # DEFINE A CLASS FOR LOGGING DATA
 class Log:
-	pattern = re.compile(""
+	pattern1 = re.compile(""
 		+"[\n\t\s]+(Time in time loop) :\t([.0-9]+)\t([<.0-9]+)\% coverage"
-		+"[\n\t\s]+(Particles)\t([.0-9]+)\t([<.0-9]+)\%"
-		+"[\n\t\s]+(Maxwell)\t([.0-9]+)\t([<.0-9]+)\%"
-		+"[\n\t\s]+(Diagnostics)\t([.0-9]+)\t([<.0-9]+)\%"
-		+"[\n\t\s]+(Densities)\t([.0-9]+)\t([<.0-9]+)\%"
-		+"[\n\t\s]+(Collisions)\t([.0-9]+)\t([<.0-9]+)\%"
-		+"[\n\t\s]+(Mov window)\t([.0-9]+)\t([<.0-9]+)\%"
-		+"[\n\t\s]+(Sync Particles)\t([.0-9]+)\t([<.0-9]+)\%"
-		+"[\n\t\s]+(Sync Fields)\t([.0-9]+)\t([<.0-9]+)\%"
-		+"[\n\t\s]+(Sync Densities)\t([.0-9]+)\t([<.0-9]+)\%"
-		+"[\n\t\s]+(Part Merging)\t([.0-9]+)\t([<.0-9]+)\%"
-		+"[\n\t\s]+(Part Injection)\t([.0-9]+)\t([<.0-9]+)\%"
+		+"([\n\t\s]+([\w ]+)\t([.0-9]+)\t([<.0-9]+)\%){6,15}"
+	)
+	pattern2 = re.compile(""
+		+"[\t\s]+([\w ]+):?\t([.0-9]+)\t([<.0-9]+)\%"
 	)
 	
 	def __init__(self, log_file):
 		mkdir(SMILEI_LOGS)
-		self.new_log_file = not path.isfile(log_file)
 		self.log_file = log_file
-		self.values = None
+		self.data = {}
 	
 	def scan(self, output):
 		# Open file and find the pattern
 		with open(output, 'r') as f:
 			text = f.read()
-		found = re.search(self.pattern, text)
+		found = re.search(self.pattern1, text)
 		if not found:
 			print( "WARNING: Unable to log data from "+output)
 			return
-		matches = found.groups()
-		# Add header if new file
-		if self.new_log_file:
-			h = tuple([m.replace(" ", "") for m in matches[::3]])
-			header = "%-25.25s "%"commit" + "%-20s "%"date" + ("%-15s "*len(h))%h + "\n"
-			with open(self.log_file, 'a') as f:
-				f.write(header)
-			self.new_log_file = False
+		lines = found.string[found.start():found.end()].split("\n")[1:]
+		matches = [re.search(self.pattern2, l).groups() for l in lines]
 		# Get timers values and add to current timers
-		values = np.array([float(m) for m in matches[1::3]])
-		if self.values is None:
-			self.values = values
-		else:
-			self.values += values
+		for m in matches:
+			key = m[0].replace(" ", "")
+			value = float(m[1])
+			if key in self.data:
+				self.data[key] += value
+			else:
+				self.data[key] = value
 	
 	def append(self):
-		if self.values is not None:
-			t = strftime("%Y_%m_%d_%H:%M:%S")
-			v = tuple(self.values)
-			with open(self.log_file, 'a') as f:
-				f.write("%-25.25s "%gitversion + "%-20s "%t + ("%-15f "*len(v))%v + "\n")
+		if self.data:
+			# Append commit and date to current data
+			self.data["commit"] = gitversion
+			self.data["date"] = strftime("%Y_%m_%d_%H:%M:%S")
+			# Open previous database
+			try:
+				with open(self.log_file, 'r') as f:
+					db = json.load(f)
+			except:
+				db = {}
+			maxlen = max([len(v) for v in db.values()] or [0])
+			# Update the database
+			for k,v in self.data.items():
+				if k in db:
+					db[k] += [v]
+				else:
+					db[k] = maxlen*[None] + [v]
+			# Overwrite the file
+			with open(self.log_file, 'w+') as f:
+				json.dump(db, f)
 	
 
 # RUN THE BENCHMARKS
@@ -785,14 +788,24 @@ for BENCH in SMILEI_BENCH_LIST :
 		# Find out the optimal dump_step
 		dump_step = int( (niter+3.) / (nb_restarts+1) )
 		# Prepare block
-		RESTART_INFO = (" \""
-			+ "Checkpoints.keep_n_dumps="+str(nb_restarts)+";"
-			+ "Checkpoints.dump_minutes=0.;"
-			+ "Checkpoints.dump_step="+str(dump_step)+";"
-			+ "Checkpoints.exit_after_dump=True;"
-			+ "Checkpoints.restart_dir=%s;"
-			+ "\""
-		)
+		if len(namelist.Checkpoints) > 0:
+			RESTART_INFO = (" \""
+				+ "Checkpoints.keep_n_dumps="+str(nb_restarts)+";"
+				+ "Checkpoints.dump_minutes=0.;"
+				+ "Checkpoints.dump_step="+str(dump_step)+";"
+				+ "Checkpoints.exit_after_dump=True;"
+				+ "Checkpoints.restart_dir=%s;"
+				+ "\""
+			)
+		else:
+			RESTART_INFO = (" \"Checkpoints("
+				+ "keep_n_dumps="+str(nb_restarts)+","
+				+ "dump_minutes=0.,"
+				+ "dump_step="+str(dump_step)+","
+				+ "exit_after_dump=True,"
+				+ "restart_dir=%s,"
+				+ ")\""
+			)
 		del namelist
 
 	# Prepare logging

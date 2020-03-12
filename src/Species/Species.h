@@ -471,13 +471,13 @@ public:
     //! Get the energy lost in the boundary conditions
     double getLostNrjBC() const
     {
-        return mass_*nrj_bc_lost;
+        return nrj_bc_lost;
     }
 
     //! Get energy lost with moving window (fields)
     double getLostNrjMW() const
     {
-        return mass_*nrj_mw_lost;
+        return nrj_mw_lost;
     }
 
     //! Get the energy radiated away by the particles
@@ -521,11 +521,12 @@ public:
     inline double computeNRJ()
     {
         double nrj( 0. );
-        if( this->mass_ > 0 ) {
+        if( mass_ > 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
                 nrj += particles->weight( iPart )*( particles->LorentzFactor( iPart )-1.0 );
             }
-        } else if( this->mass_ == 0 ) {
+            nrj *= mass_;
+        } else if( mass_ == 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
                 nrj += particles->weight( iPart )*( particles->momentumNorm( iPart ) );
             }
