@@ -358,9 +358,9 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
 {
     // // Static cast of the envelope fields
     // Static cast of the envelope fields
-    Field2D *Phi_m2Dcyl = static_cast<Field2D *>( EMfields->envelope->Phi_ );
-    Field2D *GradPhil_m2Dcyl = static_cast<Field2D *>( EMfields->envelope->GradPhil_ );
-    Field2D *GradPhir_m2Dcyl = static_cast<Field2D *>( EMfields->envelope->GradPhir_ );
+    Field2D *Phi_m2Dcyl = static_cast<Field2D *>( EMfields->envelope->Phi_m );
+    Field2D *GradPhil_m2Dcyl = static_cast<Field2D *>( EMfields->envelope->GradPhil_m );
+    Field2D *GradPhir_m2Dcyl = static_cast<Field2D *>( EMfields->envelope->GradPhir_m );
     
     std::vector<double> *PHI_mpart     = &( smpi->dynamics_PHI_mpart[ithread] );
     std::vector<double> *GradPHI_mpart = &( smpi->dynamics_GradPHI_mpart[ithread] );

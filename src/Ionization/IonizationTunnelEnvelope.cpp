@@ -124,7 +124,7 @@ void IonizationTunnelEnvelope::envelopeIonization( Particles *particles, unsigne
             // -----------------------------------------------------
             if( ran_p < 1.0 -exp( -IonizRate_tunnel_envelope[Z]*dt ) ) {
                 k_times        = 1;
-                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[Zp1];
+                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[Z];
             }
     
         } else {
@@ -159,7 +159,7 @@ void IonizationTunnelEnvelope::envelopeIonization( Particles *particles, unsigne
     
                 k_times++;
     
-                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[newZ];
+                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[newZ-1];
 
             }//END while
     
@@ -218,8 +218,8 @@ void IonizationTunnelEnvelope::envelopeIonization( Particles *particles, unsigne
             //new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi-momentum_minor_axis*sin_phi;
             //new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi+momentum_minor_axis*cos_phi;
 
-            //new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
-            //new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
+            new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
+            new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
     
             new_electrons.weight( idNew )=double( k_times )*particles->weight( ipart );
             new_electrons.charge( idNew )=-1;
