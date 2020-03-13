@@ -190,7 +190,7 @@ for i,radiation in enumerate(radiation_list):
     )
 
 for i,radiation in enumerate(radiation_list):
-    # Chi-distribution
+    # Energy-distribution
     DiagParticleBinning(
         deposited_quantity = "weight",
         every = 500,

@@ -45,11 +45,11 @@ for radiation in radiation_list:
 
     # Validation of the kinetic energy
     for it,val in enumerate(ukin):
-        Validate("Kinetic energy evolution for {} at {}".format(radiation,it), val/utot[0], val/utot[0]*0.05 )
+        Validate("Kinetic energy evolution for {} at {}".format(radiation,it), val/utot[0], val/utot[0]*0.08 )
 
     # Validation of the radiated energy
     for it,val in enumerate(urad):
-        Validate("Radiated energy evolution for {} at {}".format(radiation,it) , val/utot[0], val/utot[0]*0.05 )
+        Validate("Radiated energy evolution for {} at {}".format(radiation,it) , val/utot[0], val/utot[0]*0.08 )
 
     # Validation of the total energy
     Validate("Total energy error (max - min)/uref for {}".format(radiation) ,

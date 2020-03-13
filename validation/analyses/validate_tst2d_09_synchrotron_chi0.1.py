@@ -16,6 +16,8 @@ import os, re, numpy as np, h5py
 import happi
 
 S = happi.Open(["./restart*"], verbose=False)
+dx = S.namelist.Main.cell_length[0]
+dy = S.namelist.Main.cell_length[1]
 
 # List of relativistic pushers
 radiation_list = ["CLL","Niel","MC"]
@@ -27,28 +29,33 @@ urad_dict = {}
 # to each radiation algorithm
 for radiation in radiation_list:
 
-  # Read scalar diagnostics
-  ScalarUkinDiag = S.Scalar("Ukin_electron_"+radiation).get()
-  ukin = np.array(ScalarUkinDiag["data"])
-  times = np.array(ScalarUkinDiag["times"])
+    # Read scalar diagnostics
+    ScalarUkinDiag = S.Scalar("Ukin_electron_"+radiation).get()
+    ukin = np.array(ScalarUkinDiag["data"])
+    times = np.array(ScalarUkinDiag["times"])
 
-  ScalarUradDiag = S.Scalar("Urad_electron_"+radiation).get()
-  urad = np.array(ScalarUradDiag["data"])
+    ScalarUradDiag = S.Scalar("Urad_electron_"+radiation).get()
+    urad = np.array(ScalarUradDiag["data"])
 
-  utot = ukin+urad
+    utot = ukin+urad
 
-  # Validation of the kinetic energy
-  Validate("Kinetic energy evolution: ", ukin/ukin[0], 5.e-2 )
+    print(' Final kinetic energy for {}: {}'.format(radiation,ukin[-1]))
+    print(' Final radiated energy for {}: {}'.format(radiation,urad[-1]))
 
-  # Validation of the radiated energy
-  Validate("Radiated energy evolution: " , urad/ukin[0], 5.e-2 )
+    # Validation of the kinetic energy
+    for it,val in enumerate(ukin):
+        Validate("Kinetic energy evolution for {} at {}".format(radiation,it), val/utot[0], val/utot[0]*0.1 )
 
-  # Validation of the total energy
-  Validate("Total energy error (max - min)/uref: " ,
+    # Validation of the radiated energy
+    for it,val in enumerate(urad):
+        Validate("Radiated energy evolution for {} at {}".format(radiation,it) , val/utot[0], val/utot[0]*0.1 )
+
+    # Validation of the total energy
+    Validate("Total energy error (max - min)/uref: " ,
            (utot.max() - utot.min())/utot[0], 1e-2)
 
-  ukin_dict[radiation] = ukin
-  urad_dict[radiation] = urad
+    ukin_dict[radiation] = ukin
+    urad_dict[radiation] = urad
 
 # ______________________________________________________________________________
 # Comparison corrected Landau-Lifshitz and Niel model
@@ -92,6 +99,13 @@ number_of_files = maximal_iteration/period
 chi_max = np.zeros([number_of_files,len(radiation_list)])
 chi_ave = np.zeros([number_of_files,len(radiation_list)])
 
+chi_ave_from_dists = np.zeros([number_of_files,len(radiation_list)])
+chi_max_from_dists = np.zeros([number_of_files,len(radiation_list)])
+
+ekin_ave_from_dists = np.zeros([number_of_files,len(radiation_list)])
+ekin_max_from_dists = np.zeros([number_of_files,len(radiation_list)])
+ekin_from_dists = np.zeros([number_of_files,len(radiation_list)])
+
 # Loop over the timesteps
 for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
 
@@ -105,11 +119,36 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
         weight_chi = np.array(weight_chi_diag["data"][0])
         # Chi distribution
         chi_dist = S.ParticleBinning(diagNumber=i+2*len(radiation_list),timesteps=timestep).get()
-        # Local average chi
+        chi_distr_axis = np.array(chi_dist["chi"])
+        chi_distr_data = np.array(chi_dist["data"][0])
+        log10_chi_distr_axis = np.log10(chi_distr_axis)
+        delta = log10_chi_distr_axis[1] - log10_chi_distr_axis[0]
+        bin_size =  np.power(10.,log10_chi_distr_axis + 0.5*delta) - np.power(10.,log10_chi_distr_axis - 0.5*delta)
+        
+        # Energy distribution
+        ekin_dist = S.ParticleBinning(diagNumber=i+3*len(radiation_list),timesteps=timestep).get()
+        ekin_distr_axis = np.array(ekin_dist["ekin"])
+        ekin_distr_data = np.array(ekin_dist["data"][0])
+        log10_ekin_distr_axis = np.log10(ekin_distr_axis)
+        delta = log10_ekin_distr_axis[1] - log10_ekin_distr_axis[0]
+        bin_size =  np.power(10.,log10_ekin_distr_axis + 0.5*delta) - np.power(10.,log10_ekin_distr_axis - 0.5*delta)
+        
+        # Local average chi from spatial distribution
         chi = weight_chi[weight>0] / weight[weight>0]
-        # Maximal chi value
+        # Maximal chi value from spatial distribution
         chi_max[itimestep,i] = chi.max()
         chi_ave[itimestep,i] = np.sum(chi)/sum(list(np.shape(chi)))
+
+        # Maximal and average chi value from chi distribution
+        if (itimestep > 0):
+            chi_ave_from_dists[itimestep,i] = np.sum(chi_distr_axis * chi_distr_data * bin_size) / np.sum(chi_distr_data * bin_size)
+        imax = np.argmax(chi_distr_data)
+        chi_max_from_dists[itimestep,i] = chi_distr_axis[imax]
+        
+        # Average kinetic energy from energy distribution
+        ekin_from_dists[itimestep,i] = dx*dy*np.sum(ekin_distr_axis * ekin_distr_data * bin_size)
+        if (itimestep > 0):
+            ekin_ave_from_dists[itimestep,i] = ekin_from_dists[itimestep,i] / np.sum(ekin_distr_data * bin_size)
 
 print(" ---------------------------------------------------")
 print(" Maximal quantum parameter")
@@ -145,3 +184,54 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     # Validation with 10% error
     for k,model in enumerate(radiation_list):
         Validate("Average quantum parameter for the {} model at iteration {}".format(model,timestep),chi_ave[itimestep,k],chi_ave[itimestep,k]*0.1)
+
+print(" ---------------------------------------------------------")
+print(" Average quantum parameter from chi distribution         |")
+line = "                  |"
+for k,model in enumerate(radiation_list):
+    line += " {0:<9}  |".format(radiation_list[k])
+print(line)
+print(" ---------------------------------------------------------")
+# Loop over the timesteps
+for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
+    line = " Iteration {0:5d}  |".format(timestep)
+    for k,model in enumerate(radiation_list):
+        line += " {0:.4e} |".format(chi_ave_from_dists[itimestep,k])
+    print(line)
+    # Validation with 10% error
+    for k,model in enumerate(radiation_list):
+        Validate("Average quantum parameter for the {} model at iteration {}".format(model,timestep),chi_ave_from_dists[itimestep,k],chi_ave_from_dists[itimestep,k]*0.1)
+
+print(" ---------------------------------------------------------")
+print(" Total kinetic energy from energy distribution           |")
+line = "                  |"
+for k,model in enumerate(radiation_list):
+    line += " {0:<9}  |".format(radiation_list[k])
+print(line)
+print(" ---------------------------------------------------------")
+# Loop over the timesteps
+for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
+    line = " Iteration {0:5d}  |".format(timestep)
+    for k,model in enumerate(radiation_list):
+        line += " {0:.4e} |".format(ekin_from_dists[itimestep,k])
+    print(line)
+    # Validation with 10% error
+    for k,model in enumerate(radiation_list):
+        Validate("Total kinetic energy for the {} model at iteration {}".format(model,timestep),ekin_from_dists[itimestep,k],ekin_from_dists[itimestep,k]*0.1)
+
+print(" ---------------------------------------------------------")
+print(" Average kinetic energy from energy distribution         |")
+line = "                  |"
+for k,model in enumerate(radiation_list):
+    line += " {0:<9}  |".format(radiation_list[k])
+print(line)
+print(" ---------------------------------------------------------")
+# Loop over the timesteps
+for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
+    line = " Iteration {0:5d}  |".format(timestep)
+    for k,model in enumerate(radiation_list):
+        line += " {0:.4e} |".format(ekin_ave_from_dists[itimestep,k])
+    print(line)
+    # Validation with 10% error
+    for k,model in enumerate(radiation_list):
+        Validate("Average kinetic energy for the {} model at iteration {}".format(model,timestep),ekin_ave_from_dists[itimestep,k],ekin_ave_from_dists[itimestep,k]*0.1)
