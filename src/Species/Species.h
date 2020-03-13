@@ -523,13 +523,13 @@ public:
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
                 nrj += particles->weight( iPart )*( particles->LorentzFactor( iPart )-1.0 );
             }
-            return mass_ * nrj;
+            nrj *= mass_;
         } else if( mass_ == 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
                 nrj += particles->weight( iPart )*( particles->momentumNorm( iPart ) );
             }
-            return nrj;
         }
+        return nrj;
     }
 
     inline int getMemFootPrint()

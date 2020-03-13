@@ -117,12 +117,13 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             // Make sure all ranks have the same dump number
             // Different numbers can be due to corrupted restart files
             unsigned int prev_number;
+            MPI_Status status;
             MPI_Sendrecv(
                 &dump_number, 1, MPI_UNSIGNED, (smpi->getRank()+1) % smpi->getSize(), smpi->getRank(),
-                &prev_number, 1, MPI_UNSIGNED, (smpi->getRank()-1) % smpi->getSize(), smpi->getRank()-1,
-                smpi->SMILEI_COMM_WORLD, NULL
+                &prev_number, 1, MPI_UNSIGNED, (smpi->getRank()+smpi->getSize()-1) % smpi->getSize(), (smpi->getRank()+smpi->getSize()-1)%smpi->getSize(),
+                smpi->SMILEI_COMM_WORLD, &status
             );
-            int problem = prev_number != dump_number;
+            int problem = (prev_number != dump_number);
             int any_problem;
             MPI_Allreduce( &problem, &any_problem, 1, MPI_INT, MPI_LOR, smpi->SMILEI_COMM_WORLD );
             if( any_problem ) {
@@ -196,6 +197,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *s
                 MPI_Recv( &time_dump_step, 1, MPI_UNSIGNED, 0, SMILEI_COMM_DUMP_TIME, smpi->SMILEI_COMM_WORLD, &dump_status_recv );
             }
         }
+        smpi->barrier();
     }
     
     if( signal_received!=0 ||
