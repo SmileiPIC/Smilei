@@ -23,6 +23,7 @@ public:
     virtual void initEnvelope( Patch *patch, ElectroMagn *EMfields ) = 0;
     virtual ~LaserEnvelope();
     virtual void updateEnvelope( ElectroMagn *EMfields ) = 0;
+    virtual void updateEnvelopeReducedDispersion( ElectroMagn *EMfields ) = 0;
     virtual void computePhi( ElectroMagn *EMfields ) = 0;
     virtual void computeGradientPhi( ElectroMagn *EMfields ) = 0;
     void boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow );

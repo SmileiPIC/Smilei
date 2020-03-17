@@ -205,8 +205,78 @@ void LaserEnvelope1D::updateEnvelope( ElectroMagn *EMfields )
     } // end x loop
     
     delete A1Dnew;
-} // end LaserEnvelope1D::compute
+} // end LaserEnvelope1D::updateEnvelope
 
+void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
+{
+    //// solves envelope equation in lab frame (see doc):
+    // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
+    // where Chi is the plasma susceptibility [= sum(q^2*rho/mass/gamma_ponderomotive) for all species]
+    // gamma_ponderomotive=sqrt(1+p^2+|A|^2/2) in normalized units
+    
+    // For an envelope moving from right to left, replace the imaginary unit i with its opposite (-i)
+    // if using an envelope moving to the left, change the sign of the phase in the envelope initialization
+    
+    // the following explicit finite difference scheme is obtained through centered finite difference derivatives
+    // e.g. (dA/dx) @ time n and indices ijk = (A^n    _{i+1,j,k} - A^n    _{i-1,j,k}) /2/dx
+    //      (dA/dt) @ time n and indices ijk = (A^{n+1}_{i  ,j,k} - A^{n-1}_{i  ,j,k}) /2/dt
+    // A0 is A^{n-1}
+    //      (d^2A/dx^2) @ time n and indices ijk = (A^{n}_{i+1,j,k}-2*A^{n}_{i,j,k}+A^{n}_{i-1,j,k})/dx^2
+    
+    
+    
+    //// auxiliary quantities
+    //! 1/dt^2, where dt is the temporal step
+    double           dt_sq = timestep*timestep;
+    // imaginary unit
+    complex<double>     i1 = std::complex<double>( 0., 1 );
+    
+    //! 1/dx^2, 1/dy^2, 1/dz^2, where dx,dy,dz are the spatial step dx for 1D3V cartesian simulations
+    double one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
+    
+    cField1D *A1D          = static_cast<cField1D *>( A_ );               // the envelope at timestep n
+    cField1D *A01D         = static_cast<cField1D *>( A0_ );              // the envelope at timestep n-1
+    Field1D *Env_Chi1D     = static_cast<Field1D *>( EMfields->Env_Chi_ ); // source term of envelope equation
+    Field1D *Env_Aabs1D    = static_cast<Field1D *>( EMfields->Env_A_abs_ ); // field for diagnostic
+    Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ ); // field for diagnostic
+    
+    
+    //! 1/(1Dx), where dx is the spatial step dx for 1D3V cartesian simulations
+    double one_ov_2dt      = 1./2./timestep;
+    
+    // temporary variable for updated envelope
+    cField1D *A1Dnew;
+    A1Dnew  = new cField1D( A_->dims_ );
+    
+    //// explicit solver
+    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
+        ( *A1Dnew )( i ) -= ( *Env_Chi1D )( i )*( *A1D )( i ); // subtract here source term Chi*A from plasma
+        // A1Dnew = laplacian - source term
+        ( *A1Dnew )( i ) += ( ( *A1D )( i-1 )-2.*( *A1D )( i )+( *A1D )( i+1 ) )*one_ov_dx_sq; // x part
+        
+        // A1Dnew = A1Dnew+2ik0*dA/dx
+        ( *A1Dnew )( i ) += i1_2k0_over_2dx*( ( *A1D )( i+1 )-( *A1D )( i-1 ) );
+        // A1Dnew = A1Dnew*dt^2
+        ( *A1Dnew )( i )  = ( *A1Dnew )( i )*dt_sq;
+        // A1Dnew = A1Dnew + 2/c^2 A1D - (1+ik0cdt)A01D/c^2
+        ( *A1Dnew )( i ) += 2.*( *A1D )( i )-one_plus_ik0dt*( *A01D )( i );
+        // A1Dnew = A1Dnew * (1+ik0dct)/(1+k0^2c^1Dt^2)
+        ( *A1Dnew )( i )  = ( *A1Dnew )( i )*one_plus_ik0dt_ov_one_plus_k0sq_dtsq;
+    } // end x loop
+    
+    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
+    
+        // final back-substitution
+        // |E envelope| = |-(dA/dt-ik0cA)|
+        ( *Env_Eabs1D )( i ) = std::abs( ( ( *A1Dnew )( i )-( *A01D )( i ) )*one_ov_2dt - i1*( *A1D )( i ) );
+        ( *A01D )( i )       = ( *A1D )( i );
+        ( *A1D )( i )        = ( *A1Dnew )( i );
+        ( *Env_Aabs1D )( i ) = std::abs( ( *A1D )( i ) );
+        
+    } // end x loop
+    
+    delete A1Dnew;
+} // end LaserEnvelope1D::updateEnvelopeReducedDispersion
 
 void LaserEnvelope1D::computePhi( ElectroMagn *EMfields )
 {
