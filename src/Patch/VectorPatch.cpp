@@ -1053,8 +1053,14 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
             // Stores Phi at time n in Phi_m, GradPhi at time n in GradPhi_m
             ( *this )( ipatch )->EMfields->envelope->savePhiAndGradPhi();
 
-            // Computes A in all points
-            ( *this )( ipatch )->EMfields->envelope->updateEnvelope( ( *this )( ipatch )->EMfields );
+            // Computes A in all points, choosing the right solver for the envelope equation
+            if ( ( *this )( ipatch )->EMfields->envelope == "explicit" ){
+                ( *this )( ipatch )->EMfields->envelope->updateEnvelope( ( *this )( ipatch )->EMfields );
+            } else if ( ( *this )( ipatch )->EMfields->envelope == "explicit_reduced_dispersion" ) {
+                ( *this )( ipatch )->EMfields->envelope->updateEnvelopeReducedDispersion( ( *this )( ipatch )->EMfields );
+            }
+
+            // Apply boundary conditions for envelope
             ( *this )( ipatch )->EMfields->envelope->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
 
             // Compute ponderomotive potential Phi=|A|^2/2
