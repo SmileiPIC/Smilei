@@ -69,7 +69,8 @@ public:
     LaserEnvelope1D( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved );
     void initEnvelope( Patch *patch, ElectroMagn *EMfields ) override final;
     ~LaserEnvelope1D();
-    void compute( ElectroMagn *EMfields ) override final;
+    void updateEnvelope( ElectroMagn *EMfields ) override final;
+    void updateEnvelopeReducedDispersion( ElectroMagn *EMfields ) override final;
     void computePhi( ElectroMagn *EMfields ) override final;
     void computeGradientPhi( ElectroMagn *EMfields ) override final;
     void savePhiAndGradPhi() override final;
@@ -84,7 +85,8 @@ public:
     LaserEnvelope2D( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved );
     void initEnvelope( Patch *patch, ElectroMagn *EMfields ) override final;
     ~LaserEnvelope2D();
-    void compute( ElectroMagn *EMfields ) override final;
+    void updateEnvelope( ElectroMagn *EMfields ) override final;
+    void updateEnvelopeReducedDispersion( ElectroMagn *EMfields ) override final;
     void computePhi( ElectroMagn *EMfields ) override final;
     void computeGradientPhi( ElectroMagn *EMfields ) override final;
     void savePhiAndGradPhi() override final;
@@ -99,7 +101,8 @@ public:
     LaserEnvelope3D( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved );
     void initEnvelope( Patch *patch, ElectroMagn *EMfields ) override final;
     ~LaserEnvelope3D();
-    void compute( ElectroMagn *EMfields ) override final;
+    void updateEnvelope( ElectroMagn *EMfields ) override final;
+    void updateEnvelopeReducedDispersion( ElectroMagn *EMfields ) override final;
     void computePhi( ElectroMagn *EMfields ) override final;
     void computeGradientPhi( ElectroMagn *EMfields ) override final;
     void savePhiAndGradPhi() override final;
@@ -114,7 +117,8 @@ public:
     LaserEnvelopeAM( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved );
     void initEnvelope( Patch *patch, ElectroMagn *EMfields ) override final;
     ~LaserEnvelopeAM();
-    void compute( ElectroMagn *EMfields ) override final;
+    void updateEnvelope( ElectroMagn *EMfields ) override final;
+    void updateEnvelopeReducedDispersion( ElectroMagn *EMfields ) override final;
     void computePhi( ElectroMagn *EMfields ) override final;
     void computeGradientPhi( ElectroMagn *EMfields ) override final;
     void savePhiAndGradPhi() override final;
