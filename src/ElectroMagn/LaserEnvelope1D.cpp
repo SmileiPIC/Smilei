@@ -136,7 +136,7 @@ LaserEnvelope1D::~LaserEnvelope1D()
 {
 }
 
-void LaserEnvelope1D::compute( ElectroMagn *EMfields )
+void LaserEnvelope1D::updateEnvelope( ElectroMagn *EMfields )
 {
     //// solves envelope equation in lab frame (see doc):
     // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
@@ -208,7 +208,7 @@ void LaserEnvelope1D::compute( ElectroMagn *EMfields )
 } // end LaserEnvelope1D::compute
 
 
-void LaserEnvelope1D::compute_Phi( ElectroMagn *EMfields )
+void LaserEnvelope1D::computePhi( ElectroMagn *EMfields )
 {
 
     // computes Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
@@ -220,10 +220,10 @@ void LaserEnvelope1D::compute_Phi( ElectroMagn *EMfields )
         ( *Phi1D )( i )       = std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
     } // end x loop
     
-} // end LaserEnvelope1D::compute_Phi
+} // end LaserEnvelope1D::computePhi
 
 
-void LaserEnvelope1D::compute_gradient_Phi( ElectroMagn *EMfields )
+void LaserEnvelope1D::computeGradientPhi( ElectroMagn *EMfields )
 {
 
     // computes gradient of Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
@@ -242,10 +242,10 @@ void LaserEnvelope1D::compute_gradient_Phi( ElectroMagn *EMfields )
         
     } // end x loop
     
-} // end LaserEnvelope1D::compute_gradient_Phi
+} // end LaserEnvelope1D::computeGradientPhi
 
 
-void LaserEnvelope1D::savePhi_and_GradPhi()
+void LaserEnvelope1D::savePhiAndGradPhi()
 {
     // Static cast of the fields
     Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );
@@ -264,10 +264,10 @@ void LaserEnvelope1D::savePhi_and_GradPhi()
     } // end x loop
     
     
-}//END savePhi_and_GradPhi
+}//END savePhiAndGradPhi
 
 
-void LaserEnvelope1D::centerPhi_and_GradPhi()
+void LaserEnvelope1D::centerPhiAndGradPhi()
 {
     // Static cast of the fields
     Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );
@@ -292,6 +292,6 @@ void LaserEnvelope1D::centerPhi_and_GradPhi()
     // these are used for the ponderomotive position advance
     
     
-}//END centerPhi_and_GradPhi
+}//END centerPhiAndGradPhi
 
 

@@ -150,7 +150,7 @@ LaserEnvelope2D::~LaserEnvelope2D()
 {
 }
 
-void LaserEnvelope2D::compute( ElectroMagn *EMfields )
+void LaserEnvelope2D::updateEnvelope( ElectroMagn *EMfields )
 {
     //// solves envelope equation in lab frame (see doc):
     // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
@@ -230,7 +230,7 @@ void LaserEnvelope2D::compute( ElectroMagn *EMfields )
 } // end LaserEnvelope2D::compute
 
 
-void LaserEnvelope2D::compute_Phi( ElectroMagn *EMfields )
+void LaserEnvelope2D::computePhi( ElectroMagn *EMfields )
 {
 
     // computes Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
@@ -248,10 +248,10 @@ void LaserEnvelope2D::compute_Phi( ElectroMagn *EMfields )
         } // end y loop
     } // end x loop
     
-} // end LaserEnvelope2D::compute_Phi
+} // end LaserEnvelope2D::computePhi
 
 
-void LaserEnvelope2D::compute_gradient_Phi( ElectroMagn *EMfields )
+void LaserEnvelope2D::computeGradientPhi( ElectroMagn *EMfields )
 {
 
     // computes gradient of Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
@@ -278,10 +278,10 @@ void LaserEnvelope2D::compute_gradient_Phi( ElectroMagn *EMfields )
         } // end y loop
     } // end x loop
     
-} // end LaserEnvelope2D::compute_gradient_Phi
+} // end LaserEnvelope2D::computeGradientPhi
 
 
-void LaserEnvelope2D::savePhi_and_GradPhi()
+void LaserEnvelope2D::savePhiAndGradPhi()
 {
     // Static cast of the fields
     Field2D *Phi2D         = static_cast<Field2D *>( Phi_ );
@@ -307,10 +307,10 @@ void LaserEnvelope2D::savePhi_and_GradPhi()
     } // end x loop
     
     
-}//END savePhi_and_GradPhi
+}//END savePhiAndGradPhi
 
 
-void LaserEnvelope2D::centerPhi_and_GradPhi()
+void LaserEnvelope2D::centerPhiAndGradPhi()
 {
     // Static cast of the fields
     Field2D *Phi2D         = static_cast<Field2D *>( Phi_ );
@@ -341,6 +341,6 @@ void LaserEnvelope2D::centerPhi_and_GradPhi()
     // these are used for the ponderomotive position advance
     
     
-}//END centerPhi_and_GradPhi
+}//END centerPhiAndGradPhi
 
 
