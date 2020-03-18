@@ -504,11 +504,13 @@ void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
         delta_photon_chi = ( particle_chi - table_1d[rank_first_index[rank] + i_particle_chi] )
               / ( size_photon_chi - 1 );
         
-        particle_chi = pow( 10.0, particle_chi );
+        particle_chi = std::pow( 10.0, particle_chi );
         
         // Denominator of xi
         denominator = NonlinearComptonScattering::integrateSynchrotronEmissivity( particle_chi,
                     1e-40*particle_chi, particle_chi, 300, 1e-15 );
+        
+        bool unity_not_reached = true;
         
         // Loop over the photon chi axis
         for( i_photon_chi = 0 ; i_photon_chi < size_photon_chi ; i_photon_chi ++ ) {
@@ -529,7 +531,7 @@ void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
                         
                 if ( buffer[i_particle_chi*size_photon_chi + i_photon_chi] <
                 buffer[i_particle_chi*size_photon_chi + i_photon_chi -1] ) {
-                    std::cout << " Monotony issue at " << i_particle_chi*size_photon_chi + i_photon_chi
+                    std::cout << "   > Monotony issue at " << i_particle_chi*size_photon_chi + i_photon_chi
                               << " " << buffer[i_particle_chi*size_photon_chi + i_photon_chi-1]
                               << " " << buffer[i_particle_chi*size_photon_chi + i_photon_chi]
                               << "." << std::endl;
@@ -537,6 +539,13 @@ void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
                         
                 // buffer[i_particle_chi*size_photon_chi + i_photon_chi] =
                 // buffer[i_particle_chi*size_photon_chi + i_photon_chi -1];
+            }
+            // First unity value
+            if ( i_photon_chi < size_photon_chi - 1 ) {
+              if ( buffer[i_particle_chi*size_photon_chi + i_photon_chi] >= 1 and unity_not_reached) {
+                std::cerr << "   > Unity reached at " << i_photon_chi << std::endl;
+                unity_not_reached = false;
+              }
             }
                       
         }
