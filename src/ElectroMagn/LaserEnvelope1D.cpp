@@ -147,10 +147,10 @@ void LaserEnvelope1D::updateEnvelope( ElectroMagn *EMfields )
     // if using an envelope moving to the left, change the sign of the phase in the envelope initialization
     
     // the following explicit finite difference scheme is obtained through centered finite difference derivatives
-    // e.g. (dA/dx) @ time n and indices ijk = (A^n    _{i+1,j,k} - A^n    _{i-1,j,k}) /2/dx
-    //      (dA/dt) @ time n and indices ijk = (A^{n+1}_{i  ,j,k} - A^{n-1}_{i  ,j,k}) /2/dt
+    // e.g. (dA/dx) @ time n and indices i = (A^n    _{i+1} - A^n    _{i-1}) /2/dx
+    //      (dA/dt) @ time n and indices i = (A^{n+1}_{i  } - A^{n-1}_{i  }) /2/dt
     // A0 is A^{n-1}
-    //      (d^2A/dx^2) @ time n and indices ijk = (A^{n}_{i+1,j,k}-2*A^{n}_{i,j,k}+A^{n}_{i-1,j,k})/dx^2
+    //      (d^2A/dx^2) @ time n and indices i = (A^{n}_{i+1,j,k}-2*A^{n}_{i}+A^{n}_{i-1})/dx^2
     
     
     
@@ -160,7 +160,7 @@ void LaserEnvelope1D::updateEnvelope( ElectroMagn *EMfields )
     // imaginary unit
     complex<double>     i1 = std::complex<double>( 0., 1 );
     
-    //! 1/dx^2, 1/dy^2, 1/dz^2, where dx,dy,dz are the spatial step dx for 1D3V cartesian simulations
+    //! 1/dx^2, where dx is the spatial step dx for 1D3V cartesian simulations
     double one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
     
     cField1D *A1D          = static_cast<cField1D *>( A_ );               // the envelope at timestep n
@@ -218,10 +218,17 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // if using an envelope moving to the left, change the sign of the phase in the envelope initialization
     
     // the following explicit finite difference scheme is obtained through centered finite difference derivatives
-    // e.g. (dA/dx) @ time n and indices ijk = (A^n    _{i+1,j,k} - A^n    _{i-1,j,k}) /2/dx
-    //      (dA/dt) @ time n and indices ijk = (A^{n+1}_{i  ,j,k} - A^{n-1}_{i  ,j,k}) /2/dt
+    // e.g. (dA/dx) @ time n and indices i = (A^n    _{i+1} - A^n    _{i-1}) /2/dx
+    //      (dA/dt) @ time n and indices i = (A^{n+1}_{i  } - A^{n-1}_{i  }) /2/dt
     // A0 is A^{n-1}
-    //      (d^2A/dx^2) @ time n and indices ijk = (A^{n}_{i+1,j,k}-2*A^{n}_{i,j,k}+A^{n}_{i-1,j,k})/dx^2
+    //      (d^2A/dx^2) @ time n and indices i = (A^{n}_{i+1,j,k}-2*A^{n}_{i}+A^{n}_{i-1})/dx^2
+
+    // An optimized form for the derivatives along x has been proposed in D. Terzani, P. Londrillo, JCP 2019
+    // to reduce the numerical dispersion for the envelope solver.
+    // The derivatives along x of the reduced dispersion scheme are defined as follows:
+    // delta1= [(dt/dx)^2-1]/6., delta2=delta1/2.
+    // (dA/dx)_opt = (1-2*delta1)*(dA/dx) + delta1*(A_{i+2,j,k}-A_{i-2,j,k})/2/dx
+    // (d^2A/dx^2)_opt = (1-4*delta1)*(d^2A/dx^2) + delta1*(A_{i+2,j,k}-2*A_{i,j,k}+A_{i-2,j,k})/dx^2
     
    
     //// auxiliary quantities
@@ -230,7 +237,7 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // imaginary unit
     complex<double>     i1 = std::complex<double>( 0., 1 );
     
-    //! 1/dx^2, 1/dy^2, 1/dz^2, where dx,dy,dz are the spatial step dx for 1D3V cartesian simulations
+    //! 1/dx^2, where dx is the spatial step dx for 1D3V cartesian simulations
     double one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
     
     cField1D *A1D          = static_cast<cField1D *>( A_ );               // the envelope at timestep n
@@ -251,12 +258,12 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop
         ( *A1Dnew )( i ) -= ( *Env_Chi1D )( i )*( *A1D )( i ); // subtract here source term Chi*A from plasma
         // A1Dnew = laplacian - source term
-        ( *A1Dnew )( i ) += (1.-4.*delta2)*( ( *A1D )( i-1 )-2.*( *A1D )( i )+( *A1D )( i+1 ) )*one_ov_dx_sq; // x part with optimized stencil
-        ( *A1Dnew )( i ) += delta2*( ( *A1D )( i-2 ) -2.*( *A1D )( i ) +( *A1D )( i+2 )   )*one_ov_dx_sq;
+        ( *A1Dnew )( i ) += (1.-4.*delta2)*( ( *A1D )( i-1 ) -2.*( *A1D )( i ) +( *A1D )( i+1 )   )*one_ov_dx_sq; // x part with optimized derivative
+        ( *A1Dnew )( i ) += delta2*        ( ( *A1D )( i-2 ) -2.*( *A1D )( i ) +( *A1D )( i+2 )   )*one_ov_dx_sq;
 
         // A1Dnew = A1Dnew+2ik0*dA/dx, where dA/dx uses the optimized form
         ( *A1Dnew )( i ) += i1_2k0_over_2dx*(1.-2.*delta1)*( ( *A1D )( i+1 )-( *A1D )( i-1 ) );
-        ( *A1Dnew )( i ) += i1_2k0_over_2dx*delta1*( ( *A1D )( i+2 )-( *A1D )( i-2 ) );
+        ( *A1Dnew )( i ) += i1_2k0_over_2dx*delta1        *( ( *A1D )( i+2 )-( *A1D )( i-2 ) );
 
         // A1Dnew = A1Dnew*dt^2
         ( *A1Dnew )( i )  = ( *A1Dnew )( i )*dt_sq;

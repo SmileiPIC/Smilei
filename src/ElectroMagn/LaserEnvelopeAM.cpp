@@ -158,7 +158,7 @@ LaserEnvelopeAM::~LaserEnvelopeAM()
 void LaserEnvelopeAM::updateEnvelope( ElectroMagn *EMfields )
 {
     //// solves envelope equation in lab frame (see doc):
-    // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
+    // full_laplacian(A)+2ik0*(dA/dl+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
     // where Chi is the plasma susceptibility [= sum(q^2*rho/mass/gamma_ponderomotive) for all species]
     // gamma_ponderomotive=sqrt(1+p^2+|A|^2/2) in normalized units
     
@@ -166,10 +166,10 @@ void LaserEnvelopeAM::updateEnvelope( ElectroMagn *EMfields )
     // if using an envelope moving to the left, change the sign of the phase in the envelope initialization
     
     // the following explicit finite difference scheme is obtained through centered finite difference derivatives
-    // e.g. (dA/dx) @ time n and indices ijk = (A^n    _{i+1,j,k} - A^n    _{i-1,j,k}) /2/dx
-    //      (dA/dt) @ time n and indices ijk = (A^{n+1}_{i  ,j,k} - A^{n-1}_{i  ,j,k}) /2/dt
+    // e.g. (dA/dl) @ time n and indices ij = (A^n    _{i+1,j} - A^n    _{i-1,j}) /2/dl
+    //      (dA/dt) @ time n and indices ij = (A^{n+1}_{i  ,j} - A^{n-1}_{i  ,j}) /2/dt
     // A0 is A^{n-1}
-    //      (d^2A/dx^2) @ time n and indices ijk = (A^{n}_{i+1,j,k}-2*A^{n}_{i,j,k}+A^{n}_{i-1,j,k})/dx^2
+    //      (d^2A/dl^2) @ time n and indices ij = (A^{n}_{i+1,j}-2*A^{n}_{i,j}+A^{n}_{i-1,j})/dl^2
     
     
     
@@ -180,7 +180,7 @@ void LaserEnvelopeAM::updateEnvelope( ElectroMagn *EMfields )
     // imaginary unit
     complex<double>     i1 = std::complex<double>( 0., 1 );
     
-    //! 1/dx^2, 1/dy^2, 1/dz^2, where dx,dy,dz are the spatial step dx for 2D3V cartesian simulations
+    //! 1/dl^2, 1/dr^2 where dl,dr are the spatial step dx for 2D3V cylindrical simulations
     double one_ov_dl_sq    = 1./cell_length[0]/cell_length[0];
     double one_ov_dr_sq    = 1./cell_length[1]/cell_length[1];
     double dr              = cell_length[1];
@@ -210,7 +210,7 @@ void LaserEnvelopeAM::updateEnvelope( ElectroMagn *EMfields )
             ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i, j-1 )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i, j+1 ) )*one_ov_dr_sq; // r part
             ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j-1 ) ) * one_ov_2dr / ( ( double )( j_glob+j )*dr ); // r part         
 
-            // A2Dcylnew = A2Dcylnew+2ik0*dA/dx
+            // A2Dcylnew = A2Dcylnew+2ik0*dA/dl
             ( *A2Dcylnew )( i, j ) += i1_2k0_over_2dl*( ( *A2Dcyl )( i+1, j )-( *A2Dcyl )( i-1, j ) );
             // A2Dcylnew = A2Dcylnew*dt^2
             ( *A2Dcylnew )( i, j )  = ( *A2Dcylnew )( i, j )*dt_sq;
@@ -227,9 +227,9 @@ void LaserEnvelopeAM::updateEnvelope( ElectroMagn *EMfields )
 
            ( *A2Dcylnew )( i, j ) -= ( *Env_Chi2Dcyl )( i, j )*( *A2Dcyl )( i, j ); // subtract here source term Chi*A from plasma
            ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // l part
-           ( *A2Dcylnew )( i, j ) += 4. * ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j ) ) * one_ov_dr_sq;
+           ( *A2Dcylnew )( i, j ) += 4. * ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j ) ) * one_ov_dr_sq; // r part
 
-           // A2Dcylnew = A2Dcylnew+2ik0*dA/dx
+           // A2Dcylnew = A2Dcylnew+2ik0*dA/dl
            ( *A2Dcylnew )( i, j ) += i1_2k0_over_2dl*( ( *A2Dcyl )( i+1, j )-( *A2Dcyl )( i-1, j ) );
            // A2Dcylnew = A2Dcylnew*dt^2
            ( *A2Dcylnew )( i, j )  = ( *A2Dcylnew )( i, j )*dt_sq;
@@ -268,12 +268,17 @@ void LaserEnvelopeAM::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // if using an envelope moving to the left, change the sign of the phase in the envelope initialization
     
     // the following explicit finite difference scheme is obtained through centered finite difference derivatives
-    // e.g. (dA/dx) @ time n and indices ijk = (A^n    _{i+1,j,k} - A^n    _{i-1,j,k}) /2/dx
-    //      (dA/dt) @ time n and indices ijk = (A^{n+1}_{i  ,j,k} - A^{n-1}_{i  ,j,k}) /2/dt
+    // e.g. (dA/dl) @ time n and indices ij = (A^n    _{i+1,j} - A^n    _{i-1,j}) /2/dl
+    //      (dA/dt) @ time n and indices ij = (A^{n+1}_{i  ,j} - A^{n-1}_{i  ,j}) /2/dt
     // A0 is A^{n-1}
-    //      (d^2A/dx^2) @ time n and indices ijk = (A^{n}_{i+1,j,k}-2*A^{n}_{i,j,k}+A^{n}_{i-1,j,k})/dx^2
+    //      (d^2A/dl^2) @ time n and indices ij = (A^{n}_{i+1,j,k}-2*A^{n}_{i,j}+A^{n}_{i-1,j})/dl^2
     
-    
+    // An optimized form for the derivatives along x has been proposed in D. Terzani, P. Londrillo, JCP 2019
+    // to reduce the numerical dispersion for the envelope solver.
+    // The derivatives along l of the reduced dispersion scheme are defined as follows:
+    // delta1= [(dt/dx)^2-1]/6., delta2=delta1/2.
+    // (dA/dl)_opt = (1-2*delta1)*(dA/dl) + delta1*(A_{i+2,j,k}-A_{i-2,j,k})/2/dl
+    // (d^2A/dl^2)_opt = (1-4*delta1)*(d^2A/dl^2) + delta1*(A_{i+2,j,k}-2*A_{i,j,k}+A_{i-2,j,k})/dl^2
     
     //// auxiliary quantities
     
@@ -282,7 +287,7 @@ void LaserEnvelopeAM::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // imaginary unit
     complex<double>     i1 = std::complex<double>( 0., 1 );
     
-    //! 1/dx^2, 1/dy^2, 1/dz^2, where dx,dy,dz are the spatial step dx for 2D3V cartesian simulations
+    //! 1/dl^2, 1/dr^2, where dx,dr are the spatial step dx for 2D3V cylindrical simulations
     double one_ov_dl_sq    = 1./cell_length[0]/cell_length[0];
     double one_ov_dr_sq    = 1./cell_length[1]/cell_length[1];
     double dr              = cell_length[1];
@@ -304,16 +309,18 @@ void LaserEnvelopeAM::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     A2Dcylnew  = new cField2D( A_->dims_ );
  
     //// explicit solver
-    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
+    for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // l loop
         for( unsigned int j=std::max(3*isYmin,1) ; j < A_->dims_[1]-1 ; j++ ) { // r loop
             ( *A2Dcylnew )( i, j ) -= ( *Env_Chi2Dcyl )( i, j )*( *A2Dcyl )( i, j ); // subtract here source term Chi*A from plasma
             // A2Dcylnew = laplacian - source term
-            ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // l part
-            ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i, j-1 )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i, j+1 ) )*one_ov_dr_sq; // r part
-            ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j-1 ) ) * one_ov_2dr / ( ( double )( j_glob+j )*dr ); // r part         
+            ( *A2Dcylnew )( i, j ) += (1.-4.*delta2)*( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // l part with optimized derivative
+            ( *A2Dcylnew )( i, j ) += delta2*        ( ( *A2Dcyl )( i-2, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+2, j ) )*one_ov_dl_sq;
+            ( *A2Dcylnew )( i, j ) +=                ( ( *A2Dcyl )( i, j-1 )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i, j+1 ) )*one_ov_dr_sq; // r part
+            ( *A2Dcylnew )( i, j ) +=                ( ( *A2Dcyl )( i, j+1 )-   ( *A2Dcyl )( i, j-1 ) ) * one_ov_2dr / ( ( double )( j_glob+j )*dr ); // r part         
 
-            // A2Dcylnew = A2Dcylnew+2ik0*dA/dx
-            ( *A2Dcylnew )( i, j ) += i1_2k0_over_2dl*( ( *A2Dcyl )( i+1, j )-( *A2Dcyl )( i-1, j ) );
+            // A2Dcylnew = A2Dcylnew+2ik0*dA/dl, where dA/dl uses the optimized form
+            ( *A2Dcylnew )( i, j ) += i1_2k0_over_2dl*(1.-2.*delta1)*( ( *A2Dcyl )( i+1, j )-( *A2Dcyl )( i-1, j ) );
+            ( *A2Dcylnew )( i, j ) += i1_2k0_over_2dl*delta1        *( ( *A2Dcyl )( i+2, j )-( *A2Dcyl )( i-2, j ) );
             // A2Dcylnew = A2Dcylnew*dt^2
             ( *A2Dcylnew )( i, j )  = ( *A2Dcylnew )( i, j )*dt_sq;
             // A2Dcylnew = A2Dcylnew + 2/c^2 A2Dcyl - (1+ik0cdt)A02Dcyl/c^2
@@ -324,15 +331,17 @@ void LaserEnvelopeAM::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     } // end l loop
 
     if (isYmin){ // axis BC
-        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
+        for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // l loop
            unsigned int j = 2; // j_p = 2 corresponds to r=0
 
            ( *A2Dcylnew )( i, j ) -= ( *Env_Chi2Dcyl )( i, j )*( *A2Dcyl )( i, j ); // subtract here source term Chi*A from plasma
-           ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // l part
-           ( *A2Dcylnew )( i, j ) += 4. * ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j ) ) * one_ov_dr_sq;
+           ( *A2Dcylnew )( i, j ) += (1.-4.*delta2)*( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // l part with optimized derivative
+           ( *A2Dcylnew )( i, j ) += delta2*        ( ( *A2Dcyl )( i-2, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+2, j ) )*one_ov_dl_sq;
+           ( *A2Dcylnew )( i, j ) += 4. * ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j ) ) * one_ov_dr_sq; // r part
 
-           // A2Dcylnew = A2Dcylnew+2ik0*dA/dx
-           ( *A2Dcylnew )( i, j ) += i1_2k0_over_2dl*( ( *A2Dcyl )( i+1, j )-( *A2Dcyl )( i-1, j ) );
+           // A2Dcylnew = A2Dcylnew+2ik0*dA/dl, where dA/dl uses the optimized form
+           ( *A2Dcylnew )( i, j ) += i1_2k0_over_2dl*(1.-2.*delta1)*( ( *A2Dcyl )( i+1, j )-( *A2Dcyl )( i-1, j ) );
+           ( *A2Dcylnew )( i, j ) += i1_2k0_over_2dl*delta1        *( ( *A2Dcyl )( i+2, j )-( *A2Dcyl )( i-2, j ) );
            // A2Dcylnew = A2Dcylnew*dt^2
            ( *A2Dcylnew )( i, j )  = ( *A2Dcylnew )( i, j )*dt_sq;
            // A2Dcylnew = A2Dcylnew + 2/c^2 A2Dcyl - (1+ik0cdt)A02Dcyl/c^2

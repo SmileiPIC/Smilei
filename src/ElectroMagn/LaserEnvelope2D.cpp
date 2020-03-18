@@ -175,7 +175,7 @@ void LaserEnvelope2D::updateEnvelope( ElectroMagn *EMfields )
     // imaginary unit
     complex<double>     i1 = std::complex<double>( 0., 1 );
     
-    //! 1/dx^2, 1/dy^2, 1/dz^2, where dx,dy,dz are the spatial step dx for 2D3V cartesian simulations
+    //! 1/dx^2, 1/dy^2, where dx,dy are the spatial step dx for 2D3V cartesian simulations
     double one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
     double one_ov_dy_sq    = 1./cell_length[1]/cell_length[1];
     
@@ -245,7 +245,12 @@ void LaserEnvelope2D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // A0 is A^{n-1}
     //      (d^2A/dx^2) @ time n and indices ijk = (A^{n}_{i+1,j,k}-2*A^{n}_{i,j,k}+A^{n}_{i-1,j,k})/dx^2
     
-    
+    // An optimized form for the derivatives along x has been proposed in D. Terzani, P. Londrillo, JCP 2019
+    // to reduce the numerical dispersion for the envelope solver.
+    // The derivatives along x of the reduced dispersion scheme are defined as follows:
+    // delta1= [(dt/dx)^2-1]/6., delta2=delta1/2.
+    // (dA/dx)_opt = (1-2*delta1)*(dA/dx) + delta1*(A_{i+2,j,k}-A_{i-2,j,k})/2/dx
+    // (d^2A/dx^2)_opt = (1-4*delta1)*(d^2A/dx^2) + delta1*(A_{i+2,j,k}-2*A_{i,j,k}+A_{i-2,j,k})/dx^2
     
     //// auxiliary quantities
     
@@ -254,7 +259,7 @@ void LaserEnvelope2D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // imaginary unit
     complex<double>     i1 = std::complex<double>( 0., 1 );
     
-    //! 1/dx^2, 1/dy^2, 1/dz^2, where dx,dy,dz are the spatial step dx for 2D3V cartesian simulations
+    //! 1/dx^2, 1/dy^2, where dx,dy are the spatial step dx for 2D3V cartesian simulations
     double one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
     double one_ov_dy_sq    = 1./cell_length[1]/cell_length[1];
     
@@ -274,15 +279,17 @@ void LaserEnvelope2D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     A2Dnew  = new cField2D( A_->dims_ );
     
     //// explicit solver
-    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
+    for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop
         for( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) { // y loop
             ( *A2Dnew )( i, j ) -= ( *Env_Chi2D )( i, j )*( *A2D )( i, j ); // subtract here source term Chi*A from plasma
             // A2Dnew = laplacian - source term
-            ( *A2Dnew )( i, j ) += ( ( *A2D )( i-1, j )-2.*( *A2D )( i, j )+( *A2D )( i+1, j ) )*one_ov_dx_sq; // x part
-            ( *A2Dnew )( i, j ) += ( ( *A2D )( i, j-1 )-2.*( *A2D )( i, j )+( *A2D )( i, j+1 ) )*one_ov_dy_sq; // y part
+            ( *A2Dnew )( i, j ) += (1.-4.*delta2)*( ( *A2D )( i-1, j ) -2.*( *A2D )( i, j ) +( *A2D )( i+1, j ) )*one_ov_dx_sq; // x part with optimized derivative
+            ( *A2Dnew )( i, j ) += delta2*        ( ( *A2D )( i-2, j ) -2.*( *A2D )( i, j ) +( *A2D )( i+2, j ) )*one_ov_dx_sq;
+            ( *A2Dnew )( i, j ) +=                ( ( *A2D )( i, j-1 ) -2.*( *A2D )( i, j ) +( *A2D )( i, j+1 ) )*one_ov_dy_sq; // y part
             
-            // A2Dnew = A2Dnew+2ik0*dA/dx
-            ( *A2Dnew )( i, j ) += i1_2k0_over_2dx*( ( *A2D )( i+1, j )-( *A2D )( i-1, j ) );
+            // A2Dnew = A2Dnew+2ik0*dA/dx, where dA/dx uses the optimized form
+            ( *A2Dnew )( i, j ) += i1_2k0_over_2dx*(1.-2.*delta1)*( ( *A2D )( i+1, j )-( *A2D )( i-1, j ) );
+            ( *A2Dnew )( i, j ) += i1_2k0_over_2dx*delta1        *( ( *A2D )( i+2, j )-( *A2D )( i-2, j ) );
             // A2Dnew = A2Dnew*dt^2
             ( *A2Dnew )( i, j )  = ( *A2Dnew )( i, j )*dt_sq;
             // A2Dnew = A2Dnew + 2/c^2 A2D - (1+ik0cdt)A02D/c^2
