@@ -252,10 +252,13 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
         ( *A1Dnew )( i ) -= ( *Env_Chi1D )( i )*( *A1D )( i ); // subtract here source term Chi*A from plasma
         // A1Dnew = laplacian - source term
-        ( *A1Dnew )( i ) += ( ( *A1D )( i-1 )-2.*( *A1D )( i )+( *A1D )( i+1 ) )*one_ov_dx_sq; // x part
-        
-        // A1Dnew = A1Dnew+2ik0*dA/dx
-        ( *A1Dnew )( i ) += i1_2k0_over_2dx*( ( *A1D )( i+1 )-( *A1D )( i-1 ) );
+        ( *A1Dnew )( i ) += (1.-2.*delta2)*( ( *A1D )( i-1 )-2.*( *A1D )( i )+( *A1D )( i+1 ) )*one_ov_dx_sq; // x part with optimized stencil
+        ( *A1Dnew )( i ) += delta2*( ( *A1D )( i-2 )-2.*( *A1D )( i-1 )-2.*( *A1D )( i+1 )+( *A1D )( i+2 )   )*one_ov_dx_sq;
+
+        // A1Dnew = A1Dnew+2ik0*dA/dx, where dA/dx uses the optimized form
+        ( *A1Dnew )( i ) += i1_2k0_over_2dx*(1.-2.*delta1)*( ( *A1D )( i+1 )-( *A1D )( i-1 ) );
+        ( *A1Dnew )( i ) += i1_2k0_over_2dx*delta1*(( *A1D )( i+2 )+( *A1D )( i-2 ))
+
         // A1Dnew = A1Dnew*dt^2
         ( *A1Dnew )( i )  = ( *A1Dnew )( i )*dt_sq;
         // A1Dnew = A1Dnew + 2/c^2 A1D - (1+ik0cdt)A01D/c^2

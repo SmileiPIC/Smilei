@@ -52,8 +52,9 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     i1_2k0_over_2dl = i1_2k0_over_2dx;
     one_plus_ik0dt  = 1.+i1*k0*timestep;
     one_plus_ik0dt_ov_one_plus_k0sq_dtsq = ( 1.+i1*k0*timestep )/( 1.+k0*k0*timestep*timestep );
-    
-    
+    delta1 = ( (timestep/cell_length[0])**2-1 ) / 6. ;
+    delta2 = delta1 / 2. ;
+
     info << "\t Laser Envelope parameters: "<< endl;
     // envelope solver
     info << "\t\tEnvelope solver    : " << envelope_solver << endl;
