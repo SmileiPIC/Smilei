@@ -46,7 +46,7 @@ vector<double> matrixInverse( vector<double> A )
         invA[2] = ( A[1]*A[5]-A[2]*A[4] )*idet;
         invA[3] = ( A[5]*A[6]-A[3]*A[8] )*idet;
         invA[4] = ( A[0]*A[8]-A[2]*A[6] )*idet;
-        invA[5] = ( A[2]*A[4]-A[0]*A[5] )*idet;
+        invA[5] = ( A[2]*A[3]-A[0]*A[5] )*idet;
         invA[6] = ( A[3]*A[7]-A[4]*A[6] )*idet;
         invA[7] = ( A[1]*A[6]-A[0]*A[7] )*idet;
         invA[8] = ( A[0]*A[4]-A[1]*A[3] )*idet;
@@ -68,10 +68,11 @@ vector<double> matrixTimesVector( vector<double> A, vector<double> v )
     }
 
     vector<double> w( dim, 0. );
-    for( unsigned int i=0; i<dim; i++ )
+    for( unsigned int i=0; i<dim; i++ ) {
         for( unsigned int j=0; j<dim; j++ ) {
             w[i] += A[i+dim*j] * v[j];
         }
+    }
     return w;
 }
 
