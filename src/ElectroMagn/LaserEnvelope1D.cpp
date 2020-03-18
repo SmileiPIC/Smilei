@@ -257,7 +257,7 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
 
         // A1Dnew = A1Dnew+2ik0*dA/dx, where dA/dx uses the optimized form
         ( *A1Dnew )( i ) += i1_2k0_over_2dx*(1.-2.*delta1)*( ( *A1D )( i+1 )-( *A1D )( i-1 ) );
-        ( *A1Dnew )( i ) += i1_2k0_over_2dx*delta1*(( *A1D )( i+2 )+( *A1D )( i-2 ))
+        ( *A1Dnew )( i ) += i1_2k0_over_2dx*delta1*( ( *A1D )( i+2 )+( *A1D )( i-2 ) );
 
         // A1Dnew = A1Dnew*dt^2
         ( *A1Dnew )( i )  = ( *A1Dnew )( i )*dt_sq;
