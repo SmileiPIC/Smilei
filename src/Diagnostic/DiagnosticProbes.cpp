@@ -220,10 +220,12 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
     }
     vector<unsigned int> locations;
     locations.resize( 13 );
-    fieldindex.resize( 0 );
     for( unsigned int i=0; i<13; i++ ) {
         locations[i] = fs.size();
     }
+    unsigned int nspec = vecPatches(0)->vecSpecies.size();
+    species_field_index.resize( nspec );
+    species_field_location.resize( nspec );
     for( unsigned int i=0; i<fs.size(); i++ ) {
         for( unsigned int j=0; j<i; j++ ) {
             if( fs[i]==fs[j] ) {
@@ -244,12 +246,16 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
             locations[5] = i;
         } else if( fs[i]=="Jx" ) {
             locations[6] = i;
+            hasRhoJs = true;
         } else if( fs[i]=="Jy" ) {
             locations[7] = i;
+            hasRhoJs = true;
         } else if( fs[i]=="Jz" ) {
             locations[8] = i;
+            hasRhoJs = true;
         } else if( fs[i]=="Rho" ) {
             locations[9] = i;
+            hasRhoJs = true;
         } else if( fs[i]=="Env_A_abs" ) {
             locations[10] = i;
         } else if( fs[i]=="Env_Chi" ) {
@@ -257,28 +263,55 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
         } else if( fs[i]=="Env_E_abs" ) {
             locations[12] = i;
         } else {
-            // Test whether species-related field
-            bool ok = false;
-            for( unsigned int ifield=0; ifield<vecPatches( 0 )->EMfields->allFields.size(); ifield++ ) {
-                string field_name = vecPatches( 0 )->EMfields->allFields[ifield]->name;
-                if( fs[i]==field_name && params.isSpeciesField( field_name ) ) {
-                    vecPatches.allocateField( ifield, params );
-                    locations.push_back( i );
-                    fieldindex.push_back( ifield );
-                    hasRhoJs = true;
-                    ok = true;
-                    break;
+            // Species-related field
+            size_t i0 = fs[i].find( "_" );
+            size_t i1 = fs[i].rfind( "_" );
+            size_t l = fs[i].length();
+            if( i1 != string::npos && l-i1 < 3 ) {
+                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fs[i] );
+            }
+            // Extract requested field
+            string field_name = fs[i].substr( 0, i0 );
+            // Extract requested species
+            string target_species = fs[i].substr( i1+1, l-i1-1 );
+            // Find species number
+            unsigned int ispec = 0;
+            while( ispec < nspec && target_species != vecPatches( 0 )->vecSpecies[ispec]->name_ ) {
+                ispec++;
+            }
+            if( ispec == nspec ) {
+                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fs[i]<<"` (unknown species `"<<target_species<<"`)" );
+            }
+            // Find the index of the field
+            unsigned int field_index;
+            if( field_name == "Jx" ) {
+                field_index = 0;
+            } else if( field_name == "Jy" ) {
+                field_index = 1;
+            } else if( field_name == "Jz" ) {
+                field_index = 2;
+            } else if( field_name == "Rho" ) {
+                field_index = 3;
+            } else {
+                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fs[i]<<"` for species `"<<target_species<<"`" );
+            }
+            // Allocate fields
+            unsigned int start = vecPatches( 0 )->EMfields->species_starts[ispec];
+            unsigned int stop = vecPatches( 0 )->EMfields->species_starts[ispec+1];
+            if( geometry == "AMcylindrical" ) { // allocate all fields/modes in AM
+                if( species_field_index[ispec].size() == 0 ) { // only once
+                    for( unsigned int ifield=start; ifield<stop; ifield++ ) {
+                        vecPatches.allocateField( ifield, params );
+                    }
                 }
+            } else {
+                vecPatches.allocateField( start + field_index, params );
             }
-            // If no field found
-            if( ! ok ) {
-                ERROR( "Probe #"<<n_probe<<": unknown field "<<fs[i] );
-            }
+            // Store the input and output locations
+            species_field_index[ispec].push_back( field_index );
+            species_field_location[ispec].push_back( i );
+            hasRhoJs = true;
         }
-        if( ! hasRhoJs )
-            if( fs[i].at( 0 )=='J' || fs[i].at( 0 )=='R' ) {
-                hasRhoJs = true;
-            }
     }
     fieldlocation = locations;
     fieldname = fs;
@@ -671,7 +704,8 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
     for( unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
         // Loop probe ("fake") particles of current patch
         unsigned int iPart_MPI = offset_in_MPI[ipatch];
-        unsigned int npart = vecPatches( ipatch )->probes[probe_n]->particles.size();
+        Patch * patch = vecPatches( ipatch );
+        unsigned int npart = patch->probes[probe_n]->particles.size();
 
         LocalFields Jloc_fields;
         double Rloc_fields;
@@ -680,15 +714,15 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
 #ifdef _OPENMP
         ithread = omp_get_thread_num();
 #endif
-
+        
         // Interpolate all usual fields
         smpi->dynamics_resize( ithread, nDim_particle, npart, false );
         for( unsigned int ipart=0; ipart<npart; ipart++ ) {
             int iparticle( ipart ); // Compatibility
             int false_idx( 0 );   // Use in classical interp for now, not for probes
-            vecPatches( ipatch )->probesInterp->fieldsAndCurrents(
-                vecPatches( ipatch )->EMfields,
-                vecPatches( ipatch )->probes[probe_n]->particles, smpi,
+            patch->probesInterp->fieldsAndCurrents(
+                patch->EMfields,
+                patch->probes[probe_n]->particles, smpi,
                 &iparticle, &false_idx, ithread,
                 &Jloc_fields, &Rloc_fields
             );
@@ -707,26 +741,52 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
         }
 
         // Interpolate the species-related fields
-        for( unsigned int ifield=0; ifield<fieldindex.size(); ifield++ ) {
-            int istart( 0 ), iend( npart );
-            double *FieldLoc = &( ( *probesArray )( fieldlocation[13+ifield], offset_in_MPI[ipatch] ) );
-            vecPatches( ipatch )->probesInterp->oneField(
-                vecPatches( ipatch )->EMfields->allFields[fieldindex[ifield]],
-                vecPatches( ipatch )->probes[probe_n]->particles,
-                &istart, &iend,
-                FieldLoc
-            );
+        for( unsigned int ispec=0; ispec<species_field_index.size(); ispec++ ) {
+            unsigned int start = patch->EMfields->species_starts[ispec];
+            // In cylindrical geometry, all fields + all modes are interpolated
+            // The unecessary results are discarded
+            if( geometry == "AMcylindrical" ) {
+                if( species_field_index[ispec].size() > 0 ) {
+                    int istart( 0 ), iend( npart );
+                    vector<double> dummy( npart );
+                    vector<double *> loc( 4, &dummy[0] );
+                    for( unsigned int j=0; j<species_field_index[ispec].size(); j++ ) {
+                        unsigned int ifield = species_field_index[ispec][j];
+                        unsigned int iloc = species_field_location[ispec][j];
+                        loc[ifield] = &( ( *probesArray )( iloc, offset_in_MPI[ipatch] ) );
+                    }
+                    patch->probesInterp->oneField(
+                        &patch->EMfields->allFields[start],
+                        patch->probes[probe_n]->particles,
+                        &istart, &iend,
+                        loc[0], loc[1], loc[2], loc[3]
+                    );
+                }
+            } else {
+                for( unsigned int j=0; j<species_field_index[ispec].size(); j++ ) {
+                    unsigned int ifield = species_field_index[ispec][j];
+                    unsigned int iloc = species_field_location[ispec][j];
+                    int istart( 0 ), iend( npart );
+                    double *FieldLoc = &( ( *probesArray )( iloc, offset_in_MPI[ipatch] ) );
+                    patch->probesInterp->oneField(
+                        &patch->EMfields->allFields[start+ifield],
+                        patch->probes[probe_n]->particles,
+                        &istart, &iend,
+                        FieldLoc
+                    );
+                }
+            }
         }
-
+        
         // Probes for envelope
-        if( vecPatches( ipatch )->EMfields->envelope != NULL ) {
+        if( patch->EMfields->envelope != NULL ) {
             iPart_MPI = offset_in_MPI[ipatch];
             double Env_AabsLoc_fields, Env_ChiLoc_fields, Env_EabsLoc_fields;
             for( unsigned int ipart=0; ipart<npart; ipart++ ) {
                 int iparticle( ipart ); // Compatibility
-                vecPatches( ipatch )->probesInterp->envelopeAndSusceptibility(
-                    vecPatches( ipatch )->EMfields,
-                    vecPatches( ipatch )->probes[probe_n]->particles,
+                patch->probesInterp->envelopeAndSusceptibility(
+                    patch->EMfields,
+                    patch->probes[probe_n]->particles,
                     iparticle,
                     &Env_AabsLoc_fields, &Env_ChiLoc_fields, &Env_EabsLoc_fields
                 );

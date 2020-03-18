@@ -1119,7 +1119,7 @@ void Params::print_parallelism_params( SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 // Finds requested species in the list of existing species.
 // Returns an array of the numbers of the requested species.
-// Note that there might be several species that have the same "name" or "type"
+// Note that there might be several species that have the same "name"
 //  so that we have to search for all possibilities.
 vector<unsigned int> Params::FindSpecies( vector<Species *> &vecSpecies, vector<string> requested_species )
 {
@@ -1207,20 +1207,20 @@ void Params::cleanup( SmileiMPI *smpi )
     smpi->barrier();
 }
 
-bool Params::isSpeciesField( string field_name )
+string Params::speciesField( string field_name )
 {
-    if( geometry!="AMcylindrical" ) {
-        if( ( field_name.at( 0 )=='J' && field_name.length()>2 )
-                || ( field_name.at( 0 )=='R' && field_name.length()>3 ) ) {
-            return true;
+    if( geometry != "AMcylindrical" ) {
+        size_t i1 = field_name.rfind( "_" );
+        size_t l = field_name.length();
+        if( i1 != string::npos && l-i1 > 2 ) {
+            return field_name.substr( i1+1, l-i1-1 );
         }
     } else {
-        if( ( ( field_name.at( 0 )=='J' && field_name.length()>8 )
-                && ( field_name.substr( 2, 6 )!="_mode_" || field_name.find( "mode_" ) != field_name.rfind( "mode_" ) ) )
-                || ( ( field_name.at( 0 )=='R' && field_name.length()>9 )
-                     && ( field_name.substr( 3, 6 )!="_mode_" || field_name.find( "mode_" ) != field_name.rfind( "mode_" ) ) ) ) {
-            return true;
+        size_t i1 = field_name.find( "_" );
+        size_t i2 = field_name.rfind( "_mode_" );
+        if( i1 != string::npos && i2 != string::npos && i2-i1 > 2 ) {
+            return field_name.substr( i1+1, i2-i1-1 );
         }
     }
-    return false;
+    return "";
 }

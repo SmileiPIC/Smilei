@@ -118,7 +118,7 @@ DiagProbe(
             [Main.grid_length[0], 2.*dr, 2.*dr]
         ],
         number = [nx],
-        fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi','Env_E_abs']
+        fields = ['Ex','Ey','Rho','Jx','Rho_electron','Jx_electron','Env_A_abs','Env_Chi','Env_E_abs']
 )
 
 
@@ -127,7 +127,7 @@ DiagProbe(
     origin   = [0., -nr*dr,0.],
     corners  = [ [nx*dx,-nr*dr,0.], [0,nr*dr,0.] ],
     number   = [nx, 2*nr],
-    fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi','Env_E_abs']
+    fields = ['Ex','Ey','Rho','Jx','Rho_electron','Jx_electron','Env_A_abs','Env_Chi','Env_E_abs']
 )
 
 
