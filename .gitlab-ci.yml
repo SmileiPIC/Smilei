@@ -8,6 +8,7 @@ compile:
     - develop
     - AMsorting
     - particle_merging_correction
+    - AM_speciesprobe
 
   script:
     # Force workdir cleaning in case of retried
