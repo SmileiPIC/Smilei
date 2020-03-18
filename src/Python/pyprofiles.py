@@ -501,7 +501,7 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = space_time_envelope,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 
@@ -571,7 +571,7 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = gaussian_beam_with_temporal_profile,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 
@@ -645,7 +645,7 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = gaussian_beam_with_temporal_profile,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 
@@ -699,7 +699,7 @@ def LaserEnvelopeGaussianAM( a0=1., omega=1., focus=None, waist=3., time_envelop
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = gaussian_beam_with_temporal_profile,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 
