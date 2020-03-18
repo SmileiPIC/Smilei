@@ -737,7 +737,7 @@ class Log:
 			# Update the database
 			for k,v in self.data.items():
 				if k in db:
-					db[k] += [v]
+					db[k] += [None]*(maxlen-len(db[k]) + [v]
 				else:
 					db[k] = maxlen*[None] + [v]
 			# Overwrite the file
