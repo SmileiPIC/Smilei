@@ -223,8 +223,7 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // A0 is A^{n-1}
     //      (d^2A/dx^2) @ time n and indices ijk = (A^{n}_{i+1,j,k}-2*A^{n}_{i,j,k}+A^{n}_{i-1,j,k})/dx^2
     
-    
-    
+   
     //// auxiliary quantities
     //! 1/dt^2, where dt is the temporal step
     double           dt_sq = timestep*timestep;

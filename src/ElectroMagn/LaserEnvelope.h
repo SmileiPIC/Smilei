@@ -59,7 +59,7 @@ public:
     //EnvBoundCond = EnvelopeBC_Factory::create(params, patch);
     
     std::complex<double> i1_2k0_over_2dx, one_plus_ik0dt, one_plus_ik0dt_ov_one_plus_k0sq_dtsq,i1_2k0_over_2dl;
-    double delta1,delta2; // these are necessary for the reduced dispersion evnvelope solver  
+    double delta1,delta2; // these are necessary for the reduced dispersion envelope solver  
 };
 
 // Class for envelope
