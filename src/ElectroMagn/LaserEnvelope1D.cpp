@@ -249,7 +249,7 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     A1Dnew  = new cField1D( A_->dims_ );
     
     //// explicit solver
-    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
+    for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop
         ( *A1Dnew )( i ) -= ( *Env_Chi1D )( i )*( *A1D )( i ); // subtract here source term Chi*A from plasma
         // A1Dnew = laplacian - source term
         ( *A1Dnew )( i ) += (1.-2.*delta2)*( ( *A1D )( i-1 )-2.*( *A1D )( i )+( *A1D )( i+1 ) )*one_ov_dx_sq; // x part with optimized stencil
@@ -267,7 +267,7 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
         ( *A1Dnew )( i )  = ( *A1Dnew )( i )*one_plus_ik0dt_ov_one_plus_k0sq_dtsq;
     } // end x loop
     
-    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
+    for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop
     
         // final back-substitution
         // |E envelope| = |-(dA/dt-ik0cA)|
