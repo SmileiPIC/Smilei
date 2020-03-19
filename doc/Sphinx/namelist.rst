@@ -1541,8 +1541,11 @@ Following is the generic laser envelope creator ::
 
   :default: ``explicit``
 
-  For the moment the only available solver for the laser envelope equation is an
-  explicit solver with centered finite differences in space and time.
+  The solver scheme for the envelope equation.
+
+  * ``"explicit"``: an explicit scheme based  on central finite differences.
+  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along `x` in the ``"explicit"`` solver are substituted by 
+    optimized derivatives to reduce numerical dispersion.
 
 .. py:data:: Envelope_boundary_conditions
 

@@ -120,7 +120,7 @@ The averaged position :math:`\mathbf{\bar{x}}_p` and momentum :math:`\mathbf{\ba
   :label: ponderomotive_equations_of_motion
  
   \begin{eqnarray}
-  \frac{d\mathbf{\bar{x}}_p}{dt} &=& \frac{\mathbf{\bar{u}_p}}{\bar{\gamma}_p}\,\\
+  \frac{d\mathbf{\bar{x}}_p}{dt} &=& \frac{\mathbf{\bar{u}_p}}{\bar{\gamma}_p}, \,\\
   \frac{d\mathbf{\bar{u}}_p}{dt} &=& r_s \, \left( \mathbf{\bar{E}}_p + \frac{\mathbf{\bar{u}}_p}{\bar{\gamma}_p} \times \mathbf{\bar{B}}_p \right)-r^2_s\thinspace\frac{1}{4\bar{\gamma}_p}\nabla\left(|\tilde{A}_p|^2\right),
   \end{eqnarray}
 
@@ -195,8 +195,8 @@ The plasma electric, magnetic and ponderomotive potential fields at the macro-pa
 Envelope equation solution
 """"""""""""""""""""""""""""
 Now that the averaged susceptibility is known at time-step :math:`n`, the envelope can be advanced solving the envelope equation :eq:`envelope_equation`. 
-Central spatial and temporal finite differences are used to discretize the derivatives in the envelope equation and obtain an explicit solver scheme [ALaDynZenodo]_, [Terzani]_. The envelope :math:`A` at time-step :math:`n+1` can thus be computed from its value at timesteps :math:`n`, :math:`n-1` and the suceptibility :math:`\chi` at time-step :math:`n`. The value of the envelope at timestep :math:`n` is conserved for the next iteration of the time loop. 
-A main advantage of this numerical scheme is its straightforward parallelization in 3D, due to the locality of the operations involved.
+In the two solver schemes available in the code (see below), the envelope :math:`A` at time-step :math:`n+1` is computed from its value at timesteps :math:`n`, :math:`n-1` and the suceptibility :math:`\chi` at time-step :math:`n`. The value of the envelope at timestep :math:`n` is conserved for the next iteration of the time loop. 
+A main advantage of these explicit numerical schemes is their straightforward parallelization in 3D, due to the locality of the operations involved.
 
 Ponderomotive position push
 """"""""""""""""""""""""""""
@@ -221,7 +221,39 @@ Maxwell solvers
 Now that the averaged currents are known at time-step :math:`n+\tfrac{1}{2}`, the averaged electromagnetic
 fields can be advanced solving Maxwell's equations :eq:`Maxwell_envelope`. Their solution is identical to the one described in :doc:`algorithms` for the corresponding non-averaged quantities.
 
-  
+
+----
+
+The numerical solution of the envelope equation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To solve Eq. :eq:`envelope_equation`, two explicit numerical schemes are implemented in the code, first implemented in [ALaDynZenodo]_ and described in [Terzani]_.
+
+In the first scheme, denoted as ``"explicit"`` in the input namelist, the well known central finite differences are used to discretize the envelope equation.
+In 1D for example, the spatial and time derivatives of the envelope :math:`\tilde{A}` at time-step :math:`n` and spatial index :math:`i` are thus approximated by:
+
+.. math::
+
+  D_x\tilde{A}\bigg\rvert^{n}_{i}&=&\frac{\tilde{A}^n_{i+1}-\tilde{A}^n_{i-1}}{2\Delta x},\\
+  D_t\tilde{A}\bigg\rvert^{n}_{i}&=&\frac{\tilde{A}^{n+1}_{i}-\tilde{A}^{n-1}_{i}}{2\Delta t},\\
+  D_{xx}\tilde{A}\bigg\rvert^{n}_{i}&=&\frac{\tilde{A}^n_{i+1}-2\tilde{A}^n_{i}+\tilde{A}^n_{i-1}}{\Delta x^2},\\
+  D_{tt}\tilde{A}\bigg\rvert^{n}_{i}&=&\frac{\tilde{A}^{n+1}_{i}-2\tilde{A}^n_{i}+\tilde{A}^{n-1}_{i}}{\Delta t^2},
+
+where :math:`\Delta x, \Delta t` are the cell size in the `x` direction and the integration time-step respectively.
+
+In the second scheme, denoted as ``"explicit_reduced_dispersion"`` in the input namelist, the finite difference approximations for the derivatives along 
+the propagation direction `x` are substituted by optimized finite differences that reduce the numerical dispersion in that direction (see [Terzani]_ for the derivation).
+Namely, defining :math:`\nu=\Delta t/\Delta x`, :math:`\delta_1=(\nu^2-1)/6`, :math:`\delta_2=\delta_1/2`, these optimized derivatives can be written as:
+
+.. math::
+
+  D_{x,opt}\tilde{A}\bigg\rvert^{n}_{i}&=& (1-2\delta_1)D_x\tilde{A}\bigg\rvert^{n}_{i}+\delta_1\left(\frac{\tilde{A}^n_{i+2}-\tilde{A}^n_{i-2}}{2\Delta x}\right),\\
+  D_{xx,opt}\tilde{A}\bigg\rvert^{n}_{i}&=& (1-4\delta_2)D_{xx}\tilde{A}\bigg\rvert^{n}_{i}+\delta_2\left(\frac{\tilde{A}^n_{i+2}-2\tilde{A}^n_{i}+\tilde{A}^n_{i-2}}{\Delta x^2}\right).\\
+ 
+In both schemes, after substituting the spatial and temporal derivative with the chosen finite differences forms, 
+an explicit update of :math:`\tilde{A}^{n+1}_i`, function of :math:`\tilde{A}^{n}_i`, :math:`\tilde{A}^{n}_{i-1}`, :math:`\tilde{A}^{n}_{i+1}`, :math:`\tilde{A}^{n-1}_i` and :math:`\chi^{n}_i` can  be easily found. 
+In the reduced dispersion scheme, also the values :math:`\tilde{A}^{n}_{i-2}`, :math:`\tilde{A}^{n}_{i+2}` are necessary for the update.
+The locality of the abovementioned finite difference stencils allows a parallelization with well known techniques and the extension to the other geometries is straightforward.
 
 ----
 
