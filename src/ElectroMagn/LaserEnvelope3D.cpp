@@ -346,7 +346,7 @@ void LaserEnvelope3D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
                 ( *A3Dnew )( i, j, k ) -= ( *Env_Chi3D )( i, j, k )*( *A3D )( i, j, k ); // subtract here source term Chi*A from plasma
                 // A3Dnew = laplacian - source term
                 ( *A3Dnew )( i, j, k ) += (1.-4.*delta2)*( ( *A3D )( i-1, j, k )-2.*( *A3D )( i, j, k )+( *A3D )( i+1, j, k ) )*one_ov_dx_sq; // x part with optimized derivative
-                ( *A3Dnew )( i, j )    += delta2*        ( ( *A3D )( i-2, j, k )-2.*( *A3D )( i, j, k )+( *A3D )( i+2, j, k ) )*one_ov_dx_sq;
+                ( *A3Dnew )( i, j, k ) += delta2*        ( ( *A3D )( i-2, j, k )-2.*( *A3D )( i, j, k )+( *A3D )( i+2, j, k ) )*one_ov_dx_sq;
                 ( *A3Dnew )( i, j, k ) +=                ( ( *A3D )( i, j-1, k )-2.*( *A3D )( i, j, k )+( *A3D )( i, j+1, k ) )*one_ov_dy_sq; // y part
                 ( *A3Dnew )( i, j, k ) +=                ( ( *A3D )( i, j, k-1 )-2.*( *A3D )( i, j, k )+( *A3D )( i, j, k+1 ) )*one_ov_dz_sq; // z part
                 // A3Dnew = A3Dnew+2ik0*dA/dx, where dA/dx uses the optimized form
