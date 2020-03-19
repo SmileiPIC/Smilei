@@ -43,7 +43,7 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     // Read laser envelope parameters
     PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" );
     if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
-        ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_disperion' are available. ");
+        ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
     }
     
     std::complex<double>     i1 = std::complex<double>( 0., 1 ); // imaginary unit
