@@ -8,6 +8,7 @@ compile:
     - develop
     - AMsorting
     - particle_merging_correction
+    - AM_speciesprobe
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,6 +32,7 @@ makerun1D:
     - develop
     - AMsorting
     - particle_merging_correction
+    - AM_speciesprobe
     
   script:
     # Move in test dir
@@ -44,6 +46,7 @@ makerun2D:
     - develop
     - AMsorting
     - particle_merging_correction
+    - AM_speciesprobe
     
   script:
     # Move in test dir
@@ -57,6 +60,7 @@ makerun3D:
     - develop
     - AMsorting
     - particle_merging_correction
+    - AM_speciesprobe
 
   script:
     # Move in test dir
@@ -69,6 +73,7 @@ makerunAM:
   only:
     - develop
     - AMsorting
+    - AM_speciesprobe
     
   script:
     # Move in test dir
@@ -81,6 +86,7 @@ makerunV:
   only:
     - develop
     - AMsorting
+    - AM_speciesprobe
 
   script:
     # Move in test dir
