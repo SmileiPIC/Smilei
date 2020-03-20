@@ -486,9 +486,9 @@ void SyncVectorPatch::exchangeE( Params &params, VectorPatch &vecPatches, Smilei
         SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEy_, vecPatches, smpi );
         SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEz_, vecPatches, smpi );
     } else {
-        SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listEx_, vecPatches, smpi );
-        SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listEy_, vecPatches, smpi );
-        SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listEz_, vecPatches, smpi );
+        SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listEx_, vecPatches, smpi );
+        SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listEy_, vecPatches, smpi );
+        SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listEz_, vecPatches, smpi );
     }
 
 }
@@ -517,11 +517,11 @@ void SyncVectorPatch::exchangeB( Params &params, VectorPatch &vecPatches, Smilei
     } else {
         if( params.full_B_exchange ) {
             // Exchange Bx_ in Y then X
-            SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listBx_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listBx_, vecPatches, smpi );
             // Exchange By_ in Y then X
-            SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listBy_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listBy_, vecPatches, smpi );
             // Exchange Bz_ in Y then X
-            SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listBz_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listBz_, vecPatches, smpi );
 
         } else {
             if( vecPatches.listBx_[0]->dims_.size()==2 ) {
