@@ -938,11 +938,17 @@ void SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( std::vector<Field
 
 //Proceed to the synchronization of field including corner ghost cells.
 //This is done by exchanging one dimension at a time
+template void SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+template void SyncVectorPatch::exchangeSynchronizedPerDirection<complex<double>,cField>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+
+template<typename T, typename F>
 void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 
     unsigned int nx_, ny_( 1 ), nz_( 1 ), h0, oversize[3], n_space[3], gsp[3];
-    double *pt1, *pt2;
+    T *pt1, *pt2;
+    F* field1;
+    F* field2;
     h0 = vecPatches( 0 )->hindex;
 
     oversize[0] = vecPatches( 0 )->EMfields->oversize[0];
@@ -970,8 +976,12 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
         #pragma omp single
 #endif
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-            vecPatches( ipatch )->initExchange( fields[ipatch], 2, smpi );
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                vecPatches( ipatch )->initExchange( fields[ipatch], 2, smpi );
+            else
+                vecPatches( ipatch )->initExchangeComplex( fields[ipatch], 2, smpi );
         }
+        
 
 #ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
@@ -979,7 +989,10 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
         #pragma omp single
 #endif
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-            vecPatches( ipatch )->finalizeExchange( fields[ipatch], 2 );
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                vecPatches( ipatch )->finalizeExchange( fields[ipatch], 2 );
+            else
+                vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], 2 );
         }
 
         #pragma omp for schedule(static) private(pt1,pt2)
@@ -987,8 +1000,10 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
 
             gsp[2] = ( oversize[2] + 1 + fields[0]->isDual_[2] ); //Ghost size primal
             if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[2][0] ) {
-                pt1 = &( *fields[vecPatches( ipatch )->neighbor_[2][0]-h0] )( n_space[2] );
-                pt2 = &( *fields[ipatch] )( 0 );
+                field1 = static_cast<F *>( fields[vecPatches( ipatch )->neighbor_[2][0]-h0]  );
+                field2 = static_cast<F *>( fields[ipatch] );
+                pt1 = &( *field1 )( n_space[2] );
+                pt2 = &( *field2 )( 0 );
                 //for (unsigned int in = oversize[0] ; in < nx_-oversize[0]; in ++){
                 for( unsigned int in = 0 ; in < nx_ ; in ++ ) {
                     unsigned int i = in * ny_*nz_;
@@ -1013,7 +1028,10 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
     #pragma omp single
 #endif
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-        vecPatches( ipatch )->initExchange( fields[ipatch], 1, smpi );
+        if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+            vecPatches( ipatch )->initExchange( fields[ipatch], 1, smpi );
+        else
+            vecPatches( ipatch )->initExchangeComplex( fields[ipatch], 1, smpi );
     }
 
 #ifndef _NO_MPI_TM
@@ -1022,7 +1040,10 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
     #pragma omp single
 #endif
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-        vecPatches( ipatch )->finalizeExchange( fields[ipatch], 1 );
+        if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+            vecPatches( ipatch )->finalizeExchange( fields[ipatch], 1 );
+        else
+            vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], 1 );
     }
 
     #pragma omp for schedule(static) private(pt1,pt2)
@@ -1030,8 +1051,10 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
 
         gsp[1] = ( oversize[1] + 1 + fields[0]->isDual_[1] ); //Ghost size primal
         if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[1][0] ) {
-            pt1 = &( *fields[vecPatches( ipatch )->neighbor_[1][0]-h0] )( n_space[1]*nz_ );
-            pt2 = &( *fields[ipatch] )( 0 );
+            field1 = static_cast<F *>( fields[vecPatches( ipatch )->neighbor_[1][0]-h0]  );
+            field2 = static_cast<F *>( fields[ipatch] );
+            pt1 = &( *field1 )( n_space[1]*nz_ );
+            pt2 = &( *field2 )( 0 );
             for( unsigned int in = 0 ; in < nx_ ; in ++ ) {
                 //for (unsigned int in = oversize[0] ; in < nx_-oversize[0] ; in ++){ // <== This doesn't work. Why ??
                 unsigned int i = in * ny_*nz_;
@@ -1052,7 +1075,10 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
     #pragma omp single
 #endif
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-        vecPatches( ipatch )->initExchange( fields[ipatch], 0, smpi );
+        if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+            vecPatches( ipatch )->initExchange( fields[ipatch], 0, smpi );
+        else
+            vecPatches( ipatch )->initExchangeComplex( fields[ipatch], 0, smpi );
     }
 
 #ifndef _NO_MPI_TM
@@ -1061,7 +1087,10 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
     #pragma omp single
 #endif
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-        vecPatches( ipatch )->finalizeExchange( fields[ipatch], 0 );
+        if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+            vecPatches( ipatch )->finalizeExchange( fields[ipatch], 0 );
+        else
+            vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], 0 );
     }
 
 
@@ -1072,10 +1101,12 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
 
         if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[0][0] ) {
-            pt1 = &( *fields[vecPatches( ipatch )->neighbor_[0][0]-h0] )( ( n_space[0] )*ny_*nz_ );
-            pt2 = &( *fields[ipatch] )( 0 );
-            memcpy( pt2, pt1, oversize[0]*ny_*nz_*sizeof( double ) );
-            memcpy( pt1+gsp[0]*ny_*nz_, pt2+gsp[0]*ny_*nz_, oversize[0]*ny_*nz_*sizeof( double ) );
+            field1 = static_cast<F *>( fields[vecPatches( ipatch )->neighbor_[0][0]-h0]  );
+            field2 = static_cast<F *>( fields[ipatch] );
+            pt1 = &( *field1 )( ( n_space[0] )*ny_*nz_ );
+            pt2 = &( *field2 )( 0 );
+            memcpy( pt2, pt1, oversize[0]*ny_*nz_*sizeof( T ) );
+            memcpy( pt1+gsp[0]*ny_*nz_, pt2+gsp[0]*ny_*nz_, oversize[0]*ny_*nz_*sizeof( T ) );
         } // End if ( MPI_me_ == MPI_neighbor_[0][0] )
 
     } // End for( ipatch )
