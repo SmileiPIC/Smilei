@@ -703,8 +703,8 @@ class ShowDiffWithReference(object):
 # DEFINE A CLASS FOR LOGGING DATA
 class Log:
 	pattern1 = re.compile(""
-		+"[\n\t\s]+(Time in time loop) :\t([.0-9]+)\t([<.0-9]+)\% coverage"
-		+"([\n\t\s]+([\w ]+)\t([.0-9]+)\t([<.0-9]+)\%){6,15}"
+		+"[\n\t\s]+(Time_in_time_loop)\t([.0-9]+)\t([<.0-9]+)\% coverage"
+		+"([\n\t\s]+([\w ]+)\t([.0-9]+)\t([<.0-9]+)\%){2,15}"
 	)
 	pattern2 = re.compile(""
 		+"[\t\s]+([\w ]+):?\t([.0-9]+)\t([<.0-9]+)\%"
