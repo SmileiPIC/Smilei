@@ -123,10 +123,11 @@ SMILEI_EXE_OUT = 'smilei_exe.out'
 
 # Get the current version of Smilei
 os.chdir(SMILEI_ROOT)
-gitversion = check_output(
-	"echo `git log -n 1 --format=%h`-`git rev-parse --abbrev-ref HEAD`",
-	shell=True
-	).decode()[:-1]
+gitversion = check_output( "echo `git log -n 1 --format=%h`-", shell=True ).decode()[:-1]
+if 'CI_COMMIT_BRANCH' in os.environ:
+	gitversion += os.environ['CI_COMMIT_BRANCH']
+else:
+	gitversion += check_output("echo `git rev-parse --abbrev-ref HEAD`", shell=True ).decode()[:-1]
 os.chdir(INITIAL_DIRECTORY)
 
 # Load the happi module
