@@ -330,13 +330,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     // If new particles are required
                     if( patch_particle_created[ithread][j] ) {
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                            
                             ParticleCreator particle_creator;
                             particle_creator.associate(mypatch->vecSpecies[ispec]);
                             particle_creator.create( params.n_space, params, mypatch, 0, 0 );
-                            if (params.geometry=="AMcylindrical") {
-                                ParticleCreator::regulateWeightwithPositionAM( mypatch->vecSpecies[ispec]->particles, mypatch->vecSpecies[ispec]->position_initialization_on_species_type_, mypatch->vecSpecies[ispec]->cell_length[1]);
-                            }
                             
                             // mypatch->vecSpecies[ispec]->ParticleCreator( params.n_space, params, mypatch, 0 );
 
@@ -398,6 +394,11 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                             #endif*/
                         }
                         mypatch->copyPositions(mypatch->vecSpecies); 
+                        if (params.geometry=="AMcylindrical") {
+                            for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
+                                ParticleCreator::regulateWeightwithPositionAM( mypatch->vecSpecies[ispec]->particles, mypatch->vecSpecies[ispec]->position_initialization_on_species_type_, mypatch->vecSpecies[ispec]->cell_length[1]);
+                            }
+                        }
                         
                         mypatch->EMfields->applyExternalFields( mypatch );
                         if( params.save_magnectic_fields_for_SM ) {
