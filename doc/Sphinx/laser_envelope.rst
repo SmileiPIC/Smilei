@@ -23,7 +23,7 @@ The envelope approximation
 The use of envelope models to describe a laser pulse is well known in PIC codes [Mora1997]_, [Quesnel1998]_, [Gordon2000]_, [Huang2006]_, [Cowan2011]_, [Benedetti2012]_. The basic blocks of a PIC code using an envelope description for the laser are an envelope equation, to describe the evolution of the laser, and equations of motion for the macro-particles, to take into account their interactions with the laser. 
 The effect of the plasma on laser propagation is taken into account in the envelope equation through the plasma susceptibility, as described in the following section.
 The various PIC codes using an envelope model for the laser solve different versions of the envelope equation, depending mostly on which terms are retained and which ones are neglected, or the set of coordinates used to derive the envelope equation. Also the numerical schemes used to solve the envelope equation and the equations of motion of the macro-particles vary accordingly.
-In :program:`Smilei`, the version of the envelope model written in laboratory frame coordinates, first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [ALaDynZenodo]_, [Terzani]_ is implemented, including the same numerical scheme to solve the lab frame coordinates envelope equation.
+In :program:`Smilei`, the version of the envelope model written in laboratory frame coordinates, first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [Terzani]_ is implemented, including the same numerical scheme to solve the lab frame coordinates envelope equation.
 
 The basic assumption of the model is the description of the laser pulse vector potential in the complex polarization direction :math:`\hat{A}(\mathbf{x},t)` as a slowly varying envelope :math:`\tilde{A}(\mathbf{x},t)` modulated by fast oscillations at wavelength :math:`\lambda_0`, moving at the speed of light :math:`c`:
 
@@ -189,7 +189,7 @@ The macro-particle averaged positions :math:`\mathbf{\bar{x}}_p^{(n)}` and avera
 
 Ponderomotive momentum push
 """"""""""""""""""""""""""""
-The momentum push is performed through a modified version of the well-known `Boris Pusher <https://archive.org/stream/DTIC_ADA023511#page/n7/mode/2up>`_, first implemented in :program:`ALaDyn` [ALaDynZenodo]_.
+The momentum push is performed through a modified version of the well-known `Boris Pusher <https://archive.org/stream/DTIC_ADA023511#page/n7/mode/2up>`_, derived and proposed in [Terzani]_.
 The plasma electric, magnetic and ponderomotive potential fields at the macro-particle position :math:`\mathbf{\bar{E}}_p^{(n)}`, :math:`\mathbf{\bar{B}}_p^{(n)}`, :math:`\mathbf{\Phi}_p^{(n)}` are used to advance the momentum :math:`\mathbf{\bar{p}}_p^{(n-1/2)}` from time-step :math:`n−1/2` to time-step :math:`n + 1/2`, solving the momentum equation in Eqs. :eq:`ponderomotive_equations_of_motion`
 
 Envelope equation solution
@@ -253,7 +253,16 @@ Namely, defining :math:`\nu=\Delta t/\Delta x`, :math:`\delta=(1-\nu^2)/3`, thes
 In both schemes, after substituting the spatial and temporal derivative with the chosen finite differences forms, 
 an explicit update of :math:`\tilde{A}^{n+1}_i`, function of :math:`\tilde{A}^{n}_i`, :math:`\tilde{A}^{n}_{i-1}`, :math:`\tilde{A}^{n}_{i+1}`, :math:`\tilde{A}^{n-1}_i` and :math:`\chi^{n}_i` can  be easily found. 
 In the reduced dispersion scheme, also the values :math:`\tilde{A}^{n}_{i-2}`, :math:`\tilde{A}^{n}_{i+2}` are necessary for the update.
-The locality of the abovementioned finite difference stencils allows a parallelization with well known techniques and the extension to the other geometries is straightforward.
+The locality of the abovementioned finite difference stencils allows a parallelization with well known techniques and the extension to the other geometries is straightforward. 
+The discretization of the transverse components of the Laplacian in Eq. :eq:`envelope_equation` in Cartesian geometry uses the central finite differences defined above, applied to the `y` and `z` axes.
+In cylindrical geometry (see :doc:`azimuthal_modes_decomposition`), the transverse part of the Laplacian is discretized as:
+
+.. math::
+
+  D^2_{\perp, cyl}\tilde{A}\rvert^{n}_{i,j} = \frac{\tilde{A}^n_{i,j+1}-2\tilde{A}^n_{i,j}+\tilde{A}^n_{i,j-1}}{\Delta r^2} + \frac{1}{r_j}\frac{\tilde{A}^n_{i,j+1}-\tilde{A}^n_{i,j-1}}{2\Delta r},
+
+where :math:`j, r, \Delta r` are the transverse index, the distance from the propagation axis and the radial cell size respectively.
+
 
 ----
 
@@ -273,8 +282,6 @@ References
 .. [Benedetti2012] `C. Benedetti et al., Proceedings of the 11th International Computational Accelerator Physics Conference (ICAP 2012) <http://jacow.org/ICAP2012/papers/thaai2.pdf>`_
 
 .. [Benedetti2008] `C. Benedetti et al., IEEE Transactions on Plasma Science 36, 1790 (2008) <http://dx.doi.org/10.1109/TPS.2008.927143>`_
-
-.. [ALaDynZenodo] `S. Sinigardi et al., ALaDyn v2017.1 zenodo (2017) <https://doi.org/10.5281/zenodo.1065413>`_
 
 .. [Terzani] `D. Terzani and P. Londrillo, Computer Physics Communications 242, 49 (2019) <https://doi.org/10.1016/j.cpc.2019.04.007>`_ 
 
