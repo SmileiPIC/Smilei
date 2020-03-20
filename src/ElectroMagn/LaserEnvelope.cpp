@@ -52,8 +52,7 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     i1_2k0_over_2dl = i1_2k0_over_2dx;
     one_plus_ik0dt  = 1.+i1*k0*timestep;
     one_plus_ik0dt_ov_one_plus_k0sq_dtsq = ( 1.+i1*k0*timestep )/( 1.+k0*k0*timestep*timestep );
-    delta1 = ( 1.-pow((timestep/cell_length[0]),2)) / 3. ;
-    
+    delta = ( 1.-pow((timestep/cell_length[0]),2)) / 3. ;    
 
     info << "\t Laser Envelope parameters: "<< endl;
     // envelope solver
@@ -96,7 +95,7 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved ) :
     cell_length( envelope->cell_length ), timestep( envelope->timestep ), i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ), i1_2k0_over_2dl( envelope->i1_2k0_over_2dl ),
     one_plus_ik0dt( envelope->one_plus_ik0dt ), one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq ),
-    envelope_solver(envelope->envelope_solver), delta1(envelope->delta1), delta2(envelope->delta2)
+    envelope_solver(envelope->envelope_solver), delta(envelope->delta)
 {
     if( n_moved ==0 ) {
         profile_ = new Profile( envelope->profile_ );
