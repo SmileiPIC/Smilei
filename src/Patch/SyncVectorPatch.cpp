@@ -653,16 +653,16 @@ void SyncVectorPatch::exchangePhi( Params &params, VectorPatch &vecPatches, Smil
 
     if( !params.full_Envelope_exchange ) {
         // current ponderomotive potential
-        SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listPhi_, vecPatches, smpi );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listPhi_, vecPatches, smpi );
         SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listPhi_, vecPatches );
         // value of ponderomotive potential at previous timestep
-        SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listPhi0_, vecPatches, smpi );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listPhi0_, vecPatches, smpi );
         SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listPhi0_, vecPatches );
     } else {
         // current ponderomotive potential
-        SyncVectorPatch::exchangeSynchronizedPerDirection<complex<double>,cField>( vecPatches.listPhi_, vecPatches, smpi );
+        SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listPhi_, vecPatches, smpi );
         // value of ponderomotive potential at previous timestep
-        SyncVectorPatch::exchangeSynchronizedPerDirection<complex<double>,cField>( vecPatches.listPhi0_, vecPatches, smpi );  
+        SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listPhi0_, vecPatches, smpi );  
     }
 
 }
@@ -720,12 +720,12 @@ void SyncVectorPatch::exchangeEnvChi( Params &params, VectorPatch &vecPatches, S
 {
     if( !params.full_Envelope_exchange ) {
         // susceptibility
-        SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listEnv_Chi_, vecPatches, smpi );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnv_Chi_, vecPatches, smpi );
         SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnv_Chi_, vecPatches );
         
     } else {
         // susceptibility
-        SyncVectorPatch::exchangeSynchronizedPerDirection<complex<double>,cField>( vecPatches.listEnv_Chi_, vecPatches, smpi );
+        SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listEnv_Chi_, vecPatches, smpi );
     }
 }
 
