@@ -226,9 +226,9 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // An optimized form for the derivatives along x has been proposed in D. Terzani, P. Londrillo, JCP 2019
     // to reduce the numerical dispersion for the envelope solver.
     // The derivatives along x of the reduced dispersion scheme are defined as follows:
-    // delta1= [(dt/dx)^2-1]/6., delta2=delta1/2.
-    // (dA/dx)_opt = (1-2*delta1)*(dA/dx) + delta1*(A_{i+2,j,k}-A_{i-2,j,k})/2/dx
-    // (d^2A/dx^2)_opt = (1-4*delta1)*(d^2A/dx^2) + delta1*(A_{i+2,j,k}-2*A_{i,j,k}+A_{i-2,j,k})/dx^2
+    // delta= [1-(dt/dx)^2]/3,
+    // (dA/dx)_opt = (1+delta)*(dA/dx) - delta*(A_{i+2,j,k}-A_{i-2,j,k})/4/dx
+    // (d^2A/dx^2)_opt = (1+delta)*(d^2A/dx^2) - delta*(A_{i+2,j,k}-2*A_{i,j,k}+A_{i-2,j,k})/(4dx^2)
     
    
     //// auxiliary quantities
@@ -258,12 +258,12 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop
         ( *A1Dnew )( i ) -= ( *Env_Chi1D )( i )*( *A1D )( i ); // subtract here source term Chi*A from plasma
         // A1Dnew = laplacian - source term
-        ( *A1Dnew )( i ) += (1.-4.*delta2)*( ( *A1D )( i-1 ) -2.*( *A1D )( i ) +( *A1D )( i+1 )   )*one_ov_dx_sq; // x part with optimized derivative
-        ( *A1Dnew )( i ) += delta2*        ( ( *A1D )( i-2 ) -2.*( *A1D )( i ) +( *A1D )( i+2 )   )*one_ov_dx_sq;
+        ( *A1Dnew )( i ) += (1.+delta)*( ( *A1D )( i-1 ) -2.*( *A1D )( i ) +( *A1D )( i+1 )   )*one_ov_dx_sq; // x part with optimized derivative
+        ( *A1Dnew )( i ) -= delta*     ( ( *A1D )( i-2 ) -2.*( *A1D )( i ) +( *A1D )( i+2 )   )*0.25*one_ov_dx_sq;
 
         // A1Dnew = A1Dnew+2ik0*dA/dx, where dA/dx uses the optimized form
-        ( *A1Dnew )( i ) += i1_2k0_over_2dx*(1.-2.*delta1)*( ( *A1D )( i+1 )-( *A1D )( i-1 ) );
-        ( *A1Dnew )( i ) += i1_2k0_over_2dx*delta1        *( ( *A1D )( i+2 )-( *A1D )( i-2 ) );
+        ( *A1Dnew )( i ) += i1_2k0_over_2dx*(1.+delta)*( ( *A1D )( i+1 )-( *A1D )( i-1 ) );
+        ( *A1Dnew )( i ) -= i1_2k0_over_2dx*delta*0.5 *( ( *A1D )( i+2 )-( *A1D )( i-2 ) );
 
         // A1Dnew = A1Dnew*dt^2
         ( *A1Dnew )( i )  = ( *A1Dnew )( i )*dt_sq;

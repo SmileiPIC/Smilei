@@ -307,9 +307,9 @@ void LaserEnvelope3D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // An optimized form for the derivatives along x has been proposed in D. Terzani, P. Londrillo, JCP 2019
     // to reduce the numerical dispersion for the envelope solver.
     // The derivatives along x of the reduced dispersion scheme are defined as follows:
-    // delta1= [(dt/dx)^2-1]/6., delta2=delta1/2.
-    // (dA/dx)_opt = (1-2*delta1)*(dA/dx) + delta1*(A_{i+2,j,k}-A_{i-2,j,k})/2/dx
-    // (d^2A/dx^2)_opt = (1-4*delta1)*(d^2A/dx^2) + delta1*(A_{i+2,j,k}-2*A_{i,j,k}+A_{i-2,j,k})/dx^2
+    // delta= [1-(dt/dx)^2]/3,
+    // (dA/dx)_opt = (1+delta)*(dA/dx) - delta*(A_{i+2,j,k}-A_{i-2,j,k})/4/dx
+    // (d^2A/dx^2)_opt = (1+delta)*(d^2A/dx^2) - delta*(A_{i+2,j,k}-2*A_{i,j,k}+A_{i-2,j,k})/(4dx^2)
     
     //// auxiliary quantities
     //! laser wavenumber, i.e. omega0/c
@@ -345,13 +345,13 @@ void LaserEnvelope3D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
             for( unsigned int k=1 ; k < A_->dims_[2]-1; k++ ) { // z loop
                 ( *A3Dnew )( i, j, k ) -= ( *Env_Chi3D )( i, j, k )*( *A3D )( i, j, k ); // subtract here source term Chi*A from plasma
                 // A3Dnew = laplacian - source term
-                ( *A3Dnew )( i, j, k ) += (1.-4.*delta2)*( ( *A3D )( i-1, j, k )-2.*( *A3D )( i, j, k )+( *A3D )( i+1, j, k ) )*one_ov_dx_sq; // x part with optimized derivative
-                ( *A3Dnew )( i, j, k ) += delta2*        ( ( *A3D )( i-2, j, k )-2.*( *A3D )( i, j, k )+( *A3D )( i+2, j, k ) )*one_ov_dx_sq;
+                ( *A3Dnew )( i, j, k ) += (1.+delta)*    ( ( *A3D )( i-1, j, k )-2.*( *A3D )( i, j, k )+( *A3D )( i+1, j, k ) )*one_ov_dx_sq; // x part with optimized derivative
+                ( *A3Dnew )( i, j, k ) -= delta*         ( ( *A3D )( i-2, j, k )-2.*( *A3D )( i, j, k )+( *A3D )( i+2, j, k ) )*one_ov_dx_sq*0.25;
                 ( *A3Dnew )( i, j, k ) +=                ( ( *A3D )( i, j-1, k )-2.*( *A3D )( i, j, k )+( *A3D )( i, j+1, k ) )*one_ov_dy_sq; // y part
                 ( *A3Dnew )( i, j, k ) +=                ( ( *A3D )( i, j, k-1 )-2.*( *A3D )( i, j, k )+( *A3D )( i, j, k+1 ) )*one_ov_dz_sq; // z part
                 // A3Dnew = A3Dnew+2ik0*dA/dx, where dA/dx uses the optimized form
-                ( *A3Dnew )( i, j, k ) += i1_2k0_over_2dx*(1.-2.*delta1)*( ( *A3D )( i+1, j, k )-( *A3D )( i-1, j, k ) );
-                ( *A3Dnew )( i, j, k ) += i1_2k0_over_2dx*delta1        *( ( *A3D )( i+2, j, k )-( *A3D )( i-2, j, k ) );
+                ( *A3Dnew )( i, j, k ) += i1_2k0_over_2dx*(1.+delta)*( ( *A3D )( i+1, j, k )-( *A3D )( i-1, j, k ) );
+                ( *A3Dnew )( i, j, k ) -= i1_2k0_over_2dx*delta*0.5 *( ( *A3D )( i+2, j, k )-( *A3D )( i-2, j, k ) );
                 // A3Dnew = A3Dnew*dt^2
                 ( *A3Dnew )( i, j, k )  = ( *A3Dnew )( i, j, k )*dt_sq;
                 // A3Dnew = A3Dnew + 2/c^2 A3D - (1+ik0cdt)A03D/c^2
