@@ -243,12 +243,12 @@ where :math:`\Delta x, \Delta t` are the cell size in the `x` direction and the 
 
 In the second scheme, denoted as ``"explicit_reduced_dispersion"`` in the input namelist, the finite difference approximations for the derivatives along 
 the propagation direction `x` are substituted by optimized finite differences that reduce the numerical dispersion in that direction (see [Terzani]_ for the derivation).
-Namely, defining :math:`\nu=\Delta t/\Delta x`, :math:`\delta_1=(\nu^2-1)/6`, :math:`\delta_2=\delta_1/2`, these optimized derivatives can be written as:
+Namely, defining :math:`\nu=\Delta t/\Delta x`, :math:`\delta=(1-\nu^2)/3`, these optimized derivatives can be written as:
 
 .. math::
 
-  D_{x,opt}\tilde{A}\bigg\rvert^{n}_{i}&=& (1-2\delta_1)D_x\tilde{A}\bigg\rvert^{n}_{i}+\delta_1\left(\frac{\tilde{A}^n_{i+2}-\tilde{A}^n_{i-2}}{2\Delta x}\right),\\
-  D_{xx,opt}\tilde{A}\bigg\rvert^{n}_{i}&=& (1-4\delta_2)D_{xx}\tilde{A}\bigg\rvert^{n}_{i}+\delta_2\left(\frac{\tilde{A}^n_{i+2}-2\tilde{A}^n_{i}+\tilde{A}^n_{i-2}}{\Delta x^2}\right).\\
+  D_{x,opt}\tilde{A}\bigg\rvert^{n}_{i}&=& (1+\delta)D_x\tilde{A}\bigg\rvert^{n}_{i}-\delta\left(\frac{\tilde{A}^n_{i+2}-\tilde{A}^n_{i-2}}{4\Delta x}\right),\\
+  D_{xx,opt}\tilde{A}\bigg\rvert^{n}_{i}&=& (1+\delta)D_{xx}\tilde{A}\bigg\rvert^{n}_{i}-\delta\left(\frac{\tilde{A}^n_{i+2}-2\tilde{A}^n_{i}+\tilde{A}^n_{i-2}}{4\Delta x^2}\right).\\
  
 In both schemes, after substituting the spatial and temporal derivative with the chosen finite differences forms, 
 an explicit update of :math:`\tilde{A}^{n+1}_i`, function of :math:`\tilde{A}^{n}_i`, :math:`\tilde{A}^{n}_{i-1}`, :math:`\tilde{A}^{n}_{i+1}`, :math:`\tilde{A}^{n-1}_i` and :math:`\chi^{n}_i` can  be easily found. 
