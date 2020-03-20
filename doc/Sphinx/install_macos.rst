@@ -61,7 +61,7 @@ you might want to just install the Smilei dependencies to be able to compile Smi
      
      brew install iltommi/brews/smilei --HEAD --only-dependencies
 
-#. Edit your ``.bash_profile`` hidden file located in your home folder:
+#. Edit your ``.bash_profile`` (or ``.zprofile`` on Catalina) hidden file located in your home folder:
    
    .. code-block:: bash
 
@@ -71,7 +71,7 @@ you might want to just install the Smilei dependencies to be able to compile Smi
      
    .. code-block:: bash
   
-     export OMPI_CXX=g++-8 
+     export OMPI_CXX=g++-9 
      export HDF5_ROOT_DIR=/usr/local/opt/hdf5-parallel
      export PYTHONEXE=python3
 

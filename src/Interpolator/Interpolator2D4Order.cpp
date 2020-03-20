@@ -123,13 +123,13 @@ void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator2D4Order::oneField( Field *field, Particles &particles, int *istart, int *iend, double *FieldLoc )
+void Interpolator2D4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
 {
-    Field2D *F = static_cast<Field2D *>( field );
-    double *coeffx = field->isDual( 0 ) ? &coeffxd_[2] : &coeffxp_[2];
-    double *coeffy = field->isDual( 1 ) ? &coeffyd_[2] : &coeffyp_[2];
-    int *i = field->isDual( 0 ) ? &id_ : &ip_;
-    int *j = field->isDual( 1 ) ? &jd_ : &jp_;
+    Field2D *F = static_cast<Field2D *>( *field );
+    double *coeffx = F->isDual( 0 ) ? &coeffxd_[2] : &coeffxp_[2];
+    double *coeffy = F->isDual( 1 ) ? &coeffyd_[2] : &coeffyp_[2];
+    int *i = F->isDual( 0 ) ? &id_ : &ip_;
+    int *j = F->isDual( 1 ) ? &jd_ : &jp_;
     
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*dx_inv_;

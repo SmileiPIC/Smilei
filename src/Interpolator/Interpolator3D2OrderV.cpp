@@ -869,7 +869,7 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
 
 
 // Interpolator on another field than the basic ones
-void Interpolator3D2OrderV::oneField( Field *field, Particles &particles, int *istart, int *iend, double *FieldLoc )
+void Interpolator3D2OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
 {
     ERROR( "Single field 3D2O interpolator not available in vectorized mode" );
 }

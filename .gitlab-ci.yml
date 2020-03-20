@@ -7,7 +7,6 @@ compile:
   only:
     - develop
     - radiationSpectrum
-    - AMsorting
 
   script:
     # Force workdir cleaning in case of retried
@@ -30,7 +29,6 @@ makerun1D:
   only:
     - develop
     - radiationSpectrum
-    - AMsorting
     
   script:
     # Move in test dir
@@ -43,7 +41,6 @@ makerun2D:
   only:
     - develop
     - radiationSpectrum
-    - AMsorting
     
   script:
     # Move in test dir
@@ -56,7 +53,6 @@ makerun3D:
   only:
     - develop
     - radiationSpectrum
-    - AMsorting
 
   script:
     # Move in test dir
@@ -68,8 +64,8 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - AMsorting
-
+    - radiationSpectrum
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -81,7 +77,6 @@ makerunV:
   only:
     - develop
     - radiationSpectrum
-    - AMsorting
 
   script:
     # Move in test dir
@@ -94,7 +89,6 @@ makerunCollisions:
   only:
     - develop
     - radiationSpectrum
-    - AMsorting
     
   script:
     # Move in test dir
