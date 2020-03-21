@@ -19,6 +19,10 @@ using namespace std;
 LaserEnvelope2D::LaserEnvelope2D( Params &params, Patch *patch, ElectroMagn *EMfields )
     : LaserEnvelope( params, patch, EMfields )
 {
+
+    one_ov_dy_sq    = 1./cell_length[1]/cell_length[1];
+    one_ov_2dy      = 1./2./cell_length[1];
+
     std::vector<unsigned int>  dimPrim( params.nDim_field );
     // Dimension of the primal and dual grids
     for( size_t i=0 ; i<params.nDim_field ; i++ ) {
@@ -88,13 +92,6 @@ void LaserEnvelope2D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     vector<double> position( 2, 0 );
     double t;
     double t_previous_timestep;
-    
-    complex<double>     i1 = std::complex<double>( 0., 1 );
-    
-    //! 1/(2dx), where dx is the spatial step dx for 2D3V cartesian simulations
-    double one_ov_2dx=1./2./cell_length[0];
-    //! 1/(2dy), where dy is the spatial step dy for 2D3V cartesian simulations
-    double one_ov_2dy=1./2./cell_length[1];
     
     // position[0]: x coordinate
     // position[1]: y coordinate
@@ -167,28 +164,12 @@ void LaserEnvelope2D::updateEnvelope( ElectroMagn *EMfields )
     //      (d^2A/dx^2) @ time n and indices ijk = (A^{n}_{i+1,j,k}-2*A^{n}_{i,j,k}+A^{n}_{i-1,j,k})/dx^2
     
     
-    
-    //// auxiliary quantities
-    
-    //! 1/dt^2, where dt is the temporal step
-    double           dt_sq = timestep*timestep;
-    // imaginary unit
-    complex<double>     i1 = std::complex<double>( 0., 1 );
-    
-    //! 1/dx^2, 1/dy^2, where dx,dy are the spatial step dx for 2D3V cartesian simulations
-    double one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
-    double one_ov_dy_sq    = 1./cell_length[1]/cell_length[1];
-    
-    
     cField2D *A2D          = static_cast<cField2D *>( A_ );               // the envelope at timestep n
     cField2D *A02D         = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
     Field2D *Env_Chi2D     = static_cast<Field2D *>( EMfields->Env_Chi_ ); // source term of envelope equation
     Field2D *Env_Aabs2D    = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic
     Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
-    
-    //! 1/(2dx), where dx is the spatial step dx for 2D3V cartesian simulations
-    double one_ov_2dt      = 1./2./timestep;
     
     // temporary variable for updated envelope
     cField2D *A2Dnew;
@@ -251,28 +232,12 @@ void LaserEnvelope2D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // delta= [1-(dt/dx)^2]/3,
     // (dA/dx)_opt = (1+delta)*(dA/dx) - delta*(A_{i+2,j,k}-A_{i-2,j,k})/4/dx
     // (d^2A/dx^2)_opt = (1+delta)*(d^2A/dx^2) - delta*(A_{i+2,j,k}-2*A_{i,j,k}+A_{i-2,j,k})/(4dx^2)
-    
-    //// auxiliary quantities
-    
-    //! 1/dt^2, where dt is the temporal step
-    double           dt_sq = timestep*timestep;
-    // imaginary unit
-    complex<double>     i1 = std::complex<double>( 0., 1 );
-    
-    //! 1/dx^2, 1/dy^2, where dx,dy are the spatial step dx for 2D3V cartesian simulations
-    double one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
-    double one_ov_dy_sq    = 1./cell_length[1]/cell_length[1];
-    
+        
     
     cField2D *A2D          = static_cast<cField2D *>( A_ );               // the envelope at timestep n
     cField2D *A02D         = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
     Field2D *Env_Chi2D     = static_cast<Field2D *>( EMfields->Env_Chi_ ); // source term of envelope equation
-    Field2D *Env_Aabs2D    = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic
-    Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
-    
-    //! 1/(2dx), where dx is the spatial step dx for 2D3V cartesian simulations
-    double one_ov_2dt      = 1./2./timestep;
     
     // temporary variable for updated envelope
     cField2D *A2Dnew;
@@ -299,16 +264,11 @@ void LaserEnvelope2D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
         } // end y loop
     } // end x loop
     
-    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
+    for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop
         for( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) { // y loop
-        
             // final back-substitution
-            // |E envelope| = |-(dA/dt-ik0cA)|
-            ( *Env_Eabs2D )( i, j ) = std::abs( ( ( *A2Dnew )( i, j )-( *A02D )( i, j ) )*one_ov_2dt - i1*( *A2D )( i, j ) );
             ( *A02D )( i, j )       = ( *A2D )( i, j );
             ( *A2D )( i, j )        = ( *A2Dnew )( i, j );
-            ( *Env_Aabs2D )( i, j ) = std::abs( ( *A2D )( i, j ) );
-            
         } // end y loop
     } // end x loop
     
@@ -316,25 +276,32 @@ void LaserEnvelope2D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
 } // end LaserEnvelope2D::updateEnvelopeReducedDispersion
 
 
-void LaserEnvelope2D::computePhi( ElectroMagn *EMfields )
+void LaserEnvelope2D::computePhiEnvAEnvE( ElectroMagn *EMfields )
 {
 
     // computes Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
     
-    cField2D *A2D          = static_cast<cField2D *>( A_ );       // the envelope at timestep n
+    cField2D *A2D          = static_cast<cField2D *>( A_ );                  // the envelope at timestep n
+
+    cField2D *A02D         = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
     
-    Field2D *Phi2D         = static_cast<Field2D *>( Phi_ );      //Phi=|A|^2/2 is the ponderomotive potential
+    Field2D *Phi2D         = static_cast<Field2D *>( Phi_ );                 //Phi=|A|^2/2 is the ponderomotive potential
+
+    Field2D *Env_Aabs2D    = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic
     
-    
+    Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
         for( unsigned int j=1 ; j < A_->dims_[1]-1; j++ ) { // y loop
             ( *Phi2D )( i, j )       = std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
+            ( *Env_Aabs2D )( i, j ) = std::abs( ( *A2D )( i, j ) );
+            // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivativee
+            ( *Env_Eabs2D )( i, j ) = std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*( *A2D )( i, j ) );
         } // end y loop
     } // end x loop
     
-} // end LaserEnvelope2D::computePhi
+} // end LaserEnvelope2D::computePhiEnvAEnvE
 
 
 void LaserEnvelope2D::computeGradientPhi( ElectroMagn *EMfields )
@@ -344,13 +311,7 @@ void LaserEnvelope2D::computeGradientPhi( ElectroMagn *EMfields )
     Field2D *GradPhix2D    = static_cast<Field2D *>( GradPhix_ );
     Field2D *GradPhiy2D    = static_cast<Field2D *>( GradPhiy_ );
     Field2D *Phi2D         = static_cast<Field2D *>( Phi_ );      //Phi=|A|^2/2 is the ponderomotive potential
-    
-    
-    //! 1/(2dx), where dx is the spatial step dx for 2D3V cartesian simulations
-    double one_ov_2dx=1./2./cell_length[0];
-    //! 1/(2dy), where dy is the spatial step dy for 2D3V cartesian simulations
-    double one_ov_2dy=1./2./cell_length[1];
-    
+        
     
     // Compute gradients of Phi, at timesteps n
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop

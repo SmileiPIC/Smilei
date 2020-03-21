@@ -1064,7 +1064,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
             ( *this )( ipatch )->EMfields->envelope->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
 
             // Compute ponderomotive potential Phi=|A|^2/2
-            ( *this )( ipatch )->EMfields->envelope->computePhi( ( *this )( ipatch )->EMfields );
+            ( *this )( ipatch )->EMfields->envelope->computePhiEnvAEnvE( ( *this )( ipatch )->EMfields );
 
         }
 

@@ -86,10 +86,6 @@ void LaserEnvelope1D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     double t;
     double t_previous_timestep;
     
-    complex<double>     i1 = std::complex<double>( 0., 1 );
-    
-    //! 1/(2Dx), where dx is the spatial step dx for 1D3V cartesian simulations
-    double one_ov_2dx=1./2./cell_length[0];
     
     // position[0]: x coordinate
     // t: time coordinate --> x/c for the envelope initialization
@@ -152,26 +148,12 @@ void LaserEnvelope1D::updateEnvelope( ElectroMagn *EMfields )
     // A0 is A^{n-1}
     //      (d^2A/dx^2) @ time n and indices i = (A^{n}_{i+1,j,k}-2*A^{n}_{i}+A^{n}_{i-1})/dx^2
     
-    
-    
-    //// auxiliary quantities
-    //! 1/dt^2, where dt is the temporal step
-    double           dt_sq = timestep*timestep;
-    // imaginary unit
-    complex<double>     i1 = std::complex<double>( 0., 1 );
-    
-    //! 1/dx^2, where dx is the spatial step dx for 1D3V cartesian simulations
-    double one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
-    
     cField1D *A1D          = static_cast<cField1D *>( A_ );               // the envelope at timestep n
     cField1D *A01D         = static_cast<cField1D *>( A0_ );              // the envelope at timestep n-1
     Field1D *Env_Chi1D     = static_cast<Field1D *>( EMfields->Env_Chi_ ); // source term of envelope equation
     Field1D *Env_Aabs1D    = static_cast<Field1D *>( EMfields->Env_A_abs_ ); // field for diagnostic
     Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
-    
-    //! 1/(1Dx), where dx is the spatial step dx for 1D3V cartesian simulations
-    double one_ov_2dt      = 1./2./timestep;
     
     // temporary variable for updated envelope
     cField1D *A1Dnew;
@@ -230,25 +212,11 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     // (dA/dx)_opt = (1+delta)*(dA/dx) - delta*(A_{i+2,j,k}-A_{i-2,j,k})/4/dx
     // (d^2A/dx^2)_opt = (1+delta)*(d^2A/dx^2) - delta*(A_{i+2,j,k}-2*A_{i,j,k}+A_{i-2,j,k})/(4dx^2)
     
-   
-    //// auxiliary quantities
-    //! 1/dt^2, where dt is the temporal step
-    double           dt_sq = timestep*timestep;
-    // imaginary unit
-    complex<double>     i1 = std::complex<double>( 0., 1 );
-    
-    //! 1/dx^2, where dx is the spatial step dx for 1D3V cartesian simulations
-    double one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
     
     cField1D *A1D          = static_cast<cField1D *>( A_ );               // the envelope at timestep n
     cField1D *A01D         = static_cast<cField1D *>( A0_ );              // the envelope at timestep n-1
     Field1D *Env_Chi1D     = static_cast<Field1D *>( EMfields->Env_Chi_ ); // source term of envelope equation
-    Field1D *Env_Aabs1D    = static_cast<Field1D *>( EMfields->Env_A_abs_ ); // field for diagnostic
-    Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
-    
-    //! 1/(1Dx), where dx is the spatial step dx for 1D3V cartesian simulations
-    double one_ov_2dt      = 1./2./timestep;
     
     // temporary variable for updated envelope
     cField1D *A1Dnew;
@@ -274,32 +242,33 @@ void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
     } // end x loop
     
     for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop
-    
         // final back-substitution
-        // |E envelope| = |-(dA/dt-ik0cA)|
-        ( *Env_Eabs1D )( i ) = std::abs( ( ( *A1Dnew )( i )-( *A01D )( i ) )*one_ov_2dt - i1*( *A1D )( i ) );
         ( *A01D )( i )       = ( *A1D )( i );
-        ( *A1D )( i )        = ( *A1Dnew )( i );
-        ( *Env_Aabs1D )( i ) = std::abs( ( *A1D )( i ) );
-        
+        ( *A1D )( i )        = ( *A1Dnew )( i );      
     } // end x loop
     
     delete A1Dnew;
 } // end LaserEnvelope1D::updateEnvelopeReducedDispersion
 
-void LaserEnvelope1D::computePhi( ElectroMagn *EMfields )
+void LaserEnvelope1D::computePhiEnvAEnvE( ElectroMagn *EMfields )
 {
 
     // computes Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
-    cField1D *A1D          = static_cast<cField1D *>( A_ );       // the envelope at timestep n
-    Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );      //Phi=|A|^2/2 is the ponderomotive potential
+    cField1D *A1D          = static_cast<cField1D *>( A_ );                  // the envelope at timestep n
+    cField1D *A01D         = static_cast<cField1D *>( A0_ );              // the envelope at timestep n-1
+    Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );                 //Phi=|A|^2/2 is the ponderomotive potential
+    Field1D *Env_Aabs1D    = static_cast<Field1D *>( EMfields->Env_A_abs_ ); // field for diagnostic
+    Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        ( *Phi1D )( i )       = std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
+        ( *Phi1D )( i )      = std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
+        ( *Env_Aabs1D )( i ) = std::abs( ( *A1D )( i ) );
+        // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
+        ( *Env_Eabs1D )( i ) = std::abs( ( ( *A1D )( i )-( *A01D )( i ) )/timestep - i1*( *A1D )( i ) );
     } // end x loop
     
-} // end LaserEnvelope1D::computePhi
+} // end LaserEnvelope1D::computePhiEnvAEnvE
 
 
 void LaserEnvelope1D::computeGradientPhi( ElectroMagn *EMfields )
@@ -310,14 +279,11 @@ void LaserEnvelope1D::computeGradientPhi( ElectroMagn *EMfields )
     Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );      //Phi=|A|^2/2 is the ponderomotive potential
     
     
-    //! 1/(1Dx), where dx is the spatial step dx for 1D3V cartesian simulations
-    double one_ov_2Dx=1./2./cell_length[0];
-    
     // Compute gradients of Phi, at timesteps n
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
     
         // gradient in x direction
-        ( *GradPhix1D )( i ) = ( ( *Phi1D )( i+1 )-( *Phi1D )( i-1 ) ) * one_ov_2Dx;
+        ( *GradPhix1D )( i ) = ( ( *Phi1D )( i+1 )-( *Phi1D )( i-1 ) ) * one_ov_2dx;
         
     } // end x loop
     
