@@ -203,7 +203,7 @@ public:
     std::vector<Field *> Bzfilter;
     
     
-    //! all Fields in electromagn (filled in ElectromagnFactory.h)
+    //! all Fields in electromagn
     std::vector<Field *> allFields;
     
     //! all Fields averages required in diagnostic Fields
@@ -218,6 +218,9 @@ public:
     
     // vector of susceptibility for each species
     std::vector<Field *> Env_Chi_s;
+    
+    //! Index where each species starts in allFields (concerns only species-related fields)
+    std::vector<unsigned int> species_starts;
     
     //! Creates a new field with the right characteristics, depending on the name
     virtual Field *createField( std::string fieldname ) = 0;

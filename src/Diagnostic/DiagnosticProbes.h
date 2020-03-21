@@ -96,7 +96,9 @@ private :
     std::vector<unsigned int> fieldlocation;
     
     //! Special case of species-related fields: indices of fields in ElectroMagn
-    std::vector<unsigned int> fieldindex;
+    std::vector<std::vector<unsigned int> > species_field_index;
+    //! Special case of species-related fields: location of fields in output
+    std::vector<std::vector<unsigned int> > species_field_location;
     
     //! Variable to store the status of a dataset (whether it exists or not)
     htri_t status;

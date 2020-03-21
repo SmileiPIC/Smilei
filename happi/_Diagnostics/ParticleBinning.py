@@ -270,7 +270,8 @@ class ParticleBinning(Diagnostic):
 		for d in self._diags:
 			self._vunits = self._vunits.replace("#"+str(d), "( "+units[d]+" )")
 			self._title  = self._title .replace("#"+str(d), titles[d])
-
+		self._vunits = self.units._getUnits(self._vunits)
+		
 		# If any spatial dimension did not appear, then count it for calculating the correct density
 		if self._ndim_particles>=1 and not spatialaxes["x"]: coeff /= self._ncels[ 0]*self._cell_length[ 0]
 		if self._ndim_particles>=2 and not spatialaxes["y"]: coeff /= self._ncels[ 1]*self._cell_length[ 1]
