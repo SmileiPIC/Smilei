@@ -360,7 +360,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
             ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
         }
-        if (envelope_solver == "explicit_reduced_dispersion"){
+        if ((envelope_solver == "explicit_reduced_dispersion") && (geometry!="1Dcartesian")){
             full_Envelope_exchange = true;
         }
 
@@ -900,7 +900,7 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
-
+    
     // Set clrw if not set by the user
     if( clrw == -1 ) {
 
