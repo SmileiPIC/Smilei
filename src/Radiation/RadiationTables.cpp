@@ -209,72 +209,215 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
 // -----------------------------------------------------------------------------
 //! Computation of the photon quantum parameter photon_chi for emission
-//! ramdomly and using the tables xip and chiphmin
+//! ramdomly and using the tables xi and chiphmin
 //
 //! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
-double RadiationTables::computeRandomPhotonChi( double particle_chi )
+// double RadiationTables::computeRandomPhotonChi( double particle_chi )
+// {
+//     // Log10 of particle_chi
+//     double logchipa;
+//     double photon_chi;
+//     double chiph_xip_delta;
+//     // Random xi
+//     double xi;
+//     int ichipa;
+//     int ichiph;
+//     // For the interpolation
+//     double log10_chiphm;
+//     double log10_chiphp;
+//     double d;
+//     int ixip;
+//
+//     logchipa = std::log10( particle_chi );
+//
+//     // ---------------------------------------
+//     // index of particle_chi in xi_.table
+//     // ---------------------------------------
+//     // Use floor so that particle_chi corresponding to ichipa is <= given particle_chi
+//     ichipa = int( floor( ( logchipa-xi_.log10_min_particle_chi_ )*( xi_.inv_particle_chi_delta_ ) ) );
+//
+//     // Checking that ichipa is in the range of the tables
+//     // Else we use the values at the boundaries
+//     if( ichipa < 0 ) {
+//         ichipa = 0;
+//     } else if( ichipa > xi_.size_particle_chi_-1 ) {
+//         ichipa = xi_.size_particle_chi_-1;
+//     }
+//
+//     // ---------------------------------------
+//     // Search of the index ichiph for photon_chi
+//     // ---------------------------------------
+//
+//     // First, we compute a random xi in [0,1[
+//     xi = Rand::uniform();
+//
+//     // If the randomly computed xi if below the first one of the row,
+//     // we take the first one which corresponds to the minimal photon photon_chi
+//     if( xi <= xi_.table_[ichipa*xi_.size_photon_chi_] ) {
+//         ichiph = 0;
+//         xi = xi_.table_[ichipa*xi_.size_photon_chi_];
+//     }
+//     // Above the last xi of the row, the last one corresponds
+//     // to the maximal photon photon_chi
+//     else if( xi > xi_.table_[( ichipa+1 )*xi_.size_photon_chi_-2] ) {
+//         ichiph = xi_.size_photon_chi_-2;
+//         xi = xi_.table_[( ichipa+1 )*xi_.size_photon_chi_-1];
+//         // If nearest point: ichiph = xi_.size_photon_chi_-1
+//     } else {
+//         // Search for the corresponding index ichiph for xi
+//         ichiph = userFunctions::searchValuesInMonotonicArray(
+//                      &xi_.table_[ichipa*xi_.size_photon_chi_], xi, xi_.size_photon_chi_ );
+//     }
+//
+//     // Corresponding particle_chi for ichipa
+//     logchipa = ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_;
+//
+//     // Delta for the corresponding particle_chi
+//     chiph_xip_delta = ( logchipa - xi_.min_photon_chi_table_[ichipa] )
+//                       *xi_.inv_size_photon_chi_minus_one_;
+//
+//     // --------------------------------------------------------------------
+//     // Compute photon_chi
+//     // This method is slow but more accurate than taking the nearest point
+//     // --------------------------------------------------------------------
+//
+//     ixip = ichipa*xi_.size_photon_chi_ + ichiph;
+//
+//     // Computation of the final photon_chi by interpolation
+//     if( xi_.table_[ixip+1] - xi_.table_[ixip] > 1e-15 ) {
+//         log10_chiphm = ichiph*chiph_xip_delta
+//                        + xi_.min_photon_chi_table_[ichipa];
+//         log10_chiphp = log10_chiphm + chiph_xip_delta;
+//
+//         d = ( xi - xi_.table_[ixip] ) / ( xi_.table_[ixip+1] - xi_.table_[ixip] );
+//
+//         // Chiph after linear interpolation in the logarithmic scale
+//         photon_chi = std::pow( 10.0, log10_chiphm*( 1.0-d ) + log10_chiphp*( d ) );
+//     } else
+//         // For integration reasons, we can have xi_.table_[ixip+1] = xi_.table_[ixip]
+//         // In this case, no interpolation
+//     {
+//         photon_chi = pow( 10., ichiph*chiph_xip_delta
+//                           + xi_.min_photon_chi_table_[ichipa] );
+//     }
+//
+//     // ------------------------------------------------------------
+//     // Compute photon_chi
+//     // Fastest method using the nearest point but less accurate
+//     // ------------------------------------------------------------
+//
+//     /*photon_chi = pow(10.,ichiph*chiph_xip_delta
+//            + xi_.min_photon_chi_table_[ichipa]);*/
+//
+//
+//     return photon_chi;
+// }
+
+// -----------------------------------------------------------------------------
+//! Computation of the photon quantum parameter photon_chi for emission
+//! ramdomly and using the tables xi and chiphmin
+//
+//! \param particle_chi particle quantum parameter
+// -----------------------------------------------------------------------------
+double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi)
 {
     // Log10 of particle_chi
-    double logchipa;
+    double log10_particle_chi;
+    
+    // Photon chi (1 and 2 for interpolation)
     double photon_chi;
+    double photon_chi_1;
+    double photon_chi_2;
+    
+    // Random xi
+    double xi;
+    
     double chiph_xip_delta;
-    // Random xip
-    double xip;
+    double chiph_xip_delta_1;
+    double chiph_xip_delta_2;
+
     int ichipa;
-    int ichiph;
+    int ichiph_1;
+    int ichiph_2;
     // For the interpolation
     double log10_chiphm;
     double log10_chiphp;
-    double d;
-    int ixip;
+    double d_photon_chi;
+    double d_particle_chi;
+    int ixip_1;
+    int ixip_2;
 
-    logchipa = std::log10( particle_chi );
+    log10_particle_chi = std::log10( particle_chi );
 
     // ---------------------------------------
     // index of particle_chi in xi_.table
     // ---------------------------------------
+    
     // Use floor so that particle_chi corresponding to ichipa is <= given particle_chi
-    ichipa = int( floor( ( logchipa-xi_.log10_min_particle_chi_ )*( xi_.inv_particle_chi_delta_ ) ) );
+    ichipa = int( floor( ( log10_particle_chi-xi_.log10_min_particle_chi_ )*( xi_.inv_particle_chi_delta_ ) ) );
 
     // Checking that ichipa is in the range of the tables
     // Else we use the values at the boundaries
     if( ichipa < 0 ) {
         ichipa = 0;
-    } else if( ichipa > xi_.size_particle_chi_-1 ) {
-        ichipa = xi_.size_particle_chi_-1;
+    } else if( ichipa > xi_.size_particle_chi_-2 ) {
+        // xi_.size_particle_chi_-2 for interpolation
+        ichipa = xi_.size_particle_chi_-2;
     }
 
     // ---------------------------------------
     // Search of the index ichiph for photon_chi
     // ---------------------------------------
 
-    // First, we compute a random xip in [0,1[
-    xip = Rand::uniform();
+    xi = Rand::uniform();
 
-    // If the randomly computed xip if below the first one of the row,
+    // If the randomly computed xi if below the first one of the row,
     // we take the first one which corresponds to the minimal photon photon_chi
-    if( xip <= xi_.table_[ichipa*xi_.size_photon_chi_] ) {
-        ichiph = 0;
-        xip = xi_.table_[ichipa*xi_.size_photon_chi_];
+    if( xi <= xi_.table_[ichipa*xi_.size_photon_chi_] ) {
+        ichiph_1 = 0;
+        ichiph_2 = 0;
+        xi = xi_.table_[ichipa*xi_.size_photon_chi_];
     }
-    // Above the last xip of the row, the last one corresponds
+    // Above the last xi of the row, the last one corresponds
     // to the maximal photon photon_chi
-    else if( xip > xi_.table_[( ichipa+1 )*xi_.size_photon_chi_-2] ) {
-        ichiph = xi_.size_photon_chi_-2;
-        xip = xi_.table_[( ichipa+1 )*xi_.size_photon_chi_-1];
-        // If nearest point: ichiph = xi_.size_photon_chi_-1
-    } else {
-        // Search for the corresponding index ichiph for xip
-        ichiph = userFunctions::searchValuesInMonotonicArray(
-                     &xi_.table_[ichipa*xi_.size_photon_chi_], xip, xi_.size_photon_chi_ );
+    // else if( xi > xi_.table_[( ichipa+1 )*xi_.size_photon_chi_-2] ) {
+    //     ichiph = xi_.size_photon_chi_-2;
+    //     xi = xi_.table_[( ichipa+1 )*xi_.size_photon_chi_-1];
+    // If nearest point: ichiph = xi_.size_photon_chi_-1
+    // }
+    else {
+        // Search for the corresponding index ichiph for xi
+        ichiph_1 = userFunctions::searchValuesInMonotonicArray(
+                     &xi_.table_[ichipa*xi_.size_photon_chi_], xi, xi_.size_photon_chi_ );
+        ichiph_2 = userFunctions::searchValuesInMonotonicArray(
+                  &xi_.table_[(ichipa+1)*xi_.size_photon_chi_], xi, xi_.size_photon_chi_ );
     }
 
     // Corresponding particle_chi for ichipa
-    logchipa = ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_;
+    // log10_particle_chi = ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_;
+    d_particle_chi = (log10_particle_chi - (ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_))
+                       * xi_.inv_particle_chi_delta_;
 
-    // Delta for the corresponding particle_chi
-    chiph_xip_delta = ( logchipa - xi_.min_photon_chi_table_[ichipa] )
+    // std::cerr << " " << log10_particle_chi
+    //           << " " <<  ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_
+    //           << " " << xi_.inv_particle_chi_delta_
+    //           << " " << xi_.particle_chi_delta_
+    //           << " " << xi_.log10_min_particle_chi_
+    //           << " " << ichipa
+    //           << " " << d_particle_chi
+    //           << " " << (log10_particle_chi - ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_)
+    //           << std::endl;
+
+    // double log10_min_photon_chi =  xi_.min_photon_chi_table_[ichipa] * (d_particle_chi - 1.0)
+    //                             + d_particle_chi*xi_.min_photon_chi_table_[ichipa+1];
+
+    // Chi gap for the corresponding particle_chi
+
+    chiph_xip_delta_1 = ( ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_ - xi_.min_photon_chi_table_[ichipa])
+                      *xi_.inv_size_photon_chi_minus_one_;
+
+    chiph_xip_delta_2 = ( (ichipa+1)*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_ - xi_.min_photon_chi_table_[ichipa+1])
                       *xi_.inv_size_photon_chi_minus_one_;
 
     // --------------------------------------------------------------------
@@ -282,34 +425,47 @@ double RadiationTables::computeRandomPhotonChi( double particle_chi )
     // This method is slow but more accurate than taking the nearest point
     // --------------------------------------------------------------------
 
-    ixip = ichipa*xi_.size_photon_chi_ + ichiph;
+    ixip_1 = ichipa*xi_.size_photon_chi_ + ichiph_1;
+    ixip_2 = (ichipa+1)*xi_.size_photon_chi_ + ichiph_2;
 
     // Computation of the final photon_chi by interpolation
-    if( xi_.table_[ixip+1] - xi_.table_[ixip] > 1e-15 ) {
-        log10_chiphm = ichiph*chiph_xip_delta
+    if( (xi_.table_[ixip_1] < 1.0) && (xi_.table_[ixip_1+1] - xi_.table_[ixip_1] > 1e-15) ) {
+        log10_chiphm = ichiph_1*chiph_xip_delta_1
                        + xi_.min_photon_chi_table_[ichipa];
-        log10_chiphp = log10_chiphm + chiph_xip_delta;
+        log10_chiphp = log10_chiphm + chiph_xip_delta_1;
 
-        d = ( xip - xi_.table_[ixip] ) / ( xi_.table_[ixip+1] - xi_.table_[ixip] );
+        d_photon_chi = ( xi - xi_.table_[ixip_1] ) / ( xi_.table_[ixip_1+1] - xi_.table_[ixip_1] );
 
         // Chiph after linear interpolation in the logarithmic scale
-        photon_chi = std::pow( 10.0, log10_chiphm*( 1.0-d ) + log10_chiphp*( d ) );
+        photon_chi_1 = log10_chiphm*( 1.0-d_photon_chi ) + log10_chiphp*( d_photon_chi ) ;
     } else
-        // For integration reasons, we can have xi_.table_[ixip+1] = xi_.table_[ixip]
-        // In this case, no interpolation
+    // For integration reasons, we can have xi_.table_[ixip+1] = xi_.table_[ixip]
+    // In this case, no interpolation
     {
-        photon_chi = pow( 10., ichiph*chiph_xip_delta
-                          + xi_.min_photon_chi_table_[ichipa] );
+        photon_chi_1 =   ichiph_1*chiph_xip_delta_1
+                          + xi_.min_photon_chi_table_[ichipa] ;
     }
 
-    // ------------------------------------------------------------
-    // Compute photon_chi
-    // Fastest method using the nearest point but less accurate
-    // ------------------------------------------------------------
+    // Computation of the final photon_chi by interpolation
+    if( (xi_.table_[ixip_2] < 1.0) && (xi_.table_[ixip_2+1] - xi_.table_[ixip_2] > 1e-15) ) {
+        log10_chiphm = ichiph_2*chiph_xip_delta_2
+                       + xi_.min_photon_chi_table_[ichipa+1];
+        log10_chiphp = log10_chiphm + chiph_xip_delta_2;
 
-    /*photon_chi = pow(10.,ichiph*chiph_xip_delta
-           + xi_.min_photon_chi_table_[ichipa]);*/
+        d_photon_chi = ( xi - xi_.table_[ixip_2] ) / ( xi_.table_[ixip_2+1] - xi_.table_[ixip_2] );
 
+        // Chiph after linear interpolation in the logarithmic scale
+        photon_chi_2 = log10_chiphm*( 1.0-d_photon_chi ) + log10_chiphp*( d_photon_chi ) ;
+    } else
+    // For integration reasons, we can have xi_.table_[ixip+1] = xi_.table_[ixip]
+    // In this case, no interpolation
+    {
+        photon_chi_2 = ichiph_2*chiph_xip_delta_2
+                          + xi_.min_photon_chi_table_[ichipa+1] ;
+    }
+
+    // Chiph after linear interpolation in the logarithmic scale
+    photon_chi = std::pow( 10.0, photon_chi_1*(1 - d_particle_chi) + photon_chi_2*d_particle_chi);
 
     return photon_chi;
 }
@@ -535,7 +691,7 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
 }
 
 // -----------------------------------------------------------------------------
-//! Read the external table xip_chiphmin and xip
+//! Read the external table xip_chiphmin and xi
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
@@ -575,7 +731,7 @@ void RadiationTables::readXiTable( SmileiMPI *smpi )
                 H5::getAttr( dataset_id_xip, "min_particle_chi", xi_.min_particle_chi_ );
                 H5::getAttr( dataset_id_xip, "max_particle_chi", xi_.max_particle_chi_ );
 
-                // Allocation of the array xip
+                // Allocation of the array xi
                 xi_.min_photon_chi_table_.resize( xi_.size_particle_chi_ );
                 xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
 
@@ -585,7 +741,7 @@ void RadiationTables::readXiTable( SmileiMPI *smpi )
                          H5S_ALL, H5P_DEFAULT,
                          &xi_.min_photon_chi_table_[0] );
 
-                // then the dataset for xip
+                // then the dataset for xi
                 H5Dread( dataset_id_xip,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
@@ -606,7 +762,7 @@ void RadiationTables::readXiTable( SmileiMPI *smpi )
     }
     // Else, the table can not be found, we throw an error
     else {
-        ERROR("The table `xip` could not be read from the provided path: `"
+        ERROR("The table `xi` could not be read from the provided path: `"
               << table_path_<<"`. Please check that the path is correct.")
     }
 }
@@ -803,7 +959,7 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
 }
 
 // -----------------------------------------------------------------------------
-//! Bcast of the external table xip_chiphmin and xip
+//! Bcast of the external table xip_chiphmin and xi
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------

@@ -55,7 +55,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - radiationSpectrum
+    #- radiationSpectrum
     - AMsorting
 
   script:

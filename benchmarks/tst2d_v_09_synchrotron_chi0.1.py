@@ -192,3 +192,15 @@ for i,radiation in enumerate(radiation_list):
             ["chi", 1e-3, 1., 1000,"logscale"],
         ]
     )
+
+for i,radiation in enumerate(radiation_list):
+    # Energy-distribution
+    DiagParticleBinning(
+        deposited_quantity = "weight",
+        every = 500,
+        time_average = 1,
+        species = ["electron_" + species_name_list[i]],
+        axes = [
+            ["ekin", 1., gamma, 1000,"logscale"],
+        ]
+    )

@@ -150,7 +150,7 @@ Species(
     name = "photon",
     position_initialization = "random",
     momentum_initialization = "cold",
-    particles_per_cell = 128,
+    particles_per_cell = 256,
     c_part_max = 1.0,
     mass = 0,
     charge = 0.,
@@ -193,16 +193,32 @@ DiagScalar(
 
 DiagParticleBinning(
     deposited_quantity = "weight",
-    every = 300,
+    every = 50,
     time_average = 1,
     species = ["electron"],
-    axes = [ ["gamma",    0.,  gamma,  50] ]
+    axes = [ ["gamma",    1.,  gamma,  64, "logscale"] ]
 )
 
 DiagParticleBinning(
     deposited_quantity = "weight",
-    every = 300,
+    every = 50,
     time_average = 1,
     species = ["positron"],
-    axes = [ ["gamma",    0.,  gamma,  50] ]
+    axes = [ ["gamma",    1.,  gamma,  64, "logscale"] ]
+)
+
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = 50,
+    time_average = 1,
+    species = ["photon"],
+    axes = [ ["gamma",    0.9*gamma,  1.1*gamma,  64, "logscale"] ]
+)
+
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = 50,
+    time_average = 1,
+    species = ["photon"],
+    axes = [ ["chi",    1e-3,  chi,  64, "logscale"] ]
 )

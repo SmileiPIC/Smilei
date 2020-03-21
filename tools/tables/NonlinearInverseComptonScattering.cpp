@@ -7,6 +7,7 @@
 
 #include "NonlinearInverseComptonScattering.h"
 
+//! Creation of the tables
 void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
 {
     
@@ -65,8 +66,8 @@ void NonlinearComptonScattering::createTables(int argc, std::string * arguments)
     bool verbose;
     
     // Parameter default initialization
-    size_particle_chi      = 4;
-    size_photon_chi        = 4;
+    size_particle_chi      = 128;
+    size_photon_chi        = 128;
     min_particle_chi       = 1e-3;
     max_particle_chi       = 1e3;
     xi_power               = 4;

@@ -57,10 +57,10 @@ a0 = 500.
 simulation_time = 0.5*Lx + duration
 
 # Frozen time
-time_frozen = 0.4*Lx
+time_frozen = 0.49*Lx
 
 # Period of large output
-diag_time_selection = [int(time_frozen/dt), int((simulation_time - time_frozen)/(5*dt))]
+diag_time_selection = [2000*dt, 500]
 
 # Few merging parameters
 merge_time_selection = [int(time_frozen/dt), 5]
@@ -224,7 +224,7 @@ MultiphotonBreitWheeler(
 
 
 DiagScalar(
-    every = [3000*dt,20],
+    every = 100,
     vars=['Uelm','Ukin','Utot','Uexp','Ubal',
           'Urad',
           'Ukin_bnd',
@@ -240,11 +240,11 @@ DiagScalar(
           'Dens_photon'],
 )
 
-DiagPerformances(
-   every = 10,
-   flush_every = 100,
-   # patch_information = True,
-)
+# DiagPerformances(
+#    every = 10,
+#    flush_every = 100,
+#    # patch_information = True,
+# )
 
 species_list = ["electron","positron","photon"]
 
@@ -257,6 +257,18 @@ for species in species_list:
 		time_average = 1,
 		species = [species],
 		axes = [
-		    ["gamma", 0, a0, 128],
+		    ["gamma", 1., a0, 128, "logscale"],
+		]
+	)
+
+for species in species_list:
+
+	DiagParticleBinning(
+		deposited_quantity = "weight",
+		every = diag_time_selection,
+		time_average = 1,
+		species = [species],
+		axes = [
+		    ["chi", 1e-3, 5., 128, "logscale"],
 		]
 	)

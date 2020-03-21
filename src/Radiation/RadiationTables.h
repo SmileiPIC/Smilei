@@ -59,7 +59,12 @@ public:
     //! from a particle chi value (particle_chi) and
     //! using the tables xip and chiphmin
     //! \param particle_chi particle quantum parameter
-    double computeRandomPhotonChi( double particle_chi );
+    // double computeRandomPhotonChi( double particle_chi );
+
+    //! Computation of the photon quantum parameter photon_chi for emission
+    //! ramdomly and using the tables xi and chiphmin
+    //! \param particle_chi particle quantum parameter
+    double computeRandomPhotonChiWithInterpolation( double particle_chi);
 
     //! Return the value of the function h(particle_chi) of Niel et al.
     //! Use an integration of Gauss-Legendre

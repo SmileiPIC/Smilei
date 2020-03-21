@@ -58,24 +58,47 @@ Validate("Maximal relative error total energy: ", max(abs(utot[:] - utot[0]))/ut
 # ______________________________________________________________________________
 # Read energy spectrum
 
+species_list = ["electron","positron","photon"]
+
 if True:
 
-    PartDiag = S.ParticleBinning(diagNumber=0,timesteps = 300)
-    gamma = np.array(PartDiag.get()["gamma"])
-    density = np.array(PartDiag.get()["data"][0])
-    integral = sum(density)*(gamma[1] - gamma[0])
+    integrated_gamma_spectrum = {}
+    max_gamma_spectrum = {}
 
-    print ' Electron energy from spectrum: ',integral
-    print ' Max from spectrum: ',max(density/integral)
+    for ispecies,species in enumerate(species_list):
+        
+        integrated_gamma_spectrum[species] = np.zeros(8)
+        max_gamma_spectrum[species] = np.zeros(8)
+        
+        for diag_it in range(8):
+        
+            PartDiag = S.ParticleBinning(diagNumber=ispecies,timesteps = diag_it*50)
+            gamma = np.array(PartDiag.get()["gamma"])
+            density = np.array(PartDiag.get()["data"][0])
 
-    #Validate("Electron energy spectrum: ", density/integral, 1e-5 )
+            log10_gamma = np.log10(gamma)
+            delta = log10_gamma[1] - log10_gamma[0]
+            bins =  np.power(10.,log10_gamma + 0.5*delta) - np.power(10.,log10_gamma - 0.5*delta)
+            
+            integrated_gamma_spectrum[species][diag_it] = np.sum(bins*density)
+            imax = np.argmax(density)
+            max_gamma_spectrum[species][diag_it] = gamma[imax]
 
-    PartDiag = S.ParticleBinning(diagNumber=1,timesteps = 300)
-    gamma = np.array(PartDiag.get()["gamma"])
-    density = np.array(PartDiag.get()["data"][0])
-    integral = sum(density)*(gamma[1] - gamma[0])
-
-    print ' Positron energy from spectrum: ',integral
-    print ' Max from spectrum: ',max(density/integral)
-
-    #Validate("Positron energy spectrum: ", density/integral, 1e-5 )
+print(" ---------------------------------------------------------")
+print(" Integrated Gamma distribution                           |")
+line = "                  |"
+for ispecies,species in enumerate(species_list):
+    line += " {0:<9}  |".format(species)
+print(line)
+print(" ---------------------------------------------------------")
+# Loop over the timesteps
+for diag_it in range(8):
+    line = " Iteration {0:5d}  |".format(diag_it*50)
+    for ispecies,species in enumerate(species_list):
+        line += " {0:.4e} |".format(integrated_gamma_spectrum[species][diag_it])
+    print(line)
+# Validation
+for diag_it in range(8):
+    Validate("Integrated Gamma distribution for species electron at iteration {}".format(diag_it),integrated_gamma_spectrum["electron"][diag_it],integrated_gamma_spectrum["electron"][diag_it]*0.1)
+    Validate("Integrated Gamma distribution for species positron at iteration {}".format(diag_it),integrated_gamma_spectrum["positron"][diag_it],integrated_gamma_spectrum["positron"][diag_it]*0.1)
+    # Validate("Integrated Gamma distribution for species photon at iteration {}".format(diag_it),integrated_gamma_spectrum["photon"][diag_it],integrated_gamma_spectrum["photon"][diag_it]*0.2)
