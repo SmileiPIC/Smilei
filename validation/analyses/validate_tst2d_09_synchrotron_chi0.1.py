@@ -85,7 +85,7 @@ print(" iteration | CLL        | Niel       | MC         |            |         
 print(" ---------------------------------------------------------------------------|")
 
 for it,time in enumerate(times[::5]):
-    print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | ".format(it*500,ukin["CLL"][it*500],ukin["Niel"][it*500],ukin["MC"][it*500]))
+    print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | ".format(it*500,ukin["CLL"][it*5],ukin["Niel"][it*5],ukin["MC"][it*5]))
 
 print("")
 
