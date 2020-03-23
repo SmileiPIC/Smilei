@@ -53,7 +53,7 @@ def adaptive_error(value, number_of_points, thresholds):
     else:
         i_threshold -= 1
         d = (number_of_points - thresholds["points"][i_threshold]) / (thresholds["points"][i_threshold+1] - thresholds["points"][i_threshold])
-        return value*(thresholds["factor"][i_threshold]*(d-1) + d*thresholds["factor"][i_threshold+1])
+        return value*(thresholds["factor"][i_threshold]*(1-d) + d*thresholds["factor"][i_threshold+1])
         
 # ______________________________________________________________________________
 
@@ -193,8 +193,8 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+pe
     print(line)
     
 thresholds = {}
-thresholds["points"] = np.array([0.,10,100,1000])
-thresholds["factor"] = np.array([1e9,1.,0.5,0.2,0.1])
+thresholds["points"] = np.array([0.,10,100])
+thresholds["factor"] = np.array([1e9,1.,0.5,0.5])
     
 for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
     for ispecies,species in enumerate(species_list):
@@ -264,8 +264,8 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+pe
     print(line)
     
 thresholds = {}
-thresholds["points"] = np.array([0.,10,100,1000])
-thresholds["factor"] = np.array([1e9,1.,0.5,0.2,0.1])
+thresholds["points"] = np.array([0.,10,100])
+thresholds["factor"] = np.array([1e9,1.,0.5,0.5])
     
 for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
     for ispecies,species in enumerate(species_list):
