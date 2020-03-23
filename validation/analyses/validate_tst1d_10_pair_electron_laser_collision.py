@@ -105,8 +105,8 @@ for it,time in enumerate(times):
         print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} | {5:.4e} |".format(it*100,ukin["electron"][it],ukin["positron"][it],ukin["photon"][it],urad[it], ukin["tot"][it]))
 
 thresholds = {}
-thresholds["points"] = np.array([0.,10.,100.,1000.])
-thresholds["factor"] = np.array([1e9,1.,0.7,0.2,0.1])
+thresholds["points"] = np.array([0.,10., 100.,1000.])
+thresholds["factor"] = np.array([1e9,2.,0.5,0.2,0.1])
 
 for it,time in enumerate(times):
     if (it > 39):

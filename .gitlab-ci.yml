@@ -6,7 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    #- radiationSpectrum
+    - radiationSpectrum
 
   script:
     # Force workdir cleaning in case of retried
@@ -28,7 +28,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    #- radiationSpectrum
+    - radiationSpectrum
     
   script:
     # Move in test dir
