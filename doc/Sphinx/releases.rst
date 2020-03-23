@@ -14,6 +14,7 @@ Upcoming changes
   * Changed nomenclature for radiation tables: see :doc:`radiation_loss`
   * ``AMcylindrical``: sorting, documentation
   * LaserOffset is not recomputed after restart
+  * Added an envelope equation solver with reduced numerical dispersion
 
 * Bug fixes:
 
