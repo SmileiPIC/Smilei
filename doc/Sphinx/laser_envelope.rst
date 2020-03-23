@@ -227,7 +227,7 @@ fields can be advanced solving Maxwell's equations :eq:`Maxwell_envelope`. Their
 The numerical solution of the envelope equation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To solve Eq. :eq:`envelope_equation`, two explicit numerical schemes are implemented in the code, first implemented in [ALaDynZenodo]_ and described in [Terzani]_.
+To solve Eq. :eq:`envelope_equation`, two explicit numerical schemes are implemented in the code, first implemented in the PIC code :program:`ALaDyn` [Benedetti2008]_ and described in [Terzani]_.
 
 In the first scheme, denoted as ``"explicit"`` in the input namelist, the well known central finite differences are used to discretize the envelope equation.
 In 1D for example, the spatial and time derivatives of the envelope :math:`\tilde{A}` at time-step :math:`n` and spatial index :math:`i` are thus approximated by:
