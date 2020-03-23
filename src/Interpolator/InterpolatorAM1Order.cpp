@@ -192,39 +192,43 @@ void InterpolatorAM1Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 }
 
 // Interpolator on another field than the basic ones
-void InterpolatorAM1Order::oneField( Field *field, Particles &particles, int *istart, int *iend, double *FieldLoc )
+void InterpolatorAM1Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *Jxloc, double *Jyloc, double *Jzloc, double *Rholoc )
 {
-    cField2D *F = static_cast<cField2D *>( field );
-    int icoeff;
-    int imode = std::stoi(&(F->name.back())); //Works only if number_of_AM < 10
-    std::string name, h;
-    name =  F->name;
-    h = "h";
-    if ( &(name[1]) == "h" || &(name[1]) == "l") { // if rho or longitudinal field
-        if (imode == 0){
-            icoeff = 0; // constant on axis
-        } else {
-            icoeff = 2; // zero on axis
-        }
-    } else {
-        icoeff = (imode != 1)*2;
-    }
-    
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        complex<double> exp_m_theta, exp_mm_theta = 1. ;
         double xpn = particles.position( 0, ipart )*dl_inv_;
         double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+        complex<double> exp_m_theta, exp_mm_theta = 1. ;
         double rpn = r * dr_inv_ - 0.5;
+        coeffs( xpn, rpn);
         if (r > 0){ 
             exp_m_theta = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
         } else {
             exp_m_theta = 1. ;
         }
-        for (unsigned int iimode=0; iimode < imode; iimode++){
+
+        double Jx_ = 0., Jy_ = 0., Jz_ = 0., Rho_ = 0.;
+        for( unsigned int imode = 0; imode < nmodes ; imode++ ) {
+            int icoeff;
+            if (imode == 0){ // if rho or longitudinal field
+                icoeff = 0; // constant on axis
+            } else {
+                icoeff = 2; // zero on axis
+            }
+            cField2D *Jl  = static_cast<cField2D *>( *(field+4*imode+0) );
+            cField2D *Jr  = static_cast<cField2D *>( *(field+4*imode+1) );
+            cField2D *Jt  = static_cast<cField2D *>( *(field+4*imode+2) );
+            cField2D *Rho = static_cast<cField2D *>( *(field+4*imode+3) );
+            Jx_  += std::real( compute( &coeffxp_[1], &coeffyp_[icoeff], Jl , ip_, jp_ ) * exp_mm_theta );
+            Jy_  += std::real( compute( &coeffxp_[1], &coeffyp_[(imode != 1)*2], Jr , ip_, jp_ ) * exp_mm_theta );
+            Jz_  += std::real( compute( &coeffxp_[1], &coeffyp_[(imode != 1)*2], Jt , ip_, jp_ ) * exp_mm_theta );
+            Rho_ += std::real( compute( &coeffxp_[1], &coeffyp_[icoeff], Rho, ip_, jp_ ) * exp_mm_theta );
             exp_mm_theta *= exp_m_theta;
         }
-        coeffs( xpn, rpn);
-        FieldLoc[ipart] = std::real( compute( coeffxp_, &coeffyp_[icoeff], F, ip_, jp_) * exp_mm_theta);
+        Jxloc [ipart] = Jx_;
+        Jyloc [ipart] = std::real( exp_m_theta ) * Jy_ + std::imag( exp_m_theta ) * Jz_;
+        Jzloc [ipart] = -std::imag( exp_m_theta ) * Jy_ + std::real( exp_m_theta ) * Jz_;
+        Rholoc[ipart] = Rho_;
+
     }
 
 }

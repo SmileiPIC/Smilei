@@ -318,16 +318,24 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
         }
     }
     
-    for( int ispec=0; ispec<nspecies*( int )nmodes; ispec++ ) {
-        allFields.push_back( Jl_s[ispec] );
-        allFields.push_back( Jr_s[ispec] );
-        allFields.push_back( Jt_s[ispec] );
-        allFields.push_back( rho_AM_s[ispec] );
-        if ((ispec<nspecies) && (Env_A_abs_ != NULL) ){ // only mode 0
-            allFields.push_back( Env_Chi_s[ispec] );
+    // For species-related fields
+    // The order is necessary in DiagnosticProbes - DO NOT CHANGE -
+    species_starts.resize( 0 );
+    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+        species_starts.push_back( allFields.size() );
+        for( unsigned int imode=0; imode<nmodes; imode++ ) {
+            int ifield = imode*n_species+ispec;
+            allFields.push_back( Jl_s[ifield] );
+            allFields.push_back( Jr_s[ifield] );
+            allFields.push_back( Jt_s[ifield] );
+            allFields.push_back( rho_AM_s[ifield] );
+        }
+        if( Env_A_abs_ != NULL ){
+            int ifield = 0*n_species+ispec; // only mode 0
+            allFields.push_back( Env_Chi_s[ifield] );
         }
     }
-
+    species_starts.push_back( allFields.size() );
     
 }
 

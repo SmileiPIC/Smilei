@@ -358,6 +358,7 @@ class Field(Diagnostic):
 		self._title  = self.operation
 		for f in self._fieldname:
 			self._vunits = self._vunits.replace(f, units[f])
+		self._vunits = self.units._getUnits(self._vunits)
 		
 		# Set the directory in case of exporting
 		self._exportPrefix = "Field"+str(diagNumber)+"_"+"".join(self._fieldname)

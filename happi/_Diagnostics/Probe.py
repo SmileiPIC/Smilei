@@ -291,6 +291,7 @@ class Probe(Diagnostic):
 		for n in self._fieldn:
 			self._title  = self._title .replace("#"+str(n), titles    [n])
 			self._vunits = self._vunits.replace("#"+str(n), fieldunits[n])
+		self._vunits = self.units._getUnits(self._vunits)
 
 		# Set the directory in case of exporting
 		self._exportPrefix = "Probe"+str(probeNumber)+"_"+"".join(self._fieldname)

@@ -106,9 +106,9 @@ void Timer::print( double tot )
             return;
         }
         if( perc<1 ) {
-            MESSAGE( 0, "\t" << setw( 20 ) << name_ << "\t" << time_acc_  << "\t" << "<1%" );
+            MESSAGE( 0, "\t" << setw( 20 ) << name_ << "\t" << setprecision(6) << time_acc_ << setprecision(1) << "\t" << "    <1%" );
         } else {
-            MESSAGE( 0, "\t" << setw( 20 ) << name_ << "\t" << time_acc_  << "\t" << perc << "%" );
+            MESSAGE( 0, "\t" << setw( 20 ) << name_ << "\t" << setprecision(6) << time_acc_ << setprecision(1) << "\t" << perc << "%" );
         }
     }
 }

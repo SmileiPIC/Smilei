@@ -197,6 +197,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *s
                 MPI_Recv( &time_dump_step, 1, MPI_UNSIGNED, 0, SMILEI_COMM_DUMP_TIME, smpi->SMILEI_COMM_WORLD, &dump_status_recv );
             }
         }
+        smpi->barrier();
     }
     
     if( signal_received!=0 ||

@@ -72,35 +72,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
                 hasRhoJs = true;
             }
             // If field specific to a species, then allocate it
-
-            // JU if( species_field ) {
-            // JU     //MESSAGE("HNA3");         
-            // JU     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            // JU         if ( params.geometry != "AMcylindrical"){
-            // JU             Field * field = vecPatches(ipatch)->EMfields->allFields[i];
-            // JU             if( field->data_ != NULL ) continue;
-            // JU             if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
-            // JU             else if (!params.is_pxr) { // FDTD, staggered grids
-            // JU                 if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
-            // JU                 else if( field_name.substr(0,2)=="Jy" ) field->allocateDims(1,false);
-            // JU                 else if( field_name.substr(0,2)=="Jz" ) field->allocateDims(2,false);
-            // JU             }
-            // JU             else { // if PXR, same size for all grids 
-            // JU                 if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims();
-            // JU                 else if( field_name.substr(0,2)=="Jy" ) field->allocateDims();
-            // JU                 else if( field_name.substr(0,2)=="Jz" ) field->allocateDims();
-            // JU             }
-            // JU         } else {
-            // JU             cField2D * field = static_cast<cField2D*>(vecPatches(ipatch)->EMfields->allFields[i]);
-            // JU             if( field->cdata_ != NULL ) continue;
-            // JU             if     ( field_name.substr(0,2)=="Jl" ) field->allocateDims(0,false);
-            // JU             else if( field_name.substr(0,2)=="Jr" ) field->allocateDims(1,false);
-            // JU             else if( field_name.substr(0,2)=="Jt" ) field->allocateDims(2,false);
-            // JU             else if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
-            // JU 
-            // JU         }
-            // JU     }
-            if( params.isSpeciesField( field_name ) ) {
+            if( params.speciesField( field_name ) != "" ) {
                 vecPatches.allocateField( i, params );
             }
         }

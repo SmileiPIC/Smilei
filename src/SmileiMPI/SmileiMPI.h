@@ -23,7 +23,7 @@ class DiagnosticScalar;
 class DiagnosticParticleBinning;
 class DiagnosticScreen;
 
-#define SMILEI_COMM_DUMP_TIME 1312
+#define SMILEI_COMM_DUMP_TIME 16777216
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class SmileiMPI
