@@ -124,15 +124,15 @@ void Interpolator3D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator3D4Order::oneField( Field *field, Particles &particles, int *istart, int *iend, double *FieldLoc )
+void Interpolator3D4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
 {
-    Field3D *F = static_cast<Field3D *>( field );
-    double *coeffx = field->isDual( 0 ) ? &coeffxd_[2] : &coeffxp_[2];
-    double *coeffy = field->isDual( 1 ) ? &coeffyd_[2] : &coeffyp_[2];
-    double *coeffz = field->isDual( 2 ) ? &coeffzd_[2] : &coeffzp_[2];
-    int *i = field->isDual( 0 ) ? &id_ : &ip_;
-    int *j = field->isDual( 1 ) ? &jd_ : &jp_;
-    int *k = field->isDual( 2 ) ? &kd_ : &kp_;
+    Field3D *F = static_cast<Field3D *>( *field );
+    double *coeffx = F->isDual( 0 ) ? &coeffxd_[2] : &coeffxp_[2];
+    double *coeffy = F->isDual( 1 ) ? &coeffyd_[2] : &coeffyp_[2];
+    double *coeffz = F->isDual( 2 ) ? &coeffzd_[2] : &coeffzp_[2];
+    int *i = F->isDual( 0 ) ? &id_ : &ip_;
+    int *j = F->isDual( 1 ) ? &jd_ : &jp_;
+    int *k = F->isDual( 2 ) ? &kd_ : &kp_;
     
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*dx_inv_;

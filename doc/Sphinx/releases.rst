@@ -12,22 +12,22 @@ Upcoming changes
 * Next release:
 
   * Changed nomenclature for radiation tables: see :doc:`radiation_loss`
-  * ``AMcylindrical``: sorting, documentation
+  * ``AMcylindrical``: sorting, documentation, subgrid in DiagFields,
+    species-related currents and density in probes.
   * LaserOffset is not recomputed after restart
   * Added an envelope equation solver with reduced numerical dispersion
-
-* Bug fixes:
-
-  * Weight-initialization bug in AM geometry when a species was initialized
-    on top of a regularly initialized species
-  * LaserOffset was off sideways and temporally by a couple of cells
-  * Do not project twice a frozen species
-  * Probes for species faulty when 4th order of interpolation
-  * Checkpoints ``restart_number=0`` was not used
-  * Prevent deadlock when restart files are corrupted
-  * Checkpoints ``file_grouping`` had typo with python3
-  * Scalar ``Ukin`` for ions was incorrect, thus ``Ubal`` was also wrong
-  * happi had incorrect unit conversion with a sum of two fields
+  * Bug fixes:
+  
+    * Weight-initialization bug in AM geometry when a species was initialized
+      on top of a regularly initialized species
+    * LaserOffset was off sideways and temporally by a couple of cells
+    * Do not project twice a frozen species
+    * Probes for species faulty when 4th order of interpolation
+    * Checkpoints ``restart_number=0`` was not used
+    * Prevent deadlock when restart files are corrupted
+    * Checkpoints ``file_grouping`` had typo with python3
+    * Scalar ``Ukin`` for ions was incorrect, thus ``Ubal`` was also wrong
+    * happi had incorrect unit conversion with a sum of two fields
 
 * Already available, but experimental:
 

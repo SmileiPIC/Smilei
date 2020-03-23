@@ -123,10 +123,11 @@ SMILEI_EXE_OUT = 'smilei_exe.out'
 
 # Get the current version of Smilei
 os.chdir(SMILEI_ROOT)
-gitversion = check_output(
-	"echo `git log -n 1 --format=%h`-`git rev-parse --abbrev-ref HEAD`",
-	shell=True
-	).decode()[:-1]
+gitversion = check_output( "echo `git log -n 1 --format=%h`-", shell=True ).decode()[:-1]
+if 'CI_COMMIT_BRANCH' in os.environ:
+	gitversion += os.environ['CI_COMMIT_BRANCH']
+else:
+	gitversion += check_output("echo `git rev-parse --abbrev-ref HEAD`", shell=True ).decode()[:-1]
 os.chdir(INITIAL_DIRECTORY)
 
 # Load the happi module
@@ -691,11 +692,11 @@ class ShowDiffWithReference(object):
 # DEFINE A CLASS FOR LOGGING DATA
 class Log:
 	pattern1 = re.compile(""
-		+"[\n\t\s]+(Time in time loop) :\t([.0-9]+)\t([<.0-9]+)\% coverage"
-		+"([\n\t\s]+([\w ]+)\t([.0-9]+)\t([<.0-9]+)\%){6,15}"
+		+"[\n\t\s]+(Time in time loop) :\s+([.0-9]+)\s+([<.0-9]+)\% coverage"
+		+"([\n\t\s]+([\w ]+)\s+([.0-9]+)\s+([<.0-9]+)\%){6,15}"
 	)
 	pattern2 = re.compile(""
-		+"[\t\s]+([\w ]+):?\t([.0-9]+)\t([<.0-9]+)\%"
+		+"[\t\s]+([\w ]+):?\s+([.0-9]+)\s+([<.0-9]+)\%"
 	)
 	
 	def __init__(self, log_file):
@@ -737,7 +738,7 @@ class Log:
 			# Update the database
 			for k,v in self.data.items():
 				if k in db:
-					db[k] += [v]
+					db[k] += [None]*(maxlen-len(db[k])) + [v]
 				else:
 					db[k] = maxlen*[None] + [v]
 			# Overwrite the file
