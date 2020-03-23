@@ -34,10 +34,15 @@ def adaptive_error(value, number_of_points, thresholds):
     """
     This function return an error that depends on the statistic.
     """
+    
+    # We eliminate the case where there is no data
+    if (number_of_points <= 0):
+        return thresholds["factor"][0]
+    
     flag = True
     i_threshold = 0
     while(flag):
-        if (number_of_points <= thresholds["points"][i_threshold]):
+        if (number_of_points < thresholds["points"][i_threshold]):
             flag = False
         else:
             i_threshold+=1
@@ -47,7 +52,7 @@ def adaptive_error(value, number_of_points, thresholds):
         return thresholds["factor"][i_threshold]*value
     else:
         i_threshold -= 1
-        d = (value - thresholds["points"][i_threshold]) / (thresholds["points"][i_threshold+1] - thresholds["points"][i_threshold])
+        d = (number_of_points - thresholds["points"][i_threshold]) / (thresholds["points"][i_threshold+1] - thresholds["points"][i_threshold])
         return value*(thresholds["factor"][i_threshold]*(d-1) + d*thresholds["factor"][i_threshold+1])
         
 # ______________________________________________________________________________
@@ -100,8 +105,8 @@ for it,time in enumerate(times):
         print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} | {5:.4e} |".format(it*100,ukin["electron"][it],ukin["positron"][it],ukin["photon"][it],urad[it], ukin["tot"][it]))
 
 thresholds = {}
-thresholds["points"] = np.array([10.,10.,100.,1000.])
-thresholds["factor"] = np.array([2.,1.,0.5,0.2,0.1])
+thresholds["points"] = np.array([0.,10.,100.,1000.])
+thresholds["factor"] = np.array([1e9,1.,0.5,0.2,0.1])
 
 for it,time in enumerate(times):
     if (it > 39):
@@ -122,8 +127,8 @@ for it,time in enumerate(times):
         print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} |".format(it*100,ntot["electron"][it],ntot["positron"][it],ntot["photon"][it],ntot["tot"][it]))
 
 thresholds = {}
-thresholds["points"] = np.array([10,10,100,1000])
-thresholds["factor"] = np.array([2.,1.,0.5,0.2,0.1])
+thresholds["points"] = np.array([0.,10,100,1000])
+thresholds["factor"] = np.array([1e9, 1.,0.5,0.2,0.1])
 
 for it,time in enumerate(times):
     if (it > 39):
@@ -188,8 +193,8 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+pe
     print(line)
     
 thresholds = {}
-thresholds["points"] = np.array([10,10,100,1000])
-thresholds["factor"] = np.array([2.,1.,0.5,0.2,0.1])
+thresholds["points"] = np.array([0.,10,100,1000])
+thresholds["factor"] = np.array([1e9,1.,0.5,0.2,0.1])
     
 for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
     for ispecies,species in enumerate(species_list):
@@ -207,8 +212,8 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+pe
     print(line)
 
 thresholds = {}
-thresholds["points"] = np.array([10,10,100,1000])
-thresholds["factor"] = np.array([2.,1.,0.5,0.2,0.1])
+thresholds["points"] = np.array([0.,10,100,1000])
+thresholds["factor"] = np.array([1e9,1.,0.5,0.2,0.1])
 
 for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
     for ispecies,species in enumerate(species_list):
@@ -259,8 +264,8 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+pe
     print(line)
     
 thresholds = {}
-thresholds["points"] = np.array([10,10,100,1000])
-thresholds["factor"] = np.array([2.,1.,0.5,0.2,0.1])
+thresholds["points"] = np.array([0.,10,100,1000])
+thresholds["factor"] = np.array([1e9,1.,0.5,0.2,0.1])
     
 for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
     for ispecies,species in enumerate(species_list):
@@ -278,8 +283,8 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+pe
     print(line)
 
 thresholds = {}
-thresholds["points"] = np.array([10,10,100,1000])
-thresholds["factor"] = np.array([2.,1.,0.5,0.2,0.1])
+thresholds["points"] = np.array([0.,10,100,1000])
+thresholds["factor"] = np.array([1e9,1.,0.5,0.2,0.1])
 
 for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
     for ispecies,species in enumerate(species_list):
