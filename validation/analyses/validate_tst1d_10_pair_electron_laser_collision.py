@@ -106,7 +106,7 @@ for it,time in enumerate(times):
 
 thresholds = {}
 thresholds["points"] = np.array([0.,10.,100.,1000.])
-thresholds["factor"] = np.array([1e9,1.,0.5,0.2,0.1])
+thresholds["factor"] = np.array([1e9,1.,0.7,0.2,0.1])
 
 for it,time in enumerate(times):
     if (it > 39):
@@ -192,13 +192,13 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+pe
         line += " {0:.4e} |".format(max_chi[species][itimestep])
     print(line)
     
-thresholds = {}
-thresholds["points"] = np.array([0.,10,100])
-thresholds["factor"] = np.array([1e9,1.,0.5,0.5])
-    
-for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
-    for ispecies,species in enumerate(species_list):
-        Validate("Maximal quantum parameter for the {} model at iteration {}".format(species,timestep),max_chi[species][itimestep],adaptive_error(max_chi[species][itimestep],ntot[species][itimestep],thresholds))
+# thresholds = {}
+# thresholds["points"] = np.array([0.,10,100])
+# thresholds["factor"] = np.array([1e9,1.,0.5,0.5])
+#
+# for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
+#     for ispecies,species in enumerate(species_list):
+#         Validate("Maximal quantum parameter for the {} model at iteration {}".format(species,timestep),max_chi[species][itimestep],adaptive_error(max_chi[species][itimestep],ntot[species][itimestep],thresholds))
 
 print(" ---------------------------------------------------------------------------|")
 print(" Average quantum parameter                                                  |")
@@ -263,13 +263,13 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+pe
         line += " {0:.4e} |".format(max_gamma[species][itimestep])
     print(line)
     
-thresholds = {}
-thresholds["points"] = np.array([0.,10,100])
-thresholds["factor"] = np.array([1e9,1.,0.5,0.5])
-    
-for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
-    for ispecies,species in enumerate(species_list):
-        Validate("Maximal gamma for the {} model at iteration {}".format(species,timestep),max_gamma[species][itimestep],adaptive_error(max_gamma[species][itimestep],ntot[species][itimestep],thresholds))
+# thresholds = {}
+# thresholds["points"] = np.array([0.,10,100])
+# thresholds["factor"] = np.array([1e9,1.,0.5,0.5])
+#
+# for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
+#     for ispecies,species in enumerate(species_list):
+#         Validate("Maximal gamma for the {} model at iteration {}".format(species,timestep),max_gamma[species][itimestep],adaptive_error(max_gamma[species][itimestep],ntot[species][itimestep],thresholds))
 
 print(" ---------------------------------------------------------------------------|")
 print(" Average gamma                                                              |")
