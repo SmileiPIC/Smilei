@@ -10,37 +10,30 @@ def index_of_last_nonzero(lst):
             return len(lst)-i-1
     return -1
 
-def ntot_threshold(value):
-    if (value < 10):
-        return value*1.01
-    elif (value < 50):
-        return value*0.5
-    elif (value < 100):
-        return value*0.5
-    elif (value < 1000):
-        return value*0.5
-    elif (value < 5000):
-        return value*0.4
-    elif (value < 1e-4):
-        return value*0.3
+def adaptive_error(value, number_of_points, thresholds):
+    """
+    This function return an error that depends on the statistic.
+    """
+    
+    # We eliminate the case where there is no data
+    if (number_of_points <= 0):
+        return thresholds["factor"][0]
+    
+    flag = True
+    i_threshold = 0
+    while(flag):
+        if (number_of_points < thresholds["points"][i_threshold]):
+            flag = False
+        else:
+            i_threshold+=1
+        if (i_threshold >= np.size(thresholds["points"])):
+            flag = False
+    if ((i_threshold == 0) or (i_threshold >= np.size(thresholds["points"]))):
+        return thresholds["factor"][i_threshold]*value
     else:
-        return value*0.2
-
-def average_gamma_threshold(value,number_of_particles):
-    if (number_of_particles < 10):
-        return value*2.
-    elif (number_of_particles < 100):
-        return value*0.5
-    elif (number_of_particles < 1000):
-        return value*0.4
-    else:
-        return value*0.2
-
-def max_gamma_threshold(value,number_of_particles):
-    if (number_of_particles < 10):
-        return value*2.
-    else:
-        return value*0.7
+        i_threshold -= 1
+        d = (number_of_points - thresholds["points"][i_threshold]) / (thresholds["points"][i_threshold+1] - thresholds["points"][i_threshold])
+        return value*(thresholds["factor"][i_threshold]*(1-d) + d*thresholds["factor"][i_threshold+1])
 
 # ______________________________________________________________________________
 
@@ -92,13 +85,18 @@ print(" iteration | num e-     | num e+     | num  ph    | num tot    |         
 print(" ---------------------------------------------------------------------------|")
 
 for it,time in enumerate(Scalar["times"]):
-
     if (it*scalar_period >= 2000 and it*scalar_period <= 6500 and np.mod(it,2) == 0):
-        
-        print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} |".format(it*scalar_period,Scalar["Ntot_electron"][it],Scalar["Ntot_positron"][it],Scalar["Ntot_photon"][it]))
-        Validate("Number of electrons at {}".format(it*scalar_period), Scalar["Ntot_electron"][it], ntot_threshold(Scalar["Ntot_electron"][it]))
-        Validate("Number of positrons at {}".format(it*scalar_period), Scalar["Ntot_positron"][it], ntot_threshold(Scalar["Ntot_positron"][it]))
-        Validate("Number of photons at {}".format(it*scalar_period), Scalar["Ntot_photon"][it], ntot_threshold(Scalar["Ntot_photon"][it]))
+        print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} |".format(it*scalar_period,Scalar["Ntot_electron"][it],Scalar["Ntot_positron"][it],Scalar["Ntot_photon"][it],Scalar["Ntot"][it]))
+
+thresholds = {}
+thresholds["points"] = np.array([0. ,10 , 100, 1000, 10000])
+thresholds["factor"] = np.array([1e9, 1., 0.5, 0.25, 0.2  , 0.15])
+
+for it,time in enumerate(Scalar["times"]):
+    if (it*scalar_period >= 2000 and it*scalar_period <= 6500 and np.mod(it,2) == 0):
+        Validate("Number of electrons at {}".format(it*scalar_period), Scalar["Ntot_electron"][it], adaptive_error(Scalar["Ntot_electron"][it],Scalar["Ntot_electron"][it],thresholds))
+        Validate("Number of positrons at {}".format(it*scalar_period), Scalar["Ntot_positron"][it], adaptive_error(Scalar["Ntot_positron"][it],Scalar["Ntot_positron"][it],thresholds))
+        Validate("Number of photons at {}".format(it*scalar_period), Scalar["Ntot_photon"][it], adaptive_error(Scalar["Ntot_photon"][it],Scalar["Ntot_photon"][it],thresholds))
 
 print(" ---------------------------------------------------------------------------|")
 print(" Diag scalars (Kinetic energy)                                              |")
@@ -106,10 +104,17 @@ print(" iteration | electrons  | positron   | photon     | tot        |         
 print(" ---------------------------------------------------------------------------|")
 
 for it,time in enumerate(Scalar["times"]):
-
     if (it*scalar_period >= 2000 and it*scalar_period <= 6500 and np.mod(it,2) == 0):
-        
-        print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} |".format(it*scalar_period,Scalar["Ukin_electron"][it],Scalar["Ukin_positron"][it],Scalar["Ukin_photon"][it]))
+        print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} |".format(it*scalar_period,Scalar["Ukin_electron"][it],Scalar["Ukin_positron"][it],Scalar["Ukin_photon"][it],Scalar["Ukin_tot"][it]))
+
+thresholds = {}
+thresholds["points"] = np.array([0.,10,100,1000])
+thresholds["factor"] = np.array([1e9, 1.,0.5,0.2,0.15])
+
+for it,time in enumerate(Scalar["times"]):
+    if (it*scalar_period >= 2000 and it*scalar_period <= 6500 and np.mod(it,2) == 0):
+        Validate("Electron energy at {}".format(it*scalar_period), Scalar["Ukin_electron"][it], adaptive_error(Scalar["Ukin_electron"][it],Scalar["Ntot_electron"][it],thresholds))
+        Validate("Positron energy at {}".format(it*scalar_period), Scalar["Ukin_positron"][it], adaptive_error(Scalar["Ukin_positron"][it],Scalar["Ntot_positron"][it],thresholds))
 
 # Energy _________________________________________________________________
 
@@ -222,8 +227,15 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+pe
     for ispecies,species in enumerate(species_list):
         line += " {0:.4e} |".format(max_gamma[species][itimestep])
     print(line)
-    for ispecies,species in enumerate(species_list):
-        Validate("Maximal gamma for the {} model at iteration {}".format(species,timestep),max_gamma[species][itimestep],max_gamma_threshold(max_gamma[species][itimestep],Scalar["Ntot_{}".format(species)][itimestep]))
+    
+# thresholds = {}
+# thresholds["points"] = np.array([0.,10,100])
+# thresholds["factor"] = np.array([1e9, 1.,0.9,0.9])
+#
+# for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
+#     for ispecies,species in enumerate(species_list):
+#         Validate("Maximal gamma for the {} model at iteration {}".format(species,timestep),max_gamma[species][itimestep],adaptive_error(max_gamma[species][itimestep],Scalar["Ntot_{}".format(species)][itimestep],thresholds))
+
 print(" ---------------------------------------------------------------------------|")
 print(" Average gamma                                                              |")
 print(" iteration | electrons  | positrons  | photons    |                         |")
@@ -234,9 +246,15 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+pe
     for ispecies,species in enumerate(species_list):
         line += " {0:.4e} |".format(average_gamma[species][itimestep])
     print(line)
-    Validate("Average gamma for the electrons at iteration {}".format(timestep),average_gamma["electron"][itimestep],average_gamma_threshold(average_gamma["electron"][itimestep],Scalar["Ntot_electron"][itimestep]))
-    Validate("Average gamma for the positrons at iteration {}".format(timestep),average_gamma["positron"][itimestep],average_gamma_threshold(average_gamma["positron"][itimestep],Scalar["Ntot_positron"][itimestep]))
-    Validate("Average gamma for the photons at iteration {}".format(timestep),average_gamma["photon"][itimestep],average_gamma_threshold(average_gamma["photon"][itimestep],Scalar["Ntot_photon"][itimestep]))
+
+thresholds = {}
+thresholds["points"] = np.array([0.,10,100,1000])
+thresholds["factor"] = np.array([1e9, 1.,0.5,0.2,0.1])
+
+for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
+    Validate("Average gamma for the electrons at iteration {}".format(timestep),average_gamma["electron"][itimestep],adaptive_error(average_gamma["electron"][itimestep],Scalar["Ntot_electron"][itimestep],thresholds))
+    Validate("Average gamma for the positrons at iteration {}".format(timestep),average_gamma["positron"][itimestep],adaptive_error(average_gamma["positron"][itimestep],Scalar["Ntot_positron"][itimestep],thresholds))
+    Validate("Average gamma for the photons at iteration {}".format(timestep),average_gamma["photon"][itimestep],adaptive_error(average_gamma["photon"][itimestep],Scalar["Ntot_photon"][itimestep],thresholds))
 
 # relative_error = 0.25
 #

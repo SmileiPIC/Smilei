@@ -79,10 +79,10 @@ for radiation in radiation_list:
 
     utot[radiation] = ukin[radiation]+urad[radiation]
 
-print(" ---------------------------------------------------------------------------|")
-print(" Diag scalars (Kinetic energy)                                              |")
-print(" iteration | CLL        | Niel       | MC         |            |            |")
-print(" ---------------------------------------------------------------------------|")
+print(" -------------------------------------------------|")
+print(" Diag scalars (Kinetic energy)                    |")
+print(" iteration | CLL        | Niel       | MC         |")
+print(" -------------------------------------------------|")
 
 for it,time in enumerate(times[::5]):
     print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | ".format(it*500,ukin["CLL"][it*5],ukin["Niel"][it*5],ukin["MC"][it*5]))
@@ -240,6 +240,10 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     for k,model in enumerate(radiation_list):
         Validate("Average quantum parameter for the {} model at iteration {}".format(model,timestep),chi_ave[itimestep,k],chi_ave[itimestep,k]*0.1)
 
+print("")
+print(" 4) Analyze of chi using the chi distribution")
+print("")
+
 print(" ---------------------------------------------------------")
 print(" Average quantum parameter from chi distribution         |")
 line = "                  |"
@@ -256,6 +260,10 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     # Validation with 10% error
     for k,model in enumerate(radiation_list):
         Validate("Average quantum parameter for the {} model at iteration {}".format(model,timestep),chi_ave_from_dists[itimestep,k],chi_ave_from_dists[itimestep,k]*0.1)
+
+print("")
+print(" 5) Analyze of gamma using the gamma distribution")
+print("")
 
 print(" ---------------------------------------------------------")
 print(" Total kinetic energy from energy distribution           |")
@@ -300,4 +308,15 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
 
 fig, ax = plt.subplots(figsize = (8, 6))
 
-ax.plot(times,ukin["CLL"],color='C0',label='CLL')
+ax.plot(times,ukin["CLL"],color='C0',label='CLL',ls='-')
+ax.plot(times,urad["CLL"],color='C0',label='',ls='--')
+
+ax.plot(times,ukin["Niel"],color='C1',label='Niel',ls='-')
+ax.plot(times,urad["Niel"],color='C1',label='',ls='--')
+
+ax.plot(times,ukin["MC"],color='C2',label='MC',ls='-')
+ax.plot(times,urad["MC"],color='C2',label='',ls='--')
+
+ax.legend(loc='best')
+
+fig.savefig('tst2d_09_scalar_energy_balance.png')
