@@ -13,7 +13,39 @@
 
 
 import os, re, numpy as np, h5py
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 import happi
+
+# ______________________________________________________________________________
+# Useful functions
+
+def adaptive_error(value, number_of_points, thresholds):
+    """
+    This function return an error that depends on the statistic.
+    """
+    
+    # We eliminate the case where there is no data
+    if (number_of_points <= 0):
+        return thresholds["factor"][0]
+    
+    flag = True
+    i_threshold = 0
+    while(flag):
+        if (number_of_points < thresholds["points"][i_threshold]):
+            flag = False
+        else:
+            i_threshold+=1
+        if (i_threshold >= np.size(thresholds["points"])):
+            flag = False
+    if ((i_threshold == 0) or (i_threshold >= np.size(thresholds["points"]))):
+        return thresholds["factor"][i_threshold]*value
+    else:
+        i_threshold -= 1
+        d = (number_of_points - thresholds["points"][i_threshold]) / (thresholds["points"][i_threshold+1] - thresholds["points"][i_threshold])
+        return value*(thresholds["factor"][i_threshold]*(1-d) + d*thresholds["factor"][i_threshold+1])
+        
+# ______________________________________________________________________________
 
 S = happi.Open(["./restart*"], verbose=False)
 dx = S.namelist.Main.cell_length[0]
@@ -22,8 +54,16 @@ dy = S.namelist.Main.cell_length[1]
 # List of relativistic pushers
 radiation_list = ["CLL","Niel","MC"]
 
-ukin_dict = {}
-urad_dict = {}
+# ______________________________________________________________________________
+# Read scalar diagnostics
+
+print("")
+print(" 1) Analyze of scalar diags")
+print("")
+
+ukin = {}
+urad = {}
+utot = {}
 
 # We load successively the particle track associated
 # to each radiation algorithm
@@ -31,37 +71,49 @@ for radiation in radiation_list:
 
     # Read scalar diagnostics
     ScalarUkinDiag = S.Scalar("Ukin_electron_"+radiation).get()
-    ukin = np.array(ScalarUkinDiag["data"])
+    ukin[radiation] = np.array(ScalarUkinDiag["data"])
     times = np.array(ScalarUkinDiag["times"])
 
     ScalarUradDiag = S.Scalar("Urad_electron_"+radiation).get()
-    urad = np.array(ScalarUradDiag["data"])
+    urad[radiation] = np.array(ScalarUradDiag["data"])
 
-    utot = ukin+urad
+    utot[radiation] = ukin[radiation]+urad[radiation]
 
-    print(' Final kinetic energy for {}: {}'.format(radiation,ukin[-1]))
-    print(' Final radiated energy for {}: {}'.format(radiation,urad[-1]))
+print(" ---------------------------------------------------------------------------|")
+print(" Diag scalars (Kinetic energy)                                              |")
+print(" iteration | CLL        | Niel       | MC         |            |            |")
+print(" ---------------------------------------------------------------------------|")
+
+for it,time in enumerate(times[::5]):
+    print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | ".format(it*500,ukin["CLL"][it*500],ukin["Niel"][it*500],ukin["MC"][it*500]))
+
+print("")
+
+for radiation in radiation_list:
+    
+    print(' Final kinetic energy for {}: {}'.format(radiation,ukin[radiation][-1]))
+    print(' Final radiated energy for {}: {}'.format(radiation,urad[radiation][-1]))
 
     # Validation of the kinetic energy
-    for it,val in enumerate(ukin):
-        Validate("Kinetic energy evolution for {} at {}".format(radiation,it), val/utot[0], val/utot[0]*0.1 )
+    for it,val in enumerate(ukin[radiation]):
+        Validate("Kinetic energy evolution for {} at {}".format(radiation,it), val/utot[radiation][0], val/utot[radiation][0]*0.1 )
 
     # Validation of the radiated energy
-    for it,val in enumerate(urad):
-        Validate("Radiated energy evolution for {} at {}".format(radiation,it) , val/utot[0], val/utot[0]*0.1 )
+    for it,val in enumerate(urad[radiation]):
+        Validate("Radiated energy evolution for {} at {}".format(radiation,it) , val/utot[radiation][0], val/utot[radiation][0]*0.1 )
 
     # Validation of the total energy
-    Validate("Total energy error (max - min)/uref: " ,
-           (utot.max() - utot.min())/utot[0], 1e-2)
+    Validate("Total energy error (max - min)/uref for {}".format(radiation),(utot[radiation].max() - utot[radiation].min())/utot[radiation][0], 1e-2)
 
-    ukin_dict[radiation] = ukin
-    urad_dict[radiation] = urad
+print("")
+print(" 2) Relative errors")
+print("")
 
 # ______________________________________________________________________________
 # Comparison corrected Landau-Lifshitz and Niel model
 
-urad_rel_err = abs(urad_dict["Niel"] - urad_dict["CLL"]) / urad_dict["CLL"].max()
-ukin_rel_err = abs(ukin_dict["Niel"] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
+urad_rel_err = abs(urad["Niel"] - urad["CLL"]) / urad["CLL"].max()
+ukin_rel_err = abs(ukin["Niel"] - ukin["CLL"]) / ukin["CLL"][0]
 
 print(" Comparison Laudau-Lifshitz/Niel methods")
 print(" Maximum relative error kinetic energy: {}".format(ukin_rel_err.max()))
@@ -74,8 +126,8 @@ Validate("Relative error on the radiative energy / urad max (Niel/CLL) " , urad_
 # ______________________________________________________________________________
 # Comparison corrected Landau-Lifshitz and MC model
 
-urad_mc_rel_err = abs(urad_dict["MC"] - urad_dict["CLL"]) / urad_dict["CLL"].max()
-ukin_mc_rel_err = abs(ukin_dict["MC"] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
+urad_mc_rel_err = abs(urad["MC"] - urad["CLL"]) / urad["CLL"].max()
+ukin_mc_rel_err = abs(ukin["MC"] - ukin["CLL"]) / ukin["CLL"][0]
 
 print("")
 print(' Comparison Laudau-Lifshitz/Monte Carlo methods')
@@ -88,9 +140,6 @@ Validate("Relative error on the radiative energy / urad max (MC/CLL) " , urad_mc
 
 # ______________________________________________________________________________
 # Checking of the particle binning
-
-print("")
-print(" Checking of the particle binning diagnostics")
 
 maximal_iteration = 5500
 period = 500
@@ -150,6 +199,10 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
         if (itimestep > 0):
             ekin_ave_from_dists[itimestep,i] = ekin_from_dists[itimestep,i] / np.sum(ekin_distr_data * bin_size)
 
+print("")
+print(" 3) Analyze of chi x-y particle binning diagnostics")
+print("")
+
 print(" ---------------------------------------------------")
 print(" Maximal quantum parameter")
 line = "                  |"
@@ -163,8 +216,10 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     for k,model in enumerate(radiation_list):
         line += " {0:.5f} |".format(chi_max[itimestep,k])
     print(line)
-    # Validation with 50% error
-    # The maximal quantum parameter can vary importantly
+    
+# Validation with 50% error
+# The maximal quantum parameter can vary importantly
+# for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     # for k,model in enumerate(radiation_list):
     #    Validate("Maximal quantum parameter for the {} model at iteration {}".format(model,timestep),chi_max[itimestep,k],chi_max[itimestep,k]*0.5)
 
@@ -215,7 +270,9 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     for k,model in enumerate(radiation_list):
         line += " {0:.4e} |".format(ekin_from_dists[itimestep,k])
     print(line)
-    # Validation with 10% error
+    
+# Validation
+for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     for k,model in enumerate(radiation_list):
         Validate("Total kinetic energy for the {} model at iteration {}".format(model,timestep),ekin_from_dists[itimestep,k],ekin_from_dists[itimestep,k]*0.1)
 
@@ -232,6 +289,15 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     for k,model in enumerate(radiation_list):
         line += " {0:.4e} |".format(ekin_ave_from_dists[itimestep,k])
     print(line)
-    # Validation with 10% error
+    
+# Validation
+for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     for k,model in enumerate(radiation_list):
         Validate("Average kinetic energy for the {} model at iteration {}".format(model,timestep),ekin_ave_from_dists[itimestep,k],ekin_ave_from_dists[itimestep,k]*0.1)
+
+# ______________________________________________________________________________
+# Figures
+
+fig, ax = plt.subplots(figsize = (8, 6))
+
+ax.plot(times,ukin["CLL"],color='C0',label='CLL')
