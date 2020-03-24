@@ -31,7 +31,7 @@ dy = S.namelist.Main.cell_length[1]
 # Read scalar diagnostics
 
 print("")
-print(" 1) Analyze of Scalars")
+print(" 1) Analyze of scalar diags")
 print("")
 
 times = np.array(S.Scalar("Ukin_electron").get()["times"])
@@ -63,34 +63,32 @@ Validate("Maximal relative error total energy: ", max(abs(utot[:] - utot[0]))/ut
 # Read energy spectrum
 
 print("")
-print(" 2) Analyze of gamma spectrum")
+print(" 2) Analyze of the gamma distribution (particle binning)")
 print("")
 
 species_list = ["electron","positron","photon"]
 
-if True:
+integrated_gamma_spectrum = {}
+max_gamma_spectrum = {}
 
-    integrated_gamma_spectrum = {}
-    max_gamma_spectrum = {}
+for ispecies,species in enumerate(species_list):
+    
+    integrated_gamma_spectrum[species] = np.zeros(8)
+    max_gamma_spectrum[species] = np.zeros(8)
+    
+    for diag_it in range(8):
+    
+        PartDiag = S.ParticleBinning(diagNumber=ispecies,timesteps = diag_it*50)
+        gamma = np.array(PartDiag.get()["gamma"])
+        density = np.array(PartDiag.get()["data"][0])
 
-    for ispecies,species in enumerate(species_list):
+        log10_gamma = np.log10(gamma)
+        delta = log10_gamma[1] - log10_gamma[0]
+        bins =  np.power(10.,log10_gamma + 0.5*delta) - np.power(10.,log10_gamma - 0.5*delta)
         
-        integrated_gamma_spectrum[species] = np.zeros(8)
-        max_gamma_spectrum[species] = np.zeros(8)
-        
-        for diag_it in range(8):
-        
-            PartDiag = S.ParticleBinning(diagNumber=ispecies,timesteps = diag_it*50)
-            gamma = np.array(PartDiag.get()["gamma"])
-            density = np.array(PartDiag.get()["data"][0])
-
-            log10_gamma = np.log10(gamma)
-            delta = log10_gamma[1] - log10_gamma[0]
-            bins =  np.power(10.,log10_gamma + 0.5*delta) - np.power(10.,log10_gamma - 0.5*delta)
-            
-            integrated_gamma_spectrum[species][diag_it] = np.sum(bins*density)
-            imax = np.argmax(density)
-            max_gamma_spectrum[species][diag_it] = gamma[imax]
+        integrated_gamma_spectrum[species][diag_it] = np.sum(bins*density)
+        imax = np.argmax(density)
+        max_gamma_spectrum[species][diag_it] = gamma[imax]
 
 print(" ---------------------------------------------------------")
 print(" Integrated Gamma distribution                           |")
@@ -109,3 +107,4 @@ for diag_it in range(8):
 for diag_it in range(8):
     Validate("Integrated Gamma distribution for species electron at iteration {}".format(diag_it),integrated_gamma_spectrum["electron"][diag_it],integrated_gamma_spectrum["electron"][diag_it]*0.1)
     Validate("Integrated Gamma distribution for species positron at iteration {}".format(diag_it),integrated_gamma_spectrum["positron"][diag_it],integrated_gamma_spectrum["positron"][diag_it]*0.1)
+    # Validate("Integrated Gamma distribution for species photon at iteration {}".format(diag_it),integrated_gamma_spectrum["photon"][diag_it],integrated_gamma_spectrum["photon"][diag_it]*0.2)

@@ -77,7 +77,7 @@ makerunV:
   stage: makerun
   only:
     - develop
-    #- radiationSpectrum
+    - radiationSpectrum
 
   script:
     # Move in test dir

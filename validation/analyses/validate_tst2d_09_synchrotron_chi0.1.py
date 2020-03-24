@@ -306,17 +306,17 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
 # ______________________________________________________________________________
 # Figures
 
-fig, ax = plt.subplots(figsize = (8, 6))
-
-ax.plot(times,ukin["CLL"],color='C0',label='CLL',ls='-')
-ax.plot(times,urad["CLL"],color='C0',label='',ls='--')
-
-ax.plot(times,ukin["Niel"],color='C1',label='Niel',ls='-')
-ax.plot(times,urad["Niel"],color='C1',label='',ls='--')
-
-ax.plot(times,ukin["MC"],color='C2',label='MC',ls='-')
-ax.plot(times,urad["MC"],color='C2',label='',ls='--')
-
-ax.legend(loc='best')
-
-fig.savefig('tst2d_09_scalar_energy_balance.png')
+# fig, ax = plt.subplots(figsize = (8, 6))
+#
+# ax.plot(times,ukin["CLL"],color='C0',label='CLL',ls='-')
+# ax.plot(times,urad["CLL"],color='C0',label='',ls='--')
+#
+# ax.plot(times,ukin["Niel"],color='C1',label='Niel',ls='-')
+# ax.plot(times,urad["Niel"],color='C1',label='',ls='--')
+#
+# ax.plot(times,ukin["MC"],color='C2',label='MC',ls='-')
+# ax.plot(times,urad["MC"],color='C2',label='',ls='--')
+#
+# ax.legend(loc='best')
+#
+# fig.savefig('tst2d_09_scalar_energy_balance.png')
