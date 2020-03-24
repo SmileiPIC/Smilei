@@ -89,8 +89,8 @@ for it,time in enumerate(Scalar["times"]):
         print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} |".format(it*scalar_period,Scalar["Ntot_electron"][it],Scalar["Ntot_positron"][it],Scalar["Ntot_photon"][it],Scalar["Ntot"][it]))
 
 thresholds = {}
-thresholds["points"] = np.array([0. ,10 , 100, 1000, 10000])
-thresholds["factor"] = np.array([1e9, 1., 0.5, 0.3, 0.25  , 0.15])
+thresholds["points"] = np.array([0. , 10, 100, 1000, 10000])
+thresholds["factor"] = np.array([1e9, 1., 0.5, 0.35,   0.3, 0.2])
 
 for it,time in enumerate(Scalar["times"]):
     if (it*scalar_period >= 2000 and it*scalar_period <= 6500 and np.mod(it,2) == 0):
@@ -182,8 +182,15 @@ for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+pe
     for ispecies,species in enumerate(species_list):
         line += " {0:.4e} |".format(average_chi[species][itimestep])
     print(line)
-#    for ispecies,species in enumerate(species_list):
-#        Validate("Average quantum parameter for the {} model at iteration {}".format(species,timestep),average_chi[species][itimestep],average_chi[species][itimestep]*0.5)
+    
+thresholds = {}
+thresholds["points"] = np.array([0.,10,1000])
+thresholds["factor"] = np.array([1e9, 1.,0.5,0.3])
+    
+for itimestep,timestep in enumerate(range(minimal_iteration,maximal_iteration+period,period)):
+    Validate("Average quantum parameter for electrons at iteration {}".format(timestep),average_chi["electron"][itimestep],adaptive_error(average_chi["electron"][itimestep],Scalar["Ntot_electron"][itimestep],thresholds))
+    Validate("Average quantum parameter for positrons at iteration {}".format(timestep),average_chi["positron"][itimestep],adaptive_error(average_chi["positron"][itimestep],Scalar["Ntot_positron"][itimestep],thresholds))
+    Validate("Average quantum parameter for photons at iteration {}".format(timestep),average_chi["photon"][itimestep],adaptive_error(average_chi["photon"][itimestep],Scalar["Ntot_photon"][itimestep],thresholds))
 
 print("")
 print(" 3) Analyze of gamma spectrum")
