@@ -64,6 +64,7 @@ print("")
 ukin = {}
 urad = {}
 utot = {}
+ntot = {}
 
 # We load successively the particle track associated
 # to each radiation algorithm
@@ -94,13 +95,20 @@ for radiation in radiation_list:
     print(' Final kinetic energy for {}: {}'.format(radiation,ukin[radiation][-1]))
     print(' Final radiated energy for {}: {}'.format(radiation,urad[radiation][-1]))
 
+threshols = {}
+threshols["CLL"] = 0.05
+threshols["Niel"] = 0.1
+threshols["MC"] = 0.15
+
+for radiation in radiation_list:
+
     # Validation of the kinetic energy
     for it,val in enumerate(ukin[radiation]):
-        Validate("Kinetic energy evolution for {} at {}".format(radiation,it), val/utot[radiation][0], val/utot[radiation][0]*0.1 )
+        Validate("Kinetic energy evolution for {} at {}".format(radiation,it), val/utot[radiation][0], val/utot[radiation][0]*threshols[radiation])
 
     # Validation of the radiated energy
     for it,val in enumerate(urad[radiation]):
-        Validate("Radiated energy evolution for {} at {}".format(radiation,it) , val/utot[radiation][0], val/utot[radiation][0]*0.1 )
+        Validate("Radiated energy evolution for {} at {}".format(radiation,it) , val/utot[radiation][0], val/utot[radiation][0]*threshols[radiation] )
 
     # Validation of the total energy
     Validate("Total energy error (max - min)/uref for {}".format(radiation),(utot[radiation].max() - utot[radiation].min())/utot[radiation][0], 1e-2)
@@ -120,8 +128,8 @@ print(" Maximum relative error kinetic energy: {}".format(ukin_rel_err.max()))
 print(" Maximum relative error radiative energy: {}".format(urad_rel_err.max()))
 
 # Validation difference between continuous and discontinuous methods
-Validate("Relative error on the kinetic energy / ukin at t=0 (Niel/CLL) " , ukin_rel_err.max(), 0.01 )
-Validate("Relative error on the radiative energy / urad max (Niel/CLL) " , urad_rel_err.max(), 0.01 )
+Validate("Relative error on the kinetic energy / ukin at t=0 (Niel/CLL) " , ukin_rel_err.max(), 0.011 )
+Validate("Relative error on the radiative energy / urad max (Niel/CLL) " , urad_rel_err.max(), 0.011 )
 
 # ______________________________________________________________________________
 # Comparison corrected Landau-Lifshitz and MC model
@@ -135,8 +143,8 @@ print(' Maximum relative error kinetic energy: {}'.format(ukin_mc_rel_err.max())
 print(' Maximum relative error radiative energy: {}'.format(urad_mc_rel_err.max()))
 
 # Validation difference between continuous and discontinuous methods
-Validate("Relative error on the kinetic energy / ukin at t=0 (MC/CLL) " , ukin_mc_rel_err.max(), 0.01 )
-Validate("Relative error on the radiative energy / urad max (MC/CLL) " , urad_mc_rel_err.max(), 0.01 )
+Validate("Relative error on the kinetic energy / ukin at t=0 (MC/CLL) " , ukin_mc_rel_err.max(), 0.011 )
+Validate("Relative error on the radiative energy / urad max (MC/CLL) " , urad_mc_rel_err.max(), 0.011 )
 
 # ______________________________________________________________________________
 # Checking of the particle binning
