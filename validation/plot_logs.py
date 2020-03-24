@@ -54,7 +54,9 @@ def myplotter(ax, i):
               'Loadbalancing','Reconfiguration','PartMerging','PartInjection']:
         if k in ax.data:
             d = ax.data[k] + [None]*(t.size-len(ax.data[k]))
-            y += [array(d, dtype="float")]
+            d = array(d, dtype="float")
+            d[isnan(d)] = 0.
+            y += [d]
             labels += [k]
     
     # Get branch name to detect those which are not "develop"

@@ -692,7 +692,7 @@ class ShowDiffWithReference(object):
 # DEFINE A CLASS FOR LOGGING DATA
 class Log:
 	pattern1 = re.compile(""
-		+"[\n\t\s]+(Time in time loop) :\s+([.0-9]+)\s+([<.0-9]+)\% coverage"
+		+"[\n\t\s]+(Time[ _]in[ _]time[ _]loop) :\s+([.0-9]+)\s+([<.0-9]+)\% coverage"
 		+"([\n\t\s]+([\w ]+)\s+([.0-9]+)\s+([<.0-9]+)\%){6,15}"
 	)
 	pattern2 = re.compile(""
@@ -717,6 +717,7 @@ class Log:
 		# Get timers values and add to current timers
 		for m in matches:
 			key = m[0].replace(" ", "")
+			if key == "Time_in_time_loop": key = "Timeintimeloop"
 			value = float(m[1])
 			if key in self.data:
 				self.data[key] += value
