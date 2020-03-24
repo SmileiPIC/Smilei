@@ -69,14 +69,12 @@ Main(
     print_every = int(Tsim/dt/20.)
 )
 
-# PrescribedField(
-#     field   = 'Bz',
-#     profile = lambda x,t: 1000.
-# )
+def B0_(x,t):
+    return B0
 
-ExternalField(
-    field   = 'Bz',
-    profile = B0
+PrescribedField(
+    field   = 'Bz_m',
+    profile = B0_
 )
 
 

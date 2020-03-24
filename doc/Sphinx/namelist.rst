@@ -1698,7 +1698,12 @@ This feature is accessible using the ``PrescribedField`` block::
 
 .. py:data:: field
 
-  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"`` or ``"Bz"``.
+  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
+
+.. warning::
+
+  When prescribing a magnetic field, always use the time-centered fields ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
+  These fields are those used in the particle pusher, and are defined at integer time-steps.
 
 .. py:data:: profile
 

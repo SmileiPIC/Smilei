@@ -168,6 +168,9 @@ int main( int argc, char *argv[] )
         vecPatches.applyExternalFields();
         vecPatches.saveExternalFields( params );
 
+        TITLE( "Applying prescribed fields at time t = 0" );
+        vecPatches.applyPrescribedFields(time_prim);        
+
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
         // Note: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
@@ -331,7 +334,7 @@ int main( int argc, char *argv[] )
                 {
                     // apply external time fields if requested
                     if ( vecPatches(0)->EMfields->extTimeFields.size() )
-                        vecPatches.applyPrescribedFields(time_dual);
+                        vecPatches.applyPrescribedFields(time_prim);
                 }
 
             }
