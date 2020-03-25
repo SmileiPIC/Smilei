@@ -30,10 +30,10 @@ IonizationTunnelEnvelopeAveraged::IonizationTunnelEnvelopeAveraged( Params &para
     
     one_third = 1.0/3.0;
     
-    alpha_tunnel.resize( atomic_number_ );
-    beta_tunnel.resize( atomic_number_ );
-    gamma_tunnel.resize( atomic_number_ );
-    //Ip_times2_to_minus3ov4.resize( atomic_number_ );
+    alpha_tunnel.resize( atomic_number_+1 );
+    beta_tunnel.resize( atomic_number_+1 );
+    gamma_tunnel.resize( atomic_number_+1 );
+    Ip_times2_to_minus3ov4.resize( atomic_number_+1 );
     
     for( unsigned int Z=0 ; Z<atomic_number_ ; Z++ ) {
         DEBUG( "Z : " << Z );
@@ -41,7 +41,7 @@ IonizationTunnelEnvelopeAveraged::IonizationTunnelEnvelopeAveraged( Params &para
         alpha_tunnel[Z] = cst-1.0; // 2(n^*)-1
         beta_tunnel[Z]  = pow( 2, alpha_tunnel[Z] ) * ( 8.*Azimuthal_quantum_number[Z]+4.0 ) / ( cst*tgamma( cst ) ) * Potential[Z] * au_to_w0;
         gamma_tunnel[Z] = 2.0 * pow( 2.0*Potential[Z], 1.5 );   // 2*(2I_p)^{3/2}
-        // Ip_times2_to_minus3ov4[Z] = pow(2.*Potential[Z],-0.75); // (2I_p)^{-3/4}
+        Ip_times2_to_minus3ov4[Z] = pow(2.*Potential[Z],-0.75); // (2I_p)^{-3/4}
     }
     
     ellipticity         = params.envelope_ellipticity;
@@ -126,6 +126,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
         }
 
         IonizRate_tunnel_envelope[Z] = coeff_ellipticity * IonizRate_tunnel_envelope[Z];
+        double Ip_times2_power_minus3ov4;
     
         // k_times will give the nb of ionization events
         k_times = 0;
@@ -136,6 +137,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
             // -----------------------------------------------------
             if( ran_p < 1.0 -exp( -IonizRate_tunnel_envelope[Z]*dt ) ) {
                 k_times        = 1;
+                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[Z];
             }
     
         } else {
@@ -178,11 +180,14 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
                 Pint_tunnel             = Pint_tunnel + P_sum*Mult;
     
                 k_times++;
+           
+                Ip_times2_power_minus3ov4 += Ip_times2_to_minus3ov4[newZ-1];
             }//END while
     
             // final ionization (of last electron)
             if( ( ( 1.0-Pint_tunnel )>ran_p ) && ( k_times==atomic_number_-Zp1 ) ) {
                 k_times++;
+                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[atomic_number_-1];
             }
         }//END Multiple ionization routine
     
@@ -199,11 +204,22 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
         // since the envelope does not contain information on the oscillation phase,
         // omega*t will be extracted randomly between 0 and 2*pi
     
-        // draw from uniform distribution
-        ran_p_times_2pi= 2. * M_PI * patch->xorshift32() * patch->xorshift32_invmax;
-        
-        momentum_major_axis =               Aabs * cos(ran_p_times_2pi);
-        momentum_minor_axis = ellipticity * Aabs * sin(ran_p_times_2pi);
+        // // draw from uniform distribution
+        // ran_p_times_2pi= 2. * M_PI * patch->xorshift32() * patch->xorshift32_invmax;
+        // 
+        // momentum_major_axis =               Aabs * cos(ran_p_times_2pi);
+        // momentum_minor_axis = ellipticity * Aabs * sin(ran_p_times_2pi);
+
+        // Box-Müller transformation: generate a random number from a gaussian distribution
+        // starting from two random numbers from a uniform distribution
+
+        double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
+        double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
+
+        double rand_gaussian = sqrt(-2.*log(rand_1))*cos(2. * M_PI * rand_2);
+
+        // recreate rms momentum spread for linear polarization estimated by C.B. Schroeder 
+        momentum_major_axis = rand_gaussian * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;
     
         if( k_times !=0 ) {
             new_electrons.createParticle();
@@ -221,6 +237,9 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
             //new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi-momentum_minor_axis*sin_phi;
             //new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi+momentum_minor_axis*cos_phi;
     
+            new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
+            new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
+
             new_electrons.weight( idNew )=double( k_times )*particles->weight( ipart );
             new_electrons.charge( idNew )=-1;
     

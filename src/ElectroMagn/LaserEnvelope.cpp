@@ -46,6 +46,8 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" );
    
     if (params.envelope_ionization_is_active){
+        PyTools::extract( "polarization_phi", polarization_phi, "LaserEnvelope" );
+        PyTools::extract( "ellipticity", ellipticity, "LaserEnvelope" );
         info << "\t\tpolarization angle (only for ionization) : " << polarization_phi << endl;
         info << "\t\tellipticity (only for ionization)        : " << ellipticity << endl;
         params.envelope_ellipticity = ellipticity;
@@ -94,13 +96,13 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     GradPhil_m = NULL;
     GradPhir_  = NULL;
     GradPhir_m = NULL;
-
 }
 
 // Cloning constructor
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved ) :
     cell_length( envelope->cell_length ), timestep( envelope->timestep ), i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ), i1_2k0_over_2dl( envelope->i1_2k0_over_2dl ),
-    one_plus_ik0dt( envelope->one_plus_ik0dt ), one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq )
+    one_plus_ik0dt( envelope->one_plus_ik0dt ), one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq ),
+    polarization_phi(envelope->polarization_phi),ellipticity(envelope->ellipticity)
 {
     if( n_moved ==0 ) {
         profile_ = new Profile( envelope->profile_ );
