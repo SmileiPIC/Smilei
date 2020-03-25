@@ -121,15 +121,29 @@ PyArrayObject *Function_Python4D::complexValueAt( std::vector<PyArrayObject *> x
 // Constant profiles
 double Function_Constant1D::valueAt( vector<double> x_cell )
 {
-    return ( x_cell[0]>xvacuum ) ? value : 0.;
+    return ( x_cell[0]>=xvacuum ) ? value : 0.;
 }
 double Function_Constant2D::valueAt( vector<double> x_cell )
 {
-    return ( ( x_cell[0]>xvacuum ) && ( x_cell[1]>yvacuum ) ) ? value : 0.;
+    return ( ( x_cell[0]>=xvacuum ) && ( x_cell[1]>=yvacuum ) ) ? value : 0.;
 }
 double Function_Constant3D::valueAt( vector<double> x_cell )
 {
-    return ( ( x_cell[0]>xvacuum ) && ( x_cell[1]>yvacuum ) && ( x_cell[2]>zvacuum ) ) ? value : 0.;
+    return ( ( x_cell[0]>=xvacuum ) && ( x_cell[1]>=yvacuum ) && ( x_cell[2]>=zvacuum ) ) ? value : 0.;
+}
+
+// Constant profiles + time
+double Function_Constant1D::valueAt( vector<double> x_cell, double time )
+{
+    return ( x_cell[0]>=xvacuum ) ? value : 0.;
+}
+double Function_Constant2D::valueAt( vector<double> x_cell, double time )
+{
+    return ( ( x_cell[0]>=xvacuum ) && ( x_cell[1]>=yvacuum ) ) ? value : 0.;
+}
+double Function_Constant3D::valueAt( vector<double> x_cell, double time )
+{
+    return ( ( x_cell[0]>=xvacuum ) && ( x_cell[1]>=yvacuum ) && ( x_cell[2]>=zvacuum ) ) ? value : 0.;
 }
 
 // Trapezoidal profiles

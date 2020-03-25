@@ -484,7 +484,7 @@ void ElectroMagn::applyPrescribedFields( Patch *patch, double time )
 {
     for( vector<ExtTimeField>::iterator extfield=extTimeFields.begin(); extfield!=extTimeFields.end(); extfield++ ) {
         if( extfield->index < allFields.size() ) {
-        	extfield->savedField->copyFrom(allFields[extfield->index]);
+            extfield->savedField->copyFrom(allFields[extfield->index]);
             applyPrescribedField( allFields[extfield->index], extfield->profile, patch, time );
         }
     }
@@ -494,7 +494,7 @@ void ElectroMagn::resetPrescribedFields()
 {
     for( vector<ExtTimeField>::iterator extfield=extTimeFields.begin(); extfield!=extTimeFields.end(); extfield++ ) {
         if( extfield->index < allFields.size() ) {
-        	allFields[extfield->index]->copyFrom(extfield->savedField);
+            allFields[extfield->index]->copyFrom(extfield->savedField);
         }
     }
 }

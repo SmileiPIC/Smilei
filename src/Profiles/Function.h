@@ -32,18 +32,21 @@ public:
     //! Gets the value of a N-D function from both a vector and a double. The double is the last argument.
     virtual double valueAt( std::vector<double>, double )
     {
+        ERROR("Profile `"<<getInfo()<<"` is not available");
         return 0.; // virtual => will be redefined
     };
     
     //! Gets the complex value of a N-D function from both a vector and a double. The double is the last argument.
     virtual std::complex<double> complexValueAt( std::vector<double>, double )
     {
+        ERROR("Profile `"<<getInfo()<<"` is not available");
         return 0.; // virtual => will be redefined
     };
     
     //! Gets the complex value of a N-D function from a vector.
     virtual std::complex<double> complexValueAt( std::vector<double> )
     {
+        ERROR("Profile `"<<getInfo()<<"` is not available");
         return 0.; // virtual => will be redefined
     };
     
@@ -207,6 +210,7 @@ public:
         xvacuum = f->xvacuum;
     };
     double valueAt( std::vector<double> );
+    double valueAt( std::vector<double>, double );
     std::string getInfo ()
     {
         std::string info = " (value: " + std::to_string(value) + ")";
@@ -233,6 +237,7 @@ public:
         yvacuum = f->yvacuum;
     };
     double valueAt( std::vector<double> );
+    double valueAt( std::vector<double>, double );
     std::string getInfo ()
     {
         std::string info = " (value: " + std::to_string(value) + ")";
@@ -261,6 +266,7 @@ public:
         zvacuum = f->zvacuum;
     };
     double valueAt( std::vector<double> );
+    double valueAt( std::vector<double>, double );
     std::string getInfo ()
     {
         std::string info = " (value: " + std::to_string(value) + ")";
