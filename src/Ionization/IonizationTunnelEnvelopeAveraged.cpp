@@ -50,7 +50,7 @@ IonizationTunnelEnvelopeAveraged::IonizationTunnelEnvelopeAveraged( Params &para
     ellipticity_factor1 = (1.-params.envelope_ellipticity)/3./params.envelope_ellipticity;
     ellipticity_factor2 = params.envelope_ellipticity*(1+params.envelope_ellipticity)/2.;
     ellipticity_factor2 = pow(ellipticity_factor2,-0.5);
-
+    
     DEBUG( "Finished Creating the Tunnel Envelope Ionizaton Averaged class" );
     
 }
@@ -118,7 +118,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
     
         // Corrections on averaged ionization rate given by the polarization ellipticity  
         if (ellipticity==0.){ // linear polarization
-            coeff_ellipticity = pow((3./M_PI)/delta,0.5);
+            coeff_ellipticity = pow((3./M_PI)/delta*2.,0.5);
         } else if (ellipticity==1.){ // circular polarization
             coeff_ellipticity = 1.; // for circular polarization, the ionization rate is unchanged
         } else{ // general polarization
@@ -126,7 +126,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
         }
 
         IonizRate_tunnel_envelope[Z] = coeff_ellipticity * IonizRate_tunnel_envelope[Z];
-        double Ip_times2_power_minus3ov4;
+        double Ip_times2_power_minus3ov4=0.;
     
         // k_times will give the nb of ionization events
         k_times = 0;
@@ -157,7 +157,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
 
                 // Corrections on averaged ionization rate given by the polarization ellipticity  
                 if (ellipticity==0.){ // linear polarization
-                    coeff_ellipticity = pow((3./M_PI)/delta,0.5);
+                    coeff_ellipticity = pow((3./M_PI)/(gamma_tunnel[newZ-1]*invE)*2.,0.5);
                 } else if (ellipticity==1.){ // circular polarization
                     coeff_ellipticity = 1.; // for circular polarization, the ionization rate is unchanged
                 } else{ // general polarization
@@ -220,6 +220,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
 
         // recreate rms momentum spread for linear polarization estimated by C.B. Schroeder 
         momentum_major_axis = rand_gaussian * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;
+   
     
         if( k_times !=0 ) {
             new_electrons.createParticle();
