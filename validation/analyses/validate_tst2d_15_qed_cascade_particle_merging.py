@@ -115,6 +115,13 @@ for it,time in enumerate(Scalar["times"]):
     if (it*scalar_period >= 2000 and it*scalar_period <= 6500 and np.mod(it,2) == 0):
         Validate("Electron energy at {}".format(it*scalar_period), Scalar["Ukin_electron"][it], adaptive_error(Scalar["Ukin_electron"][it],Scalar["Ntot_electron"][it],thresholds))
         Validate("Positron energy at {}".format(it*scalar_period), Scalar["Ukin_positron"][it], adaptive_error(Scalar["Ukin_positron"][it],Scalar["Ntot_positron"][it],thresholds))
+
+thresholds = {}
+thresholds["points"] = np.array([0. ,10 ,100 , 1000, 10000])
+thresholds["factor"] = np.array([1e9, 1.,0.6 , 0.45,  0.35, 0.25])
+
+for it,time in enumerate(Scalar["times"]):
+    if (it*scalar_period >= 2000 and it*scalar_period <= 6500 and np.mod(it,2) == 0):
         Validate("Photon energy at {}".format(it*scalar_period), Scalar["Ukin_photon"][it], adaptive_error(Scalar["Ukin_photon"][it],Scalar["Ntot_photon"][it],thresholds))
 
 # Energy _________________________________________________________________
