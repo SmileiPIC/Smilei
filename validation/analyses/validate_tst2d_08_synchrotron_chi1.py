@@ -22,49 +22,75 @@ dy = S.namelist.Main.cell_length[1]
 # List of relativistic pushers
 radiation_list = ["CLL","Niel","MC"]
 
-ukin_dict = {}
-urad_dict = {}
-
 # ______________________________________________________________________________
 # We load successively particle scalar diagnostics associated
 # to each radiation algorithm
+
+print("")
+print(" 1) Analyze of scalar diags")
+print("")
+
+ukin = {}
+urad = {}
+utot = {}
+ntot = {}
+
 for radiation in radiation_list:
 
     # Read scalar diagnostics
     ScalarUkinDiag = S.Scalar("Ukin_electron_"+radiation).get()
-    ukin = np.array(ScalarUkinDiag["data"])
+    ukin[radiation] = np.array(ScalarUkinDiag["data"])
     times = np.array(ScalarUkinDiag["times"])
 
     ScalarUradDiag = S.Scalar("Urad_electron_"+radiation).get()
-    urad = np.array(ScalarUradDiag["data"])
+    urad[radiation] = np.array(ScalarUradDiag["data"])
 
-    utot = ukin+urad
+    utot[radiation] = ukin[radiation]+urad[radiation]
 
-    print(' Final kinetic energy for {}: {}'.format(radiation,ukin[-1]))
-    print(' Final radiated energy for {}: {}'.format(radiation,urad[-1]))
+print(" -------------------------------------------------|")
+print(" Diag scalars (Kinetic energy)                    |")
+print(" iteration | CLL        | Niel       | MC         |")
+print(" -------------------------------------------------|")
+
+for it,time in enumerate(times[::5]):
+    print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | ".format(it*500,ukin["CLL"][it*5],ukin["Niel"][it*5],ukin["MC"][it*5]))
+
+print("")
+
+for radiation in radiation_list:
+    
+    print(' Final kinetic energy for {}: {}'.format(radiation,ukin[radiation][-1]))
+    print(' Final radiated energy for {}: {}'.format(radiation,urad[radiation][-1]))
+
+threshols = {}
+threshols["CLL"] = 0.08
+threshols["Niel"] = 0.08
+threshols["MC"] = 0.1
+
+for radiation in radiation_list:
 
     # Validation of the kinetic energy
-    for it,val in enumerate(ukin):
-        Validate("Kinetic energy evolution for {} at {}".format(radiation,it), val/utot[0], val/utot[0]*0.08 )
+    for it,val in enumerate(ukin[radiation]):
+        Validate("Kinetic energy evolution for {} at {}".format(radiation,it), val/utot[radiation][0], val/utot[radiation][0]*threshols[radiation])
 
     # Validation of the radiated energy
-    for it,val in enumerate(urad):
-        Validate("Radiated energy evolution for {} at {}".format(radiation,it) , val/utot[0], val/utot[0]*0.08 )
+    for it,val in enumerate(urad[radiation]):
+        Validate("Radiated energy evolution for {} at {}".format(radiation,it) , val/utot[radiation][0], val/utot[radiation][0]*threshols[radiation] )
 
     # Validation of the total energy
-    Validate("Total energy error (max - min)/uref for {}".format(radiation) ,
-           (utot.max() - utot.min())/utot[0], 1e-2)
+    Validate("Total energy error (max - min)/uref for {}".format(radiation),(utot[radiation].max() - utot[radiation].min())/utot[radiation][0], 1e-2)
 
-    ukin_dict[radiation] = ukin
-    urad_dict[radiation] = urad
+print("")
+print(" 2) Relative errors")
+print("")
 
 # ______________________________________________________________________________
 # Comparison Corrected Landau-Lifshitz and the Monte-Carlo method
 
 for k,model in enumerate(radiation_list[1:]):
 
-    urad_rel_err = abs(urad_dict[model] - urad_dict["CLL"]) / urad_dict["CLL"].max()
-    ukin_rel_err = abs(ukin_dict[model] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
+    urad_rel_err = abs(urad[model] - urad["CLL"]) / urad["CLL"].max()
+    ukin_rel_err = abs(ukin[model] - ukin["CLL"]) / ukin["CLL"][0]
 
     print('')
     print(' Comparison Corrected Landau-Lifshitz / {} methods'.format(model))
