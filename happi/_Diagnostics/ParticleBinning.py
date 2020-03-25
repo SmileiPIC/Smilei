@@ -239,8 +239,7 @@ class ParticleBinning(Diagnostic):
 		axes_units = (" / ( " + " * ".join(axes_units) + " )") if axes_units else ""
 		for d in self._diags:
 			titles.update({ d:"??" })
-			units.update({ d:"??" })
-			val_units = "??"
+			val_units = "1"
 			deposited_quantity = self._myinfo[d]["deposited_quantity"]
 			if   deposited_quantity == "weight":
 				titles[d] = "Number density"
