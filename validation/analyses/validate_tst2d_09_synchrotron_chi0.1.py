@@ -98,7 +98,7 @@ for radiation in radiation_list:
 threshols = {}
 threshols["CLL"] = 0.05
 threshols["Niel"] = 0.1
-threshols["MC"] = 0.15
+threshols["MC"] = 0.2
 
 for radiation in radiation_list:
 
