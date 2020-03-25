@@ -36,7 +36,7 @@ private:
     std::vector<double> Azimuthal_quantum_number;
     
     double one_third;
-    std::vector<double> alpha_tunnel, beta_tunnel, gamma_tunnel; //,Ip_times2_to_minus3ov4;
+    std::vector<double> alpha_tunnel, beta_tunnel, gamma_tunnel,Ip_times2_to_minus3ov4;
 };
 
 
