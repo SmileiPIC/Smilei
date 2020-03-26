@@ -54,6 +54,7 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
         info << "\t\tellipticity (only for ionization)        : " << ellipticity << endl;
         params.envelope_ellipticity = ellipticity;
         params.envelope_polarization_phi = polarization_phi;
+    }
 
     // auxiliary quantities
     std::complex<double>     i1 = std::complex<double>( 0., 1 ); // imaginary unit

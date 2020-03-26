@@ -127,12 +127,12 @@ void MergingVranicCartesian::operator() (
         double total_momentum_x;
         double total_momentum_y;
         double total_momentum_z;
-        double total_momentumNorm;
+        double total_momentum_norm;
         double total_energy;
 
         // New particle properties
         double new_energy;
-        double new_momentumNorm;
+        double new_momentum_norm;
         double e1_x,e1_y,e1_z;
         double e3_x,e3_y,e3_z;
         double e2_x,e2_y,e2_z;
@@ -521,28 +521,28 @@ void MergingVranicCartesian::operator() (
                             // pa in Vranic et al.
                             // For photons
                             if (mass == 0) {
-                                new_momentumNorm = new_energy;
+                                new_momentum_norm = new_energy;
                             // For mass particles
                             } else {
-                                new_momentumNorm = sqrt(new_energy*new_energy - 1.0);
+                                new_momentum_norm = sqrt(new_energy*new_energy - 1.0);
                             }
 
                             // Total momentum norm
-                            total_momentumNorm = sqrt(total_momentum_x*total_momentum_x
+                            total_momentum_norm = sqrt(total_momentum_x*total_momentum_x
                                                 +      total_momentum_y*total_momentum_y
                                                 +      total_momentum_z*total_momentum_z);
 
                             // Angle between pa and pt, pb and pt in Vranic et al.
-                            cos_omega = std::min(total_momentumNorm / (total_weight*new_momentumNorm),1.0);
+                            cos_omega = std::min(total_momentum_norm / (total_weight*new_momentum_norm),1.0);
                             sin_omega = sqrt(1 - cos_omega*cos_omega);
 
                             // Now, represents the inverse to avoid useless division
-                            total_momentumNorm = 1/total_momentumNorm;
+                            total_momentum_norm = 1/total_momentum_norm;
 
                             // Computation of e1 unit vector
-                            e1_x = total_momentum_x*total_momentumNorm;
-                            e1_y = total_momentum_y*total_momentumNorm;
-                            e1_z = total_momentum_z*total_momentumNorm;
+                            e1_x = total_momentum_x*total_momentum_norm;
+                            e1_y = total_momentum_y*total_momentum_norm;
+                            e1_z = total_momentum_z*total_momentum_norm;
 
                             // e3 = e1 x cell_vec
                             e3_x = e1_y*cell_vec_z - e1_z*cell_vec_y;
@@ -575,12 +575,12 @@ void MergingVranicCartesian::operator() (
                                 e2_y = e2_y * e2_norm;
                                 e2_z = e2_z * e2_norm;
 
-                                // double mx1 = new_momentumNorm*(cos_omega*e1_x + sin_omega*e2_x);
-                                // double mx2 = new_momentumNorm*(cos_omega*e1_x - sin_omega*e2_x);
-                                // total_momentum_y = new_momentumNorm*(cos_omega*e1_y + sin_omega*e2_y);
-                                // double my2 = new_momentumNorm*(cos_omega*e1_y - sin_omega*e2_y);
-                                // total_momentum_z = new_momentumNorm*(cos_omega*e1_z + sin_omega*e2_z);
-                                // double mz2 = new_momentumNorm*(cos_omega*e1_z - sin_omega*e2_z);
+                                // double mx1 = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
+                                // double mx2 = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
+                                // total_momentum_y = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
+                                // double my2 = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
+                                // total_momentum_z = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
+                                // double mz2 = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
                                 // if (isnan(total_momentum_x)
                                 //     || isnan(total_momentum_y)
                                 //     || isnan(total_momentum_z)
@@ -638,8 +638,8 @@ void MergingVranicCartesian::operator() (
                                 //       << " " << fabs(total_energy - total_weight*sqrt(mx1*mx1
                                 //                         + total_momentum_y*total_momentum_y
                                 //                         + total_momentum_z*total_momentum_z)) << "\n"
-                                //     << " omega: " << std::acos(std::min(total_momentumNorm / (total_weight*new_momentumNorm),1.0))
-                                //     << " " << total_momentumNorm / (total_weight*new_momentumNorm)
+                                //     << " omega: " << std::acos(std::min(total_momentum_norm / (total_weight*new_momentum_norm),1.0))
+                                //     << " " << total_momentum_norm / (total_weight*new_momentum_norm)
                                 //     << " cos_omega: " << cos_omega << " sin_omega: " << sin_omega << "\n"
                                 //     << " cell_vec: " << cell_vec_x << " " << cell_vec_y << " " << cell_vec_z << "\n"
                                 //     << " e1: " << e1_x << " " << e1_y << " " << e1_z << "\n"
@@ -659,16 +659,16 @@ void MergingVranicCartesian::operator() (
                                 // Update momentum of the first photon
                                 ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
                                 
-                                momentum[0][ip] = new_momentumNorm*(cos_omega*e1_x + sin_omega*e2_x);
-                                momentum[1][ip] = new_momentumNorm*(cos_omega*e1_y + sin_omega*e2_y);
-                                momentum[2][ip] = new_momentumNorm*(cos_omega*e1_z + sin_omega*e2_z);
+                                momentum[0][ip] = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
+                                momentum[1][ip] = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
+                                momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
                                 weight[ip] = 0.5*total_weight;
                                 
                                 // Update momentum of the second particle
                                 ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min + 1];
-                                momentum[0][ip] = new_momentumNorm*(cos_omega*e1_x - sin_omega*e2_x);
-                                momentum[1][ip] = new_momentumNorm*(cos_omega*e1_y - sin_omega*e2_y);
-                                momentum[2][ip] = new_momentumNorm*(cos_omega*e1_z - sin_omega*e2_z);
+                                momentum[0][ip] = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
+                                momentum[1][ip] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
+                                momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
                                 weight[ip] = 0.5*total_weight;
                                 
                                 // Other photons are tagged to be removed after
@@ -690,15 +690,15 @@ void MergingVranicCartesian::operator() (
                                 // for (ipr = ipr_min; ipr < ipr_max ; ipr ++) {
                                 //     if (ipr == ipr1) {
                                 //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
-                                //         momentum[0][ip] = new_momentumNorm*(cos_omega*e1_x + sin_omega*e2_x);
-                                //         momentum[1][ip] = new_momentumNorm*(cos_omega*e1_y + sin_omega*e2_y);
-                                //         momentum[2][ip] = new_momentumNorm*(cos_omega*e1_z + sin_omega*e2_z);
+                                //         momentum[0][ip] = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
+                                //         momentum[1][ip] = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
+                                //         momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
                                 //         weight[ip] = 0.5*total_weight;
                                 //     } else if (ipr == ipr2) {
                                 //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
-                                //         momentum[0][ip] = new_momentumNorm*(cos_omega*e1_x - sin_omega*e2_x);
-                                //         momentum[1][ip] = new_momentumNorm*(cos_omega*e1_y - sin_omega*e2_y);
-                                //         momentum[2][ip] = new_momentumNorm*(cos_omega*e1_z - sin_omega*e2_z);
+                                //         momentum[0][ip] = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
+                                //         momentum[1][ip] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
+                                //         momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
                                 //         weight[ip] = 0.5*total_weight;
                                 //     } else {
                                 //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
@@ -718,9 +718,9 @@ void MergingVranicCartesian::operator() (
                                     // Update momentum of the first photon
                                     ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
                                     
-                                    momentum[0][ip] = new_momentumNorm*e1_x;
-                                    momentum[1][ip] = new_momentumNorm*e1_y;
-                                    momentum[2][ip] = new_momentumNorm*e1_z;
+                                    momentum[0][ip] = new_momentum_norm*e1_x;
+                                    momentum[1][ip] = new_momentum_norm*e1_y;
+                                    momentum[2][ip] = new_momentum_norm*e1_z;
                                     weight[ip] = total_weight;
                                     
                                     // Other photons are tagged to be removed after
@@ -736,9 +736,9 @@ void MergingVranicCartesian::operator() (
                                     // for (ipr = ipr_min; ipr < ipr_max ; ipr ++) {
                                     //     if (ipr == ipr1) {
                                     //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr1];
-                                    //         momentum[0][ip] = new_momentumNorm*e1_x;
-                                    //         momentum[1][ip] = new_momentumNorm*e1_y;
-                                    //         momentum[2][ip] = new_momentumNorm*e1_z;
+                                    //         momentum[0][ip] = new_momentum_norm*e1_x;
+                                    //         momentum[1][ip] = new_momentum_norm*e1_y;
+                                    //         momentum[2][ip] = new_momentum_norm*e1_z;
                                     //         weight[ip] = total_weight;
                                     //     } else {
                                     //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];

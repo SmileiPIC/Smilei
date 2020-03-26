@@ -190,18 +190,10 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 // Interpolator on another field than the basic ones
 void InterpolatorAM2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *Jxloc, double *Jyloc, double *Jzloc, double *Rholoc )
 {
-<<<<<<< HEAD
-    cField2D *F = static_cast<cField2D *>( field );
-    int imode = std::stoi(&(F->name.back())); //Works only if number_of_AM < 10
 
-    double *coeffx = field->isDual( 0 ) ? &coeffxd_[1] : &coeffxp_[1];
-    double *coeffy = field->isDual( 1 ) ? &coeffyd_[1] : &coeffyp_[1];
-    int *i = field->isDual( 0 ) ? &id_ : &ip_;
-    int *j = field->isDual( 1 ) ? &jd_ : &jp_;
-=======
     // **field points to the first field of the species of interest in EM->allFields
     // They are ordered as Jx0, Jy0, Jz0, Rho0, Jx1, Jy1, Jz1, Rho1, etc.
->>>>>>> remotes/origin/envelope_reduced_dispersion
+
     
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*dl_inv_;
@@ -212,9 +204,9 @@ void InterpolatorAM2Order::oneField( Field **field, Particles &particles, int *i
         if (r > 0) {
             exp_m_theta = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
         }
-<<<<<<< HEAD
-        for (unsigned int iimode=0; iimode < imode; iimode++){
-=======
+
+
+
         double Jx_ = 0., Jy_ = 0., Jz_ = 0., Rho_ = 0.;
         for( unsigned int imode = 0; imode < nmodes ; imode++ ) {
             cField2D *Jl  = static_cast<cField2D *>( *(field+4*imode+0) );
@@ -225,7 +217,7 @@ void InterpolatorAM2Order::oneField( Field **field, Particles &particles, int *i
             Jy_  += std::real( compute( &coeffxp_[1], &coeffyd_[1], Jr , ip_, jd_ ) * exp_mm_theta );
             Jz_  += std::real( compute( &coeffxp_[1], &coeffyp_[1], Jt , ip_, jp_ ) * exp_mm_theta );
             Rho_ += std::real( compute( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_ ) * exp_mm_theta );
->>>>>>> remotes/origin/envelope_reduced_dispersion
+
             exp_mm_theta *= exp_m_theta;
         }
         Jxloc [ipart] = Jx_;
