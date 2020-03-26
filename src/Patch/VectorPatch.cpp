@@ -282,7 +282,7 @@ void VectorPatch::sortAllParticles( Params &params )
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++ ) {
                 patches_[ipatch]->vecSpecies[ispec]->computeParticleCellKeys( params );
-                patches_[ipatch]->vecSpecies[ispec]->sortParticles( params );
+                patches_[ipatch]->vecSpecies[ispec]->sortParticles( params, patches_[ipatch] );
             }
         }
     }
@@ -1051,14 +1051,20 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
             // Saving Phi and GradPhi fields
             // (to compute centered quantities used in the particle position ponderomotive pusher)
             // Stores Phi at time n in Phi_m, GradPhi at time n in GradPhi_m
-            ( *this )( ipatch )->EMfields->envelope->savePhi_and_GradPhi();
+            ( *this )( ipatch )->EMfields->envelope->savePhiAndGradPhi();
 
-            // Computes A in all points
-            ( *this )( ipatch )->EMfields->envelope->compute( ( *this )( ipatch )->EMfields );
+            // Computes A in all points, choosing the right solver for the envelope equation
+            if ( ( *this )( ipatch )->EMfields->envelope->envelope_solver == "explicit" ){
+                ( *this )( ipatch )->EMfields->envelope->updateEnvelope( ( *this )( ipatch )->EMfields );
+            } else if ( ( *this )( ipatch )->EMfields->envelope->envelope_solver == "explicit_reduced_dispersion" ) {
+                ( *this )( ipatch )->EMfields->envelope->updateEnvelopeReducedDispersion( ( *this )( ipatch )->EMfields );
+            }
+
+            // Apply boundary conditions for envelope
             ( *this )( ipatch )->EMfields->envelope->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
 
             // Compute ponderomotive potential Phi=|A|^2/2
-            ( *this )( ipatch )->EMfields->envelope->compute_Phi( ( *this )( ipatch )->EMfields );
+            ( *this )( ipatch )->EMfields->envelope->computePhiEnvAEnvE( ( *this )( ipatch )->EMfields );
 
         }
 
@@ -1076,9 +1082,9 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 
         // Compute gradients of Phi
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-            ( *this )( ipatch )->EMfields->envelope->compute_gradient_Phi( ( *this )( ipatch )->EMfields );
+            ( *this )( ipatch )->EMfields->envelope->computeGradientPhi( ( *this )( ipatch )->EMfields );
             // Computes Phi and GradPhi at time n+1/2 using their values at timestep n+1 and n (the latter already in Phi_m and GradPhi_m)
-            ( *this )( ipatch )->EMfields->envelope->centerPhi_and_GradPhi();
+            ( *this )( ipatch )->EMfields->envelope->centerPhiAndGradPhi();
         }
 
         // Exchange GradPhi

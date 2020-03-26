@@ -87,8 +87,8 @@ public:
     //! sets nDim_particle and nDim_field based on the geometry
     void setDimensions();
     
-    //! Find out whether a field name corresponds to a species field
-    bool isSpeciesField( std::string field_name );
+    //! Return the species related to this field, or "" if not a species field
+    std::string speciesField( std::string field_name );
     
     //! defines the geometry of the simulation
     std::string geometry;
@@ -137,10 +137,14 @@ public:
     
     //! Define if laser envelope model is used (default = false)
     bool Laser_Envelope_model=false;
+
     //! Define if there is at least one species ionized by envelope
     bool envelope_ionization_is_active = false;
     double envelope_ellipticity = 0.; // used only for envelope ionization (0: linear polarization, 1: circular polarization)
     double envelope_polarization_phi = 0.; // used only for envelope ionization; in radians, angle with the xy plane
+    // define the solver for the envelope equation
+    std::string envelope_solver;
+
     
     //Poisson solver
     //! Do we solve poisson
@@ -160,6 +164,8 @@ public:
     
     //! Do we need to exchange full B (default=0 <=> only 2 components are exchanged by dimension)
     bool full_B_exchange;
+    //! Do we need to exchange full A,Phi,Chi (default=0 <=> only 2 components are exchanged by dimension)
+    bool full_Envelope_exchange;
     
     //! Maxwell Solver (default='Yee')
     std::string maxwell_sol;

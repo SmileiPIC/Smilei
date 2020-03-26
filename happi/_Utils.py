@@ -213,7 +213,13 @@ class Units(object):
 				print("       : The results will stay in code units.")
 				PintWarningIssued = True
 			return
-
+	
+	def _getUnits(self, units):
+		if self.UnitRegistry:
+			return str( self.ureg(units).units )
+		else:
+			return "1"	
+	
 	def _divide(self,units1, units2):
 		division = self.ureg("("+units1+") / ("+units2+")").to_base_units()
 		if not division.dimensionless: raise

@@ -607,7 +607,7 @@ Each species has to be defined in a ``Species`` block::
       # Merging
       merging_method = "vranic_spherical",
       merge_every = 5,
-      merge_min_particles_per_cell = 16,:q
+      merge_min_particles_per_cell = 16,
       merge_max_packet_size = 4,
       merge_min_packet_size = 2,
       merge_momentum_cell_size = [32,16,16],
@@ -755,10 +755,10 @@ Each species has to be defined in a ``Species`` block::
   :default: 0.
 
   The time during which the particles are "frozen", in units of :math:`T_r`.
-  Frozen particles do not move and therefore do not deposit any current density either. 
+  Frozen particles do not move and therefore do not deposit any current density either.
   Nonetheless, they deposit a charge density.
   They are computationally much cheaper than non-frozen particles and oblivious to any EM-fields
-  in the simulation. Note that frozen particles can be ionized (this is computationally much cheaper 
+  in the simulation. Note that frozen particles can be ionized (this is computationally much cheaper
   if ion motion is not relevant).
 
 .. py:data:: ionization_model
@@ -1125,7 +1125,7 @@ It is optionnally specified in the ``Species`` block::
   :default: ``True``
 
   :red:`[for experts]` Activates the accumulation correction
-  (see :ref:`vranic_accululation_effect` for more information).
+  (see :ref:`vranic_accumulation_effect` for more information).
   The correction only works in linear scale.
 
 
@@ -1403,7 +1403,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         time_envelope    = tconstant()
     )
 
-  Note that here, the focus is given in [x,r] coordinates. 
+  Note that here, the focus is given in [x,r] coordinates.
 
 .. rubric:: 7. Defining a generic wave at some distance from the boundary
 
@@ -1484,19 +1484,19 @@ this option.
 
 .. note::
 
-  The envelope model in ``"AMcylindrical"`` geometry is implemented only in the hypothesis of  
+  The envelope model in ``"AMcylindrical"`` geometry is implemented only in the hypothesis of
   cylindrical symmetry, i.e. only one azimuthal mode. Therefore, to use it the user must choose
   ``number_of_AM = 1``.
 
 Contrarily to a standard Laser initialized with the Silver-Müller
 boundary conditions, the laser envelope will be entirely initialized inside
-the simulation box at the start of the simulation. 
+the simulation box at the start of the simulation.
 
 Currently only one laser pulse of a given frequency propagating in the positive
-`x` direction can be speficified. However, a multi-pulse set-up can be initialized 
+`x` direction can be speficified. However, a multi-pulse set-up can be initialized
 if a multi-pulse profile is specified, e.g. if the temporal profile is given by two adjacents gaussian functions.
 The whole multi-pulse profile would have the same carrier frequency and would propagate in the positive
-`x` direction. For the moment it is not possible to specify more than one laser envelope profile, e.g. 
+`x` direction. For the moment it is not possible to specify more than one laser envelope profile, e.g.
 two counterpropagating lasers, or two lasers with different carrier frequency.
 
 
@@ -1531,7 +1531,7 @@ Following is the generic laser envelope creator ::
    :type: a *python* function or a :ref:`python profile <profiles>`
    :default: None
 
-   The laser space-time profile, so if the geometry is ``3Dcartesian`` a function of 4 arguments (3 for space, 1 for time) is necessary. 
+   The laser space-time profile, so if the geometry is ``3Dcartesian`` a function of 4 arguments (3 for space, 1 for time) is necessary.
    Please note that the envelope will be entirely initialized in the simulation box
    already at the start of the simulation, so the time coordinate will be applied
    to the ``x`` direction instead of time. It is recommended to initialize the
@@ -1545,8 +1545,11 @@ Following is the generic laser envelope creator ::
 
   :default: ``explicit``
 
-  For the moment the only available solver for the laser envelope equation is an
-  explicit solver with centered finite differences in space and time.
+  The solver scheme for the envelope equation.
+
+  * ``"explicit"``: an explicit scheme based  on central finite differences.
+  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along `x` in the ``"explicit"`` solver are substituted by 
+    optimized derivatives to reduce numerical dispersion.
 
 .. py:data:: Envelope_boundary_conditions
 
@@ -1621,7 +1624,7 @@ Following is the simplified laser envelope creator in 3D ::
 
 ..
 
-Following is the simplified laser envelope creator in ``"AMcylindrical"`` geometry (remember that 
+Following is the simplified laser envelope creator in ``"AMcylindrical"`` geometry (remember that
 in this geometry the envelope model can be used only if ``number_of_AM = 1``) ::
 
     LaserEnvelopeGaussianAM(
@@ -2438,7 +2441,7 @@ The full list of available scalars is given in the table below.
   units are unusual, and depend on the simulation dimension.
   All details :ref:`here<integrated_quantities>`.
 
-.. rst-class:: nowrap
+.. rst-class:: fancy
 
 +----------------+---------------------------------------------------------------------------+
 | **Space-integrated energy densities**                                                      |
@@ -2528,7 +2531,7 @@ This is done by including a block ``DiagFields``::
   List of the field names that are saved. By default, they all are.
   The full list of fields that are saved by this diagnostic:
 
-  .. rst-class:: nowrap
+  .. rst-class:: fancy
 
   +----------------+-------------------------------------------------------+
   | | Bx           | |                                                     |
@@ -2562,7 +2565,7 @@ This is done by including a block ``DiagFields``::
   If a field is specified without its associated mode number, all available modes will be included.
   In summary, the list of fields reads as follows.
 
-  .. rst-class:: nowrap
+  .. rst-class:: fancy
 
   +------------------------------+-----------------------------------------+
   | | Bl_mode_0, Bl_mode_1, etc. | |                                       |
@@ -2579,7 +2582,7 @@ This is done by including a block ``DiagFields``::
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available:
 
-  .. rst-class:: nowrap
+  .. rst-class:: fancy
 
   +----------------+-------------------------------------------------------+
   | |              | | Module of laser vector potential's complex envelope |
@@ -2593,7 +2596,7 @@ This is done by including a block ``DiagFields``::
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
 
-.. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry, 
+.. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry,
           a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs_mode_0", "Env_Chi_mode_0"]``.
 
 .. py:data:: subgrid

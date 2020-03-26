@@ -72,7 +72,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
                 hasRhoJs = true;
             }
             // If field specific to a species, then allocate it
-            if( params.isSpeciesField( field_name ) ) {
+            if( params.speciesField( field_name ) != "" ) {
                 vecPatches.allocateField( i, params );
             }
         }

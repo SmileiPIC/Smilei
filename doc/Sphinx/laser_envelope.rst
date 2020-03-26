@@ -20,10 +20,10 @@ In the following, the equations of the envelope model are presented, following m
 The envelope approximation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The use of envelope models to describe a laser pulse is well known in PIC codes [Mora1997]_, [Quesnel1998]_, [Gordon2000]_, [Huang2006]_, [Cowan2011]_, [Benedetti2012]_. The basic blocks of a PIC code using an envelope description for the laser are an envelope equation, to describe the evolution of the laser, and equations of motion for the macroparticles, to take into account their interactions with the laser. 
+The use of envelope models to describe a laser pulse is well known in PIC codes [Mora1997]_, [Quesnel1998]_, [Gordon2000]_, [Huang2006]_, [Cowan2011]_, [Benedetti2012]_. The basic blocks of a PIC code using an envelope description for the laser are an envelope equation, to describe the evolution of the laser, and equations of motion for the macro-particles, to take into account their interactions with the laser. 
 The effect of the plasma on laser propagation is taken into account in the envelope equation through the plasma susceptibility, as described in the following section.
-The various PIC codes using an envelope model for the laser solve different versions of the envelope equation, depending mostly on which terms are retained and which ones are neglected, or the set of coordinates used to derive the envelope equation. Also the numerical schemes used to solve the envelope equation and the equations of motion of the particles vary accordingly.
-In :program:`Smilei`, the version of the envelope model written in laboratory frame coordinates, first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [ALaDynZenodo]_, [Terzani]_ is implemented, including the same numerical scheme to solve the lab frame coordinates envelope equation.
+The various PIC codes using an envelope model for the laser solve different versions of the envelope equation, depending mostly on which terms are retained and which ones are neglected, or the set of coordinates used to derive the envelope equation. Also the numerical schemes used to solve the envelope equation and the equations of motion of the macro-particles vary accordingly.
+In :program:`Smilei`, the version of the envelope model written in laboratory frame coordinates, first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [Terzani]_ is implemented, including the same numerical scheme to solve the lab frame coordinates envelope equation.
 
 The basic assumption of the model is the description of the laser pulse vector potential in the complex polarization direction :math:`\hat{A}(\mathbf{x},t)` as a slowly varying envelope :math:`\tilde{A}(\mathbf{x},t)` modulated by fast oscillations at wavelength :math:`\lambda_0`, moving at the speed of light :math:`c`:
 
@@ -39,7 +39,7 @@ where :math:`k_0=2\pi/\lambda_0`. In the language of signal processing, :math:`\
   A=\bar{A} + \hat{A}
 
 In the envelope model context, "slowly varying" means that the spatial and temporal variations of :math:`\bar{A}` and :math:`\tilde{A}` are small enough to be treated perturbatively with respect to the ratio :math:`\epsilon=\lambda_0/\lambda_p`, as described in detail in [Mora1997]_, [Quesnel1998]_, [Cowan2011]_. The laser envelope transverse size :math:`R` and longitudinal size :math:`L` are thus assumed to scale as :math:`R \approx L \approx \lambda_0 / \epsilon` [Mora1997]_, [Quesnel1998]_.
-As described thoroughly in the same references, the coupling between the laser envelope and the plasma particles can be modeled through the addiction of a ponderomotive force term in the particles equations of motion. This term, not representing a real force, is a term rising from an averaging process in the perturbative treatment of the particles motion over the laser optical cycles. 
+As described thoroughly in the same references, the coupling between the laser envelope and the plasma macro-particles can be modeled through the addiction of a ponderomotive force term in the macro-particles equations of motion. This term, not representing a real force, is a term rising from an averaging process in the perturbative treatment of the macro-particles motion over the laser optical cycles. 
 
 Modeling the laser through a complex envelope and its coupling with the plasma through the ponderomotive force will yield physically meaningful results only if the variation scales in space and time are greater than :math:`\lambda_0`, :math:`1/\omega_0`. Examples violating these hypotheses include, but are not limited to, tightly focused lasers, few optical cycles lasers, sharp gradients in the plasma density. 
 
@@ -90,7 +90,7 @@ which describes the evolution of the laser pulse only in terms of the laser enve
 
   \chi(\mathbf{x}) = \sum_s\,\frac{q^2_s}{m_s}\,\sum_p\,\frac{w_p}{\bar{\gamma}_p}\,S\big(\mathbf{x}-\mathbf{\bar{x}}_p\big)\,
 
-where :math:`\bar{\gamma}_p` is the averaged Lorentz factor of the particle :math:`p`. This averaged quantity is computed from the averaged particle momentum :math:`\mathbf{\bar{u}}_p=\mathbf{\bar{p}}_p/m_s` and the envelope :math:`\tilde{A}`:
+where :math:`\bar{\gamma}_p` is the averaged Lorentz factor of the macro-particle :math:`p`. This averaged quantity is computed from the averaged macro-particle momentum :math:`\mathbf{\bar{u}}_p=\mathbf{\bar{p}}_p/m_s` and the envelope :math:`\tilde{A}`:
 
 .. math::
   :label: gamma_ponderomotive
@@ -113,14 +113,14 @@ In :program:`Smilei`, none of these assumptions are made and the full version of
 The ponderomotive equations of motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The process of averaging over the time scale of a laser oscillation period yields a simple result for the particles equations of motion. 
-The averaged position :math:`\mathbf{\bar{x}}_p` and momentum :math:`\mathbf{\bar{u}}_p` of the particle :math:`p` are related to the averaged electromagnetic fields :math:`\mathbf{\bar{E}}_p=\mathbf{\bar{E}}(\mathbf{\bar{x}}_p)`, :math:`\mathbf{\bar{B}}_p=\mathbf{\bar{B}}(\mathbf{\bar{x}}_p)` through the usual equations of motion, with the addition of a ponderomotive force term which models the interaction with the laser:
+The process of averaging over the time scale of a laser oscillation period yields a simple result for the macro-particles equations of motion. 
+The averaged position :math:`\mathbf{\bar{x}}_p` and momentum :math:`\mathbf{\bar{u}}_p` of the macro-particle :math:`p` are related to the averaged electromagnetic fields :math:`\mathbf{\bar{E}}_p=\mathbf{\bar{E}}(\mathbf{\bar{x}}_p)`, :math:`\mathbf{\bar{B}}_p=\mathbf{\bar{B}}(\mathbf{\bar{x}}_p)` through the usual equations of motion, with the addition of a ponderomotive force term which models the interaction with the laser:
 
 .. math::
   :label: ponderomotive_equations_of_motion
  
   \begin{eqnarray}
-  \frac{d\mathbf{\bar{x}}_p}{dt} &=& \frac{\mathbf{\bar{u}_p}}{\bar{\gamma}_p}\,\\
+  \frac{d\mathbf{\bar{x}}_p}{dt} &=& \frac{\mathbf{\bar{u}_p}}{\bar{\gamma}_p}, \,\\
   \frac{d\mathbf{\bar{u}}_p}{dt} &=& r_s \, \left( \mathbf{\bar{E}}_p + \frac{\mathbf{\bar{u}}_p}{\bar{\gamma}_p} \times \mathbf{\bar{B}}_p \right)-r^2_s\thinspace\frac{1}{4\bar{\gamma}_p}\nabla\left(|\tilde{A}_p|^2\right),
   \end{eqnarray}
 
@@ -155,11 +155,11 @@ Since Maxwell's equations :eq:`Maxwell_envelope` remain unaltered, their solutio
 For example, in the envelope equations, the source term involves the unknown envelope :math:`\tilde{A}` itself and :math:`\chi`, which depends on the envelope. The equations of motion contain the term :math:`\bar{\gamma}`, which depends on the envelope :math:`\tilde{A}`.
 The PIC loop described in :doc:`algorithms` is thus modified to self-consistently solve the envelope model equations. At each timestep, the code performs the following operations
 
-#. interpolating the electromagnetic fields and the ponderomotive potential at the particle positions,
+#. interpolating the electromagnetic fields and the ponderomotive potential at the macro-particle positions,
 #. projecting the new plasma susceptibility on the grid,
-#. computing the new particle velocities, 
+#. computing the new macro-particle velocities, 
 #. computing the new envelope values on the grid, 
-#. computing the new particle positions, 
+#. computing the new macro-particle positions, 
 #. projecting the new charge and current densities on the grid,
 #. computing the new electromagnetic fields on the grid.
 
@@ -169,7 +169,7 @@ In this section, we describe these steps which advance the time from time-step :
 
 Field interpolation
 """""""""""""""""""
-The electromagnetic fields and ponderomotive potential interpolation at the particle position at time-step :math:`(n)` follow the same technique described in :doc:`algorithms`:
+The electromagnetic fields and ponderomotive potential interpolation at the macro-particle position at time-step :math:`(n)` follow the same technique described in :doc:`algorithms`:
 
 .. math::
 
@@ -185,24 +185,24 @@ and :math:`V_c` denotes the volume of a cell.
 
 Susceptibility deposition
 """"""""""""""""""""""""""""
-The particle averaged positions :math:`\mathbf{\bar{x}}_p^{(n)}` and averaged momenta :math:`\mathbf{\bar{p}}_p^{(n)}` and the ponderomotive potential :math:`\mathbf{\Phi}_p^{(n)}` are used to compute the ponderomotive Lorentz factor :math:`\bar{\gamma}_p` :eq:`gamma_ponderomotive` and deposit the susceptibility on the grid through Eq. :eq:`susceptibility`.
+The macro-particle averaged positions :math:`\mathbf{\bar{x}}_p^{(n)}` and averaged momenta :math:`\mathbf{\bar{p}}_p^{(n)}` and the ponderomotive potential :math:`\mathbf{\Phi}_p^{(n)}` are used to compute the ponderomotive Lorentz factor :math:`\bar{\gamma}_p` :eq:`gamma_ponderomotive` and deposit the susceptibility on the grid through Eq. :eq:`susceptibility`.
 
 Ponderomotive momentum push
 """"""""""""""""""""""""""""
-The momentum push is performed through a modified version of the well-known `Boris Pusher <https://archive.org/stream/DTIC_ADA023511#page/n7/mode/2up>`_, first implemented in :program:`ALaDyn` [ALaDynZenodo]_.
-The plasma electric, magnetic and ponderomotive potential fields at the particle position :math:`\mathbf{\bar{E}}_p^{(n)}`, :math:`\mathbf{\bar{B}}_p^{(n)}`, :math:`\mathbf{\Phi}_p^{(n)}` are used to advance the momentum :math:`\mathbf{\bar{p}}_p^{(n-1/2)}` from time-step :math:`n−1/2` to time-step :math:`n + 1/2`, solving the momentum equation in Eqs. :eq:`ponderomotive_equations_of_motion`
+The momentum push is performed through a modified version of the well-known `Boris Pusher <https://archive.org/stream/DTIC_ADA023511#page/n7/mode/2up>`_, derived and proposed in [Terzani]_.
+The plasma electric, magnetic and ponderomotive potential fields at the macro-particle position :math:`\mathbf{\bar{E}}_p^{(n)}`, :math:`\mathbf{\bar{B}}_p^{(n)}`, :math:`\mathbf{\Phi}_p^{(n)}` are used to advance the momentum :math:`\mathbf{\bar{p}}_p^{(n-1/2)}` from time-step :math:`n−1/2` to time-step :math:`n + 1/2`, solving the momentum equation in Eqs. :eq:`ponderomotive_equations_of_motion`
 
 Envelope equation solution
 """"""""""""""""""""""""""""
 Now that the averaged susceptibility is known at time-step :math:`n`, the envelope can be advanced solving the envelope equation :eq:`envelope_equation`. 
-Central spatial and temporal finite differences are used to discretize the derivatives in the envelope equation and obtain an explicit solver scheme [ALaDynZenodo]_, [Terzani]_. The envelope :math:`A` at time-step :math:`n+1` can thus be computed from its value at timesteps :math:`n`, :math:`n-1` and the suceptibility :math:`\chi` at time-step :math:`n`. The value of the envelope at timestep :math:`n` is conserved for the next iteration of the time loop. 
-A main advantage of this numerical scheme is its straightforward parallelization in 3D, due to the locality of the operations involved.
+In the two solver schemes available in the code (see below), the envelope :math:`A` at time-step :math:`n+1` is computed from its value at timesteps :math:`n`, :math:`n-1` and the suceptibility :math:`\chi` at time-step :math:`n`. The value of the envelope at timestep :math:`n` is conserved for the next iteration of the time loop. 
+A main advantage of these explicit numerical schemes is their straightforward parallelization in 3D, due to the locality of the operations involved.
 
 Ponderomotive position push
 """"""""""""""""""""""""""""
-The updated ponderomotive potential is interpolated at particle positions to obtain :math:`\mathbf{\Phi}_p^{(n+1)}`. 
+The updated ponderomotive potential is interpolated at macro-particle positions to obtain :math:`\mathbf{\Phi}_p^{(n+1)}`. 
 Afterwards, the temporal interpolation :math:`\mathbf{\Phi}_p^{(n+1/2)}=\left(\mathbf{\Phi}_p^{(n)}+\mathbf{\Phi}_p^{(n+1)}\right)/2` is performed. 
-The updated ponderomotive Lorentz factor :math:`\bar{\gamma}_p^{(n+1/2)}` can be computed and the averaged position of each particle can be advanced solving the last of Eqs. :eq:`ponderomotive_equations_of_motion`:
+The updated ponderomotive Lorentz factor :math:`\bar{\gamma}_p^{(n+1/2)}` can be computed and the averaged position of each macro-particle can be advanced solving the last of Eqs. :eq:`ponderomotive_equations_of_motion`:
 
 .. math::
 
@@ -222,6 +222,46 @@ Now that the averaged currents are known at time-step :math:`n+\tfrac{1}{2}`, th
 fields can be advanced solving Maxwell's equations :eq:`Maxwell_envelope`. Their solution is identical to the one described in :doc:`algorithms` for the corresponding non-averaged quantities.
 
 
+----
+
+The numerical solution of the envelope equation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To solve Eq. :eq:`envelope_equation`, two explicit numerical schemes are implemented in the code, first implemented in the PIC code :program:`ALaDyn` [Benedetti2008]_ and described in [Terzani]_.
+
+In the first scheme, denoted as ``"explicit"`` in the input namelist, the well known central finite differences are used to discretize the envelope equation.
+In 1D for example, the spatial and time derivatives of the envelope :math:`\tilde{A}` at time-step :math:`n` and spatial index :math:`i` are thus approximated by:
+
+.. math::
+
+  D_x\tilde{A}\bigg\rvert^{n}_{i}&=&\frac{\tilde{A}^n_{i+1}-\tilde{A}^n_{i-1}}{2\Delta x},\\
+  D_t\tilde{A}\bigg\rvert^{n}_{i}&=&\frac{\tilde{A}^{n+1}_{i}-\tilde{A}^{n-1}_{i}}{2\Delta t},\\
+  D_{xx}\tilde{A}\bigg\rvert^{n}_{i}&=&\frac{\tilde{A}^n_{i+1}-2\tilde{A}^n_{i}+\tilde{A}^n_{i-1}}{\Delta x^2},\\
+  D_{tt}\tilde{A}\bigg\rvert^{n}_{i}&=&\frac{\tilde{A}^{n+1}_{i}-2\tilde{A}^n_{i}+\tilde{A}^{n-1}_{i}}{\Delta t^2},
+
+where :math:`\Delta x, \Delta t` are the cell size in the `x` direction and the integration time-step respectively.
+
+In the second scheme, denoted as ``"explicit_reduced_dispersion"`` in the input namelist, the finite difference approximations for the derivatives along 
+the propagation direction `x` are substituted by optimized finite differences that reduce the numerical dispersion in that direction (see [Terzani]_ for the derivation).
+Namely, defining :math:`\nu=\Delta t/\Delta x`, :math:`\delta=(1-\nu^2)/3`, these optimized derivatives can be written as:
+
+.. math::
+
+  D_{x,opt}\tilde{A}\bigg\rvert^{n}_{i}&=& (1+\delta)D_x\tilde{A}\bigg\rvert^{n}_{i}-\delta\left(\frac{\tilde{A}^n_{i+2}-\tilde{A}^n_{i-2}}{4\Delta x}\right),\\
+  D_{xx,opt}\tilde{A}\bigg\rvert^{n}_{i}&=& (1+\delta)D_{xx}\tilde{A}\bigg\rvert^{n}_{i}-\delta\left(\frac{\tilde{A}^n_{i+2}-2\tilde{A}^n_{i}+\tilde{A}^n_{i-2}}{4\Delta x^2}\right).\\
+ 
+In both schemes, after substituting the spatial and temporal derivative with the chosen finite differences forms, 
+an explicit update of :math:`\tilde{A}^{n+1}_i`, function of :math:`\tilde{A}^{n}_i`, :math:`\tilde{A}^{n}_{i-1}`, :math:`\tilde{A}^{n}_{i+1}`, :math:`\tilde{A}^{n-1}_i` and :math:`\chi^{n}_i` can  be easily found. 
+In the reduced dispersion scheme, also the values :math:`\tilde{A}^{n}_{i-2}`, :math:`\tilde{A}^{n}_{i+2}` are necessary for the update.
+The locality of the abovementioned finite difference stencils allows a parallelization with well known techniques and the extension to the other geometries is straightforward. 
+The discretization of the transverse components of the Laplacian in Eq. :eq:`envelope_equation` in Cartesian geometry uses the central finite differences defined above, applied to the `y` and `z` axes.
+In cylindrical geometry (see :doc:`azimuthal_modes_decomposition`), the transverse part of the Laplacian is discretized as:
+
+.. math::
+
+  D^2_{\perp, cyl}\tilde{A}\rvert^{n}_{i,j} = \frac{\tilde{A}^n_{i,j+1}-2\tilde{A}^n_{i,j}+\tilde{A}^n_{i,j-1}}{\Delta r^2} + \frac{1}{r_j}\frac{\tilde{A}^n_{i,j+1}-\tilde{A}^n_{i,j-1}}{2\Delta r},
+
+where :math:`j, r, \Delta r` are the transverse index, the distance from the propagation axis and the radial cell size respectively.
 
 
 ----
@@ -242,8 +282,6 @@ References
 .. [Benedetti2012] `C. Benedetti et al., Proceedings of the 11th International Computational Accelerator Physics Conference (ICAP 2012) <http://jacow.org/ICAP2012/papers/thaai2.pdf>`_
 
 .. [Benedetti2008] `C. Benedetti et al., IEEE Transactions on Plasma Science 36, 1790 (2008) <http://dx.doi.org/10.1109/TPS.2008.927143>`_
-
-.. [ALaDynZenodo] `S. Sinigardi et al., ALaDyn v2017.1 zenodo (2017) <https://doi.org/10.5281/zenodo.1065413>`_
 
 .. [Terzani] `D. Terzani and P. Londrillo, Computer Physics Communications 242, 49 (2019) <https://doi.org/10.1016/j.cpc.2019.04.007>`_ 
 

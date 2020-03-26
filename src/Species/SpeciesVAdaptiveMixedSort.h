@@ -32,7 +32,7 @@ public:
     //! regardless the number of particles per cell
     void defaultConfigure( Params &params, Patch *patch ) override;
     
-    void sortParticles( Params &params ) override;
+    void sortParticles( Params &params, Patch * patch ) override;
     
     //! This function configures the species according to the vectorization mode
     void configuration( Params &params, Patch *patch ) override;

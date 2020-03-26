@@ -421,7 +421,7 @@ public:
     virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields );
 
     //! Method used to sort particles
-    virtual void sortParticles( Params &param );
+    virtual void sortParticles( Params &param, Patch * patch );
 
     virtual void computeParticleCellKeys( Params &params ) {};
 
@@ -469,13 +469,13 @@ public:
     //! Get the energy lost in the boundary conditions
     double getLostNrjBC() const
     {
-        return mass_*nrj_bc_lost;
+        return nrj_bc_lost;
     }
 
     //! Get energy lost with moving window (fields)
     double getLostNrjMW() const
     {
-        return mass_*nrj_mw_lost;
+        return nrj_mw_lost;
     }
 
     //! Get the energy radiated away by the particles
@@ -519,11 +519,12 @@ public:
     inline double computeNRJ()
     {
         double nrj( 0. );
-        if( this->mass_ > 0 ) {
+        if( mass_ > 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
                 nrj += particles->weight( iPart )*( particles->LorentzFactor( iPart )-1.0 );
             }
-        } else if( this->mass_ == 0 ) {
+            nrj *= mass_;
+        } else if( mass_ == 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
                 nrj += particles->weight( iPart )*( particles->momentumNorm( iPart ) );
             }
@@ -567,6 +568,20 @@ public:
         }
 
         return s_gamma;
+    }
+
+    typedef double (Species::*fptr)(Particles*, int, int);
+    //Array of pointers to functions measuring distance along each dimension.
+    fptr distance[3];
+
+    double cartesian_distance(Particles *part, int idim, int ipart){
+        return part->position(idim, ipart) - min_loc_vec[idim];
+    }
+
+    double radial_distance(Particles *part, int idim, int ipart){
+        return sqrt(  part->position(idim  , ipart) * part->position(idim  , ipart)
+                    + part->position(idim+1, ipart) * part->position(idim+1, ipart))
+               - min_loc_vec[idim];
     }
     
     //! Erase all particles with zero weight

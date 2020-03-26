@@ -220,6 +220,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // communication pattern initialized as partial B exchange
     full_B_exchange = false;
+    // communication pattern initialized as partial A, Phi exchange for envelope simulations
+    full_Envelope_exchange = false;
 
     // --------------
     // Stop & Restart
@@ -352,6 +354,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
         }
 
+
         // Find if at least one species is ionized by envelope
         int n_species = PyTools::nComponents( "Species" );
         std:: string ionization_model;
@@ -364,6 +367,19 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 
             }
         }
+
+        // Read envelope solver for the envelope equation
+        if (!PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" )){
+            ERROR("envelope_solver not defined in the LaserEnvelope block");
+        }
+        if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
+            ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
+        }
+        if ((envelope_solver == "explicit_reduced_dispersion") && (geometry!="1Dcartesian")){
+            full_Envelope_exchange = true;
+        }
+
+
     }
 
     for( unsigned int iDim = 0 ; iDim < nDim_field; iDim++ ) {
@@ -752,24 +768,33 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     unsigned int n_laser = PyTools::nComponents( "Laser" );
     unsigned int n_laser_offset = 0;
     LaserPropagator propagateX;
-
+    
     for( unsigned int i_laser=0; i_laser<n_laser; i_laser++ ) {
         double offset = 0.;
-
+        
         // If this laser has the hidden _offset attribute
         if( PyTools::extract( "_offset", offset, "Laser", i_laser ) ) {
-
+            
+            bool propagate = false;
+            PyTools::extract( "_propagate", propagate, "Laser", i_laser );
+            if( ! propagate ) continue;
+            
+            // Extract the angle
+            double angle_z = 0.;
+            PyTools::extract( "_angle", angle_z, "Laser", i_laser );
+            
+            // Prepare propagator
             if( n_laser_offset == 0 ) {
                 TITLE( "Pre-processing LaserOffset" );
                 propagateX.init( this, smpi, 0 );
             }
-
+            
             MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
-
+            
             // Extract the file name
             string file( "" );
             PyTools::extract( "file", file, "Laser", i_laser );
-
+            
             // Extract the list of profiles and verify their content
             PyObject *p = PyTools::extract_py( "_profiles", "Laser", i_laser );
             vector<PyObject *> profiles;
@@ -792,7 +817,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             if( profiles.size() == 0 ) {
                 ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile cannot be [None, None]" );
             }
-            for( int i=0; i<2; i++ ) {
+            for( unsigned int i=0; i<profiles.size(); i++ ) {
                 int nargs = PyTools::function_nargs( profiles[i] );
                 if( nargs<0 ) {
                     ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] not callable" );
@@ -801,34 +826,22 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                     ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs );
                 }
             }
-
-            // Extract the box side
-            string box_side;
-            if( !PyTools::extract( "box_side", box_side, "Laser", i_laser ) || ( box_side!="xmin" && box_side!="xmax" ) ) {
-                ERROR( "For LaserOffset #" << n_laser_offset << ": box_side must be a 'xmin' or 'xmax'" );
-            }
-            //unsigned int side = string("xyz").find(box_side[0]);
-
+            
             // Extract _keep_n_strongest_modes
             int keep_n_strongest_modes=0;
             if( !PyTools::extract( "_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser ) || keep_n_strongest_modes<1 ) {
                 ERROR( "For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer" );
             }
-
-            // Extract the angle
-            double angle_z = 0.;
-            PyTools::extract( "_angle", angle_z, "Laser", i_laser );
-
+            
             // Make the propagation happen and write out the file
-            if( ! smpi->test_mode ) {
+            if( ! smpi->test_mode && ! restart ) {
                 propagateX( profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
             }
-
+            
             n_laser_offset ++;
         }
     }
-
-
+    
     check_consistency();
 }
 
@@ -903,7 +916,7 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
-
+    
     // Set clrw if not set by the user
     if( clrw == -1 ) {
 
@@ -955,7 +968,7 @@ void Params::check_consistency()
 {
     if( vectorization_mode != "off" ) {
 
-        if( ( geometry=="1Dcartesian" ) || ( geometry=="AMcylindrical" ) ) {
+        if( ( geometry=="1Dcartesian" ) ) {
             ERROR( "Vectorized algorithms not implemented for this geometry" );
         }
 
@@ -1135,7 +1148,7 @@ void Params::print_parallelism_params( SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 // Finds requested species in the list of existing species.
 // Returns an array of the numbers of the requested species.
-// Note that there might be several species that have the same "name" or "type"
+// Note that there might be several species that have the same "name"
 //  so that we have to search for all possibilities.
 vector<unsigned int> Params::FindSpecies( vector<Species *> &vecSpecies, vector<string> requested_species )
 {
@@ -1223,20 +1236,20 @@ void Params::cleanup( SmileiMPI *smpi )
     smpi->barrier();
 }
 
-bool Params::isSpeciesField( string field_name )
+string Params::speciesField( string field_name )
 {
-    if( geometry!="AMcylindrical" ) {
-        if( ( field_name.at( 0 )=='J' && field_name.length()>2 )
-                || ( field_name.at( 0 )=='R' && field_name.length()>3 ) ) {
-            return true;
+    if( geometry != "AMcylindrical" ) {
+        size_t i1 = field_name.rfind( "_" );
+        size_t l = field_name.length();
+        if( i1 != string::npos && l-i1 > 2 ) {
+            return field_name.substr( i1+1, l-i1-1 );
         }
     } else {
-        if( ( ( field_name.at( 0 )=='J' && field_name.length()>8 )
-                && ( field_name.substr( 2, 6 )!="_mode_" || field_name.find( "mode_" ) != field_name.rfind( "mode_" ) ) )
-                || ( ( field_name.at( 0 )=='R' && field_name.length()>9 )
-                     && ( field_name.substr( 3, 6 )!="_mode_" || field_name.find( "mode_" ) != field_name.rfind( "mode_" ) ) ) ) {
-            return true;
+        size_t i1 = field_name.find( "_" );
+        size_t i2 = field_name.rfind( "_mode_" );
+        if( i1 != string::npos && i2 != string::npos && i2-i1 > 2 ) {
+            return field_name.substr( i1+1, i2-i1-1 );
         }
     }
-    return false;
+    return "";
 }

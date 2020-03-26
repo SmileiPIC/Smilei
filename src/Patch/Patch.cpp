@@ -833,7 +833,7 @@ void Patch::importAndSortParticles( SmileiMPI *smpi, int ispec, Params &params, 
     timer = MPI_Wtime();
 #endif
 
-    vecSpecies[ispec]->sortParticles( params );
+    vecSpecies[ispec]->sortParticles( params , this);
 
 #ifdef  __DETAILED_TIMERS
     this->patch_timers[13] += MPI_Wtime() - timer;

@@ -502,7 +502,7 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = space_time_envelope,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
         polarization_phi    = polarization_phi,
         ellipticity         = ellipticity
@@ -575,7 +575,7 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = gaussian_beam_with_temporal_profile,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
         polarization_phi    = polarization_phi,
         ellipticity         = ellipticity
@@ -652,7 +652,7 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = gaussian_beam_with_temporal_profile,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
         polarization_phi    = polarization_phi,
         ellipticity         = ellipticity
@@ -709,7 +709,7 @@ def LaserEnvelopeGaussianAM( a0=1., omega=1., focus=None, waist=3., time_envelop
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = gaussian_beam_with_temporal_profile,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
         polarization_phi    = polarization_phi,
         ellipticity         = ellipticity
@@ -736,6 +736,7 @@ try:
         L._profiles = space_time_profile
         L._keep_n_strongest_modes = keep_n_strongest_modes
         L._angle = angle
+        L._propagate = True
         
         _N_LaserOffset += 1
 

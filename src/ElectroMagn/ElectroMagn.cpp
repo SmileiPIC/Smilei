@@ -162,7 +162,11 @@ void ElectroMagn::finishInitialization( int nspecies, Patch *patch )
         allFields.push_back( Env_E_abs_ );
     }
     
+    // For species-related fields
+    // The order is necessary in DiagnosticProbes - DO NOT CHANGE -
+    species_starts.resize( 0 );
     for( int ispec=0; ispec<nspecies; ispec++ ) {
+        species_starts.push_back( allFields.size() );
         allFields.push_back( Jx_s[ispec] );
         allFields.push_back( Jy_s[ispec] );
         allFields.push_back( Jz_s[ispec] );
@@ -171,6 +175,7 @@ void ElectroMagn::finishInitialization( int nspecies, Patch *patch )
             allFields.push_back( Env_Chi_s[ispec] );
         }
     }
+    species_starts.push_back( allFields.size() );
     
 }
 

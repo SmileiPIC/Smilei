@@ -5,8 +5,12 @@ S = happi.Open(["./restart*"], verbose=False)
 
 
 # COMPARE THE Ey FIELD in polarization plane
-Ey = S.Field(0, "Er", theta=0, timesteps=1700.).getData()[0]
+Ey = S.Field(0, "Er", theta=0, timesteps=1700.).getData()[0][::4,::4]
 Validate("Ey field at iteration 1700", Ey, 0.01)
+
+# COMPARE THE Ey FIELD in polarization plane + SUBGRID
+Ey = S.Field(0, "Er", theta=0, timesteps=1700.).getData()[0][::4,::4]
+Validate("Ey field subgrid at iteration 1700", Ey, 0.01)
 
 # TEST THE GRID PARAMETERS
 with h5py.File("./restart000/Fields0.h5") as f:

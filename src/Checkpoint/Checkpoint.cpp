@@ -21,6 +21,7 @@
 #include "ElectroMagnBC1D_SM.h"
 #include "ElectroMagnBC2D_SM.h"
 #include "ElectroMagnBC3D_SM.h"
+#include "Laser.h"
 #include "Species.h"
 #include "PatchesFactory.h"
 #include "DiagnosticScreen.h"
@@ -84,14 +85,20 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             MESSAGE( 1, "Code will group checkpoint files by "<< file_grouping );
         }
         
+        smpi->barrier();
+        
         if( params.restart ) {
             std::vector<std::string> restart_files;
             PyTools::extract( "restart_files", restart_files, "Checkpoints" );
             
             // This will open all dumps and pick the last one
+            restart_file = "";
             for( unsigned int num_dump=0; num_dump<restart_files.size(); num_dump++ ) {
                 string dump_name=restart_files[num_dump];
-                hid_t fid = H5Fopen( dump_name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
+                hid_t fid = H5::Fopen( dump_name );
+                if( fid < 0 ) {
+                    continue;
+                }
                 unsigned int stepStartTmp=0;
                 H5::getAttr( fid, "dump_step", stepStartTmp );
                 if( stepStartTmp>this_run_start_step ) {
@@ -103,8 +110,30 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
                 H5Fclose( fid );
             }
             
-            if( restart_file.empty() ) {
-                ERROR( "Cannot find a valid restart file" );
+            if( restart_file == "" ) {
+                ERROR( "Cannot find a valid restart file for rank "<<smpi->getRank() );
+            }
+            
+            // Make sure all ranks have the same dump number
+            // Different numbers can be due to corrupted restart files
+            unsigned int prev_number;
+            MPI_Status status;
+            MPI_Sendrecv(
+                &dump_number, 1, MPI_UNSIGNED, (smpi->getRank()+1) % smpi->getSize(), smpi->getRank(),
+                &prev_number, 1, MPI_UNSIGNED, (smpi->getRank()+smpi->getSize()-1) % smpi->getSize(), (smpi->getRank()+smpi->getSize()-1)%smpi->getSize(),
+                smpi->SMILEI_COMM_WORLD, &status
+            );
+            int problem = (prev_number != dump_number);
+            int any_problem;
+            MPI_Allreduce( &problem, &any_problem, 1, MPI_INT, MPI_LOR, smpi->SMILEI_COMM_WORLD );
+            if( any_problem ) {
+                if( problem ) {
+                    ostringstream t("");
+                    t << "\t[ERROR]: Issue with restart file on rank " << smpi->getRank() << endl;
+                    cout << t.str();
+                }
+                MPI_Finalize();
+                exit(EXIT_FAILURE);
             }
             
 #ifdef  __DEBUG
@@ -168,6 +197,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *s
                 MPI_Recv( &time_dump_step, 1, MPI_UNSIGNED, 0, SMILEI_COMM_DUMP_TIME, smpi->SMILEI_COMM_WORLD, &dump_status_recv );
             }
         }
+        smpi->barrier();
     }
     
     if( signal_received!=0 ||
@@ -198,7 +228,11 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
     
     hid_t fid = H5Fcreate( dumpName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
-    dump_number++;
+    if (fid<0) {
+        ERROR("Can't open file for writing checkpoint " << dumpName.c_str())
+    } else {
+        dump_number++;
+    }
     
 #ifdef  __DEBUG
     MESSAGEALL( "Step " << itime << " : DUMP fields and particles " << dumpName );
@@ -280,7 +314,10 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         dumpMovingWindow( fid, simWin );
     }
     
-    H5Fclose( fid );
+    herr_t tclose = H5Fclose( fid );
+    if (tclose < 0) {
+        ERROR("Can't close file " << dumpName.c_str())
+    }
     
 }
 
@@ -450,6 +487,34 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
         rate_multiplier[icoll] = vecCollisions[icoll]->NuclearReaction->rate_multiplier_;
     }
     H5::vect( patch_gid, "collisions_rate_multiplier", rate_multiplier );
+    
+    // Save data for LaserProfileFile (i.e. LaserOffset)
+    for( unsigned int ii = 0; ii < 2; ii++ ) {
+        if( ! EMfields->emBoundCond[ii] ) continue;
+        std::vector<Laser *> * veclaser = & EMfields->emBoundCond[ii]->vecLaser;
+        for( unsigned int ilas = 0; ilas < veclaser->size(); ilas++ ) {
+            Laser * las = (*veclaser)[ilas];
+            for( unsigned int iprof = 0; iprof < las->profiles.size(); iprof++ ) {
+                LaserProfile * prof = las->profiles[iprof];
+                if( dynamic_cast<LaserProfileFile *>( prof ) ) {
+                    LaserProfileFile *p = static_cast<LaserProfileFile *>( prof );
+                    if( p->magnitude && p->phase ) {
+                        ostringstream t1, t2, t3, t4;
+                        t1 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_mag";
+                        t2 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_phase";
+                        t3 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_omega";
+                        t4 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_dims";
+                        p->magnitude->name = t1.str();
+                        p->phase->name = t2.str();
+                        dumpFieldsPerProc( patch_gid, p->magnitude );
+                        dumpFieldsPerProc( patch_gid, p->phase );
+                        H5::vect( patch_gid, t3.str(), p->omega );
+                        H5::vect( patch_gid, t4.str(), p->magnitude->dims_ );
+                    }
+                }
+            }
+        }
+    }
 };
 
 
@@ -768,6 +833,37 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
         H5::getVect( patch_gid, "collisions_rate_multiplier", rate_multiplier, true );
         for( unsigned int icoll = 0; icoll<rate_multiplier.size(); icoll++ ) {
             vecCollisions[icoll]->NuclearReaction->rate_multiplier_ = rate_multiplier[icoll];
+        }
+    }
+    
+    // Load data for LaserProfileFile (i.e. LaserOffset)
+    for( unsigned int ii = 0; ii < 2; ii++ ) {
+        if( ! EMfields->emBoundCond[ii] ) continue;
+        std::vector<Laser *> * veclaser = & EMfields->emBoundCond[ii]->vecLaser;
+        for( unsigned int ilas = 0; ilas < veclaser->size(); ilas++ ) {
+            Laser * las = (*veclaser)[ilas];
+            for( unsigned int iprof = 0; iprof < las->profiles.size(); iprof++ ) {
+                LaserProfile * prof = las->profiles[iprof];
+                if( dynamic_cast<LaserProfileFile *>( prof ) ) {
+                    LaserProfileFile *p = static_cast<LaserProfileFile *>( prof );
+                    if( p->magnitude && p->phase ) {
+                        ostringstream t1, t2, t3, t4;
+                        t1 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_mag";
+                        t2 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_phase";
+                        t3 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_omega";
+                        t4 << "LaserFile_" << ii << "_" << ilas << "_" << iprof << "_dims";
+                        p->magnitude->name = t1.str();
+                        p->phase->name = t2.str();
+                        vector<unsigned int> dims;
+                        H5::getVect( patch_gid, t4.str(), dims, true );
+                        p->magnitude->allocateDims( dims );
+                        p->phase->allocateDims( dims );
+                        restartFieldsPerProc( patch_gid, p->magnitude );
+                        restartFieldsPerProc( patch_gid, p->phase );
+                        H5::getVect( patch_gid, t3.str(), p->omega, true );
+                    }
+                }
+            }
         }
     }
 }

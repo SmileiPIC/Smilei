@@ -199,6 +199,10 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
                 if( patch->isZmin() ) {
                     bc_zmin = &stop_particle;
                 }
+            } else if( species->boundary_conditions[2][0] == "thermalize" ) {
+                if( patch->isZmin() ) {
+                    bc_zmin = &thermalize_particle;
+                }
             } else if( species->boundary_conditions[2][0] == "periodic" ) {
             } else {
                 ERROR( "Zmin boundary condition `"<< species->boundary_conditions[2][0] << "` unknown" );
@@ -216,6 +220,10 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
                 if( patch->isZmax() ) {
                     bc_zmax = &stop_particle;
                 }
+            } else if( species->boundary_conditions[2][1] == "thermalize" ) {
+                if( patch->isZmax() ) {
+                    bc_zmax = &thermalize_particle;
+                }
             } else if( species->boundary_conditions[2][1] == "periodic" ) {
             } else {
                 ERROR( "Zmax boundary condition `"<< species->boundary_conditions[2][1] << "` unknown" );
@@ -225,26 +233,6 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         
     }//nDim_particle>1
     else if( isAM ) {
-#ifdef _TODO_AM
-        // rmin !!!
-        //        §§ none !!!
-#endif
-        // Ymin
-        //if ( species->boundary_conditions[1][0] == "reflective" ) {
-        //    if (patch->isYmin()) bc_ymin = &refl_particle_AM;
-        //}
-        //else if ( species->boundary_conditions[1][0] == "remove" ) {
-        //    if (patch->isYmin()) bc_ymin = &remove_particle;
-        //}
-        //else if ( species->boundary_conditions[1][0] == "stop" ) {
-        //    if (patch->isYmin()) bc_ymin = &stop_particle_AM;
-        //}
-        //else if ( species->boundary_conditions[1][0] == "none" ) {
-        //    if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->name_ << " is 'none', which means the same as fields");
-        //}
-        //else {
-        //    ERROR( "Ymin boundary condition undefined : " << species->boundary_conditions[1][0]  );
-        //}
         
         // Ymax
         if( species->boundary_conditions[1][1] == "remove" ) {
@@ -256,19 +244,10 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
                 bc_ymax = &refl_particle_AM;
             }
         }
-        //else if ( species->boundary_conditions[1][1] == "stop" ) {
-        //    if (patch->isYmax()) bc_ymax = &stop_particle_AM;
-        //}
-        //else if ( species->boundary_conditions[1][1] == "none" ) {
-        //    if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->name_ << " is 'none', which means the same as fields");
-        //}
         else {
-            //ERROR( "Ymax boundary condition undefined : " << species->boundary_conditions[1][1]  );
             ERROR( "Only Remove and reflective boundary conditions can be applied to particles in AM geometry " );
         }
     }
-    
-    
 }
 
 

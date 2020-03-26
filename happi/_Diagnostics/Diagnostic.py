@@ -66,14 +66,6 @@ class Diagnostic(object):
 			return
 		self.units.prepare(self.simulation._reference_angular_frequency_SI)
 		
-		# DEPRECATION ERRORS
-		if "slice" in kwargs:
-			self._error += ["Argument `slice` is deprecated: use `subset` instead."]
-			return
-		if "stride" in kwargs:
-			self._error += ["Argument `stride` is deprecated: use `average` or `sum` instead."]
-			return
-		
 		# Call the '_init' function of the child class
 		remaining_kwargs = self._init(*args, **kwargs)
 		if remaining_kwargs is not None and len(remaining_kwargs) > 0:
@@ -139,7 +131,7 @@ class Diagnostic(object):
 		l = []
 		factor = [self._xfactor, self._yfactor]
 		for i in range(self.dim):
-			l.append([min(self._centers[i])*factor[i], max(self._centers[i])*factor[i]])
+			l.append([self._centers[i].min()*factor[i], self._centers[i].max()*factor[i]])
 		return l
 
 	# Method to print info on this diag

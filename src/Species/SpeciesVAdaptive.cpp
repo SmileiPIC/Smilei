@@ -191,108 +191,111 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             }
         }
 
-#ifdef  __DETAILED_TIMERS
-        timer = MPI_Wtime();
-#endif
-        // Push the particles and the photons
-        ( *Push )( *particles, smpi, 0, last_index.back(), ithread, 0. );
-#ifdef  __DETAILED_TIMERS
-        patch->patch_timers[1] += MPI_Wtime() - timer;
-        timer = MPI_Wtime();
-#endif
-
-        // Computation of the particle cell keys for all particles
-        // this->compute_bin_cell_keys(params,0, last_index.back());
-
-        for( unsigned int scell = 0 ; scell < first_index.size() ; scell++ ) {
-            // Apply wall and boundary conditions
-            if( mass_>0 ) {
-                for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                    for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
-                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                        if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
-                            nrj_lost_per_thd[tid] += mass_ * ener_iPart;
-                        }
-                    }
-                }
-
-                for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
-                    if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                        addPartInExchList( iPart );
-                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
-                        particles->cell_keys[iPart] = -1;
-                    } else {
-                        //Compute cell_keys of remaining particles
-                        for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
-                            particles->cell_keys[iPart] *= this->length_[i];
-                            particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
-                        }
-                        //First reduction of the count sort algorithm. Lost particles are not included.
-                        count[particles->cell_keys[iPart]] ++;
-                    }
-                }
-
-            } else if( mass_==0 ) {
-                for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                    for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
-                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                        if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
-                            nrj_lost_per_thd[tid] += ener_iPart;
-                        }
-                    }
-                }
-
-                // Boundary Condition may be physical or due to domain decomposition
-                // apply returns 0 if iPart is not in the local domain anymore
-                //        if omp, create a list per thread
-                for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
-                    if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                        addPartInExchList( iPart );
-                        nrj_lost_per_thd[tid] += ener_iPart;
-                        particles->cell_keys[iPart] = -1;
-                    } else {
-                        //Compute cell_keys of remaining particles
-                        for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
-                            particles->cell_keys[iPart] *= this->length_[i];
-                            particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
-                        }
-                        //First reduction of the count sort algorithm. Lost particles are not included.
-                        count[particles->cell_keys[iPart]] ++;
-                    }
-                }
-            } // end if mass_ > 0
-        } // end loop on cells
-
-#ifdef  __DETAILED_TIMERS
-        patch->patch_timers[3] += MPI_Wtime() - timer;
-#endif
-
-        // Project currents if not a Test species and charges as well if a diag is needed.
-        // Do not project if a photon
-        if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
+    if( time_dual>time_frozen_ ) { // do not push, nor apply particles BC, nor project frozen particles
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Proj->currentsAndDensityWrapper(
-                EMfields, *particles, smpi, first_index[0],
-                last_index.back(),
-                ithread,
-                diag_flag,
-                params.is_spectral,
-                ispec
-            );
+            // Push the particles and the photons
+            ( *Push )( *particles, smpi, 0, last_index.back(), ithread, 0. );
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[2] += MPI_Wtime() - timer;
+            patch->patch_timers[1] += MPI_Wtime() - timer;
+            timer = MPI_Wtime();
 #endif
 
-        }
+            // Computation of the particle cell keys for all particles
+            // this->compute_bin_cell_keys(params,0, last_index.back());
+
+            for( unsigned int scell = 0 ; scell < first_index.size() ; scell++ ) {
+                // Apply wall and boundary conditions
+                if( mass_>0 ) {
+                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                        for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
+                            double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                            if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
+                                nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                            }
+                        }
+                    }
+
+                    for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
+                        if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                            addPartInExchList( iPart );
+                            nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                            particles->cell_keys[iPart] = -1;
+                        } else {
+                            //Compute cell_keys of remaining particles
+                            for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
+                                particles->cell_keys[iPart] *= this->length_[i];
+                                particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
+                            }
+                            //First reduction of the count sort algorithm. Lost particles are not included.
+                            count[particles->cell_keys[iPart]] ++;
+                        }
+                    }
+
+                } else if( mass_==0 ) {
+                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                        for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
+                            double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                            if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
+                                nrj_lost_per_thd[tid] += ener_iPart;
+                            }
+                        }
+                    }
+
+                    // Boundary Condition may be physical or due to domain decomposition
+                    // apply returns 0 if iPart is not in the local domain anymore
+                    //        if omp, create a list per thread
+                    for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
+                        if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                            addPartInExchList( iPart );
+                            nrj_lost_per_thd[tid] += ener_iPart;
+                            particles->cell_keys[iPart] = -1;
+                        } else {
+                             //Compute cell_keys of remaining particles
+                            for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
+                                particles->cell_keys[iPart] *= this->length_[i];
+                                particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
+                            }
+                            //First reduction of the count sort algorithm. Lost particles are not included.
+                            count[particles->cell_keys[iPart]] ++;
+                        }
+                    }
+                } // end if mass_ > 0
+            } // end loop on cells
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[3] += MPI_Wtime() - timer;
+#endif
+
+            // Project currents if not a Test species and charges as well if a diag is needed.
+            // Do not project if a photon
+            if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
+
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+                Proj->currentsAndDensityWrapper(
+                    EMfields, *particles, smpi, first_index[0],
+                    last_index.back(),
+                    ithread,
+                    diag_flag,
+                    params.is_spectral,
+                    ispec
+            );
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[2] += MPI_Wtime() - timer;
+#endif
+
+            }
+        } // end if moving particle
 
         for( unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++ ) {
             nrj_bc_lost += nrj_lost_per_thd[tid];
         }
 
-    }
+    }  // end if moving particle or ionize
 
     if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
 

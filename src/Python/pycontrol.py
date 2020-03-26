@@ -21,11 +21,11 @@ def _prepare_checkpoint_dir():
     # Checkpoint: prepare dir tree
     if smilei_mpi_rank == 0 and (Checkpoints.dump_step>0 or Checkpoints.dump_minutes>0.):
         checkpoint_dir = "." + os.sep + "checkpoints" + os.sep
-        if Checkpoints.file_grouping :
-            ngroups = (smilei_mpi_size-1)/Checkpoints.file_grouping + 1
+        if Checkpoints.file_grouping:
+            ngroups = int((smilei_mpi_size-1)/Checkpoints.file_grouping + 1)
             ngroups_chars = int(math.log10(ngroups))+1
             for group in range(ngroups):
-                group_dir = checkpoint_dir + '%*s'%(ngroups_chars,group)
+                group_dir = checkpoint_dir + '%0*d'%(ngroups_chars,group)
                 _mkdir("checkpoint", group_dir)
         else:
             _mkdir("checkpoint", checkpoint_dir)
@@ -46,33 +46,31 @@ def _smilei_check():
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
 
     # Checkpoint: Verify the restart_dir and find possible restart file for each rank
-    if len(Checkpoints)==1:
+    if len(Checkpoints)==1 and Checkpoints.restart_dir:
         if len(Checkpoints.restart_files) == 0 :
-            if Checkpoints.restart_dir:
-                Checkpoints.restart=True
-                my_pattern=Checkpoints.restart_dir + os.sep + "checkpoints" + os.sep
-                if Checkpoints.file_grouping :
-                    my_pattern += "*"+ os.sep
-                my_pattern += "dump-*-*.h5";
-                # pick those file that match the mpi rank
-                my_files = filter(lambda a: smilei_mpi_rank==int(re.search(r'dump-[0-9]*-([0-9]*).h5$',a).groups()[-1]),glob.glob(my_pattern))
-
-                if Checkpoints.restart_number:
-                    # pick those file that match the restart_number
-                    my_files = filter(lambda a: Checkpoints.restart_number==int(re.search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]),my_files)
-
-                Checkpoints.restart_files = list(my_files)
-
-                if not len(Checkpoints.restart_files):
-                    raise Exception(
-                    "ERROR in the namelist: cannot find valid restart files for processor "+str(smilei_mpi_rank) +
-                    "\n\t\trestart_dir = '" + Checkpoints.restart_dir +
-                    "'\n\t\trestart_number = " + str(Checkpoints.restart_number) +
-                    "\n\t\tmatching pattern: '" + my_pattern + "'" )
-
+            Checkpoints.restart = True
+            pattern = Checkpoints.restart_dir + os.sep + "checkpoints" + os.sep
+            if Checkpoints.file_grouping:
+                pattern += "*"+ os.sep
+            pattern += "dump-*-*.h5";
+            # pick those file that match the mpi rank
+            files = filter(lambda a: smilei_mpi_rank==int(re.search(r'dump-[0-9]*-([0-9]*).h5$',a).groups()[-1]), glob.glob(pattern))
+            
+            if Checkpoints.restart_number is not None:
+                # pick those file that match the restart_number
+                files = filter(lambda a: Checkpoints.restart_number==int(re.search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]), files)
+            
+            Checkpoints.restart_files = list(files)
+            
+            if len(Checkpoints.restart_files) == 0:
+                raise Exception(
+                "ERROR in the namelist: cannot find valid restart files for processor "+str(smilei_mpi_rank) +
+                "\n\t\trestart_dir = '" + Checkpoints.restart_dir +
+                "'\n\t\trestart_number = " + str(Checkpoints.restart_number) +
+                "\n\t\tmatching pattern: '" + pattern + "'" )
+            
         else :
-            if Checkpoints.restart_dir:
-                raise Exception("restart_dir and restart_files are both not empty")
+            raise Exception("restart_dir and restart_files are both not empty")
 
     # Verify that constant() and tconstant() were not redefined
     if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):

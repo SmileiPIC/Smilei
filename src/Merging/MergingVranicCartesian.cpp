@@ -182,7 +182,7 @@ void MergingVranicCartesian::operator() (
             }
         } else {
             #pragma omp simd private(ipr)
-//             aligned(gamma : 64) 
+//             aligned(gamma : 64)
             for (ip=(unsigned int)(istart) ; ip<(unsigned int) (iend); ip++ ) {
 
                 // Local (relative) array index
@@ -205,18 +205,20 @@ void MergingVranicCartesian::operator() (
         momentum_min[2] = momentum[2][istart];
         momentum_max[2] = momentum[2][istart];
 
+#if __INTEL_COMPILER > 18000
         #pragma omp simd \
         reduction(min:momentum_min)  \
         reduction(max:momentum_max)
+#endif
         for (ip=(unsigned int) (istart) ; ip < (unsigned int) (iend); ip++ ) {
-            momentum_min[0] = fmin(momentum_min[0],momentum[0][ip]);
-            momentum_max[0] = fmax(momentum_max[0],momentum[0][ip]);
+            momentum_min[0] = std::min(momentum_min[0],momentum[0][ip]);
+            momentum_max[0] = std::max(momentum_max[0],momentum[0][ip]);
 
-            momentum_min[1] = fmin(momentum_min[1],momentum[1][ip]);
-            momentum_max[1] = fmax(momentum_max[1],momentum[1][ip]);
+            momentum_min[1] = std::min(momentum_min[1],momentum[1][ip]);
+            momentum_max[1] = std::max(momentum_max[1],momentum[1][ip]);
 
-            momentum_min[2] = fmin(momentum_min[2],momentum[2][ip]);
-            momentum_max[2] = fmax(momentum_max[2],momentum[2][ip]);
+            momentum_min[2] = std::min(momentum_min[2],momentum[2][ip]);
+            momentum_max[2] = std::max(momentum_max[2],momentum[2][ip]);
         }
 
         // std::cerr << " momentum_min[0]: " << momentum_min[0]
@@ -359,7 +361,7 @@ void MergingVranicCartesian::operator() (
         // in the sorted particle array
         std::vector <unsigned int> momentum_cell_particle_index(momentum_cells,0);
 //         unsigned int  * momentum_cell_particle_index = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
-// 
+//
 //         // Initialization when using aligned_alloc
 //         for (ic = 0 ; ic < momentum_cells ; ic++) {
 //             momentum_cell_particle_index[ic] = 0;
@@ -372,7 +374,7 @@ void MergingVranicCartesian::operator() (
         // requested discretization.
         // This loop can be efficiently vectorized
         #pragma omp simd \
-        private(ipr,mx_i,my_i,mz_i)     
+        private(ipr,mx_i,my_i,mz_i)
 //         aligned(momentum_cell_index: 64)
         for (ip=(unsigned int) (istart) ; ip < (unsigned int) (iend); ip++ ) {
 
