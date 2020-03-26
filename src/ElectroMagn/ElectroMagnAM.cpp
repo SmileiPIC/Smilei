@@ -1338,7 +1338,7 @@ void ElectroMagnAM::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply a single pass binomial filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnAM::binomialCurrentFilter()
+void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
 {
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
     

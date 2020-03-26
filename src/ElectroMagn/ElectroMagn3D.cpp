@@ -1187,7 +1187,7 @@ void ElectroMagn3D::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply a single pass binomial filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn3D::binomialCurrentFilter()
+void ElectroMagn3D::binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
 {
     // Static-cast of the currents
     Field3D *Jx3D = static_cast<Field3D *>( Jx_ );

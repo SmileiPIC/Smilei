@@ -936,7 +936,7 @@ void ElectroMagn2D::saveMagneticFields( bool is_spectral )
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply a single pass binomial filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::binomialCurrentFilter()
+void ElectroMagn2D::binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
 {
     // Static-cast of the currents
     Field2D *Jx2D = static_cast<Field2D *>( Jx_ );
