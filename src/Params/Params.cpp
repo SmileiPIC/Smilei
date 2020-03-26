@@ -434,7 +434,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     // Current filter properties
-    currentFilter_passes = 0;
     int nCurrentFilter = PyTools::nComponents( "CurrentFilter" );
     for( int ifilt = 0; ifilt < nCurrentFilter; ifilt++ ) {
         string model;
@@ -443,6 +442,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR( "Currently, only the `binomial` model is available in CurrentFilter()" );
         }
         PyTools::extract( "passes", currentFilter_passes, "CurrentFilter", ifilt );
+        if( currentFilter_passes.size() == 0 ) {
+            ERROR( "passes cannot be empty" );
+        } else if( currentFilter_passes.size() == 1 ) {
+            while( currentFilter_passes.size() < nDim_field ) {
+                currentFilter_passes.push_back( currentFilter_passes[0] );
+            }
+        } else if( currentFilter_passes.size() != nDim_field ) {
+            ERROR( "passes must be the same size as the number of field dimensions" );
+        }
+
     }
 
     // Field filter properties
@@ -1012,8 +1021,8 @@ void Params::print_init()
         }
     }
 
-    if( currentFilter_passes > 0 ) {
-        MESSAGE( 1, "Binomial current filtering : "<< currentFilter_passes << " passes" );
+    if( *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) > 0 ) {
+        MESSAGE( 1, "Binomial current filtering : "<< *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) << " passes" );
     }
     if( Friedman_filter ) {
         MESSAGE( 1, "Friedman field filtering : theta = " << Friedman_theta );

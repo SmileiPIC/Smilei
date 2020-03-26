@@ -944,7 +944,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
 {
     timers.maxwell.restart();
 
-    for( unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++ ) {
+    for( unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes[0] ; ipassfilter++ ) {
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Current spatial filtering
