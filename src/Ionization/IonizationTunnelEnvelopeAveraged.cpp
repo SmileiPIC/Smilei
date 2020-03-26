@@ -187,7 +187,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
             // final ionization (of last electron)
             if( ( ( 1.0-Pint_tunnel )>ran_p ) && ( k_times==atomic_number_-Zp1 ) ) {
                 k_times++;
-                Ip_times2_power_minus3ov4 = Ip_times2_to_minus3ov4[atomic_number_-1];
+                Ip_times2_power_minus3ov4 += Ip_times2_to_minus3ov4[atomic_number_-1];
             }
         }//END Multiple ionization routine
     
