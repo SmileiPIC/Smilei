@@ -1063,25 +1063,17 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
             // Apply boundary conditions for envelope
             ( *this )( ipatch )->EMfields->envelope->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
 
-            // Compute ponderomotive potential Phi=|A|^2/2
-            ( *this )( ipatch )->EMfields->envelope->computePhiEnvAEnvE( ( *this )( ipatch )->EMfields );
-
         }
 
         // Exchange envelope A
         SyncVectorPatch::exchangeA( params, ( *this ), smpi );
         SyncVectorPatch::finalizeexchangeA( params, ( *this ) );
 
-        // Exchange Phi
-        SyncVectorPatch::exchangePhi( params, ( *this ), smpi );
-        SyncVectorPatch::finalizeexchangePhi( params, ( *this ) );
-
-	// Exchange envelope E
-	SyncVectorPatch::exchangeEnvE( params, ( *this ), smpi );
-	SyncVectorPatch::finalizeexchangeEnvE( params, ( *this ) );
-
-        // Compute gradients of Phi
+        #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            // Compute ponderomotive potential Phi=|A|^2/2, |A| and |E| from the envelope 
+            ( *this )( ipatch )->EMfields->envelope->computePhiEnvAEnvE( ( *this )( ipatch )->EMfields );
+            // Compute gradients of Phi
             ( *this )( ipatch )->EMfields->envelope->computeGradientPhi( ( *this )( ipatch )->EMfields );
             // Computes Phi and GradPhi at time n+1/2 using their values at timestep n+1 and n (the latter already in Phi_m and GradPhi_m)
             ( *this )( ipatch )->EMfields->envelope->centerPhiAndGradPhi();
@@ -2944,6 +2936,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listA_.resize( size() ) ;
             listA0_.resize( size() ) ;
             listEnvE_.resize( size() ) ;
+            listEnvA_.resize( size() ) ;
             listPhi_.resize( size() ) ;
             listPhi0_.resize( size() ) ;
             listGradPhix_.resize( size() ) ;
@@ -2972,6 +2965,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listA_[ipatch]         = patches_[ipatch]->EMfields->envelope->A_ ;
                 listA0_[ipatch]        = patches_[ipatch]->EMfields->envelope->A0_ ;
                 listEnvE_[ipatch]      = patches_[ipatch]->EMfields->Env_E_abs_ ;
+                listEnvA_[ipatch]      = patches_[ipatch]->EMfields->Env_A_abs_ ;
                 listPhi_[ipatch]       = patches_[ipatch]->EMfields->envelope->Phi_ ;
                 listPhi0_[ipatch]      = patches_[ipatch]->EMfields->envelope->Phi_m ;
                 listGradPhix_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhix_ ;
@@ -3030,6 +3024,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listA_.resize( size() ) ;
             listA0_.resize( size() ) ;
             listEnvE_.resize( size() ) ;
+            listEnvA_.resize( size() ) ;
             listPhi_.resize( size() ) ;
             listPhi0_.resize( size() ) ;
             listGradPhil_.resize( size() ) ;
@@ -3045,6 +3040,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listA_[ipatch]         = patches_[ipatch]->EMfields->envelope->A_ ;
                 listA0_[ipatch]        = patches_[ipatch]->EMfields->envelope->A0_ ;
                 listEnvE_[ipatch]      = patches_[ipatch]->EMfields->Env_E_abs_ ;
+                listEnvA_[ipatch]      = patches_[ipatch]->EMfields->Env_A_abs_ ;
                 listPhi_[ipatch]       = patches_[ipatch]->EMfields->envelope->Phi_ ;
                 listPhi0_[ipatch]      = patches_[ipatch]->EMfields->envelope->Phi_m ;
                 listGradPhil_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhil_ ;
@@ -3213,6 +3209,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listA0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listEnvE_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listEnvA_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listPhi_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listPhi0_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listGradPhix_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
@@ -3246,6 +3243,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listA0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listEnvE_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listEnvA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listPhi_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listPhi0_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listGradPhil_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;

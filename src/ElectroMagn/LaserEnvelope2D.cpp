@@ -167,8 +167,6 @@ void LaserEnvelope2D::updateEnvelope( ElectroMagn *EMfields )
     cField2D *A2D          = static_cast<cField2D *>( A_ );               // the envelope at timestep n
     cField2D *A02D         = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
     Field2D *Env_Chi2D     = static_cast<Field2D *>( EMfields->Env_Chi_ ); // source term of envelope equation
-    Field2D *Env_Aabs2D    = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic
-    Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
     
     // temporary variable for updated envelope
@@ -198,12 +196,9 @@ void LaserEnvelope2D::updateEnvelope( ElectroMagn *EMfields )
         for( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) { // y loop
         
             // final back-substitution
-            // |E envelope| = |-(dA/dt-ik0cA)|
-            ( *Env_Eabs2D )( i, j ) = std::abs( ( ( *A2Dnew )( i, j )-( *A02D )( i, j ) )*one_ov_2dt - i1*( *A2D )( i, j ) );
             ( *A02D )( i, j )       = ( *A2D )( i, j );
             ( *A2D )( i, j )        = ( *A2Dnew )( i, j );
-            ( *Env_Aabs2D )( i, j ) = std::abs( ( *A2D )( i, j ) );
-            
+          
         } // end y loop
     } // end x loop
     
@@ -292,8 +287,8 @@ void LaserEnvelope2D::computePhiEnvAEnvE( ElectroMagn *EMfields )
     Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
-    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        for( unsigned int j=1 ; j < A_->dims_[1]-1; j++ ) { // y loop
+    for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
+        for( unsigned int j=0 ; j < A_->dims_[1]-1; j++ ) { // y loop
             ( *Phi2D )( i, j )       = std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
             ( *Env_Aabs2D )( i, j ) = std::abs( ( *A2D )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivativee

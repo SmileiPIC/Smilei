@@ -174,8 +174,7 @@ void LaserEnvelopeAM::updateEnvelope( ElectroMagn *EMfields )
     cField2D *A2Dcyl       = static_cast<cField2D *>( A_ );               // the envelope at timestep n
     cField2D *A02Dcyl      = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
     Field2D *Env_Chi2Dcyl  = static_cast<Field2D *>( EMfields->Env_Chi_ ); // source term of envelope equation
-    Field2D *Env_Aabs2Dcyl = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic
-    Field2D *Env_Eabs2Dcyl = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
+  
     int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
     bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
   
@@ -227,12 +226,8 @@ void LaserEnvelopeAM::updateEnvelope( ElectroMagn *EMfields )
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
         for( unsigned int j=isYmin*2 ; j < A_->dims_[1]-1 ; j++ ) { // r loop
             // final back-substitution
-            // |E envelope| = |-(dA/dt-ik0cA)|
-            ( *Env_Eabs2Dcyl )( i, j ) = std::abs( ( ( *A2Dcylnew )( i, j )-( *A02Dcyl )( i, j ) )*one_ov_2dt - i1*( *A2Dcyl )( i, j ) );
             ( *A02Dcyl )( i, j )       = ( *A2Dcyl )( i, j );
             ( *A2Dcyl )( i, j )        = ( *A2Dcylnew )( i, j );
-            ( *Env_Aabs2Dcyl )( i, j ) = std::abs( ( *A2Dcyl )( i, j ) );
-            
         } // end r loop
     } // end l loop
 
@@ -349,8 +344,8 @@ void LaserEnvelopeAM::computePhiEnvAEnvE( ElectroMagn *EMfields )
     Field2D *Env_Eabs2Dcyl = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
-    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        for( unsigned int j=1 ; j < A_->dims_[1]-1; j++ ) { // r loop
+    for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
+        for( unsigned int j=0 ; j < A_->dims_[1]-1; j++ ) { // r loop
             ( *Phi2Dcyl )( i, j )      = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
             ( *Env_Aabs2Dcyl )( i, j ) = std::abs( ( *A2Dcyl )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative

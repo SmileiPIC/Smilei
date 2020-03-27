@@ -647,17 +647,17 @@ void SyncVectorPatch::finalizeexchangeA( Params &params, VectorPatch &vecPatches
 //    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listA0_, vecPatches );
 }
 
-void SyncVectorPatch::exchangeEnvE( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeEnvEEnvA( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
-    // current envelope value
+    // current envelope |E| value
     SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvE_, vecPatches, smpi );
     SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvE_, vecPatches );
-    // value of envelope at previous timestep
-    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvE_, vecPatches, smpi );
-    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvE_, vecPatches );
+    // current envelope |A| value
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvA_, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvA_, vecPatches );
 }
  
-void SyncVectorPatch::finalizeexchangeEnvE( Params &params, VectorPatch &vecPatches )
+void SyncVectorPatch::finalizeexchangeEnvEEnvA( Params &params, VectorPatch &vecPatches )
 {
 
 }

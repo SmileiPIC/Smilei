@@ -285,6 +285,7 @@ public :
     std::vector<Field *> listA_;
     std::vector<Field *> listA0_;
     std::vector<Field *> listEnvE_;
+    std::vector<Field *> listEnvA_;
     std::vector<Field *> listPhi_;
     std::vector<Field *> listPhi0_;
     std::vector<Field *> listGradPhix_;

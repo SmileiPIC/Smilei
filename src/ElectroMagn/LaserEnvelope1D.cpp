@@ -151,8 +151,6 @@ void LaserEnvelope1D::updateEnvelope( ElectroMagn *EMfields )
     cField1D *A1D          = static_cast<cField1D *>( A_ );               // the envelope at timestep n
     cField1D *A01D         = static_cast<cField1D *>( A0_ );              // the envelope at timestep n-1
     Field1D *Env_Chi1D     = static_cast<Field1D *>( EMfields->Env_Chi_ ); // source term of envelope equation
-    Field1D *Env_Aabs1D    = static_cast<Field1D *>( EMfields->Env_A_abs_ ); // field for diagnostic
-    Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
     
     // temporary variable for updated envelope
@@ -178,11 +176,8 @@ void LaserEnvelope1D::updateEnvelope( ElectroMagn *EMfields )
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
     
         // final back-substitution
-        // |E envelope| = |-(dA/dt-ik0cA)|
-        ( *Env_Eabs1D )( i ) = std::abs( ( ( *A1Dnew )( i )-( *A01D )( i ) )*one_ov_2dt - i1*( *A1D )( i ) );
         ( *A01D )( i )       = ( *A1D )( i );
         ( *A1D )( i )        = ( *A1Dnew )( i );
-        ( *Env_Aabs1D )( i ) = std::abs( ( *A1D )( i ) );
         
     } // end x loop
     
@@ -261,7 +256,7 @@ void LaserEnvelope1D::computePhiEnvAEnvE( ElectroMagn *EMfields )
     Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
-    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
+    for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
         ( *Phi1D )( i )      = std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
         ( *Env_Aabs1D )( i ) = std::abs( ( *A1D )( i ) );
         // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
