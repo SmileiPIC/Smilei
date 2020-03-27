@@ -1,9 +1,12 @@
 from numpy import *
 from matplotlib.pyplot import *
 from matplotlib.widgets import Button
+from matplotlib import dates
 from glob import glob
 from json import load
-from time import strptime, mktime
+from time import strptime
+from datetime import datetime
+ion()
 
 cases = sorted(glob("/sps2/gitlab-runner/logs/*.log"))
 
@@ -42,8 +45,9 @@ def myplotter(ax, i):
         ax.data = load(f)
     
     # Get time
-    t = array([mktime(strptime(d, "%Y_%m_%d_%H:%M:%S")) for d in ax.data["date"]], dtype=int)
-    t -= t[0]
+    t = array([dates.date2num(datetime(*strptime(d, "%Y_%m_%d_%H:%M:%S")[:6])) for d in ax.data["date"]])
+    #t = array([(datetime(*strptime(d, "%Y_%m_%d_%H:%M:%S")[:6])) for d in ax.data["date"]])
+    #t -= t[0]
     
     # Get all timers
     y = []
@@ -71,6 +75,8 @@ def myplotter(ax, i):
     # Plot
     sca(ax)
     ax.cla()
+    ax.xaxis_date()
+    ax.xaxis.set_major_formatter(dates.DateFormatter('%d/%m %H:%M'))
     title(cases[i])
     stackplot( t, *y, labels=labels )
     plot( t, array(ax.data["Timeintimeloop"]), '--k', label="time loop (total)")
