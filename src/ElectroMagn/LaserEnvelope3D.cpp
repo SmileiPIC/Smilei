@@ -224,9 +224,6 @@ void LaserEnvelope3D::updateEnvelope( ElectroMagn *EMfields )
     cField3D *A3D          = static_cast<cField3D *>( A_ );               // the envelope at timestep n
     cField3D *A03D         = static_cast<cField3D *>( A0_ );              // the envelope at timestep n-1
     Field3D *Env_Chi3D     = static_cast<Field3D *>( EMfields->Env_Chi_ ); // source term of envelope equation
-    Field3D *Env_Aabs3D    = static_cast<Field3D *>( EMfields->Env_A_abs_ ); // field for diagnostic
-    Field3D *Env_Eabs3D    = static_cast<Field3D *>( EMfields->Env_E_abs_ ); // field for diagnostic
-  
     
     // temporary variable for updated envelope
     cField3D *A3Dnew;
@@ -257,11 +254,8 @@ void LaserEnvelope3D::updateEnvelope( ElectroMagn *EMfields )
         for( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) { // y loop
             for( unsigned int k=1 ; k < A_->dims_[2]-1; k++ ) { // z loop
                 // final back-substitution
-                // |E envelope| = |-(dA/dt-ik0cA)|
-                ( *Env_Eabs3D )( i, j, k ) = std::abs( ( ( *A3Dnew )( i, j, k )-( *A03D )( i, j, k ) )*one_ov_2dt - i1*( *A3D )( i, j, k ) );
                 ( *A03D )( i, j, k )       = ( *A3D )( i, j, k );
                 ( *A3D )( i, j, k )        = ( *A3Dnew )( i, j, k );
-                ( *Env_Aabs3D )( i, j, k ) = std::abs( ( *A3D )( i, j, k ) );
             } // end z loop
         } // end y loop
     } // end x loop
@@ -355,9 +349,9 @@ void LaserEnvelope3D::computePhiEnvAEnvE( ElectroMagn *EMfields )
     
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
-    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        for( unsigned int j=1 ; j < A_->dims_[1]-1; j++ ) { // y loop
-            for( unsigned int k=1 ; k < A_->dims_[2]-1; k++ ) { // z loop
+    for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
+        for( unsigned int j=0 ; j < A_->dims_[1]-1; j++ ) { // y loop
+            for( unsigned int k=0 ; k < A_->dims_[2]-1; k++ ) { // z loop
                 ( *Phi3D )( i, j, k )      = std::abs( ( *A3D )( i, j, k ) ) * std::abs( ( *A3D )( i, j, k ) ) * 0.5;
                 ( *Env_Aabs3D )( i, j, k ) = std::abs( ( *A3D )( i, j, k ) );
                 // |E envelope| = |-(dA/dt-ik0cA)|, forward finite differences for the time derivative

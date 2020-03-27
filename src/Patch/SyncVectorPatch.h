@@ -277,6 +277,8 @@ public :
 
     static void exchangeA( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangeA( Params &params, VectorPatch &vecPatches );
+    static void exchangeEnvEEnvA( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
+    static void finalizeexchangeEnvEEnvA( Params &params, VectorPatch &vecPatches );
     static void exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangePhi( Params &params, VectorPatch &vecPatches );
     static void exchangeGradPhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
