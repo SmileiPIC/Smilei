@@ -647,44 +647,44 @@ void SyncVectorPatch::finalizeexchangeA( Params &params, VectorPatch &vecPatches
 //    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listA0_, vecPatches );
 }
 
-void SyncVectorPatch::exchangeEnvEEnvA( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
-{
-    // current envelope |E| value
-    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvE_, vecPatches, smpi );
-    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvE_, vecPatches );
-    // current envelope |A| value
-    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvA_, vecPatches, smpi );
-    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvA_, vecPatches );
-}
- 
-void SyncVectorPatch::finalizeexchangeEnvEEnvA( Params &params, VectorPatch &vecPatches )
-{
+// void SyncVectorPatch::exchangeEnvEEnvA( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
+// {
+//     // current envelope |E| value
+//     SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvE_, vecPatches, smpi );
+//     SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvE_, vecPatches );
+//     // current envelope |A| value
+//     SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvA_, vecPatches, smpi );
+//     SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvA_, vecPatches );
+// }
+// 
+// void SyncVectorPatch::finalizeexchangeEnvEEnvA( Params &params, VectorPatch &vecPatches )
+// {
+// 
+// }
 
-}
-
-void SyncVectorPatch::exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
-{
-
-    if( !params.full_Envelope_exchange ) {
-        // current ponderomotive potential
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listPhi_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listPhi_, vecPatches );
-        // value of ponderomotive potential at previous timestep
-        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listPhi0_, vecPatches, smpi );
-        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listPhi0_, vecPatches );
-    } else {
-        // current ponderomotive potential
-        SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listPhi_, vecPatches, smpi );
-        // value of ponderomotive potential at previous timestep
-        SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listPhi0_, vecPatches, smpi );  
-    }
-
-}
-
-void SyncVectorPatch::finalizeexchangePhi( Params &params, VectorPatch &vecPatches )
-{
-
-}
+// void SyncVectorPatch::exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
+// {
+// 
+//     if( !params.full_Envelope_exchange ) {
+//         // current ponderomotive potential
+//         SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listPhi_, vecPatches, smpi );
+//         SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listPhi_, vecPatches );
+//         // value of ponderomotive potential at previous timestep
+//         SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listPhi0_, vecPatches, smpi );
+//         SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listPhi0_, vecPatches );
+//     } else {
+//         // current ponderomotive potential
+//         SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listPhi_, vecPatches, smpi );
+//         // value of ponderomotive potential at previous timestep
+//         SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( vecPatches.listPhi0_, vecPatches, smpi );  
+//     }
+// 
+// }
+// 
+// void SyncVectorPatch::finalizeexchangePhi( Params &params, VectorPatch &vecPatches )
+// {
+// 
+// }
 
 
 
