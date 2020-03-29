@@ -26,7 +26,7 @@ rcParams['ytick.minor.width'] = 1.5
 
 # Custom list
 
-custom_colors = ['C0','C1','C2','C3','C4','C5']
+custom_colors = ['C0','C1','C2','C3','C4','C5','C6']
 custom_markers = ['o','s','^','v','<','>']
 
 # Obtain the data
@@ -59,6 +59,8 @@ class switchPlots:
     # Plot style
     marker_size       = 8
     menu_x_position   = 0.75
+    current_marker    = 0
+    current_color     = 0
     
     # _________________________________________________
     # Class methods
@@ -96,10 +98,29 @@ class switchPlots:
         self.plot()
     
     def next(self, event, jump):
+        """
+        This method enables to switch to another log jumping of `jump` indexes from the current log.
+        """
         self.ind += jump
         self.ind %= self.nplots
         #self.plotter(self.ax, self.fig, self.ind)
         self.plot()
+
+    def get_marker(self):
+        """
+        Select a marker in the custom list
+        """
+        marker = self.current_marker
+        self.current_marker = (self.current_marker+1)%len(custom_markers)
+        return custom_markers[marker]
+
+    def get_color(self):
+        """
+        Select a color in the custom list
+        """
+        color = self.current_color
+        self.current_color = (self.current_color+1)%len(custom_colors)
+        return custom_colors[color]
 
     def on_pick(self,event):
         """
@@ -165,13 +186,13 @@ class switchPlots:
         self.marker_properties = {}
         for ibranch,branch in enumerate(unique(self.branches)):
             self.marker_properties[branch] = {}
-            self.marker_properties[branch]["marker"] = custom_markers[ibranch]
+            self.marker_properties[branch]["marker"] = self.get_marker()
             if "HEAD" in branch or branch=="develop":
                 self.marker_properties[branch]["alpha"] = 0
-                self.marker_properties[branch]["color"] = custom_colors[ibranch]
+                self.marker_properties[branch]["color"] = self.get_color()
             else:
                 self.marker_properties[branch]["alpha"] = 1
-                self.marker_properties[branch]["color"] = custom_colors[ibranch]
+                self.marker_properties[branch]["color"] = self.get_color()
             index = flatnonzero(self.branches == branch)
             self.branch_points[branch] = [t[index], time_in_timeloop[index]]
         
