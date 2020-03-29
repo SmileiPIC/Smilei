@@ -61,7 +61,8 @@ class switchPlots:
         clf()
         gs = GridSpec(10,10)
         self.ax = subplot(gs[0:9,0:8])
-        self.pick_event = self.fig.canvas.callbacks.connect('pick_event', self.on_pick)
+        self.fig.canvas.callbacks.connect('pick_event', self.on_pick)
+        self.fig.canvas.mpl_connect("motion_notify_event", self.on_hover)
         
         # Button next
         axnext = axes([self.menu_x_position+2*0.06, 0.01, 0.05, 0.03])
@@ -82,6 +83,7 @@ class switchPlots:
         axprev5 = axes([self.menu_x_position, 0.01, 0.05, 0.03])
         self.bprev5 = Button(axprev5, '<<')
         self.bprev5.on_clicked(lambda event : self.next(event,-5))
+        
         
         # Get all data from all cases
         self.data = []
@@ -177,9 +179,6 @@ class switchPlots:
         This method is used to make markers clickable.
         Information is then shown in the terminal.
         """
-        artist = event.artist
-        xmouse, ymouse = event.mouseevent.xdata, event.mouseevent.ydata
-        #x, y = artist.get_xdata(), artist.get_ydata()
         marker_indexes = event.ind
         print("\n Selected points: {}".format(marker_indexes))
         D = self.data[self.ind]
@@ -198,7 +197,21 @@ class switchPlots:
                 D["max_times"]
             ):
                 print("     {0:15} | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} |".format(label, d[k], min, mean, max))
-
+    
+    def on_hover(self, event):
+        vis = self.annot.get_visible()
+        if event.inaxes == self.ax:
+            cont, ind = self.sc.contains(event)
+            if cont:
+                i = ind["ind"][0]
+                self.annot.set_text(self.data[self.ind]["commits"][i])
+                self.annot.set_visible(True)
+                self.fig.canvas.draw_idle()
+            else:
+                if vis:
+                    self.annot.set_visible(False)
+                    self.fig.canvas.draw_idle()
+    
     def plot(self):
         """
         Method to plot the log of index self.ind.
@@ -229,12 +242,16 @@ class switchPlots:
                 **D["branch_opt"][branch]
             )
             
-        sc = self.ax.scatter(D["t"], D["time_in_timeloop"], alpha=0, picker=10, zorder=1)
+        self.sc = self.ax.scatter(D["t"], D["time_in_timeloop"], alpha=0, picker=10, zorder=1)
         
         self.ax.legend(bbox_to_anchor=(1.05, 1.))
         self.ax.set_xlabel("Commit date")
         self.ax.set_ylabel("Time (s)")
         setp(self.ax.get_xticklabels(), rotation=30, ha="right")
+        
+        # Hovering box
+        self.annot = self.ax.annotate("", xy=(0.01,0.95), xycoords='axes fraction')
+        self.annot.set_visible(False)
         
         show()
 
