@@ -31,8 +31,8 @@ custom_markers = ['o','s','^','v','<','>']
 
 # Obtain the data
 
-#cases = sorted(glob("/sps2/gitlab-runner/logs/*.log"))
-cases = sorted(glob("./logs/*.log"))
+cases = sorted(glob("/sps2/gitlab-runner/logs/*.log"))
+#cases = sorted(glob("./logs/*.log"))
 
 # Class to create a plot with buttons to switch between cases
 class switchPlots:
