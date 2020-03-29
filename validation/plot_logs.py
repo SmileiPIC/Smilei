@@ -31,20 +31,37 @@ custom_markers = ['o','s','^','v','<','>']
 
 # Obtain the data
 
-cases = sorted(glob("/sps2/gitlab-runner/logs/*.log"))
-#cases = sorted(glob("./logs/*.log"))
+#cases = sorted(glob("/sps2/gitlab-runner/logs/*.log"))
+cases = sorted(glob("./logs/*.log"))
 
 # Class to create a plot with buttons to switch between cases
 class switchPlots:
     
+    # _________________________________________________
     # Class parameters
     
+    # Internal parameters
     ind               = 0
     branch_points     = {}
     marker_properties = {}
     branches          = array([])
+    processed_data    = []
+    labels            = []
+    min_times         = []
+    mean_times        = []
+    max_times         = []
+    
+    timers = ['Particles','Maxwell','Densities',
+              'SyncParticles','SyncFields','SyncDensities','SyncSusceptibility',
+              'Diagnostics','Envelope','Collisions','Movwindow',
+              'Loadbalancing','Reconfiguration','PartMerging','PartInjection']
+    
+    # Plot style
     marker_size       = 8
     menu_x_position   = 0.75
+    
+    # _________________________________________________
+    # Class methods
     
     def __init__(self, nplots):
         
@@ -56,22 +73,22 @@ class switchPlots:
         self.pick_event = self.fig.canvas.callbacks.connect('pick_event', self.on_pick)
         
         # Button next
-        axnext = axes([0.82, 0.01, 0.05, 0.03])
+        axnext = axes([self.menu_x_position+2*0.06, 0.01, 0.05, 0.03])
         self.bnext = Button(axnext, '>')
         self.bnext.on_clicked(lambda event : self.next(event,1))
 
         # Button previous
-        axprev = axes([0.76, 0.01, 0.05, 0.03])
+        axprev = axes([self.menu_x_position+0.06, 0.01, 0.05, 0.03])
         self.bprev = Button(axprev, '<')
         self.bprev.on_clicked(lambda event : self.next(event,-1))
    
         # Button next +5
-        axnext5 = axes([0.88, 0.01, 0.05, 0.03])
+        axnext5 = axes([self.menu_x_position+3*0.06, 0.01, 0.05, 0.03])
         self.bnext5 = Button(axnext5, '>>')
         self.bnext5.on_clicked(lambda event : self.next(event,5))
 
         # Button previous -5
-        axprev5 = axes([0.70, 0.01, 0.05, 0.03])
+        axprev5 = axes([self.menu_x_position, 0.01, 0.05, 0.03])
         self.bprev5 = Button(axprev5, '<<')
         self.bprev5.on_clicked(lambda event : self.next(event,-5))
         
@@ -93,16 +110,23 @@ class switchPlots:
         xmouse, ymouse = event.mouseevent.xdata, event.mouseevent.ydata
         #x, y = artist.get_xdata(), artist.get_ydata()
         marker_indexes = event.ind
-        print("Selected points: {}".format(marker_indexes))
+        print("\n Selected points: {}".format(marker_indexes))
         for k in marker_indexes:
-            print("  > Commit {}".format(self.ax.data["commit"][k]))
-            print("    Branch {}".format(self.branches[k]))
-            print("    Date {}".format(self.ax.data["date"][k]))
+            print("  > Commit: {}".format(self.ax.data["commit"][k]))
+            print("    Branch: {}".format(self.branches[k]))
+            print("    Date: {}".format(datetime(*strptime(self.ax.data["date"][k], "%Y_%m_%d_%H:%M:%S")[:6])))
+            print("    ----------------------------------------------------------------------")
+            print("     Timers          | Times (s)  | Min (s)    | Mean (s)   | Max (s)    |")
+            print("    ----------------------------------------------------------------------")
+            for ilabel,label in enumerate(self.labels):
+                print("     {0:15} | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} |".format(label, self.processed_data[ilabel][k], self.min_times[ilabel], self.mean_times[ilabel], self.max_times[ilabel]))
+            print("     {0:15} | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} |".format("Total", array(self.ax.data["Timeintimeloop"],dtype="float")[k],self.min_times[ilabel+1],self.mean_times[ilabel+1], self.max_times[ilabel+1]))
 
     def plot(self):
         """
         Method to plot the log of index self.ind.
         """
+        
         # Read data
         with open(cases[self.ind], 'r') as f:
             self.ax.data = load(f)
@@ -111,18 +135,27 @@ class switchPlots:
         t = array([dates.date2num(datetime(*strptime(d, "%Y_%m_%d_%H:%M:%S")[:6])) for d in self.ax.data["date"]])
         
         # Get all timers
-        y = []
-        labels = []
-        for k in ['Particles','Maxwell','Densities',
-                  'SyncParticles','SyncFields','SyncDensities','SyncSusceptibility',
-                  'Diagnostics','Envelope','Collisions','Movwindow',
-                  'Loadbalancing','Reconfiguration','PartMerging','PartInjection']:
+        self.processed_data = []
+        self.labels = []
+        self.min_times = []
+        self.mean_times = []
+        self.max_times = []
+        for k in self.timers:
             if k in self.ax.data:
                 d = self.ax.data[k] + [None]*(t.size-len(self.ax.data[k]))
                 d = array(d, dtype="float")
                 d[isnan(d)] = 0.
-                y += [d]
-                labels += [k]
+                self.processed_data += [d]
+                self.min_times += [np.min(d)]
+                self.mean_times += [np.mean(d)]
+                self.max_times += [np.max(d)]
+                self.labels += [k]
+        
+        # Array time_in_timeloop that contains the full time
+        time_in_timeloop = array(self.ax.data["Timeintimeloop"],dtype="float")
+        self.min_times += [np.min(time_in_timeloop)]
+        self.mean_times += [np.mean(time_in_timeloop)]
+        self.max_times += [np.max(time_in_timeloop)]
         
         # Get branch names
         commits = self.ax.data["commit"]
@@ -130,9 +163,7 @@ class switchPlots:
         self.branch_points = {}
         
         self.marker_properties = {}
-        print("List of unique branches: ")
         for ibranch,branch in enumerate(unique(self.branches)):
-            print(" - {}".format(branch))
             self.marker_properties[branch] = {}
             self.marker_properties[branch]["marker"] = custom_markers[ibranch]
             if "HEAD" in branch or branch=="develop":
@@ -142,7 +173,14 @@ class switchPlots:
                 self.marker_properties[branch]["alpha"] = 1
                 self.marker_properties[branch]["color"] = custom_colors[ibranch]
             index = flatnonzero(self.branches == branch)
-            self.branch_points[branch] = [t[index], array(self.ax.data["Timeintimeloop"],dtype="float")[index]]
+            self.branch_points[branch] = [t[index], time_in_timeloop[index]]
+        
+        print("\n _____________________________________________________ ")
+        print(" Benchmark {}\n".format(cases[self.ind]))
+        print(" List of unique branches: ")
+        for ibranch,branch in enumerate(unique(self.branches)):
+            print(" - {}".format(branch))
+        
         
         colors = []
         markers = []
@@ -155,14 +193,14 @@ class switchPlots:
         self.ax.cla()
         self.ax.xaxis_date()
         self.ax.xaxis.set_major_formatter(dates.DateFormatter('%d/%m %H:%M'))
-        title(cases[self.ind])
-        self.ax.stackplot( t, *y, labels=labels )
-        self.ax.plot( t, array(self.ax.data["Timeintimeloop"]), '--k', label="time loop (total)",zorder=0)
+        self.ax.set_title(cases[self.ind])
+        self.ax.stackplot( t, *self.processed_data, labels=self.labels )
+        self.ax.plot( t, time_in_timeloop, '--k', label="time loop (total)",zorder=0)
         
         for i,branch in enumerate(self.branch_points):
             plot( self.branch_points[branch][0], self.branch_points[branch][1], linestyle="none", ms=self.marker_size, marker=self.marker_properties[branch]["marker"], label=branch, color=self.marker_properties[branch]["color"])
             
-        sc = self.ax.scatter(t,array(self.ax.data["Timeintimeloop"],dtype="float"),alpha=0,picker=10,zorder=1)
+        sc = self.ax.scatter(t,time_in_timeloop,alpha=0,picker=10,zorder=1)
         # Set the mqrker color according to the branch only if we use the scatter plot
         #sc.set_color(colors)
         
