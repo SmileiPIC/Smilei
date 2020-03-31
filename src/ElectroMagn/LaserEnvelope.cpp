@@ -178,25 +178,25 @@ LaserEnvelope::~LaserEnvelope()
 
 
 
-void LaserEnvelope::boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow )
+void LaserEnvelope::boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow, ElectroMagn *EMfields )
 {
     // Compute Envelope Bcs
     if( !( simWindow && simWindow->isMoving( time_dual ) ) ) {
         if( EnvBoundCond[0]!=NULL ) { // <=> if !periodic
-            EnvBoundCond[0]->apply( this, time_dual, patch );
-            EnvBoundCond[1]->apply( this, time_dual, patch );
+            EnvBoundCond[0]->apply( this, EMfields, time_dual, patch );
+            EnvBoundCond[1]->apply( this, EMfields, time_dual, patch );
         }
     }
     if( EnvBoundCond.size()>2 ) {
         if( EnvBoundCond[2]!=NULL ) { // <=> if !periodic
-            EnvBoundCond[2]->apply( this, time_dual, patch );
-            EnvBoundCond[3]->apply( this, time_dual, patch );
+            EnvBoundCond[2]->apply( this, EMfields, time_dual, patch );
+            EnvBoundCond[3]->apply( this, EMfields, time_dual, patch );
         }
     }
     if( EnvBoundCond.size()>4 ) {
         if( EnvBoundCond[4]!=NULL ) { // <=> if !periodic
-            EnvBoundCond[4]->apply( this, time_dual, patch );
-            EnvBoundCond[5]->apply( this, time_dual, patch );
+            EnvBoundCond[4]->apply( this, EMfields, time_dual, patch );
+            EnvBoundCond[5]->apply( this, EMfields, time_dual, patch );
         }
     }
     

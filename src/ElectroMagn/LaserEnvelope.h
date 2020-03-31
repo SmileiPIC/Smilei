@@ -25,7 +25,7 @@ public:
     virtual void compute( ElectroMagn *EMfields ) = 0;
     virtual void compute_Phi( ElectroMagn *EMfields ) = 0;
     virtual void compute_gradient_Phi( ElectroMagn *EMfields ) = 0;
-    void boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow );
+    void boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow, ElectroMagn *EMfields );
     virtual void savePhi_and_GradPhi() = 0;
     virtual void centerPhi_and_GradPhi() = 0;
     
