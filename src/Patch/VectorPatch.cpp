@@ -1060,7 +1060,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
                 ( *this )( ipatch )->EMfields->envelope->updateEnvelopeReducedDispersion( ( *this )( ipatch )->EMfields );
             }
 
-            // Apply boundary conditions for envelope
+            // Apply boundary conditions for envelope and |A|, |E|
             ( *this )( ipatch )->EMfields->envelope->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
 
         }

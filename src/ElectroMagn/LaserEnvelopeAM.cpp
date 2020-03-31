@@ -342,6 +342,8 @@ void LaserEnvelopeAM::computePhiEnvAEnvE( ElectroMagn *EMfields )
     Field2D *Env_Aabs2Dcyl = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic
 
     Field2D *Env_Eabs2Dcyl = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
+
+    bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
@@ -352,6 +354,22 @@ void LaserEnvelopeAM::computePhiEnvAEnvE( ElectroMagn *EMfields )
             ( *Env_Eabs2Dcyl )( i, j ) = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
         } // end r loop
     } // end l loop
+
+    // 
+    if (isYmin){ // axis BC
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
+            unsigned int j = 2;  // j_p=2 corresponds to r=0      
+    
+            // Axis BC on |A|
+            ( *Env_Aabs2Dcyl )( i, j-1 ) = ( *Env_Aabs2Dcyl )( i, j+1 );
+            ( *Env_Aabs2Dcyl )( i, j-2 ) = ( *Env_Aabs2Dcyl )( i, j+2 );
+            // Axis BC on |E|
+            ( *Env_Eabs2Dcyl )( i, j-1 ) = ( *Env_Eabs2Dcyl )( i, j+1 );
+            ( *Env_Eabs2Dcyl )( i, j-2 ) = ( *Env_Eabs2Dcyl )( i, j+2 );
+            
+                  
+        } // end l loop
+    }
     
 } // end LaserEnvelopeAM::computePhiEnvAEnvE
 
@@ -378,16 +396,23 @@ void LaserEnvelopeAM::computeGradientPhi( ElectroMagn *EMfields )
         } // end r loop
     } // end l loop
 
-    // Compute gradients of Phi, at timesteps n
+    
     if (isYmin){ // axis BC
         for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
-            unsigned int j = 2;  // j_p corresponds to r=0      
+            unsigned int j = 2;  // j_p=2 corresponds to r=0      
       
             // gradient in x direction
             ( *GradPhil2Dcyl )( i, j ) = ( ( *Phi2Dcyl )( i+1, j )-( *Phi2Dcyl )( i-1, j ) ) * one_ov_2dl;
             // gradient in r direction, identically zero on r = 0
             ( *GradPhir2Dcyl )( i, j ) = 0. ; // ( ( *Phi2Dcyl )( i, j+1 )-( *Phi2Dcyl )( i, j-1 ) ) * one_ov_2dr;
-                  
+
+            // Axis BC on gradient in x direction
+            ( *GradPhil2Dcyl )( i, j-1 ) = ( *GradPhil2Dcyl )( i, j+1 );
+            ( *GradPhil2Dcyl )( i, j-2 ) = ( *GradPhil2Dcyl )( i, j+2 );
+            // Axis BC on gradient in r direction
+            ( *GradPhir2Dcyl )( i, j-1 ) = ( *GradPhir2Dcyl )( i, j+1 );
+            ( *GradPhir2Dcyl )( i, j-2 ) = ( *GradPhir2Dcyl )( i, j+2 );
+                            
         } // end l loop
     }
 
