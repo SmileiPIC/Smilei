@@ -1522,49 +1522,47 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
     
 }
 
-void ElectroMagnAM::applyExternalTimeFields( Patch *patch, double time )
+void ElectroMagnAM::applyPrescribedFields( Patch *patch, double time )
 {
 
 #ifdef _TODO_AM
 #endif
-//tommaso: not sure what to do in AM
-//     int Nmodes = El_.size();
-//     
-//     Field *field;
-// 
-//     for (int imode=0;imode<Nmodes;imode++){
-//         for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
-//             string name = LowerCase( extfield->field );
-//             if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
-//                 field = El_[imode];
-//             } else if( Er_[imode] && name==LowerCase( Er_[imode]->name ) ) {
-//                 field = Er_[imode];
-//             } else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
-//                 field = Et_[imode];
-//             } else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
-//                 field = Bl_[imode];
-//             } else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
-//                 field = Br_[imode];
-//             } else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
-//                 field = Bt_[imode];
-//             } else {
-//                 field = NULL;
-//             }
-//             
-//             if( field ){ 
-//                 applyExternalTimeField( field, extfield->profile, patch, time );
-//             };
-//         }
-//         Bl_m[imode]->copyFrom( Bl_[imode] );
-//         Br_m[imode]->copyFrom( Br_[imode] );
-//         Bt_m[imode]->copyFrom( Bt_[imode] );
-//     }
+    int Nmodes = El_.size();
+    
+    Field *field;
+
+    for (int imode=0;imode<Nmodes;imode++){
+        for( vector<ExtTimeField>::iterator extfield=extTimeFields.begin(); extfield!=extTimeFields.end(); extfield++ ) {
+			string name = LowerCase( extfield->savedField->name );
+			if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
+				field = El_[imode];
+			} else if( Er_[imode] && name==LowerCase( Er_[imode]->name ) ) {
+				field = Er_[imode];
+			} else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
+				field = Et_[imode];
+			} else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
+				field = Bl_[imode];
+			} else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
+				field = Br_[imode];
+			} else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
+				field = Bt_[imode];
+			} else {
+				field = NULL;
+			}
+		
+			if( field ){ 
+				applyPrescribedField( field, extfield->profile, patch, time );
+			}
+        }
+        Bl_m[imode]->copyFrom( Bl_[imode] );
+        Br_m[imode]->copyFrom( Br_[imode] );
+        Bt_m[imode]->copyFrom( Bt_[imode] );
+    }
 
 }
 
 void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patch *patch )
 {
-
      cField2D *field2D=static_cast<cField2D *>( my_field );
      
      vector<double> pos( 2 );
@@ -1607,50 +1605,47 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
     
 }
 
-void ElectroMagnAM::applyExternalTimeField( Field *my_field,  Profile *profile, Patch *patch, double time )
+void ElectroMagnAM::applyPrescribedField( Field *my_field,  Profile *profile, Patch *patch, double time )
 {
-
-//tommaso: not sure what to do in AM
-//    cField2D *field2D=static_cast<cField2D *>( my_field );
-//    
-//    vector<double> pos( 2 );
-//    pos[0]      = dl*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
-//    double pos1 = dr*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
-//    int N0 = ( int )field2D->dims()[0];
-//    int N1 = ( int )field2D->dims()[1];
-//    
-//    vector<Field *> xr( 2 );
-//    vector<unsigned int> n_space_to_create( 2 );
-//    n_space_to_create[0] = N0;
-//    n_space_to_create[1] = N1;
-//
-//    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-//        xr[idim] = new Field2D( n_space_to_create );
-//    }
-//
-//    for( int i=0 ; i<N0 ; i++ ) {
-//        pos[1] = pos1;
-//        for( int j=0 ; j<N1 ; j++ ) {
-//            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-//                ( *xr[idim] )( i, j ) = pos[idim];
-//            }
-//            pos[1] += dr;
-//        }
-//        pos[0] += dl;
-//    }
-//
-//    profile->complexValuesAt( xr, *field2D );
-//
-//    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-//        delete xr[idim];
-//    }
-//
-//    //for( auto &embc: emBoundCond ) {
-//    //    if( embc ) {
-//    //        embc->save_fields( my_field, patch );
-//    //    }
-//    //}
+    cField2D *field2D=static_cast<cField2D *>( my_field );
     
+    vector<double> pos( 2 );
+    pos[0]      = dl*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
+    double pos1 = dr*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
+    int N0 = ( int )field2D->dims()[0];
+    int N1 = ( int )field2D->dims()[1];
+    
+    vector<Field *> xr( 2 );
+    vector<unsigned int> n_space_to_create( 2 );
+    n_space_to_create[0] = N0;
+    n_space_to_create[1] = N1;
+
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        xr[idim] = new Field2D( n_space_to_create );
+    }
+
+    for( int i=0 ; i<N0 ; i++ ) {
+        pos[1] = pos1;
+        for( int j=0 ; j<N1 ; j++ ) {
+            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+                ( *xr[idim] )( i, j ) = pos[idim];
+            }
+            pos[1] += dr;
+        }
+        pos[0] += dl;
+    }
+
+    profile->complexValuesAtTime( xr, time, *field2D );
+
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        delete xr[idim];
+    }
+
+    //for( auto &embc: emBoundCond ) {
+    //    if( embc ) {
+    //        embc->save_fields( my_field, patch );
+    //    }
+    //}    
 }
 
 

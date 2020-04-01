@@ -216,7 +216,10 @@ class Units(object):
 	
 	def _getUnits(self, units):
 		if self.UnitRegistry:
-			return str( self.ureg(units).units )
+			u = self.ureg(units)
+			try: u = u.units
+			except: u = ""
+			return u
 		else:
 			return "1"	
 	

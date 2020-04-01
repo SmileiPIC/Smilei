@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Patch.h"
+#include "ElectroMagn.h"
 
 class Params;
 class Patch;

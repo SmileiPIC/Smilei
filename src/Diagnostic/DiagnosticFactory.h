@@ -5,6 +5,7 @@
 
 #include "DiagnosticParticleBinning.h"
 #include "DiagnosticScreen.h"
+#include "DiagnosticRadiationSpectrum.h"
 #include "DiagnosticProbes.h"
 #include "DiagnosticScalar.h"
 #include "DiagnosticTrack.h"
@@ -46,7 +47,7 @@ class DiagnosticFactory
 {
 public:
 
-    static std::vector<Diagnostic *> createGlobalDiagnostics( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
+    static std::vector<Diagnostic *> createGlobalDiagnostics( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, RadiationTables * radiation_tables_ )
     {
         std::vector<Diagnostic *> vecDiagnostics;
         vecDiagnostics.push_back( new DiagnosticScalar( params, smpi, vecPatches( 0 ) ) );
@@ -57,6 +58,10 @@ public:
         
         for( unsigned int n_diag_screen = 0; n_diag_screen < PyTools::nComponents( "DiagScreen" ); n_diag_screen++ ) {
             vecDiagnostics.push_back( new DiagnosticScreen( params, smpi, vecPatches( 0 ), n_diag_screen ) );
+        }
+
+        for (unsigned int n_diag_rad_spectrum = 0; n_diag_rad_spectrum < PyTools::nComponents("DiagRadiationSpectrum"); n_diag_rad_spectrum++) {
+            vecDiagnostics.push_back( new DiagnosticRadiationSpectrum(params, smpi, vecPatches(0), radiation_tables_ , n_diag_rad_spectrum) );
         }
         
 //MESSAGE ("Glob diag");

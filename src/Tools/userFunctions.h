@@ -8,22 +8,6 @@ public:
 
     static double erfinv( double x );
     static double erfinv2( double x );
-    
-    //! Modified Bessel function of first and second kind
-    static void modifiedBesselIK( double n, double x, double &I, double &dI,
-                                    double &K, double &dK, long maxit, double eps,
-                                    bool warning = true );
-                                    
-    static double modifiedBesselK( double n, double x,
-                                     long maxit, double eps,
-                                     bool warning = true );
-                                     
-    //! Chebychev evaluation
-    static double chebychevEval( const double *c, const int m, const double x );
-    
-    //! Computation of the Gauss-Legendre abscissa and weight
-    static void gaussLegendreCoef( double xmin, double xmax, double *x,
-                                     double *w, int nb_iterations, double eps );
                                      
     //! Load repartition in 1d between MPI processes
     static void distributeArray( int rank,

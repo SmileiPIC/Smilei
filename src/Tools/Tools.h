@@ -116,7 +116,7 @@ public:
     
     //! This function returns true/flase whether the file exists or not
     //! \param file file name to test
-    static bool file_exists( const std::string &filename ) ;
+    static bool fileExists( const std::string &filename ) ;
     
     static std::string xyz;
     

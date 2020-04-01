@@ -6,8 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    - AMsorting
-    - particle_merging_correction
+    - radiationSpectrum
     - envelope_reduced_dispersion
 
   script:
@@ -30,10 +29,9 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - AMsorting
-    - particle_merging_correction
-    - envelope_reduced_dispersion    
-
+    - radiationSpectrum
+    - envelope_reduced_dispersion
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -44,8 +42,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - AMsorting
-    - particle_merging_correction
+    - radiationSpectrum
     - envelope_reduced_dispersion
 
   script:
@@ -58,8 +55,8 @@ makerun3D:
   stage: makerun
   only:
     - develop
+    - radiationSpectrum
     - AMsorting
-    - particle_merging_correction
     - envelope_reduced_dispersion
 
   script:
@@ -72,7 +69,7 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - AMsorting
+    - radiationSpectrum
     - envelope_reduced_dispersion
     
   script:
@@ -85,7 +82,7 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - AMsorting
+    - radiationSpectrum
     - envelope_reduced_dispersion
 
   script:
@@ -98,8 +95,9 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - AMsorting
-    - envelope_reduced_dispersion    
+    - radiationSpectrum
+    - envelope_reduced_dispersion
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

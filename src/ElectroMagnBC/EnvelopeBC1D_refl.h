@@ -9,6 +9,7 @@
 #include "LaserEnvelope.h"
 #include "Field1D.h"
 #include "cField1D.h"
+#include "ElectroMagn.h"
 
 class Params;
 class LaserEnvelope;

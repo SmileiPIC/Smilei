@@ -26,7 +26,7 @@ public:
     virtual void updateEnvelopeReducedDispersion( ElectroMagn *EMfields ) = 0;
     virtual void computePhiEnvAEnvE( ElectroMagn *EMfields ) = 0;
     virtual void computeGradientPhi( ElectroMagn *EMfields ) = 0;
-    void boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow );
+    void boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow, ElectroMagn *EMfields );
     virtual void savePhiAndGradPhi() = 0;
     virtual void centerPhiAndGradPhi() = 0;
     
