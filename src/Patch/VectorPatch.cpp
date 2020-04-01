@@ -85,9 +85,9 @@ void VectorPatch::close( SmileiMPI *smpiData )
     patches_.clear();
 }
 
-void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &openPMD )
+void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &openPMD, RadiationTables * radiation_tables_ )
 {
-    globalDiags = DiagnosticFactory::createGlobalDiagnostics( params, smpi, *this );
+    globalDiags = DiagnosticFactory::createGlobalDiagnostics( params, smpi, *this, radiation_tables_ );
     localDiags  = DiagnosticFactory::createLocalDiagnostics( params, smpi, *this, openPMD );
 
     // Delete all unused fields
@@ -302,10 +302,6 @@ void VectorPatch::dynamics( Params &params,
 
     #pragma omp single
     {
-	// apply external time fields if requested
-	if ( emfields(0)->extTimeFields.size() )
-            applyExternalTimeFields(time_dual);
-        
         diag_flag = needsRhoJsNow( itime );
     }
 	
@@ -378,10 +374,6 @@ void VectorPatch::dynamics( Params &params,
     //MESSAGE("exchange particles");
     timers.syncPart.update( params.printNow( itime ) );
     
-    // de-apply external time fields if requested
-    if ( emfields(0)->extTimeFields.size() )
-	resetExternalTimeFields();
-
 #ifdef __DETAILED_TIMERS
     timers.sorting.update( *this, params.printNow( itime ) );
 #endif
@@ -1105,6 +1097,7 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
             ( *this )( ipatch )->EMfields->centerMagneticFields();
         }
     }
+
 #endif
 
 } // END finalizeSyncAndBCFields
@@ -3497,18 +3490,18 @@ void VectorPatch::applyExternalFields()
 
 
 // For each patch, apply external fields
-void VectorPatch::applyExternalTimeFields(double time)
+void VectorPatch::applyPrescribedFields(double time)
 {
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-        patches_[ipatch]->EMfields->applyExternalTimeFields( ( *this )( ipatch ), time );
+        patches_[ipatch]->EMfields->applyPrescribedFields( ( *this )( ipatch ), time );
     }
 }
 
 //! Method use to reset the real value of all fields on which we imposed an external time field
-void VectorPatch::resetExternalTimeFields()
+void VectorPatch::resetPrescribedFields()
 {
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-        patches_[ipatch]->EMfields->resetExternalTimeFields();
+        patches_[ipatch]->EMfields->resetPrescribedFields();
     }
 }
 

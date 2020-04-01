@@ -92,21 +92,58 @@ PyArrayObject *Function_Python2D::complexValueAt( std::vector<PyArrayObject *> x
     Py_DECREF( values );
     return cvalues;
 }
+
+// Time dependent
+
+PyArrayObject *Function_Python1D::valueAt( std::vector<PyArrayObject *> x, double time )
+{
+    return ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], time, NULL );
+}
+PyArrayObject *Function_Python2D::valueAt( std::vector<PyArrayObject *> x, double time  )
+{
+    return ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], time, NULL );
+}
+PyArrayObject *Function_Python3D::valueAt( std::vector<PyArrayObject *> x, double time  )
+{
+    return ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], time, NULL );
+}
+PyArrayObject *Function_Python4D::complexValueAt( std::vector<PyArrayObject *> x, double time )
+{
+    PyObject *values = PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], time, NULL );
+    PyArrayObject *cvalues = ( PyArrayObject * )PyObject_CallMethod( values, "astype", "s", "complex", NULL );
+    Py_DECREF( values );
+    return cvalues;
+}
+
 #endif
 
 
 // Constant profiles
 double Function_Constant1D::valueAt( vector<double> x_cell )
 {
-    return ( x_cell[0]>xvacuum ) ? value : 0.;
+    return ( x_cell[0]>=xvacuum ) ? value : 0.;
 }
 double Function_Constant2D::valueAt( vector<double> x_cell )
 {
-    return ( ( x_cell[0]>xvacuum ) && ( x_cell[1]>yvacuum ) ) ? value : 0.;
+    return ( ( x_cell[0]>=xvacuum ) && ( x_cell[1]>=yvacuum ) ) ? value : 0.;
 }
 double Function_Constant3D::valueAt( vector<double> x_cell )
 {
-    return ( ( x_cell[0]>xvacuum ) && ( x_cell[1]>yvacuum ) && ( x_cell[2]>zvacuum ) ) ? value : 0.;
+    return ( ( x_cell[0]>=xvacuum ) && ( x_cell[1]>=yvacuum ) && ( x_cell[2]>=zvacuum ) ) ? value : 0.;
+}
+
+// Constant profiles + time
+double Function_Constant1D::valueAt( vector<double> x_cell, double time )
+{
+    return ( x_cell[0]>=xvacuum ) ? value : 0.;
+}
+double Function_Constant2D::valueAt( vector<double> x_cell, double time )
+{
+    return ( ( x_cell[0]>=xvacuum ) && ( x_cell[1]>=yvacuum ) ) ? value : 0.;
+}
+double Function_Constant3D::valueAt( vector<double> x_cell, double time )
+{
+    return ( ( x_cell[0]>=xvacuum ) && ( x_cell[1]>=yvacuum ) && ( x_cell[2]>=zvacuum ) ) ? value : 0.;
 }
 
 // Trapezoidal profiles

@@ -284,7 +284,8 @@ void RadiationMonteCarlo::photonEmission( int ipart,
     //double new_norm_p;
 
     // Get the photon quantum parameter from the table xip
-    photon_chi = RadiationTables.computeRandomPhotonChi( particle_chi );
+    // photon_chi = RadiationTables.computeRandomPhotonChi( particle_chi );
+    photon_chi = RadiationTables.computeRandomPhotonChiWithInterpolation( particle_chi );
 
     // compute the photon gamma factor
     gammaph = photon_chi/particle_chi*( particle_gamma-1.0 );

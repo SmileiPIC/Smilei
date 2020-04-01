@@ -208,3 +208,11 @@ There are several ways to load this module in python.
   You may add the following command in your own python script::
 
     >>> execfile("/path/to/Smilei/scripts/Diagnostics.py")
+
+----
+
+Install the `smilei_tables` tool
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Generation of the tables is handled by an external tools.
+A full documentation is available on :doc:`the dedicated page <tables>`.

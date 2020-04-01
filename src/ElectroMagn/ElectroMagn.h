@@ -388,18 +388,18 @@ public:
     virtual void applyExternalFields( Patch * );
 
     //! Method used to copy real field and impose an external time fields (apply to all Fields)
-    virtual void applyExternalTimeFields( Patch *, double time );
+    virtual void applyPrescribedFields( Patch *, double time );
 
 	//! Method use to reset the real value of all fields on which we imposed an external time field
-	virtual void resetExternalTimeFields();
+	virtual void resetPrescribedFields();
 
     void saveExternalFields( Patch * );
     
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField( Field *, Profile *, Patch * ) = 0 ;
     
-    //! Method used to impose external time fields (apply to a given Field)
-    virtual void applyExternalTimeField( Field *, Profile *, Patch *, double time_prim) = 0 ;
+    //! Method used to impose a prescribed fields (apply to a given Field)
+    virtual void applyPrescribedField( Field *, Profile *, Patch *, double time) = 0 ;
     
     //! Antenna
     std::vector<Antenna> antennas;
