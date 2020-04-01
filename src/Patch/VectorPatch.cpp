@@ -1061,7 +1061,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
             }
 
             // Apply boundary conditions for envelope and |A|, |E|
-            ( *this )( ipatch )->EMfields->envelope->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
+            ( *this )( ipatch )->EMfields->envelope->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow, ( *this )( ipatch )->EMfields );
 
         }
 
