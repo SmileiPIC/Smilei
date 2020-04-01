@@ -13,6 +13,7 @@
 #include "RadiationMonteCarlo.h"
 #include "RadiationCorrLandauLifshitz.h"
 #include "RadiationLandauLifshitz.h"
+#include "RadiationDiagRadiationSpectrum.h"
 #include "RadiationNiel.h"
 
 #include "Params.h"
@@ -36,7 +37,7 @@ public:
     static Radiation *create( Params &params, Species *species )
     {
         Radiation *Radiate = NULL;
-        
+
         // assign the correct Radiation model to Radiate
         if( species->radiation_model_ == "mc" ) {
             Radiate = new RadiationMonteCarlo( params, species );
@@ -52,21 +53,26 @@ public:
         // Classical continuous radiation loss model from Landau-Lifshitz (LL)
         else if( species->radiation_model_ == "ll" ) {
             Radiate = new RadiationLandauLifshitz( params, species );
+        }
+        // Radiation is only a diagnostic (DiagRadiationSpectrum can be called for this species): only compute
+        // the electron quantum parameter
+        else if( species->radiation_model_ == "diagradiationspectrum" ) {
+            Radiate = new RadiationDiagRadiationSpectrum( params, species );
         } else if( species->radiation_model_ != "none" ) {
             ERROR( "For species " << species->name_
                    << ": unknown radiation_model `"
                    << species->radiation_model_ << "`" );
         }
-        
+
         int n_envlaser = params.Laser_Envelope_model;
         if( ( n_envlaser >=1 ) & ( species->ponderomotive_dynamics ) & ( species->radiation_model_ != "none" ) ) {
             ERROR( "Radiation model is not yet implemented for species interacting with Laser Envelope model." );
         }
-        
-        
+
+
         return Radiate;
     }
-    
+
 };
 
 #endif

@@ -61,7 +61,7 @@ void EnvelopeBCAM_Axis::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, d
            // ( *Env_Aabs2Dcyl )  ( i, 1 ) = (*Env_Aabs2Dcyl)(i,3);
            // ( *Env_Eabs2Dcyl )  ( i, 1 ) = (*Env_Eabs2Dcyl)(i,3);
            ( *A2Dcyl )         ( i, 0 ) =  (*A2Dcyl)(i,4);
-           ( *Phi2Dcyl )       ( i, 0 ) = std::abs((*A2Dcyl)  (i,4)) * std::abs((*A2Dcyl)  (i,4)) * 0.5; 
+           ( *Phi2Dcyl )       ( i, 0 ) = std::abs((*A2Dcyl)  (i,4)) * std::abs((*A2Dcyl)  (i,4)) * 0.5;
            // ( *Env_Aabs2Dcyl )  ( i, 0 ) = (*Env_Aabs2Dcyl)(i,4);
            // ( *Env_Eabs2Dcyl )  ( i, 0 ) = (*Env_Eabs2Dcyl)(i,4);
 

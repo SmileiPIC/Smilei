@@ -1,0 +1,4 @@
+CXXFLAGS += -mavx2 -mfma  -march=broadwell
+# -march=native
+# -mavx2
+# -mfma

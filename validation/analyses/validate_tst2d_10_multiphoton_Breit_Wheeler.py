@@ -30,6 +30,10 @@ dy = S.namelist.Main.cell_length[1]
 # ______________________________________________________________________________
 # Read scalar diagnostics
 
+print("")
+print(" 1) Analyze of scalar diags")
+print("")
+
 times = np.array(S.Scalar("Ukin_electron").get()["times"])
 ukin_electron = np.array(S.Scalar("Ukin_electron").get()["data"])
 ukin_positron = np.array(S.Scalar("Ukin_positron").get()["data"])
@@ -51,31 +55,56 @@ print ' Final number of positrons: ',ntot_positron[-1]
 print ' Final number of photons: ',ntot_photon[-1]
 
 Validate("Electron kinetic energy evolution: ", ukin_electron/utot[0], 1e-2 )
-Validate("Positron kinetic energy evolution: ", ukin_positron/utot[0], 1e-2 )
-Validate("Photon kinetic energy evolution: ", ukin_photon/utot[0], 1e-2 )
+Validate("Positron kinetic energy evolution: ", ukin_positron/utot[0], 2e-2 )
+Validate("Photon kinetic energy evolution: ", ukin_photon/utot[0], 2e-2 )
 Validate("Maximal relative error total energy: ", max(abs(utot[:] - utot[0]))/utot[0], 5e-3 )
 
 # ______________________________________________________________________________
 # Read energy spectrum
 
-if False:
+print("")
+print(" 2) Analyze of the gamma distribution (particle binning)")
+print("")
 
-    PartDiag = S.ParticleDiagnostic(diagNumber=0,timesteps = 1000)
-    gamma = np.array(PartDiag.get()["gamma"])
-    density = np.array(PartDiag.get()["data"][0])
-    integral = sum(density)*(gamma[1] - gamma[0])
+species_list = ["electron","positron","photon"]
 
-    print ' Electron energy from spectrum: ',integral
-    print ' Max from spectrum: ',max(density/integral)
+integrated_gamma_spectrum = {}
+max_gamma_spectrum = {}
 
-    Validate("Electron energy spectrum: ", density/integral, 1e-5 )
+for ispecies,species in enumerate(species_list):
+    
+    integrated_gamma_spectrum[species] = np.zeros(8)
+    max_gamma_spectrum[species] = np.zeros(8)
+    
+    for diag_it in range(8):
+    
+        PartDiag = S.ParticleBinning(diagNumber=ispecies,timesteps = diag_it*50)
+        gamma = np.array(PartDiag.get()["gamma"])
+        density = np.array(PartDiag.get()["data"][0])
 
-    PartDiag = S.ParticleDiagnostic(diagNumber=1,timesteps = 1000)
-    gamma = np.array(PartDiag.get()["gamma"])
-    density = np.array(PartDiag.get()["data"][0])
-    integral = sum(density)*(gamma[1] - gamma[0])
+        log10_gamma = np.log10(gamma)
+        delta = log10_gamma[1] - log10_gamma[0]
+        bins =  np.power(10.,log10_gamma + 0.5*delta) - np.power(10.,log10_gamma - 0.5*delta)
+        
+        integrated_gamma_spectrum[species][diag_it] = np.sum(bins*density)
+        imax = np.argmax(density)
+        max_gamma_spectrum[species][diag_it] = gamma[imax]
 
-    print ' Positron energy from spectrum: ',integral
-    print ' Max from spectrum: ',max(density/integral)
-
-    Validate("Positron energy spectrum: ", density/integral, 1e-5 )
+print(" ---------------------------------------------------------")
+print(" Integrated Gamma distribution                           |")
+line = "                  |"
+for ispecies,species in enumerate(species_list):
+    line += " {0:<9}  |".format(species)
+print(line)
+print(" ---------------------------------------------------------")
+# Loop over the timesteps
+for diag_it in range(8):
+    line = " Iteration {0:5d}  |".format(diag_it*50)
+    for ispecies,species in enumerate(species_list):
+        line += " {0:.4e} |".format(integrated_gamma_spectrum[species][diag_it])
+    print(line)
+# Validation
+for diag_it in range(8):
+    Validate("Integrated Gamma distribution for species electron at iteration {}".format(diag_it),integrated_gamma_spectrum["electron"][diag_it],integrated_gamma_spectrum["electron"][diag_it]*0.1)
+    Validate("Integrated Gamma distribution for species positron at iteration {}".format(diag_it),integrated_gamma_spectrum["positron"][diag_it],integrated_gamma_spectrum["positron"][diag_it]*0.1)
+    # Validate("Integrated Gamma distribution for species photon at iteration {}".format(diag_it),integrated_gamma_spectrum["photon"][diag_it],integrated_gamma_spectrum["photon"][diag_it]*0.2)

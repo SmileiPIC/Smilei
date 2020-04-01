@@ -935,9 +935,9 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
         name      = "injector1",
         species   = "electrons1",
         box_side  = "xmin",
-        
+
         # Parameters inherited from the associated `species` by default
-        
+
         position_initialization = "species",
         momentum_initialization = "rectangular",
         mean_velocity = [0.5,0.,0.],
@@ -960,10 +960,10 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 .. py:data:: box_side
 
     From where the macro-particles are injected. Options are:
-    
+
     * ``"xmin"``
     * ``"xmax"``
-    
+
 .. py:data:: position_initialization
 
     The method for initialization of particle positions. Options are:
@@ -985,7 +985,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     * ``"species"`` or empty ``""``: injector uses the option of the specified :py:data:`species`.
     * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
     * ``"rectangular"`` for a rectangular distribution
-    
+
     By default, injector uses the parameters provided with :py:data:`species`.
 
 .. py:data:: mean_velocity
@@ -1003,13 +1003,13 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
     The initial temperature of the particles, in units of :math:`m_ec^2`.
     By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
-    
+
 .. py:data:: particles_per_cell
 
     :type: float or *python* function (see section :ref:`profiles`)
 
     The number of particles per cell to use for the injector.
-    
+
 .. py:data:: number_density
              charge_density
 
@@ -1017,14 +1017,14 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
     The absolute value of the number density or charge density (choose one only)
     of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`)
-    
+
 .. py:data:: time_envelope
 
     :type: a *python* function or a :ref:`time profile <profiles>`
     :default:  ``tconstant()``
 
     The temporal envelope of the injector.
-    
+
 ----
 
 .. rst-class:: experimental
@@ -1123,7 +1123,7 @@ It is optionnally specified in the ``Species`` block::
   :default: ``True``
 
   :red:`[for experts]` Activates the accumulation correction
-  (see :ref:`vranic_accumulation_effect` for more information).
+  (see :doc:`particle_merging` for more information).
   The correction only works in linear scale.
 
 
@@ -1172,7 +1172,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 .. py:data:: space_time_profile_AM
 
     :type: A list of maximum 2*`number_of_AM` *python* functions.
-    
+
     These profiles define the first modes of `Br` and `Bt` in the order shown in the above example.
     Undefined modes are considered zero.
     This can be used only in `AMcylindrical` geometry.
@@ -1519,7 +1519,7 @@ Following is the generic laser envelope creator ::
 .. py:data:: omega
 
    :default: ``1.``
- 
+
    For the moment only a value of 1 is supported.
 
 .. py:data:: envelope_profile
@@ -1654,7 +1654,8 @@ the envelope model for the laser.
 External fields
 ^^^^^^^^^^^^^^^
 
-An external field can be applied using an ``ExternalField`` block::
+An constant external field can be applied over the whole box
+(at the beginning of the simulation) using an ``ExternalField`` block::
 
   ExternalField(
       field = "Ex",
@@ -1670,6 +1671,49 @@ An external field can be applied using an ``ExternalField`` block::
   :type: float or *python* function (see section :ref:`profiles`)
 
   The initial spatial profile of the applied field.
+  Refer to :doc:`units` to understand the units of this field.
+
+
+----
+
+.. _PrescribedField:
+
+Prescribed fields
+^^^^^^^^^^^^^^^^^
+
+User-defined electromagnetic fields, with spatio-temporal dependence,
+can be superimposed to the self-consistent Maxwell fields.
+These fields push the particles but **do not participate in the Maxwell solver**:
+they are not self-consistent.
+They are however useful to describe charged particles' dynamics in a given
+electromagnetic field.
+
+This feature is accessible using the ``PrescribedField`` block::
+
+  from numpy import cos, sin
+  def myPrescribedProfile(x,t):
+  	return cos(x)*sin(t)
+
+  PrescribedField(
+      field = "Ex",
+      profile = myPrescribedProfile
+  )
+
+.. py:data:: field
+
+  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
+
+.. warning::
+
+  When prescribing a magnetic field, always use the time-centered fields ``"Bx_m"``, ``"By_m"`` or ``"Bz_m"``.
+  These fields are those used in the particle pusher, and are defined at integer time-steps.
+
+.. py:data:: profile
+
+  :type: float or *python* function (see section :ref:`profiles`)
+
+  The spatio-temporal profile of the applied field: a *python* function
+  with arguments (*x*, *t*) or (*x*, *y*, *t*), etc.
   Refer to :doc:`units` to understand the units of this field.
 
 
@@ -2023,34 +2067,35 @@ Collisions
   It can either be set to the name of a pre-existing electron species (where the ionized
   electrons are created), or to ``True`` (the first electron species in :py:data:`species1`
   or :py:data:`species2` is then chosen for ionized electrons).
-  
+
   One of the species groups must be all electrons (:py:data:`mass` = 1), and the other
   one all ions of the same :py:data:`atomic_number`.
-  
+
+
 .. rst-class:: experimental
 
 .. py:data:: nuclear_reaction
-  
+
   :type: a list of strings
   :default: ``None`` (no nuclear reaction)
-  
+
   A list of the species names for the products of nuclear reactions
   that may occur during collisions. You may omit product species if they are not necessary
   for the simulation.
-  
+
   All members of :py:data:`species1` must be the same type of atoms, which is automatically
   recognized by their :py:data:`mass` and :py:data:`atomic_number`. The same applies for
   all members of :py:data:`species2`.
-  
+
   In the current version, only the reaction D(d,n)He³ is available.
 
 .. rst-class:: experimental
 
 .. py:data:: nuclear_reaction_multiplier
-  
+
   :type: a float
   :default: 0. (automatically adjusted)
-  
+
   The rate multiplier for nuclear reactions. It is a positive number that artificially
   increases the occurence of reactions so that a good statistics is obtained. The number
   of actual reaction products is adjusted by changing their weights in order to provide
@@ -2084,37 +2129,11 @@ tables.
     minimum_chi_continuous = 1e-3,
     minimum_chi_discontinuous = 1e-2,
     table_path = "../databases/",
-    compute_table = False,
 
-    # Following parameters are only if you want to compute the tables
+    # Parameters for Niel et al.
+    Niel_computation_method = "table",
 
-    output_format = "hdf5",
-
-    # Parameters to generate the table h used by Niel et al.
-    h_chipa_min = 1E-3,
-    h_chipa_max = 1E1,
-    h_dim = 128,
-    h_computation_method = "table",
-
-    # Parameter to generate the table integfochi used by the Monte-Carlo model
-    integfochi_chipa_min = 1e-4,
-    integfochi_chipa_max = 1e1,
-    integfochi_dim = 128,
-
-    # Parameter to generate the table xip used by the Monte-Carlo model
-    xip_chipa_min = 1e-4,
-    xip_chipa_max = 1e1,
-    xip_power = 4,
-    xip_threshold = 1e-3,
-    xip_chipa_dim = 128,
-    xip_chiph_dim = 128,
   )
-
-.. py:data:: output_format
-
-  :default: ``"hdf5"``
-
-  Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
 
 .. py:data:: minimum_chi_continuous
 
@@ -2133,37 +2152,14 @@ tables.
 
 .. py:data:: table_path
 
-  :default: ``"./"``
+  :default: ``""``
 
   Path to the external tables for the radiation losses.
-  Default tables are located in ``databases``.
+  If empty, the default tables are used.
+  Default tables are embedded in the code.
+  External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
 
-.. py:data:: compute_table
-
-  :default: False
-
-  If True, the tables for the selected radiation model are computed
-  with the requested parameters and stored at the path `table_path`.
-
-.. py:data:: h_chipa_min
-
-  :default: 1e-3
-
-  Minimum value of the quantum parameter :math:`\chi` for the table *h* of Niel `et al`.
-
-.. py:data:: h_chipa_max
-
-  :default: 1e1
-
-  Maximum value of the quantum parameter :math:`\chi` for the table *h* of Niel `et al`.
-
-.. py:data:: h_dim
-
-  :default: 128
-
-  Dimension of the table *h* of Niel `et al`.
-
-.. py:data:: h_computation_method
+.. py:data:: Niel_computation_method
 
   :default: "table"
 
@@ -2183,68 +2179,6 @@ tables.
   Table access prevent total vectorization.
   Fits are vectorizable.
 
-.. py:data:: integfochi_chipa_min
-
-  :default: 1e-3
-
-  Minimum value of the quantum parameter c for the table containing
-  the integration of :math:`F/\chi`.
-
-.. py:data:: integfochi_chipa_max
-
-  :default: 1e1
-
-  Maximum value of the quantum parameter :math:`\chi` for the table containing
-  the integration of :math:`F/\chi`.
-
-.. py:data:: integfochi_dim
-
-  :default: 128
-
-  Discretization of the table containing
-  the integration of :math:`F/\chi`.
-
-.. py:data:: xip_chipa_min
-
-  :default: 1e-3
-
-  Minimum particle quantum parameter for the computation of the *chimin*
-  and *xip* tables.
-
-.. py:data:: xip_chipa_max
-
-  :default: 1e1
-
-  Maximum particle quantum parameter for the computation of the *chimin*
-  and *xip* tables.
-
-.. py:data:: xip_power
-
-  :default: 4
-
-  Maximum decrease in order of magnitude for the search for the minimum value
-  of the photon quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_threshold
-
-  :default: 1e-3
-
-  Minimum value of *xip* to compute the minimum value of the photon
-  quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_chipa_dim
-
-  :default: 128
-
-  Discretization of the *chimin* and *xip* tables in the *particle_chi* direction.
-
-.. py:data:: xip_chiph_dim
-
-  :default: 128
-
-  Discretization of the *xip* tables in the *photon_chi* direction.
-
-
 --------------------------------------------------------------------------------
 
 .. _MultiphotonBreitWheeler:
@@ -2254,118 +2188,28 @@ Multiphoton Breit-Wheeler
 
 The block ``MultiphotonBreitWheeler`` enables to tune parameters of the
 multiphoton Breit-Wheeler process and particularly the table generation.
+For more information on this physical mechanism, see :doc:`multiphoton_Breit_Wheeler`.
 
-There are two tables used for the multiphoton Breit-Wheeler refers to as the
-*T* table and the *xip* table.
+There are three tables used for the multiphoton Breit-Wheeler refers to as the
+*integration_dT_dchi*, *min_particle_chi_for_xi* and *xi* table.
 
 ::
 
   MultiphotonBreitWheeler(
 
-    # Table output format, can be "ascii", "binary", "hdf5"
-    output_format = "hdf5",
-
     # Path to the tables
     table_path = "../databases/",
-
-    # Flag to compute the tables
-    compute_table = False,
-
-    # Table T parameters
-    T_chiph_min = 1e-2,
-    T_chiph_max = 1e1,
-    T_dim = 128,
-
-    # Table xip parameters
-    xip_chiph_min = 1e-2,
-    xip_chiph_max = 1e1,
-    xip_power = 4,
-    xip_threshold = 1e-3,
-    xip_chipa_dim = 128,
-    xip_chiph_dim = 128,
 
   )
 
 .. py:data:: table_path
 
-  :default: ``"./"``
+  :default: ``""``
 
   Path to the external tables for the multiphoton Breit-Wheeler.
-  Default tables are located in ``databases``.
-
-.. py:data:: compute_table
-
-  :default: False
-
-  If True, the tables for the selected radiation model are computed
-  with the requested parameters and stored at the path `table_path`.
-
-.. py:data:: output_format
-
-  :default: ``"hdf5"``
-
-  Output format of the tables:
-    * ``"hdf5"``: ``multiphoton_Breit_Wheeler_tables.h5``
-    * ``"binary"``: ``tab_T.bin`` and ``tab_mBW_xip.bin``
-    * ``"ascii"``: ``tab_T.dat`` and ``tab_mBW_xip.dat``
-
-.. py:data:: T_chiph_min
-
-  :default: 1e-2
-
-  Minimum value of the photon quantum parameter :math:`\chi_\gamma` for the table *T*.
-
-.. py:data:: T_chiph_max
-
-  :default: 1e1
-
-  Maximum value of the photon quantum parameter :math:`\chi_\gamma` for the table *T*.
-
-.. py:data:: T_dim
-
-  :default: 128
-
-  Dimension of the table *T*.
-
-.. py:data:: xip_chiph_min
-
-  :default: 1e-2
-
-  Minimum photon quantum parameter for the computation of the *chimin*
-  and *xip* tables.
-
-.. py:data:: xip_chiph_max
-
-  :default: 1e1
-
-  Maximum photon quantum parameter for the computation of the *chimin*
-  and *xip* tables.
-
-.. py:data:: xip_power
-
-  :default: 4
-
-  Maximum decrease in order of magnitude for the search for the minimum value
-  of the photon quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_threshold
-
-  :default: 1e-3
-
-  Minimum value of *xip* to compute the minimum value of the photon
-  quantum parameter. It is advised to keep this value by default.
-
-.. py:data:: xip_chiph_dim
-
-  :default: 128
-
-  Discretization of the *chimin* and *xip* tables in the *photon_chi* direction.
-
-.. py:data:: xip_chipa_dim
-
-  :default: 128
-
-  Discretization of the *xip* tables in the *particle_chi* direction.
+  If empty, the default tables are used.
+  Default tables are embedded in the code.
+  External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
 
 --------------------------------------------------------------------------------
 
@@ -2617,7 +2461,7 @@ or several points arranged in a 2-D or 3-D grid.
   Probes follow the moving window.
   To obtain the fields at fixed points in the plasma instead, create a cold,
   chargeless species, and :ref:`track the particles <DiagTrackParticles>`.
-  
+
 
 To add one probe diagnostic, include the block ``DiagProbe``::
 
@@ -3034,6 +2878,105 @@ for instance::
   * If ``shape="plane"``, then ``"a"`` and ``"b"`` are the axes perpendicular to the ``vector``.
   * If ``shape="sphere"``, then ``"theta"`` and ``"phi"`` are the angles with respect to the ``vector``.
 
+
+----
+
+.. _DiagRadiationSpectrum:
+
+*RadiationSpectrum* diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A *radiation spectrum diagnostic* computes (at a given time) the instantaneous
+power spectrum following from the incoherent emission of high-energy
+photons by accelerated charge (see :doc:`radiation_loss` for more details
+on the emission process and its implementation in :program:`Smilei`).
+
+It is similar to the :ref:`particle binning diagnostics <DiagParticleBinning>`,
+with an extra axis of binning: the emitted photon energy.
+The other axes remain available to the user.
+
+A radiation spectrum diagnostic is defined by a block ``RadiationSpectrum()``::
+
+  DiagRadiationSpectrum(
+      every = 5,
+      flush_every = 1,
+      time_average = 1,
+      species = ["electrons1", "electrons2"],
+      photon_energy_axis = [0., 1000., 100, 'logscale'],
+      axes = []
+  )
+
+.. py:data:: every
+
+  The number of time-steps between each output, **or** a :ref:`time selection <TimeSelections>`.
+
+.. py:data:: flush_every
+
+  :default: 1
+
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+
+  When `flush_every` coincides with `every`, the output
+  file is actually written ("flushed" from the buffer). Flushing
+  too often can *dramatically* slow down the simulation.
+
+.. py:data:: time_average
+
+  :default: 1
+
+  The number of time-steps during which the data is averaged before output.
+
+.. py:data:: species
+
+  A list of one or several species' :py:data:`name` that emit the radiation.
+  All these species are combined into the same diagnostic.
+
+.. py:data:: photon_energy_axis
+
+  The axis of photon energies (in units of :math:`m_e c^2`).
+  The syntax is similar to that of
+  :ref:`particle binning diagnostics <DiagParticleBinning>`.
+
+  Syntax: ``[min, max, nsteps, "logscale"]``
+
+.. py:data:: axes
+
+  An additional list of "axes" that define the grid.
+  There may be as many axes as wanted (there may be zero axes).
+  Their syntax is the same that for "axes" of a
+  :ref:`particle binning diagnostics <DiagParticleBinning>`.
+
+
+**Examples of radiation spectrum diagnostics**
+
+* Time-integrated over the full duration of the simulation::
+
+    DiagRadiationSpectrum(
+        every = Nt,
+        time_average = Nt,
+        species = ["electrons"],
+        photon_energy_axis = [0., 1000., 100, 'logscale'],
+        axes = []
+    )
+
+* Angularly-resolved instantaneous radiation spectrum.
+  The diagnostic considers that all electrons emit radiation in
+  the direction of their velocity::
+
+    from numpy import arctan2, pi
+
+    def angle(p):
+        return arctan2(p.py,p.px)
+
+    DiagRadiationSpectrum(
+        every = 10,
+        species = ["electrons"],
+        photon_energy_axis = [0., 1000., 100, 'logscale'],
+        axes = [
+            [angle,-pi,pi,90]
+        ]
+    )
+
 ----
 
 .. _DiagTrackParticles:
@@ -3233,81 +3176,81 @@ A few things are important to know when you need dumps and restarts.
   )
 
 **Parameters to save the state of the current simulation**
-  
+
   .. py:data:: dump_step
-  
+
     :default: ``0``
-  
+
     The number of timesteps between each dump.
     If ``0``, no dump is done.
-  
+
   .. py:data:: dump_minutes
-  
+
     :default: ``0.``
-  
+
     The number of minutes between each dump.
     If ``0.``, no dump is done.
-    
+
     May be used in combination with :py:data:`dump_step`.
-  
+
   .. py:data:: exit_after_dump
-  
+
     :default: ``True``
-  
+
     If ``True``, the code stops after the first dump. If ``False``, the simulation continues.
-  
+
   .. py:data:: keep_n_dumps
-  
+
     :default: ``2``
-  
+
     This tells :program:`Smilei` to keep, in the current run,  only the last ``n`` dumps.
     Older dumps will be overwritten.
-    
+
     The default value, ``2``, saves one extra dump in case of a crash during the next dump.
-  
+
   .. py:data:: file_grouping
-  
+
     :default: ``None``
-  
+
     The maximum number of checkpoint files that can be stored in one directory.
     Subdirectories are created to accomodate for all files.
     This is useful on filesystem with a limited number of files per directory.
-  
+
   .. py:data:: dump_deflate
-  
+
     :red:`to do`
-  
+
 **Parameters to restart from a previous simulation**
-  
+
   .. py:data:: restart_dir
-  
+
     :default: ``None``
-  
+
     The directory of a previous run from which :program:`Smilei` should restart.
     For the first run, do not specify this parameter.
-  
+
     **This path must either absolute or be relative to the current directory.**
-    
+
     .. Note::
-    
+
       In many situations, the restarted runs will have the exact same namelist as the initial
       simulation, except this ``restart_dir`` parameter, which points to the previous simulation
       folder.
       You can use the same namelist file, and simply add an extra argument when you launch the
       restart:
-      
+
       ``mpirun ... ./smilei mynamelist.py "Checkpoints.restart_dir='/path/to/previous/run'"``
-  
+
   .. py:data:: restart_number
-  
+
     :default: ``None``
-  
+
     The number of the dump (in the previous run) that should be used for the restart.
     For the first run, do not specify this parameter.
-    
+
     In a previous run, the simulation state may have been dumped several times.
     These dumps are numbered 0, 1, 2, etc. until the number :py:data:`keep_n_dumps`.
-  
+
 
 ----
 

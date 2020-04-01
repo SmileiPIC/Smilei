@@ -74,7 +74,8 @@ public :
     void updateFieldList( SmileiMPI *smpi );
     void updateFieldList( int ispec, SmileiMPI *smpi );
     
-    void createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams & );
+    //! Create the diagnostic list
+    void createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &, RadiationTables * radiation_tables_ );
     
     //! get a particular scalar
     inline double getScalar( std::string name )
@@ -213,10 +214,10 @@ public :
     void applyExternalFields();
     
     //! For each patch, apply external time fields
-    void applyExternalTimeFields(double time_prim);
+    void applyPrescribedFields(double time);
 
 	//! reset all external time fields;
-    void resetExternalTimeFields();
+    void resetPrescribedFields();
     
     void saveExternalFields( Params &params );
     

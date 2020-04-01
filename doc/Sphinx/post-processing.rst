@@ -222,13 +222,13 @@ Open a ParticleBinning diagnostic
   S = happi.Open("path/to/my/results")
   Diag = S.ParticleBinning(1)
 
-**Note**:
+.. note::
 
-The :ref:`macro-particle weights<Weights>` are not in units of density,
-but of density multiplied by hypervolume.
-In the ``ParticleBinning`` post-processing, this is accounted for: the
-results are divided by the hypervolume corresponding to the diagnostic's
-definition.
+  The :ref:`macro-particle weights<Weights>` are not in units of density,
+  but of density multiplied by hypervolume.
+  In the ``ParticleBinning`` post-processing, this is accounted for: the
+  results are divided by the hypervolume corresponding to the diagnostic's
+  definition.
 
 
 ----
@@ -239,11 +239,7 @@ Open a Screen diagnostic
 .. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
-  * ``diagNumber``: number of the screen diagnostic (the first one has number 0).
-     | If not given, a list of available screen diagnostics is printed.
-     | It can also be an operation between several Screen diagnostics.
-     | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
-  * ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
+  * ``diagNumber``, ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
   * See also :ref:`otherkwargs`
 
 **Example**::
@@ -252,6 +248,26 @@ Open a Screen diagnostic
   Diag = S.Screen(0)
 
 
+----
+
+Open a RadiationSpectrum diagnostic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
+
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
+  * ``diagNumber``, ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
+  * See also :ref:`otherkwargs`
+
+**Example**::
+
+  S = happi.Open("path/to/my/results")
+  Diag = S.RadiationSpectrum(0)
+
+.. note::
+
+  The resulting spectral power is in units of :math:`\omega_r`.
+  If additional axes are used, the power spectrum is divided by the size of the bins of each axes.
 
 ----
 
@@ -268,7 +284,7 @@ Open a TrackParticles diagnostic
   * ``axes``: A list of axes for plotting the trajectories or obtaining particle data.
      Each axis is one of the :py:data:`attributes` defined in the namelist.
      In addition, when there is a moving window, the axis ``"moving_x"`` is automatically available.
-     
+
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time.
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories.
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
@@ -492,7 +508,7 @@ Obtain the data
   the diagnostic's units defined by the ``units`` argument, if provided.
 
   * ``axis``: the name of the requested axis.
-  
+
     * For ``Field``: this is ``"x"``, ``"y"`` or ``"z"``
     * For ``Probe``: this is ``"axis1"``, ``"axis2"`` or ``"axis3"``
     * For ``ParticleBinning`` and ``Screen``: this is the ``type`` of the :py:data:`axes`
@@ -593,7 +609,7 @@ at one given timestep.
   * ``axes``: Matplotlib's axes handle on which to plot. If None, make new axes.
 
   You may also have keyword-arguments (``kwargs``) described in :ref:`otherkwargs`.
-  
+
 **Example**::
 
     S = happi.Open("path/to/my/results")
@@ -809,4 +825,3 @@ Other tools in ``happi``
 
   namelist = happi.openNamelist("path/no/my/namelist.py")
   print namelist.Main.timestep
-
