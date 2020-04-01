@@ -45,8 +45,8 @@ def updateMatplotLibColormaps():
 
 class ChunkedRange:
 	def __init__(self, size, chunksize):
-		self.size = size
-		self.nchunks = int( (size-1) // chunksize + 1 )
+		self.size = int(size)
+		self.nchunks = int( (size-1) // int(chunksize) + 1 )
 		self.adjustedchunksize = int( (size-1) // self.nchunks + 1 )
 		self.ichunk = 0
 	def __iter__(self):
