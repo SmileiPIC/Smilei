@@ -935,6 +935,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
         name      = "injector1",
         species   = "electrons1",
         box_side  = "xmin",
+        time_envelope = tgaussian(start=0, duration=10., order=4),
 
         # Parameters inherited from the associated `species` by default
 
@@ -943,7 +944,6 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
         mean_velocity = [0.5,0.,0.],
         temperature = [1e-30],
         number_density = 1,
-        time_envelope = tgaussian(start=0, duration=10., order=4),
         particles_per_cell = 16,
     )
 
@@ -964,7 +964,16 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     * ``"xmin"``
     * ``"xmax"``
 
+.. py:data:: time_envelope
+
+    :type: a *python* function or a :ref:`time profile <profiles>`
+    :default:  ``tconstant()``
+
+    The temporal envelope of the injector.
+
 .. py:data:: position_initialization
+
+    :default: parameters provided the species
 
     The method for initialization of particle positions. Options are:
 
@@ -973,12 +982,12 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     * ``"random"`` for randomly distributed
     * ``"centered"`` for centered in each cell
     * The :py:data:`name` of another injector from which the positions are copied.
-      This option requires (1) that the *target* injector' positions are initialized
+      This option requires (1) that the *target* injector's positions are initialized
       using one of the three other options above.
 
-    By default, injector uses the parameters provided with :py:data:`species`.
-
 .. py:data:: momentum_initialization
+
+    :default: parameters provided the species
 
     The method for initialization of particle momenta. Options are:
 
@@ -986,27 +995,26 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
     * ``"rectangular"`` for a rectangular distribution
 
-    By default, injector uses the parameters provided with :py:data:`species`.
-
 .. py:data:: mean_velocity
 
     :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+    :default: parameters provided the species
 
     The initial drift velocity of the particles, in units of the speed of light :math:`c`.
-    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
 
     **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
 
 .. py:data:: temperature
 
     :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+    :default: parameters provided the species
 
     The initial temperature of the particles, in units of :math:`m_ec^2`.
-    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
 
 .. py:data:: particles_per_cell
 
     :type: float or *python* function (see section :ref:`profiles`)
+    :default: parameters provided the species
 
     The number of particles per cell to use for the injector.
 
@@ -1014,16 +1022,10 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
              charge_density
 
     :type: float or *python* function (see section :ref:`profiles`)
+    :default: parameters provided the species
 
     The absolute value of the number density or charge density (choose one only)
     of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`)
-
-.. py:data:: time_envelope
-
-    :type: a *python* function or a :ref:`time profile <profiles>`
-    :default:  ``tconstant()``
-
-    The temporal envelope of the injector.
 
 ----
 
