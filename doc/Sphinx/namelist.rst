@@ -2244,7 +2244,9 @@ This is done by including the block ``DiagScalar``::
 
   Number of digits of the outputs.
 
+.. warning::
 
+  Scalars diagnostics are not yet supported in ``"AMcylindrical"`` geometry.
 
 The full list of available scalars is given in the table below.
 
@@ -2530,9 +2532,13 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
 
-  Note that when running a simulation in cylindrical geometry,
-  contrary to the Field diagnostic, Probes are defined as in a
-  3D Cartesian geometry and return Cartesian fields.
+  .. warning::
+
+    In ``"AMcylindrical"``, contrary to the Field diagnostic, Probes are defined as in a
+    3D Cartesian geometry and return Cartesian fields.
+    Fields per mode are not available in Probe diagnostics. See Field diagnostics if
+    per mode information is needed.
+
 
 
 
