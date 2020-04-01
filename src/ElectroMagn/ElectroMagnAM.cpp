@@ -1349,7 +1349,7 @@ void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
 
         // applying a single pass of the binomial filter along X
         if (ipass < passes[0]){
-            // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+            // on Jl^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
             for( unsigned int i=0; i<nl_d-1; i++ ) {
                 for( unsigned int j=isYmin*2; j<nr_p; j++ ) {
                         ( *Jl )( i, j) = ( ( *Jl )( i, j) + ( *Jl )( i+1, j) )*0.5;
@@ -1360,7 +1360,7 @@ void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
                         ( *Jl )( i, j) = ( ( *Jl )( i, j) + ( *Jl )( i-1, j) )*0.5;
                 }
             }
-            // Jy
+            // Jr
             for( unsigned int i=0; i<nl_p-1; i++ ) {
                 for( unsigned int j=isYmin*3; j<nr_d; j++ ) {
                         ( *Jr )( i, j) = ( ( *Jr )( i, j) + ( *Jr )( i+1, j) )*0.5;
@@ -1371,7 +1371,7 @@ void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
                         ( *Jr )( i, j) = ( ( *Jr )( i, j) + ( *Jr )( i-1, j) )*0.5;
                 }
             }
-            // Jz
+            // Jt
             for( unsigned int i=0; i<nl_p-1; i++ ) {
                 for( unsigned int j=isYmin*2; j<nr_p; j++ ) {
                         ( *Jt )( i, j) = ( ( *Jt )( i, j) + ( *Jt )( i+1, j) )*0.5;
