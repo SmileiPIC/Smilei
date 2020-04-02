@@ -113,14 +113,14 @@ integrand  = dgaxis*spc_MC
 Prad_MC    = np.sum(integrand)
 
 # Compare
-print "chi0          = ", chi0
-print "g(chi0)       = ", g(chi0)
-print "Prad (theory) = ", Prad_tot
-print "Prad (noRR)   = ", Prad_noRR
-print "Prad (LL)     = ", Prad_LL
-print "Prad (cLL)    = ", Prad_cLL
-print "Prad (FP)     = ", Prad_FP
-print "Prad (MC)     = ", Prad_MC
+print( "chi0          = ", chi0)
+print( "g(chi0)       = ", g(chi0))
+print( "Prad (theory) = ", Prad_tot)
+print( "Prad (noRR)   = ", Prad_noRR)
+print( "Prad (LL)     = ", Prad_LL)
+print( "Prad (cLL)    = ", Prad_cLL)
+print( "Prad (FP)     = ", Prad_FP)
+print( "Prad (MC)     = ", Prad_MC)
 
 Validate("Prad (noRR)",Prad_noRR, 1.e-6*Prad_noRR)
 Validate("Prad   (LL)",  Prad_LL, 1.e-6*Prad_LL  )
