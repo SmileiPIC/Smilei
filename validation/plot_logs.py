@@ -138,6 +138,7 @@ class switchPlots:
             
             # Get branch names
             D["commits"] = data["commit"]
+            D["commit_ids"] = array([(b.split("-")[0]) for b in D["commits"]])
             D["branches"] = array(["-".join(b.split("-")[1:]) for b in D["commits"]])
             # Set parameters for branch plotting
             D["branch_opt"] = {}
@@ -208,6 +209,7 @@ class switchPlots:
             print("  > Commit: {}".format(D["commits"][k]))
             print("    Branch: {}".format(D["branches"][k]))
             print("    Date: {}".format(D["date"][k]))
+            print("    Link: https://llrgit.in2p3.fr/smilei/smilei/-/commit/{}".format(D["commit_ids"][k]))
             print("    ----------------------------------------------------------------------")
             print("     Timers          | Times (s)  | Min (s)    | Mean (s)   | Max (s)    |")
             print("    ----------------------------------------------------------------------")
@@ -219,6 +221,7 @@ class switchPlots:
                 D["max_times"]
             ):
                 print("     {0:15} | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} |".format(label, d[k], min, mean, max))
+
     
     def on_hover(self, event):
         vis = self.annot.get_visible()
