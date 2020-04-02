@@ -6,6 +6,6 @@ For more information, check out our website:
 
 Documentation for last release: www.maisondelasimulation.fr/smilei
 
-Documentation for current commit: smileipic.github.io/Smilei [![Build Status](https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.org/SmileiPIC/Smilei)
+Documentation for current commit: https://smileipic.github.io/Smilei [![Build Status](https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.org/SmileiPIC/Smilei)
 
-Chat room: riot.im/app/#/room/!LQrdVpOJEohPSWMlmf:matrix.org
+Chat room: https://riot.im/app/#/room/!LQrdVpOJEohPSWMlmf:matrix.org
