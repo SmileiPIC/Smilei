@@ -845,7 +845,7 @@ Each species has to be defined in a ``Species`` block::
   * ``"none"``: no radiation
   * ``"Landau-Lifshitz"`` (or ``ll``): Landau-Lifshitz model approximated for high energies
   * ``"corrected-Landau-Lifshitz"`` (or ``cll``): with quantum correction
-  * ``""Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
+  * ``"Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
   * ``"Monte-Carlo"`` (or ``mc``): Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
 
   This parameter cannot be assigned to photons (mass = 0).

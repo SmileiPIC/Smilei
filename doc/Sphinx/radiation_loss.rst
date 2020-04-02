@@ -192,7 +192,7 @@ where we recognize 3 terms:
       + \frac{54 \chi^5 \nu^4}{\left( 2 + 3 \nu \chi \right)^5} K_{2/3}(\nu) \right]}
 
 In :program:`Smilei` the corresponding description is accessible for an electron species by defining
-``radiation_model = "Fokker-Planck"`` or ``"FP"`` in the ``Species()`` block (see :doc:`namelist` for details).
+``radiation_model = "Niel"`` in the ``Species()`` block (see :doc:`namelist` for details).
 
 
 The classical regime :math:`\chi \ll 1`
@@ -320,7 +320,7 @@ Fokker-Planck stochastic model of Niel *et al*.
 Equation :eq:`NielStochasticForce` is implemented in :program:`Smilei` using
 a simple explicit scheme, see [Niel2018]_ Sec. VI.B for more details.
 This stochastic diffusive model is accessible in the species configuration
-under the name ``Fokker-Planck`` (equiv. ``FP``).
+under the name ``Niel``.
 
 The direct computation of Eq. :eq:`Nielh` during the emission process is too expensive.
 For performance issues,  :program:`Smilei` uses tabulated values or fit functions.
@@ -481,7 +481,7 @@ When other models are considered, the emitted radiation spectrum is reconstructe
 as discussed in :ref:`DiagRadiationSpectrum`, and given by Eq. :eq:`radiatedPowerSpectrum` (see also [Niel2018b]_).
 :numref:`radSpectra` presents for both values of the initial quantum parameter :math:`\chi=0.1` and :math:`\chi=1`
 the resulting power spectra obtained from the different models, focusing of the (continuous) corrected-Landau-Lifshitz (``cLL``),
-(stochastic) Fokker-Planck (``FP``) and Monte-Carlo (``MC``) models.
+(stochastic) Fokker-Planck (``Niel``) and Monte-Carlo (``MC``) models.
 At :math:`\chi=0.1`, all three descriptions give the same results, which is consistent with the idea that at small quantum parameters, 
 the three descriptions are equivalent.
 In contrast, for :math:`\chi=1`, the stochastic nature of high-energy photon emission (not accounted for in the continuous `cLL` model)
@@ -839,6 +839,8 @@ in the synchrotron case run on KNL.
 
 References
 ^^^^^^^^^^
+
+.. [DiPiazza2012] `Di Piazza et al. (2012), Rev. Mod. Phys. 84, 1177 <https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.84.1177>`_
 
 .. [Duclous2011] `Duclous, Kirk and Bell (2011), Plasma Physics and Controlled Fusion, 53 (1), 015009 <http://stacks.iop.org/0741-3335/53/i=1/a=015009>`_
 
