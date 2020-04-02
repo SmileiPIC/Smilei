@@ -26,9 +26,18 @@ rcParams['xtick.minor.width'] = 1.5
 rcParams['ytick.minor.width'] = 1.5
 
 # Obtain the files
-cases = sorted(glob("/sps2/gitlab-runner/logs/*.log"))
-#cases = sorted(glob("./logs/*.log"))
-
+if len(sys.argv) > 1:
+    try:
+        path = sys.argv[1]
+    except:
+        raise Exception("\n Please, provide a valid path to the logs.\n")
+else:
+    path = "/sps2/gitlab-runner/logs/*.log"
+    
+cases = sorted(glob(path))
+if len(cases) ==0:
+    raise Exception('\n No cases found for `{}`.\n The path may be invalid or not accessible.'.format(path))
+        
 # Class to create a plot with buttons to switch between cases
 class switchPlots:
     
