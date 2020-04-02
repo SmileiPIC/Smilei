@@ -131,10 +131,10 @@ assess which model is most suitable.
 We adopt this simple (yet sometimes not completely satisfactory) point of view below to describe the three main approaches
 used in :program:`Smilei` to account for high-energy photon emission and its back-reaction on the electron dynamics.
 
-For arbitrary values of the electron quantum parameter :math:`\chi` (but always in the quantum regime :math:`\chi \gtrsim 1`)
+For arbitrary values of the electron quantum parameter :math:`\chi` (but mandatory in the quantum regime :math:`\chi \gtrsim 1`)
 **************************************************
 
-The model of high-energy photon emission described above is generic, and apply for any value of
+The model of high-energy photon emission described above is generic, and applies for any value of
 the electron quantum parameter** :math:`\chi` (of course as long as the assumptions listed above hold!).
 In particular, it gives a correct description of high-energy photon emission and its back-reaction on
 the particle (electron or positron) dynamics in the quantum regime :math:`\chi \gtrsim 1`.
@@ -143,6 +143,7 @@ As a result, the particle energy/velocity can exhibit abrupt jumps, and the stoc
 photon emission is important.
 Under such conditions, a Monte-Carlo description of discrete high-energy photon emission (and their feedback
 on the radiating particle dynamics) is usually used (see [Timokhin2010]_, [Elkina2011]_, [Duclous2011]_, and [Lobet2013]_).
+More details on the implementation are given below.
 
 In :program:`Smilei` the corresponding description is accessible for an electron species by defining
 ``radiation_model = "Monte-Carlo"`` or ``"MC"`` in the ``Species()`` block (see :doc:`namelist` for details).
@@ -166,11 +167,10 @@ In particular, the change in electron momentum during a time interval :math:`dt`
 
 where we recognize 3 terms:
 
-* the Lorentz force :math:`{\bf F}_{\rm L}`,
+* the Lorentz force :math:`{\bf F}_{\rm L} = \pm e ({\bf E} + {\bf v}\times{\bf B})` (with :math:`\pm e` the particle's charge),
 
-* a deterministic force term :math:`{\bf F}_{\rm rad}`, so-called *drift term*, which is nothing but the leading term
-  of the Landau-Lifshitz radiation reaction force with the quantum correction :math:`g(\chi)` (see below for more detail
-  on this force term),
+* a deterministic force term :math:`{\bf F}_{\rm rad}` (see below for its expression), so-called *drift term*, which is nothing but the leading term
+  of the Landau-Lifshitz radiation reaction force with the quantum correction :math:`g(\chi)`,
 
 * a stochastic force term, so-called *diffusion term*, proportional to :math:`dW`, a Wiener process of variance :math:`dt`.
   This last term allows to account for the stochastic nature of high-energy photon emission, and it depends on functions
@@ -233,7 +233,8 @@ In :program:`Smilei` the corresponding description is accessible for an electron
     using ``radiation_model = "Landau-Lifshitz"`` or ``"LL"`` in the ``Species()``.
 
 
-**Choosing the good model for your simulation**
+Choosing the good model for your simulation
+*******************************************
 
 The next sections describe in more details the different models implemented in :program:`Smilei`.
 For the user convenience, :numref:`radiationRegimes` briefly summarises the models and how to choose
@@ -264,253 +265,6 @@ the most appropriate radiation reaction model for your simulation.
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
 
 
-
-
---------------------------------------------------------------------------------
-
-Continuous radiation models
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Approximated Landau-Lifshitz classical model
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-The classical radiation friction force acting on an ultra-relativistic electron
-has been derived by [Landau1947]_.
-The equation of momentum evolution implemented in
-PIC codes is composed of both the classical Lorentz force :math:`F_L`
-and the radiation friction term :math:`F_{rad}` so that:
-
-.. math::
-  :label: momentumEq
-
-  \frac{d\mathbf{p}}{dt} = \mathbf{F}_L + \mathbf{F}_{rad}
-
-with
-
-.. math::
-  :label: LLFrictionForce
-
-  \mathbf{F}_{rad} = -\frac{2}{3} e \tau_e \gamma \left( \frac{d\mathbf{E}}{dt} + \mathbf{u} \times \frac{\mathbf{B}}{dt} \right) \\
-  + \frac{2}{3} \frac{e}{E_{cr}} \left[ \left( \mathbf{u} \cdot \mathbf{E} \right) \mathbf{E} - \mathbf{B} \times \left( \mathbf{E} + \mathbf{u} \times \mathbf{B} \right) \right] \\
-  - \frac{2}{3}\frac{e}{E_{cr}} \gamma^2 \left[ \left( \mathbf{E} + \mathbf{u} \times \mathbf{B} \right)^2 - \left( \mathbf{u} \cdot \mathbf{E}\right)^2 \right] \mathbf{u}
-
-where :math:`\mathbf{u} = \mathbf{p} / (\gamma m c)` is the velocity,
-:math:`\mathbf{p}` the momentum,
-:math:`\tau_e = r_e / c = e^2 / 4 \pi \varepsilon_0 m c^3`
-the time for light to travel across the classical electron radius,
-:math:`E_{cr} = E_s / \alpha` the critical field,
-and :math:`\alpha` the fine structure constant.
-
-For an ultra-relativistic electron (:math:`\gamma \gg 1`) some terms in
-Eq. :eq:`LLFrictionForce` not explicited here can be neglected so that the
-friction force reduces to a single term:
-
-.. math::
-  :label: LLFrictionForceApprox
-
-  \mathbf{F}_{rad} = - P_{cl} \mathbf{u} / \left( \mathbf{u}^2 c \right)
-
-where :math:`P_{cl} = \frac{2}{3} \frac{\alpha^2 mc^2}{\tau_e} \chi^2`.
-
-The corresponding emitted power distribution as a function of the photon
-frequency :math:`\omega` reads
-
-.. math::
-  :label: ClasRadPower
-
-  \frac{dP}{d\omega} = \frac{9 \sqrt{3}}{8 \pi} \frac{P_{cl}}{ \omega_c}
-  \frac{\omega}{\omega_c} \int_{\omega/\omega_c}^{+\infty}{dy K_{5/3}(y)}
-
-with :math:`K_\nu(z)` the modified Bessel function of the second kind,
-:math:`\omega_c = 3 \gamma \alpha \chi / (2 \tau_e)` the critical frequency for
-synchrotron emission.
-This classical approach requires the emitted photon energy
-:math:`\varepsilon_\gamma = \hbar\omega` to be much smaller than that of
-the emitting particle. This translates to :math:`\chi \ll 1` as given in the
-introduction. Otherwise, the radiated power is know to strongly overestimate
-the physical radiated energy when :math:`\chi` approaches 0.1.
-
-Corrected classical model
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-In the quantum emission regime, if the field is (i) slowly-varying
-compared to the formation time of the radiated photon and (ii)
-undercritical with respect to the Schwinger field, then the Lorentz-invariant production
-rate of high-energy photons (via the multiphoton inverse Compton scattering)
-can be written as:
-
-.. math::
-  :label: PhotonProdRate
-
-  \frac{d^2N}{dt d\chi_\gamma} = \frac{1}{\pi \sqrt{3}} \frac{\alpha^2}{\tau_e \chi_\pm}
-  \left[ \int_\nu^{+\infty}{K_{5/3(y)}dy} + \frac{2 \chi_\gamma \nu}{2} K_{2/3}(\nu) \right]
-
-
-This equation can be also decomposed into:
-
-.. math::
-  :label: PhotonProdRate2
-
-  \frac{d^2N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e} \frac{S(\chi_\pm , \chi)}{\chi}
-
-where :math:`S(\chi_\pm , \chi)` is so called the synchrotron emissity function.
-
-We therefore have:
-
-.. math::
-  :label: synchrotron_emissivity_function
-
-  S(\chi_\pm , \chi) = \frac{\sqrt{3}}{2\pi} \frac{\chi_\gamma}{\chi}
-  \left[ \int_\nu^{+\infty}{K_{5/3(y)}dy} + \frac{2 \chi_\gamma \nu}{2} K_{2/3}(\nu) \right]
-
-Condition (i) is fulfilled when :math:`a_0 = e \| A^{\mu} \| / mc^2 \gg 1`, :math:`A^{\mu}`
-being the four-potential laser amplitude.
-
-conditions (ii) corresponds to :math:`\mathbf{B}^2 - \mathbf{E}^2 \ll E_s^2`
-and  :math:`\mathbf{B}\cdot \mathbf{E} \ll 1`
-(see [Ritus1985]_ for more details).
-
-The emitted power distribution can be deduced from Eq. :eq:`PhotonProdRate` in
-terms of the photon normalized energy. After integration, one obtains the
-expression of the radiated power in the quantum regime:
-
-.. math::
-  :label: quantumRadPower
-
-  P_{rad} = P_{cl} g(\chi)
-
-with
-
-.. math::
-  :label: g
-
-  g \left( \chi \right) = \frac{9 \sqrt{3} }{8 \pi} \int_0^{+\infty}{d\nu
-  \left[  \frac{2\nu^2 }{\left( 2 + 3 \nu \chi \right) ^2}K_{5/3}(\nu) +
-  \frac{4 \nu \left( 3 \nu \chi\right)^2 }{\left( 2 + 3 \nu \chi \right)^4}K_{2/3}(\nu) \right]}
-
-The quantum instantaneous radiated power is nothing else than the classical one
-multiplied by the correction :math:`g \left( \chi \right)`.
-
-When :math:`\chi \ll 1`, this correction is close to 1 and the corrected
-Friction force
-is therefore similar to Eq. :eq:`LLFrictionForceApprox`.
-The correction rapidly decreases otherwise when :math:`\chi > 10^{-2}`.
-
-The correction does not take into account stochastic
-effects when the photon energy approaches that of
-the emitting electron. This is the subject of the next section.
-
---------------------------------------------------------------------------------
-
-Stochastic schemes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Fokker-Planck stochastic model
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-The Fokker-Planck approach is an extension of the corrected Landau-Lifshitz
-model with an operator that takes into account diffusive stochastic effects
-([Niel2018b]_):
-
-.. math::
-  :label: NielStochasticForce
-
-  F_{rad} dt = \left[ -P_{cl} g \left( \chi \right) dt + mc^2
-  \sqrt{R\left( \chi, \gamma \right)} dW \right]
-  \mathbf{u} / \left( \mathbf{u}^2 c \right)
-
-where :math:`dW` is a Wiener process of variance :math:`dt`,
-
-.. math::
-  :label: NielR
-
-    R\left( \chi, \gamma \right) = \frac{2}{3} \frac{\alpha^2}{\tau_e} \gamma
-    h \left( \chi \right)
-
-and
-
-.. math::
-  :label: Nielh
-
-    h \left( \chi \right) = \frac{9 \sqrt{3}}{4 \pi} \int_0^{+\infty}{d\nu
-    \left[ \frac{2\chi^3 \nu^3}{\left( 2 + 3\nu\chi \right)^3} K_{5/3}(\nu)
-    + \frac{54 \chi^5 \nu^4}{\left( 2 + 3 \nu \chi \right)^5} K_{2/3}(\nu) \right]}
-
-Monte-Carlo quantum model
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-The Monte-Carlo treatment of the emission is more complex process than
-the previous ones and can be divided into several steps ([Duclous2011]_,
-[Lobet2013]_, [Lobet2015]_):
-
-1. An incremental optical depth :math:`\tau`, initially set to 0, is assigned to the particle.
-   Emission occurs when it reaches the final optical depth :math:`\tau_f`
-   sampled from :math:`\tau_f = -\log{\xi}` where :math:`\xi` is a random number in :math:`\left]0,1\right]`.
-
-2. The optical depth :math:`\tau` evolves according to the field and particle
-   energy variations following this integral:
-
-   .. math::
-     :label: MCDtauDt
-
-       \frac{d\tau}{dt} = \int_0^{\chi_{\pm}}{ \frac{d^2N}{d\chi dt}  d\chi }
-       = \frac{2}{3} \frac{\alpha^2}{\tau_e} \int_0^{\chi_{\pm}}{ \frac{S(\chi_\pm, \chi)}{\chi}  d\chi }
-       = \frac{2}{3} \frac{\alpha^2}{\tau_e} K (\chi_\pm)
-
-   that simply is the production rate of photons
-   (integration of Eq. :eq:`PhotonProdRate`).
-   Here, :math:`\chi_{\pm}` is the emitting electron (or positron) quantum parameter and
-   :math:`\chi` the integration variable.
-
-3. The emitted photon's quantum parameter :math:`\chi_{\gamma}` is computed by
-   inverting the cumulative distribution function:
-
-   .. math::
-     :label: CumulativeDistr
-
-       \xi = P(\chi_\pm,\chi_{\gamma}) = \frac{\displaystyle{\int_0^{\chi_\gamma}{S(\chi_\pm, \chi) / \chi
-       d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, \chi) / \chi d\chi}}}
-
-   where :math:`S` is the so-called synchrotron emissivity function so that
-
-   .. math::
-     :label: MCF
-
-       \frac{d^2 N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e} \frac{S (\chi_\pm, \chi)}{\chi}
-
-   The inversion of  :math:`\xi = P(\chi_\pm,\chi_{\gamma})` is done after drawing
-   a second random number
-   :math:`\phi \in \left[ 0,1\right]` to find :math:`\chi_{\gamma}` by solving :
-
-   .. math::
-     :label: inverse_xi
-
-     \xi^{-1} = P^{-1}(\chi_\pm, \chi_{\gamma}) = \phi
-
-4. The energy of the emitted photon is then computed:
-   :math:`\varepsilon_\gamma = mc^2 \gamma_\gamma =
-   mc^2 \gamma_\pm \chi_\gamma / \chi_\pm`.
-
-5. The particle momentum is then updated using momentum conservation
-   considering forward emission (valid when :math:`\gamma_\pm \gg 1`).
-
-   .. math::
-     :label: momentumUpdate
-
-       F_{rad} = - \frac{\varepsilon_\gamma}{c} \frac{\mathbf{p_\pm}}{\| \mathbf{p_\pm} \|}
-
-   The radiated force is the recoil induced by the photon emission.
-   Radiation reaction is therefore a discrete process.
-   Note that momentum conservation does not exactly conserve energy.
-   It can be shown that the error :math:`\epsilon` tends to 0 when the particle
-   energy tends to infinity [Lobet2015]_ and that the error is low when
-   :math:`\varepsilon_\pm \gg 1` and :math:`\varepsilon_\gamma \ll \varepsilon_\pm`.
-   Between emission events, the electron dynamics is still governed by the
-   Lorentz force.
-
-   If the photon is emitted as a macro-photon, initial position is the same as
-   for the emitting particle. The weight is also conserved.
-
 --------------------------------------------------------------------------------
 
 Implementation
@@ -538,17 +292,18 @@ Tables can be generated by the external tool
 :program:`smilei_tables`.
 More information can be found in :doc:`tables`.
 
-Landau-Lifshitz-based models
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Continuous, Landau-Lifshitz-like models
+"""""""""""""""""""""""""""""""""""""""
 
-The classical Landau-Lifshitz model approximated for high-:math:`\gamma`
-given by Eq. :eq:`LLFrictionForceApprox`
-has been implemented in :program:`Smilei`
-using a simple explicit scheme.
-The model is accessible in the species configuration under the name
-``Landau-Lifshitz`` or ``ll``.
+Two models of continuous radiation friction force are available in :program:`Smilei`:
+(i) the approximation for high-math:`\gamma` of the Landau-Lifshitz equation (taking :math:`g(\chi)=1` in Eq. :eq:`correctedLLforce`),
+and (ii) the corrected Landau-Lifshitz equation Eq. :eq:`correctedLLforce`.
+The modelS are accessible in the species configuration under the name
+``Landau-Lifshitz`` (equiv. ``LL``) and ``corrected-Landau-Lifshitz`` (equiv. 'cLL').
 
-For the corrected version, we use a fit of the function
+The implementation of these continuous radiation friction forces consists in a modification of the particle pusher, 
+and follows the simple splitting technique proposed in [Tamburini2010]_.
+Note that for the quantum correction, we use a fit of the function
 :math:`g(\chi)` given by
 
 .. math::
@@ -558,14 +313,14 @@ For the corrected version, we use a fit of the function
   \log \left( 1 + 1.7 \chi_{\pm} \right) + 2.44 \chi_{\pm}^2 \right]^{-2/3}
 
 This fit enables to keep the vectorization of the particle loop.
-The corrected model is accessible in the species configuration under the name
-``corrected-Landau-Lifshitz`` or ``cll``.
 
 Fokker-Planck stochastic model of Niel *et al*.
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Eq. :eq:`NielStochasticForce` is implemented in :program:`Smilei` using
-a simple explicit scheme.
+Equation :eq:`NielStochasticForce` is implemented in :program:`Smilei` using
+a simple explicit scheme, see [Niel2018]_ Sec. VI.B for more details.
+This stochastic diffusive model is accessible in the species configuration
+under the name ``Fokker-Planck`` (equiv. ``FP``).
 
 The direct computation of Eq. :eq:`Nielh` during the emission process is too expensive.
 For performance issues,  :program:`Smilei` uses tabulated values or fit functions.
@@ -604,17 +359,81 @@ is given in Eq. :eq:`h_fit_ridgers`.
 
   h_{Ridgers}(\chi) = \chi^3  \frac{165}{48 \sqrt{3}} \left(1. + (1. + 4.528 \chi) \log(1.+12.29 \chi) + 4.632 \chi^2 \right)^{-7/6}
 
-The stochastic diffusive model is accessible in the species configuration
-under the name ``Niel``.
 
-Monte-Carlo quantum model
+
+Monte-Carlo full-quantum model
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+The Monte-Carlo treatment of the emission is more complex process than
+the previous ones and can be divided into several steps ([Duclous2011]_,
+[Lobet2013]_, [Lobet2015]_):
+
+1. An incremental optical depth :math:`\tau`, initially set to 0, is assigned to the particle.
+   Emission occurs when it reaches the final optical depth :math:`\tau_f`
+   sampled from :math:`\tau_f = -\log{\xi}` where :math:`\xi` is a random number in :math:`\left]0,1\right]`.
+
+2. The optical depth :math:`\tau` evolves according to the field and particle
+   energy variations following this integral:
+
+   .. math::
+     :label: MCDtauDt
+
+       \frac{d\tau}{dt} = \int_0^{\chi_{\pm}}{ \frac{d^2N}{d\chi dt}  d\chi }
+       = \frac{2}{3} \frac{\alpha^2}{\tau_e} \int_0^{\chi_{\pm}}{ \frac{S(\chi_\pm, \chi/\chi_{\pm})}{\chi}  d\chi }
+       \equiv \frac{2}{3} \frac{\alpha^2}{\tau_e} K (\chi_\pm)
+
+   that simply is the production rate of photons
+   (computed from Eq. :eq:`photonProductionRate`).
+   Here, :math:`\chi_{\pm}` is the emitting electron (or positron) quantum parameter and
+   :math:`\chi` the integration variable.
+
+3. The emitted photon's quantum parameter :math:`\chi_{\gamma}` is computed by
+   inverting the cumulative distribution function:
+
+   .. math::
+     :label: CumulativeDistr
+
+       \xi = P(\chi_\pm,\chi_{\gamma}) = \frac{\displaystyle{\int_0^{\chi_\gamma}{ d\chi S(\chi_\pm, \chi/\chi_{\pm}) / \chi
+       }}}{\displaystyle{\int_0^{\chi_\pm}{d\chi S(\chi_\pm, \chi/\chi_{\pm}) / \chi }}}.
+
+   The inversion of  :math:`\xi = P(\chi_\pm,\chi_{\gamma})` is done after drawing
+   a second random number
+   :math:`\phi \in \left[ 0,1\right]` to find :math:`\chi_{\gamma}` by solving :
+
+   .. math::
+     :label: inverse_xi
+
+     \xi^{-1} = P^{-1}(\chi_\pm, \chi_{\gamma}) = \phi
+
+4. The energy of the emitted photon is then computed:
+   :math:`\varepsilon_\gamma = mc^2 \gamma_\gamma =
+   mc^2 \gamma_\pm \chi_\gamma / \chi_\pm`.
+
+5. The particle momentum is then updated using momentum conservation and
+   considering forward emission (valid when :math:`\gamma_\pm \gg 1`).
+
+   .. math::
+     :label: momentumUpdate
+
+       d{\bf p} = - \frac{\varepsilon_\gamma}{c} \frac{\mathbf{p_\pm}}{\| \mathbf{p_\pm} \|}
+
+   The resulting force follows from the recoil induced by the photon emission.
+   Radiation reaction is therefore a discrete process.
+   Note that momentum conservation does not exactly conserve energy.
+   It can be shown that the error :math:`\epsilon` tends to 0 when the particle
+   energy tends to infinity [Lobet2015]_ and that the error is small when
+   :math:`\varepsilon_\pm \gg 1` and :math:`\varepsilon_\gamma \ll \varepsilon_\pm`.
+   Between emission events, the electron dynamics is still governed by the
+   Lorentz force.
+
+   If the photon is emitted as a macro-photon, its initial position is the same as
+   for the emitting particle. The (numerical) weight is also conserved.
+
 
 The computation of Eq. :eq:`MCDtauDt` would be too expensive for every single
 particles.
-Instead, the integral of the function :math:`S(\chi_\pm, \chi) / \chi`
+Instead, the integral of the function :math:`S(\chi_\pm, \chi/\chi_{\pm}) / \chi`
 also referred to as :math:`K(\chi_\pm)` is tabulated.
-They can be specified in the :program:`\Smilei` input file.
 
 This table is named ``integfochi``
 Related parameters are stored in the structure ``integfochi`` in the code.
@@ -626,8 +445,8 @@ The only difference is that a minimum photon quantum parameter
 .. math::
   :label: chiMin
 
-    \frac{\displaystyle{\int_{0}^{\chi_{\gamma,\min}}{S(\chi_\pm, \chi) / \chi
-    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, \chi) / \chi d\chi}}} < \epsilon
+    \frac{\displaystyle{\int_{0}^{\chi_{\gamma,\min}}{d\chi S(\chi_\pm, \chi/\chi_{\pm}) / \chi}}}
+    {\displaystyle{\int_0^{\chi_\pm}{d\chi S(\chi_\pm, \chi/\chi_{\pm}) / \chi}}} < \epsilon
 
 This enables to find a lower bound to the :math:`\chi_\gamma` range
 (discretization in the log domain) so that the
@@ -642,6 +461,41 @@ under the name ``Monte-Carlo`` or ``mc``.
 
 Benchmarks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Radiation emission by ultra-relativistic electrons in a constant magnetic field
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+This benchmark closely follows ``benchmark/tst1d_18_radiation_spectrum_chi0.1.py``.
+It considers a bunch of electrons with initial Lorentz factor :math:`\gamma=10^3` radiating in a constant magnetic field.
+The magnetic field is perpendicular to the initial electrons' velocity, 
+and its strength is adjusted so that the electron quantum parameter is either :math:`\chi=0.1` or :math:`\chi=1`.
+In both cases, the simulation is run over a single gyration time of the electron (computed neglecting radiation losses),
+and 5 electron species are considered (one neglecting all radiation losses, the other four each corresponding 
+to a different radiation model: ``LL``, ``cLL``, ``FP`` and ``MC``).
+
+In this benchmark, we focus on the differences obtained on the energy spectrum of the emitted radiation 
+considering different models of radiation reaction. 
+When the Monte-Carlo model is used, the emitted radiation spectrum is obtained by applying a ``ParticleBinning`` diagnostic
+on the photon species.
+When other models are considered, the emitted radiation spectrum is reconstructed using a ``RadiationSpectrum`` diagnostic,
+as discussed in :ref:`DiagRadiationSpectrum`, and given by Eq. :eq:`radiatedPowerSpectrum` (see also [Niel2018b]_).
+:numref:`radSpectra` presents for both values of the initial quantum parameter :math:`\chi=0.1` and :math:`\chi=1`
+the resulting power spectra obtained from the different models, focusing of the (continuous) corrected-Landau-Lifshitz (``cLL``),
+(stochastic) Fokker-Planck (``FP``) and Monte-Carlo (``MC``) models.
+At :math:`\chi=0.1`, all three descriptions give the same results, which is consistent with the idea that at small quantum parameters, 
+the three descriptions are equivalent.
+In contrast, for :math:`\chi=1`, the stochastic nature of high-energy photon emission (not accounted for in the continuous `cLL` model)
+plays an important role on the electron dynamics, and in turns on the photon emission. Hence only the two stochastic model give a 
+satisfactory description of the photon emitted spectra.
+More details on the impact of the model on both the electron and photon distribution are given in [Niel2018b]_.
+
+.. _radSpectra:
+
+.. figure:: _static/figSpectra_LR.png
+  :width: 15cm
+
+  Energy distribution (power spectrum) of the photon emitted by an ultra-relativistic electron bunch in a constant magnetic field.
+  (left) for :math:`\chi=0.1`, (right) for :math:`\chi=1`.
 
 Counter-propagating plane wave, 1D
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -986,22 +840,25 @@ in the synchrotron case run on KNL.
 References
 ^^^^^^^^^^
 
-.. [Niel2018a] `F. Niel et al., Phys. Rev. E 97, 043209 (2018) <https://doi.org/10.1103/PhysRevE.97.043209>`_
+.. [Duclous2011] `Duclous, Kirk and Bell (2011), Plasma Physics and Controlled Fusion, 53 (1), 015009 <http://stacks.iop.org/0741-3335/53/i=1/a=015009>`_
 
-.. [Duclous2011] `R. Duclous, J. G. Kirk, and A. R. Bell (2011), Plasma Physics and Controlled Fusion, 53 (1), 015009 <http://stacks.iop.org/0741-3335/53/i=1/a=015009>`_
+.. [Elkina2011] `Elkina et al. (2011), Physical Review Accelerators and Beam, 14, 054401 <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.14.054401>`_
 
-.. [Elkina2011] `Elkina N. V., A. M. Fedotov, I. Y. Kostyukov, M. V. Legkov, N. B. Narozhny, E. N. Nerush, and H. Ruhl (2011), Physical Review Accelerators and Beam, 14, 054401 <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.14.054401>`_
+.. [Landau1947] `Landau and Lifshitz (1947), The classical theory of fields. Butterworth-Heinemann <https://archive.org/details/TheClassicalTheoryOfFields>`_
 
-.. [Landau1947] `L. D. Landau and E. M. Lifshitz, The classical theory of fields. Butterworth-Heinemann (1947) <https://archive.org/details/TheClassicalTheoryOfFields>`_
+.. [Lobet2013] `Lobet et al. (2016), J. Phys.: Conf. Ser. 688, 012058 <http://iopscience.iop.org/article/10.1088/1742-6596/688/1/012058>`_
 
-.. [Lobet2013] `Lobet et al., J. Phys.: Conf. Ser. 688, 012058 (2016) <http://iopscience.iop.org/article/10.1088/1742-6596/688/1/012058>`_
+.. [Lobet2015] `Lobet (2015), Effets radiatifs et d'électrodynamique quantique dans l'interaction laser-matière ultra-relativiste (2015) <http://www.theses.fr/2015BORD0361#>`_
 
-.. [Lobet2015] `M. Lobet, Effets radiatifs et d'électrodynamique quantique dans l'interaction laser-matière ultra-relativiste (2015) <http://www.theses.fr/2015BORD0361#>`_
+.. [Niel2018a] `Niel et al. (2018a), Phys. Rev. E 97, 043209 <https://doi.org/10.1103/PhysRevE.97.043209>`_
 
-.. [Niel2018b] `F. Niel, C. Riconda, F. Amiranoff, M. Lobet, J. Derouillat, F. Pérez, T. Vinci and M. Grech, From quantum to classical modelling of radiation reaction: a focus on the radiation spectrum, Plasma Phys. Control. Fusion 60, 094002 (2018) <http://iopscience.iop.org/article/10.1088/1361-6587/aace22>`_
+.. [Niel2018b] `Niel et al. (2018b), From quantum to classical modelling of radiation reaction: a focus on the radiation spectrum, Plasma Phys. Control. Fusion 60, 094002 (2018) <http://iopscience.iop.org/article/10.1088/1361-6587/aace22>`_
 
-.. [Ritus1985] `Ritus V. (1985), Journal of Soviet Laser Research, 6, 497, ISSN 0270-2010 <https://doi.org/10.1007/BF01120220>`_
+.. [Ridgers2017] `Ridgers et al. (2017), Journal of Plasma Physics, 83(5) <https://doi.org/10.1017/S0022377817000642>`_
 
-.. [Timokhin2010] `Timokhin A. N. (2010), Monthly Notices of the Royal Astronomical Society, 408 (4), 2092, ISSN 1365-2966 <https://doi.org/10.1111/j.1365-2966.2010.17286.x>`_
+.. [Ritus1985] `Ritus (1985), Journal of Soviet Laser Research, 6, 497, ISSN 0270-2010 <https://doi.org/10.1007/BF01120220>`_
 
-.. [Ridgers2017] `Ridgers, C. P., Blackburn, T. G., Del Sorbo, D., Bradley, L. E., Slade-Lowther, C., Baird, C. D., ... & Thomas, A. G. R. (2017), Journal of Plasma Physics, 83(5) <https://doi.org/10.1017/S0022377817000642>`_
+.. [Tamburini2010] `Tamburini et al. (2010), New J. Phys. 12, 123005 <https://iopscience.iop.org/article/10.1088/1367-2630/12/12/123005>`_
+
+.. [Timokhin2010] `Timokhin (2010), Monthly Notices of the Royal Astronomical Society, 408 (4), 2092, ISSN 1365-2966 <https://doi.org/10.1111/j.1365-2966.2010.17286.x>`_
+
