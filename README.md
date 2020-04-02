@@ -4,6 +4,8 @@ Open-source, user-friendly and designed for high performances on super-computers
 
 For more information, check out our website:
 
-http://www.maisondelasimulation.fr/smilei
+Documentation for last release: www.maisondelasimulation.fr/smilei
 
-Documentation: [![Build Status](https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.org/SmileiPIC/Smilei)
+Documentation for current commit: smileipic.github.io/Smilei [![Build Status](https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.org/SmileiPIC/Smilei)
+
+Chat room: riot.im/app/#/room/!LQrdVpOJEohPSWMlmf:matrix.org
