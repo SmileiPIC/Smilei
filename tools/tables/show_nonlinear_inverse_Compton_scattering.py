@@ -57,7 +57,7 @@ def if_file_exist(filename):
     file = open(filename)
   except IOError:
     flag = False
-    print ' No file : ', filename
+    print(' No file: {}'.format(filename))
   return flag
   
 # ______________________________________________________________________________
