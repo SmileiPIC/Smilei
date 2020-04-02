@@ -6,7 +6,9 @@ from glob import glob
 from json import load
 from time import strptime
 from datetime import datetime
-from os.path import splitext, basename
+#from os.path import splitext, basename
+import os
+import urllib.request
 ion()
 
 # RCParams parameters to tune the matplotlib style
@@ -75,6 +77,7 @@ class switchPlots:
         self.fig.canvas.callbacks.connect('pick_event', self.on_pick)
         self.fig.canvas.mpl_connect("motion_notify_event", self.on_hover)
         self.fig.canvas.mpl_connect("motion_notify_event", self.update_min_mean_max_annotations)
+        self.fig.canvas.mpl_connect("button_press_event", self.open_commit_link)
         
         # Button previous -5
         axprev5 = axes([self.menu_x_position, 0.01, 0.05, 0.03])
@@ -103,7 +106,7 @@ class switchPlots:
             
             self.init_style()
             
-            D = {"name":splitext(basename(case))[0]}
+            D = {"name":os.path.splitext(os.path.basename(case))[0]}
             
             # Read data
             with open(case, 'r') as f:
@@ -236,6 +239,17 @@ class switchPlots:
                 if vis:
                     self.annot.set_visible(False)
                     self.fig.canvas.draw_idle()
+
+    def open_commit_link(self,event):
+        """
+        """
+        if event.dblclick:
+            if event.inaxes == self.ax:
+                cont, ind = self.sc.contains(event)
+                if cont:
+                    D = self.data[self.ind]
+                    for i in  ind["ind"]:
+                        os.system("xdg-open https://llrgit.in2p3.fr/smilei/smilei/-/commit/{}".format(D["commit_ids"][i]))
 
     def display_min_mean_max_annotations(self):
         """
