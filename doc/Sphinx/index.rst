@@ -34,6 +34,17 @@ interaction to astrophysics.
 
 .. raw:: html
 
+  <a href="https://riot.im/app/#/room/!LQrdVpOJEohPSWMlmf:matrix.org" class="icon">
+
+.. image:: _static/riot.im-logo.svg
+
+.. raw:: html
+
+  Chat</a>
+
+
+.. raw:: html
+
   <a href="partners.html" class="icon">
 
 .. image:: _static/people.svg

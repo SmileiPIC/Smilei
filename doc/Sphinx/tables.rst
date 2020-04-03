@@ -14,6 +14,8 @@ Several physical mechanisms can use external tables to work:
 
 An external tool called :program:`smilei_tables` is available to generate these tables.
 
+----
+
 Installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -39,6 +41,8 @@ The tool can be then installed using the makefile and the argument `tables`:
   make tables
 
 The compilation generates an executable called :program:`smilei_tables` on the root of the repository.
+
+----
 
 Execution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -111,6 +115,8 @@ The tables are generated where the code is executed using HDF5 with the followin
 * Nonlinear inverse Compton Scattering: ``radiation_tables.h5``
 * multiphoton Breit-Wheeler: ``multiphoton_breit_wheeler_tables.h5``
 
+----
+
 Precomputed tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -153,6 +159,8 @@ With a size of 512 points in 1D and 512x512 for 2D tables, these tables offer be
 
 `multiphoton_breit_wheeler_tables.h5 <http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/tables_512/multiphoton_breit_wheeler_tables.h5>`_
 
+----
+
 Python visualization scripts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -166,6 +174,8 @@ For instance:
 .. code-block:: bash
 
   python ./tools/tables/show_nonlinear_inverse_Compton_scattering.py ./radiation_tables.h5
+
+----
 
 Detailed description of the tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
