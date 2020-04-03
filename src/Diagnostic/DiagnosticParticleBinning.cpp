@@ -47,7 +47,7 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI 
     
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
-    if( !PyTools::extract( "species", species_names, "DiagParticleBinning", n_diag_particles ) ) {
+    if( ! PyTools::extract( "species", species_names, "DiagParticleBinning", n_diag_particles ) ) {
         ERROR( errorPrefix << ": parameter `species` required" );
     }
     // verify that the species exist, remove duplicates and sort by number

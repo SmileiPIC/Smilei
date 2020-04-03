@@ -57,7 +57,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
-    if (!PyTools::extract("species",species_names,"DiagRadiationSpectrum",n_diag_rad_spectrum)) {
+    if( ! PyTools::extract("species",species_names,"DiagRadiationSpectrum",n_diag_rad_spectrum) ) {
         ERROR(errorPrefix << ": parameter `species` required");
     }
     // verify that the species exist, remove duplicates and sort by number

@@ -183,8 +183,8 @@ public:
             }
             
             // Verify the atomic number has been set
-            if( ! PyTools::extract( "atomic_number", Z0, "Species", sgroup[0][0] )
-             || ! PyTools::extract( "atomic_number", Z1, "Species", sgroup[1][0] ) ) {
+            if( PyTools::extract( "atomic_number", Z0, "Species", sgroup[0][0] ) <= 0
+             || PyTools::extract( "atomic_number", Z1, "Species", sgroup[1][0] ) <= 0 ) {
                 ERROR( "In collisions #" << n_collisions << ": nuclear_reaction requires all species have an atomic_number" );
             }
             

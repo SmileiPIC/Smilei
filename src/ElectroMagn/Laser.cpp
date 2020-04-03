@@ -33,13 +33,13 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     pchirp2 = NULL;
     ptime2  = NULL;
     file = "";
-    has_omega         = PyTools::extract( "omega", omega, "Laser", ilaser );
+    has_omega         = PyTools::extract( "omega", omega, "Laser", ilaser ) > 0;
     has_chirp         = PyTools::extract_pyProfile( "chirp_profile", chirp_profile, "Laser", ilaser );
     has_time          = PyTools::extract_pyProfile( "time_envelope", time_profile, "Laser", ilaser );
     has_space         = PyTools::extract2Profiles( "space_envelope", ilaser, space_profile );
     has_phase         = PyTools::extract2Profiles( "phase", ilaser, phase_profile );
     has_space_time    = PyTools::extract2Profiles( "space_time_profile", ilaser, space_time_profile );
-    has_file          = PyTools::extract( "file", file, "Laser", ilaser );
+    has_file          = PyTools::extract( "file", file, "Laser", ilaser ) > 0;
     has_space_time_AM = PyTools::extract2NProfiles( "space_time_profile_AM", ilaser, space_time_profile );
 
     if( (has_space_time ||  has_space_time_AM) && has_file ) {

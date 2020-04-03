@@ -250,9 +250,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // geometry of the simulation
     geometry = "";
-    if( !PyTools::extract( "geometry", geometry, "Main" ) ) {
-        ERROR( "Parameter Main.geometry is required" );
-    }
+    PyTools::extract( "geometry", geometry, "Main", 0, "a string" );
     if( geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="AMcylindrical" ) {
         ERROR( "Main.geometry `" << geometry << "` invalid" );
     }
@@ -356,9 +354,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
         }
         
-        if (!PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" )){
-            ERROR("envelope_solver not defined in the LaserEnvelope block");
-        }
+        PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope", 0, "a string" );
         if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
             ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
         }
@@ -813,7 +809,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             
             // Extract _keep_n_strongest_modes
             int keep_n_strongest_modes=0;
-            if( !PyTools::extract( "_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser ) || keep_n_strongest_modes<1 ) {
+            PyTools::extract( "_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser, "an integer" );
+            if( keep_n_strongest_modes<1 ) {
                 ERROR( "For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer" );
             }
             

@@ -225,7 +225,7 @@ public:
         // Monte-Carlo Photon emission properties
         if( mass > 0. ) {
             if( this_species->radiation_model_ == "mc" ) {
-                if( PyTools::extract( "radiation_photon_species", this_species->radiation_photon_species, "Species", ispec ) ) {
+                if( PyTools::extract( "radiation_photon_species", this_species->radiation_photon_species, "Species", ispec ) > 0 ) {
 
                     MESSAGE( 3, "| Macro-photon emission activated" );
 
@@ -666,8 +666,8 @@ public:
         }
 
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
-        bool has_temperature = PyTools::extract( "thermal_boundary_temperature", this_species->thermal_boundary_temperature_, "Species", ispec );
-        bool has_velocity    = PyTools::extract( "thermal_boundary_velocity", this_species->thermal_boundary_velocity_, "Species", ispec );
+        bool has_temperature = PyTools::extract( "thermal_boundary_temperature", this_species->thermal_boundary_temperature_, "Species", ispec ) > 0;
+        bool has_velocity    = PyTools::extract( "thermal_boundary_velocity", this_species->thermal_boundary_velocity_, "Species", ispec ) > 0;
         if( has_thermalize ) {
             if( !has_temperature ) {
                 ERROR( "For species '" << species_name << "' thermal_boundary_temperature (thermalizing BC) should be a list of floats" );
@@ -759,7 +759,7 @@ public:
                     WARNING( "\t The improvement of their integration in vectorized algorithms is in progress." );
                 }
                 
-                if( ! PyTools::extract( "ionization_electrons", this_species->ionization_electrons, "Species", ispec ) ) {
+                if( PyTools::extract( "ionization_electrons", this_species->ionization_electrons, "Species", ispec ) <= 0 ) {
                     ERROR( "For species '" << species_name << ": undefined ionization_electrons (required for ionization)" );
                 }
 

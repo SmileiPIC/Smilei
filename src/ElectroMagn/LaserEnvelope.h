@@ -34,7 +34,7 @@ public:
     const std::vector<double> cell_length;
     const double timestep;
 
-    std:: string envelope_solver  = "explicit"; // default value
+    std::string envelope_solver  = "explicit"; // default value
     
     Field *A_;         // envelope value at timestep n
     Field *A0_;        // envelope value at timestep n-1
