@@ -2,7 +2,7 @@
 
 Open-source, user-friendly and designed for high performances on super-computers, it is applied to a wide range of physics studies: from relativistic laser-plasma interaction to astrophysics.
 
-* [Documentation for last release](www.maisondelasimulation.fr/smilei)
+* [Documentation for last release](http://www.maisondelasimulation.fr/smilei)
 
 * [Documentation for current commit](https://smileipic.github.io/Smilei) [![Build Status](https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.org/SmileiPIC/Smilei)
 
