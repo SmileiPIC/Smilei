@@ -76,9 +76,7 @@ public:
         for( unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++ ) {
             ExtField extField;
             PyObject *profile;
-            if( !PyTools::extract( "field", extField.field, "ExternalField", n_extfield ) ) {
-                ERROR( "ExternalField #"<<n_extfield<<": parameter 'field' not provided'" );
-            }
+            PyTools::extract( "field", extField.field, "ExternalField", n_extfield, "a string" );
             // Now import the profile
             std::ostringstream name( "" );
             name << "ExternalField[" << n_extfield <<"].profile";
@@ -114,9 +112,7 @@ public:
             ExtTimeField extField;
             PyObject *profile;
             std::string fieldName("");
-            if( !PyTools::extract( "field", fieldName, "PrescribedField", n_extfield ) ) {
-                ERROR( "PrescribedField #"<<n_extfield<<": parameter 'field' not provided'" );
-            }
+            PyTools::extract( "field", fieldName, "PrescribedField", n_extfield, "a string" );
             // Now import the profile
             std::ostringstream name( "" );
             name << "PrescribedField[" << n_extfield <<"].profile";
@@ -164,9 +160,7 @@ public:
             PyObject *profile;
             std::ostringstream name;
             antenna.field = NULL;
-            if( !PyTools::extract( "field", antenna.fieldName, "Antenna", n_antenna ) ) {
-                ERROR( "Antenna #"<<n_antenna<<": parameter 'field' not provided'" );
-            }
+            PyTools::extract( "field", antenna.fieldName, "Antenna", n_antenna, "a string" );
             if( antenna.fieldName != "Jx" && antenna.fieldName != "Jy" && antenna.fieldName != "Jz" ) {
                 ERROR( "Antenna #"<<n_antenna<<": parameter 'field' must be one of Jx, Jy, Jz" );
             }

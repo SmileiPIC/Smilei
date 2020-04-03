@@ -3218,7 +3218,7 @@ A few things are important to know when you need dumps and restarts.
 
   .. py:data:: file_grouping
 
-    :default: ``None``
+    :default: ``0`` (no grouping)
 
     The maximum number of checkpoint files that can be stored in one directory.
     Subdirectories are created to accomodate for all files.

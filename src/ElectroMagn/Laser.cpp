@@ -18,7 +18,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     ostringstream info( "" );
 
     // side from which the laser enters the simulation box (only xmin/xmax at the moment)
-    PyTools::extract( "box_side", box_side, "Laser", ilaser );
+    PyTools::extract( "box_side", box_side, "Laser", ilaser, "a string" );
     if( box_side!="xmin" && box_side!="xmax" ) {
         ERROR( errorPrefix << ": box_side must be `xmin` or `xmax`" );
     }

@@ -37,7 +37,7 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI 
     
     // get parameter "time_average" that determines the number of timestep to average the outputs
     time_average = 1;
-    PyTools::extract( "time_average", time_average, "DiagParticleBinning", n_diag_particles );
+    PyTools::extract( "time_average", time_average, "DiagParticleBinning", n_diag_particles, "an integer" );
     if( time_average < 1 ) {
         time_average=1;
     }

@@ -41,8 +41,9 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     ostringstream info( "" );
     
     // Read laser envelope parameters
-    PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" );
-    if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
+    std:: string envelope_solver  = "explicit"; // default value
+    PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope", 0, "a string" );
+    if( envelope_solver != "explicit" && envelope_solver != "explicit_reduced_dispersion" ) {
         ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
     }
     
