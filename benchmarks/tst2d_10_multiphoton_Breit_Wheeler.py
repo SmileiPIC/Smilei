@@ -51,7 +51,7 @@ dy = Rsync/res                              # space step
 dt  = 1./math.sqrt(1./(dx*dx) + 1./(dy*dy)) # timestep (CFL)
 dt *= dt_factor
 
-Tsim = 1000*dt                              # duration of the simulation
+Tsim = 350*dt                              # duration of the simulation
 
 pusher = "boris"                            # dynamic type
 
@@ -146,7 +146,7 @@ Species(
     name = "photon",
     position_initialization = "random",
     momentum_initialization = "cold",
-    particles_per_cell = 128,
+    particles_per_cell = 256,
     c_part_max = 1.0,
     mass = 0,
     charge = 0.,
@@ -164,18 +164,17 @@ Species(
 
 RadiationReaction(
     minimum_chi_discontinuous = 1e-3,
-    table_path = "./"
 )
 
 MultiphotonBreitWheeler(
-    table_path = "./"
+    #table_path = "./"
 )
 
 # ----------------------------------------------------------------------------------------
 # Diagnostics
 
 DiagScalar(
-    every = 100,
+    every = 5,
     vars=['Uelm','Ukin','Utot','Uexp','Ubal',
           'Urad',
           'UmBWpairs',
@@ -189,16 +188,32 @@ DiagScalar(
 
 DiagParticleBinning(
     deposited_quantity = "weight",
-    every = 1000,
+    every = 50,
     time_average = 1,
     species = ["electron"],
-    axes = [ ["gamma",    0.,  gamma,  50] ]
+    axes = [ ["gamma",    1.,  gamma,  64, "logscale"] ]
 )
 
 DiagParticleBinning(
     deposited_quantity = "weight",
-    every = 1000,
+    every = 50,
     time_average = 1,
     species = ["positron"],
-    axes = [ ["gamma",    0.,  gamma,  50] ]
+    axes = [ ["gamma",    1.,  gamma,  64, "logscale"] ]
+)
+
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = 50,
+    time_average = 1,
+    species = ["photon"],
+    axes = [ ["gamma",    0.9*gamma,  1.1*gamma,  64, "logscale"] ]
+)
+
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = 50,
+    time_average = 1,
+    species = ["photon"],
+    axes = [ ["chi",    1e-3,  chi,  64, "logscale"] ]
 )

@@ -116,24 +116,26 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             
             // Make sure all ranks have the same dump number
             // Different numbers can be due to corrupted restart files
-            unsigned int prev_number;
-            MPI_Status status;
-            MPI_Sendrecv(
-                &dump_number, 1, MPI_UNSIGNED, (smpi->getRank()+1) % smpi->getSize(), smpi->getRank(),
-                &prev_number, 1, MPI_UNSIGNED, (smpi->getRank()+smpi->getSize()-1) % smpi->getSize(), (smpi->getRank()+smpi->getSize()-1)%smpi->getSize(),
-                smpi->SMILEI_COMM_WORLD, &status
-            );
-            int problem = (prev_number != dump_number);
-            int any_problem;
-            MPI_Allreduce( &problem, &any_problem, 1, MPI_INT, MPI_LOR, smpi->SMILEI_COMM_WORLD );
-            if( any_problem ) {
-                if( problem ) {
-                    ostringstream t("");
-                    t << "\t[ERROR]: Issue with restart file on rank " << smpi->getRank() << endl;
-                    cout << t.str();
+            if( ! smpi->test_mode ) {
+                unsigned int prev_number;
+                MPI_Status status;
+                MPI_Sendrecv(
+                    &dump_number, 1, MPI_UNSIGNED, (smpi->getRank()+1) % smpi->getSize(), smpi->getRank(),
+                    &prev_number, 1, MPI_UNSIGNED, (smpi->getRank()+smpi->getSize()-1) % smpi->getSize(), (smpi->getRank()+smpi->getSize()-1)%smpi->getSize(),
+                    smpi->SMILEI_COMM_WORLD, &status
+                );
+                int problem = (prev_number != dump_number);
+                int any_problem;
+                MPI_Allreduce( &problem, &any_problem, 1, MPI_INT, MPI_LOR, smpi->SMILEI_COMM_WORLD );
+                if( any_problem ) {
+                    if( problem ) {
+                        ostringstream t("");
+                        t << "\t[ERROR]: Issue with restart file on rank " << smpi->getRank() << endl;
+                        cout << t.str();
+                    }
+                    MPI_Finalize();
+                    exit(EXIT_FAILURE);
                 }
-                MPI_Finalize();
-                exit(EXIT_FAILURE);
             }
             
 #ifdef  __DEBUG

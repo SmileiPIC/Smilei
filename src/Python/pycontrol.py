@@ -35,7 +35,7 @@ def _smilei_check():
     # Verify classes were not overriden
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields",
-            "DiagTrackParticles","DiagPerformances","ExternalField","ExternalTimeField",
+            "DiagTrackParticles","DiagPerformances","ExternalField","PrescribedField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
             "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler",
             "Vectorization"]:
@@ -85,16 +85,16 @@ def _smilei_check():
             return tconstant()
         except: return input
     for s in Species:
-        s.number_density      = toSpaceProfile(s.number_density      )
-        s.charge_density  = toSpaceProfile(s.charge_density  )
-        s.particles_per_cell = toSpaceProfile(s.particles_per_cell )
-        s.charge          = toSpaceProfile(s.charge          )
+        s.number_density      = toSpaceProfile(s.number_density)
+        s.charge_density  = toSpaceProfile(s.charge_density)
+        s.particles_per_cell = toSpaceProfile(s.particles_per_cell)
+        s.charge          = toSpaceProfile(s.charge)
         s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
         s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
     for e in ExternalField:
-        e.profile         = toSpaceProfile(e.profile         )
-    for e in ExternalTimeField:
-        e.profile         = toTimeProfile(e.profile         )
+        e.profile         = toSpaceProfile(e.profile)
+    for e in PrescribedField:
+        e.profile         = toSpaceProfile(e.profile)
     for a in Antenna:
         a.space_profile   = toSpaceProfile(a.space_profile   )
         a.time_profile    = toTimeProfile (a.time_profile    )
@@ -104,9 +104,9 @@ def _smilei_check():
         l.space_envelope  = [ toSpaceProfile(p) for p in l.space_envelope ]
         l.phase           = [ toSpaceProfile(p) for p in l.phase          ]
     for s in ParticleInjector:
-        s.number_density      = toSpaceProfile(s.number_density      )
-        s.charge_density  = toSpaceProfile(s.charge_density  )
-        s.time_envelope  = toTimeProfile(s.time_envelope  )
+        s.number_density = toSpaceProfile(s.number_density)
+        s.charge_density = toSpaceProfile(s.charge_density)
+        s.time_envelope  = toTimeProfile(s.time_envelope)
         s.particles_per_cell = toSpaceProfile(s.particles_per_cell )
         s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
         s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
@@ -134,8 +134,10 @@ def _keep_python_running():
     if len(LoadBalancing)>0:
         if (Main.uncoupled_grids):
             return True
-    for e in ExternalTimeField:
+    for e in PrescribedField:
         profiles += [e.profile]
+    for s in ParticleInjector:
+        profiles += [s.time_envelope, s.number_density, s.charge_density, s.particles_per_cell] + s.mean_velocity + s.temperature
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True
@@ -146,6 +148,13 @@ def _keep_python_running():
     # Verify the particle binning having a function for deposited_quantity or axis type
     for d in DiagParticleBinning._list + DiagScreen._list:
         if type(d.deposited_quantity) is not str:
+            return True
+        for ax in d.axes:
+            if type(ax[0]) is not str:
+                return True
+    # Verify the radiation spectrum having a function for deposited_quantity or axis type
+    for d in DiagRadiationSpectrum._list:
+        if type(d.photon_energy_axis[0]) is not str:
             return True
         for ax in d.axes:
             if type(ax[0]) is not str:

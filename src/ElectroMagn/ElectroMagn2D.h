@@ -160,7 +160,7 @@ public:
     
     void initAntennas( Patch *patch, Params& params );
     //! Method used to impose external time fields
-    void applyExternalTimeField( Field *, Profile *, Patch *, double time );
+    void applyPrescribedField( Field *, Profile *, Patch *, double time );
     
     
     //! from smpi is ymax

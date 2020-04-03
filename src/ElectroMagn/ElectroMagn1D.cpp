@@ -781,7 +781,7 @@ void ElectroMagn1D::applyExternalField( Field *my_field,  Profile *profile, Patc
     
 }
 
-void ElectroMagn1D::applyExternalTimeField( Field *my_field,  Profile *profile, Patch *patch, double time )
+void ElectroMagn1D::applyPrescribedField( Field *my_field,  Profile *profile, Patch *patch, double time )
 {
     Field1D *field1D=static_cast<Field1D *>( my_field );
     

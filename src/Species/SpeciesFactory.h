@@ -65,11 +65,11 @@ public:
         if( species_name.size() < 2 ) {
             ERROR("For species #" << ispec << ", name cannot be only 1 character");
         }
-        
+
         if( species_name.substr(0,2) == "m_" ) {
             ERROR("For species #" << ispec << ", name cannot start  with `m_`");
         }
-        
+
         // Extract type of species dynamics from namelist
         std::string pusher = "boris"; // default value
         PyTools::extract( "pusher", pusher, "Species", ispec );
@@ -151,6 +151,9 @@ public:
                      || ( radiation_model=="niel" ) ) {
                 this_species->particles->isQuantumParameter = true;
                 this_species->radiating_ = true;
+            } else if( radiation_model=="diagradiationspectrum" ) {
+                    this_species->particles->isQuantumParameter = true;
+                    this_species->radiating_ = true;
             } else if( radiation_model != "none" ) {
                 ERROR( "For species `" << species_name
                        << " radiation_model must be 'none',"
@@ -169,6 +172,8 @@ public:
                 MESSAGE( 2, "> Radiating species with the stochastic model of Niel et al." );
             } else if( radiation_model == "mc" ) {
                 MESSAGE( 2, "> Radiating species with the stochastic Monte-Carlo model" );
+            } else if( radiation_model == "diagradiationspectrum" ) {
+                MESSAGE(2,"> Radiating species without backreaction: a `DiagRadiationSpectrum` can be applied to this species");
             } else if( radiation_model != "none" ) {
                 MESSAGE( 2, "> Radiating species with model: `" << radiation_model << "`" );
             }
@@ -178,7 +183,8 @@ public:
                     && ( radiation_model=="mc"
                          || radiation_model=="ll"
                          || radiation_model=="cll"
-                         || radiation_model=="niel" ) ) {
+                         || radiation_model=="niel"
+                         || radiation_model=="diagradiationspectrum") ) {
                 ERROR( "For species `" << species_name
                        << "` radiation_model `"
                        << radiation_model
@@ -708,7 +714,7 @@ public:
                 }
             }
         }
-        
+
         // Manage the ionization parameters
         if( this_species->mass_ > 0 ) {
             this_species->atomic_number_ = 0;
@@ -729,13 +735,13 @@ public:
                 if( ( this_species->atomic_number_==0 )&&( this_species->maximum_charge_state_==0 ) ) {
                     ERROR( "For species '" << species_name << ": undefined atomic_number & maximum_charge_state (required for ionization)" );
                 }
-                
+
                 if( model == "tunnel" ) {
                     
                     if( params.Laser_Envelope_model & this_species->ponderomotive_dynamics ) {
                         ERROR( "For species '" << species_name << ": Ionization is not yet implemented for species interacting with Laser Envelope model." );
                     }
-                
+
                 } else if( model == "from_rate" ) {
                     
                     if( this_species->maximum_charge_state_ == 0 ) {
@@ -757,11 +763,11 @@ public:
                         ERROR( "For species '" << species_name << " ionization 'from_rate' requires Numpy" );
 #endif
                     }
-                    
+
                 } else if( model != "none" ) {
                     ERROR( "For species " << species_name << ": unknown ionization model `" << model );
                 }
-        
+
                 if( params.vectorization_mode != "off" ) {
                     WARNING( "Performances of advanced physical processes which generates new particles could be degraded for the moment!" );
                     WARNING( "\t The improvement of their integration in vectorized algorithms is in progress." );
@@ -770,11 +776,11 @@ public:
                 if( ! PyTools::extract( "ionization_electrons", this_species->ionization_electrons, "Species", ispec ) ) {
                     ERROR( "For species '" << species_name << ": undefined ionization_electrons (required for ionization)" );
                 }
-                
+
             }
-            
+
         }
-        
+
         // Extract if the species is relativistic and needs ad hoc fields initialization
         bool relativistic_field_initialization = false;
         if( !PyTools::extract( "relativistic_field_initialization", relativistic_field_initialization, "Species", ispec ) ) {

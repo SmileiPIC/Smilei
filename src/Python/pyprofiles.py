@@ -5,17 +5,16 @@ def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf"), zvacuum=-float
     if len(Main)==0:
         raise Exception("constant profile has been defined before `Main()`")
     if Main.geometry == "1Dcartesian":
-        f = lambda x  : value if x>=xvacuum else 0.
+        f = lambda x,t=0: value if x>=xvacuum else 0.
     if (Main.geometry == "2Dcartesian" or Main.geometry == "AMcylindrical"):
-        f = lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
-        f.yvacuum = yvacuum
+        f = lambda x,y,t=0: value if (x>=xvacuum and y>=yvacuum) else 0.
     if Main.geometry == "3Dcartesian":
-        f = lambda x,y,z: value if (x>=xvacuum and y>=yvacuum and z>=zvacuum) else 0.
-        f.yvacuum = yvacuum
-        f.zvacuum = zvacuum
+        f = lambda x,y,z,t=0: value if (x>=xvacuum and y>=yvacuum and z>=zvacuum) else 0.
     f.profileName = "constant"
     f.value   = value
     f.xvacuum = xvacuum
+    f.yvacuum = yvacuum
+    f.zvacuum = zvacuum
     return f
 constant._reserved = True
 
@@ -501,7 +500,7 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = space_time_envelope,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 
@@ -571,7 +570,7 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = gaussian_beam_with_temporal_profile,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 
@@ -645,7 +644,7 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = gaussian_beam_with_temporal_profile,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 
@@ -699,7 +698,7 @@ def LaserEnvelopeGaussianAM( a0=1., omega=1., focus=None, waist=3., time_envelop
     LaserEnvelope(
         omega               = omega,
         envelope_profile    = gaussian_beam_with_temporal_profile,
-        envelope_solver     = "explicit",
+        envelope_solver     = envelope_solver,
         Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 

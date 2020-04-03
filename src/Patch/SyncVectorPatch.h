@@ -278,8 +278,10 @@ public :
 
     static void exchangeA( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangeA( Params &params, VectorPatch &vecPatches );
-    static void exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeexchangePhi( Params &params, VectorPatch &vecPatches );
+    // static void exchangeEnvEEnvA( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
+    // static void finalizeexchangeEnvEEnvA( Params &params, VectorPatch &vecPatches );
+    // static void exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
+    // static void finalizeexchangePhi( Params &params, VectorPatch &vecPatches );
     static void exchangeGradPhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangeGradPhi( Params &params, VectorPatch &vecPatches );
     static void exchangeEnvChi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
@@ -290,6 +292,7 @@ public :
     template<typename T, typename MT> static void exchangeAlongAllDirectionsNoOMP( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeExchangeAlongAllDirectionsNoOMP( std::vector<Field *> fields, VectorPatch &vecPatches );
 
+    template<typename T, typename MT> static void exchangeSynchronizedPerDirection( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void exchangeSynchronizedPerDirection( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
 
     static void exchangeAllComponentsAlongX( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi );

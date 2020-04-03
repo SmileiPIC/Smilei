@@ -9,13 +9,13 @@ install:
 
 script:
  - mkdir -p build/html/_downloads
- - git rev-parse --short HEAD > scripts/CompileTools/version
+ - git rev-parse --short HEAD > scripts/compile_tools/version
  - git archive --format tar -o build/html/_downloads/Smilei.tar HEAD
- - tar rf build/html/_downloads/Smilei.tar scripts/CompileTools/version
+ - tar rf build/html/_downloads/Smilei.tar scripts/compile_tools/version
  - gzip -f build/html/_downloads/Smilei.tar
  - make doc
  - touch build/html/.nojekyll
- - for v in `git tag | grep '^v[0-9].[0-9].\?[0-9]\?$'`; do  echo ${v}; git archive --format tar -o build/html/_downloads/smilei-${v}.tar $v; git show-ref --abbrev -s ${v} > scripts/CompileTools/version; tar rf build/html/_downloads/smilei-${v}.tar scripts/CompileTools/version; gzip -f build/html/_downloads/smilei-${v}.tar; done
+ - for v in `git tag | grep '^v[0-9].[0-9].\?[0-9]\?$'`; do  echo ${v}; git archive --format tar -o build/html/_downloads/smilei-${v}.tar $v; git show-ref --abbrev -s ${v} > scripts/compile_tools/version; tar rf build/html/_downloads/smilei-${v}.tar scripts/compile_tools/version; gzip -f build/html/_downloads/smilei-${v}.tar; done
 
 deploy:
  - provider: pages
@@ -26,4 +26,3 @@ deploy:
 
  - provider: script
    script: curl -X POST "https://registry.hub.docker.com/u/iltommi/docker-smilei/trigger/${DOCKER_HUB_TOKEN}/"
-

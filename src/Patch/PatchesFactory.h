@@ -51,7 +51,7 @@ public:
     }
     
     // Create a vector of patches
-    static void createVector( VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, OpenPMDparams &openPMD, unsigned int itime, unsigned int n_moved=0 )
+    static void createVector( VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, OpenPMDparams &openPMD, RadiationTables * radiation_tables_, unsigned int itime, unsigned int n_moved=0 )
     {
     
         vecPatches.diag_flag = ( params.restart? false : true );
@@ -117,7 +117,7 @@ public:
         vecPatches.updateFieldList( smpi );
         
         TITLE( "Creating Diagnostics, antennas, and external fields" )
-        vecPatches.createDiags( params, smpi, openPMD );
+        vecPatches.createDiags( params, smpi, openPMD, radiation_tables_ );
         
         TITLE( "finalize MPI" )
         for( unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++ ) {

@@ -8,37 +8,49 @@
 
 SMILEICXX ?= mpicxx
 HDF5_ROOT_DIR ?= $(HDF5_ROOT)
+BOOST_ROOT_DIR ?= $(BOOST_ROOT)
 BUILD_DIR ?= build
 PYTHONEXE ?= python
+TABLES_BUILD_DIR ?= tools/tables/build
 
 #-----------------------------------------------------
 # check whether to use a machine specific definitions
 ifneq ($(machine),)
-    ifneq ($(wildcard scripts/CompileTools/machine/$(machine)),)
-    -include scripts/CompileTools/machine/$(machine)
+    ifneq ($(wildcard scripts/compile_tools/machine/$(machine)),)
+    -include scripts/compile_tools/machine/$(machine)
     else
 define errormsg
 ERROR: Cannot find machine file for "$(machine)"
 Available machines are:
-$(shell ls -1 scripts/CompileTools/machine)
+$(shell ls -1 scripts/compile_tools/machine)
 endef
     $(error $(errormsg))
     endif
 endif
 
-PYTHONCONFIG := $(PYTHONEXE) scripts/CompileTools/python-config.py
+PYTHONCONFIG := $(PYTHONEXE) scripts/compile_tools/python-config.py
 
 #-----------------------------------------------------
 # Git information
-VERSION:=$(shell $(PYTHONEXE) scripts/CompileTools/get-version.py )
+VERSION:=$(shell $(PYTHONEXE) scripts/compile_tools/get-version.py )
 
 #-----------------------------------------------------
 # Directories and files
+
+# Smilei
 DIRS := $(shell find src -type d)
 SRCS := $(shell find src/* -name \*.cpp)
 OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.o))
 DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
 SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
+
+# Smilei tools
+TABLES_DIR := tools/tables
+TABLES_SRCS := $(shell find tools/tables/* -name \*.cpp | rev | cut -d '/' -f1 | rev)
+TABLES_DEPS := $(addprefix $(TABLES_BUILD_DIR)/, $(SRCS:.cpp=.d))
+TABLES_OBJS := $(addprefix $(TABLES_BUILD_DIR)/, $(TABLES_SRCS:.cpp=.o))
+TABLES_SRCS := $(shell find tools/tables/* -name \*.cpp)
+
 
 #-----------------------------------------------------
 # Flags
@@ -50,7 +62,12 @@ CXXFLAGS += -std=c++11 -Wall #-Wshadow
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
 CXXFLAGS += -I$(HDF5_ROOT_DIR)/include
-LDFLAGS := -L$(HDF5_ROOT_DIR)/lib $(LDFLAGS)
+LDFLAGS := -L$(HDF5_ROOT_DIR)/lib  $(LDFLAGS)
+endif
+# Boost library
+ifneq ($(strip $(BOOST_ROOT_DIR)),)
+CXXFLAGS += -I$(BOOST_ROOT_DIR)/include
+LDFLAGS := -L$(BOOST_ROOT_DIR)/lib $(LDFLAGS)
 endif
 LDFLAGS += -lhdf5
 # Include subdirs
@@ -163,14 +180,14 @@ distclean: clean uninstall_happi
 	$(Q) rm -f $(EXEC) $(EXEC)_test
 
 check:
-	$(Q) python scripts/CompileTools/check_make_options.py config $(config)
-	$(Q) python scripts/CompileTools/check_make_options.py machine $(machine)
+	$(Q) python scripts/compile_tools/check_make_options.py config $(config)
+	$(Q) python scripts/compile_tools/check_make_options.py machine $(machine)
 
 # Create python header files
 $(BUILD_DIR)/%.pyh: %.py
 	@echo "Creating binary char for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(PYTHONEXE) scripts/CompileTools/hexdump.py "$<" "$@"
+	$(Q) $(PYTHONEXE) scripts/compile_tools/hexdump.py "$<" "$@"
 
 # Calculate dependencies
 $(BUILD_DIR)/%.d: %.cpp
@@ -261,7 +278,6 @@ uninstall_happi:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
 	$(Q) rm -f "$(SITEDIR)/smilei.pth"
 
-
 #-----------------------------------------------------
 # Info rules
 print-% :
@@ -269,6 +285,37 @@ print-% :
 
 env: print-SMILEICXX print-PYTHONEXE print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
 
+#-----------------------------------------------------
+# Smilei tables
+
+TABLES_EXEC = smilei_tables
+
+tables: tables_folder $(TABLES_EXEC)
+	
+tables_folder:
+	@echo "Installing smilei_tables tool"
+	@mkdir -p $(TABLES_BUILD_DIR)
+
+tables_clean:
+	@echo "Cleaning $(TABLES_BUILD_DIR)"
+	@rm -r $(TABLES_BUILD_DIR)
+
+# Calculate dependencies
+$(TABLES_BUILD_DIR)/%.d: %.cpp
+	@echo "Checking dependencies for $<"
+	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+
+# Compile cpps
+$(TABLES_BUILD_DIR)/%.o : $(TABLES_DIR)/%.cpp
+	@echo "Compiling $<"
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -c $< -o $@
+
+# Link the main program
+$(TABLES_EXEC): $(TABLES_OBJS)
+	@echo "Linking $@"
+	$(Q) $(SMILEICXX) $(TABLES_OBJS) -o $(TABLES_BUILD_DIR)/$@ $(LDFLAGS)
+	$(Q) cp $(TABLES_BUILD_DIR)/$@ $@
 
 #-----------------------------------------------------
 # help
@@ -300,7 +347,7 @@ help:
 	@echo '  make config="debug noopenmp"'
 	@echo
 	@echo 'Machine options:'
-	@echo '  make machine=XXX      : include machine file in scripts/CompileTools/machine/XXX'
+	@echo '  make machine=XXX      : include machine file in scripts/compile_tools/machine/XXX'
 	@echo '  make machine=XXX help : print help for machine'
 	@echo
 	@echo 'OTHER PURPOSES:'
@@ -312,6 +359,10 @@ help:
 	@echo "  make uninstall_happi  : remove Smilei's python module"
 	@echo '  make env              : print important internal makefile variables'
 	@echo '  make print-XXX        : print internal makefile variable XXX'
+	@echo ''
+	@echo 'SMILEI TABLES:'
+	@echo '---------------'
+	@echo '  make tables           : compilation of the tool smilei_tables'
 	@echo ''
 	@echo 'Environment variables:'
 	@echo '  SMILEICXX             : mpi c++ compiler [$(SMILEICXX)]'
@@ -328,5 +379,5 @@ help:
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
-	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine)|| echo "None"; fi
-	@if [ -f scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/CompileTools/machine; fi
+	@if [ -f  scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine)|| echo "None"; fi
+	@if [ -f scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/compile_tools/machine; fi

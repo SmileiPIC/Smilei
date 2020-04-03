@@ -41,18 +41,26 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     ostringstream info( "" );
     
     // Read laser envelope parameters
-    std:: string envelope_solver  = "explicit"; // default value
-    
     PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" );
+    if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
+        ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
+    }
     
+    // auxiliary quantities
     std::complex<double>     i1 = std::complex<double>( 0., 1 ); // imaginary unit
     double k0 = 1.; // laser wavenumber
     i1_2k0_over_2dx = i1*2.*k0/2./cell_length[0];
     i1_2k0_over_2dl = i1_2k0_over_2dx;
     one_plus_ik0dt  = 1.+i1*k0*timestep;
     one_plus_ik0dt_ov_one_plus_k0sq_dtsq = ( 1.+i1*k0*timestep )/( 1.+k0*k0*timestep*timestep );
+    one_ov_2dt      = 1./2./timestep;
+    dt_sq           = timestep*timestep;
+    one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
+    one_ov_2dx      = 1./2./cell_length[0];
+
     
-    
+    delta = ( 1.-pow((timestep/cell_length[0]),2)) / 3. ;    
+
     info << "\t Laser Envelope parameters: "<< endl;
     // envelope solver
     info << "\t\tEnvelope solver    : " << envelope_solver << endl;
@@ -93,7 +101,11 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
 // Cloning constructor
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved ) :
     cell_length( envelope->cell_length ), timestep( envelope->timestep ), i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ), i1_2k0_over_2dl( envelope->i1_2k0_over_2dl ),
-    one_plus_ik0dt( envelope->one_plus_ik0dt ), one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq )
+    one_plus_ik0dt( envelope->one_plus_ik0dt ), one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq ),
+    envelope_solver(envelope->envelope_solver), delta(envelope->delta), one_ov_2dt(envelope->one_ov_2dt), dt_sq(envelope->dt_sq),
+    one_ov_dx_sq(envelope->one_ov_dx_sq),one_ov_2dx(envelope->one_ov_2dx),one_ov_dy_sq(envelope->one_ov_dy_sq),one_ov_2dy(envelope->one_ov_2dy),
+    one_ov_dz_sq(envelope->one_ov_dz_sq),one_ov_2dz(envelope->one_ov_2dz),one_ov_dl_sq(envelope->one_ov_dl_sq),one_ov_2dl(envelope->one_ov_2dl),
+    one_ov_dr_sq(envelope->one_ov_dr_sq),one_ov_2dr(envelope->one_ov_2dr),dr(envelope->dr),i1(envelope->i1)
 {
     if( n_moved ==0 ) {
         profile_ = new Profile( envelope->profile_ );
@@ -178,25 +190,25 @@ LaserEnvelope::~LaserEnvelope()
 
 
 
-void LaserEnvelope::boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow )
+void LaserEnvelope::boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow, ElectroMagn *EMfields )
 {
     // Compute Envelope Bcs
     if( !( simWindow && simWindow->isMoving( time_dual ) ) ) {
-        if( EnvBoundCond[0]!=NULL ) { // <=> if !periodic
-            EnvBoundCond[0]->apply( this, time_dual, patch );
-            EnvBoundCond[1]->apply( this, time_dual, patch );
+        if( EnvBoundCond[0]!=NULL ) { 
+            EnvBoundCond[0]->apply( this, EMfields, time_dual, patch );
+            EnvBoundCond[1]->apply( this, EMfields, time_dual, patch );
         }
     }
     if( EnvBoundCond.size()>2 ) {
-        if( EnvBoundCond[2]!=NULL ) { // <=> if !periodic
-            EnvBoundCond[2]->apply( this, time_dual, patch );
-            EnvBoundCond[3]->apply( this, time_dual, patch );
+        if( EnvBoundCond[2]!=NULL ) { 
+            EnvBoundCond[2]->apply( this, EMfields, time_dual, patch );
+            EnvBoundCond[3]->apply( this, EMfields, time_dual, patch );
         }
     }
     if( EnvBoundCond.size()>4 ) {
-        if( EnvBoundCond[4]!=NULL ) { // <=> if !periodic
-            EnvBoundCond[4]->apply( this, time_dual, patch );
-            EnvBoundCond[5]->apply( this, time_dual, patch );
+        if( EnvBoundCond[4]!=NULL ) { 
+            EnvBoundCond[4]->apply( this, EMfields, time_dual, patch );
+            EnvBoundCond[5]->apply( this, EMfields, time_dual, patch );
         }
     }
     

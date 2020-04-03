@@ -34,8 +34,6 @@
 #include "DoubleGrids.h"
 #include "DoubleGridsAM.h"
 #include "Timers.h"
-#include "RadiationTables.h"
-#include "MultiphotonBreitWheelerTables.h"
 
 using namespace std;
 
@@ -109,7 +107,7 @@ int main( int argc, char *argv[] )
     // ------------------------------------------------------------------------
     // Init nonlinear inverse Compton scattering
     // ------------------------------------------------------------------------
-    RadiationTables RadiationTables;
+    RadiationTables radiation_tables_;
 
     // ------------------------------------------------------------------------
     // Create MultiphotonBreitWheelerTables object for multiphoton
@@ -121,32 +119,27 @@ int main( int argc, char *argv[] )
     // Initialize patches (including particles and fields)
     // ---------------------------------------------------
     if( smpi.test_mode ) {
-        executeTestMode( vecPatches, &smpi, simWindow, params, checkpoint, openPMD );
+        executeTestMode( vecPatches, &smpi, simWindow, params, checkpoint, openPMD, &radiation_tables_ );
         return 0;
     }
-
 
     // ---------------------------------------------------------------------
     // Init and compute tables for radiation effects
     // (nonlinear inverse Compton scattering)
     // ---------------------------------------------------------------------
-    RadiationTables.initializeParameters( params, &smpi);
-    //RadiationTables.computeTables( params, &smpi );
-    //RadiationTables.outputTables( &smpi );
+    radiation_tables_.initialization( params, &smpi);
 
     // ---------------------------------------------------------------------
     // Init and compute tables for multiphoton Breit-Wheeler pair creation
     // ---------------------------------------------------------------------
     MultiphotonBreitWheelerTables.initialization( params, &smpi );
-    //MultiphotonBreitWheelerTables.computeTables( params, &smpi );
-    //MultiphotonBreitWheelerTables.outputTables( &smpi );
 
     // reading from dumped file the restart values
     if( params.restart ) {
         // smpi.patch_count recomputed in readPatchDistribution
         checkpoint.readPatchDistribution( &smpi, simWindow );
         // allocate patches according to smpi.patch_count
-        PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, checkpoint.this_run_start_step+1, simWindow->getNmoved() );
+        PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, checkpoint.this_run_start_step+1, simWindow->getNmoved() );
         // vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD );
         vecPatches.sortAllParticles( params );
@@ -166,7 +159,7 @@ int main( int argc, char *argv[] )
 
     } else {
 
-        PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, 0 );
+        PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
         vecPatches.sortAllParticles( params );
 
         // Initialize the electromagnetic fields
@@ -175,6 +168,9 @@ int main( int argc, char *argv[] )
         TITLE( "Applying external fields at time t = 0" );
         vecPatches.applyExternalFields();
         vecPatches.saveExternalFields( params );
+
+        TITLE( "Applying prescribed fields at time t = 0" );
+        vecPatches.applyPrescribedFields(time_prim);        
 
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
         // Note: the mean gamma for initialization will be computed for all the species
@@ -185,7 +181,7 @@ int main( int argc, char *argv[] )
 
         vecPatches.computeCharge();
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
-        
+
         // Apply antennas
         // --------------
         vecPatches.applyAntennas( 0.5 * params.timestep );
@@ -360,7 +356,7 @@ int main( int argc, char *argv[] )
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
-            vecPatches.dynamics( params, &smpi, simWindow, RadiationTables,
+            vecPatches.dynamics( params, &smpi, simWindow, radiation_tables_,
                                  MultiphotonBreitWheelerTables,
                                  time_dual, timers, itime );
 
@@ -382,8 +378,20 @@ int main( int argc, char *argv[] )
             if( time_dual > params.time_fields_frozen ) {
                 #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
                 {
+                    // de-apply external time fields if requested
+                    if ( vecPatches(0)->EMfields->extTimeFields.size() )
+                        vecPatches.resetPrescribedFields();
+
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 }
+
+                #pragma omp single
+                {
+                    // apply external time fields if requested
+                    if ( vecPatches(0)->EMfields->extTimeFields.size() )
+                        vecPatches.applyPrescribedFields(time_prim);
+                }
+
             }
         }
         else { //if ( params.uncoupled_grids ) {
@@ -403,6 +411,11 @@ int main( int argc, char *argv[] )
                         SyncVectorPatch::sumRhoJ( params, region.vecPatch_, imode, &smpi, timers, itime );
                     }
                 timers.syncDens.update( params.printNow( itime ) );
+
+
+                // apply external time fields if requested
+                if ( region.vecPatch_(0)->EMfields->extTimeFields.size() )
+                    region.vecPatch_.applyPrescribedFields(time_prim);
 
                 region.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 if ( params.geometry != "AMcylindrical" )
@@ -469,10 +482,10 @@ int main( int argc, char *argv[] )
 
             // Finalize field synchronization and exchanges
             vecPatches.finalizeSyncAndBCFields( params, &smpi, simWindow, time_dual, timers, itime );
-            
+
             // call the various diagnostics
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
-            
+
             timers.movWindow.restart();
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
 
@@ -607,7 +620,13 @@ int main( int argc, char *argv[] )
 // ---------------------------------------------------------------------------------------------------------------------
 
 
-int executeTestMode( VectorPatch &vecPatches, SmileiMPI *smpi, SimWindow *simWindow, Params &params, Checkpoint &checkpoint, OpenPMDparams &openPMD )
+int executeTestMode( VectorPatch &vecPatches,
+                     SmileiMPI *smpi,
+                     SimWindow *simWindow,
+                     Params &params,
+                     Checkpoint &checkpoint,
+                     OpenPMDparams &openPMD,
+                     RadiationTables * radiation_tables_ )
 {
     int itime = 0;
     int moving_window_movement = 0;
@@ -618,7 +637,7 @@ int executeTestMode( VectorPatch &vecPatches, SmileiMPI *smpi, SimWindow *simWin
         moving_window_movement = simWindow->getNmoved();
     }
 
-    PatchesFactory::createVector( vecPatches, params, smpi, openPMD, itime, moving_window_movement );
+    PatchesFactory::createVector( vecPatches, params, smpi, openPMD, radiation_tables_, itime, moving_window_movement );
 
     if( params.restart ) {
         checkpoint.restartAll( vecPatches, smpi, simWindow, params, openPMD );

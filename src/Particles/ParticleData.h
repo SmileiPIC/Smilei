@@ -18,11 +18,11 @@ public:
         PyObject *ParticleDataClass = PyObject_GetAttrString( PyImport_AddModule( "__main__" ), "ParticleData" );
         particles = PyObject_CallObject( ParticleDataClass, NULL );
         Py_DECREF( ParticleDataClass );
-        
+
         dims[0] = nparticles;
         start = 0;
     };
-    
+
     // Special constructor for initialization test only
     // Check a numpy function with fake data
     template <typename T>
@@ -37,7 +37,7 @@ public:
         // Verify the number of arguments of the filter function
         if( n_arg != 1 ) {
             ERROR( errorPrefix << " has "<<n_arg<<" arguments while requiring 1" );
-        }
+        }//*/ //MG/2019/08/08 --- TESTING RADSPECTRUM
         // Fill with fake data
         std::vector<double> test_value = {1.2, 1.4};
         std::vector<uint64_t> test_id = {3, 4};
@@ -68,27 +68,27 @@ public:
         unsigned int s = PyArray_SIZE( ( PyArrayObject * )ret );
         if( s != 2 ) {
             ERROR( errorPrefix << " must not change the arrays sizes" );
-        }
+        }// */ //MG/2019/08/08 --- TESTING RADSPECTRUM
         Py_DECREF( ret );
     };
-    
+
     // Destructor
     ~ParticleData()
     {
         clear();
         Py_DECREF( particles );
     };
-    
+
     inline void resize( unsigned int nparticles )
     {
         dims[0] = nparticles;
     };
-    
+
     inline void startAt( unsigned int i )
     {
         start = i;
     };
-    
+
     // Expose a vector to numpy
     inline PyArrayObject *vector2numpy( std::vector<double> &vec )
     {
@@ -102,7 +102,7 @@ public:
     {
         return ( PyArrayObject * ) PyArray_SimpleNewFromData( 1, dims, NPY_SHORT, ( short * )( &vec[start] ) );
     };
-    
+
     // Add a C++ vector as an attribute, but exposed as a numpy array
     template <typename T>
     inline void setVectorAttr( std::vector<T> &vec, std::string name )
@@ -111,7 +111,7 @@ public:
         PyObject_SetAttrString( particles, name.c_str(), ( PyObject * )numpy_vector );
         attrs.push_back( numpy_vector );
     };
-    
+
     // Remove python references of all attributes
     inline void clear()
     {
@@ -121,7 +121,7 @@ public:
         }
         attrs.resize( 0 );
     };
-    
+
     // Set all attributes from an existing species
     inline void set( Particles *p )
     {
@@ -143,18 +143,18 @@ public:
             setVectorAttr( p->Chi, "chi" );
         }
     };
-    
+
     inline PyObject *get()
     {
         return particles;
     };
-    
+
 private:
     PyObject *particles;
     std::vector<PyArrayObject *> attrs;
     npy_intp dims[1];
     unsigned int start; // particles are read starting at that index
-    
+
     void checkType( PyObject *obj, std::string &errorPrefix, bool *dummy )
     {
         if( !PyArray_ISBOOL( ( PyArrayObject * )obj ) ) {

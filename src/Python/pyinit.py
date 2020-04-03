@@ -72,12 +72,30 @@ class SmileiComponent(object):
         # add all kwargs as internal class variables
         if kwargs is not None:
             deprecated = {
-                "chipa_radiation_threshold":"minimum_chi_continuous",
-                "chipa_disc_min_threshold":"minimum_chi_discontinuous",
+                "output_format":"See documentation for radiation reaction",
+                "h_chipa_min":"See documentation for radiation reaction",
+                "h_chipa_max":"See documentation for radiation reaction",
+                "h_dim":"See documentation for radiation reaction",
+                "h_computation_method":"See documentation for radiation reaction",
+                "integfochi_chipa_min":"See documentation for radiation reaction",
+                "integfochi_chipa_max":"See documentation for radiation reaction",
+                "integfochi_dim":"See documentation for radiation reaction",
+                "xip_chipa_min":"See documentation for radiation reaction",
+                "xip_chipa_max":"See documentation for radiation reaction",
+                "xip_power":"See documentation for radiation reaction or Breit-Wheeler",
+                "xip_threshold":"See documentation for radiation reaction or Breit-Wheeler",
+                "xip_chipa_dim":"See documentation for radiation reaction or Breit-Wheeler",
+                "xip_chiph_dim":"See documentation for radiation reaction or Breit-Wheeler",
+                "compute_table":"See documentation for Breit-Wheeler",
+                "T_chiph_min":"See documentation for Breit-Wheeler",
+                "T_chiph_max":"See documentation for Breit-Wheeler",
+                "T_dim":"See documentation for Breit-Wheeler",
+                "xip_chiph_min":"See documentation for Breit-Wheeler",
+                "xip_chiph_max":"See documentation for Breit-Wheeler",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
-                    raise Exception("Deprecated `"+key+"` parameter should be replaced by `"+deprecated[key]+"`")
+                    raise Exception("Deprecated `"+key+"` parameter. "+deprecated[key])
                 if key=="_list":
                     print("Python warning: in "+cls.__name__+": cannot have argument named '_list'. Discarding.")
                 elif not hasattr(cls, key):
@@ -423,6 +441,15 @@ class DiagParticleBinning(SmileiComponent):
     every = None
     flush_every = 1
 
+class DiagRadiationSpectrum(SmileiComponent):
+    """Radiation Spectrum diagnostic"""
+    time_average = 1
+    species = None
+    photon_energy_axis = None
+    axes = []
+    every = None
+    flush_every = 1
+
 class DiagScreen(SmileiComponent):
     """Screen diagnostic"""
     shape = None
@@ -471,7 +498,7 @@ class ExternalField(SmileiComponent):
     profile = None
 
 # external time fields
-class ExternalTimeField(SmileiComponent):
+class PrescribedField(SmileiComponent):
     """External Time Field"""
     field = None
     profile = None
@@ -503,31 +530,12 @@ class RadiationReaction(SmileiComponent):
     minimum_chi_discontinuous = 1e-2
     # Threshold on particle_chi: if particle_chi < 1E-3 no radiation reaction
     minimum_chi_continuous = 1e-3
-    # Flag to recompute the tables
-    compute_table = False
 
     # Path to read or write the tables/databases
-    table_path = "./"
+    table_path = ""
 
     # Parameters for computing the tables
-    # Table h parameters
-    h_chipa_min = 1e-3
-    h_chipa_max = 1e1
-    h_dim = 128
-    h_computation_method = "table"
-    # Table integfochi parameters
-    integfochi_chipa_min = 1e-3
-    integfochi_chipa_max = 1e1
-    integfochi_dim = 128
-    # Table xip_chiphmin and xip parameters
-    xip_chipa_min = 1e-3
-    xip_chipa_max = 1e1
-    xip_power = 4
-    xip_threshold = 1e-3
-    xip_chipa_dim = 128
-    xip_chiph_dim = 128
-    # Output format, can be "ascii", "binary", "hdf5"
-    output_format = "hdf5"
+    Niel_computation_method = "table"
 
 # MutliphotonBreitWheeler pair creation
 class MultiphotonBreitWheeler(SmileiComponent):
@@ -535,24 +543,7 @@ class MultiphotonBreitWheeler(SmileiComponent):
     Photon decay into electron-positron pairs
     """
     # Path the tables/databases
-    table_path = "./"
-    # Flag to recompute the tables
-    compute_table = False
-
-    # Parameters for computing the tables
-    # Table T parameters
-    T_chiph_min = 1e-2
-    T_chiph_max = 1e1
-    T_dim = 128
-    # Table xip parameters
-    xip_chiph_min = 1e-2
-    xip_chiph_max = 1e1
-    xip_power = 4
-    xip_threshold = 1e-3
-    xip_chipa_dim = 128
-    xip_chiph_dim = 128
-    # Output format, can be "ascii", "binary", "hdf5"
-    output_format = "hdf5"
+    table_path = ""
 
 # Smilei-defined
 smilei_mpi_rank = 0

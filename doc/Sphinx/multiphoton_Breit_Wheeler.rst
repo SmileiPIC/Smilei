@@ -184,23 +184,17 @@ in the photon pusher in order to preserve vector performance of the latter one.
 
 Description of the files:
 
-* Class ``MultiphotonBreitWheelerTables``: this class contains the methods to generate the tables,
-  to output them, to read them and to broadcast them among MPI tasks.
-  It also contains methods to get values from the tables for the Monte-Carlo process.
+* Class ``MultiphotonBreitWheelerTables``: This class initializes and manages the
+  multiphoton Breit-Wheeler parameters.
+  It contains the methods to read the tables and data structures to store them.
+  It also contains default embebded tables.
+  Then, it provides several methods to look for values in the tables for the Monte-Carlo process
+  and compute different parameters used by this physical mechanism.
 * Class ``MultiphotonBreitWheeler``: this class contains the methods to
   perform the Breit-Wheeler Monte-Carlo process described in :ref:`the previous section <BWStochasticSchemeSection>`).
 * Class ``MultiphotonBreitWheelerFactory``: this class is supposed to
   manage the different Breit-Wheeler algorithms.
   For the moment, only one model is implemented.
-
-Formula :eq:`BWTfunction` and :eq:`mBW_CumulativeDistr` are tabulated
-at the beginning of the simulation because of the cost of their computation
-for each photon.
-The parameters such as the table ranges and discretization can be
-given in the :ref:`MultiphotonBreitWheeler <MultiphotonBreitWheeler>` namelist section.
-Once generated, the table can be written on the disk and reloaded for a next run.
-Small tables coded in hdf5 are provided in the repository in the folder
-databases with the name: `multiphoton_Breit_Wheeler_tables.h5`.
 
 If the multiphoton Breit-Wheeler is activated for a photon species, the factory
 will initialize the instance ``Multiphoton_Breit_Wheeler_process`` of
@@ -217,6 +211,14 @@ Particles are imported in the main species particle arrays
 (``particles`` object in ``species``) only after the current deposition
 and before the boundary conditions using the method ``importParticles``
 of the class ``Particles``.
+
+--------------------------------------------------------------------------------
+
+Tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+External tables can be generated using an external tools called :program:`smilei_tables`.
+More information can be found in :doc:`tables`.
 
 --------------------------------------------------------------------------------
 

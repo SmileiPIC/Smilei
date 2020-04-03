@@ -220,6 +220,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // communication pattern initialized as partial B exchange
     full_B_exchange = false;
+    // communication pattern initialized as partial A, Phi exchange for envelope simulations
+    full_Envelope_exchange = false;
 
     // --------------
     // Stop & Restart
@@ -354,6 +356,17 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             //    else if ( (Env_BCs[iDim][0] != Env_BCs[iDim][1]) &&  (Env_BCs[iDim][0] == "periodic" || Env_BCs[iDim][1] == "periodic") )
             //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
         }
+        
+        if (!PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" )){
+            ERROR("envelope_solver not defined in the LaserEnvelope block");
+        }
+        if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
+            ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
+        }
+        if ((envelope_solver == "explicit_reduced_dispersion") && (geometry!="1Dcartesian")){
+            full_Envelope_exchange = true;
+        }
+
     }
 
     for( unsigned int iDim = 0 ; iDim < nDim_field; iDim++ ) {
@@ -707,7 +720,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     hasMCRadiation = false ;// Default value
     hasLLRadiation = false ;// Default value
     hasNielRadiation = false ;// Default value
-
+    hasDiagRadiationSpectrum = false; // Default value
 
     // Loop over all species to check if the radiation losses are activated
     std::string radiation_model = "none";
@@ -727,6 +740,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             this->hasLLRadiation = true;
         } else if( radiation_model=="niel" ) {
             this->hasNielRadiation = true;
+        }
+        else if (radiation_model=="diagradiationspectrum")
+        {
+            this->hasDiagRadiationSpectrum = true;
         }
     }
 
