@@ -61,14 +61,14 @@ public:
         
         // Coulomb logarithm (if negative or unset, then automatically computed)
         clog = 0.; // default
-        PyTools::extract( "coulomb_log", clog, "Collisions", n_collisions );
+        PyTools::extract( "coulomb_log", clog, "Collisions", n_collisions, "a float" );
         if( clog <= 0. ) {
             debye_length_required = true;    // auto coulomb log requires debye length
         }
         
         // Number of timesteps between each debug output (if 0 or unset, no debug)
         debug_every = 0; // default
-        PyTools::extract( "debug_every", debug_every, "Collisions", n_collisions );
+        PyTools::extract( "debug_every", debug_every, "Collisions", n_collisions, "an integer" );
         
         // Collisional ionization
         Z = 0; // default
@@ -183,8 +183,8 @@ public:
             }
             
             // Verify the atomic number has been set
-            if( ! PyTools::extract( "atomic_number", Z0, "Species", sgroup[0][0] )
-             || ! PyTools::extract( "atomic_number", Z1, "Species", sgroup[1][0] ) ) {
+            if( PyTools::extract( "atomic_number", Z0, "Species", sgroup[0][0] ) <= 0
+             || PyTools::extract( "atomic_number", Z1, "Species", sgroup[1][0] ) <= 0 ) {
                 ERROR( "In collisions #" << n_collisions << ": nuclear_reaction requires all species have an atomic_number" );
             }
             
@@ -206,7 +206,7 @@ public:
             
             // Rate multiplier
             double rate_multiplier = 0.;
-            PyTools::extract( "nuclear_reaction_multiplier", rate_multiplier, "Collisions", n_collisions );
+            PyTools::extract( "nuclear_reaction_multiplier", rate_multiplier, "Collisions", n_collisions, "a float");
             
             // Find products
             std::vector<unsigned int> products = params.FindSpecies( vecSpecies, nuclear_reaction );

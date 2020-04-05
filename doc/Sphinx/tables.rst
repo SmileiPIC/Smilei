@@ -121,6 +121,7 @@ We have computed some tables with several levels of discretizations that you can
 
 This table size is a good compromise between accuracy and memory cost.
 2D tables can fit in L2 cache although the pressure on the cache will be high.
+This set of tables is the one included by default in the sources of :program:`Smilei`
 
 .. code-block:: bash
 
@@ -133,8 +134,6 @@ This table size is a good compromise between accuracy and memory cost.
   mpirun -np <number of processes> ./smilei_tables mbw -s 256 256 -b 1e-2 1e2
 
 `multiphoton_breit_wheeler_tables.h5 <http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/tables_256/multiphoton_breit_wheeler_tables.h5>`_
-
-This set of tables is included by default in the sources of :program:`Smilei`
 
 512 points
 """""""""""

@@ -137,7 +137,9 @@ public:
 
     //! Define if laser envelope model is used (default = false)
     bool Laser_Envelope_model=false;
-
+    // define the solver for the envelope equation
+    std::string envelope_solver;
+    
     //Poisson solver
     //! Do we solve poisson
     bool solve_poisson;
@@ -156,7 +158,9 @@ public:
 
     //! Do we need to exchange full B (default=0 <=> only 2 components are exchanged by dimension)
     bool full_B_exchange;
-
+    //! Do we need to exchange full A,Phi,Chi (default=0 <=> only 2 components are exchanged by dimension)
+    bool full_Envelope_exchange;
+    
     //! Maxwell Solver (default='Yee')
     std::string maxwell_sol;
 

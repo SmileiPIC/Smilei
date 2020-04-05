@@ -21,9 +21,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI *smpi, Patch *patc
     string errorPrefix = name.str();
     
     // get parameter "shape" that determines if the screen is a plane or a sphere
-    if( !PyTools::extract( "shape", screen_shape, "DiagScreen", screen_id ) ) {
-        ERROR( errorPrefix << ": parameter `shape` required" );
-    }
+    PyTools::extract( "shape", screen_shape, "DiagScreen", screen_id, "a string" );
     if( screen_shape == "plane" ) {
         screen_type = 0;
     } else if( screen_shape == "sphere" ) {
@@ -86,9 +84,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI *smpi, Patch *patc
     }
     
     // get parameter "oriented", true if particles coming from the other side count negatively
-    if( !PyTools::extract( "direction", direction, "DiagScreen", screen_id ) ) {
-        ERROR( errorPrefix << ": parameter `direction` not understood" );
-    }
+    PyTools::extract( "direction", direction, "DiagScreen", screen_id, "a string" );
     if( direction=="both" ) {
         direction_type = 0;
     } else if( direction=="canceling" ) {

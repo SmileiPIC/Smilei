@@ -46,20 +46,20 @@ public:
 
         std::string species_name( "" );
 
-        PyTools::extract( "name", species_name, "Species", ispec );
-        if( patch->isMaster() ) {
-            MESSAGE( 1,"");
-            MESSAGE( 1, "Creating Species : " << species_name );
+        if( PyTools::extract( "name", species_name, "Species", ispec ) < 0 ) {
+            ERROR( "For species #" << ispec << ": `name` should be a string" );
         }
 
         unsigned int tot_species_number = PyTools::nComponents( "Species" );
         if( species_name.empty() ) {
             std::ostringstream name( "" );
             name << "species" << std::setfill( '0' ) << std::setw( log10( tot_species_number )+1 ) << ispec;
-            species_name=name.str();
-            if( patch->isMaster() ) {
-                MESSAGE( "For species #" << ispec << ", name will be " << species_name );
-            }
+            species_name = name.str();
+        }
+        
+        if( patch->isMaster() ) {
+            MESSAGE( 1,"");
+            MESSAGE( 1, "Creating Species #" << ispec << ": " << species_name );
         }
 
         if( species_name.size() < 2 ) {
@@ -72,37 +72,28 @@ public:
 
         // Extract type of species dynamics from namelist
         std::string pusher = "boris"; // default value
-        PyTools::extract( "pusher", pusher, "Species", ispec );
+        PyTools::extract( "pusher", pusher, "Species", ispec, "a string" );
 
         // Extract type of species radiation from namelist
         std::string radiation_model = "none"; // default value
-        if( !PyTools::extract( "radiation_model", radiation_model, "Species", ispec ) ) {
-            if( patch->isMaster() ) {
-                WARNING( "For species '" << species_name << "', radiation_model not defined: assumed = 'none'." );
-            }
-        } else {
-            // Cancelation of the letter case for `radiation_model`
-            std::transform( radiation_model.begin(), radiation_model.end(), radiation_model.begin(), ::tolower );
-
-            // Name simplification
-            if( radiation_model=="monte-carlo" ) {
-                radiation_model="mc";
-            }
-            if( radiation_model=="landau-lifshitz" ) {
-                radiation_model="ll";
-            }
-            if( radiation_model=="corrected-landau-lifshitz" ) {
-                radiation_model="cll";
-            }
+        PyTools::extract( "radiation_model", radiation_model, "Species", ispec, "a string" );
+        // Cancelation of the letter case for `radiation_model`
+        std::transform( radiation_model.begin(), radiation_model.end(), radiation_model.begin(), ::tolower );
+        // Name simplification
+        if( radiation_model=="monte-carlo" ) {
+            radiation_model="mc";
         }
+        if( radiation_model=="landau-lifshitz" ) {
+            radiation_model="ll";
+        }
+        if( radiation_model=="corrected-landau-lifshitz" ) {
+            radiation_model="cll";
+        }
+        
 
         // Extract mass from namelist
         double mass;
-        if( !PyTools::extract( "mass", mass, "Species", ispec ) ) {
-            if( patch->isMaster() ) {
-                ERROR( "For species '" << species_name << "`, mass is not defined." );
-            }
-        }
+        PyTools::extract( "mass", mass, "Species", ispec, "a float" );
 
         // Create species object
         Species *this_species = NULL;
@@ -234,7 +225,7 @@ public:
         // Monte-Carlo Photon emission properties
         if( mass > 0. ) {
             if( this_species->radiation_model_ == "mc" ) {
-                if( PyTools::extract( "radiation_photon_species", this_species->radiation_photon_species, "Species", ispec ) ) {
+                if( PyTools::extract( "radiation_photon_species", this_species->radiation_photon_species, "Species", ispec ) > 0 ) {
 
                     MESSAGE( 3, "| Macro-photon emission activated" );
 
@@ -246,23 +237,19 @@ public:
                     }
 
                     // Number of photons emitted per Monte-Carlo event
-                    if( PyTools::extract( "radiation_photon_sampling",
-                                          this_species->radiation_photon_sampling_, "Species", ispec ) ) {
-                        if( this_species->radiation_photon_sampling_ < 1 ) {
-                            ERROR( "For species '" << species_name
-                                   << "' radiation_photon_sampling should be > 1" );
-                        }
-                    } else {
-                        this_species->radiation_photon_sampling_ = 1;
+                    PyTools::extract( "radiation_photon_sampling",
+                        this_species->radiation_photon_sampling_, "Species", ispec, "an integer" );
+                    if( this_species->radiation_photon_sampling_ < 1 ) {
+                        ERROR( "For species '" << species_name
+                               << "' radiation_photon_sampling should be > 1" );
                     }
                     MESSAGE( 3, "| Number of macro-photons emitted per MC event: "
                              << this_species->radiation_photon_sampling_ );
 
                     // Photon energy threshold
-                    if( !PyTools::extract( "radiation_photon_gamma_threshold",
-                                           this_species->radiation_photon_gamma_threshold_, "Species", ispec ) ) {
-                        this_species->radiation_photon_gamma_threshold_ = 2.;
-                    }
+                    PyTools::extract( "radiation_photon_gamma_threshold",
+                        this_species->radiation_photon_gamma_threshold_, "Species", ispec, "a float" );
+ 
                     MESSAGE( 3, "| Photon energy threshold for macro-photon emission: "
                              << this_species->radiation_photon_gamma_threshold_ );
                 } else {
@@ -310,198 +297,197 @@ public:
         // Extract merging method
         this_species->merging_method_ = "none"; // default value
         this_species->has_merging_ = false; // default value
-        if( PyTools::extract( "merging_method", this_species->merging_method_, "Species", ispec ) ) {
-            // Cancelation of the letter case for `merging_method_`
-            std::transform( this_species->merging_method_.begin(),
-                            this_species->merging_method_.end(),
-                            this_species->merging_method_.begin(), ::tolower );
+        PyTools::extract( "merging_method", this_species->merging_method_, "Species", ispec, "a string" );
+        
+        // Cancelation of the letter case for `merging_method_`
+        std::transform( this_species->merging_method_.begin(),
+                        this_species->merging_method_.end(),
+                        this_species->merging_method_.begin(), ::tolower );
 
-            if( ( this_species->merging_method_ != "vranic_spherical" ) &&
-                ( this_species->merging_method_ != "vranic_cartesian" ) &&
-                ( this_species->merging_method_ != "none" ) ) {
-                ERROR( "In Species " << this_species->name_
-                       << ": merging method not valid, must be `vranic_spherical`, `vranic_cartesian` or `none`" );
-            }
-
-            // if( params.vectorization_mode == "off" && this_species->merging_method_ != "none" ) {
-            //     ERROR( "In Species " << this_species->name_
-            //            << ": particle merging only available with `vectorization_mode` = `on` or `adaptive`" );
-            // }
-
-            if ( this_species->merging_method_ != "none" ) {
-
-                if (!params.cell_sorting && !this_species->vectorized_operators) {
-                    ERROR( "In Species " << this_species->name_
-                           << ": merging required cell sorting to be "
-                           << "activated (`cell_sorting = True` in the mains or vectorization on).");
-                }
-
-                // get parameter "every" which describes a timestep selection
-                if( !this_species->merging_time_selection_ ) {
-                    this_species->merging_time_selection_ = new TimeSelection(
-                        PyTools::extract_py( "merge_every", "Species", ispec ), "Particle merging"
-                    );
-                }
-
-                // get extra parameters
-                // Minimum particle number per packet to merge
-                if( PyTools::extract( "merge_min_packet_size", this_species->merge_min_packet_size_ , "Species", ispec ) ) {
-                    if (this_species->merge_min_packet_size_ < 4 && this_species->mass_ > 0)
-                    {
-                        ERROR( "In Species " << this_species->name_
-                               << ": minimum number of particles per merging packet "
-                               << "(`merge_min_packet_size`)"
-                               << "must be above or equal to 4.");
-                    }
-                    if (this_species->merge_min_packet_size_ < 4 && this_species->mass_ == 0)
-                    {
-                        ERROR( "In Species " << this_species->name_
-                               << " of type photon"
-                               << ": minimum number of particles per merging packet "
-                               << "(`merge_min_packet_size`)"
-                               << "must be above or equal to 4.");
-                    }
-                }
-                // Maximum particle number per packet to merge
-                if( PyTools::extract( "merge_max_packet_size", this_species->merge_max_packet_size_ , "Species", ispec ) ) {
-                    if (this_species->merge_max_packet_size_ < 4 && this_species->mass_ > 0)
-                    {
-                        ERROR( "In Species " << this_species->name_
-                               << ": maximum number of particles per merging packet "
-                               << "(`merge_max_packet_size`)"
-                               << "must be above or equal to 4.");
-                    }
-                    if (this_species->merge_max_packet_size_ < 4 && this_species->mass_ == 0)
-                    {
-                        ERROR( "In Species " << this_species->name_
-                               << " of type photon"
-                               << ": maximum number of particles per merging packet "
-                               << "(`merge_max_packet_size`)"
-                               << "must be above or equal to 4.");
-                    }
-                    if (this_species->merge_max_packet_size_ < this_species->merge_min_packet_size_) {
-                        ERROR( "In Species " << this_species->name_
-                               << ": maximum number of particles per merging packet "
-                               << "(`merge_max_packet_size`)"
-                               << "must be below or equal to the minimum particle number"
-                               << " per merging packet (`merge_min_packet_size`)");
-                    }
-                }
-                // Minimum momentum cell length for the momentum discretization
-                if( PyTools::extract( "merge_min_momentum_cell_length",
-                                      this_species->merge_min_momentum_cell_length_ ,
-                                      "Species", ispec ) ) {
-                    for (unsigned int i = 0 ; i < 3 ; i++) {
-                        if (this_species->merge_min_momentum_cell_length_[i] <= 0) {
-                            ERROR( "In Species " << this_species->name_
-                                     << ": The minimal momentum cell length "
-                                     << "(`merge_min_particles_per_cell`)"
-                                     << " must be above 0 ("
-                                     << this_species->merge_min_momentum_cell_length_[i]
-                                     << ")");
-                        }
-                    }
-                }
-
-                // Read and check the threshold on the number of particles per cell
-                if( PyTools::extract( "merge_min_particles_per_cell", this_species->merge_min_particles_per_cell_ , "Species", ispec ) ) {
-                    if (this_species->merge_min_particles_per_cell_ < 4) {
-                        ERROR( "In Species " << this_species->name_
-                               << ": The threshold on the number of particles per cell "
-                               << "(`merge_min_particles_per_cell`)"
-                               << "must be above or equal to 4");
-                    }
-                }
-
-                // Read flag to activate the accumulation correction
-                if( PyTools::extract( "merge_accumulation_correction", this_species->merge_accumulation_correction_ , "Species", ispec ) ) {
-                }
-
-                // Momentum cell discretization
-                if( PyTools::extract( "merge_momentum_cell_size",
-                                      this_species->merge_momentum_cell_size_ ,
-                                      "Species", ispec ) ) {
-                    for (unsigned int i = 0 ; i < 3 ; i++) {
-                        if (this_species->merge_momentum_cell_size_[i] <= 0) {
-                            ERROR( "In Species " << this_species->name_
-                                   << ": The momentum cell discretization can not be equal or below 0 "
-                                   << "(`merge_momentum_cell_size_`).");
-                        }
-                    }
-                }
-
-                // Momentum cell discretization
-                std::string discretization_scale;
-                if( PyTools::extract( "merge_discretization_scale",
-                                      discretization_scale ,
-                                      "Species", ispec ) ) {
-                    if (discretization_scale == "linear") {
-                        this_species->merge_log_scale_ = false;
-                    } else if (discretization_scale == "log") {
-                        this_species->merge_log_scale_ = true;
-                        if (this_species->merge_accumulation_correction_ == true)
-                        {
-                            this_species->merge_accumulation_correction_ = false;
-                        }
-                    } else {
-                        ERROR( "In Species " << this_species->name_
-                               << ": The discretization scale (`discretization_scale`) must be `linear` "
-                               << "or `log`.");
-                    }
-                }
-
-                // Minimum momentum in log scale
-                if( PyTools::extract( "merge_min_momentum",
-                                      this_species->merge_min_momentum_log_scale_,
-                                      "Species", ispec ) ) {
-                    if (this_species->merge_min_momentum_log_scale_ <= 0) {
-                        ERROR( "In Species " << this_species->name_
-                               << ": The minimum momentum for log discretization scale (`merge_min_momentum`) "
-                               << "must be above 0.");
-                    }
-                }
-
-                // We activate the merging
-                this_species->has_merging_ = true;
-            }
-
-            // Information about the merging process
-            if( this_species->merging_method_ != "none" ) {
-                MESSAGE( 2, "> Particle merging with the method: "
-                         << this_species->merging_method_ );
-                MESSAGE( 3, "| Merging time selection: "
-                         << this_species->merging_time_selection_->info() );
-                if (this_species->merge_log_scale_) {
-                    MESSAGE( 3, "| Discretization scale: log");
-                    MESSAGE( 3, "| Minimum momentum: " << std::scientific << std::setprecision(5)
-                    << this_species->merge_min_momentum_log_scale_);
-                } else {
-                    MESSAGE( 3, "| Discretization scale: linear");
-                    if (this_species->merge_accumulation_correction_) {
-                        MESSAGE( 3, "| Accumulation correction activated");
-                    } else {
-                        MESSAGE( 3, "| Accumulation correction disabled");
-                    }
-                }
-                MESSAGE( 3, "| Momentum cell discretization: "
-                         << this_species->merge_momentum_cell_size_[0] << " "
-                         << this_species->merge_momentum_cell_size_[1] << " "
-                         << this_species->merge_momentum_cell_size_[2] << " ");
-                MESSAGE( 3, "| Minimum momentum cell length: "
-                        << std::scientific
-                        << this_species->merge_min_momentum_cell_length_[0] << " "
-                        << this_species->merge_min_momentum_cell_length_[1] << " "
-                        << this_species->merge_min_momentum_cell_length_[2] << " ");
-                MESSAGE( 3, "| Minimum particle number per cell: "
-                         << std::fixed
-                         << this_species->merge_min_particles_per_cell_ );
-                MESSAGE( 3, "| Minimum particle packet size: "
-                         << this_species->merge_min_packet_size_ );
-                MESSAGE( 3, "| Maximum particle packet size: "
-                         << this_species->merge_max_packet_size_ );
-            }
+        if( ( this_species->merging_method_ != "vranic_spherical" ) &&
+            ( this_species->merging_method_ != "vranic_cartesian" ) &&
+            ( this_species->merging_method_ != "none" ) ) {
+            ERROR( "In Species " << this_species->name_
+                   << ": merging method not valid, must be `vranic_spherical`, `vranic_cartesian` or `none`" );
         }
 
+        // if( params.vectorization_mode == "off" && this_species->merging_method_ != "none" ) {
+        //     ERROR( "In Species " << this_species->name_
+        //            << ": particle merging only available with `vectorization_mode` = `on` or `adaptive`" );
+        // }
+
+        if ( this_species->merging_method_ != "none" ) {
+
+            if (!params.cell_sorting && !this_species->vectorized_operators) {
+                ERROR( "In Species " << this_species->name_
+                       << ": merging required cell sorting to be "
+                       << "activated (`cell_sorting = True` in the mains or vectorization on).");
+            }
+
+            // get parameter "every" which describes a timestep selection
+            if( !this_species->merging_time_selection_ ) {
+                this_species->merging_time_selection_ = new TimeSelection(
+                    PyTools::extract_py( "merge_every", "Species", ispec ), "Particle merging"
+                );
+            }
+
+            // get extra parameters
+            // Minimum particle number per packet to merge
+            PyTools::extract( "merge_min_packet_size", this_species->merge_min_packet_size_ , "Species", ispec, "an integer" );
+            if (this_species->merge_min_packet_size_ < 4 && this_species->mass_ > 0)
+            {
+                ERROR( "In Species " << this_species->name_
+                       << ": minimum number of particles per merging packet "
+                       << "(`merge_min_packet_size`)"
+                       << "must be above or equal to 4.");
+            }
+            if (this_species->merge_min_packet_size_ < 4 && this_species->mass_ == 0)
+            {
+                ERROR( "In Species " << this_species->name_
+                       << " of type photon"
+                       << ": minimum number of particles per merging packet "
+                       << "(`merge_min_packet_size`)"
+                       << "must be above or equal to 4.");
+            }
+            
+            // Maximum particle number per packet to merge
+            PyTools::extract( "merge_max_packet_size", this_species->merge_max_packet_size_ , "Species", ispec, "an integer" );
+            if (this_species->merge_max_packet_size_ < 4 && this_species->mass_ > 0)
+            {
+                ERROR( "In Species " << this_species->name_
+                       << ": maximum number of particles per merging packet "
+                       << "(`merge_max_packet_size`)"
+                       << "must be above or equal to 4.");
+            }
+            if (this_species->merge_max_packet_size_ < 4 && this_species->mass_ == 0)
+            {
+                ERROR( "In Species " << this_species->name_
+                       << " of type photon"
+                       << ": maximum number of particles per merging packet "
+                       << "(`merge_max_packet_size`)"
+                       << "must be above or equal to 4.");
+            }
+            if (this_species->merge_max_packet_size_ < this_species->merge_min_packet_size_) {
+                ERROR( "In Species " << this_species->name_
+                       << ": maximum number of particles per merging packet "
+                       << "(`merge_max_packet_size`)"
+                       << "must be below or equal to the minimum particle number"
+                       << " per merging packet (`merge_min_packet_size`)");
+            }
+            
+            // Minimum momentum cell length for the momentum discretization
+            if( PyTools::extract( "merge_min_momentum_cell_length",
+                                  this_species->merge_min_momentum_cell_length_ ,
+                                  "Species", ispec ) ) {
+                for (unsigned int i = 0 ; i < 3 ; i++) {
+                    if (this_species->merge_min_momentum_cell_length_[i] <= 0) {
+                        ERROR( "In Species " << this_species->name_
+                                 << ": The minimal momentum cell length "
+                                 << "(`merge_min_particles_per_cell`)"
+                                 << " must be above 0 ("
+                                 << this_species->merge_min_momentum_cell_length_[i]
+                                 << ")");
+                    }
+                }
+            } else {
+                ERROR( "In Species " << this_species->name_ << ": merge_min_momentum_cell_length should be a list of floats" );
+            }
+
+            // Read and check the threshold on the number of particles per cell
+            PyTools::extract( "merge_min_particles_per_cell", this_species->merge_min_particles_per_cell_ , "Species", ispec, "an integer" );
+            if (this_species->merge_min_particles_per_cell_ < 4) {
+                ERROR( "In Species " << this_species->name_
+                       << ": The threshold on the number of particles per cell "
+                       << "(`merge_min_particles_per_cell`)"
+                       << "must be above or equal to 4");
+            }
+            
+            // Read flag to activate the accumulation correction
+            PyTools::extract( "merge_accumulation_correction", this_species->merge_accumulation_correction_ , "Species", ispec, "True or False" );
+
+            // Momentum cell discretization
+            if( PyTools::extract( "merge_momentum_cell_size",
+                                  this_species->merge_momentum_cell_size_ ,
+                                  "Species", ispec ) ) {
+                for (unsigned int i = 0 ; i < 3 ; i++) {
+                    if (this_species->merge_momentum_cell_size_[i] <= 0) {
+                        ERROR( "In Species " << this_species->name_
+                               << ": The momentum cell discretization can not be equal or below 0 "
+                               << "(`merge_momentum_cell_size_`).");
+                    }
+                }
+            } else {
+                ERROR( "In Species " << this_species->name_ << ": merge_momentum_cell_size should be a list of integers" );
+            }
+
+
+            // Momentum cell discretization
+            std::string discretization_scale;
+            PyTools::extract( "merge_discretization_scale",
+                              discretization_scale, "Species", ispec, "a string" );
+            if (discretization_scale == "linear") {
+                this_species->merge_log_scale_ = false;
+            } else if (discretization_scale == "log") {
+                this_species->merge_log_scale_ = true;
+                if (this_species->merge_accumulation_correction_ == true)
+                {
+                    this_species->merge_accumulation_correction_ = false;
+                }
+            } else {
+                ERROR( "In Species " << this_species->name_
+                       << ": discretization_scale should be `linear` or `log`");
+            }
+            
+            // Minimum momentum in log scale
+            PyTools::extract( "merge_min_momentum",
+                              this_species->merge_min_momentum_log_scale_,
+                              "Species", ispec, "a float" );
+            if (this_species->merge_min_momentum_log_scale_ <= 0) {
+                ERROR( "In Species " << this_species->name_
+                       << ": merge_min_momentum should be above 0.");
+            }
+            
+            // We activate the merging
+            this_species->has_merging_ = true;
+        }
+
+        // Information about the merging process
+        if( this_species->merging_method_ != "none" ) {
+            MESSAGE( 2, "> Particle merging with the method: "
+                     << this_species->merging_method_ );
+            MESSAGE( 3, "| Merging time selection: "
+                     << this_species->merging_time_selection_->info() );
+            if (this_species->merge_log_scale_) {
+                MESSAGE( 3, "| Discretization scale: log");
+                MESSAGE( 3, "| Minimum momentum: " << std::scientific << std::setprecision(5)
+                << this_species->merge_min_momentum_log_scale_);
+            } else {
+                MESSAGE( 3, "| Discretization scale: linear");
+                if (this_species->merge_accumulation_correction_) {
+                    MESSAGE( 3, "| Accumulation correction activated");
+                } else {
+                    MESSAGE( 3, "| Accumulation correction disabled");
+                }
+            }
+            MESSAGE( 3, "| Momentum cell discretization: "
+                     << this_species->merge_momentum_cell_size_[0] << " "
+                     << this_species->merge_momentum_cell_size_[1] << " "
+                     << this_species->merge_momentum_cell_size_[2] << " ");
+            MESSAGE( 3, "| Minimum momentum cell length: "
+                    << std::scientific
+                    << this_species->merge_min_momentum_cell_length_[0] << " "
+                    << this_species->merge_min_momentum_cell_length_[1] << " "
+                    << this_species->merge_min_momentum_cell_length_[2] << " ");
+            MESSAGE( 3, "| Minimum particle number per cell: "
+                     << std::fixed
+                     << this_species->merge_min_particles_per_cell_ );
+            MESSAGE( 3, "| Minimum particle packet size: "
+                     << this_species->merge_min_packet_size_ );
+            MESSAGE( 3, "| Maximum particle packet size: "
+                     << this_species->merge_max_packet_size_ );
+        }
+        
+        // Position initialization
         PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", ispec );
         if( PyTools::convert( py_pos_init, this_species->position_initialization_ ) ) {
             if( this_species->position_initialization_.empty() ) {
@@ -510,27 +496,27 @@ public:
                        &&( this_species->position_initialization_!="random" )
                        &&( this_species->position_initialization_!="centered" ) ) {
                 this_species->position_initialization_on_species_=true;
-
             }
         }
+        
 
 #ifdef SMILEI_USE_NUMPY
         else if( PyArray_Check( py_pos_init ) ) {
             //Initialize position from this array
-
+            
             PyArrayObject *np_ret = reinterpret_cast<PyArrayObject *>( py_pos_init );
             //Check dimensions
             unsigned int ndim_local = PyArray_NDIM( np_ret ); //Ok
             if( ndim_local != 2 ) ERROR( "For species '" << species_name << "' Provide a 2-dimensional array in order to init particle position from a numpy array." )
-
+                
                 //Check number of coordinates provided
                 ndim_local = PyArray_SHAPE( np_ret )[0]; // ok
             if( ndim_local != params.nDim_particle + 1 )
                 ERROR( "For species '" << species_name << "' position_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle + 1 << " columns." )
-
+                
                 // OLD //Get number of particles
                 // OLD this_species->n_numpy_particles_ =  PyArray_SHAPE(np_ret)[1];//  ok
-
+                
                 //Get number of particles. Do not initialize any more if this is a restart.
                 if( !params.restart ) {
                     this_species->n_numpy_particles_ =  PyArray_SHAPE( np_ret )[1];    //  ok
@@ -548,7 +534,7 @@ public:
         }
         Py_DECREF( py_pos_init );
 
-        if   (PyTools::extract( "regular_number", this_species->regular_number_array_, "Species", ispec )){
+        if( PyTools::extract( "regular_number", this_species->regular_number_array_, "Species", ispec )){
              if (this_species->position_initialization_ != "regular") {
                  ERROR("regular_number may not be provided if species position_initialization is not set to 'regular'.");
              }
@@ -557,7 +543,7 @@ public:
              }
         }
 
-        PyTools::extract( "ponderomotive_dynamics", this_species->ponderomotive_dynamics, "Species", ispec );
+        PyTools::extract( "ponderomotive_dynamics", this_species->ponderomotive_dynamics, "Species", ispec, "True or False" );
       
         if( this_species->ponderomotive_dynamics && ! params.Laser_Envelope_model ) {
             MESSAGE( "No Laser Envelope is specified - Standard PIC dynamics will be used for all species" );
@@ -624,9 +610,9 @@ public:
         }
         Py_DECREF( py_mom_init );
 
-        PyTools::extract( "c_part_max", this_species->c_part_max_, "Species", ispec );
+        PyTools::extract( "c_part_max", this_species->c_part_max_, "Species", ispec, "a float" );
 
-        PyTools::extract( "time_frozen", this_species->time_frozen_, "Species", ispec );
+        PyTools::extract( "time_frozen", this_species->time_frozen_, "Species", ispec, "a float" );
         if( this_species->time_frozen_ > 0 && this_species->momentum_initialization_!="cold" ) {
             if( patch->isMaster() ) {
                 WARNING( "For species '" << species_name << "' possible conflict between time-frozen & not cold initialization" );
@@ -680,8 +666,8 @@ public:
         }
 
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
-        bool has_temperature = PyTools::extract( "thermal_boundary_temperature", this_species->thermal_boundary_temperature_, "Species", ispec );
-        bool has_velocity    = PyTools::extract( "thermal_boundary_velocity", this_species->thermal_boundary_velocity_, "Species", ispec );
+        bool has_temperature = PyTools::extract( "thermal_boundary_temperature", this_species->thermal_boundary_temperature_, "Species", ispec ) > 0;
+        bool has_velocity    = PyTools::extract( "thermal_boundary_velocity", this_species->thermal_boundary_velocity_, "Species", ispec ) > 0;
         if( has_thermalize ) {
             if( !has_temperature ) {
                 ERROR( "For species '" << species_name << "' thermal_boundary_temperature (thermalizing BC) should be a list of floats" );
@@ -715,13 +701,16 @@ public:
         // Manage the ionization parameters
         if( this_species->mass_ > 0 ) {
             this_species->atomic_number_ = 0;
-            PyTools::extract( "atomic_number", this_species->atomic_number_, "Species", ispec );
+            if( PyTools::extract( "atomic_number", this_species->atomic_number_, "Species", ispec ) < 0 ) {
+                ERROR( "For species '" << species_name << "': atomic_number should be an integer" );
+            }
             
             this_species->maximum_charge_state_ = 0;
-            PyTools::extract( "maximum_charge_state", this_species->maximum_charge_state_, "Species", ispec );
+            PyTools::extract( "maximum_charge_state", this_species->maximum_charge_state_, "Species", ispec, "an integer" );
             
             std::string model;
-            if( PyTools::extract( "ionization_model", model, "Species", ispec ) && model!="none" ) {
+            PyTools::extract( "ionization_model", model, "Species", ispec, "a string" );
+            if( model!="none" ) {
                 
                 this_species->ionization_model = model;
                 
@@ -770,7 +759,7 @@ public:
                     WARNING( "\t The improvement of their integration in vectorized algorithms is in progress." );
                 }
                 
-                if( ! PyTools::extract( "ionization_electrons", this_species->ionization_electrons, "Species", ispec ) ) {
+                if( PyTools::extract( "ionization_electrons", this_species->ionization_electrons, "Species", ispec ) <= 0 ) {
                     ERROR( "For species '" << species_name << ": undefined ionization_electrons (required for ionization)" );
                 }
 
@@ -780,11 +769,7 @@ public:
 
         // Extract if the species is relativistic and needs ad hoc fields initialization
         bool relativistic_field_initialization = false;
-        if( !PyTools::extract( "relativistic_field_initialization", relativistic_field_initialization, "Species", ispec ) ) {
-            if( patch->isMaster() ) {
-                WARNING( "For species '" << species_name << "', relativistic_field_initialization not defined: assumed = 'false'." );
-            }
-        }
+        PyTools::extract( "relativistic_field_initialization", relativistic_field_initialization, "Species", ispec, "True or False" );
         this_species->relativistic_field_initialization_ = relativistic_field_initialization;
 
 
@@ -887,7 +872,8 @@ public:
         this_species->particles->tracked = false;
         for( unsigned int itrack=0; itrack<ntrack; itrack++ ) {
             std::string track_species;
-            if( PyTools::extract( "species", track_species, "DiagTrackParticles", itrack ) && track_species==species_name ) {
+            PyTools::extract( "species", track_species, "DiagTrackParticles", itrack, "a string" );
+            if( track_species==species_name ) {
                 if( this_species->particles->tracked ) {
                     ERROR( "In this version, species '" << species_name << "' cannot be tracked by two DiagTrackParticles" );
                 }
@@ -896,7 +882,7 @@ public:
         }
 
         // Extract test Species flag
-        PyTools::extract( "is_test", this_species->particles->is_test, "Species", ispec );
+        PyTools::extract( "is_test", this_species->particles->is_test, "Species", ispec, "True or False" );
 
         // Verify they don't ionize
         if( this_species->ionization_model!="none" && this_species->particles->is_test ) {

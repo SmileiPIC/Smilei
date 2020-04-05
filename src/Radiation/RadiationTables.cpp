@@ -63,7 +63,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
     if( params.hasLLRadiation || params.hasDiagRadiationSpectrum ) {
         MESSAGE( 1,"A continuous radiation reaction module"
                  << " is requested by some species:" );
-        PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction" );
+        PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction", 0, "a float" );
         MESSAGE( 2,"applied minimum chi for continuous radiation module is "
                 <<std::setprecision(6)<<minimum_chi_continuous_<<".\n");
     }
@@ -71,7 +71,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
     if( params.hasNielRadiation ) {
         MESSAGE( 1,"The Fokker-Planck radiation reaction module 'Niel'"
                  << " is requested by some species:" );
-        PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction" );
+        PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction", 0, "a float" );
         MESSAGE( 2,"applied minimum chi for Niel's radiation module is "
                 <<std::setprecision(6)<<minimum_chi_continuous_<<".\n");
     }
@@ -79,7 +79,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
     if( params.hasMCRadiation ) {
         MESSAGE( 1,"The Monte-Carlo Compton radiation module"
                  << " is requested by some species:" );
-        PyTools::extract( "minimum_chi_discontinuous", minimum_chi_discontinuous_, "RadiationReaction" );
+        PyTools::extract( "minimum_chi_discontinuous", minimum_chi_discontinuous_, "RadiationReaction", 0, "a float" );
         MESSAGE( 2,"applied minimum chi for MC radiation module is "
                  <<std::setprecision(6)<<minimum_chi_discontinuous_<<".\n");
 
@@ -91,7 +91,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
         if( params.hasNielRadiation ) {
             // How to handle the h function (table or fit)
-            PyTools::extract( "Niel_computation_method", niel_.computation_method_, "RadiationReaction" );
+            PyTools::extract( "Niel_computation_method", niel_.computation_method_, "RadiationReaction", 0, "a string" );
         }
 
         // If Monte-Carlo radiation loss is requested
@@ -99,18 +99,18 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
             // Discontinuous minimum threshold
             PyTools::extract( "minimum_chi_discontinuous",
-                              minimum_chi_discontinuous_, "RadiationReaction" );
+                              minimum_chi_discontinuous_, "RadiationReaction", 0, "a float" );
         }
 
         // With any radiation model whatever the table computation
         if( params.hasNielRadiation || params.hasMCRadiation ) {
 
             // Path to the databases
-            PyTools::extract( "table_path", table_path_, "RadiationReaction" );
+            PyTools::extract( "table_path", table_path_, "RadiationReaction", 0, "a string" );
 
             // Radiation threshold on the quantum parameter particle_chi
             PyTools::extract( "minimum_chi_continuous",
-                              minimum_chi_continuous_, "RadiationReaction" );
+                              minimum_chi_continuous_, "RadiationReaction", 0, "a float" );
 
         }
     }

@@ -350,14 +350,20 @@ public:
     
     //! get T from python
     template< typename T>
-    static bool extract( std::string name, T &val, std::string component=std::string( "" ), int nComponent=0 )
+    static int extract( std::string name, T &val, std::string component=std::string( "" ), int nComponent=0, std::string testMessage=std::string( "" ) )
     {
         PyObject *py_val = extract_py( name, component, nComponent );
         PyTools::checkPyError();
-        if( PyList_Check( py_val ) ) {
-            ERROR( "Looking for single value \"" << name << "\" in " << component << " #" << nComponent << " but got a list." );
+        int ret = -1;
+        if( py_val == Py_None ) {
+            ret = 0;
+        } else if( PyTools::convert( py_val, val ) ) {
+            ret =  1;
         }
-        return PyTools::convert( py_val, val );
+        if( !testMessage.empty() && !ret ) {
+            ERROR( "In "<<component<<"#"<<nComponent<<": `"<<name<<"` should be "<<testMessage );
+        }
+        return ret;
     }
     
     //! extract vector

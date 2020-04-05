@@ -45,7 +45,6 @@ except:
     print("\n Please, provide a path to the tables.\n")
     raise
 
-
 # ______________________________________________________________________________
 # Functions
 
@@ -57,7 +56,7 @@ def if_file_exist(filename):
     file = open(filename)
   except IOError:
     flag = False
-    print ' No file : ', filename
+    print(' No file: {}'.format(filename))
   return flag
   
 

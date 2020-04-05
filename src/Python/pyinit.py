@@ -72,12 +72,30 @@ class SmileiComponent(object):
         # add all kwargs as internal class variables
         if kwargs is not None:
             deprecated = {
-                "chipa_radiation_threshold":"minimum_chi_continuous",
-                "chipa_disc_min_threshold":"minimum_chi_discontinuous",
+                "output_format":"See documentation for radiation reaction",
+                "h_chipa_min":"See documentation for radiation reaction",
+                "h_chipa_max":"See documentation for radiation reaction",
+                "h_dim":"See documentation for radiation reaction",
+                "h_computation_method":"See documentation for radiation reaction",
+                "integfochi_chipa_min":"See documentation for radiation reaction",
+                "integfochi_chipa_max":"See documentation for radiation reaction",
+                "integfochi_dim":"See documentation for radiation reaction",
+                "xip_chipa_min":"See documentation for radiation reaction",
+                "xip_chipa_max":"See documentation for radiation reaction",
+                "xip_power":"See documentation for radiation reaction or Breit-Wheeler",
+                "xip_threshold":"See documentation for radiation reaction or Breit-Wheeler",
+                "xip_chipa_dim":"See documentation for radiation reaction or Breit-Wheeler",
+                "xip_chiph_dim":"See documentation for radiation reaction or Breit-Wheeler",
+                "compute_table":"See documentation for Breit-Wheeler",
+                "T_chiph_min":"See documentation for Breit-Wheeler",
+                "T_chiph_max":"See documentation for Breit-Wheeler",
+                "T_dim":"See documentation for Breit-Wheeler",
+                "xip_chiph_min":"See documentation for Breit-Wheeler",
+                "xip_chiph_max":"See documentation for Breit-Wheeler",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
-                    raise Exception("Deprecated `"+key+"` parameter should be replaced by `"+deprecated[key]+"`")
+                    raise Exception("Deprecated `"+key+"` parameter. "+deprecated[key])
                 if key=="_list":
                     print("Python warning: in "+cls.__name__+": cannot have argument named '_list'. Discarding.")
                 elif not hasattr(cls, key):
@@ -269,7 +287,7 @@ class MovingWindow(SmileiSingleton):
 
     time_start = 0.
     velocity_x = 1.
-    number_of_additional_shifts = 0.
+    number_of_additional_shifts = 0
     additional_shifts_time = 0.
 
 
@@ -283,7 +301,7 @@ class Checkpoints(SmileiSingleton):
     keep_n_dumps = 2
     dump_deflate = 0
     exit_after_dump = True
-    file_grouping = None
+    file_grouping = 0
     restart_files = []
 
 class CurrentFilter(SmileiSingleton):
@@ -318,7 +336,7 @@ class Species(SmileiComponent):
     radiation_model = "none"
     radiation_photon_species = None
     radiation_photon_sampling = 1
-    radiation_photon_gamma_threshold = 2
+    radiation_photon_gamma_threshold = 2.
 
     # Multiphoton Breit-Wheeler parameters
     multiphoton_Breit_Wheeler = [None,None]
@@ -345,7 +363,7 @@ class Species(SmileiComponent):
     ionization_electrons = None
     ionization_rate = None
     atomic_number = None
-    maximum_charge_state = None
+    maximum_charge_state = 0
     is_test = False
     relativistic_field_initialization = False
     ponderomotive_dynamics = False

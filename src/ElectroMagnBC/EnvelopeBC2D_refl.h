@@ -9,6 +9,7 @@
 #include "LaserEnvelope.h"
 #include "Field2D.h"
 #include "cField2D.h"
+#include "ElectroMagn.h"
 
 class Params;
 class LaserEnvelope;
@@ -21,7 +22,7 @@ public:
     EnvelopeBC2D_refl( Params &params, Patch *patch, unsigned int _min_max );
     ~EnvelopeBC2D_refl() {};
     
-    void apply( LaserEnvelope *envelope, double time_dual, Patch *patch ) override;
+    void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
     
     
 private:

@@ -49,15 +49,17 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
 
     // get parameter "time_average" that determines the number of timestep to average the outputs
     time_average = 1;
-    PyTools::extract("time_average",time_average,"DiagRadiationSpectrum",n_diag_rad_spectrum);
+    PyTools::extract( "time_average", time_average, "DiagRadiationSpectrum", n_diag_rad_spectrum, "an integer");
     if ( time_average < 1 ) time_average=1;
-    if ( time_average > timeSelection->smallestInterval() )
+    if ( time_average > timeSelection->smallestInterval() ) {
         ERROR(errorPrefix << ": `time_average` is incompatible with `every`");
-
+    }
+    
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
-    if (!PyTools::extract("species",species_names,"DiagRadiationSpectrum",n_diag_rad_spectrum))
+    if( ! PyTools::extract("species",species_names,"DiagRadiationSpectrum",n_diag_rad_spectrum) ) {
         ERROR(errorPrefix << ": parameter `species` required");
+    }
     // verify that the species exist, remove duplicates and sort by number
     species = params.FindSpecies(patch->vecSpecies, species_names);
 

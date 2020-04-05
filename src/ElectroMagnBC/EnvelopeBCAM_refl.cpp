@@ -11,6 +11,7 @@
 #include "cField2D.h"
 #include "Tools.h"
 #include "LaserEnvelope.h"
+#include "ElectroMagn.h"
 
 using namespace std;
 
@@ -35,7 +36,7 @@ EnvelopeBCAM_refl::EnvelopeBCAM_refl( Params &params, Patch *patch, unsigned int
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void EnvelopeBCAM_refl::apply( LaserEnvelope *envelope, double time_dual, Patch *patch )
+void EnvelopeBCAM_refl::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
 
     // Static cast of the field

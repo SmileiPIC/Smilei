@@ -86,10 +86,6 @@ void LaserEnvelope1D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     double t;
     double t_previous_timestep;
     
-    complex<double>     i1 = std::complex<double>( 0., 1 );
-    
-    //! 1/(2Dx), where dx is the spatial step dx for 1D3V cartesian simulations
-    double one_ov_2dx=1./2./cell_length[0];
     
     // position[0]: x coordinate
     // t: time coordinate --> x/c for the envelope initialization
@@ -136,7 +132,7 @@ LaserEnvelope1D::~LaserEnvelope1D()
 {
 }
 
-void LaserEnvelope1D::compute( ElectroMagn *EMfields )
+void LaserEnvelope1D::updateEnvelope( ElectroMagn *EMfields )
 {
     //// solves envelope equation in lab frame (see doc):
     // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
@@ -147,31 +143,15 @@ void LaserEnvelope1D::compute( ElectroMagn *EMfields )
     // if using an envelope moving to the left, change the sign of the phase in the envelope initialization
     
     // the following explicit finite difference scheme is obtained through centered finite difference derivatives
-    // e.g. (dA/dx) @ time n and indices ijk = (A^n    _{i+1,j,k} - A^n    _{i-1,j,k}) /2/dx
-    //      (dA/dt) @ time n and indices ijk = (A^{n+1}_{i  ,j,k} - A^{n-1}_{i  ,j,k}) /2/dt
+    // e.g. (dA/dx) @ time n and indices i = (A^n    _{i+1} - A^n    _{i-1}) /2/dx
+    //      (dA/dt) @ time n and indices i = (A^{n+1}_{i  } - A^{n-1}_{i  }) /2/dt
     // A0 is A^{n-1}
-    //      (d^2A/dx^2) @ time n and indices ijk = (A^{n}_{i+1,j,k}-2*A^{n}_{i,j,k}+A^{n}_{i-1,j,k})/dx^2
-    
-    
-    
-    //// auxiliary quantities
-    //! 1/dt^2, where dt is the temporal step
-    double           dt_sq = timestep*timestep;
-    // imaginary unit
-    complex<double>     i1 = std::complex<double>( 0., 1 );
-    
-    //! 1/dx^2, 1/dy^2, 1/dz^2, where dx,dy,dz are the spatial step dx for 1D3V cartesian simulations
-    double one_ov_dx_sq    = 1./cell_length[0]/cell_length[0];
+    //      (d^2A/dx^2) @ time n and indices i = (A^{n}_{i+1,j,k}-2*A^{n}_{i}+A^{n}_{i-1})/dx^2
     
     cField1D *A1D          = static_cast<cField1D *>( A_ );               // the envelope at timestep n
     cField1D *A01D         = static_cast<cField1D *>( A0_ );              // the envelope at timestep n-1
     Field1D *Env_Chi1D     = static_cast<Field1D *>( EMfields->Env_Chi_ ); // source term of envelope equation
-    Field1D *Env_Aabs1D    = static_cast<Field1D *>( EMfields->Env_A_abs_ ); // field for diagnostic
-    Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
-    
-    //! 1/(1Dx), where dx is the spatial step dx for 1D3V cartesian simulations
-    double one_ov_2dt      = 1./2./timestep;
     
     // temporary variable for updated envelope
     cField1D *A1Dnew;
@@ -196,34 +176,97 @@ void LaserEnvelope1D::compute( ElectroMagn *EMfields )
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
     
         // final back-substitution
-        // |E envelope| = |-(dA/dt-ik0cA)|
-        ( *Env_Eabs1D )( i ) = std::abs( ( ( *A1Dnew )( i )-( *A01D )( i ) )*one_ov_2dt - i1*( *A1D )( i ) );
         ( *A01D )( i )       = ( *A1D )( i );
         ( *A1D )( i )        = ( *A1Dnew )( i );
-        ( *Env_Aabs1D )( i ) = std::abs( ( *A1D )( i ) );
         
     } // end x loop
     
     delete A1Dnew;
-} // end LaserEnvelope1D::compute
+} // end LaserEnvelope1D::updateEnvelope
 
+void LaserEnvelope1D::updateEnvelopeReducedDispersion( ElectroMagn *EMfields )
+{
+    //// solves envelope equation in lab frame (see doc):
+    // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
+    // where Chi is the plasma susceptibility [= sum(q^2*rho/mass/gamma_ponderomotive) for all species]
+    // gamma_ponderomotive=sqrt(1+p^2+|A|^2/2) in normalized units
+    
+    // For an envelope moving from right to left, replace the imaginary unit i with its opposite (-i)
+    // if using an envelope moving to the left, change the sign of the phase in the envelope initialization
+    
+    // the following explicit finite difference scheme is obtained through centered finite difference derivatives
+    // e.g. (dA/dx) @ time n and indices i = (A^n    _{i+1} - A^n    _{i-1}) /2/dx
+    //      (dA/dt) @ time n and indices i = (A^{n+1}_{i  } - A^{n-1}_{i  }) /2/dt
+    // A0 is A^{n-1}
+    //      (d^2A/dx^2) @ time n and indices i = (A^{n}_{i+1,j,k}-2*A^{n}_{i}+A^{n}_{i-1})/dx^2
 
-void LaserEnvelope1D::compute_Phi( ElectroMagn *EMfields )
+    // An optimized form for the derivatives along x has been proposed in D. Terzani, P. Londrillo, JCP 2019
+    // to reduce the numerical dispersion for the envelope solver.
+    // The derivatives along x of the reduced dispersion scheme are defined as follows:
+    // delta= [1-(dt/dx)^2]/3,
+    // (dA/dx)_opt = (1+delta)*(dA/dx) - delta*(A_{i+2,j,k}-A_{i-2,j,k})/4/dx
+    // (d^2A/dx^2)_opt = (1+delta)*(d^2A/dx^2) - delta*(A_{i+2,j,k}-2*A_{i,j,k}+A_{i-2,j,k})/(4dx^2)
+    
+    
+    cField1D *A1D          = static_cast<cField1D *>( A_ );               // the envelope at timestep n
+    cField1D *A01D         = static_cast<cField1D *>( A0_ );              // the envelope at timestep n-1
+    Field1D *Env_Chi1D     = static_cast<Field1D *>( EMfields->Env_Chi_ ); // source term of envelope equation
+    
+    
+    // temporary variable for updated envelope
+    cField1D *A1Dnew;
+    A1Dnew  = new cField1D( A_->dims_ );
+    
+    //// explicit solver
+    for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop
+        ( *A1Dnew )( i ) -= ( *Env_Chi1D )( i )*( *A1D )( i ); // subtract here source term Chi*A from plasma
+        // A1Dnew = laplacian - source term
+        ( *A1Dnew )( i ) += (1.+delta)*( ( *A1D )( i-1 ) -2.*( *A1D )( i ) +( *A1D )( i+1 )   )*one_ov_dx_sq; // x part with optimized derivative
+        ( *A1Dnew )( i ) -= delta*     ( ( *A1D )( i-2 ) -2.*( *A1D )( i ) +( *A1D )( i+2 )   )*0.25*one_ov_dx_sq;
+
+        // A1Dnew = A1Dnew+2ik0*dA/dx, where dA/dx uses the optimized form
+        ( *A1Dnew )( i ) += i1_2k0_over_2dx*(1.+delta)*( ( *A1D )( i+1 )-( *A1D )( i-1 ) );
+        ( *A1Dnew )( i ) -= i1_2k0_over_2dx*delta*0.5 *( ( *A1D )( i+2 )-( *A1D )( i-2 ) );
+
+        // A1Dnew = A1Dnew*dt^2
+        ( *A1Dnew )( i )  = ( *A1Dnew )( i )*dt_sq;
+        // A1Dnew = A1Dnew + 2/c^2 A1D - (1+ik0cdt)A01D/c^2
+        ( *A1Dnew )( i ) += 2.*( *A1D )( i )-one_plus_ik0dt*( *A01D )( i );
+        // A1Dnew = A1Dnew * (1+ik0dct)/(1+k0^2c^1Dt^2)
+        ( *A1Dnew )( i )  = ( *A1Dnew )( i )*one_plus_ik0dt_ov_one_plus_k0sq_dtsq;
+    } // end x loop
+    
+    for( unsigned int i=2 ; i <A_->dims_[0]-2; i++ ) { // x loop
+        // final back-substitution
+        ( *A01D )( i )       = ( *A1D )( i );
+        ( *A1D )( i )        = ( *A1Dnew )( i );      
+    } // end x loop
+    
+    delete A1Dnew;
+} // end LaserEnvelope1D::updateEnvelopeReducedDispersion
+
+void LaserEnvelope1D::computePhiEnvAEnvE( ElectroMagn *EMfields )
 {
 
     // computes Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
-    cField1D *A1D          = static_cast<cField1D *>( A_ );       // the envelope at timestep n
-    Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );      //Phi=|A|^2/2 is the ponderomotive potential
+    cField1D *A1D          = static_cast<cField1D *>( A_ );                  // the envelope at timestep n
+    cField1D *A01D         = static_cast<cField1D *>( A0_ );              // the envelope at timestep n-1
+    Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );                 //Phi=|A|^2/2 is the ponderomotive potential
+    Field1D *Env_Aabs1D    = static_cast<Field1D *>( EMfields->Env_A_abs_ ); // field for diagnostic
+    Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
-    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        ( *Phi1D )( i )       = std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
+    for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
+        ( *Phi1D )( i )      = std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
+        ( *Env_Aabs1D )( i ) = std::abs( ( *A1D )( i ) );
+        // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
+        ( *Env_Eabs1D )( i ) = std::abs( ( ( *A1D )( i )-( *A01D )( i ) )/timestep - i1*( *A1D )( i ) );
     } // end x loop
     
-} // end LaserEnvelope1D::compute_Phi
+} // end LaserEnvelope1D::computePhiEnvAEnvE
 
 
-void LaserEnvelope1D::compute_gradient_Phi( ElectroMagn *EMfields )
+void LaserEnvelope1D::computeGradientPhi( ElectroMagn *EMfields )
 {
 
     // computes gradient of Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
@@ -231,21 +274,18 @@ void LaserEnvelope1D::compute_gradient_Phi( ElectroMagn *EMfields )
     Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );      //Phi=|A|^2/2 is the ponderomotive potential
     
     
-    //! 1/(1Dx), where dx is the spatial step dx for 1D3V cartesian simulations
-    double one_ov_2Dx=1./2./cell_length[0];
-    
     // Compute gradients of Phi, at timesteps n
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
     
         // gradient in x direction
-        ( *GradPhix1D )( i ) = ( ( *Phi1D )( i+1 )-( *Phi1D )( i-1 ) ) * one_ov_2Dx;
+        ( *GradPhix1D )( i ) = ( ( *Phi1D )( i+1 )-( *Phi1D )( i-1 ) ) * one_ov_2dx;
         
     } // end x loop
     
-} // end LaserEnvelope1D::compute_gradient_Phi
+} // end LaserEnvelope1D::computeGradientPhi
 
 
-void LaserEnvelope1D::savePhi_and_GradPhi()
+void LaserEnvelope1D::savePhiAndGradPhi()
 {
     // Static cast of the fields
     Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );
@@ -264,10 +304,10 @@ void LaserEnvelope1D::savePhi_and_GradPhi()
     } // end x loop
     
     
-}//END savePhi_and_GradPhi
+}//END savePhiAndGradPhi
 
 
-void LaserEnvelope1D::centerPhi_and_GradPhi()
+void LaserEnvelope1D::centerPhiAndGradPhi()
 {
     // Static cast of the fields
     Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );
@@ -292,6 +332,6 @@ void LaserEnvelope1D::centerPhi_and_GradPhi()
     // these are used for the ponderomotive position advance
     
     
-}//END centerPhi_and_GradPhi
+}//END centerPhiAndGradPhi
 
 

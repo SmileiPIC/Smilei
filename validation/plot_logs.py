@@ -61,33 +61,39 @@ class switchPlots:
         clf()
         gs = GridSpec(10,10)
         self.ax = subplot(gs[0:9,0:8])
+        
+        # Events
         self.fig.canvas.callbacks.connect('pick_event', self.on_pick)
         self.fig.canvas.mpl_connect("motion_notify_event", self.on_hover)
+        self.fig.canvas.mpl_connect("motion_notify_event", self.update_min_mean_max_annotations)
         
-        # Button next
-        axnext = axes([self.menu_x_position+2*0.06, 0.01, 0.05, 0.03])
-        self.bnext = Button(axnext, '>')
-        self.bnext.on_clicked(lambda event : self.next(event,1))
-
-        # Button previous
-        axprev = axes([self.menu_x_position+0.06, 0.01, 0.05, 0.03])
-        self.bprev = Button(axprev, '<')
-        self.bprev.on_clicked(lambda event : self.next(event,-1))
-   
-        # Button next +5
-        axnext5 = axes([self.menu_x_position+3*0.06, 0.01, 0.05, 0.03])
-        self.bnext5 = Button(axnext5, '>>')
-        self.bnext5.on_clicked(lambda event : self.next(event,5))
-
         # Button previous -5
         axprev5 = axes([self.menu_x_position, 0.01, 0.05, 0.03])
         self.bprev5 = Button(axprev5, '<<')
         self.bprev5.on_clicked(lambda event : self.next(event,-5))
         
+        # Button previous
+        axprev = axes([self.menu_x_position+0.06, 0.01, 0.05, 0.03])
+        self.bprev = Button(axprev, '<')
+        self.bprev.on_clicked(lambda event : self.next(event,-1))
+        
+        # Button next
+        axnext = axes([self.menu_x_position+2*0.06, 0.01, 0.05, 0.03])
+        self.bnext = Button(axnext, '>')
+        self.bnext.on_clicked(lambda event : self.next(event,1))
+   
+        # Button next +5
+        axnext5 = axes([self.menu_x_position+3*0.06, 0.01, 0.05, 0.03])
+        self.bnext5 = Button(axnext5, '>>')
+        self.bnext5.on_clicked(lambda event : self.next(event,5))
+        
         
         # Get all data from all cases
         self.data = []
         for case in cases:
+            
+            self.init_style()
+            
             D = {"name":splitext(basename(case))[0]}
             
             # Read data
@@ -124,14 +130,14 @@ class switchPlots:
             # Get branch names
             D["commits"] = data["commit"]
             D["branches"] = array(["-".join(b.split("-")[1:]) for b in D["commits"]])
-            # Set parameters for branch plotting 
+            # Set parameters for branch plotting
             D["branch_opt"] = {}
             D["branch_points"] = {}
             for branch in unique(D["branches"]):
                 if "HEAD" in branch or branch=="develop":
                     D["branch_opt"][branch] = dict(
                         marker = self.get_marker(),
-                        color = self.get_color(),
+                        color = "k",
                         alpha = 0,
                     )
                 else:
@@ -174,6 +180,13 @@ class switchPlots:
         self.current_color = (self.current_color+1)%len(self.custom_colors)
         return self.custom_colors[color]
 
+    def init_style(self):
+        """
+        Reinitialize the plot style
+        """
+        self.current_color  = 0
+        self.current_marker = 0
+
     def on_pick(self,event):
         """
         This method is used to make markers clickable.
@@ -211,6 +224,60 @@ class switchPlots:
                 if vis:
                     self.annot.set_visible(False)
                     self.fig.canvas.draw_idle()
+
+    def display_min_mean_max_annotations(self):
+        """
+        Display 3 arrows with annotations for the min, max and mean value of total time
+        """
+        D = self.data[self.ind]
+        ylim = self.ax.get_ylim()
+        y_length = ylim[1] - ylim[0]
+        
+        if ((D["min_times"][-1] < ylim[1]) and (D["min_times"][-1] > ylim[0])):
+            ypos = (D["min_times"][-1]-ylim[0])/y_length
+            self.min_annot = self.ax.annotate("min", xy=(1.0, ypos),
+                                            xycoords='axes fraction',
+                                            xytext=(1.03, ypos),
+                                            arrowprops=dict(arrowstyle="-|>",color='C0'),
+                                            color = 'C0',
+                                            va = 'center')
+            self.min_annot_drawn = True
+                    
+        if ((D["mean_times"][-1] < ylim[1]) and (D["mean_times"][-1] > ylim[0])):
+            ypos = (D["mean_times"][-1]-ylim[0])/y_length
+            self.mean_annot = self.ax.annotate("mean", xy=(1.0, ypos),
+                                            xycoords='axes fraction',
+                                            xytext=(1.03, ypos),
+                                            arrowprops=dict(arrowstyle="-|>",color='C2'),
+                                            color = 'C2',
+                                            va = 'center')
+            self.mean_annot_drawn = True
+        
+        if ((D["max_times"][-1] < ylim[1]) and (D["max_times"][-1] > ylim[0])):
+            ypos = (D["max_times"][-1]-ylim[0])/y_length
+            self.max_annot = self.ax.annotate("max", xy=(1.0, ypos),
+                                            xycoords='axes fraction',
+                                            xytext=(1.03, ypos),
+                                            arrowprops=dict(arrowstyle="-|>",color='C3'),
+                                            color = 'C3',
+                                            va = 'center')
+            self.max_annot_drawn = True
+    
+    def update_min_mean_max_annotations(self,event):
+        """
+        Update the min, mean, max annotations
+        """
+        if (self.min_annot_drawn):
+            self.min_annot.remove()
+            self.min_annot_drawn = False
+        if (self.mean_annot_drawn):
+            self.mean_annot.remove()
+            self.mean_annot_drawn = False
+        if (self.max_annot_drawn):
+            self.max_annot.remove()
+            self.max_annot_drawn = False
+        
+        self.display_min_mean_max_annotations()
     
     def plot(self):
         """
@@ -235,7 +302,7 @@ class switchPlots:
         self.ax.plot( D["t"], D["time_in_timeloop"], '--k', label="time loop (total)",zorder=0)
         
         for branch in D["branch_points"]:
-            plot( 
+            plot(
                 D["branch_points"][branch][0], D["branch_points"][branch][1],
                 linestyle = "none",
                 ms = self.marker_size,
@@ -244,14 +311,23 @@ class switchPlots:
             
         self.sc = self.ax.scatter(D["t"], D["time_in_timeloop"], alpha=0, picker=10, zorder=1)
         
-        self.ax.legend(bbox_to_anchor=(1.05, 1.))
+        self.ax.legend(bbox_to_anchor=(1.08, 1.))
         self.ax.set_xlabel("Commit date")
         self.ax.set_ylabel("Time (s)")
         setp(self.ax.get_xticklabels(), rotation=30, ha="right")
         
+        # Min, mean, max annotations
+        self.display_min_mean_max_annotations()
+        
         # Hovering box
         self.annot = self.ax.annotate("", xy=(0.01,0.95), xycoords='axes fraction')
         self.annot.set_visible(False)
+        
+        self.ax.annotate("Help:\n> Fly over markers to get commit id\n"+
+                         "> Click on markers to get full information\n    in the terminal\n"+
+                         "> Use arrows to change log plot", xy=(1.05,-0.05), xycoords='axes fraction',
+                         bbox=dict(boxstyle="round",ec="#aaaaaa",fc="None",pad=1.0)
+                         )
         
         show()
 

@@ -63,38 +63,37 @@ PartWalls::PartWalls( Params &params, Patch *patch )
     for( unsigned int iwall = 0; iwall < numpartwall; iwall++ ) {
     
         // Extract the direction of the wall
-        direction[iwall] = -1;
         string dirstring;
-        if( PyTools::extract( "x", position[iwall], "PartWall", iwall ) ) {
-            direction[iwall]=0;
-            dirstring="x";
+        int extract_x = PyTools::extract( "x", position[iwall], "PartWall", iwall );
+        int extract_y = PyTools::extract( "y", position[iwall], "PartWall", iwall );
+        int extract_z = PyTools::extract( "z", position[iwall], "PartWall", iwall );
+        if( extract_x<0 || extract_y<0 || extract_z<0 ) {
+            ERROR( "PartWall #" << iwall << ": x, y, or z should be a float" );
         }
-        if( PyTools::extract( "y", position[iwall], "PartWall", iwall ) ) {
-            if( direction[iwall]>=0 ) {
-                ERROR( "For PartWall #" << iwall << ", cannot have several locations (x, y or z)" );
-            }
+        if( extract_x + extract_y + extract_z > 1 ) {
+            ERROR( "PartWall #" << iwall << ": cannot have several locations (x, y or z)" );
+        }
+        if( extract_x ) {
+            direction[iwall] = 0;
+            dirstring = "x";
+        } else if( extract_y ) {
             if( params.nDim_particle < 2 ) {
-                ERROR( "PartWall #" << iwall << " cannot have y-location in 1D" );
+                ERROR( "PartWall #" << iwall << ": cannot have y-location in 1D" );
             }
-            direction[iwall]=1;
-            dirstring="y";
-        }
-        if( PyTools::extract( "z", position[iwall], "PartWall", iwall ) ) {
-            if( direction[iwall]>=0 ) {
-                ERROR( "For PartWall #" << iwall << ", cannot have several locations (x, y or z)" );
-            }
+            direction[iwall] = 1;
+            dirstring = "y";
+        } else if( extract_z ) {
             if( params.nDim_particle < 3 ) {
-                ERROR( "PartWall #" << iwall << " cannot have z-location y in 1D or 2D" );
+                ERROR( "PartWall #" << iwall << ": cannot have z-location y in 1D or 2D" );
             }
-            direction[iwall]=2;
-            dirstring="z";
-        }
-        if( direction[iwall] < 0 ) {
+            direction[iwall] = 2;
+            dirstring = "z";
+        } else {
             ERROR( "PartWall #" << iwall << " must have one location (x, y or z)" );
         }
         
         // Ewtract the kind of wall
-        PyTools::extract( "kind", kind[iwall], "PartWall", iwall );
+        PyTools::extract( "kind", kind[iwall], "PartWall", iwall, "a string" );
         if( kind[iwall].empty() || ( kind[iwall]!="reflective" && kind[iwall]!="remove" && kind[iwall]!="stop" && kind[iwall]!="thermalize" ) ) {
             ERROR( "For PartWall #" << iwall << ", `kind` must be one of reflective, remove, stop, thermalize" );
         }
