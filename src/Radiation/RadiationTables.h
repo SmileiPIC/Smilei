@@ -65,7 +65,7 @@ public:
     //! ramdomly and using the tables xi and chiphmin
     //! \param particle_chi particle quantum parameter
     double computeRandomPhotonChiWithInterpolation( double particle_chi);
-
+    
     //! Return the value of the function h(particle_chi) of Niel et al.
     //! Use an integration of Gauss-Legendre
     //
@@ -153,7 +153,7 @@ public:
     //! \param smpi Object of class SmileiMPI containing MPI properties
     void readHTable( SmileiMPI *smpi );
 
-    //! Read the external table integfochi
+    //! Read the external table integfochi_
     //! \param smpi Object of class SmileiMPI containing MPI properties
     void readIntegfochiTable( SmileiMPI *smpi );
 
@@ -173,7 +173,7 @@ public:
     //! \param smpi Object of class SmileiMPI containing MPI properties
     void bcastHTable( SmileiMPI *smpi );
 
-    //! Bcast of the external table integfochi
+    //! Bcast of the external table integfochi_
     //! \param smpi Object of class SmileiMPI containing MPI properties
     void bcastIntegfochiTable( SmileiMPI *smpi );
 
@@ -259,7 +259,7 @@ private:
         double max_particle_chi_;
         
         //! Minimum boundary of the table integfochi_table
-        double size_particle_chi_;
+        int size_particle_chi_;
         
         //! Log10 of the minimum boundary of the table integfochi_table
         double log10_min_particle_chi_;
@@ -272,7 +272,7 @@ private:
         
     };
     
-    struct IntegrationFoverChi integfochi;
+    struct IntegrationFoverChi integfochi_;
 
     // ---------------------------------------------
     // Structure for min_photon_chi_for_xi and xi
@@ -383,15 +383,15 @@ private:
         };
         
         // Default parameters for table `integfochi`
-        integfochi.min_particle_chi_ = 1e-4;
-        integfochi.max_particle_chi_ = 1e3;
-        integfochi.size_particle_chi_ = 256;
-        integfochi.log10_min_particle_chi_ = std::log10( integfochi.min_particle_chi_ );
-        integfochi.particle_chi_delta_ = ( std::log10( integfochi.max_particle_chi_ )
-                                   - integfochi.log10_min_particle_chi_ )/( integfochi.size_particle_chi_-1 );
-        integfochi.inv_particle_chi_delta_ = 1.0/integfochi.particle_chi_delta_;
-        integfochi.table_.resize( integfochi.size_particle_chi_ );
-        integfochi.table_ =
+        integfochi_.min_particle_chi_ = 1e-4;
+        integfochi_.max_particle_chi_ = 1e3;
+        integfochi_.size_particle_chi_ = 256;
+        integfochi_.log10_min_particle_chi_ = std::log10( integfochi_.min_particle_chi_ );
+        integfochi_.particle_chi_delta_ = ( std::log10( integfochi_.max_particle_chi_ )
+                                   - integfochi_.log10_min_particle_chi_ )/( integfochi_.size_particle_chi_-1 );
+        integfochi_.inv_particle_chi_delta_ = 1.0/integfochi_.particle_chi_delta_;
+        integfochi_.table_.resize( integfochi_.size_particle_chi_ );
+        integfochi_.table_ =
         {
             5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325, 5.23552520325,
             5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266, 5.23509929266,

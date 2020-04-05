@@ -177,9 +177,9 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
         MESSAGE( "" );
         MESSAGE( 1,"--- Integration F/particle_chi table:" );
         MESSAGE( 2,"Reading of the external database" );
-        MESSAGE( 2,"Dimension quantum parameter: " << integfochi.size_particle_chi_ );
-        MESSAGE( 2,"Minimum particle quantum parameter chi: " << integfochi.min_particle_chi_ );
-        MESSAGE( 2,"Maximum particle quantum parameter chi: " << integfochi.max_particle_chi_ );
+        MESSAGE( 2,"Dimension quantum parameter: " << integfochi_.size_particle_chi_ );
+        MESSAGE( 2,"Minimum particle quantum parameter chi: " << integfochi_.min_particle_chi_ );
+        MESSAGE( 2,"Maximum particle quantum parameter chi: " << integfochi_.max_particle_chi_ );
         MESSAGE( "" );
         MESSAGE( 1,"--- Table `min_photon_chi_for_xi` and `xi`:" );
         MESSAGE( 2,"Reading of the external database" );
@@ -313,6 +313,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 //
 //     return photon_chi;
 // }
+
 
 // -----------------------------------------------------------------------------
 //! Computation of the photon quantum parameter photon_chi for emission
@@ -491,25 +492,25 @@ double RadiationTables::computePhotonProductionYield( double particle_chi, doubl
 
     logchipa = std::log10( particle_chi );
 
-    // Lower index for interpolation in the table integfochi
-    ichipa = int( floor( ( logchipa-integfochi.log10_min_particle_chi_ )
-                         *integfochi.inv_particle_chi_delta_ ) );
+    // Lower index for interpolation in the table integfochi_
+    ichipa = int( floor( ( logchipa-integfochi_.log10_min_particle_chi_ )
+                         *integfochi_.inv_particle_chi_delta_ ) );
 
     // If we are not in the table...
     if( ichipa < 0 ) {
         ichipa = 0;
-        dNphdt = integfochi.table_[ichipa];
-    } else if( ichipa >= integfochi.size_particle_chi_-1 ) {
-        ichipa = integfochi.size_particle_chi_-2;
-        dNphdt = integfochi.table_[ichipa];
+        dNphdt = integfochi_.table_[ichipa];
+    } else if( ichipa >= integfochi_.size_particle_chi_-1 ) {
+        ichipa = integfochi_.size_particle_chi_-2;
+        dNphdt = integfochi_.table_[ichipa];
     } else {
         // Upper and lower values for linear interpolation
-        logchipam = ichipa*integfochi.particle_chi_delta_ + integfochi.log10_min_particle_chi_;
-        logchipap = logchipam + integfochi.particle_chi_delta_;
+        logchipam = ichipa*integfochi_.particle_chi_delta_ + integfochi_.log10_min_particle_chi_;
+        logchipap = logchipam + integfochi_.particle_chi_delta_;
 
         // Interpolation
-        dNphdt = ( integfochi.table_[ichipa+1]*fabs( logchipa-logchipam ) +
-                   integfochi.table_[ichipa]*fabs( logchipap - logchipa ) )*integfochi.inv_particle_chi_delta_;
+        dNphdt = ( integfochi_.table_[ichipa+1]*fabs( logchipa-logchipam ) +
+                   integfochi_.table_[ichipa]*fabs( logchipap - logchipa ) )*integfochi_.inv_particle_chi_delta_;
     }
 
     return factor_dNph_dt_*dNphdt*particle_chi/particle_gamma;
@@ -598,7 +599,7 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
                 H5::getAttr( dataset_id, "min_particle_chi", niel_.min_particle_chi_ );
                 H5::getAttr( dataset_id, "max_particle_chi", niel_.max_particle_chi_ );
 
-                // Resize of the array integfochi.table before reading
+                // Resize of the array integfochi_.table before reading
                 niel_.table_.resize( niel_.size_particle_chi_ );
 
                 // then the dataset
@@ -658,18 +659,18 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
             if( dataset_id > 0 ) {
 
                 // First, we read attributes
-                H5::getAttr( dataset_id, "size_particle_chi", integfochi.size_particle_chi_ );
-                H5::getAttr( dataset_id, "min_particle_chi", integfochi.min_particle_chi_ );
-                H5::getAttr( dataset_id, "max_particle_chi", integfochi.max_particle_chi_ );
+                H5::getAttr( dataset_id, "size_particle_chi", integfochi_.size_particle_chi_ );
+                H5::getAttr( dataset_id, "min_particle_chi", integfochi_.min_particle_chi_ );
+                H5::getAttr( dataset_id, "max_particle_chi", integfochi_.max_particle_chi_ );
 
-                // Resize of the array integfochi.table_ before reading
-                integfochi.table_.resize( integfochi.size_particle_chi_ );
+                // Resize of the array integfochi_.table_ before reading
+                integfochi_.table_.resize( integfochi_.size_particle_chi_ );
 
                 // then the dataset
                 H5Dread( dataset_id,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
-                         &integfochi.table_[0] );
+                         &integfochi_.table_[0] );
 
                 H5Dclose( dataset_id );
                 H5Fclose( fileId );
@@ -897,7 +898,7 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
         buf_size = position;
         MPI_Pack_size( 2, MPI_DOUBLE, smpi->getGlobalComm(), &position );
         buf_size += position;
-        MPI_Pack_size( integfochi.size_particle_chi_, MPI_DOUBLE, smpi->getGlobalComm(),
+        MPI_Pack_size( integfochi_.size_particle_chi_, MPI_DOUBLE, smpi->getGlobalComm(),
                        &position );
         buf_size += position;
     }
@@ -913,14 +914,14 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
     // Proc 0 packs
     if( smpi->getRank() == 0 ) {
         position = 0;
-        MPI_Pack( &integfochi.size_particle_chi_,
+        MPI_Pack( &integfochi_.size_particle_chi_,
                   1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
-        MPI_Pack( &integfochi.min_particle_chi_,
+        MPI_Pack( &integfochi_.min_particle_chi_,
                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
-        MPI_Pack( &integfochi.max_particle_chi_,
+        MPI_Pack( &integfochi_.max_particle_chi_,
                   1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
-        MPI_Pack( &integfochi.table_[0], integfochi.size_particle_chi_,
+        MPI_Pack( &integfochi_.table_[0], integfochi_.size_particle_chi_,
                   MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
 
     }
@@ -932,30 +933,57 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
     if( smpi->getRank() != 0 ) {
         position = 0;
         MPI_Unpack( buffer, buf_size, &position,
-                    &integfochi.size_particle_chi_, 1, MPI_INT, smpi->getGlobalComm() );
+                    &integfochi_.size_particle_chi_, 1, MPI_INT, smpi->getGlobalComm() );
+        std::cerr << integfochi_.size_particle_chi_ << std::endl;
         MPI_Unpack( buffer, buf_size, &position,
-                    &integfochi.min_particle_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &integfochi_.min_particle_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &integfochi.max_particle_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &integfochi_.max_particle_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
 
         // Resize table before unpacking values
-        integfochi.table_.resize( integfochi.size_particle_chi_ );
+        integfochi_.table_.resize( integfochi_.size_particle_chi_ );
 
-        MPI_Unpack( buffer, buf_size, &position, &integfochi.table_[0],
-                    integfochi.size_particle_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
+        MPI_Unpack( buffer, buf_size, &position, &integfochi_.table_[0],
+                    integfochi_.size_particle_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
 
     }
 
     delete[] buffer;
 
-    integfochi.log10_min_particle_chi_ = std::log10( integfochi.min_particle_chi_ );
+    integfochi_.log10_min_particle_chi_ = std::log10( integfochi_.min_particle_chi_ );
 
     // Computation of the delta
-    integfochi.particle_chi_delta_ = ( std::log10( integfochi.max_particle_chi_ )
-                               - integfochi.log10_min_particle_chi_ )/( integfochi.size_particle_chi_-1 );
+    integfochi_.particle_chi_delta_ = ( std::log10( integfochi_.max_particle_chi_ )
+                               - integfochi_.log10_min_particle_chi_ )/( integfochi_.size_particle_chi_-1 );
 
     // Inverse delta
-    integfochi.inv_particle_chi_delta_ = 1.0/integfochi.particle_chi_delta_;
+    integfochi_.inv_particle_chi_delta_ = 1.0/integfochi_.particle_chi_delta_;
+
+    // -----------------------------------------------------------------------
+    // DEBUG
+    //
+    // double sum_integfochi_ = 0;
+    // for (int i = 0 ; i < integfochi_.size_particle_chi_ ; i++) {
+    //     sum_integfochi_ += integfochi_.table_[i];
+    // }
+    //
+    // for (int i = 0 ; i < smpi->getSize() ; i++) {
+    //     if( smpi->getRank() == i ) {
+    //         std::cerr << " rank: " << smpi->getRank()
+    //                   << " buf_size: " << buf_size
+    //                   << " integfochi_.size_particle_chi_: " << integfochi_.size_particle_chi_
+    //                   << " integfochi_.min_particle_chi_: " << integfochi_.min_particle_chi_
+    //                   << " integfochi_.max_particle_chi_: " << integfochi_.max_particle_chi_
+    //                   << " integfochi_.log10_min_particle_chi_: " << integfochi_.log10_min_particle_chi_
+    //                   << " integfochi_.particle_chi_delta_: " << integfochi_.particle_chi_delta_
+    //                   << " integfochi_.inv_particle_chi_delta_: " << integfochi_.inv_particle_chi_delta_
+    //                   << " sum_integfochi_: " << sum_integfochi_
+    //                   << std::endl;
+    //         usleep(1000);
+    //         smpi->barrier();
+    //     }
+    // }
+    // -----------------------------------------------------------------------
 }
 
 // -----------------------------------------------------------------------------
@@ -1040,6 +1068,7 @@ void RadiationTables::bcastTableXi( SmileiMPI *smpi )
 
         MPI_Unpack( buffer, buf_size, &position, &xi_.table_[0],
                     xi_.size_particle_chi_*xi_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
+                    
     }
 
     delete[] buffer;
@@ -1057,4 +1086,34 @@ void RadiationTables::bcastTableXi( SmileiMPI *smpi )
     // Inverse photon_chi discetization (regularly used)
     xi_.inv_size_photon_chi_minus_one_ = 1.0/( xi_.size_photon_chi_ - 1. );
 
+    // -----------------------------------------------------------------------
+    // DEBUG
+    //
+    // double sum_xi = 0;
+    // double sum_min_photon_chi = 0;
+    // for (int i = 0 ; i < xi_.size_particle_chi_ ; i++) {
+    //     sum_min_photon_chi += xi_.min_photon_chi_table_[i];
+    // }
+    // for (int i = 0 ; i < xi_.size_particle_chi_*xi_.size_photon_chi_ ; i++) {
+    //     sum_xi += xi_.table_[i];
+    // }
+    // for (int i = 0 ; i < smpi->getSize() ; i++) {
+    //     if( smpi->getRank() == i ) {
+    //         std::cerr << " rank: " << smpi->getRank()
+    //                   << " xi_.size_particle_chi_: " << xi_.size_particle_chi_
+    //                   << " xi_.size_photon_chi_: " << xi_.size_photon_chi_
+    //                   << " xi_.min_particle_chi_: " << xi_.min_particle_chi_
+    //                   << " xi_.max_particle_chi_: " << xi_.max_particle_chi_
+    //                   << " xi_.log10_min_particle_chi_: " << xi_.log10_min_particle_chi_
+    //                   << " xi_.particle_chi_delta_: " << xi_.particle_chi_delta_
+    //                   << " xi_.inv_particle_chi_delta_: " << xi_.inv_particle_chi_delta_
+    //                   << " xi_.inv_size_photon_chi_minus_one_: " << xi_.inv_size_photon_chi_minus_one_
+    //                   << " sum min_photon_chi: " << sum_min_photon_chi
+    //                   << " sum xi: " << sum_xi
+    //                   << std::endl;
+    //         usleep(1000);
+    //         smpi->barrier();
+    //     }
+    // }
+    // -----------------------------------------------------------------------
 }
