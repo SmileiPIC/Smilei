@@ -18,4 +18,3 @@ Understand
    laser_envelope
    relativistic_fields_initialization
    azimuthal_modes_decomposition
-   tables
