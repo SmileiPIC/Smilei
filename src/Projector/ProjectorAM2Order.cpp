@@ -388,7 +388,7 @@ void ProjectorAM2Order::axisBC(complex<double> *rhoj, complex<double> *Jl,comple
                 Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
                 //Force dJr/dr = 0 at r=0.
                 //Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
-                Jr [ilocr-1] = 2*Icpx*Jt[iloc] - Jr [ilocr];
+                Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
             } else{
                 Jt [iloc] = 0. ;
                 //Force dJr/dr = 0 and Jr=0 at r=0.
