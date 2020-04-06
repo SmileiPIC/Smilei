@@ -453,7 +453,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR( "Currently, only the `binomial` model is available in CurrentFilter()" );
         }
 
-        PyTools::extract( "passes", currentFilter_passes, "CurrentFilter", ifilt );
+        if(!PyTools::extract( "passes", currentFilter_passes, "CurrentFilter", ifilt )){  //test list
+            if(!PyTools::extract( "passes", currentFilter_passes[0], "CurrentFilter", ifilt )){ //test integer
+                ERROR("Current filter `passes` must be given as a list of integer");
+            }
+        }
 
         if( currentFilter_passes.size() == 0 ) {
             ERROR( "passes cannot be empty" );
@@ -1033,7 +1037,10 @@ void Params::print_init()
     }
 
     if( *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) > 0 ) {
-        MESSAGE( 1, "Binomial current filtering : "<< *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) << " passes" );
+        for( unsigned int idim=0 ; idim < nDim_field ; idim++ ){
+            std::string strpass = (currentFilter_passes[idim] > 1 ? "passes" : "pass");
+            MESSAGE( 1, "Binomial current filtering : " << currentFilter_passes[idim] << " " << strpass << " along dimension " << idim );
+        }
     }
     if( Friedman_filter ) {
         MESSAGE( 1, "Friedman field filtering : theta = " << Friedman_theta );
