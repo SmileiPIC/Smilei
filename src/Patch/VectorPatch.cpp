@@ -877,6 +877,18 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
             }
         }
     }
+    //Apply boundary conditions for rho and J on axis
+    if ( ( params.geometry == "AMcylindrical" ) && (( *this )( 0 )->vecSpecies.size() > 0) ) {
+        #pragma omp for schedule(runtime)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            if (emAM->isYmin){
+                for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
+                    ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode );
+                }
+            }
+        }
+    }
     timers.syncDens.update( params.printNow( itime ) );
 } // End sumDensities
 
