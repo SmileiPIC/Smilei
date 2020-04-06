@@ -8,7 +8,6 @@ from time import strptime
 from datetime import datetime
 #from os.path import splitext, basename
 import os
-import urllib.request
 ion()
 
 # RCParams parameters to tune the matplotlib style
