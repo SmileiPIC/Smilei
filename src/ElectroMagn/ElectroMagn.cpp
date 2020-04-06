@@ -430,7 +430,7 @@ void ElectroMagn::updateGridSize( Params &params, Patch *patch )
 void ElectroMagn::boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow )
 {
     // Compute EM Bcs
-    if( !( simWindow && simWindow->isMoving( time_dual ) ) ) {
+    if( !( simWindow && simWindow->isMoving( time_dual ) ) || params.is_spectral ) {
         if( emBoundCond[0]!=NULL ) { // <=> if !periodic
             emBoundCond[0]->apply( this, time_dual, patch );
             emBoundCond[1]->apply( this, time_dual, patch );

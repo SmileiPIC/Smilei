@@ -781,7 +781,7 @@ void PatchAM::cleanType()
     }
 }
 
-void PatchAM::exchangeField_movewin( Field* field, int clrw )
+void PatchAM::exchangeField_movewin( Field* field, int nshift )
 {
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
@@ -789,7 +789,7 @@ void PatchAM::exchangeField_movewin( Field* field, int clrw )
     int istart, ix, iy, iDim, iNeighbor,bufsize;
     void* b;
 
-    bufsize = 2*clrw*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
+    bufsize = 2*nshift*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
     b=(void *)malloc(bufsize);
     MPI_Buffer_attach( b, bufsize);
     iDim = 0; // We exchange only in the X direction for movewin.
@@ -803,20 +803,20 @@ void PatchAM::exchangeField_movewin( Field* field, int clrw )
     if (MPI_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
 
         istart =  2*oversize[iDim] + 1 + isDual[iDim] ;
-        ix = (1-iDim)*istart;
-        iy =    iDim *istart;
+        ix = istart;
+        iy =   0;
         MPI_Bsend(  &( ( *f2D )( ix, iy ) ), 1, ntype, MPI_neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
     } // END of Send
 
     //Once the message is in the buffer we can safely shift the field in memory. 
-    field->shift_x(clrw);
+    field->shift_x(nshift);
     // and then receive the complementary field from the East.
 
     if (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 
-        istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
-        ix = (1-iDim)*istart;
-        iy =    iDim *istart;
+        istart = n_elem[iDim] - nshift    ;
+        ix = istart;
+        iy =   0 ;
         MPI_Irecv(  &( ( *f2D )( ix, iy ) ), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest);
     } // END of Recv
 
