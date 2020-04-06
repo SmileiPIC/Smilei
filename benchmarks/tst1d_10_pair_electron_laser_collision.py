@@ -177,11 +177,10 @@ Species(
 
 RadiationReaction(
     minimum_chi_discontinuous = 1e-2,
-    table_path = "./"
 )
 
 MultiphotonBreitWheeler(
-    table_path = "./"
+    #table_path = "./"
 )
 
 # ----------------------------------------------------------------------------------------
@@ -199,4 +198,104 @@ DiagScalar(
           'Ntot_electron',
           'Ntot_positron',
           'Ntot_photon']
+)
+
+
+# Weight spatial-distribution
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = [4000,5200,100],
+    time_average = 1,
+    species = ["electron"],
+    axes = [
+        ["x", 0., Lx, 512],
+    ]
+)
+
+# Weight spatial-distribution
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = [4000,5200,100],
+    time_average = 1,
+    species = ["positron"],
+    axes = [
+        ["x", 0., Lx, 512],
+    ]
+)
+
+# Weight spatial-distribution
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = [4000,5200,100],
+    time_average = 1,
+    species = ["photon"],
+    axes = [
+        ["x", 0., Lx, 512],
+    ]
+)
+
+# Chi-distribution
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = [4000,5200,100],
+    time_average = 1,
+    species = ["electron"],
+    axes = [
+        ["chi", 1e-3, 5., 256,"logscale"],
+    ]
+)
+
+# Chi-distribution
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = [4000,5200,100],
+    time_average = 1,
+    species = ["positron"],
+    axes = [
+        ["chi", 1e-3, 5., 256,"logscale"],
+    ]
+)
+
+# Chi-distribution
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = [4000,5200,100],
+    time_average = 1,
+    species = ["photon"],
+    axes = [
+        ["chi", 1e-3, 5., 256,"logscale"],
+    ]
+)
+
+# Gamma-distribution
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = [4000,5200,100],
+    time_average = 1,
+    species = ["electron"],
+    axes = [
+        ["gamma", 1., gamma0, 256,"logscale"],
+    ]
+)
+
+# Gamma-distribution
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = [4000,5200,100],
+    time_average = 1,
+    species = ["positron"],
+    axes = [
+        ["gamma", 1., gamma0, 256,"logscale"],
+    ]
+)
+
+# Gamma-distribution
+DiagParticleBinning(
+    deposited_quantity = "weight",
+    every = [4000,5200,100],
+    time_average = 1,
+    species = ["photon"],
+    axes = [
+        ["gamma", 1., gamma0, 256,"logscale"],
+    ]
 )

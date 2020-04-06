@@ -6,8 +6,8 @@ compile:
   stage: compile
   only:
     - develop
-    - AMsorting
-    - particle_merging_correction
+    - radiationSpectrum
+    - envelope_reduced_dispersion
 
   script:
     # Force workdir cleaning in case of retried
@@ -29,8 +29,8 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - AMsorting
-    - particle_merging_correction
+    - radiationSpectrum
+    - envelope_reduced_dispersion
     
   script:
     # Move in test dir
@@ -42,9 +42,9 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - AMsorting
-    - particle_merging_correction
-    
+    - radiationSpectrum
+    - envelope_reduced_dispersion
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -55,8 +55,9 @@ makerun3D:
   stage: makerun
   only:
     - develop
+    - radiationSpectrum
     - AMsorting
-    - particle_merging_correction
+    - envelope_reduced_dispersion
 
   script:
     # Move in test dir
@@ -68,7 +69,8 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - AMsorting
+    - radiationSpectrum
+    - envelope_reduced_dispersion
     
   script:
     # Move in test dir
@@ -80,7 +82,8 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - AMsorting
+    - radiationSpectrum
+    - envelope_reduced_dispersion
 
   script:
     # Move in test dir
@@ -92,7 +95,8 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - AMsorting
+    - radiationSpectrum
+    - envelope_reduced_dispersion
     
   script:
     # Move in test dir

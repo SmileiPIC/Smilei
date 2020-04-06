@@ -32,18 +32,21 @@ public:
     //! Gets the value of a N-D function from both a vector and a double. The double is the last argument.
     virtual double valueAt( std::vector<double>, double )
     {
+        ERROR("Profile `"<<getInfo()<<"` is not available");
         return 0.; // virtual => will be redefined
     };
     
     //! Gets the complex value of a N-D function from both a vector and a double. The double is the last argument.
     virtual std::complex<double> complexValueAt( std::vector<double>, double )
     {
+        ERROR("Profile `"<<getInfo()<<"` is not available");
         return 0.; // virtual => will be redefined
     };
     
     //! Gets the complex value of a N-D function from a vector.
     virtual std::complex<double> complexValueAt( std::vector<double> )
     {
+        ERROR("Profile `"<<getInfo()<<"` is not available");
         return 0.; // virtual => will be redefined
     };
     
@@ -70,6 +73,20 @@ public:
     {
         return NULL;
     };
+    
+    // time dependent
+    //! Gets the value of an N-D function at points specified as numpy arrays
+    virtual PyArrayObject *valueAt( std::vector<PyArrayObject *> , double )
+    {
+        return NULL;
+    };
+
+    //! Gets the value of an N-D function at points specified as numpy arrays and a time
+    virtual PyArrayObject *complexValueAt( std::vector<PyArrayObject *>, double )
+    {
+        return NULL;
+    };
+    
 #endif
 };
 
@@ -86,6 +103,7 @@ public:
     double valueAt( std::vector<double> ); // space
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject *valueAt( std::vector<PyArrayObject *> ); // numpy
+    PyArrayObject *valueAt( std::vector<PyArrayObject *>, double ); // numpy + time
 #endif
 private:
     PyObject *py_profile;
@@ -103,6 +121,7 @@ public:
     std::complex<double> complexValueAt( std::vector<double> ); // space
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject *valueAt( std::vector<PyArrayObject *> ); // numpy
+    PyArrayObject *valueAt( std::vector<PyArrayObject *>, double ); // numpy + time
     PyArrayObject *complexValueAt( std::vector<PyArrayObject *> ); // numpy
 #endif
 private:
@@ -129,6 +148,7 @@ public:
     std::complex<double> complexValueAt( std::vector<double>, double ); // space + time
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject *valueAt( std::vector<PyArrayObject *> ); // numpy
+    PyArrayObject *valueAt( std::vector<PyArrayObject *> , double ); // numpy + time
 #endif
 private:
     PyObject *py_profile;
@@ -153,6 +173,7 @@ public:
     std::complex<double> complexValueAt( std::vector<double>, double ); // space + time
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject *complexValueAt( std::vector<PyArrayObject *>, PyArrayObject * ); // numpy
+    PyArrayObject *complexValueAt( std::vector<PyArrayObject *>, double ); // numpy + time
 #endif
 private:
     PyObject *py_profile;
@@ -189,6 +210,7 @@ public:
         xvacuum = f->xvacuum;
     };
     double valueAt( std::vector<double> );
+    double valueAt( std::vector<double>, double );
     std::string getInfo ()
     {
         std::string info = " (value: " + std::to_string(value) + ")";
@@ -215,6 +237,7 @@ public:
         yvacuum = f->yvacuum;
     };
     double valueAt( std::vector<double> );
+    double valueAt( std::vector<double>, double );
     std::string getInfo ()
     {
         std::string info = " (value: " + std::to_string(value) + ")";
@@ -243,6 +266,7 @@ public:
         zvacuum = f->zvacuum;
     };
     double valueAt( std::vector<double> );
+    double valueAt( std::vector<double>, double );
     std::string getInfo ()
     {
         std::string info = " (value: " + std::to_string(value) + ")";

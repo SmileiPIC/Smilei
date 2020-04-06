@@ -135,7 +135,6 @@ for i,radiation in enumerate(radiation_list):
 # Global parameters for the radiation reaction models
 RadiationReaction(
     minimum_chi_discontinuous = 1e-3,
-    table_path = "./"
 )
 
 # ----------------------------------------------------------------------------------------
@@ -187,5 +186,17 @@ for i,radiation in enumerate(radiation_list):
         species = ["electron_" + species_name_list[i]],
         axes = [
             ["chi", 1e-3, 1., 1000,"logscale"],
+        ]
+    )
+
+for i,radiation in enumerate(radiation_list):
+    # Energy-distribution
+    DiagParticleBinning(
+        deposited_quantity = "weight",
+        every = 500,
+        time_average = 1,
+        species = ["electron_" + species_name_list[i]],
+        axes = [
+            ["ekin", 1., gamma, 1000,"logscale"],
         ]
     )

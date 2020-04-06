@@ -22,7 +22,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     
     // Extract the time_average parameter
     time_average = 1;
-    PyTools::extract( "time_average", time_average, "DiagFields", ndiag );
+    PyTools::extract( "time_average", time_average, "DiagFields", ndiag, "an integer" );
     if( time_average < 1 ) {
         time_average = 1;
     }

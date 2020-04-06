@@ -120,7 +120,7 @@ for i,radiation in enumerate(radiation_list):
         name = "electron_" + species_name_list[i],
         position_initialization = "regular",
         momentum_initialization = "cold",
-        particles_per_cell = 32,
+        particles_per_cell = 64,
         c_part_max = 1.0,
         mass = 1.0,
         charge = -1.0,
@@ -140,7 +140,7 @@ for i,radiation in enumerate(radiation_list):
 
 RadiationReaction(
     minimum_chi_discontinuous = 1e-3,
-    table_path = "./"
+    #table_path = "./"
 )
 
 # ----------------------------------------------------------------------------------------
@@ -190,6 +190,18 @@ for i,radiation in enumerate(radiation_list):
         time_average = 1,
         species = ["electron_" + species_name_list[i]],
         axes = [
-            ["chi", 1e-3, 1., 1000,"logscale"],
+            ["chi", 1e-3, 1., 256,"logscale"],
+        ]
+    )
+
+for i,radiation in enumerate(radiation_list):
+    # Gamma-distribution
+    DiagParticleBinning(
+        deposited_quantity = "weight",
+        every = [5000,6500,100],
+        time_average = 1,
+        species = ["electron_" + species_name_list[i]],
+        axes = [
+            ["gamma", 1., 1.1*gamma, 256,"logscale"],
         ]
     )

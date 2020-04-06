@@ -1397,7 +1397,7 @@ void ElectroMagn2D::applyExternalField( Field *my_field,  Profile *profile, Patc
     
 }
 
-void ElectroMagn2D::applyExternalTimeField( Field *my_field,  Profile *profile, Patch *patch, double time )
+void ElectroMagn2D::applyPrescribedField( Field *my_field,  Profile *profile, Patch *patch, double time )
 {
 
     Field2D *field2D=static_cast<Field2D *>( my_field );

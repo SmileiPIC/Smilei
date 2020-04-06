@@ -29,7 +29,7 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *smpi, Patch *patc
         );
         
         precision=10;
-        PyTools::extract( "precision", precision, "DiagScalar" );
+        PyTools::extract( "precision", precision, "DiagScalar", 0, "an integer" );
         PyTools::extract( "vars", vars, "DiagScalar" );
         
         // copy from params remaining stuff
@@ -322,11 +322,12 @@ void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
 bool DiagnosticScalar::prepare( int timestep )
 {
     // At the right timestep, reset the scalars
-    if( timeSelection->theTimeIsNow( timestep ) )
+    if( timeSelection->theTimeIsNow( timestep ) ) {
         for( unsigned int iscalar=0 ; iscalar<allScalars.size() ; iscalar++ ) {
             allScalars[iscalar]->reset();
         }
-        
+    }
+    
     // Scalars always run even if they don't dump
     return true;
 } // END prepare

@@ -224,18 +224,18 @@ void RadiationMonteCarlo::operator()(
 
                 // Remaining time of the iteration
                 emission_time = dt_ - local_it_time;
-
+                
                 // Radiated energy during emission_time
                 cont_rad_energy =
                     RadiationTables.getRidgersCorrectedRadiatedEnergy( particle_chi,
                             emission_time );
-
+                
                 // Effect on the momentum
                 temp = cont_rad_energy*gamma/( gamma*gamma-1. );
                 for( int i = 0 ; i<3 ; i++ ) {
                     momentum[i][ipart] -= temp*momentum[i][ipart];
                 }
-
+                
                 // Incrementation of the radiated energy cumulative parameter
                 radiated_energy_ += weight[ipart]*( gamma - sqrt( 1.0
                                                     + momentum[0][ipart]*momentum[0][ipart]
@@ -284,7 +284,8 @@ void RadiationMonteCarlo::photonEmission( int ipart,
     //double new_norm_p;
 
     // Get the photon quantum parameter from the table xip
-    photon_chi = RadiationTables.computeRandomPhotonChi( particle_chi );
+    // photon_chi = RadiationTables.computeRandomPhotonChi( particle_chi );
+    photon_chi = RadiationTables.computeRandomPhotonChiWithInterpolation( particle_chi );
 
     // compute the photon gamma factor
     gammaph = photon_chi/particle_chi*( particle_gamma-1.0 );
@@ -296,7 +297,8 @@ void RadiationMonteCarlo::photonEmission( int ipart,
     // Update of the particle properties
     // direction d'emission // direction de l'electron (1/gamma << 1)
     // With momentum conservation
-    inv_old_norm_p = gammaph/sqrt( particle_gamma*particle_gamma - 1.0 );
+    
+    inv_old_norm_p = gammaph/std::sqrt( particle_gamma*particle_gamma - 1.0 );
     momentum[0][ipart] -= momentum[0][ipart]*inv_old_norm_p;
     momentum[1][ipart] -= momentum[1][ipart]*inv_old_norm_p;
     momentum[2][ipart] -= momentum[2][ipart]*inv_old_norm_p;
@@ -380,7 +382,6 @@ void RadiationMonteCarlo::photonEmission( int ipart,
     // Addition of the emitted energy in the cumulating parameter
     // for the scalar diagnostics
     else {
-
         gammaph = particle_gamma - sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
                                          + momentum[1][ipart]*momentum[1][ipart]
                                          + momentum[2][ipart]*momentum[2][ipart] );

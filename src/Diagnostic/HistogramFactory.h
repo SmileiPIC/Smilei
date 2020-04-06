@@ -21,20 +21,20 @@ public:
         std::string errorPrefix
     )
     {
-    
+
         Histogram *histogram;
         std::string deposited_quantity = "";
         std::ostringstream deposited_quantityName( "" );
         deposited_quantityName << errorPrefix << ": parameter `deposited_quantity`";
         std::string deposited_quantityPrefix = deposited_quantityName.str();
-        
+
         // By default, deposited_quantity=None, but should not
         if( deposited_quantity_object == Py_None ) {
             ERROR( deposited_quantityPrefix << " required" );
-            
+
             // If string, then ok
         } else if( PyTools::convert( deposited_quantity_object, deposited_quantity ) ) {
-        
+
             if( deposited_quantity == "user_function" ) {
                 ERROR( deposited_quantityPrefix << " = " << deposited_quantity <<" not understood" );
             } else if( deposited_quantity == "weight" ) {
@@ -73,12 +73,14 @@ public:
                 histogram = new Histogram_ekin_vx();
             } else if( deposited_quantity == "weight_chi" ) {
                 histogram = new Histogram_chi( patch, species, errorPrefix );
+            } else if( deposited_quantity == "dummy_radiation_spectrum" ) {
+                histogram = new Histogram();
             } else {
                 ERROR( deposited_quantityPrefix << " not understood" );
             }
             histogram->deposited_quantity = deposited_quantity;
             Py_DECREF( deposited_quantity_object );
-            
+
             // If numpy supported, also accept deposited_quantity = any function
         } else {
 #ifdef SMILEI_USE_NUMPY
@@ -91,29 +93,29 @@ public:
             ERROR( deposited_quantityPrefix << " should be a string" );
 #endif
         }
-        
+
         // Now setup each axis
         std::string type;
         double min, max;
         int nbins;
         bool logscale, edge_inclusive;
-        
+
         // Loop axes and extract their format
         for( unsigned int iaxis=0; iaxis<pyAxes.size(); iaxis++ ) {
             PyObject *pyAxis=pyAxes[iaxis];
-            
+
             // Axis must be a list
             if( !PyTuple_Check( pyAxis ) && !PyList_Check( pyAxis ) ) {
                 ERROR( errorPrefix << ": axis #" << iaxis << " must be a list" );
             }
             PyObject *seq = PySequence_Fast( pyAxis, "expected a sequence" );
-            
+
             // Axis must have 4 elements or more
             unsigned int lenAxisArgs=PySequence_Size( seq );
             if( lenAxisArgs<4 ) {
                 ERROR( errorPrefix << ": axis #" << iaxis << " must contain at least 4 arguments (contains only " << lenAxisArgs << ")" );
             }
-            
+
             // Try to extract first element: type
             PyObject *type_object = PySequence_Fast_GET_ITEM( seq, 0 );
             if( PyTools::convert( type_object, type ) ) {
@@ -139,22 +141,22 @@ public:
                 ERROR( errorPrefix << ", axis #" << iaxis << ": First item must be a string (axis type)" );
 #endif
             }
-            
+
             // Try to extract second element: axis min
             if( !PyTools::convert( PySequence_Fast_GET_ITEM( seq, 1 ), min ) ) {
                 ERROR( errorPrefix << ", axis #" << iaxis << ": Second item must be a double (axis min)" );
             }
-            
+
             // Try to extract third element: axis max
             if( !PyTools::convert( PySequence_Fast_GET_ITEM( seq, 2 ), max ) ) {
                 ERROR( errorPrefix << ", axis #" << iaxis << ": Third item must be a double (axis max)" );
             }
-            
+
             // Try to extract fourth element: axis nbins
             if( !PyTools::convert( PySequence_Fast_GET_ITEM( seq, 3 ), nbins ) ) {
                 ERROR( errorPrefix << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)" );
             }
-            
+
             // Check for  other keywords such as "logscale" and "edge_inclusive"
             logscale = false;
             edge_inclusive = false;
@@ -169,7 +171,7 @@ public:
                     ERROR( errorPrefix << ": keyword `" << my_str << "` not understood" );
                 }
             }
-            
+
             HistogramAxis *axis;
             std::vector<double> coefficients( 0 );
             if( type == "x" ) {
@@ -246,19 +248,19 @@ public:
 #ifdef SMILEI_USE_NUMPY
             else if( type.substr( 0, 13 ) == "user_function" ) {
                 axis = new HistogramAxis_user_function( type_object );
-                
+
             }
 #endif
             else {
                 ERROR( errorPrefix << ": axis #" << iaxis << " `" << type << "` unknown" );
             }
-            
+
             Py_DECREF( seq );
-            
+
             axis->init( type, min, max, nbins, logscale, edge_inclusive, coefficients );
             histogram->axes.push_back( axis );
         }
-        
+
         return histogram;
     }
 };
