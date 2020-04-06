@@ -934,7 +934,6 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
         position = 0;
         MPI_Unpack( buffer, buf_size, &position,
                     &integfochi_.size_particle_chi_, 1, MPI_INT, smpi->getGlobalComm() );
-        std::cerr << integfochi_.size_particle_chi_ << std::endl;
         MPI_Unpack( buffer, buf_size, &position,
                     &integfochi_.min_particle_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
         MPI_Unpack( buffer, buf_size, &position,
