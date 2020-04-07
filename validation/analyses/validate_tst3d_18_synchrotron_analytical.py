@@ -78,13 +78,13 @@ print(" Final electron density: {}".format(dens_electron[-1]))
 print(" Final photon density: {}".format(dens_photon[-1]))
 
 Validate("Final electron density",dens_electron[-1], dens_electron[-1]*1e-2)
-Validate("Final photon density",dens_photon[-1], dens_photon[-1]*1e-2)
+Validate("Final photon density",dens_photon[-1], dens_photon[-1]*3e-2)
 
 print(" Final electron kinetic energy: {}".format(ukin_electron[-1]))
 print(" Final photon kinetic energy: {}".format(ukin_photon[-1]))
 
 Validate("Final electron kinetic energy",ukin_electron[-1], ukin_electron[-1]*1e-2)
-Validate("Final photon kinetic energy",ukin_photon[-1], ukin_photon[-1]*1e-2)
+Validate("Final photon kinetic energy",ukin_photon[-1], ukin_photon[-1]*3e-2)
 
 print("")
 print(" 2) Particle binning: photon spectrum (linear scale)")
@@ -149,7 +149,7 @@ Validate("Kinetic energy from theroy",ukin_theory, ukin_theory*0.1)
 
 diff = np.abs((data - analytical_spectrum) / analytical_spectrum)
 
-diff = diff[0:254]
+diff = diff[0:253]
 
 sum_diff = np.sum(diff)
 mean_diff = np.mean(diff)
@@ -161,8 +161,8 @@ print(" Mean diff: {}".format(mean_diff))
 print(" Max diff: {} ({})".format(max_diff,np.argmax(diff)))
 print(" Min diff: {} ({})".format(min_diff,np.argmin(diff)))
 
-Validate("Sum diff",sum_diff, sum_diff*0.1)
-Validate("Mean diff",mean_diff, mean_diff*0.1)
+Validate("Sum diff",sum_diff, sum_diff*0.2)
+Validate("Mean diff",mean_diff, mean_diff*0.2)
 
 # ______________________________________________________________________________
 # Figures
