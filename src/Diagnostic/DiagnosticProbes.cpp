@@ -220,8 +220,8 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
         }
     }
     vector<unsigned int> locations;
-    locations.resize( 13 );
-    for( unsigned int i=0; i<13; i++ ) {
+    locations.resize( 14 );
+    for( unsigned int i=0; i<14; i++ ) {
         locations[i] = fs.size();
     }
     unsigned int nspec = vecPatches(0)->vecSpecies.size();
@@ -797,6 +797,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
                 ( *probesArray )( fieldlocation[10], iPart_MPI )=Env_AabsLoc_fields;
                 ( *probesArray )( fieldlocation[11], iPart_MPI )=Env_ChiLoc_fields;
                 ( *probesArray )( fieldlocation[12], iPart_MPI )=Env_EabsLoc_fields;
+                ( *probesArray )( fieldlocation[13], iPart_MPI )=Env_ExabsLoc_fields;
                 iPart_MPI++;
             } // END for ipart
         } // END if envelope
