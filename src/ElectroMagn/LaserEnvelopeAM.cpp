@@ -92,6 +92,7 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     Field2D *GradPhir_m2Dcyl  = static_cast<Field2D *>( GradPhir_m );
 
     bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
+    int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
     
     
     vector<double> position( 2, 0 );
@@ -133,7 +134,7 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
         t_previous_timestep   = position[0]+timestep;
     } // end x loop
     
-    // Compute gradient of ponderomotive potential
+    // Compute gradient of ponderomotive potential and |Ex|
     for( unsigned int i=1 ; i<A_->dims_[0]-1 ; i++ ) { // x loop
         for( unsigned int j=std::max(isYmin*3,1) ; j<A_->dims_[1]-1 ; j++ ) { // r loop
             // gradient in x direction
@@ -145,9 +146,35 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
 
             // in cylindrical symmetry the gradient along theta is zero
 
+            // |Ex envelope| = |-(1/r)*d(rA)/dr|, central finite difference for the space derivative
+            ( *Env_Exabs2Dcyl )( i, j ) =  std::abs( ( ((double)(j_glob+j+1)) * ( *A2Dcyl )( i, j+1)  
+                                           -((double)(j_glob+j-1)) * ( *A2Dcyl )( i, j-1) ) 
+                                           / ((double)(j_glob+j)) );
+            
+
         } // end r loop
     } // end l loop
     
+    // 
+    if (isYmin){ // axis BC
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
+            unsigned int j = 2;  // j_p=2 corresponds to r=0    
+            ( *Phi2Dcyl )      ( i, j )   = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;  
+            ( *Env_Aabs2Dcyl ) ( i, j )   = std::abs( ( *A2Dcyl )( i, j ) );
+            ( *Env_Exabs2Dcyl )( i, j )   = 0.;
+            // Axis BC on |A|
+            ( *Env_Aabs2Dcyl )( i, j-1 )  = ( *Env_Aabs2Dcyl )( i, j+1 );
+            ( *Env_Aabs2Dcyl )( i, j-2 )  = ( *Env_Aabs2Dcyl )( i, j+2 );
+            // Axis BC on |E|
+            ( *Env_Eabs2Dcyl )( i, j-1 )  = ( *Env_Eabs2Dcyl )( i, j+1 );
+            ( *Env_Eabs2Dcyl )( i, j-2 )  = ( *Env_Eabs2Dcyl )( i, j+2 );
+            // Axis BC on |Ex|
+            ( *Env_Exabs2Dcyl )( i, j-1 ) = ( *Env_Eabs2Dcyl )( i, j+1 );
+            ( *Env_Exabs2Dcyl )( i, j-2 ) = ( *Env_Eabs2Dcyl )( i, j+2 );
+            
+                  
+        } // end l loop
+    }
 }
 
 
@@ -347,32 +374,44 @@ void LaserEnvelopeAM::computePhiEnvAEnvE( ElectroMagn *EMfields )
     Field2D *Env_Exabs2Dcyl = static_cast<Field2D *>( EMfields->Env_Ex_abs_ ); // field for diagnostic and ionization
 
     bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
-    double Ex,Er;
+
+    int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
+    
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        for( unsigned int j=0 ; j < A_->dims_[1]-2; j++ ) { // r loop
-            ( *Phi2Dcyl )( i, j )      = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
-            ( *Env_Aabs2Dcyl )( i, j ) = std::abs( ( *A2Dcyl )( i, j ) );
+        for( unsigned int j=std::max(3*isYmin,1) ; j < A_->dims_[1]-2; j++ ) { // r loop
+            ( *Phi2Dcyl )( i, j )       = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
+            ( *Env_Aabs2Dcyl )( i, j )  = std::abs( ( *A2Dcyl )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
-            //( *Env_Eabs2Dcyl )( i, j ) = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
-            Er                         = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
-            Ex                         = std::abs( ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j ) )/dr );
-            ( *Env_Eabs2Dcyl )( i, j ) = sqrt(Ex*Ex+Er*Er);
+            ( *Env_Eabs2Dcyl )( i, j )  = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
+            //Er                         = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
+            //Ex                         = std::abs( ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j ) )/dr );
+            //( *Env_Eabs2Dcyl )( i, j ) = sqrt(Ex*Ex+Er*Er);
+            // |Ex envelope| = |-(1/r)*d(rA)/dr|, central finite difference for the space derivative
+            ( *Env_Exabs2Dcyl )( i, j ) =  std::abs( ( ((double)(j_glob+j+1)) * ( *A2Dcyl )( i, j+1)  
+                                           -((double)(j_glob+j-1)) * ( *A2Dcyl )( i, j-1) ) 
+                                           / ((double)(j_glob+j))/dr );
         } // end r loop
     } // end l loop
 
     // 
     if (isYmin){ // axis BC
         for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
-            unsigned int j = 2;  // j_p=2 corresponds to r=0      
-    
+            unsigned int j = 2;  // j_p=2 corresponds to r=0    
+            ( *Phi2Dcyl )      ( i, j )   = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;  
+            ( *Env_Aabs2Dcyl ) ( i, j )   = std::abs( ( *A2Dcyl )( i, j ) );
+            ( *Env_Eabs2Dcyl ) ( i, j )   = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
+            ( *Env_Exabs2Dcyl )( i, j )   = 0.;
             // Axis BC on |A|
-            ( *Env_Aabs2Dcyl )( i, j-1 ) = ( *Env_Aabs2Dcyl )( i, j+1 );
-            ( *Env_Aabs2Dcyl )( i, j-2 ) = ( *Env_Aabs2Dcyl )( i, j+2 );
+            ( *Env_Aabs2Dcyl )( i, j-1 )  = ( *Env_Aabs2Dcyl )( i, j+1 );
+            ( *Env_Aabs2Dcyl )( i, j-2 )  = ( *Env_Aabs2Dcyl )( i, j+2 );
             // Axis BC on |E|
-            ( *Env_Eabs2Dcyl )( i, j-1 ) = ( *Env_Eabs2Dcyl )( i, j+1 );
-            ( *Env_Eabs2Dcyl )( i, j-2 ) = ( *Env_Eabs2Dcyl )( i, j+2 );
+            ( *Env_Eabs2Dcyl )( i, j-1 )  = ( *Env_Eabs2Dcyl )( i, j+1 );
+            ( *Env_Eabs2Dcyl )( i, j-2 )  = ( *Env_Eabs2Dcyl )( i, j+2 );
+            // Axis BC on |Ex|
+            ( *Env_Exabs2Dcyl)( i, j-1 )  = ( *Env_Exabs2Dcyl)( i, j+1 );
+            ( *Env_Exabs2Dcyl)( i, j-2 )  = ( *Env_Exabs2Dcyl)( i, j+2 );
             
                   
         } // end l loop

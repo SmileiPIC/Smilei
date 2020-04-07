@@ -107,6 +107,8 @@ void LaserEnvelope1D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
         ( *Env_Aabs1D )( i )= std::abs( ( *A1D )( i ) );
         // |E envelope| = |-(dA/dt-ik0cA)|
         ( *Env_Eabs1D )( i )= std::abs( ( ( *A1D )( i )-( *A01D )( i ) )/timestep - i1*( *A1D )( i ) );
+        // |Ex envelope| = 0 in 1D
+        ( *Env_Eabs1D )( i )= 0;
         // compute ponderomotive potential at timestep n
         ( *Phi1D )( i )     = std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
         // compute ponderomotive potential at timestep n-1
@@ -255,7 +257,7 @@ void LaserEnvelope1D::computePhiEnvAEnvE( ElectroMagn *EMfields )
     Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );                  //Phi=|A|^2/2 is the ponderomotive potential
     Field1D *Env_Aabs1D    = static_cast<Field1D *>( EMfields->Env_A_abs_ );  // field for diagnostic and ionization
     Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ );  // field for diagnostic and ionization
-    Field1D *Env_Exabs1D   = static_cast<Field1D *>( EMfields->Env_Ex_abs_ ); // field for diagnostic and ionization
+    //Field1D *Env_Exabs1D   = static_cast<Field1D *>( EMfields->Env_Ex_abs_ ); // field for diagnostic and ionization
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
