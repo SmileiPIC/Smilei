@@ -35,7 +35,7 @@ DiagnosticPerformances::DiagnosticPerformances( Params &params, SmileiMPI *smpi 
     );
     
     // Get patch information flag
-    PyTools::extract( "patch_information", patch_information, "DiagPerformances", 0, "True or False" );
+    PyTools::extract( "patch_information", patch_information, "DiagPerformances"  );
     
     // Output info on diagnostics
     if( smpi->isMaster() ) {

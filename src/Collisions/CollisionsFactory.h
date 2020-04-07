@@ -29,8 +29,8 @@ public:
         // which are the names of the two species that will collide
         sg1.resize( 0 );
         sg2.resize( 0 );
-        PyTools::extract( "species1", sg1, "Collisions", n_collisions );
-        PyTools::extract( "species2", sg2, "Collisions", n_collisions );
+        PyTools::extractV( "species1", sg1, "Collisions", n_collisions );
+        PyTools::extractV( "species2", sg2, "Collisions", n_collisions );
         
         // Obtain the lists of species numbers from the lists of species names.
         sgroup.resize( 2 );
@@ -61,14 +61,14 @@ public:
         
         // Coulomb logarithm (if negative or unset, then automatically computed)
         clog = 0.; // default
-        PyTools::extract( "coulomb_log", clog, "Collisions", n_collisions, "a float" );
+        PyTools::extract( "coulomb_log", clog, "Collisions", n_collisions );
         if( clog <= 0. ) {
             debye_length_required = true;    // auto coulomb log requires debye length
         }
         
         // Number of timesteps between each debug output (if 0 or unset, no debug)
         debug_every = 0; // default
-        PyTools::extract( "debug_every", debug_every, "Collisions", n_collisions, "an integer" );
+        PyTools::extract( "debug_every", debug_every, "Collisions", n_collisions );
         
         // Collisional ionization
         Z = 0; // default
@@ -159,7 +159,6 @@ public:
         }
         
         // D-D fusion
-        std::vector<std::string> nuclear_reaction(0);
         PyObject * py_nuclear_reaction = PyTools::extract_py( "nuclear_reaction", "Collisions", n_collisions );
         CollisionalNuclearReaction *NuclearReaction;
         // If fusion, verify parameters
@@ -176,8 +175,8 @@ public:
             }
             
             // Verify the atomic number has been set
-            if( PyTools::extract( "atomic_number", Z0, "Species", sgroup[0][0] ) <= 0
-             || PyTools::extract( "atomic_number", Z1, "Species", sgroup[1][0] ) <= 0 ) {
+            if( ! PyTools::extractOrNone( "atomic_number", Z0, "Species", sgroup[0][0] )
+             || ! PyTools::extractOrNone( "atomic_number", Z1, "Species", sgroup[1][0] ) ) {
                 ERROR( "In collisions #" << n_collisions << ": nuclear_reaction requires all species have an atomic_number" );
             }
             
@@ -199,7 +198,7 @@ public:
             
             // Rate multiplier
             double rate_multiplier = 0.;
-            PyTools::extract( "nuclear_reaction_multiplier", rate_multiplier, "Collisions", n_collisions, "a float");
+            PyTools::extract( "nuclear_reaction_multiplier", rate_multiplier, "Collisions", n_collisions );
             
             // Find products
             std::vector<unsigned int> products = params.FindSpecies( vecSpecies, nuclear_reaction );

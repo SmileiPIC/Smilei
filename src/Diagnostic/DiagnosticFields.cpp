@@ -22,7 +22,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     
     // Extract the time_average parameter
     time_average = 1;
-    PyTools::extract( "time_average", time_average, "DiagFields", ndiag, "an integer" );
+    PyTools::extract( "time_average", time_average, "DiagFields", ndiag );
     if( time_average < 1 ) {
         time_average = 1;
     }
@@ -35,20 +35,20 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     
     // Extract the requested fields
     vector<string> fieldsToDump( 0 );
-    PyTools::extract( "fields", fieldsToDump, "DiagFields", ndiag );
+    PyTools::extractV( "fields", fieldsToDump, "DiagFields", ndiag );
    
     //Avoid modes repetition in the namelist by interpreting field quantity as all modes of this quantity
     if (params.geometry == "AMcylindrical") {
         vector<string> fieldsToAdd( 0 );
-        for (int ifield = 0; ifield < fieldsToDump.size(); ifield++){
-            if (fieldsToDump[ifield].find("_mode_") ==  std::string::npos) {
-                for (unsigned int imode = 1; imode < params.nmodes; imode ++){
+        for( unsigned int ifield = 0; ifield < fieldsToDump.size(); ifield++ ){
+            if( fieldsToDump[ifield].find("_mode_") ==  std::string::npos ) {
+                for( unsigned int imode = 1; imode < params.nmodes; imode ++ ){
                     fieldsToAdd.push_back(fieldsToDump[ifield]+"_mode_"+to_string(imode));
                 }
                 fieldsToDump[ifield] = fieldsToDump[ifield] + "_mode_0" ;
             }
         }
-        for (int ifield = 0; ifield < fieldsToAdd.size(); ifield++){
+        for( unsigned int ifield = 0; ifield < fieldsToAdd.size(); ifield++ ){
             fieldsToDump.push_back(fieldsToAdd[ifield]);
         }
     }

@@ -29,8 +29,8 @@ DiagnosticScalar::DiagnosticScalar( Params &params, SmileiMPI *smpi, Patch *patc
         );
         
         precision=10;
-        PyTools::extract( "precision", precision, "DiagScalar", 0, "an integer" );
-        PyTools::extract( "vars", vars, "DiagScalar" );
+        PyTools::extract( "precision", precision, "DiagScalar"  );
+        PyTools::extractV( "vars", vars, "DiagScalar" );
         
         // copy from params remaining stuff
         res_time       = params.res_time;

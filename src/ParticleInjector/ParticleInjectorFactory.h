@@ -32,26 +32,21 @@ public:
         }
 
         // Read the name of the interpolator
-        std::string injector_name( "" );
-        PyTools::extract( "name", injector_name, "ParticleInjector", injector_index, "a string" );
+        std::string injector_name;
+        if( ! PyTools::extractOrNone( "name", injector_name, "ParticleInjector", injector_index ) ) {
+            // If no name, name it from the number
+            unsigned int tot_injector_number = PyTools::nComponents( "ParticleInjector" );
+            std::ostringstream name( "" );
+            name << "injector" << std::setfill( '0' ) << std::setw( log10( tot_injector_number )+1 ) << injector_index;
+            injector_name=name.str();
+        }
         if( patch->isMaster() ) {
             MESSAGE( 1, "Creating Injector: " << injector_name );
         }
         
-        // If no name, name it from the number
-        unsigned int tot_injector_number = PyTools::nComponents( "ParticleInjector" );
-        if( injector_name.empty() ) {
-            std::ostringstream name( "" );
-            name << "injector" << std::setfill( '0' ) << std::setw( log10( tot_injector_number )+1 ) << injector_index;
-            injector_name=name.str();
-            if( patch->isMaster() ) {
-                MESSAGE( "For particle injector #" << injector_index << ", name will be " << injector_name );
-            }
-        }
-        
         // Read the species name associated to this interpolator
         std::string species_name( "" );
-        PyTools::extract( "species", species_name, "ParticleInjector", injector_index, "a string" );
+        PyTools::extract( "species", species_name, "ParticleInjector", injector_index );
         
         // Checks that the species exists and assigns the species index
         bool species_defined = false;
@@ -72,7 +67,7 @@ public:
         
         // Read the box side associated to this interpolator
         std::string box_side( "" );
-        PyTools::extract( "box_side", box_side, "ParticleInjector", injector_index, "a string" );
+        PyTools::extract( "box_side", box_side, "ParticleInjector", injector_index );
         
         // check box side according to the dimension
         if (params.nDim_field == 1) {
@@ -104,7 +99,7 @@ public:
         Species * species = species_vector[this_particle_injector->species_number_];
 
         // Read the position initialization
-        PyTools::extract( "position_initialization", this_particle_injector->position_initialization_, "ParticleInjector", injector_index, "a string" );
+        PyTools::extract( "position_initialization", this_particle_injector->position_initialization_, "ParticleInjector", injector_index );
         if ( this_particle_injector->position_initialization_=="species" || this_particle_injector->position_initialization_=="") {
             MESSAGE( 2, "> Position initialization defined as the species.");
             this_particle_injector->position_initialization_ = species->position_initialization_;
@@ -120,7 +115,7 @@ public:
         }
 
         // Read the momentum initialization
-        PyTools::extract( "momentum_initialization", this_particle_injector->momentum_initialization_, "ParticleInjector", injector_index, "a string" );
+        PyTools::extract( "momentum_initialization", this_particle_injector->momentum_initialization_, "ParticleInjector", injector_index );
         if( ( this_particle_injector->momentum_initialization_=="mj" ) || ( this_particle_injector->momentum_initialization_=="maxj" ) ) {
                 this_particle_injector->momentum_initialization_="maxwell-juettner";
         }

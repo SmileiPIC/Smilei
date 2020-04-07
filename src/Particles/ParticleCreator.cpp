@@ -522,7 +522,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
             for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
                 npart_check *= species->regular_number_array_[idim];
             }
-            if( nPart != npart_check) {
+            if( (int)nPart != npart_check) {
                 ERROR( "The number of particles required per cell and per dimension is not coherent with the total number of particles per cell." );
             }
         }

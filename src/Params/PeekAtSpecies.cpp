@@ -11,7 +11,7 @@ PeekAtSpecies::PeekAtSpecies( Params &p, unsigned int species_id ) :
 {
     // Obtain the profiles of the species
     std::string species_name( "" );
-    PyTools::extract( "name", species_name, "Species", species_id );
+    PyTools::extractOrNone( "name", species_name, "Species", species_id );
     PyObject *profile1=nullptr;
     std::string density_profile_type( "" );
     std::string peek_position_initialization;

@@ -161,7 +161,6 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
         
         }
         
-        Py_XDECREF( py_profile );
     }
     
     // Otherwise (if the python profile cannot be hard-coded) ....

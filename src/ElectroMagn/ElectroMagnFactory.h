@@ -76,7 +76,7 @@ public:
         for( unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++ ) {
             ExtField extField;
             PyObject *profile;
-            PyTools::extract( "field", extField.field, "ExternalField", n_extfield, "a string" );
+            PyTools::extract( "field", extField.field, "ExternalField", n_extfield );
             // Now import the profile
             std::ostringstream name( "" );
             name << "ExternalField[" << n_extfield <<"].profile";
@@ -112,7 +112,7 @@ public:
             ExtTimeField extField;
             PyObject *profile;
             std::string fieldName("");
-            PyTools::extract( "field", fieldName, "PrescribedField", n_extfield, "a string" );
+            PyTools::extract( "field", fieldName, "PrescribedField", n_extfield );
             // Now import the profile
             std::ostringstream name( "" );
             name << "PrescribedField[" << n_extfield <<"].profile";
@@ -160,7 +160,7 @@ public:
             PyObject *profile;
             std::ostringstream name;
             antenna.field = NULL;
-            PyTools::extract( "field", antenna.fieldName, "Antenna", n_antenna, "a string" );
+            PyTools::extract( "field", antenna.fieldName, "Antenna", n_antenna );
             if( antenna.fieldName != "Jx" && antenna.fieldName != "Jy" && antenna.fieldName != "Jz" ) {
                 ERROR( "Antenna #"<<n_antenna<<": parameter 'field' must be one of Jx, Jy, Jz" );
             }

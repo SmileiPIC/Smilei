@@ -18,7 +18,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     ostringstream info( "" );
 
     // side from which the laser enters the simulation box (only xmin/xmax at the moment)
-    PyTools::extract( "box_side", box_side, "Laser", ilaser, "a string" );
+    PyTools::extract( "box_side", box_side, "Laser", ilaser );
     if( box_side!="xmin" && box_side!="xmax" ) {
         ERROR( errorPrefix << ": box_side must be `xmin` or `xmax`" );
     }
@@ -27,20 +27,16 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     profiles.resize( 0 );
     PyObject *chirp_profile=nullptr, *time_profile=nullptr;
     vector<PyObject *>  space_profile, phase_profile, space_time_profile;
-    bool has_time, has_space, has_omega, has_chirp, has_phase, has_space_time, has_space_time_AM, has_file;
     double omega( 0 );
-    Profile *p, *pchirp, *pchirp2, *ptime, *ptime2, *pspace1, *pspace2, *pphase1, *pphase2;
-    pchirp2 = NULL;
-    ptime2  = NULL;
     file = "";
-    has_omega         = PyTools::extract( "omega", omega, "Laser", ilaser ) > 0;
-    has_chirp         = PyTools::extract_pyProfile( "chirp_profile", chirp_profile, "Laser", ilaser );
-    has_time          = PyTools::extract_pyProfile( "time_envelope", time_profile, "Laser", ilaser );
-    has_space         = PyTools::extract2Profiles( "space_envelope", ilaser, space_profile );
-    has_phase         = PyTools::extract2Profiles( "phase", ilaser, phase_profile );
-    has_space_time    = PyTools::extract2Profiles( "space_time_profile", ilaser, space_time_profile );
-    has_file          = PyTools::extract( "file", file, "Laser", ilaser ) > 0;
-    has_space_time_AM = PyTools::extract2NProfiles( "space_time_profile_AM", ilaser, space_time_profile );
+    PyTools::extract( "omega", omega, "Laser", ilaser );
+    bool has_chirp         = PyTools::extract_pyProfile( "chirp_profile", chirp_profile, "Laser", ilaser );
+    bool has_time          = PyTools::extract_pyProfile( "time_envelope", time_profile, "Laser", ilaser );
+    bool has_space         = PyTools::extract2Profiles( "space_envelope", ilaser, space_profile );
+    bool has_phase         = PyTools::extract2Profiles( "phase", ilaser, phase_profile );
+    bool has_space_time    = PyTools::extract2Profiles( "space_time_profile", ilaser, space_time_profile );
+    bool has_space_time_AM = PyTools::extract2NProfiles( "space_time_profile_AM", ilaser, space_time_profile );
+    bool has_file          = PyTools::extractOrNone( "file", file, "Laser", ilaser );
 
     if( (has_space_time ||  has_space_time_AM) && has_file ) {
         ERROR( errorPrefix << ": `space_time_profile` and `file` cannot both be set" );
@@ -58,11 +54,11 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     if( has_space_time || has_space_time_AM ) {
 
         info << "\t\t" << errorPrefix << ": space-time profile " << endl;
-        if( has_time || has_space || has_omega || has_chirp || has_phase ) {
+        if( has_time || has_space || has_chirp || has_phase ) {
             name.str( "" );
             name << ( has_time ?"time_envelope ":"" )
                  << ( has_space?"space_envelope ":"" )
-                 << ( has_omega?"omega ":"" )
+                 << ( "omega " )
                  << ( has_chirp?"chirp_profile ":"" )
                  << ( has_phase?"phase ":"" );
             WARNING( errorPrefix << ": space-time profile defined, dismissing " << name.str() );
@@ -81,7 +77,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
             name.str( "" );
             name << "Laser[" << ilaser <<"].space_time_profile["<< 2*imode << "]";
             if( spacetime[2*imode] ) {
-                p = new Profile( space_time_profile[2*imode], params.nDim_field, name.str() );
+                Profile *p = new Profile( space_time_profile[2*imode], params.nDim_field, name.str() );
                 profiles.push_back( new LaserProfileNonSeparable( p ) );
                 info << "\t\t\tfirst  component : " << p->getInfo();
                 if (has_space_time_AM) info << " mode " << imode ;
@@ -96,7 +92,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
             name.str( "" );
             name << "Laser[" << ilaser <<"].space_time_profile[" << 2*imode+1 << "]";
             if( spacetime[2*imode+1] ) {
-                p = new Profile( space_time_profile[2*imode+1], params.nDim_field, name.str() );
+                Profile *p = new Profile( space_time_profile[2*imode+1], params.nDim_field, name.str() );
                 profiles.push_back( new LaserProfileNonSeparable( p ) );
                 info << "\t\t\tsecond component : " << p->getInfo() ;
                 if (has_space_time_AM) info << " mode " << imode ;
@@ -114,7 +110,8 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
 
         info << "\t\t" << errorPrefix << endl;
         info << "\t\t\tData in file : " << file << endl;
-
+        
+        Profile *ptime, *ptime2;
         if( PyTools::extract_pyProfile( "_extra_envelope", time_profile, "Laser", ilaser ) ) {
             // extra envelope
             name.str( "" );
@@ -137,9 +134,6 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
         if( ! has_space ) {
             ERROR( errorPrefix << ": missing `space_envelope`" );
         }
-        if( ! has_omega ) {
-            ERROR( errorPrefix << ": missing `omega`" );
-        }
         if( ! has_chirp ) {
             ERROR( errorPrefix << ": missing `chirp_profile`" );
         }
@@ -151,48 +145,48 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
 
         // omega
         info << "\t\t\tomega              : " << omega << endl;
-
+        
         // chirp
         name.str( "" );
         name << "Laser[" << ilaser <<"].chirp_profile";
-        pchirp = new Profile( chirp_profile, 1, name.str() );
-        pchirp2 = new Profile( chirp_profile, 1, name.str() );
+        Profile *pchirp = new Profile( chirp_profile, 1, name.str() );
+        Profile *pchirp2 = new Profile( chirp_profile, 1, name.str() );
         info << "\t\t\tchirp_profile      : " << pchirp->getInfo();
 
         // time envelope
         name.str( "" );
         name << "Laser[" << ilaser <<"].time_envelope";
-        ptime = new Profile( time_profile, 1, name.str() );
-        ptime2 = new Profile( time_profile, 1, name.str() );
+        Profile *ptime = new Profile( time_profile, 1, name.str() );
+        Profile *ptime2 = new Profile( time_profile, 1, name.str() );
         info << endl << "\t\t\ttime envelope      : " << ptime->getInfo();
 
         // space envelope (By)
         name.str( "" );
         name << "Laser[" << ilaser <<"].space_envelope[0]";
-        pspace1 = new Profile( space_profile[0], space_dims, name .str() );
+        Profile *pspace1 = new Profile( space_profile[0], space_dims, name .str() );
         info << endl << "\t\t\tspace envelope (y) : " << pspace1->getInfo();
 
         // space envelope (Bz)
         name.str( "" );
         name << "Laser[" << ilaser <<"].space_envelope[1]";
-        pspace2 = new Profile( space_profile[1], space_dims, name .str() );
+        Profile *pspace2 = new Profile( space_profile[1], space_dims, name .str() );
         info << endl << "\t\t\tspace envelope (z) : " << pspace2->getInfo();
 
         // phase (By)
         name.str( "" );
         name << "Laser[" << ilaser <<"].phase[0]";
-        pphase1 = new Profile( phase_profile[0], space_dims, name.str() );
+        Profile *pphase1 = new Profile( phase_profile[0], space_dims, name.str() );
         info << endl << "\t\t\tphase          (y) : " << pphase1->getInfo();
 
         // phase (Bz)
         name.str( "" );
         name << "Laser[" << ilaser <<"].phase[1]";
-        pphase2 = new Profile( phase_profile[1], space_dims, name.str() );
+        Profile *pphase2 = new Profile( phase_profile[1], space_dims, name.str() );
         info << endl << "\t\t\tphase          (z) : " << pphase2->getInfo();
 
         // delay phase
         vector<double> delay_phase( 2, 0. );
-        PyTools::extract( "delay_phase", delay_phase, "Laser", ilaser );
+        PyTools::extractV( "delay_phase", delay_phase, "Laser", ilaser );
         info << endl << "\t\tdelay phase      (y) : " << delay_phase[0];
         info << endl << "\t\tdelay phase      (z) : " << delay_phase[1];
 

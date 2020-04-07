@@ -37,121 +37,27 @@ class PyTools
 {
 private:
     //! convert Python object to bool
-    static bool pyconvert( PyObject *py_val, bool &val )
-    {
-        int result;
-        if( py_val ) {
-            result = PyObject_IsTrue( py_val );
-            if( result == -1 ) {
-                return false;
-            }
-            val = ( bool ) result;
-            return true;
-        }
-        return false;
-    }
+    static bool pyconvert( PyObject *py_val, bool &val );
     
     //! convert Python object to any integer type (short, uint, int, etc.)
     template<typename T>
-    static bool pyconvert( PyObject *py_val, T &val )
-    {
-        if( py_val && PyNumber_Check( py_val ) ) {
-            PyObject *v = PyNumber_Long( py_val );
-            if( PyObject_RichCompareBool( v, py_val, Py_EQ ) < 1 ) {
-                return false;
-            }
-            val=( T ) PyLong_AsLong( v );
-            Py_XDECREF( v );
-            return true;
-        }
-        return false;
-    }
+    static bool pyconvert( PyObject *py_val, T &val );
     
     //! convert Python object to double
-    static bool pyconvert( PyObject *py_val, double &val )
-    {
-        if( py_val && PyNumber_Check( py_val ) ) {
-            PyObject *v = PyNumber_Float( py_val );
-            val=( double ) PyFloat_AsDouble( v );
-            Py_XDECREF( v );
-            return true;
-        }
-        return false;
-    }
+    static bool pyconvert( PyObject *py_val, double &val );
     
     //! convert Python object to complex
-    static bool pyconvert( PyObject *py_val, std::complex<double> &val )
-    {
-        if( py_val && PyComplex_Check( py_val ) ) {
-            val.real( PyComplex_RealAsDouble( py_val ) );
-            val.imag( PyComplex_ImagAsDouble( py_val ) );
-            return true;
-        }
-        return false;
-    }
+    static bool pyconvert( PyObject *py_val, std::complex<double> &val );
     
     //! convert Python object to string
-    static bool pyconvert( PyObject *py_val, std::string &val )
-    {
-        if( py_val ) {
-            PyObject *s = NULL;
-            if( PyUnicode_Check( py_val ) ) {
-                s = PyUnicode_AsUTF8String( py_val );    // python3
-            } else if( PyBytes_Check( py_val ) ) {
-                s = PyObject_Bytes( py_val );    // python2
-            }
-            if( s ) {
-                val=std::string( PyBytes_AsString( s ) );
-                Py_XDECREF( s );
-                return true;
-            }
-        }
-        return false;
-    }
+    static bool pyconvert( PyObject *py_val, std::string &val );
     
     //! check error and display message
-    static double get_py_result( PyObject *pyresult )
-    {
-        checkPyError();
-        double cppresult=0;
-        if( pyresult ) {
-            if( !py2scalar( pyresult, cppresult ) ) {
-                PyObject *ptype, *pvalue, *ptraceback;
-                PyErr_Fetch( &ptype, &pvalue, &ptraceback );
-                ERROR( "function does not return float but " << pyresult->ob_type->tp_name );
-            }
-        } else {
-            // we should never reach this point... something is weird
-            ERROR( "Function does not return a valid Python object" );
-        }
-        return cppresult;
-    }
-    static std::complex<double> get_py_result_complex( PyObject *pyresult )
-    {
-        checkPyError();
-        std::complex<double> cppresult=0;
-        if( pyresult ) {
-            if( !py2scalar( pyresult, cppresult ) ) {
-                PyObject *ptype, *pvalue, *ptraceback;
-                PyErr_Fetch( &ptype, &pvalue, &ptraceback );
-                ERROR( "function does not return complex but " << pyresult->ob_type->tp_name );
-            }
-        } else {
-            // we should never reach this point... something is weird
-            ERROR( "Function does not return a valid Python object" );
-        }
-        return cppresult;
-    }
+    static double get_py_result( PyObject *pyresult );
+    static std::complex<double> get_py_result_complex( PyObject *pyresult );
     
     // DECREF for vectors of python objects
-    static void DECREF( std::vector<PyObject *> pyvec )
-    {
-        for( unsigned int i=0; i<pyvec.size(); i++ ) {
-            if( pyvec[i] ) {
-                Py_DECREF( pyvec[i] );
-            }
-        }
-    }
+    static void DECREF( std::vector<PyObject *> pyvec );
     
 public:
 
@@ -204,20 +110,7 @@ public:
     }
     
     //! convert python list to vector of python objects
-    static bool py2pyvector( PyObject *py_list, std::vector<PyObject *> &py_vec )
-    {
-        if( py_list && PySequence_Check( py_list ) ) {
-            int len = PySequence_Size( py_list );
-            py_vec.resize( len );
-            for( int i = 0; i < len; i++ ) {
-                PyObject *item = PySequence_GetItem( py_list, i );
-                py_vec[i] = item;
-            }
-           return true; // success
-        }
-        checkPyError();
-        return false; // error
-    }
+    static bool py2pyvector( PyObject *py_list, std::vector<PyObject *> &py_vec );
     
     //! convert python list to vector of c++ values
     template <typename T>
@@ -232,7 +125,7 @@ public:
             DECREF( py_vec );
         }
         return ret;
-    }
+    };
     
     //! check if there has been a python error
     static void checkPyError( bool exitOnError=false, bool print=true )
@@ -363,38 +256,75 @@ public:
         return retval;
     }
     
-    //! get T from python
+    //! extract a bool
+    static void extract( std::string name, bool &val, std::string component=std::string( "" ), int nComponent=0 );    
+    //! extract an integer-like
     template< typename T>
-    static int extract( std::string name, T &val, std::string component=std::string( "" ), int nComponent=0, std::string testMessage=std::string( "" ) )
+    static void extract( std::string name, T &val, std::string component=std::string( "" ), int nComponent=0 );
+    
+    //! extract a float
+    static void extract( std::string name, double &val, std::string component=std::string( "" ), int nComponent=0 );
+    
+    //! extract a string
+    static void extract( std::string name, std::string &val, std::string component=std::string( "" ), int nComponent=0 );
+    
+    //! extract any scalar
+    template< typename T>
+    static void extract( std::string name, T &val, std::string component, int nComponent, std::string testMessage )
     {
         PyObject *py_val = extract_py( name, component, nComponent );
         checkPyError();
-        int ret = -1;
+        if( ! py2scalar( py_val, val ) ) {
+            std::string print_type;
+            py2scalar( PyObject_Str( PyObject_Type( py_val ) ), print_type );
+            ERROR( "In "<<component<<"#"<<nComponent<<": `"<<name<<"` should be "<<testMessage<<" but is "<<print_type );
+        }
+    };
+    
+    //! extract a bool but accepts None (which returns false, and does not change the variable)
+    static bool extractOrNone( std::string name, bool &val, std::string component=std::string( "" ), int nComponent=0 );
+    
+    //! extract an integer-like but accepts None (which returns false, and does not change the variable)
+    template< typename T>
+    static bool extractOrNone( std::string name, T &val, std::string component=std::string( "" ), int nComponent=0 );
+    
+    //! extract a float but accepts None (which returns false, and does not change the variable)
+    static bool extractOrNone( std::string name, double &val, std::string component=std::string( "" ), int nComponent=0 );
+    
+    //! extract a string but accepts None (which returns false, and does not change the variable)
+    static bool extractOrNone( std::string name, std::string &val, std::string component=std::string( "" ), int nComponent=0 );
+
+    //! extract any scalar but accepts None (which returns false, and does not change the variable)
+    template< typename T>
+    static bool extractOrNone( std::string name, T &val, std::string component, int nComponent, std::string testMessage )
+    {
+        PyObject *py_val = extract_py( name, component, nComponent );
+        checkPyError();
         if( py_val == Py_None ) {
-            ret = 0;
-        } else if( py2scalar( py_val, val ) ) {
-            ret =  1;
+            Py_XDECREF( py_val );
+            return false;
+        } else if( ! py2scalar( py_val, val ) ) {
+            std::string print_type;
+            py2scalar( PyObject_Str( PyObject_Type( py_val ) ), print_type );
+            ERROR( "In "<<component<<"#"<<nComponent<<": `"<<name<<"` should be "<<testMessage<<" but is "<<print_type );
         }
-        if( !testMessage.empty() && !ret ) {
-            ERROR( "In "<<component<<"#"<<nComponent<<": `"<<name<<"` should be "<<testMessage );
-        }
-        return ret;
-    }
+        return true;
+    };
     
     //! extract vector
     template< typename T>
-    static bool extract( std::string name, std::vector<T> &val, std::string component=std::string( "" ), int nComponent=0 )
+    static bool extractV( std::string name, std::vector<T> &val, std::string component, int nComponent=0 )
     {
         std::vector<PyObject *> py_val = extract_pyVec( name, component, nComponent );
         if( py_val.size() ) {
             return pyvector2vector( py_val, val );
         }
         return false;
-    }
+    };
     
     //! extract vector of vectors
     template< typename T>
-    static bool extract( std::string name, std::vector<std::vector<T> > &val, std::string component=std::string( "" ), int nComponent=0 )
+    static bool extractVV( std::string name, std::vector<std::vector<T> > &val, std::string component, int nComponent=0 )
     {
         std::vector<PyObject *> py_val = extract_pyVec( name, component, nComponent );
         if( py_val.size() == 0 ) {
@@ -409,185 +339,32 @@ public:
             val.push_back( vec );
         }
         return true;
-    }
+    };
     
     //! retrieve python object
-    static PyObject *extract_py( std::string name, std::string component=std::string( "" ), int nComponent=0 )
-    {
-        if( name.find( " " )!= std::string::npos || component.find( " " )!= std::string::npos ) {
-            WARNING( "asking for [" << name << "] [" << component << "] : it has whitespace inside: please fix the code" );
-        }
-        if( !Py_IsInitialized() ) {
-            ERROR( "Python not initialized: this should not happen" );
-        }
-        PyObject *py_main = PyImport_AddModule( "__main__" );
-        PyObject *py_obj, *py_return;
-        // If component requested
-        if( component.empty() ) {
-            py_return = PyObject_GetAttrString( py_main, name.c_str() );
-        } else {
-            // Get the selected component (e.g. "Species" or "Laser")
-            PyObject *py_component = PyObject_GetAttrString( py_main, component.c_str() );
-            checkPyError();
-            // Error if not found
-            if( !py_component ) {
-                ERROR( "Component "<<component<<" not found in namelist" );
-            }
-            // If successfully found
-            int len = PyObject_Length( py_component );
-            if( len > nComponent ) {
-                py_obj = PySequence_GetItem( py_component, nComponent );
-            } else {
-                ERROR( "Requested " << component << " #" <<nComponent<< ", but only "<<len<<" available" );
-            }
-            Py_DECREF( py_component );
-            py_return = PyObject_GetAttrString( py_obj, name.c_str() );
-            Py_DECREF( py_obj );
-        }
-        checkPyError();
-        return py_return;
-    }
+    static PyObject *extract_py( std::string name, std::string component=std::string( "" ), int nComponent=0 );
     
     //! retrieve a vector of python objects
-    static std::vector<PyObject *> extract_pyVec( std::string name, std::string component=std::string( "" ), int nComponent=0 )
-    {
-        std::vector<PyObject *> retvec;
-        PyObject *py_obj = extract_py( name, component, nComponent );
-        if( ! py2pyvector( py_obj, retvec ) ) {
-            std::ostringstream ss( "" );
-            if( component!="" ) {
-                ss << "In " << component << " #" << nComponent << " ";
-            }
-            ERROR( ss.str() << name << " should be a list not a scalar: use [...]" );
-        }
-        Py_DECREF( py_obj );
-        return retvec;
-    }
+    static std::vector<PyObject *> extract_pyVec( std::string name, std::string component=std::string( "" ), int nComponent=0 );
     
     // extract 1 profile
-    static bool extract_pyProfile( std::string name, PyObject *&prof, std::string component=std::string( "" ), int nComponent=0 )
-    {
-        PyObject *py_obj = extract_py( name, component, nComponent );
-        if( PyCallable_Check( py_obj ) ) {
-            prof = py_obj;
-            return true;
-        }
-        Py_XDECREF( py_obj );
-        return false;
-    }
+    static bool extract_pyProfile( std::string name, PyObject *&prof, std::string component=std::string( "" ), int nComponent=0 );
     
     // extract a vector of profiles
-    static bool extract_pyProfiles( std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof )
-    {
-        std::vector<PyObject *> pvec = extract_pyVec( name, component, nComponent );
-        for( unsigned int i=0; i<pvec.size(); i++ ) {
-            if( !PyCallable_Check( pvec[i] ) ) {
-                return false;
-            }
-        }
-        prof.resize( pvec.size() );
-        for( unsigned int i=0; i<pvec.size(); i++ ) {
-            prof[i] = pvec[i];
-        }
-        return true;
-    }
+    static bool extract_pyProfiles( std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof );
     
     // extract a vector of 1 or 3 profiles
-    static bool extract_1or3Profiles( std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof )
-    {
-        if( ! extract_pyProfiles( name, component, nComponent, prof ) ) {
-            ERROR( "In "<<component<<"#"<<nComponent<<": expected a list of profiles" );
-        }
-        if( prof.size() == 0 ) {
-            return false;
-        } else if( prof.size() == 1 ) {
-            prof.resize( 3 );
-            prof[1] = prof[0]; Py_INCREF( prof[0] );
-            prof[2] = prof[0]; Py_INCREF( prof[0] );
-        } else if( prof.size() != 3 ) {
-            ERROR( "In "<<component<<"#"<<nComponent<<": expected 1 or 3 profiles" );
-        }
-        return true;
-    }
+    static bool extract_1or3Profiles( std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof );
     
     // extract 2 profiles from namelist (used for laser profile)
-    static bool extract2Profiles( std::string varname, int ilaser, std::vector<PyObject *> &profiles )
-    {
-        PyObject *py_obj = extract_py( varname, "Laser", ilaser );
-        // Return false if None
-        if( py_obj==Py_None ) {
-            return false;
-        }
-        
-        // Error if not list
-        if( ! py2pyvector( py_obj, profiles ) ) {
-            ERROR( "For laser #" << ilaser << ": " << varname << " must be a list of 2 profiles" );
-        }
-        
-        // Error if wrong size
-        if( profiles.size()!=2 ) {
-            ERROR( "For Laser #" << ilaser << ": "<<varname<<" needs 2 profiles." );
-        }
-        
-        // Error if not callable
-        for( int i=0; i<2; i++ ) {
-            if( !PyCallable_Check( profiles[i] ) ) {
-                ERROR( "For Laser #" << ilaser << ": "<<varname<<"["<<i<<"] not understood" );
-            }
-        }
-        
-        return true;
-    }
-
+    static bool extract2Profiles( std::string varname, int ilaser, std::vector<PyObject *> &profiles );
+    
     // extract 2N profiles from namelist (used for laser profile)
-    static bool extract2NProfiles( std::string varname, int ilaser, std::vector<PyObject *> &profiles )
-    {
-        PyObject *py_obj = extract_py( varname, "Laser", ilaser );
-        // Return false if None
-        if( py_obj==Py_None ) {
-            return false;
-        }
-        
-        // Error if not list
-        if( ! py2pyvector( py_obj, profiles ) ) {
-            ERROR( "For laser #" << ilaser << ": " << varname << " must be a list of 2N profiles (2 per AM)" );
-        }
-       
- 
-        // Error if wrong size
-        if( profiles.size()%2!=0 ) {
-            ERROR( "For Laser #" << ilaser << ": "<<varname<<" needs a pair number of profiles." );
-        }
-        
-        int profile_number_of_modes = profiles.size()/2;
-
-        // Error if not callable
-        for( int i=0; i<2*profile_number_of_modes; i++ ) {
-            if( !PyCallable_Check( profiles[i] ) ) {
-                ERROR( "For Laser #" << ilaser << ": "<<varname<<"["<<i<<"] not understood" );
-            }
-        }
-        
-        return true;
-    }
+    static bool extract2NProfiles( std::string varname, int ilaser, std::vector<PyObject *> &profiles );
     
     
     //! return the number of components (see pyinit.py)
-    static unsigned int nComponents( std::string componentName )
-    {
-        // Get the selected component (e.g. "Species" or "Laser")
-        if( !Py_IsInitialized() ) {
-            ERROR( "Python not initialized: this should not happen" );
-        }
-        PyObject *py_obj = PyObject_GetAttrString( PyImport_AddModule( "__main__" ), componentName.c_str() );
-        checkPyError();
-        Py_ssize_t retval = PyObject_Length( py_obj );
-        Py_DECREF( py_obj );
-        if( retval < 0 ) {
-            ERROR( "Problem searching for component " << componentName );
-        }
-        return retval;
-    }
+    static unsigned int nComponents( std::string componentName );
     
     //! Get an object's attribute ( int, double, etc.)
     template <typename T>
@@ -600,7 +377,7 @@ public:
             Py_XDECREF( py_value );
         }
         return success;
-    }
+    };
     
     //! Get an object's attribute for lists
     template <typename T>
@@ -613,7 +390,7 @@ public:
             Py_XDECREF( py_list );
         }
         return success;
-    }
+    };
     
     //! Get an object's attribute for lists of list
     template <typename T>
@@ -645,7 +422,7 @@ public:
         }
         //This should never happen
         return false;
-    }
+    };
     
     //! Get an object's repr
     static std::string repr( PyObject *obj )

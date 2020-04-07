@@ -59,7 +59,7 @@ void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *s
     if( PyTools::nComponents( "MultiphotonBreitWheeler" ) ) {
 
         // Path to the databases
-        PyTools::extract( "table_path", table_path_, "MultiphotonBreitWheeler", 0, "a string" );
+        PyTools::extract( "table_path", table_path_, "MultiphotonBreitWheeler"  );
     }
 
     // Computation of some parameters
