@@ -107,9 +107,6 @@ public:
     //! Particles per cell
     Profile * particles_per_cell_profile_;
     
-    //! Flag for the addition of the energy coming from the created particles
-    bool add_new_particle_energy_;
-    
 private:
 
     //! Provides a Maxwell-Juttner distribution of energies
