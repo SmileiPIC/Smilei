@@ -291,13 +291,14 @@ void Interpolator3D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
 } // END Interpolator3D2Order
 
 
-void Interpolator3D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc )
+void Interpolator3D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
 {
     // Static cast of the electromagnetic fields
-    Field3D *Env_A_abs_3D = static_cast<Field3D *>( EMfields->Env_A_abs_ );
-    Field3D *Env_Chi_3D = static_cast<Field3D *>( EMfields->Env_Chi_ );
-    Field3D *Env_E_abs_3D = static_cast<Field3D *>( EMfields->Env_E_abs_ );
-    
+    Field3D *Env_A_abs_3D  = static_cast<Field3D *>( EMfields->Env_A_abs_ );
+    Field3D *Env_Chi_3D    = static_cast<Field3D *>( EMfields->Env_Chi_ );
+    Field3D *Env_E_abs_3D  = static_cast<Field3D *>( EMfields->Env_E_abs_ );
+    Field3D *Env_Ex_abs_3D = static_cast<Field3D *>( EMfields->Env_Ex_abs_ );    
+
     // Normalized particle position
     double xpn = particles.position( 0, ipart )*dx_inv_;
     double ypn = particles.position( 1, ipart )*dy_inv_;
@@ -353,6 +354,14 @@ void Interpolator3D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     // Interpolation of Env_E_abs_^(p,p,p)
     // -------------------------
     *( Env_E_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_E_abs_3D, ip_, jp_, kp_ );
+
+
+    // -------------------------
+    // Interpolation of Env_E_abs_^(p,p,p)
+    // ------------------------- 
+    *( Env_Ex_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_Ex_abs_3D, ip_, jp_, kp_ ); 
+
+
     
 } // END Interpolator3D2Order
 
@@ -360,10 +369,11 @@ void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
 {
     // Static cast of the envelope fields
     Field3D *EnvEabs = static_cast<Field3D *>( EMfields->Env_E_abs_ );
-    Field3D *EnvEabs = static_cast<Field3D *>( EMfields->Env_Ex_abs_ );
+    Field3D *EnvExabs = static_cast<Field3D *>( EMfields->Env_Ex_abs_ );
     
     
-    std::vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
+    std::vector<double> *EnvEabs_part  = &( smpi->dynamics_EnvEabs_part[ithread] );
+    std::vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
     
     
     //Loop on bin particles

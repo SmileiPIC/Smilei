@@ -480,11 +480,11 @@ void InterpolatorAM2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
 void InterpolatorAM2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
     // Static cast of the envelope fields
-    Field2D *EnvEabs = static_cast<Field2D*>( EMfields->Env_E_abs_ );
-    Field2D *EnvEabs = static_cast<Field2D*>( EMfields->Env_Ex_abs_ );
+    Field2D *EnvEabs  = static_cast<Field2D*>( EMfields->Env_E_abs_ );
+    Field2D *EnvExabs = static_cast<Field2D*>( EMfields->Env_Ex_abs_ );
     
-    std::vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
-    std::vector<double> *EnvEabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
+    std::vector<double> *EnvEabs_part  = &( smpi->dynamics_EnvEabs_part[ithread] );
+    std::vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
  
     double xpn,rpn,r;
    

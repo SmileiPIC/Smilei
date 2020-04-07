@@ -784,14 +784,14 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
         // Probes for envelope
         if( patch->EMfields->envelope != NULL ) {
             iPart_MPI = offset_in_MPI[ipatch];
-            double Env_AabsLoc_fields, Env_ChiLoc_fields, Env_EabsLoc_fields;
+            double Env_AabsLoc_fields, Env_ChiLoc_fields, Env_EabsLoc_fields, Env_ExabsLoc_fields;
             for( unsigned int ipart=0; ipart<npart; ipart++ ) {
                 int iparticle( ipart ); // Compatibility
                 patch->probesInterp->envelopeAndSusceptibility(
                     patch->EMfields,
                     patch->probes[probe_n]->particles,
                     iparticle,
-                    &Env_AabsLoc_fields, &Env_ChiLoc_fields, &Env_EabsLoc_fields
+                    &Env_AabsLoc_fields, &Env_ChiLoc_fields, &Env_EabsLoc_fields, &Env_ExabsLoc_fields
                 );
                 //! here we fill the probe data!!!
                 ( *probesArray )( fieldlocation[10], iPart_MPI )=Env_AabsLoc_fields;
