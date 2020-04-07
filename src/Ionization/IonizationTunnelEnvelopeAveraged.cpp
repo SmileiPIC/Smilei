@@ -77,6 +77,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
     double *Ey      = &( ( *Epart )[1*nparts] );
     double *Ez      = &( ( *Epart )[2*nparts] );
     double *E_env   = &( ( *EnvEabs_part )[0*nparts] );
+    double *Ex_env  = &( ( *EnvExabs_part )[0*nparts] );
     double *Phi_env = &( ( *Phipart )[0*nparts] );
     
     for( unsigned int ipart=ipart_min ; ipart<ipart_max; ipart++ ) {
@@ -95,7 +96,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
                                     +pow( *( Ey+ipart-ipart_ref ), 2 )
                                     +pow( *( Ez+ipart-ipart_ref ), 2 ) );
         // Envelope field normalized in atomic units
-        EnvE_sq = pow(EC_to_au,2)*( pow( *( E_env+ipart-ipart_ref ), 2 ) );
+        EnvE_sq = pow(EC_to_au,2)*( pow( *( E_env+ipart-ipart_ref ), 2 ) ) + pow(EC_to_au,2)*( pow( *( Ex_env+ipart-ipart_ref ), 2 ) );
         // Absolute value of envelope, necessary for the computation of the momentum of new electrons
         Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  );  // because Phi = |A|^2/2
 
