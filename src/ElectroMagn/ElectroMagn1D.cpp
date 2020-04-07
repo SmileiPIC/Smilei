@@ -133,9 +133,10 @@ void ElectroMagn1D::initElectroMagn1DQuantities( Params &params, Patch *patch )
     Bz_m = new Field1D( dimPrim, 2, true,  "Bz_m" );
     
     if( params.Laser_Envelope_model ) {
-        Env_A_abs_ = new Field1D( dimPrim, "Env_A_abs" );
-        Env_Chi_   = new Field1D( dimPrim, "Env_Chi" );
-        Env_E_abs_ = new Field1D( dimPrim, "Env_E_abs" );
+        Env_A_abs_  = new Field1D( dimPrim, "Env_A_abs" );
+        Env_Chi_    = new Field1D( dimPrim, "Env_Chi" );
+        Env_E_abs_  = new Field1D( dimPrim, "Env_E_abs" );
+        Env_Ex_abs_ = new Field1D( dimPrim, "Env_Ex_abs" );
     }
     // Total charge currents and densities
     Jx_   = new Field1D( dimPrim, 0, false, "Jx" );
@@ -662,6 +663,8 @@ Field *ElectroMagn1D::createField( string fieldname )
     } else if( fieldname.substr( 0, 7 )=="Env_Chi" ) {
         return new Field1D( dimPrim, 0, false, fieldname );
     } else if( fieldname.substr( 0, 9 )=="Env_E_abs" ) {
+        return new Field1D( dimPrim, 0, false, fieldname );
+    } else if( fieldname.substr( 0, 10 )=="Env_Ex_abs" ) {
         return new Field1D( dimPrim, 0, false, fieldname );
     }
     

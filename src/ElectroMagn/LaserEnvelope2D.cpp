@@ -78,6 +78,7 @@ void LaserEnvelope2D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     cField2D *A02D         = static_cast<cField2D *>( A0_ );
     Field2D *Env_Aabs2D    = static_cast<Field2D *>( EMfields->Env_A_abs_ );
     Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_E_abs_ );
+    Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_Ex_abs_ );
     
     Field2D *Phi2D         = static_cast<Field2D *>( Phi_ );
     Field2D *Phi_m2D       = static_cast<Field2D *>( Phi_m );
@@ -276,15 +277,17 @@ void LaserEnvelope2D::computePhiEnvAEnvE( ElectroMagn *EMfields )
 
     // computes Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
     
-    cField2D *A2D          = static_cast<cField2D *>( A_ );                  // the envelope at timestep n
+    cField2D *A2D          = static_cast<cField2D *>( A_ );                   // the envelope at timestep n
 
-    cField2D *A02D         = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
+    cField2D *A02D         = static_cast<cField2D *>( A0_ );                  // the envelope at timestep n-1
     
-    Field2D *Phi2D         = static_cast<Field2D *>( Phi_ );                 //Phi=|A|^2/2 is the ponderomotive potential
+    Field2D *Phi2D         = static_cast<Field2D *>( Phi_ );                  //Phi=|A|^2/2 is the ponderomotive potential
 
-    Field2D *Env_Aabs2D    = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic
+    Field2D *Env_Aabs2D    = static_cast<Field2D *>( EMfields->Env_A_abs_ );  // field for diagnostic and ionization
     
-    Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
+    Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_E_abs_ );  // field for diagnostic and ionization
+ 
+    Field2D *Env_Exabs2D   = static_cast<Field2D *>( EMfields->Env_Ex_abs_ ); // field for diagnostic and ionization
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop

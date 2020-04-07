@@ -81,6 +81,7 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     cField3D *A03D         = static_cast<cField3D *>( A0_ );
     Field3D *Env_Aabs3D    = static_cast<Field3D *>( EMfields->Env_A_abs_ );
     Field3D *Env_Eabs3D    = static_cast<Field3D *>( EMfields->Env_E_abs_ );
+    Field3D *Env_Exabs3D   = static_cast<Field3D *>( EMfields->Env_Ex_abs_ );
     
     Field3D *Phi3D         = static_cast<Field3D *>( Phi_ );
     Field3D *Phi_m3D       = static_cast<Field3D *>( Phi_m );
@@ -337,15 +338,17 @@ void LaserEnvelope3D::computePhiEnvAEnvE( ElectroMagn *EMfields )
 
     // computes Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
     
-    cField3D *A3D          = static_cast<cField3D *>( A_ );                  // the envelope at timestep n
+    cField3D *A3D          = static_cast<cField3D *>( A_ );                   // the envelope at timestep n
 
-    cField3D *A03D         = static_cast<cField3D *>( A0_ );              // the envelope at timestep n-1
+    cField3D *A03D         = static_cast<cField3D *>( A0_ );                  // the envelope at timestep n-1
     
-    Field3D *Phi3D         = static_cast<Field3D *>( Phi_ );                 //Phi=|A|^2/2 is the ponderomotive potential
+    Field3D *Phi3D         = static_cast<Field3D *>( Phi_ );                  //Phi=|A|^2/2 is the ponderomotive potential
 
-    Field3D *Env_Aabs3D    = static_cast<Field3D *>( EMfields->Env_A_abs_ ); // field for diagnostic
-    
-    Field3D *Env_Eabs3D    = static_cast<Field3D *>( EMfields->Env_E_abs_ ); // field for diagnostic
+    Field3D *Env_Aabs3D    = static_cast<Field3D *>( EMfields->Env_A_abs_ );  // field for diagnostic and ionization
+     
+    Field3D *Env_Eabs3D    = static_cast<Field3D *>( EMfields->Env_E_abs_ );  // field for diagnostic and ionization
+ 
+    Field3D *Env_Exabs3D   = static_cast<Field3D *>( EMfields->Env_Ex_abs_ ); // field for diagnostic and ionization
     
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells

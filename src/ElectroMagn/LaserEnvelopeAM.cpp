@@ -80,6 +80,7 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     cField2D *A02Dcyl         = static_cast<cField2D *>( A0_ );
     Field2D *Env_Aabs2Dcyl    = static_cast<Field2D *>( EMfields->Env_A_abs_ );
     Field2D *Env_Eabs2Dcyl    = static_cast<Field2D *>( EMfields->Env_E_abs_ );
+    Field2D *Env_Exabs2Dcyl   = static_cast<Field2D *>( EMfields->Env_Ex_abs_ );
     
     Field2D *Phi2Dcyl         = static_cast<Field2D *>( Phi_ );
     Field2D *Phi_m2Dcyl       = static_cast<Field2D *>( Phi_m );
@@ -339,19 +340,25 @@ void LaserEnvelopeAM::computePhiEnvAEnvE( ElectroMagn *EMfields )
     
     Field2D *Phi2Dcyl         = static_cast<Field2D *>( Phi_ );              //Phi=|A|^2/2 is the ponderomotive potential
     
-    Field2D *Env_Aabs2Dcyl = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic
+    Field2D *Env_Aabs2Dcyl = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic and ionization
 
-    Field2D *Env_Eabs2Dcyl = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
+    Field2D *Env_Eabs2Dcyl = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic and ionization
+
+    Field2D *Env_Exabs2Dcyl = static_cast<Field2D *>( EMfields->Env_Ex_abs_ ); // field for diagnostic and ionization
 
     bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
+    double Ex,Er;
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        for( unsigned int j=0 ; j < A_->dims_[1]-1; j++ ) { // r loop
+        for( unsigned int j=0 ; j < A_->dims_[1]-2; j++ ) { // r loop
             ( *Phi2Dcyl )( i, j )      = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
             ( *Env_Aabs2Dcyl )( i, j ) = std::abs( ( *A2Dcyl )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
-            ( *Env_Eabs2Dcyl )( i, j ) = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
+            //( *Env_Eabs2Dcyl )( i, j ) = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
+            Er                         = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
+            Ex                         = std::abs( ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j ) )/dr );
+            ( *Env_Eabs2Dcyl )( i, j ) = sqrt(Ex*Ex+Er*Er);
         } // end r loop
     } // end l loop
 

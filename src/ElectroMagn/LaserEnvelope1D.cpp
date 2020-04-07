@@ -74,6 +74,7 @@ void LaserEnvelope1D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     cField1D *A01D         = static_cast<cField1D *>( A0_ );
     Field1D *Env_Aabs1D    = static_cast<Field1D *>( EMfields->Env_A_abs_ );
     Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ );
+    Field1D *Env_Exabs1D   = static_cast<Field1D *>( EMfields->Env_Ex_abs_ );
     
     Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );
     Field1D *Phi_m1D       = static_cast<Field1D *>( Phi_m );
@@ -249,11 +250,12 @@ void LaserEnvelope1D::computePhiEnvAEnvE( ElectroMagn *EMfields )
 {
 
     // computes Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
-    cField1D *A1D          = static_cast<cField1D *>( A_ );                  // the envelope at timestep n
-    cField1D *A01D         = static_cast<cField1D *>( A0_ );              // the envelope at timestep n-1
-    Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );                 //Phi=|A|^2/2 is the ponderomotive potential
-    Field1D *Env_Aabs1D    = static_cast<Field1D *>( EMfields->Env_A_abs_ ); // field for diagnostic
-    Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ ); // field for diagnostic
+    cField1D *A1D          = static_cast<cField1D *>( A_ );                   // the envelope at timestep n
+    cField1D *A01D         = static_cast<cField1D *>( A0_ );                  // the envelope at timestep n-1
+    Field1D *Phi1D         = static_cast<Field1D *>( Phi_ );                  //Phi=|A|^2/2 is the ponderomotive potential
+    Field1D *Env_Aabs1D    = static_cast<Field1D *>( EMfields->Env_A_abs_ );  // field for diagnostic and ionization
+    Field1D *Env_Eabs1D    = static_cast<Field1D *>( EMfields->Env_E_abs_ );  // field for diagnostic and ionization
+    Field1D *Env_Exabs1D   = static_cast<Field1D *>( EMfields->Env_Ex_abs_ ); // field for diagnostic and ionization
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop

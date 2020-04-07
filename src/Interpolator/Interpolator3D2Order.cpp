@@ -360,6 +360,7 @@ void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
 {
     // Static cast of the envelope fields
     Field3D *EnvEabs = static_cast<Field3D *>( EMfields->Env_E_abs_ );
+    Field3D *EnvEabs = static_cast<Field3D *>( EMfields->Env_Ex_abs_ );
     
     
     std::vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
@@ -372,6 +373,11 @@ void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         // Interpolation of Env_E_abs^(p,p,p)
         // ---------------------------------
         ( *EnvEabs_part )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], EnvEabs, ip_, jp_, kp_ );
+
+        // ---------------------------------
+        // Interpolation of Env_Ex_abs^(p,p,p)
+        // ---------------------------------
+        ( *EnvExabs_part )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], EnvExabs, ip_, jp_, kp_ );
         
     }
     

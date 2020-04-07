@@ -1194,9 +1194,10 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 #endif
                 vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
                 vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
+                vector<double> *EnvEabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
                 vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( first_index[ibin] ), &( last_index[ibin] ), ithread );
-                Ionize->envelopeIonization( particles, first_index[ibin], last_index[ibin], Epart, EnvEabs_part, Phipart, patch, Proj );
+                Ionize->envelopeIonization( particles, first_index[ibin], last_index[ibin], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
                 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[4] += MPI_Wtime() - timer;

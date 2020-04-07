@@ -214,9 +214,9 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
         fs[8]="Jz";
         fs[9]="Rho";
         if( params.Laser_Envelope_model ) {
-            fs.resize( 13 );
+            fs.resize( 14 );
             fs[10]="Env_A_abs";
-            fs[11]="Env_Chi", fs[12]="Env_E_abs";
+            fs[11]="Env_Chi", fs[12]="Env_E_abs",fs[13]="Env_Ex_abs";
         }
     }
     vector<unsigned int> locations;
@@ -263,7 +263,9 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
             locations[11] = i;
         } else if( fs[i]=="Env_E_abs" ) {
             locations[12] = i;
-        } else {
+        } else if( fs[i]=="Env_Ex_abs" ) {
+            locations[13] = i;
+        }else {
             // Species-related field
             size_t i0 = fs[i].find( "_" );
             size_t i1 = fs[i].rfind( "_" );

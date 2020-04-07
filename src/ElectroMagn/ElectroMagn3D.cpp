@@ -1133,6 +1133,8 @@ Field *ElectroMagn3D::createField( string fieldname )
         return new Field3D( dimPrim, 0, false, fieldname );
     } else if( fieldname.substr( 0, 9 )=="Env_E_abs" ) {
         return new Field3D( dimPrim, 0, false, fieldname );
+    } else if( fieldname.substr( 0, 10 )=="Env_Ex_abs" ) {
+        return new Field3D( dimPrim, 0, false, fieldname );
     }
     
     ERROR( "Cannot create field "<<fieldname );

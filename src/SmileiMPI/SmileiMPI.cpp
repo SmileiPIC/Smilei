@@ -155,7 +155,11 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
         dynamics_inv_gamma_ponderomotive.resize( omp_get_max_threads() );
         if (params.envelope_ionization_is_active){
             dynamics_EnvEabs_part.resize( omp_get_max_threads() );
-        } else {dynamics_EnvEabs_part.clear();}
+            dynamics_EnvExabs_part.resize( omp_get_max_threads() );
+        } else {
+            dynamics_EnvEabs_part.clear();
+            dynamics_EnvExabs_part.clear();
+        }
     }
 #else
     dynamics_Epart.resize( 1 );
@@ -175,7 +179,11 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
         dynamics_inv_gamma_ponderomotive.resize( 1 );
         if (params.envelope_ionization_is_active){
             dynamics_EnvEabs_part.resize( 1 );
-        } else {dynamics_EnvEabs_part.clear();}
+            dynamics_EnvExabs_part.resize( 1 );
+        } else {
+            dynamics_EnvEabs_part.clear();
+            dynamics_EnvExabs_part.clear();
+        }
     }
 #endif
 

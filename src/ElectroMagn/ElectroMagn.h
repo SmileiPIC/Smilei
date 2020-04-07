@@ -191,6 +191,8 @@ public:
     
     //! Envelope of laser electric field along the polarization direction, absolute value
     Field *Env_E_abs_;
+    //! Envelope of laser electric field along the longitudinal direction, absolute value
+    Field *Env_Ex_abs_;
     
     //! Vector of electric fields used when a filter is applied
     std::vector<Field *> Exfilter;
@@ -438,7 +440,7 @@ public:
         int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
         
         if( Env_Chi_ ) {
-            emSize += 3;    //Env_Chi, Env_A_abs, Env_E_abs;
+            emSize += 4;    //Env_Chi, Env_A_abs, Env_E_abs, Env_Ex_abs;
         }
         
         for( unsigned int ispec=0 ; ispec<Jx_s.size() ; ispec++ ) {

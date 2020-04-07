@@ -269,12 +269,13 @@ void Interpolator1D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
 } // END Interpolator1D2Order
 
 
-void Interpolator1D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc )
+void Interpolator1D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
 {
     // Static cast of the electromagnetic fields
     Field1D *Env_A_abs_1D = static_cast<Field1D *>( EMfields->Env_A_abs_ );
     Field1D *Env_Chi_1D = static_cast<Field1D *>( EMfields->Env_Chi_ );
     Field1D *Env_E_abs_1D = static_cast<Field1D *>( EMfields->Env_E_abs_ );
+    Field1D *Env_E_abs_1D = static_cast<Field1D *>( EMfields->Env_Ex_abs_ );
     
     // Normalized particle position
     double xpn = particles.position( 0, ipart )*dx_inv_;
@@ -311,6 +312,11 @@ void Interpolator1D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     // Interpolation of Env_E_abs_^(p)
     // -------------------------
     *( Env_E_abs_Loc ) = compute( &coeffp_[1], Env_E_abs_1D, ip_ );
+
+    // -------------------------
+    // Interpolation of Env_Ex_abs_^(p)
+    // -------------------------
+    *( Env_Ex_abs_Loc ) = compute( &coeffp_[1], Env_Ex_abs_1D, ip_ );
     
 } // END Interpolator1D2Order
 

@@ -2439,6 +2439,11 @@ This is done by including a block ``DiagFields``::
   | | Env_E_abs    | | :math:`\tilde{E}` (component along the polarization |
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
+  | |              | | Module of laser electric field's complex envelope   |
+  | | Env_Ex_abs   | | :math:`\tilde{Ex}` (component along the propagation |
+  | |              | | direction)                                          |
+  +----------------+-------------------------------------------------------+
+
 
 .. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry,
           a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs_mode_0", "Env_Chi_mode_0"]``.
@@ -2559,7 +2564,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   species name.
 
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
-  the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
+  the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``, ``"Env_Ex_abs"``.
 
   Note that when running a simulation in cylindrical geometry,
   contrary to the Field diagnostic, Probes are defined as in a

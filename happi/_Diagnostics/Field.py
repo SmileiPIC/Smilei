@@ -78,6 +78,11 @@ class Field(Diagnostic):
 						f = f[10:]
 						self._is_complex = False
 						build3d = None
+                    elif f[:11] in ["Env_Ex_abs_"]:
+						fname = f[:10]
+						f = f[11:]
+						self._is_complex = False
+						build3d = None
 					elif f[:8] in ["Env_Chi_"]:
 						fname = f[:7]
 						f = f[8:]

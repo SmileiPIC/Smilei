@@ -151,6 +151,7 @@ void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
             fields.push_back( EMfields->Env_A_abs_->name );
             fields.push_back( EMfields->Env_Chi_->name );
             fields.push_back( EMfields->Env_E_abs_->name );
+            fields.push_back( EMfields->Env_Ex_abs_->name );
         }
     } else {
         ElectroMagnAM *emfields = static_cast<ElectroMagnAM *>( EMfields );
@@ -601,6 +602,7 @@ void DiagnosticScalar::compute( Patch *patch, int timestep )
         fields.push_back( EMfields->Env_A_abs_ );
         fields.push_back( EMfields->Env_Chi_ );
         fields.push_back( EMfields->Env_E_abs_ );
+        fields.push_back( EMfields->Env_Ex_abs_ );
     }
     
     double fieldval;
@@ -807,6 +809,7 @@ uint64_t DiagnosticScalar::getDiskFootPrint( int istart, int istop, Patch *patch
                 scalars.push_back( Tools::merge( patch->EMfields->Env_A_abs_->name, minmax, cell ) );
                 scalars.push_back( Tools::merge( patch->EMfields->Env_Chi_->name, minmax, cell ) );
                 scalars.push_back( Tools::merge( patch->EMfields->Env_E_abs_->name, minmax, cell ) );
+                scalars.push_back( Tools::merge( patch->EMfields->Env_Ex_abs_->name, minmax, cell ) );
             }
         }
     }

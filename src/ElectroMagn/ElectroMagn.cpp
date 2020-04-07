@@ -113,6 +113,7 @@ void ElectroMagn::initElectroMagnQuantities()
     Env_A_abs_=NULL;
     Env_Chi_  =NULL;
     Env_E_abs_=NULL;
+    Env_Ex_abs_=NULL;
     
     
     // Species charge currents and density
@@ -160,6 +161,7 @@ void ElectroMagn::finishInitialization( int nspecies, Patch *patch )
         allFields.push_back( Env_A_abs_ );
         allFields.push_back( Env_Chi_ );
         allFields.push_back( Env_E_abs_ );
+        allFields.push_back( Env_Ex_abs_ );
     }
     
     // For species-related fields
@@ -235,6 +237,9 @@ ElectroMagn::~ElectroMagn()
     }
     if( Env_E_abs_ != NULL ) {
         delete Env_E_abs_;
+    }
+    if( Env_Ex_abs_ != NULL ) {
+        delete Env_Ex_abs_;
     }
     
     for( unsigned int idiag=0; idiag<allFields_avg.size(); idiag++ )
