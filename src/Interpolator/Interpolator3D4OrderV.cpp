@@ -473,7 +473,7 @@ void Interpolator3D4OrderV::interp_Bz( int* idxO, int np_computed, double *coeff
         for( int iloc=-2 ; iloc<3 ; iloc++ ) {
             for( int jloc=-2 ; jloc<3 ; jloc++ ) {
                 for( int kloc=-2 ; kloc<3 ; kloc++ ) {
-                    interp_res += *( coeffxd+iloc*32 ) * *( coeffyd+jloc*32 ) * *( coeffzp+kloc*32 ) *
+                    interp_res += *( coeff_xd+iloc*32 ) * *( coeff_yd+jloc*32 ) * *( coeff_zp+kloc*32 ) *
                         ( ( 1-dualy[ipart] ) * ( ( 1-dualx[ipart] )*( *Bz3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dualx[ipart]*( *Bz3D )( idxO[0]+1+iloc, idxO[1]+jloc, idxO[2]+kloc ) )
                           +    dualy[ipart]  * ( ( 1-dualx[ipart] )*( *Bz3D )( idxO[0]+iloc, idxO[1]+1+jloc, idxO[2]+kloc ) + dualx[ipart]*( *Bz3D )( idxO[0]+1+iloc, idxO[1]+1+jloc, idxO[2]+kloc ) ) );
                 }
