@@ -215,7 +215,7 @@ void RadiationMonteCarlo::operator()(
             // Continuous emission
             // particle_chi needs to be below the discontinuous threshold
             // particle_chi needs to be above the continuous threshold
-            // No discontunous emission is in progress:
+            // No discontiuous emission is in progress:
             // tau[ipart] <= epsilon_tau_
             else if( ( particle_chi <= RadiationTables.getMinimumChiDiscontinuous() )
                      && ( tau[ipart] <= epsilon_tau_ )
