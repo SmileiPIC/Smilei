@@ -442,6 +442,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         full_B_exchange=true;
     }
     PyTools::extract( "is_pxr", is_pxr, "Main" );
+#ifndef _PICSAR
+    if (is_pxr) {
+        ERROR( "Smilei not linked with picsar, use make config=picsar" );
+    }
+#endif
 
     // Maxwell Solver
     PyTools::extract( "maxwell_solver", maxwell_sol, "Main" );
