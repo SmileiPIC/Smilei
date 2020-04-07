@@ -147,10 +147,10 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
             // in cylindrical symmetry the gradient along theta is zero
 
             // |Ex envelope| = |-(1/r)*d(rA)/dr|, central finite difference for the space derivative
-            ( *Env_Exabs2Dcyl )( i, j ) =  std::abs( ( ((double)(j_glob+j+1)) * ( *A2Dcyl )( i, j+1)  
-                                           -((double)(j_glob+j-1)) * ( *A2Dcyl )( i, j-1) ) 
-                                           / ((double)(j_glob+j)) );
-            
+            //( *Env_Exabs2Dcyl )( i, j ) =  std::abs( ( ((double)(j_glob+j+1)) * ( *A2Dcyl )( i, j+1)  
+            //                               -((double)(j_glob+j-1)) * ( *A2Dcyl )( i, j-1) ) 
+            //                               / ((double)(j_glob+j)) );
+            ( *Env_Exabs2Dcyl )( i, j ) =  std::abs( (( *A2Dcyl )( i, j+1)-( *A2Dcyl )( i, j-1) )*one_ov_2dr );
 
         } // end r loop
     } // end l loop
@@ -389,9 +389,10 @@ void LaserEnvelopeAM::computePhiEnvAEnvE( ElectroMagn *EMfields )
             //Ex                         = std::abs( ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j ) )/dr );
             //( *Env_Eabs2Dcyl )( i, j ) = sqrt(Ex*Ex+Er*Er);
             // |Ex envelope| = |-(1/r)*d(rA)/dr|, central finite difference for the space derivative
-            ( *Env_Exabs2Dcyl )( i, j ) =  std::abs( ( ((double)(j_glob+j+1)) * ( *A2Dcyl )( i, j+1)  
-                                           -((double)(j_glob+j-1)) * ( *A2Dcyl )( i, j-1) ) 
-                                           / ((double)(j_glob+j))/dr );
+            //( *Env_Exabs2Dcyl )( i, j ) =  std::abs( ( ((double)(j_glob+j+1)) * ( *A2Dcyl )( i, j+1)  
+            //                               -((double)(j_glob+j-1)) * ( *A2Dcyl )( i, j-1) ) 
+            //                               / ((double)(j_glob+j))/dr );
+            ( *Env_Exabs2Dcyl )( i, j ) =  std::abs( (( *A2Dcyl )( i, j+1)-( *A2Dcyl )( i, j-1) )*one_ov_2dr );
         } // end r loop
     } // end l loop
 
