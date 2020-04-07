@@ -79,7 +79,7 @@ public:
         
         // If `ionizing` is a species name, then use that one
         std::string ionization_electrons_name = "";
-        if( PyTools::convert( ionizing, ionization_electrons_name ) ) {
+        if( PyTools::py2scalar( ionizing, ionization_electrons_name ) ) {
             
             for( int i=0; i<(int)vecSpecies.size(); i++ ) {
                 if( vecSpecies[i]->name_ == ionization_electrons_name ) {
@@ -170,16 +170,9 @@ public:
         } else {
             
             // Extract the content of the list nuclear_reaction
-            std::vector<PyObject *> py_list;
-            if( ! PyTools::convert( py_nuclear_reaction, py_list ) ) {
-                ERROR( "In collisions #" << n_collisions << ": nuclear_reaction should be a list" );
-            }
             std::vector<std::string> nuclear_reaction( 0 );
-            if( py_list.size() ) {
-                PyTools::convert( py_list, nuclear_reaction );
-                for( unsigned int i=0; i<py_list.size(); i++ ) {
-                    Py_DECREF( py_list[i] );
-                }
+            if( ! PyTools::py2vector( py_nuclear_reaction, nuclear_reaction ) ) {
+                ERROR( "In collisions #" << n_collisions << ": nuclear_reaction should be a list of strings" );
             }
             
             // Verify the atomic number has been set

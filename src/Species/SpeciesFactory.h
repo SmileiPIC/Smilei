@@ -489,7 +489,7 @@ public:
         
         // Position initialization
         PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", ispec );
-        if( PyTools::convert( py_pos_init, this_species->position_initialization_ ) ) {
+        if( PyTools::py2scalar( py_pos_init, this_species->position_initialization_ ) ) {
             if( this_species->position_initialization_.empty() ) {
                 ERROR( "For species '" << species_name << "' empty position_initialization" );
             } else if( ( this_species->position_initialization_!="regular" )
@@ -552,7 +552,7 @@ public:
 
 
         PyObject *py_mom_init = PyTools::extract_py( "momentum_initialization", "Species", ispec );
-        if( PyTools::convert( py_mom_init, this_species->momentum_initialization_ ) ) {
+        if( PyTools::py2scalar( py_mom_init, this_species->momentum_initialization_ ) ) {
             if( ( this_species->momentum_initialization_=="mj" ) || ( this_species->momentum_initialization_=="maxj" ) ) {
                 this_species->momentum_initialization_="maxwell-juettner";
             }
@@ -779,15 +779,13 @@ public:
 
         // Density
         bool ok1, ok2;
-        PyObject *profile1( nullptr ), *profile2( nullptr ), *profile3( nullptr );
-
-
+        PyObject * profile1 = nullptr;
         if( this_species->position_initialization_array_ == NULL ) {
             //These quantities are disregarded if positioning of the species is directly specified by the user
             // Matter particles
+            ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", ispec );
+            ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", ispec );
             if( this_species->mass_ > 0 ) {
-                ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", ispec );
-                ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", ispec );
                 if( ok1 &&  ok2 ) {
                     ERROR( "For species '" << species_name << "', cannot define both `number_density ` and `charge_density`." );
                 }
@@ -804,8 +802,6 @@ public:
             }
             // Photons
             else if( this_species->mass_ == 0 ) {
-                ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", ispec );
-                ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", ispec );
                 if( ok2 ) {
                     ERROR( "For photon species '" << species_name << "', `charge_density` has no meaning."
                             << "You must use `number_density`." );
@@ -840,24 +836,24 @@ public:
             ERROR( "For species '" << species_name << "', charge not found or not understood" );
         }
         this_species->charge_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( "charge ", species_name ), true );
-
+        
+        std::vector<PyObject *> prof;
         if( this_species->momentum_initialization_array_ == NULL ) {
             // Mean velocity
-            if( PyTools::extract3Profiles( "mean_velocity", "Species", ispec, profile1, profile2, profile3 ) ) {
-                this_species->velocity_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
-                this_species->velocity_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
-                this_species->velocity_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
+            if( PyTools::extract_1or3Profiles( "mean_velocity", "Species", ispec, prof ) ) {
+                this_species->velocity_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
+                this_species->velocity_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
+                this_species->velocity_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
             }
-
             // Temperature
-            if( PyTools::extract3Profiles( "temperature", "Species", ispec, profile1, profile2, profile3 ) ) {
-                this_species->temperature_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "temperature[0] ", species_name ), true );
-                this_species->temperature_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "temperature[1] ", species_name ), true );
-                this_species->temperature_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "temperature[2] ", species_name ), true );
+            if( PyTools::extract_1or3Profiles( "temperature", "Species", ispec, prof ) ) {
+                this_species->temperature_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "temperature[0] ", species_name ), true );
+                this_species->temperature_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "temperature[1] ", species_name ), true );
+                this_species->temperature_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "temperature[2] ", species_name ), true );
             }
         } else {
-            ok1 = PyTools::extract3Profiles( "mean_velocity", "Species", ispec, profile1, profile2, profile3 ) ;
-            ok2 = PyTools::extract3Profiles( "temperature", "Species", ispec, profile1, profile2, profile3 ) ;
+            ok1 = PyTools::extract_1or3Profiles( "mean_velocity", "Species", ispec, prof ) ;
+            ok2 = PyTools::extract_1or3Profiles( "temperature", "Species", ispec, prof ) ;
             if( ok1 ) {
                 ERROR( "For species '" << species_name << "', cannot define both `mean_velocity` and `momentum_initialization` array." );
             }

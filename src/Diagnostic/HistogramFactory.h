@@ -33,7 +33,7 @@ public:
             ERROR( deposited_quantityPrefix << " required" );
 
             // If string, then ok
-        } else if( PyTools::convert( deposited_quantity_object, deposited_quantity ) ) {
+        } else if( PyTools::py2scalar( deposited_quantity_object, deposited_quantity ) ) {
 
             if( deposited_quantity == "user_function" ) {
                 ERROR( deposited_quantityPrefix << " = " << deposited_quantity <<" not understood" );
@@ -118,7 +118,7 @@ public:
 
             // Try to extract first element: type
             PyObject *type_object = PySequence_Fast_GET_ITEM( seq, 0 );
-            if( PyTools::convert( type_object, type ) ) {
+            if( PyTools::py2scalar( type_object, type ) ) {
                 if( type.substr( 0, 13 ) == "user_function" ) {
                     ERROR( errorPrefix << ", axis #" << iaxis << ": type " << type << " unknown" );
                 }
@@ -143,17 +143,17 @@ public:
             }
 
             // Try to extract second element: axis min
-            if( !PyTools::convert( PySequence_Fast_GET_ITEM( seq, 1 ), min ) ) {
+            if( !PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, 1 ), min ) ) {
                 ERROR( errorPrefix << ", axis #" << iaxis << ": Second item must be a double (axis min)" );
             }
 
             // Try to extract third element: axis max
-            if( !PyTools::convert( PySequence_Fast_GET_ITEM( seq, 2 ), max ) ) {
+            if( !PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, 2 ), max ) ) {
                 ERROR( errorPrefix << ", axis #" << iaxis << ": Third item must be a double (axis max)" );
             }
 
             // Try to extract fourth element: axis nbins
-            if( !PyTools::convert( PySequence_Fast_GET_ITEM( seq, 3 ), nbins ) ) {
+            if( !PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, 3 ), nbins ) ) {
                 ERROR( errorPrefix << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)" );
             }
 
@@ -162,7 +162,7 @@ public:
             edge_inclusive = false;
             for( unsigned int i=4; i<lenAxisArgs; i++ ) {
                 std::string my_str( "" );
-                PyTools::convert( PySequence_Fast_GET_ITEM( seq, i ), my_str );
+                PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, i ), my_str );
                 if( my_str=="logscale" ||  my_str=="log_scale" || my_str=="log" ) {
                     logscale = true;
                 } else if( my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive" ) {
@@ -171,7 +171,8 @@ public:
                     ERROR( errorPrefix << ": keyword `" << my_str << "` not understood" );
                 }
             }
-
+            Py_XDECREF( seq );
+            
             HistogramAxis *axis;
             std::vector<double> coefficients( 0 );
             if( type == "x" ) {

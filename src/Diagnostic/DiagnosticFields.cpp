@@ -106,7 +106,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
             subgrid_start_.push_back( 0 );
             subgrid_stop_ .push_back( params.n_space_global[isubgrid]+2 );
             subgrid_step_ .push_back( 1 );
-        } else if( PyTools::convert( subgrids[isubgrid], n ) ) {
+        } else if( PyTools::py2scalar( subgrids[isubgrid], n ) ) {
             subgrid_start_.push_back( n );
             subgrid_stop_ .push_back( n + 1 );
             subgrid_step_ .push_back( 1 );

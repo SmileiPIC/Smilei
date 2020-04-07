@@ -57,6 +57,9 @@ private:
     {
         if( py_val && PyNumber_Check( py_val ) ) {
             PyObject *v = PyNumber_Long( py_val );
+            if( PyObject_RichCompareBool( v, py_val, Py_EQ ) < 1 ) {
+                return false;
+            }
             val=( T ) PyLong_AsLong( v );
             Py_XDECREF( v );
             return true;
@@ -112,7 +115,7 @@ private:
         checkPyError();
         double cppresult=0;
         if( pyresult ) {
-            if( !convert( pyresult, cppresult ) ) {
+            if( !py2scalar( pyresult, cppresult ) ) {
                 PyObject *ptype, *pvalue, *ptraceback;
                 PyErr_Fetch( &ptype, &pvalue, &ptraceback );
                 ERROR( "function does not return float but " << pyresult->ob_type->tp_name );
@@ -128,7 +131,7 @@ private:
         checkPyError();
         std::complex<double> cppresult=0;
         if( pyresult ) {
-            if( !convert( pyresult, cppresult ) ) {
+            if( !py2scalar( pyresult, cppresult ) ) {
                 PyObject *ptype, *pvalue, *ptraceback;
                 PyErr_Fetch( &ptype, &pvalue, &ptraceback );
                 ERROR( "function does not return complex but " << pyresult->ob_type->tp_name );
@@ -138,6 +141,16 @@ private:
             ERROR( "Function does not return a valid Python object" );
         }
         return cppresult;
+    }
+    
+    // DECREF for vectors of python objects
+    static void DECREF( std::vector<PyObject *> pyvec )
+    {
+        for( unsigned int i=0; i<pyvec.size(); i++ ) {
+            if( pyvec[i] ) {
+                Py_DECREF( pyvec[i] );
+            }
+        }
     }
     
 public:
@@ -170,7 +183,7 @@ public:
     
     //! convert Python object to C++ value
     template <typename T>
-    static bool convert( PyObject *py_val, T &val )
+    static bool py2scalar( PyObject *py_val, T &val )
     {
         bool retval=pyconvert( py_val, val );
         return retval;
@@ -178,45 +191,47 @@ public:
     
     //! convert vector of Python objects to vector of C++ values
     template <typename T>
-    static bool convert( std::vector<PyObject *> py_vec, std::vector<T> &val )
+    static bool pyvector2vector( std::vector<PyObject *> py_vec, std::vector<T> &val )
     {
-        bool retval=true;
+        bool retval = true;
         val.resize( py_vec.size() );
         for( unsigned int i=0; i<py_vec.size(); i++ ) {
-            bool thisval=convert( py_vec[i], val[i] );
-            if( thisval==false ) {
-                retval=false;
+            if( ! py2scalar( py_vec[i], val[i] ) ) {
+                retval = false;
             }
         }
         return retval;
     }
     
     //! convert python list to vector of python objects
-    static bool convert( PyObject *py_list, std::vector<PyObject *> &py_vec )
+    static bool py2pyvector( PyObject *py_list, std::vector<PyObject *> &py_vec )
     {
-        if( py_list ) {
-            if( PyList_Check( py_list ) ) {
-                PyObject *seq = PySequence_Fast( py_list, "expected a sequence" );
-                int len = PySequence_Size( seq );
-                py_vec.resize( len );
-                for( int i = 0; i < len; i++ ) {
-                    PyObject *item = PySequence_Fast_GET_ITEM( seq, i );
-                    py_vec[i]=item;
-                }
-                Py_DECREF( seq );
-                return true; // success
+        if( py_list && PySequence_Check( py_list ) ) {
+            int len = PySequence_Size( py_list );
+            py_vec.resize( len );
+            for( int i = 0; i < len; i++ ) {
+                PyObject *item = PySequence_GetItem( py_list, i );
+                py_vec[i] = item;
             }
+           return true; // success
         }
-        PyTools::checkPyError();
+        checkPyError();
         return false; // error
     }
     
     //! convert python list to vector of c++ values
     template <typename T>
-    static bool convert( PyObject *py_list, std::vector<T> &vec )
+    static bool py2vector( PyObject *py_list, std::vector<T> &vec )
     {
         std::vector<PyObject *> py_vec;
-        return convert( py_list, py_vec ) && convert( py_vec, vec );
+        bool ret = false;
+        if( py2pyvector( py_list, py_vec ) ) {
+            if( pyvector2vector( py_vec, vec ) ) {
+                ret = true;
+            }
+            DECREF( py_vec );
+        }
+        return ret;
     }
     
     //! check if there has been a python error
@@ -237,7 +252,7 @@ public:
             }
             if( value ) {
                 message += ": ";
-                message += PyTools::repr( value );
+                message += repr( value );
             }
             Py_XDECREF( type );
             Py_XDECREF( value );
@@ -272,7 +287,7 @@ public:
         PyObject *py_obj=PyImport_AddModule( "__main__" );
         if( !component.empty() ) {
             py_obj = PyObject_GetAttrString( py_obj, component.c_str() );
-            PyTools::checkPyError();
+            checkPyError();
         }
         PyObject *myFunction = PyObject_GetAttrString( py_obj, name.c_str() );
         if( myFunction ) {
@@ -353,11 +368,11 @@ public:
     static int extract( std::string name, T &val, std::string component=std::string( "" ), int nComponent=0, std::string testMessage=std::string( "" ) )
     {
         PyObject *py_val = extract_py( name, component, nComponent );
-        PyTools::checkPyError();
+        checkPyError();
         int ret = -1;
         if( py_val == Py_None ) {
             ret = 0;
-        } else if( PyTools::convert( py_val, val ) ) {
+        } else if( py2scalar( py_val, val ) ) {
             ret =  1;
         }
         if( !testMessage.empty() && !ret ) {
@@ -372,7 +387,7 @@ public:
     {
         std::vector<PyObject *> py_val = extract_pyVec( name, component, nComponent );
         if( py_val.size() ) {
-            return PyTools::convert( py_val, val );
+            return pyvector2vector( py_val, val );
         }
         return false;
     }
@@ -388,7 +403,7 @@ public:
         val.resize( 0 );
         for( unsigned int i=0; i<py_val.size(); i++ ) {
             std::vector<T> vec;
-            if( ! convert( py_val[i], vec ) ) {
+            if( ! py2vector( py_val[i], vec ) ) {
                 ERROR( name << " should be a list of lists" );
             }
             val.push_back( vec );
@@ -405,12 +420,15 @@ public:
         if( !Py_IsInitialized() ) {
             ERROR( "Python not initialized: this should not happen" );
         }
-        PyObject *py_obj = PyImport_AddModule( "__main__" );
+        PyObject *py_main = PyImport_AddModule( "__main__" );
+        PyObject *py_obj, *py_return;
         // If component requested
-        if( !component.empty() ) {
+        if( component.empty() ) {
+            py_return = PyObject_GetAttrString( py_main, name.c_str() );
+        } else {
             // Get the selected component (e.g. "Species" or "Laser")
-            PyObject *py_component = PyObject_GetAttrString( py_obj, component.c_str() );
-            PyTools::checkPyError();
+            PyObject *py_component = PyObject_GetAttrString( py_main, component.c_str() );
+            checkPyError();
             // Error if not found
             if( !py_component ) {
                 ERROR( "Component "<<component<<" not found in namelist" );
@@ -423,9 +441,10 @@ public:
                 ERROR( "Requested " << component << " #" <<nComponent<< ", but only "<<len<<" available" );
             }
             Py_DECREF( py_component );
+            py_return = PyObject_GetAttrString( py_obj, name.c_str() );
+            Py_DECREF( py_obj );
         }
-        PyObject *py_return=PyObject_GetAttrString( py_obj, name.c_str() );
-        PyTools::checkPyError();
+        checkPyError();
         return py_return;
     }
     
@@ -434,50 +453,61 @@ public:
     {
         std::vector<PyObject *> retvec;
         PyObject *py_obj = extract_py( name, component, nComponent );
-        if( ! convert( py_obj, retvec ) ) {
+        if( ! py2pyvector( py_obj, retvec ) ) {
             std::ostringstream ss( "" );
             if( component!="" ) {
                 ss << "In " << component << " #" << nComponent << " ";
             }
             ERROR( ss.str() << name << " should be a list not a scalar: use [...]" );
         }
+        Py_DECREF( py_obj );
         return retvec;
     }
     
-    static bool extract_pyProfile( std::string name, PyObject *&myPy, std::string component=std::string( "" ), int nComponent=0 )
+    // extract 1 profile
+    static bool extract_pyProfile( std::string name, PyObject *&prof, std::string component=std::string( "" ), int nComponent=0 )
     {
-        PyObject *myPytmp=extract_py( name, component, nComponent );
-        if( PyCallable_Check( myPytmp ) ) {
-            myPy=myPytmp;
+        PyObject *py_obj = extract_py( name, component, nComponent );
+        if( PyCallable_Check( py_obj ) ) {
+            prof = py_obj;
             return true;
         }
+        Py_XDECREF( py_obj );
         return false;
     }
     
-    // extract 3 profiles from namelist (used for part mean velocity and temperature)
-    static bool extract3Profiles( std::string varname, std::string component, int element_index, PyObject *&profx, PyObject *&profy, PyObject *&profz )
+    // extract a vector of profiles
+    static bool extract_pyProfiles( std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof )
     {
-        std::vector<PyObject *> pvec = PyTools::extract_pyVec( varname, component, element_index );
-        if( pvec.size()==1 ) {
-            if( !PyCallable_Check( pvec[0] ) ) {
-                ERROR( "For " << component << " #" << element_index << ", "<<varname<<" not understood" );
+        std::vector<PyObject *> pvec = extract_pyVec( name, component, nComponent );
+        for( unsigned int i=0; i<pvec.size(); i++ ) {
+            if( !PyCallable_Check( pvec[i] ) ) {
+                return false;
             }
-            profx =  profy =  profz = pvec[0];
-            return true;
-        } else if( pvec.size()==3 ) {
-            if( !PyCallable_Check( pvec[0] ) || !PyCallable_Check( pvec[1] ) || !PyCallable_Check( pvec[2] ) ) {
-                ERROR( "For " << component << " #" << element_index << ", "<<varname<<" not understood" );
-            }
-            profx = pvec[0];
-            profy = pvec[1];
-            profz = pvec[2];
-            return true;
-        } else if( pvec.size()==0 ) {
-            return false;
-        } else {
-            ERROR( "For " << component << " #" << element_index << ", "<<varname<<" needs 1 or 3 components." );
-            return false;
         }
+        prof.resize( pvec.size() );
+        for( unsigned int i=0; i<pvec.size(); i++ ) {
+            prof[i] = pvec[i];
+        }
+        return true;
+    }
+    
+    // extract a vector of 1 or 3 profiles
+    static bool extract_1or3Profiles( std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof )
+    {
+        if( ! extract_pyProfiles( name, component, nComponent, prof ) ) {
+            ERROR( "In "<<component<<"#"<<nComponent<<": expected a list of profiles" );
+        }
+        if( prof.size() == 0 ) {
+            return false;
+        } else if( prof.size() == 1 ) {
+            prof.resize( 3 );
+            prof[1] = prof[0]; Py_INCREF( prof[0] );
+            prof[2] = prof[0]; Py_INCREF( prof[0] );
+        } else if( prof.size() != 3 ) {
+            ERROR( "In "<<component<<"#"<<nComponent<<": expected 1 or 3 profiles" );
+        }
+        return true;
     }
     
     // extract 2 profiles from namelist (used for laser profile)
@@ -490,7 +520,7 @@ public:
         }
         
         // Error if not list
-        if( ! convert( py_obj, profiles ) ) {
+        if( ! py2pyvector( py_obj, profiles ) ) {
             ERROR( "For laser #" << ilaser << ": " << varname << " must be a list of 2 profiles" );
         }
         
@@ -519,7 +549,7 @@ public:
         }
         
         // Error if not list
-        if( ! convert( py_obj, profiles ) ) {
+        if( ! py2pyvector( py_obj, profiles ) ) {
             ERROR( "For laser #" << ilaser << ": " << varname << " must be a list of 2N profiles (2 per AM)" );
         }
        
@@ -550,8 +580,9 @@ public:
             ERROR( "Python not initialized: this should not happen" );
         }
         PyObject *py_obj = PyObject_GetAttrString( PyImport_AddModule( "__main__" ), componentName.c_str() );
-        PyTools::checkPyError();
+        checkPyError();
         Py_ssize_t retval = PyObject_Length( py_obj );
+        Py_DECREF( py_obj );
         if( retval < 0 ) {
             ERROR( "Problem searching for component " << componentName );
         }
@@ -565,7 +596,7 @@ public:
         bool success = false;
         if( PyObject_HasAttrString( object, attr_name.c_str() ) ) {
             PyObject *py_value = PyObject_GetAttrString( object, attr_name.c_str() );
-            success = convert( py_value, value );
+            success = py2scalar( py_value, value );
             Py_XDECREF( py_value );
         }
         return success;
@@ -578,7 +609,7 @@ public:
         bool success = false;
         if( PyObject_HasAttrString( object, attr_name.c_str() ) ) {
             PyObject *py_list = PyObject_GetAttrString( object, attr_name.c_str() );
-            success = convert( py_list, vec );
+            success = py2vector( py_list, vec );
             Py_XDECREF( py_list );
         }
         return success;
@@ -593,19 +624,24 @@ public:
             PyObject *py_list = PyObject_GetAttrString( object, attr_name.c_str() );
             // Convert to vector of lists
             std::vector<PyObject *> py_vec;
-            if( !convert( py_list, py_vec ) ) {
+            if( !py2pyvector( py_list, py_vec ) ) {
+                Py_XDECREF( py_list );
                 return false;
             }
             Py_XDECREF( py_list );
             // For each list, convert to vector
-            vec.resize( 0 );
             std::vector<T> v;
+            std::vector<std::vector<T> > vv( 0 );
             for( unsigned int i=0; i<py_vec.size(); i++ ) {
-                if( !convert( py_vec[i], v ) ) {
+                if( ! py2vector( py_vec[i], v ) ) {
+                    DECREF( py_vec );
                     return false;
                 }
-                vec.push_back( v );
+                vv.push_back( v );
             }
+            DECREF( py_vec );
+            vec = vv;
+            return true;
         }
         //This should never happen
         return false;

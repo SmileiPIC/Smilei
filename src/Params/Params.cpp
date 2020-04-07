@@ -779,7 +779,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             PyObject *p = PyTools::extract_py( "_profiles", "Laser", i_laser );
             vector<PyObject *> profiles;
             vector<int> profiles_n = {1, 2};
-            if( ! PyTools::convert( p, profiles ) ) {
+            if( ! PyTools::py2pyvector( p, profiles ) ) {
                 ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile must be a list of 2 profiles" );
             }
             Py_DECREF( p );

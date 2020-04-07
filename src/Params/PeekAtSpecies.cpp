@@ -16,7 +16,7 @@ PeekAtSpecies::PeekAtSpecies( Params &p, unsigned int species_id ) :
     std::string density_profile_type( "" );
     std::string peek_position_initialization;
     PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", species_id );
-    if( PyTools::convert( py_pos_init, peek_position_initialization ) ) {
+    if( PyTools::py2scalar( py_pos_init, peek_position_initialization ) ) {
         bool ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", species_id );
         bool ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", species_id );
         if( ok1 ) {
