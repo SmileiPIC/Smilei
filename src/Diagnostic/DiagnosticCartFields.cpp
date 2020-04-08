@@ -34,7 +34,7 @@ DiagnosticCartFields::DiagnosticCartFields( Params &params, SmileiMPI *smpi, Vec
     
     // Extract the requested fields
     vector<string> fieldsToDump( 0 );
-    PyTools::extract( "fields", fieldsToDump, "DiagFields", ndiag );
+    PyTools::extractV( "fields", fieldsToDump, "DiagFields", ndiag );
     
     // List all fields that are requested
     std::vector<Field *> allFields( 0 );

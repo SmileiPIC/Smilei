@@ -17,7 +17,6 @@ ParticleCreator::ParticleCreator()
 {
     position_initialization_on_species_ = false;
     initialized_in_species_ = true;
-    add_new_particle_energy_ = true;
     time_profile_ = NULL;
 }
 
@@ -495,31 +494,6 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     delete [] temp;
     delete [] vel;
     
-    if (add_new_particle_energy_) {
-        // Recalculate former position using the particle velocity
-        // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
-        if( patch->isXmax() ) {
-            // Matter particle case
-            if( species_->mass_ > 0 ) {
-                for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
-                    /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
-                      particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->LorentzFactor(iPart) * params.timestep;
-                      }897*/
-                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->LorentzFactor( iPart )-1.0 );
-                }
-            }
-            // Photon case
-            else if( species_->mass_ == 0 ) {
-                for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
-                    /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
-                      particles_->position_old(i,iPart) -= particles_->momentum(i,iPart)/particles_->LorentzFactor(iPart) * params.timestep;
-                      }897*/
-                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->momentumNorm( iPart ) );
-                }
-            }
-        }
-    }
-    
     if( particles_->tracked ) {
         particles_->resetIds();
     }
@@ -548,7 +522,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
             for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
                 npart_check *= species->regular_number_array_[idim];
             }
-            if( nPart != npart_check) {
+            if( (int)nPart != npart_check) {
                 ERROR( "The number of particles required per cell and per dimension is not coherent with the total number of particles per cell." );
             }
         }

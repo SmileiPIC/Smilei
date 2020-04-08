@@ -155,6 +155,10 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
             } else {
                 ERROR( "Profile `"<<name<<"`: tsin2plateau() profile is only for time" );
             }
+        } else {
+            
+            ERROR( "Undefined profile "<<profileName );
+        
         }
         
     }
@@ -166,12 +170,12 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
 #ifdef  __DEBUG
         // Check how the profile looks like
         PyObject *repr = PyObject_Repr( py_profile );
-        PyTools::convert( repr, message );
+        PyTools::py2scalar( repr, message );
         MESSAGE( message );
         Py_XDECREF( repr );
         
         repr = PyObject_Str( py_profile );
-        PyTools::convert( repr, message );
+        PyTools::py2scalar( repr, message );
         MESSAGE( message );
         Py_XDECREF( repr );
 #endif
@@ -197,7 +201,7 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
             for( int i=0; i<size; i++ ) {
                 PyObject *arg=PyList_GetItem( arglist, i );
                 PyObject *repr = PyObject_Repr( arg );
-                PyTools::convert( repr, message );
+                PyTools::py2scalar( repr, message );
                 args += message+" ";
                 Py_XDECREF( repr );
             }

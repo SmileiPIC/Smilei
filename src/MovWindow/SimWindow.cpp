@@ -49,10 +49,10 @@ SimWindow::SimWindow( Params &params )
         
         TITLE( "Initializing moving window" );
         
-        PyTools::extract( "time_start", time_start, "MovingWindow" );
-        PyTools::extract( "velocity_x", velocity_x, "MovingWindow" );
-        PyTools::extract( "number_of_additional_shifts", number_of_additional_shifts, "MovingWindow" );
-        PyTools::extract( "additional_shifts_time", additional_shifts_time, "MovingWindow" );
+        PyTools::extract( "time_start", time_start, "MovingWindow"  );
+        PyTools::extract( "velocity_x", velocity_x, "MovingWindow"  );
+        PyTools::extract( "number_of_additional_shifts", number_of_additional_shifts, "MovingWindow"  );
+        PyTools::extract( "additional_shifts_time", additional_shifts_time, "MovingWindow"  );
     }
     
     cell_length_x_   = params.cell_length[0];

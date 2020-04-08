@@ -21,9 +21,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI *smpi, Patch *patc
     string errorPrefix = name.str();
     
     // get parameter "shape" that determines if the screen is a plane or a sphere
-    if( !PyTools::extract( "shape", screen_shape, "DiagScreen", screen_id ) ) {
-        ERROR( errorPrefix << ": parameter `shape` required" );
-    }
+    PyTools::extract( "shape", screen_shape, "DiagScreen", screen_id );
     if( screen_shape == "plane" ) {
         screen_type = 0;
     } else if( screen_shape == "sphere" ) {
@@ -33,7 +31,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI *smpi, Patch *patc
     }
     
     // get parameter "point" that determines the plane reference point, or the sphere center
-    if( !PyTools::extract( "point", screen_point, "DiagScreen", screen_id ) ) {
+    if( !PyTools::extractV( "point", screen_point, "DiagScreen", screen_id ) ) {
         ERROR( errorPrefix << ": parameter `point` required" );
     }
     if( screen_point.size() != params.nDim_particle ) {
@@ -41,7 +39,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI *smpi, Patch *patc
     }
     
     // get parameter "vector" that determines the plane normal, or the sphere radius
-    if( !PyTools::extract( "vector", screen_vector, "DiagScreen", screen_id ) ) {
+    if( !PyTools::extractV( "vector", screen_vector, "DiagScreen", screen_id ) ) {
         if( params.nDim_particle == 1 ) {
             screen_vector.resize( 1, 1. );
         } else {
@@ -86,9 +84,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI *smpi, Patch *patc
     }
     
     // get parameter "oriented", true if particles coming from the other side count negatively
-    if( !PyTools::extract( "direction", direction, "DiagScreen", screen_id ) ) {
-        ERROR( errorPrefix << ": parameter `direction` not understood" );
-    }
+    PyTools::extract( "direction", direction, "DiagScreen", screen_id );
     if( direction=="both" ) {
         direction_type = 0;
     } else if( direction=="canceling" ) {
@@ -119,7 +115,7 @@ DiagnosticScreen::DiagnosticScreen( Params &params, SmileiMPI *smpi, Patch *patc
     
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
-    if( !PyTools::extract( "species", species_names, "DiagScreen", screen_id ) ) {
+    if( !PyTools::extractV( "species", species_names, "DiagScreen", screen_id ) ) {
         ERROR( errorPrefix << ": parameter `species` required" );
     }
     // verify that the species exist, remove duplicates and sort by number

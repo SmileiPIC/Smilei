@@ -6,7 +6,8 @@ from glob import glob
 from json import load
 from time import strptime
 from datetime import datetime
-from os.path import splitext, basename
+#from os.path import splitext, basename
+import os
 ion()
 
 # RCParams parameters to tune the matplotlib style
@@ -26,9 +27,18 @@ rcParams['xtick.minor.width'] = 1.5
 rcParams['ytick.minor.width'] = 1.5
 
 # Obtain the files
-cases = sorted(glob("/sps2/gitlab-runner/logs/*.log"))
-#cases = sorted(glob("./logs/*.log"))
-
+if len(sys.argv) > 1:
+    try:
+        path = sys.argv[1]
+    except:
+        raise Exception("\n Please, provide a valid path to the logs.\n")
+else:
+    path = "/sps2/gitlab-runner/logs/*.log"
+    
+cases = sorted(glob(path))
+if len(cases) ==0:
+    raise Exception('\n No cases found for `{}`.\n The path may be invalid or not accessible.'.format(path))
+        
 # Class to create a plot with buttons to switch between cases
 class switchPlots:
     
@@ -66,6 +76,7 @@ class switchPlots:
         self.fig.canvas.callbacks.connect('pick_event', self.on_pick)
         self.fig.canvas.mpl_connect("motion_notify_event", self.on_hover)
         self.fig.canvas.mpl_connect("motion_notify_event", self.update_min_mean_max_annotations)
+        self.fig.canvas.mpl_connect("button_press_event", self.open_commit_link)
         
         # Button previous -5
         axprev5 = axes([self.menu_x_position, 0.01, 0.05, 0.03])
@@ -94,7 +105,7 @@ class switchPlots:
             
             self.init_style()
             
-            D = {"name":splitext(basename(case))[0]}
+            D = {"name":os.path.splitext(os.path.basename(case))[0]}
             
             # Read data
             with open(case, 'r') as f:
@@ -129,6 +140,7 @@ class switchPlots:
             
             # Get branch names
             D["commits"] = data["commit"]
+            D["commit_ids"] = array([(b.split("-")[0]) for b in D["commits"]])
             D["branches"] = array(["-".join(b.split("-")[1:]) for b in D["commits"]])
             # Set parameters for branch plotting
             D["branch_opt"] = {}
@@ -199,6 +211,7 @@ class switchPlots:
             print("  > Commit: {}".format(D["commits"][k]))
             print("    Branch: {}".format(D["branches"][k]))
             print("    Date: {}".format(D["date"][k]))
+            print("    Link: https://llrgit.in2p3.fr/smilei/smilei/-/commit/{}".format(D["commit_ids"][k]))
             print("    ----------------------------------------------------------------------")
             print("     Timers          | Times (s)  | Min (s)    | Mean (s)   | Max (s)    |")
             print("    ----------------------------------------------------------------------")
@@ -210,6 +223,7 @@ class switchPlots:
                 D["max_times"]
             ):
                 print("     {0:15} | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} |".format(label, d[k], min, mean, max))
+
     
     def on_hover(self, event):
         vis = self.annot.get_visible()
@@ -224,6 +238,17 @@ class switchPlots:
                 if vis:
                     self.annot.set_visible(False)
                     self.fig.canvas.draw_idle()
+
+    def open_commit_link(self,event):
+        """
+        """
+        if event.dblclick:
+            if event.inaxes == self.ax:
+                cont, ind = self.sc.contains(event)
+                if cont:
+                    D = self.data[self.ind]
+                    for i in  ind["ind"]:
+                        os.system("xdg-open https://llrgit.in2p3.fr/smilei/smilei/-/commit/{}".format(D["commit_ids"][i]))
 
     def display_min_mean_max_annotations(self):
         """

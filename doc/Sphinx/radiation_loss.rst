@@ -90,7 +90,7 @@ Note that considering ultra-relativistic (radiating) particles, both parameters 
 In the photon production rate Eq. :eq:`photonProductionRate` appears the quantum emissivity:
 
 .. math::
-  :label: particleQuantumParameter
+  :label: particleQuantumEmissivity
 
   S(\chi,\xi) = \frac{\sqrt{3}}{2\pi}\,\xi\,\left[\int_{\nu}^{+\infty} {\rm K}_{5/3}(y) dy
   + \frac{\xi^2}{1-\xi}\,{\rm K}_{2/3}(\nu)\right]\,,
@@ -132,7 +132,7 @@ We adopt this simple (yet sometimes not completely satisfactory) point of view b
 used in :program:`Smilei` to account for high-energy photon emission and its back-reaction on the electron dynamics.
 
 For arbitrary values of the electron quantum parameter :math:`\chi` (but mandatory in the quantum regime :math:`\chi \gtrsim 1`)
-**************************************************
+******************************************************************************************************************************************************
 
 The model of high-energy photon emission described above is generic, and applies for any value of
 the electron quantum parameter :math:`\chi` (of course as long as the assumptions listed above hold!).
@@ -150,7 +150,7 @@ In :program:`Smilei` the corresponding description is accessible for an electron
 
 
 Intermediate, moderately quantum regime :math:`\chi \lesssim 1`
-**************************************************
+*****************************************************************
 
 In the intermediate regime (:math:`\chi \lesssim 1`), the energy of the emitted photons remains
 small with respect to that of the emitting electrons. Yet, the stochastic nature of photon emission cannot be neglected.

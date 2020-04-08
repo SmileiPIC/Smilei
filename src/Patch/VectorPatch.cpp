@@ -587,7 +587,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     // Particle creator object
                     ParticleCreator particle_creator;
                     particle_creator.associate(particle_injector, particles, injector_species);
-                    particle_creator.add_new_particle_energy_ = false;
                     
                     //particle_index[i_injector] = previous_particle_number_per_species[i_species];
                     // Creation of the particles in local_particles_vector
@@ -748,20 +747,21 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     new_particle_number += 1;
                         
                     // New energy from particles
-                    if( patch->isXmax() ) {
+                    if( patch->isXmin() || patch->isXmax() ) {
+                        double energy = 0.;
                         // Matter particle case
                         if( injector_species->mass_ > 0 ) {
                             for( int ip = 0; ip<new_particle_number; ip++ ) {
-                                injector_species->new_particles_energy_ += particles->weight( ip )
-                                *( particles->LorentzFactor( ip )-1.0 );
+                                energy += particles->weight( ip )*( particles->LorentzFactor( ip )-1.0 );
                             }
+                            injector_species->new_particles_energy_ += injector_species->mass_ * energy;
                         }
                         // Photon case
                         else if( injector_species->mass_ == 0 ) {
                             for( int ip=0; ip<new_particle_number; ip++ ) {
-                                injector_species->new_particles_energy_ += particles->weight( ip )
-                                *( particles->momentumNorm( ip ) );
+                                energy += particles->weight( ip )*( particles->momentumNorm( ip ) );
                             }
+                            injector_species->new_particles_energy_ += energy;
                         }
                     }
                         

@@ -23,13 +23,13 @@ Debye_length = 1. / np.sqrt( n0 / Te + Zi * n0 / Ti )
 # Cell length
 cell_length = [Debye_length*0.5, Debye_length*0.5]
 # Number of patches
-number_of_patches =[16, 2]
+number_of_patches =[2, 16]
 # Cells per patches (patch shape)
 cells_per_patch = [16., 16.]
 # Grid length
 grid_length = [0.,0.]
 for i in range(2):
-    grid_length[i] = number_of_patches[i] * cell_length[i] * cells_per_patch[i]
+    grid_length[i] = [8,8][i] * cell_length[i] * cells_per_patch[i]
 # Number of particles per cell
 particles_per_cell = 32
 # Position init
@@ -37,7 +37,7 @@ position_initialization = 'random'
 # Time step
 timestep = 0.95/np.sqrt(1./ cell_length[0]**2 + 1./ cell_length[1]**2 )
 # Total simulation time
-simulation_time = ((0.5 - 0.125)*grid_length[0])/mean_velocity          # duration of the simulation
+simulation_time = ((1.5 - 0.125)*grid_length[0])/mean_velocity          # duration of the simulation
 # Period of output for the diags
 diag_every = int(simulation_time / timestep)
 
@@ -57,8 +57,12 @@ Main(
     random_seed = smilei_mpi_rank,
 )
 
+LoadBalancing(
+	every = 100
+)
+
 # Initial plasma shape
-fp = trapezoidal(1., xvacuum=0.        ,xplateau=grid_length[0]/8.)
+fp = trapezoidal(1., xvacuum=0.        ,xplateau=grid_length[0]/8., yplateau=grid_length[0]/2.)
 fm = trapezoidal(1., xvacuum=7*grid_length[0]/8.,xplateau=grid_length[0])
 
 Species(
@@ -201,10 +205,10 @@ DiagParticleBinning(
 #     fields = ['Ex','Ey','Ez','Bx','By','Bz','Rho_pon1','Rho_eon1','Rho_pon2','Rho_eon2',"Jx","Jy","Jz"]
 # )
 
-# DiagProbe(
-#     every = globalEvery,
-#     origin = [0., Main.grid_length[1]/2.],
-#     corners = [[Main.grid_length[0],Main.grid_length[1]/2.]],
-#     number = [256],
-#     fields = ['Ex','Ey','Ez','Rho_pon1','Jx_pon1','Jy_pon1','Jz_pon1']
-# )
+#DiagProbe(
+#    every = 5,
+#    origin = [0., Main.grid_length[1]/2.],
+#    corners = [[Main.grid_length[0],Main.grid_length[1]/2.]],
+#    number = [256],
+#    fields = ['Ex','Ey','Ez','Rho_pon1','Jx_pon1','Jy_pon1','Jz_pon1']
+#)
