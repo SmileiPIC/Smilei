@@ -445,33 +445,28 @@ public:
     }
     
     // Test whether a python object is a function
-    // Return the number of arguments, or -1 if failure
+    // Return the number of arguments
+    // If there are python *args, return -1
+    // If failure, return -2
     static int function_nargs( PyObject *obj )
     {
         if( ! PyCallable_Check( obj ) ) {
-            return -1;
+            return -2;
         }
-        // Try to get the number of arguments of the function
-        int n_arg = -1;
-        PyObject *code=NULL, *argcount=NULL;
-        try {
-            code = PyObject_GetAttrString( obj, "__code__" );
-            argcount = PyObject_GetAttrString( code, "co_argcount" );
-            n_arg = PyLong_AsLong( argcount );
-            Py_DECREF( argcount );
-            argcount = NULL;
-            Py_DECREF( code );
-            code = NULL;
-        } catch( ... ) {
-            if( argcount ) {
-                Py_DECREF( argcount );
-            }
-            if( code ) {
-                Py_DECREF( code );
-            }
+        PyObject *inspect=PyImport_ImportModule( "inspect" );
+        checkPyError();
+        PyObject *tuple = PyObject_CallMethod( inspect, const_cast<char *>( "getargspec" ), const_cast<char *>( "(O)" ), obj );
+        PyObject *arglist = PyTuple_GetItem( tuple, 0 ); // list of function arguments
+        PyObject *vararg = PyTuple_GetItem( tuple, 1 ); // name of *args
+        int nargs = PyObject_Size( arglist );
+        bool varargs = vararg != Py_None;
+        Py_XDECREF( tuple );
+        Py_XDECREF( inspect );
+        if( varargs ) {
             return -1;
+        } else {
+            return nargs;
         }
-        return n_arg;
     }
 };
 

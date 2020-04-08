@@ -104,7 +104,7 @@ void LaserPropagator::init( Params *params, SmileiMPI *smpi, unsigned int side )
 
     // Make the array bigger to accommodate for the parallel FFT
     double old_L = L[0];
-    for( unsigned int idim=0; idim<ndim-1; idim++ ) {
+    for( unsigned int idim=0; idim<2; idim++ ) {
         double old_N = ( double )N[idim];
         N[idim]  = ( ( int ) ceil( ( double )N[idim] / MPI_size ) ) * MPI_size;
         L[idim] *= ( ( double )N[idim]/old_N );
