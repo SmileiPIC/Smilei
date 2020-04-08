@@ -1027,10 +1027,13 @@ void Params::print_init()
         }
     }
 
-    if( *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) > 0 ) {
-        for( unsigned int idim=0 ; idim < nDim_field ; idim++ ){
-            std::string strpass = (currentFilter_passes[idim] > 1 ? "passes" : "pass");
-            MESSAGE( 1, "Binomial current filtering : " << currentFilter_passes[idim] << " " << strpass << " along dimension " << idim );
+    if (currentFilter_passes.size() > 0){
+        if( *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) > 0 ) {
+            cout << "npasses = " << *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) << endl;
+            for( unsigned int idim=0 ; idim < nDim_field ; idim++ ){
+                std::string strpass = (currentFilter_passes[idim] > 1 ? "passes" : "pass");
+                MESSAGE( 1, "Binomial current filtering : " << currentFilter_passes[idim] << " " << strpass << " along dimension " << idim );
+            }
         }
     }
     if( Friedman_filter ) {
