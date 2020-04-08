@@ -95,7 +95,7 @@ In the photon production rate Eq. :eq:`photonProductionRate` appears the quantum
   S(\chi,\xi) = \frac{\sqrt{3}}{2\pi}\,\xi\,\left[\int_{\nu}^{+\infty} {\rm K}_{5/3}(y) dy
   + \frac{\xi^2}{1-\xi}\,{\rm K}_{2/3}(\nu)\right]\,,
 
-with :math:`\nu = 2\xi/[\chi(1-\xi)]`.
+with :math:`\nu = 2\xi/[3\chi(1-\xi)]`.
 
 Finally, the *instantaneous radiated power energy-spectrum* reads:
 
@@ -135,7 +135,7 @@ For arbitrary values of the electron quantum parameter :math:`\chi` (but mandato
 ******************************************************************************************************************************************************
 
 The model of high-energy photon emission described above is generic, and applies for any value of
-the electron quantum parameter** :math:`\chi` (of course as long as the assumptions listed above hold!).
+the electron quantum parameter :math:`\chi` (of course as long as the assumptions listed above hold!).
 In particular, it gives a correct description of high-energy photon emission and its back-reaction on
 the particle (electron or positron) dynamics in the quantum regime :math:`\chi \gtrsim 1`.
 In this regime, photons with energies of the order of the energy of the emitting particle can be produced.
