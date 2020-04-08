@@ -49,7 +49,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
 
     // get parameter "time_average" that determines the number of timestep to average the outputs
     time_average = 1;
-    PyTools::extract( "time_average", time_average, "DiagRadiationSpectrum", n_diag_rad_spectrum, "an integer");
+    PyTools::extract( "time_average", time_average, "DiagRadiationSpectrum", n_diag_rad_spectrum );
     if ( time_average < 1 ) time_average=1;
     if ( time_average > timeSelection->smallestInterval() ) {
         ERROR(errorPrefix << ": `time_average` is incompatible with `every`");
@@ -57,7 +57,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
-    if( ! PyTools::extract("species",species_names,"DiagRadiationSpectrum",n_diag_rad_spectrum) ) {
+    if( ! PyTools::extractV("species",species_names,"DiagRadiationSpectrum",n_diag_rad_spectrum) ) {
         ERROR(errorPrefix << ": parameter `species` required");
     }
     // verify that the species exist, remove duplicates and sort by number
@@ -68,8 +68,9 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     // --------------------------------------
     PyObject* photon_energy_axis = PyTools::extract_py("photon_energy_axis", "DiagRadiationSpectrum", n_diag_rad_spectrum);
     // Axis must be a list
-    if (!PyTuple_Check(photon_energy_axis) && !PyList_Check(photon_energy_axis))
+    if (!PyTuple_Check(photon_energy_axis) && !PyList_Check(photon_energy_axis)) {
         ERROR(errorPrefix << ": photon_energy_axis must be a list");
+    }
     PyObject* seq = PySequence_Fast(photon_energy_axis, "expected a sequence");
 
     // Axis must have 3 elements or more
@@ -78,26 +79,26 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
         ERROR(errorPrefix << ": photon_energy_axis must contain at least 3 arguments (contains only " << lenAxisArgs << ")");
 
     // Try to extract 1st element: axis min
-    if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 0), photon_energy_min)) {
+    if (!PyTools::py2scalar(PySequence_Fast_GET_ITEM(seq, 0), photon_energy_min)) {
         ERROR(errorPrefix << ", photon_energy_axis: 1st item must be a double (minimum photon energy)");
     }
 
     // Try to extract 2nd element: axis max
-    if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 1), photon_energy_max)) {
+    if (!PyTools::py2scalar(PySequence_Fast_GET_ITEM(seq, 1), photon_energy_max)) {
         ERROR(errorPrefix << ", photon_energy_axis: 2nd item must be a double (maximum photon energy)");
     }
 
     // Try to extract 3rd element: axis nbins
-    if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, 2), photon_energy_nbins)) {
+    if (!PyTools::py2scalar(PySequence_Fast_GET_ITEM(seq, 2), photon_energy_nbins)) {
         ERROR(errorPrefix << ", photon_energy_axis: 3rd item must be an int (number of bins)");
     }
-
+    
     // Check for  other keywords such as "logscale" and "edge_inclusive"
     photon_energy_logscale = false;
     photon_energy_edge_inclusive = false;
     for(unsigned int i=3; i<lenAxisArgs; i++) {
         std::string my_str("");
-        PyTools::convert(PySequence_Fast_GET_ITEM(seq, i),my_str);
+        PyTools::py2scalar(PySequence_Fast_GET_ITEM(seq, i),my_str);
         if(my_str=="logscale" ||  my_str=="log_scale" || my_str=="log")
             photon_energy_logscale = true;
         else if(my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive")
@@ -105,7 +106,8 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
         else
             ERROR(errorPrefix << ": keyword `" << my_str << "` not understood");
     }
-
+    Py_XDECREF( seq );
+    
     // construct the list of photon_energies
     photon_energies.resize(photon_energy_nbins);
     delta_energies.resize(photon_energy_nbins);

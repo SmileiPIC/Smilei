@@ -307,7 +307,7 @@ class Checkpoints(SmileiSingleton):
 class CurrentFilter(SmileiSingleton):
     """Current filtering parameters"""
     model = "binomial"
-    passes = 0
+    passes = [0]
 
 class FieldFilter(SmileiSingleton):
     """Fields filtering parameters"""
@@ -370,8 +370,8 @@ class Species(SmileiComponent):
 
 class ParticleInjector(SmileiComponent):
     """Parameters for particle injection at boundaries"""
-    name = None,
-    species = None,
+    name = None
+    species = None
     box_side = "xmin"
     position_initialization = "species"
     momentum_initialization = "species"

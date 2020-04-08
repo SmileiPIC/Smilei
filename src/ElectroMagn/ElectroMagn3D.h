@@ -97,7 +97,7 @@ public:
     void centerMagneticFields();
     
     //! Method used to apply a single-pass binomial filter on currents
-    void binomialCurrentFilter();
+    void binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes);
     
     //! Creates a new field with the right characteristics, depending on the name
     Field *createField( std::string fieldname );

@@ -52,17 +52,17 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
 
     if( PyTools::nComponents( "Checkpoints" ) > 0 ) {
     
-        PyTools::extract( "dump_step", dump_step, "Checkpoints", 0, "an integer" );
-        if( dump_step ) {
+        PyTools::extract( "dump_step", dump_step, "Checkpoints"  );
+        if( dump_step > 0 ) {
             MESSAGE( 1, "Code will dump after " << dump_step << " steps" );
         }
         
-        PyTools::extract( "dump_minutes", dump_minutes, "Checkpoints", 0, "a float" );
-        if( dump_minutes>0 ) {
+        PyTools::extract( "dump_minutes", dump_minutes, "Checkpoints"  );
+        if( dump_minutes > 0 ) {
             MESSAGE( 1, "Code will stop after " << dump_minutes << " minutes" );
         }
         
-        PyTools::extract( "keep_n_dumps", keep_n_dumps, "Checkpoints", 0, "an integer" );
+        PyTools::extract( "keep_n_dumps", keep_n_dumps, "Checkpoints"  );
         if( keep_n_dumps<1 ) {
             keep_n_dumps=1;
         }
@@ -72,11 +72,11 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             keep_n_dumps = keep_n_dumps_max;
         }
         
-        PyTools::extract( "exit_after_dump", exit_after_dump, "Checkpoints", 0, "True or False");
+        PyTools::extract( "exit_after_dump", exit_after_dump, "Checkpoints"  );
         
-        PyTools::extract( "dump_deflate", dump_deflate, "Checkpoints", 0, "an integer" );
+        PyTools::extract( "dump_deflate", dump_deflate, "Checkpoints"  );
         
-        PyTools::extract( "file_grouping", file_grouping, "Checkpoints", 0, "an integer" );
+        PyTools::extract( "file_grouping", file_grouping, "Checkpoints"  );
         if( file_grouping > 0 ) {
             if( file_grouping > ( unsigned int )( smpi->getSize() ) ) {
                 file_grouping = smpi->getSize();
@@ -88,7 +88,7 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
         
         if( params.restart ) {
             std::vector<std::string> restart_files;
-            if( ! PyTools::extract( "restart_files", restart_files, "Checkpoints" ) ) {
+            if( ! PyTools::extractV( "restart_files", restart_files, "Checkpoints" ) ) {
                 ERROR( "Internal parameter `restart_files` not understood. This should not happen" );
             }
             

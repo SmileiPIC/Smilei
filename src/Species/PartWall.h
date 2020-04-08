@@ -19,11 +19,6 @@ public:
     //! PartWall destructor
     ~PartWall() {};
     
-    //! Method that creates a vector of PartWall objects: one for each group in the input file.
-    static std::vector<PartWall *> create( Params &, Patch * );
-    //! Method that clones a vector of PartWall objects
-    static std::vector<PartWall *> clone( std::vector<PartWall *> );
-    
     //! Wall boundary condition pointer (same prototypes for all conditions)
     //! @see BoundaryConditionType.h for functions that this pointer will target
     int ( *wall )( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart );
