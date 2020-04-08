@@ -1546,7 +1546,7 @@ Following is the generic laser envelope creator ::
   The solver scheme for the envelope equation.
 
   * ``"explicit"``: an explicit scheme based  on central finite differences.
-  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along `x` in the ``"explicit"`` solver are substituted by 
+  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along `x` in the ``"explicit"`` solver are substituted by
     optimized derivatives to reduce numerical dispersion.
 
 .. py:data:: Envelope_boundary_conditions
@@ -2130,7 +2130,7 @@ tables.
     # Radiation parameters
     minimum_chi_continuous = 1e-3,
     minimum_chi_discontinuous = 1e-2,
-    table_path = "../databases/",
+    table_path = "<path to the external table folder>",
 
     # Parameters for Niel et al.
     Niel_computation_method = "table",
@@ -2156,7 +2156,7 @@ tables.
 
   :default: ``""``
 
-  Path to the external tables for the radiation losses.
+  Path to the **directory** that contains external tables for the radiation losses.
   If empty, the default tables are used.
   Default tables are embedded in the code.
   External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
@@ -2200,7 +2200,7 @@ There are three tables used for the multiphoton Breit-Wheeler refers to as the
   MultiphotonBreitWheeler(
 
     # Path to the tables
-    table_path = "../databases/",
+    table_path = "<path to the external table folder>",
 
   )
 
@@ -2208,7 +2208,7 @@ There are three tables used for the multiphoton Breit-Wheeler refers to as the
 
   :default: ``""``
 
-  Path to the external tables for the multiphoton Breit-Wheeler.
+  Path to the **directory** that contains external tables for the multiphoton Breit-Wheeler.
   If empty, the default tables are used.
   Default tables are embedded in the code.
   External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
