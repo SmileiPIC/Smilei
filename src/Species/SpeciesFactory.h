@@ -44,14 +44,10 @@ public:
     static Species *create( Params &params, int ispec, Patch *patch )
     {
 
-        std::string species_name( "" );
-
-        if( PyTools::extract( "name", species_name, "Species", ispec ) < 0 ) {
-            ERROR( "For species #" << ispec << ": `name` should be a string" );
-        }
-
         unsigned int tot_species_number = PyTools::nComponents( "Species" );
-        if( species_name.empty() ) {
+        
+        std::string species_name;
+        if( ! PyTools::extractOrNone( "name", species_name, "Species", ispec ) ) {
             std::ostringstream name( "" );
             name << "species" << std::setfill( '0' ) << std::setw( log10( tot_species_number )+1 ) << ispec;
             species_name = name.str();
@@ -72,11 +68,11 @@ public:
 
         // Extract type of species dynamics from namelist
         std::string pusher = "boris"; // default value
-        PyTools::extract( "pusher", pusher, "Species", ispec, "a string" );
+        PyTools::extract( "pusher", pusher, "Species", ispec );
 
         // Extract type of species radiation from namelist
         std::string radiation_model = "none"; // default value
-        PyTools::extract( "radiation_model", radiation_model, "Species", ispec, "a string" );
+        PyTools::extract( "radiation_model", radiation_model, "Species", ispec );
         // Cancelation of the letter case for `radiation_model`
         std::transform( radiation_model.begin(), radiation_model.end(), radiation_model.begin(), ::tolower );
         // Name simplification
@@ -93,7 +89,7 @@ public:
 
         // Extract mass from namelist
         double mass;
-        PyTools::extract( "mass", mass, "Species", ispec, "a float" );
+        PyTools::extract( "mass", mass, "Species", ispec );
 
         // Create species object
         Species *this_species = NULL;
@@ -225,7 +221,7 @@ public:
         // Monte-Carlo Photon emission properties
         if( mass > 0. ) {
             if( this_species->radiation_model_ == "mc" ) {
-                if( PyTools::extract( "radiation_photon_species", this_species->radiation_photon_species, "Species", ispec ) > 0 ) {
+                if( PyTools::extractOrNone( "radiation_photon_species", this_species->radiation_photon_species, "Species", ispec ) ) {
 
                     MESSAGE( 3, "| Macro-photon emission activated" );
 
@@ -238,7 +234,7 @@ public:
 
                     // Number of photons emitted per Monte-Carlo event
                     PyTools::extract( "radiation_photon_sampling",
-                        this_species->radiation_photon_sampling_, "Species", ispec, "an integer" );
+                        this_species->radiation_photon_sampling_, "Species", ispec );
                     if( this_species->radiation_photon_sampling_ < 1 ) {
                         ERROR( "For species '" << species_name
                                << "' radiation_photon_sampling should be > 1" );
@@ -248,7 +244,7 @@ public:
 
                     // Photon energy threshold
                     PyTools::extract( "radiation_photon_gamma_threshold",
-                        this_species->radiation_photon_gamma_threshold_, "Species", ispec, "a float" );
+                        this_species->radiation_photon_gamma_threshold_, "Species", ispec );
  
                     MESSAGE( 3, "| Photon energy threshold for macro-photon emission: "
                              << this_species->radiation_photon_gamma_threshold_ );
@@ -262,7 +258,7 @@ public:
         // Multiphoton Breit-Wheeler
         if( mass == 0 ) {
             // If this_species->multiphoton_Breit_Wheeler
-            if( PyTools::extract( "multiphoton_Breit_Wheeler", this_species->multiphoton_Breit_Wheeler_, "Species", ispec ) ) {
+            if( PyTools::extractV( "multiphoton_Breit_Wheeler", this_species->multiphoton_Breit_Wheeler_, "Species", ispec ) ) {
                 // If one of the species is empty
                 if( this_species->multiphoton_Breit_Wheeler_[1].empty() || this_species->multiphoton_Breit_Wheeler_[0].empty() ) {
                     ERROR( "For species '" << species_name
@@ -280,7 +276,7 @@ public:
 
                     // Number of emitted particles per MC event
                     this_species->mBW_pair_creation_sampling.resize( 2 );
-                    if( !PyTools::extract( "multiphoton_Breit_Wheeler_sampling",
+                    if( !PyTools::extractV( "multiphoton_Breit_Wheeler_sampling",
                                            this_species->mBW_pair_creation_sampling, "Species", ispec ) ) {
                         this_species->mBW_pair_creation_sampling[0] = 1;
                         this_species->mBW_pair_creation_sampling[1] = 1;
@@ -297,7 +293,7 @@ public:
         // Extract merging method
         this_species->merging_method_ = "none"; // default value
         this_species->has_merging_ = false; // default value
-        PyTools::extract( "merging_method", this_species->merging_method_, "Species", ispec, "a string" );
+        PyTools::extract( "merging_method", this_species->merging_method_, "Species", ispec );
         
         // Cancelation of the letter case for `merging_method_`
         std::transform( this_species->merging_method_.begin(),
@@ -333,7 +329,7 @@ public:
 
             // get extra parameters
             // Minimum particle number per packet to merge
-            PyTools::extract( "merge_min_packet_size", this_species->merge_min_packet_size_ , "Species", ispec, "an integer" );
+            PyTools::extract( "merge_min_packet_size", this_species->merge_min_packet_size_ , "Species", ispec );
             if (this_species->merge_min_packet_size_ < 4 && this_species->mass_ > 0)
             {
                 ERROR( "In Species " << this_species->name_
@@ -351,7 +347,7 @@ public:
             }
             
             // Maximum particle number per packet to merge
-            PyTools::extract( "merge_max_packet_size", this_species->merge_max_packet_size_ , "Species", ispec, "an integer" );
+            PyTools::extract( "merge_max_packet_size", this_species->merge_max_packet_size_ , "Species", ispec );
             if (this_species->merge_max_packet_size_ < 4 && this_species->mass_ > 0)
             {
                 ERROR( "In Species " << this_species->name_
@@ -376,7 +372,7 @@ public:
             }
             
             // Minimum momentum cell length for the momentum discretization
-            if( PyTools::extract( "merge_min_momentum_cell_length",
+            if( PyTools::extractV( "merge_min_momentum_cell_length",
                                   this_species->merge_min_momentum_cell_length_ ,
                                   "Species", ispec ) ) {
                 for (unsigned int i = 0 ; i < 3 ; i++) {
@@ -394,7 +390,7 @@ public:
             }
 
             // Read and check the threshold on the number of particles per cell
-            PyTools::extract( "merge_min_particles_per_cell", this_species->merge_min_particles_per_cell_ , "Species", ispec, "an integer" );
+            PyTools::extract( "merge_min_particles_per_cell", this_species->merge_min_particles_per_cell_ , "Species", ispec );
             if (this_species->merge_min_particles_per_cell_ < 4) {
                 ERROR( "In Species " << this_species->name_
                        << ": The threshold on the number of particles per cell "
@@ -403,10 +399,10 @@ public:
             }
             
             // Read flag to activate the accumulation correction
-            PyTools::extract( "merge_accumulation_correction", this_species->merge_accumulation_correction_ , "Species", ispec, "True or False" );
+            PyTools::extract( "merge_accumulation_correction", this_species->merge_accumulation_correction_ , "Species", ispec );
 
             // Momentum cell discretization
-            if( PyTools::extract( "merge_momentum_cell_size",
+            if( PyTools::extractV( "merge_momentum_cell_size",
                                   this_species->merge_momentum_cell_size_ ,
                                   "Species", ispec ) ) {
                 for (unsigned int i = 0 ; i < 3 ; i++) {
@@ -424,7 +420,7 @@ public:
             // Momentum cell discretization
             std::string discretization_scale;
             PyTools::extract( "merge_discretization_scale",
-                              discretization_scale, "Species", ispec, "a string" );
+                              discretization_scale, "Species", ispec );
             if (discretization_scale == "linear") {
                 this_species->merge_log_scale_ = false;
             } else if (discretization_scale == "log") {
@@ -441,7 +437,7 @@ public:
             // Minimum momentum in log scale
             PyTools::extract( "merge_min_momentum",
                               this_species->merge_min_momentum_log_scale_,
-                              "Species", ispec, "a float" );
+                              "Species", ispec );
             if (this_species->merge_min_momentum_log_scale_ <= 0) {
                 ERROR( "In Species " << this_species->name_
                        << ": merge_min_momentum should be above 0.");
@@ -489,7 +485,7 @@ public:
         
         // Position initialization
         PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", ispec );
-        if( PyTools::convert( py_pos_init, this_species->position_initialization_ ) ) {
+        if( PyTools::py2scalar( py_pos_init, this_species->position_initialization_ ) ) {
             if( this_species->position_initialization_.empty() ) {
                 ERROR( "For species '" << species_name << "' empty position_initialization" );
             } else if( ( this_species->position_initialization_!="regular" )
@@ -534,7 +530,7 @@ public:
         }
         Py_DECREF( py_pos_init );
 
-        if( PyTools::extract( "regular_number", this_species->regular_number_array_, "Species", ispec )){
+        if( PyTools::extractV( "regular_number", this_species->regular_number_array_, "Species", ispec )){
              if (this_species->position_initialization_ != "regular") {
                  ERROR("regular_number may not be provided if species position_initialization is not set to 'regular'.");
              }
@@ -543,7 +539,7 @@ public:
              }
         }
 
-        PyTools::extract( "ponderomotive_dynamics", this_species->ponderomotive_dynamics, "Species", ispec, "True or False" );
+        PyTools::extract( "ponderomotive_dynamics", this_species->ponderomotive_dynamics, "Species", ispec );
       
         if( this_species->ponderomotive_dynamics && ! params.Laser_Envelope_model ) {
             MESSAGE( "No Laser Envelope is specified - Standard PIC dynamics will be used for all species" );
@@ -552,7 +548,7 @@ public:
 
 
         PyObject *py_mom_init = PyTools::extract_py( "momentum_initialization", "Species", ispec );
-        if( PyTools::convert( py_mom_init, this_species->momentum_initialization_ ) ) {
+        if( PyTools::py2scalar( py_mom_init, this_species->momentum_initialization_ ) ) {
             if( ( this_species->momentum_initialization_=="mj" ) || ( this_species->momentum_initialization_=="maxj" ) ) {
                 this_species->momentum_initialization_="maxwell-juettner";
             }
@@ -610,9 +606,9 @@ public:
         }
         Py_DECREF( py_mom_init );
 
-        PyTools::extract( "c_part_max", this_species->c_part_max_, "Species", ispec, "a float" );
+        PyTools::extract( "c_part_max", this_species->c_part_max_, "Species", ispec );
 
-        PyTools::extract( "time_frozen", this_species->time_frozen_, "Species", ispec, "a float" );
+        PyTools::extract( "time_frozen", this_species->time_frozen_, "Species", ispec );
         if( this_species->time_frozen_ > 0 && this_species->momentum_initialization_!="cold" ) {
             if( patch->isMaster() ) {
                 WARNING( "For species '" << species_name << "' possible conflict between time-frozen & not cold initialization" );
@@ -622,7 +618,7 @@ public:
         int n_timesteps_relativistic_initialization   = ( int )( this_species->time_frozen_/params.timestep );
         this_species->time_relativistic_initialization_ = ( double )( n_timesteps_relativistic_initialization ) * params.timestep;
 
-        if( !PyTools::extract( "boundary_conditions", this_species->boundary_conditions, "Species", ispec ) ) {
+        if( !PyTools::extractVV( "boundary_conditions", this_species->boundary_conditions, "Species", ispec ) ) {
             ERROR( "For species '" << species_name << "', boundary_conditions not defined" );
         }
 
@@ -666,8 +662,8 @@ public:
         }
 
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
-        bool has_temperature = PyTools::extract( "thermal_boundary_temperature", this_species->thermal_boundary_temperature_, "Species", ispec ) > 0;
-        bool has_velocity    = PyTools::extract( "thermal_boundary_velocity", this_species->thermal_boundary_velocity_, "Species", ispec ) > 0;
+        bool has_temperature = PyTools::extractV( "thermal_boundary_temperature", this_species->thermal_boundary_temperature_, "Species", ispec ) > 0;
+        bool has_velocity    = PyTools::extractV( "thermal_boundary_velocity", this_species->thermal_boundary_velocity_, "Species", ispec ) > 0;
         if( has_thermalize ) {
             if( !has_temperature ) {
                 ERROR( "For species '" << species_name << "' thermal_boundary_temperature (thermalizing BC) should be a list of floats" );
@@ -701,15 +697,13 @@ public:
         // Manage the ionization parameters
         if( this_species->mass_ > 0 ) {
             this_species->atomic_number_ = 0;
-            if( PyTools::extract( "atomic_number", this_species->atomic_number_, "Species", ispec ) < 0 ) {
-                ERROR( "For species '" << species_name << "': atomic_number should be an integer" );
-            }
+            PyTools::extractOrNone( "atomic_number", this_species->atomic_number_, "Species", ispec );
             
             this_species->maximum_charge_state_ = 0;
-            PyTools::extract( "maximum_charge_state", this_species->maximum_charge_state_, "Species", ispec, "an integer" );
+            PyTools::extract( "maximum_charge_state", this_species->maximum_charge_state_, "Species", ispec);
             
             std::string model;
-            PyTools::extract( "ionization_model", model, "Species", ispec, "a string" );
+            PyTools::extract( "ionization_model", model, "Species", ispec );
             if( model!="none" ) {
                 
                 this_species->ionization_model = model;
@@ -759,9 +753,7 @@ public:
                     WARNING( "\t The improvement of their integration in vectorized algorithms is in progress." );
                 }
                 
-                if( PyTools::extract( "ionization_electrons", this_species->ionization_electrons, "Species", ispec ) <= 0 ) {
-                    ERROR( "For species '" << species_name << ": undefined ionization_electrons (required for ionization)" );
-                }
+                PyTools::extract( "ionization_electrons", this_species->ionization_electrons, "Species", ispec );
 
             }
 
@@ -769,7 +761,7 @@ public:
 
         // Extract if the species is relativistic and needs ad hoc fields initialization
         bool relativistic_field_initialization = false;
-        PyTools::extract( "relativistic_field_initialization", relativistic_field_initialization, "Species", ispec, "True or False" );
+        PyTools::extract( "relativistic_field_initialization", relativistic_field_initialization, "Species", ispec );
         this_species->relativistic_field_initialization_ = relativistic_field_initialization;
 
 
@@ -779,15 +771,13 @@ public:
 
         // Density
         bool ok1, ok2;
-        PyObject *profile1( nullptr ), *profile2( nullptr ), *profile3( nullptr );
-
-
+        PyObject * profile1 = nullptr;
         if( this_species->position_initialization_array_ == NULL ) {
             //These quantities are disregarded if positioning of the species is directly specified by the user
             // Matter particles
+            ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", ispec );
+            ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", ispec );
             if( this_species->mass_ > 0 ) {
-                ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", ispec );
-                ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", ispec );
                 if( ok1 &&  ok2 ) {
                     ERROR( "For species '" << species_name << "', cannot define both `number_density ` and `charge_density`." );
                 }
@@ -804,8 +794,6 @@ public:
             }
             // Photons
             else if( this_species->mass_ == 0 ) {
-                ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", ispec );
-                ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", ispec );
                 if( ok2 ) {
                     ERROR( "For photon species '" << species_name << "', `charge_density` has no meaning."
                             << "You must use `number_density`." );
@@ -840,24 +828,24 @@ public:
             ERROR( "For species '" << species_name << "', charge not found or not understood" );
         }
         this_species->charge_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( "charge ", species_name ), true );
-
+        
+        std::vector<PyObject *> prof;
         if( this_species->momentum_initialization_array_ == NULL ) {
             // Mean velocity
-            if( PyTools::extract3Profiles( "mean_velocity", "Species", ispec, profile1, profile2, profile3 ) ) {
-                this_species->velocity_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
-                this_species->velocity_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
-                this_species->velocity_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
+            if( PyTools::extract_1or3Profiles( "mean_velocity", "Species", ispec, prof ) ) {
+                this_species->velocity_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
+                this_species->velocity_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
+                this_species->velocity_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
             }
-
             // Temperature
-            if( PyTools::extract3Profiles( "temperature", "Species", ispec, profile1, profile2, profile3 ) ) {
-                this_species->temperature_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "temperature[0] ", species_name ), true );
-                this_species->temperature_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "temperature[1] ", species_name ), true );
-                this_species->temperature_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "temperature[2] ", species_name ), true );
+            if( PyTools::extract_1or3Profiles( "temperature", "Species", ispec, prof ) ) {
+                this_species->temperature_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "temperature[0] ", species_name ), true );
+                this_species->temperature_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "temperature[1] ", species_name ), true );
+                this_species->temperature_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "temperature[2] ", species_name ), true );
             }
         } else {
-            ok1 = PyTools::extract3Profiles( "mean_velocity", "Species", ispec, profile1, profile2, profile3 ) ;
-            ok2 = PyTools::extract3Profiles( "temperature", "Species", ispec, profile1, profile2, profile3 ) ;
+            ok1 = PyTools::extract_1or3Profiles( "mean_velocity", "Species", ispec, prof ) ;
+            ok2 = PyTools::extract_1or3Profiles( "temperature", "Species", ispec, prof ) ;
             if( ok1 ) {
                 ERROR( "For species '" << species_name << "', cannot define both `mean_velocity` and `momentum_initialization` array." );
             }
@@ -872,7 +860,7 @@ public:
         this_species->particles->tracked = false;
         for( unsigned int itrack=0; itrack<ntrack; itrack++ ) {
             std::string track_species;
-            PyTools::extract( "species", track_species, "DiagTrackParticles", itrack, "a string" );
+            PyTools::extract( "species", track_species, "DiagTrackParticles", itrack );
             if( track_species==species_name ) {
                 if( this_species->particles->tracked ) {
                     ERROR( "In this version, species '" << species_name << "' cannot be tracked by two DiagTrackParticles" );
@@ -882,7 +870,7 @@ public:
         }
 
         // Extract test Species flag
-        PyTools::extract( "is_test", this_species->particles->is_test, "Species", ispec, "True or False" );
+        PyTools::extract( "is_test", this_species->particles->is_test, "Species", ispec );
 
         // Verify they don't ionize
         if( this_species->ionization_model!="none" && this_species->particles->is_test ) {

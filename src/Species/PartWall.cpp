@@ -64,12 +64,9 @@ PartWalls::PartWalls( Params &params, Patch *patch )
     
         // Extract the direction of the wall
         string dirstring;
-        int extract_x = PyTools::extract( "x", position[iwall], "PartWall", iwall );
-        int extract_y = PyTools::extract( "y", position[iwall], "PartWall", iwall );
-        int extract_z = PyTools::extract( "z", position[iwall], "PartWall", iwall );
-        if( extract_x<0 || extract_y<0 || extract_z<0 ) {
-            ERROR( "PartWall #" << iwall << ": x, y, or z should be a float" );
-        }
+        bool extract_x = PyTools::extractOrNone( "x", position[iwall], "PartWall", iwall );
+        bool extract_y = PyTools::extractOrNone( "y", position[iwall], "PartWall", iwall );
+        bool extract_z = PyTools::extractOrNone( "z", position[iwall], "PartWall", iwall );
         if( extract_x + extract_y + extract_z > 1 ) {
             ERROR( "PartWall #" << iwall << ": cannot have several locations (x, y or z)" );
         }
@@ -93,7 +90,7 @@ PartWalls::PartWalls( Params &params, Patch *patch )
         }
         
         // Ewtract the kind of wall
-        PyTools::extract( "kind", kind[iwall], "PartWall", iwall, "a string" );
+        PyTools::extract( "kind", kind[iwall], "PartWall", iwall );
         if( kind[iwall].empty() || ( kind[iwall]!="reflective" && kind[iwall]!="remove" && kind[iwall]!="stop" && kind[iwall]!="thermalize" ) ) {
             ERROR( "For PartWall #" << iwall << ", `kind` must be one of reflective, remove, stop, thermalize" );
         }

@@ -21,7 +21,7 @@ TimeSelection::TimeSelection( PyObject *timeSelection, string name )
     if( PyNumber_Check( timeSelection ) ) {
     
         // Interpret as the period
-        if( !PyTools::convert( timeSelection, period ) ) {
+        if( !PyTools::py2scalar( timeSelection, period ) ) {
             ERROR( name << ": time selection must be a number or a list of numbers" );
         }
         // If zero, no output, ever
@@ -47,7 +47,7 @@ TimeSelection::TimeSelection( PyObject *timeSelection, string name )
         // Extract all values
         vector<double> items( nitems );
         for( int i=0; i<nitems; i++ )
-            if( !PyTools::convert( PySequence_Fast_GET_ITEM( seq, i ), items[i] ) ) {
+            if( !PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, i ), items[i] ) ) {
                 ERROR( name << ": time selection must be a list of numbers" );
             }
             

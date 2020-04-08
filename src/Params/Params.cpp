@@ -210,15 +210,12 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     // random seed
-    int extract_seed = PyTools::extract( "random_seed", random_seed, "Main" );
-    if( extract_seed > 0 ) {
+    if( PyTools::extractOrNone( "random_seed", random_seed, "Main" ) ) {
         // Init of the seed for the vectorized C++ random generator recommended by Intel
         // See https://software.intel.com/en-us/articles/random-number-function-vectorization
         srand48( random_seed );
         // Init of the seed for the C++ random generator
         Rand::gen = std::mt19937( random_seed );
-    } else if( extract_seed < 0 ) {
-        ERROR( "random_seed must be an integer" );
     }
 
     // communication pattern initialized as partial B exchange
@@ -232,7 +229,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     restart = false;
     std::vector<std::string> _unused_restart_files;
-    if( PyTools::nComponents( "Checkpoints" )>0 && PyTools::extract( "restart_files", _unused_restart_files, "Checkpoints" ) ) {
+    if( PyTools::nComponents( "Checkpoints" )>0 && PyTools::extractV( "restart_files", _unused_restart_files, "Checkpoints" ) ) {
         MESSAGE( 1, "Code will restart" );
         restart=true;
     }
@@ -242,7 +239,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // ---------------------
 
     reference_angular_frequency_SI = 0.;
-    PyTools::extract( "reference_angular_frequency_SI", reference_angular_frequency_SI, "Main" , 0, "a float" );
+    PyTools::extract( "reference_angular_frequency_SI", reference_angular_frequency_SI, "Main"   );
 
     // -------------------
     // Simulation box info
@@ -250,14 +247,14 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // geometry of the simulation
     geometry = "";
-    PyTools::extract( "geometry", geometry, "Main", 0, "a string" );
+    PyTools::extract( "geometry", geometry, "Main"  );
     if( geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="AMcylindrical" ) {
         ERROR( "Main.geometry `" << geometry << "` invalid" );
     }
     setDimensions();
 
     // interpolation order
-    PyTools::extract( "interpolation_order", interpolation_order, "Main", 0, "an integer" );
+    PyTools::extract( "interpolation_order", interpolation_order, "Main"  );
     if( interpolation_order!=2 && interpolation_order!=4 ) {
         ERROR( "Main.interpolation_order " << interpolation_order << " should be 2 or 4" );
     }
@@ -267,15 +264,15 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // if ( !PyTools::extract("exchange_particles_each", exchange_particles_each) )
     exchange_particles_each = 1;
 
-    PyTools::extract( "every_clean_particles_overhead", every_clean_particles_overhead, "Main" , 0, "an integer" );
+    PyTools::extract( "every_clean_particles_overhead", every_clean_particles_overhead, "Main"   );
 
     // TIME & SPACE RESOLUTION/TIME-STEPS
 
     // reads timestep & cell_length
-    PyTools::extract( "timestep", timestep, "Main" , 0, "a float" );
+    PyTools::extract( "timestep", timestep, "Main"   );
     res_time = 1.0/timestep;
 
-    PyTools::extract( "cell_length", cell_length, "Main" );
+    PyTools::extractV( "cell_length", cell_length, "Main" );
     if( cell_length.size()!=nDim_field ) {
         ERROR( "Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry );
     }
@@ -284,29 +281,29 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         res_space[i] = 1.0/cell_length[i];
     }
     // Number of modes in AMcylindrical geometry
-    PyTools::extract( "number_of_AM", nmodes, "Main" , 0, "an integer" );
+    PyTools::extract( "number_of_AM", nmodes, "Main"   );
 
     nmodes_rel_field_init = 1;
 
     // Number of modes in AMcylindrical geometry for relativistic field initialization
     // if not specified, it will be equal to the number of modes of the simulation
-    PyTools::extract( "number_of_AM_relativistic_field_initialization", nmodes_rel_field_init, "Main" , 0, "an integer" );
+    PyTools::extract( "number_of_AM_relativistic_field_initialization", nmodes_rel_field_init, "Main"   );
     if (nmodes_rel_field_init>nmodes){
         ERROR( "The number of AM modes computed in relativistic field initialization must be lower or equal than the number of modes of the simulation" );
     }
 
     
     // simulation duration & length
-    PyTools::extract( "simulation_time", simulation_time, "Main" , 0, "a float" );
+    PyTools::extract( "simulation_time", simulation_time, "Main"   );
 
-    PyTools::extract( "grid_length", grid_length, "Main" );
+    PyTools::extractV( "grid_length", grid_length, "Main" );
     if( grid_length.size()!=nDim_field ) {
         ERROR( "Dimension of grid_length ("<< grid_length.size() << ") != " << nDim_field << " for geometry " << geometry );
     }
 
 
     //! Boundary conditions for ElectroMagnetic Fields
-    if( !PyTools::extract( "EM_boundary_conditions", EM_BCs, "Main" ) ) {
+    if( !PyTools::extractVV( "EM_boundary_conditions", EM_BCs, "Main" ) ) {
         ERROR( "Electromagnetic boundary conditions (EM_boundary_conditions) not defined" );
     }
 
@@ -332,7 +329,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     if( n_envlaser >=1 ) {
         Laser_Envelope_model = true;
         //! Boundary conditions for Envelope Field
-        if( !PyTools::extract( "Envelope_boundary_conditions", Env_BCs, "LaserEnvelope" ) ) {
+        if( !PyTools::extractVV( "Envelope_boundary_conditions", Env_BCs, "LaserEnvelope" ) ) {
             ERROR( "Envelope_boundary_conditions not defined" );
         }
 
@@ -354,7 +351,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
         }
         
-        PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope", 0, "a string" );
+        PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope"  );
         if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
             ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
         }
@@ -374,7 +371,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
     }
 
-    PyTools::extract( "EM_boundary_conditions_k", EM_BCs_k, "Main" );
+    PyTools::extractVV( "EM_boundary_conditions_k", EM_BCs_k, "Main" );
     if( EM_BCs_k.size() == 0 ) {
         //Gives default value
         for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
@@ -413,33 +410,33 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     }
     save_magnectic_fields_for_SM = true;
-    PyTools::extract( "save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main" , 0, "True or False" );
+    PyTools::extract( "save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main"   );
     
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
     // -----------------------------------
 
     time_fields_frozen=0.0;
-    PyTools::extract( "time_fields_frozen", time_fields_frozen, "Main" , 0, "a float" );
+    PyTools::extract( "time_fields_frozen", time_fields_frozen, "Main"   );
 
     // Poisson Solver
-    PyTools::extract( "solve_poisson", solve_poisson, "Main" , 0, "True or False" );
-    PyTools::extract( "poisson_max_iteration", poisson_max_iteration, "Main" , 0, "an integer" );
-    PyTools::extract( "poisson_max_error", poisson_max_error, "Main" , 0, "a float" );
+    PyTools::extract( "solve_poisson", solve_poisson, "Main"   );
+    PyTools::extract( "poisson_max_iteration", poisson_max_iteration, "Main"   );
+    PyTools::extract( "poisson_max_error", poisson_max_error, "Main"   );
     // Relativistic Poisson Solver
-    PyTools::extract( "solve_relativistic_poisson", solve_relativistic_poisson, "Main" , 0, "True or False" );
-    PyTools::extract( "relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main" , 0, "an integer" );
-    PyTools::extract( "relativistic_poisson_max_error", relativistic_poisson_max_error, "Main" , 0, "a float" );
+    PyTools::extract( "solve_relativistic_poisson", solve_relativistic_poisson, "Main"   );
+    PyTools::extract( "relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main"   );
+    PyTools::extract( "relativistic_poisson_max_error", relativistic_poisson_max_error, "Main"   );
 
     // PXR parameters
-    PyTools::extract( "is_spectral", is_spectral, "Main" , 0, "True or False" );
+    PyTools::extract( "is_spectral", is_spectral, "Main"   );
     if( is_spectral ) {
         full_B_exchange=true;
     }
-    PyTools::extract( "is_pxr", is_pxr, "Main" , 0, "True or False" );
+    PyTools::extract( "is_pxr", is_pxr, "Main"   );
     
     // Maxwell Solver
-    PyTools::extract( "maxwell_solver", maxwell_sol, "Main" , 0, "a string" );
+    PyTools::extract( "maxwell_solver", maxwell_sol, "Main"   );
     if( maxwell_sol == "Lehe" ) {
         full_B_exchange=true;
     }
@@ -448,7 +445,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     int nCurrentFilter = PyTools::nComponents( "CurrentFilter" );
     for( int ifilt = 0; ifilt < nCurrentFilter; ifilt++ ) {
         string model;
-        PyTools::extract( "model", model, "CurrentFilter", ifilt, "a string" );
+        PyTools::extract( "model", model, "CurrentFilter", ifilt );
         if( model != "binomial" ) {
             ERROR( "Currently, only the `binomial` model is available in CurrentFilter()" );
         }
@@ -475,7 +472,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     int nFieldFilter = PyTools::nComponents( "FieldFilter" );
     for( int ifilt = 0; ifilt < nFieldFilter; ifilt++ ) {
         string model;
-        PyTools::extract( "model", model, "FieldFilter", ifilt, "a string" );
+        PyTools::extract( "model", model, "FieldFilter", ifilt );
         if( model != "Friedman" ) {
             ERROR( "Currently, only the `Friedman` model is available in FieldFilter()" );
         }
@@ -483,7 +480,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR( "Currently, the `Friedman` field filter is only availble in `2Dcartesian` geometry" );
         }
         Friedman_filter = true;
-        PyTools::extract( "theta", Friedman_theta, "FieldFilter", ifilt, "a float" );
+        PyTools::extract( "theta", Friedman_theta, "FieldFilter", ifilt );
         if( Friedman_filter && ( Friedman_theta==0. ) ) {
             WARNING( "Friedman filter is applied but parameter theta is set to zero" );
         }
@@ -510,14 +507,14 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
 
     // clrw
-    PyTools::extract( "clrw", clrw, "Main" , 0, "an integer" );
+    PyTools::extract( "clrw", clrw, "Main"   );
 
 
 
     // --------------------
     // Number of patches
     // --------------------
-    if( !PyTools::extract( "number_of_patches", number_of_patches, "Main" ) ) {
+    if( !PyTools::extractV( "number_of_patches", number_of_patches, "Main" ) ) {
         ERROR( "The parameter `number_of_patches` must be defined as a list of integers" );
     }
 
@@ -541,16 +538,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 #endif
 
     global_factor.resize( nDim_field, 1 );
-    PyTools::extract( "global_factor", global_factor, "Main" );
+    PyTools::extractV( "global_factor", global_factor, "Main" );
     norder.resize( nDim_field, 1 );
     norder.resize( nDim_field, 1 );
-    PyTools::extract( "norder", norder, "Main" );
+    PyTools::extractV( "norder", norder, "Main" );
     //norderx=norder[0];
     //nordery=norder[1];
     //norderz=norder[2];
 
 
-    PyTools::extract( "patch_arrangement", patch_arrangement, "Main", 0, "a string" );
+    PyTools::extract( "patch_arrangement", patch_arrangement, "Main"  );
     WARNING( "Patches distribution: " << patch_arrangement );
 
     int total_number_of_hilbert_patches = 1;
@@ -569,9 +566,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         load_balancing_time_selection = new TimeSelection(
             PyTools::extract_py( "every", "LoadBalancing" ), "Load balancing"
         );
-        PyTools::extract( "cell_load", cell_load, "LoadBalancing" , 0, "a float" );
-        PyTools::extract( "frozen_particle_load", frozen_particle_load, "LoadBalancing" , 0, "a float" );
-        PyTools::extract( "initial_balance", initial_balance, "LoadBalancing" , 0, "True or False" );
+        PyTools::extract( "cell_load", cell_load, "LoadBalancing"   );
+        PyTools::extract( "frozen_particle_load", frozen_particle_load, "LoadBalancing"   );
+        PyTools::extract( "initial_balance", initial_balance, "LoadBalancing"   );
     } else {
         load_balancing_time_selection = new TimeSelection();
     }
@@ -606,7 +603,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     if( PyTools::nComponents( "Vectorization" )>0 ) {
         // Extraction of the vectorization mode
-        PyTools::extract( "mode", vectorization_mode, "Vectorization" , 0, "a string" );
+        PyTools::extract( "mode", vectorization_mode, "Vectorization"   );
         if( !( vectorization_mode == "off" ||
                 vectorization_mode == "on" ||
                 vectorization_mode == "adaptive" ||
@@ -624,7 +621,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
 
         // Default mode for the adaptive mode
-        PyTools::extract( "initial_mode", adaptive_default_mode, "Vectorization" , 0, "a string" );
+        PyTools::extract( "initial_mode", adaptive_default_mode, "Vectorization"   );
         if( !( adaptive_default_mode == "off" ||
                 adaptive_default_mode == "on" ) ) {
             ERROR( "In block `Vectorization`, parameter `default` must be `off` or `on`" );
@@ -637,7 +634,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             );
     }
 
-    PyTools::extract( "cell_sorting", cell_sorting, "Main", 0, "True or False" );
+    PyTools::extract( "cell_sorting", cell_sorting, "Main"  );
     //MESSAGE("Sorting per cell : " << cell_sorting );
     //if (cell_sorting)
     //    vectorization_mode = "on";
@@ -664,15 +661,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Read the "print_every" parameter
     print_every = ( int )( simulation_time/timestep )/10;
-    if( PyTools::extract( "print_every", print_every, "Main" ) < 0 ) {
-        ERROR( "Main.print_every should be an integer" );
-    }
+    PyTools::extractOrNone( "print_every", print_every, "Main" );
     if( !print_every ) {
         print_every = 1;
     }
 
     // Read the "print_expected_disk_usage" parameter
-    PyTools::extract( "print_expected_disk_usage", print_expected_disk_usage, "Main" , 0, "True or False" );
+    PyTools::extract( "print_expected_disk_usage", print_expected_disk_usage, "Main"   );
 
     // -------------------------------------------------------
     // Checking species order
@@ -683,10 +678,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     double mass, mass2=0;
 
     for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
-        PyTools::extract( "mass", mass, "Species", ispec, "a float" );
+        PyTools::extract( "mass", mass, "Species", ispec );
         if( mass == 0 ) {
             for( unsigned int ispec2 = ispec+1; ispec2 < tot_species_number; ispec2++ ) {
-                PyTools::extract( "mass", mass2, "Species", ispec2, "a float" );
+                PyTools::extract( "mass", mass2, "Species", ispec2 );
                 if( mass2 > 0 ) {
                     ERROR( "the photon species (mass==0) should be defined after the particle species (mass>0)" );
                 }
@@ -706,7 +701,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     std::string radiation_model = "none";
     for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
 
-        PyTools::extract( "radiation_model", radiation_model, "Species", ispec, "a string" );
+        PyTools::extract( "radiation_model", radiation_model, "Species", ispec );
 
         // Cancelation of the letter case for `radiation_model`
         std::transform( radiation_model.begin(), radiation_model.end(), radiation_model.begin(), ::tolower );
@@ -735,7 +730,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     std::vector<std::string> multiphoton_Breit_Wheeler( 2 );
     for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
 
-        if( PyTools::extract( "multiphoton_Breit_Wheeler", multiphoton_Breit_Wheeler, "Species", ispec ) ) {
+        if( PyTools::extractV( "multiphoton_Breit_Wheeler", multiphoton_Breit_Wheeler, "Species", ispec ) ) {
             this->hasMultiphotonBreitWheeler = true;
         }
     }
@@ -766,7 +761,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         double offset = 0.;
         
         // If this laser has the hidden _offset attribute
-        if( PyTools::extract( "_offset", offset, "Laser", i_laser ) ) {
+        if( PyTools::extractOrNone( "_offset", offset, "Laser", i_laser ) ) {
             
             bool propagate = false;
             PyTools::extract( "_propagate", propagate, "Laser", i_laser );
@@ -792,7 +787,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             PyObject *p = PyTools::extract_py( "_profiles", "Laser", i_laser );
             vector<PyObject *> profiles;
             vector<int> profiles_n = {1, 2};
-            if( ! PyTools::convert( p, profiles ) ) {
+            if( ! PyTools::py2pyvector( p, profiles ) ) {
                 ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile must be a list of 2 profiles" );
             }
             Py_DECREF( p );
@@ -822,7 +817,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             
             // Extract _keep_n_strongest_modes
             int keep_n_strongest_modes=0;
-            PyTools::extract( "_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser, "an integer" );
+            PyTools::extract( "_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser );
             if( keep_n_strongest_modes<1 ) {
                 ERROR( "For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer" );
             }

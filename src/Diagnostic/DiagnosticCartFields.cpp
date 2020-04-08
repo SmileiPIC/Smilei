@@ -21,7 +21,7 @@ DiagnosticCartFields::DiagnosticCartFields( Params &params, SmileiMPI *smpi, Vec
     
     // Extract the time_average parameter
     time_average = 1;
-    PyTools::extract( "time_average", time_average, "DiagFields", ndiag, "an integer" );
+    PyTools::extract( "time_average", time_average, "DiagFields", ndiag );
     if( time_average < 1 ) {
         time_average = 1;
     }
@@ -34,7 +34,7 @@ DiagnosticCartFields::DiagnosticCartFields( Params &params, SmileiMPI *smpi, Vec
     
     // Extract the requested fields
     vector<string> fieldsToDump( 0 );
-    PyTools::extract( "fields", fieldsToDump, "DiagFields", ndiag );
+    PyTools::extractV( "fields", fieldsToDump, "DiagFields", ndiag );
     
     // List all fields that are requested
     std::vector<Field *> allFields( 0 );

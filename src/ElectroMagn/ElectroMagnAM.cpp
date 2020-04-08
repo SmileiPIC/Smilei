@@ -1124,8 +1124,6 @@ void ElectroMagnAM::sum_Poisson_fields_to_em_fields_AM( Patch *patch, Params &pa
     cField2D *ElAM  = static_cast<cField2D *>( El_[imode] );
     cField2D *ErAM  = static_cast<cField2D *>( Er_[imode] );
     cField2D *EtAM  = static_cast<cField2D *>( Et_[imode] );
-
-    complex<double>     i1 = std::complex<double>( 0., 1 );
   
     // El (d,p)
     for( unsigned int i=0; i<nl_d; i++ ) {
