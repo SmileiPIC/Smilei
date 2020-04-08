@@ -450,10 +450,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR( "Currently, only the `binomial` model is available in CurrentFilter()" );
         }
 
-        currentFilter_passes.resize(1,0);
-        if(PyTools::extract( "passes", currentFilter_passes[0], "CurrentFilter", ifilt, "an integer" ) != 1){ //test integer
-            PyTools::extract( "passes", currentFilter_passes, "CurrentFilter", ifilt );  //test list
-        }
+        PyTools::extractV( "passes", currentFilter_passes, "CurrentFilter", ifilt );  //test list
 
         if( currentFilter_passes.size() == 0 ) {
             ERROR( "passes cannot be empty" );
