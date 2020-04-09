@@ -931,6 +931,7 @@ public:
         new_species->photon_species                            = species->photon_species;
         new_species->species_number_                           = species->species_number_;
         new_species->position_initialization_on_species_       = species->position_initialization_on_species_;
+        new_species->position_initialization_on_species_type_  = species->position_initialization_on_species_type_;
         new_species->position_initialization_on_species_index  = species->position_initialization_on_species_index;
         new_species->position_initialization_                  = species->position_initialization_;
         new_species->position_initialization_array_            = species->position_initialization_array_;
@@ -1075,6 +1076,7 @@ public:
                         }
                         // We copy ispec2 which is the index of the species, already created, on which initialize particle of the new created species
                         returned_species[ispec1]->position_initialization_on_species_index=ispec2;
+                        returned_species[ispec1]->position_initialization_on_species_type_ = returned_species[ispec2]->position_initialization_;
                         // We copy position of species 2 (index ispec2), for position on species 1 (index ispec1)
                         returned_species[ispec1]->particles->Position=returned_species[ispec2]->particles->Position;
                     }
@@ -1082,6 +1084,15 @@ public:
                 if( returned_species[ispec1]->position_initialization_on_species_index==-1 ) {
                     ERROR( "Specie '"<<returned_species[ispec1]->position_initialization_<<"' doesn't exist. We can't initialize position on this species. Choose an already created specie or 'centered', 'regular', 'random'." )
                 }
+            } else {
+                returned_species[ispec1]->position_initialization_on_species_type_ = returned_species[ispec1]->position_initialization_;
+            }
+        }
+
+        // Update particles weight in specific case
+        if (params.geometry=="AMcylindrical") {
+            for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
+                ParticleCreator::regulateWeightwithPositionAM( returned_species[ispec1]->particles, returned_species[ispec1]->position_initialization_on_species_type_, returned_species[ispec1]->cell_length[1]  );
             }
         }
 
@@ -1201,6 +1212,13 @@ public:
             returned_species.push_back( new_species );
         }
         patch->copyPositions(returned_species);
+        
+        // Update particles weight in specific case
+        if (params.geometry=="AMcylindrical") {
+            for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
+                ParticleCreator::regulateWeightwithPositionAM( returned_species[ispec1]->particles, returned_species[ispec1]->position_initialization_on_species_type_, returned_species[ispec1]->cell_length[1]);
+            }
+        }
 
         // Ionization
         for( unsigned int i=0; i<returned_species.size(); i++ ) {
