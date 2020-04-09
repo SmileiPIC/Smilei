@@ -94,7 +94,7 @@ void Collisions::calculate_debye_length( Params &params, Patch *patch )
     if( nspec==0 ) {
         return;
     }
-    unsigned int nbin = patch->vecSpecies[0]->first_index.size();
+    unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
     
     patch->debye_length_squared.resize( nbin, 0. );
     double mean_debye_length = 0.;
@@ -108,10 +108,10 @@ void Collisions::calculate_debye_length( Params &params, Patch *patch )
             p  = s->particles;
             
             // Skip when no particles
-            if( s->last_index[ibin] <= s->first_index[ibin] ) continue;
+            if( s->particles->last_index[ibin] <= s->particles->first_index[ibin] ) continue;
             
             if( inv_cell_volume == 0. ) {
-                inv_cell_volume = 1. / patch->getPrimalCellVolume( p, s->first_index[ibin], params );
+                inv_cell_volume = 1. / patch->getPrimalCellVolume( p, s->particles->first_index[ibin], params );
             }
             
             // Calculation of particles density, mean charge, and temperature
@@ -121,7 +121,7 @@ void Collisions::calculate_debye_length( Params &params, Patch *patch )
             charge      = 0.;
             temperature = 0.;
             // loop particles to calculate average quantities
-            for( unsigned int iPart=s->first_index[ibin]; iPart<( unsigned int )s->last_index[ibin] ; iPart++ ) {
+            for( unsigned int iPart=s->particles->first_index[ibin]; iPart<( unsigned int )s->particles->last_index[ibin] ; iPart++ ) {
                 p2 = p->momentum( 0, iPart ) * p->momentum( 0, iPart )
                      +p->momentum( 1, iPart ) * p->momentum( 1, iPart )
                      +p->momentum( 2, iPart ) * p->momentum( 2, iPart );
@@ -195,7 +195,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
     NuclearReaction->prepare();
     
     // Loop bins of particles (typically, cells, but may also be clusters)
-    unsigned int nbin = patch->vecSpecies[0]->first_index.size();
+    unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
     
         // get number of particles for all necessary species
@@ -208,12 +208,12 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             npart2 = 0;
             for( ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
                 s1 = patch->vecSpecies[( *sg1 )[ispec1]];
-                np1[ispec1] = s1->last_index[ibin] - s1->first_index[ibin];
+                np1[ispec1] = s1->particles->last_index[ibin] - s1->particles->first_index[ibin];
                 npart1 += np1[ispec1];
             }
             for( ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
                 s2 = patch->vecSpecies[( *sg2 )[ispec2]];
-                np2[ispec2] = s2->last_index[ibin] - s2->first_index[ibin];
+                np2[ispec2] = s2->particles->last_index[ibin] - s2->particles->first_index[ibin];
                 npart2 += np2[ispec2];
             }
             if( npart2 <= npart1 ) {
@@ -286,8 +286,8 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             
             s1 = patch->vecSpecies[( *sg1 )[ispec1]];
             s2 = patch->vecSpecies[( *sg2 )[ispec2]];
-            i1 += s1->first_index[ibin];
-            i2 += s2->first_index[ibin];
+            i1 += s1->particles->first_index[ibin];
+            i2 += s2->particles->first_index[ibin];
             p1 = s1->particles;
             p2 = s2->particles;
             
@@ -338,8 +338,8 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             
             s1 = patch->vecSpecies[( *sg1 )[ispec1]];
             s2 = patch->vecSpecies[( *sg2 )[ispec2]];
-            i1 += s1->first_index[ibin];
-            i2 += s2->first_index[ibin];
+            i1 += s1->particles->first_index[ibin];
+            i2 += s2->particles->first_index[ibin];
             p1 = s1->particles;
             p2 = s2->particles;
             

@@ -46,12 +46,12 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
     NuclearReaction->prepare();
     
     // Loop bins of particles (typically, cells, but may also be clusters)
-    unsigned int nbin = patch->vecSpecies[0]->first_index.size();
+    unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
     
         // get number of particles for all necessary species
-        np1 = s1->last_index[ibin] - s1->first_index[ibin];
-        np2 = s2->last_index[ibin] - s2->first_index[ibin];
+        np1 = s1->particles->last_index[ibin] - s1->particles->first_index[ibin];
+        np2 = s2->particles->last_index[ibin] - s2->particles->first_index[ibin];
         // skip to next bin if no particles
         if( np1==0 || np2==0 ) {
             continue;
@@ -61,8 +61,8 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
             swap( s1, s2 );
             swap( np1, np2 );
         }
-        first_index1 = s1->first_index[ibin];
-        first_index2 = s2->first_index[ibin];
+        first_index1 = s1->particles->first_index[ibin];
+        first_index2 = s2->particles->first_index[ibin];
         p1 = s1->particles;
         p2 = s2->particles;
         

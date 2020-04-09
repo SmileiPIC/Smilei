@@ -638,7 +638,7 @@ void SmileiMPI::isend( Patch *patch, int to, int tag, Params &params )
     // Adaptive vectorization:
     // In the case of the adaptive mixed sort Vectorization,
     // we communicate the operator state (vectorized_operators variable)
-    // to deduce the bin number (last_index.size())
+    // to deduce the bin number (particles->last_index.size())
     // In both adaptive cases :
     //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
     //   - default values of the bin number is defined by the vectorized conf
@@ -653,7 +653,7 @@ void SmileiMPI::isend( Patch *patch, int to, int tag, Params &params )
 
     // For the particles
     for( int ispec=0 ; ispec<( int )patch->vecSpecies.size() ; ispec++ ) {
-        isend( &( patch->vecSpecies[ispec]->last_index ), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
+        isend( &( patch->vecSpecies[ispec]->particles->last_index ), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
         if( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ) {
             patch->vecSpecies[ispec]->exchangePatch = createMPIparticles( patch->vecSpecies[ispec]->particles );
             isend( patch->vecSpecies[ispec]->particles, to, tag+maxtag+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[maxtag+2*ispec+1] );
@@ -701,7 +701,7 @@ void SmileiMPI::isend_species( Patch *patch, int to, int tag, Params &params )
     // Adaptive vectorization:
     // In the case of the adaptive mixed sort Vectorization,
     // we communicate the operator state (vectorized_operators variable)
-    // to deduce the bin number (last_index.size())
+    // to deduce the bin number (particles->last_index.size())
     // In both adaptive cases :
     //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
     //   - default values of the bin number is defined by the vectorized conf
@@ -717,7 +717,7 @@ void SmileiMPI::isend_species( Patch *patch, int to, int tag, Params &params )
 
     // For the particles
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        isend( &( patch->vecSpecies[ispec]->last_index ), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
+        isend( &( patch->vecSpecies[ispec]->particles->last_index ), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
         if( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ) {
             patch->vecSpecies[ispec]->exchangePatch = createMPIparticles( patch->vecSpecies[ispec]->particles );
             isend( patch->vecSpecies[ispec]->particles, to, tag+maxtag+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[maxtag+2*ispec+1] );
@@ -793,7 +793,7 @@ void SmileiMPI::recv( Patch *patch, int from, int tag, Params &params )
     // Adaptive vectorization:
     // In the case of the adaptive mixed sort Vectorization,
     // we communicate the operator state (vectorized_operators variable)
-    // to deduce the bin number (last_index.size())
+    // to deduce the bin number (particles->last_index.size())
     // In both adaptive cases :
     //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
     //   - default values of the bin number is defined by the vectorized conf
@@ -804,8 +804,8 @@ void SmileiMPI::recv( Patch *patch, int from, int tag, Params &params )
         for( int ispec=0 ; ispec<( int )patch->vecSpecies.size() ; ispec++ ) {
             MPI_Recv( &( patch->vecSpecies[ispec]->vectorized_operators ), 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );
             if( !patch->vecSpecies[ispec]->vectorized_operators ) {
-                patch->vecSpecies[ispec]->last_index.resize( 1 );
-                patch->vecSpecies[ispec]->first_index.resize( 1 );
+                patch->vecSpecies[ispec]->particles->last_index.resize( 1 );
+                patch->vecSpecies[ispec]->particles->first_index.resize( 1 );
             }
             maxtag ++;
         }
@@ -814,12 +814,12 @@ void SmileiMPI::recv( Patch *patch, int from, int tag, Params &params )
 
     for( int ispec=0 ; ispec<( int )patch->vecSpecies.size() ; ispec++ ) {
         //Receive lst_index
-        recv( &patch->vecSpecies[ispec]->last_index, from, maxtag+2*ispec+1 );
-        //Reconstruct first_index from last_index
-        memcpy( &( patch->vecSpecies[ispec]->first_index[1] ), &( patch->vecSpecies[ispec]->last_index[0] ), ( patch->vecSpecies[ispec]->last_index.size()-1 )*sizeof( int ) );
-        patch->vecSpecies[ispec]->first_index[0]=0;
+        recv( &patch->vecSpecies[ispec]->particles->last_index, from, maxtag+2*ispec+1 );
+        //Reconstruct particles->first_index from particles->last_index
+        memcpy( &( patch->vecSpecies[ispec]->particles->first_index[1] ), &( patch->vecSpecies[ispec]->particles->last_index[0] ), ( patch->vecSpecies[ispec]->particles->last_index.size()-1 )*sizeof( int ) );
+        patch->vecSpecies[ispec]->particles->first_index[0]=0;
         //Prepare patch for receiving particles
-        nbrOfPartsRecv = patch->vecSpecies[ispec]->last_index.back();
+        nbrOfPartsRecv = patch->vecSpecies[ispec]->particles->last_index.back();
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if( nbrOfPartsRecv > 0 ) {
@@ -828,7 +828,7 @@ void SmileiMPI::recv( Patch *patch, int from, int tag, Params &params )
             MPI_Type_free( &( recvParts ) );
         }
         /*std::cerr << "Species: " << ispec
-                  << " last_index: " <<  patch->vecSpecies[ispec]->last_index[0]
+                  << " particles->last_index: " <<  patch->vecSpecies[ispec]->particles->last_index[0]
                   << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
     }
 
@@ -882,7 +882,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int tag, Params &params )
     // Adaptive vectorization:
     // In the case of the adaptive mixed sort Vectorization,
     // we communicate the operator state (vectorized_operators variable)
-    // to deduce the bin number (last_index.size())
+    // to deduce the bin number (particles->last_index.size())
     // In both adaptive cases :
     //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
     //   - default values of the bin number is defined by the vectorized conf
@@ -893,8 +893,8 @@ void SmileiMPI::recv_species( Patch *patch, int from, int tag, Params &params )
         for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
             MPI_Recv( &( patch->vecSpecies[ispec]->vectorized_operators ), 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );
             if( !patch->vecSpecies[ispec]->vectorized_operators ) {
-                patch->vecSpecies[ispec]->last_index.resize( 1 );
-                patch->vecSpecies[ispec]->first_index.resize( 1 );
+                patch->vecSpecies[ispec]->particles->last_index.resize( 1 );
+                patch->vecSpecies[ispec]->particles->first_index.resize( 1 );
             }
             maxtag ++;
         }
@@ -902,13 +902,13 @@ void SmileiMPI::recv_species( Patch *patch, int from, int tag, Params &params )
     }
 
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        //Receive last_index
-        recv( &patch->vecSpecies[ispec]->last_index, from, maxtag+2*ispec+1 );
-        //Reconstruct first_index from last_index
-        memcpy( &( patch->vecSpecies[ispec]->first_index[1] ), &( patch->vecSpecies[ispec]->last_index[0] ), ( patch->vecSpecies[ispec]->last_index.size()-1 )*sizeof( int ) );
-        patch->vecSpecies[ispec]->first_index[0]=0;
+        //Receive particles->last_index
+        recv( &patch->vecSpecies[ispec]->particles->last_index, from, maxtag+2*ispec+1 );
+        //Reconstruct particles->first_index from particles->last_index
+        memcpy( &( patch->vecSpecies[ispec]->particles->first_index[1] ), &( patch->vecSpecies[ispec]->particles->last_index[0] ), ( patch->vecSpecies[ispec]->particles->last_index.size()-1 )*sizeof( int ) );
+        patch->vecSpecies[ispec]->particles->first_index[0]=0;
         //Prepare patch for receiving particles
-        nbrOfPartsRecv = patch->vecSpecies[ispec]->last_index.back();
+        nbrOfPartsRecv = patch->vecSpecies[ispec]->particles->last_index.back();
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if( nbrOfPartsRecv > 0 ) {
@@ -917,7 +917,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int tag, Params &params )
             MPI_Type_free( &( recvParts ) );
         }
         /*std::cerr << "Species: " << ispec
-                  << " last_index: " <<  patch->vecSpecies[ispec]->last_index[0]
+                  << " particles->last_index: " <<  patch->vecSpecies[ispec]->particles->last_index[0]
                   << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
     }
     

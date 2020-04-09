@@ -398,6 +398,9 @@ public:
         prop = double_prop[iprop];
     }
 
+    //! Indices of first and last particles in each bin/cell
+    std::vector<int> first_index, last_index;
+
 private:
 
 };
