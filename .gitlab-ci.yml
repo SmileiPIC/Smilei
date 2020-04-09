@@ -6,8 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    - radiationSpectrum
-    - envelope_reduced_dispersion
+    - move_indexes
 
   script:
     # Force workdir cleaning in case of retried
@@ -29,8 +28,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - radiationSpectrum
-    - envelope_reduced_dispersion
+    - move_indexes
     
   script:
     # Move in test dir
@@ -42,8 +40,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - radiationSpectrum
-    - envelope_reduced_dispersion
+    - move_indexes
 
   script:
     # Move in test dir
@@ -55,9 +52,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - radiationSpectrum
-    - AMsorting
-    - envelope_reduced_dispersion
+    - move_indexes
 
   script:
     # Move in test dir
@@ -69,8 +64,7 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - radiationSpectrum
-    - envelope_reduced_dispersion
+    - move_indexes
     
   script:
     # Move in test dir
@@ -82,8 +76,7 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - radiationSpectrum
-    - envelope_reduced_dispersion
+    - move_indexes
 
   script:
     # Move in test dir
@@ -95,8 +88,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - radiationSpectrum
-    - envelope_reduced_dispersion
+    - move_indexes
     
   script:
     # Move in test dir
