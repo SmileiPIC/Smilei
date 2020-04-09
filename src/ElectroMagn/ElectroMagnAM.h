@@ -148,7 +148,6 @@ public:
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ() override;
     void addToGlobalRho( int ispec, unsigned int clrw );
-    void computeTotalRhoJs( unsigned int clrw );
     
     //! Method used to compute the total susceptibility by summing over all species
     void computeTotalEnvChi() override;
