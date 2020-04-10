@@ -210,7 +210,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: 'Yee'
 
-  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"`` are available for ``2DCartesian`` and ``"Lehe"`` is available for ``3DCartesian``. The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
+  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian`` and ``"Lehe"`` is available for ``3DCartesian``. The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
 
 .. py:data:: solve_poisson
 

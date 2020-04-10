@@ -437,7 +437,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     
     // Maxwell Solver
     PyTools::extract( "maxwell_solver", maxwell_sol, "Main"   );
-    if( maxwell_sol == "Lehe" ) {
+    if( (maxwell_sol == "Lehe")||(maxwell_sol == "Bouchard") ) {
         full_B_exchange=true;
     }
 

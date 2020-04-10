@@ -32,8 +32,8 @@ OpenPMDparams::OpenPMDparams( Params &p ):
     fieldSolverParameters = "";
     if( params->maxwell_sol == "Yee" ) {
         fieldSolver = "Yee";
-    } else if( params->maxwell_sol == "Lehe" ) {
-        fieldSolver = "Lehe";
+    } else if( (params->maxwell_sol == "Lehe") || (params->maxwell_sol == "Bouchard") ) {
+        fieldSolver = "Bouchard";
     } else {
         fieldSolver = "other";
         fieldSolverParameters = params->maxwell_sol;

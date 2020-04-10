@@ -12,6 +12,7 @@
 #include "MF_SolverAM_Yee.h"
 #include "MF_Solver2D_Grassi.h"
 #include "MF_Solver2D_GrassiSpL.h"
+#include "MF_Solver2D_Bouchard.h"
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
 #include "MF_Solver3D_Lehe.h"
@@ -93,6 +94,8 @@ public:
                     solver = new MF_Solver2D_Grassi( params );
                 } else if( params.maxwell_sol == "GrassiSpL" ) {
                     solver = new MF_Solver2D_GrassiSpL( params );
+                } else if( params.maxwell_sol == "Bouchard" ) {
+                    solver = new MF_Solver2D_Bouchard( params );
                 } else if( params.maxwell_sol == "Cowan" ) {
                     solver = new MF_Solver2D_Cowan( params );
                 } else if( params.maxwell_sol == "Lehe" ) {
