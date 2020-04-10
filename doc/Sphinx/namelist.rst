@@ -466,6 +466,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 
 .. py:data:: time_start
 
+  :type: Float.
   :default: 0.
 
   The time at which the window starts moving.
@@ -473,18 +474,21 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 
 .. py:data:: velocity_x
 
+  :type: Float.
   :default: 0.
 
   The average velocity of the moving window in the `x_max` direction. It muste be between 0 and 1.
 
 .. py:data:: number_of_additional_shifts
 
+  :type: Integer.
   :default: 0.
 
   The number of additional shifts of the moving window.
 
 .. py:data:: additional_shifts_time
 
+  :type: Float.
   :default: 0.
 
   The time at which the additional shifts are done.
@@ -507,20 +511,23 @@ which parameters are controlled in the following block::
 
   CurrentFilter(
       model = "binomial",
-      passes = 0,
+      passes = [0],
   )
 
 .. py:data:: model
 
+  :type: String.
   :default: ``"binomial"``
 
   The model for current filtering. Presently, only ``"binomial"`` current filtering is available.
 
 .. py:data:: passes
 
-  :default: ``0``
+  :type: A python list of integers.
+  :default: ``[0]``
 
-  The number of passes in the filter at each timestep.
+  The number of passes in the filter at each timestep given for all dimensions.
+  If the list is of length 1, the same number of passes is assumed for all dimensions.
 
 
 ----

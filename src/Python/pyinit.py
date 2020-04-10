@@ -307,7 +307,7 @@ class Checkpoints(SmileiSingleton):
 class CurrentFilter(SmileiSingleton):
     """Current filtering parameters"""
     model = "binomial"
-    passes = 0
+    passes = [0]
 
 class FieldFilter(SmileiSingleton):
     """Fields filtering parameters"""

@@ -1336,7 +1336,7 @@ void ElectroMagnAM::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply a single pass binomial filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnAM::binomialCurrentFilter()
+void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
 {
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
     
@@ -1345,41 +1345,115 @@ void ElectroMagnAM::binomialCurrentFilter()
         cField2D *Jr     = static_cast<cField2D *>(Jr_ [imode]);
         cField2D *Jt     = static_cast<cField2D *>(Jt_ [imode]);
 
-        cField2D *tmp   = new cField2D( dimPrim, 0, false );
-        tmp->copyFrom( Jl );
-        for( unsigned int i=1; i<nl_d-1; i++ ) {
-            for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
-                ( *Jl )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1)
-                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j  )
-                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+1)
-                                  )/16.*dr*invR[j];
+        // applying a single pass of the binomial filter along X
+        if (ipass < passes[0]){
+            // on Jl^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+            for( unsigned int i=0; i<nl_d-1; i++ ) {
+                for( unsigned int j=isYmin*2; j<nr_p; j++ ) {
+                        ( *Jl )( i, j) = ( ( *Jl )( i, j) + ( *Jl )( i+1, j) )*0.5;
+                }
+            }
+            for( unsigned int i=nl_d-2; i>0; i-- ) {
+                for( unsigned int j=isYmin*2; j<nr_p; j++ ) {
+                        ( *Jl )( i, j) = ( ( *Jl )( i, j) + ( *Jl )( i-1, j) )*0.5;
+                }
+            }
+            // Jr
+            for( unsigned int i=0; i<nl_p-1; i++ ) {
+                for( unsigned int j=isYmin*3; j<nr_d; j++ ) {
+                        ( *Jr )( i, j) = ( ( *Jr )( i, j) + ( *Jr )( i+1, j) )*0.5;
+                }
+            }
+            for( unsigned int i=nl_p-2; i>0; i-- ) {
+                for( unsigned int j=isYmin*3; j<nr_d; j++ ) {
+                        ( *Jr )( i, j) = ( ( *Jr )( i, j) + ( *Jr )( i-1, j) )*0.5;
+                }
+            }
+            // Jt
+            for( unsigned int i=0; i<nl_p-1; i++ ) {
+                for( unsigned int j=isYmin*2; j<nr_p; j++ ) {
+                        ( *Jt )( i, j) = ( ( *Jt )( i, j) + ( *Jt )( i+1, j) )*0.5;
+                }
+            }
+            for( unsigned int i=nl_p-2; i>0; i-- ) {
+                for( unsigned int j=isYmin*2; j<nr_p; j++ ) {
+                        ( *Jt )( i, j) = ( ( *Jt )( i, j) + ( *Jt )( i-1, j) )*0.5;
+                }
             }
         }
-        delete tmp;
 
-        tmp   = new cField2D( dimPrim, 1, false );
-        tmp->copyFrom( Jr );
-        for( unsigned int i=1; i<nl_p-1; i++ ) {
-            for( unsigned int j=isYmin*3+1; j<nr_d-1; j++ ) {
-                ( *Jr )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1.5)
-                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j-0.5)
-                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+0.5)
-                                  )/16.*dr*invRd[j];
+        // applying a single pass of the binomial filter along Y
+        if (ipass < passes[1]){
+            //Jl
+            for( unsigned int i=1; i<nl_d-1; i++ ) {
+                for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
+                        ( *Jl )( i, j) = ( ( *Jl )( i, j) + ( *Jl )( i, j+1)*(1.+dr*invR[j]) )*0.5;
+                }
+            }
+            for( unsigned int i=1; i<nl_d-1; i++ ) {
+                for( unsigned int j=nr_p-2; j>isYmin*2; j-- ) {
+                        ( *Jl )( i, j) = ( ( *Jl )( i, j) + ( *Jl )( i, j-1)*(1.-dr*invR[j]) )*0.5;
+                }
+            }
+            //Jr
+            for( unsigned int i=1; i<nl_p-1; i++ ) {
+                for( unsigned int j=isYmin*3; j<nr_d-1; j++ ) {
+                        ( *Jr )( i, j) = ( ( *Jr )( i, j) + ( *Jr )( i, j+1)*(1.+dr*invRd[j]) )*0.5;
+                }
+            }
+            for( unsigned int i=1; i<nl_p-1; i++ ) {
+                for( unsigned int j=nr_d-2; j>isYmin*3; j-- ) {
+                        ( *Jr )( i, j) = ( ( *Jr )( i, j) + ( *Jr )( i, j-1)*(1.-dr*invRd[j]) )*0.5;
+                }
+            }
+            //Jt
+            for( unsigned int i=1; i<nl_p-1; i++ ) {
+                for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
+                        ( *Jt )( i, j) = ( ( *Jt )( i, j) + ( *Jt )( i, j+1)*(1.+dr*invR[j]) )*0.5;
+                }
+            }
+            for( unsigned int i=1; i<nl_p-1; i++ ) {
+                for( unsigned int j=nr_p-2; j>isYmin*2; j-- ) {
+                        ( *Jt )( i, j) = ( ( *Jt )( i, j) + ( *Jt )( i, j-1)*(1.-dr*invR[j]) )*0.5;
+                }
             }
         }
-        delete tmp;
 
-        tmp   = new cField2D( dimPrim, 2, false );
-        tmp->copyFrom( Jt );
-        for( unsigned int i=1; i<nl_p-1; i++ ) {
-            for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
-                ( *Jt )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1)
-                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j  )
-                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+1)
-                                  )/16.*dr*invR[j];
-            }
-        }
-        delete tmp;
+        //cField2D *tmp   = new cField2D( dimPrim, 0, false );
+        //tmp->copyFrom( Jl );
+        //for( unsigned int i=1; i<nl_d-1; i++ ) {
+        //    for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
+        //        ( *Jl )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1)
+        //                          + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j  )
+        //                          + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+1)
+        //                          )/16.*dr*invR[j];
+        //    }
+        //}
+        //delete tmp;
+
+        //tmp   = new cField2D( dimPrim, 1, false );
+        //tmp->copyFrom( Jr );
+        //for( unsigned int i=1; i<nl_p-1; i++ ) {
+        //    for( unsigned int j=isYmin*3+1; j<nr_d-1; j++ ) {
+        //        ( *Jr )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1.5)
+        //                          + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j-0.5)
+        //                          + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+0.5)
+        //                          )/16.*dr*invRd[j];
+        //    }
+        //}
+        //delete tmp;
+
+        //tmp   = new cField2D( dimPrim, 2, false );
+        //tmp->copyFrom( Jt );
+        //for( unsigned int i=1; i<nl_p-1; i++ ) {
+        //    for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
+        //        ( *Jt )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1)
+        //                          + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j  )
+        //                          + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+1)
+        //                          )/16.*dr*invR[j];
+        //    }
+        //}
+        //delete tmp;
     }
 }
 
@@ -1397,34 +1471,24 @@ void ElectroMagnAM::computeTotalRhoJ()
         cField2D *Jr     = Jr_[imode];
         cField2D *Jt     = Jt_[imode];
         cField2D *rho    = rho_AM_[imode];
-        //MESSAGE("c");
         // -----------------------------------
         // Species currents and charge density
         // -----------------------------------
         for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
         
             int ifield = imode*n_species+ispec;
-            // MESSAGE("cc");
-            // MESSAGE(Jl_s.size());
-            // MESSAGE(Jl_.size());
-            // MESSAGE(ifield);
             if( Jl_s[ifield] ) {
                 cField2D *Jl2D_s  = Jl_s[ifield];
-                for( unsigned int i=0 ; i<=nl_p ; i++ ) {
-                    //MESSAGE("here");
-                    //MESSAGE(nr_p);
-                    //MESSAGE(nl_p);
+                for( unsigned int i=0 ; i<nl_d ; i++ ) {
                     for( unsigned int j=0 ; j<nr_p ; j++ ) {
-                        //MESSAGE("here i=" <<i << "  j="<<j);
                         ( *Jl )( i, j ) += ( *Jl2D_s )( i, j );
                     }
                 }
             }
-            //MESSAGE("or here");
             if( Jr_s[ifield] ) {
                 cField2D *Jr2D_s  = Jr_s[ifield];
                 for( unsigned int i=0 ; i<nl_p ; i++ )
-                    for( unsigned int j=0 ; j<=nr_p ; j++ ) {
+                    for( unsigned int j=0 ; j<nr_d ; j++ ) {
                         ( *Jr )( i, j ) += ( *Jr2D_s )( i, j );
                     }
             }
@@ -1446,7 +1510,6 @@ void ElectroMagnAM::computeTotalRhoJ()
         }//END loop on species ispec
         
     }//END loop on mmodes
-    //MESSAGE("totalRj");
 } //END computeTotalRhoJ
 
 // ---------------------------------------------------------------------------------------------------------------------

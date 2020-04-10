@@ -95,7 +95,7 @@ Main(
 
 CurrentFilter(
     model = "binomial",
-    passes = 3,
+    passes = [3,3],
 )
 
 FieldFilter(

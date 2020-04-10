@@ -18,6 +18,11 @@ Get Smilei
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
+* New features
+
+  * Current filtering with adjustable number of passes per dimension.
+  * Improved axis boundary conditions for ``AMcylindrical`` geometry.
+
 * Bugfixes:
 
   * Scalar ``Ukin_bnd`` was sometimes wrong with load balancing
@@ -32,6 +37,7 @@ Upcoming changes
 * In the future:
 
   * Single Domain Multiple Decomposition
+  * Spectral Solvers
 
 ----
 
