@@ -13,8 +13,8 @@
 
 
 import os, re, numpy as np, h5py
-import matplotlib.pyplot as plt
-import matplotlib as mpl
+# import matplotlib.pyplot as plt
+# import matplotlib as mpl
 import happi
 
 # ______________________________________________________________________________
@@ -46,6 +46,7 @@ def adaptive_error(value, number_of_points, thresholds):
         return value*(thresholds["factor"][i_threshold]*(1-d) + d*thresholds["factor"][i_threshold+1])
         
 # ______________________________________________________________________________
+# opening of the case
 
 S = happi.Open(["./restart*"], verbose=False)
 dx = S.namelist.Main.cell_length[0]
@@ -143,8 +144,8 @@ print(' Maximum relative error kinetic energy: {}'.format(ukin_mc_rel_err.max())
 print(' Maximum relative error radiative energy: {}'.format(urad_mc_rel_err.max()))
 
 # Validation difference between continuous and discontinuous methods
-Validate("Relative error on the kinetic energy / ukin at t=0 (MC/CLL) " , ukin_mc_rel_err.max(), 0.011 )
-Validate("Relative error on the radiative energy / urad max (MC/CLL) " , urad_mc_rel_err.max(), 0.011 )
+Validate("Relative error on the kinetic energy / ukin at t=0 (MC/CLL) " , ukin_mc_rel_err.max(), 0.013 )
+Validate("Relative error on the radiative energy / urad max (MC/CLL) " , urad_mc_rel_err.max(), 0.013 )
 
 # ______________________________________________________________________________
 # Checking of the particle binning

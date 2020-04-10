@@ -466,6 +466,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 
 .. py:data:: time_start
 
+  :type: Float.
   :default: 0.
 
   The time at which the window starts moving.
@@ -473,18 +474,21 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 
 .. py:data:: velocity_x
 
+  :type: Float.
   :default: 0.
 
   The average velocity of the moving window in the `x_max` direction. It muste be between 0 and 1.
 
 .. py:data:: number_of_additional_shifts
 
+  :type: Integer.
   :default: 0.
 
   The number of additional shifts of the moving window.
 
 .. py:data:: additional_shifts_time
 
+  :type: Float.
   :default: 0.
 
   The time at which the additional shifts are done.
@@ -507,20 +511,23 @@ which parameters are controlled in the following block::
 
   CurrentFilter(
       model = "binomial",
-      passes = 0,
+      passes = [0],
   )
 
 .. py:data:: model
 
+  :type: String.
   :default: ``"binomial"``
 
   The model for current filtering. Presently, only ``"binomial"`` current filtering is available.
 
 .. py:data:: passes
 
-  :default: ``0``
+  :type: A python list of integers.
+  :default: ``[0]``
 
-  The number of passes in the filter at each timestep.
+  The number of passes in the filter at each timestep given for all dimensions.
+  If the list is of length 1, the same number of passes is assumed for all dimensions.
 
 
 ----
@@ -1546,7 +1553,7 @@ Following is the generic laser envelope creator ::
   The solver scheme for the envelope equation.
 
   * ``"explicit"``: an explicit scheme based  on central finite differences.
-  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along `x` in the ``"explicit"`` solver are substituted by 
+  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along `x` in the ``"explicit"`` solver are substituted by
     optimized derivatives to reduce numerical dispersion.
 
 .. py:data:: Envelope_boundary_conditions
@@ -2130,7 +2137,7 @@ tables.
     # Radiation parameters
     minimum_chi_continuous = 1e-3,
     minimum_chi_discontinuous = 1e-2,
-    table_path = "../databases/",
+    table_path = "<path to the external table folder>",
 
     # Parameters for Niel et al.
     Niel_computation_method = "table",
@@ -2156,7 +2163,7 @@ tables.
 
   :default: ``""``
 
-  Path to the external tables for the radiation losses.
+  Path to the **directory** that contains external tables for the radiation losses.
   If empty, the default tables are used.
   Default tables are embedded in the code.
   External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
@@ -2200,7 +2207,7 @@ There are three tables used for the multiphoton Breit-Wheeler refers to as the
   MultiphotonBreitWheeler(
 
     # Path to the tables
-    table_path = "../databases/",
+    table_path = "<path to the external table folder>",
 
   )
 
@@ -2208,7 +2215,7 @@ There are three tables used for the multiphoton Breit-Wheeler refers to as the
 
   :default: ``""``
 
-  Path to the external tables for the multiphoton Breit-Wheeler.
+  Path to the **directory** that contains external tables for the multiphoton Breit-Wheeler.
   If empty, the default tables are used.
   Default tables are embedded in the code.
   External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
@@ -3218,7 +3225,7 @@ A few things are important to know when you need dumps and restarts.
 
   .. py:data:: file_grouping
 
-    :default: ``None``
+    :default: ``0`` (no grouping)
 
     The maximum number of checkpoint files that can be stored in one directory.
     Subdirectories are created to accomodate for all files.

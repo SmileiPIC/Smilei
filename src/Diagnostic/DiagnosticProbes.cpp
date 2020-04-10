@@ -107,7 +107,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
 
     // Extract "number" (number of points you have in each dimension of the probe,
     // which must be smaller than the code dimensions)
-    PyTools::extract( "number", vecNumber, "DiagProbe", n_probe );
+    PyTools::extractV( "number", vecNumber, "DiagProbe", n_probe );
 
     // Dimension of the probe grid
     dimProbe=vecNumber.size();
@@ -131,7 +131,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
 
     // Extract origin and corners
     // (positions of the vertices of the grid)
-    if( ! PyTools::extract( "origin", origin, "DiagProbe", n_probe ) ) {
+    if( ! PyTools::extractV( "origin", origin, "DiagProbe", n_probe ) ) {
         ERROR( "Probe #"<<n_probe<<": origin missing" );
     }
 
@@ -140,8 +140,8 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
     }
 
     corners.resize( 0 );
-    bool has_corners = PyTools::extract( "corners", corners, "DiagProbe", n_probe );
-    bool has_vectors = PyTools::extract( "vectors", corners, "DiagProbe", n_probe );
+    bool has_corners = PyTools::extractVV( "corners", corners, "DiagProbe", n_probe );
+    bool has_vectors = PyTools::extractVV( "vectors", corners, "DiagProbe", n_probe );
     if( has_corners && has_vectors ) {
         ERROR( "Probe #"<<n_probe<<": cannot define both `corners` and `vectors`" );
     }
@@ -201,7 +201,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
 
     // Extract the list of requested fields
     vector<string> fs;
-    if( !PyTools::extract( "fields", fs, "DiagProbe", n_probe ) ) {
+    if( !PyTools::extractV( "fields", fs, "DiagProbe", n_probe ) ) {
         fs.resize( 10 );
         fs[0]="Ex";
         fs[1]="Ey";

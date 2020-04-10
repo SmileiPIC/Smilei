@@ -44,9 +44,9 @@ void EnvelopeBCAM_Axis::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, d
     
     Field2D  *Phi2Dcyl      = static_cast<Field2D *>( envelope->Phi_ ); // the ponderomotive potential Phi=|A|^2/2 at timestep n
     
-    Field2D *Env_Aabs2Dcyl  = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // absolute value of the envelope |A|
+    //Field2D *Env_Aabs2Dcyl  = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // absolute value of the envelope |A|
 
-    Field2D *Env_Eabs2Dcyl  = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // absolute value of the envelope of the electric field of the  laser |E|
+    //Field2D *Env_Eabs2Dcyl  = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // absolute value of the envelope of the electric field of the  laser |E|
     
 // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
   

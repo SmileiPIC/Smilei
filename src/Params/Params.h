@@ -165,7 +165,7 @@ public:
     std::string maxwell_sol;
 
     //! Current spatial filter: number of binomial passes
-    unsigned int currentFilter_passes;
+    std::vector<unsigned int> currentFilter_passes;
 
     //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 201, 665 (2004)]
     bool Friedman_filter;

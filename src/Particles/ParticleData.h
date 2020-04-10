@@ -30,14 +30,14 @@ public:
         : ParticleData( 2 )
     {
         // Check if function is callable
-        unsigned int n_arg = PyTools::function_nargs( function );
-        if( n_arg < 0 ) {
+        int n_arg = PyTools::function_nargs( function );
+        if( n_arg == -2 ) {
             ERROR( errorPrefix << " does not look like a normal python function" );
         }
         // Verify the number of arguments of the filter function
-        if( n_arg != 1 ) {
+        if( n_arg >= 0 && n_arg != 1 ) {
             ERROR( errorPrefix << " has "<<n_arg<<" arguments while requiring 1" );
-        }//*/ //MG/2019/08/08 --- TESTING RADSPECTRUM
+        }
         // Fill with fake data
         std::vector<double> test_value = {1.2, 1.4};
         std::vector<uint64_t> test_id = {3, 4};
@@ -68,7 +68,7 @@ public:
         unsigned int s = PyArray_SIZE( ( PyArrayObject * )ret );
         if( s != 2 ) {
             ERROR( errorPrefix << " must not change the arrays sizes" );
-        }// */ //MG/2019/08/08 --- TESTING RADSPECTRUM
+        }
         Py_DECREF( ret );
     };
 

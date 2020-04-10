@@ -1156,145 +1156,158 @@ void ElectroMagn3D::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply a single pass binomial filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn3D::binomialCurrentFilter()
+void ElectroMagn3D::binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
 {
     // Static-cast of the currents
     Field3D *Jx3D = static_cast<Field3D *>( Jx_ );
     Field3D *Jy3D = static_cast<Field3D *>( Jy_ );
     Field3D *Jz3D = static_cast<Field3D *>( Jz_ );
     
-    // applying a single pass of the binomial filter
-    // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
-    for( unsigned int i=0; i<nx_d-1; i++ ) {
-        for( unsigned int j=0; j<ny_p; j++ ) {
-            for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i+1, j, k ) )*0.5;
+    // applying a single pass of the binomial filter along X
+    if (ipass < passes[0]){
+        // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+        for( unsigned int i=0; i<nx_d-1; i++ ) {
+            for( unsigned int j=0; j<ny_p; j++ ) {
+                for( unsigned int k=0; k<nz_p; k++ ) {
+                    ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i+1, j, k ) )*0.5;
+                }
+            }
+        }
+        for( unsigned int i=nx_d-2; i>0; i-- ) {
+            for( unsigned int j=0; j<ny_p; j++ ) {
+                for( unsigned int k=0; k<nz_p; k++ ) {
+                    ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i-1, j, k ) )*0.5;
+                }
+            }
+        }
+        // Jy
+        for( unsigned int i=0; i<nx_p-1; i++ ) {
+            for( unsigned int j=0; j<ny_d; j++ ) {
+                for( unsigned int k=0; k<nz_p; k++ ) {
+                    ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i+1, j, k ) )*0.5;
+                }
+            }
+        }
+        for( unsigned int i=nx_p-2; i>0; i-- ) {
+            for( unsigned int j=0; j<ny_d; j++ ) {
+                for( unsigned int k=0; k<nz_p; k++ ) {
+                    ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i-1, j, k ) )*0.5;
+                }
+            }
+        }
+        // Jz
+        for( unsigned int i=0; i<nx_p-1; i++ ) {
+            for( unsigned int j=0; j<ny_p; j++ ) {
+                for( unsigned int k=0; k<nz_d; k++ ) {
+                    ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i+1, j, k ) )*0.5;
+                }
+            }
+        }
+        for( unsigned int i=nx_p-2; i>0; i-- ) {
+            for( unsigned int j=0; j<ny_p; j++ ) {
+                for( unsigned int k=0; k<nz_d; k++ ) {
+                    ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i-1, j, k ) )*0.5;
+                }
             }
         }
     }
-    for( unsigned int i=nx_d-2; i>0; i-- ) {
-        for( unsigned int j=0; j<ny_p; j++ ) {
-            for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i-1, j, k ) )*0.5;
+
+    // applying a single pass of the binomial filter along Y
+    if (ipass < passes[1]){
+        //Jx
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=0; j<ny_p-1; j++ ) {
+                for( unsigned int k=0; k<nz_p; k++ ) {
+                    ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j+1, k ) )*0.5;
+                }
+            }
+        }
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=ny_p-2; j>0; j-- ) {
+                for( unsigned int k=0; k<nz_p; k++ ) {
+                    ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j-1, k ) )*0.5;
+                }
+            }
+        }
+        //Jy
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=0; j<ny_d-1; j++ ) {
+                for( unsigned int k=0; k<nz_p; k++ ) {
+                    ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j+1, k ) )*0.5;
+                }
+            }
+        }
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=ny_d-2; j>0; j-- ) {
+                for( unsigned int k=0; k<nz_p; k++ ) {
+                    ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j-1, k ) )*0.5;
+                }
+            }
+        }
+        //Jz
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=0; j<ny_p-1; j++ ) {
+                for( unsigned int k=0; k<nz_d; k++ ) {
+                    ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j+1, k ) )*0.5;
+                }
+            }
+        }
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=ny_p-2; j>0; j-- ) {
+                for( unsigned int k=0; k<nz_d; k++ ) {
+                    ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j-1, k ) )*0.5;
+                }
             }
         }
     }
-    for( unsigned int i=1; i<nx_d-1; i++ ) {
-        for( unsigned int j=0; j<ny_p-1; j++ ) {
-            for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j+1, k ) )*0.5;
+    // applying a single pass of the binomial filter along Z
+    if (ipass < passes[2]){
+        //Jx
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
+                for( unsigned int k=0; k<nz_p-1; k++ ) {
+                    ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j, k+1 ) )*0.5;
+                }
+            }
+        }
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
+                for( unsigned int k=nz_p-2; k>0; k-- ) {
+                    ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j, k-1 ) )*0.5;
+                }
+            }
+        }
+        //Jy
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=1; j<ny_d-1; j++ ) {
+                for( unsigned int k=0; k<nz_p-1; k++ ) {
+                    ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j, k+1 ) )*0.5;
+                }
+            }
+        }
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=1; j<ny_d-1; j++ ) {
+                for( unsigned int k=nz_p-2; k>0; k-- ) {
+                    ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j, k-1 ) )*0.5;
+                }
+            }
+        }
+        //Jz
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
+                for( unsigned int k=0; k<nz_d-1; k++ ) {
+                    ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j, k+1 ) )*0.5;
+                }
+            }
+        }
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
+                for( unsigned int k=nz_d-2; k>0; k-- ) {
+                    ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j, k-1 ) )*0.5;
+                }
             }
         }
     }
-    for( unsigned int i=1; i<nx_d-1; i++ ) {
-        for( unsigned int j=ny_p-2; j>0; j-- ) {
-            for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j-1, k ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=1; i<nx_d-1; i++ ) {
-        for( unsigned int j=1; j<ny_p-1; j++ ) {
-            for( unsigned int k=0; k<nz_p-1; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j, k+1 ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=1; i<nx_d-1; i++ ) {
-        for( unsigned int j=1; j<ny_p-1; j++ ) {
-            for( unsigned int k=nz_p-2; k>0; k-- ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j, k-1 ) )*0.5;
-            }
-        }
-    }
-    // Jy
-    for( unsigned int i=0; i<nx_p-1; i++ ) {
-        for( unsigned int j=0; j<ny_d; j++ ) {
-            for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i+1, j, k ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=nx_p-2; i>0; i-- ) {
-        for( unsigned int j=0; j<ny_d; j++ ) {
-            for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i-1, j, k ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=1; i<nx_p-1; i++ ) {
-        for( unsigned int j=0; j<ny_d-1; j++ ) {
-            for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j+1, k ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=1; i<nx_p-1; i++ ) {
-        for( unsigned int j=ny_d-2; j>0; j-- ) {
-            for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j-1, k ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=1; i<nx_p-1; i++ ) {
-        for( unsigned int j=1; j<ny_d-1; j++ ) {
-            for( unsigned int k=0; k<nz_p-1; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j, k+1 ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=1; i<nx_p-1; i++ ) {
-        for( unsigned int j=1; j<ny_d-1; j++ ) {
-            for( unsigned int k=nz_p-2; k>0; k-- ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j, k-1 ) )*0.5;
-            }
-        }
-    }
-    // Jz
-    for( unsigned int i=0; i<nx_p-1; i++ ) {
-        for( unsigned int j=0; j<ny_p; j++ ) {
-            for( unsigned int k=0; k<nz_d; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i+1, j, k ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=nx_p-2; i>0; i-- ) {
-        for( unsigned int j=0; j<ny_p; j++ ) {
-            for( unsigned int k=0; k<nz_d; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i-1, j, k ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=1; i<nx_p-1; i++ ) {
-        for( unsigned int j=0; j<ny_p-1; j++ ) {
-            for( unsigned int k=0; k<nz_d; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j+1, k ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=1; i<nx_p-1; i++ ) {
-        for( unsigned int j=ny_p-2; j>0; j-- ) {
-            for( unsigned int k=0; k<nz_d; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j-1, k ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=1; i<nx_p-1; i++ ) {
-        for( unsigned int j=1; j<ny_p-1; j++ ) {
-            for( unsigned int k=0; k<nz_d-1; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j, k+1 ) )*0.5;
-            }
-        }
-    }
-    for( unsigned int i=1; i<nx_p-1; i++ ) {
-        for( unsigned int j=1; j<ny_p-1; j++ ) {
-            for( unsigned int k=nz_d-2; k>0; k-- ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j, k-1 ) )*0.5;
-            }
-        }
-    }
-    
-    
 }
 
 void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )

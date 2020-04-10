@@ -290,7 +290,7 @@ class MovingWindow(SmileiSingleton):
 
     time_start = 0.
     velocity_x = 1.
-    number_of_additional_shifts = 0.
+    number_of_additional_shifts = 0
     additional_shifts_time = 0.
 
 
@@ -304,13 +304,13 @@ class Checkpoints(SmileiSingleton):
     keep_n_dumps = 2
     dump_deflate = 0
     exit_after_dump = True
-    file_grouping = None
+    file_grouping = 0
     restart_files = []
 
 class CurrentFilter(SmileiSingleton):
     """Current filtering parameters"""
     model = "binomial"
-    passes = 0
+    passes = [0]
 
 class FieldFilter(SmileiSingleton):
     """Fields filtering parameters"""
@@ -339,7 +339,7 @@ class Species(SmileiComponent):
     radiation_model = "none"
     radiation_photon_species = None
     radiation_photon_sampling = 1
-    radiation_photon_gamma_threshold = 2
+    radiation_photon_gamma_threshold = 2.
 
     # Multiphoton Breit-Wheeler parameters
     multiphoton_Breit_Wheeler = [None,None]
@@ -366,15 +366,15 @@ class Species(SmileiComponent):
     ionization_electrons = None
     ionization_rate = None
     atomic_number = None
-    maximum_charge_state = None
+    maximum_charge_state = 0
     is_test = False
     relativistic_field_initialization = False
     ponderomotive_dynamics = False
 
 class ParticleInjector(SmileiComponent):
     """Parameters for particle injection at boundaries"""
-    name = None,
-    species = None,
+    name = None
+    species = None
     box_side = "xmin"
     position_initialization = "species"
     momentum_initialization = "species"

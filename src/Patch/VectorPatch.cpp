@@ -590,7 +590,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     // Particle creator object
                     ParticleCreator particle_creator;
                     particle_creator.associate(particle_injector, particles, injector_species);
-                    particle_creator.add_new_particle_energy_ = false;
                     
                     //particle_index[i_injector] = previous_particle_number_per_species[i_species];
                     // Creation of the particles in local_particles_vector
@@ -751,20 +750,21 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     new_particle_number += 1;
                         
                     // New energy from particles
-                    if( patch->isXmax() ) {
+                    if( patch->isXmin() || patch->isXmax() ) {
+                        double energy = 0.;
                         // Matter particle case
                         if( injector_species->mass_ > 0 ) {
                             for( int ip = 0; ip<new_particle_number; ip++ ) {
-                                injector_species->new_particles_energy_ += particles->weight( ip )
-                                *( particles->LorentzFactor( ip )-1.0 );
+                                energy += particles->weight( ip )*( particles->LorentzFactor( ip )-1.0 );
                             }
+                            injector_species->new_particles_energy_ += injector_species->mass_ * energy;
                         }
                         // Photon case
                         else if( injector_species->mass_ == 0 ) {
                             for( int ip=0; ip<new_particle_number; ip++ ) {
-                                injector_species->new_particles_energy_ += particles->weight( ip )
-                                *( particles->momentumNorm( ip ) );
+                                energy += particles->weight( ip )*( particles->momentumNorm( ip ) );
                             }
+                            injector_species->new_particles_energy_ += energy;
                         }
                     }
                         
@@ -954,27 +954,29 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
 {
     timers.maxwell.restart();
 
-    for( unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++ ) {
-        #pragma omp for schedule(static)
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-            // Current spatial filtering
-            ( *this )( ipatch )->EMfields->binomialCurrentFilter();
-        }
-        if (params.geometry != "AMcylindrical"){
-            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJx_, *this, smpi );
-            SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
-            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJy_, *this, smpi );
-            SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
-            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJz_, *this, smpi );
-            SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
-        } else {
-            for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
-                SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJl_[imode], *this, smpi );
-                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJl_[imode], *this );
-                SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJr_[imode], *this, smpi );
-                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJr_[imode], *this );
-                SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJt_[imode], *this, smpi );
-                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJt_[imode], *this );
+    if (params.currentFilter_passes.size() > 0){
+        for( unsigned int ipassfilter=0 ; ipassfilter<*std::max_element(std::begin(params.currentFilter_passes), std::end(params.currentFilter_passes)) ; ipassfilter++ ) {
+            #pragma omp for schedule(static)
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                // Current spatial filtering
+                ( *this )( ipatch )->EMfields->binomialCurrentFilter(ipassfilter, params.currentFilter_passes);
+            }
+            if (params.geometry != "AMcylindrical"){
+                SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJx_, *this, smpi );
+                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
+                SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJy_, *this, smpi );
+                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
+                SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJz_, *this, smpi );
+                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
+            } else {
+                for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
+                    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJl_[imode], *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJl_[imode], *this );
+                    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJr_[imode], *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJr_[imode], *this );
+                    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJt_[imode], *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJt_[imode], *this );
+                }
             }
         }
     }
