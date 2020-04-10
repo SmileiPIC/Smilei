@@ -804,10 +804,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             }
             for( unsigned int i=0; i<profiles.size(); i++ ) {
                 int nargs = PyTools::function_nargs( profiles[i] );
-                if( nargs<0 ) {
+                if( nargs == -2 ) {
                     ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] not callable" );
                 }
-                if( nargs != ( int ) nDim_field ) {
+                if( nargs >= 0 && nargs != ( int ) nDim_field ) {
                     ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs );
                 }
             }
