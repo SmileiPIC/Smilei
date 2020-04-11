@@ -194,23 +194,9 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
     
         // Ionization ion current cannot be computed with the envelope ionization model
         
-    
-    
+
         // Creation of the new electrons
         
-        // each electron will acquire a transverse momentum equal to p_perp = eA 
-        // where the vector A(t) is equal to A*(vec_major_axis*cos(omega*t) + vec_minor_axis*epsilon*sin(omega*t))
-        // where vec_major_axis and vec_minor_axis are the major and minor axes of the polarization ellipse
-        // epsilon is the polarization ellipticity
-        // since the envelope does not contain information on the oscillation phase,
-        // omega*t will be extracted randomly between 0 and 2*pi
-    
-        // // draw from uniform distribution
-        // ran_p_times_2pi= 2. * M_PI * patch->xorshift32() * patch->xorshift32_invmax;
-        // 
-        // momentum_major_axis =               Aabs * cos(ran_p_times_2pi);
-        // momentum_minor_axis = ellipticity * Aabs * sin(ran_p_times_2pi);
-
         // Box-Müller transformation: generate a random number from a gaussian distribution
         // starting from two random numbers from a uniform distribution
 
@@ -236,23 +222,9 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
                 new_electrons.momentum( i, idNew ) = particles->momentum( i, ipart )*ionized_species_invmass;
             }
     
-            // add the momentum p=eA, back-transformed to y-z coordinates
-            // no changes are made on the x momentum, as the envelope propagates in that direction
-            //new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi-momentum_minor_axis*sin_phi;
-            //new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi+momentum_minor_axis*cos_phi;
-            //new_electrons.momentum( 0, idNew )  = 0.5*( momentum_major_axis*momentum_major_axis );
-            //double average_px = 0.; //2.*0.5 * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4 * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;
-            //double rms_px     = momentum_major_axis*momentum_major_axis/2.;
-            //average_px        = Aabs * Aabs *  sqrt(1.5*E) * Ip_times2_power_minus3ov4 * sqrt(1.5*E) * Ip_times2_power_minus3ov4;
-            //rms_px = rand_gaussian2 * rand_gaussian2 * Aabs * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4/4.*sqrt(2/3.14159);
-            
-           
-          
-         
-
-
-
-
+            // add the transverse momentum to obtain a gaussian in the py distribution following Schroeder's result
+            // initialize px to take into account the average drift <px>=A^2/4 and the px=|p_perp|^2/2 result
+ 
 	    //new_electrons.momentum( 0, idNew )  = Aabs*Aabs/4.+momentum_major_axis*momentum_major_axis/2.; //+ momentum_rms_px;   //p_perp*p_perp/2.; //momentum_px; //average_px + rms_px;
             //new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
             //new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
