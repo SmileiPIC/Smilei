@@ -217,12 +217,14 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
         double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
         double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
 
-        double rand_gaussian = sqrt(-2.*log(rand_1))*cos(2. * M_PI * rand_2);
-
+        double rand_gaussian  = sqrt(-2.*log(rand_1))*cos(2. * M_PI * rand_2);
+        double rand_gaussian2 = sqrt(-2.*log(rand_1))*sin(2. * M_PI * rand_2);
+        
         // recreate rms momentum spread for linear polarization estimated by C.B. Schroeder 
         momentum_major_axis = rand_gaussian * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;
-   
-    
+        double momentum_rms_px = rand_gaussian2* sqrt(1.5*E) * Ip_times2_power_minus3ov4 * sqrt(1.5*E) * Ip_times2_power_minus3ov4 * Aabs * Aabs /4/sqrt(2);
+            
+
         if( k_times !=0 ) {
             new_electrons.createParticle();
             //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
@@ -238,9 +240,28 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
             // no changes are made on the x momentum, as the envelope propagates in that direction
             //new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi-momentum_minor_axis*sin_phi;
             //new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi+momentum_minor_axis*cos_phi;
-    
+            //new_electrons.momentum( 0, idNew )  = 0.5*( momentum_major_axis*momentum_major_axis );
+            //double average_px = 0.; //2.*0.5 * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4 * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;
+            //double rms_px     = momentum_major_axis*momentum_major_axis/2.;
+            //average_px        = Aabs * Aabs *  sqrt(1.5*E) * Ip_times2_power_minus3ov4 * sqrt(1.5*E) * Ip_times2_power_minus3ov4;
+            //rms_px = rand_gaussian2 * rand_gaussian2 * Aabs * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4/4.*sqrt(2/3.14159);
+            
+           
+          
+         
+
+
+
+
+	    //new_electrons.momentum( 0, idNew )  = Aabs*Aabs/4.+momentum_major_axis*momentum_major_axis/2.; //+ momentum_rms_px;   //p_perp*p_perp/2.; //momentum_px; //average_px + rms_px;
+            //new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
+            //new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
+
+
+	    new_electrons.momentum( 0, idNew )  = Aabs*Aabs/4. + momentum_major_axis*momentum_major_axis/2. + momentum_rms_px;   //p_perp*p_perp/2.; //momentum_px; //average_px + rms_px;
             new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
             new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
+
 
             new_electrons.weight( idNew )=double( k_times )*particles->weight( ipart );
             new_electrons.charge( idNew )=-1;
