@@ -43,24 +43,6 @@ As described thoroughly in the same references, the coupling between the laser e
 
 Modeling the laser through a complex envelope and its coupling with the plasma through the ponderomotive force will yield physically meaningful results only if the variation scales in space and time are greater than :math:`\lambda_0`, :math:`1/\omega_0`. Examples violating these hypotheses include, but are not limited to, tightly focused lasers, few optical cycles lasers, sharp gradients in the plasma density. 
 
-From Eq. :eq:`envelope`, the laser electric field's complex envelope :math:`\tilde{E}` can be derived. In the context of the perturbative treatment, the laser scalar potential can be neglected [Cowan2011]_, yielding:
-
-.. math::
-
-  \hat{E} = -\partial_t \hat{A} = -\partial_t \Big\{\textrm{Re}\left[\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right]\Big\} = \textrm{Re}\left[-\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right],
-
-which can be expressed, following the definition in Eq. :eq:`envelope`, also as  
-
-.. math::
-
-  \hat{E} = \textrm{Re}\left[\tilde{E}(\mathbf{x},t)e^{ik_0(x-ct)}\right].
- 
-
-The laser electric field's complex envelope along the polarization direction :math:`\tilde{E}` can thus be defined:
-
-.. math::
-
-  \tilde{E} = -\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t)
 
 
 ----
@@ -262,6 +244,58 @@ In cylindrical geometry (see :doc:`azimuthal_modes_decomposition`), the transver
   D^2_{\perp, cyl}\tilde{A}\rvert^{n}_{i,j} = \frac{\tilde{A}^n_{i,j+1}-2\tilde{A}^n_{i,j}+\tilde{A}^n_{i,j-1}}{\Delta r^2} + \frac{1}{r_j}\frac{\tilde{A}^n_{i,j+1}-\tilde{A}^n_{i,j-1}}{2\Delta r},
 
 where :math:`j, r, \Delta r` are the transverse index, the distance from the propagation axis and the radial cell size respectively.
+
+
+
+----
+
+Computing the laser electric field from the laser envelope
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is always useful (and recommendable) to compare the results of an envelope simulation and of a standard laser simulation,
+to check if the envelope approximation is suitable for the physical case that is simulated. For this purpose, the plasma electromagnetic fields and the charge densities are easily comparable. 
+However, in an envelope simulation all the plasma dynamics is written as function of the envelope of the transverse component 
+of the vector potential :math:`\tilde{A}`, as explained in the previous section, and not as function of the laser electric field.
+
+Furthermore, in case of envelope simulations with ionization, the ionization rate formula is computed using the electric field 
+(longitudinal and transverse components) of the laser. 
+
+For these two reasons (diagnostic and ionization), in an envelope simulation two additional fields are computed, 
+:math:`\tilde{E}` and :math:`\tilde{E_x}`, which represent respectively the envelope of the transverse component 
+and of the longitudinal component of the laser electric field.
+
+
+From Eq. :eq:`envelope`, the laser tranvserse electric field's complex envelope :math:`\tilde{E}` can be derived. 
+In the context of the perturbative treatment, the laser scalar potential can be neglected [Cowan2011]_, yielding:
+
+.. math::
+
+  \hat{E} = -\partial_t \hat{A} = -\partial_t \Big\{\textrm{Re}\left[\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right]\Big\} = \textrm{Re}\left[-\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right],
+
+which can be expressed, following the definition in Eq. :eq:`envelope`, also as  
+
+.. math::
+
+  \hat{E} = \textrm{Re}\left[\tilde{E}(\mathbf{x},t)e^{ik_0(x-ct)}\right].
+ 
+
+The laser transverse electric field's complex envelope along the polarization direction :math:`\tilde{E}` can thus be defined:
+
+.. math::
+
+  \tilde{E} = -\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t).
+
+In the same theoretical framework, it can be shown that the laser longitudinal electric field's envelope can be computed through 
+a partial derivative along the direction perpendicular to the laser propagation direction:
+
+.. math::
+
+  \tilde{E_x} = -\partial_{\perp}\tilde{A}(\mathbf{x},t).
+
+In the diagnostics, the absolute value of the fields :math:`\tilde{E}`, :math:`\tilde{E_x}` are available, under the names `Env_E_abs` and `Env_Ex_abs`.
+
+
+ 
 
 
 ----

@@ -204,14 +204,15 @@ Field ionization with a laser envelope
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In a typical PIC simulation, the laser oscillation is sampled frequently in time, 
-thus the electric field can be considered static and the ionization rate in 
-DC (:math:`\Gamma_{\rm ADK, DC}` from Eq. :eq:`ionizationRate`) can be used at 
+thus the electric field can be considered static within a single timestep where ionization takes place,
+and the ionization rate in 
+DC, i.e. :math:`\Gamma_{\rm ADK, DC}` from Eq. :eq:`ionizationRate` can be used at 
 each timestep. 
 
 Instead, in presence of a laser envelope (see :doc:`laser_envelope`) an ad hoc treatment of the 
-ionization process averaged over the scales of the optical cycle may be necessary if the
-integration timestep is much greater than the laser oscillation period [Chen2013]_.
-Thus, in this case a ionization rate :math:`\Gamma_{\rm ADK, AC}` averaged over the laser oscillations 
+ionization process averaged over the scales of the optical cycle may be necessary, since the
+integration timestep is much greater than the one used in those typical PIC simulations [Chen2013]_.
+Thus, in this case a ionization rate obtained averaging :math:`\Gamma_{\rm ADK, AC}` over the laser oscillations 
 should be used at each timestep to have a better agreement with a correspondent standard laser simulation.
 Given a laser with ellipticity :math:`\varepsilon`, the averaged ionization rate is [Perelomov1966]_
 
@@ -236,24 +237,24 @@ For linear polarization, i.e. :math:`\varepsilon=0`:
 .. math::
   :label: ionizationRate
 
-  \Gamma_{\rm ADK, AC} = \left(\frac{3}{\pi}\frac{\|\tilde{E}\|}{(2I_p)^{3/2}}\right)^{-1/2}\Gamma_{\rm ADK, DC} .
-
-If the integration timestep is not much greater than the laser oscillation period, 
-using the DC ionization rate will yield results more in agreement with a standard 
-laser simulation. It is possible to choose which ionization rate to use through 
-the ``ionization_model`` parameter for a given ``Species`` in the namelist, which 
-can be set to ``"tunnel_envelope"`` for the DC ionization rate :math:`\Gamma_{\rm ADK, DC}` 
-(Eq. :eq:`ionizationRate`) or to ``"tunnel_envelope_averaged"`` for the AC 
-ionization rate :math:`\Gamma_{\rm ADK, AC}` (Eq. :eq:`ionizationRateAveraged`). 
+  \Gamma_{\rm ADK, AC} = \left(\frac{3}{\pi}\frac{\|\tilde{E}\|}{2(2I_p)^{3/2}}\right)^{-1/2}\Gamma_{\rm ADK, DC} .
 
 Normally the laser is intense enough to be the main cause of ionization, 
 but to allow possible high fields :math:`E` not described by an envelope, 
-in :program:`Smilei` a combination :math:`\hat{E}=\sqrt{\|E\|^{1/2}+\|\tilde{E}\|^{1/2}}` 
-is used instead of  :math:`\tilde{E}` in the above formulas.
+in :program:`Smilei` a combination :math:`\hat{E}=\sqrt{\|E_{plasma}\|^{2}+\|\tilde{E}_{laser}\|^{2}}` 
+is used instead of :math:`\tilde{E}` in the above formulas. The field :math:`\tilde{E}_{plasma}` represents
+the electric field of the plasma, while :math:`\tilde{E}_{laser} =\sqrt{|\tilde{E}|^2+|\tilde{E}_x|^2}` 
+takes into account the envelopes of both the transverse and longitudinal components of the laser electric field
+(see :doc:`laser_envelope` for details on their calculation).
 
-The transverse momentum of the newly created electrons will be set taking into account the
-polarization of the laser (including the polarization angle and the polarization ellipticity).
-Since the envelope does not keep memory on the phase of laser oscillations, for this procedure  the phase is chosen randomly. 
+The initial longitudinal and transverse momentum of the newly created electrons will be set taking into account 
+this averaging operation. 
+
+If the envelope approximation hypotheses are satisfied, the charge created with ionization and the distribution 
+of the newly created electrons computed with this procedure should agree with those obtained with a standard laser simulation,
+provided that the comparison is made after the end of the interaction with the laser. 
+This because during the interaction with the laser the effects of the quiver motion in the electron momenta would be still visible
+in the standard laser simulation) and absent in the envelope simulation.
 
 Note that when a laser envelope model is used, the polarization of the laser plays a role 
 only in the equations related to ionization (see :doc:`laser_envelope`),

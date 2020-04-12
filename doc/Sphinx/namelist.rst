@@ -768,8 +768,7 @@ Each species has to be defined in a ``Species`` block::
   The model for ionization:
 
   * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
-  * ``"tunnel_envelope"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>` (requires species with an :py:data:`atomic_number` and :py:data:`ponderomotive_dynamics=True`)
-  * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>`, averaged ionization rate (requires species with an :py:data:`atomic_number` and :py:data:`ponderomotive_dynamics=True`)
+  * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>` (requires species with an :py:data:`atomic_number` and :py:data:`ponderomotive_dynamics=True`)
   * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
 
 .. py:data:: ionization_rate
