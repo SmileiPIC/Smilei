@@ -197,19 +197,16 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
 
         // Creation of the new electrons
         
-        // Box-Müller transformation: generate a random number from a gaussian distribution
+        // Box-Müller transformation: generate a random number with a gaussian distribution
         // starting from two random numbers from a uniform distribution
 
         double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
         double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
 
         double rand_gaussian  = sqrt(-2.*log(rand_1))*cos(2. * M_PI * rand_2);
-        double rand_gaussian2 = sqrt(-2.*log(rand_1))*sin(2. * M_PI * rand_2);
         
         // recreate rms momentum spread for linear polarization estimated by C.B. Schroeder 
-        momentum_major_axis = rand_gaussian * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;
-        double momentum_rms_px = rand_gaussian2* sqrt(1.5*E) * Ip_times2_power_minus3ov4 * sqrt(1.5*E) * Ip_times2_power_minus3ov4 * Aabs * Aabs /4/sqrt(2);
-            
+        momentum_major_axis = rand_gaussian * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;         
 
         if( k_times !=0 ) {
             new_electrons.createParticle();
@@ -224,13 +221,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
     
             // add the transverse momentum to obtain a gaussian in the py distribution following Schroeder's result
             // initialize px to take into account the average drift <px>=A^2/4 and the px=|p_perp|^2/2 result
- 
-	    //new_electrons.momentum( 0, idNew )  = Aabs*Aabs/4.+momentum_major_axis*momentum_major_axis/2.; //+ momentum_rms_px;   //p_perp*p_perp/2.; //momentum_px; //average_px + rms_px;
-            //new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
-            //new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
-
-
-	    new_electrons.momentum( 0, idNew )  = Aabs*Aabs/4. + momentum_major_axis*momentum_major_axis/2. + momentum_rms_px;   //p_perp*p_perp/2.; //momentum_px; //average_px + rms_px;
+	    new_electrons.momentum( 0, idNew ) += Aabs*Aabs/4. + momentum_major_axis*momentum_major_axis/2.;
             new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
             new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
 
