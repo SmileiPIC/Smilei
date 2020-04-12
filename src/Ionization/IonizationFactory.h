@@ -4,7 +4,6 @@
 #include "Ionization.h"
 #include "IonizationTunnel.h"
 #include "IonizationFromRate.h"
-#include "IonizationTunnelEnvelope.h"
 #include "IonizationTunnelEnvelopeAveraged.h"
 
 #include "Params.h"
@@ -29,25 +28,11 @@ public:
             }
 
             if( (params.Laser_Envelope_model) & ( species->ponderomotive_dynamics ) ) {
-                ERROR( "The ionization model for species interacting with envelope is tunnel_envelope" );
+                ERROR( "The ionization model for species interacting with envelope is tunnel_envelope_averaged" );
             }
             
             Ionize = new IonizationTunnel( params, species );
             
-        } else if( model == "tunnel_envelope" ) {
-            if( species->max_charge_ > ( int )species->atomic_number_ ) {
-                ERROR( "Charge > atomic_number for species " << species->name_ );
-            }
-            if( species->particles->is_test ) {
-                ERROR( "Cannot ionize test species " << species->name_ );
-            }
-            
-            Ionize = new IonizationTunnelEnvelope( params, species );
-            
-            if ( !((params.Laser_Envelope_model) & ( species->ponderomotive_dynamics )) ) {
-                ERROR( "The ionization model tunnel_envelope needs a laser envelope and ponderomotive_dynamics = True" );
-            }
-
         } else if( model == "tunnel_envelope_averaged" ) {
             if( species->max_charge_ > ( int )species->atomic_number_ ) {
                 ERROR( "Charge > atomic_number for species " << species->name_ );
