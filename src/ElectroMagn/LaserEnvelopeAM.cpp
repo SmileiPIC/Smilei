@@ -146,10 +146,7 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
 
             // in cylindrical symmetry the gradient along theta is zero
 
-            // |Ex envelope| = |-(1/r)*d(rA)/dr|, central finite difference for the space derivative
-            //( *Env_Exabs2Dcyl )( i, j ) =  std::abs( ( ((double)(j_glob+j+1)) * ( *A2Dcyl )( i, j+1)  
-            //                               -((double)(j_glob+j-1)) * ( *A2Dcyl )( i, j-1) ) 
-            //                               / ((double)(j_glob+j)) );
+            // |Ex envelope| = |-dA/dr|, central finite difference for the space derivative  
             ( *Env_Exabs2Dcyl )( i, j ) =  std::abs( (( *A2Dcyl )( i, j+1)-( *A2Dcyl )( i, j-1) )*one_ov_2dr );
 
         } // end r loop
@@ -380,18 +377,12 @@ void LaserEnvelopeAM::computePhiEnvAEnvE( ElectroMagn *EMfields )
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        for( unsigned int j=std::max(3*isYmin,1) ; j < A_->dims_[1]-2; j++ ) { // r loop
+        for( unsigned int j=std::max(3*isYmin,1) ; j < A_->dims_[1]-1; j++ ) { // r loop
             ( *Phi2Dcyl )( i, j )       = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
             ( *Env_Aabs2Dcyl )( i, j )  = std::abs( ( *A2Dcyl )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
             ( *Env_Eabs2Dcyl )( i, j )  = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
-            //Er                         = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
-            //Ex                         = std::abs( ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j ) )/dr );
-            //( *Env_Eabs2Dcyl )( i, j ) = sqrt(Ex*Ex+Er*Er);
-            // |Ex envelope| = |-(1/r)*d(rA)/dr|, central finite difference for the space derivative
-            //( *Env_Exabs2Dcyl )( i, j ) =  std::abs( ( ((double)(j_glob+j+1)) * ( *A2Dcyl )( i, j+1)  
-            //                               -((double)(j_glob+j-1)) * ( *A2Dcyl )( i, j-1) ) 
-            //                               / ((double)(j_glob+j))/dr );
+            // |Ex envelope| = |-dA/dr|, central finite difference for the space derivative
             ( *Env_Exabs2Dcyl )( i, j ) =  std::abs( (( *A2Dcyl )( i, j+1)-( *A2Dcyl )( i, j-1) )*one_ov_2dr );
         } // end r loop
     } // end l loop

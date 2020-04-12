@@ -299,7 +299,7 @@ void LaserEnvelope2D::computePhiEnvAEnvE( ElectroMagn *EMfields )
             // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
             ( *Env_Eabs2D )( i, j )  = std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*( *A2D )( i, j ) );
             // |Ex envelope| = |-(dA/dy|, central finite difference for the space derivative
-            ( *Env_Exabs2D )( i, j ) = std::abs( ( ( *A2D )( i, j+1 )-( *A2D )( i, j-1 ) )*one_ov_2dy );
+            ( *Env_Exabs2D )( i, j ) = std::abs( ( ( *A2D )( i, j+1 )-( *A2D )( i, j-1 ) )*one_ov_2dy );      
         } // end y loop
     } // end x loop
     

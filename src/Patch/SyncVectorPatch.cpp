@@ -662,6 +662,18 @@ void SyncVectorPatch::finalizeexchangeA( Params &params, VectorPatch &vecPatches
 // 
 // }
 
+void SyncVectorPatch::exchangeEnvEx( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
+{
+    // current envelope |Ex| value
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvEx_, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvEx_, vecPatches );
+}
+
+void SyncVectorPatch::finalizeexchangeEnvEx( Params &params, VectorPatch &vecPatches )
+{
+
+}
+
 // void SyncVectorPatch::exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 // {
 // 
