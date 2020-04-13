@@ -495,8 +495,7 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
     from numpy import vectorize
 
     def space_time_envelope(x,t):
-	polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
-        
+        polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
         return (a0*omega*polarization_amplitude_factor) * complex( vectorize(time_envelope)(t) )
 
     # Create Laser Envelope
@@ -640,7 +639,7 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
     from numpy import exp, sqrt, arctan, vectorize
 
     def gaussian_beam_with_temporal_profile(x,y,z,t):
-	polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
+        polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
         Zr = omega * waist**2/2.
         w  = sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
         coeff = omega * (x-focus[0]) * w**2 / (2.*Zr**2)
@@ -698,7 +697,7 @@ def LaserEnvelopeGaussianAM( a0=1., omega=1., focus=None, waist=3., time_envelop
     from numpy import exp, sqrt, arctan, vectorize
 
     def gaussian_beam_with_temporal_profile(x,r,t):
-	polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
+        polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
         Zr = omega * waist**2/2.
         w  = sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
         coeff = omega * (x-focus[0]) * w**2 / (2.*Zr**2)
