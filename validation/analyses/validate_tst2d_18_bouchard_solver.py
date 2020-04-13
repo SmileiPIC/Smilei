@@ -1,3 +1,4 @@
+import os,re
 import numpy as np
 import happi
 
