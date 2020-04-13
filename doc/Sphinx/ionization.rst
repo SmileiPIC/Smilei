@@ -210,29 +210,17 @@ DC, i.e. :math:`\Gamma_{\rm ADK, DC}` from Eq. :eq:`ionizationRate` can be used 
 each timestep. 
 
 Instead, in presence of a laser envelope (see :doc:`laser_envelope`) an ad hoc treatment of the 
-ionization process averaged over the scales of the optical cycle may be necessary, since the
+ionization process averaged over the scales of the optical cycle is necessary, since the
 integration timestep is much greater than the one used in those typical PIC simulations [Chen2013]_.
-Thus, in this case a ionization rate obtained averaging :math:`\Gamma_{\rm ADK, AC}` over the laser oscillations 
+Thus, in this case a ionization rate :math:`\Gamma_{\rm ADK, AC}` obtained averaging :math:`\Gamma_{\rm ADK, DC}` over the laser oscillations 
 should be used at each timestep to have a better agreement with a correspondent standard laser simulation.
-Given a laser with ellipticity :math:`\varepsilon`, the averaged ionization rate is [Perelomov1966]_
+Afterwards, the momentum of the newly created electrons should be properly initialized taking into account of the 
+averaging process in the definition of the particle-envelope interaction.
 
-.. math::
-  :label: ionizationRateAveraged
-
-  \Gamma_{\rm ADK, AC} = \left[\frac{\varepsilon(1+\varepsilon)}{2}\right]^{-1/2}
-  a\left(\frac{1-\varepsilon}{3\varepsilon}\frac{\|\tilde{E}\|}{(2I_p)^{3/2}}\right)\Gamma_{\rm ADK, DC} \,, 
-
-where :math:`\tilde{E}` is the envelope of the electric field to which the ion is subject and
-
-.. math::
-
-  a(x) = e^{-x}I_0(x) \,,
-
-where :math:`I_0(x)` is the zeroth order modified Bessel function. For circular polarization, 
-i.e. :math:`\varepsilon=1`, 
+For circular polarization, i.e. ellipticity :math:`\varepsilon=1`, 
 :math:`\Gamma_{\rm ADK, AC}=\Gamma_{\rm ADK, DC}`, since the field does not change 
 its magnitude over the laser oscillations.
-For linear polarization, i.e. :math:`\varepsilon=0`:
+For linear polarization, i.e. ellipticity :math:`\varepsilon=0`:
 
 .. math::
   :label: ionizationRate
@@ -240,27 +228,40 @@ For linear polarization, i.e. :math:`\varepsilon=0`:
   \Gamma_{\rm ADK, AC} = \left(\frac{3}{\pi}\frac{\|\tilde{E}\|}{2(2I_p)^{3/2}}\right)^{-1/2}\Gamma_{\rm ADK, DC} .
 
 Normally the laser is intense enough to be the main cause of ionization, 
-but to allow possible high fields :math:`E` not described by an envelope, 
+but to take into account possible high total fields :math:`E` not described only by an envelope, 
 in :program:`Smilei` a combination :math:`\hat{E}=\sqrt{\|E_{plasma}\|^{2}+\|\tilde{E}_{laser}\|^{2}}` 
 is used instead of :math:`\tilde{E}` in the above formulas. The field :math:`\tilde{E}_{plasma}` represents
 the electric field of the plasma, while :math:`\tilde{E}_{laser} =\sqrt{|\tilde{E}|^2+|\tilde{E}_x|^2}` 
 takes into account the envelopes of both the transverse and longitudinal components of the laser electric field
 (see :doc:`laser_envelope` for details on their calculation).
 
-The initial longitudinal and transverse momentum of the newly created electrons will be set taking into account 
-this averaging operation. 
+After an electron is created by ionization, its initial transverse momentum :math:`p_{\perp}` is drawn as described in [Tomassini2017]_.
+For circular polarization, in the case of an electron subject to a laser envelope potential :math:`\tilde{A}`, the magnitude of its transverse momentum is set as 
+:math:`\|p_{\perp}\| = \|\tilde{A}\|` and its transverse direction is chosen randomly between :math:`0` and :math:`2\pi`. 
+For linear polarization, the transverse momentum along the polarization direction is drawn from a gaussian distribution with
+rms width :math:`\sigma_{p_{\perp}} = \Delta\|\tilde{A}\|`, to reproduce the residual rms transverse momentum spread of electrons stripped from 
+atoms by a linearly polarized laser [Schroeder2014]_. The parameter :math:`\Delta` is defined as [Schroeder2014_]:
 
-If the envelope approximation hypotheses are satisfied, the charge created with ionization and the distribution 
+.. math::
+  :label: ionizationRate
+
+  \Delta = \left(\frac{3}{2} \hat{E} \right)^{1/2}\left(2I_p\right)^{-3/4}.
+
+Additionally, in :program:`Smilei` the initial longitudinal momentum of the new electrons is initialized. An electron initially at rest in a plane wave 
+with vector potential of amplitude :math:`\|\tilde{A}\|` propagating along the positive :math:`x` direction is subject to a drift, 
+with an average longitudinal momentum :math:`<p_x> = \|\tilde{A}\|^2/4` and its longitudinal momentum is equal to :math:`p_x = |p_{\perp}|^2/2` [Gibbon]_.
+Each electron, newly created from ionization, is thus initalized with :math:`p_x = |\tilde{A}\|^2/4+\|p_{\perp}\|^2/2`, 
+where :math:`p_{\perp}` is drawn as described above and in [Tomassini2017]_. 
+This technique allows to take into account longitudinal effects on the initial momentum that are more visible when :math:`\|\tilde{A}\|>1`, 
+which manifest as an initial average longitudinal momentum and an initial quadratic relation between the longitudinal and the transverse momentum.
+
+If the envelope approximation hypotheses are satisfied, the charge created with ionization and the momentum distribution 
 of the newly created electrons computed with this procedure should agree with those obtained with a standard laser simulation,
 provided that the comparison is made after the end of the interaction with the laser. 
 This because during the interaction with the laser the effects of the quiver motion in the electron momenta would be still visible
-in the standard laser simulation) and absent in the envelope simulation.
+in the standard laser simulation and absent in the envelope simulation.
 
-Note that when a laser envelope model is used, the polarization of the laser plays a role 
-only in the equations related to ionization (see :doc:`laser_envelope`),
-since it is absent from the particles equations of motion and from the envelope equation.
-
-Apart from the different ionization rate and the different momentum initialization, 
+Apart from the different ionization rate and the ad hoc momentum initialization of the new electrons, 
 the implementation of the field ionization with a laser envelope follows the same procedure 
 described in the above section treating the usual field ionization.
 
@@ -324,3 +325,10 @@ References
 .. [Perelomov1967] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 24, 207 (1967) <http://www.jetp.ac.ru/cgi-bin/dn/e_024_01_0207.pdf>`_
 
 .. [Chen2013] `M. Chen, E. Cormier-Michel, C. G. R. Geddes, D. L. Bruwhiler, L. L. Yu, E. Esarey, C. B. Schroeder, W. P. Leemans, Journ. Comput. Phys. 236, 220 (2013) <https://doi.org/10.1016/j.jcp.2012.11.029>`_
+
+.. [Tomassini2017] `P. Tomassini, S. De Nicola, L. Labate, P. Londrillo, R. Fedele, D. Terzani, and L. A. Gizzi, Physics of Plasmas 24, 103120 (2017) <https://doi.org/10.1063/1.5000696>`_
+
+.. [Schroeder2014] `C. B. Schroeder, J.-L. Vay, E. Esarey, S. S. Bulanov, C. Benedetti, L.-L. Yu, M. Chen, C. G. R. Geddes, and W. P. Leemans
+Phys. Rev. ST Accel. Beams 17, 101301 <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.17.101301>`_
+
+.. [Gibbon] `P. Gibbon, Short Pulse Laser Interactions with Matter - An Introduction, Imperial College Press (2005)`_
