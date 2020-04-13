@@ -201,33 +201,50 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
 
         // Creation of the new electrons
         
-        // Box-Müller transformation: generate a random number with a gaussian distribution
-        // starting from two random numbers from a uniform distribution
-
-        double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
-        double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
-        double rand_gaussian  = sqrt(-2.*log(rand_1))*cos(2. * M_PI * rand_2);
-        
-        // recreate gaussian distribution with rms momentum spread for linear polarization, estimated by C.B. Schroeder 
-        momentum_major_axis = rand_gaussian * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;         
-
         if( k_times !=0 ) {
             new_electrons.createParticle();
             //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
             int idNew = new_electrons.size() - 1;
+
+            // The new electron is in the same position of the atom where it originated from
             for( unsigned int i=0; i<new_electrons.dimension(); i++ ) {
                 new_electrons.position( i, idNew )=particles->position( i, ipart );
             }
             for( unsigned int i=0; i<3; i++ ) {
                 new_electrons.momentum( i, idNew ) = particles->momentum( i, ipart )*ionized_species_invmass;
             }
+
+           
+            // Initialise the momentum, weight and charge of the new electron
+
+            if (ellipticity==0.){ // linear polarization
+
+                // Box-Müller transformation: generate a random number with a gaussian distribution
+                // starting from two random numbers from a uniform distribution
+                double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
+                double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
+                double rand_gaussian  = sqrt(-2.*log(rand_1))*cos(2. * M_PI * rand_2);
+                
+                // recreate gaussian distribution with rms momentum spread for linear polarization, estimated by C.B. Schroeder 
+                momentum_major_axis = rand_gaussian * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;         
+
+                // add the transverse momentum to obtain a gaussian in the py distribution following Schroeder's result
+                new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
+                new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
+
+            } else if (ellipticity==1.){ // circular polarization
+
+                // extract a random angle between 0 and 2pi, and give p_perp = eA
+                double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
+                momentum_major_axis = Aabs;
+                new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos(2. * M_PI * rand_1);
+                new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin(2. * M_PI * rand_1); 
+            
+            }
     
-            // add the transverse momentum to obtain a gaussian in the py distribution following Schroeder's result
             // initialize px to take into account the average drift <px>=A^2/4 and the px=|p_perp|^2/2 result
-            // Note: the agreement between envelope and standard laser simulation will be seen only after the passage of the ionizing laser
+            // Note: the agreement in the phase space between envelope and standard laser simulation will be seen only after the passage of the ionizing laser
 	          new_electrons.momentum( 0, idNew ) += Aabs*Aabs/4. + momentum_major_axis*momentum_major_axis/2.;
-            new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
-            new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
 
             // weight and charge of the new electron
             new_electrons.weight( idNew )=double( k_times )*particles->weight( ipart );
