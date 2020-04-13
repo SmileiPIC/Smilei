@@ -47,15 +47,17 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
         ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
     }
 
-    if (params.envelope_ionization_is_active){
-        PyTools::extract( "polarization_phi", polarization_phi, "LaserEnvelope" );
-        PyTools::extract( "ellipticity", ellipticity, "LaserEnvelope" );
-        info << "\t\tpolarization angle (only for ionization) : " << polarization_phi << endl;
-        info << "\t\tellipticity (only for ionization)        : " << ellipticity << endl;
-        params.envelope_ellipticity = ellipticity;
-        params.envelope_polarization_phi = polarization_phi;
+    
+    PyTools::extract( "polarization_phi", polarization_phi, "LaserEnvelope" );
+    PyTools::extract( "ellipticity", ellipticity, "LaserEnvelope" );
+    info << "\t\tpolarization angle : " << polarization_phi << endl;
+    info << "\t\tellipticity        : " << ellipticity << endl;
+    if ((ellipticity != 0.) and (ellipticity != 1.)){
+        ERROR("For the moment, only ellipticity = 0 (linear polarization) or ellipticity = 1 (circular polarization) are available");
     }
-
+    params.envelope_ellipticity = ellipticity;
+    params.envelope_polarization_phi = polarization_phi;
+  
     // auxiliary quantities
     std::complex<double>     i1 = std::complex<double>( 0., 1 ); // imaginary unit
     double k0 = 1.; // laser wavenumber

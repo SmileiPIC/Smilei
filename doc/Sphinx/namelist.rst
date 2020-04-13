@@ -1568,7 +1568,7 @@ Following is the generic laser envelope creator ::
 
   :default: 0.
 
-  The polarization ellipticity: 0 for linear and :math:`\pm 1` for circular. Needed only for ionization.
+  The polarization ellipticity: 0 for linear and :math:`\pm 1` for circular. For the moment, only these two polarizations are available.
 
 .. rubric:: 2. Defining a 1D laser envelope
 
