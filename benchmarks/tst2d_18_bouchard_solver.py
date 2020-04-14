@@ -12,16 +12,16 @@ import numpy as np
 l0 = 2.*m.pi                 # laser wavelength
 t0 = l0                      # optical cycle
 
-resx  = 16.                  # nb of cells in one laser wavelength x
-resy  = 16.                  # nb of cells in one laser wavelength y
+resx  = 8.                  # nb of cells in one laser wavelength x
+resy  = 8.                  # nb of cells in one laser wavelength y
 
 solver = 'Bouchard'
 order=4
 
-# CurrentFilter(
-#     model = "binomial",
-#     passes = 3
-# )
+CurrentFilter(
+    model = "binomial",
+    passes = [6,6]
+)
 
 fromcflfactor = 1.00 # have to be less than 1.
 rest = 2*resx/fromcflfactor
@@ -55,7 +55,7 @@ Main(
         simulation_time                = Tsim,
         cell_length                    = [l0/resx,l0/resx],
         grid_length                    = Lsim,
-        number_of_patches              = [64,64],
+        number_of_patches              = [32,32],
         clrw                           = 1,
         maxwell_solver                 = solver,
         EM_boundary_conditions         = [
@@ -125,7 +125,7 @@ Species(
 # --------------------------------------------------------------------------
 
 DiagScalar(
-  every = int(rest/8.),
+  every = 2,
   vars = [
     "Utot",
     "Ukin_eon_c",
@@ -149,21 +149,9 @@ dfac = 1.
 Tsim_over_t0 = 110.
 Lsim_over_l0 = [120.,60.]
 
-# DiagFields(
-#     every        = [0.*rest,Tsim_over_t0*rest,10],
-#     flush_every  = [0.*rest,Tsim_over_t0*rest,2000],
-#     time_average = 2,
-#     fields       = ["Bz","Ey","Rho_eon_c","Jx","Jy"]
-# )
-
-DiagProbe(
-    every        = [0.*rest,Tsim_over_t0*rest,10],
+DiagFields(
+    every        = [0.*rest,Tsim_over_t0*rest,100],
     flush_every  = [0.*rest,Tsim_over_t0*rest,2000],
-    origin   = [0.*l0, 0.*l0],
-    vectors  = [
-        [120.*l0,00.0*l0],
-        [00.0*l0,60.0*l0],
-    ],
-    number   = [int(120*resx), int(60*resy)],
-    fields   = ["Ex", "Ey","Bz"]
+    subgrid      = np.s_[int(40*resy-10*resy):int(40*resy+20*resy), int(30*resy-10*resy):int(30*resy+10*resy)],
+    fields       = ["Bz","Ey"]
 )
