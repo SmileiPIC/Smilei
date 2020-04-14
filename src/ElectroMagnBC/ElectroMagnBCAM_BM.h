@@ -43,9 +43,6 @@ private:
     double CB_BM;
     //! Constant used for the Buneman boundary conditions (+R)
     double CE_BM;
-    //! Number of modes
-    unsigned int Nmode;
-    
 };
 
 #endif

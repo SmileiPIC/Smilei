@@ -12,7 +12,6 @@
 #include "ElectroMagnBC3D_BM.h"
 #include "ElectroMagnBCAM_SM.h"
 #include "ElectroMagnBCAM_zero.h"
-#include "ElectroMagnBCAM_Axis.h"
 #include "ElectroMagnBCAM_BM.h"
 
 #include "Params.h"

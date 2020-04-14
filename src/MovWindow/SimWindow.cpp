@@ -544,6 +544,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         poynting[0].resize( params.nDim_field, 0.0 );
         poynting[1].resize( params.nDim_field, 0.0 );
         
+        std::vector<double> urad( nSpecies, 0. );
+        
         //Delete useless patches
         for( unsigned int j=0; j < delete_patches_.size(); j++ ) {
             mypatch = delete_patches_[j];
@@ -554,12 +556,16 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             //        energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
             //}
             
-            for( unsigned int jp=0; jp<2; jp++ ) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+            for( unsigned int jp=0; jp<2; jp++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
                 for( unsigned int i=0 ; i<params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
                     poynting[jp][i] += mypatch->EMfields->poynting[jp][i];
                 }
-                
-                
+            }
+            
+            for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
+                urad[ispec] += mypatch->vecSpecies[ispec]->getNrjRadiation();
+            }
+            
             delete  mypatch;
         }
         
@@ -572,12 +578,17 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                 vecPatches( 0 )->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
             }
-       
-            for( unsigned int j=0; j<2; j++ ) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+            
+            for( unsigned int j=0; j<2; j++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
                 for( unsigned int i=0 ; i< params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
                     vecPatches( 0 )->EMfields->poynting[j][i] += poynting[j][i];
                 }
-        }        
+            }
+            
+            for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
+                vecPatches( 0 )->vecSpecies[ispec]->addNrjRadiation( urad[ispec] );
+            }
+        }
         
 #ifdef _NO_MPI_TM
     } // end omp master
