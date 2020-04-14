@@ -650,6 +650,8 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
     //DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, smpi );
 
     region.patch_->EMfields->laserDisabled();
+    region.patch_->EMfields->emBoundCond[0]->apply(region.patch_->EMfields, time_dual, region.patch_);
+    region.patch_->EMfields->emBoundCond[1]->apply(region.patch_->EMfields, time_dual, region.patch_);
     // External fields
 
     //mypatch->EMfields->emBoundCond[1]->disableExternalFields();
@@ -692,6 +694,8 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
     //DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, smpi );
 
     region.patch_->EMfields->laserDisabled();
+    region.patch_->EMfields->emBoundCond[0]->apply(region.patch_->EMfields, time_dual, region.patch_);
+    region.patch_->EMfields->emBoundCond[1]->apply(region.patch_->EMfields, time_dual, region.patch_);
     // External fields
 
     //mypatch->EMfields->emBoundCond[1]->disableExternalFields();

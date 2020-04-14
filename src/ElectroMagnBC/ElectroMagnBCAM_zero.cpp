@@ -47,8 +47,11 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
         cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
         
         if( min_max == 0 && patch->isXmin() ) {
-                //x= Xmin
-            for (unsigned int i=0; i < region_oversize_l; i++){
+            //x= Xmin
+            int cell_start_dump =  region_oversize_l - number_of_damping_cells[0];
+            int cell_stop_dump  =  cell_start_dump + number_of_damping_cells[0]/2 ;
+
+            for (unsigned int i=0; i < cell_start_dump; i++){
                 for ( unsigned int j=0 ; j<nr_p ; j++ ) {
                     ( *El )( i, j ) = 0.;
                     ( *Er )( i, j ) = 0.;
@@ -58,9 +61,23 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
                     ( *Bt )( i, j ) = 0.;
                 }
             }
+            for (unsigned int i=cell_start_dump; i < cell_stop_dump; i++){
+                //sin^2 damping over number_of_damping_cells/2 cells.
+                double damp_coeff = sin((i-cell_start_dump)*M_PI/number_of_damping_cells[0]);
+                damp_coeff *= damp_coeff; 
+            
+                for ( unsigned int j=0 ; j<nr_p ; j++ ) {
+                    ( *El )( i, j ) *= damp_coeff;
+                    ( *Er )( i, j ) *= damp_coeff;
+                    ( *Et )( i, j ) *= damp_coeff;
+                    ( *Bl )( i, j ) *= damp_coeff;
+                    ( *Br )( i, j ) *= damp_coeff;
+                    ( *Bt )( i, j ) *= damp_coeff;
+                }
+            }
 
         } else if( min_max == 1 && patch->isXmax() ) {
-            for (unsigned int i=nl_p - region_oversize_l; i < nl_p; i++){
+            for (unsigned int i=nl_p - region_oversize_l + number_of_damping_cells[0]; i < nl_p; i++){
                 for( unsigned int j=0. ; j<nr_p ; j++ ) {
                     ( *El )( i, j ) = 0.;
                     ( *Er )( i, j ) = 0.;
