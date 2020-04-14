@@ -328,6 +328,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
     }
 
+    if( !PyTools::extractV( "number_of_damping_cells", number_of_damping_cells, "Main" ) ) {
+        ERROR( "The parameter `number_of_damping_cells` must be defined as a list of integers" );
+    }
+
     int n_envlaser = PyTools::nComponents( "LaserEnvelope" );
     if( n_envlaser >=1 ) {
         Laser_Envelope_model = true;

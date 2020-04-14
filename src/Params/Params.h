@@ -226,6 +226,8 @@ public:
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
     std::vector<unsigned int> region_oversize;
+    //! Number of damping cells
+    std::vector<unsigned int> number_of_damping_cells;
 
     unsigned int pseudo_spectral_guardells;
     bool apply_rotational_cleaning;
