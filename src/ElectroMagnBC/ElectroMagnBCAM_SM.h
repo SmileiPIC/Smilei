@@ -65,8 +65,6 @@ private:
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
     std::complex<double> Epsilon_SM_Xmax;
-    //! Number of modes
-    unsigned int Nmode;
     
 };
 

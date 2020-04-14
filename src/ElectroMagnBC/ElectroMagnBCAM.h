@@ -53,6 +53,9 @@ protected:
    
     //! Number of ghost cells of the region in the longitudinal direction 
     int region_oversize_l;
+
+    //! Number of modes
+    unsigned int Nmode;
 };
 
 #endif

@@ -11,7 +11,6 @@
 #include "ElectroMagnBC3D_refl.h"
 #include "ElectroMagnBC3D_BM.h"
 #include "ElectroMagnBCAM_SM.h"
-#include "ElectroMagnBCAM_Axis.h"
 #include "ElectroMagnBCAM_BM.h"
 
 #include "Params.h"
@@ -180,7 +179,7 @@ public:
             }
             
             // R DIRECTION
-            emBoundCond[2] = new ElectroMagnBCAM_Axis( params, patch, 2 );
+            emBoundCond[2] = NULL; 
             // silver-muller bcs (injecting/absorbin)
             //MESSAGE("bc AXIS");
             if( params.EM_BCs[1][1] == "buneman" ) {
