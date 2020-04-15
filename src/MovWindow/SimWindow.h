@@ -29,7 +29,7 @@ public:
     void shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param, unsigned int itime, double time_dual, Region& region );
     
     void operate( Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual );
-    void operate( Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual, unsigned int imode );
+    void operate( Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual, unsigned int nmodes );
 
     //! Tells whether there is a moving window or not
     inline bool isActive()

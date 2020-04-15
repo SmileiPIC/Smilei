@@ -601,8 +601,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             if ( params.geometry != "AMcylindrical" )
                 operate(region, vecPatches, smpi, params, time_dual);
             else {
-                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++ )
-                    operate(region, vecPatches, smpi, params, time_dual, imode);
+                operate(region, vecPatches, smpi, params, time_dual, params.nmodes);
             }
     }
     #pragma omp barrier
@@ -668,32 +667,34 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
 }
 
 
-void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, double time_dual, unsigned int imode)
+void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, double time_dual, unsigned int nmodes)
 {
     ElectroMagnAM * region_fields = static_cast<ElectroMagnAM *>( region.patch_->EMfields );
-    
-    region.patch_->exchangeField_movewin( region_fields->El_[imode], params.n_space[0] );
-    region.patch_->exchangeField_movewin( region_fields->Er_[imode], params.n_space[0] );
-    region.patch_->exchangeField_movewin( region_fields->Et_[imode], params.n_space[0] );
-    
-    if (region_fields->Bl_[imode]->cdata_!= region_fields->Bl_m[imode]->cdata_) {
-        region.patch_->exchangeField_movewin( region_fields->Bl_[imode], params.n_space[0] );
-        region.patch_->exchangeField_movewin( region_fields->Br_[imode], params.n_space[0] );
-        region.patch_->exchangeField_movewin( region_fields->Bt_[imode], params.n_space[0] );
-    }
+   
+    for (unsigned int imode = 0; imode < nmodes; imode++){ 
+        region.patch_->exchangeField_movewin( region_fields->El_[imode], params.n_space[0] );
+        region.patch_->exchangeField_movewin( region_fields->Er_[imode], params.n_space[0] );
+        region.patch_->exchangeField_movewin( region_fields->Et_[imode], params.n_space[0] );
+        
+        if (region_fields->Bl_[imode]->cdata_!= region_fields->Bl_m[imode]->cdata_) {
+            region.patch_->exchangeField_movewin( region_fields->Bl_[imode], params.n_space[0] );
+            region.patch_->exchangeField_movewin( region_fields->Br_[imode], params.n_space[0] );
+            region.patch_->exchangeField_movewin( region_fields->Bt_[imode], params.n_space[0] );
+        }
 
-    region.patch_->exchangeField_movewin( region_fields->Bl_m[imode], params.n_space[0] );
-    region.patch_->exchangeField_movewin( region_fields->Br_m[imode], params.n_space[0] );
-    region.patch_->exchangeField_movewin( region_fields->Bt_m[imode], params.n_space[0] );
+        region.patch_->exchangeField_movewin( region_fields->Bl_m[imode], params.n_space[0] );
+        region.patch_->exchangeField_movewin( region_fields->Br_m[imode], params.n_space[0] );
+        region.patch_->exchangeField_movewin( region_fields->Bt_m[imode], params.n_space[0] );
 
-    if (params.is_spectral) {
-        region.patch_->exchangeField_movewin( region_fields->rho_AM_[imode], params.n_space[0] );
-        region.patch_->exchangeField_movewin( region_fields->rho_old_AM_[imode], params.n_space[0] );
+        if (params.is_spectral) {
+            region.patch_->exchangeField_movewin( region_fields->rho_AM_[imode], params.n_space[0] );
+            region.patch_->exchangeField_movewin( region_fields->rho_old_AM_[imode], params.n_space[0] );
+        }
     }
 
     //DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, smpi );
 
-    region.patch_->EMfields->laserDisabled();
+    region_fields->laserDisabled();
     region.patch_->EMfields->emBoundCond[0]->apply(region.patch_->EMfields, time_dual, region.patch_);
     region.patch_->EMfields->emBoundCond[1]->apply(region.patch_->EMfields, time_dual, region.patch_);
     // External fields
