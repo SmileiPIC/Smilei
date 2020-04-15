@@ -31,7 +31,18 @@ ElectroMagnBCAM_zero::ElectroMagnBCAM_zero( Params &params, Patch *patch, unsign
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Apply Boundary Conditions
+// Apply Zero Boundary Conditions
+//
+//
+//   zero - damping area - unmodified   - region - unmodified - damping area - zero
+//   <--------------------------------->           <------------------------------>
+//          ghost cells                                       ghost cells                 
+//          <-------------------------->           <------------------------> 
+//                  damping cells                         damping cells       
+//                        <------------>           <---------> 
+//                        damping cells/2          damping cells/2       
+//
+//
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
@@ -48,22 +59,15 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
         
         if( min_max == 0 && patch->isXmin() ) {
             //x= Xmin
-            int cell_start_dump =  region_oversize_l - number_of_damping_cells[0];
-            int cell_stop_dump  =  cell_start_dump + number_of_damping_cells[0]/2 ;
+            int cell_start_dump =  region_oversize_l - number_of_damping_cells[0]/2;
+            int cell_stop_dump  =  cell_start_dump - number_of_damping_cells[0]/2 ;
+            double pi_ov_ndc = M_PI / number_of_damping_cells[0];
+            double damping_phase = 0.;
 
-            for (unsigned int i=0; i < cell_start_dump; i++){
-                for ( unsigned int j=0 ; j<nr_p ; j++ ) {
-                    ( *El )( i, j ) = 0.;
-                    ( *Er )( i, j ) = 0.;
-                    ( *Et )( i, j ) = 0.;
-                    ( *Bl )( i, j ) = 0.;
-                    ( *Br )( i, j ) = 0.;
-                    ( *Bt )( i, j ) = 0.;
-                }
-            }
-            for (unsigned int i=cell_start_dump; i < cell_stop_dump; i++){
-                //sin^2 damping over number_of_damping_cells/2 cells.
-                double damp_coeff = sin((i-cell_start_dump)*M_PI/number_of_damping_cells[0]);
+            for (unsigned int i=cell_start_dump; i > cell_stop_dump; i--){
+                //cos^2 damping over number_of_damping_cells/2 cells.
+                damping_phase += pi_ov_ndc;
+                double damp_coeff = cos(damping_phase);
                 damp_coeff *= damp_coeff; 
             
                 for ( unsigned int j=0 ; j<nr_p ; j++ ) {
@@ -76,8 +80,41 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
                 }
             }
 
+            for (unsigned int i= 0; i<=cell_stop_dump; i++){
+                for ( unsigned int j=0 ; j<nr_p ; j++ ) {
+                    ( *El )( i, j ) = 0.;
+                    ( *Er )( i, j ) = 0.;
+                    ( *Et )( i, j ) = 0.;
+                    ( *Bl )( i, j ) = 0.;
+                    ( *Br )( i, j ) = 0.;
+                    ( *Bt )( i, j ) = 0.;
+                }
+            }
+
         } else if( min_max == 1 && patch->isXmax() ) {
-            for (unsigned int i=nl_p - region_oversize_l + number_of_damping_cells[0]; i < nl_p; i++){
+
+            int cell_start_dump = nl_p - region_oversize_l + number_of_damping_cells[0]/2;
+            int cell_stop_dump  =  cell_start_dump + number_of_damping_cells[0]/2 ;
+            double pi_ov_ndc = M_PI / number_of_damping_cells[0];
+            double damping_phase = 0.;
+ 
+            for (unsigned int i=cell_start_dump; i < cell_stop_dump; i++){
+                //cos^2 damping over number_of_damping_cells/2 cells.
+                damping_phase += pi_ov_ndc;
+                double damp_coeff  = cos(damping_phase);
+                damp_coeff *= damp_coeff; 
+
+                for( unsigned int j=0. ; j<nr_p ; j++ ) {
+                    ( *El )( i, j ) *= damp_coeff;
+                    ( *Er )( i, j ) *= damp_coeff;
+                    ( *Et )( i, j ) *= damp_coeff;
+                    ( *Bl )( i, j ) *= damp_coeff;
+                    ( *Br )( i, j ) *= damp_coeff;
+                    ( *Bt )( i, j ) *= damp_coeff;
+                }
+            }
+
+            for (unsigned int i=cell_stop_dump; i < nl_p; i++){
                 for( unsigned int j=0. ; j<nr_p ; j++ ) {
                     ( *El )( i, j ) = 0.;
                     ( *Er )( i, j ) = 0.;
