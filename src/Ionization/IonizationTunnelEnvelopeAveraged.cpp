@@ -232,6 +232,10 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
                 new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
                 new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
 
+                // initialize px to take into account the average drift <px>=A^2/4 and the px=|p_perp|^2/2 result
+                // Note: the agreement in the phase space between envelope and standard laser simulation will be seen only after the passage of the ionizing laser
+                new_electrons.momentum( 0, idNew ) += Aabs*Aabs/4. + momentum_major_axis*momentum_major_axis/2.;
+
             } else if (ellipticity==1.){ // circular polarization
 
                 // extract a random angle between 0 and 2pi, and give p_perp = eA
@@ -239,12 +243,12 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
                 momentum_major_axis = Aabs;
                 new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos(2. * M_PI * rand_1);
                 new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin(2. * M_PI * rand_1); 
+     
+                // initialize px to take into account the average drift <px>=A^2/4 and the px=|p_perp|^2/2 result
+                // Note: the agreement in the phase space between envelope and standard laser simulation will be seen only after the passage of the ionizing laser
+                new_electrons.momentum( 0, idNew ) += Aabs*Aabs/2 + momentum_major_axis*momentum_major_axis/2.;
             
             }
-    
-            // initialize px to take into account the average drift <px>=A^2/4 and the px=|p_perp|^2/2 result
-            // Note: the agreement in the phase space between envelope and standard laser simulation will be seen only after the passage of the ionizing laser
-	          new_electrons.momentum( 0, idNew ) += Aabs*Aabs/4. + momentum_major_axis*momentum_major_axis/2.;
 
             // weight and charge of the new electron
             new_electrons.weight( idNew )=double( k_times )*particles->weight( ipart );
