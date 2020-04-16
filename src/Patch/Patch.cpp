@@ -232,16 +232,8 @@ void Patch::finalizeMPIenvironment( Params &params )
         nb_comms += vecSpecies.size();
     }
 
-    // Radiated energy
-    if( params.hasMCRadiation ||
-            params.hasLLRadiation ||
-            params.hasNielRadiation ) {
-        for( int ispec=0 ; ispec<( int )this->vecSpecies.size() ; ispec++ ) {
-            if( this->vecSpecies[ispec]->Radiate ) {
-                nb_comms ++;
-            }
-        }
-    }
+    // Scalars
+    nb_comms ++;
 
     // Just apply on species & fields to start
 

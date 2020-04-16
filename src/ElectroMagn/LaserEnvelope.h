@@ -62,16 +62,20 @@ public:
     //EnvBoundCond = EnvelopeBC_Factory::create(params, patch);
 
     ////// auxiliary quantities for the solver, computation of gradients etc
-    double one_ov_2dt,dt_sq;            // 1/(2dt), dt^2
-    double one_ov_dx_sq,one_ov_2dx;     // 1/(2dx), 1/(dx^2)     // for all geometries
-    double one_ov_dy_sq,one_ov_2dy;     // 1/(2dy), 1/(dy^2)     // for 2D, 3D geometries
-    double one_ov_dz_sq,one_ov_2dz;     // 1/(2dz), 1/(dz^2)     // for 3D geometry
-    double one_ov_dl_sq,one_ov_2dl;     // 1/(2dl), 1/(dl^2)     // for AMcylindrical geometry
-    double one_ov_dr_sq,one_ov_2dr,dr;  // 1/(2dr), 1/(dr^2), dr // for AMcylindrical geometry
+    double one_ov_2dt,dt_sq;         // 1/(2dt), dt^2
+    double one_ov_dx_sq,one_ov_2dx;  // 1/(2dx), 1/(dx^2)     // for all geometries
+    double one_ov_dy_sq,one_ov_2dy;  // 1/(2dy), 1/(dy^2)     // for 2D, 3D geometries
+    double one_ov_dz_sq,one_ov_2dz;  // 1/(2dz), 1/(dz^2)     // for 3D geometry
+    double one_ov_dl_sq,one_ov_2dl;  // 1/(2dl), 1/(dl^2)     // for AMcylindrical geometry
+    double one_ov_dr_sq,one_ov_2dr;  // 1/(2dr), 1/(dr^2), dr // for AMcylindrical geometry
+    double dr;
 
     // imaginary unit
     std::complex<double> i1 = std::complex<double>( 0., 1 );
-    std::complex<double> i1_2k0_over_2dx, one_plus_ik0dt, one_plus_ik0dt_ov_one_plus_k0sq_dtsq,i1_2k0_over_2dl;
+    std::complex<double> i1_2k0_over_2dx;
+    std::complex<double> i1_2k0_over_2dl;
+    std::complex<double> one_plus_ik0dt;
+    std::complex<double> one_plus_ik0dt_ov_one_plus_k0sq_dtsq;
     double delta; // necessary for the reduced dispersion envelope solver  
 };
 

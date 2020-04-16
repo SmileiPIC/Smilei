@@ -8,7 +8,7 @@
 
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class for 2nd order interpolator for 1d3v simulations
+//! Class for 2nd order interpolator for AM spectral simulations
 //  --------------------------------------------------------------------------------------------------------------------
 class InterpolatorAM2Order : public InterpolatorAM
 {

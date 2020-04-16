@@ -5,6 +5,15 @@
 
 import h5py as h5py
 import numpy as np
+import sys
+# ______________________________________________________________________________
+# Checks
+
+try:
+    path = sys.argv[1]
+except:
+    print("\n Please, provide a path to the tables.\n")
+    raise
 
 # ______________________________________________________________________________
 # Functions
@@ -17,15 +26,15 @@ def if_file_exist(filename):
     file = open(filename)
   except IOError:
     flag = False
-    print ' No file : ', filename
+    print(' No file: {}'.format(filename))
   return flag
 
 # ______________________________________________________________________________
 # Dump the table integfochi
 
-if if_file_exist('./radiation_tables.h5'):
+if if_file_exist(path):
     
-    f = h5py.File('./radiation_tables.h5', "r")
+    f = h5py.File(path, "r")
 
     if 'integfochi' in f:
 
@@ -48,9 +57,9 @@ if if_file_exist('./radiation_tables.h5'):
 # ______________________________________________________________________________
 # Read the table h
 
-if if_file_exist('./radiation_tables.h5'):
+if if_file_exist(path):
     
-    f = h5py.File('./radiation_tables.h5', "r")
+    f = h5py.File(path, "r")
 
     if 'h' in f:
 
@@ -73,9 +82,9 @@ if if_file_exist('./radiation_tables.h5'):
 # ______________________________________________________________________________
 # Read the table min photon chi for xi
 
-if if_file_exist('./radiation_tables.h5'):
+if if_file_exist(path):
 
-    f = h5py.File('./radiation_tables.h5', "r")
+    f = h5py.File(path, "r")
     
     if 'min_photon_chi_for_xi' in f:
         
@@ -98,9 +107,9 @@ if if_file_exist('./radiation_tables.h5'):
 # ______________________________________________________________________________
 # Read the table xip
 
-if if_file_exist('./radiation_tables.h5'):
+if if_file_exist(path):
 
-    f = h5py.File('./radiation_tables.h5', "r")
+    f = h5py.File(path, "r")
 
     if 'xi' in f:
         

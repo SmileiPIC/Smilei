@@ -466,6 +466,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 
 .. py:data:: time_start
 
+  :type: Float.
   :default: 0.
 
   The time at which the window starts moving.
@@ -473,18 +474,21 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 
 .. py:data:: velocity_x
 
+  :type: Float.
   :default: 0.
 
   The average velocity of the moving window in the `x_max` direction. It muste be between 0 and 1.
 
 .. py:data:: number_of_additional_shifts
 
+  :type: Integer.
   :default: 0.
 
   The number of additional shifts of the moving window.
 
 .. py:data:: additional_shifts_time
 
+  :type: Float.
   :default: 0.
 
   The time at which the additional shifts are done.
@@ -507,20 +511,23 @@ which parameters are controlled in the following block::
 
   CurrentFilter(
       model = "binomial",
-      passes = 0,
+      passes = [0],
   )
 
 .. py:data:: model
 
+  :type: String.
   :default: ``"binomial"``
 
   The model for current filtering. Presently, only ``"binomial"`` current filtering is available.
 
 .. py:data:: passes
 
-  :default: ``0``
+  :type: A python list of integers.
+  :default: ``[0]``
 
-  The number of passes in the filter at each timestep.
+  The number of passes in the filter at each timestep given for all dimensions.
+  If the list is of length 1, the same number of passes is assumed for all dimensions.
 
 
 ----
@@ -846,7 +853,7 @@ Each species has to be defined in a ``Species`` block::
   * ``"none"``: no radiation
   * ``"Landau-Lifshitz"`` (or ``ll``): Landau-Lifshitz model approximated for high energies
   * ``"corrected-Landau-Lifshitz"`` (or ``cll``): with quantum correction
-  * ``""Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
+  * ``"Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
   * ``"Monte-Carlo"`` (or ``mc``): Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
 
   This parameter cannot be assigned to photons (mass = 0).
@@ -936,6 +943,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
         name      = "injector1",
         species   = "electrons1",
         box_side  = "xmin",
+        time_envelope = tgaussian(start=0, duration=10., order=4),
 
         # Parameters inherited from the associated `species` by default
 
@@ -944,7 +952,6 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
         mean_velocity = [0.5,0.,0.],
         temperature = [1e-30],
         number_density = 1,
-        time_envelope = tgaussian(start=0, duration=10., order=4),
         particles_per_cell = 16,
     )
 
@@ -965,7 +972,16 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     * ``"xmin"``
     * ``"xmax"``
 
+.. py:data:: time_envelope
+
+    :type: a *python* function or a :ref:`time profile <profiles>`
+    :default:  ``tconstant()``
+
+    The temporal envelope of the injector.
+
 .. py:data:: position_initialization
+
+    :default: parameters provided the species
 
     The method for initialization of particle positions. Options are:
 
@@ -974,12 +990,12 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     * ``"random"`` for randomly distributed
     * ``"centered"`` for centered in each cell
     * The :py:data:`name` of another injector from which the positions are copied.
-      This option requires (1) that the *target* injector' positions are initialized
+      This option requires (1) that the *target* injector's positions are initialized
       using one of the three other options above.
 
-    By default, injector uses the parameters provided with :py:data:`species`.
-
 .. py:data:: momentum_initialization
+
+    :default: parameters provided the species
 
     The method for initialization of particle momenta. Options are:
 
@@ -987,27 +1003,26 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
     * ``"rectangular"`` for a rectangular distribution
 
-    By default, injector uses the parameters provided with :py:data:`species`.
-
 .. py:data:: mean_velocity
 
     :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+    :default: parameters provided the species
 
     The initial drift velocity of the particles, in units of the speed of light :math:`c`.
-    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
 
     **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
 
 .. py:data:: temperature
 
     :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+    :default: parameters provided the species
 
     The initial temperature of the particles, in units of :math:`m_ec^2`.
-    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
 
 .. py:data:: particles_per_cell
 
     :type: float or *python* function (see section :ref:`profiles`)
+    :default: parameters provided the species
 
     The number of particles per cell to use for the injector.
 
@@ -1015,16 +1030,10 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
              charge_density
 
     :type: float or *python* function (see section :ref:`profiles`)
+    :default: parameters provided the species
 
     The absolute value of the number density or charge density (choose one only)
     of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`)
-
-.. py:data:: time_envelope
-
-    :type: a *python* function or a :ref:`time profile <profiles>`
-    :default:  ``tconstant()``
-
-    The temporal envelope of the injector.
 
 ----
 
@@ -1547,7 +1556,7 @@ Following is the generic laser envelope creator ::
   The solver scheme for the envelope equation.
 
   * ``"explicit"``: an explicit scheme based  on central finite differences.
-  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along `x` in the ``"explicit"`` solver are substituted by 
+  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along `x` in the ``"explicit"`` solver are substituted by
     optimized derivatives to reduce numerical dispersion.
 
 .. py:data:: Envelope_boundary_conditions
@@ -2158,7 +2167,7 @@ tables.
     # Radiation parameters
     minimum_chi_continuous = 1e-3,
     minimum_chi_discontinuous = 1e-2,
-    table_path = "../databases/",
+    table_path = "<path to the external table folder>",
 
     # Parameters for Niel et al.
     Niel_computation_method = "table",
@@ -2184,7 +2193,7 @@ tables.
 
   :default: ``""``
 
-  Path to the external tables for the radiation losses.
+  Path to the **directory** that contains external tables for the radiation losses.
   If empty, the default tables are used.
   Default tables are embedded in the code.
   External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
@@ -2228,7 +2237,7 @@ There are three tables used for the multiphoton Breit-Wheeler refers to as the
   MultiphotonBreitWheeler(
 
     # Path to the tables
-    table_path = "../databases/",
+    table_path = "<path to the external table folder>",
 
   )
 
@@ -2236,7 +2245,7 @@ There are three tables used for the multiphoton Breit-Wheeler refers to as the
 
   :default: ``""``
 
-  Path to the external tables for the multiphoton Breit-Wheeler.
+  Path to the **directory** that contains external tables for the multiphoton Breit-Wheeler.
   If empty, the default tables are used.
   Default tables are embedded in the code.
   External tables can be generated using the external tool :program:`smilei_tables` (see :doc:`tables`).
@@ -2274,7 +2283,9 @@ This is done by including the block ``DiagScalar``::
 
   Number of digits of the outputs.
 
+.. warning::
 
+  Scalars diagnostics are not yet supported in ``"AMcylindrical"`` geometry.
 
 The full list of available scalars is given in the table below.
 
@@ -2565,9 +2576,13 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``, ``"Env_Ex_abs"``.
 
-  Note that when running a simulation in cylindrical geometry,
-  contrary to the Field diagnostic, Probes are defined as in a
-  3D Cartesian geometry and return Cartesian fields.
+  .. warning::
+
+    In ``"AMcylindrical"``, contrary to the Field diagnostic, Probes are defined as in a
+    3D Cartesian geometry and return Cartesian fields.
+    Fields per mode are not available in Probe diagnostics. See Field diagnostics if
+    per mode information is needed.
+
 
 
 
@@ -3245,7 +3260,7 @@ A few things are important to know when you need dumps and restarts.
 
   .. py:data:: file_grouping
 
-    :default: ``None``
+    :default: ``0`` (no grouping)
 
     The maximum number of checkpoint files that can be stored in one directory.
     Subdirectories are created to accomodate for all files.

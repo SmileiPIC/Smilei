@@ -111,13 +111,30 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
 
 // Cloning constructor
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved ) :
-    cell_length( envelope->cell_length ), timestep( envelope->timestep ), i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ), i1_2k0_over_2dl( envelope->i1_2k0_over_2dl ),
-    one_plus_ik0dt( envelope->one_plus_ik0dt ), one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq ),
-    envelope_solver(envelope->envelope_solver), delta(envelope->delta), one_ov_2dt(envelope->one_ov_2dt), dt_sq(envelope->dt_sq),
-    one_ov_dx_sq(envelope->one_ov_dx_sq),one_ov_2dx(envelope->one_ov_2dx),one_ov_dy_sq(envelope->one_ov_dy_sq),one_ov_2dy(envelope->one_ov_2dy),
-    one_ov_dz_sq(envelope->one_ov_dz_sq),one_ov_2dz(envelope->one_ov_2dz),one_ov_dl_sq(envelope->one_ov_dl_sq),one_ov_2dl(envelope->one_ov_2dl),
-    one_ov_dr_sq(envelope->one_ov_dr_sq),one_ov_2dr(envelope->one_ov_2dr),dr(envelope->dr),i1(envelope->i1),
-    polarization_phi(envelope->polarization_phi),ellipticity(envelope->ellipticity)
+    cell_length( envelope->cell_length ),
+    timestep( envelope->timestep ),
+    i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ),
+    i1_2k0_over_2dl( envelope->i1_2k0_over_2dl ),
+    one_plus_ik0dt( envelope->one_plus_ik0dt ),
+    one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq ),
+    envelope_solver(envelope->envelope_solver),
+    delta(envelope->delta),
+    one_ov_2dt(envelope->one_ov_2dt),
+    dt_sq(envelope->dt_sq),
+    one_ov_dx_sq(envelope->one_ov_dx_sq),
+    one_ov_2dx(envelope->one_ov_2dx),
+    one_ov_dy_sq(envelope->one_ov_dy_sq),
+    one_ov_2dy(envelope->one_ov_2dy),
+    one_ov_dz_sq(envelope->one_ov_dz_sq),
+    one_ov_2dz(envelope->one_ov_2dz),
+    one_ov_dl_sq(envelope->one_ov_dl_sq),
+    one_ov_2dl(envelope->one_ov_2dl),
+    one_ov_dr_sq(envelope->one_ov_dr_sq),
+    one_ov_2dr(envelope->one_ov_2dr),
+    dr(envelope->dr),
+    i1(envelope->i1),
+    polarization_phi(envelope->polarization_phi),
+    ellipticity(envelope->ellipticity)
 {
     if( n_moved ==0 ) {
         profile_ = new Profile( envelope->profile_ );

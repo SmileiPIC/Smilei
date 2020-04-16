@@ -45,14 +45,14 @@ ntot_electron = np.array(S.Scalar("Ntot_electron").get()["data"])
 ntot_positron = np.array(S.Scalar("Ntot_positron").get()["data"])
 ntot_photon = np.array(S.Scalar("Ntot_photon").get()["data"])
 
-print ' Final electron energy / total energy: ',ukin_electron[-1] / utot[0]
-print ' Final positron energy / total energy: ',ukin_positron[-1] / utot[0]
-print ' Final photon energy / total energy: ',ukin_photon[-1] / utot[0]
-print ' Maximal relative error total energy: ', max(abs(utot[:] - utot[0]))/utot[0]
+print( ' Final electron energy / total energy: ',ukin_electron[-1] / utot[0] )
+print( ' Final positron energy / total energy: ',ukin_positron[-1] / utot[0] )
+print( ' Final photon energy / total energy: ',ukin_photon[-1] / utot[0] )
+print( ' Maximal relative error total energy: ', max(abs(utot[:] - utot[0]))/utot[0] )
 
-print ' Final number of electrons:',ntot_electron[-1]
-print ' Final number of positrons: ',ntot_positron[-1]
-print ' Final number of photons: ',ntot_photon[-1]
+print( ' Final number of electrons:',ntot_electron[-1] )
+print( ' Final number of positrons: ',ntot_positron[-1] )
+print( ' Final number of photons: ',ntot_photon[-1] )
 
 Validate("Electron kinetic energy evolution: ", ukin_electron/utot[0], 1e-2 )
 Validate("Positron kinetic energy evolution: ", ukin_positron/utot[0], 2e-2 )

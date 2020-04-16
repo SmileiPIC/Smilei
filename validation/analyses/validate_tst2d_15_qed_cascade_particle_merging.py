@@ -90,7 +90,7 @@ for it,time in enumerate(Scalar["times"]):
 
 thresholds = {}
 thresholds["points"] = np.array([0. , 10, 100, 1000, 10000])
-thresholds["factor"] = np.array([1e9,1.5, 0.6, 0.35,   0.3, 0.2])
+thresholds["factor"] = np.array([1e9,1.5, 0.6, 0.35,   0.3, 0.25])
 
 for it,time in enumerate(Scalar["times"]):
     if (it*scalar_period >= 2000 and it*scalar_period <= 6500 and np.mod(it,2) == 0):

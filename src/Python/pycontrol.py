@@ -133,6 +133,8 @@ def _keep_python_running():
             profiles += [e.profile]
     for e in PrescribedField:
         profiles += [e.profile]
+    for s in ParticleInjector:
+        profiles += [s.time_envelope, s.number_density, s.charge_density, s.particles_per_cell] + s.mean_velocity + s.temperature
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True

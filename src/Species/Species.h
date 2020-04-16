@@ -156,6 +156,8 @@ public:
     bool position_initialization_on_species_;
     //! Index of the species where position initialization is made
     int position_initialization_on_species_index;
+    //! Initialization type of the species where position initialization is made
+    std::string position_initialization_on_species_type_;
     //! Boolean to know if species follows ponderomotive loop (laser modeled with envelope)
     bool ponderomotive_dynamics;
     //! Pointer to the species where field-ionized electrons go
@@ -466,6 +468,12 @@ public:
     //! Method to know if we have to project this species or not.
     bool  isProj( double time_dual, SimWindow *simWindow );
 
+    //! Set the energy lost in the boundary conditions
+    void setLostNrjBC( double value )
+    {
+        nrj_bc_lost = value;
+    }
+    
     //! Get the energy lost in the boundary conditions
     double getLostNrjBC() const
     {
@@ -496,10 +504,16 @@ public:
         nrj_radiation += value;
     }
 
+    //! Set gained via new particles
+    void setNewParticlesNRJ( double value )
+    {
+        new_particles_energy_ = value;
+    }
+    
     //! Get energy gained via new particles
     double getNewParticlesNRJ() const
     {
-        return mass_*new_particles_energy_;
+        return new_particles_energy_;
     }
 
     //! Reinitialize the scalar diagnostics buffer
@@ -507,7 +521,7 @@ public:
     {
         //nrj_bc_lost = 0;
         nrj_mw_lost = 0;
-        new_particles_energy_ = 0;
+        //new_particles_energy_ = 0;
         //nrj_radiation = 0;
     }
 

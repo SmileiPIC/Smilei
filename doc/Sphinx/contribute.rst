@@ -3,14 +3,11 @@ Contribute
 
 Contributions to the development of :program:`Smilei` are welcome.
 
-To report bugs, please create an issue on the
-`GitHub website <https://github.com/SmileiPIC/Smilei/issues/new>`_.
-
-To develop new features, you may freely *fork*
-the source code from the same website. When
-your modifications to the code are ready, you can make a `pull request
-<https://github.com/SmileiPIC/Smilei/pulls>`_ for review and
-merge with the main repository.
+* `Chatroom <https://riot.im/app/#/room/!LQrdVpOJEohPSWMlmf:matrix.org>`_ for discussion and sharing.
+* `GitHub issues <https://github.com/SmileiPIC/Smilei/issues>`_ for bugs and requests.
+* `GitHub fork <https://github.com/SmileiPIC/Smilei/issues>`_ to develop new features
+  (you can make a `pull request <https://github.com/SmileiPIC/Smilei/pulls>`_ when
+  your features are ready).
 
 Guidelines for new developments are:
 

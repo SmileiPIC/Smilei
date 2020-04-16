@@ -17,7 +17,6 @@ ParticleCreator::ParticleCreator()
 {
     position_initialization_on_species_ = false;
     initialized_in_species_ = true;
-    add_new_particle_energy_ = true;
     time_profile_ = NULL;
 }
 
@@ -89,6 +88,7 @@ void ParticleCreator::associate( Species * species)
     
     position_initialization_ = species->position_initialization_;
     position_initialization_on_species_ = species->position_initialization_on_species_;
+    position_initialization_on_species_type_ = species->position_initialization_on_species_type_;
     momentum_initialization_ = species->momentum_initialization_;
     velocity_profile_.resize(species->velocity_profile_.size());
     for (unsigned int i = 0 ; i < velocity_profile_.size() ; i++) {
@@ -191,8 +191,6 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }
-            // cerr << species_->name
-            //      << " Velocity[m] : " << velocity[m](0,0,0) << " Temperature[m]: " << temperature[m](0,0,0) << endl;
         }
     } // end if momentum_initialization_array_
     
@@ -287,10 +285,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                     
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical") {
-                        //Particles weight in regular is normalized later.
-                        density( i, j, k ) *= ( *xyz[1] )( i, j, k );
-                    }
+
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
                     // for each cell with as non-zero density
                     npart_effective += ( unsigned int ) n_part_in_cell( i, j, k );
@@ -494,31 +489,6 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     delete [] indexes;
     delete [] temp;
     delete [] vel;
-    
-    if (add_new_particle_energy_) {
-        // Recalculate former position using the particle velocity
-        // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
-        if( patch->isXmax() ) {
-            // Matter particle case
-            if( species_->mass_ > 0 ) {
-                for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
-                    /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
-                      particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->LorentzFactor(iPart) * params.timestep;
-                      }897*/
-                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->LorentzFactor( iPart )-1.0 );
-                }
-            }
-            // Photon case
-            else if( species_->mass_ == 0 ) {
-                for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
-                    /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
-                      particles_->position_old(i,iPart) -= particles_->momentum(i,iPart)/particles_->LorentzFactor(iPart) * params.timestep;
-                      }897*/
-                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->momentumNorm( iPart ) );
-                }
-            }
-        }
-    }
     
     if( particles_->tracked ) {
         particles_->resetIds();
@@ -842,10 +812,35 @@ void ParticleCreator::createWeight( std::string position_initialization,
                                     Params &params )
 {
     double w = n_real_particles / nPart;
-    for( unsigned  p= iPart; p<iPart+nPart; p++ ) {
+    for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
         particles->weight( p ) = w ;
     }
 }
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! For all (nPart) particles in a mesh initialize its numerical weight (equivalent to a number density)
+// ---------------------------------------------------------------------------------------------------------------------
+void ParticleCreator::regulateWeightwithPositionAM( Particles * particles, std::string position_initialization_on_species_type_, double dr )
+{
+    int nParts = particles->Weight.size();
+
+    if ( position_initialization_on_species_type_ == "regular" ){
+        //Particles in regular have a weight proportional to their position along r.
+        for (unsigned int ipart=0; ipart < nParts ; ipart++){
+            double radius = sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
+            particles->weight(ipart) *= radius;
+        }
+    } else {
+        //Particles in AM have a weight proportional to their intial cell radius
+        double dr_inv = 1./dr;
+        for (unsigned int ipart=0; ipart < nParts ; ipart++){
+            double cell_radius = dr * (floor ( sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart)) * dr_inv) + 0.5);
+            particles->weight(ipart) *= cell_radius;
+        }
+    }
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize its charge state

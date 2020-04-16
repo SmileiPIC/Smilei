@@ -14,6 +14,8 @@ Several physical mechanisms can use external tables to work:
 
 An external tool called :program:`smilei_tables` is available to generate these tables.
 
+----
+
 Installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -39,6 +41,8 @@ The tool can be then installed using the makefile and the argument `tables`:
   make tables
 
 The compilation generates an executable called :program:`smilei_tables` on the root of the repository.
+
+----
 
 Execution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -111,6 +115,8 @@ The tables are generated where the code is executed using HDF5 with the followin
 * Nonlinear inverse Compton Scattering: ``radiation_tables.h5``
 * multiphoton Breit-Wheeler: ``multiphoton_breit_wheeler_tables.h5``
 
+----
+
 Precomputed tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -121,6 +127,7 @@ We have computed some tables with several levels of discretizations that you can
 
 This table size is a good compromise between accuracy and memory cost.
 2D tables can fit in L2 cache although the pressure on the cache will be high.
+This set of tables is the one included by default in the sources of :program:`Smilei`
 
 .. code-block:: bash
 
@@ -132,27 +139,48 @@ This table size is a good compromise between accuracy and memory cost.
 
   mpirun -np <number of processes> ./smilei_tables mbw -s 256 256 -b 1e-2 1e2
 
-`multiphoton_breit_wheeler_tables.h5 <http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/tables_256/multiphoton_breit_wheeler_tables.h5>`_
+`multiphoton_breit_wheeler_tables.h5 <http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/tables_256/multiphoton_Breit_Wheeler_tables.h5>`_
 
-This set of tables is included by default in the sources of :program:`Smilei`
+These tables can be generated on a normal desktop computer in few minutes.
 
 512 points
 """""""""""
 
 With a size of 512 points in 1D and 512x512 for 2D tables, these tables offer better accuracy at a larger memory cost.
-2D tables of this size are too large to fit in L2 cache.
+2D tables of this size are too large to fit in L2 cache but can be contained in L3.
 
 .. code-block:: bash
 
   mpirun -np <number of processes> ./smilei_tables nics -s 512 512 -b 1e-4 1e3
   
-`radiation_tables.h5 <http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/tables_512/radiation_tables.h5>`_
+`radiation_tables.h5 <http://www.maisondelasimulation.fr/projects/Smilei/uploads/tables_512/radiation_tables.h5>`_
 
 .. code-block:: bash
 
   mpirun -np <number of processes> ./smilei_tables mbw -s 512 512 -b 1e-2 1e2
 
-`multiphoton_breit_wheeler_tables.h5 <http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/tables_512/multiphoton_breit_wheeler_tables.h5>`_
+`multiphoton_breit_wheeler_tables.h5 <http://www.maisondelasimulation.fr/projects/Smilei/uploads/tables_512/multiphoton_Breit_Wheeler_tables.h5>`_
+
+1024 points
+"""""""""""
+
+With a size of 1024 points in 1D and 1024x1024 for 2D tables, these tables offer the best accuracy at a high memory cost (around 8.5 Mb per file).
+2D tables of this size are too large to fit in L2 cache and L3 cache.
+
+.. code-block:: bash
+
+  mpirun -np <number of processes> ./smilei_tables nics -s 1024 1024 -b 1e-4 1e3
+  
+`radiation_tables.h5 <http://www.maisondelasimulation.fr/projects/Smilei/uploads/tables_1024/radiation_tables.h5>`_
+
+.. code-block:: bash
+
+  mpirun -np <number of processes> ./smilei_tables mbw -s 1024 1024 -b 1e-2 1e2
+
+`multiphoton_breit_wheeler_tables.h5 <http://www.maisondelasimulation.fr/projects/Smilei/uploads/tables_1024/multiphoton_Breit_Wheeler_tables.h5>`_
+
+
+----
 
 Python visualization scripts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -167,6 +195,8 @@ For instance:
 .. code-block:: bash
 
   python ./tools/tables/show_nonlinear_inverse_Compton_scattering.py ./radiation_tables.h5
+
+----
 
 Detailed description of the tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

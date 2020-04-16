@@ -68,8 +68,10 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
             if( imode==0 ) {
                 for( unsigned int i=0 ; i<nl_d ; i++ ) {
                     ( *Br )( i, j )=0;
+                    ( *Br )( i, 1 )=-( *Br )( i, 3 );
                 }
                 for( unsigned int i=0 ; i<nl_d ; i++ ) {
+                    //( *Bt )( i, j+1 )= ( *Bt )( i, j+2 )/9.;
                     ( *Bt )( i, j )= -( *Bt )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_p ; i++ ) {
@@ -85,6 +87,7 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
                 for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
                     ( *Br )( i, j )+=  Icpx*dt_ov_dr*( *El )( i, j+1 )
                                        +			dt_ov_dl*( ( *Et )( i, j )-( *Et )( i-1, j ) );
+                    ( *Br )( i, 1 )=( *Br )( i, 3 );
                 }
                 for( unsigned int i=0; i<nl_d ; i++ ) {
                     ( *Bt )( i, j )= -2.*Icpx*( *Br )( i, j )-( *Bt )( i, j+1 );
@@ -96,15 +99,11 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
                 }
                 for( unsigned int i=0 ; i<nl_d; i++ ) {
                     ( *Br )( i, j )= 0;
+                    ( *Br )( i, 1 )=-( *Br )( i, 3 );
                 }
                 for( unsigned int  i=0 ; i<nl_d ; i++ ) {
                     ( *Bt )( i, j )= - ( *Bt )( i, j+1 );
                 }
-            }
-            // Conditions below axis (matters for primal quantities interpolated on particles)
-            j=1;
-            for( unsigned int i=0 ; i<nl_d  ; i++ ) {
-                ( *Br )( i, j )=( *Br )( i, j+2 );
             }
         }
     }

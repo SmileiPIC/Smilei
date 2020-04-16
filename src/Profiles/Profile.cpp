@@ -155,6 +155,10 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
             } else {
                 ERROR( "Profile `"<<name<<"`: tsin2plateau() profile is only for time" );
             }
+        } else {
+            
+            ERROR( "Undefined profile "<<profileName );
+        
         }
         
     }
@@ -166,12 +170,12 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
 #ifdef  __DEBUG
         // Check how the profile looks like
         PyObject *repr = PyObject_Repr( py_profile );
-        PyTools::convert( repr, message );
+        PyTools::py2scalar( repr, message );
         MESSAGE( message );
         Py_XDECREF( repr );
         
         repr = PyObject_Str( py_profile );
-        PyTools::convert( repr, message );
+        PyTools::py2scalar( repr, message );
         MESSAGE( message );
         Py_XDECREF( repr );
 #endif
@@ -187,29 +191,11 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
         
         
         // Verify that the profile has the right number of arguments
-        PyObject *inspect=PyImport_ImportModule( "inspect" );
-        PyTools::checkPyError();
-        PyObject *tuple = PyObject_CallMethod( inspect, const_cast<char *>( "getargspec" ), const_cast<char *>( "(O)" ), py_profile );
-        PyObject *arglist = PyTuple_GetItem( tuple, 0 );
-        int size = PyObject_Size( arglist );
-        if( size != ( int )nvariables_ ) {
-            string args( "" );
-            for( int i=0; i<size; i++ ) {
-                PyObject *arg=PyList_GetItem( arglist, i );
-                PyObject *repr = PyObject_Repr( arg );
-                PyTools::convert( repr, message );
-                args += message+" ";
-                Py_XDECREF( repr );
-            }
-            WARNING( "Profile `" << name << "` takes "<< size <<" variables (" << args << ") but it is created with " << nvariables_ );
-        }
-        Py_XDECREF( tuple );
-        Py_XDECREF( inspect );
         int nargs = PyTools::function_nargs( py_profile );
-        if( nargs < 0 ) {
+        if( nargs == -2 ) {
             ERROR( "Profile `" << name << "` does not seem to be callable" );
         }
-        if( nargs != ( int ) nvariables_ ) {
+        if( nargs >= 0  && nargs != ( int ) nvariables_ ) {
             WARNING( "Profile `" << name << "` takes "<< nargs <<" arguments but requires " << nvariables_ );
         }
         if( nvariables_<1 || nvariables_>4 ) {

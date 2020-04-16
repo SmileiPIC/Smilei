@@ -19,9 +19,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI *smpi, VectorPatch &
 
     // Extract the species
     string species_name;
-    if( !PyTools::extract( "species", species_name, "DiagTrackParticles", iDiagTrackParticles ) ) {
-        ERROR( "DiagTrackParticles #" << iDiagTrackParticles << " requires an argument `species`" );
-    }
+    PyTools::extract( "species", species_name, "DiagTrackParticles", iDiagTrackParticles );
     vector<string> species_names = {species_name};
     vector<unsigned int> species_ids = Params::FindSpecies( vecPatches( 0 )->vecSpecies, species_names );
     if( species_ids.size() > 1 ) {
@@ -67,7 +65,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI *smpi, VectorPatch &
     
     // Get the parameter "attributes": a list of attribute name that must be written
     vector<string> attributes( 0 );
-    if( !PyTools::extract( "attributes", attributes, "DiagTrackParticles", iDiagTrackParticles ) ) {
+    if( !PyTools::extractV( "attributes", attributes, "DiagTrackParticles", iDiagTrackParticles ) ) {
         ERROR( "DiagTrackParticles #" << iDiagTrackParticles << ": argument `attribute` must be a list of strings" );
     }
     if( attributes.size() == 0 ) {

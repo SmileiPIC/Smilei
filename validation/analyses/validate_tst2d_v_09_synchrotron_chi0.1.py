@@ -143,8 +143,8 @@ print(' Maximum relative error kinetic energy: {}'.format(ukin_mc_rel_err.max())
 print(' Maximum relative error radiative energy: {}'.format(urad_mc_rel_err.max()))
 
 # Validation difference between continuous and discontinuous methods
-Validate("Relative error on the kinetic energy / ukin at t=0 (MC/CLL) " , ukin_mc_rel_err.max(), 0.011 )
-Validate("Relative error on the radiative energy / urad max (MC/CLL) " , urad_mc_rel_err.max(), 0.011 )
+Validate("Relative error on the kinetic energy / ukin at t=0 (MC/CLL) " , ukin_mc_rel_err.max(), 0.013 )
+Validate("Relative error on the radiative energy / urad max (MC/CLL) " , urad_mc_rel_err.max(), 0.013 )
 
 # ______________________________________________________________________________
 # Checking of the particle binning

@@ -110,6 +110,7 @@ void SpeciesV::initCluster( Params &params )
     nrj_bc_lost = 0.;
     nrj_mw_lost = 0.;
     new_particles_energy_ = 0.;
+    nrj_radiation = 0.;
 
 }//END initCluster
 

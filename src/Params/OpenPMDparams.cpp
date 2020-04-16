@@ -110,11 +110,13 @@ OpenPMDparams::OpenPMDparams( Params &p ):
     // Other parameters
     currentSmoothing = "none";
     currentSmoothingParameters = "";
-    if( params->currentFilter_passes > 0 ) {
-        currentSmoothing = "Binomial";
-        ostringstream t( "" );
-        t << "numPasses="<<params->currentFilter_passes;
-        currentSmoothingParameters = t.str();
+    if (params->currentFilter_passes.size() > 0){
+        if( *std::max_element(std::begin(params->currentFilter_passes), std::end(params->currentFilter_passes)) > 0 ) {
+            currentSmoothing = "Binomial";
+            ostringstream t( "" );
+            t << "numPasses="<<*std::max_element(std::begin(params->currentFilter_passes), std::end(params->currentFilter_passes));
+            currentSmoothingParameters = t.str();
+        }
     }
 }
 
