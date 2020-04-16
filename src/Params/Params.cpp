@@ -356,19 +356,15 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         int n_species = PyTools::nComponents( "Species" );
         std:: string ionization_model;
         for (int i_species=0;i_species<n_species;i_species++){
-            if(PyTools::extract( "ionization_model", ionization_model, "Species", i_species )){
-                if (ionization_model=="tunnel_envelope" || ionization_model=="tunnel_envelope_averaged" ){
-                    envelope_ionization_is_active = true;
-                    break;
-                }
-                
+            PyTools::extract( "ionization_model", ionization_model, "Species", i_species );
+            if (ionization_model=="tunnel_envelope" || ionization_model=="tunnel_envelope_averaged" ){
+                envelope_ionization_is_active = true;
+                break;
             }
         }
 
         // Read envelope solver for the envelope equation
-        if (!PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" )){
-            ERROR("envelope_solver not defined in the LaserEnvelope block");
-        }
+        PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" );
         if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
             ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
         }
