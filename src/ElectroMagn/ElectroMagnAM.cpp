@@ -1385,50 +1385,50 @@ void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
         // applying a single pass of the binomial filter along Y
         if (ipass < passes[1]){
 
-            double q0[nr_p], q[nr_p]; // Coefficient to retrieve proper binomial stencil along r in cylindrical geometry.
+            double qp[nr_p], qm[nr_p]; // Coefficient to retrieve proper binomial stencil along r in cylindrical geometry.
             for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
-                q[j] = sqrt(1.+dr*invR[j]);
-                q0[j] = (1.-dr*invR[j]) / q[j];
+                qp[j] = 1.+dr*invR[j];
+                qm[j] = 1.-dr*invR[j];
             }
 
-            double qd0[nr_d], qd[nr_d];
+            double qdp[nr_d], qdm[nr_d];
             for( unsigned int j=isYmin*3; j<nr_d-1; j++ ) {
-                qd[j] = sqrt(1.+dr*invRd[j]);
-                qd0[j] = (1.-dr*invRd[j]) / qd[j];
+                qdp[j] = 1.+dr*invRd[j];
+                qdm[j] = 1.-dr*invRd[j];
             }
 
 
             //Jl
             for( unsigned int i=1; i<nl_d-1; i++ ) {
                 for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
-                        ( *Jl )( i, j) = ( q0[j]*( *Jl )( i, j) + q[j]*( *Jl )( i, j+1) )*0.5;
+                        ( *Jl )( i, j) = ( qm[j]*( *Jl )( i, j) + qp[j]*( *Jl )( i, j+1) )*0.5;
                 }
             }
             for( unsigned int i=1; i<nl_d-1; i++ ) {
                 for( unsigned int j=nr_p-2; j>isYmin*2; j-- ) {
-                        ( *Jl )( i, j) = ( q[j]*( *Jl )( i, j) + q[j]*( *Jl )( i, j-1)  )*0.5;
+                        ( *Jl )( i, j) = ( ( *Jl )( i, j) + ( *Jl )( i, j-1)  )*0.5;
                 }
             }
             //Jr
             for( unsigned int i=1; i<nl_p-1; i++ ) {
                 for( unsigned int j=isYmin*3; j<nr_d-1; j++ ) {
-                        ( *Jr )( i, j) = ( qd0[j]*( *Jr )( i, j) + qd[j]*( *Jr )( i, j+1) )*0.5;
+                        ( *Jr )( i, j) = ( qdp[j]*( *Jr )( i, j) + qdm[j]*( *Jr )( i, j+1) )*0.5;
                 }
             }
             for( unsigned int i=1; i<nl_p-1; i++ ) {
                 for( unsigned int j=nr_d-2; j>isYmin*3; j-- ) {
-                        ( *Jr )( i, j) = ( qd[j]*( *Jr )( i, j) + qd[j]*( *Jr )( i, j-1) )*0.5;
+                        ( *Jr )( i, j) = ( ( *Jr )( i, j) + ( *Jr )( i, j-1) )*0.5;
                 }
             }
             //Jt
             for( unsigned int i=1; i<nl_p-1; i++ ) {
                 for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
-                        ( *Jt )( i, j) = ( q0[j]*( *Jt )( i, j) + q[j]*( *Jt )( i, j+1) )*0.5;
+                        ( *Jt )( i, j) = ( qp[j]*( *Jt )( i, j) + qm[j]*( *Jt )( i, j+1) )*0.5;
                 }
             }
             for( unsigned int i=1; i<nl_p-1; i++ ) {
                 for( unsigned int j=nr_p-2; j>isYmin*2; j-- ) {
-                        ( *Jt )( i, j) = ( q[j]*( *Jt )( i, j) + q[j]*( *Jt )( i, j-1) )*0.5;
+                        ( *Jt )( i, j) = ( ( *Jt )( i, j) + ( *Jt )( i, j-1) )*0.5;
                 }
             }
         }
