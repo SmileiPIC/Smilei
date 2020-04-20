@@ -1405,7 +1405,7 @@ void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
                 }
             }
             for( unsigned int i=1; i<nl_d-1; i++ ) {
-                for( unsigned int j=nr_p-2; j>isYmin*2; j-- ) {
+                for(  int j=nr_p-2; j>isYmin*2+1; j-- ) {
                         ( *Jl )( i, j) = ( ( *Jl )( i, j) + ( *Jl )( i, j-1)  )*0.5;
                 }
             }
@@ -1416,7 +1416,7 @@ void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
                 }
             }
             for( unsigned int i=1; i<nl_p-1; i++ ) {
-                for( unsigned int j=nr_d-2; j>isYmin*3; j-- ) {
+                for(  int j=nr_d-2; j>isYmin*3; j-- ) {
                         ( *Jr )( i, j) = ( ( *Jr )( i, j) + ( *Jr )( i, j-1) )*0.5;
                 }
             }
@@ -1427,7 +1427,7 @@ void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
                 }
             }
             for( unsigned int i=1; i<nl_p-1; i++ ) {
-                for( unsigned int j=nr_p-2; j>isYmin*2; j-- ) {
+                for(  int j=nr_p-2; j>isYmin*2+1; j-- ) {
                         ( *Jt )( i, j) = ( ( *Jt )( i, j) + ( *Jt )( i, j-1) )*0.5;
                 }
             }
