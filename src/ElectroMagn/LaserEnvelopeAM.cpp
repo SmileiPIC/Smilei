@@ -121,9 +121,9 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
             // |E envelope| = |-(dA/dt-ik0cA)|
             ( *Env_Eabs2Dcyl )( i, j )= std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
             // compute ponderomotive potential at timestep n
-            ( *Phi2Dcyl )( i, j )     = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
+            ( *Phi2Dcyl )( i, j )     = ellipticity_factor*std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
             // compute ponderomotive potential at timestep n-1
-            ( *Phi_m2Dcyl )( i, j )   = std::abs( ( *A02Dcyl )( i, j ) ) * std::abs( ( *A02Dcyl )( i, j ) ) * 0.5;
+            ( *Phi_m2Dcyl )( i, j )   = ellipticity_factor*std::abs( ( *A02Dcyl )( i, j ) ) * std::abs( ( *A02Dcyl )( i, j ) ) * 0.5;
             // interpolate in time
             ( *Phi_m2Dcyl )( i, j )   = 0.5*( ( *Phi_m2Dcyl )( i, j )+( *Phi2Dcyl )( i, j ) );
             
@@ -156,7 +156,7 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     if (isYmin){ // axis BC
         for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
             unsigned int j = 2;  // j_p=2 corresponds to r=0    
-            ( *Phi2Dcyl )      ( i, j )   = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;  
+            ( *Phi2Dcyl )      ( i, j )   = ellipticity_factor*std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;  
             ( *Env_Aabs2Dcyl ) ( i, j )   = std::abs( ( *A2Dcyl )( i, j ) );
             ( *Env_Exabs2Dcyl )( i, j )   = 0.;
             // Axis BC on |A|
@@ -378,7 +378,7 @@ void LaserEnvelopeAM::computePhiEnvAEnvE( ElectroMagn *EMfields )
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
         for( unsigned int j=std::max(3*isYmin,1) ; j < A_->dims_[1]-1; j++ ) { // r loop
-            ( *Phi2Dcyl )( i, j )       = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
+            ( *Phi2Dcyl )( i, j )       = ellipticity_factor*std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
             ( *Env_Aabs2Dcyl )( i, j )  = std::abs( ( *A2Dcyl )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
             ( *Env_Eabs2Dcyl )( i, j )  = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );

@@ -110,9 +110,9 @@ void LaserEnvelope1D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
         // |Ex envelope| = 0 in 1D
         ( *Env_Eabs1D )( i )= 0;
         // compute ponderomotive potential at timestep n
-        ( *Phi1D )( i )     = std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
+        ( *Phi1D )( i )     = ellipticity_factor*std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
         // compute ponderomotive potential at timestep n-1
-        ( *Phi_m1D )( i )   = std::abs( ( *A01D )( i ) ) * std::abs( ( *A01D )( i ) ) * 0.5;
+        ( *Phi_m1D )( i )   = ellipticity_factor*std::abs( ( *A01D )( i ) ) * std::abs( ( *A01D )( i ) ) * 0.5;
         // interpolate in time
         ( *Phi_m1D )( i )   = 0.5*( ( *Phi_m1D )( i )+( *Phi1D )( i ) );
         
@@ -261,7 +261,7 @@ void LaserEnvelope1D::computePhiEnvAEnvE( ElectroMagn *EMfields )
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        ( *Phi1D )( i )      = std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
+        ( *Phi1D )( i )      = ellipticity_factor*std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
         ( *Env_Aabs1D )( i ) = std::abs( ( *A1D )( i ) );
         // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
         ( *Env_Eabs1D )( i ) = std::abs( ( ( *A1D )( i )-( *A01D )( i ) )/timestep - i1*( *A1D )( i ) );
@@ -300,7 +300,7 @@ void LaserEnvelope1D::savePhiAndGradPhi()
     
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
     
-        // ponderomotive potential Phi=|A|^2/2
+        // ponderomotive potential Phi=ellipticity_factor*|A|^2/2
         ( *Phi_m1D )( i )       = ( *Phi1D )( i );
         // gradient of ponderomotive potential
         ( *GradPhix_m1D )( i )  = ( *GradPhix1D )( i );

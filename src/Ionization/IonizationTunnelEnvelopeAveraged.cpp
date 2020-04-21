@@ -45,11 +45,13 @@ IonizationTunnelEnvelopeAveraged::IonizationTunnelEnvelopeAveraged( Params &para
     }
     
     ellipticity         = params.envelope_ellipticity;
+    if (ellipticity == 0){ // linear polarization
+        ellipticity_factor = 1.;
+    } else if (ellipticity == 1.){ // circular polarization
+        ellipticity_factor = 2.;
+    }
     cos_phi             = cos(params.envelope_polarization_phi);
     sin_phi             = sin(params.envelope_polarization_phi);
-    ellipticity_factor1 = (1.-params.envelope_ellipticity)/3./params.envelope_ellipticity;
-    ellipticity_factor2 = params.envelope_ellipticity*(1+params.envelope_ellipticity)/2.;
-    ellipticity_factor2 = pow(ellipticity_factor2,-0.5);
     
     DEBUG( "Finished Creating the Tunnel Envelope Ionizaton Averaged class" );
     
@@ -66,7 +68,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
     unsigned int Z, Zp1, newZ, k_times;
     double E, E_sq, EnvE_sq, Aabs, invE, delta, ran_p, Mult, D_sum, P_sum, Pint_tunnel;
     // double rms_momentum_major_axis, rms_momentum_minor_axis, delta_momentum_spread;
-    double coeff_ellipticity;
+    double coeff_ellipticity_in_ionization_rate;
     double momentum_major_axis, momentum_minor_axis; //, rand_gaussian;
     vector<double> IonizRate_tunnel_envelope( atomic_number_ ), Dnom_tunnel( atomic_number_ );
     double ran_p_times_2pi;
@@ -101,8 +103,8 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
         EnvE_sq = pow(EC_to_au,2)*( pow( *( E_env+ipart-ipart_ref ), 2 ) ) + pow(EC_to_au,2)*( pow( *( Ex_env+ipart-ipart_ref ), 2 ) );
         
         // Absolute value of envelope |A|, necessary for the computation of the momentum of new electrons
-        // Computed from the ponderomotive potential Phi = |A|^2/2
-        Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  );  
+        // Computed from the ponderomotive potential Phi = ellipticity_factor*|A|^2/2
+        Aabs    = sqrt(2./ellipticity_factor * (*(Phi_env+ipart-ipart_ref))  );  
 
         // Effective electric field for ionization:
         // |E| = sqrt(|E_plasma|^2+|E_laser|^2)
@@ -123,14 +125,12 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
     
         // Corrections on averaged ionization rate given by the polarization ellipticity  
         if (ellipticity==0.){ // linear polarization
-            coeff_ellipticity = pow((3./M_PI)/delta*2.,0.5);
+            coeff_ellipticity_in_ionization_rate = pow((3./M_PI)/delta*2.,0.5);
         } else if (ellipticity==1.){ // circular polarization
-            coeff_ellipticity = 1.; // for circular polarization, the ionization rate is unchanged
-        } else{ // general polarization
-            coeff_ellipticity = ellipticity_factor1*correction_factor_general_polarization(ellipticity_factor2  * delta);
+            coeff_ellipticity_in_ionization_rate = 1.; // for circular polarization, the ionization rate is unchanged
         }
 
-        IonizRate_tunnel_envelope[Z] = coeff_ellipticity * IonizRate_tunnel_envelope[Z];
+        IonizRate_tunnel_envelope[Z] = coeff_ellipticity_in_ionization_rate * IonizRate_tunnel_envelope[Z];
         double Ip_times2_power_minus3ov4=0.;
     
         // k_times will give the nb of ionization events
@@ -162,14 +162,12 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
 
                 // Corrections on averaged ionization rate given by the polarization ellipticity  
                 if (ellipticity==0.){ // linear polarization
-                    coeff_ellipticity = pow((3./M_PI)/(gamma_tunnel[newZ-1]*invE)*2.,0.5);
+                    coeff_ellipticity_in_ionization_rate = pow((3./M_PI)/(gamma_tunnel[newZ-1]*invE)*2.,0.5);
                 } else if (ellipticity==1.){ // circular polarization
-                    coeff_ellipticity = 1.; // for circular polarization, the ionization rate is unchanged
-                } else{ // general polarization
-                    coeff_ellipticity = ellipticity_factor1*correction_factor_general_polarization(ellipticity_factor2  * delta);
+                    coeff_ellipticity_in_ionization_rate = 1.; // for circular polarization, the ionization rate is unchanged
                 }
 
-                IonizRate_tunnel_envelope[newZ] = coeff_ellipticity * beta_tunnel[newZ]
+                IonizRate_tunnel_envelope[newZ] = coeff_ellipticity_in_ionization_rate * beta_tunnel[newZ]
                                          *                        exp( -delta*one_third+alpha_tunnel[newZ]*log( delta ) );
 
                 D_sum = 0.0;

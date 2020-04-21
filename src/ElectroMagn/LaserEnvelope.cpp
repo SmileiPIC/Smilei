@@ -56,6 +56,13 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
         ERROR("For the moment, only ellipticity = 0 (linear polarization) or ellipticity = 1 (circular polarization) are available");
     }
     params.envelope_ellipticity = ellipticity;
+
+    if (ellipticity == 0){ // linear polarization
+        ellipticity_factor = 1.;
+    } else if (ellipticity == 1.){ // circular polarization
+        ellipticity_factor = 2.;
+    }
+
     params.envelope_polarization_phi = polarization_phi;
   
     // auxiliary quantities

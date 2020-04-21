@@ -140,7 +140,7 @@ public:
 
     //! Define if there is at least one species ionized by envelope
     bool envelope_ionization_is_active = false;
-    double envelope_ellipticity = 0.; // used only for envelope ionization (0: linear polarization, 1: circular polarization)
+    double envelope_ellipticity = 0.; // (0: linear polarization, 1: circular polarization)
     double envelope_polarization_phi = 0.; // used only for envelope ionization; in radians, angle with the xy plane
     // define the solver for the envelope equation
     std::string envelope_solver;

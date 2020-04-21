@@ -28,7 +28,7 @@ public:
         return exp(-x)*boost::math::cyl_bessel_i(0, x); 
     };
 
-    double ellipticity,cos_phi,sin_phi,ellipticity_factor1,ellipticity_factor2;
+    double ellipticity,cos_phi,sin_phi,ellipticity_factor;
 
 private:
     unsigned int atomic_number_;

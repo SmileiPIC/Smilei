@@ -116,9 +116,9 @@ void LaserEnvelope2D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
             // |E envelope| = |-(dA/dt-ik0cA)|
             ( *Env_Eabs2D )( i, j )  = std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*( *A2D )( i, j ) );
             // compute ponderomotive potential at timestep n
-            ( *Phi2D )( i, j )       = std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
+            ( *Phi2D )( i, j )       = ellipticity_factor*std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
             // compute ponderomotive potential at timestep n-1
-            ( *Phi_m2D )( i, j )     = std::abs( ( *A02D )( i, j ) ) * std::abs( ( *A02D )( i, j ) ) * 0.5;
+            ( *Phi_m2D )( i, j )     = ellipticity_factor*std::abs( ( *A02D )( i, j ) ) * std::abs( ( *A02D )( i, j ) ) * 0.5;
             // interpolate in time
             ( *Phi_m2D )( i, j )     = 0.5*( ( *Phi_m2D )( i, j )+( *Phi2D )( i, j ) );
             
@@ -294,7 +294,7 @@ void LaserEnvelope2D::computePhiEnvAEnvE( ElectroMagn *EMfields )
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
         for( unsigned int j=1 ; j < A_->dims_[1]-1; j++ ) { // y loop
-            ( *Phi2D )( i, j )       = std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
+            ( *Phi2D )( i, j )       = ellipticity_factor*std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
             ( *Env_Aabs2D )( i, j )  = std::abs( ( *A2D )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
             ( *Env_Eabs2D )( i, j )  = std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*( *A2D )( i, j ) );
@@ -345,7 +345,7 @@ void LaserEnvelope2D::savePhiAndGradPhi()
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
         for( unsigned int j=0 ; j < A_->dims_[1]-1 ; j++ ) { // y loop
         
-            // ponderomotive potential Phi=|A|^2/2
+            // ponderomotive potential Phi=ellipticity_factor*|A|^2/2
             ( *Phi_m2D )( i, j )       = ( *Phi2D )( i, j );
             
             // gradient of ponderomotive potential

@@ -35,7 +35,9 @@ public:
     const double timestep;
 
     double polarization_phi;
-    double ellipticity;
+    double ellipticity; // 0 for linear polarization, 1 for circular polarization
+    double ellipticity_factor; // 1 for linear polarization, 2 for circular polarization. 
+    // This coefficient is used for the ponderomotive potential Phi = ellipticity_factor*|A|^2/2.
 
     std:: string envelope_solver  = "explicit"; // default value
     
@@ -70,13 +72,15 @@ public:
     double one_ov_dr_sq,one_ov_2dr;  // 1/(2dr), 1/(dr^2), dr // for AMcylindrical geometry
     double dr;
 
-    // imaginary unit
+    // imaginary unit and quantities using it
     std::complex<double> i1 = std::complex<double>( 0., 1 );
     std::complex<double> i1_2k0_over_2dx;
     std::complex<double> i1_2k0_over_2dl;
     std::complex<double> one_plus_ik0dt;
     std::complex<double> one_plus_ik0dt_ov_one_plus_k0sq_dtsq;
-    double delta; // necessary for the reduced dispersion envelope solver  
+
+    // coefficient necessary for the reduced dispersion envelope solver  
+    double delta; 
 };
 
 // Class for envelope
