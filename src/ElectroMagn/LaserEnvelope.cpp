@@ -141,7 +141,8 @@ LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn
     dr(envelope->dr),
     i1(envelope->i1),
     polarization_phi(envelope->polarization_phi),
-    ellipticity(envelope->ellipticity)
+    ellipticity(envelope->ellipticity),
+    ellipticity_factor(envelope->ellipticity_factor)
 {
     if( n_moved ==0 ) {
         profile_ = new Profile( envelope->profile_ );
