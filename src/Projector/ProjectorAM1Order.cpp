@@ -128,7 +128,7 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents and charge densities for all modes, not charge conserving
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, bool diag_flag, int ispec)
+void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, bool diag_flag, int ispec)
 {
 
     // -------------------------------------
@@ -256,12 +256,15 @@ return;
 void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
 {
         
+    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
+    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
+    std::vector<double> *array_theta_old = &( smpi->dynamics_thetaold[ithread] );
     
     ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
 
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        currents( emAM, particles,  ipart, ( *invgf )[ipart], diag_flag, ispec);
+        currents( emAM, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], diag_flag, ispec);
     }
 }
 
