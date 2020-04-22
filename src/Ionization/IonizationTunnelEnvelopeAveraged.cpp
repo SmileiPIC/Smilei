@@ -104,7 +104,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
         
         // Absolute value of envelope |A|, necessary for the computation of the momentum of new electrons
         // Computed from the ponderomotive potential Phi = ellipticity_factor*|A|^2/2
-        Aabs    = sqrt(2./ellipticity_factor * (*(Phi_env+ipart-ipart_ref))  );  
+        //Aabs    = sqrt(2./ellipticity_factor * (*(Phi_env+ipart-ipart_ref))  );  
 
         // Effective electric field for ionization:
         // |E| = sqrt(|E_plasma|^2+|E_laser|^2)
@@ -222,6 +222,8 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
                 double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
                 double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
                 double rand_gaussian  = sqrt(-2.*log(rand_1))*cos(2. * M_PI * rand_2);
+
+                Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  );
                 
                 // recreate gaussian distribution with rms momentum spread for linear polarization, estimated by C.B. Schroeder 
                 momentum_major_axis = rand_gaussian * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;         
@@ -238,13 +240,16 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
 
                 // extract a random angle between 0 and 2pi, and give p_perp = eA
                 double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
+                
+                Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  );                 
+
                 momentum_major_axis = Aabs;
-                new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos(2. * M_PI * rand_1);
-                new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin(2. * M_PI * rand_1); 
+                new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos(2. * M_PI * rand_1)/sqrt(2);
+                new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin(2. * M_PI * rand_1)/sqrt(2); 
      
                 // initialize px to take into account the average drift <px>=A^2/4 and the px=|p_perp|^2/2 result
                 // Note: the agreement in the phase space between envelope and standard laser simulation will be seen only after the passage of the ionizing laser
-                new_electrons.momentum( 0, idNew ) += Aabs*Aabs/2 + momentum_major_axis*momentum_major_axis/2.;
+                new_electrons.momentum( 0, idNew ) += Aabs*Aabs/2.; // + momentum_major_axis*momentum_major_axis/4.;
             
             }
 
