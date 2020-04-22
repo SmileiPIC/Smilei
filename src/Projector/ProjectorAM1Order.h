@@ -30,7 +30,6 @@ public:
     void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 ) override final;
     
 private:
-    int staggered;
     double dt, dts2, dts4;
 };
 

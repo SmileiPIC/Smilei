@@ -38,10 +38,6 @@ ProjectorAM1Order::ProjectorAM1Order( Params &params, Patch *patch ) : Projector
     invR = &((static_cast<PatchAM *>( patch )->invR)[0]);
     invRd = &((static_cast<PatchAM *>( patch )->invRd)[0]);
 
-    if (!params.is_pxr)
-        staggered = true;
-    else
-        staggered = false;
     dts2           = params.timestep/2.;
     dts4           = params.timestep/4.;
 
@@ -56,14 +52,17 @@ ProjectorAM1Order::~ProjectorAM1Order()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Non charge conserving projector for diags, frozen species or spectral solver - mode >= 0
+//! Non charge conserving projector for diags at t=0, frozen species or compute charge 
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
 {
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
-    
+   
+    // This projection for currents is used only in cases where position=position_old.
+    // Warning: will fail evaluating the current at t=0 if a plasma is already in the box.
+ 
     int iloc, nr( nprimr );
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
@@ -127,7 +126,7 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
 } // END Project for diags local current densities
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local currents for all modes, not charge conserving
+//! Project local currents and charge densities for all modes, not charge conserving
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, bool diag_flag, int ispec)
 {
@@ -135,52 +134,64 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
-    int iloc, jloc, linindex;
+    int ip[2], jp[2];
+    int iloc[2], linindex;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     
     // variable declaration
-    double xpn, rpn;
-    double delta;
+    double xpn[2], rp[2], rpn[2], delta;
+    //double xpn_rho, rp_rho, rpn_rho; //Rho is not computed at the same particle position as J.
 
-    double  Sl1[2], Sr1[2],Sl1d[2], Sr1d[2];
-    complex<double> e_theta, C_m = 1.; 
+    double  Sl1[2][2], Sr1[2][2];
+    complex<double> e_theta[2], C_m[2] = 1.; 
     complex<double> *Jl, *Jr, *Jt, *rho;
     
-    double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
+    rp[0] = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
+    e_theta[0] = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/rp[0];
     double crl_p =  ( particles.momentum( 0, ipart )) *invgf;
-    double crt_p =  ( particles.momentum( 2, ipart )*particles.position( 1, ipart ) - particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/rp * invgf;
-    double crr_p =  ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) )/rp * invgf;
-    e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/rp;
+    double crt_p =  ( particles.momentum( 2, ipart )*particles.position( 1, ipart ) - particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/rp[0] * invgf;
+    double crr_p =  ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) )/rp[0] * invgf;
+
+    rp[1] = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
+    e_theta[1] = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/rp[1];
     
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
-    xpn = particles.position( 0, ipart ) * dl_inv_ ;
-    int ip = floor( xpn );
-    delta  = xpn - ( double )ip;
-    Sl1[0] = 1. - delta;
-    Sl1[1] = delta;
-    
-    rpn = rp *dr_inv_ -0.5 ; //-0.5 because grid is shifted by dr/2
-    int jp = floor( rpn );
-    delta  = rpn - ( double )jp;
-    Sr1[0] = 1. - delta;
-    Sr1[1] = delta;
+    xpn[0] = particles.position( 0, ipart ) * dl_inv_ ;
+    xpn[1] = particles.position( 0, ipart ) * dl_inv_ ;
 
-    if (rpn < 0.){ // If particle is between 0 and dr/2.
-        jp = 0;
-        Sr1[0] = Sr1[1];
-        Sr1[1] = 0.; // Only account for deposition above axis. Symetry is handled in interpolation.
+    for (int irho=0; irho < 2; irho++){ //irho=0 for currents, irho=1 for charge density
+
+        ip[irho] = floor( xpn[irho] );
+        delta  = xpn[irho] - ( double )ip[irho];
+        Sl1[irho][0] = 1. - delta;
+        Sl1[irho][1] = delta;
+        
+        rpn[irho] = rp[irho] *dr_inv_ -0.5 ; //-0.5 because grid is shifted by dr/2
+        jp[irho] = floor( rpn[irho] );
+        delta  = rpn[irho] - ( double )jp[irho];
+        Sr1[irho][0] = 1. - delta;
+        Sr1[irho][1] = delta;
+
+        if (rpn[irho] < 0.){ // If particle is between 0 and dr/2.
+            jp[irho] = 0;
+            Sr1[irho][0] = Sr1[irho][1];
+            Sr1[irho][1] = 0.; // Only account for deposition above axis. Symetry is handled in interpolation.
+        }
+
+        ip[irho]  -= i_domain_begin ;
+        jp[irho]  -= j_domain_begin ;
+
     }
-
-    ip  -= i_domain_begin ;
-    jp  -= j_domain_begin ;
 
     for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
         if( imode == 1 ) {
-            C_m = 2.;
+            C_m[0] = 2.;
+            C_m[1] = 2.;
         }
         if( imode > 0 ) {
-            C_m *= e_theta;
+            C_m[0] *= e_theta[0];
+            C_m[1] *= e_theta[1];
         }
         
         if (!diag_flag){
@@ -198,21 +209,23 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
         }
 
-        // Jr^(p,p) Jt^(p,p) Jl^(p,p)
+        // Jr^(p,p) Jt^(p,p) Jl^(p,p) Rho^(p,p)
         for( unsigned int i=0 ; i<2 ; i++ ) {
-            iloc = ( i+ip )* nprimr + jp;
+            iloc[0] = ( i+ip[0] )* nprimr + jp[0];
+            iloc[1] = ( i+ip[1] )* nprimr + jp[1];
             for( unsigned int j=0 ; j<2 ; j++ ) {
-                linindex = iloc+j;
-                complex<double> increment =  C_m*charge_weight* Sl1[i]*Sr1[j]*invR[jp+j];
-                rho [linindex] += increment;
+                linindex = iloc[0]+j;
+                complex<double> increment =  C_m[0]*charge_weight* Sl1[0][i]*Sr1[0][j]*invR[jp[0]+j];
                 Jl [linindex] += crl_p * increment ;
                 Jr [linindex] += crr_p * increment ;
                 Jt [linindex] += crt_p * increment ;
+                rho [iloc[1]+j] += C_m[1]*charge_weight* Sl1[1][i]*Sr1[1][j]*invR[jp[1]+j];
             }
         }//i
+
     }// end loop on modes
     
-} // END Project local current densities (Jl, Jr, Jt)
+} // END Project local current and charge densities (rho, Jl, Jr, Jt)
 
 void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode )
 {
