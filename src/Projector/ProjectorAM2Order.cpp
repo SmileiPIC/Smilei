@@ -133,7 +133,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     }
 
     double dtheta = std::remainder( theta-theta_old, 2*M_PI )/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
-    double theta_bar = theta_old+dtheta;
+    double theta_bar = theta_old+dtheta; // theta at t= t0 - dt/2
     e_delta_m1 = std::polar( 1.0, dtheta );
     e_bar_m1 = std::polar( 1.0, theta_bar );
     
@@ -159,7 +159,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // ---------------------------
 
     //initial value of crt_p for imode = 0.
-    complex<double> crt_p= charge_weight*( particles.momentum( 2, ipart )*particles.position( 1, ipart )-particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/( rp )*invgf;
+    complex<double> crt_p= charge_weight*( particles.momentum( 2, ipart )* real(e_bar_m1) - particles.momentum( 1, ipart )*imag(e_bar_m1) ) * invgf;
 
     // Compute everything independent of theta
     for( unsigned int j=0 ; j<5 ; j++ ) {
@@ -258,7 +258,11 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
 {
     //Warning : this function is not charge conserving.
-    
+    // This function also assumes that particles position is evaluated at the same time as currents which is usually not true (half time-step difference).
+    // It will therefore fail to evaluate the current accurately at t=0 if a plasma is already in the box.
+   
+
+ 
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
@@ -342,7 +346,7 @@ void ProjectorAM2Order::axisBC(complex<double> *rhoj, complex<double> *Jl,comple
 {
 
     double sign = 1.;
-    for (unsigned i=0; i< imode; i++) sign *= -1;
+    for (unsigned int i=0; i< imode; i++) sign *= -1;
    
     //Fold rho 
         for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
