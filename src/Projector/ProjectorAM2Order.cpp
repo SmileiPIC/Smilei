@@ -132,8 +132,9 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
         DSr[i] = Sr1[i] - Sr0[i];
     }
 
+    double r_bar = ((jpo + j_domain_begin)*dr + deltaold[1*nparts] + rp) * 0.5; // r at t = t0 - dt/2
     double dtheta = std::remainder( theta-theta_old, 2*M_PI )/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
-    double theta_bar = theta_old+dtheta; // theta at t= t0 - dt/2
+    double theta_bar = theta_old+dtheta; // theta at t = t0 - dt/2
     e_delta_m1 = std::polar( 1.0, dtheta );
     e_bar_m1 = std::polar( 1.0, theta_bar );
     
@@ -194,7 +195,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             e_bar *= e_bar_m1;
             C_m = 2. * e_bar ; //multiply modes > 0 by 2 and C_m = 1 otherwise.
             e_delta_inv =1./e_delta - 1.;
-            crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*rp;
+            crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*r_bar;
         }
         
         // Add contribution J_p to global array
