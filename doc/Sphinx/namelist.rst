@@ -2440,13 +2440,13 @@ This is done by including a block ``DiagFields``::
 
   +----------------+-------------------------------------------------------+
   | |              | | Module of laser vector potential's complex envelope |
-  | | Env_A_abs    | | :math:`\tilde{A}` (component along the polarization |
+  | | Env_A_abs    | | :math:`\tilde{A}` (component along the transverse   |
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
   | | Env_Chi      | | Total  susceptibility :math:`\chi`                  |
   +----------------+-------------------------------------------------------+
   | |              | | Module of laser electric field's complex envelope   |
-  | | Env_E_abs    | | :math:`\tilde{E}` (component along the polarization |
+  | | Env_E_abs    | | :math:`\tilde{E}` (component along the transverse   |
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
   | |              | | Module of laser electric field's complex envelope   |

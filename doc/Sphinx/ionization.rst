@@ -217,42 +217,42 @@ should be used at each timestep to have a better agreement with a correspondent 
 Afterwards, the momentum of the newly created electrons should be properly initialized taking into account of the 
 averaging process in the definition of the particle-envelope interaction.
 
-For circular polarization, i.e. ellipticity :math:`\varepsilon=1`, 
+For circular polarization, i.e. `ellipticity = 1`, 
 :math:`\Gamma_{\rm ADK, AC}=\Gamma_{\rm ADK, DC}`, since the field does not change 
 its magnitude over the laser oscillations.
-For linear polarization, i.e. ellipticity :math:`\varepsilon=0`:
+For linear polarization, i.e. `ellipticity = 0`:
 
 .. math::
   :label: ionizationRate
 
-  \Gamma_{\rm ADK, AC} = \left(\frac{3}{\pi}\frac{\|\tilde{E}\|}{2(2I_p)^{3/2}}\right)^{-1/2}\Gamma_{\rm ADK, DC} .
+  \Gamma_{\rm ADK, AC} = \left(\frac{3}{\pi}\frac{\vert\tilde{E}\vert}{2(2I_p)^{3/2}}\right)^{1/2}\Gamma_{\rm ADK, DC} .
 
 Normally the laser is intense enough to be the main cause of ionization, 
 but to take into account possible high total fields :math:`E` not described only by an envelope, 
-in :program:`Smilei` a combination :math:`\hat{E}=\sqrt{\|E_{plasma}\|^{2}+\|\tilde{E}_{laser}\|^{2}}` 
+in :program:`Smilei` a combination :math:`\hat{E}=\sqrt{\vert E_{plasma}\vert^{2}+\vert\tilde{E}_{laser}\vert^{2}}` 
 is used instead of :math:`\tilde{E}` in the above formulas. The field :math:`\tilde{E}_{plasma}` represents
-the electric field of the plasma, while :math:`\tilde{E}_{laser} =\sqrt{|\tilde{E}|^2+|\tilde{E}_x|^2}` 
+the electric field of the plasma, while :math:`\vert\tilde{E}_{laser} \vert=\sqrt{\vert\tilde{E}\vert^2+\vert\tilde{E}_x\vert^2}` 
 takes into account the envelopes of both the transverse and longitudinal components of the laser electric field
 (see :doc:`laser_envelope` for details on their calculation).
 
 After an electron is created by ionization, its initial transverse momentum :math:`p_{\perp}` is drawn as described in [Tomassini2017]_.
-For circular polarization, in the case of an electron subject to a laser envelope potential :math:`\tilde{A}`, the magnitude of its transverse momentum is set as 
-:math:`\|p_{\perp}\| = \|\tilde{A}\|` and its transverse direction is chosen randomly between :math:`0` and :math:`2\pi`. 
+For circular polarization, in the case of an electron subject to a laser transverse envelope potential :math:`\tilde{A}`, the magnitude of its transverse momentum is set as 
+:math:`\vert p_{\perp}\vert = \vert\tilde{A}\vert` and its transverse direction is chosen randomly between :math:`0` and :math:`2\pi`. 
 For linear polarization, the transverse momentum along the polarization direction is drawn from a gaussian distribution with
-rms width :math:`\sigma_{p_{\perp}} = \Delta\|\tilde{A}\|`, to reproduce the residual rms transverse momentum spread of electrons stripped from 
+rms width :math:`\sigma_{p_{\perp}} = \Delta\vert\tilde{A}\vert`, to reproduce the residual rms transverse momentum spread of electrons stripped from 
 atoms by a linearly polarized laser [Schroeder2014]_. The parameter :math:`\Delta` is defined as [Schroeder2014_]:
 
 .. math::
   :label: ionizationRate
 
-  \Delta = \left(\frac{3}{2} \hat{E} \right)^{1/2}\left(2I_p\right)^{-3/4}.
+  \Delta = \left(\frac{3}{2} \vert\hat{E}\vert \right)^{1/2}\left(2I_p\right)^{-3/4}.
 
 Additionally, in :program:`Smilei` the initial longitudinal momentum of the new electrons is initialized. An electron initially at rest in a plane wave 
-with vector potential of amplitude :math:`\|\tilde{A}\|` propagating along the positive :math:`x` direction is subject to a drift, 
-with an average longitudinal momentum :math:`<p_x> = \|\tilde{A}\|^2/4` and its longitudinal momentum is equal to :math:`p_x = |p_{\perp}|^2/2` [Gibbon]_.
-Each electron, newly created from ionization, is thus initalized with :math:`p_x = |\tilde{A}\|^2/4+\|p_{\perp}\|^2/2`, 
+with vector potential of amplitude :math:`\vert\tilde{A}\vert` propagating along the positive :math:`x` direction is subject to a drift, 
+with an average longitudinal momentum :math:`<p_x> = \vert\tilde{A}\vert^2/4` and its longitudinal momentum is equal to :math:`p_x = |p_{\perp}|^2/2` [Gibbon]_.
+Each electron, newly created from ionization, is thus initalized with :math:`p_x = \vert\tilde{A}\vert^2/4+\vert p_{\perp}\vert^2/2`, 
 where :math:`p_{\perp}` is drawn as described above and in [Tomassini2017]_. 
-This technique allows to take into account longitudinal effects on the initial momentum that are more visible when :math:`\|\tilde{A}\|>1`, 
+This technique allows to take into account longitudinal effects on the initial momentum that are more visible when :math:`\vert\tilde{A}\vert>1`, 
 which manifest as an initial average longitudinal momentum and an initial quadratic relation between the longitudinal and the transverse momentum.
 
 If the envelope approximation hypotheses are satisfied, the charge created with ionization and the momentum distribution 
