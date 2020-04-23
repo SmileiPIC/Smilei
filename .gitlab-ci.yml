@@ -6,7 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    - merge_new_axisBC
+    - filterAM_adjustment
     - envelope_reduced_dispersion
 
   script:
@@ -29,7 +29,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
+    - filterAM_adjustment
     - envelope_reduced_dispersion
     
   script:
@@ -42,7 +42,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
+    - filterAM_adjustment
     - envelope_reduced_dispersion
 
   script:
@@ -55,7 +55,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
+    - filterAM_adjustment
     - AMsorting
     - envelope_reduced_dispersion
 
@@ -69,7 +69,7 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
+    - filterAM_adjustment
     - envelope_reduced_dispersion
     
   script:
@@ -82,7 +82,7 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
+    - filterAM_adjustment
     - envelope_reduced_dispersion
 
   script:
@@ -95,7 +95,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
+    - filterAM_adjustment
     - envelope_reduced_dispersion
     
   script:
