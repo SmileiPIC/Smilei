@@ -134,31 +134,40 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
+    int nparts= particles.size();
     int ip[2], jp[2];
     int iloc[2], linindex;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     
     // variable declaration
-    double xpn[2], rp[2], rpn[2], delta;
+    double xpn[2], rp, rpn[2], delta;
     //double xpn_rho, rp_rho, rpn_rho; //Rho is not computed at the same particle position as J.
 
     double  Sl1[2][2], Sr1[2][2];
     complex<double> e_theta[2], C_m[2] = 1.; 
     complex<double> *Jl, *Jr, *Jt, *rho;
     
-    rp[0] = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
-    e_theta[0] = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/rp[0];
-    double crl_p =  ( particles.momentum( 0, ipart )) *invgf;
-    double crt_p =  ( particles.momentum( 2, ipart )*particles.position( 1, ipart ) - particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/rp[0] * invgf;
-    double crr_p =  ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) )/rp[0] * invgf;
+    double theta_old = array_theta_old[0]; // theta at t = t0 - dt
+    double theta = atan2( particles.position( 2, ipart ) , particles.position( 1, ipart ) );// theta at t = t0
+    double dtheta = std::remainder( theta-theta_old, 2*M_PI )/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
+    theta_old += dtheta; // theta at t = t0 - dt/2
+    e_theta[0] = std::polar( 1.0, theta_old );
+    e_theta[1] = std::polar( 1.0, theta );
 
-    rp[1] = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
-    e_theta[1] = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/rp[1];
+    double crl_p =  ( particles.momentum( 0, ipart )) *invgf;
+    double crt_p =  ( particles.momentum( 2, ipart )*real(e_theta[0]) - particles.momentum( 1, ipart )*imag(e_theta[0]) ) * invgf;
+    double crr_p =  ( particles.momentum( 1, ipart )*real(e_theta[0]) + particles.momentum( 2, ipart )*imag(e_theta[0]) ) * invgf;
+
     
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
-    xpn[0] = particles.position( 0, ipart ) * dl_inv_ ;
+    xpn[0] = i_domain_begin + iold[0*nparts] + deltaold[0*nparts];
     xpn[1] = particles.position( 0, ipart ) * dl_inv_ ;
+    xpn[0] = 0.5*(xpn[0]+xpn[1]);
+    rpn[0] = j_domain_begin + iold[1*nparts] + deltaold[1*nparts];
+    rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
+    rpn[1] = rp * dr_inv_ - 0.5 ;
+    rpn[0] = 0.5*(rpn[0]+rpn[1]);
 
     for (int irho=0; irho < 2; irho++){ //irho=0 for currents, irho=1 for charge density
 
@@ -167,7 +176,6 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
         Sl1[irho][0] = 1. - delta;
         Sl1[irho][1] = delta;
         
-        rpn[irho] = rp[irho] *dr_inv_ -0.5 ; //-0.5 because grid is shifted by dr/2
         jp[irho] = floor( rpn[irho] );
         delta  = rpn[irho] - ( double )jp[irho];
         Sr1[irho][0] = 1. - delta;
