@@ -154,6 +154,7 @@ class Main(SmileiSingleton):
     simulation_time = None
     number_of_timesteps = None
     interpolation_order = 2
+    custom_oversize = 4
     number_of_patches = None
     patch_arrangement = "hilbertian"
     clrw = -1

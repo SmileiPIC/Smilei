@@ -18,9 +18,11 @@ resy  = 8.                  # nb of cells in one laser wavelength y
 solver = 'Bouchard'
 order=4
 
+# One 4 pass current filter in y-direction, perpendicular to the x-velocity of the plasma
+
 CurrentFilter(
-    model = "binomial",
-    passes = [6,6]
+    model = "blackman21",
+    passes = [0,4]
 )
 
 fromcflfactor = 1.00 # have to be less than 1.
@@ -51,15 +53,16 @@ dfac = 1
 Main(
         geometry                       = "2Dcartesian",
         interpolation_order            = order,
+        custom_oversize                = 10,
         timestep                       = t0/rest,
         simulation_time                = Tsim,
         cell_length                    = [l0/resx,l0/resx],
         grid_length                    = Lsim,
-        number_of_patches              = [32,32],
+        number_of_patches              = [8,8],
         clrw                           = 1,
         maxwell_solver                 = solver,
         EM_boundary_conditions         = [
-                                          ["silver-muller","silver-muller"],
+                                          ["periodic","periodic"],
                                           ["periodic","periodic"]
                                          ],
         random_seed                    = smilei_mpi_rank,
@@ -83,16 +86,16 @@ Species(
     # atomic_number                  = 1,
     mass                           = +1.0,
     charge                         = +1.0,
-    number_density                 = trapezoidal(1, xvacuum=10.*l0, xplateau=l0, xslope1=0., xslope2=0., yvacuum=30.*l0, yplateau=l0, yslope1=0., yslope2=0.),
+    number_density                 = constant(1,0,0), 
     position_initialization        = "centered",
     momentum_initialization        = "mj",
     time_frozen                    = 0,
     temperature                    = [1e-2],
-    mean_velocity                  = [0.995, 0, 0],
+    mean_velocity                  = [0.999999995, 0, 0],
     # thermal_boundary_temperature = [1e-3*T_keV],
     # thermal_boundary_velocity    = [0., 0., -beta],
     boundary_conditions            = [
-                                      ['remove','remove'],
+                                      ['periodic','periodic'],
                                       ['periodic','periodic']
                                      ]
 )
@@ -103,16 +106,16 @@ Species(
     # atomic_number                = 1,
     mass                           = +1.0,
     charge                         = -1.0,
-    number_density                 = trapezoidal(1, xvacuum=10.*l0, xplateau=l0, xslope1=0., xslope2=0., yvacuum=30*l0, yplateau=l0, yslope1=0., yslope2=0.),
+    number_density                 = constant(1,0,0),
     position_initialization        = "pon_c",
     momentum_initialization        = "mj",
     time_frozen                    = 0,
     temperature                    = [1e-2],
-    mean_velocity                  = [0.995, 0, 0],
+    mean_velocity                  = [0.999999995, 0, 0],
     # thermal_boundary_temperature   = [10.*T_keV],
     # thermal_boundary_velocity      = [0., 0., -beta],
     boundary_conditions            = [
-                                      ['remove','remove'],
+                                      ['periodic','periodic'],
                                       ['periodic','periodic']
                                      ]
 )
@@ -129,7 +132,7 @@ DiagScalar(
   vars = [
     "Utot",
     "Ukin_eon_c",
-    "Ukin_eon_h",
+    "Ukin_pon_c",
     "Uelm",
     "Uelm_Bz_m",
     "Uelm_By_m",

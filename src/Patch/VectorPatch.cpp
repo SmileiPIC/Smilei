@@ -953,7 +953,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             #pragma omp for schedule(static)
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                 // Current spatial filtering
-                ( *this )( ipatch )->EMfields->binomialCurrentFilter(ipassfilter, params.currentFilter_passes);
+                if (params.currentFilter_model=="binomial"){
+                    ( *this )( ipatch )->EMfields->binomialCurrentFilter(ipassfilter, params.currentFilter_passes);
+                }
+                if (params.currentFilter_model=="blackman21"){
+                    ( *this )( ipatch )->EMfields->blackman21CurrentFilter(ipassfilter, params.currentFilter_passes);
+                }
             }
             if (params.geometry != "AMcylindrical"){
                 SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJx_, *this, smpi );

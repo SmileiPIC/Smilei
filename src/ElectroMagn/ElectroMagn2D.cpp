@@ -942,82 +942,82 @@ void ElectroMagn2D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
     Field2D *Jx2D = static_cast<Field2D *>( Jx_ );
     Field2D *Jy2D = static_cast<Field2D *>( Jy_ );
     Field2D *Jz2D = static_cast<Field2D *>( Jz_ );
-    
+
     // applying a single pass of the binomial filter
     // 9-point filter: (4*point itself + 2*(4*direct neighbors) + 1*(4*cross neghbors))/16
-      // applying a single pass of the binomial filter along X
-   if (ipass < passes[0]){
-       // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
-       for( unsigned int i=0; i<nx_d-1; i++ ) {
-           for( unsigned int j=0; j<ny_p; j++ ) {
-                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i+1, j) )*0.5;
-           }
-       }
-       for( unsigned int i=nx_d-2; i>0; i-- ) {
-           for( unsigned int j=0; j<ny_p; j++ ) {
-                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i-1, j) )*0.5;
-           }
-       }
-       // Jy
-       for( unsigned int i=0; i<nx_p-1; i++ ) {
-           for( unsigned int j=0; j<ny_d; j++ ) {
-                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i+1, j) )*0.5;
-           }
-       }
-       for( unsigned int i=nx_p-2; i>0; i-- ) {
-           for( unsigned int j=0; j<ny_d; j++ ) {
-                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i-1, j) )*0.5;
-           }
-       }
-       // Jz
-       for( unsigned int i=0; i<nx_p-1; i++ ) {
-           for( unsigned int j=0; j<ny_p; j++ ) {
-                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i+1, j) )*0.5;
-           }
-       }
-       for( unsigned int i=nx_p-2; i>0; i-- ) {
-           for( unsigned int j=0; j<ny_p; j++ ) {
-                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i-1, j) )*0.5;
-           }
-       }
-   }
+    // applying a single pass of the binomial filter along X
+    if (ipass < passes[0]){
+        // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+        for( unsigned int i=0; i<nx_d-1; i++ ) {
+            for( unsigned int j=0; j<ny_p; j++ ) {
+                    ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i+1, j) )*0.5;
+            }
+        }
+        for( unsigned int i=nx_d-2; i>0; i-- ) {
+            for( unsigned int j=0; j<ny_p; j++ ) {
+                    ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i-1, j) )*0.5;
+            }
+        }
+        // Jy
+        for( unsigned int i=0; i<nx_p-1; i++ ) {
+             for( unsigned int j=0; j<ny_d; j++ ) {
+                     ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i+1, j) )*0.5;
+             }
+         }
+         for( unsigned int i=nx_p-2; i>0; i-- ) {
+             for( unsigned int j=0; j<ny_d; j++ ) {
+                     ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i-1, j) )*0.5;
+             }
+         }
+         // Jz
+         for( unsigned int i=0; i<nx_p-1; i++ ) {
+             for( unsigned int j=0; j<ny_p; j++ ) {
+                     ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i+1, j) )*0.5;
+             }
+         }
+         for( unsigned int i=nx_p-2; i>0; i-- ) {
+             for( unsigned int j=0; j<ny_p; j++ ) {
+                     ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i-1, j) )*0.5;
+             }
+         }
+    }
 
-   // applying a single pass of the binomial filter along Y
-   if (ipass < passes[1]){
-       //Jx
-       for( unsigned int i=1; i<nx_d-1; i++ ) {
-           for( unsigned int j=0; j<ny_p-1; j++ ) {
-                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i, j+1) )*0.5;
-           }
-       }
-       for( unsigned int i=1; i<nx_d-1; i++ ) {
-           for( unsigned int j=ny_p-2; j>0; j-- ) {
-                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i, j-1) )*0.5;
-           }
-       }
-       //Jy
-       for( unsigned int i=1; i<nx_p-1; i++ ) {
-           for( unsigned int j=0; j<ny_d-1; j++ ) {
-                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i, j+1) )*0.5;
-           }
-       }
-       for( unsigned int i=1; i<nx_p-1; i++ ) {
-           for( unsigned int j=ny_d-2; j>0; j-- ) {
-                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i, j-1) )*0.5;
-           }
-       }
-       //Jz
-       for( unsigned int i=1; i<nx_p-1; i++ ) {
-           for( unsigned int j=0; j<ny_p-1; j++ ) {
-                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i, j+1) )*0.5;
-           }
-       }
-       for( unsigned int i=1; i<nx_p-1; i++ ) {
-           for( unsigned int j=ny_p-2; j>0; j-- ) {
-                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i, j-1) )*0.5;
-           }
-       }
-   }
+    // applying a single pass of the binomial filter along Y
+    if (ipass < passes[1]){
+        //Jx
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=0; j<ny_p-1; j++ ) {
+                    ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i, j+1) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=ny_p-2; j>0; j-- ) {
+                    ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i, j-1) )*0.5;
+            }
+        }
+        //Jy
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=0; j<ny_d-1; j++ ) {
+                    ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i, j+1) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=ny_d-2; j>0; j-- ) {
+                    ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i, j-1) )*0.5;
+            }
+        }
+        //Jz
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=0; j<ny_p-1; j++ ) {
+                    ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i, j+1) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=ny_p-2; j>0; j-- ) {
+                    ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i, j-1) )*0.5;
+            }
+        }
+    }
  
     //// on Jx^(d,p) -- external points are treated by exchange
     //Field2D *tmp   = new Field2D( dimPrim, 0, false );
@@ -1050,6 +1050,227 @@ void ElectroMagn2D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
     //delete tmp;
     
 }//END binomialCurrentFilter
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Apply a single pass FIR 21 points blackman based filter on currents
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
+{
+    // Static-cast of the currents
+    Field2D *Jx2D = static_cast<Field2D *>( Jx_ );
+    Field2D *Jy2D = static_cast<Field2D *>( Jy_ );
+    Field2D *Jz2D = static_cast<Field2D *>( Jz_ );
+
+    std::vector<double> filtering_coeff {
+        0.000000000000000002,
+        0.003619160996209281,
+        -0.000000000000000003,
+        -0.012238250198266232,
+        0.000000000000000008,
+        0.034315551069916399,
+        -0.000000000000000013,
+        -0.085829253103766809,
+        0.000000000000000018,
+        0.310583061733280541,
+        0.499099459005253432,
+        0.310583061733280541,
+        0.000000000000000018,
+        -0.085829253103766823,
+        -0.000000000000000013,
+        0.034315551069916413,
+        0.000000000000000008,
+        -0.012238250198266234,
+        -0.000000000000000003,
+        0.003619160996209281,
+        0.000000000000000002
+    };
+
+    // Applying a single pass of the 21 points blackman based filter along X
+    if (ipass < passes[0]){
+        Field2D *tmp   = new Field2D( dimPrim, 0, false );
+        tmp->copyFrom( Jx2D );
+        for( unsigned int i=10; i<nx_d-10; i++ ) {
+            for( unsigned int j=0; j<ny_p; j++ ) {
+                ( *Jx2D )( i, j ) =
+                    + filtering_coeff[0]*( *tmp )( i-10, j )
+                    + filtering_coeff[1]*( *tmp )( i-9, j )
+                    + filtering_coeff[2]*( *tmp )( i-8, j )
+                    + filtering_coeff[3]*( *tmp )( i-7, j )
+                    + filtering_coeff[4]*( *tmp )( i-6, j )
+                    + filtering_coeff[5]*( *tmp )( i-5, j )
+                    + filtering_coeff[6]*( *tmp )( i-4, j )
+                    + filtering_coeff[7]*( *tmp )( i-3, j )
+                    + filtering_coeff[8]*( *tmp )( i-2, j )
+                    + filtering_coeff[9]*( *tmp )( i-1, j )
+                    + filtering_coeff[10]*( *tmp )( i, j )
+                    + filtering_coeff[11]*( *tmp )( i+1, j )
+                    + filtering_coeff[12]*( *tmp )( i+2, j )
+                    + filtering_coeff[13]*( *tmp )( i+3, j )
+                    + filtering_coeff[14]*( *tmp )( i+4, j )
+                    + filtering_coeff[15]*( *tmp )( i+5, j )
+                    + filtering_coeff[16]*( *tmp )( i+6, j )
+                    + filtering_coeff[17]*( *tmp )( i+7, j )
+                    + filtering_coeff[18]*( *tmp )( i+8, j )
+                    + filtering_coeff[19]*( *tmp )( i+9, j )
+                    + filtering_coeff[20]*( *tmp )( i+10, j );
+            }
+        }
+        delete tmp;
+        tmp   = new Field2D( dimPrim, 1, false );
+        tmp->copyFrom( Jy2D );
+        for( unsigned int i=10; i<nx_p-10; i++ ) {
+            for( unsigned int j=0; j<ny_d; j++ ) {
+                ( *Jy2D )( i, j ) =
+                    + filtering_coeff[0]*( *tmp )( i-10, j )
+                    + filtering_coeff[1]*( *tmp )( i-9, j )
+                    + filtering_coeff[2]*( *tmp )( i-8, j )
+                    + filtering_coeff[3]*( *tmp )( i-7, j )
+                    + filtering_coeff[4]*( *tmp )( i-6, j )
+                    + filtering_coeff[5]*( *tmp )( i-5, j )
+                    + filtering_coeff[6]*( *tmp )( i-4, j )
+                    + filtering_coeff[7]*( *tmp )( i-3, j )
+                    + filtering_coeff[8]*( *tmp )( i-2, j )
+                    + filtering_coeff[9]*( *tmp )( i-1, j )
+                    + filtering_coeff[10]*( *tmp )( i, j )
+                    + filtering_coeff[11]*( *tmp )( i+1, j )
+                    + filtering_coeff[12]*( *tmp )( i+2, j )
+                    + filtering_coeff[13]*( *tmp )( i+3, j )
+                    + filtering_coeff[14]*( *tmp )( i+4, j )
+                    + filtering_coeff[15]*( *tmp )( i+5, j )
+                    + filtering_coeff[16]*( *tmp )( i+6, j )
+                    + filtering_coeff[17]*( *tmp )( i+7, j )
+                    + filtering_coeff[18]*( *tmp )( i+8, j )
+                    + filtering_coeff[19]*( *tmp )( i+9, j )
+                    + filtering_coeff[20]*( *tmp )( i+10, j );
+           }
+        }
+        delete tmp;
+        tmp   = new Field2D( dimPrim, 2, false );
+        tmp->copyFrom( Jz2D );
+        for( unsigned int i=10; i<nx_p-10; i++ ) {
+            for( unsigned int j=0; j<ny_p; j++ ) {
+                ( *Jz2D )( i, j ) =
+                    + filtering_coeff[0]*( *tmp )( i-10, j )
+                    + filtering_coeff[1]*( *tmp )( i-9, j )
+                    + filtering_coeff[2]*( *tmp )( i-8, j )
+                    + filtering_coeff[3]*( *tmp )( i-7, j )
+                    + filtering_coeff[4]*( *tmp )( i-6, j )
+                    + filtering_coeff[5]*( *tmp )( i-5, j )
+                    + filtering_coeff[6]*( *tmp )( i-4, j )
+                    + filtering_coeff[7]*( *tmp )( i-3, j )
+                    + filtering_coeff[8]*( *tmp )( i-2, j )
+                    + filtering_coeff[9]*( *tmp )( i-1, j )
+                    + filtering_coeff[10]*( *tmp )( i, j )
+                    + filtering_coeff[11]*( *tmp )( i+1, j )
+                    + filtering_coeff[12]*( *tmp )( i+2, j )
+                    + filtering_coeff[13]*( *tmp )( i+3, j )
+                    + filtering_coeff[14]*( *tmp )( i+4, j )
+                    + filtering_coeff[15]*( *tmp )( i+5, j )
+                    + filtering_coeff[16]*( *tmp )( i+6, j )
+                    + filtering_coeff[17]*( *tmp )( i+7, j )
+                    + filtering_coeff[18]*( *tmp )( i+8, j )
+                    + filtering_coeff[19]*( *tmp )( i+9, j )
+                    + filtering_coeff[20]*( *tmp )( i+10, j ); 
+            }
+        }
+        delete tmp;
+    }
+
+    // Applying a single pass of the 21 points blackman based filter along Y
+    if (ipass < passes[1]){
+        // On Jx^(d,p) -- External points are treated by exchange
+        Field2D *tmp   = new Field2D( dimPrim, 0, false );
+        tmp->copyFrom( Jx2D );
+        for( unsigned int i=0; i<nx_d; i++ ) {
+            for( unsigned int j=10; j<ny_p-10; j++ ) {
+                ( *Jx2D )( i, j ) =
+                    + filtering_coeff[0]*( *tmp )( i, j-10 )
+                    + filtering_coeff[1]*( *tmp )( i, j-9 )
+                    + filtering_coeff[2]*( *tmp )( i, j-8 )
+                    + filtering_coeff[3]*( *tmp )( i, j-7 )
+                    + filtering_coeff[4]*( *tmp )( i, j-6 )
+                    + filtering_coeff[5]*( *tmp )( i, j-5 )
+                    + filtering_coeff[6]*( *tmp )( i, j-4 )
+                    + filtering_coeff[7]*( *tmp )( i, j-3 )
+                    + filtering_coeff[8]*( *tmp )( i, j-2 )
+                    + filtering_coeff[9]*( *tmp )( i, j-1 )
+                    + filtering_coeff[10]*( *tmp )( i, j )
+                    + filtering_coeff[11]*( *tmp )( i, j+1 )
+                    + filtering_coeff[12]*( *tmp )( i, j+2 )
+                    + filtering_coeff[13]*( *tmp )( i, j+3 )
+                    + filtering_coeff[14]*( *tmp )( i, j+4 )
+                    + filtering_coeff[15]*( *tmp )( i, j+5 )
+                    + filtering_coeff[16]*( *tmp )( i, j+6 )
+                    + filtering_coeff[17]*( *tmp )( i, j+7 )
+                    + filtering_coeff[18]*( *tmp )( i, j+8 )
+                    + filtering_coeff[19]*( *tmp )( i, j+9 )
+                    + filtering_coeff[20]*( *tmp )( i, j+10  );
+            }
+        }
+        delete tmp;
+        // On Jy^(p,d) -- External points are treated by exchange
+        tmp   = new Field2D( dimPrim, 1, false );
+        tmp->copyFrom( Jy2D );
+        for( unsigned int i=0; i<nx_p; i++ ) {
+            for( unsigned int j=10; j<ny_d-10; j++ ) {
+                ( *Jy2D )( i, j ) =
+                    + filtering_coeff[0]*( *tmp )( i, j-10 )
+                    + filtering_coeff[1]*( *tmp )( i, j-9 )
+                    + filtering_coeff[2]*( *tmp )( i, j-8 )
+                    + filtering_coeff[3]*( *tmp )( i, j-7 )
+                    + filtering_coeff[4]*( *tmp )( i, j-6 )
+                    + filtering_coeff[5]*( *tmp )( i, j-5 )
+                    + filtering_coeff[6]*( *tmp )( i, j-4 )
+                    + filtering_coeff[7]*( *tmp )( i, j-3 )
+                    + filtering_coeff[8]*( *tmp )( i, j-2 )
+                    + filtering_coeff[9]*( *tmp )( i, j-1 )
+                    + filtering_coeff[10]*( *tmp )( i, j )
+                    + filtering_coeff[11]*( *tmp )( i, j+1 )
+                    + filtering_coeff[12]*( *tmp )( i, j+2 )
+                    + filtering_coeff[13]*( *tmp )( i, j+3 )
+                    + filtering_coeff[14]*( *tmp )( i, j+4 )
+                    + filtering_coeff[15]*( *tmp )( i, j+5 )
+                    + filtering_coeff[16]*( *tmp )( i, j+6 )
+                    + filtering_coeff[17]*( *tmp )( i, j+7 )
+                    + filtering_coeff[18]*( *tmp )( i, j+8 )
+                    + filtering_coeff[19]*( *tmp )( i, j+9 )
+                    + filtering_coeff[20]*( *tmp )( i, j+10  );
+            }
+        }
+        delete tmp;
+        // On Jz^(p,p) -- External points are treated by exchange
+        tmp   = new Field2D( dimPrim, 2, false );
+        tmp->copyFrom( Jz2D );
+        for( unsigned int i=0; i<nx_p; i++ ) {
+            for( unsigned int j=10; j<ny_p-10; j++ ) {
+                ( *Jz2D )( i, j ) =
+                    + filtering_coeff[0]*( *tmp )( i, j-10 )
+                    + filtering_coeff[1]*( *tmp )( i, j-9 )
+                    + filtering_coeff[2]*( *tmp )( i, j-8 )
+                    + filtering_coeff[3]*( *tmp )( i, j-7 )
+                    + filtering_coeff[4]*( *tmp )( i, j-6 )
+                    + filtering_coeff[5]*( *tmp )( i, j-5 )
+                    + filtering_coeff[6]*( *tmp )( i, j-4 )
+                    + filtering_coeff[7]*( *tmp )( i, j-3 )
+                    + filtering_coeff[8]*( *tmp )( i, j-2 )
+                    + filtering_coeff[9]*( *tmp )( i, j-1 )
+                    + filtering_coeff[10]*( *tmp )( i, j )
+                    + filtering_coeff[11]*( *tmp )( i, j+1 )
+                    + filtering_coeff[12]*( *tmp )( i, j+2 )
+                    + filtering_coeff[13]*( *tmp )( i, j+3 )
+                    + filtering_coeff[14]*( *tmp )( i, j+4 )
+                    + filtering_coeff[15]*( *tmp )( i, j+5 )
+                    + filtering_coeff[16]*( *tmp )( i, j+6 )
+                    + filtering_coeff[17]*( *tmp )( i, j+7 )
+                    + filtering_coeff[18]*( *tmp )( i, j+8 )
+                    + filtering_coeff[19]*( *tmp )( i, j+9 )
+                    + filtering_coeff[20]*( *tmp )( i, j+10  );
+            }
+        }
+        delete tmp;
+    }
+}//END blackman21CurrentFilter
+
 
 
 //// ---------------------------------------------------------------------------------------------------------------------

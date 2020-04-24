@@ -166,6 +166,7 @@ public:
 
     //! Current spatial filter: number of binomial passes
     std::vector<unsigned int> currentFilter_passes;
+    std::string currentFilter_model;
 
     //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 201, 665 (2004)]
     bool Friedman_filter;
@@ -217,6 +218,7 @@ public:
 
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
+    unsigned int custom_oversize ;
 
     //! True if restart requested
     bool restart;

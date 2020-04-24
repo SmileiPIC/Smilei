@@ -321,6 +321,7 @@ public:
     virtual void saveMagneticFields( bool ) = 0;
     virtual void centerMagneticFields() = 0;
     virtual void binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes ) = 0;
+    virtual void blackman21CurrentFilter(unsigned int ipass, std::vector<unsigned int> passes) = 0;
     
     void boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow );
     

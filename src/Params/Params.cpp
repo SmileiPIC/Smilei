@@ -444,10 +444,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // Current filter properties
     int nCurrentFilter = PyTools::nComponents( "CurrentFilter" );
     for( int ifilt = 0; ifilt < nCurrentFilter; ifilt++ ) {
-        string model;
-        PyTools::extract( "model", model, "CurrentFilter", ifilt );
-        if( model != "binomial" ) {
-            ERROR( "Currently, only the `binomial` model is available in CurrentFilter()" );
+        PyTools::extract( "model", currentFilter_model, "CurrentFilter", ifilt );
+        if( (currentFilter_model != "binomial")&&(currentFilter_model != "blackman21") ) {
+            ERROR( "Currently, only the `binomial` and `blackman21` model is available in CurrentFilter()" );
         }
 
         PyTools::extractV( "passes", currentFilter_passes, "CurrentFilter", ifilt );  //test list
@@ -890,7 +889,11 @@ void Params::compute()
     }
 
     for( unsigned int i=0; i<nDim_field; i++ ) {
-        oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );;
+        PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
+        oversize[i]  = max( interpolation_order, max( ( unsigned int )( norder[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
+        if ( (currentFilter_model == "blackman21") && (oversize[i] < 10) ){
+            ERROR( "With the `blackman21` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be > 10." )
+        }
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if( n_space_global[i]%number_of_patches[i] !=0 ) {
@@ -1031,7 +1034,7 @@ void Params::print_init()
         if( *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) > 0 ) {
             for( unsigned int idim=0 ; idim < nDim_field ; idim++ ){
                 std::string strpass = (currentFilter_passes[idim] > 1 ? "passes" : "pass");
-                MESSAGE( 1, "Binomial current filtering : " << currentFilter_passes[idim] << " " << strpass << " along dimension " << idim );
+                MESSAGE( 1, currentFilter_model << " current filtering : " << currentFilter_passes[idim] << " " << strpass << " along dimension " << idim );
             }
         }
     }
