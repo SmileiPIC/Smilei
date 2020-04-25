@@ -45,11 +45,7 @@ IonizationTunnelEnvelopeAveraged::IonizationTunnelEnvelopeAveraged( Params &para
     }
     
     ellipticity         = params.envelope_ellipticity;
-    if (ellipticity == 0){ // linear polarization
-        ellipticity_factor = 1.;
-    } else if (ellipticity == 1.){ // circular polarization
-        ellipticity_factor = 2.;
-    }
+    
     cos_phi             = cos(params.envelope_polarization_phi);
     sin_phi             = sin(params.envelope_polarization_phi);
     
@@ -67,11 +63,9 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
 {
     unsigned int Z, Zp1, newZ, k_times;
     double E, E_sq, EnvE_sq, Aabs, invE, delta, ran_p, Mult, D_sum, P_sum, Pint_tunnel;
-    // double rms_momentum_major_axis, rms_momentum_minor_axis, delta_momentum_spread;
     double coeff_ellipticity_in_ionization_rate;
-    double momentum_major_axis, momentum_minor_axis; //, rand_gaussian;
+    double p_perp; 
     vector<double> IonizRate_tunnel_envelope( atomic_number_ ), Dnom_tunnel( atomic_number_ );
-    double ran_p_times_2pi;
     
     
     int nparts = Epart->size()/3;
@@ -101,10 +95,6 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
         // |E_laser|^2 = |Env_E|^2 + |Env_Ex|^2
 
         EnvE_sq = pow(EC_to_au,2)*( pow( *( E_env+ipart-ipart_ref ), 2 ) ) + pow(EC_to_au,2)*( pow( *( Ex_env+ipart-ipart_ref ), 2 ) );
-        
-        // Absolute value of envelope |A|, necessary for the computation of the momentum of new electrons
-        // Computed from the ponderomotive potential Phi = ellipticity_factor*|A|^2/2
-        //Aabs    = sqrt(2./ellipticity_factor * (*(Phi_env+ipart-ipart_ref))  );  
 
         // Effective electric field for ionization:
         // |E| = sqrt(|E_plasma|^2+|E_laser|^2)
@@ -168,7 +158,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
                 }
 
                 IonizRate_tunnel_envelope[newZ] = coeff_ellipticity_in_ionization_rate * beta_tunnel[newZ]
-                                         *                        exp( -delta*one_third+alpha_tunnel[newZ]*log( delta ) );
+                                                  * exp( -delta*one_third+alpha_tunnel[newZ]*log( delta ) );
 
                 D_sum = 0.0;
                 P_sum = 0.0;
@@ -194,10 +184,9 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
             }
         }//END Multiple ionization routine
     
-        // Ionization ion current cannot be computed with the envelope ionization model
-        
-
-        // Creation of the new electrons
+        // ---- Ionization ion current cannot be computed with the envelope ionization model
+      
+        // ---- Creation of the new electrons
         
         if( k_times !=0 ) {
             new_electrons.createParticle();
@@ -213,7 +202,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
             }
 
            
-            // Initialise the momentum, weight and charge of the new electron
+            // ----  Initialise the momentum, weight and charge of the new electron
 
             if (ellipticity==0.){ // linear polarization
 
@@ -223,33 +212,35 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
                 double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
                 double rand_gaussian  = sqrt(-2.*log(rand_1))*cos(2. * M_PI * rand_2);
 
-                Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  );
+                Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  ); // envelope of the laser vector potential component along the polarization direction
                 
-                // recreate gaussian distribution with rms momentum spread for linear polarization, estimated by C.B. Schroeder 
-                momentum_major_axis = rand_gaussian * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;         
+                // recreate gaussian distribution with rms momentum spread for linear polarization, estimated by C.B. Schroeder
+                // C. B. Schroeder et al., Phys. Rev. ST Accel. Beams 17, 2014, first part of Eqs. 7,10 
+                p_perp = rand_gaussian * Aabs * sqrt(1.5*E) * Ip_times2_power_minus3ov4;         
 
-                // add the transverse momentum to obtain a gaussian in the py distribution following Schroeder's result
-                new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos_phi;
-                new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin_phi;
+                // add the transverse momentum p_perp to obtain a gaussian distribution 
+                // in the momentum in the polarization direction p_perp, following Schroeder's result
+                new_electrons.momentum( 1, idNew ) += p_perp*cos_phi;
+                new_electrons.momentum( 2, idNew ) += p_perp*sin_phi;
 
-                // initialize px to take into account the average drift <px>=A^2/4 and the px=|p_perp|^2/2 result
+                // initialize px to take into account the average drift <px>=A^2/4 and the px=|p_perp|^2/2 relation
                 // Note: the agreement in the phase space between envelope and standard laser simulation will be seen only after the passage of the ionizing laser
-                new_electrons.momentum( 0, idNew ) += Aabs*Aabs/4. + momentum_major_axis*momentum_major_axis/2.;
+                new_electrons.momentum( 0, idNew ) += Aabs*Aabs/4. + p_perp*p_perp/2.;
 
             } else if (ellipticity==1.){ // circular polarization
 
-                // extract a random angle between 0 and 2pi, and give p_perp = eA
+                // extract a random angle between 0 and 2pi, and assign p_perp = eA
                 double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
                 
                 Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  );                 
 
-                momentum_major_axis = Aabs;
-                new_electrons.momentum( 1, idNew ) += momentum_major_axis*cos(2. * M_PI * rand_1)/sqrt(2);
-                new_electrons.momentum( 2, idNew ) += momentum_major_axis*sin(2. * M_PI * rand_1)/sqrt(2); 
+                p_perp = Aabs;   // in circular polarization it corresponds to a0/sqrt(2)
+                new_electrons.momentum( 1, idNew ) += p_perp*cos(2. * M_PI * rand_1)/sqrt(2);
+                new_electrons.momentum( 2, idNew ) += p_perp*sin(2. * M_PI * rand_1)/sqrt(2); 
      
                 // initialize px to take into account the average drift <px>=A^2/4 and the px=|p_perp|^2/2 result
                 // Note: the agreement in the phase space between envelope and standard laser simulation will be seen only after the passage of the ionizing laser
-                new_electrons.momentum( 0, idNew ) += Aabs*Aabs/2.; // + momentum_major_axis*momentum_major_axis/4.;
+                new_electrons.momentum( 0, idNew ) += Aabs*Aabs/2.; 
             
             }
 
