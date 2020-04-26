@@ -1,7 +1,7 @@
 Ionization
 ----------------------------------
 
-Three types of ionization have been introduced in Smilei.
+Three types of ionization have been introduced in Smilei (4 if you count field ionization with a laser envelope as a separate type).
 
 ----
 
@@ -214,13 +214,13 @@ ionization process averaged over the scales of the optical cycle is necessary, s
 integration timestep is much greater than the one used in those typical PIC simulations [Chen2013]_.
 Thus, in this case a ionization rate :math:`\Gamma_{\rm ADK, AC}` obtained averaging :math:`\Gamma_{\rm ADK, DC}` over the laser oscillations 
 should be used at each timestep to have a better agreement with a correspondent standard laser simulation.
-Afterwards, the momentum of the newly created electrons should be properly initialized taking into account of the 
+Afterwards, the momentum of the newly created electrons must be properly initialized taking into account of the 
 averaging process in the definition of the particle-envelope interaction.
 
 For circular polarization, i.e. `ellipticity = 1`, 
 :math:`\Gamma_{\rm ADK, AC}=\Gamma_{\rm ADK, DC}`, since the field does not change 
 its magnitude over the laser oscillations.
-For linear polarization, i.e. `ellipticity = 0`:
+For linear polarization, i.e. `ellipticity = 0` :
 
 .. math::
   :label: ionizationRate
@@ -235,7 +235,7 @@ the electric field of the plasma, while :math:`\vert\tilde{E}_{laser} \vert=\sqr
 takes into account the envelopes of both the transverse and longitudinal components of the laser electric field
 (see :doc:`laser_envelope` for details on their calculation).
 
-After an electron is created by ionization, its initial transverse momentum :math:`p_{\perp}` is drawn as described in [Tomassini2017]_.
+After an electron is created by ionization, its initial transverse momentum :math:`p_{\perp}` is assigned as described in [Tomassini2017]_.
 For circular polarization, in the case of an electron subject to a laser transverse envelope potential :math:`\tilde{A}`, the magnitude of its transverse momentum is set as 
 :math:`\vert p_{\perp}\vert = \vert\tilde{A}\vert` and its transverse direction is chosen randomly between :math:`0` and :math:`2\pi`. 
 For linear polarization, the transverse momentum along the polarization direction is drawn from a gaussian distribution with
@@ -253,7 +253,7 @@ with an average longitudinal momentum :math:`<p_x> = \vert\tilde{A}\vert^2/4` an
 Each electron, newly created from ionization, is thus initalized with :math:`p_x = \vert\tilde{A}\vert^2/4+\vert p_{\perp}\vert^2/2`, 
 where :math:`p_{\perp}` is drawn as described above and in [Tomassini2017]_. 
 This technique allows to take into account longitudinal effects on the initial momentum that are more visible when :math:`\vert\tilde{A}\vert>1`, 
-which manifest as an initial average longitudinal momentum and an initial quadratic relation between the longitudinal and the transverse momentum.
+which manifest mainly as an initial average longitudinal momentum.
 
 If the envelope approximation hypotheses are satisfied, the charge created with ionization and the momentum distribution 
 of the newly created electrons computed with this procedure should agree with those obtained with a standard laser simulation,
@@ -328,7 +328,6 @@ References
 
 .. [Tomassini2017] `P. Tomassini, S. De Nicola, L. Labate, P. Londrillo, R. Fedele, D. Terzani, and L. A. Gizzi, Physics of Plasmas 24, 103120 (2017) <https://doi.org/10.1063/1.5000696>`_
 
-.. [Schroeder2014] `C. B. Schroeder, J.-L. Vay, E. Esarey, S. S. Bulanov, C. Benedetti, L.-L. Yu, M. Chen, C. G. R. Geddes, and W. P. Leemans
-Phys. Rev. ST Accel. Beams 17, 101301 <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.17.101301>`_
+.. [Schroeder2014] `C. B. Schroeder, J.-L. Vay, E. Esarey, S. S. Bulanov, C. Benedetti, L.-L. Yu, M. Chen, C. G. R. Geddes, and W. P. Leemans, Phys. Rev. ST Accel. Beams 17, 101301 <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.17.101301>`_
 
-.. [Gibbon] `P. Gibbon, Short Pulse Laser Interactions with Matter - An Introduction, Imperial College Press (2005)`_
+.. [Gibbon] P. Gibbon, Short Pulse Laser Interactions with Matter - An Introduction, Imperial College Press (2005)
