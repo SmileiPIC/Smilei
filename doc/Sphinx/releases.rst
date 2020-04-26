@@ -22,6 +22,7 @@ Upcoming changes
 
   * Current filtering with adjustable number of passes per dimension.
   * Improved axis boundary conditions for ``AMcylindrical`` geometry.
+  * Laser Envelope: circular polarization, tunnel ionization with linear or circular polarization.
 
 * Bugfixes:
 
