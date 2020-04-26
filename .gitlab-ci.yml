@@ -7,7 +7,7 @@ compile:
   only:
     - develop
     - merge_new_axisBC
-    - envelope_reduced_dispersion
+    - smilei_envelope_ionization_all_geometries
 
   script:
     # Force workdir cleaning in case of retried
@@ -30,7 +30,7 @@ makerun1D:
   only:
     - develop
     - merge_new_axisBC
-    - envelope_reduced_dispersion
+    - smilei_envelope_ionization_all_geometries
     
   script:
     # Move in test dir
@@ -43,7 +43,7 @@ makerun2D:
   only:
     - develop
     - merge_new_axisBC
-    - envelope_reduced_dispersion
+    - smilei_envelope_ionization_all_geometries
 
   script:
     # Move in test dir
@@ -57,7 +57,7 @@ makerun3D:
     - develop
     - merge_new_axisBC
     - AMsorting
-    - envelope_reduced_dispersion
+    - smilei_envelope_ionization_all_geometries
 
   script:
     # Move in test dir
@@ -70,7 +70,7 @@ makerunAM:
   only:
     - develop
     - merge_new_axisBC
-    - envelope_reduced_dispersion
+    - smilei_envelope_ionization_all_geometries
     
   script:
     # Move in test dir
@@ -83,7 +83,7 @@ makerunV:
   only:
     - develop
     - merge_new_axisBC
-    - envelope_reduced_dispersion
+    - smilei_envelope_ionization_all_geometries
 
   script:
     # Move in test dir
@@ -96,7 +96,7 @@ makerunCollisions:
   only:
     - develop
     - merge_new_axisBC
-    - envelope_reduced_dispersion
+    - smilei_envelope_ionization_all_geometries
     
   script:
     # Move in test dir
