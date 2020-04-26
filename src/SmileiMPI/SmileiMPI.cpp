@@ -648,51 +648,9 @@ void SmileiMPI::isend( Patch *patch, int to, int tag, Params &params )
 
     // Count number max of comms :
     int maxtag = 0;
-
-    // Adaptive vectorization:
-    // In the case of the adaptive mixed sort Vectorization,
-    // we communicate the operator state (vectorized_operators variable)
-    // to deduce the bin number (last_index.size())
-    // In both adaptive cases :
-    //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
-    //   - default values of the bin number is defined by the vectorized conf
-    if( params.vectorization_mode == "adaptive_mixed_sort" ) {
-        // Parameter vectorized_operators
-        for( int ispec=0 ; ispec<( int )patch->vecSpecies.size() ; ispec++ ) {
-            MPI_Isend( &( patch->vecSpecies[ispec]->vectorized_operators ), 1, MPI_INT, to, tag, MPI_COMM_WORLD, &patch->requests_[maxtag] );
-            maxtag ++;
-        }
-
-    }
-
-    // For the particles
-    for( int ispec=0 ; ispec<( int )patch->vecSpecies.size() ; ispec++ ) {
-        isend( &( patch->vecSpecies[ispec]->last_index ), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
-        if( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ) {
-            patch->vecSpecies[ispec]->exchangePatch = createMPIparticles( patch->vecSpecies[ispec]->particles );
-            isend( patch->vecSpecies[ispec]->particles, to, tag+maxtag+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[maxtag+2*ispec+1] );
-        }
-    }
-
-    maxtag += 2*patch->vecSpecies.size();
-
-    // Send the cumulated radiated energy
-    if( params.hasMCRadiation ||
-            params.hasLLRadiation ||
-            params.hasNielRadiation ) {
-
-        for( int ispec=0 ; ispec<( int )patch->vecSpecies.size() ; ispec++ ) {
-            if( patch->vecSpecies[ispec]->getNbrOfParticles() > 0
-                    && patch->vecSpecies[ispec]->Radiate ) {
-
-                MPI_Isend( &( patch->vecSpecies[ispec]->nrj_radiation ),
-                           1, MPI_DOUBLE, to, tag + maxtag, SMILEI_COMM_WORLD,
-                           &patch->requests_[maxtag] );
-                maxtag ++;
-            }
-        }
-    }
-
+    
+    isend_species( patch, to, maxtag, tag, params );
+    
     // Send fields
     if( params.geometry != "AMcylindrical" ) {
         isend( patch->EMfields, to, maxtag, patch->requests_, tag );
@@ -703,12 +661,9 @@ void SmileiMPI::isend( Patch *patch, int to, int tag, Params &params )
 } // END isend( Patch )
 
 
-void SmileiMPI::isend_species( Patch *patch, int to, int tag, Params &params )
+void SmileiMPI::isend_species( Patch *patch, int to, int &maxtag, int tag, Params &params )
 {
 
-    // Count number max of comms :
-    int maxtag = 0;
-    
     // number of species
     unsigned int nspec = patch->vecSpecies.size();
 
@@ -798,79 +753,11 @@ void SmileiMPI::waitall( Patch *patch )
 
 void SmileiMPI::recv( Patch *patch, int from, int tag, Params &params )
 {
-    MPI_Datatype recvParts;
-    int nbrOfPartsRecv;
-
-    // Count number max of comms :int tag
     int maxtag = tag;
-
-    // Adaptive vectorization:
-    // In the case of the adaptive mixed sort Vectorization,
-    // we communicate the operator state (vectorized_operators variable)
-    // to deduce the bin number (last_index.size())
-    // In both adaptive cases :
-    //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
-    //   - default values of the bin number is defined by the vectorized conf
-    if( params.vectorization_mode == "adaptive_mixed_sort" ) {
-        // Parameter vectorized_operators
-        MPI_Status status;
-
-        for( int ispec=0 ; ispec<( int )patch->vecSpecies.size() ; ispec++ ) {
-            MPI_Recv( &( patch->vecSpecies[ispec]->vectorized_operators ), 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );
-            if( !patch->vecSpecies[ispec]->vectorized_operators ) {
-                patch->vecSpecies[ispec]->last_index.resize( 1 );
-                patch->vecSpecies[ispec]->first_index.resize( 1 );
-            }
-            maxtag ++;
-        }
-
-    }
-
-    for( int ispec=0 ; ispec<( int )patch->vecSpecies.size() ; ispec++ ) {
-        //Receive lst_index
-        recv( &patch->vecSpecies[ispec]->last_index, from, maxtag+2*ispec+1 );
-        //Reconstruct first_index from last_index
-        memcpy( &( patch->vecSpecies[ispec]->first_index[1] ), &( patch->vecSpecies[ispec]->last_index[0] ), ( patch->vecSpecies[ispec]->last_index.size()-1 )*sizeof( int ) );
-        patch->vecSpecies[ispec]->first_index[0]=0;
-        //Prepare patch for receiving particles
-        nbrOfPartsRecv = patch->vecSpecies[ispec]->last_index.back();
-        patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
-        //Receive particles
-        if( nbrOfPartsRecv > 0 ) {
-            recvParts = createMPIparticles( patch->vecSpecies[ispec]->particles );
-            recv( patch->vecSpecies[ispec]->particles, from, maxtag+2*ispec, recvParts );
-            MPI_Type_free( &( recvParts ) );
-        }
-        /*std::cerr << "Species: " << ispec
-                  << " last_index: " <<  patch->vecSpecies[ispec]->last_index[0]
-                  << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
-    }
-
-    maxtag += 2*patch->vecSpecies.size();
-
-    // Receive the cumulated radiated energy
-    if( params.hasMCRadiation ||
-            params.hasLLRadiation ||
-            params.hasNielRadiation ) {
-
-        MPI_Status status;
-        double temp;
-        for( int ispec=0 ; ispec<( int )patch->vecSpecies.size() ; ispec++ ) {
-            if( patch->vecSpecies[ispec]->getNbrOfParticles() > 0
-                    && patch->vecSpecies[ispec]->Radiate ) {
-
-                MPI_Recv( &temp, 1, MPI_DOUBLE, from,
-                          maxtag,
-                          SMILEI_COMM_WORLD, &status );
-
-                maxtag++;
-
-                //patch->vecSpecies[ispec]->Radiate->setRadiatedEnergy(temp);
-                patch->vecSpecies[ispec]->setNrjRadiation( temp );
-            }
-        }
-    }
-
+    
+    // Receive species
+    recv_species( patch, from, maxtag, params );
+    
     // Receive EM fields
     patch->EMfields->initAntennas( patch );
     if( params.geometry != "AMcylindrical" ) {
@@ -882,13 +769,11 @@ void SmileiMPI::recv( Patch *patch, int from, int tag, Params &params )
 } // END recv ( Patch )
 
 
-void SmileiMPI::recv_species( Patch *patch, int from, int tag, Params &params )
+void SmileiMPI::recv_species( Patch *patch, int from, int &maxtag, Params &params )
 {
     MPI_Datatype recvParts;
     int nbrOfPartsRecv;
-
-    // Count number max of comms :int tag
-    int maxtag = tag;
+    int tag = maxtag;
     
     // number of species
     unsigned int nspec = patch->vecSpecies.size();

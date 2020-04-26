@@ -75,8 +75,8 @@ public:
 
     void isend_fields( Patch *patch, int to, int hindex, Params &params );
     void recv_fields( Patch *patch, int from, int hindex, Params &params );
-    void isend_species( Patch *patch, int to, int hindex, Params &params );
-    void recv_species( Patch *patch, int from, int hindex, Params &params );
+    void isend_species( Patch *patch, int to, int &maxtag, int tag, Params &params );
+    void recv_species( Patch *patch, int from, int &tag, Params &params );
 
     void isend( Particles *particles, int to, int hindex, MPI_Datatype datatype, MPI_Request &request );
     void recv( Particles *partictles, int from, int hindex, MPI_Datatype datatype );

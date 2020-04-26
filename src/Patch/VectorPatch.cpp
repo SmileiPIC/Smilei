@@ -2736,8 +2736,9 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         if( send_patch_id_[ipatch]+refHindex_ > istart ) {
             newMPIrank = smpi->getRank() + 1;
         }
-
-        smpi->isend_species( ( *this )( send_patch_id_[ipatch] ), newMPIrank, ( refHindex_+send_patch_id_[ipatch] )*nmessage, params );
+        int tag = ( refHindex_+send_patch_id_[ipatch] )*nmessage;
+        int maxtag = 0;
+        smpi->isend_species( ( *this )( send_patch_id_[ipatch] ), newMPIrank, maxtag, tag, params );
     }
 
     for( unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++ ) {
@@ -2745,8 +2746,8 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         if( recv_patch_id_[ipatch] > refHindex_ ) {
             oldMPIrank = smpi->getRank() + 1;
         }
-
-        smpi->recv_species( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
+        int tag = recv_patch_id_[ipatch]*nmessage;
+        smpi->recv_species( recv_patches_[ipatch], oldMPIrank, tag, params );
     }
 
 
