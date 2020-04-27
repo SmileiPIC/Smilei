@@ -891,8 +891,8 @@ void Params::compute()
     for( unsigned int i=0; i<nDim_field; i++ ) {
         PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
         oversize[i]  = max( interpolation_order, max( ( unsigned int )( norder[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
-        if ( (currentFilter_model == "blackman21") && (oversize[i] < 10) ){
-            ERROR( "With the `blackman21` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be > 10." )
+        if ( (currentFilter_model == "blackman21") && (oversize[i] < 12) ){
+            ERROR( "With the `blackman21` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= 12." )
         }
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];

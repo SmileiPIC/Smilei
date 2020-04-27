@@ -1089,8 +1089,8 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
     if (ipass < passes[0]){
         Field2D *tmp   = new Field2D( dimPrim, 0, false );
         tmp->copyFrom( Jx2D );
-        for( unsigned int i=10; i<nx_d-10; i++ ) {
-            for( unsigned int j=0; j<ny_p; j++ ) {
+        for( unsigned int i=12; i<nx_d-12; i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
                 ( *Jx2D )( i, j ) =
                     + filtering_coeff[0]*( *tmp )( i-10, j )
                     + filtering_coeff[1]*( *tmp )( i-9, j )
@@ -1118,8 +1118,8 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         delete tmp;
         tmp   = new Field2D( dimPrim, 1, false );
         tmp->copyFrom( Jy2D );
-        for( unsigned int i=10; i<nx_p-10; i++ ) {
-            for( unsigned int j=0; j<ny_d; j++ ) {
+        for( unsigned int i=12; i<nx_p-12; i++ ) {
+            for( unsigned int j=1; j<ny_d-1; j++ ) {
                 ( *Jy2D )( i, j ) =
                     + filtering_coeff[0]*( *tmp )( i-10, j )
                     + filtering_coeff[1]*( *tmp )( i-9, j )
@@ -1147,8 +1147,8 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         delete tmp;
         tmp   = new Field2D( dimPrim, 2, false );
         tmp->copyFrom( Jz2D );
-        for( unsigned int i=10; i<nx_p-10; i++ ) {
-            for( unsigned int j=0; j<ny_p; j++ ) {
+        for( unsigned int i=12; i<nx_p-12; i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
                 ( *Jz2D )( i, j ) =
                     + filtering_coeff[0]*( *tmp )( i-10, j )
                     + filtering_coeff[1]*( *tmp )( i-9, j )
@@ -1181,8 +1181,8 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         // On Jx^(d,p) -- External points are treated by exchange
         Field2D *tmp   = new Field2D( dimPrim, 0, false );
         tmp->copyFrom( Jx2D );
-        for( unsigned int i=0; i<nx_d; i++ ) {
-            for( unsigned int j=10; j<ny_p-10; j++ ) {
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=12; j<ny_p-12; j++ ) {
                 ( *Jx2D )( i, j ) =
                     + filtering_coeff[0]*( *tmp )( i, j-10 )
                     + filtering_coeff[1]*( *tmp )( i, j-9 )
@@ -1211,8 +1211,8 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         // On Jy^(p,d) -- External points are treated by exchange
         tmp   = new Field2D( dimPrim, 1, false );
         tmp->copyFrom( Jy2D );
-        for( unsigned int i=0; i<nx_p; i++ ) {
-            for( unsigned int j=10; j<ny_d-10; j++ ) {
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=12; j<ny_d-12; j++ ) {
                 ( *Jy2D )( i, j ) =
                     + filtering_coeff[0]*( *tmp )( i, j-10 )
                     + filtering_coeff[1]*( *tmp )( i, j-9 )
@@ -1241,8 +1241,8 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         // On Jz^(p,p) -- External points are treated by exchange
         tmp   = new Field2D( dimPrim, 2, false );
         tmp->copyFrom( Jz2D );
-        for( unsigned int i=0; i<nx_p; i++ ) {
-            for( unsigned int j=10; j<ny_p-10; j++ ) {
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=12; j<ny_p-12; j++ ) {
                 ( *Jz2D )( i, j ) =
                     + filtering_coeff[0]*( *tmp )( i, j-10 )
                     + filtering_coeff[1]*( *tmp )( i, j-9 )
