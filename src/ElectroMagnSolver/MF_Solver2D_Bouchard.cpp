@@ -15,11 +15,14 @@ MF_Solver2D_Bouchard::MF_Solver2D_Bouchard(Params &params)
     dx = params.cell_length[0];
     dy = params.cell_length[1];
     if( dx!=dy ) {
-        ERROR( "Grassi solver requires the same cell-length in x and y directions" );
+        ERROR( "Bouchard solver requires the same cell-length in x and y directions" );
     }
     
-    double delta = 0.110*(1-pow(2.,2))/4. ;
-    double beta = -0.150*(1-0.5*pow(2.,2)-4.*delta)/4. ;
+    // On the axes v_phi^max = 1.02c and is below c @ 0.64 kxdx/pi
+    // So there could existe a numerical cherenkov emission at this point
+    // On the diagonal v_phi^max = 1.02c and is below c @ 0.99 sqrt((kxdx)^2+(kydy)^2)
+    double delta = 0.141*(1-pow(2.,2))/4. ;
+    double beta = -0.209*(1-0.5*pow(2.,2)-4.*delta)/4. ;
     double alpha = 1-2.*beta-3.*delta;
  
     beta_xy = beta;
