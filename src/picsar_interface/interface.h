@@ -30,6 +30,7 @@ extern  "C"
     void push_psatd_ebfield_();
     void solve_maxwell_fdtd_pxr();
     void rotational_cleaning();
+    void densities_correction();
 };
 
 }

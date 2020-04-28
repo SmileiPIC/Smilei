@@ -954,6 +954,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
 {
     timers.maxwell.restart();
 
+    // Current filter in intermediate space
     if (params.currentFilter_passes.size() > 0){
         for( unsigned int ipassfilter=0 ; ipassfilter<*std::max_element(std::begin(params.currentFilter_passes), std::end(params.currentFilter_passes)) ; ipassfilter++ ) {
             #pragma omp for schedule(static)
@@ -979,6 +980,11 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 }
             }
         }
+    }
+
+    if ( params.is_spectral and params.geometry == "AMcylindrical"){
+        // Current correction in spectral space
+        (*this)( 0 )->EMfields->MaxwellAmpereSolver_->densities_correction( (*this)( 0 )->EMfields );
     }
 
     #pragma omp for schedule(static)

@@ -153,8 +153,14 @@ void PXR_SolverAM_GPSTD::rotational_cleaning( ElectroMagn *fields )
 //densities_correction takes care of densities high frequency filtering and divergence cleaning before Maxwell solver is called.
 void PXR_SolverAM_GPSTD::densities_correction(ElectroMagn *fields)
 {
+//0) Transform toward spectral space
 //1) Filter + divergence cleaning (current correction)
 //2) Back to intermediate space
+#ifdef _PICSAR
+    picsar::densities_correction();
+#else
+    ERROR( "Smilei not linked with picsar, use make config=picsar" );
+#endif
 //3) Communicate J, rho, rho_old and set them to zero in boundary cells
 
 
