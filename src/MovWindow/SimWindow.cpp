@@ -97,8 +97,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     }
     
     unsigned int h0;
-    double energy_field_lost( 0. );
-    std::vector<double> energy_part_lost( vecPatches( 0 )->vecSpecies.size(), 0. );
+    //double energy_field_lost( 0. );
+    //std::vector<double> energy_part_lost( vecPatches( 0 )->vecSpecies.size(), 0. );
     Patch *mypatch;
     
     //Initialization for inter-process communications
@@ -566,10 +566,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         #pragma omp critical
 #endif
         {
-            vecPatches( 0 )->EMfields->storeNRJlost( energy_field_lost );
-            for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                vecPatches( 0 )->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
-            }
+            //vecPatches( 0 )->EMfields->storeNRJlost( energy_field_lost );
+            //for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
+            //    vecPatches( 0 )->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
+            //}
             
             for( unsigned int j=0; j<2; j++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
                 for( unsigned int i=0 ; i< params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
