@@ -280,7 +280,7 @@ void DiagnosticParticleBinning::write( int timestep, SmileiMPI *smpi )
         return;
     }
     
-    if( writeNow( timestep ) ) {
+    if( ! writeNow( timestep ) ) {
         return;
     }
     
