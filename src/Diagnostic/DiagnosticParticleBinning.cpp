@@ -9,35 +9,45 @@ using namespace std;
 
 
 // Constructor
-DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI *smpi, Patch *patch, int diagId )
+DiagnosticParticleBinning::DiagnosticParticleBinning(
+    Params &params,
+    SmileiMPI *smpi,
+    Patch *patch,
+    int diagId,
+    string diagName,
+    PyObject *deposited_quantity
+)
 {
     fileId_ = 0;
-    
-    int n_diag_particles = diagId;
+    int idiag = diagId;
     
     ostringstream name( "" );
-    name << "Diagnotic Particles #" << n_diag_particles;
+    name << "Diag" << diagName;
+    string pyDiag = name.str();
+    name << " #" << idiag;
     string errorPrefix = name.str();
     
     // get parameter "deposited_quantity" that determines the quantity to sum in the output array
-    PyObject *deposited_quantity_object = PyTools::extract_py( "deposited_quantity", "DiagParticleBinning", n_diag_particles );
-    PyTools::checkPyError();
+    if( deposited_quantity == nullptr ) {
+        deposited_quantity = PyTools::extract_py( "deposited_quantity", pyDiag, idiag );
+        PyTools::checkPyError();
+    }
     
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
-        PyTools::extract_py( "every", "DiagParticleBinning", n_diag_particles ),
+        PyTools::extract_py( "every", pyDiag, idiag ),
         name.str()
     );
     
     // get parameter "flush_every" which describes a timestep selection for flushing the file
     flush_timeSelection = new TimeSelection(
-        PyTools::extract_py( "flush_every", "DiagParticleBinning", n_diag_particles ),
+        PyTools::extract_py( "flush_every", pyDiag, idiag ),
         name.str()
     );
     
     // get parameter "time_average" that determines the number of timestep to average the outputs
     time_average = 1;
-    PyTools::extract( "time_average", time_average, "DiagParticleBinning", n_diag_particles );
+    PyTools::extract( "time_average", time_average, pyDiag, idiag );
     if( time_average < 1 ) {
         time_average=1;
     }
@@ -47,42 +57,49 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI 
     
     // get parameter "species" that determines the species to use (can be a list of species)
     vector<string> species_names;
-    if( ! PyTools::extractV( "species", species_names, "DiagParticleBinning", n_diag_particles ) ) {
+    if( ! PyTools::extractV( "species", species_names, pyDiag, idiag ) ) {
         ERROR( errorPrefix << ": parameter `species` required" );
     }
     // verify that the species exist, remove duplicates and sort by number
     species = params.FindSpecies( patch->vecSpecies, species_names );
     
-    // Temporarily set the spatial min and max to the simulation box size
-    spatial_min.resize( params.nDim_particle, 0. );
-    spatial_max = params.grid_length;
+//    // Temporarily set the spatial min and max to the simulation box size
+//    spatial_min.resize( params.nDim_particle, 0. );
+//    spatial_max = params.grid_length;
     
     // get parameter "axes" that adds axes to the diagnostic
     // Each axis should contain several items:
     //      requested quantity, min value, max value ,number of bins, log (optional), edge_inclusive (optional)
-    vector<PyObject *> pyAxes=PyTools::extract_pyVec( "axes", "DiagParticleBinning", n_diag_particles );
+    vector<PyObject *> pyAxes=PyTools::extract_pyVec( "axes", pyDiag, idiag );
     
-    // Create the Histogram object based on the extracted parameters above
+    // Histogram axes that should not be allowed
     vector<string> excluded_axes( 0 );
     excluded_axes.push_back( "a" );
     excluded_axes.push_back( "b" );
     excluded_axes.push_back( "theta" );
     excluded_axes.push_back( "phi" );
-    histogram = HistogramFactory::create( params, deposited_quantity_object, pyAxes, species, patch, excluded_axes, errorPrefix );
     
-    // Get info on the spatial extent
-    for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
-        if( histogram->axes[i]->type == "x" ) {
-            spatial_min[0] = histogram->axes[i]->min;
-            spatial_max[0] = histogram->axes[i]->max;
-        } else if( histogram->axes[i]->type == "y" ) {
-            spatial_min[1] = histogram->axes[i]->min;
-            spatial_max[1] = histogram->axes[i]->max;
-        } else if( histogram->axes[i]->type == "z" ) {
-            spatial_min[2] = histogram->axes[i]->min;
-            spatial_max[2] = histogram->axes[i]->max;
-        }
+    // Create the Histogram object based on the extracted parameters above
+    histogram = HistogramFactory::create( params, deposited_quantity, pyAxes, species, patch, excluded_axes, errorPrefix );
+    total_axes = histogram->axes.size();
+    dims.resize( total_axes );
+    for( int iaxis=0; iaxis<total_axes; iaxis++ ) {
+        dims[iaxis] = histogram->axes[iaxis]->nbins;
     }
+    
+//    // Get info on the spatial extent
+//    for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
+//        if( histogram->axes[i]->type == "x" ) {
+//            spatial_min[0] = histogram->axes[i]->min;
+//            spatial_max[0] = histogram->axes[i]->max;
+//        } else if( histogram->axes[i]->type == "y" ) {
+//            spatial_min[1] = histogram->axes[i]->min;
+//            spatial_max[1] = histogram->axes[i]->max;
+//        } else if( histogram->axes[i]->type == "z" ) {
+//            spatial_min[2] = histogram->axes[i]->min;
+//            spatial_max[2] = histogram->axes[i]->max;
+//        }
+//    }
     
     // Calculate the size of the output array
     uint64_t total_size = 1;
@@ -102,23 +119,14 @@ DiagnosticParticleBinning::DiagnosticParticleBinning( Params &params, SmileiMPI 
         for( unsigned int i=1; i<species_names.size(); i++ ) {
             mystream << "," << species_names[i];
         }
-        MESSAGE( 1, "Created ParticleBinning diagnostic #" << n_diag_particles << ": species " << mystream.str() );
+        MESSAGE( 1, "Created "<<diagName<<" #" << idiag << ": species " << mystream.str() );
         for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
-            HistogramAxis *axis = histogram->axes[i];
-            mystream.str( "" );
-            mystream << "Axis " << axis->type << " from " << axis->min << " to " << axis->max << " in " << axis->nbins << " steps";
-            if( axis->logscale ) {
-                mystream << " [LOGSCALE] ";
-            }
-            if( axis->edge_inclusive ) {
-                mystream << " [EDGE INCLUSIVE]";
-            }
-            MESSAGE( 2, mystream.str() );
+            MESSAGE( 2, histogram->axes[i]->info() );
         }
         
         // init HDF files (by master, only if it doesn't yet exist)
         mystream.str( "" ); // clear
-        mystream << "ParticleBinning" << n_diag_particles << ".h5";
+        mystream << diagName << idiag << ".h5";
         filename = mystream.str();
     }
     
@@ -224,21 +232,21 @@ void DiagnosticParticleBinning::run( Patch *patch, int timestep, SimWindow *simW
     vector<double> double_buffer;
     unsigned int npart;
     
-    // Update spatial_min and spatial_max if needed
-    if( simWindow ) {
-        bool did_move = false;
-        for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
-            if( histogram->axes[i]->type == "moving_x" ) {
-                spatial_min[0] = histogram->axes[i]->min + simWindow->getXmoved();
-                spatial_max[0] = histogram->axes[i]->max + simWindow->getXmoved();
-                did_move = true;
-            }
-        }
-        if( ! did_move ) {
-            spatial_max[0] += simWindow->getXmoved() - spatial_min[0];
-            spatial_min[0] = simWindow->getXmoved();
-        }
-    }
+//    // Update spatial_min and spatial_max if needed
+//    if( simWindow ) {
+//        bool did_move = false;
+//        for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
+//            if( histogram->axes[i]->type == "moving_x" ) {
+//                spatial_min[0] = histogram->axes[i]->min + simWindow->getXmoved();
+//                spatial_max[0] = histogram->axes[i]->max + simWindow->getXmoved();
+//                did_move = true;
+//            }
+//        }
+//        if( ! did_move ) {
+//            spatial_max[0] += simWindow->getXmoved() - spatial_min[0];
+//            spatial_min[0] = simWindow->getXmoved();
+//        }
+//    }
     
     // loop species
     for( unsigned int ispec=0 ; ispec < species.size() ; ispec++ ) {
@@ -271,10 +279,9 @@ void DiagnosticParticleBinning::write( int timestep, SmileiMPI *smpi )
         return;
     }
     
-    double coeff;
     // if time_average, then we need to divide by the number of timesteps
     if( time_average > 1 ) {
-        coeff = 1./( ( double )time_average );
+        double coeff = 1./( ( double )time_average );
         for( unsigned int i=0; i<output_size; i++ ) {
             data_sum[i] *= coeff;
         }
@@ -287,14 +294,8 @@ void DiagnosticParticleBinning::write( int timestep, SmileiMPI *smpi )
     
     // write the array if it does not exist already
     if( ! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) ) {
-        // Prepare array dimensions
-        unsigned int naxes = histogram->axes.size();
-        hsize_t dims[naxes];
-        for( unsigned int iaxis=0; iaxis<naxes; iaxis++ ) {
-            dims[iaxis] = histogram->axes[iaxis]->nbins;
-        }
         // Create file space
-        hid_t sid = H5Screate_simple( naxes, &dims[0], NULL );
+        hid_t sid = H5Screate_simple( total_axes, &dims[0], NULL );
         hid_t pid = H5Pcreate( H5P_DATASET_CREATE );
         // create dataset
         hid_t did = H5Dcreate( fileId_, mystream.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid, H5P_DEFAULT );

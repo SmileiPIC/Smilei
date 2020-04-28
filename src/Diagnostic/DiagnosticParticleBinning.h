@@ -12,19 +12,19 @@ class DiagnosticParticleBinning : public Diagnostic
 public :
 
     //! Default constructor
-    DiagnosticParticleBinning( Params &params, SmileiMPI *smpi, Patch *patch, int diagId );
+    DiagnosticParticleBinning( Params &params, SmileiMPI *smpi, Patch *patch, int diagId, std::string diagName = "ParticleBinning", PyObject *deposited_quantity = nullptr );
     //! Cloning constructor
     DiagnosticParticleBinning( DiagnosticParticleBinning * );
     //! Default destructor
     ~DiagnosticParticleBinning() override;
     
-    void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
+    virtual void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
     
     void closeFile() override;
     
     bool prepare( int timestep ) override;
     
-    void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
+    virtual void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
     
     void write( int timestep, SmileiMPI *smpi ) override;
     
@@ -43,7 +43,7 @@ public :
     //! Get disk footprint of current diagnostic
     uint64_t getDiskFootPrint( int istart, int istop, Patch *patch ) override;
     
-private :
+protected:
 
     //! number of timesteps during which outputs are averaged
     int time_average;
@@ -59,8 +59,11 @@ private :
     
     unsigned int output_size;
     
-    //! Minimum and maximum spatial coordinates that are useful for this diag
-    std::vector<double> spatial_min, spatial_max;
+    int total_axes;
+    std::vector<hsize_t> dims;
+    
+//    //! Minimum and maximum spatial coordinates that are useful for this diag
+//    std::vector<double> spatial_min, spatial_max;
 };
 
 #endif
