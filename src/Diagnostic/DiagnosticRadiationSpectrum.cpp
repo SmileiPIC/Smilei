@@ -146,8 +146,10 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
         
         Species *s = patch->vecSpecies[species[ispec]];
         unsigned int npart = s->particles->size();
-        int_buffer   .resize( npart, 0 );
+        int_buffer   .resize( npart );
         double_buffer.resize( npart );
+        
+        fill(int_buffer.begin(), int_buffer.end(), 0);
         
         histogram->digitize( s, double_buffer, int_buffer, simWindow );
         
