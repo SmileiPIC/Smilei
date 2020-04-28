@@ -237,7 +237,7 @@ void Patch::finalizeMPIenvironment( Params &params )
 
     // Adaptive vectorization:
     if( params.has_adaptive_vectorization ) {
-        nb_comms += vecSpecies.size();
+        nb_comms ++;
     }
 
     // Scalars
