@@ -17,7 +17,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum(
     Patch *patch,
     RadiationTables *radiation_tables_,
     int diagId
-) : DiagnosticParticleBinning( params, smpi, patch, diagId, "RadiationSpectrum", PyUnicode_FromString( "" ) )
+) : DiagnosticParticleBinning( params, smpi, patch, diagId, "RadiationSpectrum", false, PyUnicode_FromString( "" ) )
 {
     
     ostringstream name( "" );

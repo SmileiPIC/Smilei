@@ -15,11 +15,13 @@ DiagnosticParticleBinning::DiagnosticParticleBinning(
     Patch *patch,
     int diagId,
     string diagName,
+    bool time_accumulate_,
     PyObject *deposited_quantity
 )
 {
     fileId_ = 0;
     int idiag = diagId;
+    time_accumulate = time_accumulate_;
     
     ostringstream name( "" );
     name << "Diag" << diagName;
@@ -46,13 +48,15 @@ DiagnosticParticleBinning::DiagnosticParticleBinning(
     );
     
     // get parameter "time_average" that determines the number of timestep to average the outputs
-    time_average = 1;
-    PyTools::extract( "time_average", time_average, pyDiag, idiag );
-    if( time_average < 1 ) {
-        time_average=1;
-    }
-    if( time_average > timeSelection->smallestInterval() ) {
-        ERROR( errorPrefix << ": `time_average` is incompatible with `every`" );
+    if( ! time_accumulate ) {
+        time_average = 1;
+        PyTools::extract( "time_average", time_average, pyDiag, idiag );
+        if( time_average < 1 ) {
+            time_average=1;
+        }
+        if( time_average > timeSelection->smallestInterval() ) {
+            ERROR( errorPrefix << ": `time_average` is incompatible with `every`" );
+        }
     }
     
     // get parameter "species" that determines the species to use (can be a list of species)
@@ -73,11 +77,7 @@ DiagnosticParticleBinning::DiagnosticParticleBinning(
     vector<PyObject *> pyAxes=PyTools::extract_pyVec( "axes", pyDiag, idiag );
     
     // Histogram axes that should not be allowed
-    vector<string> excluded_axes( 0 );
-    excluded_axes.push_back( "a" );
-    excluded_axes.push_back( "b" );
-    excluded_axes.push_back( "theta" );
-    excluded_axes.push_back( "phi" );
+    vector<string> excluded_axes = excludedAxes();
     
     // Create the Histogram object based on the extracted parameters above
     histogram = HistogramFactory::create( params, deposited_quantity, pyAxes, species, patch, excluded_axes, errorPrefix );
@@ -158,7 +158,9 @@ void DiagnosticParticleBinning::openFile( Params &params, SmileiMPI *smpi, bool 
         // write all parameters as HDF5 attributes
         H5::attr( fileId_, "Version", string( __VERSION ) );
         H5::attr( fileId_, "deposited_quantity", histogram->deposited_quantity );
-        H5::attr( fileId_, "time_average", time_average );
+        if( ! time_accumulate ) {
+            H5::attr( fileId_, "time_average", time_average );
+        }
         // write all species
         ostringstream mystream( "" );
         mystream.str( "" ); // clear
@@ -266,6 +268,9 @@ void DiagnosticParticleBinning::run( Patch *patch, int timestep, SimWindow *simW
     
 } // END run
 
+bool DiagnosticParticleBinning::writeNow( int timestep ) {
+    return timestep - timeSelection->previousTime() == time_average-1;
+}
 
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
@@ -275,12 +280,12 @@ void DiagnosticParticleBinning::write( int timestep, SmileiMPI *smpi )
         return;
     }
     
-    if( timestep - timeSelection->previousTime() != time_average-1 ) {
+    if( writeNow( timestep ) ) {
         return;
     }
     
     // if time_average, then we need to divide by the number of timesteps
-    if( time_average > 1 ) {
+    if( !time_accumulate && time_average > 1 ) {
         double coeff = 1./( ( double )time_average );
         for( unsigned int i=0; i<output_size; i++ ) {
             data_sum[i] *= coeff;
@@ -311,9 +316,11 @@ void DiagnosticParticleBinning::write( int timestep, SmileiMPI *smpi )
         H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
     
-    // Clear the array
-    clear();
-    data_sum.resize( 0 );
+    if( ! time_accumulate ) {
+        // Clear the array
+        clear();
+        data_sum.resize( 0 );
+    }
 } // END write
 
 

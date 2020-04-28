@@ -11,8 +11,6 @@ public :
 
     //! Default constructor
     DiagnosticRadiationSpectrum( Params &params, SmileiMPI *smpi, Patch *patch, RadiationTables *radiation_tables_, int diagId );
-    //! Cloning constructor
-    DiagnosticRadiationSpectrum( DiagnosticRadiationSpectrum * );
     //! Default destructor
     ~DiagnosticRadiationSpectrum();
     

@@ -3713,7 +3713,7 @@ void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Check
             //     * Screen diagnostics
             for( unsigned int idiag=0; idiag<globalDiags.size(); idiag++ )
                 if( DiagnosticScreen *screen = dynamic_cast<DiagnosticScreen *>( globalDiags[idiag] ) ) {
-                    checkpoint_diags_footprint += screen->data_sum.size() * sizeof( double );
+                    checkpoint_diags_footprint += screen->getData()->size() * sizeof( double );
                 }
             MESSAGE( 2, "For diagnostics: " << Tools::printBytes( checkpoint_diags_footprint ) );
 

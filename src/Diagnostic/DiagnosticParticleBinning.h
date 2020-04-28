@@ -12,9 +12,15 @@ class DiagnosticParticleBinning : public Diagnostic
 public :
 
     //! Default constructor
-    DiagnosticParticleBinning( Params &params, SmileiMPI *smpi, Patch *patch, int diagId, std::string diagName = "ParticleBinning", PyObject *deposited_quantity = nullptr );
-    //! Cloning constructor
-    DiagnosticParticleBinning( DiagnosticParticleBinning * );
+    DiagnosticParticleBinning(
+        Params &params,
+        SmileiMPI *smpi,
+        Patch *patch,
+        int diagId,
+        std::string diagName = "ParticleBinning",
+        bool time_accumulate = false,
+        PyObject *deposited_quantity = nullptr
+    );
     //! Default destructor
     ~DiagnosticParticleBinning() override;
     
@@ -26,10 +32,21 @@ public :
     
     virtual void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
     
+    virtual bool writeNow( int timestep );
+    
     void write( int timestep, SmileiMPI *smpi ) override;
     
     //! Clear the array
-    void clear();
+    virtual void clear();
+    
+    virtual std::vector<std::string> excludedAxes() {
+        std::vector<std::string> excluded_axes( 0 );
+        excluded_axes.push_back( "a" );
+        excluded_axes.push_back( "b" );
+        excluded_axes.push_back( "theta" );
+        excluded_axes.push_back( "phi" );
+        return excluded_axes;
+    }
     
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override
@@ -44,7 +61,10 @@ public :
     uint64_t getDiskFootPrint( int istart, int istop, Patch *patch ) override;
     
 protected:
-
+    
+    //! True for Screen only
+    bool time_accumulate;
+    
     //! number of timesteps during which outputs are averaged
     int time_average;
     

@@ -1656,8 +1656,10 @@ void SmileiMPI::computeGlobalDiags( DiagnosticScreen *diagScreen, int timestep )
 void SmileiMPI::computeGlobalDiags(DiagnosticRadiationSpectrum* diagRad, int timestep)
 {
     if (timestep - diagRad->timeSelection->previousTime() == diagRad->time_average-1) {
-        MPI_Reduce(diagRad->filename.size()?MPI_IN_PLACE:&diagRad->data_sum[0], &diagRad->data_sum[0], diagRad->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce( diagRad->filename.size()?MPI_IN_PLACE:&diagRad->data_sum[0], &diagRad->data_sum[0], diagRad->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
 
-        if( !isMaster() ) diagRad->clear();
+        if( !isMaster() ) {
+            diagRad->clear();
+        }
     }
 } // END computeGlobalDiags(DiagnosticRadiationSpectrum*  ...)
