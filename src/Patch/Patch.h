@@ -388,6 +388,10 @@ protected:
     
     double cell_volume;
     
+    //! Buffers for exchange
+    std::vector<int> buffer_vecto;
+    std::vector<double> buffer_scalars;
+        
 };
 
 
