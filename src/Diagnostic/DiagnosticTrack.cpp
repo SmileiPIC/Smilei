@@ -597,12 +597,11 @@ void DiagnosticTrack::setIDs( Particles &particles )
     if( has_filter ) {
         return;
     }
-    unsigned int s = particles.size(), id;
+    unsigned int s = particles.size();
     #pragma omp critical
     {
         for( unsigned int iPart=0; iPart<s; iPart++ ) {
-            id = ++latest_Id;
-            particles.id( iPart ) = id;
+            particles.id( iPart ) = ++latest_Id;
         }
     }
 }
