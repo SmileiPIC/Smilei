@@ -99,70 +99,25 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     double pxr_dl = params.cell_length[0];
     double pxr_dr = params.cell_length[1];
 
-//    for ( int imode=0 ; imode<params.nmodes ; imode++ ) {
-//
-//        El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
-//        Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
-//        Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
-//        Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_[imode];
-//        Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
-//        Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
-//        Jl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Jl_[imode];
-//        Jr = ( static_cast<ElectroMagnAM *>( EMfields ) )->Jr_[imode];
-//        Jt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Jt_[imode];
-//        rho = ( static_cast<ElectroMagnAM *>( EMfields ) )->rho_AM_[imode];
-//        rhoold = ( static_cast<ElectroMagnAM *>( EMfields ) )->rho_old_AM_[imode];
-//
-//        double sum = 0.;
-//        for ( int il=0 ; il<Et->dims_[0] ; il++ )
-//            for ( int ir=0 ; ir<Et->dims_[1] ; ir++ )
-//                sum += ((*Et)(il,ir)).real()*((*Et)(il,ir)).real() + ((*Et)(il,ir)).imag()*((*Et)(il,ir)).imag() ;
-//        cout << "Et " << sum << endl;
-//        sum = 0.;
-//        for ( int il=0 ; il<Et->dims_[0] ; il++ )
-//            for ( int ir=0 ; ir<Et->dims_[1] ; ir++ )
-//                sum += ((*Er)(il,ir)).real()*((*Er)(il,ir)).real() + ((*Er)(il,ir)).imag()*((*Er)(il,ir)).imag() ;
-//        cout << "Er " << sum << endl;
-//        sum = 0.;
-//        for ( int il=0 ; il<Et->dims_[0] ; il++ )
-//            for ( int ir=0 ; ir<Et->dims_[1] ; ir++ )
-//                sum += ((*El)(il,ir)).real()*((*El)(il,ir)).real() + ((*El)(il,ir)).imag()*((*El)(il,ir)).imag() ;
-//        cout << "El " << sum << endl;
-//        sum = 0.;
-//        for ( int il=0 ; il<Et->dims_[0] ; il++ )
-//            for ( int ir=0 ; ir<Et->dims_[1] ; ir++ )
-//                sum += ((*Bt)(il,ir)).real()*((*Bt)(il,ir)).real() + ((*Bt)(il,ir)).imag()*((*Bt)(il,ir)).imag() ;
-//        cout << "Bt " << sum << endl;
-//        sum = 0.;
-//        for ( int il=0 ; il<Et->dims_[0] ; il++ )
-//            for ( int ir=0 ; ir<Et->dims_[1] ; ir++ )
-//                sum += ((*Br)(il,ir)).real()*((*Br)(il,ir)).real() + ((*Br)(il,ir)).imag()*((*Br)(il,ir)).imag() ;
-//        cout << "Br " << sum << endl;
-//        sum = 0.;
-//        for ( int il=0 ; il<Et->dims_[0] ; il++ )
-//            for ( int ir=0 ; ir<Et->dims_[1] ; ir++ )
-//                sum += ((*Bl)(il,ir)).real()*((*Bl)(il,ir)).real() + ((*Bl)(il,ir)).imag()*((*Bl)(il,ir)).imag() ;
-//        cout << "Bl " << sum << endl;
-//    }
 #ifdef _PICSAR    
 
-        int nmodes ( Nmode );
-        //call of extern init routine (defined in picsar)
-        picsar::init_params_picsar_AM( &nr, &nl, &nmodes, &nmodes, 
-                                    &pxr_dr, &pxr_dl, &params.timestep,
-                                    &ovr, &ovl,
-                                    &params.norder[1], &params.norder[0],
-                                    &( Et_pxr->cdata_[0] ),
-                                    &( Er_pxr->cdata_[0] ),
-                                    &( El_pxr->cdata_[0] ),
-                                    &( Bt_pxr->cdata_[0] ),
-                                    &( Br_pxr->cdata_[0] ),
-                                    &( Bl_pxr->cdata_[0] ),
-                                    &( Jt_pxr->cdata_[0] ),
-                                    &( Jr_pxr->cdata_[0] ),
-                                    &( Jl_pxr->cdata_[0] ),
-                                    &( rho_pxr->cdata_[0] ),
-                                    &( rhoold_pxr->cdata_[0] ) );
+    int nmodes ( Nmode );
+    //call of extern init routine (defined in picsar)
+    picsar::init_params_picsar_AM( &nr, &nl, &nmodes, &nmodes, 
+                                &pxr_dr, &pxr_dl, &params.timestep,
+                                &ovr, &ovl,
+                                &params.norder[1], &params.norder[0],
+                                &( Et_pxr->cdata_[0] ),
+                                &( Er_pxr->cdata_[0] ),
+                                &( El_pxr->cdata_[0] ),
+                                &( Bt_pxr->cdata_[0] ),
+                                &( Br_pxr->cdata_[0] ),
+                                &( Bl_pxr->cdata_[0] ),
+                                &( Jt_pxr->cdata_[0] ),
+                                &( Jr_pxr->cdata_[0] ),
+                                &( Jl_pxr->cdata_[0] ),
+                                &( rho_pxr->cdata_[0] ),
+                                &( rhoold_pxr->cdata_[0] ) );
 #else
     ERROR( "Smilei not linked with picsar, use make config=picsar" );
 #endif
@@ -179,6 +134,7 @@ void PXR_SolverAM_GPSTD::uncoupling()
 #endif
 }
 
+//rotational_cleaning is called over a reconstruction of the full domain in a single region in order to correct the initial laser field
 void PXR_SolverAM_GPSTD::rotational_cleaning( ElectroMagn *fields )
 {
     _2Dvectors_to_3D(fields);
@@ -194,6 +150,16 @@ void PXR_SolverAM_GPSTD::rotational_cleaning( ElectroMagn *fields )
 
 }
 
+//densities_correction takes care of densities high frequency filtering and divergence cleaning before Maxwell solver is called.
+void PXR_SolverAM_GPSTD::densities_correction(ElectroMagn *fields)
+{
+//1) Filter + divergence cleaning (current correction)
+//2) Back to intermediate space
+//3) Communicate J, rho, rho_old and set them to zero in boundary cells
+
+
+
+}
 
 void PXR_SolverAM_GPSTD::operator()( ElectroMagn *fields )
 {
