@@ -6,7 +6,6 @@ compile:
   stage: compile
   only:
     - develop
-    - merge_new_axisBC
     - smilei_envelope_ionization_all_geometries
 
   script:
@@ -29,7 +28,6 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
     - smilei_envelope_ionization_all_geometries
     
   script:
@@ -37,12 +35,12 @@ makerun1D:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_1d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerun2D:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
     - smilei_envelope_ionization_all_geometries
 
   script:
@@ -50,13 +48,12 @@ makerun2D:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerun3D:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
-    - AMsorting
     - smilei_envelope_ionization_all_geometries
 
   script:
@@ -64,12 +61,12 @@ makerun3D:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerunAM:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
     - smilei_envelope_ionization_all_geometries
     
   script:
@@ -82,7 +79,6 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
     - smilei_envelope_ionization_all_geometries
 
   script:
@@ -95,7 +91,6 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
     - smilei_envelope_ionization_all_geometries
     
   script:
