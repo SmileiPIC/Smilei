@@ -323,18 +323,20 @@ int main( int argc, char *argv[] )
             //if ( global_factor==1 )
             {
                 // de-apply external time fields if requested
-                if ( vecPatches(0)->EMfields->extTimeFields.size() )
+                if( vecPatches(0)->EMfields->extTimeFields.size() ) {
                     vecPatches.resetPrescribedFields();
-
+                    #pragma omp barrier
+                }
+                
                 if( time_dual > params.time_fields_frozen ) {
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 }
-
-                #pragma omp master
-                {
-                    // apply external time fields if requested
-                    if ( vecPatches(0)->EMfields->extTimeFields.size() )
-                        vecPatches.applyPrescribedFields(time_prim);
+                
+                // apply external time fields if requested
+                if( vecPatches(0)->EMfields->extTimeFields.size() ) {
+                    #pragma omp single
+                    vecPatches.applyPrescribedFields(time_prim);
+                    #pragma omp barrier
                 }
 
             }
