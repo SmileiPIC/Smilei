@@ -145,11 +145,7 @@ DiagnosticParticleBinning::~DiagnosticParticleBinning()
 // Called only by patch master of process master
 void DiagnosticParticleBinning::openFile( Params &params, SmileiMPI *smpi, bool newfile )
 {
-    if( !smpi->isMaster() ) {
-        return;
-    }
-    
-    if( fileId_>0 ) {
+    if( !smpi->isMaster() || fileId_>0 ) {
         return;
     }
     

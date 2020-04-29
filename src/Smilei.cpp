@@ -330,7 +330,7 @@ int main( int argc, char *argv[] )
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 }
 
-                #pragma omp single
+                #pragma omp master
                 {
                     // apply external time fields if requested
                     if ( vecPatches(0)->EMfields->extTimeFields.size() )

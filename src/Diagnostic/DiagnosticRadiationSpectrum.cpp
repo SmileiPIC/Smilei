@@ -95,11 +95,7 @@ DiagnosticRadiationSpectrum::~DiagnosticRadiationSpectrum()
 // Called only by patch master of process master
 void DiagnosticRadiationSpectrum::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
-    if( !smpi->isMaster() ) {
-        return;
-    }
-    
-    if( fileId_>0 ) {
+    if( !smpi->isMaster() || fileId_>0 ) {
         return;
     }
     
