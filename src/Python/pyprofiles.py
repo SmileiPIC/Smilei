@@ -492,7 +492,7 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
         envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]],
         polarization_phi = 0.,ellipticity = 0.):
     import cmath
-    from numpy import vectorize
+    from numpy import vectorize, sqrt
 
     def space_time_envelope(x,t):
         polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
