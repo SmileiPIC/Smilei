@@ -115,8 +115,8 @@ class RadiationSpectrum(Diagnostic):
 			# Verify that timesteps are the same for all diagnostics
 			if (self._timesteps[d] != self._timesteps[self._diags[0]]).any() :
 				self._error += ["All diagnostics in operation '"+self.operation+"' must have the same timesteps."
-					+ " Diagnotic #"+str(d)+" has "+str(len(self._timesteps[d]))+ " timesteps and #"
-					+ str(self._diags[0])+" has "+str(len(self._timesteps[self._diags[0]]))+ " timesteps"]
+					+" Diagnotic #"+str(d)+" has "+str(len(self._timesteps[d]))+ " timesteps and #"
+					+str(self._diags[0])+" has "+str(len(self._timesteps[self._diags[0]]))+ " timesteps"]
 				return
 		# Now we need to keep only one array of timesteps because they should be all the same
 		self._timesteps  = self._timesteps [self._diags[0]]
@@ -131,9 +131,7 @@ class RadiationSpectrum(Diagnostic):
 		# -------------------------------------------------------------------
 		# Fabricate all axes values for all diags
 		plot_diff = []
-		#cell_volume = self._cell_length.prod()
 		coeff = 1.
-		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
 		self._finalShape = [[]]*self._naxes
 		self._sums = [False]*self._naxes
@@ -350,7 +348,7 @@ class RadiationSpectrum(Diagnostic):
 
 		# 3 - axes
 		for i in range(len(info["axes"])):
-			axis = info["axes"][i];
+			axis = info["axes"][i]
 			logscale = "" if not axis["log"] else " [ LOG SCALE ] "
 			edges    = "" if not axis["edges_included"] else " [ INCLUDING EDGES ] "
 			printedInfo += "    "+axis["type"]+" from "+str(axis["min"])+" to "+str(axis["max"]) \

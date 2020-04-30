@@ -73,8 +73,8 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum(
     
     // Calculate the size of the output array
     uint64_t total_size = (uint64_t)output_size * photon_axis->nbins;
-    if( total_size > 4294967296 ) { // 2^32
-        ERROR( errorPrefix << ": too many points (" << total_size << " > 2^32)" );
+    if( total_size > 2147483648 ) { // 2^31
+        ERROR( errorPrefix << ": too many points (" << total_size << " > 2^312)" );
     }
     output_size = ( unsigned int ) total_size;
     
