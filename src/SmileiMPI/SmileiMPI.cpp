@@ -1523,12 +1523,12 @@ void SmileiMPI::computeGlobalDiags( Diagnostic *diag, int timestep )
 {
     if ( DiagnosticScalar* scalar = dynamic_cast<DiagnosticScalar*>( diag ) ) {
         computeGlobalDiags(scalar, timestep);
-    } else if (DiagnosticParticleBinning* particles = dynamic_cast<DiagnosticParticleBinning*>( diag )) {
-        computeGlobalDiags(particles, timestep);
     } else if (DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>( diag )) {
         computeGlobalDiags(screen, timestep);
     } else if (DiagnosticRadiationSpectrum* rad = dynamic_cast<DiagnosticRadiationSpectrum*>( diag )) {
         computeGlobalDiags(rad, timestep);
+    } else if (DiagnosticParticleBinning* particles = dynamic_cast<DiagnosticParticleBinning*>( diag )) {
+        computeGlobalDiags(particles, timestep);
     }
 }
 
