@@ -288,6 +288,9 @@ class ParticleBinning(Diagnostic):
 			elif deposited_quantity[:13] == "weight_ekin_v":
 				titles[d] = "Energy ("+deposited_quantity[-1]+") flux" + (" x Volume" if self.hasComposite else " density")
 				val_units = "K_r" if self.hasComposite else "N_r * K_r"
+			elif deposited_quantity[:13] == "weight_power": # for radiation spectrum
+				titles[d] = "Power" + ("" if self.hasComposite else " density")
+				val_units = "K_r / T_r" if self.hasComposite else "N_r * K_r / T_r"
 			units[d] = val_units + axes_units
 		# Make total units and title
 		self._vunits = self.operation
@@ -338,35 +341,35 @@ class ParticleBinning(Diagnostic):
 			except:
 				return False
 			# get attributes from file
-			attrs = f.attrs.items()
 			axes = []
-			deposited_quantity = None
+			deposited_quantity = "weight_power" # necessary for radiation spectrum
 			time_average = None
 			# Parse each attribute
-			for name, value in attrs:
-				if (name == "deposited_quantity"):
+			for name, value in f.attrs.items():
+				if name == "deposited_quantity":
 					try:
 						deposited_quantity = bytes.decode(value)
 					except:
 						deposited_quantity = "user_function"
-				if (name == "time_average"): time_average = int(value)
-				if (name == "species"):
+				elif name == "time_average":
+					time_average = int(value)
+				elif name == "species":
 					species = bytes.decode(value.strip()).split() # get all species numbers
 					species = [int(s) for s in species]
-				if (name[0:4] == "axis" ):
+				elif name[0:4] == "axis":
 					n = int(name[4:]) # axis number
 					sp = bytes.decode(value).split()
-					axistype  = sp[0]
-					axismin  = float(sp[1])
-					axismax  = float(sp[2])
-					axissize = int(sp[3])
-					logscale = bool(int(sp[4]))
-					edge_inclusive = bool(int(sp[5]))
-					coefficients = 0
-					if sp[6]!="[]" :
-						coefficients = eval(sp[6])
 					while len(axes)<n+1: axes.append({}) # extend the array to the adequate size
-					axes[n] = {"type":axistype,"min":axismin,"max":axismax,"size":axissize,"log":logscale,"edges_included":edge_inclusive,"coefficients":coefficients}
+					axes[n] = dict(
+						type = sp[0], min = float(sp[1]), max = float(sp[2]), size = int(sp[3]),
+						log = bool(int(sp[4])), edges_included = bool(int(sp[5])), coefficients = 0 if sp[6]=="[]" else eval(sp[6])
+					)
+				elif name == "photon_energy_axis":
+					sp = bytes.decode(value).split()
+					axes.append( dict(
+						type = "gamma", min = float(sp[0]), max = float(sp[1]), size = int(sp[2]),
+						log = bool(int(sp[3])), edges_included = bool(int(sp[4]))
+					))
 			f.close()
 			# Verify that the info corresponds to the diag in the other paths
 			if info == {}:
