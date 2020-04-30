@@ -325,7 +325,6 @@ int main( int argc, char *argv[] )
                 // de-apply external time fields if requested
                 if( vecPatches(0)->EMfields->extTimeFields.size() ) {
                     vecPatches.resetPrescribedFields();
-                    #pragma omp barrier
                 }
                 
                 if( time_dual > params.time_fields_frozen ) {

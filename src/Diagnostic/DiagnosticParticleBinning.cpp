@@ -106,8 +106,8 @@ DiagnosticParticleBinning::DiagnosticParticleBinning(
     for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
         total_size *= histogram->axes[i]->nbins;
     }
-    if( total_size > 4294967296 ) { // 2^32
-        ERROR( errorPrefix << ": too many points (" << total_size << " > 2^32)" );
+    if( total_size > 2147483648 ) { // 2^31
+        ERROR( errorPrefix << ": too many points (" << total_size << " > 2^31)" );
     }
     output_size = ( unsigned int ) total_size;
     
