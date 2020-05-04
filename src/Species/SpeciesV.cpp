@@ -735,7 +735,7 @@ void SpeciesV::compute_bin_cell_keys( Params &params, int istart, int iend )
 void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
 
-    unsigned int npart = source_particles.size(), scell, ii, ncells=first_index.size();
+    unsigned int npart = source_particles.size(), ncells=first_index.size();
 
     // If this species is tracked, set the particle IDs
     if( particles->tracked ) {
