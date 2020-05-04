@@ -210,7 +210,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
                 // starting from two random numbers from a uniform distribution
                 //double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
                 //double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
-                double rand_gaussian  = patch->rand->normal();
+                double rand_gaussian  = patch->rand_->normal();
 
                 Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  ); // envelope of the laser vector potential component along the polarization direction
                 
