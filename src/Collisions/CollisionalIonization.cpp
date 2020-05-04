@@ -224,8 +224,8 @@ void CollisionalIonization::apply( Patch *patch, Particles *p1, int i1, Particle
                      - p1->momentum( 1, i1 )*p2->momentum( 1, i2 )
                      - p1->momentum( 2, i1 )*p2->momentum( 2, i2 );
     // Random numbers
-    double U1  = patch->xorshift32() * patch->xorshift32_invmax;
-    double U2  = patch->xorshift32() * patch->xorshift32_invmax;
+    double U1  = patch->rand_->uniform();
+    double U2  = patch->rand_->uniform();
     // Calculate the rest of the stuff
     if( electronFirst ) {
         calculate( gamma_s, gamma1, gamma2, p1, i1, p2, i2, U1, U2 );

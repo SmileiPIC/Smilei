@@ -3513,6 +3513,7 @@ void VectorPatch::applyPrescribedFields(double time)
 //! Method use to reset the real value of all fields on which we imposed an external time field
 void VectorPatch::resetPrescribedFields()
 {
+    #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         patches_[ipatch]->EMfields->resetPrescribedFields();
     }
@@ -3713,7 +3714,7 @@ void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Check
             //     * Screen diagnostics
             for( unsigned int idiag=0; idiag<globalDiags.size(); idiag++ )
                 if( DiagnosticScreen *screen = dynamic_cast<DiagnosticScreen *>( globalDiags[idiag] ) ) {
-                    checkpoint_diags_footprint += screen->data_sum.size() * sizeof( double );
+                    checkpoint_diags_footprint += screen->getData()->size() * sizeof( double );
                 }
             MESSAGE( 2, "For diagnostics: " << Tools::printBytes( checkpoint_diags_footprint ) );
 
