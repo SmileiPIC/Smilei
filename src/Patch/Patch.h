@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <limits.h>
 
+#include "Random.h"
 #include "Params.h"
 #include "SmileiMPI.h"
 #include "PartWall.h"
@@ -98,61 +99,8 @@ public:
     std::vector<double> patch_timers;
 #endif
     
-    //! Random number generator
-    inline uint32_t xorshift32()
-    {
-        /* Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs" */
-        xorshift32_state ^= xorshift32_state << 13;
-        xorshift32_state ^= xorshift32_state >> 17;
-        xorshift32_state ^= xorshift32_state << 5;
-        return xorshift32_state;
-    }
-    //! Uniform rand from xorshift32 generator, between 0 (excluded) and 1 (included)
-    inline double rand_uniform() {
-        return xorshift32() * xorshift32_invmax;
-    }
-    //! Uniform rand from xorshift32 generator, between 0 (excluded) and 1-10^-11
-    inline double rand_uniform1() {
-        return xorshift32() * xorshift32_invmax1;
-    }
-    //! Uniform rand from xorshift32 generator, between -1. (excluded) and 1. (included)
-    inline double rand_uniform2() {
-        return xorshift32() * xorshift32_invmax2 - 1.;
-    }
-    //! Uniform rand from xorshift32 generator, between 0. (excluded) and 2 pi (included)
-    inline double rand_uniform_2pi() {
-        return xorshift32() * xorshift32_invmax_2pi;
-    }
-    //! Normal rand from xorshift32 generator (std deviation = 1.)
-    inline double rand_normal() {
-        static double spare;
-        static bool has_spare = false;
-        if( has_spare ) {
-            has_spare = false;
-            return spare;
-        } else {
-            double u, v, s;
-            do {
-                u = rand_uniform2();
-                v = rand_uniform2();
-                s = u*u + v*v;
-            } while( s >= 1. );
-            s = std::sqrt( -2. * std::log(s) / s );
-            spare = v * s;
-            has_spare = true;
-            return u * s;
-        }
-    }
-    //! State of the random number generator
-    uint32_t xorshift32_state;
-    //! Inverse of the maximum value of the random number generator
-    const double xorshift32_invmax = 1./4294967296.;
-    //! Almost inverse of the maximum value of the random number generator
-    const double xorshift32_invmax1 = (1.-1e-11)/4294967296.;
-     //! Twice inverse of the maximum value of the random number generator
-    const double xorshift32_invmax2 = 2./4294967296.;
-     //! two pi * inverse of the maximum value of the random number generator
-    const double xorshift32_invmax_2pi = 2.*M_PI/4294967296.;
+    // Random number generator.
+    Random * rand_;
     
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)

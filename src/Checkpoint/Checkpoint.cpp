@@ -296,7 +296,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         dumpPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, patch_gid );
         
         // Random number generator state
-        H5::attr( patch_gid, "xorshift32_state", vecPatches( ipatch )->xorshift32_state );
+        H5::attr( patch_gid, "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
         
         // Close a group
         H5Gclose( patch_gid );
@@ -618,7 +618,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
         restartPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, patch_gid );
         
         // Random number generator state
-        H5::getAttr( patch_gid, "xorshift32_state", vecPatches( ipatch )->xorshift32_state );
+        H5::getAttr( patch_gid, "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
         
         H5Gclose( patch_gid );
         
