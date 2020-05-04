@@ -19,7 +19,6 @@
 
 #include "Patch.h"
 
-#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 
@@ -112,16 +111,10 @@ void Patch::initStep1( Params &params )
     for( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
         oversize[iDim] = params.oversize[iDim];
     }
-
-    // Initialize the state of the random number generator
-    xorshift32_state = params.random_seed;
-    // Ensure that the random seed is different for each patch
-    xorshift32_state += rand();
-    // zero is not acceptable for xorshift
-    if( xorshift32_state==0 ) {
-        xorshift32_state = 1073741824;
-    }
-
+    
+    // Initialize the random number generator
+    rand_ = new Random( params.random_seed );
+    
     // Obtain the cell_volume
     cell_volume = params.cell_volume;
 }
@@ -731,7 +724,9 @@ Patch::~Patch()
         delete vecSpecies[ispec];
     }
     vecSpecies.clear();
-
+    
+    delete rand_;
+    
 } // END Patch::~Patch
 
 

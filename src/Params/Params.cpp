@@ -737,31 +737,29 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         std::transform( radiation_model.begin(), radiation_model.end(), radiation_model.begin(), ::tolower );
 
         if( radiation_model=="monte-carlo" || radiation_model=="mc" ) {
-            this->hasMCRadiation = true;
+            hasMCRadiation = true;
         } else if( radiation_model=="landau-lifshitz"
                    || radiation_model=="ll"
                    || radiation_model=="corrected-landau-lifshitz"
                    || radiation_model=="cll" ) {
-            this->hasLLRadiation = true;
+            hasLLRadiation = true;
         } else if( radiation_model=="niel" ) {
-            this->hasNielRadiation = true;
+            hasNielRadiation = true;
         }
         else if (radiation_model=="diagradiationspectrum")
         {
-            this->hasDiagRadiationSpectrum = true;
+            hasDiagRadiationSpectrum = true;
         }
     }
 
     // -------------------------------------------------------
     // Parameters for the mutliphoton Breit-Wheeler pair decay
     // -------------------------------------------------------
-    this->hasMultiphotonBreitWheeler = false ;// Default value
-
+    hasMultiphotonBreitWheeler = false ;// Default value
     std::vector<std::string> multiphoton_Breit_Wheeler( 2 );
     for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
-
         if( PyTools::extractV( "multiphoton_Breit_Wheeler", multiphoton_Breit_Wheeler, "Species", ispec ) ) {
-            this->hasMultiphotonBreitWheeler = true;
+            hasMultiphotonBreitWheeler = true;
         }
     }
 

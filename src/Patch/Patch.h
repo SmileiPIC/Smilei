@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <limits.h>
 
+#include "Random.h"
 #include "Params.h"
 #include "SmileiMPI.h"
 #include "PartWall.h"
@@ -98,19 +99,8 @@ public:
     std::vector<double> patch_timers;
 #endif
     
-    //! Random number generator
-    inline uint32_t xorshift32()
-    {
-        /* Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs" */
-        xorshift32_state ^= xorshift32_state << 13;
-        xorshift32_state ^= xorshift32_state >> 17;
-        xorshift32_state ^= xorshift32_state << 5;
-        return xorshift32_state;
-    }
-    //! State of the random number generator
-    uint32_t xorshift32_state;
-    //! Inverse of the maximum value of the random number generator
-    const double xorshift32_invmax = 1./4294967296.;
+    // Random number generator.
+    Random * rand_;
     
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)

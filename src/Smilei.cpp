@@ -379,17 +379,18 @@ int main( int argc, char *argv[] )
                 #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
                 {
                     // de-apply external time fields if requested
-                    if ( vecPatches(0)->EMfields->extTimeFields.size() )
+                    if ( vecPatches(0)->EMfields->extTimeFields.size() ) {
                         vecPatches.resetPrescribedFields();
+                    }
 
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 }
-
-                #pragma omp single
-                {
-                    // apply external time fields if requested
-                    if ( vecPatches(0)->EMfields->extTimeFields.size() )
-                        vecPatches.applyPrescribedFields(time_prim);
+                
+                // apply external time fields if requested
+                if( vecPatches(0)->EMfields->extTimeFields.size() ) {
+                    #pragma omp single
+                    vecPatches.applyPrescribedFields(time_prim);
+                    #pragma omp barrier
                 }
 
             }
