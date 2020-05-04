@@ -14,7 +14,8 @@ DiagnosticScreen::DiagnosticScreen(
     SmileiMPI *smpi,
     Patch *patch,
     int diagId
-) : DiagnosticParticleBinning( params, smpi, patch, diagId, "Screen", true )
+) :
+    DiagnosticParticleBinningBase( params, smpi, patch, diagId, "Screen", true, nullptr, excludedAxes(diagId) )
 {
     dt = params.timestep;
     

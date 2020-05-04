@@ -1,9 +1,9 @@
 #ifndef DIAGNOSTICRADIATIONSPECTRUM_H
 #define DIAGNOSTICRADIATIONSPECTRUM_H
 
-#include "DiagnosticParticleBinning.h"
+#include "DiagnosticParticleBinningBase.h"
 
-class DiagnosticRadiationSpectrum : public DiagnosticParticleBinning
+class DiagnosticRadiationSpectrum : public DiagnosticParticleBinningBase
 {
     friend class SmileiMPI;
 
@@ -17,7 +17,16 @@ public :
     void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
     
     void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
-
+    
+    static std::vector<std::string> excludedAxes() {
+        std::vector<std::string> excluded_axes( 0 );
+        excluded_axes.push_back( "a" );
+        excluded_axes.push_back( "b" );
+        excluded_axes.push_back( "theta" );
+        excluded_axes.push_back( "phi" );
+        return excluded_axes;
+    }
+    
 private :
 
     //! constant 2/3

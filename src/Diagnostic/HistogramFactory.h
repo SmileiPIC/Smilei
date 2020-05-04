@@ -17,7 +17,7 @@ public:
         std::vector<PyObject *> &pyAxes,
         std::vector<unsigned int> &species,
         Patch *patch,
-        std::vector<std::string> &excluded_axes,
+        std::vector<std::string> excluded_axes,
         std::string errorPrefix
     )
     {
@@ -97,7 +97,7 @@ public:
         // Loop axes and extract their format
         for( unsigned int iaxis=0; iaxis<pyAxes.size(); iaxis++ ) {
             std::ostringstream t( "" );
-            t << errorPrefix << "axis " << iaxis << ": ";
+            t << errorPrefix << ", axis " << iaxis << ": ";
             
             HistogramAxis *axis = createAxis( pyAxes[iaxis], params, species, patch, excluded_axes, t.str() );
             

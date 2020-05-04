@@ -1,9 +1,9 @@
 #ifndef DIAGNOSTICSCREEN_H
 #define DIAGNOSTICSCREEN_H
 
-#include "DiagnosticParticleBinning.h"
+#include "DiagnosticParticleBinningBase.h"
 
-class DiagnosticScreen : public DiagnosticParticleBinning
+class DiagnosticScreen : public DiagnosticParticleBinningBase
 {
     friend class SmileiMPI;
     friend class Checkpoints;
@@ -24,9 +24,11 @@ public :
     //! Clear the array
     void clear() override;
     
-    std::vector<std::string> excludedAxes() override {
+    static std::vector<std::string> excludedAxes( int idiag ) {
+        std::string shape = "";
+        PyTools::extract( "shape", shape, "DiagScreen", idiag );
         std::vector<std::string> excluded_axes( 0 );
-        if( screen_shape == "plane" ) {
+        if( shape == "plane" ) {
             excluded_axes.push_back( "theta_yx" );
             excluded_axes.push_back( "theta_zx" );
         } else {

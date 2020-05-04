@@ -17,7 +17,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum(
     Patch *patch,
     RadiationTables *radiation_tables_,
     int diagId
-) : DiagnosticParticleBinning( params, smpi, patch, diagId, "RadiationSpectrum", false, PyUnicode_FromString( "" ) )
+) : DiagnosticParticleBinningBase( params, smpi, patch, diagId, "RadiationSpectrum", false, PyUnicode_FromString( "" ), excludedAxes() )
 {
     
     ostringstream name( "" );
@@ -100,7 +100,7 @@ void DiagnosticRadiationSpectrum::openFile( Params& params, SmileiMPI* smpi, boo
     }
     
     if( newfile ) {
-        DiagnosticParticleBinning::openFile( params, smpi, newfile );
+        DiagnosticParticleBinningBase::openFile( params, smpi, newfile );
         
         // write photon_energy_axis
         string str1 = "photon_energy_axis";
