@@ -110,7 +110,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
     
         invE = 1./E;
         delta      = gamma_tunnel[Z]*invE; // 2*(2I_p)^{3/2}/E
-        ran_p = patch->xorshift32() * patch->xorshift32_invmax;
+        ran_p = patch->rand_->uniform();
         IonizRate_tunnel_envelope[Z] = beta_tunnel[Z] * exp( -delta*one_third + alpha_tunnel[Z]*log( delta ) );
     
         // Corrections on averaged ionization rate given by the polarization ellipticity  
@@ -208,9 +208,9 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
 
                 // Box-Müller transformation: generate a random number with a gaussian distribution
                 // starting from two random numbers from a uniform distribution
-                double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
-                double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
-                double rand_gaussian  = sqrt(-2.*log(rand_1))*cos(2. * M_PI * rand_2);
+                //double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
+                //double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
+                double rand_gaussian  = patch->rand->normal();
 
                 Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  ); // envelope of the laser vector potential component along the polarization direction
                 
@@ -230,13 +230,13 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
             } else if (ellipticity==1.){ // circular polarization
 
                 // extract a random angle between 0 and 2pi, and assign p_perp = eA
-                double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
+                double rand_times_2pi = patch->rand_->uniform_2pi(); // from uniform distribution between [0,2pi]
                 
                 Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  );                 
 
                 p_perp = Aabs;   // in circular polarization it corresponds to a0/sqrt(2)
-                new_electrons.momentum( 1, idNew ) += p_perp*cos(2. * M_PI * rand_1)/sqrt(2);
-                new_electrons.momentum( 2, idNew ) += p_perp*sin(2. * M_PI * rand_1)/sqrt(2); 
+                new_electrons.momentum( 1, idNew ) += p_perp*cos(rand_times_2pi)/sqrt(2);
+                new_electrons.momentum( 2, idNew ) += p_perp*sin(rand_times_2pi)/sqrt(2); 
      
                 // initialize px to take into account the average drift <px>=A^2/4 and the px=|p_perp|^2/2 result
                 // Note: the agreement in the phase space between envelope and standard laser simulation will be seen only after the passage of the ionizing laser
