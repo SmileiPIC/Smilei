@@ -275,11 +275,13 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     // Write the diags screen data
     ostringstream diagName( "" );
     if( smpi->isMaster() ) {
+        unsigned int iscreen = 0;
         for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ ) {
             if( DiagnosticScreen *screen = dynamic_cast<DiagnosticScreen *>( vecPatches.globalDiags[idiag] ) ) {
                 diagName.str( "" );
-                diagName << "DiagScreen" << screen->screen_id;
-                H5::vect( fid, diagName.str(), screen->data_sum );
+                diagName << "DiagScreen" << iscreen;
+                H5::vect( fid, diagName.str(), *(screen->getData()) );
+                iscreen++;
             }
         }
     }
@@ -296,7 +298,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         dumpPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, patch_gid );
         
         // Random number generator state
-        H5::attr( patch_gid, "xorshift32_state", vecPatches( ipatch )->xorshift32_state );
+        H5::attr( patch_gid, "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
         
         // Close a group
         H5Gclose( patch_gid );
@@ -589,20 +591,19 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
     // Read the diags screen data
     ostringstream diagName( "" );
     if( smpi->isMaster() ) {
+        unsigned int iscreen = 0;
         for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ ) {
             if( DiagnosticScreen *screen = dynamic_cast<DiagnosticScreen *>( vecPatches.globalDiags[idiag] ) ) {
                 diagName.str( "" );
-                diagName << "DiagScreen" << screen->screen_id;
-                int target_size = screen->data_sum.size();
+                diagName << "DiagScreen" << iscreen;
+                int target_size = screen->getData()->size();
                 int vect_size = H5::getVectSize( fid, diagName.str() );
-                int attr_size = H5::getAttrSize( fid, diagName.str() );
                 if( vect_size == target_size ) {
-                    H5::getVect( fid, diagName.str(), screen->data_sum );
-                } else if( attr_size == target_size ) {
-                    H5::getAttr( fid, diagName.str(), screen->data_sum );
+                    H5::getVect( fid, diagName.str(), *(screen->getData()) );
                 } else {
-                    WARNING( "Restart: DiagScreen[" << screen->screen_id << "] size mismatch. Previous data discarded" );
+                    WARNING( "Restart: DiagScreen[" << iscreen << "] size mismatch. Previous data discarded" );
                 }
+                iscreen++;
             }
         }
     }
@@ -618,7 +619,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
         restartPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, patch_gid );
         
         // Random number generator state
-        H5::getAttr( patch_gid, "xorshift32_state", vecPatches( ipatch )->xorshift32_state );
+        H5::getAttr( patch_gid, "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
         
         H5Gclose( patch_gid );
         
