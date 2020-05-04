@@ -2732,8 +2732,9 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         if( send_patch_id_[ipatch]+refHindex_ > istart ) {
             newMPIrank = smpi->getRank() + 1;
         }
-
-        smpi->isend_species( ( *this )( send_patch_id_[ipatch] ), newMPIrank, ( refHindex_+send_patch_id_[ipatch] )*nmessage, params );
+        int tag = ( refHindex_+send_patch_id_[ipatch] )*nmessage;
+        int maxtag = 0;
+        smpi->isend_species( ( *this )( send_patch_id_[ipatch] ), newMPIrank, maxtag, tag, params );
     }
 
     for( unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++ ) {
@@ -2741,8 +2742,8 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         if( recv_patch_id_[ipatch] > refHindex_ ) {
             oldMPIrank = smpi->getRank() + 1;
         }
-
-        smpi->recv_species( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
+        int tag = recv_patch_id_[ipatch]*nmessage;
+        smpi->recv_species( recv_patches_[ipatch], oldMPIrank, tag, params );
     }
 
 
@@ -3512,6 +3513,7 @@ void VectorPatch::applyPrescribedFields(double time)
 //! Method use to reset the real value of all fields on which we imposed an external time field
 void VectorPatch::resetPrescribedFields()
 {
+    #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         patches_[ipatch]->EMfields->resetPrescribedFields();
     }
@@ -3712,7 +3714,7 @@ void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Check
             //     * Screen diagnostics
             for( unsigned int idiag=0; idiag<globalDiags.size(); idiag++ )
                 if( DiagnosticScreen *screen = dynamic_cast<DiagnosticScreen *>( globalDiags[idiag] ) ) {
-                    checkpoint_diags_footprint += screen->data_sum.size() * sizeof( double );
+                    checkpoint_diags_footprint += screen->getData()->size() * sizeof( double );
                 }
             MESSAGE( 2, "For diagnostics: " << Tools::printBytes( checkpoint_diags_footprint ) );
 

@@ -427,6 +427,8 @@ def RUN_OTHER(command, dir):
 	- dir: working directory
 	"""
 	try :
+		if VERBOSE:
+			print( "Trying command `"+command+"`")
 		check_call(command, shell=True)
 	except CalledProcessError:
 		if VERBOSE :

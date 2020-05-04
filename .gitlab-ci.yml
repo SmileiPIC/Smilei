@@ -8,6 +8,7 @@ compile:
     - develop
     - filterAM_adjustment
     - envelope_reduced_dispersion
+    - ionizationCurrent
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,12 +32,14 @@ makerun1D:
     - develop
     - filterAM_adjustment
     - envelope_reduced_dispersion
+    - ionizationCurrent
     
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_1d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerun2D:
   stage: makerun
@@ -44,12 +47,14 @@ makerun2D:
     - develop
     - filterAM_adjustment
     - envelope_reduced_dispersion
+    - ionizationCurrent
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerun3D:
   stage: makerun
@@ -58,12 +63,14 @@ makerun3D:
     - filterAM_adjustment
     - AMsorting
     - envelope_reduced_dispersion
+    - ionizationCurrent
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerunAM:
   stage: makerun

@@ -257,7 +257,7 @@ void Projector2D2OrderV::basic( double *rhoj, Particles &particles, unsigned int
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project global current densities : ionization
+//! Project global current densities : ionization (WARNING: Not Vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector2D2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion )
 {
