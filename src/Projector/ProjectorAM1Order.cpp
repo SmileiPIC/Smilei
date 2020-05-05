@@ -145,7 +145,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     //double xpn_rho, rp_rho, rpn_rho; //Rho is not computed at the same particle position as J.
 
     double  Sl1[2][2], Sr1[2][2];
-    complex<double> e_theta[2], C_m[2] = 1.; 
+    complex<double> e_theta[2], C_m[2] = { 1., 1. }; 
     complex<double> *Jl, *Jr, *Jt, *rho;
     
     double theta_old = array_theta_old[0]; // theta at t = t0 - dt
