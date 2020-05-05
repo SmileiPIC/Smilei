@@ -214,20 +214,20 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                 for( unsigned int scell = 0 ; scell < first_index.size() ; scell++ ) {
-                    // Radiation process
-                    ( *Radiate )( *particles, this->photon_species, smpi,
-                                  RadiationTables,
+
+                    ( *Radiate )( *particles, this->photon_species_, smpi,
+                                  RadiationTables, nrj_radiation,
                                   first_index[scell], last_index[scell], ithread );
 
-                    // Update scalar variable for diagnostics
-                    nrj_radiation += Radiate->getRadiatedEnergy();
-
-                    // Update the quantum parameter chi
-                    Radiate->computeParticlesChi( *particles,
-                                                  smpi,
-                                                  first_index[scell],
-                                                  last_index[scell],
-                                                  ithread );
+                    // // Update scalar variable for diagnostics
+                    // nrj_radiation += Radiate->getRadiatedEnergy();
+                    //
+                    // // Update the quantum parameter chi
+                    // Radiate->computeParticlesChi( *particles,
+                    //                               smpi,
+                    //                               first_index[scell],
+                    //                               last_index[scell],
+                    //                               ithread );
                 }
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[5] += MPI_Wtime() - timer;

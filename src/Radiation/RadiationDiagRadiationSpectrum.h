@@ -44,6 +44,7 @@ class RadiationDiagRadiationSpectrum : public Radiation {
             Species *photon_species,
             SmileiMPI *smpi,
             RadiationTables &RadiationTables,
+            double          &radiated_energy,
             int istart,
             int iend,
             int ithread, int ipart_ref = 0 );

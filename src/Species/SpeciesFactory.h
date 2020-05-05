@@ -928,7 +928,7 @@ public:
         new_species->radiation_photon_species                  = species->radiation_photon_species;
         new_species->radiation_photon_sampling_                = species->radiation_photon_sampling_;
         new_species->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
-        new_species->photon_species                            = species->photon_species;
+        new_species->photon_species_                            = species->photon_species_;
         new_species->species_number_                           = species->species_number_;
         new_species->position_initialization_on_species_       = species->position_initialization_on_species_;
         new_species->position_initialization_on_species_type_  = species->position_initialization_on_species_type_;
@@ -1132,7 +1132,7 @@ public:
                 // No emission of discrete photon, only scalar diagnostics are updated
                 if( returned_species[ispec1]->radiation_photon_species.empty() ) {
                     returned_species[ispec1]->photon_species_index = -1;
-                    returned_species[ispec1]->photon_species = NULL;
+                    returned_species[ispec1]->photon_species_ = NULL;
                 }
                 // Else, there will be emission of macro-photons.
                 else {
@@ -1146,10 +1146,10 @@ public:
                                 ERROR( "For species '"<<returned_species[ispec1]->name_<<"' radiation_photon_species must be a photon species with mass==0" );
                             }
                             returned_species[ispec1]->photon_species_index = ispec2;
-                            returned_species[ispec1]->photon_species = returned_species[ispec2];
+                            returned_species[ispec1]->photon_species_ = returned_species[ispec2];
                             returned_species[ispec1]->Radiate->new_photons_.initializeReserve(
                                 returned_species[ispec1]->getNbrOfParticles(),
-                                *returned_species[ispec1]->photon_species->particles
+                                *returned_species[ispec1]->photon_species_->particles
                             );
                             break;
                         }
@@ -1237,16 +1237,16 @@ public:
             if( returned_species[i]->Radiate ) {
                 returned_species[i]->radiation_photon_species = vector_species[i]->radiation_photon_species;
                 returned_species[i]->photon_species_index = vector_species[i]->photon_species_index;
-                if( vector_species[i]->photon_species ) {
-                    returned_species[i]->photon_species = returned_species[returned_species[i]->photon_species_index];
-                    returned_species[i]->Radiate->new_photons_.tracked = returned_species[i]->photon_species->particles->tracked;
-                    returned_species[i]->Radiate->new_photons_.isQuantumParameter = returned_species[i]->photon_species->particles->isQuantumParameter;
-                    returned_species[i]->Radiate->new_photons_.isMonteCarlo = returned_species[i]->photon_species->particles->isMonteCarlo;
+                if( vector_species[i]->photon_species_ ) {
+                    returned_species[i]->photon_species_ = returned_species[returned_species[i]->photon_species_index];
+                    returned_species[i]->Radiate->new_photons_.tracked = returned_species[i]->photon_species_->particles->tracked;
+                    returned_species[i]->Radiate->new_photons_.isQuantumParameter = returned_species[i]->photon_species_->particles->isQuantumParameter;
+                    returned_species[i]->Radiate->new_photons_.isMonteCarlo = returned_species[i]->photon_species_->particles->isMonteCarlo;
                     //returned_species[i]->Radiate->new_photons_.initialize(returned_species[i]->getNbrOfParticles(),
                     //                                               params.nDim_particle );
                     returned_species[i]->Radiate->new_photons_.initialize( 0, params.nDim_particle );
                 } else {
-                    returned_species[i]->photon_species = NULL;
+                    returned_species[i]->photon_species_ = NULL;
                 }
             }
         }

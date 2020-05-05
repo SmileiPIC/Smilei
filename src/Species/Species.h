@@ -168,7 +168,7 @@ public:
     std::string ionization_electrons;
 
     //! Pointer to the species where radiated photon go
-    Species *photon_species;
+    Species * photon_species_;
     //! Index of the species where radiated photons go
     int photon_species_index;
     //! radiation photon species for the Monte-Carlo model.
