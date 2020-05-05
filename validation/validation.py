@@ -546,7 +546,6 @@ try :
 	else:
 		if COMPILE_ONLY :
 			if VERBOSE:
-                                print SMILEI_R, SMILEI_W, STAT_SMILEI_R_OLD
 				print(  "Smilei validation not needed.")
 			exit(0)
 
