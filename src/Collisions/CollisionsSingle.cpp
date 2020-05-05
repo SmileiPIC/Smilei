@@ -129,15 +129,15 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
         // ----------------------------------------------------
         for( unsigned int i=0; i<npairs; i++ ) {
             
-            double weight_correction;
-            if( i % N2max <= (npairs-1) % N2max ) {
-                weight_correction = weight_correction_2;
-            } else {
-                weight_correction = weight_correction_1;
-            }
-            
             i1 = first_index1 + i;
             i2 = first_index2 + i%N2max;
+            
+            double weight_correction = std::max( p1->weight(i1), p2->weight(i2) );
+            if( i % N2max <= (npairs-1) % N2max ) {
+                weight_correction *= weight_correction_2 ;
+            } else {
+                weight_correction *= weight_correction_1;
+            }
             
             logL = coulomb_log_;
             double U1  = patch->rand_->uniform();

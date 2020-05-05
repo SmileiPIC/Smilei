@@ -286,8 +286,6 @@ protected:
             s = smax;
         }
         
-        s *= std::max( p1->weight(i1), p2->weight(i2) );
-        
         // Pick the deflection angles
         // Technique given by Nanbu in http://dx.doi.org/10.1103/PhysRevE.55.4642
         //   to pick randomly the deflection angle cosine, in the center-of-mass frame.

@@ -173,10 +173,6 @@ void CollisionalIonization::apply( Patch *patch, Particles *p1, int i1, Particle
 void CollisionalIonization::calculate( double gamma_s, double gammae, double gammai,
                                        Particles *pe, int ie, Particles *pi, int ii, double U1, double U2, double coeff )
 {
-    double We, Wi; // weights
-    double a, x, cs, w, e, pr, p2, WeWi, WiWe, cum_prob=0., cp;
-    int i, j, k, p, kmax;
-    
     // Get ion charge
     int Zstar = pi->charge( ii );
     if( Zstar>=atomic_number ) {
@@ -184,33 +180,32 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
     }
     
     // Calculate weights
-    We = pe->weight( ie );
-    Wi = pi->weight( ii );
-    WeWi = We/Wi;
-    WiWe = 1./WeWi;
+    double We = pe->weight( ie );
+    double Wi = pi->weight( ii );
     
     // Calculate coefficient (1-ve.vi)*ve' where ve' is in ion frame
-    double K = coeff * max(We,Wi) * sqrt( gamma_s*gamma_s-1. )/gammai;
+    double K = coeff * sqrt( gamma_s*gamma_s-1. )/gammai;
     
     // Loop for multiple ionization
     // k+1 is the number of ionizations
-    kmax = atomic_number-Zstar-1;
-    for( k = 0; k <= kmax;  k++ ) {
+    int kmax = atomic_number-Zstar-1;
+    double cs, w, e, cum_prob;
+    for( int k = 0; k <= kmax;  k++ ) {
         // Calculate the location x (~log of energy) in the databases
-        x = a2*log( a1*( gamma_s-1. ) );
+        double x = a2*log( a1*( gamma_s-1. ) );
         
         // Interpolate the databases at location x
-        if( x<0. ) {
+        if( x < 0. ) {
             break;    // if energy below Emin, do nothing
         }
-        if( x<npointsm1 ) { // if energy within table range, interpolate
-            i = int( x );
-            a = x - ( double )i;
+        if( x < npointsm1 ) { // if energy within table range, interpolate
+            int i = int( x );
+            double a = x - ( double )i;
             cs = ( ( *crossSection )[Zstar][i+1]-( *crossSection )[Zstar][i] )*a + ( *crossSection )[Zstar][i];
             w  = ( ( *transferredEnergy )[Zstar][i+1]-( *transferredEnergy )[Zstar][i] )*a + ( *transferredEnergy )[Zstar][i];
             e  = ( ( *lostEnergy )[Zstar][i+1]-( *lostEnergy )[Zstar][i] )*a + ( *lostEnergy )[Zstar][i];
         } else { // if energy above table range, extrapolate
-            a = x - npointsm1;
+            double a = x - npointsm1;
             cs = ( ( *crossSection )[Zstar][npoints-1]-( *crossSection )[Zstar][npoints-2] )*a + ( *crossSection )[Zstar][npoints-1];
             w  = ( *transferredEnergy )[Zstar][npoints-1];
             e  = ( *lostEnergy )[Zstar][npoints-1];
@@ -227,23 +222,23 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         if( k==0 ) {
             cum_prob = prob[k];
         } else if( k<kmax ) {
-            for( p=0; p<k; p++ ) {
-                cp = 1. - rate[k]*irate[p];
-                for( j=0  ; j<p; j++ ) {
+            for( int p=0; p<k; p++ ) {
+                double cp = 1. - rate[k]*irate[p];
+                for( int j=0  ; j<p; j++ ) {
                     cp *= 1.-rate[p]*irate[j];
                 }
-                for( j=p+1; j<k; j++ ) {
+                for( int j=p+1; j<k; j++ ) {
                     cp *= 1.-rate[p]*irate[j];
                 }
                 cum_prob += ( prob[k]-prob[p] )/cp;
             }
         } else {
-            for( p=0; p<k; p++ ) {
-                cp = 1. - rate[k]*irate[p];
-                for( j=0  ; j<p; j++ ) {
+            for( int p=0; p<k; p++ ) {
+                double cp = 1. - rate[k]*irate[p];
+                for( int j=0  ; j<p; j++ ) {
                     cp *= 1.-rate[p]*irate[j];
                 }
-                for( j=p+1; j<k; j++ ) {
+                for( int j=p+1; j<k; j++ ) {
                     cp *= 1.-rate[p]*irate[j];
                 }
                 cum_prob += ( 1.-prob[k]+rate[k]*irate[p]*( prob[p]-1. ) )/cp;
@@ -256,14 +251,14 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         }
         
         // Otherwise, we do the ionization
-        p2 = gamma_s*gamma_s - 1.;
+        double p2 = gamma_s*gamma_s - 1.;
         // Ionize the atom and create electron
-        if( U2 < WeWi ) {
+        if( U2 < We/Wi ) {
             pi->charge( ii )++; // increase ion charge
             pe->copyParticleSafe( ie, new_electrons ); // duplicate electron
             new_electrons.Weight.back() = Wi; // new electron has ion weight
             // Calculate the new electron momentum
-            pr = sqrt( w*( w+2. )/p2 );
+            double pr = sqrt( w*( w+2. )/p2 );
             new_electrons.Momentum[0].back() *= pr;
             new_electrons.Momentum[1].back() *= pr;
             new_electrons.Momentum[2].back() *= pr;
@@ -278,9 +273,9 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
             }
         }
         // Lose incident electron energy
-        if( U2 < WiWe ) {
+        if( U2 < Wi/We ) {
             // Calculate the modified electron momentum
-            pr = sqrt( ( pow( gamma_s-e, 2 )-1. )/p2 );
+            double pr = sqrt( ( pow( gamma_s-e, 2 )-1. )/p2 );
             pe->momentum( 0, ie ) *= pr;
             pe->momentum( 1, ie ) *= pr;
             pe->momentum( 2, ie ) *= pr;

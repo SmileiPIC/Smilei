@@ -304,13 +304,6 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         // ----------------------------------------------------
         for( unsigned int i = 0; i<npairs; i++ ) {
             
-            double weight_correction;
-            if( i % N2max <= (npairs-1) % N2max ) {
-                weight_correction = weight_correction_2;
-            } else {
-                weight_correction = weight_correction_1;
-            }
-        
             // find species and index i1 of particle "1"
             i1 = index1[i];
             for( ispec1=0 ; i1>=np1[ispec1]; ispec1++ ) {
@@ -328,6 +321,13 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             i2 += s2->first_index[ibin];
             p1 = s1->particles;
             p2 = s2->particles;
+            
+            double weight_correction = std::max( p1->weight(i1), p2->weight(i2) );
+            if( i % N2max <= (npairs-1) % N2max ) {
+                weight_correction *= weight_correction_2 ;
+            } else {
+                weight_correction *= weight_correction_1;
+            }
             
             logL = coulomb_log_;
             double U1  = patch->rand_->uniform();
