@@ -27,6 +27,8 @@ Projector2D2Order::Projector2D2Order( Params &params, Patch *patch ) : Projector
     
     nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
     
+    pxr = !params.is_pxr;
+    
     dt             = params.timestep;
     dts2           = params.timestep/2.;
     dts4           = params.timestep/4.;
@@ -153,7 +155,7 @@ void Projector2D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
         tmpY = Sx0[0] + 0.5*DSx[0];
         for( unsigned int j=1 ; j<5 ; j++ ) {
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
+            Jy[iloc+j+pxr*ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
             Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             // cerr << " iloc+j+ipo: " << iloc+j+ipo
             //      << " iloc: " << iloc
@@ -177,7 +179,7 @@ void Projector2D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
             tmpJx[j] -= crx_p * DSx[i-1] * ( Sy0[j] + 0.5*DSy[j] );
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
+            Jy[iloc+j+pxr*(i+ipo)]  += tmp; //Because size of Jy in Y is nprimy+1.
             Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
     }//i
@@ -289,7 +291,7 @@ void Projector2D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
         tmpY = Sx0[0] + 0.5*DSx[0];
         for( unsigned int j=1 ; j<5 ; j++ ) {
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
+            Jy[iloc+j+pxr*ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
             Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[0]*Sy1[j];
         }
@@ -311,7 +313,7 @@ void Projector2D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
             tmpJx[j] -= crx_p * DSx[i-1] * ( Sy0[j] + 0.5*DSy[j] );
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
+                Jy[iloc+j+pxr*(i+ipo)]  += tmp; //Because size of Jy in Y is nprimy+1.
             Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }

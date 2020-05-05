@@ -10,8 +10,12 @@
 ElectroMagnBC1D::ElectroMagnBC1D( Params &params, Patch *patch, unsigned int _min_max )
     : ElectroMagnBC( params, patch, _min_max )
 {
+    std::vector<unsigned int> n_space(params.n_space);
+    if (params.uncoupled_grids)
+        n_space = params.n_space_region;
+    
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
+    nx_p = n_space[0]+1+2*params.oversize[0];
     nx_d = nx_p+1;
     
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)

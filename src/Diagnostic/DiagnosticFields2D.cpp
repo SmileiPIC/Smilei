@@ -11,7 +11,7 @@
 #include "VectorPatch.h"
 #include "DomainDecomposition.h"
 #include "Hilbert_functions.h"
-#include "CartesianDomainDecomposition.h"
+#include "LinearizedDomainDecomposition.h"
 
 using namespace std;
 
@@ -55,7 +55,7 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI *smpi, VectorP
     int nproc = smpi->getSize(), iproc = smpi->getRank();
     int npatch = params.tot_number_of_patches;
     int npatch_local = 1<<int( log2( ( ( double )npatch )/nproc ) );
-    if( dynamic_cast<CartesianDomainDecomposition2D *>( vecPatches.domain_decomposition_ ) ) {
+    if( dynamic_cast<LinearizedDomainDecomposition2D *>( vecPatches.domain_decomposition_ ) ) {
         npatch_local = vecPatches.size();
     }
     int first_proc_with_less_patches = ( npatch-npatch_local*nproc )/npatch_local;

@@ -15,7 +15,7 @@ public:
     PXR_Solver3D_FDTD( Params &params );
     virtual ~PXR_Solver3D_FDTD();
     
-    void coupling( Params &params, ElectroMagn *EMfields ) override;
+    void coupling( Params &params, ElectroMagn *EMfields, bool full_domain = false ) override;
     //! Overloading of () operator
     virtual void operator()( ElectroMagn *fields ) override;
     
