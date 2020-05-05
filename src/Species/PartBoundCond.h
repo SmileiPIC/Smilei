@@ -156,7 +156,6 @@ private:
 
     bool isAM;
     
-
 };
 
 #endif

@@ -279,7 +279,7 @@ void Projector1D2Order::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Par
     ci   = ( 0.75-xjmxi2 );
     cip1 = 0.5 * ( xjmxi2+xjmxi+0.25 );
     
-    // Jy
+    // Jx
     ( *Jx1D )( im1 )  += cim1 * Jx_ion;
     ( *Jx1D )( i )  += ci   * Jx_ion;
     ( *Jx1D )( ip1 )  += cip1 * Jx_ion;

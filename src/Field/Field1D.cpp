@@ -85,10 +85,12 @@ void Field1D::allocateDims()
     
 }
 
-void Field1D::deallocateDims()
+void Field1D::deallocateDataAndSetTo( Field* f )
 {
     delete [] data_;
     data_=NULL;
+
+    data_ = f->data_;
 }
 
 
@@ -174,7 +176,7 @@ void Field1D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
     
     std::vector<unsigned int> dual =  this->isDual_;
     
-    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - outPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
+    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.oversize[0] ) ;
     
     for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         ( *out1D )( iout+i ) = ( *this )( i );
@@ -182,6 +184,19 @@ void Field1D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
     
 }
 
+void Field1D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+{
+    Field1D *out1D = static_cast<Field1D *>( outField );
+    
+    std::vector<unsigned int> dual =  this->isDual_;
+    
+    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.oversize[0] ) ;
+    
+    for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
+        ( *out1D )( iout+i ) += ( *this )( i );
+    }
+    
+}
 
 void Field1D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPatch, Patch *thisPatch )
 {
@@ -189,7 +204,7 @@ void Field1D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPat
     
     std::vector<unsigned int> dual =  in1D->isDual_;
     
-    int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - inPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
+    int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - ( inPatch->getCellStartingGlobalIndex(0) + params.oversize[0] );
     
     for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         ( *this )( i ) = ( *in1D )( iin+i );

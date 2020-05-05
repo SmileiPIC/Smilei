@@ -1,14 +1,13 @@
 stages:
     - compile
     - makerun
+    - use_picsar
 
 compile:
   stage: compile
   only:
     - develop
-    - merge_new_axisBC
-    - envelope_reduced_dispersion
-    - radiationSpectrum
+    - merge_sdmd_dev
 
   script:
     # Force workdir cleaning in case of retried
@@ -24,71 +23,64 @@ compile:
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs"
+    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs_sdmd"
 
 makerun1D:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
-    - envelope_reduced_dispersion
-    - radiationSpectrum
+    - merge_sdmd_dev
     
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_1d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerun2D:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
-    - envelope_reduced_dispersion
-    - radiationSpectrum
+    - merge_sdmd_dev
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerun3D:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
-    - AMsorting
-    - envelope_reduced_dispersion
-    - radiationSpectrum
+    - merge_sdmd_dev
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerunAM:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
-    - envelope_reduced_dispersion
+    - merge_sdmd_dev
     
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -l "/sps2/gitlab-runner/logs_sdmd"
 
 makerunV:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
-    - envelope_reduced_dispersion
-    - radiationSpectrum
+    - merge_sdmd_dev
 
   script:
     # Move in test dir
@@ -100,11 +92,22 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - merge_new_axisBC
-    - envelope_reduced_dispersion
+    - merge_sdmd_dev
     
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+
+use_picsar:
+  stage: use_picsar
+  only:
+    - merge_sdmd_dev
+
+  script:
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make clean
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
+

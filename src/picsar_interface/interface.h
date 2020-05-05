@@ -20,8 +20,17 @@ extern  "C"
     void init_params_picsar( int *, int *, int *, double *, double *, double *, double *,
                              int *, int *, int *, int *, int *, int *, bool *, double *, double *, double *, double *,
                              double *, double *, double *, double *, double *, double *, double *, int * );
+    void init_params_picsar_AM( int*, int *, int *, int *, double *, double *, double *,
+                                int *, int *, int *, int *, 
+                                std::complex<double> *, std::complex<double> *, std::complex<double> *,
+                                std::complex<double> *, std::complex<double> *, std::complex<double> *, 
+                                std::complex<double> *, std::complex<double> *, std::complex<double> *, 
+                                std::complex<double> *, std::complex<double> * );
+    void free_params_picsar_AM();
     void push_psatd_ebfield_();
     void solve_maxwell_fdtd_pxr();
+    void rotational_cleaning();
+    void densities_correction();
 };
 
 }

@@ -13,11 +13,19 @@ public:
     //! Creator for Solver
     Solver2D( Params &params ) : Solver( params )
     {
-        nx_p = params.n_space[0] * params.global_factor[0]+1+2*params.oversize[0];
-        nx_d = params.n_space[0] * params.global_factor[0]+2+2*params.oversize[0];
-        ny_p = params.n_space[1] * params.global_factor[1]+1+2*params.oversize[1];
-        ny_d = params.n_space[1] * params.global_factor[1]+2+2*params.oversize[1];
-        
+        std::vector<unsigned int> n_space(params.n_space);
+        if (params.uncoupled_grids)
+            n_space = params.n_space_region;
+
+        std::vector<unsigned int> oversize(params.oversize);
+        if (params.uncoupled_grids)
+            oversize = params.region_oversize;
+
+        nx_p = n_space[0] +1+2*oversize[0];
+        nx_d = n_space[0] +2+2*oversize[0];
+        ny_p = n_space[1] +1+2*oversize[1];
+        ny_d = n_space[1] +2+2*oversize[1];
+
         dt = params.timestep;
         dt_ov_dx = params.timestep / params.cell_length[0];
         dt_ov_dy = params.timestep / params.cell_length[1];

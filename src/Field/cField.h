@@ -44,7 +44,7 @@ public:
     
     //! Method used to allocate a cField
     virtual void allocateDims() = 0;
-    virtual void deallocateDims() = 0;
+    virtual void deallocateDataAndSetTo( Field* f ) = 0;
     //! a cField can also be initialized win two unsigned int
 //    void allocateDims(unsigned int dims1,unsigned int dims2,unsigned int dims3);
 //    //! allocate dimensions for field3D isPrimal define if mainDim is Primal or Dual
@@ -82,6 +82,7 @@ public:
     };
     
     void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) = 0;
+    void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) = 0;
     void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) = 0;
     
     std::complex<double> *cdata_;

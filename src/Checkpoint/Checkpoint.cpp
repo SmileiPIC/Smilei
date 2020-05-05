@@ -298,7 +298,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         dumpPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, patch_gid );
         
         // Random number generator state
-        H5::attr( patch_gid, "xorshift32_state", vecPatches( ipatch )->xorshift32_state );
+        H5::attr( patch_gid, "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
         
         // Close a group
         H5Gclose( patch_gid );
@@ -351,6 +351,10 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
             dump_cFieldsPerProc( patch_gid, emAM->Bl_m[imode] );
             dump_cFieldsPerProc( patch_gid, emAM->Br_m[imode] );
             dump_cFieldsPerProc( patch_gid, emAM->Bt_m[imode] );
+            
+            if(params.is_pxr == true)
+                dump_cFieldsPerProc( patch_gid, emAM->rho_old_AM_[imode] );
+            
         }
     }
     
@@ -619,7 +623,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
         restartPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, patch_gid );
         
         // Random number generator state
-        H5::getAttr( patch_gid, "xorshift32_state", vecPatches( ipatch )->xorshift32_state );
+        H5::getAttr( patch_gid, "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
         
         H5Gclose( patch_gid );
         
@@ -668,6 +672,10 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
             restart_cFieldsPerProc( patch_gid, emAM->Bl_m[imode] );
             restart_cFieldsPerProc( patch_gid, emAM->Br_m[imode] );
             restart_cFieldsPerProc( patch_gid, emAM->Bt_m[imode] );
+            
+            if(params.is_pxr == true)
+                restart_cFieldsPerProc( patch_gid, emAM->rho_old_AM_[imode] );
+            
         }
     }
     

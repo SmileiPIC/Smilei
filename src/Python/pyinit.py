@@ -163,11 +163,15 @@ class Main(SmileiSingleton):
     number_of_AM_relativistic_field_initialization = 1
     timestep_over_CFL = None
     cell_sorting = False
+    number_of_damping_cells = [0]
 
 
     # PXR tuning
+    uncoupled_grids = False
     global_factor = []
     norder = []
+    pseudo_spectral_guardells = 0
+    apply_rotational_cleaning = False
     is_spectral = False
     is_pxr = False
 

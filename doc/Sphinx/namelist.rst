@@ -333,6 +333,15 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
   Note that this number must be lower or equal to the number of modes of the simulation.
 
+.. rst-class:: experimental
+
+.. py:data:: uncoupled_grids
+
+  :default: `False`
+
+  | If `False`, the parallelization of the simulation is done according to the see :doc:`parallelization`.
+  | If `True`, the simulated domain is decomposed in dedicated shapes for particles and fields operations. Benefits of this option is illustrated in `Single Domain Multiple Decompositions for Particle-in-Cell simulations <https://arxiv.org/abs/1912.04064>`_
+
 ----
 
 Load Balancing
@@ -595,7 +604,7 @@ Each species has to be defined in a ``Species`` block::
       # ionization_rate = None,
       is_test = False,
       # ponderomotive_dynamics = False,
-      c_part_max = 1.0,
+..      c_part_max = 1.0,
       pusher = "boris",
 
       # Radiation reaction, for particles only:
@@ -825,10 +834,10 @@ Each species has to be defined in a ``Species`` block::
 .. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
 
 
-.. py:data:: c_part_max
-
-  :red:`to do`
-
+.. .. py:data:: c_part_max
+.. 
+..   :red:`to do`
+.. 
 
 .. py:data:: pusher
 

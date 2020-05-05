@@ -103,13 +103,16 @@ void cField3D::allocateDims()
     
 }
 
-void cField3D::deallocateDims()
+void cField3D::deallocateDataAndSetTo( Field* f )
 {
     delete [] cdata_;
     cdata_ = NULL;
     delete [] data_3D;
     data_3D = NULL;
     
+    cdata_ = (static_cast<cField3D *>(f))->cdata_;
+    data_3D = (static_cast<cField3D *>(f))->data_3D;
+
 }
 
 void cField3D::allocateDims( unsigned int dims1, unsigned int dims2, unsigned int dims3 )
@@ -208,9 +211,9 @@ void cField3D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thi
     
     std::vector<unsigned int> dual =  this->isDual_;
     
-    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - outPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
-    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - outPatch->Pcoordinates[1]*params.n_space[1]*params.global_factor[1] ;
-    int kout = thisPatch->Pcoordinates[2]*params.n_space[2] - outPatch->Pcoordinates[2]*params.n_space[2]*params.global_factor[2] ;
+    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.oversize[0] ) ;
+    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.oversize[1] ) ;
+    int kout = thisPatch->Pcoordinates[2]*params.n_space[2] - ( outPatch->getCellStartingGlobalIndex(2) + params.oversize[2] ) ;
     
     for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         for( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
@@ -222,6 +225,25 @@ void cField3D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thi
     
 }
 
+void cField3D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+{
+    cField3D *out3D = static_cast<cField3D *>( outField );
+    
+    std::vector<unsigned int> dual =  this->isDual_;
+    
+    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.oversize[0] ) ;
+    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.oversize[1] ) ;
+    int kout = thisPatch->Pcoordinates[2]*params.n_space[2] - ( outPatch->getCellStartingGlobalIndex(2) + params.oversize[2] ) ;
+    
+    for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
+            for( unsigned int k = 0 ; k < this->dims_[2] ; k++ ) {
+                ( *out3D )( iout+i, jout+j, kout+k ) += ( *this )( i, j, k );
+            }
+        }
+    }
+    
+}
 
 void cField3D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPatch, Patch *thisPatch )
 {
@@ -229,9 +251,9 @@ void cField3D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPa
     
     std::vector<unsigned int> dual =  in3D->isDual_;
     
-    int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - inPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
-    int jin = thisPatch->Pcoordinates[1]*params.n_space[1] - inPatch->Pcoordinates[1]*params.n_space[1]*params.global_factor[1] ;
-    int kin = thisPatch->Pcoordinates[2]*params.n_space[2] - inPatch->Pcoordinates[2]*params.n_space[2]*params.global_factor[2] ;
+    int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - ( inPatch->getCellStartingGlobalIndex(0) + params.oversize[0] );
+    int jin = thisPatch->Pcoordinates[1]*params.n_space[1] - ( inPatch->getCellStartingGlobalIndex(1) + params.oversize[1] );
+    int kin = thisPatch->Pcoordinates[2]*params.n_space[2] - ( inPatch->getCellStartingGlobalIndex(2) + params.oversize[2] );
     
     for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         for( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
