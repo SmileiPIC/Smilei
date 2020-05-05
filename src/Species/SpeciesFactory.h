@@ -660,6 +660,9 @@ public:
         if( (params.geometry=="AMcylindrical") && ( this_species->boundary_conditions[1][1] != "remove" ) && ( this_species->boundary_conditions[1][1] != "stop" ) ) {
             ERROR( " In AM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' " );
         }
+        if( (params.hasWindow) && (( this_species->boundary_conditions[0][1] != "remove" ) || ( this_species->boundary_conditions[0][0] != "remove" ) )) {
+            ERROR( " When MovingWindow is activated 'remove' boundary conditions along x is mandatory for all species. " );
+        }
 
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
         bool has_temperature = PyTools::extractV( "thermal_boundary_temperature", this_species->thermal_boundary_temperature_, "Species", ispec ) > 0;

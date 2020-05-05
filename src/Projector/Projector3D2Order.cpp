@@ -33,6 +33,8 @@ Projector3D2Order::Projector3D2Order( Params &params, Patch *patch ) : Projector
     
     DEBUG( "cell_length "<< params.cell_length[0] );
     
+    pxr = !params.is_pxr;
+    
     dt             = params.timestep;
     dts2           = params.timestep/2.;
     dts4           = params.timestep/4.;
@@ -228,7 +230,7 @@ void Projector3D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     
     
     // Jy^(p,d,p)
-    yz_size = nprimz*( nprimy+1 );
+    yz_size = nprimz*( nprimy+1*pxr );
     linindex0 = ipo*yz_size+jpo*z_size+kpo;
     tmp = 0.;
     linindex = linindex0;
@@ -283,8 +285,8 @@ void Projector3D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     }//i
     
     // Jz^(p,p,d)
-    z_size =  nprimz+1;
-    yz_size = ( nprimz+1 )*nprimy;
+    z_size =  nprimz+1*pxr;
+    yz_size = ( nprimz+1*pxr )*nprimy;
     linindex0 = ipo*yz_size+jpo*z_size+kpo;
     tmp = 0.;
     linindex = linindex0;
@@ -484,7 +486,7 @@ void Projector3D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
             for( unsigned int k=0 ; k<5 ; k++ ) {
                 tmpJy[i][k] -= cry_p * DSy[j-1] * ( Sz0[k]*Sx0[i] + 0.5*DSz[k]*Sx0[i] + 0.5*DSx[i]*Sz0[k] + one_third*DSz[k]*DSx[i] );
                 kloc = k+kpo;
-                linindex = iloc*nprimz*( nprimy+1 )+jloc*nprimz+kloc;
+                linindex = iloc*nprimz*( nprimy+1*pxr )+jloc*nprimz+kloc;
                 Jy [linindex] += tmpJy[i][k]; //
             }
         }
@@ -498,7 +500,7 @@ void Projector3D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
             for( unsigned int k=1 ; k<5 ; k++ ) {
                 tmpJz[i][j] -= crz_p * DSz[k-1] * ( Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j] + 0.5*DSy[j]*Sx0[i] + one_third*DSx[i]*DSy[j] );
                 kloc = k+kpo;
-                linindex = iloc*( nprimz+1 )*nprimy+jloc*( nprimz+1 )+kloc;
+                linindex = iloc*( nprimz+1*pxr )*nprimy+jloc*( nprimz+1*pxr )+kloc;
                 Jz [linindex] += tmpJz[i][j]; //
             }
         }

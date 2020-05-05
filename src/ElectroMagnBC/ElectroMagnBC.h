@@ -36,8 +36,10 @@ protected:
     
     // side of BC is applied 0:xmin 1:xmax 2:ymin 3:ymax 4:zmin 5:zmax
     unsigned int min_max;
+
+    // number of damping cells
+    std::vector<unsigned int> number_of_damping_cells;
     
-    int pxr_offset;
 };
 
 #endif

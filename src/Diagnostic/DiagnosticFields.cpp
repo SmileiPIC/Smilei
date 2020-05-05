@@ -144,7 +144,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
             if( time_average > 1 ) {
                 for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ )
                     vecPatches( ipatch )->EMfields->allFields_avg[diag_n].push_back(
-                        vecPatches( ipatch )->EMfields->createField( fields_names[ifield] )
+                        vecPatches( ipatch )->EMfields->createField( fields_names[ifield],params )
                     );
             }
         }
@@ -377,6 +377,8 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
             // Close dataset
             H5Dclose( dset_id );
         }
+        #pragma omp barrier
+
     }
     
     #pragma omp master
@@ -394,6 +396,7 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
             H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
         }
     }
+    #pragma omp barrier
 }
 
 bool DiagnosticFields::needsRhoJs( int itime )

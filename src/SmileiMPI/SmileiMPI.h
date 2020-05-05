@@ -95,11 +95,18 @@ public:
     void recv( Field *field, int from, int hindex );
     void recvComplex( Field *field, int from, int hindex );
 
+    void sendComplex( Field *field, int to, int hindex );
+    void irecvComplex( Field *field, int from, int hindex, MPI_Request &request );
+
     void isend( ProbeParticles *probe, int to, int hindex, unsigned int );
     void recv( ProbeParticles *probe, int from, int hindex, unsigned int );
 
     void isend( int *integer, int to, int hindex, unsigned int, MPI_Request &request );
     void recv( int *integer, int from, int hindex, unsigned int );
+    
+    // Functions for double grid exchange
+    void send( Field* field, int to  , int hindex );
+    void irecv( Field* field, int from, int hindex, MPI_Request& request );
 
     // DIAGS MPI SYNC
     // --------------

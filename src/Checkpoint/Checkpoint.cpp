@@ -351,6 +351,10 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
             dump_cFieldsPerProc( patch_gid, emAM->Bl_m[imode] );
             dump_cFieldsPerProc( patch_gid, emAM->Br_m[imode] );
             dump_cFieldsPerProc( patch_gid, emAM->Bt_m[imode] );
+            
+            if(params.is_pxr == true)
+                dump_cFieldsPerProc( patch_gid, emAM->rho_old_AM_[imode] );
+            
         }
     }
     
@@ -668,6 +672,10 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
             restart_cFieldsPerProc( patch_gid, emAM->Bl_m[imode] );
             restart_cFieldsPerProc( patch_gid, emAM->Br_m[imode] );
             restart_cFieldsPerProc( patch_gid, emAM->Bt_m[imode] );
+            
+            if(params.is_pxr == true)
+                restart_cFieldsPerProc( patch_gid, emAM->rho_old_AM_[imode] );
+            
         }
     }
     

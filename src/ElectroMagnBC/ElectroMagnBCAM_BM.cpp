@@ -50,7 +50,10 @@ ElectroMagnBCAM_BM::ElectroMagnBCAM_BM( Params &params, Patch *patch, unsigned i
     double cosphi ;
     double Kx, Kr ;
     double one_ov_rlocal;
-    one_ov_rlocal = 1./( params.grid_length[1]+params.oversize[1]*dr ); // BM conditions on rmax are written at the last primal r position.
+    if (!params.uncoupled_grids)
+        one_ov_rlocal = 1./( params.grid_length[1]+params.oversize[1]*dr ); // BM conditions on rmax are written at the last primal r position.
+    else
+        one_ov_rlocal = 1./( params.grid_length[1]+params.region_oversize[1]*dr ); // BM conditions on rmax are written at the last primal r position.
     //std::cout<< "rlocal " <<params.grid_length[1]+params.oversize[1]*dr<< "one_ov"<< one_ov_rlocal*10<< std::endl;
     //std::cout<< "grid length " <<params.grid_length[1]<< "   oversize*dr  "<< params.oversize[1]*dr<< std::endl;
     Kx =  params.EM_BCs_k[3][0];

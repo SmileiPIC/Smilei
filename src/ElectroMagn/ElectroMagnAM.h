@@ -33,6 +33,7 @@ public:
     std::vector<cField2D *> Jr_;
     std::vector<cField2D *> Jt_;
     std::vector<cField2D *> rho_AM_;
+    std::vector<cField2D *> rho_old_AM_;
     //define a vector of vectors
     std::vector<cField2D *> Jl_s;
     std::vector<cField2D *> Jr_s;
@@ -143,7 +144,7 @@ public:
     void binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes) override;
     
     //! Creates a new field with the right characteristics, depending on the name
-    Field *createField( std::string fieldname ) override;
+    Field *createField( std::string fieldname, Params& params ) override;
     
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ() override;
@@ -201,7 +202,7 @@ public:
     //! Method used to impose one external time field
     void applyPrescribedField( Field *, Profile *, Patch *, double time ) override;
     
-    void initAntennas( Patch *patch ) override;
+    void initAntennas( Patch *patch, Params& params ) override;
     
     //! Compute local square norm of charge denisty is not null
     double computeRhoNorm2() override
