@@ -2,9 +2,12 @@
 #define DOMAINDECOMPOSITIONFACTORY_H
 
 #include "DomainDecomposition.h"
+// Patches decomposition along tht Hilbert curve
 #include "HilbertDomainDecomposition.h"
-#include "GlobalDomainDecomposition.h"
-#include "CartesianDomainDecomposition.h"
+// Patches decomposition along a linearized curve
+#include "LinearizedDomainDecomposition.h"
+// Domain decomposition (linearized)
+#include "RegionDomainDecomposition.h"
 
 class DomainDecompositionFactory
 {
@@ -66,18 +69,18 @@ public:
             }
             
             if( ( params.geometry == "1Dcartesian" ) ) {
-                domain_decomposition = new CartesianDomainDecomposition1D( params );
+                domain_decomposition = new LinearizedDomainDecomposition1D( params );
             } else if( ( params.geometry == "2Dcartesian" )  || ( params.geometry == "AMcylindrical" ) ) {
                 if( params.patch_arrangement=="linearized_XY" ) {
-                    domain_decomposition = new CartesianDomainDecomposition2D( params );
+                    domain_decomposition = new LinearizedDomainDecomposition2D( params );
                 } else if( params.patch_arrangement=="linearized_YX" ) {
-                    domain_decomposition = new CartesianDomainDecomposition2D_YX( params );
+                    domain_decomposition = new LinearizedDomainDecomposition2D_YX( params );
                 }
             } else if( ( params.geometry == "3Dcartesian" ) ) {
                 if( params.patch_arrangement=="linearized_XYZ" ) {
-                    domain_decomposition = new CartesianDomainDecomposition3D( params );
+                    domain_decomposition = new LinearizedDomainDecomposition3D( params );
                 } else if( params.patch_arrangement=="linearized_ZYX" ) {
-                    domain_decomposition = new CartesianDomainDecomposition3D_ZYX( params );
+                    domain_decomposition = new LinearizedDomainDecomposition3D_ZYX( params );
                 }
             } else {
                 ERROR( "Unknown geometry" );
@@ -92,11 +95,11 @@ public:
         DomainDecomposition *domain_decomposition = NULL;
         
         if( ( params.geometry == "1Dcartesian" ) ) {
-            domain_decomposition = new GlobalDomainDecomposition1D( params );
+            domain_decomposition = new RegionDomainDecomposition1D( params );
         } else if( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "AMcylindrical" ) ) {
-            domain_decomposition = new GlobalDomainDecomposition2D( params );
+            domain_decomposition = new RegionDomainDecomposition2D( params );
         } else if( ( params.geometry == "3Dcartesian" ) ) {
-            domain_decomposition = new GlobalDomainDecomposition3D( params );
+            domain_decomposition = new RegionDomainDecomposition3D( params );
         } else {
             ERROR( "Unknown geometry" );
         }

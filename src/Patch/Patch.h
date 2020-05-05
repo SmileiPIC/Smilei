@@ -51,7 +51,7 @@ public:
     //! Finalize MPI environment : especially requests array for non blocking communications
     void finalizeMPIenvironment( Params &params );
     
-    void set( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
+    void setLocationAndAllocateFields( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
    
     //Copy positions of particles from source species to species which are initialized on top of another one.
     void copyPositions( std::vector<Species *> vecSpecies_to_update);
@@ -146,6 +146,8 @@ public:
     virtual void finalizeExchange( Field *field, int iDim ) = 0;
     //! finalize comm / exchange complex fields in direction iDim only
     virtual void finalizeExchangeComplex( Field *field, int iDim ) = 0;
+    
+    virtual void exchangeField_movewin ( Field* field, int clrw ) = 0;
     
     // Create MPI_Datatype to exchange fields
     virtual void createType( Params &params ) = 0;
@@ -344,8 +346,7 @@ public:
     
     bool is_small = true;
     
-    
-    
+        
 protected:
     // Complementary members for the description of the geometry
     // ---------------------------------------------------------

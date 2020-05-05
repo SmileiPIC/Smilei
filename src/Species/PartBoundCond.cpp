@@ -45,8 +45,6 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     } else {
         x_min = max( x_min_global, patch->getDomainLocalMin( 0 ) );
         x_max = min( x_max_global, patch->getDomainLocalMax( 0 ) );
-        //std::cout<<"xminnnn "<<x_min<<std::endl;
-        //std::cout<<"xmaxxxx "<<x_max<<std::endl;
     }
     
     if( nDim_particle > 1 ) {
@@ -58,11 +56,11 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
             y_max = min( y_max_global, patch->getDomainLocalMax( 1 ) );
             y_max2 = y_max * y_max;
             y_min2 = y_min * y_min;
-            //std::cout<<"yminnnn "<<y_min<<std::endl;
-            //std::cout<<"ymaxxx "<<y_max<<std::endl;
-            //std::cout<<"ymin2 "<<y_min2<<std::endl;
-            //std::cout<<"ymax2 "<<y_max2<<std::endl;
-        }
+            if (params.geometry=="AMcylindrical" && params.is_spectral){
+                y_min2 = 0.; // No parallrlization along R
+                y_max2 = patch->getDomainLocalMax( 1 )*patch->getDomainLocalMax( 1 ); 
+            }
+       }
         
         if( ( nDim_particle > 2 ) && ( !isAM ) ) {
             if( params.EM_BCs[2][0]=="periodic" ) {
@@ -79,9 +77,10 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     // Check for inconsistencies between EM and particle BCs
     if( ! species->particles->tracked ) {
         for( unsigned int iDim=0; iDim<( unsigned int )nDim_field; iDim++ ) {
-            if( ( ( params.EM_BCs[iDim][0]=="periodic" )&&( species->boundary_conditions[iDim][0]!="periodic" ) )
-                    || ( ( params.EM_BCs[iDim][1]=="periodic" )&&( species->boundary_conditions[iDim][1]!="periodic" ) ) ) {
-                ERROR( "For species " << species->name_ << ", periodic EM "<<"xyz"[iDim]<<"-boundary conditions require particle BCs to be periodic." );
+            if(     (  ( ( params.EM_BCs[iDim][0]=="periodic" )&&( species->boundary_conditions[iDim][0]!="periodic" ) )
+                    || ( ( params.EM_BCs[iDim][1]=="periodic" )&&( species->boundary_conditions[iDim][1]!="periodic" ) )) 
+                 && (params.is_spectral==false)) {
+                WARNING( "For species " << species->name_ << ", periodic EM "<<"xyz"[iDim]<<"-boundary conditions require particle BCs to be periodic." );
             }
         }
     }

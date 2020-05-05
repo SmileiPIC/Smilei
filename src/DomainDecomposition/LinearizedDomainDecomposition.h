@@ -3,11 +3,11 @@
 
 #include "DomainDecomposition.h"
 
-class CartesianDomainDecomposition : public DomainDecomposition
+class LinearizedDomainDecomposition : public DomainDecomposition
 {
 public:
-    CartesianDomainDecomposition( Params &params );
-    virtual ~CartesianDomainDecomposition( ) {};
+    LinearizedDomainDecomposition( Params &params );
+    virtual ~LinearizedDomainDecomposition( ) {};
     
     virtual unsigned int getDomainId( std::vector<int> Coordinates ) = 0;
     virtual std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) = 0;
@@ -18,53 +18,53 @@ protected:
 };
 
 
-class CartesianDomainDecomposition1D : public CartesianDomainDecomposition
+class LinearizedDomainDecomposition1D : public LinearizedDomainDecomposition
 {
 public:
-    CartesianDomainDecomposition1D( Params &params );
-    ~CartesianDomainDecomposition1D( ) override final;
+    LinearizedDomainDecomposition1D( Params &params );
+    ~LinearizedDomainDecomposition1D( ) override final;
     
     unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
 
-class CartesianDomainDecomposition2D : public CartesianDomainDecomposition
+class LinearizedDomainDecomposition2D : public LinearizedDomainDecomposition
 {
 public:
-    CartesianDomainDecomposition2D( Params &params );
-    ~CartesianDomainDecomposition2D( ) override final;
+    LinearizedDomainDecomposition2D( Params &params );
+    ~LinearizedDomainDecomposition2D( ) override final;
     
     unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
-class CartesianDomainDecomposition2D_YX : public CartesianDomainDecomposition
+class LinearizedDomainDecomposition2D_YX : public LinearizedDomainDecomposition
 {
 public:
-    CartesianDomainDecomposition2D_YX( Params &params );
-    ~CartesianDomainDecomposition2D_YX( ) override final;
+    LinearizedDomainDecomposition2D_YX( Params &params );
+    ~LinearizedDomainDecomposition2D_YX( ) override final;
     
     unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
 
-class CartesianDomainDecomposition3D : public CartesianDomainDecomposition
+class LinearizedDomainDecomposition3D : public LinearizedDomainDecomposition
 {
 public:
-    CartesianDomainDecomposition3D( Params &params );
-    ~CartesianDomainDecomposition3D( ) override final;
+    LinearizedDomainDecomposition3D( Params &params );
+    ~LinearizedDomainDecomposition3D( ) override final;
     
     unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
-class CartesianDomainDecomposition3D_ZYX : public CartesianDomainDecomposition
+class LinearizedDomainDecomposition3D_ZYX : public LinearizedDomainDecomposition
 {
 public:
-    CartesianDomainDecomposition3D_ZYX( Params &params );
-    ~CartesianDomainDecomposition3D_ZYX( ) override final;
+    LinearizedDomainDecomposition3D_ZYX( Params &params );
+    ~LinearizedDomainDecomposition3D_ZYX( ) override final;
     
     unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;

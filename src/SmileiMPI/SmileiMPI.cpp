@@ -750,7 +750,7 @@ void SmileiMPI::recv( Patch *patch, int from, int tag, Params &params )
     recv_species( patch, from, tag, params );
     
     // Receive EM fields
-    patch->EMfields->initAntennas( patch );
+    patch->EMfields->initAntennas( patch, params );
     if( params.geometry != "AMcylindrical" ) {
         recv( patch->EMfields, from, tag );
     } else {
@@ -845,7 +845,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
 void SmileiMPI::recv_fields( Patch *patch, int from, int tag, Params &params )
 {
     // Receive EM fields
-    patch->EMfields->initAntennas( patch );
+    patch->EMfields->initAntennas( patch, params );
     if( params.geometry != "AMcylindrical" ) {
         recv( patch->EMfields, from, tag );
     } else {
@@ -1441,6 +1441,20 @@ void SmileiMPI::isendComplex( Field *field, int to, int hindex, MPI_Request &req
 
 } // End isendComplex ( Field )
 
+void SmileiMPI::sendComplex( Field *field, int to, int hindex )
+{
+    cField *cf = static_cast<cField *>( field );
+    MPI_Send( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD );
+    
+} // End isendComplex ( Field )
+
+
+void SmileiMPI::send(Field* field, int to, int hindex)
+{
+    MPI_Send( &((*field)(0)),field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD );
+
+} // End isend ( Field )
+
 
 void SmileiMPI::recv( Field *field, int from, int hindex )
 {
@@ -1454,6 +1468,20 @@ void SmileiMPI::recvComplex( Field *field, int from, int hindex )
     MPI_Status status;
     cField *cf = static_cast<cField *>( field );
     MPI_Recv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &status );
+
+} // End recv ( Field )
+
+void SmileiMPI::irecvComplex( Field *field, int from, int hindex, MPI_Request &request )
+{
+    MPI_Status status;
+    cField *cf = static_cast<cField *>( field );
+    MPI_Irecv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
+    
+} // End recv ( Field )
+
+void SmileiMPI::irecv(Field* field, int from, int hindex, MPI_Request& request)
+{
+    MPI_Irecv( &((*field)(0)),2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
 
 } // End recv ( Field )
 
