@@ -148,73 +148,8 @@ void CollisionalIonization::assignDatabase( unsigned int index )
     
 }
 
-// Method to prepare the ionization
-// "not_duplicated_particle" is true if the current particle #2 is already present in
-// another pair of particles
-void CollisionalIonization::prepare2( Particles *p1, int i1, Particles *p2, int i2,
-                                      bool not_duplicated_particle )
-{
-    double E; // electron energy
-    double We, Wi; // weights
-    double cs, x;
-    int Zstar;
-    // Calculates the current electron energy, the ion charge and weight
-    if( electronFirst ) {
-        E = sqrt( 1. + pow( p1->momentum( 0, i1 ), 2 )+pow( p1->momentum( 1, i1 ), 2 )+pow( p1->momentum( 2, i1 ), 2 ) )-1.;
-        Zstar = p2->charge( i2 );
-        Wi = p2->weight( i2 );
-        if( not_duplicated_particle ) {
-            ni += Wi;
-        }
-    } else {
-        E = sqrt( 1. + pow( p2->momentum( 0, i2 ), 2 )+pow( p2->momentum( 1, i2 ), 2 )+pow( p2->momentum( 2, i2 ), 2 ) )-1.;
-        Zstar = p1->charge( i1 );
-        Wi = p1->weight( i1 );
-        ni += Wi;
-    }
-    if( Zstar<0 ) {
-        ERROR( "Collisional ionization requires positively charged ions" );
-    }
-    // No ionization if fully ionized already
-    if( Zstar>=atomic_number ) {
-        return;
-    }
-    // Retrieve the cross section from the database
-    x = a2*log( a1*E ); // index in the database, which depends on the electron energy E
-    if( x<0. ) {
-        x = 0.;
-    } else if( x>npointsm1 ) {
-        x = npointsm1;
-    }
-    cs = ( *crossSection )[Zstar][ int( x ) ];
-    // Calculate hybrid density nei
-    if( cs>0. ) { // only pairs that can ionize
-        if( electronFirst ) {
-            We = p1->weight( i1 );
-            ne += We;
-        } else {
-            We = p2->weight( i2 );
-            if( not_duplicated_particle ) {
-                ne += We;
-            }
-        }
-        nei += We<Wi ? We : Wi;
-    }
-}
-
-// Method to prepare the ionization
-void CollisionalIonization::prepare3( double timestep, double inv_cell_volume )
-{
-    // Calculate the coeff used later for ionization probability
-    if( nei<=0. ) {
-        coeff = 0.;
-    } else {
-        coeff = ne*ni/nei * timestep * inv_cell_volume;
-    }
-}
-
 // Method to apply the ionization
-void CollisionalIonization::apply( Patch *patch, Particles *p1, int i1, Particles *p2, int i2 )
+void CollisionalIonization::apply( Patch *patch, Particles *p1, int i1, Particles *p2, int i2, double coeff )
 {
     double gamma1 = p1->LorentzFactor( i1 );
     double gamma2 = p2->LorentzFactor( i2 );
@@ -228,15 +163,15 @@ void CollisionalIonization::apply( Patch *patch, Particles *p1, int i1, Particle
     double U2  = patch->rand_->uniform();
     // Calculate the rest of the stuff
     if( electronFirst ) {
-        calculate( gamma_s, gamma1, gamma2, p1, i1, p2, i2, U1, U2 );
+        calculate( gamma_s, gamma1, gamma2, p1, i1, p2, i2, U1, U2, coeff );
     } else {
-        calculate( gamma_s, gamma2, gamma1, p2, i2, p1, i1, U1, U2 );
+        calculate( gamma_s, gamma2, gamma1, p2, i2, p1, i1, U1, U2, coeff );
     }
 }
 
 // Method used by ::apply so that we are sure that electrons are the first species
 void CollisionalIonization::calculate( double gamma_s, double gammae, double gammai,
-                                       Particles *pe, int ie, Particles *pi, int ii, double U1, double U2 )
+                                       Particles *pe, int ie, Particles *pi, int ii, double U1, double U2, double coeff )
 {
     double We, Wi; // weights
     double a, x, cs, w, e, pr, p2, WeWi, WiWe, cum_prob=0., cp;
@@ -248,14 +183,14 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         return;    // if already fully ionized, do nothing
     }
     
-    // Calculate coefficient (1-ve.vi)*ve' where ve' is in ion frame
-    double K = coeff * sqrt( gamma_s*gamma_s-1. )/gammai;
-    
     // Calculate weights
     We = pe->weight( ie );
     Wi = pi->weight( ii );
     WeWi = We/Wi;
     WiWe = 1./WeWi;
+    
+    // Calculate coefficient (1-ve.vi)*ve' where ve' is in ion frame
+    double K = coeff * max(We,Wi) * sqrt( gamma_s*gamma_s-1. )/gammai;
     
     // Loop for multiple ionization
     // k+1 is the number of ionizations

@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 plt.ion()
 
-v0  = { "conductivity1":[-0.00033 ,-0.000195,-0.00012 ],
+v0  = { "conductivity1":[-0.00064 ,-0.00041,-0.00025 ],
         "conductivity2":[-0.00088,-0.00108,-0.00145],
         "conductivity3":[-0.0023  ,-0.005            ]}
 
-dv0 = { "conductivity1":[0.000017,0.0000000, 0        ],
+dv0 = { "conductivity1":[0.00008, 0.00002, 0        ],
         "conductivity2":[-0.0001,-0.00015,-0.0002  ],
-        "conductivity3":[-0.0005,-0.0016           ]}
+        "conductivity3":[-0.0005,-0.0012           ]}
 
 style = { "conductivity1": 'b', "conductivity2":'g', "conductivity3":'r' }
 
@@ -46,8 +46,8 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
 	for k in range(ncases):
-		evx_density = -np.array(S.ParticleBinning(k*2).getData())
-		edensity = np.array(S.ParticleBinning(k*2+1).getData())
+		evx_density = -np.array(S.ParticleBinning(k*3).getData())
+		edensity = np.array(S.ParticleBinning(k*3+1).getData())
 		vx_mean[k,:] = evx_density/edensity
 	
 	
@@ -79,7 +79,7 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 velocity    = np.double(velocity)
 temperature = np.double(temperature)
 density     = np.double(density)
-Ex          = np.array([0.001, 0.001, 0.001, 0.01, 0.01, 0.01, 0.01, 0.01])
+Ex          = np.array([0.002, 0.002, 0.002, 0.01, 0.01, 0.01, 0.01, 0.01])
 
 # Simulation results
 coeff = 1.66782e4 # e0*(2*pi*c/(1um)) in S/m
