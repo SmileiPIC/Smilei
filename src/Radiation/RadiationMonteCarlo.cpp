@@ -20,8 +20,8 @@
 //! Constructor for RadiationMonteCarlo
 //! Inherit from Radiation
 // ---------------------------------------------------------------------------------------------------------------------
-RadiationMonteCarlo::RadiationMonteCarlo( Params &params, Species *species )
-    : Radiation( params, species )
+RadiationMonteCarlo::RadiationMonteCarlo( Params &params, Species *species, Random * rand  )
+    : Radiation( params, species, rand )
 {
     radiation_photon_sampling_ = species->radiation_photon_sampling_;
     radiation_photon_gamma_threshold_ = species->radiation_photon_gamma_threshold_;
@@ -168,7 +168,8 @@ void RadiationMonteCarlo::operator()(
                     && ( tau[ipart] <= epsilon_tau_ ) ) {
                 // New final optical depth to reach for emision
                 while( tau[ipart] <= epsilon_tau_ ) {
-                    tau[ipart] = -log( 1.-Rand::uniform() );
+                    //tau[ipart] = -log( 1.-Rand::uniform() );
+                    tau[ipart] = -log( 1.-rand_->uniform() );
                 }
 
             }
@@ -309,7 +310,7 @@ double RadiationMonteCarlo::photonEmission( int ipart,
 
     // Get the photon quantum parameter from the table xip
     // photon_chi = RadiationTables.computeRandomPhotonChi( particle_chi );
-    photon_chi = RadiationTables.computeRandomPhotonChiWithInterpolation( particle_chi );
+    photon_chi = RadiationTables.computeRandomPhotonChiWithInterpolation( particle_chi, rand_ );
 
     // compute the photon gamma factor
     gammaph = photon_chi/particle_chi*( particle_gamma-1.0 );

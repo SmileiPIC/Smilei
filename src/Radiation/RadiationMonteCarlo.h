@@ -26,7 +26,7 @@ class RadiationMonteCarlo : public Radiation
 public:
 
     //! Constructor for RadiationMonteCarlo
-    RadiationMonteCarlo( Params &params, Species *species );
+    RadiationMonteCarlo( Params &params, Species *species, Random * rand  );
     
     //! Destructor for RadiationMonteCarlo
     ~RadiationMonteCarlo();

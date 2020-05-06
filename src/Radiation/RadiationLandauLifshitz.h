@@ -31,7 +31,7 @@ class RadiationLandauLifshitz : public Radiation
 public:
 
     //! Constructor for RadiationLandauLifshitz
-    RadiationLandauLifshitz( Params &params, Species *species );
+    RadiationLandauLifshitz( Params &params, Species *species, Random * rand  );
     
     //! Destructor for RadiationLandauLifshitz
     ~RadiationLandauLifshitz();

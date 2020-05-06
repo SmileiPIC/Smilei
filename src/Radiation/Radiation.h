@@ -18,6 +18,7 @@
 #include "Particles.h"
 #include "Species.h"
 #include "RadiationTables.h"
+#include "Random.h"
 
 //  ----------------------------------------------------------------------------
 //! Class Radiation
@@ -27,7 +28,7 @@ class Radiation
 
 public:
     //! Creator for Radiation
-    Radiation( Params &params, Species *species );
+    Radiation( Params &params, Species *species, Random * rand );
     virtual ~Radiation();
     
     //! Overloading of () operator
@@ -109,6 +110,8 @@ protected:
     
     //! Time step
     double dt_;
+    
+    Random * rand_;
     
     // _________________________________________
     // Factors

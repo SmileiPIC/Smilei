@@ -36,7 +36,7 @@ class RadiationNiel : public Radiation
 public:
 
     //! Constructor for RadiationLL
-    RadiationNiel( Params &params, Species *species );
+    RadiationNiel( Params &params, Species *species, Random * rand  );
     
     //! Destructor for RadiationLL
     ~RadiationNiel();

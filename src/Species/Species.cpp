@@ -213,7 +213,7 @@ void Species::initOperators( Params &params, Patch *patch )
     Ionize = IonizationFactory::create( params, this );
 
     // Create the radiation model
-    Radiate = RadiationFactory::create( params, this );
+    Radiate = RadiationFactory::create( params, this, patch->rand_ );
 
     // Create the multiphoton Breit-Wheeler model
     Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create( params, this );

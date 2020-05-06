@@ -18,8 +18,8 @@
 //! Inherited from Radiation
 // -----------------------------------------------------------------------------
 RadiationLandauLifshitz::RadiationLandauLifshitz( Params &params,
-        Species *species )
-    : Radiation( params, species )
+        Species *species, Random * rand  )
+    : Radiation( params, species, rand )
 {
 }
 

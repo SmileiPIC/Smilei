@@ -14,7 +14,7 @@
 //! \param params simulation parameters
 //! \param species Species index
 // -----------------------------------------------------------------------------
-Radiation::Radiation( Params &params, Species *species )
+Radiation::Radiation( Params &params, Species *species, Random * rand )
 {
     // Number of dimensions for the positions and momentums
     n_dimensions_ = params.nDim_particle;
@@ -31,6 +31,9 @@ Radiation::Radiation( Params &params, Species *species )
                         
     // Inverse of norm_E_Schwinger_
     inv_norm_E_Schwinger_ = 1./norm_E_Schwinger_;
+    
+    // Pointer to the local patch random generator
+    rand_ = rand;
     
 }
 

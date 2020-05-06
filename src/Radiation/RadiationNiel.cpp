@@ -20,8 +20,8 @@
 //! Constructor for RadiationNLL
 //! Inherited from Radiation
 // -----------------------------------------------------------------------------
-RadiationNiel::RadiationNiel( Params &params, Species *species )
-    : Radiation( params, species )
+RadiationNiel::RadiationNiel( Params &params, Species *species, Random * rand  )
+    : Radiation( params, species, rand )
 {
 }
 
@@ -161,7 +161,7 @@ void RadiationNiel::operator()(
     }*/
 
     // Vectorized computation of the random number in a uniform distribution
-    #pragma omp simd
+    // #pragma omp simd
     for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
         // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
@@ -170,7 +170,8 @@ void RadiationNiel::operator()(
             // Pick a random number in the normal distribution of standard
             // deviation sqrt(dt_) (variance dt_)
             //random_numbers[ipart] = 2.*Rand::uniform() -1.;
-            random_numbers[ipart] = 2.*drand48() -1.;
+            //random_numbers[ipart] = 2.*drand48() -1.;
+            random_numbers[ipart] = 2.*rand_->uniform() -1.;
         }
     }
 

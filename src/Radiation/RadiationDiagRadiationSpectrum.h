@@ -22,7 +22,7 @@ class RadiationDiagRadiationSpectrum : public Radiation {
     public:
 
         //! Constructor for RadiationDiagRadiationSpectrum
-        RadiationDiagRadiationSpectrum(Params& params, Species * species);
+        RadiationDiagRadiationSpectrum(Params& params, Species * species, Random * rand );
 
         //! Destructor for RadiationDiagRadiationSpectrum
         ~RadiationDiagRadiationSpectrum();

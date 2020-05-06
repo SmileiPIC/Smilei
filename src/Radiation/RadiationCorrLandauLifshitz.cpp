@@ -20,8 +20,8 @@
 //! Constructor for RadiationCorrLandauLifshitz
 //! Inherited from Radiation
 // ---------------------------------------------------------------------------------------------------------------------
-RadiationCorrLandauLifshitz::RadiationCorrLandauLifshitz( Params &params, Species *species )
-    : Radiation( params, species )
+RadiationCorrLandauLifshitz::RadiationCorrLandauLifshitz( Params &params, Species *species, Random * rand )
+    : Radiation( params, species, rand )
 {
 }
 
