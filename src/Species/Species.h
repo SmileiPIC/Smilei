@@ -188,7 +188,7 @@ public:
     //! from the multiphoton Breit-Wheeler go
     int mBW_pair_species_index[2];
     //! Number of created pairs per event and per photons
-    std::vector<int> mBW_pair_creation_sampling;
+    std::vector<int> mBW_pair_creation_sampling_;
 
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.

@@ -275,15 +275,15 @@ public:
                              << " & " << this_species->multiphoton_Breit_Wheeler_[1] );
 
                     // Number of emitted particles per MC event
-                    this_species->mBW_pair_creation_sampling.resize( 2 );
+                    this_species->mBW_pair_creation_sampling_.resize( 2 );
                     if( !PyTools::extractV( "multiphoton_Breit_Wheeler_sampling",
-                                           this_species->mBW_pair_creation_sampling, "Species", ispec ) ) {
-                        this_species->mBW_pair_creation_sampling[0] = 1;
-                        this_species->mBW_pair_creation_sampling[1] = 1;
+                                           this_species->mBW_pair_creation_sampling_, "Species", ispec ) ) {
+                        this_species->mBW_pair_creation_sampling_[0] = 1;
+                        this_species->mBW_pair_creation_sampling_[1] = 1;
                     }
                     MESSAGE( 3, "| Number of emitted macro-particles per MC event: "
-                             << this_species->mBW_pair_creation_sampling[0]
-                             << " & " << this_species->mBW_pair_creation_sampling[1] );
+                             << this_species->mBW_pair_creation_sampling_[0]
+                             << " & " << this_species->mBW_pair_creation_sampling_[1] );
                 }
             }
         }
@@ -1004,8 +1004,8 @@ public:
         if( new_species->mass_==0 ) {
             new_species->multiphoton_Breit_Wheeler_[0]         = species->multiphoton_Breit_Wheeler_[0];
             new_species->multiphoton_Breit_Wheeler_[1]         = species->multiphoton_Breit_Wheeler_[1];
-            new_species->mBW_pair_creation_sampling[0]        = species->mBW_pair_creation_sampling[0];
-            new_species->mBW_pair_creation_sampling[1]        = species->mBW_pair_creation_sampling[1];
+            new_species->mBW_pair_creation_sampling_[0]        = species->mBW_pair_creation_sampling_[0];
+            new_species->mBW_pair_creation_sampling_[1]        = species->mBW_pair_creation_sampling_[1];
         }
 
         new_species->particles->is_test                       = species->particles->is_test;

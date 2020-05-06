@@ -79,7 +79,7 @@ Species::Species( Params &params, Patch *patch ) :
     photon_species_( NULL ),
     //photon_species_index(-1),
     radiation_photon_species( "" ),
-    mBW_pair_creation_sampling( 2, 1 ),
+    mBW_pair_creation_sampling_( 2, 1 ),
     clrw( params.clrw ),
     oversize( params.oversize ),
     cell_length( params.cell_length ),
@@ -216,7 +216,7 @@ void Species::initOperators( Params &params, Patch *patch )
     Radiate = RadiationFactory::create( params, this, patch->rand_ );
 
     // Create the multiphoton Breit-Wheeler model
-    Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create( params, this );
+    Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create( params, this, patch->rand_  );
 
     // assign the correct Merging method to Merge
     Merge = MergingFactory::create( params, this );
