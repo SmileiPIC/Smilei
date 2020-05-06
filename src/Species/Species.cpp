@@ -68,7 +68,6 @@ Species::Species( Params &params, Patch *patch ) :
     particles_per_cell_profile_( NULL ),
     max_charge_( 0. ),
     particles( &particles_sorted[0] ),
-    regular_number_array_(0),
     position_initialization_array_( NULL ),
     momentum_initialization_array_( NULL ),
     n_numpy_particles_( 0 ),
@@ -87,11 +86,12 @@ Species::Species( Params &params, Patch *patch ) :
     tracking_diagnostic( 10000 ),
     nDim_particle( params.nDim_particle ),
     nDim_field(    params.nDim_field  ),
-    partBoundCond( NULL ),
-    min_loc( patch->getDomainLocalMin( 0 ) ),
-    merging_method_( "none" ),
     merging_time_selection_( 0 )
 {
+    regular_number_array_.clear();
+    partBoundCond = NULL;
+    min_loc = patch->getDomainLocalMin( 0 );
+    merging_method_ = "none";
 
     PI2 = 2.0 * M_PI;
     PI_ov_2 = 0.5*M_PI;
@@ -1017,7 +1017,7 @@ void Species::countSortParticles( Params &params )
 // Move all particles from another species to this one
 void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
-    unsigned int npart = source_particles.size(), ibin, ii, nbin=first_index.size();
+    unsigned int npart = source_particles.size(), nbin=first_index.size();
     double inv_cell_length = 1./ params.cell_length[0];
 
     // std::cerr << "Species::importParticles "
@@ -1050,14 +1050,14 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     int istart = 0;
     int istop  = bin_count[0];
 
-    for ( int ibin = 0 ; ibin < nbin ; ibin++ ) {
+    for ( int ibin = 0 ; ibin < (int)nbin ; ibin++ ) {
         if (bin_count[ibin]!=0) {
-            for( unsigned int ip=istart; ip < istop ; ip++ ) {
+            for( int ip=istart; ip < istop ; ip++ ) {
                 if ( src_bin_keys[ip] == ibin )
                     continue;
                 else { // rearrange particles
                     int ip_swap = istop;
-                    while (( src_bin_keys[ip_swap] != ibin ) && (ip_swap<npart))
+                    while (( src_bin_keys[ip_swap] != ibin ) && (ip_swap<(int)npart))
                         ip_swap++;
                     source_particles.swapParticle(ip, ip_swap);
                     int tmp = src_bin_keys[ip];
@@ -1071,7 +1071,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
                                         *particles,
                                         first_index[ibin] );
             last_index[ibin] += bin_count[ibin];
-            for ( int idx=ibin+1 ; idx<last_index.size() ; idx++ ) {
+            for ( unsigned int idx=ibin+1 ; idx<last_index.size() ; idx++ ) {
                 first_index[idx] += bin_count[ibin];
                 last_index[idx]  += bin_count[ibin];
             }
@@ -1079,7 +1079,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
         }
         // update istart/istop fot the next cell
         istart += bin_count[ibin];
-        if ( ibin != nbin-1  )
+        if ( ibin != (int)nbin-1  )
             istop  += bin_count[ibin+1];
         else
             istop = npart;

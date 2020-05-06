@@ -514,7 +514,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
             if ( species->regular_number_array_.size() != species->nDim_particle){
                 ERROR( "The number of particles required per cell per dimension (regular_number) must be of length " << species->nDim_particle << " in this geometry." );
             }
-            int npart_check=1;
+            unsigned int npart_check=1;
             for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
                 npart_check *= species->regular_number_array_[idim];
             }
@@ -823,7 +823,7 @@ void ParticleCreator::createWeight( std::string position_initialization,
 // ---------------------------------------------------------------------------------------------------------------------
 void ParticleCreator::regulateWeightwithPositionAM( Particles * particles, std::string position_initialization_on_species_type_, double dr )
 {
-    int nParts = particles->Weight.size();
+    unsigned int nParts = particles->Weight.size();
 
     if ( position_initialization_on_species_type_ == "regular" ){
         //Particles in regular have a weight proportional to their position along r.

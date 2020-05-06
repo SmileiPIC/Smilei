@@ -1473,7 +1473,6 @@ void SmileiMPI::recvComplex( Field *field, int from, int hindex )
 
 void SmileiMPI::irecvComplex( Field *field, int from, int hindex, MPI_Request &request )
 {
-    MPI_Status status;
     cField *cf = static_cast<cField *>( field );
     MPI_Irecv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
     

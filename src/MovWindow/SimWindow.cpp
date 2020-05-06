@@ -597,12 +597,13 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     #pragma omp barrier
     #pragma omp master
     {
-        if (params.uncoupled_grids)
+        if (params.uncoupled_grids) {
             if ( params.geometry != "AMcylindrical" )
                 operate(region, vecPatches, smpi, params, time_dual);
             else {
                 operate(region, vecPatches, smpi, params, time_dual, params.nmodes);
             }
+        }
     }
     #pragma omp barrier
 
