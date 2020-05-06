@@ -119,6 +119,7 @@ public:
         TITLE( "Creating Diagnostics, antennas, and external fields" )
         vecPatches.createDiags( params, smpi, openPMD, radiation_tables_ );
         
+        TITLE( "finalize MPI" )
         for( unsigned int ipatch = 0 ; ipatch < npatches ; ipatch++ ) {
             vecPatches.patches_[ipatch]->finalizeMPIenvironment( params );
         }

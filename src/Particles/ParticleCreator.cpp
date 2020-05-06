@@ -88,6 +88,7 @@ void ParticleCreator::associate( Species * species)
     
     position_initialization_ = species->position_initialization_;
     position_initialization_on_species_ = species->position_initialization_on_species_;
+    position_initialization_on_species_type_ = species->position_initialization_on_species_type_;
     momentum_initialization_ = species->momentum_initialization_;
     velocity_profile_.resize(species->velocity_profile_.size());
     for (unsigned int i = 0 ; i < velocity_profile_.size() ; i++) {
@@ -190,8 +191,6 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }
-            // cerr << species_->name
-            //      << " Velocity[m] : " << velocity[m](0,0,0) << " Temperature[m]: " << temperature[m](0,0,0) << endl;
         }
     } // end if momentum_initialization_array_
     
@@ -286,10 +285,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                     
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical") {
-                        //Particles weight in regular is normalized later.
-                        density( i, j, k ) *= ( *xyz[1] )( i, j, k );
-                    }
+
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
                     // for each cell with as non-zero density
                     npart_effective += ( unsigned int ) n_part_in_cell( i, j, k );
@@ -522,7 +518,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
             for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
                 npart_check *= species->regular_number_array_[idim];
             }
-            if( (int)nPart != npart_check) {
+            if( nPart != npart_check) {
                 ERROR( "The number of particles required per cell and per dimension is not coherent with the total number of particles per cell." );
             }
         }
@@ -816,10 +812,35 @@ void ParticleCreator::createWeight( std::string position_initialization,
                                     Params &params )
 {
     double w = n_real_particles / nPart;
-    for( unsigned  p= iPart; p<iPart+nPart; p++ ) {
+    for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
         particles->weight( p ) = w ;
     }
 }
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! For all (nPart) particles in a mesh initialize its numerical weight (equivalent to a number density)
+// ---------------------------------------------------------------------------------------------------------------------
+void ParticleCreator::regulateWeightwithPositionAM( Particles * particles, std::string position_initialization_on_species_type_, double dr )
+{
+    int nParts = particles->Weight.size();
+
+    if ( position_initialization_on_species_type_ == "regular" ){
+        //Particles in regular have a weight proportional to their position along r.
+        for (unsigned int ipart=0; ipart < nParts ; ipart++){
+            double radius = sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
+            particles->weight(ipart) *= radius;
+        }
+    } else {
+        //Particles in AM have a weight proportional to their intial cell radius
+        double dr_inv = 1./dr;
+        for (unsigned int ipart=0; ipart < nParts ; ipart++){
+            double cell_radius = dr * (floor ( sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart)) * dr_inv) + 0.5);
+            particles->weight(ipart) *= cell_radius;
+        }
+    }
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize its charge state

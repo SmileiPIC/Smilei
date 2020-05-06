@@ -30,6 +30,8 @@ rcParams['ytick.minor.width'] = 1.5
 if len(sys.argv) > 1:
     try:
         path = sys.argv[1]
+        if os.path.isdir(path):
+            path = path +"/*.log"
     except:
         raise Exception("\n Please, provide a valid path to the logs.\n")
 else:

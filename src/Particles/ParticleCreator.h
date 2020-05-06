@@ -66,6 +66,9 @@ public:
                             unsigned int iPart,
                             double n_real_particles,
                             Params &params );
+
+    //! Regulate of the particle weight with particle position
+    static void regulateWeightwithPositionAM( Particles * particles, std::string position_initialization_on_species_type_, double dr );
     
     // For all particles in a mesh initialize its charge state
     static void createCharge( Particles * particles, Species * species,
@@ -79,6 +82,9 @@ public:
     
     //! Initialization with the positions of another species
     bool position_initialization_on_species_;
+
+    //! Initialization type of the species where position initialization is made
+    std::string position_initialization_on_species_type_;
     
     //! Flag if initialized in particles of a species
     bool initialized_in_species_;
@@ -106,6 +112,9 @@ public:
 
     //! Particles per cell
     Profile * particles_per_cell_profile_;
+    
+    //! Flag for the addition of the energy coming from the created particles
+    bool add_new_particle_energy_;
     
 private:
 

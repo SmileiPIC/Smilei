@@ -13,10 +13,24 @@ public:
     //! Creator for Solver
     SolverAM( Params &params ) : Solver( params )
     {
-        nl_p = params.n_space[0]+1+2*params.oversize[0];
-        nl_d = params.n_space[0]+2+2*params.oversize[0];
-        nr_p = params.n_space[1]+1+2*params.oversize[1];
-        nr_d = params.n_space[1]+2+2*params.oversize[1];
+        std::vector<unsigned int> oversize(params.oversize);
+        if (params.uncoupled_grids)
+            oversize = params.region_oversize;
+        nl_p = params.n_space[0]+1+2*oversize[0];
+        nl_d = params.n_space[0]+2+2*oversize[0];
+        nr_p = params.n_space[1]+1+2*oversize[1];
+        nr_d = params.n_space[1]+2+2*oversize[1];
+        
+        std::vector<unsigned int> n_space(params.n_space);
+        if (params.uncoupled_grids)
+            n_space = params.n_space_region;
+
+        nl_p = n_space[0] +1+2*oversize[0];
+        nl_d = n_space[0] +2+2*oversize[0]-(params.is_pxr);
+        nr_p = n_space[1] +1+2*oversize[1];
+        nr_d = n_space[1] +2+2*oversize[1]-(params.is_pxr);
+
+
         Nmode= params.nmodes;
         dt = params.timestep;
         dr = params.cell_length[1];

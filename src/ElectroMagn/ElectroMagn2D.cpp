@@ -7,6 +7,7 @@
 
 #include "Params.h"
 #include "Field2D.h"
+#include "FieldFactory.h"
 
 #include "Patch.h"
 #include <cstring>
@@ -30,9 +31,9 @@ ElectroMagn2D::ElectroMagn2D( Params &params, DomainDecomposition *domain_decomp
     
     // Charge currents currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        Jx_s[ispec]  = new Field2D( Tools::merge( "Jx_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
-        Jy_s[ispec]  = new Field2D( Tools::merge( "Jy_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
-        Jz_s[ispec]  = new Field2D( Tools::merge( "Jz_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jx_s[ispec]  = FieldFactory::create(Tools::merge("Jx_" ,vecSpecies[ispec]->name_).c_str(), dimPrim, params);
+        Jy_s[ispec]  = FieldFactory::create(Tools::merge("Jy_" ,vecSpecies[ispec]->name_).c_str(), dimPrim, params);
+        Jz_s[ispec]  = FieldFactory::create(Tools::merge("Jz_" ,vecSpecies[ispec]->name_).c_str(), dimPrim, params);
         rho_s[ispec] = new Field2D( Tools::merge( "Rho_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         
         if( params.Laser_Envelope_model ) {
@@ -40,8 +41,6 @@ ElectroMagn2D::ElectroMagn2D( Params &params, DomainDecomposition *domain_decomp
         }
         
     }
-    
-    
     
 }//END constructor Electromagn2D
 
@@ -56,26 +55,23 @@ ElectroMagn2D::ElectroMagn2D( ElectroMagn2D *emFields, Params &params, Patch *pa
     
     // Charge currents currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        if( emFields->Jx_s[ispec] != NULL ) {
-            if( emFields->Jx_s[ispec]->data_ != NULL ) {
-                Jx_s[ispec]  = new Field2D( dimPrim, 0, false, emFields->Jx_s[ispec]->name );
-            } else {
-                Jx_s[ispec]  = new Field2D( emFields->Jx_s[ispec]->name, dimPrim );
-            }
+        if ( emFields->Jx_s[ispec] != NULL ) {
+            if ( emFields->Jx_s[ispec]->data_ != NULL )
+                Jx_s[ispec]  = FieldFactory::create(dimPrim, 0, false, emFields->Jx_s[ispec]->name, params);
+            else
+                Jx_s[ispec]  = FieldFactory::create(emFields->Jx_s[ispec]->name, dimPrim, params);
         }
-        if( emFields->Jy_s[ispec] != NULL ) {
-            if( emFields->Jy_s[ispec]->data_ != NULL ) {
-                Jy_s[ispec]  = new Field2D( dimPrim, 1, false, emFields->Jy_s[ispec]->name );
-            } else {
-                Jy_s[ispec]  = new Field2D( emFields->Jy_s[ispec]->name, dimPrim );
-            }
+        if ( emFields->Jy_s[ispec] != NULL ) {
+            if ( emFields->Jy_s[ispec]->data_ != NULL )
+                Jy_s[ispec]  = FieldFactory::create(dimPrim, 1, false, emFields->Jy_s[ispec]->name, params);
+            else
+                Jy_s[ispec]  = FieldFactory::create(emFields->Jy_s[ispec]->name, dimPrim, params);
         }
-        if( emFields->Jz_s[ispec] != NULL ) {
-            if( emFields->Jz_s[ispec]->data_ != NULL ) {
-                Jz_s[ispec]  = new Field2D( dimPrim, 2, false, emFields->Jz_s[ispec]->name );
-            } else {
-                Jz_s[ispec]  = new Field2D( emFields->Jz_s[ispec]->name, dimPrim );
-            }
+        if ( emFields->Jz_s[ispec] != NULL ) {
+            if ( emFields->Jz_s[ispec]->data_ != NULL )
+                Jz_s[ispec]  = FieldFactory::create(dimPrim, 2, false, emFields->Jz_s[ispec]->name, params);
+            else
+                Jz_s[ispec]  = FieldFactory::create(emFields->Jz_s[ispec]->name, dimPrim, params);
         }
         if( emFields->rho_s[ispec] != NULL ) {
             if( emFields->rho_s[ispec]->data_ != NULL ) {
@@ -131,28 +127,28 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
     for( size_t i=0 ; i<nDim_field ; i++ ) {
         // Standard scheme
         dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2;
+        dimDual[i] = n_space[i]+2-(params.is_pxr);
         // + Ghost domain
         dimPrim[i] += 2*oversize[i];
         dimDual[i] += 2*oversize[i];
     }
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = n_space[0]+1+2*oversize[0];
-    nx_d = n_space[0]+2+2*oversize[0];
+    nx_d = n_space[0]+2+2*oversize[0]-(params.is_pxr);
     // number of nodes of the primal and dual grid in the y-direction
     ny_p = n_space[1]+1+2*oversize[1];
-    ny_d = n_space[1]+2+2*oversize[1];
+    ny_d = n_space[1]+2+2*oversize[1]-(params.is_pxr);
     
     // Allocation of the EM fields
-    Ex_  = new Field2D( dimPrim, 0, false, "Ex" );
-    Ey_  = new Field2D( dimPrim, 1, false, "Ey" );
-    Ez_  = new Field2D( dimPrim, 2, false, "Ez" );
-    Bx_  = new Field2D( dimPrim, 0, true,  "Bx" );
-    By_  = new Field2D( dimPrim, 1, true,  "By" );
-    Bz_  = new Field2D( dimPrim, 2, true,  "Bz" );
-    Bx_m = new Field2D( dimPrim, 0, true,  "Bx_m" );
-    By_m = new Field2D( dimPrim, 1, true,  "By_m" );
-    Bz_m = new Field2D( dimPrim, 2, true,  "Bz_m" );
+    Ex_  = FieldFactory::create( dimPrim, 0, false, "Ex", params );
+    Ey_  = FieldFactory::create( dimPrim, 1, false, "Ey", params );
+    Ez_  = FieldFactory::create( dimPrim, 2, false, "Ez", params );
+    Bx_  = FieldFactory::create( dimPrim, 0, true,  "Bx", params );
+    By_  = FieldFactory::create( dimPrim, 1, true,  "By", params );
+    Bz_  = FieldFactory::create( dimPrim, 2, true,  "Bz", params );
+    Bx_m = FieldFactory::create( dimPrim, 0, true,  "Bx_m", params );
+    By_m = FieldFactory::create( dimPrim, 1, true,  "By_m", params );
+    Bz_m = FieldFactory::create( dimPrim, 2, true,  "Bz_m", params );
     
     if( params.Laser_Envelope_model ) {
         Env_A_abs_ = new Field2D( dimPrim, "Env_A_abs" );
@@ -176,24 +172,13 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
     }
     
     // Total charge currents and densities
-    Jx_   = new Field2D( dimPrim, 0, false, "Jx" );
-    Jy_   = new Field2D( dimPrim, 1, false, "Jy" );
-    Jz_   = new Field2D( dimPrim, 2, false, "Jz" );
+    Jx_   = FieldFactory::create( dimPrim, 0, false, "Jx", params );
+    Jy_   = FieldFactory::create( dimPrim, 1, false, "Jy", params );
+    Jz_   = FieldFactory::create( dimPrim, 2, false, "Jz", params );
     rho_  = new Field2D( dimPrim, "Rho" );
     
-    if( params.is_pxr == true ) {
-        rhoold_ = new Field2D( dimPrim, "Rho" );
-        Ex_pxr  = new Field2D( dimDual );
-        Ey_pxr  = new Field2D( dimDual );
-        Ez_pxr  = new Field2D( dimDual );
-        Bx_pxr  = new Field2D( dimDual );
-        By_pxr  = new Field2D( dimDual );
-        Bz_pxr  = new Field2D( dimDual );
-        Jx_pxr  = new Field2D( dimDual );
-        Jy_pxr  = new Field2D( dimDual );
-        Jz_pxr  = new Field2D( dimDual );
-        rho_pxr = new Field2D( dimDual );
-        rhoold_pxr  = new Field2D( dimDual );
+    if(params.is_pxr == true) {
+        rhoold_ = new Field2D( dimPrim, "RhoOld" );
     }
     
     
@@ -926,9 +911,9 @@ void ElectroMagn2D::saveMagneticFields( bool is_spectral )
         //    (*Bz2D_m)(nx_p,j)=(*Bz2D)(nx_p,j);
         //}
     } else {
-        Bx_m = Bx_;
-        By_m = By_;
-        Bz_m = Bz_;
+        Bx_m->deallocateDataAndSetTo( Bx_ );
+        By_m->deallocateDataAndSetTo( By_ );
+        Bz_m->deallocateDataAndSetTo( Bz_ );
     }
 }//END saveMagneticFields
 
@@ -936,7 +921,7 @@ void ElectroMagn2D::saveMagneticFields( bool is_spectral )
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply a single pass binomial filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::binomialCurrentFilter()
+void ElectroMagn2D::binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
 {
     // Static-cast of the currents
     Field2D *Jx2D = static_cast<Field2D *>( Jx_ );
@@ -945,36 +930,109 @@ void ElectroMagn2D::binomialCurrentFilter()
     
     // applying a single pass of the binomial filter
     // 9-point filter: (4*point itself + 2*(4*direct neighbors) + 1*(4*cross neghbors))/16
-    
-    // on Jx^(d,p) -- external points are treated by exchange
-    Field2D *tmp   = new Field2D( dimPrim, 0, false );
-    tmp->copyFrom( Jx2D );
-    for( unsigned int i=1; i<nx_d-1; i++ ) {
-        for( unsigned int j=1; j<ny_p-1; j++ ) {
-            ( *Jx2D )( i, j ) = ( ( *tmp )( i+1, j-1 ) + 2.*( *tmp )( i+1, j ) + ( *tmp )( i+1, j+1 ) + 2.*( *tmp )( i, j-1 ) + 4.*( *tmp )( i, j ) + 2.*( *tmp )( i, j+1 ) + ( *tmp )( i-1, j-1 ) + 2.*( *tmp )( i-1, j ) + ( *tmp )( i-1, j+1 ) )/16.;
-        }
-    }
-    delete tmp;
-    
-    // on Jy^(p,d) -- external points are treated by exchange
-    tmp   = new Field2D( dimPrim, 1, false );
-    tmp->copyFrom( Jy2D );
-    for( unsigned int i=1; i<nx_p-1; i++ ) {
-        for( unsigned int j=1; j<ny_d-1; j++ ) {
-            ( *Jy2D )( i, j ) = ( ( *tmp )( i+1, j-1 ) + 2.*( *tmp )( i+1, j ) + ( *tmp )( i+1, j+1 ) + 2.*( *tmp )( i, j-1 ) + 4.*( *tmp )( i, j ) + 2.*( *tmp )( i, j+1 ) + ( *tmp )( i-1, j-1 ) + 2.*( *tmp )( i-1, j ) + ( *tmp )( i-1, j+1 ) )/16.;
-        }
-    }
-    delete tmp;
-    
-    // on Jz^(p,p) -- external points are treated by exchange
-    tmp   = new Field2D( dimPrim, 2, false );
-    tmp->copyFrom( Jz2D );
-    for( unsigned int i=1; i<nx_p-1; i++ ) {
-        for( unsigned int j=1; j<ny_p-1; j++ ) {
-            ( *Jz2D )( i, j ) = ( ( *tmp )( i+1, j-1 ) + 2.*( *tmp )( i+1, j ) + ( *tmp )( i+1, j+1 ) + 2.*( *tmp )( i, j-1 ) + 4.*( *tmp )( i, j ) + 2.*( *tmp )( i, j+1 ) + ( *tmp )( i-1, j-1 ) + 2.*( *tmp )( i-1, j ) + ( *tmp )( i-1, j+1 ) )/16.;
-        }
-    }
-    delete tmp;
+      // applying a single pass of the binomial filter along X
+   if (ipass < passes[0]){
+       // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+       for( unsigned int i=0; i<nx_d-1; i++ ) {
+           for( unsigned int j=0; j<ny_p; j++ ) {
+                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i+1, j) )*0.5;
+           }
+       }
+       for( unsigned int i=nx_d-2; i>0; i-- ) {
+           for( unsigned int j=0; j<ny_p; j++ ) {
+                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i-1, j) )*0.5;
+           }
+       }
+       // Jy
+       for( unsigned int i=0; i<nx_p-1; i++ ) {
+           for( unsigned int j=0; j<ny_d; j++ ) {
+                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i+1, j) )*0.5;
+           }
+       }
+       for( unsigned int i=nx_p-2; i>0; i-- ) {
+           for( unsigned int j=0; j<ny_d; j++ ) {
+                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i-1, j) )*0.5;
+           }
+       }
+       // Jz
+       for( unsigned int i=0; i<nx_p-1; i++ ) {
+           for( unsigned int j=0; j<ny_p; j++ ) {
+                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i+1, j) )*0.5;
+           }
+       }
+       for( unsigned int i=nx_p-2; i>0; i-- ) {
+           for( unsigned int j=0; j<ny_p; j++ ) {
+                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i-1, j) )*0.5;
+           }
+       }
+   }
+
+   // applying a single pass of the binomial filter along Y
+   if (ipass < passes[1]){
+       //Jx
+       for( unsigned int i=1; i<nx_d-1; i++ ) {
+           for( unsigned int j=0; j<ny_p-1; j++ ) {
+                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i, j+1) )*0.5;
+           }
+       }
+       for( unsigned int i=1; i<nx_d-1; i++ ) {
+           for( unsigned int j=ny_p-2; j>0; j-- ) {
+                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i, j-1) )*0.5;
+           }
+       }
+       //Jy
+       for( unsigned int i=1; i<nx_p-1; i++ ) {
+           for( unsigned int j=0; j<ny_d-1; j++ ) {
+                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i, j+1) )*0.5;
+           }
+       }
+       for( unsigned int i=1; i<nx_p-1; i++ ) {
+           for( unsigned int j=ny_d-2; j>0; j-- ) {
+                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i, j-1) )*0.5;
+           }
+       }
+       //Jz
+       for( unsigned int i=1; i<nx_p-1; i++ ) {
+           for( unsigned int j=0; j<ny_p-1; j++ ) {
+                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i, j+1) )*0.5;
+           }
+       }
+       for( unsigned int i=1; i<nx_p-1; i++ ) {
+           for( unsigned int j=ny_p-2; j>0; j-- ) {
+                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i, j-1) )*0.5;
+           }
+       }
+   }
+ 
+    //// on Jx^(d,p) -- external points are treated by exchange
+    //Field2D *tmp   = new Field2D( dimPrim, 0, false );
+    //tmp->copyFrom( Jx2D );
+    //for( unsigned int i=1; i<nx_d-1; i++ ) {
+    //    for( unsigned int j=1; j<ny_p-1; j++ ) {
+    //        ( *Jx2D )( i, j ) = ( ( *tmp )( i+1, j-1 ) + 2.*( *tmp )( i+1, j ) + ( *tmp )( i+1, j+1 ) + 2.*( *tmp )( i, j-1 ) + 4.*( *tmp )( i, j ) + 2.*( *tmp )( i, j+1 ) + ( *tmp )( i-1, j-1 ) + 2.*( *tmp )( i-1, j ) + ( *tmp )( i-1, j+1 ) )/16.;
+    //    }
+    //}
+    //delete tmp;
+    //
+    //// on Jy^(p,d) -- external points are treated by exchange
+    //tmp   = new Field2D( dimPrim, 1, false );
+    //tmp->copyFrom( Jy2D );
+    //for( unsigned int i=1; i<nx_p-1; i++ ) {
+    //    for( unsigned int j=1; j<ny_d-1; j++ ) {
+    //        ( *Jy2D )( i, j ) = ( ( *tmp )( i+1, j-1 ) + 2.*( *tmp )( i+1, j ) + ( *tmp )( i+1, j+1 ) + 2.*( *tmp )( i, j-1 ) + 4.*( *tmp )( i, j ) + 2.*( *tmp )( i, j+1 ) + ( *tmp )( i-1, j-1 ) + 2.*( *tmp )( i-1, j ) + ( *tmp )( i-1, j+1 ) )/16.;
+    //    }
+    //}
+    //delete tmp;
+    //
+    //// on Jz^(p,p) -- external points are treated by exchange
+    //tmp   = new Field2D( dimPrim, 2, false );
+    //tmp->copyFrom( Jz2D );
+    //for( unsigned int i=1; i<nx_p-1; i++ ) {
+    //    for( unsigned int j=1; j<ny_p-1; j++ ) {
+    //        ( *Jz2D )( i, j ) = ( ( *tmp )( i+1, j-1 ) + 2.*( *tmp )( i+1, j ) + ( *tmp )( i+1, j+1 ) + 2.*( *tmp )( i, j-1 ) + 4.*( *tmp )( i, j ) + 2.*( *tmp )( i, j+1 ) + ( *tmp )( i-1, j-1 ) + 2.*( *tmp )( i-1, j ) + ( *tmp )( i-1, j+1 ) )/16.;
+    //    }
+    //}
+    //delete tmp;
     
 }//END binomialCurrentFilter
 
@@ -1074,37 +1132,20 @@ void ElectroMagn2D::centerMagneticFields()
 
 
 // Create a new field
-Field *ElectroMagn2D::createField( string fieldname )
+Field * ElectroMagn2D::createField( string fieldname, Params& params )
 {
-    if( fieldname.substr( 0, 2 )=="Ex" ) {
-        return new Field2D( dimPrim, 0, false, fieldname );
-    } else if( fieldname.substr( 0, 2 )=="Ey" ) {
-        return new Field2D( dimPrim, 1, false, fieldname );
-    } else if( fieldname.substr( 0, 2 )=="Ez" ) {
-        return new Field2D( dimPrim, 2, false, fieldname );
-    } else if( fieldname.substr( 0, 2 )=="Bx" ) {
-        return new Field2D( dimPrim, 0, true,  fieldname );
-    } else if( fieldname.substr( 0, 2 )=="By" ) {
-        return new Field2D( dimPrim, 1, true,  fieldname );
-    } else if( fieldname.substr( 0, 2 )=="Bz" ) {
-        return new Field2D( dimPrim, 2, true,  fieldname );
-    } else if( fieldname.substr( 0, 2 )=="Jx" ) {
-        return new Field2D( dimPrim, 0, false, fieldname );
-    } else if( fieldname.substr( 0, 2 )=="Jy" ) {
-        return new Field2D( dimPrim, 1, false, fieldname );
-    } else if( fieldname.substr( 0, 2 )=="Jz" ) {
-        return new Field2D( dimPrim, 2, false, fieldname );
-    } else if( fieldname.substr( 0, 3 )=="Rho" ) {
-        return new Field2D( dimPrim, fieldname );
-    } else if( fieldname.substr( 0, 9 )=="Env_A_abs" ) {
-        return new Field2D( dimPrim, 0, false, fieldname );
-    } else if( fieldname.substr( 0, 7 )=="Env_Chi" ) {
-        return new Field2D( dimPrim, 0, false, fieldname );
-    } else if( fieldname.substr( 0, 9 )=="Env_E_abs" ) {
-        return new Field2D( dimPrim, 0, false, fieldname );
-    }
+    if     (fieldname.substr(0,2)=="Ex" ) return FieldFactory::create(dimPrim, 0, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Ey" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Ez" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Bx" ) return FieldFactory::create(dimPrim, 0, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="By" ) return FieldFactory::create(dimPrim, 1, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="Bz" ) return FieldFactory::create(dimPrim, 2, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="Jx" ) return FieldFactory::create(dimPrim, 0, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Jy" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Jz" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
+    else if(fieldname.substr(0,3)=="Rho") return new Field2D(dimPrim, fieldname );
     
-    ERROR( "Cannot create field "<<fieldname );
+    ERROR("Cannot create field "<<fieldname);
     return NULL;
 }
 
@@ -1127,29 +1168,29 @@ void ElectroMagn2D::computeTotalRhoJ()
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
         if( Jx_s[ispec] ) {
             Field2D *Jx2D_s  = static_cast<Field2D *>( Jx_s[ispec] );
-            for( unsigned int i=0 ; i<=nx_p ; i++ )
-                for( unsigned int j=0 ; j<ny_p ; j++ ) {
+            for( unsigned int i=0 ; i<Jx2D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jx2D->dims_[1] ; j++ ) {
                     ( *Jx2D )( i, j ) += ( *Jx2D_s )( i, j );
                 }
         }
         if( Jy_s[ispec] ) {
             Field2D *Jy2D_s  = static_cast<Field2D *>( Jy_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ )
-                for( unsigned int j=0 ; j<=ny_p ; j++ ) {
+            for( unsigned int i=0 ; i<Jy2D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jy2D->dims_[1] ; j++ ) {
                     ( *Jy2D )( i, j ) += ( *Jy2D_s )( i, j );
                 }
         }
         if( Jz_s[ispec] ) {
             Field2D *Jz2D_s  = static_cast<Field2D *>( Jz_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ )
-                for( unsigned int j=0 ; j<ny_p ; j++ ) {
+            for( unsigned int i=0 ; i<Jz2D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jz2D->dims_[1] ; j++ ) {
                     ( *Jz2D )( i, j ) += ( *Jz2D_s )( i, j );
                 }
         }
         if( rho_s[ispec] ) {
             Field2D *rho2D_s  = static_cast<Field2D *>( rho_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ )
-                for( unsigned int j=0 ; j<ny_p ; j++ ) {
+            for( unsigned int i=0 ; i<rho2D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<rho2D->dims_[1] ; j++ ) {
                     ( *rho2D )( i, j ) += ( *rho2D_s )( i, j );
                 }
         }
@@ -1348,22 +1389,20 @@ void ElectroMagn2D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
 }
 
 
-void ElectroMagn2D::initAntennas( Patch *patch )
+void ElectroMagn2D::initAntennas( Patch *patch, Params& params )
 {
 
     // Filling the space profiles of antennas
-    for( unsigned int i=0; i<antennas.size(); i++ ) {
-        if( antennas[i].fieldName == "Jx" ) {
-            antennas[i].field = new Field2D( dimPrim, 0, false, "Jx" );
-        } else if( antennas[i].fieldName == "Jy" ) {
-            antennas[i].field = new Field2D( dimPrim, 1, false, "Jy" );
-        } else if( antennas[i].fieldName == "Jz" ) {
-            antennas[i].field = new Field2D( dimPrim, 2, false, "Jz" );
-        }
-        
-        if( antennas[i].field ) {
-            applyExternalField( antennas[i].field, antennas[i].space_profile, patch );
-        }
+    for (unsigned int i=0; i<antennas.size(); i++) {
+        if      (antennas[i].fieldName == "Jx")
+            antennas[i].field = FieldFactory::create(dimPrim, 0, false, "Jx", params);
+        else if (antennas[i].fieldName == "Jy")
+            antennas[i].field = FieldFactory::create(dimPrim, 1, false, "Jy", params);
+        else if (antennas[i].fieldName == "Jz")
+            antennas[i].field = FieldFactory::create(dimPrim, 2, false, "Jz", params);
+       
+        if (antennas[i].field) 
+            applyExternalField(antennas[i].field, antennas[i].space_profile, patch);
     }
     
 }

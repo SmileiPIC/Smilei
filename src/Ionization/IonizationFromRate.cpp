@@ -75,7 +75,7 @@ void IonizationFromRate::operator()( Particles *particles, unsigned int ipart_mi
         // Start of the Monte-Carlo routine  (At the moment, only 1 ionization per timestep is possible)
         // k_times will give the nb of ionization events
         k_times = 0;
-        double ran_p = patch->xorshift32() * patch->xorshift32_invmax;
+        double ran_p = patch->rand_->uniform();
         if( ran_p < 1.0 - exp( -rate[ipart-ipart_min]*dt ) ) {
             k_times        = 1;
         }

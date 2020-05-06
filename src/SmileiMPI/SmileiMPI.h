@@ -75,8 +75,8 @@ public:
 
     void isend_fields( Patch *patch, int to, int hindex, Params &params );
     void recv_fields( Patch *patch, int from, int hindex, Params &params );
-    void isend_species( Patch *patch, int to, int hindex, Params &params );
-    void recv_species( Patch *patch, int from, int hindex, Params &params );
+    void isend_species( Patch *patch, int to, int &maxtag, int tag, Params &params );
+    void recv_species( Patch *patch, int from, int &tag, Params &params );
 
     void isend( Particles *particles, int to, int hindex, MPI_Datatype datatype, MPI_Request &request );
     void recv( Particles *partictles, int from, int hindex, MPI_Datatype datatype );
@@ -95,11 +95,18 @@ public:
     void recv( Field *field, int from, int hindex );
     void recvComplex( Field *field, int from, int hindex );
 
+    void sendComplex( Field *field, int to, int hindex );
+    void irecvComplex( Field *field, int from, int hindex, MPI_Request &request );
+
     void isend( ProbeParticles *probe, int to, int hindex, unsigned int );
     void recv( ProbeParticles *probe, int from, int hindex, unsigned int );
 
     void isend( int *integer, int to, int hindex, unsigned int, MPI_Request &request );
     void recv( int *integer, int from, int hindex, unsigned int );
+    
+    // Functions for double grid exchange
+    void send( Field* field, int to  , int hindex );
+    void irecv( Field* field, int from, int hindex, MPI_Request& request );
 
     // DIAGS MPI SYNC
     // --------------

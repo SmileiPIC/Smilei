@@ -18,27 +18,10 @@
 using namespace std;
 
 ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch *patch, unsigned int _min_max )
-    : ElectroMagnBC( params, patch, _min_max )
+    : ElectroMagnBCAM( params, patch, _min_max )
 {
     // conversion factor from degree to radian
     conv_deg2rad = M_PI/180.0;
-    
-    // number of nodes of the primal and dual grid in the x-direction
-    nl_p = params.n_space[0]+1+2*params.oversize[0];
-    nl_d = nl_p+1;
-    // number of nodes of the primal and dual grid in the y-direction
-    nr_p = params.n_space[1]+1+2*params.oversize[1];
-    nr_d = nr_p+1;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
-    dl       = params.cell_length[0];
-    dt_ov_dl = dt/dl;
-    dl_ov_dt = 1.0/dt_ov_dl;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
-    dr       = params.cell_length[1];
-    dt_ov_dr = dt/dr;
-    dr_ov_dt = 1.0/dt_ov_dr;
     
     //Number of modes
     Nmode= params.nmodes;
@@ -90,9 +73,7 @@ ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch *patch, unsigned i
     Gamma_SM_Xmax    = 4.0*factor;
     Delta_SM_Xmax    = - dt_ov_dr*factor;
     Epsilon_SM_Xmax  = - Icpx*factor*dt;
-    
-    
-    
+   
 }
 
 
@@ -189,6 +170,7 @@ void ElectroMagnBCAM_SM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
+
     // Loop on imode
     for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
         // Static cast of the fields

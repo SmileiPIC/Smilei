@@ -242,7 +242,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         }
         // shuffle the index array
         for( unsigned int i=npart1; i>1; i-- ) {
-            unsigned int p = patch->xorshift32() % i;
+            unsigned int p = patch->rand_->integer() % i;
             swap( index1[i-1], index1[p] );
         }
         if( intra_collisions_ ) { // In the case of collisions within one species
@@ -344,9 +344,9 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             p2 = s2->particles;
             
             logL = coulomb_log_;
-            double U1  = patch->xorshift32() * patch->xorshift32_invmax;
-            double U2  = patch->xorshift32() * patch->xorshift32_invmax;
-            double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
+            double U1  = patch->rand_->uniform();
+            double U2  = patch->rand_->uniform();
+            double phi = patch->rand_->uniform_2pi();
             s = one_collision( p1, i1, s1->mass_, p2, i2, s2->mass_, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
             
             // Handle ionization & nuclear reaction

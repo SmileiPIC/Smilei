@@ -271,7 +271,87 @@ void Projector1D4Order::basic( double *rhoj, Particles &particles, unsigned int 
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector1D4Order::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion )
 {
-    WARNING( "Projection of ionization current not yet defined for 1D 4th order" );
+    Field1D *Jx1D  = static_cast<Field1D *>( Jx );
+    Field1D *Jy1D  = static_cast<Field1D *>( Jy );
+    Field1D *Jz1D  = static_cast<Field1D *>( Jz );
+    
+    
+    //Declaration of local variables
+    int i, im2, im1, ip1, ip2;
+    double xjn, xjmxi, xjmxi2, xjmxi3, xjmxi4;
+    double cim2, cim1, ci, cip1, cip2;
+    
+    // weighted currents
+    double weight = inv_cell_volume * particles.weight( ipart );
+    double Jx_ion = Jion.x * weight;
+    double Jy_ion = Jion.y * weight;
+    double Jz_ion = Jion.z * weight;
+    
+    //Locate particle on the grid
+    xjn    = particles.position( 0, ipart ) * dx_inv_; // normalized distance to the first node
+    
+    
+    // Compute Jx_ion on the dual grid
+    // -------------------------------
+    
+    i      = round( xjn+0.5 );             // index of the central node
+    xjmxi  = xjn - ( double )i + 0.5;      // normalized distance to the nearest grid point
+    xjmxi2 = xjmxi*xjmxi;                  // square of the normalized distance to the nearest grid point
+    xjmxi3 = xjmxi2*xjmxi;                 // cube
+    xjmxi4 = xjmxi2*xjmxi2;                 // fourth-power
+    
+    i  -= index_domain_begin;
+    im2 = i-2;
+    im1 = i-1;
+    ip1 = i+1;
+    ip2 = i+2;
+
+    cim2 = dble_1_ov_384   - dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 - dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    cim1 = dble_19_ov_96   - dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  + dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    ci   = dble_115_ov_192 - dble_5_ov_8   * xjmxi2 + dble_1_ov_4 * xjmxi4;
+    cip1 = dble_19_ov_96   + dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  - dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    cip2 = dble_1_ov_384   + dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 + dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    
+    // Jx
+    ( *Jx1D )( im2 )  += cim2 * Jx_ion;
+    ( *Jx1D )( im1 )  += cim1 * Jx_ion;
+    ( *Jx1D )( i )    += ci   * Jx_ion;
+    ( *Jx1D )( ip1 )  += cip1 * Jx_ion;
+    ( *Jx1D )( ip2 )  += cip2 * Jx_ion;
+    
+    
+    // Compute Jy_ion & Jz_ion on the primal grid
+    // ------------------------------------------
+    
+    i      = round( xjn );                 // index of the central node
+    xjmxi  = xjn - ( double )i;            // normalized distance to the nearest grid point
+    xjmxi2 = xjmxi*xjmxi;                  // square of the normalized distance to the nearest grid point
+    
+    i  -= index_domain_begin;
+    im2 = i-2;
+    im1 = i-1;
+    ip1 = i+1;
+    ip2 = i+2;
+    
+    cim2 = dble_1_ov_384   - dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 - dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    cim1 = dble_19_ov_96   - dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  + dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    ci   = dble_115_ov_192 - dble_5_ov_8   * xjmxi2 + dble_1_ov_4 * xjmxi4;
+    cip1 = dble_19_ov_96   + dble_11_ov_24 * xjmxi  + dble_1_ov_4 * xjmxi2  - dble_1_ov_6  * xjmxi3 - dble_1_ov_6  * xjmxi4;
+    cip2 = dble_1_ov_384   + dble_1_ov_48  * xjmxi  + dble_1_ov_16 * xjmxi2 + dble_1_ov_12 * xjmxi3 + dble_1_ov_24 * xjmxi4;
+    
+    // Jy
+    ( *Jy1D )( im2 )  += cim2 * Jy_ion;
+    ( *Jy1D )( im1 )  += cim1 * Jy_ion;
+    ( *Jy1D )( i )    += ci   * Jy_ion;
+    ( *Jy1D )( ip1 )  += cip1 * Jy_ion;
+    ( *Jy1D )( ip2 )  += cip2 * Jy_ion;
+    
+    // Jz
+    ( *Jz1D )( im2 )  += cim2 * Jz_ion;
+    ( *Jz1D )( im1 )  += cim1 * Jz_ion;
+    ( *Jz1D )( i )    += ci   * Jz_ion;
+    ( *Jz1D )( ip1 )  += cip1 * Jz_ion;
+    ( *Jz1D )( ip2 )  += cip2 * Jz_ion;
     
 } // END Project global current densities (ionize)
 

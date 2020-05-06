@@ -305,6 +305,14 @@ LaserProfileSeparable::~LaserProfileSeparable()
 
 void LaserProfileSeparable::createFields( Params &params, Patch *patch )
 {
+    std::vector<unsigned int> n_space(params.n_space);
+    if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
+        n_space = params.n_space_region;
+
+    std::vector<unsigned int> oversize(params.oversize);
+    if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
+        oversize = params.region_oversize;
+
     vector<unsigned int> dim( 2 );
     dim[0] = 1;
     dim[1] = 1;
@@ -315,21 +323,21 @@ void LaserProfileSeparable::createFields( Params &params, Patch *patch )
 
     // dim[0] for 2D and 3D Cartesian
     if( params.geometry=="2Dcartesian" || params.geometry=="3Dcartesian" ) {
-        unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+        unsigned int ny_p = n_space[1]+1+2*oversize[1];
         unsigned int ny_d = ny_p+1;
         dim[0] = primal_ ? ny_p : ny_d;
     }
 
     // dim[0] for LRT
     if( params.geometry=="AMcylindrical" ) {
-        unsigned int nr_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+        unsigned int nr_p = n_space[1]+1+2*oversize[1];
         unsigned int nr_d = nr_p+1;
         dim[0] = nr_p + nr_d;
     }
 
     // dim[1] for 3D Cartesian
     if( params.geometry=="3Dcartesian" ) {
-        unsigned int nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
+        unsigned int nz_p = n_space[2]+1+2*oversize[2];
         unsigned int nz_d = nz_p+1;
         dim[1] = primal_ ? nz_d : nz_p;
     }
@@ -341,6 +349,14 @@ void LaserProfileSeparable::createFields( Params &params, Patch *patch )
 
 void LaserProfileSeparable::initFields( Params &params, Patch *patch )
 {
+    std::vector<unsigned int> n_space(params.n_space);
+    if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
+        n_space = params.n_space_region;
+
+    std::vector<unsigned int> oversize(params.oversize);
+    if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
+        oversize = params.region_oversize;
+
     if( params.geometry=="1Dcartesian" ) {
 
         // Assign profile (only one point in 1D)
@@ -350,8 +366,8 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
         ( *phase )( 0, 0 ) = phaseProfile_->valueAt( pos );
 
     } else if( params.geometry=="2Dcartesian" ) {
-
-        unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+        
+        unsigned int ny_p = n_space[1]+1+2*oversize[1];
         unsigned int ny_d = ny_p+1;
         double dy = params.cell_length[1];
         vector<unsigned int> dim( 1 );
@@ -359,7 +375,7 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
 
         // Assign profile
         vector<double> pos( 1 );
-        pos[0] = patch->getDomainLocalMin( 1 ) - ( ( primal_?0.:0.5 ) + params.oversize[1] )*dy;
+        pos[0] = patch->getDomainLocalMin( 1 ) - ( ( primal_?0.:0.5 ) + oversize[1] )*dy;
         for( unsigned int j=0 ; j<dim[0] ; j++ ) {
             ( *space_envelope )( j, 0 ) = spaceProfile_->valueAt( pos );
             ( *phase )( j, 0 ) = phaseProfile_->valueAt( pos );
@@ -367,8 +383,8 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
         }
 
     } else if( params.geometry=="AMcylindrical" ) {
-
-        unsigned int nr_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+    
+        unsigned int nr_p = n_space[1]+1+2*oversize[1];
         unsigned int nr_d = nr_p+1;
         double dr = params.cell_length[1];
         vector<unsigned int> dim( 1 );
@@ -377,16 +393,15 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
         // Assign profile
         vector<double> pos( 1 );
         for( unsigned int j=0 ; j<dim[0] ; j++ ) {
-            pos[0] = patch->getDomainLocalMin( 1 ) + ( j*0.5 - 0.5 - params.oversize[1] )*dr ; // Increment half cells
+            pos[0] = patch->getDomainLocalMin( 1 ) + ( j*0.5 - 0.5 - oversize[1] )*dr ; // Increment half cells
             ( *space_envelope )( j, 0 ) = spaceProfile_->valueAt( pos );
             ( *phase )( j, 0 ) = phaseProfile_->valueAt( pos );
         }
 
     } else if( params.geometry=="3Dcartesian" ) {
-
-        unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+        unsigned int ny_p = n_space[1]+1+2*oversize[1];
         unsigned int ny_d = ny_p+1;
-        unsigned int nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
+        unsigned int nz_p = n_space[2]+1+2*oversize[2];
         unsigned int nz_d = nz_p+1;
         double dy = params.cell_length[1];
         double dz = params.cell_length[2];
@@ -396,9 +411,9 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
 
         // Assign profile
         vector<double> pos( 2 );
-        pos[0] = patch->getDomainLocalMin( 1 ) - ( ( primal_?0.:0.5 ) + params.oversize[1] )*dy;
+        pos[0] = patch->getDomainLocalMin( 1 ) - ( ( primal_?0.:0.5 ) + oversize[1] )*dy;
         for( unsigned int j=0 ; j<dim[0] ; j++ ) {
-            pos[1] = patch->getDomainLocalMin( 2 ) - ( ( primal_?0.5:0. ) + params.oversize[2] )*dz;
+            pos[1] = patch->getDomainLocalMin( 2 ) - ( ( primal_?0.5:0. ) + oversize[2] )*dz;
             for( unsigned int k=0 ; k<dim[1] ; k++ ) {
                 ( *space_envelope )( j, k ) = spaceProfile_->valueAt( pos );
                 ( *phase )( j, k ) = phaseProfile_->valueAt( pos );
@@ -448,6 +463,14 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
         return;
     }
     
+    std::vector<unsigned int> n_space(params.n_space);
+    if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
+        n_space = params.n_space_region;
+
+    std::vector<unsigned int> oversize(params.oversize);
+    if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
+        oversize = params.region_oversize;
+
     unsigned int ndim = 2;
     if( params.geometry=="3Dcartesian" ) {
         ndim = 3;
@@ -455,8 +478,8 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
 
     // Define the part of the array to obtain
     vector<hsize_t> dim( 3 ), offset( 3 ), fulldim( 3 );
-    hsize_t ny_tot = params.n_space_global[1]*params.global_factor[1]+2+2*params.oversize[1];
-    hsize_t ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+    hsize_t ny_tot = params.n_space_global[1]+2+2*params.oversize[1];
+    hsize_t ny_p = n_space[1]+1+2*oversize[1];
     hsize_t ny_d = ny_p+1;
     dim[0] = primal_ ? ny_p : ny_d;
     dim[1] = 1;
@@ -465,10 +488,10 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
     offset[2] = 0;
 
     if( ndim == 3 ) {
-        hsize_t nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
+        hsize_t nz_p = n_space[2]+1+2*oversize[2];
         hsize_t nz_d = nz_p+1;
         dim[1] = primal_ ? nz_d : nz_p;
-        offset[1] = patch->getCellStartingGlobalIndex( 2 ) + params.oversize[2];
+        offset[1] = patch->getCellStartingGlobalIndex( 2 ) + oversize[2];
     }
 
     // Open file
