@@ -8,6 +8,7 @@ compile:
   only:
     - develop
     - merge_sdmd_dev
+    - radiationSpectrum
 
   script:
     # Force workdir cleaning in case of retried
@@ -30,6 +31,7 @@ makerun1D:
   only:
     - develop
     - merge_sdmd_dev
+    - radiationSpectrum
     
   script:
     # Move in test dir
@@ -43,6 +45,7 @@ makerun2D:
   only:
     - develop
     - merge_sdmd_dev
+    - radiationSpectrum
 
   script:
     # Move in test dir
@@ -56,6 +59,7 @@ makerun3D:
   only:
     - develop
     - merge_sdmd_dev
+    - radiationSpectrum
 
   script:
     # Move in test dir
@@ -81,6 +85,7 @@ makerunV:
   only:
     - develop
     - merge_sdmd_dev
+    - radiationSpectrum
 
   script:
     # Move in test dir
@@ -110,4 +115,3 @@ use_picsar:
     - make clean
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
-

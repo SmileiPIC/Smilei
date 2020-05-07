@@ -75,10 +75,10 @@ Species::Species( Params &params, Patch *patch ) :
     position_initialization_on_species_index( -1 ),
     electron_species( NULL ),
     electron_species_index( -1 ),
-    photon_species( NULL ),
+    photon_species_( NULL ),
     //photon_species_index(-1),
     radiation_photon_species( "" ),
-    mBW_pair_creation_sampling( 2, 1 ),
+    mBW_pair_creation_sampling_( 2, 1 ),
     clrw( params.clrw ),
     oversize( params.oversize ),
     cell_length( params.cell_length ),
@@ -213,10 +213,10 @@ void Species::initOperators( Params &params, Patch *patch )
     Ionize = IonizationFactory::create( params, this );
 
     // Create the radiation model
-    Radiate = RadiationFactory::create( params, this );
+    Radiate = RadiationFactory::create( params, this, patch->rand_ );
 
     // Create the multiphoton Breit-Wheeler model
-    Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create( params, this );
+    Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create( params, this, patch->rand_  );
 
     // assign the correct Merging method to Merge
     Merge = MergingFactory::create( params, this );
@@ -369,19 +369,22 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                 // Radiation process
-                ( *Radiate )( *particles, this->photon_species, smpi,
+                ( *Radiate )( *particles, photon_species_, smpi,
                               RadiationTables,
-                              first_index[ibin], last_index[ibin], ithread );
+                              nrj_radiation,
+                              first_index[ibin],
+                              last_index[ibin], ithread );
 
                 // Update scalar variable for diagnostics
-                nrj_radiation += Radiate->getRadiatedEnergy();
+                // nrj_radiation += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
-                Radiate->computeParticlesChi( *particles,
-                                              smpi,
-                                              first_index[ibin],
-                                              last_index[ibin],
-                                              ithread );
+                // Radiate->computeParticlesChi( *particles,
+                //                               smpi,
+                //                               first_index[ibin],
+                //                               last_index[ibin],
+                //                               ithread );
+                
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[5] += MPI_Wtime() - timer;
 #endif
@@ -667,8 +670,8 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
         // Radiation losses
         if( Radiate ) {
             // If creation of macro-photon, we add them to photon_species
-            if( photon_species ) {
-                photon_species->importParticles( params,
+            if( photon_species_ ) {
+                photon_species_->importParticles( params,
                                                  patch,
                                                  Radiate->new_photons_,
                                                  localDiags );

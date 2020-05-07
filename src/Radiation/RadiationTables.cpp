@@ -321,7 +321,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 //
 //! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
-double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi)
+double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi, Random * rand)
 {
     // Log10 of particle_chi
     double log10_particle_chi;
@@ -371,7 +371,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     // Search of the index ichiph for photon_chi
     // ---------------------------------------
 
-    xi = Rand::uniform();
+    xi = rand->uniform();
 
     // If the randomly computed xi if below the first one of the row,
     // we take the first one which corresponds to the minimal photon photon_chi

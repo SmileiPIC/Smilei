@@ -22,6 +22,7 @@
 #include "Params.h"
 #include "H5.h"
 #include "userFunctions.h"
+#include "Random.h"
 
 //------------------------------------------------------------------------------
 //! MutliphotonBreitWheelerTables class: holds parameters, tables and
@@ -56,7 +57,7 @@ public:
     //! Computation of the electron and positron quantum parameters for
     //! the multiphoton Breit-Wheeler pair creation
     //! \param photon_chi photon quantum parameter
-    double *computePairQuantumParameter( double photon_chi );
+    double *computePairQuantumParameter( double photon_chi, Random * rand );
 
 
     // ---------------------------------------------------------------------
