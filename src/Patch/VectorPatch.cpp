@@ -956,6 +956,27 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
     SyncVectorPatch::sumEnvChi( params, ( *this ), smpi, timers, itime ); // MPI
     
 
+    //Apply boundary conditions for Env_Chi, only mode 0
+    if ( ( params.geometry == "AMcylindrical" ) && (( *this )( 0 )->vecSpecies.size() > 0) ) {
+        #pragma omp for schedule(runtime)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            if (emAM->isYmin){  
+                ( *this )( ipatch )->vecSpecies[0]->Proj->axisBCEnvChi( &( *emAM->Env_Chi_ )( 0 ) );
+                //Also apply BC on axis on species diagnostics
+                if (diag_flag) {
+                    unsigned int n_species = ( *this )( 0 )->vecSpecies.size();
+                        int imode =0;
+                        for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
+                            unsigned int ifield = imode*n_species+ispec;
+                            double *EnvChi = emAM->Env_Chi_s    [ifield] ? &( * ( emAM->Env_Chi_s[ifield] ) )( 0 ) : NULL ;
+                            ( *this )( ipatch )->vecSpecies[ispec]->Proj->axisBCEnvChi( EnvChi );
+                        }
+                }
+            }
+        }
+    }
+
     timers.susceptibility.update();
 
 } // End sumSusceptibility

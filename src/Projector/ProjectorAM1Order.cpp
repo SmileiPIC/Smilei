@@ -387,10 +387,24 @@ void ProjectorAM1Order::susceptibility( ElectroMagn *EMfields, Particles &partic
 
 
     }
-
-
-
-
     
+}
+
+
+
+void ProjectorAM1Order::axisBCEnvChi( double *EnvChi )
+{
+    if(EnvChi == NULL)
+        return;
+
+    const double one_ov_9  = 1./9.; 
+    const double one_ov_16 = 1./16.; 
+    
+    for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+          
+        EnvChi[i] = (25.*EnvChi[i+1] - 9.*EnvChi[i+2])*one_ov_16;
+    }//i
+    
+return;
 }
 
