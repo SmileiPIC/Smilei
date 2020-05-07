@@ -85,9 +85,10 @@ public:
     //! \param gamma particle Lorentz factor
     //! \param particle_chi particle quantum parameter
     //! \param dt time step
-    double getNielStochasticTerm( double gamma,
-                                  double particle_chi,
-                                  double dt );
+    // double getNielStochasticTerm( double gamma,
+    //                               double particle_chi,
+    //                               double dt,
+    //                               Random * rand);
 
     //! Computation of the corrected continuous quantum radiated energy
     //! during dt from the quantum parameter particle_chi using the Ridgers

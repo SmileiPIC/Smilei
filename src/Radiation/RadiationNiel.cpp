@@ -173,6 +173,9 @@ void RadiationNiel::operator()(
             //random_numbers[ipart] = 2.*drand48() -1.;
             random_numbers[ipart] = 2.*rand_->uniform() -1.;
         }
+        // else {
+        //     random_numbers[ipart] = 0;
+        // }
     }
 
     // Vectorized computation of the random number in a normal distribution
@@ -181,7 +184,7 @@ void RadiationNiel::operator()(
     for( ipart=0 ; ipart < nbparticles; ipart++ ) {
         // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
         if( particle_chi[ipart] > minimum_chi_continuous_ ) {
-            temp = -log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
+            temp = -std::log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
 
             if( temp < 5.000000 ) {
                 temp = temp - 2.500000;
@@ -195,7 +198,7 @@ void RadiationNiel::operator()(
                 p = +0.24664072700e+00 + p*temp;
                 p = +1.50140941000e+00 + p*temp;
             } else {
-                temp = sqrt( temp ) - 3.000000;
+                temp = std::sqrt( temp ) - 3.000000;
                 p = -0.000200214257      ;
                 p = +0.000100950558 + p*temp;
                 p = +0.001349343220 + p*temp;

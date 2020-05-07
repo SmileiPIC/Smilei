@@ -17,8 +17,8 @@
 //! Inherited from Radiation
 // -----------------------------------------------------------------------------
 MergingVranicSpherical::MergingVranicSpherical(Params& params,
-                             Species * species)
-      : Merging(params, species)
+                             Species * species, Random * rand)
+      : Merging(params, species, rand)
 {
     // Momentum cell discretization
     dimensions_[0] = (unsigned int)(species->merge_momentum_cell_size_[0]);
@@ -78,7 +78,7 @@ void MergingVranicSpherical::operator() (
 
     // First of all, we check that there is enought particles per cell
     // to process the merging.
-    if (number_of_particles > min_particles_per_cell) {
+    if (number_of_particles > min_particles_per_cell_) {
 
         // Momentum discretization
         // unsigned int dim[3];
@@ -268,7 +268,8 @@ void MergingVranicSpherical::operator() (
                     if (accumulation_correction_) {
                         mr_delta = (mr_interval) / (mr_dim-1);
                         // A bit of chaos to kill the accumulation effect
-                        mr_min -= 0.99*mr_delta*Rand::uniform();
+                        // mr_min -= 0.99*mr_delta*Rand::uniform();
+                        mr_min -= 0.99*mr_delta*rand_->uniform();
                         inv_mr_delta = 1./mr_delta;
                     } else {
                         mr_max += (mr_interval)*0.01;
@@ -295,7 +296,8 @@ void MergingVranicSpherical::operator() (
                 if (accumulation_correction_) {
                     phi_delta = (phi_interval) / (phi_dim-1);
                     // A bit of chaos to kill the accumulation effect
-                    phi_min -= 0.99*phi_delta*Rand::uniform();
+                    // phi_min -= 0.99*phi_delta*Rand::uniform();
+                    phi_min -= 0.99*phi_delta*rand_->uniform();
                     inv_phi_delta = 1./phi_delta;
                 } else {
                     phi_max += (phi_interval)*0.01;

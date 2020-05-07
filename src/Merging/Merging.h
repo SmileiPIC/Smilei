@@ -14,6 +14,7 @@
 #include "Params.h"
 #include "Particles.h"
 #include "Species.h"
+#include "Random.h"
 
 //  ----------------------------------------------------------------------------
 //! Class Merging
@@ -23,7 +24,7 @@ class Merging
 public:
 
     //! Creator for Merging
-    Merging( Params &params, Species *species );
+    Merging( Params &params, Species *species, Random * rand );
 
     virtual ~Merging();
 
@@ -44,11 +45,16 @@ public:
 
     // parameters _______________________________________________
 
-    // Minimum number of particles per cell to process the merging
-    unsigned int min_particles_per_cell;
-
 protected:
+    
+    // Local rand generator
+    Random * rand_;
+    
+    // Minimum number of particles per cell to process the merging
+    unsigned int min_particles_per_cell_;
+    
 private:
+    
 };
 
 #endif

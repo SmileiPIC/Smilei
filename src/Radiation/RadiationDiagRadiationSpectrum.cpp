@@ -73,7 +73,7 @@ void RadiationDiagRadiationSpectrum::operator() (
     double charge_over_mass2;
 
     // 1/mass^2
-    const double one_over_mass_2 = pow(one_over_mass_,2.);
+    const double one_over_mass_2 = std::pow(one_over_mass_,2.);
 
     // Temporary Lorentz factor
     double gamma;
@@ -85,9 +85,6 @@ void RadiationDiagRadiationSpectrum::operator() (
 
     // Charge shortcut
     short* charge = &( particles.charge(0) );
-
-    // Weight shortcut
-    double* weight = &( particles.weight(0) );
 
     // Optical depth for the Monte-Carlo process
     double* chi = &( particles.chi(0));
