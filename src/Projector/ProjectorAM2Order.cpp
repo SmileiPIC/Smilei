@@ -346,7 +346,7 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
 void ProjectorAM2Order::axisBC(complex<double> *rhoj, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode, bool diag_flag )
 {
 
-    double sign = 1.;
+    double sign = -1.;
     for (unsigned int i=0; i< imode; i++) sign *= -1;
    
         if (diag_flag and rhoj) {
