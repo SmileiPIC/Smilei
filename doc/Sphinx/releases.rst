@@ -25,6 +25,7 @@ Upcoming changes
   * Units in ``RadiationSpectrum`` diagnostic are more consistent with that
     of ``ParticleBinning``
   * Ionisation current at fourth order of interpolation
+  * Correction for :doc:`collisions` as suggested in [Higginson2020]_
 
 * Bugfixes:
 

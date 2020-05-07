@@ -8,7 +8,6 @@ compile:
   only:
     - develop
     - merge_sdmd_dev
-    - radiationSpectrum
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,7 +30,6 @@ makerun1D:
   only:
     - develop
     - merge_sdmd_dev
-    - radiationSpectrum
     
   script:
     # Move in test dir
@@ -45,7 +43,6 @@ makerun2D:
   only:
     - develop
     - merge_sdmd_dev
-    - radiationSpectrum
 
   script:
     # Move in test dir
@@ -59,7 +56,6 @@ makerun3D:
   only:
     - develop
     - merge_sdmd_dev
-    - radiationSpectrum
 
   script:
     # Move in test dir
@@ -73,7 +69,7 @@ makerunAM:
   only:
     - develop
     - merge_sdmd_dev
-    
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -85,7 +81,6 @@ makerunV:
   only:
     - develop
     - merge_sdmd_dev
-    - radiationSpectrum
 
   script:
     # Move in test dir
@@ -98,7 +93,7 @@ makerunCollisions:
   only:
     - develop
     - merge_sdmd_dev
-    
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
