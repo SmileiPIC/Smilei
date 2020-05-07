@@ -347,7 +347,7 @@ void ProjectorAM2Order::axisBC(complex<double> *rhoj, complex<double> *Jl,comple
 {
 
     double sign = -1.;
-    for (unsigned int i=0; i< imode; i++) sign *= -1;
+    for (int i=0; i< imode; i++) sign *= -1;
    
         if (diag_flag and rhoj) {
             for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {

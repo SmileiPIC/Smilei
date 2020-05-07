@@ -720,7 +720,6 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
 
 
     int patch_ndims_(3);
-    int patch_nbNeighbors_(2);
     vector<int> idx( patch_ndims_,0 );
     idx[iDim] = 1;
 

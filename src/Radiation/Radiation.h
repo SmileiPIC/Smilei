@@ -18,6 +18,7 @@
 #include "Particles.h"
 #include "Species.h"
 #include "RadiationTables.h"
+#include "Random.h"
 
 //  ----------------------------------------------------------------------------
 //! Class Radiation
@@ -27,7 +28,7 @@ class Radiation
 
 public:
     //! Creator for Radiation
-    Radiation( Params &params, Species *species );
+    Radiation( Params &params, Species *species, Random * rand );
     virtual ~Radiation();
     
     //! Overloading of () operator
@@ -39,14 +40,17 @@ public:
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
     //! \param ithread     Thread index
+    //! \param radiated_energy     overall energy radiated during the call to this method
     virtual void operator()(
-        Particles &particles,
-        Species *photon_species,
-        SmileiMPI *smpi,
+        Particles       &particles,
+        Species         *photon_species,
+        SmileiMPI       *smpi,
         RadiationTables &RadiationTables,
-        int istart,
-        int iend,
-        int ithread, int ipart_ref = 0 ) = 0;
+        double          &radiated_energy,
+        int             istart,
+        int             iend,
+        int             ithread,
+        int             ipart_ref = 0) = 0;
         
     //! Computation of the Lorentz invariant quantum parameter
     //! for the given particle properties
@@ -76,19 +80,6 @@ public:
                              - pow( gamma*Ez - Bx*py + By*px, 2 ) ) );
     };
     
-    //! Return the total normalized radiated energy
-    double inline getRadiatedEnergy()
-    {
-        return radiated_energy_;
-    };
-    
-    //! Set the total normalized radiated energy of the path
-    //! \param value value of the radiated energy to be assigned
-    void setRadiatedEnergy( double value )
-    {
-        radiated_energy_ = value;
-    };
-    
     //! Computation of the quantum parameter for the given
     //! thread of particles
     //! \param Particles class containg the particle property arrays
@@ -100,7 +91,8 @@ public:
                               SmileiMPI *smpi,
                               int istart,
                               int iend,
-                              int ithread, int ipart_ref = 0 );
+                              int ithread,
+                              int ipart_ref = 0 );
                               
     // Local array of new photons
     Particles new_photons_;
@@ -119,8 +111,7 @@ protected:
     //! Time step
     double dt_;
     
-    //! Radiated energy of the total thread
-    double radiated_energy_;
+    Random * rand_;
     
     // _________________________________________
     // Factors

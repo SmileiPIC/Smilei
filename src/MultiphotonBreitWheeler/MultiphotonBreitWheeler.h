@@ -17,6 +17,7 @@
 
 #include "MultiphotonBreitWheelerTables.h"
 #include "Params.h"
+#include "Random.h"
 
 //  ----------------------------------------------------------------------------
 //! Class Radiation
@@ -26,7 +27,7 @@ class MultiphotonBreitWheeler
 public:
 
     //! Creator for Radiation
-    MultiphotonBreitWheeler( Params &params, Species *species );
+    MultiphotonBreitWheeler( Params &params, Species *species, Random * rand );
     ~MultiphotonBreitWheeler();
     
     //! Overloading of () operator
@@ -114,7 +115,7 @@ public:
     //! Return the pair converted energy
     double inline getPairEnergy( void )
     {
-        return pair_converted_energy;
+        return pair_converted_energy_;
     }
     
     // Local array of new pairs of electron-positron
@@ -129,19 +130,22 @@ private:
     int n_dimensions_;
     
     //! Time step
-    double dt;
+    double dt_;
     
     // Number of pairs created per even
-    int mBW_pair_creation_sampling[2];
+    int mBW_pair_creation_sampling_[2];
     
     // Inverse of the number of pairs created per even
-    double mBW_pair_creation_inv_sampling[2];
+    double mBW_pair_creation_inv_sampling_[2];
     
     //! Energy lost after conversion into pairs
-    double pair_converted_energy;
+    double pair_converted_energy_;
     
     //! Threshold under which pair creation is not considered
-    double chiph_threashold;
+    double chiph_threshold_;
+    
+    //! Local random generator
+    Random * rand_;
     
     // _________________________________________
     // Factors
@@ -153,7 +157,7 @@ private:
     double inv_norm_E_Schwinger_;
     
     //! Espilon to check when tau is near 0
-    const double epsilon_tau_ = 1e-100;
+    static constexpr double epsilon_tau_ = 1e-100;
     
 };
 

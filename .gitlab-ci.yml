@@ -69,7 +69,7 @@ makerunAM:
   only:
     - develop
     - filterAM_adjustment
-    
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -93,7 +93,7 @@ makerunCollisions:
   only:
     - develop
     - filterAM_adjustment
-    
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -110,4 +110,3 @@ use_picsar:
     - make clean
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
-

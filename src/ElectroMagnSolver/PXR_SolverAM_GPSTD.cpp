@@ -44,6 +44,7 @@ PXR_SolverAM_GPSTD::~PXR_SolverAM_GPSTD()
 
 void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool full_domain )
 {
+#ifdef _PICSAR    
 
     int nl, nr;
     int ovl, ovr;
@@ -98,8 +99,6 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
 
     double pxr_dl = params.cell_length[0];
     double pxr_dr = params.cell_length[1];
-
-#ifdef _PICSAR    
 
     int nmodes ( Nmode );
     //call of extern init routine (defined in picsar)
@@ -197,7 +196,7 @@ void PXR_SolverAM_GPSTD::_2Dvectors_to_3D( ElectroMagn *fields )
     cField2D* rho;
     cField2D* rhoold;
 
-    for ( int imode=0 ; imode<( static_cast<ElectroMagnAM *>( fields ) )->El_.size() ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<( static_cast<ElectroMagnAM *>( fields ) )->El_.size() ; imode++ ) {
 
         El = ( static_cast<ElectroMagnAM *>( fields ) )->El_[imode];
         Er = ( static_cast<ElectroMagnAM *>( fields ) )->Er_[imode];
@@ -211,8 +210,8 @@ void PXR_SolverAM_GPSTD::_2Dvectors_to_3D( ElectroMagn *fields )
         rho = ( static_cast<ElectroMagnAM *>( fields ) )->rho_AM_[imode];
         rhoold = ( static_cast<ElectroMagnAM *>( fields ) )->rho_old_AM_[imode];
 
-        for (int il=0;il<El->dims_[0];il++) {
-            for (int ir=fields->oversize[1];ir<El->dims_[1]-fields->oversize[1];ir++) {
+        for (unsigned int il=0;il<El->dims_[0];il++) {
+            for (unsigned int ir=fields->oversize[1];ir<El->dims_[1]-fields->oversize[1];ir++) {
                 (*El_pxr)(imode,il,ir-fields->oversize[1]) = (*El)(il,ir); 
                 (*Er_pxr)(imode,il,ir-fields->oversize[1]) = (*Er)(il,ir); 
                 (*Et_pxr)(imode,il,ir-fields->oversize[1]) = (*Et)(il,ir); 
@@ -243,7 +242,7 @@ void PXR_SolverAM_GPSTD::_3D_to_2Dvectors( ElectroMagn *fields )
     cField2D* rho;
     cField2D* rhoold;
 
-    for ( int imode=0 ; imode<( static_cast<ElectroMagnAM *>( fields ) )->El_.size() ; imode++ ) {
+    for ( unsigned int imode=0 ; imode<( static_cast<ElectroMagnAM *>( fields ) )->El_.size() ; imode++ ) {
 
         El = ( static_cast<ElectroMagnAM *>(  fields ) )->El_[imode];
         Er = ( static_cast<ElectroMagnAM *>(  fields ) )->Er_[imode];
@@ -257,8 +256,8 @@ void PXR_SolverAM_GPSTD::_3D_to_2Dvectors( ElectroMagn *fields )
         rho = ( static_cast<ElectroMagnAM *>( fields ) )->rho_AM_[imode];
         rhoold = ( static_cast<ElectroMagnAM *>( fields ) )->rho_old_AM_[imode];
 
-        for (int il=0;il<El->dims_[0];il++) {
-            for (int ir=fields->oversize[1];ir<El->dims_[1]-fields->oversize[1];ir++) {
+        for (unsigned int il=0;il<El->dims_[0];il++) {
+            for (unsigned int ir=fields->oversize[1];ir<El->dims_[1]-fields->oversize[1];ir++) {
                 (*El)(il,ir) = (*El_pxr)(imode,il,ir-fields->oversize[1]); 
                 (*Er)(il,ir) = (*Er_pxr)(imode,il,ir-fields->oversize[1]); 
                 (*Et)(il,ir) = (*Et_pxr)(imode,il,ir-fields->oversize[1]); 

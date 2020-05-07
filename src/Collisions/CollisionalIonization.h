@@ -37,14 +37,9 @@ public:
     inline void prepare1( int Z_firstgroup )
     {
         electronFirst = Z_firstgroup==0 ? true : false;
-        ne = 0.;
-        ni = 0.;
-        nei = 0.;
     };
-    virtual void prepare2( Particles *p1, int i1, Particles *p2, int i2, bool );
-    virtual void prepare3( double, double );
     //! Method to apply the ionization
-    virtual void apply( Patch *patch, Particles *p1, int i1, Particles *p2, int i2 );
+    virtual void apply( Patch *patch, Particles *p1, int i1, Particles *p2, int i2, double coeff );
     //! Method to finish the ionization and put new electrons in place
     virtual void finish( Params &, Patch *, std::vector<Diagnostic *> & );
     
@@ -80,14 +75,6 @@ private:
     
     //! True if first group of species is the electron
     bool electronFirst;
-    //! Ionizing electron density
-    double ne;
-    //! Ionizing "hybrid" density
-    double nei;
-    //! Ion density
-    double ni;
-    //! Coefficient for the ionization frequency
-    double coeff;
     
     //! Current ionization rate array (one cell per number of ionization events)
     std::vector<double> rate;
@@ -96,7 +83,7 @@ private:
     std::vector<double> prob;
     
     //! Method called by ::apply to calculate the ionization, being sure that electrons are the first species
-    void calculate( double, double, double, Particles *pe, int ie, Particles *pi, int ii, double U1, double U2 );
+    void calculate( double, double, double, Particles *pe, int ie, Particles *pi, int ii, double U1, double U2, double coeff );
     
 };
 
@@ -113,9 +100,7 @@ public:
     };
     void assignDatabase( unsigned int ) override {};
     
-    void prepare2( Particles *, int, Particles *, int, bool ) override {};
-    void prepare3( double, double ) override {};
-    void apply( Patch *, Particles *, int, Particles *, int ) override {};
+    void apply( Patch *, Particles *, int, Particles *, int, double ) override {};
     //void finish(Species*, Species*, Params&, Patch*) override {};
     void finish( Params &, Patch *, std::vector<Diagnostic *> & ) override {};
 };

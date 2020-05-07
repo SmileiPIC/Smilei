@@ -2,8 +2,8 @@
 # SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ---------------------------------------------
 
-import math
-L0 = 2.*math.pi # conversion from normalization length to wavelength
+from math import pi, sqrt
+L0 = 2.*pi # conversion from normalization length to wavelength
 
 
 Main(
@@ -103,6 +103,17 @@ for i in range(2):
 			 ["x",  0, Main.grid_length[0], 1]
 		]
 	)
+	
+	DiagParticleBinning(
+		deposited_quantity = "weight",
+		every = 5,
+		time_average = 1,
+		species = ["electron"+str(i+1)],
+		axes = [
+			 ["vx",  -5.*sqrt(temperature[i]), 5.*sqrt(temperature[i]), 100]
+		]
+	)
+
 
 DiagFields(
 	every = 100
