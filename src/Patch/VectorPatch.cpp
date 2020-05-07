@@ -890,8 +890,23 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             if (emAM->isYmin){
                 for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
-                    ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode );
+                    ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode, diag_flag );
                 }
+                //Also apply BC on axis on species diagnostics
+                if (diag_flag) {
+                    unsigned int n_species = ( *this )( 0 )->vecSpecies.size();
+                    for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
+                        for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
+                            unsigned int ifield = imode*n_species+ispec;
+                            complex<double> *Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : NULL ;
+                            complex<double> *Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : NULL ;
+                            complex<double> *Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : NULL ;
+                            complex<double> *rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : NULL ;
+                            ( *this )( ipatch )->vecSpecies[ispec]->Proj->axisBC( rho , Jl, Jr, Jt, imode, diag_flag );
+                        }
+                    }
+                }
+
             }
         }
     }

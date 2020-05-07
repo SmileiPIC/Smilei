@@ -236,8 +236,12 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     
 } // END Project local current and charge densities (rho, Jl, Jr, Jt)
 
-void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode )
+void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode, bool diag_flag )
 {
+
+    if(rho == NULL)
+        return;
+
     const double one_ov_9  = 1./9.; 
     const double one_ov_16 = 1./16.; 
     if (imode == 0){

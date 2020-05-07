@@ -343,64 +343,71 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
 } // END Project for diags local current densities
 
 // Apply boundary conditions on axis for currents and densities
-void ProjectorAM2Order::axisBC(complex<double> *rhoj, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode )
+void ProjectorAM2Order::axisBC(complex<double> *rhoj, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode, bool diag_flag )
 {
 
     double sign = 1.;
     for (unsigned int i=0; i< imode; i++) sign *= -1;
    
-    //Fold rho 
-        for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
-            for( unsigned int j=1 ; j<3; j++ ) {
-                rhoj[i+j] += sign * rhoj[i-j];
-                rhoj[i-j]  = sign * rhoj[i+j];
+        if (diag_flag and rhoj) {
+            for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
+                //Fold rho 
+                for( unsigned int j=1 ; j<3; j++ ) {
+                    rhoj[i+j] += sign * rhoj[i-j];
+                    rhoj[i-j]  = sign * rhoj[i+j];
+                }
+                //Apply BC
+                if (imode > 0){
+                    rhoj[i] = 0.;
+                } else {
+                    rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
+                }
             }
-            if (imode > 0){
-                rhoj[i] = 0.;
-            } else {
-                rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
-            }
-        }//i
+        }
                     
-    //Fold Jl
-        for( unsigned int i=2 ; i<(npriml+1)*nprimr+2; i+=nprimr ) {
-            for( unsigned int j=1 ; j<3; j++ ) {
-                Jl [i+j] +=  sign * Jl[i-j];
-                Jl[i-j]   =  sign * Jl[i+j];
-             }
-             if (imode > 0){
-                 Jl [i] = 0. ;
-            } else {
-                 //Force dJl/dr = 0 at r=0.
-                 Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
+        if (Jl) {
+            for( unsigned int i=2 ; i<(npriml+1)*nprimr+2; i+=nprimr ) {
+                //Fold Jl
+                for( unsigned int j=1 ; j<3; j++ ) {
+                    Jl [i+j] +=  sign * Jl[i-j];
+                    Jl[i-j]   =  sign * Jl[i+j];
+                 }
+                 if (imode > 0){
+                     Jl [i] = 0. ;
+                } else {
+                     //Force dJl/dr = 0 at r=0.
+                     Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
+                }
             }
-        }//i
+        }
 
-    //Fold Jt
-        for( unsigned int i=0 ; i<npriml; i++ ) {
-            int iloc = i*nprimr+2;
-            int ilocr = i*(nprimr+1)+3;
-            for( unsigned int j=1 ; j<3; j++ ) {
-                Jt [iloc+j] += -sign * Jt[iloc-j];
-                Jt[iloc-j]   = -sign * Jt[iloc+j];
-            }
-            for( unsigned int j=0 ; j<3; j++ ) {
-                Jr [ilocr+2-j] += -sign * Jr [ilocr-3+j];
-                Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
-            }
+        if (Jt and Jr) {
+            for( unsigned int i=0 ; i<npriml; i++ ) {
+                int iloc = i*nprimr+2;
+                int ilocr = i*(nprimr+1)+3;
+                //Fold Jt
+                for( unsigned int j=1 ; j<3; j++ ) {
+                    Jt [iloc+j] += -sign * Jt[iloc-j];
+                    Jt[iloc-j]   = -sign * Jt[iloc+j];
+                }
+                for( unsigned int j=0 ; j<3; j++ ) {
+                    Jr [ilocr+2-j] += -sign * Jr [ilocr-3+j];
+                    Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
+                }
 
-            if (imode == 1){
-                Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
-                //Force dJr/dr = 0 at r=0.
-                //Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
-                Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
-            } else{
-                Jt [iloc] = 0. ;
-                //Force dJr/dr = 0 and Jr=0 at r=0.
-                Jr [ilocr] =  Jr [ilocr+1]/9.;
-                Jr [ilocr-1] = -Jr [ilocr];
+                if (imode == 1){
+                    Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
+                    //Force dJr/dr = 0 at r=0.
+                    //Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
+                    Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
+                } else{
+                    Jt [iloc] = 0. ;
+                    //Force dJr/dr = 0 and Jr=0 at r=0.
+                    //Jr [ilocr] =  Jr [ilocr+1]/9.;
+                    Jr [ilocr-1] = -Jr [ilocr];
+                }
             }
-        }//i
+        }
 
     return;
 

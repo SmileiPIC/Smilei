@@ -32,7 +32,7 @@ public:
     virtual void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) {};
 
     //! Apply boundary conditions on axis for Rho and J in AM geometry
-    virtual void axisBC( std::complex<double> *rhoj, std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, int imode ) {};
+    virtual void axisBC( std::complex<double> *rhoj, std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, int imode, bool diag_flag ) {};
     
     //! Project global current densities if Ionization in Species::dynamics,
     virtual void ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion ) = 0;
