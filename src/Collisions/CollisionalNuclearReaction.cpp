@@ -71,7 +71,7 @@ void CollisionalNuclearReaction::finish(
         patch->vecSpecies[product_species_[i]]->importParticles( params, patch, *product_particles_[i], localDiags );
     }
     
-    // Remove reactants that have been (very rare)
+    // Remove reactants that have fully reacted (very rare)
     for( unsigned int is = 0; is < sg1.size(); is++ ) {
         patch->vecSpecies[sg1[is]]->eraseWeightlessParticles();
     }
