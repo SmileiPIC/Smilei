@@ -377,5 +377,4 @@ help:
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
-	@if [ -f  scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine)|| echo "None"; fi
 	@if [ -f scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/compile_tools/machine; fi
