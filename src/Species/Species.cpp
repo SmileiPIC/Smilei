@@ -1023,15 +1023,6 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     unsigned int npart = source_particles.size(), nbin=first_index.size();
     double inv_cell_length = 1./ params.cell_length[0];
 
-    // std::cerr << "Species::importParticles "
-    //           << " for "<< this->name_
-    //           << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
-    //           << " mpi process " << patch->MPI_me_ << " - "
-    //           << " mode: " << this->vectorized_operators << " - "
-    //           << " nb bin: " << first_index.size() << " - "
-    //           << " nbp: " << npart
-    //           << std::endl;
-
     // If this species is tracked, set the particle IDs
     if( particles->tracked ) {
         dynamic_cast<DiagnosticTrack *>( localDiags[tracking_diagnostic] )->setIDs( source_particles );
