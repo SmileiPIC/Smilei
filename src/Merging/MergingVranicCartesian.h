@@ -30,7 +30,7 @@ class MergingVranicCartesian : public Merging
 public:
 
     //! Constructor for RadiationLandauLifshitz
-    MergingVranicCartesian( Params &params, Species *species );
+    MergingVranicCartesian( Params &params, Species *species, Random * rand );
 
     //! Destructor for RadiationLandauLifshitz
     ~MergingVranicCartesian();
@@ -55,6 +55,8 @@ public:
         //unsigned int &remaining_particles,
         //unsigned int &merged_particles);
 
+protected:
+
     // Parameters __________________________________________________
 
     // discretization dans chaque direction
@@ -75,9 +77,6 @@ public:
     
     // Minimum momentum value in log scale
     double min_momentum_log_scale_;
-
-protected:
-
 
 private:
 

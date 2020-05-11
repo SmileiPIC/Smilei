@@ -219,7 +219,7 @@ void Species::initOperators( Params &params, Patch *patch )
     Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create( params, this, patch->rand_  );
 
     // assign the correct Merging method to Merge
-    Merge = MergingFactory::create( params, this );
+    Merge = MergingFactory::create( params, this, patch->rand_ );
 
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, this, patch );
