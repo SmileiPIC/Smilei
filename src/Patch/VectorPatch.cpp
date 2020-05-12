@@ -957,7 +957,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                     ( *this )( ipatch )->EMfields->binomialCurrentFilter(ipassfilter, params.currentFilter_passes);
                 }
                 if (params.currentFilter_model=="blackman21"){
-                    ( *this )( ipatch )->EMfields->blackman21CurrentFilter(ipassfilter, params.currentFilter_passes);
+                    ( *this )( ipatch )->EMfields->blackman21CurrentFilter(ipassfilter, params.currentFilter_passes, params.currentFilter_kernelFIR);
                 }
             }
             if (params.geometry != "AMcylindrical"){

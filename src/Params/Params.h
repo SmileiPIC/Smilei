@@ -167,6 +167,7 @@ public:
     //! Current spatial filter: number of binomial passes
     std::vector<unsigned int> currentFilter_passes;
     std::string currentFilter_model;
+    std::vector<double> currentFilter_kernelFIR;
 
     //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 201, 665 (2004)]
     bool Friedman_filter;

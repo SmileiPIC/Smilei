@@ -16,13 +16,13 @@ resx  = 8.                  # nb of cells in one laser wavelength x
 resy  = 8.                  # nb of cells in one laser wavelength y
 
 solver = 'Bouchard'
-order=4
+order=2
 
 # One 4 pass current filter in y-direction, perpendicular to the x-velocity of the plasma
 
 CurrentFilter(
     model = "blackman21",
-    passes = [0,4]
+    passes = [0,6]
 )
 
 fromcflfactor = 1.00 # have to be less than 1.
@@ -53,7 +53,7 @@ dfac = 1
 Main(
         geometry                       = "2Dcartesian",
         interpolation_order            = order,
-        custom_oversize                = 10,
+        custom_oversize                = 12,
         timestep                       = t0/rest,
         simulation_time                = Tsim,
         cell_length                    = [l0/resx,l0/resx],

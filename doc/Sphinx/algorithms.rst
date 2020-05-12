@@ -390,7 +390,10 @@ Current filtering, if required by the user, is applied before solving
 Maxwell’s equation, and the number of passes is an :ref:`input parameter <CurrentFilter>`
 defined by the user.
 
+Large band low-pass filter of the current densities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+A large band low-pass filter on the current densities is available in :program:`Smilei` too. The convolution kernel is a 21 points windowed-sinc.
 
 ----
 

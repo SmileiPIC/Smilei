@@ -449,6 +449,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR( "Currently, only the `binomial` and `blackman21` model is available in CurrentFilter()" );
         }
 
+        if(currentFilter_model == "blackman21") {
+            PyTools::extractV( "kernelFIR", currentFilter_kernelFIR, "CurrentFilter", ifilt );
+            if( currentFilter_kernelFIR.size() < 3 ) {
+                ERROR( "Kernel have to measure 3 taps at least. For example the binomial FIR kernel on three tapis [0.25,0.50,0.25]" );
+            }
+        }
+
         PyTools::extractV( "passes", currentFilter_passes, "CurrentFilter", ifilt );  //test list
 
         if( currentFilter_passes.size() == 0 ) {
@@ -891,9 +898,9 @@ void Params::compute()
     for( unsigned int i=0; i<nDim_field; i++ ) {
         PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
         oversize[i]  = max( interpolation_order, max( ( unsigned int )( norder[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
-        if ( (currentFilter_model == "blackman21") && (oversize[i] < 12) ){
-            ERROR( "With the `blackman21` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= 12." )
-        }
+       if ( (currentFilter_model == "blackman21") && (oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) ) {
+           ERROR( "With the `blackman21` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2" );
+       }
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if( n_space_global[i]%number_of_patches[i] !=0 ) {

@@ -1054,125 +1054,84 @@ void ElectroMagn2D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply a single pass FIR 21 points blackman based filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsigned int> passes)
+void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff)
 {
     // Static-cast of the currents
     Field2D *Jx2D = static_cast<Field2D *>( Jx_ );
     Field2D *Jy2D = static_cast<Field2D *>( Jy_ );
     Field2D *Jz2D = static_cast<Field2D *>( Jz_ );
 
+    // Upsampling factor
+    // m=1 : No upsampling ......................... f_Nyquist *= 1
+    // m=2 : 1 zero(s) between two data points ..... f_Nyquist *= 2
+    // m=3 : 2 zero(s) between two data points ..... f_Nyquist *= 3
+    // m=4 : 3 zero(s) between two data points ..... f_Nyquist *= 4
+    unsigned int m=1 ;
+
+    // Guard-Cell Current
+    unsigned int gcfilt=0 ;
+
     // Coefficient for a "sinc*blackman" filter on 21 coefficients with the cut-off frequency (g=0.5)
     // set 0.63*f_Nyquist (the frequency where Bouchard solver suffer from numerical Cherenkov radiation).
-    std::vector<double> filtering_coeff {
-        0.000000000000000000,
-        -0.000279838770318800,
-        -0.000200519484294521,
-        0.004426897002348270,
-        -0.006788778154595251,
-        -0.009825869947950394,
-        0.040484277103842545,
-        -0.024767664627818806,
-        -0.098518872041088876,
-        0.280495603922022663,
-        0.629949529995706525,
-        0.280495603922022718,
-        -0.098518872041088876,
-        -0.024767664627818809,
-        0.040484277103842552,
-        -0.009825869947950400,
-        -0.006788778154595256,
-        0.004426897002348273,
-        -0.000200519484294521,
-        -0.000279838770318800,
-        0.000000000000000000
-    };
+    // std::vector<double> filtering_coeff {
+    //     0.,
+    //     0.0004417052133439378,
+    //     0.004068661289108311,
+    //     -0.003865266434116045,
+    //     -0.013277634036992836,
+    //     0.020669998746904193,
+    //     0.028934610242885666,
+    //     -0.07264453710751474,
+    //     -0.0437980746027025,
+    //     0.3050382699553371,
+    //     0.5488645334674936,
+    //     0.3050382699553371,
+    //     -0.0437980746027025,
+    //     -0.07264453710751476,
+    //     0.02893461024288566,
+    //     0.020669998746904197,
+    //     -0.013277634036992836,
+    //     -0.003865266434116045,
+    //     0.004068661289108313,
+    //     0.0004417052133439378,
+    //     0.
+    //};
 
     // Applying a single pass of the 21 points blackman based filter along X
     if (ipass < passes[0]){
         Field2D *tmp   = new Field2D( dimPrim, 0, false );
         tmp->copyFrom( Jx2D );
-        for( unsigned int i=12; i<nx_d-12; i++ ) {
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_d-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
             for( unsigned int j=1; j<ny_p-1; j++ ) {
-                ( *Jx2D )( i, j ) =
-                    + filtering_coeff[0]*( *tmp )( i-10, j )
-                    + filtering_coeff[1]*( *tmp )( i-9, j )
-                    + filtering_coeff[2]*( *tmp )( i-8, j )
-                    + filtering_coeff[3]*( *tmp )( i-7, j )
-                    + filtering_coeff[4]*( *tmp )( i-6, j )
-                    + filtering_coeff[5]*( *tmp )( i-5, j )
-                    + filtering_coeff[6]*( *tmp )( i-4, j )
-                    + filtering_coeff[7]*( *tmp )( i-3, j )
-                    + filtering_coeff[8]*( *tmp )( i-2, j )
-                    + filtering_coeff[9]*( *tmp )( i-1, j )
-                    + filtering_coeff[10]*( *tmp )( i, j )
-                    + filtering_coeff[11]*( *tmp )( i+1, j )
-                    + filtering_coeff[12]*( *tmp )( i+2, j )
-                    + filtering_coeff[13]*( *tmp )( i+3, j )
-                    + filtering_coeff[14]*( *tmp )( i+4, j )
-                    + filtering_coeff[15]*( *tmp )( i+5, j )
-                    + filtering_coeff[16]*( *tmp )( i+6, j )
-                    + filtering_coeff[17]*( *tmp )( i+7, j )
-                    + filtering_coeff[18]*( *tmp )( i+8, j )
-                    + filtering_coeff[19]*( *tmp )( i+9, j )
-                    + filtering_coeff[20]*( *tmp )( i+10, j );
-            }
+                ( *Jx2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jx2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m, j ) ;
+                }
+                ( *Jx2D )( i, j ) *= m ;
+           }
         }
         delete tmp;
         tmp   = new Field2D( dimPrim, 1, false );
         tmp->copyFrom( Jy2D );
-        for( unsigned int i=12; i<nx_p-12; i++ ) {
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
             for( unsigned int j=1; j<ny_d-1; j++ ) {
-                ( *Jy2D )( i, j ) =
-                    + filtering_coeff[0]*( *tmp )( i-10, j )
-                    + filtering_coeff[1]*( *tmp )( i-9, j )
-                    + filtering_coeff[2]*( *tmp )( i-8, j )
-                    + filtering_coeff[3]*( *tmp )( i-7, j )
-                    + filtering_coeff[4]*( *tmp )( i-6, j )
-                    + filtering_coeff[5]*( *tmp )( i-5, j )
-                    + filtering_coeff[6]*( *tmp )( i-4, j )
-                    + filtering_coeff[7]*( *tmp )( i-3, j )
-                    + filtering_coeff[8]*( *tmp )( i-2, j )
-                    + filtering_coeff[9]*( *tmp )( i-1, j )
-                    + filtering_coeff[10]*( *tmp )( i, j )
-                    + filtering_coeff[11]*( *tmp )( i+1, j )
-                    + filtering_coeff[12]*( *tmp )( i+2, j )
-                    + filtering_coeff[13]*( *tmp )( i+3, j )
-                    + filtering_coeff[14]*( *tmp )( i+4, j )
-                    + filtering_coeff[15]*( *tmp )( i+5, j )
-                    + filtering_coeff[16]*( *tmp )( i+6, j )
-                    + filtering_coeff[17]*( *tmp )( i+7, j )
-                    + filtering_coeff[18]*( *tmp )( i+8, j )
-                    + filtering_coeff[19]*( *tmp )( i+9, j )
-                    + filtering_coeff[20]*( *tmp )( i+10, j );
+                ( *Jy2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jy2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m, j ) ;
+                }
+                ( *Jy2D )( i, j ) *= m ;
            }
         }
         delete tmp;
         tmp   = new Field2D( dimPrim, 2, false );
         tmp->copyFrom( Jz2D );
-        for( unsigned int i=12; i<nx_p-12; i++ ) {
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
             for( unsigned int j=1; j<ny_p-1; j++ ) {
-                ( *Jz2D )( i, j ) =
-                    + filtering_coeff[0]*( *tmp )( i-10, j )
-                    + filtering_coeff[1]*( *tmp )( i-9, j )
-                    + filtering_coeff[2]*( *tmp )( i-8, j )
-                    + filtering_coeff[3]*( *tmp )( i-7, j )
-                    + filtering_coeff[4]*( *tmp )( i-6, j )
-                    + filtering_coeff[5]*( *tmp )( i-5, j )
-                    + filtering_coeff[6]*( *tmp )( i-4, j )
-                    + filtering_coeff[7]*( *tmp )( i-3, j )
-                    + filtering_coeff[8]*( *tmp )( i-2, j )
-                    + filtering_coeff[9]*( *tmp )( i-1, j )
-                    + filtering_coeff[10]*( *tmp )( i, j )
-                    + filtering_coeff[11]*( *tmp )( i+1, j )
-                    + filtering_coeff[12]*( *tmp )( i+2, j )
-                    + filtering_coeff[13]*( *tmp )( i+3, j )
-                    + filtering_coeff[14]*( *tmp )( i+4, j )
-                    + filtering_coeff[15]*( *tmp )( i+5, j )
-                    + filtering_coeff[16]*( *tmp )( i+6, j )
-                    + filtering_coeff[17]*( *tmp )( i+7, j )
-                    + filtering_coeff[18]*( *tmp )( i+8, j )
-                    + filtering_coeff[19]*( *tmp )( i+9, j )
-                    + filtering_coeff[20]*( *tmp )( i+10, j ); 
+                ( *Jz2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jz2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m, j ) ;
+                }
+                ( *Jz2D )( i, j ) *= m ;
             }
         }
         delete tmp;
@@ -1184,29 +1143,12 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         Field2D *tmp   = new Field2D( dimPrim, 0, false );
         tmp->copyFrom( Jx2D );
         for( unsigned int i=1; i<nx_d-1; i++ ) {
-            for( unsigned int j=12; j<ny_p-12; j++ ) {
-                ( *Jx2D )( i, j ) =
-                    + filtering_coeff[0]*( *tmp )( i, j-10 )
-                    + filtering_coeff[1]*( *tmp )( i, j-9 )
-                    + filtering_coeff[2]*( *tmp )( i, j-8 )
-                    + filtering_coeff[3]*( *tmp )( i, j-7 )
-                    + filtering_coeff[4]*( *tmp )( i, j-6 )
-                    + filtering_coeff[5]*( *tmp )( i, j-5 )
-                    + filtering_coeff[6]*( *tmp )( i, j-4 )
-                    + filtering_coeff[7]*( *tmp )( i, j-3 )
-                    + filtering_coeff[8]*( *tmp )( i, j-2 )
-                    + filtering_coeff[9]*( *tmp )( i, j-1 )
-                    + filtering_coeff[10]*( *tmp )( i, j )
-                    + filtering_coeff[11]*( *tmp )( i, j+1 )
-                    + filtering_coeff[12]*( *tmp )( i, j+2 )
-                    + filtering_coeff[13]*( *tmp )( i, j+3 )
-                    + filtering_coeff[14]*( *tmp )( i, j+4 )
-                    + filtering_coeff[15]*( *tmp )( i, j+5 )
-                    + filtering_coeff[16]*( *tmp )( i, j+6 )
-                    + filtering_coeff[17]*( *tmp )( i, j+7 )
-                    + filtering_coeff[18]*( *tmp )( i, j+8 )
-                    + filtering_coeff[19]*( *tmp )( i, j+9 )
-                    + filtering_coeff[20]*( *tmp )( i, j+10  );
+            for( unsigned int j=((filtering_coeff.size()-1)/(m*2)+gcfilt); j<ny_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); j++ ) {
+                ( *Jx2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jx2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i, j - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+                }
+                ( *Jx2D )( i, j ) *= m ;
             }
         }
         delete tmp;
@@ -1214,29 +1156,12 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         tmp   = new Field2D( dimPrim, 1, false );
         tmp->copyFrom( Jy2D );
         for( unsigned int i=1; i<nx_p-1; i++ ) {
-            for( unsigned int j=12; j<ny_d-12; j++ ) {
-                ( *Jy2D )( i, j ) =
-                    + filtering_coeff[0]*( *tmp )( i, j-10 )
-                    + filtering_coeff[1]*( *tmp )( i, j-9 )
-                    + filtering_coeff[2]*( *tmp )( i, j-8 )
-                    + filtering_coeff[3]*( *tmp )( i, j-7 )
-                    + filtering_coeff[4]*( *tmp )( i, j-6 )
-                    + filtering_coeff[5]*( *tmp )( i, j-5 )
-                    + filtering_coeff[6]*( *tmp )( i, j-4 )
-                    + filtering_coeff[7]*( *tmp )( i, j-3 )
-                    + filtering_coeff[8]*( *tmp )( i, j-2 )
-                    + filtering_coeff[9]*( *tmp )( i, j-1 )
-                    + filtering_coeff[10]*( *tmp )( i, j )
-                    + filtering_coeff[11]*( *tmp )( i, j+1 )
-                    + filtering_coeff[12]*( *tmp )( i, j+2 )
-                    + filtering_coeff[13]*( *tmp )( i, j+3 )
-                    + filtering_coeff[14]*( *tmp )( i, j+4 )
-                    + filtering_coeff[15]*( *tmp )( i, j+5 )
-                    + filtering_coeff[16]*( *tmp )( i, j+6 )
-                    + filtering_coeff[17]*( *tmp )( i, j+7 )
-                    + filtering_coeff[18]*( *tmp )( i, j+8 )
-                    + filtering_coeff[19]*( *tmp )( i, j+9 )
-                    + filtering_coeff[20]*( *tmp )( i, j+10  );
+            for( unsigned int j=((filtering_coeff.size()-1)/(m*2)+gcfilt); j<ny_d-((filtering_coeff.size()-1)/(m*2)+gcfilt); j++ ) {
+                ( *Jy2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jy2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i, j - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+                }
+                ( *Jy2D )( i, j ) *= m ;
             }
         }
         delete tmp;
@@ -1244,33 +1169,17 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         tmp   = new Field2D( dimPrim, 2, false );
         tmp->copyFrom( Jz2D );
         for( unsigned int i=1; i<nx_p-1; i++ ) {
-            for( unsigned int j=12; j<ny_p-12; j++ ) {
-                ( *Jz2D )( i, j ) =
-                    + filtering_coeff[0]*( *tmp )( i, j-10 )
-                    + filtering_coeff[1]*( *tmp )( i, j-9 )
-                    + filtering_coeff[2]*( *tmp )( i, j-8 )
-                    + filtering_coeff[3]*( *tmp )( i, j-7 )
-                    + filtering_coeff[4]*( *tmp )( i, j-6 )
-                    + filtering_coeff[5]*( *tmp )( i, j-5 )
-                    + filtering_coeff[6]*( *tmp )( i, j-4 )
-                    + filtering_coeff[7]*( *tmp )( i, j-3 )
-                    + filtering_coeff[8]*( *tmp )( i, j-2 )
-                    + filtering_coeff[9]*( *tmp )( i, j-1 )
-                    + filtering_coeff[10]*( *tmp )( i, j )
-                    + filtering_coeff[11]*( *tmp )( i, j+1 )
-                    + filtering_coeff[12]*( *tmp )( i, j+2 )
-                    + filtering_coeff[13]*( *tmp )( i, j+3 )
-                    + filtering_coeff[14]*( *tmp )( i, j+4 )
-                    + filtering_coeff[15]*( *tmp )( i, j+5 )
-                    + filtering_coeff[16]*( *tmp )( i, j+6 )
-                    + filtering_coeff[17]*( *tmp )( i, j+7 )
-                    + filtering_coeff[18]*( *tmp )( i, j+8 )
-                    + filtering_coeff[19]*( *tmp )( i, j+9 )
-                    + filtering_coeff[20]*( *tmp )( i, j+10  );
+            for( unsigned int j=((filtering_coeff.size()-1)/(m*2)+gcfilt); j<ny_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); j++ ) {
+                ( *Jz2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jz2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i, j - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+                }
+                ( *Jz2D )( i, j ) *= m ;
             }
         }
         delete tmp;
     }
+
 }//END blackman21CurrentFilter
 
 
