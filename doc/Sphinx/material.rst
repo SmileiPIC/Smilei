@@ -49,7 +49,7 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [Massimo]
+.. [Massimo2020]
 
   F. Massimo, I. Zemzemi, A. Beck, J. Derouillat and A. Specka,
   `Efficient cylindrical envelope modeling for laser wakefield acceleration`,
@@ -193,7 +193,7 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [Niel2018]
+.. [Niel2018a]
 
    F. Niel, C. Riconda, F. Amiranoff, R. Duclous and M. Grech,
    `From quantum to classical modelling of radiation reaction: a focus on stochasticity effects`,

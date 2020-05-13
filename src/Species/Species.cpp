@@ -68,7 +68,6 @@ Species::Species( Params &params, Patch *patch ) :
     particles_per_cell_profile_( NULL ),
     max_charge_( 0. ),
     particles( &particles_sorted[0] ),
-    regular_number_array_(0),
     position_initialization_array_( NULL ),
     momentum_initialization_array_( NULL ),
     n_numpy_particles_( 0 ),
@@ -76,10 +75,10 @@ Species::Species( Params &params, Patch *patch ) :
     position_initialization_on_species_index( -1 ),
     electron_species( NULL ),
     electron_species_index( -1 ),
-    photon_species( NULL ),
+    photon_species_( NULL ),
     //photon_species_index(-1),
     radiation_photon_species( "" ),
-    mBW_pair_creation_sampling( 2, 1 ),
+    mBW_pair_creation_sampling_( 2, 1 ),
     clrw( params.clrw ),
     oversize( params.oversize ),
     cell_length( params.cell_length ),
@@ -87,11 +86,12 @@ Species::Species( Params &params, Patch *patch ) :
     tracking_diagnostic( 10000 ),
     nDim_particle( params.nDim_particle ),
     nDim_field(    params.nDim_field  ),
-    partBoundCond( NULL ),
-    min_loc( patch->getDomainLocalMin( 0 ) ),
-    merging_method_( "none" ),
     merging_time_selection_( 0 )
 {
+    regular_number_array_.clear();
+    partBoundCond = NULL;
+    min_loc = patch->getDomainLocalMin( 0 );
+    merging_method_ = "none";
 
     PI2 = 2.0 * M_PI;
     PI_ov_2 = 0.5*M_PI;
@@ -213,13 +213,13 @@ void Species::initOperators( Params &params, Patch *patch )
     Ionize = IonizationFactory::create( params, this );
 
     // Create the radiation model
-    Radiate = RadiationFactory::create( params, this );
+    Radiate = RadiationFactory::create( params, this, patch->rand_ );
 
     // Create the multiphoton Breit-Wheeler model
-    Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create( params, this );
+    Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create( params, this, patch->rand_  );
 
     // assign the correct Merging method to Merge
-    Merge = MergingFactory::create( params, this );
+    Merge = MergingFactory::create( params, this, patch->rand_ );
 
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, this, patch );
@@ -369,19 +369,22 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                 // Radiation process
-                ( *Radiate )( *particles, this->photon_species, smpi,
+                ( *Radiate )( *particles, photon_species_, smpi,
                               RadiationTables,
-                              particles->first_index[ibin], particles->last_index[ibin], ithread );
+                              nrj_radiation,
+                              particles->first_index[ibin],
+                              particles->last_index[ibin], ithread );
 
                 // Update scalar variable for diagnostics
-                nrj_radiation += Radiate->getRadiatedEnergy();
+                // nrj_radiation += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
-                Radiate->computeParticlesChi( *particles,
-                                              smpi,
-                                              particles->first_index[ibin],
-                                              particles->last_index[ibin],
-                                              ithread );
+                // Radiate->computeParticlesChi( *particles,
+                //                               smpi,
+                //                               first_index[ibin],
+                //                               last_index[ibin],
+                //                               ithread );
+                
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[5] += MPI_Wtime() - timer;
 #endif
@@ -667,8 +670,8 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
         // Radiation losses
         if( Radiate ) {
             // If creation of macro-photon, we add them to photon_species
-            if( photon_species ) {
-                photon_species->importParticles( params,
+            if( photon_species_ ) {
+                photon_species_->importParticles( params,
                                                  patch,
                                                  Radiate->new_photons_,
                                                  localDiags );
@@ -1017,17 +1020,8 @@ void Species::countSortParticles( Params &params )
 // Move all particles from another species to this one
 void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
-    unsigned int npart = source_particles.size(), ibin, ii, nbin=particles->first_index.size();
+    unsigned int npart = source_particles.size(), nbin=particles->first_index.size();
     double inv_cell_length = 1./ params.cell_length[0];
-
-    // std::cerr << "Species::importParticles "
-    //           << " for "<< this->name_
-    //           << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
-    //           << " mpi process " << patch->MPI_me_ << " - "
-    //           << " mode: " << this->vectorized_operators << " - "
-    //           << " nb bin: " << particles->first_index.size() << " - "
-    //           << " nbp: " << npart
-    //           << std::endl;
 
     // If this species is tracked, set the particle IDs
     if( particles->tracked ) {
@@ -1050,14 +1044,14 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     int istart = 0;
     int istop  = bin_count[0];
 
-    for ( int ibin = 0 ; ibin < nbin ; ibin++ ) {
+    for ( int ibin = 0 ; ibin < (int)nbin ; ibin++ ) {
         if (bin_count[ibin]!=0) {
-            for( unsigned int ip=istart; ip < istop ; ip++ ) {
+            for( int ip=istart; ip < istop ; ip++ ) {
                 if ( src_bin_keys[ip] == ibin )
                     continue;
                 else { // rearrange particles
                     int ip_swap = istop;
-                    while (( src_bin_keys[ip_swap] != ibin ) && (ip_swap<npart))
+                    while (( src_bin_keys[ip_swap] != ibin ) && (ip_swap<(int)npart))
                         ip_swap++;
                     source_particles.swapParticle(ip, ip_swap);
                     int tmp = src_bin_keys[ip];
@@ -1071,7 +1065,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
                                         *particles,
                                         particles->first_index[ibin] );
             particles->last_index[ibin] += bin_count[ibin];
-            for ( int idx=ibin+1 ; idx<particles->last_index.size() ; idx++ ) {
+            for ( unsigned int idx=ibin+1 ; idx<particles->last_index.size() ; idx++ ) {
                 particles->first_index[idx] += bin_count[ibin];
                 particles->last_index[idx]  += bin_count[ibin];
             }
@@ -1079,7 +1073,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
         }
         // update istart/istop fot the next cell
         istart += bin_count[ibin];
-        if ( ibin != nbin-1  )
+        if ( ibin != (int)nbin-1  )
             istop  += bin_count[ibin+1];
         else
             istop = npart;

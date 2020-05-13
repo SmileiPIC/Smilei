@@ -236,8 +236,12 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     
 } // END Project local current and charge densities (rho, Jl, Jr, Jt)
 
-void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode )
+void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode, bool diag_flag )
 {
+
+    if(rho == NULL)
+        return;
+
     const double one_ov_9  = 1./9.; 
     const double one_ov_16 = 1./16.; 
     if (imode == 0){
@@ -383,10 +387,24 @@ void ProjectorAM1Order::susceptibility( ElectroMagn *EMfields, Particles &partic
 
 
     }
-
-
-
-
     
+}
+
+
+
+void ProjectorAM1Order::axisBCEnvChi( double *EnvChi )
+{
+    if(EnvChi == NULL)
+        return;
+
+    const double one_ov_9  = 1./9.; 
+    const double one_ov_16 = 1./16.; 
+    
+    for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+          
+        EnvChi[i] = (25.*EnvChi[i+1] - 9.*EnvChi[i+2])*one_ov_16;
+    }//i
+    
+return;
 }
 

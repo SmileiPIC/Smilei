@@ -20,8 +20,8 @@
 //! Inherited from Radiation
 // -----------------------------------------------------------------------------
 MergingVranicCartesian::MergingVranicCartesian(Params& params,
-                             Species * species)
-      : Merging(params, species)
+                             Species * species, Random * rand)
+      : Merging(params, species, rand)
 {
     // Momentum cell discretization
     dimensions_[0] = (unsigned int)(species->merge_momentum_cell_size_[0]);
@@ -81,7 +81,7 @@ void MergingVranicCartesian::operator() (
 
     // First of all, we check that there is enought particles per cell
     // to process the merging.
-    if (number_of_particles > min_particles_per_cell) {
+    if (number_of_particles > min_particles_per_cell_) {
 
         // Momentum discretization
         unsigned int dim[3];
@@ -264,7 +264,8 @@ void MergingVranicCartesian::operator() (
                     momentum_max[ip] += (momentum_max[ip] - momentum_min[ip])*0.01;
                     if (accumulation_correction_) {
                         momentum_delta[ip] = (momentum_max[ip] - momentum_min[ip]) / (dim[ip]-1);
-                        momentum_min[ip] -= 0.99*momentum_delta[ip]*Rand::uniform();
+                        //momentum_min[ip] -= 0.99*momentum_delta[ip]*Rand::uniform();
+                        momentum_min[ip] -= 0.99*momentum_delta[ip]*rand_->uniform();
                     } else {
                         momentum_delta[ip] = (momentum_max[ip] - momentum_min[ip]) / (dim[ip]);
                     }
@@ -273,7 +274,8 @@ void MergingVranicCartesian::operator() (
                 // The 0 value is at the boundary between 2 cells
                 } else {
                     if (accumulation_correction_) {
-                        dim[ip] = int(dim[ip]*(1+Rand::uniform()));
+                        //dim[ip] = int(dim[ip]*(1+Rand::uniform()));
+                        dim[ip] = int(dim[ip]*(1+rand_->uniform()));
                     }
                     momentum_delta[ip] = fabs(momentum_max[ip] - momentum_min[ip]) / dim[ip];
                     inv_momentum_delta[ip] = 1.0/momentum_delta[ip];

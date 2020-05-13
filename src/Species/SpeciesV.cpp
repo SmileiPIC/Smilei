@@ -50,7 +50,7 @@ SpeciesV::SpeciesV( Params &params, Patch *patch ) :
     npack_ = 0 ;
     packsize_ = 0;
 
-    for (int idim=0; idim < params.nDim_field; idim++){
+    for (unsigned int idim=0; idim < params.nDim_field; idim++){
         distance[idim] = &Species::cartesian_distance;
     }
     if (params.geometry == "AMcylindrical"){
@@ -214,20 +214,20 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                 for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
-                    // Radiation process
-                    ( *Radiate )( *particles, this->photon_species, smpi,
-                                  RadiationTables,
+
+                    ( *Radiate )( *particles, this->photon_species_, smpi,
+                                  RadiationTables, nrj_radiation,
                                   particles->first_index[scell], particles->last_index[scell], ithread );
 
-                    // Update scalar variable for diagnostics
-                    nrj_radiation += Radiate->getRadiatedEnergy();
-
-                    // Update the quantum parameter chi
-                    Radiate->computeParticlesChi( *particles,
-                                                  smpi,
-                                                  particles->first_index[scell],
-                                                  particles->last_index[scell],
-                                                  ithread );
+                    // // Update scalar variable for diagnostics
+                    // nrj_radiation += Radiate->getRadiatedEnergy();
+                    //
+                    // // Update the quantum parameter chi
+                    // Radiate->computeParticlesChi( *particles,
+                    //                               smpi,
+                    //                               first_index[scell],
+                    //                               last_index[scell],
+                    //                               ithread );
                 }
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[5] += MPI_Wtime() - timer;
@@ -390,7 +390,6 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             }//End loop on scells
 
         } else { // AM case
-            complex<double> *b_rho=nullptr;
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
             int n_species = patch->vecSpecies.size();
             for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
@@ -735,7 +734,7 @@ void SpeciesV::compute_bin_cell_keys( Params &params, int istart, int iend )
 void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
 
-    unsigned int npart = source_particles.size(), scell, ii, ncells=particles->first_index.size();
+    unsigned int npart = source_particles.size(), ncells=particles->first_index.size();
 
     // If this species is tracked, set the particle IDs
     if( particles->tracked ) {
@@ -749,7 +748,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
 
     // compute cell keys of new parts
     vector<int> src_cell_keys( npart, 0 );
-    for ( int ip = 0 ; ip < npart ; ip++ ) {
+    for ( unsigned int ip = 0 ; ip < npart ; ip++ ) {
         for( unsigned int ipos=0; ipos < nDim_field ; ipos++ ) {
             double X = ((this)->*(distance[ipos]))(&source_particles, ipos, ip);
             int IX = round( X * dx_inv_[ipos] );
@@ -764,14 +763,14 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
     int istart = 0;
     int istop  = src_count[0];
 
-    for ( int icell = 0 ; icell < ncells ; icell++ ) {
+    for ( int icell = 0 ; icell < (int)ncells ; icell++ ) {
         if (src_count[icell]!=0) {
-            for( unsigned int ip=istart; ip < istop ; ip++ ) {
+            for( int ip=istart; ip < istop ; ip++ ) {
                 if ( src_cell_keys[ip] == icell )
                     continue;
                 else { // rearrange particles
                     int ip_swap = istop;
-                    while (( src_cell_keys[ip_swap] != icell ) && (ip_swap<npart))
+                    while (( src_cell_keys[ip_swap] != icell ) && (ip_swap<(int)npart))
                         ip_swap++;
                     source_particles.swapParticle(ip, ip_swap);
                     int tmp = src_cell_keys[ip];
@@ -785,7 +784,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
                                         *particles,
                                         particles->first_index[icell] );
             particles->last_index[icell] += src_count[icell];
-            for ( int idx=icell+1 ; idx<particles->last_index.size() ; idx++ ) {
+            for ( unsigned int idx=icell+1 ; idx<particles->last_index.size() ; idx++ ) {
                 particles->first_index[idx] += src_count[icell];
                 particles->last_index[idx]  += src_count[icell];
             }
@@ -794,7 +793,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
         }
         // update istart/istop fot the next cell
         istart += src_count[icell];
-        if ( icell != ncells-1  )
+        if ( icell != (int)ncells-1  )
             istop  += src_count[icell+1];
         else
             istop = npart;
@@ -803,7 +802,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
     //source_particles.clear();
 
     // Set place for new particles in species->particles->cell_keys
-    for (int ip=0;ip<npart ; ip++ )
+    for (unsigned int ip=0;ip<npart ; ip++ )
         addSpaceForOneParticle();
 
     source_particles.clear();

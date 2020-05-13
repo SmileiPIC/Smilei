@@ -619,7 +619,7 @@ void PatchAM::createType( Params &params )
     
     int nx0 = params.n_space[0] + 1 + 2*oversize[0];
     int ny0 = params.n_space[1] + 1 + 2*oversize[1];
-    unsigned int clrw = params.clrw;
+    //unsigned int clrw = params.clrw;
     
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;
@@ -692,7 +692,7 @@ void PatchAM::createType2( Params &params )
     
     int nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
     int ny0 = params.n_space_region[1] + 1 + 2*oversize[1];
-    unsigned int clrw = params.clrw;
+    //unsigned int clrw = params.clrw;
 
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;

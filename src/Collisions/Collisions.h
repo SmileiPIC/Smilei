@@ -90,7 +90,6 @@ protected:
         unsigned int i2,
         double m2,
         double coeff1,
-        double coeff2,
         double coeff3,
         double coeff4,
         double n123,
@@ -105,12 +104,13 @@ protected:
         double term6, cosX, sinX, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp,
                newpx_COM, newpy_COM, newpz_COM, vcp;
         
+        double m12 = m1 / m2;
+        
         // If one weight is zero, then skip. Can happen after nuclear reaction
         double minW = std::min( p1->weight(i1), p2->weight(i2) );
         if( minW <= 0. ) return 0.;
         
         // Get momenta and calculate gammas
-        double m12 = m1 / m2;
         double gamma1 = sqrt( 1. + p1->momentum( 0, i1 )*p1->momentum( 0, i1 ) + p1->momentum( 1, i1 )*p1->momentum( 1, i1 ) + p1->momentum( 2, i1 )*p1->momentum( 2, i1 ) );
         double gamma2 = sqrt( 1. + p2->momentum( 0, i2 )*p2->momentum( 0, i2 ) + p2->momentum( 1, i2 )*p2->momentum( 1, i2 ) + p2->momentum( 2, i2 )*p2->momentum( 2, i2 ) );
         double gamma12 = m12 * gamma1 + gamma2;
@@ -269,7 +269,8 @@ protected:
         
         // Calculate coulomb log if necessary
         if( logL <= 0. ) { // if auto-calculation requested
-            double bmin = std::max( coeff1/m1/p_COM, std::abs( coeff2*qqm*term3*term5 ) ); // min impact parameter
+            // Note : 0.00232282 is coeff2 / coeff1
+            double bmin = coeff1 * std::max( 1./m1/p_COM, std::abs( 0.00232282*qqm*term3*term5 ) ); // min impact parameter
             logL = 0.5*log( 1.+debye2/( bmin*bmin ) );
             if( logL < 2. ) {
                 logL = 2.;

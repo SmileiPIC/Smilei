@@ -18,8 +18,8 @@
 //! Inherited from Radiation
 // -----------------------------------------------------------------------------
 RadiationDiagRadiationSpectrum::RadiationDiagRadiationSpectrum(Params& params,
-                                                 Species * species)
-      : Radiation(params, species)
+                                                 Species * species, Random * rand )
+      : Radiation(params, species, rand)
 {
 }
 
@@ -41,12 +41,14 @@ RadiationDiagRadiationSpectrum::~RadiationDiagRadiationSpectrum()
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
+//! \param radiated_energy     overall energy radiated during the call to this method
 // -----------------------------------------------------------------------------
 void RadiationDiagRadiationSpectrum::operator() (
       Particles &particles,
       Species *photon_species,
       SmileiMPI *smpi,
       RadiationTables &RadiationTables,
+      double          &radiated_energy,
       int istart,
       int iend,
       int ithread, int ipart_ref)
@@ -71,10 +73,7 @@ void RadiationDiagRadiationSpectrum::operator() (
     double charge_over_mass2;
 
     // 1/mass^2
-    const double one_over_mass_2 = pow(one_over_mass_,2.);
-
-    // Temporary quantum parameter
-    double chipa;
+    const double one_over_mass_2 = std::pow(one_over_mass_,2.);
 
     // Temporary Lorentz factor
     double gamma;
@@ -87,18 +86,8 @@ void RadiationDiagRadiationSpectrum::operator() (
     // Charge shortcut
     short* charge = &( particles.charge(0) );
 
-    // Weight shortcut
-    double* weight = &( particles.weight(0) );
-
     // Optical depth for the Monte-Carlo process
-    // double* chi = &( particles.chi(0));
-
-    // Local vector to store the radiated energy
-    std::vector <double> rad_norm_energy (iend-istart,0);
-
-    // Reinitialize the cumulative radiated energy for the current thread
-    //this->radiated_energy = 0.;
-    radiated_energy_ = 0.;
+    double* chi = &( particles.chi(0));
 
     // _______________________________________________________________
     // Computation
@@ -113,23 +102,11 @@ void RadiationDiagRadiationSpectrum::operator() (
                              + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        chipa = Radiation::computeParticleChi(charge_over_mass2,
+        chi[ipart] = Radiation::computeParticleChi(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                      gamma,
                      (*(Ex+ipart)),(*(Ey+ipart)),(*(Ez+ipart)),
                      (*(Bx+ipart)),(*(By+ipart)),(*(Bz+ipart)) );
 
     }
-
-    // _______________________________________________________________
-    // Computation of the thread radiated energy
-
-    double radiated_energy_loc = 0;
-
-    #pragma omp simd reduction(+:radiated_energy_loc)
-    for (int ipart=istart ; ipart<iend; ipart++ )
-    {
-        radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart - istart] ;
-    }
-    radiated_energy_ += radiated_energy_loc;
 }

@@ -604,7 +604,6 @@ Each species has to be defined in a ``Species`` block::
       # ionization_rate = None,
       is_test = False,
       # ponderomotive_dynamics = False,
-..      c_part_max = 1.0,
       pusher = "boris",
 
       # Radiation reaction, for particles only:

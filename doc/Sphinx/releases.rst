@@ -20,18 +20,11 @@ Upcoming changes
 
 * Changes:
 
-  * Current filtering with adjustable number of passes per dimension
-  * Improved axial boundary conditions for ``AMcylindrical`` geometry
-  * Units in ``RadiationSpectrum`` diagnostic are more consistent with that
-    of ``ParticleBinning``
-  * Ionisation current at fourth order of interpolation
+  * ...
 
 * Bugfixes:
 
-  * ``PrescribedField`` was sometimes not applied by some OpenMP threads
-  * Scalar ``Ukin_bnd`` was sometimes wrong with load balancing
-  * Scalar ``Urad`` was sometimes wrong with moving window
-  * On some systems, particles IDs were incorrect with ionization
+  * ...
 
 * Already available, but experimental:
 
@@ -55,6 +48,29 @@ Latest version
 The latest version tarball can be donwloaded here:
 
 **Download**: `Smilei latest <_downloads/Smilei.tar.gz>`_
+
+----
+
+Release 4.5
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.5 <_downloads/smilei-v4.5.tar.gz>`_
+
+* Changes:
+
+  * Current filtering with adjustable number of passes per dimension
+  * Improved axial boundary conditions for ``AMcylindrical`` geometry
+  * Units in ``RadiationSpectrum`` diagnostic are more consistent with that
+    of ``ParticleBinning``
+  * Ionisation current at fourth order of interpolation
+  * Correction for :doc:`collisions` as suggested in [Higginson2020]_
+
+* Bugfixes:
+
+  * ``PrescribedField`` was sometimes not applied by some OpenMP threads
+  * Scalar ``Ukin_bnd`` was sometimes wrong with load balancing
+  * Scalar ``Urad`` was sometimes wrong with moving window
+  * On some systems, particles IDs were incorrect with ionization
 
 
 ----

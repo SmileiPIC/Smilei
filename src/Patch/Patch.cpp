@@ -322,9 +322,9 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
     if ( dynamic_cast<RegionDomainDecomposition*>( domain_decomposition ) ) {
 
         if (nDim_fields_==1) {
-            for ( int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
-                for ( int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
-                    for ( int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
+            for ( unsigned int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
+                for ( unsigned int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
+                    for ( unsigned int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
 
                         if (params.map_rank[xDom][yDom][zDom] == rk ) {
                             Pcoordinates[0] = xDom;
@@ -360,9 +360,9 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
     
         if (nDim_fields_==2) {
 
-            for ( int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
-                for ( int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
-                    for ( int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
+            for ( unsigned int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
+                for ( unsigned int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
+                    for ( unsigned int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
                         
                         if (params.map_rank[xDom][yDom][zDom] == rk ) {
                             
@@ -438,7 +438,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
     
             xcall[0] = Pcoordinates[0]+1;
-            if( params.EM_BCs[0][0]=="periodic" && xcall[0] >= params.number_of_region[0] ) {
+            if( params.EM_BCs[0][0]=="periodic" && xcall[0] >= (int)params.number_of_region[0] ) {
                 xcall[0] -= params.number_of_region[0];
             }
             neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
@@ -452,7 +452,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             neighbor_[1][0] = domain_decomposition->getDomainId( xcall );
     
             xcall[1] = Pcoordinates[1]+1;
-            if( params.EM_BCs[1][0]=="periodic" && xcall[1] >= params.number_of_region[1] ) {
+            if( params.EM_BCs[1][0]=="periodic" && xcall[1] >= (int)params.number_of_region[1] ) {
                 xcall[1] -=  params.number_of_region[1];
             }
             neighbor_[1][1] = domain_decomposition->getDomainId( xcall );
@@ -472,9 +472,9 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 
         if (nDim_fields_==3) {
 
-            for ( int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
-                for ( int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
-                    for ( int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
+            for ( unsigned int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
+                for ( unsigned int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
+                    for ( unsigned int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
 
                         if (params.map_rank[xDom][yDom][zDom] == rk ) {
                             Pcoordinates[0] = xDom;

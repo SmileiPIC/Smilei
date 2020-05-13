@@ -368,7 +368,7 @@ void SpeciesVAdaptiveMixedSort::reconfigure_particle_importation()
         this->electron_species->vectorized_operators = this->vectorized_operators;
     }
     if( this->Radiate ) {
-        this->photon_species->vectorized_operators = this->vectorized_operators;
+        this->photon_species_->vectorized_operators = this->vectorized_operators;
     }
     if( this->Multiphoton_Breit_Wheeler_process ) {
         for( int k=0; k<2; k++ ) {

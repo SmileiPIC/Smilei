@@ -33,7 +33,6 @@ void DoubleGrids::syncCurrentsOnRegion( VectorPatch &vecPatches, Region &region,
     //        missing_patches_ranks stores the MPI rank of the vecPacthes which own missing_patches_
     for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
 
-        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
         DoubleGrids::currentsOnRegionRecv( region.patch_->EMfields,
                                            region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region );
 
@@ -140,7 +139,6 @@ void DoubleGrids::syncFieldsOnPatches( Region &region, VectorPatch &vecPatches, 
     //                         send data which do not concern local Region
     for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
 
-        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
         DoubleGrids::fieldsOnPatchesSend( region.patch_->EMfields,
                                           region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region );
 
@@ -250,7 +248,6 @@ void DoubleGrids::syncFieldsOnRegion( VectorPatch& vecPatches, Region& region, P
     //        missing_patches_ranks stores the MPI rank of the vecPacthes which own missing_patches_
     for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
 
-        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
         DoubleGrids::fieldsOnRegionRecv( region.patch_->EMfields,
                                          region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region );
 
@@ -392,7 +389,6 @@ void DoubleGrids::syncBOnPatches( Region &region, VectorPatch &vecPatches, Param
     //                         send data which do not concern local Region
     for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
 
-        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
         DoubleGrids::bOnPatchesSend( region.patch_->EMfields,
                                      region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region );
 
@@ -484,7 +480,6 @@ void DoubleGrids::syncCurrentsOnPatches( Region &region, VectorPatch &vecPatches
     //                         send data which do not concern local Region
     for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
 
-        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
         DoubleGrids::currentsOnPatchesSend( region.patch_->EMfields,
                                           region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region );
 

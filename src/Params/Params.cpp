@@ -1287,7 +1287,7 @@ void Params::uncoupled_decomposition()
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
     if (rk==0) {
         cout << "Number of patches : ";
-        for ( int iDim  = 0 ; iDim < nDim_field ; iDim++ )
+        for ( unsigned int iDim  = 0 ; iDim < nDim_field ; iDim++ )
             cout << number_of_patches[iDim] << " ";
         cout << endl;
     }
@@ -1301,19 +1301,19 @@ void Params::uncoupled_decomposition()
 
     // Build the map of offset, contains offset for each domain, expressed in number of cells
     offset_map.resize( nDim_field );
-    for ( int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
+    for ( unsigned int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
         offset_map[iDim].resize( number_of_region[iDim] );
         int nlocal_i = number_of_patches[iDim] / number_of_region[iDim];
         //if ( nlocal_i*number_of_region[iDim] != number_of_patches[iDim] )
         //    nlocal_i++;
-        for ( int iDom = 0 ; iDom < number_of_region[iDim] ; iDom++ ) {
+        for ( unsigned int iDom = 0 ; iDom < number_of_region[iDim] ; iDom++ ) {
             offset_map[iDim][iDom] = iDom * nlocal_i * n_space[iDim];
         }
     }
 
     // Compute size of local domain
-    for ( int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
-        if ( coordinates[iDim] != number_of_region[iDim]-1 ) {
+    for ( unsigned int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
+        if ( coordinates[iDim] != (int)number_of_region[iDim]-1 ) {
             n_space_region[iDim] = offset_map[iDim][coordinates[iDim]+1] - offset_map[iDim][coordinates[iDim]];
         }
         else {
@@ -1335,7 +1335,7 @@ void Params::print_uncoupled_params()
 
     if (rk==0) {
         cout << "Number of regions : ";
-        for ( int iDim  = 0 ; iDim < nDim_field ; iDim++ )
+        for ( unsigned int iDim  = 0 ; iDim < nDim_field ; iDim++ )
             cout << number_of_region[iDim] << " ";
         cout << endl;
     }
@@ -1346,10 +1346,10 @@ void Params::print_uncoupled_params()
         if ( irk == rk) {
             cout << " MPI_rank = " << rk << endl;
             cout << "\tcoords = ";
-            for ( int iDim  = 0 ; iDim < nDim_field ; iDim++ ) cout << coordinates[iDim] << " ";
+            for ( unsigned int iDim  = 0 ; iDim < nDim_field ; iDim++ ) cout << coordinates[iDim] << " ";
             cout << endl;
             cout << "\tsize :  ";
-            for ( int iDim  = 0 ; iDim < nDim_field ; iDim++ ) cout << n_space_region[iDim] << " ";
+            for ( unsigned int iDim  = 0 ; iDim < nDim_field ; iDim++ ) cout << n_space_region[iDim] << " ";
             cout << endl;
         }
         MPI_Barrier( MPI_COMM_WORLD );
@@ -1369,18 +1369,18 @@ void Params::uncoupled_decomposition_1D()
     number_of_region[0] = sz;
 
     map_rank.resize( number_of_region[0] );
-    for ( int iDim = 0 ; iDim < number_of_region[0] ; iDim++ ) {
+    for ( unsigned int iDim = 0 ; iDim < number_of_region[0] ; iDim++ ) {
         map_rank[iDim].resize( number_of_region[1] );
-        for ( int jDim = 0 ; jDim < number_of_region[1] ; jDim++ ) {
+        for ( unsigned int jDim = 0 ; jDim < number_of_region[1] ; jDim++ ) {
             map_rank[iDim][jDim].resize( number_of_region[2] );
         }
     }
 
     int new_rk(0);
     // Build the map of MPI ranks in 1D
-    for ( int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
-        for ( int yDom = 0 ; yDom < number_of_region[1] ; yDom++ ) {
-            for ( int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
+    for ( unsigned int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
+        for ( unsigned int yDom = 0 ; yDom < number_of_region[1] ; yDom++ ) {
+            for ( unsigned int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
                 map_rank[xDom][yDom][zDom] = new_rk;
                 new_rk++;
             }
@@ -1388,9 +1388,9 @@ void Params::uncoupled_decomposition_1D()
 
     coordinates.resize( nDim_field );
     // Compute coordinates of current patch in 1D
-    for ( int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
-        for ( int yDom = 0 ; yDom < number_of_region[1] ; yDom++ ) {
-            for ( int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
+    for ( unsigned int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
+        for ( unsigned int yDom = 0 ; yDom < number_of_region[1] ; yDom++ ) {
+            for ( unsigned int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
                 if (map_rank[xDom][yDom][zDom] == rk ) {
                     coordinates[0] = xDom;
                 }
@@ -1416,7 +1416,7 @@ void Params::uncoupled_decomposition_2D()
         number_of_region[0] = min( sz, max(1, (int)sqrt ( (double)sz*tmp) ) );
         number_of_region[1] = (int)(sz / number_of_region[0]);
 
-        while ( number_of_region[0]*number_of_region[1] != sz ) {
+        while ( number_of_region[0]*number_of_region[1] != (unsigned int) sz ) {
             if (number_of_region[0]>=number_of_region[1] ) {
                 number_of_region[0]++;
                 number_of_region[1] = (int)(sz / number_of_region[0]);
@@ -1430,7 +1430,7 @@ void Params::uncoupled_decomposition_2D()
     else { // AM and spectral
         number_of_region[0] = sz;
         number_of_region[1] = 1;
-        if (number_of_patches[0]<sz) {
+        if (number_of_patches[0]<(unsigned int)sz) {
             ERROR( "In AM, the number of patches in dimension 0, here " << number_of_patches[0]
                    << ",  must be at least equal to the number of MPI process which is here " << sz );
         }
@@ -1438,18 +1438,18 @@ void Params::uncoupled_decomposition_2D()
     //cout << "ndomain : " << number_of_region[0] << " " << number_of_region[1] << " " << number_of_region[2] << endl;
 
     map_rank.resize( number_of_region[0] );
-    for ( int iDim = 0 ; iDim < number_of_region[0] ; iDim++ ) {
+    for ( unsigned int iDim = 0 ; iDim < number_of_region[0] ; iDim++ ) {
         map_rank[iDim].resize( number_of_region[1] );
-        for ( int jDim = 0 ; jDim < number_of_region[1] ; jDim++ ) {
+        for ( unsigned int jDim = 0 ; jDim < number_of_region[1] ; jDim++ ) {
             map_rank[iDim][jDim].resize( number_of_region[2] );
         }
     }
 
     int new_rk(0);
     // Build the map of MPI ranks in 2D
-    for ( int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
-        for ( int yDom = 0 ; yDom < number_of_region[1] ; yDom++ ) {
-            for ( int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
+    for ( unsigned int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
+        for ( unsigned int yDom = 0 ; yDom < number_of_region[1] ; yDom++ ) {
+            for ( unsigned int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
                 map_rank[xDom][yDom][zDom] = new_rk;
                 new_rk++;
             }
@@ -1461,9 +1461,9 @@ void Params::uncoupled_decomposition_2D()
 
     coordinates.resize( nDim_field );
     // Compute coordinates of current patch in 2D
-    for ( int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
-        for ( int yDom = 0 ; yDom < number_of_region[1] ; yDom++ ) {
-            for ( int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
+    for ( unsigned int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
+        for ( unsigned int yDom = 0 ; yDom < number_of_region[1] ; yDom++ ) {
+            for ( unsigned int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
                 if (map_rank[xDom][yDom][zDom] == rk ) {
                 //cout << xDom << " " << yDom << endl;
                     coordinates[0] = xDom;
@@ -1491,8 +1491,8 @@ void Params::uncoupled_decomposition_3D()
     number_of_region[0] = min( sz, max(1, (int) pow( (double)sz*tmp, 1./3. ) ) );
 
     int rest = (int)(sz / number_of_region[0]);
-    while ( number_of_region[0]*rest != sz ) {
-        if (number_of_region[0]>=rest ) {
+    while ( (int)number_of_region[0]*rest != sz ) {
+        if ((int)number_of_region[0]>=rest ) {
             number_of_region[0]++;
             rest = (int)(sz / number_of_region[0]);
         }
@@ -1505,7 +1505,7 @@ void Params::uncoupled_decomposition_3D()
     double tmp2 = number_of_patches[1] / number_of_patches[2];
     number_of_region[1] = min( rest, max(1, (int)sqrt ( (double)rest*tmp2 ) ) );
     number_of_region[2] = (int)( (double)rest / (double)number_of_region[1] );
-    while ( number_of_region[1]*number_of_region[2] != rest ) {
+    while ( number_of_region[1]*number_of_region[2] != (unsigned int)rest ) {
         if (number_of_region[1]>=number_of_region[2] ) {
             number_of_region[1]++;
             number_of_region[2] = (int)(rest / number_of_region[1]);
@@ -1515,32 +1515,32 @@ void Params::uncoupled_decomposition_3D()
             number_of_region[1] = (int)(rest / number_of_region[2]);
         }
     }
-    if ( (number_of_region[0]*number_of_region[1]*number_of_region[2] != sz ) && (!rk) )
+    if ( (number_of_region[0]*number_of_region[1]*number_of_region[2] != (unsigned int)sz ) && (!rk) )
         ERROR( "Decomposition à affiner : " << number_of_region[0] << " " << number_of_region[1] << " " << number_of_region[2] );
 
 
     map_rank.resize( number_of_region[0] );
-    for ( int iDim = 0 ; iDim < number_of_region[0] ; iDim++ ) {
+    for ( unsigned int iDim = 0 ; iDim < number_of_region[0] ; iDim++ ) {
         map_rank[iDim].resize( number_of_region[1] );
-        for ( int jDim = 0 ; jDim < number_of_region[1] ; jDim++ ) {
+        for ( unsigned int jDim = 0 ; jDim < number_of_region[1] ; jDim++ ) {
             map_rank[iDim][jDim].resize( number_of_region[2] );
         }
     }
 
     int new_rk(0);
     // Build the map of MPI ranks in 3D
-    for ( int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
-        for ( int yDom = 0 ; yDom < number_of_region[1] ; yDom++ )
-            for ( int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
+    for ( unsigned int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
+        for ( unsigned int yDom = 0 ; yDom < number_of_region[1] ; yDom++ )
+            for ( unsigned int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
                 map_rank[xDom][yDom][zDom] = new_rk;
                 new_rk++;
             }
 
     coordinates.resize( nDim_field );
     // Compute coordinates of current patch in 3D
-    for ( int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
-        for ( int yDom = 0 ; yDom < number_of_region[1] ; yDom++ )
-            for ( int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
+    for ( unsigned int xDom = 0 ; xDom < number_of_region[0] ; xDom++ )
+        for ( unsigned int yDom = 0 ; yDom < number_of_region[1] ; yDom++ )
+            for ( unsigned int zDom = 0 ; zDom < number_of_region[2] ; zDom++ ) {
                 if (map_rank[xDom][yDom][zDom] == rk ) {
                     //cout << xDom << " " << yDom << endl;
                     coordinates[0] = xDom;
