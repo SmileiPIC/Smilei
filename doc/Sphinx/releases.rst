@@ -15,16 +15,20 @@ Get Smilei
 
 ----
 
-Upcoming changes
-^^^^^^^^^^^^^^^^
+Changes made in the repository (not released)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Changes:
-
-  * ...
+* Diagnostics may now have a ``name`` to be found more easily
+  during post-processing
 
 * Bugfixes:
 
   * ...
+
+----
+
+Projects
+^^^^^^^^^^^^^^^^
 
 * Already available, but experimental:
 
