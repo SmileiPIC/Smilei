@@ -167,7 +167,7 @@ endif
 
 EXEC = smilei
 
-default: check $(EXEC) $(EXEC)_test
+default: $(EXEC) $(EXEC)_test
 
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
