@@ -1097,7 +1097,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                 if( neighbor_[idim][0]!=MPI_PROC_NULL ) { //if neighbour exists
                                     //... copy it at the back of the local particle vector ...
                                     ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );
-                                    //...adjust last_index or cell_keys ...
+                                    //...adjust particles->last_index or cell_keys ...
                                     vecSpecies[ispec]->addSpaceForOneParticle();
                                     //... and add its index to the particles to be sent later...
                                     vecSpecies[ispec]->MPI_buffer_.part_index_send[idim][0].push_back( cuParticles.size()-1 );
@@ -1113,7 +1113,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                             else if( ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).position( idim, iPart ) >= max_local[idim] ) {
                                 if( neighbor_[idim][1]!=MPI_PROC_NULL ) { //if neighbour exists
                                     ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );
-                                    //...adjust last_index or cell_keys ...
+                                    //...adjust particles->last_index or cell_keys ...
                                     vecSpecies[ispec]->addSpaceForOneParticle();
                                     vecSpecies[ispec]->MPI_buffer_.part_index_send[idim][1].push_back( cuParticles.size()-1 );
                                     vecSpecies[ispec]->addPartInExchList( cuParticles.size()-1 );
@@ -1136,7 +1136,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                             if( neighbor_[1][0]!=MPI_PROC_NULL ) { //if neighbour exists
                                 //... copy it at the back of the local particle vector ...
                                 ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );
-                                //...adjust last_index or cell_keys ...
+                                //...adjust particles->last_index or cell_keys ...
                                 vecSpecies[ispec]->addSpaceForOneParticle();
                                 //... and add its index to the particles to be sent later...
                                 vecSpecies[ispec]->MPI_buffer_.part_index_send[1][0].push_back( cuParticles.size()-1 );
@@ -1152,7 +1152,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                             if( neighbor_[1][1]!=MPI_PROC_NULL ) { //if neighbour exists
                                 //MESSAGE("particle diag +R");
                                 ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );
-                                //...adjust last_index or cell_keys ...
+                                //...adjust particles->last_index or cell_keys ...
                                 vecSpecies[ispec]->addSpaceForOneParticle();
                                 vecSpecies[ispec]->MPI_buffer_.part_index_send[1][1].push_back( cuParticles.size()-1 );
                                 vecSpecies[ispec]->addPartInExchList( cuParticles.size()-1 );
@@ -1216,8 +1216,8 @@ void Patch::cleanupSentParticles( int ispec, std::vector<int> *indexes_of_partic
     // Delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
     /********************************************************************************/
     int ii, iPart;
-    std::vector<int> *cufirst_index = &vecSpecies[ispec]->first_index;
-    std::vector<int> *culast_index = &vecSpecies[ispec]->last_index;
+    std::vector<int> *cufirst_index = &vecSpecies[ispec]->particles->first_index;
+    std::vector<int> *culast_index = &vecSpecies[ispec]->particles->last_index;
     Particles &cuParticles = ( *vecSpecies[ispec]->particles );
 
 
