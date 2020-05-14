@@ -7,7 +7,7 @@
 using namespace std;
 
 DiagnosticCartFields::DiagnosticCartFields( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int ndiag, OpenPMDparams &oPMD ):
-    Diagnostic( oPMD )
+    Diagnostic( &oPMD, "DiagFields", ndiag )
 {
     fileId_ = 0;
     data_group_id = 0;
@@ -85,7 +85,7 @@ DiagnosticCartFields::DiagnosticCartFields( Params &params, SmileiMPI *smpi, Vec
     if( time_average > 1 ) {
         for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ )
             vecPatches( 0 )->EMfields->allFields_avg[diag_n].push_back(
-                vecPatches( 0 )->EMfields->createField( fields_names[ifield] )
+                vecPatches( 0 )->EMfields->createField( fields_names[ifield], params )
             );
     }
     

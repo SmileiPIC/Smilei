@@ -102,7 +102,7 @@ void Timer::print( double tot )
         //cout << "\t" << setw(12) << name_ << "\t" << time_acc_  << "\t(" << 100.0*time_acc_/tot << "%)" << endl ;
         //MESSAGE(0, "\t" << setw(12) << name_ << "\t" << time_acc_  << "\t(" << 100.0*time_acc_/tot << "%)");
         double perc=100.0*time_acc_/tot;
-        if( perc<0.001 ) {
+        if( perc<0.05 ) {
             return;
         }
         if( perc<1 ) {

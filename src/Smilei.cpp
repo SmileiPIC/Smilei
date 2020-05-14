@@ -30,8 +30,9 @@
 #include "Solver.h"
 #include "SimWindow.h"
 #include "Diagnostic.h"
-#include "Domain.h"
-#include "SyncCartesianPatch.h"
+#include "Region.h"
+#include "DoubleGrids.h"
+#include "DoubleGridsAM.h"
 #include "Timers.h"
 
 using namespace std;
@@ -217,26 +218,78 @@ int main( int argc, char *argv[] )
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
         vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+
     }
 
     TITLE( "Species creation summary" );
     vecPatches.printNumberOfParticles( &smpi );
 
     timers.reboot();
+    
 
-
-    Domain domain( params );
-    unsigned int global_factor( 1 );
-#ifdef _PICSAR
-    for( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
-        global_factor *= params.global_factor[iDim];
+    // divergence cleaning
+    if ( params.apply_rotational_cleaning ) {
+        Region region_global( params );
+        region_global.build( params, &smpi, vecPatches, openPMD, true );
+        region_global.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+        region_global.identify_missing_patches( &smpi, vecPatches, params );
+        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+            DoubleGridsAM::syncFieldsOnRegion( vecPatches, region_global, params, &smpi, imode );
+        if( params.is_pxr && smpi.isMaster()) {
+            region_global.coupling( params, true );
+        }
+        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+            DoubleGridsAM::syncFieldsOnPatches( region_global, vecPatches, params, &smpi, timers, 0, imode );
+        vecPatches.setMagneticFieldsForDiagnostic( params );
+        region_global.clean();
     }
-    // Force temporary usage of double grids, even if global_factor = 1
-    //    especially to compare solvers
-    //if (global_factor!=1) {
-    domain.build( params, &smpi, vecPatches, openPMD );
-    //}
-#endif
+    
+    Region region( params );
+    if (params.uncoupled_grids) {
+        region.vecPatch_.refHindex_ = smpi.getRank();
+        region.build( params, &smpi, vecPatches, openPMD, false );
+        region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+        region.identify_missing_patches( &smpi, vecPatches, params );
+
+        //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
+        //     <<  "\t - missing : " << region.missing_patches_.size()
+        //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
+        
+        region.reset_fitting( &smpi, params );
+        
+        region.clean();
+        region.reset_mapping();
+        
+        region.build( params, &smpi, vecPatches, openPMD, false );
+        region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+        region.identify_missing_patches( &smpi, vecPatches, params );
+        
+        //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
+        //     <<  "\t - missing : " << region.missing_patches_.size()
+        //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
+
+        if ( params.apply_rotational_cleaning ) { // Need to upload corrected data on Region
+            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
+                DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
+                // Need to fill all ghost zones, not covered by patches ghost zones
+                SyncVectorPatch::exchangeE( params, region.vecPatch_, imode, &smpi );
+                SyncVectorPatch::exchangeB( params, region.vecPatch_, imode, &smpi );
+            }
+
+        }
+        if( params.is_pxr ){
+            region.coupling( params, false );
+        }
+    }
+    else {
+        if (params.is_pxr) {
+            vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
+        }
+    }
+
+    if( params.is_spectral ) {
+        vecPatches.saveOldRho( params );
+    }
 
     timers.global.reboot();
 
@@ -267,12 +320,14 @@ int main( int argc, char *argv[] )
     if( smpi.isMaster() ) {
         params.print_timestep_headers();
     }
+    
+    int count_dlb = 0;
+    
+    unsigned int itime=checkpoint.this_run_start_step+1;
+    while( ( itime <= params.n_time ) && ( !checkpoint.exit_asap ) ) {
 
-    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint)
-    {
-
-        unsigned int itime=checkpoint.this_run_start_step+1;
-        while( ( itime <= params.n_time ) && ( !checkpoint.exit_asap ) ) {
+        #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
+        {
 
             // calculate new times
             // -------------------
@@ -316,44 +371,106 @@ int main( int argc, char *argv[] )
             // apply currents from antennas
             vecPatches.applyAntennas( time_dual );
 
-            // solve Maxwell's equations
-#ifndef _PICSAR
-            // Force temporary usage of double grids, even if global_factor = 1
-            //    especially to compare solvers
-            //if ( global_factor==1 )
-            {
-                // de-apply external time fields if requested
-                if ( vecPatches(0)->EMfields->extTimeFields.size() )
-                    vecPatches.resetPrescribedFields();
+        } //End omp parallel region
 
-                if( time_dual > params.time_fields_frozen ) {
+        // solve Maxwell's equations
+        if (!params.uncoupled_grids) {
+            if( time_dual > params.time_fields_frozen ) {
+                #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
+                {
+                    // de-apply external time fields if requested
+                    if ( vecPatches(0)->EMfields->extTimeFields.size() ) {
+                        vecPatches.resetPrescribedFields();
+                    }
+
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 }
-
-                #pragma omp single
-                {
-                    // apply external time fields if requested
-                    if ( vecPatches(0)->EMfields->extTimeFields.size() )
-                        vecPatches.applyPrescribedFields(time_prim);
+                
+                // apply external time fields if requested
+                if( vecPatches(0)->EMfields->extTimeFields.size() ) {
+                    #pragma omp single
+                    vecPatches.applyPrescribedFields(time_prim);
+                    #pragma omp barrier
                 }
 
             }
-#else
-            // Force temporary usage of double grids, even if global_factor = 1
-            //    especially to compare solvers
-            //if ( global_factor!=1 )
-            {
-                if( time_dual > params.time_fields_frozen ) {
-                    SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
-                    domain.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
-                    SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
+        }
+        else { //if ( params.uncoupled_grids ) {
+            if( time_dual > params.time_fields_frozen ) {
+                if ( params.geometry != "AMcylindrical" )
+                    DoubleGrids::syncCurrentsOnRegion( vecPatches, region, params, &smpi, timers, itime );
+                else {
+                    for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                        DoubleGridsAM::syncCurrentsOnRegion( vecPatches, region, params, &smpi, timers, itime, imode );
+                }
+                timers.syncDens.restart();
+                region.vecPatch_.diag_flag = false;
+                if( params.geometry != "AMcylindrical" )
+                    SyncVectorPatch::sumRhoJ( params, region.vecPatch_, &smpi, timers, itime ); // MPI
+                else
+                    for( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
+                        SyncVectorPatch::sumRhoJ( params, region.vecPatch_, imode, &smpi, timers, itime );
+                    }
+                timers.syncDens.update( params.printNow( itime ) );
+
+
+                // apply external time fields if requested
+                if ( region.vecPatch_(0)->EMfields->extTimeFields.size() )
+                    region.vecPatch_.applyPrescribedFields(time_prim);
+
+                region.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
+                if ( params.geometry != "AMcylindrical" )
+                    DoubleGrids::syncFieldsOnPatches( region, vecPatches, params, &smpi, timers, itime );
+                else {
+                    for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                        DoubleGridsAM::syncFieldsOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
                 }
             }
-#endif
+            if( vecPatches.diag_flag ) {
 
+                if (!params.is_spectral) {
+                    if ( params.geometry != "AMcylindrical" )
+                        DoubleGrids::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime );
+                    else {
+                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                            DoubleGridsAM::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
+                    }
+
+                    // Currents and densities not corrected on regions
+                    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
+                    {
+                        if( params.geometry != "AMcylindrical" ) {
+                            SyncVectorPatch::sumRhoJ( params, vecPatches, &smpi, timers, itime ); // MPI
+                        }
+                        else {
+                            for( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
+                                SyncVectorPatch::sumRhoJ( params, vecPatches, imode, &smpi, timers, itime );
+                            }
+                        }
+                    }
+                }
+                else {
+                    // Just need to cp Bm in B for all patches
+                    vecPatches.setMagneticFieldsForDiagnostic( params );
+
+                    // Currents and densities could have been corrected on regions
+                    if ( params.geometry != "AMcylindrical" ) {
+                        DoubleGrids::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers, itime );
+                    }
+                    else {
+                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                            DoubleGridsAM::syncCurrentsOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
+                    }
+                }
+            }
+            region.vecPatch_.resetRhoJ();
+        }
+
+        #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
+        {
             // finalize particle exchanges and sort particles
             vecPatches.finalizeAndSortParticles( params, &smpi, simWindow,
-                                                time_dual, timers, itime );
+                                                 time_dual, timers, itime );
 
             // Particle merging
             vecPatches.mergeParticles(params, &smpi, time_dual,timers, itime );
@@ -371,12 +488,12 @@ int main( int argc, char *argv[] )
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
 
             timers.movWindow.restart();
-            simWindow->shift( vecPatches, &smpi, params, itime, time_dual );
+            simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
 
             if (itime == simWindow->getAdditionalShiftsIteration() ) {
                 int adjust = simWindow->isMoving(time_dual)?0:1;
                 for (unsigned int n=0;n < simWindow->getNumberOfAdditionalShifts()-adjust; n++)
-                    simWindow->shift( vecPatches, &smpi, params, itime, time_dual );
+                    simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
             }
             timers.movWindow.update();
             // ----------------------------------------------------------------------
@@ -386,35 +503,81 @@ int main( int argc, char *argv[] )
             checkpoint.dump( vecPatches, itime, &smpi, simWindow, params );
             #pragma omp barrier
             // ----------------------------------------------------------------------
+            
+        } //End omp parallel region
+            
+        if( params.has_load_balancing ) {
+            if( params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
 
-
-            if( params.has_load_balancing ) {
-                if( params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
-                    timers.loadBal.restart();
-                    #pragma omp single
-                    vecPatches.loadBalance( params, time_dual, &smpi, simWindow, itime );
-                    timers.loadBal.update( params.printNow( itime ) );
+                count_dlb++;
+                if (params.uncoupled_grids && ((count_dlb%5)==0)) {
+                    if ( params.geometry != "AMcylindrical" )
+                        DoubleGrids::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime );
+                    else {
+                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                            DoubleGridsAM::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
+                    }
                 }
+
+                timers.loadBal.restart();
+                #pragma omp single
+                vecPatches.loadBalance( params, time_dual, &smpi, simWindow, itime );
+                timers.loadBal.update( params.printNow( itime ) );
+
+                if (params.uncoupled_grids && ((count_dlb%5)==0)) {
+                    //if (params.uncoupled_grids ) {
+                    region.reset_fitting( &smpi, params );
+
+                    region.clean();
+                    region.reset_mapping();
+
+                    region.build( params, &smpi, vecPatches, openPMD, false );
+                    if( params.is_pxr ){
+                        region.coupling( params, false );
+                    }
+                    region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+                    region.identify_missing_patches( &smpi, vecPatches, params );
+
+                    if ( params.geometry != "AMcylindrical" ) {
+                        DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, &smpi );
+
+                        //SyncVectorPatch::exchangeE( params, region.vecPatch_, &smpi );
+                        //SyncVectorPatch::finalizeexchangeE( params, region.vecPatch_ );
+                        //SyncVectorPatch::exchangeB( params, region.vecPatch_, &smpi );
+                        //SyncVectorPatch::finalizeexchangeB( params, region.vecPatch_ );
+                    }
+                    else {
+                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                            DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
+                    }
+
+                }
+                else if (params.uncoupled_grids) {
+                    region.reset_mapping();
+                    region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+                    region.identify_missing_patches( &smpi, vecPatches, params );
+                }
+
             }
+        }
 
-            // print message at given time-steps
-            // --------------------------------
-            if( smpi.isMaster() &&  params.printNow( itime ) ) {
-                params.print_timestep( itime, time_dual, timers.global );    //contain a timer.update !!!
-            }
+        // print message at given time-steps
+        // --------------------------------
+        if( smpi.isMaster() &&  params.printNow( itime ) ) {
+            params.print_timestep( itime, time_dual, timers.global );    //contain a timer.update !!!
+        }
 
-            if( params.printNow( itime ) ) {
-                #pragma omp master
-                timers.consolidate( &smpi );
-                #pragma omp barrier
-            }
+        if( params.printNow( itime ) ) {
+            #pragma omp master
+            timers.consolidate( &smpi );
+            #pragma omp barrier
+        }
 
-            itime++;
-
-        }//END of the time loop
-
-    } //End omp parallel region
-
+        itime++;
+            
+    }//END of the time loop
+        
+    
     smpi.barrier();
 
     // ------------------------------------------------------------------
@@ -440,8 +603,8 @@ int main( int argc, char *argv[] )
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    if( global_factor!=1 ) {
-        domain.clean();
+    if (params.uncoupled_grids) {
+        region.clean();
     }
     vecPatches.close( &smpi );
     smpi.barrier(); // Don't know why but sync needed by HDF5 Phasespace managment

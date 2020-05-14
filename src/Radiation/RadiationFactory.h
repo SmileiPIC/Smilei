@@ -34,30 +34,30 @@ public:
     //! \param species Species object
     //! \param params Parameters
     //  --------------------------------------------------------------------------------------------------------------------
-    static Radiation *create( Params &params, Species *species )
+    static Radiation *create( Params &params, Species *species, Random * rand   )
     {
         Radiation *Radiate = NULL;
 
         // assign the correct Radiation model to Radiate
         if( species->radiation_model_ == "mc" ) {
-            Radiate = new RadiationMonteCarlo( params, species );
+            Radiate = new RadiationMonteCarlo( params, species, rand  );
         }
         // Corrected LL + stochastic diffusive operator
         else if( species->radiation_model_ == "niel" ) {
-            Radiate = new RadiationNiel( params, species );
+            Radiate = new RadiationNiel( params, species, rand  );
         }
         // Corrected continuous radiation loss model
         else if( species->radiation_model_ == "cll" ) {
-            Radiate = new RadiationCorrLandauLifshitz( params, species );
+            Radiate = new RadiationCorrLandauLifshitz( params, species, rand  );
         }
         // Classical continuous radiation loss model from Landau-Lifshitz (LL)
         else if( species->radiation_model_ == "ll" ) {
-            Radiate = new RadiationLandauLifshitz( params, species );
+            Radiate = new RadiationLandauLifshitz( params, species, rand );
         }
         // Radiation is only a diagnostic (DiagRadiationSpectrum can be called for this species): only compute
         // the electron quantum parameter
         else if( species->radiation_model_ == "diagradiationspectrum" ) {
-            Radiate = new RadiationDiagRadiationSpectrum( params, species );
+            Radiate = new RadiationDiagRadiationSpectrum( params, species, rand );
         } else if( species->radiation_model_ != "none" ) {
             ERROR( "For species " << species->name_
                    << ": unknown radiation_model `"

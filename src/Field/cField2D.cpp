@@ -102,12 +102,15 @@ void cField2D::allocateDims()
     
 }
 
-void cField2D::deallocateDims()
+void cField2D::deallocateDataAndSetTo( Field* f )
 {
     delete [] cdata_;
     cdata_ = NULL;
     delete [] data_2D;
     data_2D = NULL;
+
+    cdata_ = (static_cast<cField2D *>(f))->cdata_;
+    data_2D = (static_cast<cField2D *>(f))->data_2D;
     
 }
 
@@ -199,15 +202,33 @@ void cField2D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thi
     
     std::vector<unsigned int> dual =  this->isDual_;
     
-    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - outPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
-    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - outPatch->Pcoordinates[1]*params.n_space[1]*params.global_factor[1] ;
+    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.region_oversize[0] ) ;
+    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.region_oversize[1] ) ;
     
     //for ( unsigned int i = params.oversize[0] ; i < this->dims_[0]-params.oversize[0] ; i++ ) {
     //    for ( unsigned int j = params.oversize[1] ; j < this->dims_[1]-params.oversize[1] ; j++ ) {
-    for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
-        for( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
-            ( *out2D )( iout+i, jout+j ) = ( *this )( i, j );
-            //( *out2D )( iout+i, jout+j ) += (thisPatch->hindex+1);
+    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
+            ( *out2D )( iout+i+params.region_oversize[0]-params.oversize[0], jout+j+params.region_oversize[1]-params.oversize[1] ) = ( *this )( i, j );
+        }
+    }
+    
+}
+
+void cField2D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+{
+    cField2D *out2D = static_cast<cField2D *>( outField );
+    
+    std::vector<unsigned int> dual =  this->isDual_;
+    
+    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.region_oversize[0] ) ;
+    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.region_oversize[1] ) ;
+    
+    //for ( unsigned int i = params.oversize[0] ; i < this->dims_[0]-params.oversize[0] ; i++ ) {
+    //    for ( unsigned int j = params.oversize[1] ; j < this->dims_[1]-params.oversize[1] ; j++ ) {
+    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
+            ( *out2D )( iout+i+params.region_oversize[0]-params.oversize[0], jout+j+params.region_oversize[1]-params.oversize[1] ) += ( *this )( i, j );
         }
     }
     
@@ -220,14 +241,14 @@ void cField2D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPa
     
     std::vector<unsigned int> dual =  in2D->isDual_;
     
-    int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - inPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
-    int jin = thisPatch->Pcoordinates[1]*params.n_space[1] - inPatch->Pcoordinates[1]*params.n_space[1]*params.global_factor[1] ;
+    int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - ( inPatch->getCellStartingGlobalIndex(0) + params.region_oversize[0] );
+    int jin = thisPatch->Pcoordinates[1]*params.n_space[1] - ( inPatch->getCellStartingGlobalIndex(1) + params.region_oversize[1] );
     
     //for ( unsigned int i = params.oversize[0] ; i < out2D->dims_[0]-params.oversize[0] ; i++ ) {
     //    for ( unsigned int j = params.oversize[1] ; j < out2D->dims_[1]-params.oversize[1] ; j++ ) {
-    for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
-        for( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
-            ( *this )( i, j ) = ( *in2D )( iin+i, jin+j );
+    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
+            ( *this )( i, j ) = ( *in2D )( iin+i+params.region_oversize[0]-params.oversize[0], jin+j+params.region_oversize[1]-params.oversize[1] );
             //( *out2D )( i, j ) = in2D->hindex;
         }
     }

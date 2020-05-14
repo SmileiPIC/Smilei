@@ -110,7 +110,7 @@ public:
     void blackman21CurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff){return ;};
     
     //! Creates a new field with the right characteristics, depending on the name
-    Field *createField( std::string fieldname );
+    Field *createField( std::string fieldname, Params& params );
     
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
@@ -139,10 +139,10 @@ public:
     //! Method used to impose external fields
     void applyExternalField( Field *, Profile *, Patch * );
     
+    void initAntennas( Patch *patch, Params& params );
     //! Method used to impose external fields
     void applyPrescribedField( Field *, Profile *, Patch *, double time );
     
-    void initAntennas( Patch *patch );
     
 private:
     //! Initialize quantities needed in the creators of ElectroMagn1D

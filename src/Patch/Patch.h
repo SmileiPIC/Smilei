@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <limits.h>
 
+#include "Random.h"
 #include "Params.h"
 #include "SmileiMPI.h"
 #include "PartWall.h"
@@ -50,7 +51,7 @@ public:
     //! Finalize MPI environment : especially requests array for non blocking communications
     void finalizeMPIenvironment( Params &params );
     
-    void set( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
+    void setLocationAndAllocateFields( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
    
     //Copy positions of particles from source species to species which are initialized on top of another one.
     void copyPositions( std::vector<Species *> vecSpecies_to_update);
@@ -98,19 +99,8 @@ public:
     std::vector<double> patch_timers;
 #endif
     
-    //! Random number generator
-    inline uint32_t xorshift32()
-    {
-        /* Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs" */
-        xorshift32_state ^= xorshift32_state << 13;
-        xorshift32_state ^= xorshift32_state >> 17;
-        xorshift32_state ^= xorshift32_state << 5;
-        return xorshift32_state;
-    }
-    //! State of the random number generator
-    uint32_t xorshift32_state;
-    //! Inverse of the maximum value of the random number generator
-    const double xorshift32_invmax = 1./4294967296.;
+    // Random number generator.
+    Random * rand_;
     
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
@@ -156,6 +146,8 @@ public:
     virtual void finalizeExchange( Field *field, int iDim ) = 0;
     //! finalize comm / exchange complex fields in direction iDim only
     virtual void finalizeExchangeComplex( Field *field, int iDim ) = 0;
+    
+    virtual void exchangeField_movewin ( Field* field, int clrw ) = 0;
     
     // Create MPI_Datatype to exchange fields
     virtual void createType( Params &params ) = 0;
@@ -354,8 +346,7 @@ public:
     
     bool is_small = true;
     
-    
-    
+        
 protected:
     // Complementary members for the description of the geometry
     // ---------------------------------------------------------
@@ -387,6 +378,10 @@ protected:
     
     double cell_volume;
     
+    //! Buffers for exchange
+    std::vector<int> buffer_vecto;
+    std::vector<double> buffer_scalars;
+        
 };
 
 

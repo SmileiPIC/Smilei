@@ -151,19 +151,20 @@ COMPILE_ONLY = False
 GENERATE = False
 SHOWDIFF = False
 nb_restarts = 0
+COMPILE_MODE=""
 LOG = False
 
 # TO PRINT USAGE
 def usage():
-	print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>] [-p <partition name>] [-l <logs_folder>]' )
+	print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>] [-k <compile_mode>] [-p <partition name>] [-l <logs_folder>]' )
 	print( '    Try `validation.py -h` for more details' )
 
 # GET COMMAND-LINE OPTIONS
 try:
 	options, remainder = getopt(
 		sys.argv[1:],
-		'o:m:b:r:p:gshvcl:',
-		['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'LOG='])
+		'o:m:b:r:k:p:gshvcl:',
+		['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG='])
 except GetoptError as err:
 	usage()
 	sys.exit(4)
@@ -182,6 +183,8 @@ for opt, arg in options:
 		PARTITION = arg
 	elif opt in ('-c', '--COMPILE_ONLY'):
 		COMPILE_ONLY=True
+	elif opt in ('-k', '--COMPILE_MODE'):
+		COMPILE_MODE=arg
 	elif opt in ('-h', '--HELP'):
 		print( "-b")
 		print( "     -b <bench_case>")
@@ -209,6 +212,8 @@ for opt, arg in options:
 		print( "     DEFAULT : 0 (meaning no restarts, only one simulation)")
 		print( "-c")
 		print( "     Compilation only")
+		print( "-k")
+		print( "     Compilation using config=... See make help for details")
 		print( "-v")
 		print( "     Verbose mode")
 		print( "-l")
@@ -369,6 +374,10 @@ def RUN_LLR(command, dir):
 			+"export OMP_SCHEDULE=DYNAMIC \n"
 			+"export KMP_AFFINITY=verbose \n"
 			+"export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n"
+			+"module load fftw/3.3.7-opm-1.6.5-icc-17 \n"
+			+"export LIBPXR=/home/llr/galop/derouil/applications/picsar/lib \n"
+			+"export LD_LIBRARY_PATH=$LIBPXR:$LD_LIBRARY_PATH \n"
+			+"ulimit -s unlimited \n"
 			+"#Specify the number of sockets per node in -mca orte_num_sockets \n"
 			+"#Specify the number of cores per sockets in -mca orte_num_cores \n"
 			+"cd "+dir+" \n"
@@ -427,6 +436,8 @@ def RUN_OTHER(command, dir):
 	- dir: working directory
 	"""
 	try :
+		if VERBOSE:
+			print( "Trying command `"+command+"`")
 		check_call(command, shell=True)
 	except CalledProcessError:
 		if VERBOSE :
@@ -456,6 +467,10 @@ COMPILE_ERRORS=WORKDIR_BASE+s+'compilation_errors'
 COMPILE_OUT=WORKDIR_BASE+s+'compilation_out'
 COMPILE_OUT_TMP=WORKDIR_BASE+s+'compilation_out_temp'
 
+MAKE='make'
+if COMPILE_MODE:
+	MAKE += " config="+COMPILE_MODE
+
 # Find commands according to the host
 if LLR in HOSTNAME :
 	if (PARTITION=="jollyjumper"):
@@ -465,11 +480,10 @@ if LLR in HOSTNAME :
 	if PPN % OMP != 0:
 		print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
 		sys.exit(4)
-	#NODES=((int(MPI)*int(OMP)-1)/24)+1
 	NODES=int(ceil(MPI/2.))
-	#NPERSOCKET = int(ceil(MPI/NODES/2.))
 	NPERSOCKET = 1
-	COMPILE_COMMAND = 'make -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = str(MAKE)+' -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = str(MAKE)+' -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN)+" -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
@@ -477,7 +491,8 @@ if LLR in HOSTNAME :
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
 	#CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
-	COMPILE_COMMAND = 'make -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = str(MAKE)+' -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = str(MAKE)+' -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
@@ -496,7 +511,7 @@ else:
 	else:
 		MPIRUN = "mpirun -np "
 
-	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = str(MAKE)+' -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+MPIRUN+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
@@ -526,7 +541,7 @@ try :
 		#copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
 		if COMPILE_ONLY:
 			if VERBOSE:
-				print(  "Smilei validation succeed.")
+				print( "Smilei validation succeed.")
 			exit(0)
 	else:
 		if COMPILE_ONLY :
@@ -536,7 +551,7 @@ try :
 
 except CalledProcessError as e:
 	# if compiling errors, archive the workdir (if it contains a smilei bin),
-    # create a new one with compilation_errors inside and exit with error code
+	# create a new one with compilation_errors inside and exit with error code
 	workdir_archiv(SMILEI_W)
 	os.rename(COMPILE_ERRORS,WORKDIR_BASE+s+COMPILE_ERRORS)
 	if VERBOSE:
@@ -559,7 +574,7 @@ def findReference(bench_name):
 
 def matchesWithReference(data, expected_data, data_name, precision):
 	# ok if exactly equal (including strings or lists of strings)
-	try   :
+	try:
 		if expected_data == data:
 			return True
 	except: pass
@@ -719,8 +734,8 @@ class ShowDiffWithReference(object):
 # DEFINE A CLASS FOR LOGGING DATA
 class Log:
 	pattern1 = re.compile(""
-		+"[\n\t\s]+(Time[ _]in[ _]time[ _]loop) :\s+([.0-9]+)\s+([<.0-9]+)\% coverage"
-		+"([\n\t\s]+([\w ]+)\s+([.0-9]+)\s+([<.0-9]+)\%){6,15}"
+		+"[\n\t\s]+(Time[ _]in[ _]time[ _]loop)\s+([.0-9]+)\s+([<.0-9]+)\% coverage"
+		+"([\n\t\s]+([\w ]+)\s+([.0-9]+)\s+([<.0-9]+)\%){2,15}"
 	)
 	pattern2 = re.compile(""
 		+"[\t\s]+([\w ]+):?\s+([.0-9]+)\s+([<.0-9]+)\%"

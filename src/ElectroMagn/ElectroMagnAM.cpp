@@ -9,6 +9,7 @@
 #include "Params.h"
 #include "Field2D.h"
 #include "cField2D.h"
+#include "FieldFactory.h"
 
 #include "Patch.h"
 #include "PatchAM.h"
@@ -36,9 +37,9 @@ ElectroMagnAM::ElectroMagnAM( Params &params, DomainDecomposition *domain_decomp
         for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
             ostringstream species_mode_name( "" );
             species_mode_name << vecSpecies[ispec]->name_ << "_mode_" << imode;
-            Jl_s[imode*n_species+ispec]  = new cField2D( ( "Jl_" + species_mode_name.str() ).c_str(), dimPrim );
-            Jr_s[imode*n_species+ispec]  = new cField2D( ( "Jr_" + species_mode_name.str() ).c_str(), dimPrim );
-            Jt_s[imode*n_species+ispec]  = new cField2D( ( "Jt_" + species_mode_name.str() ).c_str(), dimPrim );
+            Jl_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jl_" , vecSpecies[ispec]->name_, "_mode_",  imode ).c_str(), dimPrim, params );
+            Jr_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jr_" , vecSpecies[ispec]->name_, "_mode_",  imode ).c_str(), dimPrim, params );
+            Jt_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jt_" , vecSpecies[ispec]->name_, "_mode_",  imode ).c_str(), dimPrim, params );
             rho_AM_s[imode*n_species+ispec] = new cField2D( ( "Rho_"+ species_mode_name.str() ).c_str(), dimPrim );
             if ((imode == 0) && (params.Laser_Envelope_model )){
                 Env_Chi_s[ispec] = new Field2D( ( "Env_Chi_"+ species_mode_name.str() ).c_str(), dimPrim );
@@ -61,26 +62,26 @@ ElectroMagnAM::ElectroMagnAM( ElectroMagnAM *emFields, Params &params, Patch *pa
         for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
         
             int ifield = imode*n_species+ispec;
-            
+
             if( emFields->Jl_s[ifield] != NULL ) {
                 if( emFields->Jl_s[ifield]->cdata_ != NULL ) {
-                    Jl_s[ifield]  = new cField2D( dimPrim, 0, false, emFields->Jl_s[ifield]->name );
+                    Jl_s[ifield]  = FieldFactory::createComplex(dimPrim, 0, false, emFields->Jl_s[ifield]->name, params);
                 } else {
-                    Jl_s[ifield]  = new cField2D( emFields->Jl_s[ifield]->name, dimPrim );
+                    Jl_s[ifield]  = FieldFactory::createComplex(emFields->Jl_s[ifield]->name, dimPrim, params);
                 }
             }
             if( emFields->Jr_s[ifield] != NULL ) {
                 if( emFields->Jr_s[ifield]->cdata_ != NULL ) {
-                    Jr_s[ifield]  = new cField2D( dimPrim, 1, false, emFields->Jr_s[ifield]->name );
+                    Jr_s[ifield]  = FieldFactory::createComplex(dimPrim, 1, false, emFields->Jr_s[ifield]->name, params);
                 } else {
-                    Jr_s[ifield]  = new cField2D( emFields->Jr_s[ifield]->name, dimPrim );
+                    Jr_s[ifield]  = FieldFactory::createComplex(emFields->Jr_s[ifield]->name, dimPrim, params);
                 }
             }
             if( emFields->Jt_s[ifield] != NULL ) {
                 if( emFields->Jt_s[ifield]->cdata_ != NULL ) {
-                    Jt_s[ifield]  = new cField2D( dimPrim, 2, false, emFields->Jt_s[ifield]->name );
+                    Jt_s[ifield]  = FieldFactory::createComplex(dimPrim, 2, false, emFields->Jt_s[ifield]->name, params);
                 } else {
-                    Jt_s[ifield]  = new cField2D( emFields->Jt_s[ifield]->name, dimPrim );
+                    Jt_s[ifield]  = FieldFactory::createComplex(emFields->Jt_s[ifield]->name, dimPrim, params);
                 }
             }
             if( emFields->rho_AM_s[ifield] != NULL ) {
@@ -164,17 +165,17 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
     for( size_t i=0 ; i<nDim_field ; i++ ) {
         // Standard scheme
         dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2;
+        dimDual[i] = n_space[i]+2-(params.is_pxr);
         // + Ghost domain
         dimPrim[i] += 2*oversize[i];
         dimDual[i] += 2*oversize[i];
     }
     // number of nodes of the primal and dual grid in the x-direction
     nl_p = n_space[0]+1+2*oversize[0];
-    nl_d = n_space[0]+2+2*oversize[0];
+    nl_d = n_space[0]+2+2*oversize[0]-(params.is_pxr);
     // number of nodes of the primal and dual grid in the y-direction
     nr_p = n_space[1]+1+2*oversize[1];
-    nr_d = n_space[1]+2+2*oversize[1];
+    nr_d = n_space[1]+2+2*oversize[1]-(params.is_pxr);
     
     // Allocation of the EM fields
     
@@ -193,27 +194,38 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
     Jr_.resize( nmodes );
     Jt_.resize( nmodes );
     rho_AM_.resize( nmodes );
-    
+
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         ostringstream mode_id( "" );
         mode_id << "_mode_" << imode;
         
-        El_[imode]  = new cField2D( dimPrim, 0, false, ( "El"+mode_id.str() ).c_str() );
-        Er_[imode]  = new cField2D( dimPrim, 1, false, ( "Er"+mode_id.str() ).c_str() );
-        Et_[imode]  = new cField2D( dimPrim, 2, false, ( "Et"+mode_id.str() ).c_str() );
-        Bl_[imode]  = new cField2D( dimPrim, 0, true, ( "Bl"+mode_id.str() ).c_str() );
-        Br_[imode]  = new cField2D( dimPrim, 1, true, ( "Br"+mode_id.str() ).c_str() );
-        Bt_[imode]  = new cField2D( dimPrim, 2, true, ( "Bt"+mode_id.str() ).c_str() );
-        Bl_m[imode] = new cField2D( dimPrim, 0, true, ( "Bl_m"+mode_id.str() ).c_str() );
-        Br_m[imode] = new cField2D( dimPrim, 1, true, ( "Br_m"+mode_id.str() ).c_str() );
-        Bt_m[imode] = new cField2D( dimPrim, 2, true, ( "Bt_m"+mode_id.str() ).c_str() );
+        El_[imode]  = FieldFactory::createComplex( dimPrim, 0, false, ( "El"+mode_id.str() ).c_str(), params );
+        Er_[imode]  = FieldFactory::createComplex( dimPrim, 1, false, ( "Er"+mode_id.str() ).c_str(), params );
+        Et_[imode]  = FieldFactory::createComplex( dimPrim, 2, false, ( "Et"+mode_id.str() ).c_str(), params );
+        Bl_[imode]  = FieldFactory::createComplex( dimPrim, 0, true, ( "Bl"+mode_id.str() ).c_str(), params );
+        Br_[imode]  = FieldFactory::createComplex( dimPrim, 1, true, ( "Br"+mode_id.str() ).c_str(), params );
+        Bt_[imode]  = FieldFactory::createComplex( dimPrim, 2, true, ( "Bt"+mode_id.str() ).c_str(), params );
+        Bl_m[imode] = FieldFactory::createComplex( dimPrim, 0, true, ( "Bl_m"+mode_id.str() ).c_str(), params );
+        Br_m[imode] = FieldFactory::createComplex( dimPrim, 1, true, ( "Br_m"+mode_id.str() ).c_str(), params );
+        Bt_m[imode] = FieldFactory::createComplex( dimPrim, 2, true, ( "Bt_m"+mode_id.str() ).c_str(), params );
         
         // Total charge currents and densities
-        Jl_[imode]   = new cField2D( dimPrim, 0, false, ( "Jl"+mode_id.str() ).c_str() );
-        Jr_[imode]   = new cField2D( dimPrim, 1, false, ( "Jr"+mode_id.str() ).c_str() );
-        Jt_[imode]   = new cField2D( dimPrim, 2, false, ( "Jt"+mode_id.str() ).c_str() );
+        Jl_[imode]   = FieldFactory::createComplex( dimPrim, 0, false, ( "Jl"+mode_id.str() ).c_str(), params );
+        Jr_[imode]   = FieldFactory::createComplex( dimPrim, 1, false, ( "Jr"+mode_id.str() ).c_str(), params );
+        Jt_[imode]   = FieldFactory::createComplex( dimPrim, 2, false, ( "Jt"+mode_id.str() ).c_str(), params );
         rho_AM_[imode]  = new cField2D( dimPrim, ( "Rho"+mode_id.str() ).c_str() );
     }
+
+    if(params.is_pxr == true) {
+        rho_old_AM_.resize( nmodes );
+        for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+            ostringstream mode_id( "" );
+            mode_id << "_mode_" << imode;
+            rho_old_AM_[imode]  = new cField2D( dimPrim, ( "RhoOld"+mode_id.str() ).c_str() );
+        }
+    } 
+
+    
 
     if( params.Laser_Envelope_model ) {
         Env_A_abs_ = new Field2D( dimPrim, "Env_A_abs_mode_0" );
@@ -340,9 +352,11 @@ ElectroMagnAM::~ElectroMagnAM()
         delete Bl_[imode];
         delete Br_[imode];
         delete Bt_[imode];
-        delete Bl_m[imode];
-        delete Br_m[imode];
-        delete Bt_m[imode];
+        if (!is_pxr) {
+            delete Bl_m[imode];
+            delete Br_m[imode];
+            delete Bt_m[imode];
+        }
         
         delete Jl_[imode];
         delete Jr_[imode];
@@ -1232,51 +1246,56 @@ void ElectroMagnAM::centeringE( std::vector<double> E_Add )
 void ElectroMagnAM::saveMagneticFields( bool is_spectral )
 {
     if( is_spectral ) {
-        ERROR( "Not implemented" );
-    }
-    for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
-        // Static cast of the fields
-        cField2D *Bl   = Bl_[imode];
-        cField2D *Br   = Br_[imode];
-        cField2D *Bt   = Bt_[imode];
-        cField2D *Bl_old = Bl_m[imode];
-        cField2D *Br_old = Br_m[imode];
-        cField2D *Bt_old = Bt_m[imode];
-        
-        // Magnetic field Bl^(p,d)
-        memcpy( &( ( *Bl_old )( 0, 0 ) ), &( ( *Bl )( 0, 0 ) ), nl_p*nr_d*sizeof( complex<double> ) );
-        
-        // Magnetic field Br^(d,p)
-        memcpy( &( ( *Br_old )( 0, 0 ) ), &( ( *Br )( 0, 0 ) ), nl_d*nr_p*sizeof( complex<double> ) );
-        
-        // Magnetic field Bt^(d,d)
-        memcpy( &( ( *Bt_old )( 0, 0 ) ), &( ( *Bt )( 0, 0 ) ), nl_d*nr_d*sizeof( complex<double> ) );
+        for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+            Bl_m[imode]->deallocateDataAndSetTo( Bl_[imode] );
+            Br_m[imode]->deallocateDataAndSetTo( Br_[imode] );
+            Bt_m[imode]->deallocateDataAndSetTo( Bt_[imode] );
+        }
+    } else {
+        for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+            // Static cast of the fields
+            cField2D *Bl   = Bl_[imode];
+            cField2D *Br   = Br_[imode];
+            cField2D *Bt   = Bt_[imode];
+            cField2D *Bl_old = Bl_m[imode];
+            cField2D *Br_old = Br_m[imode];
+            cField2D *Bt_old = Bt_m[imode];
+            
+            // Magnetic field Bl^(p,d)
+            memcpy( &( ( *Bl_old )( 0, 0 ) ), &( ( *Bl )( 0, 0 ) ), nl_p*nr_d*sizeof( complex<double> ) );
+            
+            // Magnetic field Br^(d,p)
+            memcpy( &( ( *Br_old )( 0, 0 ) ), &( ( *Br )( 0, 0 ) ), nl_d*nr_p*sizeof( complex<double> ) );
+            
+            // Magnetic field Bt^(d,d)
+            memcpy( &( ( *Bt_old )( 0, 0 ) ), &( ( *Bt )( 0, 0 ) ), nl_d*nr_d*sizeof( complex<double> ) );
+        }
     }
     
 }//END saveMagneticFields
 
 
 // Create a new field
-Field *ElectroMagnAM::createField( string fieldname )
+Field *ElectroMagnAM::createField( string fieldname, Params& params )
 {
     if( fieldname.substr( 0, 2 )=="El" ) {
-        return new cField2D( dimPrim, 0, false, fieldname );
+        return FieldFactory::createComplex( dimPrim, 0, false, fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Er" ) {
-        return new cField2D( dimPrim, 1, false, fieldname );
+        return FieldFactory::createComplex( dimPrim, 1, false, fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Et" ) {
-        return new cField2D( dimPrim, 2, false, fieldname );
+        return FieldFactory::createComplex( dimPrim, 2, false, fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Bl" ) {
-        return new cField2D( dimPrim, 0, true,  fieldname );
+        return FieldFactory::createComplex( dimPrim, 0, true,  fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Br" ) {
-        return new cField2D( dimPrim, 1, true,  fieldname );
+        return FieldFactory::createComplex( dimPrim, 1, true,  fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Bt" ) {
-        return new cField2D( dimPrim, 2, true,  fieldname );
+        return FieldFactory::createComplex( dimPrim, 2, true,  fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Jl" ) {
-        return new cField2D( dimPrim, 0, false, fieldname );
+        return FieldFactory::createComplex( dimPrim, 0, false, fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Jr" ) {
-        return new cField2D( dimPrim, 1, false, fieldname );
+        return FieldFactory::createComplex( dimPrim, 1, false, fieldname, params );
     } else if( fieldname.substr( 0, 2 )=="Jt" ) {
-        return new cField2D( dimPrim, 2, false, fieldname );
+        return FieldFactory::createComplex( dimPrim, 2, false, fieldname, params );
     } else if( fieldname.substr( 0, 3 )=="Rho" ) {
         return new cField2D( dimPrim, fieldname );
     } else if( fieldname.substr( 0, 9 )=="Env_A_abs" ) {
@@ -1384,37 +1403,87 @@ void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
 
         // applying a single pass of the binomial filter along Y
         if (ipass < passes[1]){
+
+            double qp[nr_p], qm[nr_p]; // Coefficient to retrieve proper binomial stencil along r in cylindrical geometry.
+            complex<double> temp[nl_d];
+            for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
+                qp[j] = 1.+dr*invR[j];
+                qm[j] = 1.-dr*invR[j];
+            }
+
+            double qdp[nr_d], qdm[nr_d];
+            for( unsigned int j=isYmin*3; j<nr_d-1; j++ ) {
+                qdp[j] = 1.+dr*invRd[j];
+                qdm[j] = 1.-dr*invRd[j];
+            }
+
             //Jl
-            for( unsigned int i=1; i<nl_d-1; i++ ) {
-                for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
-                        ( *Jl )( i, j) = ( ( *Jl )( i, j) + ( *Jl )( i, j+1)*(1.+dr*invR[j]) )*0.5;
+            if(isYmin){
+                int j0 = 3;
+                for( unsigned int i=1; i<nl_d-1; i++ ) {
+                    temp[i] = ( qm[j0]*( *Jl )( i, j0-1) + qp[j0]*( *Jl )( i, j0) )*0.25; 
                 }
             }
             for( unsigned int i=1; i<nl_d-1; i++ ) {
-                for( unsigned int j=nr_p-2; j>isYmin*2; j-- ) {
-                        ( *Jl )( i, j) = ( ( *Jl )( i, j) + ( *Jl )( i, j-1)*(1.-dr*invR[j]) )*0.5;
+                for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
+                        ( *Jl )( i, j) = ( qm[j]*( *Jl )( i, j) + qp[j]*( *Jl )( i, j+1) )*0.5;
+                }
+            }
+            for( unsigned int i=1; i<nl_d-1; i++ ) {
+                for(  int j=nr_p-2; j>isYmin*2+1; j-- ) {
+                        ( *Jl )( i, j) = ( ( *Jl )( i, j) + ( *Jl )( i, j-1)  )*0.5;
+                }
+            }
+            if(isYmin){
+                int j0 = 3;
+                for( unsigned int i=1; i<nl_d-1; i++ ) {
+                        ( *Jl )( i, j0) = 0.5*( *Jl )( i, j0) + temp[i];
                 }
             }
             //Jr
-            for( unsigned int i=1; i<nl_p-1; i++ ) {
-                for( unsigned int j=isYmin*3; j<nr_d-1; j++ ) {
-                        ( *Jr )( i, j) = ( ( *Jr )( i, j) + ( *Jr )( i, j+1)*(1.+dr*invRd[j]) )*0.5;
+            if(isYmin){
+                int j0 = 4;
+                for( unsigned int i=1; i<nl_p-1; i++ ) {
+                    temp[i] = ( qdm[j0]*( *Jr )( i, j0-1) + qdp[j0]*( *Jr )( i, j0) )*0.25; 
                 }
             }
             for( unsigned int i=1; i<nl_p-1; i++ ) {
-                for( unsigned int j=nr_d-2; j>isYmin*3; j-- ) {
-                        ( *Jr )( i, j) = ( ( *Jr )( i, j) + ( *Jr )( i, j-1)*(1.-dr*invRd[j]) )*0.5;
+                for( unsigned int j=isYmin*3+1; j<nr_d-1; j++ ) {
+                        ( *Jr )( i, j) = ( qdp[j]*( *Jr )( i, j) + qdm[j]*( *Jr )( i, j+1) )*0.5;
+                }
+            }
+            for( unsigned int i=1; i<nl_p-1; i++ ) {
+                for(  int j=nr_d-2; j>isYmin*3+1; j-- ) {
+                        ( *Jr )( i, j) = ( ( *Jr )( i, j) + ( *Jr )( i, j-1) )*0.5;
+                }
+            }
+            if(isYmin){
+                int j0 = 4;
+                for( unsigned int i=1; i<nl_p-1; i++ ) {
+                        ( *Jr )( i, j0) = 0.5*( *Jr )( i, j0) + temp[i];
                 }
             }
             //Jt
-            for( unsigned int i=1; i<nl_p-1; i++ ) {
-                for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
-                        ( *Jt )( i, j) = ( ( *Jt )( i, j) + ( *Jt )( i, j+1)*(1.+dr*invR[j]) )*0.5;
+            if(isYmin){
+                int j0 = 3;
+                for( unsigned int i=1; i<nl_p-1; i++ ) {
+                    temp[i] = ( qm[j0]*( *Jt )( i, j0-1) + qp[j0]*( *Jt )( i, j0) )*0.25; 
                 }
             }
             for( unsigned int i=1; i<nl_p-1; i++ ) {
-                for( unsigned int j=nr_p-2; j>isYmin*2; j-- ) {
-                        ( *Jt )( i, j) = ( ( *Jt )( i, j) + ( *Jt )( i, j-1)*(1.-dr*invR[j]) )*0.5;
+                for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
+                        ( *Jt )( i, j) = ( qp[j]*( *Jt )( i, j) + qm[j]*( *Jt )( i, j+1) )*0.5;
+                }
+            }
+            for( unsigned int i=1; i<nl_p-1; i++ ) {
+                for(  int j=nr_p-2; j>isYmin*2+1; j-- ) {
+                        ( *Jt )( i, j) = ( ( *Jt )( i, j) + ( *Jt )( i, j-1) )*0.5;
+                }
+            }
+            if(isYmin){
+                int j0 = 3;
+                for( unsigned int i=1; i<nl_p-1; i++ ) {
+                        ( *Jt )( i, j0) = 0.5*( *Jt )( i, j0) + temp[i];
                 }
             }
         }
@@ -1627,8 +1696,8 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
      cField2D *field2D=static_cast<cField2D *>( my_field );
      
      vector<double> pos( 2 );
-     pos[0]      = dl*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
-     double pos1 = dr*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
+     pos[0]      = patch->getDomainLocalMin(0) + dl*( (field2D->isDual( 0 )?-0.5:0.) - oversize[0]);
+     double pos1 = patch->getDomainLocalMin(1) + dr*( (field2D->isDual( 1 )?-0.5:0.) - oversize[1])+is_pxr*dr/2.;
      int N0 = ( int )field2D->dims()[0];
      int N1 = ( int )field2D->dims()[1];
      
@@ -1710,18 +1779,17 @@ void ElectroMagnAM::applyPrescribedField( Field *my_field,  Profile *profile, Pa
 }
 
 
-
-void ElectroMagnAM::initAntennas( Patch *patch )
+void ElectroMagnAM::initAntennas( Patch *patch, Params& params )
 {
 
     // Filling the space profiles of antennas
     for( unsigned int i=0; i<antennas.size(); i++ ) {
         if( antennas[i].fieldName == "Jl" ) {
-            antennas[i].field = new cField2D( dimPrim, 0, false, "Jl" );
+            antennas[i].field = FieldFactory::createComplex( dimPrim, 0, false, "Jl", params );
         } else if( antennas[i].fieldName == "Jr" ) {
-            antennas[i].field = new cField2D( dimPrim, 1, false, "Jr" );
+            antennas[i].field = FieldFactory::createComplex( dimPrim, 1, false, "Jr", params );
         } else if( antennas[i].fieldName == "Jt" ) {
-            antennas[i].field = new cField2D( dimPrim, 2, false, "Jt" );
+            antennas[i].field = FieldFactory::createComplex( dimPrim, 2, false, "Jt", params );
         } else {
             ERROR( "Antenna cannot be applied to field "<<antennas[i].fieldName );
         }

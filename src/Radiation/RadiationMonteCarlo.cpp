@@ -20,12 +20,12 @@
 //! Constructor for RadiationMonteCarlo
 //! Inherit from Radiation
 // ---------------------------------------------------------------------------------------------------------------------
-RadiationMonteCarlo::RadiationMonteCarlo( Params &params, Species *species )
-    : Radiation( params, species )
+RadiationMonteCarlo::RadiationMonteCarlo( Params &params, Species *species, Random * rand  )
+    : Radiation( params, species, rand )
 {
-    this->radiation_photon_sampling_ = species->radiation_photon_sampling_;
-    this->radiation_photon_gamma_threshold_ = species->radiation_photon_gamma_threshold_;
-    this->inv_radiation_photon_sampling_ = 1. / this->radiation_photon_sampling_;
+    radiation_photon_sampling_ = species->radiation_photon_sampling_;
+    radiation_photon_gamma_threshold_ = species->radiation_photon_gamma_threshold_;
+    inv_radiation_photon_sampling_ = 1. / radiation_photon_sampling_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -47,19 +47,23 @@ RadiationMonteCarlo::~RadiationMonteCarlo()
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
+//! \param radiated_energy     overall energy radiated during the call to this method
 // ---------------------------------------------------------------------------------------------------------------------
 void RadiationMonteCarlo::operator()(
-    Particles &particles,
-    Species *photon_species,
-    SmileiMPI *smpi,
+    Particles       &particles,
+    Species         *photon_species,
+    SmileiMPI       *smpi,
     RadiationTables &RadiationTables,
-    int istart,
-    int iend,
-    int ithread, int ipart_ref )
+    double          &radiated_energy,
+    int             istart,
+    int             iend,
+    int             ithread,
+    int             ipart_ref)
 {
 
     // _______________________________________________________________
     // Parameters
+    
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
@@ -73,9 +77,9 @@ void RadiationMonteCarlo::operator()(
     double *Bz = &( ( *Bpart )[2*nparts] );
 
     // Charge divided by the square of the mass
-    double charge_over_mass2;
+    double charge_over_mass_square;
 
-    const double one_over_mass_2 = pow( one_over_mass_, 2. );
+    const double one_over_mass_square = pow( one_over_mass_, 2. );
 
     // Temporary quantum parameter
     double particle_chi;
@@ -120,16 +124,13 @@ void RadiationMonteCarlo::operator()(
     double *tau = &( particles.tau( 0 ) );
 
     // Optical depth for the Monte-Carlo process
-    // double* chi = &( particles.chi(0));
-
-    // Reinitialize the cumulative radiated energy for the current thread
-    radiated_energy_ = 0.;
+    double* chi = &( particles.chi(0));
 
     // _______________________________________________________________
     // Computation
 
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass2 = ( double )( charge[ipart] )*one_over_mass_2;
+        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Init local variables
         emission_time = 0;
@@ -150,7 +151,7 @@ void RadiationMonteCarlo::operator()(
             }
 
             // Computation of the Lorentz invariant quantum parameter
-            particle_chi = Radiation::computeParticleChi( charge_over_mass2,
+            particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                            momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
                            gamma,
                            ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
@@ -167,7 +168,8 @@ void RadiationMonteCarlo::operator()(
                     && ( tau[ipart] <= epsilon_tau_ ) ) {
                 // New final optical depth to reach for emision
                 while( tau[ipart] <= epsilon_tau_ ) {
-                    tau[ipart] = -log( 1.-Rand::uniform() );
+                    //tau[ipart] = -log( 1.-Rand::uniform() );
+                    tau[ipart] = -log( 1.-rand_->uniform() );
                 }
 
             }
@@ -191,7 +193,8 @@ void RadiationMonteCarlo::operator()(
                 if( tau[ipart] <= epsilon_tau_ ) {
 
                     // Emission of a photon
-                    RadiationMonteCarlo::photonEmission( ipart,
+                    // Radiated energy is incremented only if the macro-photon is not created
+                    radiated_energy += RadiationMonteCarlo::photonEmission( ipart,
                                                          particle_chi, gamma,
                                                          position,
                                                          momentum,
@@ -237,7 +240,7 @@ void RadiationMonteCarlo::operator()(
                 }
                 
                 // Incrementation of the radiated energy cumulative parameter
-                radiated_energy_ += weight[ipart]*( gamma - sqrt( 1.0
+                radiated_energy += weight[ipart]*( gamma - sqrt( 1.0
                                                     + momentum[0][ipart]*momentum[0][ipart]
                                                     + momentum[1][ipart]*momentum[1][ipart]
                                                     + momentum[2][ipart]*momentum[2][ipart] ) );
@@ -253,7 +256,28 @@ void RadiationMonteCarlo::operator()(
         }
 
     }
-
+    
+    // ____________________________________________________
+    // Update of the quantum parameter chi
+    
+    #pragma omp simd
+    for( int ipart=istart ; ipart<iend; ipart++ ) {
+        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+        
+        // Gamma
+        gamma = sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
+                      + momentum[1][ipart]*momentum[1][ipart]
+                      + momentum[2][ipart]*momentum[2][ipart] );
+                      
+        // Computation of the Lorentz invariant quantum parameter
+        chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
+                     momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
+                     gamma,
+                     ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
+                     ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+                     
+    }
+    
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -267,25 +291,26 @@ void RadiationMonteCarlo::operator()(
 //! \param RadiationTables    Cross-section data tables and useful functions
 //                        for nonlinear inverse Compton scattering
 // ---------------------------------------------------------------------------------------------------------------------
-void RadiationMonteCarlo::photonEmission( int ipart,
+double RadiationMonteCarlo::photonEmission( int ipart,
         double &particle_chi,
         double &particle_gamma,
         double *position[3],
         double *momentum[3],
         double *weight,
         Species *photon_species,
-        RadiationTables &RadiationTables )
+        RadiationTables &RadiationTables)
 {
     // ____________________________________________________
     // Parameters
     double photon_chi;      // Photon quantum parameter
     double gammaph;    // Photon gamma factor
     double inv_old_norm_p;
+    double radiated_energy = 0;
     //double new_norm_p;
 
     // Get the photon quantum parameter from the table xip
     // photon_chi = RadiationTables.computeRandomPhotonChi( particle_chi );
-    photon_chi = RadiationTables.computeRandomPhotonChiWithInterpolation( particle_chi );
+    photon_chi = RadiationTables.computeRandomPhotonChiWithInterpolation( particle_chi, rand_ );
 
     // compute the photon gamma factor
     gammaph = photon_chi/particle_chi*( particle_gamma-1.0 );
@@ -385,6 +410,8 @@ void RadiationMonteCarlo::photonEmission( int ipart,
         gammaph = particle_gamma - sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
                                          + momentum[1][ipart]*momentum[1][ipart]
                                          + momentum[2][ipart]*momentum[2][ipart] );
-        radiated_energy_ += weight[ipart]*gammaph;
+        radiated_energy += weight[ipart]*gammaph;
     }
+    
+    return radiated_energy;
 }

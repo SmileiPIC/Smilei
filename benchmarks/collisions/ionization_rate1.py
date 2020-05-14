@@ -112,7 +112,7 @@ DiagParticleBinning(
 	every = 20,
 	species = ["electron1"],
 	axes = [
-		 ["px",    -0.05,    0.05,   1000]
+		 ["px",    -0.3,    0.3,   1000]
 	]
 )
 

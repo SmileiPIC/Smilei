@@ -12,6 +12,10 @@ ElectroMagnBCAM::ElectroMagnBCAM( Params &params, Patch *patch, unsigned int _mi
 {
     std::vector<unsigned int> n_space(params.n_space);
     std::vector<unsigned int> oversize(params.oversize);
+    if (params.uncoupled_grids) {
+        n_space = params.n_space_region;
+        oversize = params.region_oversize;
+    }
 
     // number of nodes of the primal and dual grid in the l-direction
     nl_p = n_space[0]+1+2*oversize[0];

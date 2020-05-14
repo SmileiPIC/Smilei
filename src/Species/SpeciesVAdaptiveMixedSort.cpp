@@ -74,20 +74,20 @@ void SpeciesVAdaptiveMixedSort::resizeCluster( Params &params )
         }
 
         // We keep the current number of particles
-        // int npart = last_index[last_index.size()-1];
+        // int npart = particles->last_index[particles->last_index.size()-1];
         // int size = params.n_space[0]/clrw;
 
-        last_index.resize( ncells, 0 );
-        first_index.resize( ncells, 0 );
+        particles->last_index.resize( ncells, 0 );
+        particles->first_index.resize( ncells, 0 );
         //count.resize(ncells,0);
 
-        first_index[0] = 0;
+        particles->first_index[0] = 0;
         for( unsigned int ic=1; ic < ncells; ic++ ) {
-            first_index[ic] = first_index[ic-1] + count[ic-1];
-            last_index[ic-1]= first_index[ic];
+            particles->first_index[ic] = particles->first_index[ic-1] + count[ic-1];
+            particles->last_index[ic-1]= particles->first_index[ic];
         }
-        //New total number of particles is stored as last element of last_index
-        last_index[ncells-1] = last_index[ncells-2] + count.back() ;
+        //New total number of particles is stored as last element of particles->last_index
+        particles->last_index[ncells-1] = particles->last_index[ncells-2] + count.back() ;
 
     } else {
 
@@ -122,7 +122,7 @@ void SpeciesVAdaptiveMixedSort::computeParticleCellKeys( Params &params )
 
     #pragma omp simd
     for( ip=0; ip < nparts ; ip++ ) {
-        // Counts the # of particles in each cell (or sub_cell) and store it in slast_index.
+        // Counts the # of particles in each cell (or sub_cell) and store it in sparticles->last_index.
         for( unsigned int ipos=0; ipos < nDim_particle ; ipos++ ) {
             X = particles->position( ipos, ip )-min_loc_vec[ipos];
             IX = round( X * dx_inv_[ipos] );
@@ -368,7 +368,7 @@ void SpeciesVAdaptiveMixedSort::reconfigure_particle_importation()
         this->electron_species->vectorized_operators = this->vectorized_operators;
     }
     if( this->Radiate ) {
-        this->photon_species->vectorized_operators = this->vectorized_operators;
+        this->photon_species_->vectorized_operators = this->vectorized_operators;
     }
     if( this->Multiphoton_Breit_Wheeler_process ) {
         for( int k=0; k<2; k++ ) {

@@ -12,7 +12,7 @@
 using namespace std;
 
 DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, unsigned int iDiagTrackParticles, unsigned int idiag, OpenPMDparams &oPMD ) :
-    Diagnostic( oPMD ),
+    Diagnostic( &oPMD, "DiagTrackParticles", iDiagTrackParticles ),
     IDs_done( params.restart ),
     nDim_particle( params.nDim_particle )
 {
@@ -177,6 +177,8 @@ void DiagnosticTrack::openFile( Params &params, SmileiMPI *smpi, bool newfile )
         H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
         H5Pclose( pid );
+        
+        H5::attr( fileId_, "name", diag_name_ );
         
         // Attributes for openPMD
         openPMD_->writeRootAttributes( fileId_, "no_meshes", "particles/" );
@@ -597,12 +599,11 @@ void DiagnosticTrack::setIDs( Particles &particles )
     if( has_filter ) {
         return;
     }
-    unsigned int s = particles.size(), id;
+    unsigned int s = particles.size();
     #pragma omp critical
     {
         for( unsigned int iPart=0; iPart<s; iPart++ ) {
-            id = ++latest_Id;
-            particles.id( iPart ) = id;
+            particles.id( iPart ) = ++latest_Id;
         }
     }
 }

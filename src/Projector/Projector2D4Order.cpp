@@ -431,54 +431,55 @@ void Projector2D4Order::basic( double *rhoj, Particles &particles, unsigned int 
 // ---------------------------------------------------------------------------------------------------------------------
 void  Projector2D4Order::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion )
 {
-    //ERROR( "Projection of ionization current not yet defined for 2D 4th order" );
-    Field2D* Jx2D  = static_cast<Field2D*>(Jx);
-    Field2D* Jy2D  = static_cast<Field2D*>(Jy);
-    Field2D* Jz2D  = static_cast<Field2D*>(Jz);
-
+    Field2D *Jx2D  = static_cast<Field2D *>( Jx );
+    Field2D *Jy2D  = static_cast<Field2D *>( Jy );
+    Field2D *Jz2D  = static_cast<Field2D *>( Jz );
+    
+    
     //Declaration of local variables
     int ip, id, jp, jd;
-    double xpn, xpmxip, xpmxip2, xpmxid, xpmxid2, xpmxip3, xpmxip4, xpmxid3, xpmxid4;
-    double ypn, ypmyjp, ypmyjp2, ypmyjd, ypmyjd2, ypmyjp3, ypmyjp4, ypmyjd3, ypmyjd4;
+    double xpn, xpmxip, xpmxip2, xpmxip3, xpmxip4, xpmxid, xpmxid2, xpmxid3, xpmxid4;
+    double ypn, ypmyjp, ypmyjp2, ypmyjp3, ypmyjp4, ypmyjd, ypmyjd2, ypmyjd3, ypmyjd4;
     double Sxp[5], Sxd[5], Syp[5], Syd[5];
     
     // weighted currents
-    double Jx_ion = Jion.x * particles.weight(ipart);
-    double Jy_ion = Jion.y * particles.weight(ipart);
-    double Jz_ion = Jion.z * particles.weight(ipart);
-
+    double weight = inv_cell_volume * particles.weight( ipart );
+    double Jx_ion = Jion.x * weight;
+    double Jy_ion = Jion.y * weight;
+    double Jz_ion = Jion.z * weight;
+    
     //Locate particle on the grid
-    xpn    = particles.position(0, ipart) * dx_inv_;  // normalized distance to the first node
-    ypn    = particles.position(1, ipart) * dy_inv_;  // normalized distance to the first node
-
+    xpn    = particles.position( 0, ipart ) * dx_inv_; // normalized distance to the first node
+    ypn    = particles.position( 1, ipart ) * dy_inv_; // normalized distance to the first node
+    
     // x-primal index
-    ip      = round(xpn);                    // x-index of the central node
-    xpmxip  = xpn - (double)ip;              // normalized distance to the nearest grid point
+    ip      = round( xpn );                  // x-index of the central node
+    xpmxip  = xpn - ( double )ip;            // normalized distance to the nearest grid point
     xpmxip2 = xpmxip*xpmxip;                 // square of the normalized distance to the nearest grid point
-    xpmxip3 = xpmxip2*xpmxip;
-    xpmxip4 = xpmxip3*xpmxip;
+    xpmxip3 = xpmxip2*xpmxip;                // cube 
+    xpmxip4 = xpmxip2*xpmxip2;               // fourth-power
     
     // x-dual index
-    id      = round(xpn+0.5);                // x-index of the central node
-    xpmxid  = xpn - (double)id + 0.5;        // normalized distance to the nearest grid point
+    id      = round( xpn+0.5 );              // x-index of the central node
+    xpmxid  = xpn - ( double )id + 0.5;      // normalized distance to the nearest grid point
     xpmxid2 = xpmxid*xpmxid;                 // square of the normalized distance to the nearest grid point
-    xpmxid3 = xpmxid2*xpmxid;
-    xpmxid4 = xpmxid3*xpmxid;
-
+    xpmxid3 = xpmxid2*xpmxid;                // cube
+    xpmxid4 = xpmxid2*xpmxid2;               // fourth-power
+    
     // y-primal index
-    jp      = round(ypn);                    // y-index of the central node
-    ypmyjp  = ypn - (double)jp;              // normalized distance to the nearest grid point
+    jp      = round( ypn );                  // y-index of the central node
+    ypmyjp  = ypn - ( double )jp;            // normalized distance to the nearest grid point
     ypmyjp2 = ypmyjp*ypmyjp;                 // square of the normalized distance to the nearest grid point
-    ypmyjp3 = ypmyjp2*ypmyjp;
-    ypmyjp4 = ypmyjp3*ypmyjp;
+    ypmyjp3 = ypmyjp2*ypmyjp;                // cube
+    ypmyjp4 = ypmyjp2*ypmyjp2;               // fourth-power
     
     // y-dual index
-    jd      = round(ypn+0.5);                // y-index of the central node
-    ypmyjd  = ypn - (double)jd + 0.5;        // normalized distance to the nearest grid point
+    jd      = round( ypn+0.5 );              // y-index of the central node
+    ypmyjd  = ypn - ( double )jd + 0.5;      // normalized distance to the nearest grid point
     ypmyjd2 = ypmyjd*ypmyjd;                 // square of the normalized distance to the nearest grid point
-    ypmyjd3 = ypmyjd2*ypmyjd;
-    ypmyjd4 = ypmyjd3*ypmyjd;
-
+    ypmyjd3 = ypmyjd2*ypmyjd;                // cube
+    ypmyjd4 = ypmyjd2*ypmyjd2;               // fourth-power
+    
     Sxp[0] = dble_1_ov_384   - dble_1_ov_48  * xpmxip  + dble_1_ov_16 * xpmxip2 - dble_1_ov_12 * xpmxip3 + dble_1_ov_24 * xpmxip4;
     Sxp[1] = dble_19_ov_96   - dble_11_ov_24 * xpmxip  + dble_1_ov_4  * xpmxip2 + dble_1_ov_6  * xpmxip3 - dble_1_ov_6  * xpmxip4;
     Sxp[2] = dble_115_ov_192 - dble_5_ov_8   * xpmxip2 + dble_1_ov_4  * xpmxip4;
@@ -507,7 +508,6 @@ void  Projector2D4Order::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
     id  -= i_domain_begin;
     jp  -= j_domain_begin;
     jd  -= j_domain_begin;
-
 
     for (unsigned int i=0 ; i<5 ; i++) {
         int iploc=ip+i-2;

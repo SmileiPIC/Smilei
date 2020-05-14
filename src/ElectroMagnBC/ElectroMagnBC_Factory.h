@@ -11,7 +11,7 @@
 #include "ElectroMagnBC3D_refl.h"
 #include "ElectroMagnBC3D_BM.h"
 #include "ElectroMagnBCAM_SM.h"
-#include "ElectroMagnBCAM_Axis.h"
+#include "ElectroMagnBCAM_zero.h"
 #include "ElectroMagnBCAM_BM.h"
 
 #include "Params.h"
@@ -160,7 +160,7 @@ public:
         }//3Dcartesian
         
         // -----------------
-        // For theta mode Geometry
+        // For AM cylindrical Geometry
         // -----------------
         else if( params.geometry == "AMcylindrical" ) {
         
@@ -168,29 +168,27 @@ public:
             
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
-                //MESSAGE(params.EM_BCs[0][ii]);
                 if( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBCAM_SM( params, patch, ii );
-                    
                 }
-                
+                else if( params.EM_BCs[0][ii] == "zero" ) {
+                    emBoundCond[ii] = new ElectroMagnBCAM_zero( params, patch, ii );
+                }
                 else if( params.EM_BCs[0][ii] != "periodic" ) {
                     ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`" );
                 }
             }
             
             // R DIRECTION
-            emBoundCond[2] = new ElectroMagnBCAM_Axis( params, patch, 2 );
-            // silver-muller bcs (injecting/absorbin)
-            //MESSAGE("bc AXIS");
-            if( params.EM_BCs[1][1] == "buneman" ) {
+            emBoundCond[2] = NULL ; //Axis BC are handeled directly in solvers.
+            if( params.EM_BCs[1][1] == "periodic" ) {
+                ERROR( "Periodic EM Rmax-boundary condition is not supported`" );
+            } else if( params.EM_BCs[1][1] == "buneman" ) {
                 emBoundCond[3] = new ElectroMagnBCAM_BM( params, patch, 3 );
-                //MESSAGE("create BM BC");
-            }
-            
-            // else: error
-            else  {
-                ERROR( "Unknown EM y-boundary condition `" << params.EM_BCs[1][1] << "`" );
+            } else if (params.is_spectral) {
+                emBoundCond[3] = NULL ;
+            } else  {
+                ERROR( "Unknown EM Rmax-boundary condition `" << params.EM_BCs[1][1] << "`" );
             }
             //MESSAGE( params.EM_BCs[1][1]);
             

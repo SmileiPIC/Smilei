@@ -1,68 +1,49 @@
 #ifndef DIAGNOSTICSCREEN_H
 #define DIAGNOSTICSCREEN_H
 
-#include "Diagnostic.h"
+#include "DiagnosticParticleBinningBase.h"
 
-#include "Params.h"
-#include "Species.h"
-#include "Patch.h"
-#include "SmileiMPI.h"
-#include "Histogram.h"
-
-class DiagnosticScreen : public Diagnostic
+class DiagnosticScreen : public DiagnosticParticleBinningBase
 {
     friend class SmileiMPI;
+    friend class Checkpoints;
     
 public :
 
     //! Default constructor
     DiagnosticScreen( Params &params, SmileiMPI *smpi, Patch *patch, int diagId );
-    //! Cloning constructor
-    DiagnosticScreen( DiagnosticScreen * );
     //! Default destructor
-    ~DiagnosticScreen() override;
-    
-    void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
-    
-    void closeFile() override;
+    ~DiagnosticScreen();
     
     bool prepare( int timestep ) override;
     
     void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
     
-    void write( int timestep, SmileiMPI *smpi ) override;
+    bool writeNow( int timestep ) override;
     
     //! Clear the array
-    void clear();
+    void clear() override;
     
-    //! Get memory footprint of current diagnostic
-    int getMemFootPrint() override
-    {
-        int size = output_size*sizeof( double );
-        // + data_array + index_array +  axis_array
-        // + nparts_max * (sizeof(double)+sizeof(int)+sizeof(double))
-        return size;
-    };
+    static std::vector<std::string> excludedAxes( int idiag ) {
+        std::string shape = "";
+        PyTools::extract( "shape", shape, "DiagScreen", idiag );
+        std::vector<std::string> excluded_axes( 0 );
+        if( shape == "plane" ) {
+            excluded_axes.push_back( "theta_yx" );
+            excluded_axes.push_back( "theta_zx" );
+        } else {
+            excluded_axes.push_back( "a" );
+            excluded_axes.push_back( "b" );
+        }
+        return excluded_axes;
+    }
     
-    //! Get disk footprint of current diagnostic
-    uint64_t getDiskFootPrint( int istart, int istop, Patch *patch ) override;
-    
-    //! vector for saving the output array
-    std::vector<double> data_sum;
-    
-    //! Id of this diag
-    int screen_id;
+    std::vector<double> * getData() {
+        return &data_sum;
+    }
     
 private :
 
-    //! list of the species that will be accounted for
-    std::vector<unsigned int> species;
-    
-    //! Histogram object
-    Histogram *histogram;
-    
-    unsigned int output_size;
-    
     std::string screen_shape;
     //! Relates to the shape of the screen (plane=0, sphere=1)
     int screen_type;

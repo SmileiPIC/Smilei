@@ -7,7 +7,7 @@
 using namespace std;
 
 DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int ndiag, OpenPMDparams &oPMD ):
-    Diagnostic( oPMD )
+    Diagnostic( &oPMD, "DiagFields", ndiag )
 {
     //MESSAGE("Starting diag field creation " );
     fileId_ = 0;
@@ -144,7 +144,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
             if( time_average > 1 ) {
                 for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ )
                     vecPatches( ipatch )->EMfields->allFields_avg[diag_n].push_back(
-                        vecPatches( ipatch )->EMfields->createField( fields_names[ifield] )
+                        vecPatches( ipatch )->EMfields->createField( fields_names[ifield],params )
                     );
             }
         }
@@ -227,6 +227,8 @@ void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi, bool newfile )
         H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
         fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
         H5Pclose( pid );
+        
+        H5::attr( fileId_, "name", diag_name_ );
         
         // Attributes for openPMD
         openPMD_->writeRootAttributes( fileId_, "", "no_particles" );
@@ -377,6 +379,8 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
             // Close dataset
             H5Dclose( dset_id );
         }
+        #pragma omp barrier
+
     }
     
     #pragma omp master
@@ -394,6 +398,7 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
             H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
         }
     }
+    #pragma omp barrier
 }
 
 bool DiagnosticFields::needsRhoJs( int itime )
