@@ -89,7 +89,24 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
 {
     globalDiags = DiagnosticFactory::createGlobalDiagnostics( params, smpi, *this, radiation_tables_ );
     localDiags  = DiagnosticFactory::createLocalDiagnostics( params, smpi, *this, openPMD );
-
+    
+    // Verify that diagnostic names are not duplicated
+    vector<string> names( 0 );
+    for( unsigned int i=0; i<globalDiags.size(); i++ ) {
+        if( globalDiags[i]->name().empty() ) continue;
+        if( std::find(names.begin(), names.end(), globalDiags[i]->name()) != names.end() ) {
+            ERROR( "Two diagnostics have the same label " << globalDiags[i]->name() );
+        }
+        names.push_back( globalDiags[i]->name() );
+    }
+    for( unsigned int i=0; i<localDiags.size(); i++ ) {
+        if( localDiags[i]->name().empty() ) continue;
+        if( std::find(names.begin(), names.end(), localDiags[i]->name()) != names.end() ) {
+            ERROR( "Two diagnostics have the same label " << localDiags[i]->name() );
+        }
+        names.push_back( localDiags[i]->name() );
+    }
+    
     // Delete all unused fields
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         if( params.geometry!="AMcylindrical" ) {
