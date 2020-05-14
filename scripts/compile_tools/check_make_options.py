@@ -8,8 +8,8 @@ def option_is_in_the_list( keyword, option, options_registered ):
        if (option == listed):
            sys.exit(0)
 
-    print option, "do not exist for", keyword
-    print "Use one of : ", options_registered
+    print(option, "do not exist for", keyword)
+    print("Use one of : ", options_registered)
     sys.exit(-1)
 
 
