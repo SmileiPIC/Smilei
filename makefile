@@ -178,8 +178,8 @@ distclean: clean uninstall_happi
 	$(Q) rm -f $(EXEC) $(EXEC)_test
 
 check:
-	$(Q) python scripts/compile_tools/check_make_options.py config $(config)
-	$(Q) python scripts/compile_tools/check_make_options.py machine $(machine)
+	$(Q) $(PYTHONEXE) scripts/compile_tools/check_make_options.py config $(config)
+	$(Q) $(PYTHONEXE) scripts/compile_tools/check_make_options.py machine $(machine)
 
 # Create python header files
 $(BUILD_DIR)/%.pyh: %.py
