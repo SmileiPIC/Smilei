@@ -983,8 +983,20 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
     }
 
     if ( params.is_spectral and params.geometry == "AMcylindrical"){
-        // Current correction in spectral space
+        // Current correction: to spectral space, apply corrections and back
         (*this)( 0 )->EMfields->MaxwellAmpereSolver_->densities_correction( (*this)( 0 )->EMfields );
+        // Exchange corrected current and charge densities
+        for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
+             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listrho_AM_[imode], *this, smpi );
+             SyncVectorPatch::finalizeExchangeAlongAllDirections( listrho_AM_[imode], *this );
+             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJl_[imode], *this, smpi );
+             SyncVectorPatch::finalizeExchangeAlongAllDirections( listJl_[imode], *this );
+             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJr_[imode], *this, smpi );
+             SyncVectorPatch::finalizeExchangeAlongAllDirections( listJr_[imode], *this );
+             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJt_[imode], *this, smpi );
+             SyncVectorPatch::finalizeExchangeAlongAllDirections( listJt_[imode], *this );
+        }
+
     }
 
     #pragma omp for schedule(static)
