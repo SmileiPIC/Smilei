@@ -3003,7 +3003,8 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
         listJr_.resize( nmodes ) ;
         listJt_.resize( nmodes ) ;
         listrho_AM_.resize( nmodes ) ;
-        listrho_old_AM_.resize( nmodes ) ;
+        if (static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->rho_old_AM_[0])
+            listrho_old_AM_.resize( nmodes ) ;
         listrho_AM_.resize( nmodes ) ;
         listJls_.resize( nmodes ) ;
         listJrs_.resize( nmodes ) ;
@@ -3021,7 +3022,8 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listJr_[imode].resize( size() );
             listJt_[imode].resize( size() );
             listrho_AM_[imode].resize( size() );
-            listrho_old_AM_[imode].resize( size() );
+            if (static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->rho_old_AM_[imode])
+                listrho_old_AM_[imode].resize( size() );
             listEl_[imode].resize( size() );
             listEr_[imode].resize( size() );
             listEt_[imode].resize( size() );

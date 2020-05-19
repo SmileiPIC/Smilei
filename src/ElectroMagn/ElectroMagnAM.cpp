@@ -194,6 +194,7 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
     Jr_.resize( nmodes );
     Jt_.resize( nmodes );
     rho_AM_.resize( nmodes );
+    rho_old_AM_.resize( nmodes );
 
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         ostringstream mode_id( "" );
@@ -214,18 +215,12 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         Jr_[imode]   = FieldFactory::createComplex( dimPrim, 1, false, ( "Jr"+mode_id.str() ).c_str(), params );
         Jt_[imode]   = FieldFactory::createComplex( dimPrim, 2, false, ( "Jt"+mode_id.str() ).c_str(), params );
         rho_AM_[imode]  = new cField2D( dimPrim, ( "Rho"+mode_id.str() ).c_str() );
-    }
-
-    if(params.is_pxr == true) {
-        rho_old_AM_.resize( nmodes );
-        for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
-            ostringstream mode_id( "" );
-            mode_id << "_mode_" << imode;
+        if(params.is_pxr == true) {
             rho_old_AM_[imode]  = new cField2D( dimPrim, ( "RhoOld"+mode_id.str() ).c_str() );
+        } else {
+            rho_old_AM_[imode] = NULL;
         }
-    } 
-
-    
+    }
 
     if( params.Laser_Envelope_model ) {
         Env_A_abs_ = new Field2D( dimPrim, "Env_A_abs_mode_0" );
@@ -311,6 +306,9 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
         allFields.push_back( Jr_[imode] );
         allFields.push_back( Jt_[imode] );
         allFields.push_back( rho_AM_[imode] );
+        if (is_pxr){
+            allFields.push_back( rho_old_AM_[imode] );
+        }
         if( (imode ==0) && (Env_A_abs_ != NULL) ) {
             allFields.push_back( Env_A_abs_ );
             allFields.push_back( Env_Chi_ );
@@ -356,6 +354,8 @@ ElectroMagnAM::~ElectroMagnAM()
             delete Bl_m[imode];
             delete Br_m[imode];
             delete Bt_m[imode];
+        } else {
+            delete rho_old_AM_[imode];
         }
         
         delete Jl_[imode];
