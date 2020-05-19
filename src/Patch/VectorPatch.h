@@ -307,6 +307,7 @@ public :
     std::vector<std::vector< Field *>> listJr_;
     std::vector<std::vector< Field *>> listJt_;
     std::vector<std::vector< Field *>> listrho_AM_;
+    std::vector<std::vector< Field *>> listrho_old_AM_;
     std::vector<std::vector< Field *>> listJls_;
     std::vector<std::vector< Field *>> listJrs_;
     std::vector<std::vector< Field *>> listJts_;

@@ -987,16 +987,19 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         (*this)( 0 )->EMfields->MaxwellAmpereSolver_->densities_correction( (*this)( 0 )->EMfields );
         // Exchange corrected current and charge densities
         for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
+             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listrho_old_AM_[imode], *this, smpi );
+             SyncVectorPatch::finalizeExchangeAlongAllDirections( listrho_old_AM_[imode], *this );
              SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listrho_AM_[imode], *this, smpi );
              SyncVectorPatch::finalizeExchangeAlongAllDirections( listrho_AM_[imode], *this );
-             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJl_[imode], *this, smpi );
-             SyncVectorPatch::finalizeExchangeAlongAllDirections( listJl_[imode], *this );
-             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJr_[imode], *this, smpi );
-             SyncVectorPatch::finalizeExchangeAlongAllDirections( listJr_[imode], *this );
-             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJt_[imode], *this, smpi );
-             SyncVectorPatch::finalizeExchangeAlongAllDirections( listJt_[imode], *this );
+    //         SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJl_[imode], *this, smpi );
+    //         SyncVectorPatch::finalizeExchangeAlongAllDirections( listJl_[imode], *this );
+    //         SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJr_[imode], *this, smpi );
+    //         SyncVectorPatch::finalizeExchangeAlongAllDirections( listJr_[imode], *this );
+    //         SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJt_[imode], *this, smpi );
+    //         SyncVectorPatch::finalizeExchangeAlongAllDirections( listJt_[imode], *this );
         }
-
+    //    // Set densities to zero in boundary cells
+    //    // set_boundary_to_zero();
     }
 
     #pragma omp for schedule(static)
@@ -3000,6 +3003,8 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
         listJr_.resize( nmodes ) ;
         listJt_.resize( nmodes ) ;
         listrho_AM_.resize( nmodes ) ;
+        listrho_old_AM_.resize( nmodes ) ;
+        listrho_AM_.resize( nmodes ) ;
         listJls_.resize( nmodes ) ;
         listJrs_.resize( nmodes ) ;
         listJts_.resize( nmodes ) ;
@@ -3016,6 +3021,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listJr_[imode].resize( size() );
             listJt_[imode].resize( size() );
             listrho_AM_[imode].resize( size() );
+            listrho_old_AM_[imode].resize( size() );
             listEl_[imode].resize( size() );
             listEr_[imode].resize( size() );
             listEt_[imode].resize( size() );
@@ -3027,6 +3033,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listJr_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Jr_[imode] ;
                 listJt_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Jt_[imode] ;
                 listrho_AM_[imode][ipatch] =static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_AM_[imode];
+                listrho_old_AM_[imode][ipatch] =static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_old_AM_[imode];
                 listEl_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->El_[imode] ;
                 listEr_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Er_[imode] ;
                 listEt_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Et_[imode] ;
@@ -3252,6 +3259,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listEr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listEt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listrho_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                listrho_old_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
             }
         }
         if( patches_[0]->EMfields->envelope != NULL ) {
