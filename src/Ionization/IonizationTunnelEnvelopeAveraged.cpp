@@ -92,12 +92,12 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
                                     +pow( *( Ey+ipart-ipart_ref ), 2 )
                                     +pow( *( Ez+ipart-ipart_ref ), 2 ) );
         // Laser envelope electric field normalized in atomic units, using both transverse and longitudinal components:
-        // |E_laser|^2 = |Env_E|^2 + |Env_Ex|^2
+        // |E_envelope|^2 = |Env_E|^2 + |Env_Ex|^2
 
         EnvE_sq = pow(EC_to_au,2)*( pow( *( E_env+ipart-ipart_ref ), 2 ) ) + pow(EC_to_au,2)*( pow( *( Ex_env+ipart-ipart_ref ), 2 ) );
 
         // Effective electric field for ionization:
-        // |E| = sqrt(|E_plasma|^2+|E_laser|^2)
+        // |E| = sqrt(|E_plasma|^2+|E_envelope|^2)
         E = sqrt(E_sq+EnvE_sq);
     
         if( E<1e-10 ) {
@@ -206,10 +206,6 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
 
             if (ellipticity==0.){ // linear polarization
 
-                // Box-Müller transformation: generate a random number with a gaussian distribution
-                // starting from two random numbers from a uniform distribution
-                //double rand_1 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
-                //double rand_2 = patch->xorshift32() * patch->xorshift32_invmax; // from uniform distribution between [0,1]
                 double rand_gaussian  = patch->rand_->normal();
 
                 Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  ); // envelope of the laser vector potential component along the polarization direction
