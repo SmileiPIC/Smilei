@@ -525,8 +525,8 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( doubl
             vector<double> *EnvEabs_part  = &( smpi->dynamics_EnvEabs_part[ithread] );
             vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
             vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
-            Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( first_index[0] ), &( last_index[last_index.size()-1] ), ithread );
-            Ionize->envelopeIonization( particles, first_index[0], last_index[last_index.size()-1], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
+            Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[0] ), &( particles->last_index[particles->last_index.size()-1] ), ithread );
+            Ionize->envelopeIonization( particles, ( particles->first_index[0] ), ( particles->last_index[particles->last_index.size()-1] ), Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
