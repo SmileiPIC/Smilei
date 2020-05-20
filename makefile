@@ -85,20 +85,6 @@ ifneq ($(strip $(PYTHONHOME)),)
 endif
 
 
-PICSAR ?= FALSE
-ifeq ($(PICSAR),TRUE)
-        # New environment variable
-	FFTW3_LIB ?= $(FFTW_LIB_DIR)
-	LIBPXR ?= picsar/lib
-	# Set Picsar link environment
-	CXXFLAGS += -D_PICSAR
-	LDFLAGS += -L$(LIBPXR) -lpxr
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
-	LDFLAGS += -lgfortran
-endif
-
 CXXFLAGS += -D_VECTO
 
 # Manage options in the "config" parameter
@@ -148,6 +134,21 @@ ifeq (,$(findstring noopenmp,$(config)))
     CXXFLAGS += $(OPENMP_FLAG)
 endif
 
+ifneq (,$(findstring picsar,$(config)))
+        # New environment variable
+	FFTW3_LIB ?= $(FFTW_LIB_DIR)
+	LIBPXR ?= picsar/lib
+	# Set Picsar link environment
+	CXXFLAGS += -D_PICSAR
+	LDFLAGS += -L$(LIBPXR) -lpxr
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi  -lopenblas
+
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
+	LDFLAGS += -lgfortran
+endif
+
+
 # Manage MPI communications by a single thread (master in MW)
 ifneq (,$(findstring no_mpi_tm,$(config)))
     CXXFLAGS += -D_NO_MPI_TM
@@ -166,7 +167,7 @@ endif
 
 EXEC = smilei
 
-default: $(EXEC) $(EXEC)_test
+default: check $(EXEC) $(EXEC)_test
 
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
@@ -176,6 +177,9 @@ clean:
 distclean: clean uninstall_happi
 	$(Q) rm -f $(EXEC) $(EXEC)_test
 
+check:
+	$(Q) python scripts/compile_tools/check_make_options.py config $(config)
+	$(Q) python scripts/compile_tools/check_make_options.py machine $(machine)
 
 # Create python header files
 $(BUILD_DIR)/%.pyh: %.py
@@ -373,5 +377,4 @@ help:
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
-	@if [ -f  scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine)|| echo "None"; fi
 	@if [ -f scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/compile_tools/machine; fi

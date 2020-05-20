@@ -15,10 +15,15 @@
 // input: simulation parameters & Species index
 //! \param params simulation parameters
 //! \param species Species index
+//! \param rand local random generator
 // -----------------------------------------------------------------------------
-Merging::Merging( Params &params, Species *species )
+Merging::Merging( Params &params, Species *species, Random * rand )
 {
-    min_particles_per_cell = species->merge_min_particles_per_cell_;
+    // minimum particles per cell to process the merging
+    min_particles_per_cell_ = species->merge_min_particles_per_cell_;
+    
+    // Pointer to the local patch random generator
+    rand_ = rand;
 }
 
 // -----------------------------------------------------------------------------

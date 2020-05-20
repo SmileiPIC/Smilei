@@ -38,7 +38,7 @@ public:
     
     //! Method used to allocate a Field3D
     void allocateDims() override;
-    void deallocateDims() override;
+    void deallocateDataAndSetTo( Field* f ) override;
     //! a Field3D can also be initialized win three unsigned int
     void allocateDims( unsigned int dims1, unsigned int dims2, unsigned int dims3 );
     //! allocate dimensions for field3D isPrimal define if mainDim is Primal or Dual
@@ -92,6 +92,7 @@ public:
     
     virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) override;
     void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;
+    void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;
     void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) override;
     
     //!\todo{Comment what are these stuffs (MG for JD)}

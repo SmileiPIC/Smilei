@@ -321,7 +321,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 //
 //! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
-double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi)
+double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi, Random * rand)
 {
     // Log10 of particle_chi
     double log10_particle_chi;
@@ -334,7 +334,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     // Random xi
     double xi;
     
-    double chiph_xip_delta;
+    //double chiph_xip_delta;
     double chiph_xip_delta_1;
     double chiph_xip_delta_2;
 
@@ -371,7 +371,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     // Search of the index ichiph for photon_chi
     // ---------------------------------------
 
-    xi = Rand::uniform();
+    xi = rand->uniform();
 
     // If the randomly computed xi if below the first one of the row,
     // we take the first one which corresponds to the minimal photon photon_chi
@@ -545,26 +545,28 @@ double RadiationTables::getHNielFromTable( double particle_chi )
 //! \param gamma particle Lorentz factor
 //! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
-double RadiationTables::getNielStochasticTerm( double gamma,
-        double particle_chi,
-        double sqrtdt )
-{
-    // Get the value of h for the corresponding particle_chi
-    double h, r;
-
-    h = RadiationTables::getHNielFromTable( particle_chi );
-
-    // Pick a random number in the normal distribution of standard
-    // deviation sqrt(dt) (variance dt)
-    r = Rand::normal( sqrtdt );
-
-    /*std::random_device device;
-    std::mt19937 gen(device());
-    std::normal_distribution<double> normal_distribution(0., sqrt(dt));
-    r = normal_distribution(gen);*/
-
-    return sqrt( factor_classical_radiated_power_*gamma*h )*r;
-}
+// double RadiationTables::getNielStochasticTerm( double gamma,
+//         double particle_chi,
+//         double sqrtdt,
+//         Random * rand)
+// {
+//     // Get the value of h for the corresponding particle_chi
+//     double h, r;
+//
+//     h = RadiationTables::getHNielFromTable( particle_chi );
+//
+//     // Pick a random number in the normal distribution of standard
+//     // deviation sqrt(dt) (variance dt)
+//     // r = Rand::normal( sqrtdt );
+//     r = rand->normal() * sqrtdt;
+//
+//     /*std::random_device device;
+//     std::mt19937 gen(device());
+//     std::normal_distribution<double> normal_distribution(0., sqrt(dt));
+//     r = normal_distribution(gen);*/
+//
+//     return sqrt( factor_classical_radiated_power_*gamma*h )*r;
+// }
 
 // -----------------------------------------------------------------------------
 // TABLE READING

@@ -18,17 +18,14 @@ DiagnosticParticleBinningBase::DiagnosticParticleBinningBase(
     bool time_accumulate_,
     PyObject *deposited_quantity,
     vector<string> excluded_axes
-)
+) : Diagnostic( nullptr, Tools::merge( "Diag", diagName ), diagId )
 {
     fileId_ = 0;
     int idiag = diagId;
     time_accumulate = time_accumulate_;
     
-    ostringstream name( "" );
-    name << "Diag" << diagName;
-    string pyDiag = name.str();
-    name << " #" << idiag;
-    string errorPrefix = name.str();
+    string pyDiag = Tools::merge( "Diag", diagName );
+    string errorPrefix = Tools::merge( pyDiag, " #", to_string( idiag ) );
     
     // get parameter "deposited_quantity" that determines the quantity to sum in the output array
     if( deposited_quantity == nullptr ) {
@@ -39,13 +36,13 @@ DiagnosticParticleBinningBase::DiagnosticParticleBinningBase(
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
         PyTools::extract_py( "every", pyDiag, idiag ),
-        name.str()
+        errorPrefix
     );
     
     // get parameter "flush_every" which describes a timestep selection for flushing the file
     flush_timeSelection = new TimeSelection(
         PyTools::extract_py( "flush_every", pyDiag, idiag ),
-        name.str()
+        errorPrefix
     );
     
     // get parameter "time_average" that determines the number of timestep to average the outputs
@@ -151,6 +148,7 @@ void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi, b
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
         // write all parameters as HDF5 attributes
         H5::attr( fileId_, "Version", string( __VERSION ) );
+        H5::attr( fileId_, "name", diag_name_ );
         H5::attr( fileId_, "deposited_quantity", histogram->deposited_quantity );
         if( ! time_accumulate ) {
             H5::attr( fileId_, "time_average", time_average );

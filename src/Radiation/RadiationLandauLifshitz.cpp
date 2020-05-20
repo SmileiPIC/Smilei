@@ -18,8 +18,8 @@
 //! Inherited from Radiation
 // -----------------------------------------------------------------------------
 RadiationLandauLifshitz::RadiationLandauLifshitz( Params &params,
-        Species *species )
-    : Radiation( params, species )
+        Species *species, Random * rand  )
+    : Radiation( params, species, rand )
 {
 }
 
@@ -41,15 +41,18 @@ RadiationLandauLifshitz::~RadiationLandauLifshitz()
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
+//! \param radiated_energy     overall energy radiated during the call to this method
 // -----------------------------------------------------------------------------
 void RadiationLandauLifshitz::operator()(
-    Particles &particles,
-    Species *photon_species,
-    SmileiMPI *smpi,
+    Particles       &particles,
+    Species         *photon_species,
+    SmileiMPI       *smpi,
     RadiationTables &RadiationTables,
+    double          &radiated_energy,
     int istart,
     int iend,
-    int ithread, int ipart_ref )
+    int ithread,
+    int ipart_ref )
 {
 
     // _______________________________________________________________
@@ -67,10 +70,10 @@ void RadiationLandauLifshitz::operator()(
     double *Bz = &( ( *Bpart )[2*nparts] );
 
     // Charge divided by the square of the mass
-    double charge_over_mass2;
+    double charge_over_mass_square;
 
     // 1/mass^2
-    const double one_over_mass_2 = pow( one_over_mass_, 2. );
+    const double one_over_mass_square = pow( one_over_mass_, 2. );
 
     // Temporary quantum parameter
     double particle_chi;
@@ -94,20 +97,17 @@ void RadiationLandauLifshitz::operator()(
     double *weight = &( particles.weight( 0 ) );
 
     // Optical depth for the Monte-Carlo process
-    // double* chi = &( particles.chi(0));
+    double* chi = &( particles.chi(0));
 
     // Local vector to store the radiated energy
     std::vector <double> rad_norm_energy( iend-istart, 0 );
-
-    // Reinitialize the cumulative radiated energy for the current thread
-    radiated_energy_ = 0.;
 
     // _______________________________________________________________
     // Computation
 
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass2 = ( double )( charge[ipart] )*one_over_mass_2;
+        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
         gamma = sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
@@ -115,7 +115,7 @@ void RadiationLandauLifshitz::operator()(
                       + momentum[2][ipart]*momentum[2][ipart] );
 
         // Computation of the Lorentz invariant quantum parameter
-        particle_chi = Radiation::computeParticleChi( charge_over_mass2,
+        particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                        momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
                        gamma,
                        ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
@@ -154,5 +154,27 @@ void RadiationLandauLifshitz::operator()(
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart - istart] ;
     }
-    radiated_energy_ += radiated_energy_loc;
+    radiated_energy += radiated_energy_loc;
+    
+    // _______________________________________________________________
+    // Update of the quantum parameter
+    
+    #pragma omp simd
+    for( int ipart=istart ; ipart<iend; ipart++ ) {
+        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+        
+        // Gamma
+        gamma = sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
+                      + momentum[1][ipart]*momentum[1][ipart]
+                      + momentum[2][ipart]*momentum[2][ipart] );
+                      
+        // Computation of the Lorentz invariant quantum parameter
+        chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
+                     momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
+                     gamma,
+                     ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
+                     ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+                     
+    }
+    
 }

@@ -80,7 +80,7 @@ vector<double> matrixTimesVector( vector<double> A, vector<double> v )
 
 
 DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int n_probe )
-    : offset_in_MPI( 0 )
+    : Diagnostic( nullptr, "DiagProbe", n_probe ), offset_in_MPI( 0 )
 {
     probe_n = n_probe;
     nDim_particle = params.nDim_particle;
@@ -380,13 +380,15 @@ void DiagnosticProbes::openFile( Params &params, SmileiMPI *smpi, bool newfile )
         H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
         H5Pclose( pid );
-
+        
+        H5::attr( fileId_, "name", diag_name_ );
+        
         // Write the version of the code as an attribute
         H5::attr( fileId_, "Version", string( __VERSION ) );
-
+        
         // Dimension of the probe grid
         H5::attr( fileId_, "dimension", dimProbe );
-
+        
         // Add arrays "p0", "p1", ...
         H5::vect( fileId_, "p0", origin );
         ostringstream pk;

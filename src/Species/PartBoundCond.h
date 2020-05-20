@@ -156,9 +156,6 @@ private:
 //<<<<<<< HEAD
     bool isAM;
     
-//=======
-
-//>>>>>>> develop
 };
 
 #endif

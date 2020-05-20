@@ -9,6 +9,7 @@
 #include "Interpolator2D4Order.h"
 #include "Interpolator3D2Order.h"
 #include "Interpolator3D4Order.h"
+#include "InterpolatorAM1Order.h"
 #include "InterpolatorAM2Order.h"
 
 #ifdef _VECTO
@@ -77,9 +78,12 @@ public:
         // AM simulation
         // ---------------
         else if( params.geometry == "AMcylindrical" ) {
-            Interp = new InterpolatorAM2Order( params, patch );
-        }
-        
+            if ( !params.is_spectral){
+                Interp = new InterpolatorAM2Order( params, patch );
+            } else {
+                Interp = new InterpolatorAM1Order( params, patch );
+            }
+        } 
         else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
         }

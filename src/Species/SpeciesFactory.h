@@ -275,15 +275,15 @@ public:
                              << " & " << this_species->multiphoton_Breit_Wheeler_[1] );
 
                     // Number of emitted particles per MC event
-                    this_species->mBW_pair_creation_sampling.resize( 2 );
+                    this_species->mBW_pair_creation_sampling_.resize( 2 );
                     if( !PyTools::extractV( "multiphoton_Breit_Wheeler_sampling",
-                                           this_species->mBW_pair_creation_sampling, "Species", ispec ) ) {
-                        this_species->mBW_pair_creation_sampling[0] = 1;
-                        this_species->mBW_pair_creation_sampling[1] = 1;
+                                           this_species->mBW_pair_creation_sampling_, "Species", ispec ) ) {
+                        this_species->mBW_pair_creation_sampling_[0] = 1;
+                        this_species->mBW_pair_creation_sampling_[1] = 1;
                     }
                     MESSAGE( 3, "| Number of emitted macro-particles per MC event: "
-                             << this_species->mBW_pair_creation_sampling[0]
-                             << " & " << this_species->mBW_pair_creation_sampling[1] );
+                             << this_species->mBW_pair_creation_sampling_[0]
+                             << " & " << this_species->mBW_pair_creation_sampling_[1] );
                 }
             }
         }
@@ -660,6 +660,9 @@ public:
         if( (params.geometry=="AMcylindrical") && ( this_species->boundary_conditions[1][1] != "remove" ) && ( this_species->boundary_conditions[1][1] != "stop" ) ) {
             ERROR( " In AM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' " );
         }
+        if( (params.hasWindow) && (( this_species->boundary_conditions[0][1] != "remove" ) || ( this_species->boundary_conditions[0][0] != "remove" ) )) {
+            ERROR( " When MovingWindow is activated 'remove' boundary conditions along x is mandatory for all species. " );
+        }
 
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
         bool has_temperature = PyTools::extractV( "thermal_boundary_temperature", this_species->thermal_boundary_temperature_, "Species", ispec ) > 0;
@@ -931,7 +934,7 @@ public:
         new_species->radiation_photon_species                  = species->radiation_photon_species;
         new_species->radiation_photon_sampling_                = species->radiation_photon_sampling_;
         new_species->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
-        new_species->photon_species                            = species->photon_species;
+        new_species->photon_species_                            = species->photon_species_;
         new_species->species_number_                           = species->species_number_;
         new_species->position_initialization_on_species_       = species->position_initialization_on_species_;
         new_species->position_initialization_on_species_type_  = species->position_initialization_on_species_type_;
@@ -1004,8 +1007,8 @@ public:
         if( new_species->mass_==0 ) {
             new_species->multiphoton_Breit_Wheeler_[0]         = species->multiphoton_Breit_Wheeler_[0];
             new_species->multiphoton_Breit_Wheeler_[1]         = species->multiphoton_Breit_Wheeler_[1];
-            new_species->mBW_pair_creation_sampling[0]        = species->mBW_pair_creation_sampling[0];
-            new_species->mBW_pair_creation_sampling[1]        = species->mBW_pair_creation_sampling[1];
+            new_species->mBW_pair_creation_sampling_[0]        = species->mBW_pair_creation_sampling_[0];
+            new_species->mBW_pair_creation_sampling_[1]        = species->mBW_pair_creation_sampling_[1];
         }
 
         new_species->particles->is_test                       = species->particles->is_test;
@@ -1135,7 +1138,7 @@ public:
                 // No emission of discrete photon, only scalar diagnostics are updated
                 if( returned_species[ispec1]->radiation_photon_species.empty() ) {
                     returned_species[ispec1]->photon_species_index = -1;
-                    returned_species[ispec1]->photon_species = NULL;
+                    returned_species[ispec1]->photon_species_ = NULL;
                 }
                 // Else, there will be emission of macro-photons.
                 else {
@@ -1149,10 +1152,10 @@ public:
                                 ERROR( "For species '"<<returned_species[ispec1]->name_<<"' radiation_photon_species must be a photon species with mass==0" );
                             }
                             returned_species[ispec1]->photon_species_index = ispec2;
-                            returned_species[ispec1]->photon_species = returned_species[ispec2];
+                            returned_species[ispec1]->photon_species_ = returned_species[ispec2];
                             returned_species[ispec1]->Radiate->new_photons_.initializeReserve(
                                 returned_species[ispec1]->getNbrOfParticles(),
-                                *returned_species[ispec1]->photon_species->particles
+                                *returned_species[ispec1]->photon_species_->particles
                             );
                             break;
                         }
@@ -1240,16 +1243,16 @@ public:
             if( returned_species[i]->Radiate ) {
                 returned_species[i]->radiation_photon_species = vector_species[i]->radiation_photon_species;
                 returned_species[i]->photon_species_index = vector_species[i]->photon_species_index;
-                if( vector_species[i]->photon_species ) {
-                    returned_species[i]->photon_species = returned_species[returned_species[i]->photon_species_index];
-                    returned_species[i]->Radiate->new_photons_.tracked = returned_species[i]->photon_species->particles->tracked;
-                    returned_species[i]->Radiate->new_photons_.isQuantumParameter = returned_species[i]->photon_species->particles->isQuantumParameter;
-                    returned_species[i]->Radiate->new_photons_.isMonteCarlo = returned_species[i]->photon_species->particles->isMonteCarlo;
+                if( vector_species[i]->photon_species_ ) {
+                    returned_species[i]->photon_species_ = returned_species[returned_species[i]->photon_species_index];
+                    returned_species[i]->Radiate->new_photons_.tracked = returned_species[i]->photon_species_->particles->tracked;
+                    returned_species[i]->Radiate->new_photons_.isQuantumParameter = returned_species[i]->photon_species_->particles->isQuantumParameter;
+                    returned_species[i]->Radiate->new_photons_.isMonteCarlo = returned_species[i]->photon_species_->particles->isMonteCarlo;
                     //returned_species[i]->Radiate->new_photons_.initialize(returned_species[i]->getNbrOfParticles(),
                     //                                               params.nDim_particle );
                     returned_species[i]->Radiate->new_photons_.initialize( 0, params.nDim_particle );
                 } else {
-                    returned_species[i]->photon_species = NULL;
+                    returned_species[i]->photon_species_ = NULL;
                 }
             }
         }

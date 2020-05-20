@@ -503,10 +503,9 @@ void ElectroMagn1D::saveMagneticFields( bool is_spectral )
             ( *Bz1D_m )( i ) = ( *Bz1D )( i );
         }
     } else {
-        Bx_m = Bx_;
-        By_m = By_;
-        Bz_m = Bz_;
-        
+        Bx_m->deallocateDataAndSetTo( Bx_ );
+        By_m->deallocateDataAndSetTo( By_ );
+        Bz_m->deallocateDataAndSetTo( Bz_ );
     }
     
 }//END saveMagneticFields
@@ -636,7 +635,7 @@ void ElectroMagn1D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
 
 
 // Create a new field
-Field *ElectroMagn1D::createField( string fieldname )
+Field *ElectroMagn1D::createField( string fieldname, Params& params )
 {
     if( fieldname.substr( 0, 2 )=="Ex" ) {
         return new Field1D( dimPrim, 0, false, fieldname );
@@ -803,7 +802,7 @@ void ElectroMagn1D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
 
 
 
-void ElectroMagn1D::initAntennas( Patch *patch )
+void ElectroMagn1D::initAntennas( Patch *patch, Params& params )
 {
 
     // Filling the space profiles of antennas

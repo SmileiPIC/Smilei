@@ -268,10 +268,11 @@ public :
     static void exchangeB( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangeB( Params &params, VectorPatch &vecPatches );
 
+    static void exchangeE( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
+    static void finalizeexchangeE( Params &params, VectorPatch &vecPatches, int imode );   
     static void exchangeB( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
     static void finalizeexchangeB( Params &params, VectorPatch &vecPatches, int imode );
-    static void exchangeE( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
-    static void finalizeexchangeE( Params &params, VectorPatch &vecPatches, int imode );
+
     static void exchangeJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangeJ( Params &params, VectorPatch &vecPatches );
 

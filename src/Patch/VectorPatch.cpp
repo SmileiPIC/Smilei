@@ -89,7 +89,24 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
 {
     globalDiags = DiagnosticFactory::createGlobalDiagnostics( params, smpi, *this, radiation_tables_ );
     localDiags  = DiagnosticFactory::createLocalDiagnostics( params, smpi, *this, openPMD );
-
+    
+    // Verify that diagnostic names are not duplicated
+    vector<string> names( 0 );
+    for( unsigned int i=0; i<globalDiags.size(); i++ ) {
+        if( globalDiags[i]->name().empty() ) continue;
+        if( std::find(names.begin(), names.end(), globalDiags[i]->name()) != names.end() ) {
+            ERROR( "Two diagnostics have the same label " << globalDiags[i]->name() );
+        }
+        names.push_back( globalDiags[i]->name() );
+    }
+    for( unsigned int i=0; i<localDiags.size(); i++ ) {
+        if( localDiags[i]->name().empty() ) continue;
+        if( std::find(names.begin(), names.end(), localDiags[i]->name()) != names.end() ) {
+            ERROR( "Two diagnostics have the same label " << localDiags[i]->name() );
+        }
+        names.push_back( localDiags[i]->name() );
+    }
+    
     // Delete all unused fields
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         if( params.geometry!="AMcylindrical" ) {
@@ -120,6 +137,7 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
             }
 
         } else {
+            
             ElectroMagnAM *EMfields = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             for( unsigned int ifield=0 ; ifield<EMfields->Jl_s.size(); ifield++ ) {
                 if( EMfields->Jl_s[ifield]->cdata_ == NULL ) {
@@ -303,7 +321,9 @@ void VectorPatch::dynamics( Params &params,
     #pragma omp single
     {
         diag_flag = needsRhoJsNow( itime );
-    }
+        diag_flag = ( needsRhoJsNow( itime ) || params.is_spectral );
+
+    }    
 	
     timers.particles.restart();
     ostringstream t;
@@ -851,18 +871,21 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
             // Per species in global, Attention if output -> Sync / per species fields
             ( *this )( ipatch )->EMfields->computeTotalRhoJ();
         }
-    } //MESSAGE ("bug before");
+    } 
     timers.densities.update();
 
     timers.syncDens.restart();
     if( params.geometry != "AMcylindrical" ) {
-        SyncVectorPatch::sumRhoJ( params, ( *this ), smpi, timers, itime ); // MPI
+        if ( (!params.uncoupled_grids)||(itime==0) )
+            SyncVectorPatch::sumRhoJ( params, ( *this ), smpi, timers, itime ); // MPI
     } else {
-        for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->Jl_.size() ; imode++ ) {
-            SyncVectorPatch::sumRhoJ( params, ( *this ), imode, smpi, timers, itime );
-        }
+
+        if ( (!params.uncoupled_grids)||(itime==0) )
+            for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->Jl_.size() ; imode++ ) {
+                SyncVectorPatch::sumRhoJ( params, ( *this ), imode, smpi, timers, itime );
+            }
     }
-    //MESSAGE ("bug after");
+
     if( diag_flag ) {
         for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
             if( !( *this )( 0 )->vecSpecies[ispec]->particles->is_test ) {
@@ -884,8 +907,23 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             if (emAM->isYmin){
                 for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
-                    ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode );
+                    ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode, diag_flag );
                 }
+                //Also apply BC on axis on species diagnostics
+                if (diag_flag) {
+                    unsigned int n_species = ( *this )( 0 )->vecSpecies.size();
+                    for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
+                        for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
+                            unsigned int ifield = imode*n_species+ispec;
+                            complex<double> *Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : NULL ;
+                            complex<double> *Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : NULL ;
+                            complex<double> *Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : NULL ;
+                            complex<double> *rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : NULL ;
+                            ( *this )( ipatch )->vecSpecies[ispec]->Proj->axisBC( rho , Jl, Jr, Jt, imode, diag_flag );
+                        }
+                    }
+                }
+
             }
         }
     }
@@ -935,6 +973,27 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
     SyncVectorPatch::sumEnvChi( params, ( *this ), smpi, timers, itime ); // MPI
     
 
+    //Apply boundary conditions for Env_Chi, only mode 0
+    if ( ( params.geometry == "AMcylindrical" ) && (( *this )( 0 )->vecSpecies.size() > 0) ) {
+        #pragma omp for schedule(runtime)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            if (emAM->isYmin){  
+                ( *this )( ipatch )->vecSpecies[0]->Proj->axisBCEnvChi( &( *emAM->Env_Chi_ )( 0 ) );
+                //Also apply BC on axis on species diagnostics
+                if (diag_flag) {
+                    unsigned int n_species = ( *this )( 0 )->vecSpecies.size();
+                        int imode =0;
+                        for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
+                            unsigned int ifield = imode*n_species+ispec;
+                            double *EnvChi = emAM->Env_Chi_s    [ifield] ? &( * ( emAM->Env_Chi_s[ifield] ) )( 0 ) : NULL ;
+                            ( *this )( ipatch )->vecSpecies[ispec]->Proj->axisBCEnvChi( EnvChi );
+                        }
+                }
+            }
+        }
+    }
+
     timers.susceptibility.update();
 
 } // End sumSusceptibility
@@ -948,6 +1007,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
 {
     timers.maxwell.restart();
 
+    // Current filter in intermediate space
     if (params.currentFilter_passes.size() > 0){
         for( unsigned int ipassfilter=0 ; ipassfilter<*std::max_element(std::begin(params.currentFilter_passes), std::end(params.currentFilter_passes)) ; ipassfilter++ ) {
             #pragma omp for schedule(static)
@@ -974,6 +1034,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             }
         }
     }
+
+    if ( params.is_spectral and params.geometry == "AMcylindrical"){
+        // Current correction in spectral space
+        (*this)( 0 )->EMfields->MaxwellAmpereSolver_->densities_correction( (*this)( 0 )->EMfields );
+    }
+
     #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         if( !params.is_spectral ) {
@@ -984,11 +1050,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
         ( *( *this )( ipatch )->EMfields->MaxwellAmpereSolver_ )( ( *this )( ipatch )->EMfields );
-        //MESSAGE("SOLVE MAXWELL AMPERE");
+    }
+
+    #pragma omp for schedule(static)
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         // Computes Bx_, By_, Bz_ at time n+1 on interior points.
-        //for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         ( *( *this )( ipatch )->EMfields->MaxwellFaradaySolver_ )( ( *this )( ipatch )->EMfields );
-        //MESSAGE("SOLVE MAXWELL FARADAY");
     }
     //Synchronize B fields between patches.
     timers.maxwell.update( params.printNow( itime ) );
@@ -1003,23 +1070,22 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
     } else {
         for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
             SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
-            SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+            //SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
             SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
-            SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+            //SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
         }
     }
     timers.syncField.update( params.printNow( itime ) );
-
-
-#ifdef _PICSAR
-    //if ( (params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
-    if( ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) {
+    
+    
+    if ( (params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true 
         timers.syncField.restart();
-        if( params.is_spectral ) {
+        if( params.is_spectral && params.geometry != "AMcylindrical" ) {
             SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
         }
 
-        SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
+        if( params.geometry != "AMcylindrical" )
+            SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
         timers.syncField.update( params.printNow( itime ) );
 
         #pragma omp for schedule(static)
@@ -1029,17 +1095,13 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             // Computes B at time n using B and B_m.
             if( !params.is_spectral ) {
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
-            } else {
-                ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
             }
         }
         if( params.is_spectral ) {
             saveOldRho( params );
         }
     }
-#endif
-
-
+    
 } // END solveMaxwell
 
 void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi )
@@ -1100,8 +1162,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
-#ifndef _PICSAR
-    if( ( !params.is_spectral ) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) {
+    if ( (!params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true 
         if( params.geometry != "AMcylindrical" ) {
             timers.syncField.restart();
             SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
@@ -1111,13 +1172,18 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
-            ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
+            if ( (!params.is_spectral) || (params.geometry!= "AMcylindrical") )
+                ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
             // Computes B at time n using B and B_m.
-            ( *this )( ipatch )->EMfields->centerMagneticFields();
+            if( !params.is_spectral ) {
+                ( *this )( ipatch )->EMfields->centerMagneticFields();
+            }
+            //Done at domain initializtion
+            //else {
+            //    ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
+            //}
         }
     }
-
-#endif
 
 } // END finalizeSyncAndBCFields
 
@@ -1143,7 +1209,7 @@ void VectorPatch::initExternals( Params &params )
 
     // Init all antennas
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
-        ( *this )( ipatch )->EMfields->initAntennas( ( *this )( ipatch ) );
+        ( *this )( ipatch )->EMfields->initAntennas( ( *this )( ipatch ), params );
     }
 }
 
@@ -2365,7 +2431,6 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         }
 
         unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
-        //if ( Ex_[0]->dims_.size()>1 ) {
         if( El_rel_[0]->dims_.size()>1 ) {
             nx_p2_global *= ( params.n_space_global[1]+1 );
             if( El_rel_[0]->dims_.size()>2 ) {
@@ -2375,7 +2440,6 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
 
         // compute control parameter
         double norm2_source_term = sqrt( std::abs(rnew_dot_rnewAM_) );
-        //double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
         double ctrl = sqrt( std::abs(rnew_dot_rnewAM_) ) / norm2_source_term; // initially is equal to one
         
         // ---------------------------------------------------------
@@ -3474,13 +3538,13 @@ void VectorPatch::allocateField( unsigned int ifield, Params &params )
             if( field->data_ != NULL ) {
                 continue;
             }
-            if( field->name.substr( 0, 2 )=="Jx" ) {
+            if( ( field->name.substr( 0, 2 )=="Jx" ) && (!params.is_pxr) ) {
                 field->allocateDims( 0, false );
-            } else if( field->name.substr( 0, 2 )=="Jy" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Jy" ) && (!params.is_pxr) ) {
                 field->allocateDims( 1, false );
-            } else if( field->name.substr( 0, 2 )=="Jz" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Jz" ) && (!params.is_pxr) ) {
                 field->allocateDims( 2, false );
-            } else if( field->name.substr( 0, 2 )=="Rh" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Rh" ) || (params.is_pxr) ) {
                 field->allocateDims();
             }
             //MESSAGE("HNA4");
@@ -3489,13 +3553,13 @@ void VectorPatch::allocateField( unsigned int ifield, Params &params )
             if( field->cdata_ != NULL ) {
                 continue;
             }
-            if( field->name.substr( 0, 2 )=="Jl" ) {
+            if( ( field->name.substr( 0, 2 )=="Jl" ) && (!params.is_pxr) ) {
                 field->allocateDims( 0, false );
-            } else if( field->name.substr( 0, 2 )=="Jr" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Jr" ) && (!params.is_pxr) ) {
                 field->allocateDims( 1, false );
-            } else if( field->name.substr( 0, 2 )=="Jt" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Jt" ) && (!params.is_pxr) ) {
                 field->allocateDims( 2, false );
-            } else if( field->name.substr( 0, 2 )=="Rh" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Rh" ) || (params.is_pxr) ) {
                 field->allocateDims();
             }
         }
@@ -3615,17 +3679,66 @@ void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi )
 
 void VectorPatch::saveOldRho( Params &params )
 {
+    //Spectral methods need the old density. This function is not called in FDTD.
     int n=0;
-    #pragma omp for schedule(static)
-    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        n = ( *this )( ipatch )->EMfields->rhoold_->dims_[0]*( *this )( ipatch )->EMfields->rhoold_->dims_[1]; //*(*this)(ipatch)->EMfields->rhoold_->dims_[2];
-        if( params.nDim_field ==3 ) {
-            n*=( *this )( ipatch )->EMfields->rhoold_->dims_[2];
+    if( params.geometry!="AMcylindrical" ) {
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            n = ( *this )( ipatch )->EMfields->rhoold_->dims_[0]*( *this )( ipatch )->EMfields->rhoold_->dims_[1]; //*(*this)(ipatch)->EMfields->rhoold_->dims_[2];
+            if( params.nDim_field ==3 ) {
+                n*=( *this )( ipatch )->EMfields->rhoold_->dims_[2];
+            }
+            std::memcpy( ( *this )( ipatch )->EMfields->rhoold_->data_, ( *this )( ipatch )->EMfields->rho_->data_, sizeof( double )*n );
         }
-        std::memcpy( ( *this )( ipatch )->EMfields->rhoold_->data_, ( *this )( ipatch )->EMfields->rho_->data_, sizeof( double )*n );
+    } else {
+        cField2D *rho, *rhoold;
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM* amfield = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields);
+            n = amfield->rho_old_AM_[0]->dims_[0] * amfield->rho_old_AM_[0]->dims_[1]; 
+            for( unsigned int imode=0 ; imode < params.nmodes ; imode++ ) {
+                rho = amfield->rho_AM_[imode];
+                rhoold = amfield->rho_old_AM_[imode];
+                std::memcpy( &((*rhoold)(0,0)), &((*rho)(0,0)) , sizeof( complex<double> )*n );
+            }
+        }
+
     }
 }
 
+
+void VectorPatch::setMagneticFieldsForDiagnostic( Params &params )
+{
+    if ( !params.is_spectral ) {
+        ERROR( "Should not come here for non spectral solver" );
+    }
+
+    if ( params.geometry!="AMcylindrical" ) {
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagn* emfield = static_cast<ElectroMagn *>( ( *this )( ipatch )->EMfields);
+            if ( emfield->Bx_->data_ != emfield->Bx_m->data_ ) {
+                emfield->Bx_->deallocateDataAndSetTo( emfield->Bx_m );
+                emfield->By_->deallocateDataAndSetTo( emfield->By_m );
+                emfield->Bz_->deallocateDataAndSetTo( emfield->Bz_m );
+            }
+        }
+    }
+    else {
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM* amfield = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields);
+            if ( amfield->Bl_[0]->cdata_ != amfield->Bl_m[0]->cdata_ ) {
+                for( unsigned int imode=0 ; imode < params.nmodes ; imode++ ) {
+                    amfield->Bl_[imode]->deallocateDataAndSetTo( amfield->Bl_m[imode] );
+                    amfield->Br_[imode]->deallocateDataAndSetTo( amfield->Br_m[imode] );
+                    amfield->Bt_[imode]->deallocateDataAndSetTo( amfield->Bt_m[imode] );
+                }
+            }
+        }
+    }
+
+}
 
 
 // Print information on the memory consumption
@@ -3706,8 +3819,8 @@ void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Check
                 //     * Calculate an approximate number of particles
                 PeekAtSpecies peek( params, ispec );
                 uint64_t number_of_particles = peek.totalNumberofParticles();
-                //     * Calculate the size of the first_index and last_index arrays
-                uint64_t b_size = ( s->first_index.size() + s->last_index.size() ) * params.tot_number_of_patches * sizeof( int );
+                //     * Calculate the size of the particles->first_index and particles->last_index arrays
+                uint64_t b_size = ( s->particles->first_index.size() + s->particles->last_index.size() ) * params.tot_number_of_patches * sizeof( int );
                 //     * Conclude the disk footprint of this species
                 checkpoint_particles_footprint += one_particle_size*number_of_particles + b_size;
             }

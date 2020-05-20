@@ -12,6 +12,7 @@
 #include "Projector.h"
 #include "SmileiMPI.h"
 #include "VectorPatch.h"
+#include "Region.h"
 #include "DiagnosticProbes.h"
 #include "DiagnosticTrack.h"
 #include "Hilbert_functions.h"
@@ -21,6 +22,8 @@
 #include <fstream>
 #include <limits>
 #include "ElectroMagnBC_Factory.h"
+#include "DoubleGrids.h"
+#include "SyncVectorPatch.h"
 
 using namespace std;
 
@@ -63,9 +66,9 @@ SimWindow::SimWindow( Params &params )
     
     
     if( active ) {
-        if( velocity_x != 0. && params.EM_BCs[0][0] == "periodic" ) {
-            ERROR( "Periodic topology in the moving window direction is neither encouraged nor supported" );
-        }
+        //if( velocity_x != 0. && params.EM_BCs[0][0] == "periodic" ) {
+        //    ERROR( "Periodic topology in the moving window direction is neither encouraged nor supported" );
+        //}
         
         MESSAGE( 1, "Moving window is active:" );
         MESSAGE( 2, "velocity_x : " << velocity_x );
@@ -90,7 +93,7 @@ bool SimWindow::isMoving( double time_dual )
     return active && ( ( time_dual - time_start )*velocity_x > x_moved - number_of_additional_shifts*cell_length_x_*n_space_x_*(time_dual>additional_shifts_time) );
 }
 
-void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params, unsigned int itime, double time_dual )
+void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params, unsigned int itime, double time_dual, Region& region )
 {
     if( ! isMoving( time_dual ) && itime != additional_shifts_iteration ) {
         return;
@@ -166,8 +169,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 delete_patches_.push_back( mypatch ); // Stores pointers to patches to be deleted later
                 //... I might have to MPI send myself to the left...
                 if( mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL ) {
-                    send_patches_.push_back( mypatch ); // Stores pointers to patches to be sent later
-                    smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] ) * nmessage, params );
+                    if ( vecPatches_old[ipatch]->Pcoordinates[0]!=0 ) {
+                        send_patches_.push_back( mypatch ); // Stores pointers to patches to be sent later
+                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] ) * nmessage, params );
+                    }
                 }
             } else { //In case my left neighbor belongs to me:
                 // I become my left neighbor.
@@ -218,8 +223,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             vecPatches.patches_[patch_to_be_created[my_thread][j]] = mypatch ;
             //Receive Patch if necessary
             if( mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL ) {
-                smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex )*nmessage, params );
-                patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
+                if ( mypatch->Pcoordinates[0]!=params.number_of_patches[0]-1 ) {
+                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex )*nmessage, params );
+                    patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
+                }
             }
             
             // Create Xmin condition which could not be received
@@ -231,7 +238,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 }
                 mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
                 mypatch->EMfields->laserDisabled();
-                mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
+                if (!params.uncoupled_grids)
+                    mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
             }
             
             mypatch->EMfields->laserDisabled();
@@ -283,7 +291,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 }
                 mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
                 mypatch->EMfields->laserDisabled();
-                mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
+                if (!params.uncoupled_grids)
+                    mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
             }
             if( mypatch->wasXmax( params ) ) {
                 for( auto &embc:mypatch->EMfields->emBoundCond ) {
@@ -321,7 +330,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     // If new particles are required
                     if( patch_particle_created[ithread][j] ) {
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                            
                             ParticleCreator particle_creator;
                             particle_creator.associate(mypatch->vecSpecies[ispec]);
                             particle_creator.create( params.n_space, params, mypatch, 0, 0 );
@@ -582,9 +590,123 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             }
         }
         
-        
 #ifdef _NO_MPI_TM
     } // end omp master
 #endif
+
+    #pragma omp barrier
+    #pragma omp master
+    {
+        if (params.uncoupled_grids) {
+            if ( params.geometry != "AMcylindrical" )
+                operate(region, vecPatches, smpi, params, time_dual);
+            else {
+                operate(region, vecPatches, smpi, params, time_dual, params.nmodes);
+            }
+        }
+    }
+    #pragma omp barrier
+
+
+    if (params.uncoupled_grids) {
+        if ( params.geometry != "AMcylindrical" ) {
+            // warkaround for !params.full_B_exchange (in 3D, with SM some border elements are not computed)
+            SyncVectorPatch::exchangeE( params, region.vecPatch_, smpi );
+            SyncVectorPatch::finalizeexchangeE( params, region.vecPatch_ );
+            SyncVectorPatch::exchangeB( params, region.vecPatch_, smpi );
+            SyncVectorPatch::finalizeexchangeB( params, region.vecPatch_ );
+        }
+        else {
+            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
+                SyncVectorPatch::exchangeE( params, region.vecPatch_, imode, smpi );
+                SyncVectorPatch::exchangeB( params, region.vecPatch_, imode, smpi );
+            }
+        }
+    }
+
+}
+
+void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, double time_dual)
+{
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->Ex_, params.n_space[0] );
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->Ey_, params.n_space[0] );
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->Ez_, params.n_space[0] );
     
+    if (region.patch_->EMfields->Bx_->data_!= region.patch_->EMfields->Bx_m->data_) {
+        region.patch_->exchangeField_movewin( region.patch_->EMfields->Bx_, params.n_space[0] );
+        region.patch_->exchangeField_movewin( region.patch_->EMfields->By_, params.n_space[0] );
+        region.patch_->exchangeField_movewin( region.patch_->EMfields->Bz_, params.n_space[0] );
+    }
+    
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->Bx_m, params.n_space[0] );
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->By_m, params.n_space[0] );
+    region.patch_->exchangeField_movewin( region.patch_->EMfields->Bz_m, params.n_space[0] );
+
+    if (params.is_spectral) {
+        region.patch_->exchangeField_movewin( region.patch_->EMfields->rho_, params.n_space[0] );
+        region.patch_->exchangeField_movewin( region.patch_->EMfields->rhoold_, params.n_space[0] );
+    }
+
+    //DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, smpi );
+
+    region.patch_->EMfields->laserDisabled();
+    region.patch_->EMfields->emBoundCond[0]->apply(region.patch_->EMfields, time_dual, region.patch_);
+    region.patch_->EMfields->emBoundCond[1]->apply(region.patch_->EMfields, time_dual, region.patch_);
+    // External fields
+
+    //mypatch->EMfields->emBoundCond[1]->disableExternalFields();
+
+    // Deadlock if moving window & load balancing enabled
+    //     Recompute patch distribution does not change
+    //if (params.uncoupled_grids) {
+    //    region.reset_mapping();
+    //    region.identify_additional_patches( smpi, vecPatches, params );
+    //    region.identify_missing_patches( smpi, vecPatches, params );
+    //}
+
+
+}
+
+
+void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, double time_dual, unsigned int nmodes)
+{
+    ElectroMagnAM * region_fields = static_cast<ElectroMagnAM *>( region.patch_->EMfields );
+   
+    for (unsigned int imode = 0; imode < nmodes; imode++){ 
+        region.patch_->exchangeField_movewin( region_fields->El_[imode], params.n_space[0] );
+        region.patch_->exchangeField_movewin( region_fields->Er_[imode], params.n_space[0] );
+        region.patch_->exchangeField_movewin( region_fields->Et_[imode], params.n_space[0] );
+        
+        if (region_fields->Bl_[imode]->cdata_!= region_fields->Bl_m[imode]->cdata_) {
+            region.patch_->exchangeField_movewin( region_fields->Bl_[imode], params.n_space[0] );
+            region.patch_->exchangeField_movewin( region_fields->Br_[imode], params.n_space[0] );
+            region.patch_->exchangeField_movewin( region_fields->Bt_[imode], params.n_space[0] );
+        }
+
+        region.patch_->exchangeField_movewin( region_fields->Bl_m[imode], params.n_space[0] );
+        region.patch_->exchangeField_movewin( region_fields->Br_m[imode], params.n_space[0] );
+        region.patch_->exchangeField_movewin( region_fields->Bt_m[imode], params.n_space[0] );
+
+        if (params.is_spectral) {
+            region.patch_->exchangeField_movewin( region_fields->rho_AM_[imode], params.n_space[0] );
+            region.patch_->exchangeField_movewin( region_fields->rho_old_AM_[imode], params.n_space[0] );
+        }
+    }
+
+    //DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, smpi );
+
+    region_fields->laserDisabled();
+    region.patch_->EMfields->emBoundCond[0]->apply(region.patch_->EMfields, time_dual, region.patch_);
+    region.patch_->EMfields->emBoundCond[1]->apply(region.patch_->EMfields, time_dual, region.patch_);
+    // External fields
+
+    //mypatch->EMfields->emBoundCond[1]->disableExternalFields();
+
+    // Deadlock if moving window & load balancing enabled
+    //     Recompute patch distribution does not change
+    //if (params.uncoupled_grids) {
+    //    region.reset_mapping();
+    //    region.identify_additional_patches( smpi, vecPatches, params );
+    //    region.identify_missing_patches( smpi, vecPatches, params );
+    //}
 }

@@ -4,7 +4,7 @@ from ._Diagnostics import Scalar, Field, Probe, ParticleBinning, RadiationSpectr
 
 class ScalarFactory(object):
 	"""Import and analyze a scalar diagnostic from a Smilei simulation
-
+	
 	Parameters:
 	-----------
 	scalar : string (optional)
@@ -17,19 +17,19 @@ class ScalarFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
-
+	
 	Usage:
 	------
 		S = happi.Open("path/to/simulation") # Load the simulation
 		scalar = S.Scalar(...)               # Load the scalar diagnostic
 		scalar.get()                         # Obtain the data
 	"""
-
+	
 	def __init__(self, simulation, scalar=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		if not simulation._scan: return
-
+		
 		# If not a specific scalar (root level), build a list of scalar shortcuts
 		if scalar is None:
 			if simulation._verbose: print("Scanning for Scalar diagnostics")
@@ -40,7 +40,7 @@ class ScalarFactory(object):
 			# Create scalars shortcuts
 			for scalar in scalars:
 				setattr(self, scalar, ScalarFactory(simulation, scalar))
-
+		
 		else:
 			# the scalar is saved for generating the object in __call__
 			self._additionalArgs += (scalar, )
@@ -84,30 +84,26 @@ class FieldFactory(object):
 		field = S.Field(...)                 # Load the field diagnostic
 		field.get()                          # Obtain the data
 	"""
-
+	
 	def __init__(self, simulation, diagNumber=None, field=None, timestep=None, availableTimesteps=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		self._children = []
 		if not simulation._scan: return
-
+		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
 			if simulation._verbose: print("Scanning for Field diagnostics")
-			# Create a temporary, empty field diagnostic
-			tmpDiag = Field.Field(simulation)
-			# Get a list of diag
-			diags = tmpDiag.getDiags()
 			# Create diags shortcuts
-			for diag in diags:
+			for diag in simulation._diag_numbers["Fields"]:
 				child = FieldFactory(simulation, diag)
 				setattr(self, "Field"+str(diag), child)
 				self._children += [child]
-
+		
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-
+			
 			# If not a specific field, build a list of field shortcuts
 			if field is None:
 				# Create a temporary, empty field diagnostic
@@ -188,12 +184,8 @@ class ProbeFactory(object):
 		# If not a specific probe, build a list of probe shortcuts
 		if probeNumber is None:
 			if simulation._verbose: print("Scanning for Probe diagnostics")
-			# Create a temporary, empty probe diagnostic
-			tmpDiag = Probe.Probe(simulation)
-			# Get a list of probes
-			probes = tmpDiag._probes
 			# Create probe shortcuts
-			for probe in probes:
+			for probe in simulation._diag_numbers["Probes"]:
 				setattr(self, 'Probe'+str(probe), ProbeFactory(simulation, probe))
 
 		else:
@@ -276,12 +268,8 @@ class ParticleBinningFactory(object):
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
 			if simulation._verbose: print("Scanning for ParticleBinning diagnostics")
-			# Create a temporary, empty particle binning diagnostic
-			tmpDiag = ParticleBinning.ParticleBinning(simulation)
-			# Get a list of diags
-			diags = tmpDiag.getDiags()
 			# Create diags shortcuts
-			for diag in diags:
+			for diag in simulation._diag_numbers["ParticleBinning"]:
 				setattr(self, 'Diag'+str(diag), ParticleBinningFactory(simulation, diag))
 
 		else:
@@ -336,22 +324,20 @@ class RadiationSpectrumFactory(object):
 	Usage:
 	------
 		S = happi.Open("path/to/simulation") # Load the simulation
-		part = S.RadiationSpectrum(...)      # Load the particle binning diagnostic
-		part.get()                           # Obtain the data
+		rad = S.RadiationSpectrum(...)      # Load the RadiationSpectrum diagnostic
+		rad.get()                           # Obtain the data
 	"""
 
 	def __init__(self, simulation, diagNumber=None, timestep=None):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-
+		if not simulation._scan: return
+		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
-			# Create a temporary, empty radiation spectrum diagnostic
-			tmpDiag = RadiationSpectrum.RadiationSpectrum(simulation)
-			# Get a list of diags
-			diags = tmpDiag.getDiags()
+			if simulation._verbose: print("Scanning for RadiationSpectrum diagnostics")
 			# Create diags shortcuts
-			for diag in diags:
+			for diag in simulation._diag_numbers["RadiationSpectrum"]:
 				setattr(self, 'Diag'+str(diag), RadiationSpectrumFactory(simulation, diag))
 
 		else:
@@ -432,7 +418,9 @@ class PerformancesFactory(object):
 	def __init__(self, simulation):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
-
+		if not simulation._scan: return
+		if simulation._verbose: print("Scanning for Performance diagnostics")
+	
 	def __call__(self, *args, **kwargs):
 		return Performances.Performances(self._simulation, *(self._additionalArgs+args), **kwargs)
 
@@ -481,12 +469,8 @@ class ScreenFactory(object):
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
 			if simulation._verbose: print("Scanning for Screen diagnostics")
-			# Create a temporary, empty Screen diagnostic
-			tmpDiag = Screen.Screen(simulation)
-			# Get a list of diags
-			diags = tmpDiag.getDiags()
 			# Create diags shortcuts
-			for diag in diags:
+			for diag in simulation._diag_numbers["Screen"]:
 				setattr(self, 'Screen'+str(diag), ScreenFactory(simulation, diag))
 
 		else:
@@ -701,15 +685,18 @@ class SmileiSimulation(object):
 
 		# Load diagnostics factories
 		if self.valid:
+			self._diag_numbers = {}
+			self._diag_names = {}
+			for diagType in ["Fields", "Probes", "ParticleBinning", "Screen", "RadiationSpectrum"]:
+				self._diag_numbers[diagType], self._diag_names[diagType] = None, None
+				if self._scan:
+					self.getDiags(diagType)
+			
 			self.Scalar = ScalarFactory(self)
 			self.Field = FieldFactory(self)
 			self.Probe = ProbeFactory(self)
 			self.ParticleBinning = ParticleBinningFactory(self)
-
-			if self._verbose: print("Scanning for RadiationSpectrum diagnostics")
 			self.RadiationSpectrum = RadiationSpectrumFactory(self)
-
-			if self._verbose: print("Scanning for Performances diagnostics")
 			self.Performances = PerformancesFactory(self)
 			self.Screen = ScreenFactory(self)
 			self.TrackParticles = TrackParticlesFactory(self)
@@ -819,10 +806,35 @@ class SmileiSimulation(object):
 				if self._verbose: print("Loaded simulation '"+path+"'")
 			if self._reference_angular_frequency_SI is None:
 				self._reference_angular_frequency_SI = W_r
-
+		
 		self._mtime = lastmodif
 		self.valid = True
-
+	
+	def getDiags(self, diagType):
+		if self._diag_numbers[diagType] is None:
+			self._diag_numbers[diagType], self._diag_names[diagType] = self.scanDiags(diagType)
+		return self._diag_numbers[diagType], self._diag_names[diagType]
+	
+	def scanDiags(self, diagType):
+		diags = []
+		for path in self._results_path:
+			files = self._glob(path+self._os.sep+diagType+'*.h5')
+			these_diags = []
+			for file in files:
+				# get number
+				number = int(self._re.findall(diagType+"([0-9]+).h5$",file)[0])
+				# get name
+				with self._h5py.File(file, 'r') as f:
+					name = f.attrs["name"].decode() if "name" in f.attrs else ""
+				these_diags += [(number, name)]
+			# Update diags with those of previous paths
+			if diags == []: diags = these_diags
+			else          : diags = [ d for d in diags if d in these_diags ]
+		if diags == []:
+			return [], []
+		else:
+			return zip( *sorted( diags, key=lambda x:x[0] ) )
+	
 	def __repr__(self):
 		if not self.valid:
 			return "Invalid Smilei simulation"

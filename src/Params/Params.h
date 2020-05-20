@@ -205,7 +205,15 @@ public:
 
     //! number of cells in every direction of the local domain
     std::vector<unsigned int> n_space;
-
+    
+    //! number of cells in every direction of the local domain (can be different from 1 MPI process to another)
+    std::vector<unsigned int> n_space_region;
+    
+    std::vector<unsigned int> number_of_region;
+    std::vector< std::vector<int> > offset_map;
+    std::vector< std::vector< std::vector<int> > > map_rank;
+    std::vector<int> coordinates;
+    
     //! number of cells in every direction of the global domain
     std::vector<unsigned int> n_space_global;
 
@@ -223,7 +231,13 @@ public:
 
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
+    std::vector<unsigned int> region_oversize;
+    //! Number of damping cells
+    std::vector<unsigned int> number_of_damping_cells;
 
+    unsigned int pseudo_spectral_guardells;
+    bool apply_rotational_cleaning;
+    
     //! True if restart requested
     bool restart;
 
@@ -296,9 +310,17 @@ public:
 
     //! every for the standard pic timeloop output
     unsigned int print_every;
+    
+    // Double grids parameters (particles and fields)
+    std::vector<unsigned int> global_factor;
+    void uncoupled_decomposition();
+    void uncoupled_decomposition_1D();
+    void uncoupled_decomposition_2D();
+    void uncoupled_decomposition_3D();
+    void print_uncoupled_params();
+    bool uncoupled_grids;
 
     // PXR parameters
-    std::vector<unsigned int> global_factor;
     bool  is_spectral=false ;
     bool  is_pxr=false ;
     int   norderx = 2;

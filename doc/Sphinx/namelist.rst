@@ -333,6 +333,15 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
   Note that this number must be lower or equal to the number of modes of the simulation.
 
+.. rst-class:: experimental
+
+.. py:data:: uncoupled_grids
+
+  :default: `False`
+
+  | If `False`, the parallelization of the simulation is done according to the see :doc:`parallelization`.
+  | If `True`, the simulated domain is decomposed in dedicated shapes for particles and fields operations. Benefits of this option is illustrated in `Single Domain Multiple Decompositions for Particle-in-Cell simulations <https://arxiv.org/abs/1912.04064>`_
+
 ----
 
 Load Balancing
@@ -516,7 +525,6 @@ which parameters are controlled in the following block::
 
 .. py:data:: model
 
-  :type: String.
   :default: ``"binomial"``
 
   The model for current filtering. Presently, only ``"binomial"`` current filtering is available.
@@ -595,7 +603,6 @@ Each species has to be defined in a ``Species`` block::
       # ionization_rate = None,
       is_test = False,
       # ponderomotive_dynamics = False,
-      c_part_max = 1.0,
       pusher = "boris",
 
       # Radiation reaction, for particles only:
@@ -826,10 +833,10 @@ Each species has to be defined in a ``Species`` block::
 .. note:: Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
 
 
-.. py:data:: c_part_max
-
-  :red:`to do`
-
+.. .. py:data:: c_part_max
+.. 
+..   :red:`to do`
+.. 
 
 .. py:data:: pusher
 
@@ -2350,11 +2357,16 @@ taken at the location of the PIC grid, both as instantaneous values and averaged
 This is done by including a block ``DiagFields``::
 
   DiagFields(
+      #name = "my field diag",
       every = 10,
       time_average = 2,
       fields = ["Ex", "Ey", "Ez"],
       #subgrid = None
   )
+
+.. py:data:: name
+
+  Optional name of the diagnostic. Used only for post-processing purposes.
 
 .. py:data:: every
 
@@ -2512,6 +2524,7 @@ or several points arranged in a 2-D or 3-D grid.
 To add one probe diagnostic, include the block ``DiagProbe``::
 
   DiagProbe(
+      #name = "my_probe",
       every    = 10,
       origin   = [1., 1.],
       corners  = [
@@ -2521,6 +2534,10 @@ To add one probe diagnostic, include the block ``DiagProbe``::
       number   = [100, 100],
       fields   = ["Ex", "Ey", "Ez"]
   )
+
+.. py:data:: name
+
+  Optional name of the diagnostic. Used only for post-processing purposes.
 
 .. py:data:: every
 
@@ -2657,6 +2674,7 @@ You can add a particle binning diagnostic by including a block ``DiagParticleBin
 for instance::
 
   DiagParticleBinning(
+      #name = "my binning",
       deposited_quantity = "weight",
       every = 5,
       time_average = 1,
@@ -2666,6 +2684,10 @@ for instance::
           ["ekin", 0.1, 100, 1000, "logscale", "edge_inclusive"]
       ]
   )
+
+.. py:data:: name
+
+  Optional name of the diagnostic. Used only for post-processing purposes.
 
 .. py:data:: deposited_quantity
 
@@ -2727,7 +2749,7 @@ for instance::
 
 .. py:data:: axes
 
-  A list of "axes" that define the grid.
+  A list of *axes* that define the grid.
   There may be as many axes as wanted (there may be zero axes).
 
   Syntax of one axis: ``[type, min, max, nsteps, "logscale", "edge_inclusive"]``
@@ -2856,6 +2878,7 @@ You can add a screen by including a block ``DiagScreen()`` in the namelist,
 for instance::
 
   DiagScreen(
+      #name = "my screen",
       shape = "plane",
       point = [5., 10.],
       vector = [1., 0.],
@@ -2866,6 +2889,10 @@ for instance::
               ["px", 0., 3., 30]],
       every = 10
   )
+
+.. py:data:: name
+
+  Optional name of the diagnostic. Used only for post-processing purposes.
 
 .. py:data:: shape
 
@@ -2948,6 +2975,7 @@ The other axes remain available to the user.
 A radiation spectrum diagnostic is defined by a block ``RadiationSpectrum()``::
 
   DiagRadiationSpectrum(
+      #name = "my radiation spectrum",
       every = 5,
       flush_every = 1,
       time_average = 1,
@@ -2955,6 +2983,10 @@ A radiation spectrum diagnostic is defined by a block ``RadiationSpectrum()``::
       photon_energy_axis = [0., 1000., 100, 'logscale'],
       axes = []
   )
+
+.. py:data:: name
+
+  Optional name of the diagnostic. Used only for post-processing purposes.
 
 .. py:data:: every
 
