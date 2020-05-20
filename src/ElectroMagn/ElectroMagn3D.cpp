@@ -167,6 +167,7 @@ void ElectroMagn3D::initElectroMagn3DQuantities( Params &params, Patch *patch )
         Env_A_abs_ = new Field3D( dimPrim, "Env_A_abs" );
         Env_Chi_   = new Field3D( dimPrim, "Env_Chi" );
         Env_E_abs_ = new Field3D( dimPrim, "Env_E_abs" );
+	Env_Ex_abs_= new Field3D( dimPrim, "Env_Ex_abs" );
     }
     
     // Total charge currents and densities
