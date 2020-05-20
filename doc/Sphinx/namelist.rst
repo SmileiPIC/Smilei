@@ -2462,7 +2462,7 @@ This is done by including a block ``DiagFields``::
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
   | |              | | Module of laser electric field's complex envelope   |
-  | | Env_Ex_abs   | | :math:`\tilde{Ex}` (component along the propagation |
+  | | Env_Ex_abs   | | :math:`\tilde{E}_x` (component along the propagation|
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
 

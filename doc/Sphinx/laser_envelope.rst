@@ -229,7 +229,9 @@ The envelope of a laser pulse propagating in the positive `x` direction can be w
   \mathbf{\tilde{A}} (\mathbf{x},t)= \tilde{A}(\mathbf{x},t) \left[ \eta\thinspace\hat{y} + i(1-\eta^2)^{1/2}\hat{z}   \right] ,
 
 where :math:`\eta=1` or :math:`\eta=0` for linear polarization along `y` or `z`, and :math:`\eta\pm1/\sqrt{2}` for circular polarization.
-Although Eq. :eq:`envelope_equation` is a vector equation, these two polarizations allow to solve only one scalar equation:
+Although Eq. :eq:`envelope_equation` is a vector equation nonlinear, these two polarizations allow to solve only one scalar equation
+at each timestep, because once the susceptibility at a given timestep is known, the envelope equation can be considered linear.
+Thus, after calculating the susceptibility we can solve the equation:
 
 .. math::
   :label: envelope_equation_scalar
@@ -238,8 +240,8 @@ Although Eq. :eq:`envelope_equation` is a vector equation, these two polarizatio
 
 where :math:`\tilde{A}` is the nonzero component of :math:`\mathbf{\tilde{A}}` for linear polarization and :math:`\tilde{A}/\sqrt{2}` for circular polarization.
 This approach gives accurate results only if the ponderomotive potential :math:`\Phi_{pond}=\frac{|\mathbf{\tilde{A}}|^2}{2}` is computed 
-accordingly to the vector definition of :math:`\mathbf{\tilde{A}}`. This means that :math:`\Phi_{pond}=\frac{|\tilde{A}|^2}{2}` for linear polarization and 
-:math:`\Phi_{pond}=|\tilde{A}|^2` for circular polarization.
+accordingly to the vector definition of :math:`\mathbf{\tilde{A}}`. This means that :math:`\Phi_{pond}=\frac{|\tilde{A}|^2}{2}` for both linear and 
+circular polarization.
 Besides, with this approach the absolute value of :math:`\tilde{A}` and the derived electric field :math:`\tilde{E}` (see next section) are directly comparable with
 standard laser simulations with the same polarization and :math:`a_0`. 
 
