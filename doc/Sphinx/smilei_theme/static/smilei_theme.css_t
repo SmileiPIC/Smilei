@@ -109,7 +109,7 @@ div.body h5,
 div.body h6 {
 	font-family: {{ theme_head_font_family }};
 	font-weight: bold;
-	margin: 30px 0px 10px 0px;
+	margin: 10px 0px 10px 0px;
 	padding: 0;
 	color: {{ theme_main_color_bold }};
 }
@@ -128,9 +128,13 @@ div.body h4 { font-size: 130%; }
 div.body h5 { font-size: 100%; }
 div.body h6 { font-size: 100%; }
 
-.section {
-	padding-top:{{ theme_head_height | float * 0.5 }}mm;
-	margin-top:-{{ theme_head_height }}mm;
+:target {
+	margin-top: -{{ theme_head_height| float *1.2 }}mm;
+	padding-top: {{ theme_head_height| float *1.2 }}mm;
+}
+
+h1:target, h2:target, h3:target, dt:target {
+	background: {{ theme_main_color_pale }} content-box !important;
 }
 
 a.headerlink {
@@ -187,7 +191,7 @@ div.highlight {
 	background-color: white;
 }
 
-dt:target, .highlight {
+.highlight {
 	background: {{ theme_main_color_pale }};
 }
 
