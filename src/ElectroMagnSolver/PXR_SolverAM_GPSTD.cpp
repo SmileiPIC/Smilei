@@ -156,14 +156,18 @@ void PXR_SolverAM_GPSTD::densities_correction(ElectroMagn *fields)
 //0) Transform toward spectral space
 //1) Filter + divergence cleaning (current correction)
 //2) Back to intermediate space
+
+    //duplicate_field_into_pxr( fields );
+    _2Dvectors_to_3D(fields);
 #ifdef _PICSAR
     picsar::densities_correction();
 #else
     ERROR( "Smilei not linked with picsar, use make config=picsar" );
 #endif
-//3) Communicate J, rho, rho_old and set them to zero in boundary cells
+//3) Communicate J, rho, rho_old and set them to zero in boundary cells (in vectorPatch)
 
-
+    //duplicate_field_into_smilei( fields );
+    _3D_to_2Dvectors(fields);
 
 }
 
