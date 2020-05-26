@@ -1018,11 +1018,11 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 }
                 if((*this)( 0 )->isXmax() ) {
                     int istart = (params.region_oversize[0]+1+params.n_space_region[0]);
-                    fill( &((*Jl)(istart,0)), &((*Jl)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*Jr)(istart,0)), &((*Jr)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*Jt)(istart,0)), &((*Jt)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*rho_old_AM)(istart,0)), &((*rho_old_AM)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*rho_AM)(istart,0)), &((*rho_AM)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*Jl)(istart,0)), &((*Jl)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*Jr)(istart,0)), &((*Jr)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*Jt)(istart,0)), &((*Jt)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*rho_old_AM)(istart,0)), &((*rho_old_AM)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*rho_AM)(istart,0)), &((*rho_AM)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
                 }
 
             }
