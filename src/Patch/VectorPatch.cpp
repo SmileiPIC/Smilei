@@ -1010,19 +1010,19 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 cField2D *rho_old_AM = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->rho_old_AM_[imode];
                 cField2D *rho_AM = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->rho_AM_[imode];
                 if( (*this)( 0 )->isXmin() ) {
-                    memset( &( Jl[0] ), 0, sizeof( Jl[0] )*mem_size );
-                    memset( &( Jr[0] ), 0, sizeof( Jr[0] )*mem_size );
-                    memset( &( Jt[0] ), 0, sizeof( Jt[0] )*mem_size );
-                    memset( &( rho_old_AM[0] ), 0, sizeof( rho_old_AM[0] )*mem_size );
-                    memset( &( rho_AM[0] ), 0, sizeof( rho_AM[0] )*mem_size );
+                    fill( &((*Jl)(0,0)), &((*Jl)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*Jr)(0,0)), &((*Jr)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*Jt)(0,0)), &((*Jt)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*rho_old_AM)(0,0)), &((*rho_old_AM)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*rho_AM)(0,0)), &((*rho_AM)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
                 }
                 if((*this)( 0 )->isXmax() ) {
-                    int istart = (params.n_space_region[1]+1+2*params.region_oversize[1])*(params.region_oversize[0]+1+params.n_space_region[0]);
-                    memset( &( Jl[istart] ), 0, sizeof( Jl[0] )*mem_size );
-                    memset( &( Jr[istart] ), 0, sizeof( Jr[0] )*mem_size );
-                    memset( &( Jt[istart] ), 0, sizeof( Jt[0] )*mem_size );
-                    memset( &( rho_old_AM[istart] ), 0, sizeof( rho_old_AM[0] )*mem_size );
-                    memset( &( rho_AM[istart] ), 0, sizeof( rho_AM[0] )*mem_size );
+                    int istart = (params.region_oversize[0]+1+params.n_space_region[0]);
+                    fill( &((*Jl)(istart,0)), &((*Jl)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*Jr)(istart,0)), &((*Jr)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*Jt)(istart,0)), &((*Jt)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*rho_old_AM)(istart,0)), &((*rho_old_AM)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+                    fill( &((*rho_AM)(istart,0)), &((*rho_AM)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
                 }
 
             }
