@@ -987,53 +987,53 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         }
     }
 
-    if ( params.is_spectral and params.geometry == "AMcylindrical"){
-        // Current correction: to spectral space, apply corrections and back
-        (*this)( 0 )->EMfields->MaxwellAmpereSolver_->densities_correction( (*this)( 0 )->EMfields );
-        // Exchange corrected current and charge densities
-        for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
-             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listrho_old_AM_[imode], *this, smpi );
-             SyncVectorPatch::finalizeExchangeAlongAllDirections( listrho_old_AM_[imode], *this );
-             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listrho_AM_[imode], *this, smpi );
-             SyncVectorPatch::finalizeExchangeAlongAllDirections( listrho_AM_[imode], *this );
-             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJl_[imode], *this, smpi );
-             SyncVectorPatch::finalizeExchangeAlongAllDirections( listJl_[imode], *this );
-             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJr_[imode], *this, smpi );
-             SyncVectorPatch::finalizeExchangeAlongAllDirections( listJr_[imode], *this );
-             SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJt_[imode], *this, smpi );
-             SyncVectorPatch::finalizeExchangeAlongAllDirections( listJt_[imode], *this );
-        }
+    //if ( params.is_spectral and params.geometry == "AMcylindrical"){
+    //    // Current correction: to spectral space, apply corrections and back
+    //    (*this)( 0 )->EMfields->MaxwellAmpereSolver_->densities_correction( (*this)( 0 )->EMfields );
+    //    // Exchange corrected current and charge densities
+    //    for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
+    //         SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listrho_old_AM_[imode], *this, smpi );
+    //         SyncVectorPatch::finalizeExchangeAlongAllDirections( listrho_old_AM_[imode], *this );
+    //         SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listrho_AM_[imode], *this, smpi );
+    //         SyncVectorPatch::finalizeExchangeAlongAllDirections( listrho_AM_[imode], *this );
+    //         SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJl_[imode], *this, smpi );
+    //         SyncVectorPatch::finalizeExchangeAlongAllDirections( listJl_[imode], *this );
+    //         SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJr_[imode], *this, smpi );
+    //         SyncVectorPatch::finalizeExchangeAlongAllDirections( listJr_[imode], *this );
+    //         SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJt_[imode], *this, smpi );
+    //         SyncVectorPatch::finalizeExchangeAlongAllDirections( listJt_[imode], *this );
+    //    }
     //    // Set densities to zero in boundary cells
     //    // set_boundary_to_zero();
-        if( (*this)( 0 )->isXmin() || (*this)( 0 )->isXmax() ) {
-            int mem_size = (params.n_space_region[1]+1+2*params.region_oversize[1])*params.region_oversize[0];
-            for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
-                // Static cast of the fields
-                cField2D *Jl = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->Jl_[imode];
-                cField2D *Jr = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->Jr_[imode];
-                cField2D *Jt = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->Jt_[imode];
-                cField2D *rho_old_AM = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->rho_old_AM_[imode];
-                cField2D *rho_AM = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->rho_AM_[imode];
-                if( (*this)( 0 )->isXmin() ) {
-                    fill( &((*Jl)(0,0)), &((*Jl)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*Jr)(0,0)), &((*Jr)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*Jt)(0,0)), &((*Jt)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*rho_old_AM)(0,0)), &((*rho_old_AM)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*rho_AM)(0,0)), &((*rho_AM)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
-                }
-                if((*this)( 0 )->isXmax() ) {
-                    int istart = (params.region_oversize[0]+1+params.n_space_region[0]);
-                    fill( &((*Jl)(istart,0)), &((*Jl)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*Jr)(istart,0)), &((*Jr)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*Jt)(istart,0)), &((*Jt)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*rho_old_AM)(istart,0)), &((*rho_old_AM)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
-                    fill( &((*rho_AM)(istart,0)), &((*rho_AM)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
-                }
+        //if( (*this)( 0 )->isXmin() || (*this)( 0 )->isXmax() ) {
+        //    int mem_size = (params.n_space_region[1]+1+2*params.region_oversize[1])*params.region_oversize[0];
+        //    for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+        //        // Static cast of the fields
+        //        cField2D *Jl = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->Jl_[imode];
+        //        cField2D *Jr = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->Jr_[imode];
+        //        cField2D *Jt = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->Jt_[imode];
+        //        cField2D *rho_old_AM = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->rho_old_AM_[imode];
+        //        cField2D *rho_AM = ( static_cast<ElectroMagnAM *>( (*this)( 0 )->EMfields ) )->rho_AM_[imode];
+        //        if( (*this)( 0 )->isXmin() ) {
+        //            fill( &((*Jl)(0,0)), &((*Jl)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+        //            fill( &((*Jr)(0,0)), &((*Jr)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+        //            fill( &((*Jt)(0,0)), &((*Jt)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+        //            fill( &((*rho_old_AM)(0,0)), &((*rho_old_AM)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+        //            fill( &((*rho_AM)(0,0)), &((*rho_AM)(0,0))+mem_size, std::complex<double>(0.0, 0.0));
+        //        }
+        //        if((*this)( 0 )->isXmax() ) {
+        //            int istart = (params.region_oversize[0]+1+params.n_space_region[0]);
+        //            fill( &((*Jl)(istart,0)), &((*Jl)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
+        //            fill( &((*Jr)(istart,0)), &((*Jr)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
+        //            fill( &((*Jt)(istart,0)), &((*Jt)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
+        //            fill( &((*rho_old_AM)(istart,0)), &((*rho_old_AM)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
+        //            fill( &((*rho_AM)(istart,0)), &((*rho_AM)(istart,0))+mem_size, std::complex<double>(0.0, 0.0));
+        //        }
 
-            }
-         }
+        //    }
+        // }
         
-    }
+    //}
 
     #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {

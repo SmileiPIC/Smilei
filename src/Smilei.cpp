@@ -411,6 +411,8 @@ int main( int argc, char *argv[] )
                 region.vecPatch_.diag_flag = false;
 
                 //here filter + divergence cleaning
+                if ( params.is_spectral and params.geometry == "AMcylindrical")
+                    region.vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->densities_correction( region.vecPatch_( 0 )->EMfields );
 
 
                 if( params.geometry != "AMcylindrical" )
