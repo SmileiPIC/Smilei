@@ -161,9 +161,9 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
     
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
-    xpn[0] = i_domain_begin + iold[0*nparts] + deltaold[0*nparts];
-    xpn[1] = particles.position( 0, ipart ) * dl_inv_ ;
-    xpn[0] = 0.5*(xpn[0]+xpn[1]);
+    xpn[0] = i_domain_begin + iold[0*nparts] + deltaold[0*nparts];  // position at t=t0
+    xpn[1] = particles.position( 0, ipart ) * dl_inv_ ;             // position at t=t0+dt
+    xpn[0] = 0.5*(xpn[0]+xpn[1]);                                   // position at t=t0+dt/2
     rpn[0] = j_domain_begin + iold[1*nparts] + deltaold[1*nparts];
     rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
     rpn[1] = rp * dr_inv_ - 0.5 ;
@@ -237,6 +237,9 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
 void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode )
 {
+
+    return;
+
     const double one_ov_9  = 1./9.; 
     const double one_ov_16 = 1./16.; 
     if (imode == 0){
@@ -256,7 +259,7 @@ void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex
         }//i
     }
 
-return;
+    return;
 }
 
 //------------------------------------//
