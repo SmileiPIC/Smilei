@@ -287,7 +287,7 @@ int main( int argc, char *argv[] )
         }
     }
 
-    if( params.is_spectral ) {
+    if( params.is_spectral && params.geometry != "AMcylindrical") {
         vecPatches.saveOldRho( params );
     }
 
@@ -352,6 +352,10 @@ int main( int argc, char *argv[] )
             if( params.solve_relativistic_poisson == true ) {
                 vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
             }
+
+            // Reset global charge and currents densities to zero and computes rho old before moving particles
+            if ( params.geometry == "AMcylindrical" && params.is_spectral )
+                vecPatches.computeCharge(true);
 
             // (1) interpolate the fields at the particle position
             // (2) move the particle

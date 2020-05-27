@@ -40,6 +40,7 @@ public:
     std::vector<cField2D *> Jt_s;
     std::vector<cField2D *> rho_AM_s;
     void restartRhoJ() override;
+    void restartRhoold() ;
     void restartRhoJs() override;
     
     // fields for Poisson solver

@@ -313,7 +313,6 @@ void VectorPatch::dynamics( Params &params,
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
-        //MESSAGE("restart rhoj");
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             Species *spec = species( ipatch, ispec );
             if( spec->ponderomotive_dynamics ) {
@@ -792,7 +791,11 @@ void VectorPatch::computeCharge(bool old /*=false*/)
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        ( *this )( ipatch )->EMfields->restartRhoJ();
+        if (old) {
+            static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields)->restartRhoold();
+        } else {
+            ( *this )( ipatch )->EMfields->restartRhoJ();
+        }
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
                 species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ), old );
@@ -1087,7 +1090,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
             }
         }
-        if( params.is_spectral ) {
+        if( params.is_spectral && params.geometry != "AMcylindrical" ) {
             saveOldRho( params );
         }
     }
@@ -3668,6 +3671,9 @@ void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi )
 
 void VectorPatch::saveOldRho( Params &params )
 {
+
+    cout << "save old rho. Should not be called in this test" << endl;
+
     //Spectral methods need the old density. This function is not called in FDTD.
     int n=0;
     if( params.geometry!="AMcylindrical" ) {
