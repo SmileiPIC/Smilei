@@ -139,7 +139,7 @@ public :
     void injectParticlesFromBoundaries( Params &params, Timers &timers, unsigned int itime );
                                       
     //! Computation of the total charge
-    void computeCharge();
+    void computeCharge(bool old = false);
     
     void projectionForDiags( Params &params,
                                SmileiMPI *smpi,

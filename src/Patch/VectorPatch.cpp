@@ -788,16 +788,16 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
 }
 
 //! Computation of the total charge
-void VectorPatch::computeCharge()
+void VectorPatch::computeCharge(bool old /*=false*/)
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
-                species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ) );
+                species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ), old );
             } else {
-                species( ipatch, ispec )->Species::computeCharge( ispec, emfields( ipatch ) );
+                species( ipatch, ispec )->Species::computeCharge( ispec, emfields( ipatch ), old );
             }
         }
     }

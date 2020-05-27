@@ -382,6 +382,8 @@ void ElectroMagnAM::restartRhoJ()
         Jr_[imode] ->put_to( 0. );
         Jt_[imode] ->put_to( 0. );
         rho_AM_[imode]->put_to( 0. );
+        if (rho_old_AM_[imode])
+            rho_old_AM_[imode]->put_to( 0. );
     }
 }
 
