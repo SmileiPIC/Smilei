@@ -826,11 +826,13 @@ void VectorPatch::computeChargeRelativisticSpecies( double time_primal )
     }
 } // END computeRho
 
-void VectorPatch::resetRhoJ()
+void VectorPatch::resetRhoJ(bool old/*=false*/)
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
+        if (old)
+            static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields)->restartRhoold();
     }
 }
 

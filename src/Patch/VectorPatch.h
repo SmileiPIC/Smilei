@@ -165,7 +165,7 @@ public :
             SmileiMPI *smpi,
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );
-    void resetRhoJ();
+    void resetRhoJ(bool old = false);
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities( Params &params, double time_dual, Timers &timers, int itime, SimWindow *simWindow, SmileiMPI *smpi );

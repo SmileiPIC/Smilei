@@ -409,6 +409,10 @@ int main( int argc, char *argv[] )
                 }
                 timers.syncDens.restart();
                 region.vecPatch_.diag_flag = false;
+
+                //here filter + divergence cleaning
+
+
                 if( params.geometry != "AMcylindrical" )
                     SyncVectorPatch::sumRhoJ( params, region.vecPatch_, &smpi, timers, itime ); // MPI
                 else
@@ -467,7 +471,8 @@ int main( int argc, char *argv[] )
                     }
                 }
             }
-            region.vecPatch_.resetRhoJ();
+            bool old = (params.geometry == "AMcylindrical" && params.is_spectral);
+            region.vecPatch_.resetRhoJ(old);
         }
 
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
