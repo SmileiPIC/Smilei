@@ -18,11 +18,37 @@ resy  = 8.                  # nb of cells in one laser wavelength y
 solver = 'Bouchard'
 order=2
 
-# One 4 pass current filter in y-direction, perpendicular to the x-velocity of the plasma
+# One 2 pass current filter in y-direction, perpendicular to the x-velocity of the plasma
+
+# My FIR Kernel
+my_kernelFIR = [
+    0.,
+    0.01364035272420037,
+    -3.5059674461847047e-17,
+    -0.023941402143973,
+    -1.8698493046318425e-16,
+    0.046588211176174774,
+    -1.2855213969343918e-16,
+    -0.0951163438409052,
+    -2.921639538487254e-16,
+    0.3145154967908793,
+    0.4999999999999999,
+    0.3145154967908793,
+    -2.921639538487254e-16,
+    -0.0951163438409052,
+    -1.2855213969343918e-16,
+    0.046588211176174774,
+    -1.8698493046318425e-16,
+    -0.023941402143973,
+    -3.5059674461847047e-17,
+    0.01364035272420037,
+    0.
+]
 
 CurrentFilter(
-    model = "blackman21",
-    passes = [0,6]
+    model = "customFIR",
+    passes = [2,2],
+    kernelFIR = my_kernelFIR
 )
 
 fromcflfactor = 1.00 # have to be less than 1.
@@ -53,7 +79,7 @@ dfac = 1
 Main(
         geometry                       = "2Dcartesian",
         interpolation_order            = order,
-        custom_oversize                = 12,
+        custom_oversize                = 10,
         timestep                       = t0/rest,
         simulation_time                = Tsim,
         cell_length                    = [l0/resx,l0/resx],

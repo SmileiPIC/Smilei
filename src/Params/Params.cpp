@@ -457,11 +457,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     int nCurrentFilter = PyTools::nComponents( "CurrentFilter" );
     for( int ifilt = 0; ifilt < nCurrentFilter; ifilt++ ) {
         PyTools::extract( "model", currentFilter_model, "CurrentFilter", ifilt );
-        if( (currentFilter_model != "binomial")&&(currentFilter_model != "blackman21") ) {
-            ERROR( "Currently, only the `binomial` and `blackman21` model is available in CurrentFilter()" );
+        if( (currentFilter_model != "binomial")&&(currentFilter_model != "customFIR") ) {
+            ERROR( "Currently, only the `binomial` and `customFIR` model is available in CurrentFilter()" );
         }
 
-        if(currentFilter_model == "blackman21") {
+        if(currentFilter_model == "customFIR") {
             PyTools::extractV( "kernelFIR", currentFilter_kernelFIR, "CurrentFilter", ifilt );
             if( currentFilter_kernelFIR.size() < 3 ) {
                 ERROR( "Kernel have to measure 3 taps at least. For example the binomial FIR kernel on three tapis [0.25,0.50,0.25]" );
@@ -932,8 +932,8 @@ void Params::compute()
         PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
         if (uncoupled_grids==false){
             oversize[i]  = max( interpolation_order, max( ( unsigned int )( norder[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
-            if ( (currentFilter_model == "blackman21") && (oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) ) {
-                ERROR( "With the `blackman21` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2" );
+            if ( (currentFilter_model == "customFIR") && (oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) ) {
+                ERROR( "With the `customFIR` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2" );
             }
         }
         if (uncoupled_grids==true){

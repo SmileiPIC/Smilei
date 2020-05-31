@@ -1311,9 +1311,9 @@ void ElectroMagn3D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Apply a single pass FIR 21 points blackman based filter on currents
+// Apply a single pass custom FIR based filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn3D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff)
+void ElectroMagn3D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff)
 {
     // Static-cast of the currents
     Field3D *Jx3D = static_cast<Field3D *>( Jx_ );
@@ -1325,7 +1325,7 @@ void ElectroMagn3D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
     // Guard-Cell Current
     unsigned int gcfilt=0 ;
 
-    // Applying a single pass of the 21 points blackman based filter along X
+    // Applying a single pass of the custom FIR based filter along X
     if (ipass < passes[0]){
         Field3D *tmp   = new Field3D( dimPrim, 0, false );
         tmp->copyFrom( Jx3D );
@@ -1371,7 +1371,7 @@ void ElectroMagn3D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         delete tmp;
     }
 
-    // Applying a single pass of the 21 points blackman based filter along Y
+    // Applying a single pass of the custom FIR based filter along Y
     if (ipass < passes[1]){
         // On Jx^(d,p,p) -- External points are treated by exchange
         Field3D *tmp   = new Field3D( dimPrim, 0, false );
@@ -1420,7 +1420,7 @@ void ElectroMagn3D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         delete tmp;
     }
 
-    // Applying a single pass of the 21 points blackman based filter along Z
+    // Applying a single pass of the custom FIR based filter along Z
     if (ipass < passes[2]){
         // On Jx^(d,p,p) -- External points are treated by exchange
         Field3D *tmp   = new Field3D( dimPrim, 0, false );
@@ -1469,7 +1469,7 @@ void ElectroMagn3D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         delete tmp;
     }
 
-}//END blackman21CurrentFilter
+}//END customFIRCurrentFilter
 
 void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
 {

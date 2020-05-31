@@ -1037,9 +1037,9 @@ void ElectroMagn2D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
 }//END binomialCurrentFilter
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Apply a single pass FIR 21 points blackman based filter on currents
+// Apply a single pass custom FIR based filter on currents
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff)
+void ElectroMagn2D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff)
 {
     // Static-cast of the currents
     Field2D *Jx2D = static_cast<Field2D *>( Jx_ );
@@ -1056,33 +1056,7 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
     // Guard-Cell Current
     unsigned int gcfilt=0 ;
 
-    // Coefficient for a "sinc*blackman" filter on 21 coefficients with the cut-off frequency (g=0.5)
-    // set 0.63*f_Nyquist (the frequency where Bouchard solver suffer from numerical Cherenkov radiation).
-    // std::vector<double> filtering_coeff {
-    //     0.,
-    //     0.0004417052133439378,
-    //     0.004068661289108311,
-    //     -0.003865266434116045,
-    //     -0.013277634036992836,
-    //     0.020669998746904193,
-    //     0.028934610242885666,
-    //     -0.07264453710751474,
-    //     -0.0437980746027025,
-    //     0.3050382699553371,
-    //     0.5488645334674936,
-    //     0.3050382699553371,
-    //     -0.0437980746027025,
-    //     -0.07264453710751476,
-    //     0.02893461024288566,
-    //     0.020669998746904197,
-    //     -0.013277634036992836,
-    //     -0.003865266434116045,
-    //     0.004068661289108313,
-    //     0.0004417052133439378,
-    //     0.
-    //};
-
-    // Applying a single pass of the 21 points blackman based filter along X
+    // Applying a single pass of the custom FIR based filter along X
     if (ipass < passes[0]){
         Field2D *tmp   = new Field2D( dimPrim, 0, false );
         tmp->copyFrom( Jx2D );
@@ -1122,7 +1096,7 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         delete tmp;
     }
 
-    // Applying a single pass of the 21 points blackman based filter along Y
+    // Applying a single pass of the custom FIR based filter along Y
     if (ipass < passes[1]){
         // On Jx^(d,p) -- External points are treated by exchange
         Field2D *tmp   = new Field2D( dimPrim, 0, false );
@@ -1165,7 +1139,7 @@ void ElectroMagn2D::blackman21CurrentFilter(unsigned int ipass, std::vector<unsi
         delete tmp;
     }
 
-}//END blackman21CurrentFilter
+}//END customFIRCurrentFilter
 
 
 

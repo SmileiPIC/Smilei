@@ -1016,12 +1016,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 if (params.currentFilter_model=="binomial"){
                     ( *this )( ipatch )->EMfields->binomialCurrentFilter(ipassfilter, params.currentFilter_passes);
                 }
-                if (params.currentFilter_model=="blackman21"){
-                    ( *this )( ipatch )->EMfields->blackman21CurrentFilter(ipassfilter, params.currentFilter_passes, params.currentFilter_kernelFIR);
+                if (params.currentFilter_model=="customFIR"){
+                    ( *this )( ipatch )->EMfields->customFIRCurrentFilter(ipassfilter, params.currentFilter_passes, params.currentFilter_kernelFIR);
                 }
             }
             if (params.geometry != "AMcylindrical"){
-                if (params.currentFilter_model=="blackman21"){
+                if (params.currentFilter_model=="customFIR"){
                     SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJx_, *this, smpi );
                     SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
                     SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJy_, *this, smpi );
