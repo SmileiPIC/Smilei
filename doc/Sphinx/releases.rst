@@ -18,6 +18,8 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* New 4th order Non-Standard FDTD solver ``Bouchard`` for 2D and 3D geometry
+* New method for current filtering with a user provide FIR kernel for 1D, 2D and 3D geometry
 * Diagnostics may now have a ``name`` to be found more easily
   during post-processing
 

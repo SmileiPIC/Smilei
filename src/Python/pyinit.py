@@ -316,7 +316,7 @@ class CurrentFilter(SmileiSingleton):
     """Current filtering parameters"""
     model = "binomial"
     passes = [0]
-    kernelFIR = [0,1,0]
+    kernelFIR = [0.25,0.5,0.25]
 
 class FieldFilter(SmileiSingleton):
     """Fields filtering parameters"""
