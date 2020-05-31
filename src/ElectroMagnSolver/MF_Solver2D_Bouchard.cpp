@@ -10,19 +10,24 @@ MF_Solver2D_Bouchard::MF_Solver2D_Bouchard(Params &params)
 {
     //ERROR("Under development, not yet working");
     double dt = params.timestep;
-    dt_ov_dx  = dt/params.cell_length[0];
-    dt_ov_dy  = dt/params.cell_length[0];
     dx = params.cell_length[0];
     dy = params.cell_length[1];
+    double dx_ov_dt  = dx/dt;
+    double dy_ov_dt  = dy/dt;
+    double dt_ov_dx  = dt/dx;
+    double dt_ov_dy  = dt/dy;
     if( dx!=dy ) {
         ERROR( "Bouchard solver requires the same cell-length in x and y directions" );
     }
+    if( dx_ov_dt!=2 ) {
+        WARNING( "Bouchard solver requires dx/dt = 2 (Magical Timestep)" );
+    }
     
-    // On the axes v_phi^max = 1.02c and is below c @ 0.64 kxdx/pi
+    // On the axes v_phi^max = 1.01c and is below c @ 0.54 kxdx/pi
     // So there could existe a numerical cherenkov emission at this point
-    // On the diagonal v_phi^max = 1.02c and is below c @ 0.99 sqrt((kxdx)^2+(kydy)^2)
-    double delta = 0.141*(1-pow(2.,2))/4. ;
-    double beta = -0.209*(1-0.5*pow(2.,2)-4.*delta)/4. ;
+    // On the diagonal v_phi^max = 1.01c and is below c @ 0.85 sqrt((kxdx)^2+(kydy)^2)
+    double delta = 0.1222*(1-pow(2.,2))/4. ;
+    double beta = -0.1727*(1-0.5*pow(2.,2)-4.*delta)/4. ;
     double alpha = 1-2.*beta-3.*delta;
  
     beta_xy = beta;
