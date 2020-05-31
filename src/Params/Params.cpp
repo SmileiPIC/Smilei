@@ -930,9 +930,14 @@ void Params::compute()
     //Define number of cells per patch and number of ghost cells 
     for( unsigned int i=0; i<nDim_field; i++ ) {
         PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
-        oversize[i]  = max( interpolation_order, max( ( unsigned int )( norder[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
-        if ( (currentFilter_model == "blackman21") && (oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) ) {
-           ERROR( "With the `blackman21` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2" );
+        if (uncoupled_grids==false){
+            oversize[i]  = max( interpolation_order, max( ( unsigned int )( norder[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
+            if ( (currentFilter_model == "blackman21") && (oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) ) {
+                ERROR( "With the `blackman21` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2" );
+            }
+        }
+        if (uncoupled_grids==true){
+            oversize[i] = interpolation_order + ( exchange_particles_each-1 );
         }
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
@@ -945,7 +950,11 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
-    region_oversize = oversize;
+    PyTools::extract( "custom_region_oversize", custom_region_oversize, "Main"  );
+    for( unsigned int i=0; i<nDim_field; i++ ) {
+        region_oversize[i] = max( oversize[i], custom_region_oversize );
+    }
+    //region_oversize = oversize ;
     if ( is_spectral && geometry == "AMcylindrical" )  {
         //Force ghost cells number in L when spectral
         region_oversize[0] = pseudo_spectral_guardells;

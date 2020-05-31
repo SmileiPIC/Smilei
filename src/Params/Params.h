@@ -229,6 +229,7 @@ public:
     std::vector<unsigned int> oversize;
     unsigned int custom_oversize ;
     std::vector<unsigned int> region_oversize;
+    unsigned int custom_region_oversize ;
     //! Number of damping cells
     std::vector<unsigned int> number_of_damping_cells;
 
