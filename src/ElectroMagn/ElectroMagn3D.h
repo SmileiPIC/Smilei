@@ -100,7 +100,7 @@ public:
     void binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes);
 
     //! Method used to apply a single-pass FIR 21 pts blackman based filter on currents
-    void blackman21CurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff){return ;};
+    void blackman21CurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff);
  
     //! Creates a new field with the right characteristics, depending on the name
     Field *createField( std::string fieldname, Params& params );
