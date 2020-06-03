@@ -937,7 +937,7 @@ void Params::compute()
             }
         }
         if (uncoupled_grids==true){
-            oversize[i] = interpolation_order + ( exchange_particles_each-1 );
+            oversize[i] = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 ); 
         }
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
@@ -949,11 +949,7 @@ void Params::compute()
         }
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
-    }
-    PyTools::extract( "custom_region_oversize", custom_region_oversize, "Main"  );
-    for( unsigned int i=0; i<nDim_field; i++ ) {
-        region_oversize[i] = max( oversize[i], custom_region_oversize );
-    }
+    } 
     //region_oversize = oversize ;
     if ( is_spectral && geometry == "AMcylindrical" )  {
         //Force ghost cells number in L when spectral
@@ -965,7 +961,11 @@ void Params::compute()
         for( unsigned int i=0; i<nDim_field; i++ )
             region_oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
     }
-    
+    PyTools::extract( "custom_region_oversize", custom_region_oversize, "Main"  );
+    for( unsigned int i=0; i<nDim_field; i++ ) {
+        region_oversize[i] = max( region_oversize[i], custom_region_oversize );
+    }
+ 
     // Set clrw if not set by the user
     if( clrw == -1 ) {
 
