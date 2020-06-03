@@ -326,9 +326,11 @@
             if( smallScreenMenu.className != "on" ) {
                 smallScreenMenu.className = "on";
                 smallScreenMenuButton.className = "pushed";
+                document.documentElement.style.overflow = "hidden";
             } else {
                 smallScreenMenu.className = "off";
                 smallScreenMenuButton.className = "";
+                document.documentElement.style.overflow = "";
             }
         }
         

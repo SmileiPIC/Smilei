@@ -444,8 +444,11 @@ to manipulate the plotting options:
 * ``vmin``, ``vmax``: data value limits.
 * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
 * ``xfactor``, ``yfactor``: factors to rescale axes.
-* ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left- or the right-hand-side.
-* ``transparent``: ``None`` (by default), ``"over"``, ``"under"`` or ``"both"`` makes the colormap transparent outside the requested boundary.
+* ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left-
+  or the right-hand-side.
+* ``transparent``: ``None`` (by default), ``"over"``, ``"under"`` or ``"both"``.
+  The colormap becomes transparent *over*, *under*, or *outside both* the boundaries
+  set by ``vmin`` and ``vmax``.
 * Many Matplotlib arguments listed in :ref:`advancedOptions`.
 
 ----
