@@ -3087,6 +3087,11 @@ for instance::
     def my_filter(particles):
         return (particles.px>-1.)*(particles.px<1.) + (particles.pz>3.)
 
+.. Warning:: The ``px``, ``py`` and ``pz`` quantities are not exactly the momenta.
+  They are actually the velocities multiplied by the lorentz factor, i.e., 
+  :math:`\gamma v_x`, :math:`\gamma v_y` and :math:`\gamma v_z`. This is true only
+  inside the `filter` function (not for the output of the diagnostic).
+
 .. Note:: The ``id`` attribute contains the :doc:`particles identification number<ids>`.
   This number is set to 0 at the beginning of the simulation. **Only after particles have
   passed the filter**, they acquire a positive ``id``.
