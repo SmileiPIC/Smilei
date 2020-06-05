@@ -310,7 +310,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     if( species_->position_initialization_array_ == NULL ) {
         for( i=0; i<n_space_to_create_generalized[0]; i++ ) {
             if(( !n_existing_particles )&&( i%species_->clrw == 0 )&&( initialized_in_species_ )) {
-                species_->first_index[(new_cell_idx+i)/species_->clrw] = iPart;
+                species_->particles->first_index[(new_cell_idx+i)/species_->clrw] = iPart;
             }
             for( j=0; j<n_space_to_create_generalized[1]; j++ ) {
                 for( k=0; k<n_space_to_create_generalized[2]; k++ ) {
@@ -329,11 +329,11 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         
                         //if (n_existing_particles) {
                         //    iPart = n_existing_particles;
-                        //    iPart = first_index[(new_cell_idx+i)/clrw];
-                        //    last_index[(new_cell_idx+i)/clrw] += nPart;
-                        //    for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
-                        //        first_index[idx] += nPart;
-                        //        last_index[idx] += nPart;
+                        //    iPart = particles->first_index[(new_cell_idx+i)/clrw];
+                        //    particles->last_index[(new_cell_idx+i)/clrw] += nPart;
+                        //    for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<particles->last_index.size() ; idx++ ) {
+                        //        particles->first_index[idx] += nPart;
+                        //        particles->last_index[idx] += nPart;
                         //    }
                         //    particles->createParticles( nPart, iPart );
                         //
@@ -367,10 +367,10 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         //            if ( ( X < 0. ) ) {
                         //                nPart--; // ne sert à rien ici
                         //                particles->eraseParticle(iPart+ip);
-                        //                last_index[(new_cell_idx+i)/clrw]--;
-                        //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
-                        //                    first_index[idx]--;
-                        //                    last_index[idx]--;
+                        //                particles->last_index[(new_cell_idx+i)/clrw]--;
+                        //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<particles->last_index.size() ; idx++ ) {
+                        //                    particles->first_index[idx]--;
+                        //                    particles->last_index[idx]--;
                         //                }
                         //            }
                         //            else
@@ -383,10 +383,10 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         //                //cout << "params.grid_length[0]                        = " << params.grid_length[0] << endl;
                         //                nPart--; // ne sert à rien ici
                         //                particles->eraseParticle(iPart+ip);
-                        //                last_index[(new_cell_idx+i)/clrw]--;
-                        //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
-                        //                    first_index[idx]--;
-                        //                    last_index[idx]--;
+                        //                particles->last_index[(new_cell_idx+i)/clrw]--;
+                        //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<particles->last_index.size() ; idx++ ) {
+                        //                    particles->first_index[idx]--;
+                        //                    particles->last_index[idx]--;
                         //                }
                         //            }
                         //            else
@@ -402,7 +402,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                 }//k end the loop on all cells
             }//j
             if((!n_existing_particles)&&( i%species_->clrw == species_->clrw -1 ) &&(initialized_in_species_)) {
-                 species_->last_index[(new_cell_idx+i)/species_->clrw] = iPart;
+                 species_->particles->last_index[(new_cell_idx+i)/species_->clrw] = iPart;
             }
 
         }//i
@@ -410,7 +410,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
         // Here position are created from a numpy array.
         // Do not recreate particles from numpy array again after initialization. Is this condition enough ?
         // Initializing particles from numpy array and based on a count sort to comply with initial sorting.
-        int nbins = species_->first_index.size();
+        int nbins = species_->particles->first_index.size();
         int indices[nbins];
         double one_ov_dbin = 1. / ( species_->cell_length[0] * species_->clrw ) ;
 
@@ -432,12 +432,12 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
             tot += oc;
         }
         for( int ibin=0; ibin < nbins   ; ibin++ ) {
-            species_->first_index[ibin] = indices[ibin] ;
+            species_->particles->first_index[ibin] = indices[ibin] ;
         }
         for( int ibin=0; ibin < nbins-1 ; ibin++ ) {
-            species_->last_index[ibin] = species_->first_index[ibin+1] ;
+            species_->particles->last_index[ibin] = species_->particles->first_index[ibin+1] ;
         }
-        species_->last_index[nbins-1] = npart_effective ;
+        species_->particles->last_index[nbins-1] = npart_effective ;
 
         //Now initialize particles at their proper indices
         for( unsigned int ipart = 0; ipart < npart_effective ; ipart++ ) {
@@ -514,7 +514,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
             if ( species->regular_number_array_.size() != species->nDim_particle){
                 ERROR( "The number of particles required per cell per dimension (regular_number) must be of length " << species->nDim_particle << " in this geometry." );
             }
-            int npart_check=1;
+            unsigned int npart_check=1;
             for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
                 npart_check *= species->regular_number_array_[idim];
             }
@@ -823,7 +823,7 @@ void ParticleCreator::createWeight( std::string position_initialization,
 // ---------------------------------------------------------------------------------------------------------------------
 void ParticleCreator::regulateWeightwithPositionAM( Particles * particles, std::string position_initialization_on_species_type_, double dr )
 {
-    int nParts = particles->Weight.size();
+    unsigned int nParts = particles->Weight.size();
 
     if ( position_initialization_on_species_type_ == "regular" ){
         //Particles in regular have a weight proportional to their position along r.

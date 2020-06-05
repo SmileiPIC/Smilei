@@ -374,10 +374,10 @@ def RUN_LLR(command, dir):
 			+"export OMP_SCHEDULE=DYNAMIC \n"
 			+"export KMP_AFFINITY=verbose \n"
 			+"export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n"
-                        +"module load fftw/3.3.7-opm-1.6.5-icc-17 \n"
-                        +"export LIBPXR=/home/llr/galop/derouil/applications/picsar/lib \n"
-                        +"export LD_LIBRARY_PATH=$LIBPXR:$LD_LIBRARY_PATH \n"
-                        +"ulimit -s unlimited \n"
+			+"module load fftw/3.3.7-opm-1.6.5-icc-17 \n"
+			+"export LIBPXR=/home/llr/galop/derouil/applications/picsar/lib \n"
+			+"export LD_LIBRARY_PATH=$LIBPXR:$LD_LIBRARY_PATH \n"
+			+"ulimit -s unlimited \n"
 			+"#Specify the number of sockets per node in -mca orte_num_sockets \n"
 			+"#Specify the number of cores per sockets in -mca orte_num_cores \n"
 			+"cd "+dir+" \n"
@@ -469,7 +469,7 @@ COMPILE_OUT_TMP=WORKDIR_BASE+s+'compilation_out_temp'
 
 MAKE='make'
 if COMPILE_MODE:
-        MAKE += " config="+COMPILE_MODE
+	MAKE += " config="+COMPILE_MODE
 
 # Find commands according to the host
 if LLR in HOSTNAME :
@@ -541,18 +541,17 @@ try :
 		#copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
 		if COMPILE_ONLY:
 			if VERBOSE:
-				print(  "Smilei validation succeed.")
+				print( "Smilei validation succeed.")
 			exit(0)
 	else:
 		if COMPILE_ONLY :
 			if VERBOSE:
-                                print SMILEI_R, SMILEI_W, STAT_SMILEI_R_OLD
 				print(  "Smilei validation not needed.")
 			exit(0)
 
 except CalledProcessError as e:
 	# if compiling errors, archive the workdir (if it contains a smilei bin),
-    # create a new one with compilation_errors inside and exit with error code
+	# create a new one with compilation_errors inside and exit with error code
 	workdir_archiv(SMILEI_W)
 	os.rename(COMPILE_ERRORS,WORKDIR_BASE+s+COMPILE_ERRORS)
 	if VERBOSE:
@@ -575,7 +574,7 @@ def findReference(bench_name):
 
 def matchesWithReference(data, expected_data, data_name, precision):
 	# ok if exactly equal (including strings or lists of strings)
-	try   :
+	try:
 		if expected_data == data:
 			return True
 	except: pass

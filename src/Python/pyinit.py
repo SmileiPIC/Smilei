@@ -42,14 +42,16 @@ class SmileiComponentType(type):
 
     # Function to return one given instance, for example DiagParticleBinning[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
+    # Special case: diagnostics can also be indexed by their label: DiagParticleBinning["x-px"]
     def __getitem__(self, key):
-        if self.__name__ == "Species" and type(key) is str:
+        try:
             for obj in self._list:
                 if obj.name == key:
                     return obj
-        else:
-            return self._list[key]
-
+        except:
+            pass
+        return self._list[key]
+    
     # Function to return the number of instances, for example len(Species)
     def __len__(self):
         return len(self._list)
@@ -425,6 +427,7 @@ class Collisions(SmileiComponent):
 #diagnostics
 class DiagProbe(SmileiComponent):
     """Probe diagnostic"""
+    name = ""
     every = None
     number = []
     origin = []
@@ -435,6 +438,7 @@ class DiagProbe(SmileiComponent):
 
 class DiagParticleBinning(SmileiComponent):
     """Particle Binning diagnostic"""
+    name = ""
     deposited_quantity = None
     time_average = 1
     species = None
@@ -444,6 +448,7 @@ class DiagParticleBinning(SmileiComponent):
 
 class DiagRadiationSpectrum(SmileiComponent):
     """Radiation Spectrum diagnostic"""
+    name = ""
     time_average = 1
     species = None
     photon_energy_axis = None
@@ -453,6 +458,7 @@ class DiagRadiationSpectrum(SmileiComponent):
 
 class DiagScreen(SmileiComponent):
     """Screen diagnostic"""
+    name = ""
     shape = None
     point = None
     vector = None
@@ -472,6 +478,7 @@ class DiagScalar(SmileiComponent):
 
 class DiagFields(SmileiComponent):
     """Field diagnostic"""
+    name = ""
     every = None
     fields = []
     time_average = 1
@@ -480,6 +487,7 @@ class DiagFields(SmileiComponent):
 
 class DiagTrackParticles(SmileiComponent):
     """Track diagnostic"""
+    name = ""
     species = None
     every = 0
     flush_every = 1

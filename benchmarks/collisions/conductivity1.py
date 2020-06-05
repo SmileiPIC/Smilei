@@ -2,8 +2,8 @@
 # SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ---------------------------------------------
 
-import math
-L0 = 2.*math.pi # conversion from normalization length to wavelength
+from math import pi, sqrt
+L0 = 2.*pi # conversion from normalization length to wavelength
 
 
 Main(
@@ -13,7 +13,7 @@ Main(
 
     interpolation_order = 2,
 
-    timestep = 0.005 * L0,
+    timestep = 0.001 * L0,
     simulation_time = 0.5 * L0,
 
 
@@ -36,11 +36,11 @@ Main(
 # EXTERNAL FIELDS
 ExternalField(
 	field = "Ex",
-	profile = 0.001
+	profile = 0.002
 )
 
-ion_nppc = 100
-eon_nppc = 100
+ion_nppc = 200
+eon_nppc = 200
 
 charge_density = [330., 333., 368]
 charge = [4.4, 4.4, 5.]
@@ -105,7 +105,16 @@ for i in range(3):
 			 ["x",  0, Main.grid_length[0], 1]
 		]
 	)
-
+	
+	DiagParticleBinning(
+		deposited_quantity = "weight",
+		every = 5,
+		time_average = 1,
+		species = ["electron"+str(i+1)],
+		axes = [
+			 ["vx",  -5.*sqrt(temperature[i]), 5.*sqrt(temperature[i]), 100]
+		]
+	)
 
 DiagFields(
 	every = 5

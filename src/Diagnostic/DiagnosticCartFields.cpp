@@ -7,7 +7,7 @@
 using namespace std;
 
 DiagnosticCartFields::DiagnosticCartFields( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int ndiag, OpenPMDparams &oPMD ):
-    Diagnostic( oPMD )
+    Diagnostic( &oPMD, "DiagFields", ndiag )
 {
     fileId_ = 0;
     data_group_id = 0;

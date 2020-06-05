@@ -8,8 +8,8 @@ def option_is_in_the_list( keyword, option, options_registered ):
        if (option == listed):
            sys.exit(0)
 
-    print option, "do not exist for", keyword
-    print "Use one of : ", options_registered
+    print(option, "do not exist for", keyword)
+    print("Use one of : ", options_registered)
     sys.exit(-1)
 
 
@@ -34,7 +34,7 @@ if ( (sys.argv)[1] == "machine" ):
     if (len(sys.argv)!=3):
         sys.exit(-1)
 
-    cmd = subprocess.Popen('ls -1 scripts/CompileTools/machine', shell=True, stdout=subprocess.PIPE)
+    cmd = subprocess.Popen('ls -1 scripts/compile_tools/machine', shell=True, stdout=subprocess.PIPE)
     for line in cmd.stdout :
         options_registered += (line.split())[0] + " "
 

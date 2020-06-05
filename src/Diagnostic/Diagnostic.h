@@ -17,7 +17,9 @@ class Diagnostic
 public :
 
     Diagnostic( ) : openPMD_( NULL ) {};
-    Diagnostic( OpenPMDparams &o ) : openPMD_( &o ) {};
+    Diagnostic( OpenPMDparams *o, std::string diag_type, int idiag ) : openPMD_( o ) {
+        PyTools::extract( "name", diag_name_, diag_type, idiag );
+    };
     virtual ~Diagnostic() {};
     
     //! Opens the file. Only by MPI master for global diags. Only by patch master for local diags.
@@ -66,6 +68,10 @@ public :
     
     bool theTimeIsNow;
     
+    std::string name() {
+        return diag_name_;
+    };
+    
 protected :
 
     //! Id of the file for one diagnostic
@@ -73,6 +79,9 @@ protected :
     
     //! Pointer to all parameters needed for openPMD compatibility
     OpenPMDparams *openPMD_;
+    
+    //! Label of the diagnostic (for post-processing)
+    std::string diag_name_;
 };
 
 #endif

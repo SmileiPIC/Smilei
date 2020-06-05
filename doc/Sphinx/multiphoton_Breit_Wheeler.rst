@@ -24,7 +24,7 @@ As for electrons or positrons, the strength of QED effects depends
 on the photon quantum parameter:
 
 .. math::
-  :label: photonQuantumParameter
+  :label: photonQuantumParameter1
 
   \chi_\gamma = \frac{\gamma_\gamma}{E_s} \sqrt{ \left( \mathbf{E}_\perp
   + \mathbf{c} \times \mathbf{B} \right)^2 }

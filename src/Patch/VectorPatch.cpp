@@ -89,7 +89,24 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
 {
     globalDiags = DiagnosticFactory::createGlobalDiagnostics( params, smpi, *this, radiation_tables_ );
     localDiags  = DiagnosticFactory::createLocalDiagnostics( params, smpi, *this, openPMD );
-
+    
+    // Verify that diagnostic names are not duplicated
+    vector<string> names( 0 );
+    for( unsigned int i=0; i<globalDiags.size(); i++ ) {
+        if( globalDiags[i]->name().empty() ) continue;
+        if( std::find(names.begin(), names.end(), globalDiags[i]->name()) != names.end() ) {
+            ERROR( "Two diagnostics have the same label " << globalDiags[i]->name() );
+        }
+        names.push_back( globalDiags[i]->name() );
+    }
+    for( unsigned int i=0; i<localDiags.size(); i++ ) {
+        if( localDiags[i]->name().empty() ) continue;
+        if( std::find(names.begin(), names.end(), localDiags[i]->name()) != names.end() ) {
+            ERROR( "Two diagnostics have the same label " << localDiags[i]->name() );
+        }
+        names.push_back( localDiags[i]->name() );
+    }
+    
     // Delete all unused fields
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         if( params.geometry!="AMcylindrical" ) {
@@ -895,8 +912,23 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             if (emAM->isYmin){
                 for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
-                    ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode );
+                    ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode, diag_flag );
                 }
+                //Also apply BC on axis on species diagnostics
+                if (diag_flag) {
+                    unsigned int n_species = ( *this )( 0 )->vecSpecies.size();
+                    for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
+                        for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
+                            unsigned int ifield = imode*n_species+ispec;
+                            complex<double> *Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : NULL ;
+                            complex<double> *Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : NULL ;
+                            complex<double> *Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : NULL ;
+                            complex<double> *rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : NULL ;
+                            ( *this )( ipatch )->vecSpecies[ispec]->Proj->axisBC( rho , Jl, Jr, Jt, imode, diag_flag );
+                        }
+                    }
+                }
+
             }
         }
     }
@@ -945,6 +977,27 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
     
     SyncVectorPatch::sumEnvChi( params, ( *this ), smpi, timers, itime ); // MPI
     
+
+    //Apply boundary conditions for Env_Chi, only mode 0
+    if ( ( params.geometry == "AMcylindrical" ) && (( *this )( 0 )->vecSpecies.size() > 0) ) {
+        #pragma omp for schedule(runtime)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            if (emAM->isYmin){  
+                ( *this )( ipatch )->vecSpecies[0]->Proj->axisBCEnvChi( &( *emAM->Env_Chi_ )( 0 ) );
+                //Also apply BC on axis on species diagnostics
+                if (diag_flag) {
+                    unsigned int n_species = ( *this )( 0 )->vecSpecies.size();
+                        int imode =0;
+                        for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
+                            unsigned int ifield = imode*n_species+ispec;
+                            double *EnvChi = emAM->Env_Chi_s    [ifield] ? &( * ( emAM->Env_Chi_s[ifield] ) )( 0 ) : NULL ;
+                            ( *this )( ipatch )->vecSpecies[ispec]->Proj->axisBCEnvChi( EnvChi );
+                        }
+                }
+            }
+        }
+    }
 
     timers.susceptibility.update();
 
@@ -3768,8 +3821,8 @@ void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Check
                 //     * Calculate an approximate number of particles
                 PeekAtSpecies peek( params, ispec );
                 uint64_t number_of_particles = peek.totalNumberofParticles();
-                //     * Calculate the size of the first_index and last_index arrays
-                uint64_t b_size = ( s->first_index.size() + s->last_index.size() ) * params.tot_number_of_patches * sizeof( int );
+                //     * Calculate the size of the particles->first_index and particles->last_index arrays
+                uint64_t b_size = ( s->particles->first_index.size() + s->particles->last_index.size() ) * params.tot_number_of_patches * sizeof( int );
                 //     * Conclude the disk footprint of this species
                 checkpoint_particles_footprint += one_particle_size*number_of_particles + b_size;
             }

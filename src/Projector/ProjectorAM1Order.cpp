@@ -145,7 +145,8 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     //double xpn_rho, rp_rho, rpn_rho; //Rho is not computed at the same particle position as J.
 
     double  Sl1[2][2], Sr1[2][2];
-    complex<double> e_theta[2], C_m[2] = 1.; 
+    complex<double> e_theta[2] = { 1., 1. };
+    complex<double> C_m[2] = { 1., 1. };
     complex<double> *Jl, *Jr, *Jt, *rho;
     
     double theta_old = array_theta_old[0]; // theta at t = t0 - dt
@@ -235,10 +236,11 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     
 } // END Project local current and charge densities (rho, Jl, Jr, Jt)
 
-void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode )
+void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode, bool diag_flag )
 {
 
-    return;
+    if(rho == NULL)
+        return;
 
     const double one_ov_9  = 1./9.; 
     const double one_ov_16 = 1./16.; 
@@ -385,10 +387,24 @@ void ProjectorAM1Order::susceptibility( ElectroMagn *EMfields, Particles &partic
 
 
     }
-
-
-
-
     
+}
+
+
+
+void ProjectorAM1Order::axisBCEnvChi( double *EnvChi )
+{
+    if(EnvChi == NULL)
+        return;
+
+    const double one_ov_9  = 1./9.; 
+    const double one_ov_16 = 1./16.; 
+    
+    for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+          
+        EnvChi[i] = (25.*EnvChi[i+1] - 9.*EnvChi[i+2])*one_ov_16;
+    }//i
+    
+return;
 }
 

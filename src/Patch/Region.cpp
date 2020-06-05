@@ -159,10 +159,10 @@ void Region::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatche
     double domain_min( 10 );
     double domain_max( 0 );
 
-    for ( int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++ ) {
+    for ( unsigned int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++ ) {
         
         bool patch_is_in( true );
-        for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+        for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
             if ( vecPatch_.patches_.size() ) {
                 domain_min = patch_->getDomainLocalMin(iDim);
                 domain_max = patch_->getDomainLocalMax(iDim);
@@ -199,13 +199,13 @@ int Region::hrank_global_region( int hindex, Params& params, VectorPatch& vecPat
         //rank_coordinates.resize( params.nDim_field );
         rank_coordinates.resize( 3, 0 );
 
-        for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+        for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
             int min =  patch_coordinates[iDim]    * params.n_space[iDim];
             int max = (patch_coordinates[iDim]+1) * params.n_space[iDim];
             int center = (min+max)/2;
 
             int idomain(0);
-            while ( ( center > params.offset_map[iDim][idomain] ) && ( idomain < params.number_of_region[iDim] ) )
+            while ( ( center > params.offset_map[iDim][idomain] ) && ( idomain < (int)params.number_of_region[iDim] ) )
                 idomain++;
 
             rank_coordinates[iDim] = idomain-1;
@@ -233,7 +233,7 @@ void Region::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
     int npatch_domain(1);
 
     if (decomposition_!=NULL) { // SDMD
-        for ( int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
+        for ( unsigned int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
             patch_min_coord[iDim] = params.offset_map[iDim][ patch_->Pcoordinates[iDim] ] / params.n_space[iDim];
             if ( patch_->Pcoordinates[iDim] < params.number_of_region[iDim]-1 )
                 patch_max_coord[iDim] = params.offset_map[iDim][ patch_->Pcoordinates[iDim]+1 ] / params.n_space[iDim] - 1;
@@ -244,7 +244,7 @@ void Region::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
         }
     }
     else { // Global mode for rotational cleaning
-        for ( int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
+        for ( unsigned int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
             patch_min_coord[iDim] = (int)( patch_->getDomainLocalMin(iDim) / params.cell_length[iDim] / (double)params.n_space[iDim] );
             patch_max_coord[iDim] = (int)( patch_->getDomainLocalMax(iDim) / params.cell_length[iDim] / (double)params.n_space[iDim] ) - 1;
             npatch_domain *= params.n_space_region[iDim] / params.n_space[iDim];
@@ -306,7 +306,7 @@ void Region::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
         bool patch_is_in( true );
 
         vector<unsigned int> Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( idx );
-        for ( int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
+        for ( unsigned int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
             double center = ( 2. * (double)Pcoordinates[iDim] + 1. )* (double)params.n_space[iDim]*params.cell_length[iDim] / 2.;
             
             if ( ( center < patch_->getDomainLocalMin(iDim) ) || ( center > patch_->getDomainLocalMax(iDim) ) ) {
@@ -316,7 +316,7 @@ void Region::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
         if (!patch_is_in)
             continue;
         
-        if ( (idx < vecPatches(0)->hindex) || (idx > vecPatches(vecPatches.size()-1)->hindex) ) {
+        if ( (idx < (int)vecPatches(0)->hindex) || (idx > (int)vecPatches(vecPatches.size()-1)->hindex) ) {
             missing_patches_.push_back( idx );
             missing_patches_ranks.push_back(  smpi->hrank( idx ) );
         }
@@ -480,7 +480,7 @@ void Region::reset_fitting(SmileiMPI* smpi, Params& params)
 
     // Unattribuated
     for (int i=0 ; i< smpi->getSize() ;i++) {
-        int todo = -1;
+        //int todo = -1;
         bool att(false);
         for (int j=0 ; j< smpi->getSize() ;j++) { //0 1 2 -1 4 -1
             if ( target_map[j] == i ) {
@@ -528,9 +528,9 @@ void Region::reset_fitting(SmileiMPI* smpi, Params& params)
 
     std::vector< std::vector< std::vector<int> > > new_map_rank;
     new_map_rank.resize( params.number_of_region[0] );
-    for ( int iDim = 0 ; iDim < params.number_of_region[0] ; iDim++ ) {
+    for ( unsigned int iDim = 0 ; iDim < params.number_of_region[0] ; iDim++ ) {
         new_map_rank[iDim].resize( params.number_of_region[1] );
-        for ( int jDim = 0 ; jDim < params.number_of_region[1] ; jDim++ ) {
+        for ( unsigned int jDim = 0 ; jDim < params.number_of_region[1] ; jDim++ ) {
             new_map_rank[iDim][jDim].resize( params.number_of_region[2], -1 );
         }
     }
@@ -544,9 +544,9 @@ void Region::reset_fitting(SmileiMPI* smpi, Params& params)
 
 
     //update params.map_rank[xDom][yDom][zDom]
-    for ( int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
-        for ( int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
-            for ( int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
+    for ( unsigned int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
+        for ( unsigned int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
+            for ( unsigned int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
                 for (int i=0 ; i< smpi->getSize() ;i++)
                     if ( params.map_rank[xDom][yDom][zDom] == i ) {
                         new_map_rank[xDom][yDom][zDom] = target_map[i];
@@ -571,9 +571,9 @@ void Region::reset_fitting(SmileiMPI* smpi, Params& params)
 
 
     // Compute coordinates of current patch in 3D
-    for ( int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
-        for ( int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ )
-            for ( int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
+    for ( unsigned int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
+        for ( unsigned int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ )
+            for ( unsigned int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
 
                 if ( params.map_rank[xDom][yDom][zDom] ==  targeted_rk ) {
                     params.coordinates[0] = xDom;
@@ -583,9 +583,9 @@ void Region::reset_fitting(SmileiMPI* smpi, Params& params)
             }
 
     int count_ = 0;
-    for ( int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
-        for ( int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
-            for ( int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
+    for ( unsigned int xDom = 0 ; xDom < params.number_of_region[0] ; xDom++ )
+        for ( unsigned int yDom = 0 ; yDom < params.number_of_region[1] ; yDom++ ) {
+            for ( unsigned int zDom = 0 ; zDom < params.number_of_region[2] ; zDom++ ) {
                 params.map_rank[xDom][yDom][zDom] = new_map_rank[xDom][yDom][zDom];
 
                 if ( new_map_rank[xDom][yDom][zDom] == smpi->getRank() )
@@ -606,8 +606,8 @@ void Region::reset_fitting(SmileiMPI* smpi, Params& params)
 
 
     // Compute size of local domain
-    for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
-        if ( params.coordinates[iDim] != params.number_of_region[iDim]-1 ) {
+    for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+        if ( params.coordinates[iDim] != (int)params.number_of_region[iDim]-1 ) {
             params.n_space_region[iDim] = params.offset_map[iDim][params.coordinates[iDim]+1] - params.offset_map[iDim][params.coordinates[iDim]];
         }
         else {

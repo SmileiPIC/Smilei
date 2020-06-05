@@ -113,7 +113,7 @@ Open a Field diagnostic
 .. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, moving=False, export_dir=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``: same as before.
-  * ``diagNumber``: The number of the fields diagnostic
+  * ``diagNumber``: number or ``name`` of the fields diagnostic
      | If not given, then a list of available diagnostic numbers is printed.
   * ``field``: The name of a field (``"Ex"``, ``"Ey"``, etc.)
      | If not given, then a list of available fields is printed.
@@ -171,10 +171,10 @@ Open a Probe diagnostic
 .. py:method:: Probe(probeNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
-  * ``probeNumber``: number of the probe (the first one has number 0).
+  * ``probeNumber``: number or ``name`` of the probe (the first one has number 0).
      | If not given, a list of available probes is printed.
   * ``field``: name of the field (``"Bx"``, ``"By"``, ``"Bz"``, ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` or ``"Rho"``).
-     | If not given, then a list of available fields is printed.
+     | If not given, a list of available fields is printed.
      | The string can also be an operation between several fields, such as ``"Jx+Jy"``.
   * ``subset`` and ``average`` are very similar to those of :py:meth:`Field`, but they can only have the axes: ``"axis1"``, ``"axis2"`` and ``"axis3"``.
     For instance, ``average={"axis1":"all"}``. Note that the axes are not necessarily :math:`x`, :math:`y` or :math:`z` because the probe mesh is arbitrary.
@@ -194,7 +194,7 @@ Open a ParticleBinning diagnostic
 .. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
-  * ``diagNumber``: number of the particle binning diagnostic (starts at 0).
+  * ``diagNumber``: number or ``name`` of the particle binning diagnostic (starts at 0).
      | If not given, a list of available diagnostics is printed.
      | It can also be an operation between several diagnostics.
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
@@ -444,8 +444,11 @@ to manipulate the plotting options:
 * ``vmin``, ``vmax``: data value limits.
 * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
 * ``xfactor``, ``yfactor``: factors to rescale axes.
-* ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left- or the right-hand-side.
-* ``transparent``: ``None`` (by default), ``"over"``, ``"under"`` or ``"both"`` makes the colormap transparent outside the requested boundary.
+* ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left-
+  or the right-hand-side.
+* ``transparent``: ``None`` (by default), ``"over"``, ``"under"`` or ``"both"``.
+  The colormap becomes transparent *over*, *under*, or *outside both* the boundaries
+  set by ``vmin`` and ``vmax``.
 * Many Matplotlib arguments listed in :ref:`advancedOptions`.
 
 ----

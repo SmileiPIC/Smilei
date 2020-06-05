@@ -32,7 +32,6 @@ void DoubleGridsAM::syncCurrentsOnRegion( VectorPatch &vecPatches, Region &regio
     //        missing_patches_ranks stores the MPI rank of the vecPacthes which own missing_patches_
     for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
 
-        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
         DoubleGridsAM::currentsOnRegionRecv( static_cast<ElectroMagnAM *>(region.patch_->EMfields)
                                              , region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region, imode );
 
@@ -148,7 +147,6 @@ void DoubleGridsAM::syncFieldsOnPatches( Region &region, VectorPatch &vecPatches
     //                         send data which do not concern local Region
     for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
 
-        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
         DoubleGridsAM::fieldsOnPatchesSend( static_cast<ElectroMagnAM *>(region.patch_->EMfields),
                                             region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region, imode );
 
@@ -270,7 +268,6 @@ void DoubleGridsAM::syncFieldsOnRegion( VectorPatch& vecPatches, Region& region,
     //        missing_patches_ranks stores the MPI rank of the vecPacthes which own missing_patches_
     for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
         
-        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
         DoubleGridsAM::fieldsOnRegionRecv( static_cast<ElectroMagnAM *>(region.patch_->EMfields),
                                            region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region, imode );
 
@@ -413,7 +410,6 @@ void DoubleGridsAM::syncBOnPatches( Region &region, VectorPatch &vecPatches, Par
     //                         send data which do not concern local Region
     for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
 
-        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
         DoubleGridsAM::bOnPatchesSend( static_cast<ElectroMagnAM *>(region.patch_->EMfields),
                                             region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region, imode );
 
@@ -513,7 +509,6 @@ void DoubleGridsAM::syncCurrentsOnPatches( Region &region, VectorPatch &vecPatch
     //                         send data which do not concern local Region
     for ( unsigned int i=0 ; i<region.missing_patches_.size() ; i++ ) {
 
-        unsigned int ipatch = region.missing_patches_[i]-vecPatches.refHindex_;
         DoubleGridsAM::currentsOnPatchesSend( static_cast<ElectroMagnAM *>(region.patch_->EMfields),
                                             region.missing_patches_[i], region.missing_patches_ranks[i], vecPatches, params, smpi, region, imode );
 

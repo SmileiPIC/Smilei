@@ -132,8 +132,9 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
         DSr[i] = Sr1[i] - Sr0[i];
     }
 
+    double r_bar = ((jpo + j_domain_begin)*dr + deltaold[1*nparts] + rp) * 0.5; // r at t = t0 - dt/2
     double dtheta = std::remainder( theta-theta_old, 2*M_PI )/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
-    double theta_bar = theta_old+dtheta;
+    double theta_bar = theta_old+dtheta; // theta at t = t0 - dt/2
     e_delta_m1 = std::polar( 1.0, dtheta );
     e_bar_m1 = std::polar( 1.0, theta_bar );
     
@@ -159,7 +160,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // ---------------------------
 
     //initial value of crt_p for imode = 0.
-    complex<double> crt_p= charge_weight*( particles.momentum( 2, ipart )*particles.position( 1, ipart )-particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/( rp )*invgf;
+    complex<double> crt_p= charge_weight*( particles.momentum( 2, ipart )* real(e_bar_m1) - particles.momentum( 1, ipart )*imag(e_bar_m1) ) * invgf;
 
     // Compute everything independent of theta
     for( unsigned int j=0 ; j<5 ; j++ ) {
@@ -194,7 +195,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             e_bar *= e_bar_m1;
             C_m = 2. * e_bar ; //multiply modes > 0 by 2 and C_m = 1 otherwise.
             e_delta_inv =1./e_delta - 1.;
-            crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*rp;
+            crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*r_bar;
         }
         
         // Add contribution J_p to global array
@@ -258,7 +259,11 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
 {
     //Warning : this function is not charge conserving.
-    
+    // This function also assumes that particles position is evaluated at the same time as currents which is usually not true (half time-step difference).
+    // It will therefore fail to evaluate the current accurately at t=0 if a plasma is already in the box.
+   
+
+ 
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
@@ -338,64 +343,71 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
 } // END Project for diags local current densities
 
 // Apply boundary conditions on axis for currents and densities
-void ProjectorAM2Order::axisBC(complex<double> *rhoj, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode )
+void ProjectorAM2Order::axisBC(complex<double> *rhoj, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode, bool diag_flag )
 {
 
-    double sign = 1.;
-    for (unsigned i=0; i< imode; i++) sign *= -1;
+    double sign = -1.;
+    for (int i=0; i< imode; i++) sign *= -1;
    
-    //Fold rho 
-        for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
-            for( unsigned int j=1 ; j<3; j++ ) {
-                rhoj[i+j] += sign * rhoj[i-j];
-                rhoj[i-j]  = sign * rhoj[i+j];
+        if (diag_flag and rhoj) {
+            for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
+                //Fold rho 
+                for( unsigned int j=1 ; j<3; j++ ) {
+                    rhoj[i+j] += sign * rhoj[i-j];
+                    rhoj[i-j]  = sign * rhoj[i+j];
+                }
+                //Apply BC
+                if (imode > 0){
+                    rhoj[i] = 0.;
+                } else {
+                    rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
+                }
             }
-            if (imode > 0){
-                rhoj[i] = 0.;
-            } else {
-                rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
-            }
-        }//i
+        }
                     
-    //Fold Jl
-        for( unsigned int i=2 ; i<(npriml+1)*nprimr+2; i+=nprimr ) {
-            for( unsigned int j=1 ; j<3; j++ ) {
-                Jl [i+j] +=  sign * Jl[i-j];
-                Jl[i-j]   =  sign * Jl[i+j];
-             }
-             if (imode > 0){
-                 Jl [i] = 0. ;
-            } else {
-                 //Force dJl/dr = 0 at r=0.
-                 Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
+        if (Jl) {
+            for( unsigned int i=2 ; i<(npriml+1)*nprimr+2; i+=nprimr ) {
+                //Fold Jl
+                for( unsigned int j=1 ; j<3; j++ ) {
+                    Jl [i+j] +=  sign * Jl[i-j];
+                    Jl[i-j]   =  sign * Jl[i+j];
+                 }
+                 if (imode > 0){
+                     Jl [i] = 0. ;
+                } else {
+                     //Force dJl/dr = 0 at r=0.
+                     Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
+                }
             }
-        }//i
+        }
 
-    //Fold Jt
-        for( unsigned int i=0 ; i<npriml; i++ ) {
-            int iloc = i*nprimr+2;
-            int ilocr = i*(nprimr+1)+3;
-            for( unsigned int j=1 ; j<3; j++ ) {
-                Jt [iloc+j] += -sign * Jt[iloc-j];
-                Jt[iloc-j]   = -sign * Jt[iloc+j];
-            }
-            for( unsigned int j=0 ; j<3; j++ ) {
-                Jr [ilocr+2-j] += -sign * Jr [ilocr-3+j];
-                Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
-            }
+        if (Jt and Jr) {
+            for( unsigned int i=0 ; i<npriml; i++ ) {
+                int iloc = i*nprimr+2;
+                int ilocr = i*(nprimr+1)+3;
+                //Fold Jt
+                for( unsigned int j=1 ; j<3; j++ ) {
+                    Jt [iloc+j] += -sign * Jt[iloc-j];
+                    Jt[iloc-j]   = -sign * Jt[iloc+j];
+                }
+                for( unsigned int j=0 ; j<3; j++ ) {
+                    Jr [ilocr+2-j] += -sign * Jr [ilocr-3+j];
+                    Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
+                }
 
-            if (imode == 1){
-                Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
-                //Force dJr/dr = 0 at r=0.
-                //Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
-                Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
-            } else{
-                Jt [iloc] = 0. ;
-                //Force dJr/dr = 0 and Jr=0 at r=0.
-                Jr [ilocr] =  Jr [ilocr+1]/9.;
-                Jr [ilocr-1] = -Jr [ilocr];
+                if (imode == 1){
+                    Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
+                    //Force dJr/dr = 0 at r=0.
+                    //Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
+                    Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
+                } else{
+                    Jt [iloc] = 0. ;
+                    //Force dJr/dr = 0 and Jr=0 at r=0.
+                    //Jr [ilocr] =  Jr [ilocr+1]/9.;
+                    Jr [ilocr-1] = -Jr [ilocr];
+                }
             }
-        }//i
+        }
 
     return;
 
@@ -616,9 +628,30 @@ void ProjectorAM2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
 
     }
 
+}
 
 
+void ProjectorAM2Order::axisBCEnvChi( double *EnvChi )
+{
+    double sign = 1.;
+    int imode = 0;
+    for (int i=0; i< imode; i++) sign *= -1;
+    if (EnvChi) {
+        for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
+            //Fold EnvChi
+            //for( unsigned int j=1 ; j<3; j++ ) {
+            //    EnvChi[i+j] += sign * EnvChi[i-j];
+            //    EnvChi[i-j]  = sign * EnvChi[i+j];
+            //} 
+            //EnvChi[i] = (4.*EnvChi[i+1] - EnvChi[i+2])/3.;
+            
+            EnvChi[i]   = EnvChi[i+1];
+            for( unsigned int j=1 ; j<3; j++ ) {
+                EnvChi[i-j]  = sign * EnvChi[i+j];
+            }
 
-  
-    
+        }
+    }
+                
+return;
 }

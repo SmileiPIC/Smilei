@@ -13,7 +13,7 @@ Main(
 
     interpolation_order = 2,
 
-    timestep = 0.02 * L0,
+    timestep = 0.01 * L0,
     simulation_time = .4 * L0,
 
 

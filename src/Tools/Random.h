@@ -61,7 +61,7 @@ public:
             return u * s;
         }
     }
-    
+
     //! State of the random number generator
     uint32_t xorshift32_state;
 
