@@ -57,7 +57,8 @@ div.documentwrapper {
 div.body {
 	background-color: white;
 	color: {{ theme_body_text }};
-	padding: 0 30px 0 30px;
+	padding: 0 1em 0 1em;
+	min-width: unset;
 }
 
 div.footer {
@@ -109,14 +110,13 @@ div.body h5,
 div.body h6 {
 	font-family: {{ theme_head_font_family }};
 	font-weight: bold;
-	margin: 30px 0px 10px 0px;
+	margin: 10px 0px 10px 0px;
 	padding: 0;
 	color: {{ theme_main_color_bold }};
 }
 
 div.body h1 {
 	font-size: 240%;
-	margin-right: 3em;
 	padding: 0.1em 0.3em 0.1em 1em;
 	background-color:{{ theme_main_color_pale }};
 	display: inline-block;
@@ -128,9 +128,13 @@ div.body h4 { font-size: 130%; }
 div.body h5 { font-size: 100%; }
 div.body h6 { font-size: 100%; }
 
-.section {
-	padding-top:{{ theme_head_height | float * 0.5 }}mm;
-	margin-top:-{{ theme_head_height }}mm;
+:target {
+	margin-top: -{{ theme_head_height| float *1.2 }}mm;
+	padding-top: {{ theme_head_height| float *1.2 }}mm;
+}
+
+h1:target, h2:target, h3:target, dt:target {
+	background: {{ theme_main_color_pale }} content-box !important;
 }
 
 a.headerlink {
@@ -148,8 +152,12 @@ div.body p, div.body li {
 	line-height: 1.4em;
 }
 
-div.body li > ul {
-	padding-bottom: 0.7em;
+div.body p {
+	margin-bottom: 0.5em;
+}
+
+div.body table p {
+	margin-bottom: 0;
 }
 
 div.body li > p {
@@ -187,7 +195,7 @@ div.highlight {
 	background-color: white;
 }
 
-dt:target, .highlight {
+.highlight {
 	background: {{ theme_main_color_pale }};
 }
 
@@ -244,8 +252,12 @@ table.docutils td, table.docutils th {
 }
 
 table.fancy {
+	position: relative;
+	z-index:0;
+	display: block;
+	overflow-x: auto;
 	border:1px solid {{ theme_main_color_med }};
-	width: min-content;
+	white-space: nowrap;
 }
 
 table.fancy * {
@@ -290,10 +302,6 @@ table.footnote td {
 	padding: 0.3em 0.5em;
 }
 
-table.fancy {
-	white-space: nowrap;
-}
-
 table.noborder, table.noborder td {
 	border:0 !important;
 }
@@ -308,16 +316,16 @@ dl {
 }
 
 dl dd {
-	margin-left: 30px;
+	margin-left: 1em;
 }
 
 blockquote {
-	margin: 0 0 0 30px;
+	margin: 0 0 0 1em;
 	padding: 0;
 }
 
 ul, ol {
-	margin: 4px 0 4px 30px;
+	margin: 4px 0 4px 1em;
 	padding: 0;
 }
 
@@ -341,7 +349,7 @@ li.toctree-l1 > ul {
 
 pre {
 	background: {{ theme_pre_bg }};
-	padding: 7px 30px;
+	padding: 7px 1em;
 	margin: 15px 0px;
 	line-height: 1.3em;
 }
@@ -812,7 +820,8 @@ dt.bigcitation + dd
 /* Adjust horizontal lines */
 hr {
 	margin-top:1em;
-	border: 1px solid {{ theme_main_color_bold }};
+	border: 0;
+	border-top: 2px solid {{ theme_main_color_bold }};
 }
 div.toctree-smilei hr {
 	margin: 0.2em 0;
@@ -886,6 +895,12 @@ div.toctree-smilei hr {
 	padding-top: 5px;
 }
 
+/* ---- MathJax display issues ------------*/
+.MathJax_Display {
+	overflow-x: auto;
+	overflow-y: hidden;
+	z-index: 0;
+}
 
 
 @media screen and (max-width:  {{ theme_page_width | float * 1.01 }}mm) {
@@ -894,8 +909,8 @@ div.toctree-smilei hr {
 		margin:0;
 	}
 	
-	ul {
-		margin-left: 0;
+	ul, ol {
+		margin-left: 0.6em;
 	}
 	
 	.document {
