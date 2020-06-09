@@ -82,7 +82,8 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     
     complex<double> C_m = 1.;
     if( imode > 0 ) {
-        complex<double> e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/r;
+        double theta = atan2( particles.position( 2, ipart ) , particles.position( 1, ipart ) );// theta at t = t0
+        complex<double> e_theta = std::polar( 1.0, theta );
         C_m = 2.;
         for( unsigned int i=0; i<( unsigned int )imode; i++ ) {
             C_m *= e_theta;
