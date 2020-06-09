@@ -705,27 +705,26 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old
     // calculate the particle charge
     // -------------------------------
     if( ( !particles->is_test ) ) {
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-            // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
-            //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
-            if( !dynamic_cast<ElectroMagnAM *>( EMfields ) ) {
+        if( !dynamic_cast<ElectroMagnAM *>( EMfields ) ) {
+            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
                 double *b_rho = &( *EMfields->rho_ )( 0 );
 
                 for( unsigned int iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
                     Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 }
-            } else {
-                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
-                unsigned int Nmode = emAM->rho_AM_.size();
-                for( unsigned int imode=0; imode<Nmode; imode++ ) {
-                    complex<double> *b_rho = old ? &( *emAM->rho_old_AM_[imode] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 );
-                    for( unsigned int iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
+            }
+        } else {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            unsigned int Nmode = emAM->rho_AM_.size();
+            for( unsigned int imode=0; imode<Nmode; imode++ ) {
+                complex<double> *b_rho = old ? &( *emAM->rho_old_AM_[imode] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 );
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                    for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
                         Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
                     }
                 }
             }
         }
-
     }
 }//END computeCharge
 
