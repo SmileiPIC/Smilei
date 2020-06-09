@@ -253,13 +253,13 @@ with an average longitudinal momentum :math:`<p_x> = \vert\tilde{A}\vert^2/4` an
 Each electron, newly created from ionization, is thus initalized with :math:`p_x = \vert\tilde{A}\vert^2/4+\vert p_{\perp}\vert^2/2`, 
 where :math:`p_{\perp}` is drawn as described above and in [Tomassini2017]_. 
 This technique allows to take into account longitudinal effects on the initial momentum that are more visible when :math:`\vert\tilde{A}\vert>1`, 
-which manifest mainly as an initial average longitudinal momentum.
+which manifest mainly as an initial average longitudinal momentum [MassimoIonization2020]_.
 
 If the envelope approximation hypotheses are satisfied, the charge created with ionization and the momentum distribution 
 of the newly created electrons computed with this procedure should agree with those obtained with a standard laser simulation,
-provided that the comparison is made after the end of the interaction with the laser. 
-This because during the interaction with the laser the effects of the quiver motion in the electron momenta would be still visible
-in the standard laser simulation and absent in the envelope simulation.
+provided that the comparison is made after the end of the interaction with the laser. Examples of these comparisons can be found in [MassimoIonization2020]_.
+A comparison made in a timestep where the interaction with the laser is still taking place would show the effects of the quiver motion in the electron momenta
+in the standard laser simulation (e.g. peaks in the transverse momentum spectrum). These effects would be absent in the envelope simulation. 
 
 Apart from the different ionization rate and the ad hoc momentum initialization of the new electrons, 
 the implementation of the field ionization with a laser envelope follows the same procedure 

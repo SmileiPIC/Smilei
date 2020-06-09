@@ -21,6 +21,8 @@ Changes made in the repository (not released)
 * Diagnostics may now have a ``name`` to be found more easily
   during post-processing
 
+* Laser Envelope: both linear and circular polarization are available; added ionization model for envelope simulations
+
 * Bugfixes:
 
   * ...
