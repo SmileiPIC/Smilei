@@ -1013,15 +1013,29 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             #pragma omp for schedule(static)
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                 // Current spatial filtering
-                ( *this )( ipatch )->EMfields->binomialCurrentFilter(ipassfilter, params.currentFilter_passes);
+                if (params.currentFilter_model=="binomial"){
+                    ( *this )( ipatch )->EMfields->binomialCurrentFilter(ipassfilter, params.currentFilter_passes);
+                }
+                if (params.currentFilter_model=="customFIR"){
+                    ( *this )( ipatch )->EMfields->customFIRCurrentFilter(ipassfilter, params.currentFilter_passes, params.currentFilter_kernelFIR);
+                }
             }
             if (params.geometry != "AMcylindrical"){
-                SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJx_, *this, smpi );
-                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
-                SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJy_, *this, smpi );
-                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
-                SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJz_, *this, smpi );
-                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
+                if (params.currentFilter_model=="customFIR"){
+                    SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJx_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
+                    SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJy_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
+                    SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJz_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
+                } else {
+                    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJx_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
+                    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJy_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
+                    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJz_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
+                }                   
             } else {
                 for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
                     SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJl_[imode], *this, smpi );

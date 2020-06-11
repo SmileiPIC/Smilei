@@ -373,7 +373,7 @@ Lastly, periodic BCs correspond to applying the fields from the opposite boundar
 
 .. _multipassBinomialFilter:
 
-Multi-pass binomial filtering of the current densities
+Multi-pass filtering of the current densities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A multi-pass binomial filter on the current densities is available in :program:`Smilei`,
@@ -390,7 +390,12 @@ Current filtering, if required by the user, is applied before solving
 Maxwell’s equation, and the number of passes is an :ref:`input parameter <CurrentFilter>`
 defined by the user.
 
+If necessary the user can provide his own FIR filter by setting his own kernel of length N. The number of ghost-cells have to be greater than (N-1)/2 accordingly.
 
+Large band low-pass filter of the current densities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A large band low-pass filter on the current densities is available in :program:`Smilei` too. The convolution kernel is a 21 points windowed-sinc.
 
 ----
 

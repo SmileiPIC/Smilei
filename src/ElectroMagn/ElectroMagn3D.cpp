@@ -1311,6 +1311,167 @@ void ElectroMagn3D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Apply a single pass custom FIR based filter on currents
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn3D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff)
+{
+    // Static-cast of the currents
+    Field3D *Jx3D = static_cast<Field3D *>( Jx_ );
+    Field3D *Jy3D = static_cast<Field3D *>( Jy_ );
+    Field3D *Jz3D = static_cast<Field3D *>( Jz_ );
+
+    unsigned int m=1 ;
+
+    // Guard-Cell Current
+    unsigned int gcfilt=0 ;
+
+    // Applying a single pass of the custom FIR based filter along X
+    if (ipass < passes[0]){
+        Field3D *tmp   = new Field3D( dimPrim, 0, false );
+        tmp->copyFrom( Jx3D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_d-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
+                for( unsigned int k=1; k<nz_p-1; k++ ) {
+                    ( *Jx3D )( i, j, k ) = 0. ;
+                    for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                        ( *Jx3D )( i, j, k ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m, j, k ) ;
+                    }
+                    ( *Jx3D )( i, j, k ) *= m ;
+                }
+            }
+        }
+        delete tmp;
+        tmp   = new Field3D( dimPrim, 1, false );
+        tmp->copyFrom( Jy3D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            for( unsigned int j=1; j<ny_d-1; j++ ) {
+                for( unsigned int k=1; k<nz_p-1; k++ ) {
+                    ( *Jy3D )( i, j, k ) = 0. ;
+                    for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                        ( *Jy3D )( i, j, k ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m, j, k ) ;
+                    }
+                    ( *Jy3D )( i, j, k ) *= m ;
+                }
+            }
+        }
+        delete tmp;
+        tmp   = new Field3D( dimPrim, 2, false );
+        tmp->copyFrom( Jz3D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
+                for( unsigned int k=1; k<nz_d-1; k++ ) {
+                    ( *Jz3D )( i, j, k ) = 0. ;
+                    for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                        ( *Jz3D )( i, j, k ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m, j, k ) ;
+                    }
+                    ( *Jz3D )( i, j, k ) *= m ;
+                }
+            }
+        }
+        delete tmp;
+    }
+
+    // Applying a single pass of the custom FIR based filter along Y
+    if (ipass < passes[1]){
+        // On Jx^(d,p,p) -- External points are treated by exchange
+        Field3D *tmp   = new Field3D( dimPrim, 0, false );
+        tmp->copyFrom( Jx3D );
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=((filtering_coeff.size()-1)/(m*2)+gcfilt); j<ny_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); j++ ) {
+                for( unsigned int k=1; k<nz_p-1; k++ ) {
+                    ( *Jx3D )( i, j, k ) = 0. ;
+                    for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                        ( *Jx3D )( i, j, k ) += filtering_coeff[kernel_idx]*( *tmp )( i, j - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m, k ) ;
+                    }
+                    ( *Jx3D )( i, j, k ) *= m ;
+                }
+            }
+        }
+        delete tmp;
+        // On Jy^(p,d,p) -- External points are treated by exchange
+        tmp   = new Field3D( dimPrim, 1, false );
+        tmp->copyFrom( Jy3D );
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=((filtering_coeff.size()-1)/(m*2)+gcfilt); j<ny_d-((filtering_coeff.size()-1)/(m*2)+gcfilt); j++ ) {
+                for( unsigned int k=1; k<nz_p-1; k++ ) {
+                    ( *Jy3D )( i, j, k ) = 0. ;
+                    for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                        ( *Jy3D )( i, j, k ) += filtering_coeff[kernel_idx]*( *tmp )( i, j - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m, k ) ;
+                    }
+                    ( *Jy3D )( i, j, k ) *= m ;
+                }
+            }
+        }
+        delete tmp;
+        // On Jz^(p,p,d) -- External points are treated by exchange
+        tmp   = new Field3D( dimPrim, 2, false );
+        tmp->copyFrom( Jz3D );
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=((filtering_coeff.size()-1)/(m*2)+gcfilt); j<ny_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); j++ ) {
+                for( unsigned int k=1; k<nz_d-1; k++ ) {
+                    ( *Jz3D )( i, j, k ) = 0. ;
+                    for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                        ( *Jz3D )( i, j, k ) += filtering_coeff[kernel_idx]*( *tmp )( i, j - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m , k) ;
+                    }
+                    ( *Jz3D )( i, j, k ) *= m ;
+                }
+            }
+        }
+        delete tmp;
+    }
+
+    // Applying a single pass of the custom FIR based filter along Z
+    if (ipass < passes[2]){
+        // On Jx^(d,p,p) -- External points are treated by exchange
+        Field3D *tmp   = new Field3D( dimPrim, 0, false );
+        tmp->copyFrom( Jx3D );
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
+                for( unsigned int k=((filtering_coeff.size()-1)/(m*2)+gcfilt); k<ny_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); k++ ) {
+                    ( *Jx3D )( i, j, k ) = 0. ;
+                    for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                        ( *Jx3D )( i, j, k ) += filtering_coeff[kernel_idx]*( *tmp )( i, j, k - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+                    }
+                    ( *Jx3D )( i, j, k ) *= m ;
+                }
+            }
+        }
+        delete tmp;
+        // On Jy^(p,d,p) -- External points are treated by exchange
+        tmp   = new Field3D( dimPrim, 1, false );
+        tmp->copyFrom( Jy3D );
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=1; j<ny_d-1; j++ ) {
+                for( unsigned int k=((filtering_coeff.size()-1)/(m*2)+gcfilt); k<ny_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); k++ ) {
+                    ( *Jy3D )( i, j, k ) = 0. ;
+                    for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                        ( *Jy3D )( i, j, k ) += filtering_coeff[kernel_idx]*( *tmp )( i, j, k - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+                    }
+                    ( *Jy3D )( i, j, k ) *= m ;
+                }
+            }
+        }
+        delete tmp;
+        // On Jz^(p,p,d) -- External points are treated by exchange
+        tmp   = new Field3D( dimPrim, 2, false );
+        tmp->copyFrom( Jz3D );
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
+                for( unsigned int k=((filtering_coeff.size()-1)/(m*2)+gcfilt); k<ny_d-((filtering_coeff.size()-1)/(m*2)+gcfilt); k++ ) {
+                    ( *Jz3D )( i, j, k ) = 0. ;
+                    for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                        ( *Jz3D )( i, j, k ) += filtering_coeff[kernel_idx]*( *tmp )( i, j, k - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+                    }
+                    ( *Jz3D )( i, j, k ) *= m ;
+                }
+            }
+        }
+        delete tmp;
+    }
+
+}//END customFIRCurrentFilter
+
 void ElectroMagn3D::center_fields_from_relativistic_Poisson( Patch *patch )
 {
 

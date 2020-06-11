@@ -103,7 +103,8 @@ makerunCollisions:
 use_picsar:
   stage: use_picsar
   only:
-    - merge_sdmd_dev
+    - develop
+    - smilei_envelope_ionization_all_geometries
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

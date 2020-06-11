@@ -463,17 +463,23 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Maxwell Solver
     PyTools::extract( "maxwell_solver", maxwell_sol, "Main"   );
-    if( maxwell_sol == "Lehe" ) {
+    if( (maxwell_sol == "Lehe")||(maxwell_sol == "Bouchard") ) {
         full_B_exchange=true;
     }
 
     // Current filter properties
     int nCurrentFilter = PyTools::nComponents( "CurrentFilter" );
     for( int ifilt = 0; ifilt < nCurrentFilter; ifilt++ ) {
-        string model;
-        PyTools::extract( "model", model, "CurrentFilter", ifilt );
-        if( model != "binomial" ) {
-            ERROR( "Currently, only the `binomial` model is available in CurrentFilter()" );
+        PyTools::extract( "model", currentFilter_model, "CurrentFilter", ifilt );
+        if( (currentFilter_model != "binomial")&&(currentFilter_model != "customFIR") ) {
+            ERROR( "Currently, only the `binomial` and `customFIR` model is available in CurrentFilter()" );
+        }
+
+        if(currentFilter_model == "customFIR") {
+            PyTools::extractV( "kernelFIR", currentFilter_kernelFIR, "CurrentFilter", ifilt );
+            if( currentFilter_kernelFIR.size() < 3 ) {
+                ERROR( "Kernel have to measure 3 taps at least. For example the binomial FIR kernel on three tapis [0.25,0.50,0.25]" );
+            }
         }
 
         PyTools::extractV( "passes", currentFilter_passes, "CurrentFilter", ifilt );  //test list
@@ -937,7 +943,16 @@ void Params::compute()
 
     //Define number of cells per patch and number of ghost cells
     for( unsigned int i=0; i<nDim_field; i++ ) {
-        oversize[i]  = interpolation_order + ( exchange_particles_each-1 );
+        PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
+        if (uncoupled_grids==false){
+            oversize[i]  = max( interpolation_order, max( ( unsigned int )( norder[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
+            if ( (currentFilter_model == "customFIR") && (oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) ) {
+                ERROR( "With the `customFIR` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2" );
+            }
+        }
+        if (uncoupled_grids==true){
+            oversize[i] = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 ); 
+        }
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if( n_space_global[i]%number_of_patches[i] !=0 ) {
@@ -948,8 +963,8 @@ void Params::compute()
         }
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
-    }
-    region_oversize = oversize;
+    } 
+    //region_oversize = oversize ;
     if ( is_spectral && geometry == "AMcylindrical" )  {
         //Force ghost cells number in L when spectral
         region_oversize[0] = pseudo_spectral_guardells;
@@ -960,7 +975,11 @@ void Params::compute()
         for( unsigned int i=0; i<nDim_field; i++ )
             region_oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
     }
-    
+    PyTools::extract( "custom_region_oversize", custom_region_oversize, "Main"  );
+    for( unsigned int i=0; i<nDim_field; i++ ) {
+        region_oversize[i] = max( region_oversize[i], custom_region_oversize );
+    }
+ 
     // Set clrw if not set by the user
     if( clrw == -1 ) {
 
@@ -1095,7 +1114,7 @@ void Params::print_init()
         if( *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) > 0 ) {
             for( unsigned int idim=0 ; idim < nDim_field ; idim++ ){
                 std::string strpass = (currentFilter_passes[idim] > 1 ? "passes" : "pass");
-                MESSAGE( 1, "Binomial current filtering : " << currentFilter_passes[idim] << " " << strpass << " along dimension " << idim );
+                MESSAGE( 1, currentFilter_model << " current filtering : " << currentFilter_passes[idim] << " " << strpass << " along dimension " << idim );
             }
         }
     }

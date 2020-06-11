@@ -36,7 +36,7 @@ if ( (sys.argv)[1] == "machine" ):
 
     cmd = subprocess.Popen('ls -1 scripts/compile_tools/machine', shell=True, stdout=subprocess.PIPE)
     for line in cmd.stdout :
-        options_registered += (line.split())[0] + " "
+        options_registered += (line.split())[0].decode() + " "
 
     option_is_in_the_list( "machine", (sys.argv)[2], options_registered)
 

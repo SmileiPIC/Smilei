@@ -632,6 +632,58 @@ void ElectroMagn1D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
     
 }
 
+void ElectroMagn1D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff)
+{
+    // Static-cast of the currents
+    Field1D *Jx1D = static_cast<Field1D *>( Jx_ );
+    Field1D *Jy1D = static_cast<Field1D *>( Jy_ );
+    Field1D *Jz1D = static_cast<Field1D *>( Jz_ );
+
+    // Upsampling factor
+    // m=1 : No upsampling ......................... f_Nyquist *= 1
+    // m=2 : 1 zero(s) between two data points ..... f_Nyquist *= 2
+    // m=3 : 2 zero(s) between two data points ..... f_Nyquist *= 3
+    // m=4 : 3 zero(s) between two data points ..... f_Nyquist *= 4
+    unsigned int m=1 ;
+
+    // Guard-Cell Current
+    unsigned int gcfilt=0 ;
+
+    // Applying a single pass of the custom FIR based filter along X
+    if (ipass < passes[0]){
+        Field1D *tmp   = new Field1D( dimPrim, 0, false );
+        tmp->copyFrom( Jx1D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_d-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            ( *Jx1D )( i ) = 0. ;
+            for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                ( *Jx1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+            }
+            ( *Jx1D )( i ) *= m ;
+        }
+        delete tmp;
+        tmp   = new Field1D( dimPrim, 1, false );
+        tmp->copyFrom( Jy1D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            ( *Jy1D )( i ) = 0. ;
+            for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                ( *Jy1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+            }
+            ( *Jy1D )( i ) *= m ;
+        }
+        delete tmp;
+        tmp   = new Field1D( dimPrim, 2, false );
+        tmp->copyFrom( Jz1D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            ( *Jz1D )( i ) = 0. ;
+            for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+               ( *Jz1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+            }
+            ( *Jz1D )( i ) *= m ;
+        }
+        delete tmp;
+    }
+}
+
 
 
 // Create a new field
