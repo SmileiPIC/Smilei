@@ -7,7 +7,7 @@
 
 #include "Ionization.h"
 #include "Tools.h"
-#include <boost/math/special_functions/bessel.hpp>
+
 
 class Particles;
 
@@ -23,10 +23,6 @@ public:
     void operator()( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) override;
     //! method for envelope ionization
     void envelopeIonization( Particles *, unsigned int, unsigned int, std::vector<double> *, std::vector<double> *, std::vector<double> *, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) override;
-
-    inline double correction_factor_general_polarization(double x){
-        return exp(-x)*boost::math::cyl_bessel_i(0, x); 
-    };
 
     double ellipticity,cos_phi,sin_phi;
 
