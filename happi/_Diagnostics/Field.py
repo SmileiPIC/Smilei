@@ -8,31 +8,38 @@ class Field(Diagnostic):
 		
 		self.moving = moving
 		self._subsetinfo = {}
-		
 		self.cylindrical = self.namelist.Main.geometry == "AMcylindrical"
 		
 		# Search available diags
-		diags = self.getDiags()
+		diag_numbers, diag_names = self.simulation.getDiags("Fields")
 		
 		# Return directly if no diag number provided
 		if diagNumber is None:
 			self._error += ["Diagnostic not loaded: diagNumber is not defined"]
-			if len(diags)>0:
-				self._error += ["Please choose among: "+", ".join([str(d) for d in diags])]
+			if len(diag_numbers)>0:
+				self._error += ["Please choose among: "+", ".join([str(d) for d in diag_numbers])]
+				self._error += ["(names: "+", ".join([d for d in diag_names if d])+" )"]
 			else:
 				self._error += ["(No Field diagnostics existing anyways)"]
 			return
-		else:
-			self.diagNumber = diagNumber
-			if diagNumber not in diags:
+		elif type(diagNumber) is str:
+			if diagNumber not in diag_names:
 				self._error += ["Diagnostic not loaded: no field diagnostic #"+str(diagNumber)+" found"]
 				return
+			i = diag_names.index( diagNumber )
+		else:
+			if diagNumber not in diag_numbers:
+				self._error += ["Diagnostic not loaded: no field diagnostic #"+str(diagNumber)+" found"]
+				return
+			i = diag_numbers.index( diagNumber )
+		self.diagNumber = diag_numbers[i]
+		self.diagName = diag_names[i]
 		
 		# Open the file(s) and load the data
 		self._h5items = {}
 		self._fields = []
 		for path in self._results_path:
-			file = path+self._os.sep+'Fields'+str(diagNumber)+'.h5'
+			file = path+self._os.sep+'Fields'+str(self.diagNumber)+'.h5'
 			try:
 				f = self._h5py.File(file, 'r')
 			except:
@@ -76,6 +83,11 @@ class Field(Diagnostic):
 					elif f[:10] in ["Env_A_abs_","Env_E_abs_"]:
 						fname = f[:9]
 						f = f[10:]
+						self._is_complex = False
+						build3d = None
+					elif f[:11] in ["Env_Ex_abs_"]:
+						fname = f[:10]
+						f = f[11:]
 						self._is_complex = False
 						build3d = None
 					elif f[:8] in ["Env_Chi_"]:
@@ -361,7 +373,7 @@ class Field(Diagnostic):
 		self._vunits = self.units._getUnits(self._vunits)
 		
 		# Set the directory in case of exporting
-		self._exportPrefix = "Field"+str(diagNumber)+"_"+"".join(self._fieldname)
+		self._exportPrefix = "Field"+str(self.diagNumber)+"_"+"".join(self._fieldname)
 		self._exportDir = self._setExportDir(self._exportPrefix)
 		
 		# Finish constructor
@@ -381,19 +393,6 @@ class Field(Diagnostic):
 		for l in self._subsetinfo:
 			s += "\n\t"+self._subsetinfo[l]
 		return s
-	
-	# get all available field diagnostics
-	def getDiags(self):
-		diags = []
-		for path in self._results_path:
-			files = self._glob(path+self._os.sep+'Fields*.h5')
-			if len(files)==0:
-				self._error += ["No fields found in '"+path+"'"]
-				return []
-			diagNumbers = [ int(self._re.findall("Fields([0-9]+).h5$",file)[0]) for file in files ]
-			if diags == []: diags = diagNumbers
-			else          : diags = [ d for d in diags if d in diagNumbers ]
-		return sorted(diags)
 	
 	# get all available fields, sorted by name length
 	def getFields(self):

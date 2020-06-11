@@ -84,7 +84,7 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 
 #define DEBUG(__txt) {__header("DEBUG", __txt);}
 
-#define ERROR(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); __header("ERROR proc "<<__rk, __txt); MPI_Finalize(); raise(SIGSEGV);}
+#define ERROR(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); __header("ERROR proc "<<__rk, __txt); raise(SIGSEGV);}
 
 #define DEBUGEXEC(...) __VA_ARGS__
 #define RELEASEEXEC(...)
@@ -99,7 +99,7 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 #define DEBUGEXEC(...)
 #define RELEASEEXEC(...) __VA_ARGS__
 
-#define ERROR(__txt) {__header("ERROR", __txt); MPI_Finalize(); exit(EXIT_FAILURE);}
+#define ERROR(__txt) {__header("ERROR", __txt); raise(SIGSEGV);}
 
 #define HEREIAM(...)
 

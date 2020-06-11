@@ -269,12 +269,13 @@ void Interpolator1D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
 } // END Interpolator1D2Order
 
 
-void Interpolator1D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc )
+void Interpolator1D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
 {
     // Static cast of the electromagnetic fields
-    Field1D *Env_A_abs_1D = static_cast<Field1D *>( EMfields->Env_A_abs_ );
-    Field1D *Env_Chi_1D = static_cast<Field1D *>( EMfields->Env_Chi_ );
-    Field1D *Env_E_abs_1D = static_cast<Field1D *>( EMfields->Env_E_abs_ );
+    Field1D *Env_A_abs_1D  = static_cast<Field1D *>( EMfields->Env_A_abs_ );
+    Field1D *Env_Chi_1D    = static_cast<Field1D *>( EMfields->Env_Chi_ );
+    Field1D *Env_E_abs_1D  = static_cast<Field1D *>( EMfields->Env_E_abs_ );
+    Field1D *Env_Ex_abs_1D = static_cast<Field1D *>( EMfields->Env_Ex_abs_ );
     
     // Normalized particle position
     double xpn = particles.position( 0, ipart )*dx_inv_;
@@ -311,6 +312,31 @@ void Interpolator1D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     // Interpolation of Env_E_abs_^(p)
     // -------------------------
     *( Env_E_abs_Loc ) = compute( &coeffp_[1], Env_E_abs_1D, ip_ );
+
+    // -------------------------
+    // Interpolation of Env_Ex_abs_^(p)
+    // -------------------------
+    *( Env_Ex_abs_Loc ) = compute( &coeffp_[1], Env_Ex_abs_1D, ip_ );
+    
+} // END Interpolator1D2Order
+
+
+void Interpolator1D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+{
+    // Static cast of the envelope fields
+    Field1D *Env_Eabs = static_cast<Field1D *>( EMfields->Env_E_abs_ );
+    
+    std::vector<double> *Env_Eabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
+    
+    //Loop on bin particles
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+    
+        // ---------------------------------
+        // Interpolation of Env_E_abs^(p)
+        // ---------------------------------
+        ( *Env_Eabs_part )[ipart] = compute( &coeffp_[1], Env_Eabs, ip_ );
+        
+    }    
     
 } // END Interpolator1D2Order
 

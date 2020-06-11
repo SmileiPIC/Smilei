@@ -110,7 +110,7 @@ via the ``machine`` argument:
   make machine=my_machine_file
 
 where ``my_machine_file`` is a file, located in
-``scripts/CompileTools/machine``, containing the lines of command to be
+``scripts/compile_tools/machine``, containing the lines of command to be
 executed before compilation. If you successfully write such a file for
 a common supercomputer, please share it with developpers so that it can
 be included in the next release of :program:`Smilei`.

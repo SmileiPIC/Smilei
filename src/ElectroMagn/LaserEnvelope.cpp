@@ -41,11 +41,30 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     ostringstream info( "" );
     
     // Read laser envelope parameters
-    PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope"  );
-    if( envelope_solver != "explicit" && envelope_solver != "explicit_reduced_dispersion" ) {
+    PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" );
+
+    if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
         ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
     }
+
     
+    PyTools::extract( "polarization_phi", polarization_phi, "LaserEnvelope" );
+    PyTools::extract( "ellipticity", ellipticity, "LaserEnvelope" );
+    info << "\t\tpolarization angle : " << polarization_phi << endl;
+    info << "\t\tellipticity        : " << ellipticity << endl;
+    if ((ellipticity != 0.) and (ellipticity != 1.)){
+        ERROR("For the moment, only ellipticity = 0 (linear polarization) or ellipticity = 1 (circular polarization) are available");
+    }
+    params.envelope_ellipticity = ellipticity;
+
+    if (ellipticity == 0){ // linear polarization
+        ellipticity_factor = 1.;
+    } else if (ellipticity == 1.){ // circular polarization
+        ellipticity_factor = 2.;
+    }
+
+    params.envelope_polarization_phi = polarization_phi;
+  
     // auxiliary quantities
     std::complex<double>     i1 = std::complex<double>( 0., 1 ); // imaginary unit
     double k0 = 1.; // laser wavenumber
@@ -95,14 +114,18 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     GradPhil_m = NULL;
     GradPhir_  = NULL;
     GradPhir_m = NULL;
-
 }
 
 // Cloning constructor
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved ) :
     cell_length( envelope->cell_length ),
     timestep( envelope->timestep ),
+    i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ),
+    i1_2k0_over_2dl( envelope->i1_2k0_over_2dl ),
+    one_plus_ik0dt( envelope->one_plus_ik0dt ),
+    one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq ),
     envelope_solver(envelope->envelope_solver),
+    delta(envelope->delta),
     one_ov_2dt(envelope->one_ov_2dt),
     dt_sq(envelope->dt_sq),
     one_ov_dx_sq(envelope->one_ov_dx_sq),
@@ -117,11 +140,9 @@ LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn
     one_ov_2dr(envelope->one_ov_2dr),
     dr(envelope->dr),
     i1(envelope->i1),
-    i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ),
-    i1_2k0_over_2dl( envelope->i1_2k0_over_2dl ),
-    one_plus_ik0dt( envelope->one_plus_ik0dt ),
-    one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq ),
-    delta(envelope->delta)
+    polarization_phi(envelope->polarization_phi),
+    ellipticity(envelope->ellipticity),
+    ellipticity_factor(envelope->ellipticity_factor)
 {
     if( n_moved ==0 ) {
         profile_ = new Profile( envelope->profile_ );
@@ -210,19 +231,19 @@ void LaserEnvelope::boundaryConditions( int itime, double time_dual, Patch *patc
 {
     // Compute Envelope Bcs
     if( !( simWindow && simWindow->isMoving( time_dual ) ) ) {
-        if( EnvBoundCond[0]!=NULL ) { 
+        if( EnvBoundCond[0]!=NULL ) {
             EnvBoundCond[0]->apply( this, EMfields, time_dual, patch );
             EnvBoundCond[1]->apply( this, EMfields, time_dual, patch );
         }
     }
     if( EnvBoundCond.size()>2 ) {
-        if( EnvBoundCond[2]!=NULL ) { 
+        if( EnvBoundCond[2]!=NULL ) {
             EnvBoundCond[2]->apply( this, EMfields, time_dual, patch );
             EnvBoundCond[3]->apply( this, EMfields, time_dual, patch );
         }
     }
     if( EnvBoundCond.size()>4 ) {
-        if( EnvBoundCond[4]!=NULL ) { 
+        if( EnvBoundCond[4]!=NULL ) {
             EnvBoundCond[4]->apply( this, EMfields, time_dual, patch );
             EnvBoundCond[5]->apply( this, EMfields, time_dual, patch );
         }

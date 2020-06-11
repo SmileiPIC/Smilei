@@ -7,7 +7,7 @@ compile:
   stage: compile
   only:
     - develop
-    - filterAM_adjustment
+    - smilei_envelope_ionization_all_geometries
 
   script:
     # Force workdir cleaning in case of retried
@@ -29,7 +29,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - filterAM_adjustment
+    - smilei_envelope_ionization_all_geometries
     
   script:
     # Move in test dir
@@ -42,7 +42,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - filterAM_adjustment
+    - smilei_envelope_ionization_all_geometries
 
   script:
     # Move in test dir
@@ -55,7 +55,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - filterAM_adjustment
+    - smilei_envelope_ionization_all_geometries
 
   script:
     # Move in test dir
@@ -68,8 +68,8 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - filterAM_adjustment
-
+    - smilei_envelope_ionization_all_geometries
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -80,7 +80,7 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - filterAM_adjustment
+    - smilei_envelope_ionization_all_geometries
 
   script:
     # Move in test dir
@@ -92,8 +92,8 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - filterAM_adjustment
-
+    - smilei_envelope_ionization_all_geometries
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -103,7 +103,8 @@ makerunCollisions:
 use_picsar:
   stage: use_picsar
   only:
-    - merge_sdmd_dev
+    - develop
+    - smilei_envelope_ionization_all_geometries
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

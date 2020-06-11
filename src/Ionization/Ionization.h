@@ -22,7 +22,9 @@ public:
     
     //! Overloading of () operator
     virtual void operator()( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) {};
-    
+    //! method for envelope ionization
+    virtual void envelopeIonization( Particles *, unsigned int, unsigned int, std::vector<double> *, std::vector<double> *, std::vector<double> *, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ){};
+
     Particles new_electrons;
     
 protected:

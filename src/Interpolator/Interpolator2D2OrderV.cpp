@@ -371,7 +371,7 @@ void Interpolator2D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
 } // END Interpolator2D2Order
 
 
-void Interpolator2D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc )
+void Interpolator2D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
 {
     ERROR( "Vectorized interpolation for the envelope model is not implemented for 2D geometry" );
 } // END Interpolator2D2Order

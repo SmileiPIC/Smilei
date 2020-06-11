@@ -46,8 +46,11 @@ void EnvelopeBCAM_Axis::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, d
     
     //Field2D *Env_Aabs2Dcyl  = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // absolute value of the envelope |A|
 
-    //Field2D *Env_Eabs2Dcyl  = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // absolute value of the envelope of the electric field of the  laser |E|
+    Field2D *Env_Eabs2Dcyl  = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // absolute value of the envelope of the transverse electric field of the  laser |E|
+ 
+    Field2D *Env_Exabs2Dcyl  = static_cast<Field2D *>( EMfields->Env_Ex_abs_ ); // absolute value of the envelope of the longitudinal electric field of the  laser |Ex|
     
+    double ellipticity_factor = envelope->ellipticity_factor;
 // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
   
 
@@ -57,11 +60,11 @@ void EnvelopeBCAM_Axis::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, d
         //unsigned int j=2;
         for( unsigned int i=0; i<nx_p; i++ ) {
            ( *A2Dcyl )         ( i, 1 ) = (*A2Dcyl)(i,3);
-           ( *Phi2Dcyl )       ( i, 1 ) = std::abs((*A2Dcyl)  (i,3)) * std::abs((*A2Dcyl)  (i,3)) * 0.5;
+           ( *Phi2Dcyl )       ( i, 1 ) = ellipticity_factor*std::abs((*A2Dcyl)  (i,3)) * std::abs((*A2Dcyl)  (i,3)) * 0.5;
            // ( *Env_Aabs2Dcyl )  ( i, 1 ) = (*Env_Aabs2Dcyl)(i,3);
            // ( *Env_Eabs2Dcyl )  ( i, 1 ) = (*Env_Eabs2Dcyl)(i,3);
            ( *A2Dcyl )         ( i, 0 ) =  (*A2Dcyl)(i,4);
-           ( *Phi2Dcyl )       ( i, 0 ) = std::abs((*A2Dcyl)  (i,4)) * std::abs((*A2Dcyl)  (i,4)) * 0.5;
+           ( *Phi2Dcyl )       ( i, 0 ) = ellipticity_factor*std::abs((*A2Dcyl)  (i,4)) * std::abs((*A2Dcyl)  (i,4)) * 0.5;
            // ( *Env_Aabs2Dcyl )  ( i, 0 ) = (*Env_Aabs2Dcyl)(i,4);
            // ( *Env_Eabs2Dcyl )  ( i, 0 ) = (*Env_Eabs2Dcyl)(i,4);
 

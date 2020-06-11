@@ -481,8 +481,8 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
             }
             
             
-            H5::vect( gid, "first_index", vecSpecies[ispec]->first_index );
-            H5::vect( gid, "last_index", vecSpecies[ispec]->last_index );
+            H5::vect( gid, "first_index", vecSpecies[ispec]->particles->first_index );
+            H5::vect( gid, "last_index", vecSpecies[ispec]->particles->last_index );
             
         } // End if partSize
         
@@ -828,8 +828,8 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
             }
             
             if( params.vectorization_mode == "off" || params.vectorization_mode == "on" || params.cell_sorting ) {
-                H5::getVect( gid, "first_index", vecSpecies[ispec]->first_index, true );
-                H5::getVect( gid, "last_index", vecSpecies[ispec]->last_index, true );
+                H5::getVect( gid, "first_index", vecSpecies[ispec]->particles->first_index, true );
+                H5::getVect( gid, "last_index", vecSpecies[ispec]->particles->last_index, true );
             }
             // In the adaptive vectorization case, the bins will be recomputed
             // latter in the patch reconfiguration

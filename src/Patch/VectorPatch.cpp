@@ -89,7 +89,24 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
 {
     globalDiags = DiagnosticFactory::createGlobalDiagnostics( params, smpi, *this, radiation_tables_ );
     localDiags  = DiagnosticFactory::createLocalDiagnostics( params, smpi, *this, openPMD );
-
+    
+    // Verify that diagnostic names are not duplicated
+    vector<string> names( 0 );
+    for( unsigned int i=0; i<globalDiags.size(); i++ ) {
+        if( globalDiags[i]->name().empty() ) continue;
+        if( std::find(names.begin(), names.end(), globalDiags[i]->name()) != names.end() ) {
+            ERROR( "Two diagnostics have the same label " << globalDiags[i]->name() );
+        }
+        names.push_back( globalDiags[i]->name() );
+    }
+    for( unsigned int i=0; i<localDiags.size(); i++ ) {
+        if( localDiags[i]->name().empty() ) continue;
+        if( std::find(names.begin(), names.end(), localDiags[i]->name()) != names.end() ) {
+            ERROR( "Two diagnostics have the same label " << localDiags[i]->name() );
+        }
+        names.push_back( localDiags[i]->name() );
+    }
+    
     // Delete all unused fields
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         if( params.geometry!="AMcylindrical" ) {
@@ -996,15 +1013,29 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             #pragma omp for schedule(static)
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                 // Current spatial filtering
-                ( *this )( ipatch )->EMfields->binomialCurrentFilter(ipassfilter, params.currentFilter_passes);
+                if (params.currentFilter_model=="binomial"){
+                    ( *this )( ipatch )->EMfields->binomialCurrentFilter(ipassfilter, params.currentFilter_passes);
+                }
+                if (params.currentFilter_model=="customFIR"){
+                    ( *this )( ipatch )->EMfields->customFIRCurrentFilter(ipassfilter, params.currentFilter_passes, params.currentFilter_kernelFIR);
+                }
             }
             if (params.geometry != "AMcylindrical"){
-                SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJx_, *this, smpi );
-                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
-                SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJy_, *this, smpi );
-                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
-                SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJz_, *this, smpi );
-                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
+                if (params.currentFilter_model=="customFIR"){
+                    SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJx_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
+                    SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJy_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
+                    SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJz_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
+                } else {
+                    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJx_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
+                    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJy_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
+                    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJz_, *this, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
+                }                   
             } else {
                 for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
                     SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJl_[imode], *this, smpi );
@@ -1130,9 +1161,13 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
             ( *this )( ipatch )->EMfields->envelope->centerPhiAndGradPhi();
         }
 
+        // Exchange |Ex|, because it cannot be computed in all ghost cells like |E|
+        SyncVectorPatch::exchangeEnvEx( params, ( *this ), smpi );
+        SyncVectorPatch::finalizeexchangeEnvEx( params, ( *this ) );
         // Exchange GradPhi
         SyncVectorPatch::exchangeGradPhi( params, ( *this ), smpi );
         SyncVectorPatch::finalizeexchangeGradPhi( params, ( *this ) );
+
         timers.envelope.update();
     }
 
@@ -2975,6 +3010,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
         if( patches_[0]->EMfields->envelope != NULL ) {
             listA_.resize( size() ) ;
             listA0_.resize( size() ) ;
+            listEnvEx_.resize( size() ) ;
             // listEnvE_.resize( size() ) ;
             // listEnvA_.resize( size() ) ;
             // listPhi_.resize( size() ) ;
@@ -3004,6 +3040,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
                 listA_[ipatch]         = patches_[ipatch]->EMfields->envelope->A_ ;
                 listA0_[ipatch]        = patches_[ipatch]->EMfields->envelope->A0_ ;
+                listEnvEx_[ipatch]      = patches_[ipatch]->EMfields->Env_Ex_abs_ ;
                 // listEnvE_[ipatch]      = patches_[ipatch]->EMfields->Env_E_abs_ ;
                 // listEnvA_[ipatch]      = patches_[ipatch]->EMfields->Env_A_abs_ ;
                 // listPhi_[ipatch]       = patches_[ipatch]->EMfields->envelope->Phi_ ;
@@ -3063,6 +3100,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
         if( patches_[0]->EMfields->envelope != NULL ) {
             listA_.resize( size() ) ;
             listA0_.resize( size() ) ;
+            listEnvEx_.resize( size() ) ;
             // listEnvE_.resize( size() ) ;
             // listEnvA_.resize( size() ) ;
             // listPhi_.resize( size() ) ;
@@ -3079,6 +3117,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
                 listA_[ipatch]         = patches_[ipatch]->EMfields->envelope->A_ ;
                 listA0_[ipatch]        = patches_[ipatch]->EMfields->envelope->A0_ ;
+                listEnvEx_[ipatch]      = patches_[ipatch]->EMfields->Env_Ex_abs_ ;
                 // listEnvE_[ipatch]      = patches_[ipatch]->EMfields->Env_E_abs_ ;
                 // listEnvA_[ipatch]      = patches_[ipatch]->EMfields->Env_A_abs_ ;
                 // listPhi_[ipatch]       = patches_[ipatch]->EMfields->envelope->Phi_ ;
@@ -3248,6 +3287,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
                 listA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listA0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listEnvEx_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 // listEnvE_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 // listEnvA_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 // listPhi_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
@@ -3282,6 +3322,7 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
                 listA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 listA0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listEnvEx_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 // listEnvE_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 // listEnvA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
                 // listPhi_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
@@ -3792,8 +3833,8 @@ void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Check
                 //     * Calculate an approximate number of particles
                 PeekAtSpecies peek( params, ispec );
                 uint64_t number_of_particles = peek.totalNumberofParticles();
-                //     * Calculate the size of the first_index and last_index arrays
-                uint64_t b_size = ( s->first_index.size() + s->last_index.size() ) * params.tot_number_of_patches * sizeof( int );
+                //     * Calculate the size of the particles->first_index and particles->last_index arrays
+                uint64_t b_size = ( s->particles->first_index.size() + s->particles->last_index.size() ) * params.tot_number_of_patches * sizeof( int );
                 //     * Conclude the disk footprint of this species
                 checkpoint_particles_footprint += one_particle_size*number_of_particles + b_size;
             }

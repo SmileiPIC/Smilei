@@ -9,13 +9,15 @@ class ParticleBinning(Diagnostic):
 	
 	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, include={}, **kwargs):
 		
+		# Search available diags
+		diag_numbers, diag_names = self.simulation.getDiags(self._diagName)
+		
 		if diagNumber is None:
 			self._error += ["Printing available %s:" % self._diagName]
 			self._error += ["------------------------------------------------"]
-			diags = self.getDiags()
-			for diagNumber in diags:
+			for diagNumber in diag_numbers:
 				self._error += [self._printInfo(self._getInfo(diagNumber))]
-			if len(diags)==0:
+			if len(diag_numbers)==0:
 				self._error += ["      No %s found" % self._diagName]
 			return
 		
@@ -28,7 +30,11 @@ class ParticleBinning(Diagnostic):
 				return
 			self.operation = '#' + str(diagNumber)
 		elif type(diagNumber) is str:
-			self.operation = diagNumber
+			if diagNumber in diag_names:
+				i = diag_names.index(diagNumber)
+				self.operation = '#' + str(diag_numbers[i])
+			else:
+				self.operation = diagNumber
 		else:
 			self._error += ["Argument 'diagNumber' must be and integer or a string."]
 			return
@@ -415,17 +421,6 @@ class ParticleBinning(Diagnostic):
 			if "sumInfo" in ax: info += ax["sumInfo"]+"\n"
 			if "subsetInfo" in ax: info += ax["subsetInfo"]+"\n"
 		return info
-	
-	def getDiags(self):
-		allDiags = []
-		for path in self._results_path:
-			files = self._glob(path+self._os.sep+self._diagName+"*.h5")
-			diags = [int(self._re.findall(self._diagName+r"([0-9]+)[.]h5$",file)[0]) for file in files]
-			if len(allDiags)>0:
-				allDiags = [d for d in diags if d in allDiags]
-			else:
-				allDiags = diags
-		return sorted(allDiags)
 	
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):

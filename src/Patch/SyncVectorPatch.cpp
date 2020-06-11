@@ -478,7 +478,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 
 void SyncVectorPatch::exchangeE( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
-    // full_B_exchange is true if (Buneman BC, Lehe or spectral solvers)
+    // full_B_exchange is true if (Buneman BC, Lehe, Bouchard or spectral solvers)
     // E is exchange if spectral solver and/or at the end of initialisation of non-neutral plasma
 
     if( !params.full_B_exchange ) {
@@ -495,7 +495,7 @@ void SyncVectorPatch::exchangeE( Params &params, VectorPatch &vecPatches, Smilei
 
 void SyncVectorPatch::finalizeexchangeE( Params &params, VectorPatch &vecPatches )
 {
-    // full_B_exchange is true if (Buneman BC, Lehe or spectral solvers)
+    // full_B_exchange is true if (Buneman BC, Lehe, Bouchard or spectral solvers)
     // E is exchange if spectral solver and/or at the end of initialisation of non-neutral plasma
 
     if( !params.full_B_exchange ) {
@@ -509,7 +509,7 @@ void SyncVectorPatch::finalizeexchangeE( Params &params, VectorPatch &vecPatches
 
 void SyncVectorPatch::exchangeB( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
-    // full_B_exchange is true if (Buneman BC, Lehe or spectral solvers)
+    // full_B_exchange is true if (Buneman BC, Lehe, Bouchard or spectral solvers)
 
     if( vecPatches.listBx_[0]->dims_.size()==1 ) {
         // Exchange Bs0 : By_ and Bz_ (dual in X)
@@ -543,7 +543,7 @@ void SyncVectorPatch::exchangeB( Params &params, VectorPatch &vecPatches, Smilei
 
 void SyncVectorPatch::finalizeexchangeB( Params &params, VectorPatch &vecPatches )
 {
-    // full_B_exchange is true if (Buneman BC, Lehe or spectral solvers)
+    // full_B_exchange is true if (Buneman BC, Lehe, Bouchard or spectral solvers)
 
     if( vecPatches.listBx_[0]->dims_.size()==1 ) {
         // Finalize exchange Bs0 : By_ and Bz_ (dual in X)
@@ -673,6 +673,18 @@ void SyncVectorPatch::finalizeexchangeA( Params &params, VectorPatch &vecPatches
 // {
 // 
 // }
+
+void SyncVectorPatch::exchangeEnvEx( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
+{
+    // current envelope |Ex| value
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnvEx_, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnvEx_, vecPatches );
+}
+
+void SyncVectorPatch::finalizeexchangeEnvEx( Params &params, VectorPatch &vecPatches )
+{
+
+}
 
 // void SyncVectorPatch::exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 // {
