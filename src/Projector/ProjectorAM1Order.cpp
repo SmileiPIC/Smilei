@@ -239,9 +239,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
 void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode, bool diag_flag )
 {
-
-    if(rho == NULL)
-        return;
+    return;
 
     const double one_ov_9  = 1./9.; 
     const double one_ov_16 = 1./16.; 
