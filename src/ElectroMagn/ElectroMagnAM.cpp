@@ -390,6 +390,9 @@ void ElectroMagnAM::restartRhoold()
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         rho_old_AM_[imode]->put_to( 0. );
     }
+    for( unsigned int ifield=0 ; ifield < n_species*nmodes ; ifield++ ) {
+        rho_AM_s[ifield]->put_to( 0. );
+    }
 }
 
 void ElectroMagnAM::restartRhoJs()
@@ -1538,6 +1541,23 @@ void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute the total density and currents from species density and currents
 // ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagnAM::computeTotalRhoold()
+{
+    // sum all rho_AM_s which were used as temporary buffers on rho_old_AM
+    for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+        cField2D *rhoold  = rho_old_AM_[imode];
+        for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+            int ifield = imode*n_species+ispec;
+            cField2D *rho2D_s  = rho_AM_s[ifield];
+            for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                for( unsigned int j=0 ; j<nr_p ; j++ ) {
+                    ( *rhoold )( i, j ) += ( *rho2D_s )( i, j );
+                }
+            }
+        }
+    }
+    return;
+}
 void ElectroMagnAM::computeTotalRhoJ()
 {
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
