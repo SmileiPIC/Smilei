@@ -5,7 +5,7 @@ On a large cluster, refer to the administrator to install the requirements
 and to choose the compilation options.
 
 For a few existing machines, we provide instructions in the folder
-``scripts/CompileTools/machine``. Each file contains compiler flags
+``scripts/compile_tools/machine``. Each file contains compiler flags
 and environment setup to optimize Smilei's performance.
 
 .. rst-class:: fancy
