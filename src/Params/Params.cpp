@@ -951,7 +951,7 @@ void Params::compute()
             }
         }
         if (uncoupled_grids==true){
-            oversize[i] = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 ); 
+            oversize[i] = interpolation_order + ( exchange_particles_each-1 );
         }
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
