@@ -237,9 +237,33 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     
 } // END Project local current and charge densities (rho, Jl, Jr, Jt)
 
-void ProjectorAM1Order::axisBC(complex<double> *rho, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode, bool diag_flag )
+void ProjectorAM1Order::axisBC(ElectroMagnAM *emAM, bool diag_flag )
 {
     return;
+    
+    for (unsigned int imode=0; imode < Nmode; imode++){ 
+
+       std::complex<double> *rho     = &( *emAM->rho_AM_[imode] )( 0 );
+       std::complex<double> *rho_old = &( *emAM->rho_old_AM_[imode] )( 0 );
+       apply_axisBC(rho, imode);
+       apply_axisBC(rho_old, imode);
+    }
+
+    if (diag_flag){
+        unsigned int n_species = emAM->Jl_s.size() / Nmode;
+        for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
+            for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
+                unsigned int ifield = imode*n_species+ispec;
+                complex<double> *rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : NULL ;
+                apply_axisBC( rho, imode);
+            }
+        }
+    }
+
+}
+
+void ProjectorAM1Order::apply_axisBC(std::complex<double> *rho, unsigned int imode)
+{
 
     const double one_ov_9  = 1./9.; 
     const double one_ov_16 = 1./16.; 
