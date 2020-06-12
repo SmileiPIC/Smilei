@@ -11,7 +11,6 @@
 #include "VectorPatch.h"
 #include "DomainDecomposition.h"
 #include "Hilbert_functions.h"
-#include "CartesianDomainDecomposition.h"
 
 using namespace std;
 

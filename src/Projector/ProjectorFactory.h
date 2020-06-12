@@ -78,11 +78,11 @@ public:
         // AM simulation
         // ---------------
         else if( params.geometry == "AMcylindrical" ) {
-            //if (params.is_spectral){
-                //Proj = new ProjectorAM1Order( params, patch );
-            //} else {
+            if (params.is_spectral){
+                Proj = new ProjectorAM1Order( params, patch );
+            } else {
                 Proj = new ProjectorAM2Order( params, patch );
-            //}
+            }
         } else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
         }

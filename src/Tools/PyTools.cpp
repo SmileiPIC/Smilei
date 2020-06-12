@@ -85,13 +85,10 @@ double PyTools::get_py_result( PyObject *pyresult )
     double cppresult=0;
     if( pyresult ) {
         if( !py2scalar( pyresult, cppresult ) ) {
-            PyObject *ptype, *pvalue, *ptraceback;
-            PyErr_Fetch( &ptype, &pvalue, &ptraceback );
-            ERROR( "function does not return float but " << pyresult->ob_type->tp_name );
+            ERROR( "A python function does not return float but " << pyresult->ob_type->tp_name );
         }
     } else {
-        // we should never reach this point... something is weird
-        ERROR( "Function does not return a valid Python object" );
+        ERROR( "A python function raised an error" );
     }
     return cppresult;
 };
@@ -101,13 +98,10 @@ std::complex<double> PyTools::get_py_result_complex( PyObject *pyresult )
     std::complex<double> cppresult=0;
     if( pyresult ) {
         if( !py2scalar( pyresult, cppresult ) ) {
-            PyObject *ptype, *pvalue, *ptraceback;
-            PyErr_Fetch( &ptype, &pvalue, &ptraceback );
-            ERROR( "function does not return complex but " << pyresult->ob_type->tp_name );
+            ERROR( "A python function does not return complex but " << pyresult->ob_type->tp_name );
         }
     } else {
-        // we should never reach this point... something is weird
-        ERROR( "Function does not return a valid Python object" );
+        ERROR( "A python function raised an error" );
     }
     return cppresult;
 };

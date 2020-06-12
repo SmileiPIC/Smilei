@@ -148,73 +148,8 @@ void CollisionalIonization::assignDatabase( unsigned int index )
     
 }
 
-// Method to prepare the ionization
-// "not_duplicated_particle" is true if the current particle #2 is already present in
-// another pair of particles
-void CollisionalIonization::prepare2( Particles *p1, int i1, Particles *p2, int i2,
-                                      bool not_duplicated_particle )
-{
-    double E; // electron energy
-    double We, Wi; // weights
-    double cs, x;
-    int Zstar;
-    // Calculates the current electron energy, the ion charge and weight
-    if( electronFirst ) {
-        E = sqrt( 1. + pow( p1->momentum( 0, i1 ), 2 )+pow( p1->momentum( 1, i1 ), 2 )+pow( p1->momentum( 2, i1 ), 2 ) )-1.;
-        Zstar = p2->charge( i2 );
-        Wi = p2->weight( i2 );
-        if( not_duplicated_particle ) {
-            ni += Wi;
-        }
-    } else {
-        E = sqrt( 1. + pow( p2->momentum( 0, i2 ), 2 )+pow( p2->momentum( 1, i2 ), 2 )+pow( p2->momentum( 2, i2 ), 2 ) )-1.;
-        Zstar = p1->charge( i1 );
-        Wi = p1->weight( i1 );
-        ni += Wi;
-    }
-    if( Zstar<0 ) {
-        ERROR( "Collisional ionization requires positively charged ions" );
-    }
-    // No ionization if fully ionized already
-    if( Zstar>=atomic_number ) {
-        return;
-    }
-    // Retrieve the cross section from the database
-    x = a2*log( a1*E ); // index in the database, which depends on the electron energy E
-    if( x<0. ) {
-        x = 0.;
-    } else if( x>npointsm1 ) {
-        x = npointsm1;
-    }
-    cs = ( *crossSection )[Zstar][ int( x ) ];
-    // Calculate hybrid density nei
-    if( cs>0. ) { // only pairs that can ionize
-        if( electronFirst ) {
-            We = p1->weight( i1 );
-            ne += We;
-        } else {
-            We = p2->weight( i2 );
-            if( not_duplicated_particle ) {
-                ne += We;
-            }
-        }
-        nei += We<Wi ? We : Wi;
-    }
-}
-
-// Method to prepare the ionization
-void CollisionalIonization::prepare3( double timestep, double inv_cell_volume )
-{
-    // Calculate the coeff used later for ionization probability
-    if( nei<=0. ) {
-        coeff = 0.;
-    } else {
-        coeff = ne*ni/nei * timestep * inv_cell_volume;
-    }
-}
-
 // Method to apply the ionization
-void CollisionalIonization::apply( Patch *patch, Particles *p1, int i1, Particles *p2, int i2 )
+void CollisionalIonization::apply( Patch *patch, Particles *p1, int i1, Particles *p2, int i2, double coeff )
 {
     double gamma1 = p1->LorentzFactor( i1 );
     double gamma2 = p2->LorentzFactor( i2 );
@@ -224,58 +159,53 @@ void CollisionalIonization::apply( Patch *patch, Particles *p1, int i1, Particle
                      - p1->momentum( 1, i1 )*p2->momentum( 1, i2 )
                      - p1->momentum( 2, i1 )*p2->momentum( 2, i2 );
     // Random numbers
-    double U1  = patch->xorshift32() * patch->xorshift32_invmax;
-    double U2  = patch->xorshift32() * patch->xorshift32_invmax;
+    double U1  = patch->rand_->uniform();
+    double U2  = patch->rand_->uniform();
     // Calculate the rest of the stuff
     if( electronFirst ) {
-        calculate( gamma_s, gamma1, gamma2, p1, i1, p2, i2, U1, U2 );
+        calculate( gamma_s, gamma1, gamma2, p1, i1, p2, i2, U1, U2, coeff );
     } else {
-        calculate( gamma_s, gamma2, gamma1, p2, i2, p1, i1, U1, U2 );
+        calculate( gamma_s, gamma2, gamma1, p2, i2, p1, i1, U1, U2, coeff );
     }
 }
 
 // Method used by ::apply so that we are sure that electrons are the first species
 void CollisionalIonization::calculate( double gamma_s, double gammae, double gammai,
-                                       Particles *pe, int ie, Particles *pi, int ii, double U1, double U2 )
+                                       Particles *pe, int ie, Particles *pi, int ii, double U1, double U2, double coeff )
 {
-    double We, Wi; // weights
-    double a, x, cs, w, e, pr, p2, WeWi, WiWe, cum_prob=0., cp;
-    int i, j, k, p, kmax;
-    
     // Get ion charge
     int Zstar = pi->charge( ii );
     if( Zstar>=atomic_number ) {
         return;    // if already fully ionized, do nothing
     }
     
+    // Calculate weights
+    double We = pe->weight( ie );
+    double Wi = pi->weight( ii );
+    
     // Calculate coefficient (1-ve.vi)*ve' where ve' is in ion frame
     double K = coeff * sqrt( gamma_s*gamma_s-1. )/gammai;
     
-    // Calculate weights
-    We = pe->weight( ie );
-    Wi = pi->weight( ii );
-    WeWi = We/Wi;
-    WiWe = 1./WeWi;
-    
     // Loop for multiple ionization
     // k+1 is the number of ionizations
-    kmax = atomic_number-Zstar-1;
-    for( k = 0; k <= kmax;  k++ ) {
+    int kmax = atomic_number-Zstar-1;
+    double cs, w, e, cum_prob;
+    for( int k = 0; k <= kmax;  k++ ) {
         // Calculate the location x (~log of energy) in the databases
-        x = a2*log( a1*( gamma_s-1. ) );
+        double x = a2*log( a1*( gamma_s-1. ) );
         
         // Interpolate the databases at location x
-        if( x<0. ) {
+        if( x < 0. ) {
             break;    // if energy below Emin, do nothing
         }
-        if( x<npointsm1 ) { // if energy within table range, interpolate
-            i = int( x );
-            a = x - ( double )i;
+        if( x < npointsm1 ) { // if energy within table range, interpolate
+            int i = int( x );
+            double a = x - ( double )i;
             cs = ( ( *crossSection )[Zstar][i+1]-( *crossSection )[Zstar][i] )*a + ( *crossSection )[Zstar][i];
             w  = ( ( *transferredEnergy )[Zstar][i+1]-( *transferredEnergy )[Zstar][i] )*a + ( *transferredEnergy )[Zstar][i];
             e  = ( ( *lostEnergy )[Zstar][i+1]-( *lostEnergy )[Zstar][i] )*a + ( *lostEnergy )[Zstar][i];
         } else { // if energy above table range, extrapolate
-            a = x - npointsm1;
+            double a = x - npointsm1;
             cs = ( ( *crossSection )[Zstar][npoints-1]-( *crossSection )[Zstar][npoints-2] )*a + ( *crossSection )[Zstar][npoints-1];
             w  = ( *transferredEnergy )[Zstar][npoints-1];
             e  = ( *lostEnergy )[Zstar][npoints-1];
@@ -292,23 +222,23 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         if( k==0 ) {
             cum_prob = prob[k];
         } else if( k<kmax ) {
-            for( p=0; p<k; p++ ) {
-                cp = 1. - rate[k]*irate[p];
-                for( j=0  ; j<p; j++ ) {
+            for( int p=0; p<k; p++ ) {
+                double cp = 1. - rate[k]*irate[p];
+                for( int j=0  ; j<p; j++ ) {
                     cp *= 1.-rate[p]*irate[j];
                 }
-                for( j=p+1; j<k; j++ ) {
+                for( int j=p+1; j<k; j++ ) {
                     cp *= 1.-rate[p]*irate[j];
                 }
                 cum_prob += ( prob[k]-prob[p] )/cp;
             }
         } else {
-            for( p=0; p<k; p++ ) {
-                cp = 1. - rate[k]*irate[p];
-                for( j=0  ; j<p; j++ ) {
+            for( int p=0; p<k; p++ ) {
+                double cp = 1. - rate[k]*irate[p];
+                for( int j=0  ; j<p; j++ ) {
                     cp *= 1.-rate[p]*irate[j];
                 }
-                for( j=p+1; j<k; j++ ) {
+                for( int j=p+1; j<k; j++ ) {
                     cp *= 1.-rate[p]*irate[j];
                 }
                 cum_prob += ( 1.-prob[k]+rate[k]*irate[p]*( prob[p]-1. ) )/cp;
@@ -321,14 +251,14 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         }
         
         // Otherwise, we do the ionization
-        p2 = gamma_s*gamma_s - 1.;
+        double p2 = gamma_s*gamma_s - 1.;
         // Ionize the atom and create electron
-        if( U2 < WeWi ) {
+        if( U2 < We/Wi ) {
             pi->charge( ii )++; // increase ion charge
             pe->copyParticleSafe( ie, new_electrons ); // duplicate electron
             new_electrons.Weight.back() = Wi; // new electron has ion weight
             // Calculate the new electron momentum
-            pr = sqrt( w*( w+2. )/p2 );
+            double pr = sqrt( w*( w+2. )/p2 );
             new_electrons.Momentum[0].back() *= pr;
             new_electrons.Momentum[1].back() *= pr;
             new_electrons.Momentum[2].back() *= pr;
@@ -343,9 +273,9 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
             }
         }
         // Lose incident electron energy
-        if( U2 < WiWe ) {
+        if( U2 < Wi/We ) {
             // Calculate the modified electron momentum
-            pr = sqrt( ( pow( gamma_s-e, 2 )-1. )/p2 );
+            double pr = sqrt( ( pow( gamma_s-e, 2 )-1. )/p2 );
             pe->momentum( 0, ie ) *= pr;
             pe->momentum( 1, ie ) *= pr;
             pe->momentum( 2, ie ) *= pr;

@@ -12,6 +12,8 @@
 #include "MF_SolverAM_Yee.h"
 #include "MF_Solver2D_Grassi.h"
 #include "MF_Solver2D_GrassiSpL.h"
+#include "MF_Solver2D_Bouchard.h"
+#include "MF_Solver3D_Bouchard.h"
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
 #include "MF_Solver3D_Lehe.h"
@@ -19,6 +21,7 @@
 #include "PXR_Solver2D_GPSTD.h"
 #include "PXR_Solver3D_FDTD.h"
 #include "PXR_Solver3D_GPSTD.h"
+#include "PXR_SolverAM_GPSTD.h"
 
 #include "Params.h"
 
@@ -62,7 +65,10 @@ public:
                 solver = new PXR_Solver3D_GPSTD( params );
             }
         } else if( params.geometry == "AMcylindrical" ) {
-            solver = new MA_SolverAM_norm( params );
+            if( params.is_pxr == false )
+                solver = new MA_SolverAM_norm( params );
+            else
+                solver = new PXR_SolverAM_GPSTD( params );
         }
         
         if( !solver ) {
@@ -93,6 +99,8 @@ public:
                     solver = new MF_Solver2D_Grassi( params );
                 } else if( params.maxwell_sol == "GrassiSpL" ) {
                     solver = new MF_Solver2D_GrassiSpL( params );
+                } else if( params.maxwell_sol == "Bouchard" ) {
+                    solver = new MF_Solver2D_Bouchard( params );
                 } else if( params.maxwell_sol == "Cowan" ) {
                     solver = new MF_Solver2D_Cowan( params );
                 } else if( params.maxwell_sol == "Lehe" ) {
@@ -108,14 +116,20 @@ public:
                     solver = new MF_Solver3D_Yee( params );
                 } else if( params.maxwell_sol == "Lehe" ) {
                     solver = new MF_Solver3D_Lehe( params );
+                } else if( params.maxwell_sol == "Bouchard" ) {
+                    solver = new MF_Solver3D_Bouchard( params );
                 }
             } else {
                 solver = new NullSolver( params );
             }
         } else if( params.geometry == "AMcylindrical" ) {
-            if( params.maxwell_sol == "Yee" ) {
-                solver = new MF_SolverAM_Yee( params );
+            if( params.is_pxr == false ) {
+                if( params.maxwell_sol == "Yee" ) {
+                    solver = new MF_SolverAM_Yee( params );
+                }
             }
+            else
+                solver = new NullSolver( params );
         }
         
         if( !solver ) {

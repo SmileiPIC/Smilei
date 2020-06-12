@@ -137,8 +137,14 @@ public:
 
     //! Define if laser envelope model is used (default = false)
     bool Laser_Envelope_model=false;
+
+    //! Define if there is at least one species ionized by envelope
+    bool envelope_ionization_is_active = false;
+    double envelope_ellipticity = 0.; // (0: linear polarization, 1: circular polarization)
+    double envelope_polarization_phi = 0.; // used only for envelope ionization; in radians, angle with the xy plane
     // define the solver for the envelope equation
     std::string envelope_solver;
+
     
     //Poisson solver
     //! Do we solve poisson
@@ -166,6 +172,8 @@ public:
 
     //! Current spatial filter: number of binomial passes
     std::vector<unsigned int> currentFilter_passes;
+    std::string currentFilter_model;
+    std::vector<double> currentFilter_kernelFIR;
 
     //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 201, 665 (2004)]
     bool Friedman_filter;
@@ -199,7 +207,15 @@ public:
 
     //! number of cells in every direction of the local domain
     std::vector<unsigned int> n_space;
-
+    
+    //! number of cells in every direction of the local domain (can be different from 1 MPI process to another)
+    std::vector<unsigned int> n_space_region;
+    
+    std::vector<unsigned int> number_of_region;
+    std::vector< std::vector<int> > offset_map;
+    std::vector< std::vector< std::vector<int> > > map_rank;
+    std::vector<int> coordinates;
+    
     //! number of cells in every direction of the global domain
     std::vector<unsigned int> n_space_global;
 
@@ -217,7 +233,15 @@ public:
 
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
+    unsigned int custom_oversize ;
+    std::vector<unsigned int> region_oversize;
+    unsigned int custom_region_oversize ;
+    //! Number of damping cells
+    std::vector<unsigned int> number_of_damping_cells;
 
+    unsigned int pseudo_spectral_guardells;
+    bool apply_rotational_cleaning;
+    
     //! True if restart requested
     bool restart;
 
@@ -290,9 +314,17 @@ public:
 
     //! every for the standard pic timeloop output
     unsigned int print_every;
+    
+    // Double grids parameters (particles and fields)
+    std::vector<unsigned int> global_factor;
+    void uncoupled_decomposition();
+    void uncoupled_decomposition_1D();
+    void uncoupled_decomposition_2D();
+    void uncoupled_decomposition_3D();
+    void print_uncoupled_params();
+    bool uncoupled_grids;
 
     // PXR parameters
-    std::vector<unsigned int> global_factor;
     bool  is_spectral=false ;
     bool  is_pxr=false ;
     int   norderx = 2;

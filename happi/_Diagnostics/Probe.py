@@ -10,21 +10,34 @@ class Probe(Diagnostic):
 		self._alltimesteps = []
 		self._chunksize = chunksize
 		self._subsetinfo = {}
-
+		
+		# Search available diags
+		diag_numbers, diag_names = self.simulation.getDiags("Probes")
+		
 		# If no probeNumber, print available probes
 		if probeNumber is None:
-			self._probes = self.getProbes()
-			if len(self._probes)>0:
+			if len(diag_numbers)>0:
 				self._error += ["Printing available probes:"]
 				self._error += ["--------------------------"]
-				for p in self._probes:
+				for p in diag_numbers:
 					self._error += [self._info(self._getInfo(p))]
 			else:
 				self._error += ["No probes found"]
 			return
-
+		elif type(probeNumber) is str:
+			if probeNumber not in diag_names:
+				self._error += ["Diagnostic not loaded: no probe diagnostic #"+str(probeNumber)+" found"]
+				return
+			i = diag_names.index( probeNumber )
+		else:
+			if probeNumber not in diag_numbers:
+				self._error += ["Diagnostic not loaded: no probe diagnostic #"+str(probeNumber)+" found"]
+				return
+			i = diag_numbers.index( probeNumber )
+		self.probeNumber = diag_numbers[i]
+		self.probeName = diag_names[i]
+		
 		# Try to get the probe from the hdf5 file
-		self.probeNumber = probeNumber
 		for path in self._results_path:
 			# Open file
 			file = path+self._os.sep+"Probes"+str(self.probeNumber)+".h5"
@@ -346,18 +359,7 @@ class Probe(Diagnostic):
 		return out
 	def _getMyInfo(self):
 		return self._getInfo(self.probeNumber)
-
-	# get all available probes
-	def getProbes(self):
-		for path in self._results_path:
-			files = self._glob(path+self._os.sep+"Probes*.h5")
-			probes = [self._re.findall(r"Probes([0-9]+)[.]h5$",file)[0] for file in files]
-			try   :
-				allprobes = [p for p in probes if p in allprobes]
-			except:
-				allprobes = probes
-		return allprobes
-
+	
 	# get all available fields
 	def getFields(self):
 		for file in self._h5probe:

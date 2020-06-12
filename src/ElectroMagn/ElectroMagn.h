@@ -183,14 +183,20 @@ public:
     //! Laser envelope
     LaserEnvelope *envelope;
     
-    //! Envelope of the laser vector potential component along the polarization direction, absolute value
+    //! In linear polarization, this is the absolute value of the envelope of the vector potential in the polarization direction
+    //! In circular polarization, this is the absolute value of the envelope of the vector potential along one direction
+    //! This choice means that if the laser has a given a0 at waist in vacuum, 
+    //! in the same point max(Env_A_abs_) = a0 in linear polarization and max(Env_A_abs_) = a0/sqrt(2) in circular polarization. 
+    //! However in the same point the ponderomotive potential will always have max(Phi) = a0^2/2.
     Field *Env_A_abs_;
     
     //! Chi field (i.e. susceptibility) for envelope equation
     Field *Env_Chi_;
     
-    //! Envelope of laser electric field along the polarization direction, absolute value
+    //! Envelope of laser electric field along the same direction of Env_A_abs, absolute value
     Field *Env_E_abs_;
+    //! Envelope of laser electric field along the longitudinal direction, absolute value
+    Field *Env_Ex_abs_;
     
     //! Vector of electric fields used when a filter is applied
     std::vector<Field *> Exfilter;
@@ -223,7 +229,7 @@ public:
     std::vector<unsigned int> species_starts;
     
     //! Creates a new field with the right characteristics, depending on the name
-    virtual Field *createField( std::string fieldname ) = 0;
+    virtual Field *createField( std::string fieldname, Params& params ) = 0;
     
     //! nDim_field (from params)
     const unsigned int nDim_field;
@@ -244,7 +250,7 @@ public:
     
     //!\todo should this be just an integer???
     //! Oversize domain to exchange less particles (from params)
-    const std::vector<unsigned int> oversize;
+    std::vector<unsigned int> oversize;
     
     //! Constructor for Electromagn
     ElectroMagn( Params &params, Patch *patch );
@@ -321,6 +327,7 @@ public:
     virtual void saveMagneticFields( bool ) = 0;
     virtual void centerMagneticFields() = 0;
     virtual void binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes ) = 0;
+    virtual void customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff) = 0;
     
     void boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow );
     
@@ -408,7 +415,7 @@ public:
     void applyAntenna( unsigned int iAntenna, double intensity );
     
     //! Method that fills the initial spatial profile of the antenna
-    virtual void initAntennas( Patch *patch ) {};
+    virtual void initAntennas( Patch *patch, Params& params ) {};
     
     double computeNRJ();
     double getLostNrjMW() const
@@ -438,7 +445,7 @@ public:
         int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
         
         if( Env_Chi_ ) {
-            emSize += 3;    //Env_Chi, Env_A_abs, Env_E_abs;
+            emSize += 4;    //Env_Chi, Env_A_abs, Env_E_abs, Env_Ex_abs;
         }
         
         for( unsigned int ispec=0 ; ispec<Jx_s.size() ; ispec++ ) {

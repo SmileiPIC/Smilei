@@ -78,6 +78,7 @@ void LaserEnvelope2D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     cField2D *A02D         = static_cast<cField2D *>( A0_ );
     Field2D *Env_Aabs2D    = static_cast<Field2D *>( EMfields->Env_A_abs_ );
     Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_E_abs_ );
+    Field2D *Env_Exabs2D   = static_cast<Field2D *>( EMfields->Env_Ex_abs_ );
     
     Field2D *Phi2D         = static_cast<Field2D *>( Phi_ );
     Field2D *Phi_m2D       = static_cast<Field2D *>( Phi_m );
@@ -107,19 +108,19 @@ void LaserEnvelope2D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
         position[1] = pos1;
         for( unsigned int j=0 ; j<A_->dims_[1] ; j++ ) { // y loop
             // init envelope through Python function
-            ( *A2D )( i, j )      += profile_->complexValueAt( position, t );
-            ( *A02D )( i, j )     += profile_->complexValueAt( position, t_previous_timestep );
+            ( *A2D )( i, j )        += profile_->complexValueAt( position, t );
+            ( *A02D )( i, j )       += profile_->complexValueAt( position, t_previous_timestep );
             
             // |A|
-            ( *Env_Aabs2D )( i, j )= std::abs( ( *A2D )( i, j ) );
+            ( *Env_Aabs2D )( i, j )  = std::abs( ( *A2D )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|
-            ( *Env_Eabs2D )( i, j )= std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*( *A2D )( i, j ) );
+            ( *Env_Eabs2D )( i, j )  = std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*( *A2D )( i, j ) );
             // compute ponderomotive potential at timestep n
-            ( *Phi2D )( i, j )     = std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
+            ( *Phi2D )( i, j )       = ellipticity_factor*std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
             // compute ponderomotive potential at timestep n-1
-            ( *Phi_m2D )( i, j )   = std::abs( ( *A02D )( i, j ) ) * std::abs( ( *A02D )( i, j ) ) * 0.5;
+            ( *Phi_m2D )( i, j )     = ellipticity_factor*std::abs( ( *A02D )( i, j ) ) * std::abs( ( *A02D )( i, j ) ) * 0.5;
             // interpolate in time
-            ( *Phi_m2D )( i, j )   = 0.5*( ( *Phi_m2D )( i, j )+( *Phi2D )( i, j ) );
+            ( *Phi_m2D )( i, j )     = 0.5*( ( *Phi_m2D )( i, j )+( *Phi2D )( i, j ) );
             
             position[1] += cell_length[1];
         } // end y loop
@@ -128,7 +129,7 @@ void LaserEnvelope2D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
         t_previous_timestep   = position[0]+timestep;
     } // end x loop
     
-    // Compute gradient of ponderomotive potential
+    // Compute gradient of ponderomotive potential and |Ex|
     for( unsigned int i=1 ; i<A_->dims_[0]-1 ; i++ ) { // x loop
         for( unsigned int j=1 ; j<A_->dims_[1]-1 ; j++ ) { // y loop
             // gradient in x direction
@@ -137,6 +138,8 @@ void LaserEnvelope2D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
             // gradient in y direction
             ( *GradPhiy2D )( i, j ) = ( ( *Phi2D )( i, j+1 )-( *Phi2D )( i, j-1 ) ) * one_ov_2dy;
             ( *GradPhiy_m2D )( i, j ) = ( ( *Phi_m2D )( i, j+1 )-( *Phi_m2D )( i, j-1 ) ) * one_ov_2dy;
+            // |Ex envelope| = |-(dA/dy|
+            ( *Env_Exabs2D )( i, j ) = std::abs( ( ( *A2D )( i, j+1 )-( *A2D )( i, j-1 ) )*one_ov_2dy );
         } // end y loop
     } // end x loop
     
@@ -276,23 +279,27 @@ void LaserEnvelope2D::computePhiEnvAEnvE( ElectroMagn *EMfields )
 
     // computes Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
     
-    cField2D *A2D          = static_cast<cField2D *>( A_ );                  // the envelope at timestep n
+    cField2D *A2D          = static_cast<cField2D *>( A_ );                   // the envelope at timestep n
 
-    cField2D *A02D         = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
+    cField2D *A02D         = static_cast<cField2D *>( A0_ );                  // the envelope at timestep n-1
     
-    Field2D *Phi2D         = static_cast<Field2D *>( Phi_ );                 //Phi=|A|^2/2 is the ponderomotive potential
+    Field2D *Phi2D         = static_cast<Field2D *>( Phi_ );                  //Phi=|A|^2/2 is the ponderomotive potential
 
-    Field2D *Env_Aabs2D    = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic
+    Field2D *Env_Aabs2D    = static_cast<Field2D *>( EMfields->Env_A_abs_ );  // field for diagnostic and ionization
     
-    Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
+    Field2D *Env_Eabs2D    = static_cast<Field2D *>( EMfields->Env_E_abs_ );  // field for diagnostic and ionization
+ 
+    Field2D *Env_Exabs2D   = static_cast<Field2D *>( EMfields->Env_Ex_abs_ ); // field for diagnostic and ionization
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
-    for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        for( unsigned int j=0 ; j < A_->dims_[1]-1; j++ ) { // y loop
-            ( *Phi2D )( i, j )       = std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
-            ( *Env_Aabs2D )( i, j ) = std::abs( ( *A2D )( i, j ) );
-            // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivativee
-            ( *Env_Eabs2D )( i, j ) = std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*( *A2D )( i, j ) );
+    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
+        for( unsigned int j=1 ; j < A_->dims_[1]-1; j++ ) { // y loop
+            ( *Phi2D )( i, j )       = ellipticity_factor*std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
+            ( *Env_Aabs2D )( i, j )  = std::abs( ( *A2D )( i, j ) );
+            // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
+            ( *Env_Eabs2D )( i, j )  = std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*( *A2D )( i, j ) );
+            // |Ex envelope| = |-(dA/dy|, central finite difference for the space derivative
+            ( *Env_Exabs2D )( i, j ) = std::abs( ( ( *A2D )( i, j+1 )-( *A2D )( i, j-1 ) )*one_ov_2dy );      
         } // end y loop
     } // end x loop
     
@@ -338,7 +345,7 @@ void LaserEnvelope2D::savePhiAndGradPhi()
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
         for( unsigned int j=0 ; j < A_->dims_[1]-1 ; j++ ) { // y loop
         
-            // ponderomotive potential Phi=|A|^2/2
+            // ponderomotive potential Phi=ellipticity_factor*|A|^2/2
             ( *Phi_m2D )( i, j )       = ( *Phi2D )( i, j );
             
             // gradient of ponderomotive potential

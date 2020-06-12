@@ -153,6 +153,13 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
         dynamics_PHIpart.resize( omp_get_max_threads() );
         dynamics_PHI_mpart.resize( omp_get_max_threads() );
         dynamics_inv_gamma_ponderomotive.resize( omp_get_max_threads() );
+        if (params.envelope_ionization_is_active){
+            dynamics_EnvEabs_part.resize( omp_get_max_threads() );
+            dynamics_EnvExabs_part.resize( omp_get_max_threads() );
+        } else {
+            dynamics_EnvEabs_part.clear();
+            dynamics_EnvExabs_part.clear();
+        }
     }
 #else
     dynamics_Epart.resize( 1 );
@@ -170,6 +177,13 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
         dynamics_PHIpart.resize( 1 );
         dynamics_PHI_mpart.resize( 1 );
         dynamics_inv_gamma_ponderomotive.resize( 1 );
+        if (params.envelope_ionization_is_active){
+            dynamics_EnvEabs_part.resize( 1 );
+            dynamics_EnvExabs_part.resize( 1 );
+        } else {
+            dynamics_EnvEabs_part.clear();
+            dynamics_EnvExabs_part.clear();
+        }
     }
 #endif
 
@@ -656,7 +670,7 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &maxtag, int tag, Param
     // Adaptive vectorization:
     // In the case of the adaptive mixed sort Vectorization,
     // we communicate the operator state (vectorized_operators variable)
-    // to deduce the bin number (last_index.size())
+    // to deduce the bin number (particles->last_index.size())
     // In both adaptive cases :
     //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
     //   - default values of the bin number is defined by the vectorized conf
@@ -672,7 +686,7 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &maxtag, int tag, Param
 
     // For the particles
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        isend( &( patch->vecSpecies[ispec]->last_index ), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
+        isend( &( patch->vecSpecies[ispec]->particles->last_index ), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
         if( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ) {
             patch->vecSpecies[ispec]->exchangePatch = createMPIparticles( patch->vecSpecies[ispec]->particles );
             isend( patch->vecSpecies[ispec]->particles, to, tag+maxtag+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[maxtag+2*ispec+1] );
@@ -750,7 +764,7 @@ void SmileiMPI::recv( Patch *patch, int from, int tag, Params &params )
     recv_species( patch, from, tag, params );
     
     // Receive EM fields
-    patch->EMfields->initAntennas( patch );
+    patch->EMfields->initAntennas( patch, params );
     if( params.geometry != "AMcylindrical" ) {
         recv( patch->EMfields, from, tag );
     } else {
@@ -771,7 +785,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
     // Adaptive vectorization:
     // In the case of the adaptive mixed sort Vectorization,
     // we communicate the operator state (vectorized_operators variable)
-    // to deduce the bin number (last_index.size())
+    // to deduce the bin number (particles->last_index.size())
     // In both adaptive cases :
     //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
     //   - default values of the bin number is defined by the vectorized conf
@@ -784,20 +798,20 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
             patch->vecSpecies[ispec]->vectorized_operators = patch->buffer_vecto[ispec];
             if( ! patch->buffer_vecto[ispec] ) {
-                patch->vecSpecies[ispec]->last_index.resize( 1 );
-                patch->vecSpecies[ispec]->first_index.resize( 1 );
+                patch->vecSpecies[ispec]->particles->last_index.resize( 1 );
+                patch->vecSpecies[ispec]->particles->first_index.resize( 1 );
             }
         }
     }
 
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         //Receive last_index
-        recv( &patch->vecSpecies[ispec]->last_index, from, tag+2*ispec+1 );
+        recv( &patch->vecSpecies[ispec]->particles->last_index, from, tag+2*ispec+1 );
         //Reconstruct first_index from last_index
-        memcpy( &( patch->vecSpecies[ispec]->first_index[1] ), &( patch->vecSpecies[ispec]->last_index[0] ), ( patch->vecSpecies[ispec]->last_index.size()-1 )*sizeof( int ) );
-        patch->vecSpecies[ispec]->first_index[0]=0;
+        memcpy( &( patch->vecSpecies[ispec]->particles->first_index[1] ), &( patch->vecSpecies[ispec]->particles->last_index[0] ), ( patch->vecSpecies[ispec]->particles->last_index.size()-1 )*sizeof( int ) );
+        patch->vecSpecies[ispec]->particles->first_index[0]=0;
         //Prepare patch for receiving particles
-        nbrOfPartsRecv = patch->vecSpecies[ispec]->last_index.back();
+        nbrOfPartsRecv = patch->vecSpecies[ispec]->particles->last_index.back();
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if( nbrOfPartsRecv > 0 ) {
@@ -806,7 +820,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
             MPI_Type_free( &( recvParts ) );
         }
         /*std::cerr << "Species: " << ispec
-                  << " last_index: " <<  patch->vecSpecies[ispec]->last_index[0]
+                  << " particles->last_index: " <<  patch->vecSpecies[ispec]->particles->last_index[0]
                   << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
     }
     
@@ -845,7 +859,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
 void SmileiMPI::recv_fields( Patch *patch, int from, int tag, Params &params )
 {
     // Receive EM fields
-    patch->EMfields->initAntennas( patch );
+    patch->EMfields->initAntennas( patch, params );
     if( params.geometry != "AMcylindrical" ) {
         recv( patch->EMfields, from, tag );
     } else {
@@ -1441,6 +1455,20 @@ void SmileiMPI::isendComplex( Field *field, int to, int hindex, MPI_Request &req
 
 } // End isendComplex ( Field )
 
+void SmileiMPI::sendComplex( Field *field, int to, int hindex )
+{
+    cField *cf = static_cast<cField *>( field );
+    MPI_Send( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD );
+    
+} // End isendComplex ( Field )
+
+
+void SmileiMPI::send(Field* field, int to, int hindex)
+{
+    MPI_Send( &((*field)(0)),field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD );
+
+} // End isend ( Field )
+
 
 void SmileiMPI::recv( Field *field, int from, int hindex )
 {
@@ -1454,6 +1482,19 @@ void SmileiMPI::recvComplex( Field *field, int from, int hindex )
     MPI_Status status;
     cField *cf = static_cast<cField *>( field );
     MPI_Recv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &status );
+
+} // End recv ( Field )
+
+void SmileiMPI::irecvComplex( Field *field, int from, int hindex, MPI_Request &request )
+{
+    cField *cf = static_cast<cField *>( field );
+    MPI_Irecv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
+    
+} // End recv ( Field )
+
+void SmileiMPI::irecv(Field* field, int from, int hindex, MPI_Request& request)
+{
+    MPI_Irecv( &((*field)(0)),2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
 
 } // End recv ( Field )
 
@@ -1523,12 +1564,12 @@ void SmileiMPI::computeGlobalDiags( Diagnostic *diag, int timestep )
 {
     if ( DiagnosticScalar* scalar = dynamic_cast<DiagnosticScalar*>( diag ) ) {
         computeGlobalDiags(scalar, timestep);
-    } else if (DiagnosticParticleBinning* particles = dynamic_cast<DiagnosticParticleBinning*>( diag )) {
-        computeGlobalDiags(particles, timestep);
     } else if (DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>( diag )) {
         computeGlobalDiags(screen, timestep);
     } else if (DiagnosticRadiationSpectrum* rad = dynamic_cast<DiagnosticRadiationSpectrum*>( diag )) {
         computeGlobalDiags(rad, timestep);
+    } else if (DiagnosticParticleBinning* particles = dynamic_cast<DiagnosticParticleBinning*>( diag )) {
+        computeGlobalDiags(particles, timestep);
     }
 }
 
@@ -1656,8 +1697,10 @@ void SmileiMPI::computeGlobalDiags( DiagnosticScreen *diagScreen, int timestep )
 void SmileiMPI::computeGlobalDiags(DiagnosticRadiationSpectrum* diagRad, int timestep)
 {
     if (timestep - diagRad->timeSelection->previousTime() == diagRad->time_average-1) {
-        MPI_Reduce(diagRad->filename.size()?MPI_IN_PLACE:&diagRad->data_sum[0], &diagRad->data_sum[0], diagRad->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce( diagRad->filename.size()?MPI_IN_PLACE:&diagRad->data_sum[0], &diagRad->data_sum[0], diagRad->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
 
-        if( !isMaster() ) diagRad->clear();
+        if( !isMaster() ) {
+            diagRad->clear();
+        }
     }
 } // END computeGlobalDiags(DiagnosticRadiationSpectrum*  ...)

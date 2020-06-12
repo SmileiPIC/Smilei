@@ -16,13 +16,13 @@
 //! \param params simulation parameters
 //! \param species Species index
 // -----------------------------------------------------------------------------
-MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *species )
+MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *species, Random * rand )
 {
     // Dimension position
     n_dimensions_ = params.nDim_particle;
 
     // Time step
-    dt    = params.timestep;
+    dt_    = params.timestep;
 
     // Normalized Schwinger Electric Field
     norm_E_Schwinger_ = params.electron_mass*params.c_vacuum*params.c_vacuum
@@ -32,14 +32,17 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
     inv_norm_E_Schwinger_ = 1./norm_E_Schwinger_;
 
     // Number of positrons and electrons generated per event
-    this->mBW_pair_creation_sampling[0] = species->mBW_pair_creation_sampling[0];
-    this->mBW_pair_creation_inv_sampling[0] = 1. / mBW_pair_creation_sampling[0];
+    mBW_pair_creation_sampling_[0] = species->mBW_pair_creation_sampling_[0];
+    mBW_pair_creation_inv_sampling_[0] = 1. / mBW_pair_creation_sampling_[0];
 
-    mBW_pair_creation_sampling[1] = species->mBW_pair_creation_sampling[1];
-    mBW_pair_creation_inv_sampling[1] = 1. / mBW_pair_creation_sampling[1];
+    mBW_pair_creation_sampling_[1] = species->mBW_pair_creation_sampling_[1];
+    mBW_pair_creation_inv_sampling_[1] = 1. / mBW_pair_creation_sampling_[1];
 
-    //! Threshold under which pair creation is not considered
-    chiph_threashold = 1E-2;
+    // Threshold under which pair creation is not considered
+    chiph_threshold_ = 1E-2;
+    
+    // Local random generator
+    rand_ = rand;
 
 }
 
@@ -177,7 +180,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // uint64_t * id = &( particles.id(0));
 
     // Total energy converted into pairs for this species during this timestep
-    this->pair_converted_energy = 0;
+    this->pair_converted_energy_ = 0;
 
     // _______________________________________________________________
     // Computation
@@ -206,7 +209,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
         // If the photon has enough energy
         // We also check that photon_chi > chiph_threshold,
         // else photon_chi is too low to induce a decay
-        if( ( ( *gamma )[ipart] > 2. ) && ( photon_chi[ipart] > chiph_threashold ) ) {
+        if( ( ( *gamma )[ipart] > 2. ) && ( photon_chi[ipart] > chiph_threshold_ ) ) {
             // Init local variables
             event_time = 0;
 
@@ -215,7 +218,8 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
             if( tau[ipart] <= epsilon_tau_ ) {
                 // New final optical depth to reach for emision
                 while( tau[ipart] <= epsilon_tau_ ) {
-                    tau[ipart] = -log( 1.-Rand::uniform() );
+                    //tau[ipart] = -log( 1.-Rand::uniform() );
+                    tau[ipart] = -log( 1.-rand_->uniform() );
                 }
 
             }
@@ -230,7 +234,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                 // If this time is above the remaining iteration time,
                 // There is a synchronization at the end of the pic iteration
                 // and the process continues at the next
-                event_time = std::min( tau[ipart]/temp, dt );
+                event_time = std::min( tau[ipart]/temp, dt_ );
 
                 // Update of the optical depth
                 tau[ipart] -= temp*event_time;
@@ -253,7 +257,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
                     MultiphotonBreitWheeler::pair_emission( ipart,
                                                             particles,
                                                             ( *gamma )[ipart],
-                                                            dt - event_time,
+                                                            dt_ - event_time,
                                                             MultiphotonBreitWheelerTables );
 
 
@@ -303,7 +307,7 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
     inv_chiph_gammaph = ( gammaph-2. )/particles.chi( ipart );
 
     // Get the pair quantum parameters to compute the energy
-    chi = MultiphotonBreitWheelerTables.computePairQuantumParameter( particles.chi( ipart ) );
+    chi = MultiphotonBreitWheelerTables.computePairQuantumParameter( particles.chi( ipart ), rand_ );
     
     // pair propagation direction // direction of the photon
     for( k = 0 ; k<3 ; k++ ) {
@@ -316,13 +320,13 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
     for( k=0 ; k < 2 ; k++ ) {
 
         // Creation of new electrons in the temporary array new_pair[0]
-        new_pair[k].createParticles( mBW_pair_creation_sampling[k] );
+        new_pair[k].createParticles( mBW_pair_creation_sampling_[k] );
         
         // Final size
         nparticles = new_pair[k].size();
 
         // For all new electrons...
-        for( int idNew=nparticles-mBW_pair_creation_sampling[k]; idNew<nparticles; idNew++ ) {
+        for( int idNew=nparticles-mBW_pair_creation_sampling_[k]; idNew<nparticles; idNew++ ) {
 
             // Momentum
             p = sqrt( pow( 1.+chi[k]*inv_chiph_gammaph, 2 )-1 );
@@ -347,7 +351,7 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
             }
 #endif
 
-            new_pair[k].weight( idNew )=particles.weight( ipart )*mBW_pair_creation_inv_sampling[k];
+            new_pair[k].weight( idNew )=particles.weight( ipart )*mBW_pair_creation_inv_sampling_[k];
             new_pair[k].charge( idNew )= k*2-1;
 
             if( new_pair[k].isQuantumParameter ) {
@@ -361,7 +365,7 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
     }
 
     // Total energy converted into pairs during the current timestep
-    this->pair_converted_energy += particles.weight( ipart )*gammaph;
+    pair_converted_energy_ += particles.weight( ipart )*gammaph;
 
     // The photon with negtive weight will be deleted latter
     particles.weight( ipart ) = -1;

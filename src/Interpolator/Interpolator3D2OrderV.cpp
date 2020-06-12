@@ -793,7 +793,7 @@ void Interpolator3D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
 }
 
 // probes like diagnostic !
-void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc )
+void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
 {
     // probes are interpolated one by one for now
     
@@ -806,9 +806,10 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
     idx[2]  = round( particles.position( 2, ipart ) * D_inv[2] );
     idxO[2] = idx[2] - k_domain_begin -1 ;
     
-    Field3D *Env_A_abs_3D = static_cast<Field3D *>( EMfields->Env_A_abs_ );
-    Field3D *Env_Chi_3D   = static_cast<Field3D *>( EMfields->Env_Chi_ );
-    Field3D *Env_E_abs_3D = static_cast<Field3D *>( EMfields->Env_E_abs_ );
+    Field3D *Env_A_abs_3D  = static_cast<Field3D *>( EMfields->Env_A_abs_ );
+    Field3D *Env_Chi_3D    = static_cast<Field3D *>( EMfields->Env_Chi_ );
+    Field3D *Env_E_abs_3D  = static_cast<Field3D *>( EMfields->Env_E_abs_ );
+    Field3D *Env_Ex_abs_3D = static_cast<Field3D *>( EMfields->Env_Ex_abs_ );
     
     double coeff[3][2][3];
     
@@ -854,7 +855,7 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
     }
     *Env_Chi_Loc= interp_res;
     
-    // Interpolation of Env_E_abs^(p,p,p) (absolute value of envelope E)
+    // Interpolation of Env_E_abs^(p,p,p) (absolute value of envelope E transverse)
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
         for( int jloc=-1 ; jloc<2 ; jloc++ ) {
@@ -864,6 +865,17 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
         }
     }
     *Env_E_abs_Loc= interp_res;
+
+    // Interpolation of Env_Ex_abs^(p,p,p) (absolute value of envelope Ex)
+    interp_res = 0.;
+    for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+        for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+            for( int kloc=-1 ; kloc<2 ; kloc++ ) {
+                interp_res += *( coeffxp+iloc*1 ) * *( coeffyp+jloc*1 ) * *( coeffzp+kloc*1 ) * ( *Env_Ex_abs_3D )( idxO[0]+1+iloc, idxO[1]+1+jloc, idxO[2]+1+kloc );
+            }
+        }
+    }
+    *Env_Ex_abs_Loc= interp_res;
     
 }
 

@@ -42,14 +42,16 @@ class SmileiComponentType(type):
 
     # Function to return one given instance, for example DiagParticleBinning[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
+    # Special case: diagnostics can also be indexed by their label: DiagParticleBinning["x-px"]
     def __getitem__(self, key):
-        if self.__name__ == "Species" and type(key) is str:
+        try:
             for obj in self._list:
                 if obj.name == key:
                     return obj
-        else:
-            return self._list[key]
-
+        except:
+            pass
+        return self._list[key]
+    
     # Function to return the number of instances, for example len(Species)
     def __len__(self):
         return len(self._list)
@@ -154,6 +156,8 @@ class Main(SmileiSingleton):
     simulation_time = None
     number_of_timesteps = None
     interpolation_order = 2
+    custom_oversize = 2
+    custom_region_oversize = 2
     number_of_patches = None
     patch_arrangement = "hilbertian"
     clrw = -1
@@ -163,11 +167,15 @@ class Main(SmileiSingleton):
     number_of_AM_relativistic_field_initialization = 1
     timestep_over_CFL = None
     cell_sorting = False
+    number_of_damping_cells = [0]
 
 
     # PXR tuning
+    uncoupled_grids = False
     global_factor = []
     norder = []
+    pseudo_spectral_guardells = 0
+    apply_rotational_cleaning = False
     is_spectral = False
     is_pxr = False
 
@@ -308,6 +316,7 @@ class CurrentFilter(SmileiSingleton):
     """Current filtering parameters"""
     model = "binomial"
     passes = [0]
+    kernelFIR = [0.25,0.5,0.25]
 
 class FieldFilter(SmileiSingleton):
     """Fields filtering parameters"""
@@ -405,6 +414,8 @@ class LaserEnvelope(SmileiSingleton):
     envelope_solver = "explicit"
     envelope_profile = None
     Envelope_boundary_conditions = [["reflective"]]
+    polarization_phi = 0.
+    ellipticity = 0.
 
 
 class Collisions(SmileiComponent):
@@ -421,6 +432,7 @@ class Collisions(SmileiComponent):
 #diagnostics
 class DiagProbe(SmileiComponent):
     """Probe diagnostic"""
+    name = ""
     every = None
     number = []
     origin = []
@@ -431,6 +443,7 @@ class DiagProbe(SmileiComponent):
 
 class DiagParticleBinning(SmileiComponent):
     """Particle Binning diagnostic"""
+    name = ""
     deposited_quantity = None
     time_average = 1
     species = None
@@ -440,6 +453,7 @@ class DiagParticleBinning(SmileiComponent):
 
 class DiagRadiationSpectrum(SmileiComponent):
     """Radiation Spectrum diagnostic"""
+    name = ""
     time_average = 1
     species = None
     photon_energy_axis = None
@@ -449,6 +463,7 @@ class DiagRadiationSpectrum(SmileiComponent):
 
 class DiagScreen(SmileiComponent):
     """Screen diagnostic"""
+    name = ""
     shape = None
     point = None
     vector = None
@@ -468,6 +483,7 @@ class DiagScalar(SmileiComponent):
 
 class DiagFields(SmileiComponent):
     """Field diagnostic"""
+    name = ""
     every = None
     fields = []
     time_average = 1
@@ -476,6 +492,7 @@ class DiagFields(SmileiComponent):
 
 class DiagTrackParticles(SmileiComponent):
     """Track diagnostic"""
+    name = ""
     species = None
     every = 0
     flush_every = 1

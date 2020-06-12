@@ -94,7 +94,7 @@ void Collisions::calculate_debye_length( Params &params, Patch *patch )
     if( nspec==0 ) {
         return;
     }
-    unsigned int nbin = patch->vecSpecies[0]->first_index.size();
+    unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
     
     patch->debye_length_squared.resize( nbin, 0. );
     double mean_debye_length = 0.;
@@ -108,10 +108,10 @@ void Collisions::calculate_debye_length( Params &params, Patch *patch )
             p  = s->particles;
             
             // Skip when no particles
-            if( s->last_index[ibin] <= s->first_index[ibin] ) continue;
+            if( s->particles->last_index[ibin] <= s->particles->first_index[ibin] ) continue;
             
             if( inv_cell_volume == 0. ) {
-                inv_cell_volume = 1. / patch->getPrimalCellVolume( p, s->first_index[ibin], params );
+                inv_cell_volume = 1. / patch->getPrimalCellVolume( p, s->particles->first_index[ibin], params );
             }
             
             // Calculation of particles density, mean charge, and temperature
@@ -121,7 +121,7 @@ void Collisions::calculate_debye_length( Params &params, Patch *patch )
             charge      = 0.;
             temperature = 0.;
             // loop particles to calculate average quantities
-            for( unsigned int iPart=s->first_index[ibin]; iPart<( unsigned int )s->last_index[ibin] ; iPart++ ) {
+            for( unsigned int iPart=s->particles->first_index[ibin]; iPart<( unsigned int )s->particles->last_index[ibin] ; iPart++ ) {
                 p2 = p->momentum( 0, iPart ) * p->momentum( 0, iPart )
                      +p->momentum( 1, iPart ) * p->momentum( 1, iPart )
                      +p->momentum( 2, iPart ) * p->momentum( 2, iPart );
@@ -174,12 +174,10 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
     unsigned int npart1, npart2; // numbers of macro-particles in each group
     unsigned int npairs; // number of pairs of macro-particles
     vector<unsigned int> np1, np2; // numbers of macro-particles in each species, in each group
-    double n1, n2, n12, n123, n223; // densities of particles
     unsigned int i1=0, i2, ispec1, ispec2, N2max;
     Species   *s1, *s2;
     Particles *p1=NULL, *p2;
     double coeff3, coeff4, logL, s, ncol, debye2=0.;
-    bool not_duplicated_particle;
     
     sg1 = &species_group1_;
     sg2 = &species_group2_;
@@ -195,7 +193,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
     NuclearReaction->prepare();
     
     // Loop bins of particles (typically, cells, but may also be clusters)
-    unsigned int nbin = patch->vecSpecies[0]->first_index.size();
+    unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
     
         // get number of particles for all necessary species
@@ -208,12 +206,12 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             npart2 = 0;
             for( ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
                 s1 = patch->vecSpecies[( *sg1 )[ispec1]];
-                np1[ispec1] = s1->last_index[ibin] - s1->first_index[ibin];
+                np1[ispec1] = s1->particles->last_index[ibin] - s1->particles->first_index[ibin];
                 npart1 += np1[ispec1];
             }
             for( ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
                 s2 = patch->vecSpecies[( *sg2 )[ispec2]];
-                np2[ispec2] = s2->last_index[ibin] - s2->first_index[ibin];
+                np2[ispec2] = s2->particles->last_index[ibin] - s2->particles->first_index[ibin];
                 npart2 += np2[ispec2];
             }
             if( npart2 <= npart1 ) {
@@ -242,14 +240,14 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         }
         // shuffle the index array
         for( unsigned int i=npart1; i>1; i-- ) {
-            unsigned int p = patch->xorshift32() % i;
+            unsigned int p = patch->rand_->integer() % i;
             swap( index1[i-1], index1[p] );
         }
         if( intra_collisions_ ) { // In the case of collisions within one species
             if( npart1 < 2 ) {
                 continue;
             }
-            npairs = ( int ) ceil( ( ( double )npart1 )/2. ); // half as many pairs as macro-particles
+            npairs = ( npart1 + 1 ) / 2; // half as many pairs as macro-particles
             index2.resize( npairs );
             for( unsigned int i=0; i<npairs; i++ ) {
                 index2[i] = index1[( i+npairs )%npart1];    // index2 is second half
@@ -269,62 +267,43 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         Ionization->prepare1( patch->vecSpecies[( *sg1 )[0]]->atomic_number_ );
         
         // Calculate the densities
-        n1  = 0.; // density of group 1
-        n2  = 0.; // density of group 2
-        n12 = 0.; // "hybrid" density
-        for( unsigned int i=0; i<npairs; i++ ) { // for each pair of particles
-            // find species and index i1 of particle "1"
-            i1 = index1[i];
-            for( ispec1=0 ; i1>=np1[ispec1]; ispec1++ ) {
-                i1 -= np1[ispec1];
-            }
-            // find species and index i2 of particle "2"
-            i2 = index2[i];
-            for( ispec2=0 ; i2>=np2[ispec2]; ispec2++ ) {
-                i2 -= np2[ispec2];
-            }
-            
+        double n1  = 0.; // density of group 1
+        for( ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
             s1 = patch->vecSpecies[( *sg1 )[ispec1]];
-            s2 = patch->vecSpecies[( *sg2 )[ispec2]];
-            i1 += s1->first_index[ibin];
-            i2 += s2->first_index[ibin];
             p1 = s1->particles;
-            p2 = s2->particles;
-            
-            // sum weights
-            n1 += p1->weight( i1 );
-            not_duplicated_particle = ( i<N2max );
-            if( not_duplicated_particle ) {
-                n2 += p2->weight( i2 );    // special case for group 2 to avoid repeated particles
+            for( int i = s1->particles->first_index[ibin]; i < s1->particles->last_index[ibin]; i++ ) {
+                n1 += p1->weight( i );
             }
-            n12 += min( p1->weight( i1 ),  p2->weight( i2 ) );
-            // Same for ionization
-            Ionization->prepare2( p1, i1, p2, i2, not_duplicated_particle );
         }
-        if( intra_collisions_ ) {
-            n1 += n2;
-            n2 = n1;
+        double n2  = 0.; // density of group 2
+        for( ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
+            s2 = patch->vecSpecies[( *sg2 )[ispec2]];
+            p2 = s2->particles;
+            for( int i = s2->particles->first_index[ibin]; i < s2->particles->last_index[ibin]; i++ ) {
+                n2 += p2->weight( i );
+            }
         }
         
         // Pre-calculate some numbers before the big loop
-        double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, i1, params );
+        s1 = patch->vecSpecies[( *sg1 )[0]];
+        p1 = s1->particles;
+        double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, s1->particles->first_index[ibin], params );
+        unsigned int ncorr = intra_collisions_ ? 2*npairs-1 : npairs;
+        double dt_corr = params.timestep * ((double)ncorr) * inv_cell_volume;
+        coeff3 = coeff2_ * dt_corr;
+        coeff4 = pow( 3.*coeff2_, -1./3. ) * dt_corr;
+        double weight_correction_1 = 1. / (double)( (npairs-1) / N2max );
+        double weight_correction_2 = 1. / (double)( (npairs-1) / N2max + 1 );
         n1  *= inv_cell_volume;
         n2  *= inv_cell_volume;
-        n12 *= inv_cell_volume;
-        n123 = pow( n1, 2./3. );
-        n223 = pow( n2, 2./3. );
-        coeff3 = params.timestep * n1*n2/n12;
-        coeff4 = pow( 3.*coeff2_, -1./3. ) * coeff3;
-        coeff3 *= coeff2_;
-        
-        // Prepare the ionization & nuclear reaction
-        Ionization->prepare3( params.timestep, inv_cell_volume );
+        double n123 = pow( n1, 2./3. );
+        double n223 = pow( n2, 2./3. );
         
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
         // ----------------------------------------------------
-        for( unsigned int i=0; i<npairs; i++ ) {
-        
+        for( unsigned int i = 0; i<npairs; i++ ) {
+            
             // find species and index i1 of particle "1"
             i1 = index1[i];
             for( ispec1=0 ; i1>=np1[ispec1]; ispec1++ ) {
@@ -338,19 +317,27 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             
             s1 = patch->vecSpecies[( *sg1 )[ispec1]];
             s2 = patch->vecSpecies[( *sg2 )[ispec2]];
-            i1 += s1->first_index[ibin];
-            i2 += s2->first_index[ibin];
+            i1 += s1->particles->first_index[ibin];
+            i2 += s2->particles->first_index[ibin];
             p1 = s1->particles;
             p2 = s2->particles;
             
-            logL = coulomb_log_;
-            double U1  = patch->xorshift32() * patch->xorshift32_invmax;
-            double U2  = patch->xorshift32() * patch->xorshift32_invmax;
-            double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
-            s = one_collision( p1, i1, s1->mass_, p2, i2, s2->mass_, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
+            double weight_correction = std::max( p1->weight(i1), p2->weight(i2) );
+            if( i % N2max <= (npairs-1) % N2max ) {
+                weight_correction *= weight_correction_2 ;
+            } else {
+                weight_correction *= weight_correction_1;
+            }
             
-            // Handle ionization & nuclear reaction
-            Ionization->apply( patch, p1, i1, p2, i2 );
+            logL = coulomb_log_;
+            double U1  = patch->rand_->uniform();
+            double U2  = patch->rand_->uniform();
+            double phi = patch->rand_->uniform_2pi();
+            
+            s = one_collision( p1, i1, s1->mass_, p2, i2, s2->mass_, coeff1_, coeff3*weight_correction, coeff4*weight_correction, n123, n223, debye2, logL, U1, U2, phi );
+            
+            // Handle ionization
+            Ionization->apply( patch, p1, i1, p2, i2, dt_corr*weight_correction );
             
             ncol ++;
             if( debug ) {

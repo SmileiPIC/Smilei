@@ -168,7 +168,7 @@ public:
     std::string ionization_electrons;
 
     //! Pointer to the species where radiated photon go
-    Species *photon_species;
+    Species * photon_species_;
     //! Index of the species where radiated photons go
     int photon_species_index;
     //! radiation photon species for the Monte-Carlo model.
@@ -188,12 +188,10 @@ public:
     //! from the multiphoton Breit-Wheeler go
     int mBW_pair_species_index[2];
     //! Number of created pairs per event and per photons
-    std::vector<int> mBW_pair_creation_sampling;
+    std::vector<int> mBW_pair_creation_sampling_;
 
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.
-    //! Indices of first and last particles in each bin/cell
-    std::vector<int> first_index, last_index;
     //! Array counting the occurence of each cell key
     std::vector<int> count;
     //! sub dimensions of buffers for dim > 1
@@ -444,7 +442,7 @@ public:
     //!
     virtual void addSpaceForOneParticle()
     {
-        last_index[last_index.size()-1]++;
+        particles->last_index[particles->last_index.size()-1]++;
     }
 
     //inline void clearExchList(int tid) {

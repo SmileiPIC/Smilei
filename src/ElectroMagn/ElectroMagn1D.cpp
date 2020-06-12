@@ -133,9 +133,10 @@ void ElectroMagn1D::initElectroMagn1DQuantities( Params &params, Patch *patch )
     Bz_m = new Field1D( dimPrim, 2, true,  "Bz_m" );
     
     if( params.Laser_Envelope_model ) {
-        Env_A_abs_ = new Field1D( dimPrim, "Env_A_abs" );
-        Env_Chi_   = new Field1D( dimPrim, "Env_Chi" );
-        Env_E_abs_ = new Field1D( dimPrim, "Env_E_abs" );
+        Env_A_abs_  = new Field1D( dimPrim, "Env_A_abs" );
+        Env_Chi_    = new Field1D( dimPrim, "Env_Chi" );
+        Env_E_abs_  = new Field1D( dimPrim, "Env_E_abs" );
+        Env_Ex_abs_ = new Field1D( dimPrim, "Env_Ex_abs" );
     }
     // Total charge currents and densities
     Jx_   = new Field1D( dimPrim, 0, false, "Jx" );
@@ -502,10 +503,9 @@ void ElectroMagn1D::saveMagneticFields( bool is_spectral )
             ( *Bz1D_m )( i ) = ( *Bz1D )( i );
         }
     } else {
-        Bx_m = Bx_;
-        By_m = By_;
-        Bz_m = Bz_;
-        
+        Bx_m->deallocateDataAndSetTo( Bx_ );
+        By_m->deallocateDataAndSetTo( By_ );
+        Bz_m->deallocateDataAndSetTo( Bz_ );
     }
     
 }//END saveMagneticFields
@@ -632,10 +632,62 @@ void ElectroMagn1D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
     
 }
 
+void ElectroMagn1D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff)
+{
+    // Static-cast of the currents
+    Field1D *Jx1D = static_cast<Field1D *>( Jx_ );
+    Field1D *Jy1D = static_cast<Field1D *>( Jy_ );
+    Field1D *Jz1D = static_cast<Field1D *>( Jz_ );
+
+    // Upsampling factor
+    // m=1 : No upsampling ......................... f_Nyquist *= 1
+    // m=2 : 1 zero(s) between two data points ..... f_Nyquist *= 2
+    // m=3 : 2 zero(s) between two data points ..... f_Nyquist *= 3
+    // m=4 : 3 zero(s) between two data points ..... f_Nyquist *= 4
+    unsigned int m=1 ;
+
+    // Guard-Cell Current
+    unsigned int gcfilt=0 ;
+
+    // Applying a single pass of the custom FIR based filter along X
+    if (ipass < passes[0]){
+        Field1D *tmp   = new Field1D( dimPrim, 0, false );
+        tmp->copyFrom( Jx1D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_d-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            ( *Jx1D )( i ) = 0. ;
+            for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                ( *Jx1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+            }
+            ( *Jx1D )( i ) *= m ;
+        }
+        delete tmp;
+        tmp   = new Field1D( dimPrim, 1, false );
+        tmp->copyFrom( Jy1D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            ( *Jy1D )( i ) = 0. ;
+            for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                ( *Jy1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+            }
+            ( *Jy1D )( i ) *= m ;
+        }
+        delete tmp;
+        tmp   = new Field1D( dimPrim, 2, false );
+        tmp->copyFrom( Jz1D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            ( *Jz1D )( i ) = 0. ;
+            for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+               ( *Jz1D )( i ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+            }
+            ( *Jz1D )( i ) *= m ;
+        }
+        delete tmp;
+    }
+}
+
 
 
 // Create a new field
-Field *ElectroMagn1D::createField( string fieldname )
+Field *ElectroMagn1D::createField( string fieldname, Params& params )
 {
     if( fieldname.substr( 0, 2 )=="Ex" ) {
         return new Field1D( dimPrim, 0, false, fieldname );
@@ -662,6 +714,8 @@ Field *ElectroMagn1D::createField( string fieldname )
     } else if( fieldname.substr( 0, 7 )=="Env_Chi" ) {
         return new Field1D( dimPrim, 0, false, fieldname );
     } else if( fieldname.substr( 0, 9 )=="Env_E_abs" ) {
+        return new Field1D( dimPrim, 0, false, fieldname );
+    } else if( fieldname.substr( 0, 10 )=="Env_Ex_abs" ) {
         return new Field1D( dimPrim, 0, false, fieldname );
     }
     
@@ -800,7 +854,7 @@ void ElectroMagn1D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
 
 
 
-void ElectroMagn1D::initAntennas( Patch *patch )
+void ElectroMagn1D::initAntennas( Patch *patch, Params& params )
 {
 
     // Filling the space profiles of antennas

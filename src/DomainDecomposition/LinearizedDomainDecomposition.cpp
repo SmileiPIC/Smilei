@@ -1,8 +1,8 @@
 
-#include "CartesianDomainDecomposition.h"
+#include "LinearizedDomainDecomposition.h"
 
 
-CartesianDomainDecomposition::CartesianDomainDecomposition( Params &params )
+LinearizedDomainDecomposition::LinearizedDomainDecomposition( Params &params )
     : DomainDecomposition( params )
 {
     ndomain_ = params.number_of_patches;
@@ -10,19 +10,19 @@ CartesianDomainDecomposition::CartesianDomainDecomposition( Params &params )
 }
 
 
-CartesianDomainDecomposition1D::CartesianDomainDecomposition1D( Params &params )
-    : CartesianDomainDecomposition( params )
+LinearizedDomainDecomposition1D::LinearizedDomainDecomposition1D( Params &params )
+    : LinearizedDomainDecomposition( params )
 {
 }
 
 
-CartesianDomainDecomposition1D::~CartesianDomainDecomposition1D( )
+LinearizedDomainDecomposition1D::~LinearizedDomainDecomposition1D( )
 {
 }
 
 
 // generalhilbertindex
-unsigned int CartesianDomainDecomposition1D::getDomainId( std::vector<int> Coordinates )
+unsigned int LinearizedDomainDecomposition1D::getDomainId( std::vector<int> Coordinates )
 {
     if( Coordinates[0] < 0 ) {
         return MPI_PROC_NULL;
@@ -36,7 +36,7 @@ unsigned int CartesianDomainDecomposition1D::getDomainId( std::vector<int> Coord
 
 
 // generalhilbertindexinv
-std::vector<unsigned int> CartesianDomainDecomposition1D::getDomainCoordinates( unsigned int Id )
+std::vector<unsigned int> LinearizedDomainDecomposition1D::getDomainCoordinates( unsigned int Id )
 {
     std::vector<unsigned int> coords( 1, 0 );
     coords[0] = Id;
@@ -45,19 +45,19 @@ std::vector<unsigned int> CartesianDomainDecomposition1D::getDomainCoordinates( 
 }
 
 
-CartesianDomainDecomposition2D::CartesianDomainDecomposition2D( Params &params )
-    : CartesianDomainDecomposition( params )
+LinearizedDomainDecomposition2D::LinearizedDomainDecomposition2D( Params &params )
+    : LinearizedDomainDecomposition( params )
 {
 }
 
 
-CartesianDomainDecomposition2D::~CartesianDomainDecomposition2D( )
+LinearizedDomainDecomposition2D::~LinearizedDomainDecomposition2D( )
 {
 }
 
 
 // generalhilbertindex
-unsigned int CartesianDomainDecomposition2D::getDomainId( std::vector<int> Coordinates )
+unsigned int LinearizedDomainDecomposition2D::getDomainId( std::vector<int> Coordinates )
 {
     if( Coordinates[0] < 0 ) {
         return MPI_PROC_NULL;
@@ -75,7 +75,7 @@ unsigned int CartesianDomainDecomposition2D::getDomainId( std::vector<int> Coord
 
 
 // generalhilbertindexinv
-std::vector<unsigned int> CartesianDomainDecomposition2D::getDomainCoordinates( unsigned int Id )
+std::vector<unsigned int> LinearizedDomainDecomposition2D::getDomainCoordinates( unsigned int Id )
 {
     std::vector<unsigned int> coords( 2, 0 );
     coords[0] = Id/ndomain_[1];
@@ -85,19 +85,19 @@ std::vector<unsigned int> CartesianDomainDecomposition2D::getDomainCoordinates( 
 }
 
 
-CartesianDomainDecomposition2D_YX::CartesianDomainDecomposition2D_YX( Params &params )
-    : CartesianDomainDecomposition( params )
+LinearizedDomainDecomposition2D_YX::LinearizedDomainDecomposition2D_YX( Params &params )
+    : LinearizedDomainDecomposition( params )
 {
 }
 
 
-CartesianDomainDecomposition2D_YX::~CartesianDomainDecomposition2D_YX( )
+LinearizedDomainDecomposition2D_YX::~LinearizedDomainDecomposition2D_YX( )
 {
 }
 
 
 // generalhilbertindex
-unsigned int CartesianDomainDecomposition2D_YX::getDomainId( std::vector<int> Coordinates )
+unsigned int LinearizedDomainDecomposition2D_YX::getDomainId( std::vector<int> Coordinates )
 {
     if( Coordinates[0] < 0 ) {
         return MPI_PROC_NULL;
@@ -115,7 +115,7 @@ unsigned int CartesianDomainDecomposition2D_YX::getDomainId( std::vector<int> Co
 
 
 // generalhilbertindexinv
-std::vector<unsigned int> CartesianDomainDecomposition2D_YX::getDomainCoordinates( unsigned int Id )
+std::vector<unsigned int> LinearizedDomainDecomposition2D_YX::getDomainCoordinates( unsigned int Id )
 {
     std::vector<unsigned int> coords( 2, 0 );
     coords[0] = Id%ndomain_[0];
@@ -126,19 +126,19 @@ std::vector<unsigned int> CartesianDomainDecomposition2D_YX::getDomainCoordinate
 
 
 
-CartesianDomainDecomposition3D::CartesianDomainDecomposition3D( Params &params )
-    : CartesianDomainDecomposition( params )
+LinearizedDomainDecomposition3D::LinearizedDomainDecomposition3D( Params &params )
+    : LinearizedDomainDecomposition( params )
 {
 }
 
 
-CartesianDomainDecomposition3D::~CartesianDomainDecomposition3D( )
+LinearizedDomainDecomposition3D::~LinearizedDomainDecomposition3D( )
 {
 }
 
 
 // generalhilbertindex
-unsigned int CartesianDomainDecomposition3D::getDomainId( std::vector<int> Coordinates )
+unsigned int LinearizedDomainDecomposition3D::getDomainId( std::vector<int> Coordinates )
 {
     if( Coordinates[0] < 0 ) {
         return MPI_PROC_NULL;
@@ -160,7 +160,7 @@ unsigned int CartesianDomainDecomposition3D::getDomainId( std::vector<int> Coord
 
 
 // generalhilbertindexinv
-std::vector<unsigned int> CartesianDomainDecomposition3D::getDomainCoordinates( unsigned int Id )
+std::vector<unsigned int> LinearizedDomainDecomposition3D::getDomainCoordinates( unsigned int Id )
 {
     std::vector<unsigned int> coords( 3, 0 );
     coords[0] = Id/( ndomain_[1]*ndomain_[2] );
@@ -171,19 +171,19 @@ std::vector<unsigned int> CartesianDomainDecomposition3D::getDomainCoordinates( 
 }
 
 
-CartesianDomainDecomposition3D_ZYX::CartesianDomainDecomposition3D_ZYX( Params &params )
-    : CartesianDomainDecomposition( params )
+LinearizedDomainDecomposition3D_ZYX::LinearizedDomainDecomposition3D_ZYX( Params &params )
+    : LinearizedDomainDecomposition( params )
 {
 }
 
 
-CartesianDomainDecomposition3D_ZYX::~CartesianDomainDecomposition3D_ZYX( )
+LinearizedDomainDecomposition3D_ZYX::~LinearizedDomainDecomposition3D_ZYX( )
 {
 }
 
 
 // generalhilbertindex
-unsigned int CartesianDomainDecomposition3D_ZYX::getDomainId( std::vector<int> Coordinates )
+unsigned int LinearizedDomainDecomposition3D_ZYX::getDomainId( std::vector<int> Coordinates )
 {
     if( Coordinates[0] < 0 ) {
         return MPI_PROC_NULL;
@@ -205,7 +205,7 @@ unsigned int CartesianDomainDecomposition3D_ZYX::getDomainId( std::vector<int> C
 
 
 // generalhilbertindexinv
-std::vector<unsigned int> CartesianDomainDecomposition3D_ZYX::getDomainCoordinates( unsigned int Id )
+std::vector<unsigned int> LinearizedDomainDecomposition3D_ZYX::getDomainCoordinates( unsigned int Id )
 {
     std::vector<unsigned int> coords( 3, 0 );
     coords[0] = ( Id%( ndomain_[0]*ndomain_[1] ) )%ndomain_[0];

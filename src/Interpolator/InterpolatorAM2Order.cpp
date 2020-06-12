@@ -190,8 +190,10 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 // Interpolator on another field than the basic ones
 void InterpolatorAM2Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *Jxloc, double *Jyloc, double *Jzloc, double *Rholoc )
 {
+
     // **field points to the first field of the species of interest in EM->allFields
     // They are ordered as Jx0, Jy0, Jz0, Rho0, Jx1, Jy1, Jz1, Rho1, etc.
+
     
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*dl_inv_;
@@ -202,6 +204,9 @@ void InterpolatorAM2Order::oneField( Field **field, Particles &particles, int *i
         if (r > 0) {
             exp_m_theta = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
         }
+
+
+
         double Jx_ = 0., Jy_ = 0., Jz_ = 0., Rho_ = 0.;
         for( unsigned int imode = 0; imode < nmodes ; imode++ ) {
             cField2D *Jl  = static_cast<cField2D *>( *(field+4*imode+0) );
@@ -212,6 +217,7 @@ void InterpolatorAM2Order::oneField( Field **field, Particles &particles, int *i
             Jy_  += std::real( compute( &coeffxp_[1], &coeffyd_[1], Jr , ip_, jd_ ) * exp_mm_theta );
             Jz_  += std::real( compute( &coeffxp_[1], &coeffyp_[1], Jt , ip_, jp_ ) * exp_mm_theta );
             Rho_ += std::real( compute( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_ ) * exp_mm_theta );
+
             exp_mm_theta *= exp_m_theta;
         }
         Jxloc [ipart] = Jx_;
@@ -433,12 +439,13 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
 } // END InterpolatorAM2Order
 
 
-void InterpolatorAM2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc )
+void InterpolatorAM2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
 {
     // Static cast of the electromagnetic fields
-    Field2D *Env_A_abs_2Dcyl = static_cast<Field2D *>( EMfields->Env_A_abs_ );
-    Field2D *Env_Chi_2Dcyl   = static_cast<Field2D *>( EMfields->Env_Chi_ );
-    Field2D *Env_E_abs_2Dcyl = static_cast<Field2D *>( EMfields->Env_E_abs_ );
+    Field2D *Env_A_abs_2Dcyl  = static_cast<Field2D *>( EMfields->Env_A_abs_ );
+    Field2D *Env_Chi_2Dcyl    = static_cast<Field2D *>( EMfields->Env_Chi_ );
+    Field2D *Env_E_abs_2Dcyl  = static_cast<Field2D *>( EMfields->Env_E_abs_ );
+    Field2D *Env_Ex_abs_2Dcyl = static_cast<Field2D *>( EMfields->Env_Ex_abs_ );
 
     // Normalized particle position
     double xpn = particles.position( 0, ipart ) * dl_inv_;
@@ -462,5 +469,53 @@ void InterpolatorAM2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     // Interpolation of Env_E_abs_^(p,p)
     // -------------------------
     *( Env_E_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_E_abs_2Dcyl, ip_, jp_);
+
+    // -------------------------
+    // Interpolation of Env_Ex_abs_^(p,p)
+    // -------------------------
+    *( Env_Ex_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_Ex_abs_2Dcyl, ip_, jp_);
   
 } // END InterpolatorAM2Order
+
+void InterpolatorAM2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+{
+    // Static cast of the envelope fields
+    Field2D *EnvEabs  = static_cast<Field2D*>( EMfields->Env_E_abs_ );
+    Field2D *EnvExabs = static_cast<Field2D*>( EMfields->Env_Ex_abs_ );
+    
+    std::vector<double> *EnvEabs_part  = &( smpi->dynamics_EnvEabs_part[ithread] );
+    std::vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
+ 
+    double xpn,rpn,r;
+   
+    //Loop on bin particles
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+
+        // Normalized particle position
+        xpn = particles.position( 0, ipart ) * dl_inv_;
+        r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+        rpn = r * dr_inv_;
+                                     
+        // Compute coefficients
+        coeffs( xpn, rpn );
+ 
+        // only mode 0 is used
+    
+        // ---------------------------------
+        // Interpolation of Env_E_abs^(p,p)
+        // ---------------------------------
+        ( *EnvEabs_part )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], EnvEabs, ip_, jp_ );
+  
+        // ---------------------------------
+        // Interpolation of Env_Ex_abs^(p,p)
+        // ---------------------------------
+        ( *EnvExabs_part )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], EnvExabs, ip_, jp_ );
+    
+    }
+    
+    
+} // END InterpolatorAM2Order
+
+
+
+

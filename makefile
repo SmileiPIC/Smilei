@@ -84,50 +84,38 @@ ifneq ($(strip $(PYTHONHOME)),)
     LDFLAGS += -L$(PYTHONHOME)/lib
 endif
 
-
-PICSAR ?= FALSE
-ifeq ($(PICSAR),TRUE)
-        # New environment variable
-	FFTW3_LIB ?= $(FFTW_LIB_DIR)
-	LIBPXR ?= picsar/lib
-	# Set Picsar link environment
-	CXXFLAGS += -D_PICSAR
-	LDFLAGS += -L$(LIBPXR) -lpxr
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
-	LDFLAGS += -lgfortran
-endif
-
-CXXFLAGS += -D_VECTO
+my_config:=$(config)
+define parse_config
+$(findstring $(1),$(config))$(eval my_config:=$(filter-out $(1),$(my_config)))
+endef
 
 # Manage options in the "config" parameter
-ifneq (,$(findstring debug,$(config)))
+ifneq (,$(call parse_config,debug))
     CXXFLAGS += -g -pg -D__DEBUG -O0
 # With gdb
-else ifneq (,$(findstring gdb,$(config)))
+else ifneq (,$(call parse_config,gdb))
     CXXFLAGS += -g -D__DEBUG -O0
 
 # With valgrind
-else ifneq (,$(findstring valgrind,$(config)))
+else ifneq (,$(call parse_config,valgrind))
     CXXFLAGS += -g  -O3
 
 # Scalasca
-else ifneq (,$(findstring scalasca,$(config)))
+else ifneq (,$(call parse_config,scalasca))
     CXXFLAGS += -g  -O3
     SMILEICXX = scalasca -instrument $(SMILEICXX)
 
 # With Intel Advisor / Vtune
-else ifneq (,$(findstring advisor,$(config)))
+else ifneq (,$(call parse_config,advisor))
     CXXFLAGS += -g -O3 -shared-intel -debug inline-debug-info -qopenmp-link dynamic -parallel-source-info=2
 
 # With Intel Inspector
-else ifneq (,$(findstring inspector,$(config)))
+else ifneq (,$(call parse_config,inspector))
     CXXFLAGS += -g -O0 -I$(INSPECTOR_ROOT_DIR)/include/
     LDFLAGS += $(INSPECTOR_ROOT_DIR)/lib64/libittnotify.a
 
 # Optimization report
-else ifneq (,$(findstring opt-report,$(config)))
+else ifneq (,$(call parse_config,opt-report))
     CXXFLAGS += -O3 -qopt-report5
 
 # Default configuration
@@ -136,11 +124,12 @@ else
 endif
 
 # Manage options in the "config" parameter
-ifneq (,$(findstring detailed_timers,$(config)))
+ifneq (,$(call parse_config,detailed_timers))
     CXXFLAGS += -D__DETAILED_TIMERS
 endif
 
-ifeq (,$(findstring noopenmp,$(config)))
+#activate openmp unless noopenmp flag
+ifeq (,$(call parse_config,noopenmp))
     OPENMP_FLAG ?= -fopenmp
     LDFLAGS += -lm
     OPENMP_FLAG += -D_OMP
@@ -148,10 +137,33 @@ ifeq (,$(findstring noopenmp,$(config)))
     CXXFLAGS += $(OPENMP_FLAG)
 endif
 
+ifneq (,$(call parse_config,picsar))
+    # New environment variable
+	FFTW3_LIB ?= $(FFTW_LIB_DIR)
+	LIBPXR ?= picsar/lib
+	# Set Picsar link environment
+	CXXFLAGS += -D_PICSAR
+	LDFLAGS += -L$(LIBPXR) -lpxr
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi  -lopenblas
+
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
+	LDFLAGS += -lgfortran
+endif
+
+
 # Manage MPI communications by a single thread (master in MW)
-ifneq (,$(findstring no_mpi_tm,$(config)))
+ifneq (,$(call parse_config,no_mpi_tm))
     CXXFLAGS += -D_NO_MPI_TM
 endif
+
+#last: check remaining arguments and raise error
+ifneq ($(strip $(my_config)),)
+$(error "Unused parameters in config : $(my_config)")
+endif
+
+
+
 
 #-----------------------------------------------------
 # Set the verbosity prefix
@@ -176,6 +188,9 @@ clean:
 distclean: clean uninstall_happi
 	$(Q) rm -f $(EXEC) $(EXEC)_test
 
+check:
+	$(Q) $(PYTHONEXE) scripts/compile_tools/check_make_options.py config $(config)
+	$(Q) $(PYTHONEXE) scripts/compile_tools/check_make_options.py machine $(machine)
 
 # Create python header files
 $(BUILD_DIR)/%.pyh: %.py
@@ -373,5 +388,4 @@ help:
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
-	@if [ -f  scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine)|| echo "None"; fi
 	@if [ -f scripts/compile_tools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/compile_tools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/compile_tools/machine; fi

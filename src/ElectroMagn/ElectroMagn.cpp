@@ -16,6 +16,8 @@
 #include "DomainDecompositionFactory.h"
 #include "LaserEnvelope.h"
 
+#include "PatchAM.h"
+
 using namespace std;
 
 
@@ -28,7 +30,6 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
     n_species( vecSpecies.size() ),
     nDim_field( params.nDim_field ),
     cell_volume( params.cell_volume ),
-    n_space( params.n_space ),
     oversize( params.oversize ),
     isXmin( patch->isXmin() ),
     isXmax( patch->isXmax() ),
@@ -36,13 +37,52 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
     nrj_mw_lost( 0. ),
     nrj_new_fields( 0. )
 {
-    if( !dynamic_cast<GlobalDomainDecomposition *>( domain_decomposition ) ) {
+    n_space.resize( params.n_space.size() );
+    // Test if the patch is a small patch (Hilbert or Linearized are for VectorPatch)
+    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
+        || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
         n_space = params.n_space;
-    } else {
-        for( unsigned int i = 0 ; i < nDim_field ; i++ ) {
-            n_space[i] = params.n_space[i] * params.global_factor[i];
+    }
+    else if ( dynamic_cast<RegionDomainDecomposition*>( domain_decomposition ) ) {
+        for ( unsigned int i = 0 ; i < nDim_field ; i++ ) {
+            n_space[i] = params.n_space_region[i];
+            oversize[i] = params.region_oversize[i];
         }
     }
+    else { //NULL (Global domain)
+        n_space = params.n_space_global;
+        for ( unsigned int i = 0 ; i < nDim_field ; i++ )
+            oversize[i] = params.region_oversize[i];
+    }
+
+    if ( dynamic_cast<PatchAM *>( patch ) ) {
+        PatchAM *patchAM = static_cast<PatchAM *>( patch );
+        int j_glob_ = patchAM->Pcoordinates[1]*n_space[1]-oversize[1]; //cell_starting_global_index is only define later during patch creation.
+        int nr_p = n_space[1]+1+2*oversize[1];
+        double dr = params.cell_length[1];
+        patchAM->invR.resize( nr_p );
+
+        if (!params.is_spectral){
+            patchAM->invRd.resize( nr_p+1 );
+            for( int j = 0; j< nr_p; j++ ) {
+                if( j_glob_ + j == 0 ) {
+                    patchAM->invR[j] = 8./dr; // No Verboncoeur correction
+                    //invR[j] = 64./(13.*dr); // Order 2 Verboncoeur correction
+                } else {
+                    patchAM->invR[j] = 1./abs(((double)j_glob_ + (double)j)*dr);
+                }
+            }
+            for( int j = 0; j< nr_p + 1; j++ ) {
+                patchAM->invRd[j] = 1./abs(((double)j_glob_ + (double)j - 0.5)*dr);
+            }
+        } else { // if spectral, primal grid shifted by half cell length
+            for( int j = 0; j< nr_p; j++ ) {
+                //patchAM->invR[j] = 1./( ((double)j + 0.5)*dr);
+                patchAM->invR[j] = 1./abs(((double)j_glob_ + (double)j+ 0.5)*dr);
+            }
+        }
+    }
+
     
     // take useful things from params
     initElectroMagnQuantities();
@@ -71,6 +111,35 @@ ElectroMagn::ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch ) 
     nrj_mw_lost( 0. ),
     nrj_new_fields( 0. )
 {
+
+    if ( dynamic_cast<PatchAM *>( patch ) ) {
+        PatchAM *patchAM = static_cast<PatchAM *>( patch );
+        int j_glob_ = patchAM->Pcoordinates[1]*n_space[1]-oversize[1]; //cell_starting_global_index is only define later during patch creation.
+        int nr_p = n_space[1]+1+2*oversize[1];
+        double dr = params.cell_length[1];
+        patchAM->invR.resize( nr_p );
+
+        if (!params.is_spectral){
+            patchAM->invRd.resize( nr_p+1 );
+            for( int j = 0; j< nr_p; j++ ) {
+                if( j_glob_ + j == 0 ) {
+                    patchAM->invR[j] = 8./dr; // No Verboncoeur correction
+                    //invR[j] = 64./(13.*dr); // Order 2 Verboncoeur correction
+                } else {
+                    patchAM->invR[j] = 1./abs(((double)j_glob_ + (double)j)*dr);
+                }
+            }
+            for( int j = 0; j< nr_p + 1; j++ ) {
+                patchAM->invRd[j] = 1./abs(((double)j_glob_ + (double)j - 0.5)*dr);
+            }
+        } else { // if spectral, primal grid shifted by half cell length
+            for( int j = 0; j< nr_p; j++ ) {
+                //patchAM->invR[j] = 1./( ((double)j + 0.5)*dr);
+                patchAM->invR[j] = 1./abs(((double)j_glob_ + (double)j+ 0.5)*dr);
+            }
+        }
+    }
+
 
     initElectroMagnQuantities();
     
@@ -113,6 +182,7 @@ void ElectroMagn::initElectroMagnQuantities()
     Env_A_abs_=NULL;
     Env_Chi_  =NULL;
     Env_E_abs_=NULL;
+    Env_Ex_abs_=NULL;
     
     
     // Species charge currents and density
@@ -160,6 +230,7 @@ void ElectroMagn::finishInitialization( int nspecies, Patch *patch )
         allFields.push_back( Env_A_abs_ );
         allFields.push_back( Env_Chi_ );
         allFields.push_back( Env_E_abs_ );
+        allFields.push_back( Env_Ex_abs_ );
     }
     
     // For species-related fields
@@ -235,6 +306,9 @@ ElectroMagn::~ElectroMagn()
     }
     if( Env_E_abs_ != NULL ) {
         delete Env_E_abs_;
+    }
+    if( Env_Ex_abs_ != NULL ) {
+        delete Env_Ex_abs_;
     }
     
     for( unsigned int idiag=0; idiag<allFields_avg.size(); idiag++ )
@@ -361,7 +435,7 @@ void ElectroMagn::updateGridSize( Params &params, Patch *patch )
 void ElectroMagn::boundaryConditions( int itime, double time_dual, Patch *patch, Params &params, SimWindow *simWindow )
 {
     // Compute EM Bcs
-    if( !( simWindow && simWindow->isMoving( time_dual ) ) ) {
+    if( !( simWindow && simWindow->isMoving( time_dual ) ) ) { //Boundary conditions are applied after moving the window.
         if( emBoundCond[0]!=NULL ) { // <=> if !periodic
             emBoundCond[0]->apply( this, time_dual, patch );
             emBoundCond[1]->apply( this, time_dual, patch );

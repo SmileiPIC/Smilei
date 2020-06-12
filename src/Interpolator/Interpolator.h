@@ -34,7 +34,12 @@ public:
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
     
-    virtual void envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc )
+    virtual void envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
+    {
+        ERROR( "Envelope not implemented with this geometry and this order" );
+    };
+ 
+    virtual void envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 )
     {
         ERROR( "Envelope not implemented with this geometry and this order" );
     };

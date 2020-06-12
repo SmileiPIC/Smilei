@@ -80,6 +80,7 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     cField2D *A02Dcyl         = static_cast<cField2D *>( A0_ );
     Field2D *Env_Aabs2Dcyl    = static_cast<Field2D *>( EMfields->Env_A_abs_ );
     Field2D *Env_Eabs2Dcyl    = static_cast<Field2D *>( EMfields->Env_E_abs_ );
+    Field2D *Env_Exabs2Dcyl   = static_cast<Field2D *>( EMfields->Env_Ex_abs_ );
     
     Field2D *Phi2Dcyl         = static_cast<Field2D *>( Phi_ );
     Field2D *Phi_m2Dcyl       = static_cast<Field2D *>( Phi_m );
@@ -91,6 +92,7 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     Field2D *GradPhir_m2Dcyl  = static_cast<Field2D *>( GradPhir_m );
 
     bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
+    int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
     
     
     vector<double> position( 2, 0 );
@@ -119,9 +121,9 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
             // |E envelope| = |-(dA/dt-ik0cA)|
             ( *Env_Eabs2Dcyl )( i, j )= std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
             // compute ponderomotive potential at timestep n
-            ( *Phi2Dcyl )( i, j )     = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
+            ( *Phi2Dcyl )( i, j )     = ellipticity_factor*std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
             // compute ponderomotive potential at timestep n-1
-            ( *Phi_m2Dcyl )( i, j )   = std::abs( ( *A02Dcyl )( i, j ) ) * std::abs( ( *A02Dcyl )( i, j ) ) * 0.5;
+            ( *Phi_m2Dcyl )( i, j )   = ellipticity_factor*std::abs( ( *A02Dcyl )( i, j ) ) * std::abs( ( *A02Dcyl )( i, j ) ) * 0.5;
             // interpolate in time
             ( *Phi_m2Dcyl )( i, j )   = 0.5*( ( *Phi_m2Dcyl )( i, j )+( *Phi2Dcyl )( i, j ) );
             
@@ -132,7 +134,7 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
         t_previous_timestep   = position[0]+timestep;
     } // end x loop
     
-    // Compute gradient of ponderomotive potential
+    // Compute gradient of ponderomotive potential and |Ex|
     for( unsigned int i=1 ; i<A_->dims_[0]-1 ; i++ ) { // x loop
         for( unsigned int j=std::max(isYmin*3,1) ; j<A_->dims_[1]-1 ; j++ ) { // r loop
             // gradient in x direction
@@ -144,9 +146,32 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
 
             // in cylindrical symmetry the gradient along theta is zero
 
+            // |Ex envelope| = |-dA/dr|, central finite difference for the space derivative  
+            ( *Env_Exabs2Dcyl )( i, j ) =  std::abs( (( *A2Dcyl )( i, j+1)-( *A2Dcyl )( i, j-1) )*one_ov_2dr );
+
         } // end r loop
     } // end l loop
     
+    // 
+    if (isYmin){ // axis BC
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
+            unsigned int j = 2;  // j_p=2 corresponds to r=0    
+            ( *Phi2Dcyl )      ( i, j )   = ellipticity_factor*std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;  
+            ( *Env_Aabs2Dcyl ) ( i, j )   = std::abs( ( *A2Dcyl )( i, j ) );
+            ( *Env_Exabs2Dcyl )( i, j )   = 0.;
+            // Axis BC on |A|
+            ( *Env_Aabs2Dcyl )( i, j-1 )  = ( *Env_Aabs2Dcyl )( i, j+1 );
+            ( *Env_Aabs2Dcyl )( i, j-2 )  = ( *Env_Aabs2Dcyl )( i, j+2 );
+            // Axis BC on |E|
+            ( *Env_Eabs2Dcyl )( i, j-1 )  = ( *Env_Eabs2Dcyl )( i, j+1 );
+            ( *Env_Eabs2Dcyl )( i, j-2 )  = ( *Env_Eabs2Dcyl )( i, j+2 );
+            // Axis BC on |Ex|
+            ( *Env_Exabs2Dcyl )( i, j-1 ) = ( *Env_Eabs2Dcyl )( i, j+1 );
+            ( *Env_Exabs2Dcyl )( i, j-2 ) = ( *Env_Eabs2Dcyl )( i, j+2 );
+            
+                  
+        } // end l loop
+    }
 }
 
 
@@ -339,33 +364,46 @@ void LaserEnvelopeAM::computePhiEnvAEnvE( ElectroMagn *EMfields )
     
     Field2D *Phi2Dcyl         = static_cast<Field2D *>( Phi_ );              //Phi=|A|^2/2 is the ponderomotive potential
     
-    Field2D *Env_Aabs2Dcyl = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic
+    Field2D *Env_Aabs2Dcyl = static_cast<Field2D *>( EMfields->Env_A_abs_ ); // field for diagnostic and ionization
 
-    Field2D *Env_Eabs2Dcyl = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
+    Field2D *Env_Eabs2Dcyl = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic and ionization
+
+    Field2D *Env_Exabs2Dcyl = static_cast<Field2D *>( EMfields->Env_Ex_abs_ ); // field for diagnostic and ionization
 
     bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
+
+    int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
+    
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells
     for( unsigned int i=0 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        for( unsigned int j=0 ; j < A_->dims_[1]-1; j++ ) { // r loop
-            ( *Phi2Dcyl )( i, j )      = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
-            ( *Env_Aabs2Dcyl )( i, j ) = std::abs( ( *A2Dcyl )( i, j ) );
+        for( unsigned int j=std::max(3*isYmin,1) ; j < A_->dims_[1]-1; j++ ) { // r loop
+            ( *Phi2Dcyl )( i, j )       = ellipticity_factor*std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;
+            ( *Env_Aabs2Dcyl )( i, j )  = std::abs( ( *A2Dcyl )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
-            ( *Env_Eabs2Dcyl )( i, j ) = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
+            ( *Env_Eabs2Dcyl )( i, j )  = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
+            // |Ex envelope| = |-dA/dr|, central finite difference for the space derivative
+            ( *Env_Exabs2Dcyl )( i, j ) =  std::abs( (( *A2Dcyl )( i, j+1)-( *A2Dcyl )( i, j-1) )*one_ov_2dr );
         } // end r loop
     } // end l loop
 
     // 
     if (isYmin){ // axis BC
         for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
-            unsigned int j = 2;  // j_p=2 corresponds to r=0      
-    
+            unsigned int j = 2;  // j_p=2 corresponds to r=0    
+            ( *Phi2Dcyl )      ( i, j )   = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;  
+            ( *Env_Aabs2Dcyl ) ( i, j )   = std::abs( ( *A2Dcyl )( i, j ) );
+            ( *Env_Eabs2Dcyl ) ( i, j )   = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*( *A2Dcyl )( i, j ) );
+            ( *Env_Exabs2Dcyl )( i, j )   = 0.;
             // Axis BC on |A|
-            ( *Env_Aabs2Dcyl )( i, j-1 ) = ( *Env_Aabs2Dcyl )( i, j+1 );
-            ( *Env_Aabs2Dcyl )( i, j-2 ) = ( *Env_Aabs2Dcyl )( i, j+2 );
+            ( *Env_Aabs2Dcyl )( i, j-1 )  = ( *Env_Aabs2Dcyl )( i, j+1 );
+            ( *Env_Aabs2Dcyl )( i, j-2 )  = ( *Env_Aabs2Dcyl )( i, j+2 );
             // Axis BC on |E|
-            ( *Env_Eabs2Dcyl )( i, j-1 ) = ( *Env_Eabs2Dcyl )( i, j+1 );
-            ( *Env_Eabs2Dcyl )( i, j-2 ) = ( *Env_Eabs2Dcyl )( i, j+2 );
+            ( *Env_Eabs2Dcyl )( i, j-1 )  = ( *Env_Eabs2Dcyl )( i, j+1 );
+            ( *Env_Eabs2Dcyl )( i, j-2 )  = ( *Env_Eabs2Dcyl )( i, j+2 );
+            // Axis BC on |Ex|
+            ( *Env_Exabs2Dcyl)( i, j-1 )  = ( *Env_Exabs2Dcyl)( i, j+1 );
+            ( *Env_Exabs2Dcyl)( i, j-2 )  = ( *Env_Exabs2Dcyl)( i, j+2 );
             
                   
         } // end l loop

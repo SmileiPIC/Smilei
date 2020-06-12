@@ -10,12 +10,20 @@
 ElectroMagnBC2D::ElectroMagnBC2D( Params &params, Patch *patch, unsigned int _min_max )
     : ElectroMagnBC( params, patch, _min_max )
 {
+    std::vector<unsigned int> n_space(params.n_space);
+    if (params.uncoupled_grids)
+        n_space = params.n_space_region;
+
+    std::vector<unsigned int> oversize(params.oversize);
+    if (params.uncoupled_grids)
+        oversize = params.region_oversize;
+
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
-    nx_d = nx_p+1;
+    nx_p = n_space[0]+1+2*oversize[0];
+    nx_d = nx_p+1-params.is_pxr;
     // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
-    ny_d = ny_p+1;
+    ny_p = n_space[1]+1+2*oversize[1];
+    ny_d = ny_p+1-params.is_pxr;
     
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
     dx       = params.cell_length[0];

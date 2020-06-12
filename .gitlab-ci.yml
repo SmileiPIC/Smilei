@@ -1,6 +1,7 @@
 stages:
     - compile
     - makerun
+    - use_picsar
 
 compile:
   stage: compile
@@ -22,7 +23,7 @@ compile:
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs"
+    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs_sdmd"
 
 makerun1D:
   stage: makerun
@@ -73,7 +74,7 @@ makerunAM:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -l "/sps2/gitlab-runner/logs_sdmd"
 
 makerunV:
   stage: makerun
@@ -98,3 +99,15 @@ makerunCollisions:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+
+use_picsar:
+  stage: use_picsar
+  only:
+    - develop
+    - vecto2D_new_currentsAndDensity
+
+  script:
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make clean
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v

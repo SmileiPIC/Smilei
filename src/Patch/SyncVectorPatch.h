@@ -268,10 +268,11 @@ public :
     static void exchangeB( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangeB( Params &params, VectorPatch &vecPatches );
 
+    static void exchangeE( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
+    static void finalizeexchangeE( Params &params, VectorPatch &vecPatches, int imode );   
     static void exchangeB( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
     static void finalizeexchangeB( Params &params, VectorPatch &vecPatches, int imode );
-    static void exchangeE( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
-    static void finalizeexchangeE( Params &params, VectorPatch &vecPatches, int imode );
+
     static void exchangeJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangeJ( Params &params, VectorPatch &vecPatches );
 
@@ -281,6 +282,8 @@ public :
     // static void finalizeexchangeEnvEEnvA( Params &params, VectorPatch &vecPatches );
     // static void exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     // static void finalizeexchangePhi( Params &params, VectorPatch &vecPatches );
+    static void exchangeEnvEx( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
+    static void finalizeexchangeEnvEx( Params &params, VectorPatch &vecPatches );
     static void exchangeGradPhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangeGradPhi( Params &params, VectorPatch &vecPatches );
     static void exchangeEnvChi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );

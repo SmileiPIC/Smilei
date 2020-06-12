@@ -11,7 +11,10 @@ and numerics of this implementation.
 | [Nanbu1997]_ and [Nanbu1998]_ give the original technique from which [Perez2012]_ was developed.
 | [Sentoku2008]_, [Lee1984]_ and [Frankel1979]_ provide additional information.
 
-Please refer to :ref:`that doc <Collisions>` for an explanation of how to add collisions in the namelist file.
+The correction suggested in [Higginson2020]_ has been applied since v4.5.
+
+Please refer to :ref:`that doc <Collisions>` for an explanation of how to add
+collisions in the namelist file.
 
 
 ----
@@ -38,7 +41,6 @@ Calculate a few intermediate quantities:
   
   | Particle density :math:`n_1` of group 1.
   | Particle density :math:`n_2`  of group 2.
-  | *Crossed* particle density :math:`n_{12}` (see [Perez2012]_).
   | Other constants.
 
 For each pair of particles:
@@ -448,6 +450,8 @@ References
 .. [Desjarlais2001] `M. Desjarlais, Contrib. Plasma Phys. 41, 267 (2001) <http://dx.doi.org/10.1002/1521-3986%28200103%2941%3A2%2F3%3C267%3A%3AAID-CTPP267%3E3.0.CO%3B2-P>`_
 
 .. [Frankel1979] `N. E. Frankel, K. C. Hines, and R. L. Dewar, Phys. Rev. A 20, 2120 (1979) <https://doi.org/10.1103/PhysRevA.20.2120>`_
+
+.. [Higginson2020] `D. P. Higginson, I. Holod and A. Link, J. Comput. Phys. 413, 109450 (2020) <https://doi.org/10.1016/j.jcp.2020.109450>`_
 
 .. [Lee1984] `Y. T. Lee and R. M. More, Phys. Fluids 27, 1273 (1984) <http://dx.doi.org/10.1063/1.864744>`_
 

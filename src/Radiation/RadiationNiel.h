@@ -36,7 +36,7 @@ class RadiationNiel : public Radiation
 public:
 
     //! Constructor for RadiationLL
-    RadiationNiel( Params &params, Species *species );
+    RadiationNiel( Params &params, Species *species, Random * rand  );
     
     //! Destructor for RadiationLL
     ~RadiationNiel();
@@ -52,15 +52,19 @@ public:
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
     //! \param ithread     Thread index
+    //! \param radiated_energy     overall energy radiated during the call to this method
     // ---------------------------------------------------------------------
     virtual void operator()(
         Particles &particles,
         Species *photon_species,
-        SmileiMPI *smpi,
+        SmileiMPI       *smpi,
         RadiationTables &RadiationTables,
-        int istart,
-        int iend,
-        int ithread, int ipart_ref = 0 );
+        double          &radiated_energy,
+        int             istart,
+        int             iend,
+        int             ithread,
+        int             ipart_ref = 0
+        );
         
 protected:
 

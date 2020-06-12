@@ -153,7 +153,11 @@ public:
             if( exitOnError ) {
                 ERROR( message );
             } else if( print ) {
-                MESSAGE( 1, "[Python] " << message );
+                int rk(0);
+                MPI_Comm_rank( MPI_COMM_WORLD, &rk );
+                std::ostringstream t("");
+                t << "  On rank "<< rk <<" [Python] " << message << std::endl;
+                std::cout << t.str();
             }
         }
     }

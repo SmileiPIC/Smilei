@@ -98,9 +98,12 @@ public:
     
     //! Method used to apply a single-pass binomial filter on currents
     void binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes);
-    
+
+    //! Method used to apply a single-pass custom FIR based filter on currents
+    void customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff);
+ 
     //! Creates a new field with the right characteristics, depending on the name
-    Field *createField( std::string fieldname );
+    Field *createField( std::string fieldname, Params& params );
     
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
@@ -172,6 +175,8 @@ public:
     void applyPrescribedField( Field *, Profile *, Patch *, double time );
     
     void initAntennas( Patch *patch );
+    
+    void initAntennas( Patch* patch, Params& params );
     
     //! from smpi is ymax
     const bool isYmin;

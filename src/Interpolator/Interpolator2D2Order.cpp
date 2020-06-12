@@ -308,12 +308,13 @@ void Interpolator2D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
 } // END Interpolator2D2Order
 
 
-void Interpolator2D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc )
+void Interpolator2D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
 {
     // Static cast of the electromagnetic fields
     Field2D *Env_A_abs_2D = static_cast<Field2D *>( EMfields->Env_A_abs_ );
     Field2D *Env_Chi_2D = static_cast<Field2D *>( EMfields->Env_Chi_ );
     Field2D *Env_E_abs_2D = static_cast<Field2D *>( EMfields->Env_E_abs_ );
+    Field2D *Env_Ex_abs_2D = static_cast<Field2D *>( EMfields->Env_Ex_abs_ );
     
     // Normalized particle position
     double xpn = particles.position( 0, ipart )*dx_inv_;
@@ -365,6 +366,31 @@ void Interpolator2D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     // Interpolation of Env_E_abs_^(p,p)
     // -------------------------
     *( Env_E_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_E_abs_2D, ip_, jp_ );
+
+    // -------------------------
+    // Interpolation of Env_Ex_abs_^(p,p)
+    // -------------------------
+    *( Env_Ex_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_Ex_abs_2D, ip_, jp_ );
+    
+} // END Interpolator2D2Order
+
+void Interpolator2D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+{
+    // Static cast of the envelope fields
+    Field2D *EnvEabs = static_cast<Field2D *>( EMfields->Env_E_abs_ );
+    
+    std::vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
+    
+    //Loop on bin particles
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+    
+        // ---------------------------------
+        // Interpolation of Env_E_abs^(p,p)
+        // ---------------------------------
+        ( *EnvEabs_part )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], EnvEabs, ip_, jp_ );
+        
+    }
+    
     
 } // END Interpolator2D2Order
 

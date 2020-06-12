@@ -36,6 +36,7 @@ public :
     VectorPatch( Params &params );
     ~VectorPatch();
     void saveOldRho( Params &params );
+    void setMagneticFieldsForDiagnostic( Params &params );
     
     void close( SmileiMPI * );
     
@@ -286,6 +287,7 @@ public :
     std::vector<Field *> listA_;
     std::vector<Field *> listA0_;
     // std::vector<Field *> listEnvE_;
+    std::vector<Field *> listEnvEx_;
     // std::vector<Field *> listEnvA_;
     // std::vector<Field *> listPhi_;
     // std::vector<Field *> listPhi0_;

@@ -17,7 +17,7 @@ public:
         std::vector<PyObject *> &pyAxes,
         std::vector<unsigned int> &species,
         Patch *patch,
-        std::vector<std::string> &excluded_axes,
+        std::vector<std::string> excluded_axes,
         std::string errorPrefix
     )
     {
@@ -32,7 +32,7 @@ public:
         if( deposited_quantity_object == Py_None ) {
             ERROR( deposited_quantityPrefix << " required" );
 
-            // If string, then ok
+        // If string, then ok
         } else if( PyTools::py2scalar( deposited_quantity_object, deposited_quantity ) ) {
 
             if( deposited_quantity == "user_function" ) {
@@ -73,7 +73,7 @@ public:
                 histogram = new Histogram_ekin_vx();
             } else if( deposited_quantity == "weight_chi" ) {
                 histogram = new Histogram_chi( patch, species, errorPrefix );
-            } else if( deposited_quantity == "dummy_radiation_spectrum" ) {
+            } else if( deposited_quantity == "" ) {
                 histogram = new Histogram();
             } else {
                 ERROR( deposited_quantityPrefix << " not understood" );
@@ -93,88 +93,118 @@ public:
             ERROR( deposited_quantityPrefix << " should be a string" );
 #endif
         }
+        
+        // Loop axes and extract their format
+        for( unsigned int iaxis=0; iaxis<pyAxes.size(); iaxis++ ) {
+            std::ostringstream t( "" );
+            t << errorPrefix << ", axis " << iaxis << ": ";
+            
+            HistogramAxis *axis = createAxis( pyAxes[iaxis], params, species, patch, excluded_axes, t.str() );
+            
+            histogram->axes.push_back( axis );
+        }
 
-        // Now setup each axis
-        std::string type;
+        return histogram;
+    }
+    
+    static HistogramAxis *createAxis(
+        PyObject *pyAxis,
+        Params &params,
+        std::vector<unsigned int> species,
+        Patch *patch,
+        std::vector<std::string> excluded_axes,
+        std::string errorPrefix,
+        bool hasType = true
+    )
+    {
+        HistogramAxis *axis;
+        std::string type = "";
         double min, max;
         int nbins;
         bool logscale, edge_inclusive;
-
-        // Loop axes and extract their format
-        for( unsigned int iaxis=0; iaxis<pyAxes.size(); iaxis++ ) {
-            PyObject *pyAxis=pyAxes[iaxis];
-
-            // Axis must be a list
-            if( !PyTuple_Check( pyAxis ) && !PyList_Check( pyAxis ) ) {
-                ERROR( errorPrefix << ": axis #" << iaxis << " must be a list" );
-            }
-            PyObject *seq = PySequence_Fast( pyAxis, "expected a sequence" );
-
-            // Axis must have 4 elements or more
-            unsigned int lenAxisArgs=PySequence_Size( seq );
-            if( lenAxisArgs<4 ) {
-                ERROR( errorPrefix << ": axis #" << iaxis << " must contain at least 4 arguments (contains only " << lenAxisArgs << ")" );
-            }
-
-            // Try to extract first element: type
-            PyObject *type_object = PySequence_Fast_GET_ITEM( seq, 0 );
+        std::vector<double> coefficients( 0 );
+        unsigned int i = 0;
+        
+        // Axis must be a list
+        if( ! PyTuple_Check( pyAxis ) && ! PyList_Check( pyAxis ) ) {
+            ERROR( errorPrefix << " must be a list" );
+        }
+        PyObject *seq = PySequence_Fast( pyAxis, "expected a sequence" );
+        
+        // Axis must have 4 elements or more (3 if no type)
+        unsigned int lenAxisArgs = PySequence_Size( seq );
+        unsigned int minArgs = hasType ? 4 : 3;
+        if( lenAxisArgs < minArgs ) {
+            ERROR( errorPrefix << " must contain at least " << minArgs << " arguments (contains only " << lenAxisArgs << ")" );
+        }
+        
+        // Try to extract first element: type
+        PyObject *type_object = nullptr;
+        if( hasType ) {
+            type_object = PySequence_Fast_GET_ITEM( seq, i );
+            i++;
             if( PyTools::py2scalar( type_object, type ) ) {
                 if( type.substr( 0, 13 ) == "user_function" ) {
-                    ERROR( errorPrefix << ", axis #" << iaxis << ": type " << type << " unknown" );
+                    ERROR( errorPrefix << ": type " << type << " unknown" );
                 }
-                for( unsigned int i=0; i<excluded_axes.size(); i++ )
+                for( unsigned int i=0; i<excluded_axes.size(); i++ ) {
                     if( type == excluded_axes[i] ) {
-                        ERROR( errorPrefix << ", axis #" << iaxis << ": type " << type << " unknown" );
+                        ERROR( errorPrefix << ": type " << type << " unknown" );
                     }
-                // If numpy supported, also accept type = any function
+                }
+            // If numpy supported, also accept type = any function
             } else {
-                std::ostringstream typePrefix( "" );
-                typePrefix << errorPrefix << ", axis #" << iaxis << ": type";
 #ifdef SMILEI_USE_NUMPY
                 // Test the function with temporary, "fake" particles
                 double *dummy = NULL;
+                std::ostringstream typePrefix( "" );
+                typePrefix << errorPrefix << ": type";
                 ParticleData test( params.nDim_particle, type_object, typePrefix.str(), dummy );
                 std::ostringstream t( "" );
-                t << "user_function" << iaxis;
+                t << "user_function";
                 type = t.str();
 #else
-                ERROR( errorPrefix << ", axis #" << iaxis << ": First item must be a string (axis type)" );
+                ERROR( errorPrefix << ": First item must be a string (axis type)" );
 #endif
             }
-
-            // Try to extract second element: axis min
-            if( !PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, 1 ), min ) ) {
-                ERROR( errorPrefix << ", axis #" << iaxis << ": Second item must be a double (axis min)" );
+        }
+        
+        // Try to extract second element: axis min
+        if( !PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, i ), min ) ) {
+            ERROR( errorPrefix<< ": Second item must be a double (axis min)" );
+        }
+        i++;
+        
+        // Try to extract third element: axis max
+        if( !PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, i ), max ) ) {
+            ERROR( errorPrefix << ": Third item must be a double (axis max)" );
+        }
+        i++;
+        
+        // Try to extract fourth element: axis nbins
+        if( !PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, i ), nbins ) ) {
+            ERROR( errorPrefix << ": Fourth item must be an int (number of bins)" );
+        }
+        i++;
+        
+        // Check for  other keywords such as "logscale" and "edge_inclusive"
+        logscale = false;
+        edge_inclusive = false;
+        while( i < lenAxisArgs ) {
+            std::string my_str( "" );
+            PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, i ), my_str );
+            i++;
+            if( my_str=="logscale" ||  my_str=="log_scale" || my_str=="log" ) {
+                logscale = true;
+            } else if( my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive" ) {
+                edge_inclusive = true;
+            } else {
+                ERROR( errorPrefix << ": keyword `" << my_str << "` not understood" );
             }
-
-            // Try to extract third element: axis max
-            if( !PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, 2 ), max ) ) {
-                ERROR( errorPrefix << ", axis #" << iaxis << ": Third item must be a double (axis max)" );
-            }
-
-            // Try to extract fourth element: axis nbins
-            if( !PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, 3 ), nbins ) ) {
-                ERROR( errorPrefix << ", axis #" << iaxis << ": Fourth item must be an int (number of bins)" );
-            }
-
-            // Check for  other keywords such as "logscale" and "edge_inclusive"
-            logscale = false;
-            edge_inclusive = false;
-            for( unsigned int i=4; i<lenAxisArgs; i++ ) {
-                std::string my_str( "" );
-                PyTools::py2scalar( PySequence_Fast_GET_ITEM( seq, i ), my_str );
-                if( my_str=="logscale" ||  my_str=="log_scale" || my_str=="log" ) {
-                    logscale = true;
-                } else if( my_str=="edges" ||  my_str=="edge" ||  my_str=="edge_inclusive" ||  my_str=="edges_inclusive" ) {
-                    edge_inclusive = true;
-                } else {
-                    ERROR( errorPrefix << ": keyword `" << my_str << "` not understood" );
-                }
-            }
-            Py_XDECREF( seq );
-            
-            HistogramAxis *axis;
-            std::vector<double> coefficients( 0 );
+        }
+        Py_XDECREF( seq );
+        
+        if( hasType ) {
             if( type == "x" ) {
                 axis = new HistogramAxis_x();
             } else if( type == "moving_x" ) {
@@ -240,30 +270,31 @@ public:
                 axis = new HistogramAxis_charge();
             } else if( type == "chi" ) {
                 // The requested species must be radiating
-                for( unsigned int ispec=0 ; ispec < species.size() ; ispec++ )
+                for( unsigned int ispec=0 ; ispec < species.size() ; ispec++ ) {
                     if( ! patch->vecSpecies[species[ispec]]->particles->isQuantumParameter ) {
-                        ERROR( errorPrefix << ": axis #" << iaxis << " 'chi' requires all species to be 'radiating'" );
+                        ERROR( errorPrefix << " 'chi' requires all species to be 'radiating'" );
                     }
+                }
                 axis = new HistogramAxis_chi();
             }
 #ifdef SMILEI_USE_NUMPY
             else if( type.substr( 0, 13 ) == "user_function" ) {
                 axis = new HistogramAxis_user_function( type_object );
-
             }
 #endif
             else {
-                ERROR( errorPrefix << ": axis #" << iaxis << " `" << type << "` unknown" );
+                ERROR( errorPrefix << type << " unknown" );
             }
-
-            Py_DECREF( seq );
-
-            axis->init( type, min, max, nbins, logscale, edge_inclusive, coefficients );
-            histogram->axes.push_back( axis );
+            
+        } else { // hasType = false
+            axis = new HistogramAxis();
         }
-
-        return histogram;
+        
+        axis->init( type, min, max, nbins, logscale, edge_inclusive, coefficients );
+        
+        return axis;
     }
+
 };
 
 #endif
