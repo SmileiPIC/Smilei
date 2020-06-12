@@ -46,7 +46,7 @@ ElectroMagnAM::ElectroMagnAM( Params &params, DomainDecomposition *domain_decomp
             }
         }
     }
-}//END constructor ElectromagnAM
+}//END constructor Electromagn3D
 
 
 ElectroMagnAM::ElectroMagnAM( ElectroMagnAM *emFields, Params &params, Patch *patch ) :

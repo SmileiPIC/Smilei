@@ -58,11 +58,13 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     fields_indexes.resize( 0 );
     fields_names  .resize( 0 );
     hasRhoJs = false;
+    //MESSAGE("HNA");
     // Loop fields
     for( unsigned int i=0; i<vecPatches.emfields( 0 )->allFields.size(); i++ ) {
         string field_name = vecPatches.emfields( 0 )->allFields[i]->name;
-        // If field in list of fields to dump, or rho per species in spectral AM then add it
-        if( hasField( field_name, fieldsToDump ) || (params.geometry == "AMcylindrical" && params.is_spectral && field_name.substr(0,4)=="Rho_") ) {
+        
+        // If field in list of fields to dump, then add it
+        if( hasField( field_name, fieldsToDump ) ) {
             ss << field_name << " ";
             fields_indexes.push_back( i );
             fields_names  .push_back( field_name );
