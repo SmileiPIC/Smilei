@@ -262,29 +262,23 @@ public:
             std::ifstream file( filename );
             // Check if file exists
             if( ! file ) {
-                // Create the file access protocol for writing in the debug file later
-                hid_t file_access = H5Pcreate( H5P_FILE_ACCESS );
-                H5Pset_fapl_mpio( file_access, MPI_COMM_WORLD, MPI_INFO_NULL );
-                // Create file
-                hid_t fileId = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, file_access );
-                H5Pclose( file_access );
+                H5FileWrite f = H5FileWrite( filename, true );
                 // write all parameters as HDF5 attributes
-                H5::attr( fileId, "Version", std::string( __VERSION ) );
+                f.attr( "Version", std::string( __VERSION ) );
                 mystream.str( "" );
                 mystream << sgroup[0][0];
                 for( unsigned int i=1; i<sgroup[0].size(); i++ ) {
                     mystream << "," << sgroup[0][i];
                 }
-                H5::attr( fileId, "species1", mystream.str() );
+                f.attr( "species1", mystream.str() );
                 mystream.str( "" );
                 mystream << sgroup[1][0];
                 for( unsigned int i=1; i<sgroup[1].size(); i++ ) {
                     mystream << "," << sgroup[1][i];
                 }
-                H5::attr( fileId, "species2", mystream.str() );
-                H5::attr( fileId, "coulomb_log", clog );
-                H5::attr( fileId, "debug_every", debug_every );
-                H5Fclose( fileId );
+                f.attr( "species2", mystream.str() );
+                f.attr( "coulomb_log", clog );
+                f.attr( "debug_every", debug_every );
             }
         }
         

@@ -16,10 +16,10 @@ class H5Group
 {
 public:
     //! Group already opened
-    H5Group( hid_t ID );
+    H5Group( hid_t ID, bool parallel );
     
     //! Open group from location
-    H5Group( hid_t lid, std::string grouppath );
+    H5Group( hid_t lid, std::string grouppath, bool parallel );
     
     ~H5Group();
     
@@ -27,21 +27,28 @@ public:
         return id >= 0;
     }
     
+    void flush() {
+        H5Fflush( id, H5F_SCOPE_GLOBAL );
+    }
+    
 protected:
     hid_t id;
-    bool empty;
+    hid_t dxpl;
+    hid_t dcr;
+    bool empty_;
+    bool parallel_;
 };
 
 class H5GroupWrite : public H5Group
 {
 public:
-    H5GroupWrite( hid_t id ) : H5Group( id ) {};
-    H5GroupWrite( hid_t lid, std::string grouppath ) : H5Group( lid, grouppath ) {};
+    H5GroupWrite( hid_t id, bool parallel ) : H5Group( id, parallel ) {};
+    H5GroupWrite( hid_t lid, std::string grouppath, bool parallel ) : H5Group( lid, grouppath, parallel ) {};
     
     //! Make an empty group
     H5GroupWrite group( std::string group_name )
     {
-        return H5GroupWrite( H5Gcreate( id, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT ) );
+        return H5GroupWrite( H5Gcreate( id, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT ), parallel_ );
     }
     
     //! Write a string as an attribute
@@ -151,74 +158,90 @@ public:
     }
     
     //! Write a vector<int>
-    void vect( std::string name, std::vector<int> v, int deflate=0 )
+    void vect( std::string name, std::vector<int> v, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
     {
-        vect( name, v[0], v.size(), H5T_NATIVE_INT, deflate );
+        vect( name, v[0], v.size(), H5T_NATIVE_INT, deflate, offset, npoints );
     }
     
     //! write a vector<unsigned int>
-    void vect(std::string name, std::vector<unsigned int> v, int deflate=0 )
+    void vect(std::string name, std::vector<unsigned int> v, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
     {
-        vect(name, v[0], v.size(), H5T_NATIVE_UINT, deflate );
+        vect(name, v[0], v.size(), H5T_NATIVE_UINT, deflate, offset, npoints );
     }
     
     //! write a vector<short>
-    void vect( std::string name, std::vector<short> v, int deflate=0 )
+    void vect( std::string name, std::vector<short> v, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
     {
-        vect( name, v[0], v.size(), H5T_NATIVE_SHORT, deflate );
+        vect( name, v[0], v.size(), H5T_NATIVE_SHORT, deflate, offset, npoints );
     }
     
     //! write a vector<doubles>
-    void vect( std::string name, std::vector<double> v, int deflate=0 )
+    void vect( std::string name, std::vector<double> v, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
     {
-        vect( name, v[0], v.size(), H5T_NATIVE_DOUBLE, deflate );
+        vect( name, v[0], v.size(), H5T_NATIVE_DOUBLE, deflate, offset, npoints );
     }
     
     //! write any vector
     template<class T>
-    void vect( std::string name, std::vector<T> v, hid_t type, int deflate=0 )
+    void vect( std::string name, std::vector<T> v, hid_t type, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
     {
-        vect( name, v[0], v.size(), type, deflate );
+        vect( name, v[0], v.size(), type, deflate, offset, npoints );
     }
     
     //! Write a portion of a vector
     template<class T>
-    void vect( std::string name, T &v, int size, hid_t type, int deflate=0 )
+    void vect( std::string name, T &v, int size, hid_t type, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
     {
         // create dataspace for 1D array with good number of elements
-        hsize_t dims = size;
-        hid_t sid = H5Screate_simple( 1, &dims, NULL );
-        hid_t pid = H5Pcreate( H5P_DATASET_CREATE );
-        
+        hsize_t dim = size;
         if( deflate>0 ) {
-            H5Pset_chunk( pid, 1, &dims );
-            H5Pset_deflate( pid, std::min( 9, deflate ) );
+            H5Pset_chunk( dcr, 1, &dim );
+            H5Pset_deflate( dcr, std::min( 9, deflate ) );
+        } else {
+            H5Premove_filter( dcr, H5Z_FILTER_DEFLATE );
         }
-        
+        // Select portion
+        if( npoints == 0 ) {
+            npoints = dim - offset;
+        }
+        hid_t memspace = H5Screate_simple( 1, &npoints, NULL );
+        hid_t filespace = H5Screate_simple( 1, &dim, NULL );
+        if( offset > 0 || npoints < dim ) {
+            hsize_t o = offset;
+            hsize_t c = 1;
+            hsize_t n = npoints;
+            H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &o, NULL, &c, &n );
+        }
         // create dataset
-        hid_t did = H5Dcreate( id, name.c_str(), type, sid, H5P_DEFAULT, pid, H5P_DEFAULT );
+        hid_t did = H5Dcreate( id, name.c_str(), type, filespace, H5P_DEFAULT, dcr, H5P_DEFAULT );
         // write vector in dataset
-        H5Dwrite( did, type, sid, sid, H5P_DEFAULT, &v );
+        H5Dwrite( did, type, memspace, filespace, dxpl, &v );
         // close all
         H5Dclose( did );
-        H5Pclose( pid );
-        H5Sclose( sid );
+        H5Sclose( filespace );
+        H5Sclose( memspace );
     }
 };
 
 class H5GroupRead : public H5Group
 {
 public:
-    H5GroupRead( hid_t id ) : H5Group( id ) {};
-    H5GroupRead( hid_t lid, std::string grouppath ) : H5Group( lid, grouppath ) {};
+    H5GroupRead( hid_t id, bool parallel ) : H5Group( id, parallel ) {};
+    H5GroupRead( hid_t lid, std::string grouppath, bool parallel ) : H5Group( lid, grouppath, parallel ) {};
     
     //! Open group
     H5GroupRead group( std::string group_name )
     {
-        return H5GroupRead( H5Gopen( id, group_name.c_str(), H5P_DEFAULT ) );
+        return H5GroupRead( H5Gopen( id, group_name.c_str(), H5P_DEFAULT ), parallel_ );
     }
     
-    //Check if attribute exists
+    //! Check if group exists
+    bool hasGroup( std::string group_name )
+    {
+        return H5Lexists( id, group_name.c_str(), H5P_DEFAULT ) > 0;
+    }
+    
+    //! Check if attribute exists
     bool hasAttr( std::string attribute_name )
     {
         return H5Aexists( id, attribute_name.c_str() ) > 0;
@@ -350,6 +373,24 @@ public:
     template<class T>
     void vect( std::string vect_name, std::vector<T> &v, hid_t type, bool resizeVect=false, hsize_t offset=0, hsize_t npoints=0 )
     {
+        hsize_t dim = vectSize( vect_name );
+        if( npoints == 0 ) {
+            npoints = dim - offset ;
+        }
+        if( npoints != v.size() ) {
+            if( resizeVect ) {
+                v.resize( npoints );
+            } else {
+                ERROR( "Reading vector " << vect_name << " mismatch " << v.size() << " != " << npoints );
+            }
+        }
+        vect( vect_name, v[0], type, offset, npoints );
+    }
+    
+    //! template to read generic 1d data (optionally offset and npoints)
+    template<class T>
+    void vect( std::string vect_name, T &v, hid_t type, hsize_t offset=0, hsize_t npoints=0 )
+    {
         // Open dataset
         hid_t did = H5Dopen( id, vect_name.c_str(), H5P_DEFAULT );
         if( did < 0 ) {
@@ -364,14 +405,7 @@ public:
         hsize_t dim = H5Sget_simple_extent_npoints( sid );
         H5Sclose( sid );
         if( npoints == 0 ) {
-            npoints = std::max( (hsize_t)0, dim - offset );
-        }
-        if( npoints != v.size() ) {
-            if( resizeVect ) {
-                v.resize( npoints );
-            } else {
-                ERROR( "Reading vector " << vect_name << " mismatch " << v.size() << " != " << npoints );
-            }
+            npoints = dim - offset;
         }
         // Select portion
         hid_t memspace = H5Screate_simple( 1, &npoints, NULL );
@@ -383,7 +417,7 @@ public:
             H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &o, NULL, &c, &n );
         }
         // Read data
-        H5Dread( did, type, memspace, filespace, H5P_DEFAULT, &v[0] );
+        H5Dread( did, type, memspace, filespace, dxpl, &v );
         H5Dclose( did );
         H5Sclose( filespace );
         H5Sclose( memspace );
@@ -423,10 +457,12 @@ public:
 class H5File
 {
 public:
-    H5File( std::string file, unsigned access, bool _raise );
+    H5File( std::string file, unsigned access, bool parallel, bool _raise );
     ~H5File() {
         if( fid >= 0 ) {
-            H5Fclose( fid );
+            if( H5Fclose( fid ) < 0 ) {
+                ERROR( "Can't close file " << filepath );
+            }
         }
     };
 protected:
@@ -438,14 +474,16 @@ protected:
 class H5FileWrite : public H5File, public H5GroupWrite
 {
 public:
-    H5FileWrite( std::string file, bool _raise = true ) : H5File( file, H5F_ACC_RDWR, _raise ), H5GroupWrite( fid, grouppath ) {};
+    H5FileWrite( std::string file, bool parallel = false, bool _raise = true )
+     : H5File( file, H5F_ACC_RDWR, parallel, _raise ), H5GroupWrite( fid, grouppath, parallel ) {};
     ~H5FileWrite() {};
 };
 
 class H5FileRead : public H5File, public H5GroupRead
 {
 public:
-    H5FileRead( std::string file, bool _raise = true ) : H5File( file, H5F_ACC_RDONLY, _raise ), H5GroupRead( fid, grouppath ) {};
+    H5FileRead( std::string file, bool parallel = false, bool _raise = true )
+     : H5File( file, H5F_ACC_RDONLY, parallel,  _raise ), H5GroupRead( fid, grouppath, parallel ) {};
     ~H5FileRead() {};
 };
 

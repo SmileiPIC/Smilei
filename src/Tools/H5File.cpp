@@ -1,27 +1,42 @@
 #include "H5File.h"
 
 //! Group already opened
-H5Group::H5Group( hid_t ID ) : id( ID ), empty( false )
+H5Group::H5Group( hid_t ID, bool parallel ) : id( ID ), empty_( false ), parallel_( parallel )
 {
+    dxpl = H5Pcreate( H5P_DATASET_XFER );
+    dcr = H5Pcreate( H5P_DATASET_CREATE );
+    if( parallel ) {
+        H5Pset_dxpl_mpio( dxpl, H5FD_MPIO_COLLECTIVE );
+        H5Pset_alloc_time( dcr, H5D_ALLOC_TIME_EARLY );
+    }
 }
 
 //! Open group from file
-H5Group::H5Group( hid_t lid, std::string grouppath ) {
+H5Group::H5Group( hid_t lid, std::string grouppath, bool parallel ) {
     id = lid;
-    empty = true;
+    empty_ = true;
+    parallel_ = parallel;
     if( ! grouppath.empty() && lid >= 0 ) {
         id = H5Gopen( lid, grouppath.c_str(), H5P_DEFAULT );
-        empty = false;
+        empty_ = false;
+    }
+    dxpl = H5Pcreate( H5P_DATASET_XFER );
+    dcr = H5Pcreate( H5P_DATASET_CREATE );
+    if( parallel ) {
+        H5Pset_dxpl_mpio( dxpl, H5FD_MPIO_COLLECTIVE );
+        H5Pset_alloc_time( dcr, H5D_ALLOC_TIME_EARLY );
     }
 }
 
 H5Group::~H5Group() {
-    if( ! empty ) {
+    if( ! empty_ ) {
         H5Gclose( id );
     }
+    H5Pclose( dxpl );
+    H5Pclose( dcr );
 }
 
-H5File::H5File( std::string file, unsigned access, bool _raise ) {
+H5File::H5File( std::string file, unsigned access, bool parallel, bool _raise ) {
     
     // Analyse file string : separate file name and tree inside hdf5 file
     size_t l = file.length();
@@ -49,8 +64,16 @@ H5File::H5File( std::string file, unsigned access, bool _raise ) {
         H5Eset_auto( H5E_DEFAULT, NULL, NULL );
     }
     
-    // Open
-    fid = H5Fopen( filepath.c_str(), access, H5P_DEFAULT );
+    // Open or create
+    hid_t fapl = H5Pcreate( H5P_FILE_ACCESS );
+    if( parallel ) {
+        H5Pset_fapl_mpio( fapl, MPI_COMM_WORLD, MPI_INFO_NULL );
+    }
+    if( access == H5F_ACC_RDWR ) {
+        fid = H5Fcreate( filepath.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl );
+    } else {
+        fid = H5Fopen( filepath.c_str(), access, fapl );
+    }
     
     // Check error stack size
     if( H5Eget_num( H5E_DEFAULT ) > 0 ) {

@@ -391,52 +391,18 @@ void Collisions::debug( Params &params, int itime, unsigned int icoll, VectorPat
         }
         
         // Open the HDF5 file
-        hid_t file_access = H5Pcreate( H5P_FILE_ACCESS );
-        H5Pset_fapl_mpio( file_access, MPI_COMM_WORLD, MPI_INFO_NULL );
-        hid_t fileId = H5Fopen( vecPatches( 0 )->vecCollisions[icoll]->filename_.c_str(), H5F_ACC_RDWR, file_access );
-        H5Pclose( file_access );
+        H5FileWrite f = H5FileWrite( vecPatches( 0 )->vecCollisions[icoll]->filename_, true );
         // Create H5 group for the current timestep
         ostringstream name( "" );
         name << "t" << setfill( '0' ) << setw( 8 ) << itime;
-        hid_t group = H5::group( fileId, name.str() );
-        // Define the size in memory for this MPI
-        hsize_t mem_size[1] = {npatch};
-        hid_t memspace  = H5Screate_simple( 1, mem_size, NULL );
-        // Define size and location in file
-        hsize_t dimsf[1] = {( hsize_t )params.tot_number_of_patches};
-        hid_t filespace = H5Screate_simple( 1, dimsf, NULL );
-        hsize_t offset[1] = {( hsize_t )vecPatches.refHindex_}, stride[1] = {1}, count[1] = {1}, block[1] = {npatch};
-        H5Sselect_hyperslab( filespace, H5S_SELECT_SET, offset, stride, count, block );
-        // Define transfer
-        hid_t transfer = H5Pcreate( H5P_DATASET_XFER );
-        H5Pset_dxpl_mpio( transfer, H5FD_MPIO_COLLECTIVE );
-        // Define dataset property list
-        hid_t plist_id = H5Pcreate( H5P_DATASET_CREATE );
-        H5Pset_alloc_time( plist_id, H5D_ALLOC_TIME_EARLY );
+        H5GroupWrite group = f.group( name.str() );
         // Create new datasets for this timestep and write
-        hid_t dset_id;
-        dset_id  = H5Dcreate( group, "s", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT );
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &smean[0] );
-        H5Dclose( dset_id );
-        dset_id  = H5Dcreate( group, "coulomb_log", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT );
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &logLmean[0] );
-        H5Dclose( dset_id );
-        //dset_id  = H5Dcreate(group, "temperature", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-        //H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &temperature[0] );
-        //H5Dclose(dset_id);
-        dset_id  = H5Dcreate( group, "debyelength", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT );
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &debye_length[0] );
-        H5Dclose( dset_id );
-        dset_id  = H5Dcreate( group, "nuclear_reaction_multiplier", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT );
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &nuclear_reaction_multiplier[0] );
-        H5Dclose( dset_id );
-        // Close all
-        H5Pclose( plist_id );
-        H5Pclose( transfer );
-        H5Sclose( filespace );
-        H5Sclose( memspace );
-        H5Gclose( group );
-        H5Fclose( fileId );
+        group.vect( "s"                          , smean                      , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );
+        group.vect( "coulomb_log"                , logLmean                   , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );
+        group.vect( "debyelength"                , debye_length               , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );
+        //group.vect( "temperature"                , temperature                , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );
+        group.vect( "nuclear_reaction_multiplier", nuclear_reaction_multiplier, params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );
+        
     }
     
 }
