@@ -344,7 +344,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
             // Open file
             H5FileRead f = H5FileRead( species_->position_initialization_ );
             // Loop in chunks
-            unsigned int chunksize = 80;
+            unsigned int chunksize = 10000000;
             std::vector<double> buffer[species_->nDim_particle];
             for( unsigned int i=0; i<species_->file_position_npart_; i+=chunksize ) {
                 // Get position arrays for this chunks

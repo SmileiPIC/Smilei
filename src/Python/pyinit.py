@@ -52,6 +52,14 @@ class SmileiComponentType(type):
             pass
         return self._list[key]
     
+    def has(self, key):
+        if type(key) is int and key < len(self._list):
+            return True
+        for obj in self._list:
+            if obj.name == key:
+                return True
+        return False
+    
     # Function to return the number of instances, for example len(Species)
     def __len__(self):
         return len(self._list)

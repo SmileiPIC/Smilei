@@ -494,29 +494,27 @@ public:
                        || this_species->position_initialization_=="random"
                        || this_species->position_initialization_=="centered" ) {
                 ;
+            // Copy positions of other species
+            } else if( PyTools::isSpecies( this_species->position_initialization_ ) ) {
+                this_species->position_initialization_on_species_ = true;
+            // HDF5 file where arrays are stored
             } else {
-                // HDF5 file where arrays are stored
-                H5FileRead f = H5FileRead( this_species->position_initialization_, false );
-                if( f.valid() ) {
-                    std::vector<std::string> ax = {"weight", "position/x", "position/y", "position/z"};
-                    for( unsigned int i=0; i<params.nDim_particle+1; i++ ) {
-                        std::vector<hsize_t> shape = f.shape( ax[i] );
-                        if( shape.size() == 0 ) {
-                            ERROR( "For species '" << species_name << "': " << ax[i] << " not found in file " << this_species->position_initialization_ );
-                        }
-                        if( this_species->file_position_npart_ == 0 ) {
-                            if( shape[0] == 0 ) {
-                                ERROR( "For species '" << species_name << "': " << ax[i] << " is empty in file " << this_species->position_initialization_ );
-                            }
-                            this_species->file_position_npart_ = shape[0];
-                        }
-                        if( shape.size() > 1 || shape[0] != this_species->file_position_npart_ ) {
-                            ERROR( "For species '" << species_name << "': wrong size for " << ax[i] << " in file " << this_species->position_initialization_ );
-                        }
+                H5FileRead f = H5FileRead( this_species->position_initialization_ );
+                std::vector<std::string> ax = {"weight", "position/x", "position/y", "position/z"};
+                for( unsigned int i=0; i<params.nDim_particle+1; i++ ) {
+                    std::vector<hsize_t> shape = f.shape( ax[i] );
+                    if( shape.size() == 0 ) {
+                        ERROR( "For species '" << species_name << "': " << ax[i] << " not found in file " << this_species->position_initialization_ );
                     }
-                // Copy positions of other species
-                } else {
-                    this_species->position_initialization_on_species_ = true;
+                    if( this_species->file_position_npart_ == 0 ) {
+                        if( shape[0] == 0 ) {
+                            ERROR( "For species '" << species_name << "': " << ax[i] << " is empty in file " << this_species->position_initialization_ );
+                        }
+                        this_species->file_position_npart_ = shape[0];
+                    }
+                    if( shape.size() > 1 || shape[0] != this_species->file_position_npart_ ) {
+                        ERROR( "For species '" << species_name << "': wrong size for " << ax[i] << " in file " << this_species->position_initialization_ );
+                    }
                 }
             }
         }
@@ -589,10 +587,7 @@ public:
                 }
             // HDF5 file where arrays are stored
             } else if( this_species->file_position_npart_ > 0 ) {
-                H5FileRead f = H5FileRead( this_species->momentum_initialization_, false );
-                if( ! f.valid() ) {
-                    ERROR( "For species '" << species_name << "' file not found: " << this_species->momentum_initialization_ );
-                }
+                H5FileRead f = H5FileRead( this_species->momentum_initialization_ );
                 std::vector<std::string> ax = {"momentum/x", "momentum/y", "momentum/z"};
                 for( unsigned int i=0; i<ax.size(); i++ ) {
                     std::vector<hsize_t> shape = f.shape( ax[i] );
