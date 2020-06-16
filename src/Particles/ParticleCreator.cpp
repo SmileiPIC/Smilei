@@ -175,21 +175,23 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     }
     
     // CHARGE PROFILE
+    charge.allocateDims( n_space_to_create );
     if( species_->mass_ > 0 ) {
         // Initialize charge profile
-        charge.allocateDims( n_space_to_create );
         species_->charge_profile_->valuesAt( xyz, charge );
         // Loop cells
         for( unsigned int i=0; i<n_space_to_create[0]; i++ ) {
             for( unsigned int j=0; j<n_space_to_create[1]; j++ ) {
                 for( unsigned int k=0; k<n_space_to_create[2]; k++ ) {
                     // Calculate max_charge_
-                    if( species_->mass_ > 0 && charge( i, j, k ) > species_->max_charge_ ) {
+                    if( charge( i, j, k ) > species_->max_charge_ ) {
                         species_->max_charge_ = charge( i, j, k );
                     }
                 }
             }
         }
+    } else {
+        charge.put_to( 0. );
     }
     
     // POSITION & WEIGHT PROFILE
