@@ -30,7 +30,11 @@ H5Group::H5Group( hid_t lid, std::string grouppath, bool parallel ) {
 
 H5Group::~H5Group() {
     if( ! empty_ ) {
-        H5Gclose( id );
+        if( H5Iget_type( id ) == H5I_GROUP ) {
+            H5Gclose( id );
+        } else if( H5Iget_type( id ) == H5I_DATASET ) {
+            H5Dclose( id );
+        }
     }
     H5Pclose( dxpl );
     H5Pclose( dcr );

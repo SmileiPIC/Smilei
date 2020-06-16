@@ -232,7 +232,7 @@ public:
     //! Open group
     H5GroupRead group( std::string group_name )
     {
-        return H5GroupRead( H5Gopen( id, group_name.c_str(), H5P_DEFAULT ), parallel_ );
+        return H5GroupRead( H5Oopen( id, group_name.c_str(), H5P_DEFAULT ), parallel_ );
     }
     
     //! Check if group exists
@@ -373,16 +373,16 @@ public:
     template<class T>
     void vect( std::string vect_name, std::vector<T> &v, hid_t type, bool resizeVect=false, hsize_t offset=0, hsize_t npoints=0 )
     {
-        hsize_t dim = vectSize( vect_name );
-        if( npoints == 0 ) {
-            npoints = dim - offset ;
-        }
-        if( npoints != v.size() ) {
-            if( resizeVect ) {
-                v.resize( npoints );
-            } else {
-                ERROR( "Reading vector " << vect_name << " mismatch " << v.size() << " != " << npoints );
+        if( resizeVect ) {
+            std::vector<hsize_t> s = shape( vect_name );
+            hsize_t n = 1;
+            for( unsigned int i=0; i<s.size(); i++ ) {
+                n *= s[i];
             }
+            if( npoints == 0 ) {
+                npoints = n - offset ;
+            }
+            v.resize( npoints );
         }
         vect( vect_name, v[0], type, offset, npoints );
     }
@@ -396,31 +396,33 @@ public:
         if( did < 0 ) {
             ERROR( "Cannot read dataset " << vect_name );
         }
-        // Get shape and resize vector
-        hid_t sid = H5Dget_space( did );
-        int sdim = H5Sget_simple_extent_ndims( sid );
-        if( sdim!=1 ) {
-            ERROR( "Reading vector " << vect_name << " is not 1D but " <<sdim << "D" );
-        }
-        hsize_t dim = H5Sget_simple_extent_npoints( sid );
-        H5Sclose( sid );
-        if( npoints == 0 ) {
-            npoints = dim - offset;
-        }
-        // Select portion
-        hid_t memspace = H5Screate_simple( 1, &npoints, NULL );
-        hid_t filespace = H5Screate_simple( 1, &dim, NULL );
-        if( offset > 0 || npoints < dim ) {
+        if( offset != 0 || npoints != 0 ) {
+            // Get shape and resize vector
+            hid_t sid = H5Dget_space( did );
+            int sdim = H5Sget_simple_extent_ndims( sid );
+            if( sdim!=1 ) {
+                ERROR( "Reading vector " << vect_name << " is not 1D but " <<sdim << "D" );
+            }
+            hsize_t dim = H5Sget_simple_extent_npoints( sid );
+            H5Sclose( sid );
+            if( npoints == 0 ) {
+                npoints = dim - offset;
+            }
+            // Select portion
+            hid_t memspace = H5Screate_simple( 1, &npoints, NULL );
+            hid_t filespace = H5Screate_simple( 1, &dim, NULL );
             hsize_t o = offset;
             hsize_t c = 1;
             hsize_t n = npoints;
             H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &o, NULL, &c, &n );
+            // Read data
+            H5Dread( did, type, memspace, filespace, dxpl, &v );
+            H5Sclose( filespace );
+            H5Sclose( memspace );
+        } else {
+            H5Dread( did, type, H5S_ALL, H5S_ALL, dxpl, &v );
         }
-        // Read data
-        H5Dread( did, type, memspace, filespace, dxpl, &v );
         H5Dclose( did );
-        H5Sclose( filespace );
-        H5Sclose( memspace );
     }
     
     std::vector<hsize_t> shape( std::string name )
