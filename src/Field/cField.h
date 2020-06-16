@@ -19,22 +19,27 @@ public:
     //! Constructor for cField: no input argument
     cField() : Field()
     {
+        cdata_ = NULL;
     };
     //! Constructor for cField: with the vector dimension as input argument
     cField( std::vector<unsigned int> dims ) : Field( dims )
     {
+        cdata_ = NULL;
     };
     //! Constructor, isPrimal define if mainDim is Primal or Dual
     cField( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : Field( dims, mainDim, isPrimal )
     {
+        cdata_ = NULL;
     };
     //! Constructor for cField: with the vector dimension and filename for the dump as input argument
     cField( std::vector<unsigned int> dims, std::string name_in ) : Field( dims, name_in )
     {
+        cdata_ = NULL;
     };
     //! Constructor, isPrimal define if mainDim is Primal or Dual and a name
     cField( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : Field( dims, mainDim, isPrimal, name_in )
     {
+        cdata_ = NULL;
     };
     
     //! Destructor for cField
