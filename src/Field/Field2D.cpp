@@ -18,42 +18,37 @@ using namespace std;
 // with no input argument
 Field2D::Field2D() : Field()
 {
-    data_=NULL;
 }
 
 // with the dimensions as input argument
 Field2D::Field2D( vector<unsigned int> dims ) : Field( dims )
 {
-    data_=NULL;
     allocateDims( dims );
 }
 
 // with the dimensions and output (dump) file name as input argument
 Field2D::Field2D( vector<unsigned int> dims, string name_in ) : Field( dims, name_in )
 {
-    data_=NULL;
     allocateDims( dims );
 }
 
 // with the dimensions as input argument
 Field2D::Field2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : Field( dims, mainDim, isPrimal )
 {
-    data_=NULL;
     allocateDims( dims, mainDim, isPrimal );
 }
 
 // with the dimensions and output (dump) file name as input argument
 Field2D::Field2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in ) : Field( dims, mainDim, isPrimal, name_in )
 {
-    data_=NULL;
     allocateDims( dims, mainDim, isPrimal );
 }
 
 // without allocating
 Field2D::Field2D( string name_in, vector<unsigned int> dims ) : Field( dims, name_in )
 {
-    data_=NULL;
-    dims_=dims;
+    dims_ = dims;
+    globalDims_ = dims_[0]*dims_[1];
 }
 
 

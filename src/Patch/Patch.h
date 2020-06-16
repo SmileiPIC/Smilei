@@ -321,6 +321,9 @@ public:
     //! of one cell at the position of a given particle
     virtual double getPrimalCellVolume( Particles *p, unsigned int ipart, Params &params ) = 0;
     
+    //! Given several arrays (x,y,z for instance), return indices of points in patch
+    virtual std::vector<unsigned int> indicesInDomain( double **position, unsigned int n_particles ) = 0;
+    
     //! Set geometry data in case of moving window restart
     //! \param x_moved difference on coordinates regarding t0 geometry
     //! \param idx_moved number of displacement of the window

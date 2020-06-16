@@ -54,7 +54,7 @@ public:
 
     
     //! Attempt to open a file but does not display an error
-    static hid_t Fopen( std::string file ) {
+    static hid_t Fopen( std::string file, unsigned access = H5F_ACC_RDWR ) {
         // Backup default error printing
         H5E_auto2_t old_func;
         void *old_client_data;
@@ -62,7 +62,7 @@ public:
         H5Eset_auto( H5E_DEFAULT, NULL, NULL );
         
         // Open
-        hid_t status = H5Fopen( file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
+        hid_t status = H5Fopen( file.c_str(), access, H5P_DEFAULT );
         
         // Check error stack size
         if( H5Eget_num( H5E_DEFAULT ) > 0 ) {
@@ -405,27 +405,35 @@ public:
         H5Dclose( did );
     }
     
+    static std::vector<hsize_t> getShape( hid_t locationId, std::string name )
+    {
+        std::vector<hsize_t> shape( 0 );
+        if( H5Lexists( locationId, name.c_str(), H5P_DEFAULT ) >0 ) {
+            hid_t did = H5Dopen( locationId, name.c_str(), H5P_DEFAULT );
+            if( did >= 0 ) {
+                hid_t sid = H5Dget_space( did );
+                int sdim = H5Sget_simple_extent_ndims( sid );
+                shape.resize( sdim );
+                H5Sget_simple_extent_dims( sid, &shape[0], NULL );
+                H5Sclose( sid );
+                H5Dclose( did );
+            }
+        }
+        return shape;
+    }
+    
     static int getVectSize( hid_t locationId, std::string vect_name )
     {
-        if( H5Lexists( locationId, vect_name.c_str(), H5P_DEFAULT ) >0 ) {
-            hid_t did = H5Dopen( locationId, vect_name.c_str(), H5P_DEFAULT );
-            if( did < 0 ) {
-                return -1;
-            }
-            hid_t sid = H5Dget_space( did );
-            int sdim = H5Sget_simple_extent_ndims( sid );
-            if( sdim!=1 ) {
-                ERROR( "Reading vector " << vect_name << " is not 1D but " <<sdim << "D" );
-            }
-            hsize_t dim[1];
-            H5Sget_simple_extent_dims( sid, dim, NULL );
-            H5Sclose( sid );
-            H5Dclose( did );
-            return ( int )dim[0];
-        } else {
+        std::vector<hsize_t> shape = getShape( locationId, vect_name );
+        if( shape.size() == 0 ) {
             return -1;
         }
+        if( shape.size() != 1 ) {
+            ERROR( "Reading vector " << vect_name << " is not 1D but " << shape.size() << "D" );
+        }
+        return shape[0];
     }
+    
 };
 
 #endif

@@ -47,8 +47,8 @@ cField1D::cField1D( vector<unsigned int> dims, unsigned int mainDim, bool isPrim
 // without allocating
 cField1D::cField1D( string name, vector<unsigned int> dims ) : cField( dims, name )
 {
-    cdata_=NULL;
     dims_ = dims;
+    globalDims_ = dims_[0];
 }
 
 
