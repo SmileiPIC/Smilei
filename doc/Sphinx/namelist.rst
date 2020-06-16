@@ -210,7 +210,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: 'Yee'
 
-  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``. ``"Lehe"`` and ``"Bouchard"`` is available for ``3DCartesian``. The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
+  The solver for Maxwell's equations.
+  Only ``"Yee"`` is available for all geometries at the moment.
+  ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``.
+  ``"Lehe"`` and ``"Bouchard"`` is available for ``3DCartesian``.
+  The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
 
 .. py:data:: solve_poisson
 
@@ -261,9 +265,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
-  ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_{inc}` on each face is defined by ``"EM_boundary_conditions_k"``.
-  When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_{inc}` is aligned with the wave you are injecting.
-  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_{inc}` on the considered face.
+  ``"silver-muller"`` is an open boundary condition.
+  The incident wave vector :math:`k_{inc}` on each face is defined by
+  ``"EM_boundary_conditions_k"``.
+  When using ``"silver-muller"`` as an injecting boundary,
+  make sure :math:`k_{inc}` is aligned with the wave you are injecting.
+  When using ``"silver-muller"`` as an absorbing boundary,
+  the optimal wave absorption on a given face will be along :math:`k_{abs}`
+  the specular reflection of :math:`k_{inc}` on the considered face.
 
 .. py:data:: EM_boundary_conditions_k
 
@@ -271,9 +280,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[[1.,0.],[-1.,0.],[0.,1.],[0.,-1.]]`` in 2D
   :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
-  The incident unit wave vector `k` for each face (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax) is
+  The incident unit wave vector `k` for each face
+  (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax) is
   defined by its coordinates in the `xyz` frame.
-  The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation. In cylindrical geometry, `k` coordinates are given in the `xr` frame and only the Rmax face is affected.
+  The number of coordinates is equal to the dimension of the simulation.
+  The number of given vectors must be equal to 1 or to the number of faces
+  which is twice the dimension of the simulation. In cylindrical geometry,
+  `k` coordinates are given in the `xr` frame and only the Rmax face is affected.
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
@@ -339,20 +352,24 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: `False`
 
-  | If `False`, the parallelization of the simulation is done according to the see :doc:`parallelization`.
-  | If `True`, the simulated domain is decomposed in dedicated shapes for particles and fields operations. Benefits of this option is illustrated in `Single Domain Multiple Decompositions for Particle-in-Cell simulations <https://arxiv.org/abs/1912.04064>`_
+  * If `False`, the parallelization of the simulation is done according to :doc:`parallelization`.
+  * If `True`, the simulated domain is decomposed in dedicated shapes for particles
+    and fields operations. Benefits of this option are illustrated
+    `in this paper <https://arxiv.org/abs/1912.04064>`_.
 
 .. py:data:: custom_oversize
 
    :default: 2
 
-   The number of ghost-cell for each patches. The default value is set accordingly with the ``interpolation_order`` value.
+   The number of ghost-cell for each patches. The default value is set accordingly with
+   the ``interpolation_order`` value.
 
 .. py:data:: custom_region_oversize
 
    :default: 2
 
-   The number of ghost-cell for each region when ``uncoupled_grids=True``. The default value is set accordingly with the ``interpolation_order`` value.
+   The number of ghost-cell for each region when ``uncoupled_grids=True``.
+   The default value is set accordingly with the ``interpolation_order`` value.
 
 ----
 
@@ -468,10 +485,11 @@ Each "shift" consists in removing a column of patches from the ``x_min`` border 
 adding a new one after the ``x_max`` border, thus changing the physical domain that the
 simulation represents but keeping the same box size. This is particularly useful to
 *follow* waves or plasma moving at high speed.
-The frequency of the shifts is adjusted so that the average displacement velocity over many shifts matches the velocity
-given by the user.
+The frequency of the shifts is adjusted so that the average displacement velocity
+over many shifts matches the velocity given by the user.
 The user may ask for a given number of additional shifts at a given time.
-These additional shifts are not taken into account for the evaluation of the average velocity of the moving window.
+These additional shifts are not taken into account for the evaluation of the average
+velocity of the moving window.
 
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
 
@@ -527,7 +545,8 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 Current filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides a :ref:`multi-pass binomial filter <multipassBinomialFilter>` on the current densities,
+The present version of :program:`Smilei` provides a
+:ref:`multi-pass binomial filter <multipassBinomialFilter>` on the current densities,
 which parameters are controlled in the following block::
 
   CurrentFilter(
@@ -540,7 +559,8 @@ which parameters are controlled in the following block::
 
   :default: ``"binomial"``
 
-  The model for current filtering. ``"binomial"`` current filtering is available. With ``"customFIR"`` the user can provide a self made FIR kernel.
+  The model for current filtering. ``"binomial"`` current filtering is available.
+  With ``"customFIR"`` the user can provide a self made FIR kernel.
 
 .. py:data:: passes
 
@@ -554,8 +574,10 @@ which parameters are controlled in the following block::
 
   :default: ``"[0.25,0.5,0.25]"``
 
-  The FIR kernel for the ``"customFIR"`` model. Be carefull, the number of coefficients of the kernel have to be less than 2 times the number of ghost-cell.
-  If you use a kernel with more than 3 coefficients, you have to increase the number of ghost-cell with ``"custom_oversize"`` in ``"Main()"``
+  The FIR kernel for the ``"customFIR"`` model. Be carefull, the number of coefficients
+  of the kernel have to be less than 2 times the number of ghost-cell.
+  If you use a kernel with more than 3 coefficients, you have to increase
+  the number of ghost-cell with ``"custom_oversize"`` in ``"Main()"``
 
 
 ----
@@ -655,33 +677,28 @@ Each species has to be defined in a ``Species`` block::
 
    The method for initialization of particle positions. Options are:
 
-   * ``"regular"`` for regularly spaced. In that case the number of particles per cell per dimension can be set by using `regular_number`.
-     Otherwise, the number of particles per cell per dimension is the same in all dimensions and therefore the `particles_per_cell` must be
-     an integer to the power of the simulation dimension ( i.e. a square number in dimension 2).
-   * ``"random"`` for randomly distributed
-   * ``"centered"`` for centered in each cell
+   * ``"regular"`` for regularly spaced. See :py:data:`regular_number`.
+   * ``"random"`` for randomly distributed.
+   * ``"centered"`` for centered in each cell.
    * The :py:data:`name` of another species from which the positions are copied.
      This option requires (1) that the *target* species' positions are initialized
      using one of the three other options above and (2) that the number of particles
      of both species are identical in each cell.
-   * A *numpy* array defining all the positions of the species' particles.
+   * A *numpy* array or an *HDF5* file defining all the positions of the particles.
      In this case you must also provide the weight of each particle (see :ref:`Weights`).
-     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the number of particle dimensions (of the particles),
-     and `Npart` is the total number of particles. Positions components `x`, `y`, `z` are
-     given along the first `Ndim` columns and the weights are given in the last column of the array.
-     This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
-     and :py:data:`particles_per_cell`. Particles initialized outside of the initial simulation domain
-     will not be created. This initalization is disregarded when running a `restart`.
+     See :doc:`particle_initialization`.
+
 
 .. py:data:: regular_number
 
-   :type: A python list of integers.
-
-   This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
-   The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`.
-   The product of the elements of the provided list must be equal to `particles_per_cell`.
-   The numbers are given in the order [`Nx`, `Ny`, `Nz`] in cartesian geometries and [`Nx`, `Nr`, `Ntheta`] in `AMcylindrical` in which
-   case we advise to use :math:`Ntheta \geq  4\times (number\_of\_AM-1)`.
+   :type: A list of as many integers as the simulation dimension
+   
+   When ``position_initialization = "regular"``, this sets the number of evenly-spaced
+   particles per cell in each direction: ``[Nx, Ny, Nz]`` in cartesian geometries and
+   ``[Nx, Nr, Ntheta]`` in ``AMcylindrical`` in which case we recommend
+   :math:`\textrm{Ntheta} \geq  4\times (\textrm{number\_of\_AM}-1)`.
+   If unset, ``particles_per_cell`` must be a power of the simulation dimension,
+   for instance, a power of 2 in ``2Dcartesian``.
 
 .. py:data:: momentum_initialization
 
@@ -690,11 +707,8 @@ Each species has to be defined in a ``Species`` block::
   * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
   * ``"rectangular"`` for a rectangular distribution
   * ``"cold"`` for zero temperature
-  * A *numpy* array defining all the momenta of the species' particles (requires that
-    :py:data:`position_initialization` also be an array with the same number of particles).
-    The array shape must be `(3, Npart)` where `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
-    are given in successive columns.This initialization is incompatible with
-    :py:data:`temperature` and :py:data:`mean_velocity`.
+  * A *numpy* array or an *HDF5* file defining all the momenta of the particles.
+    See :doc:`particle_initialization`.
 
   The first 2 distributions depend on the parameter :py:data:`temperature` explained below.
 
