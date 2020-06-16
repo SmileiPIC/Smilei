@@ -483,7 +483,7 @@ if LLR in HOSTNAME :
 	COMPILE_COMMAND = str(MAKE)+' -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)":socket:"+"pe="+str(OMP) + " -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(OMP) + " -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_LLR
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
