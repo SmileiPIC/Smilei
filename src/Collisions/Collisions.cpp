@@ -391,11 +391,11 @@ void Collisions::debug( Params &params, int itime, unsigned int icoll, VectorPat
         }
         
         // Open the HDF5 file
-        H5FileWrite f = H5FileWrite( vecPatches( 0 )->vecCollisions[icoll]->filename_, true );
+        H5Write f = H5Write( vecPatches( 0 )->vecCollisions[icoll]->filename_, true );
         // Create H5 group for the current timestep
         ostringstream name( "" );
         name << "t" << setfill( '0' ) << setw( 8 ) << itime;
-        H5GroupWrite group = f.group( name.str() );
+        H5Write group = f.group( name.str() );
         // Create new datasets for this timestep and write
         group.vect( "s"                          , smean                      , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );
         group.vect( "coulomb_log"                , logLmean                   , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );

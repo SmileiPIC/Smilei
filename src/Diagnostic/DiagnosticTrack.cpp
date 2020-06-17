@@ -178,13 +178,13 @@ void DiagnosticTrack::openFile( Params &params, SmileiMPI *smpi, bool newfile )
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
         H5Pclose( pid );
         
-        H5::attr( fileId_, "name", diag_name_ );
+        H5_::attr( fileId_, "name", diag_name_ );
         
         // Attributes for openPMD
         openPMD_->writeRootAttributes( fileId_, "no_meshes", "particles/" );
         
         // Create "data" group for openPMD compatibility
-        data_group_id = H5::group( fileId_, "data" );
+        data_group_id = H5_::group( fileId_, "data" );
         
     } else {
         // Open the file
@@ -309,9 +309,9 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         // Make a new group for this iteration
         ostringstream t( "" );
         t << setfill( '0' ) << setw( 10 ) << itime;
-        iteration_group = H5::group( data_group_id, t.str().c_str() );
-        particles_group = H5::group( iteration_group, "particles" );
-        species_group = H5::group( particles_group, vecPatches( 0 )->vecSpecies[speciesId_]->name_.c_str() );
+        iteration_group = H5_::group( data_group_id, t.str().c_str() );
+        particles_group = H5_::group( iteration_group, "particles" );
+        species_group = H5_::group( particles_group, vecPatches( 0 )->vecSpecies[speciesId_]->name_.c_str() );
         
         // Add openPMD attributes ( "basePath" )
         openPMD_->writeBasePathAttributes( iteration_group, itime );
@@ -321,7 +321,7 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         openPMD_->writeSpeciesAttributes( species_group );
         
         // Write x_moved
-        H5::attr( iteration_group, "x_moved", simWindow ? simWindow->getXmoved() : 0. );
+        H5_::attr( iteration_group, "x_moved", simWindow ? simWindow->getXmoved() : 0. );
         
         // Set the dataset parameters
         plist = H5Pcreate( H5P_DATASET_CREATE );
@@ -423,7 +423,7 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
     if( write_any_momentum ) {
         #pragma omp master
         {
-            momentum_group = H5::group( species_group, "momentum" );
+            momentum_group = H5_::group( species_group, "momentum" );
             openPMD_->writeRecordAttributes( momentum_group, SMILEI_UNIT_MOMENTUM );
         }
         for( unsigned int idim=0; idim<3; idim++ ) {
@@ -451,7 +451,7 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
     if( write_any_position ) {
         #pragma omp master
         {
-            position_group = H5::group( species_group, "position" );
+            position_group = H5_::group( species_group, "position" );
             openPMD_->writeRecordAttributes( position_group, SMILEI_UNIT_POSITION );
         }
         for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
@@ -522,7 +522,7 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         #pragma omp master
         {
             if( write_any_E ) {
-                hid_t Efield_group = H5::group( species_group, "E" );
+                hid_t Efield_group = H5_::group( species_group, "E" );
                 openPMD_->writeRecordAttributes( Efield_group, SMILEI_UNIT_EFIELD );
                 for( unsigned int idim=0; idim<3; idim++ ) {
                     if( write_E[idim] ) {
@@ -533,7 +533,7 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
             }
             
             if( write_any_B ) {
-                hid_t Bfield_group = H5::group( species_group, "B" );
+                hid_t Bfield_group = H5_::group( species_group, "B" );
                 openPMD_->writeRecordAttributes( Bfield_group, SMILEI_UNIT_BFIELD );
                 for( unsigned int idim=0; idim<3; idim++ ) {
                     if( write_B[idim] ) {
@@ -550,14 +550,14 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         data_double.resize( 0 );
         
         // PositionOffset (for OpenPMD)
-        hid_t positionoffset_group = H5::group( species_group, "positionOffset" );
+        hid_t positionoffset_group = H5_::group( species_group, "positionOffset" );
         openPMD_->writeRecordAttributes( positionoffset_group, SMILEI_UNIT_POSITION );
         vector<uint64_t> np = {nParticles_global};
         for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
-            hid_t xyz_group = H5::group( positionoffset_group, xyz.substr( idim, 1 ) );
+            hid_t xyz_group = H5_::group( positionoffset_group, xyz.substr( idim, 1 ) );
             openPMD_->writeComponentAttributes( xyz_group, SMILEI_UNIT_POSITION );
-            H5::attr( xyz_group, "value", 0. );
-            H5::attr( xyz_group, "shape", np, H5T_NATIVE_UINT64 );
+            H5_::attr( xyz_group, "value", 0. );
+            H5_::attr( xyz_group, "shape", np, H5T_NATIVE_UINT64 );
             H5Gclose( xyz_group );
         }
         H5Gclose( positionoffset_group );

@@ -1,46 +1,9 @@
-#include "H5File.h"
+#include "H5.h"
 
-//! Group already opened
-H5Group::H5Group( hid_t ID, bool parallel ) : id( ID ), empty_( false ), parallel_( parallel )
+//! Open HDF5 file + location
+H5::H5( std::string file, unsigned access, bool parallel, bool _raise )
 {
-    dxpl = H5Pcreate( H5P_DATASET_XFER );
-    dcr = H5Pcreate( H5P_DATASET_CREATE );
-    if( parallel ) {
-        H5Pset_dxpl_mpio( dxpl, H5FD_MPIO_COLLECTIVE );
-        H5Pset_alloc_time( dcr, H5D_ALLOC_TIME_EARLY );
-    }
-}
-
-//! Open group from file
-H5Group::H5Group( hid_t lid, std::string grouppath, bool parallel ) {
-    id = lid;
-    empty_ = true;
     parallel_ = parallel;
-    if( ! grouppath.empty() && lid >= 0 ) {
-        id = H5Gopen( lid, grouppath.c_str(), H5P_DEFAULT );
-        empty_ = false;
-    }
-    dxpl = H5Pcreate( H5P_DATASET_XFER );
-    dcr = H5Pcreate( H5P_DATASET_CREATE );
-    if( parallel ) {
-        H5Pset_dxpl_mpio( dxpl, H5FD_MPIO_COLLECTIVE );
-        H5Pset_alloc_time( dcr, H5D_ALLOC_TIME_EARLY );
-    }
-}
-
-H5Group::~H5Group() {
-    if( ! empty_ ) {
-        if( H5Iget_type( id ) == H5I_GROUP ) {
-            H5Gclose( id );
-        } else if( H5Iget_type( id ) == H5I_DATASET ) {
-            H5Dclose( id );
-        }
-    }
-    H5Pclose( dxpl );
-    H5Pclose( dcr );
-}
-
-H5File::H5File( std::string file, unsigned access, bool parallel, bool _raise ) {
     
     // Analyse file string : separate file name and tree inside hdf5 file
     size_t l = file.length();
@@ -79,18 +42,60 @@ H5File::H5File( std::string file, unsigned access, bool parallel, bool _raise ) 
         fid = H5Fopen( filepath.c_str(), access, fapl );
     }
     
-    // Check error stack size
+    // Check error
     if( H5Eget_num( H5E_DEFAULT ) > 0 ) {
         fid = -1;
+        id = -1;
+    } else {
+        // Open group from file
+        id = fid;
+        if( ! grouppath.empty() ) {
+            id = H5Gopen( fid, grouppath.c_str(), H5P_DEFAULT );
+        }
+        dxpl = H5Pcreate( H5P_DATASET_XFER );
+        dcr = H5Pcreate( H5P_DATASET_CREATE );
+        if( parallel ) {
+            H5Pset_dxpl_mpio( dxpl, H5FD_MPIO_COLLECTIVE );
+            H5Pset_alloc_time( dcr, H5D_ALLOC_TIME_EARLY );
+        }
+        // Check error
+        if( H5Eget_num( H5E_DEFAULT ) > 0 ) {
+            id = -1;
+        }
     }
     
     if( ! _raise ) {
         // Restore previous error printing
         H5Eset_auto( H5E_DEFAULT, old_func, old_client_data );
-    }
-    
-    if( _raise && fid < 0 ) {
+    } else if( fid < 0 || id < 0 ) {
         ERROR( "Cannot open file " << filepath );
     }
 }
 
+
+//! Location already opened
+H5::H5( hid_t ID, bool parallel ) : fid( -1 ), id( ID ), parallel_( parallel )
+{
+    dxpl = H5Pcreate( H5P_DATASET_XFER );
+    dcr = H5Pcreate( H5P_DATASET_CREATE );
+    if( parallel ) {
+        H5Pset_dxpl_mpio( dxpl, H5FD_MPIO_COLLECTIVE );
+        H5Pset_alloc_time( dcr, H5D_ALLOC_TIME_EARLY );
+    }
+}
+
+H5::~H5()
+{
+    if( H5Iget_type( id ) == H5I_GROUP ) {
+        H5Gclose( id );
+    } else if( H5Iget_type( id ) == H5I_DATASET ) {
+        H5Dclose( id );
+    }
+    H5Pclose( dxpl );
+    H5Pclose( dcr );
+    if( fid >= 0 ) {
+        if( H5Fclose( fid ) < 0 ) {
+            ERROR( "Can't close file " << filepath );
+        }
+    }
+}

@@ -19,7 +19,7 @@
 #include "Species.h"
 #include "ParticleInjector.h"
 #include "Field3D.h"
-#include "H5File.h"
+#include "H5.h"
 
 class ParticleCreator
 {

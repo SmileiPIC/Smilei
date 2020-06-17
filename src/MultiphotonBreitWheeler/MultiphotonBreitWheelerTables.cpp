@@ -12,7 +12,7 @@
 // ----------------------------------------------------------------------------
 
 #include "MultiphotonBreitWheelerTables.h"
-#include "H5File.h"
+#include "H5.h"
 
 // -----------------------------------------------------------------------------
 // INITILIZATION AND DESTRUCTION
@@ -275,10 +275,10 @@ void MultiphotonBreitWheelerTables::readTableT( SmileiMPI *smpi )
         
         if( smpi->isMaster() ) {
             
-            H5FileRead f = H5FileRead( file );
+            H5Read f = H5Read( file );
             
             // First, we read attributes
-            H5GroupRead d = f.group( "integration_dt_dchi" );
+            H5Read d = f.group( "integration_dt_dchi" );
             d.attr( "size_photon_chi", T_.size_photon_chi_ );
             d.attr( "min_photon_chi", T_.min_photon_chi_ );
             d.attr( "max_photon_chi", T_.max_photon_chi_ );
@@ -312,10 +312,10 @@ void MultiphotonBreitWheelerTables::readTableXi( SmileiMPI *smpi )
         
         if( smpi->isMaster() ) {
             
-            H5FileRead f = H5FileRead( file );
+            H5Read f = H5Read( file );
             
             // First, we read attributes
-            H5GroupRead xi = f.group( "xi" );
+            H5Read xi = f.group( "xi" );
             xi.attr( "size_photon_chi", xi_.size_photon_chi_ );
             xi.attr( "size_particle_chi", xi_.size_particle_chi_ );
             xi.attr( "min_photon_chi", xi_.min_photon_chi_ );

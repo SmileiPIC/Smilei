@@ -172,7 +172,7 @@ void DiagnosticCartFields::openFile( Params &params, SmileiMPI *smpi, bool newfi
         openPMD_->writeRootAttributes( fileId_, "", "no_particles" );
         
         // Make main "data" group where everything will be stored (required by openPMD)
-        data_group_id = H5::group( fileId_, "data" );
+        data_group_id = H5_::group( fileId_, "data" );
     } else {
         // Open the existing file
         hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
@@ -267,7 +267,7 @@ void DiagnosticCartFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int it
         name_t << setfill( '0' ) << setw( 10 ) << itime;
         status = H5Lexists( data_group_id, name_t.str().c_str(), H5P_DEFAULT );
         if( status==0 ) {
-            iteration_group_id = H5::group( data_group_id, name_t.str().c_str() );
+            iteration_group_id = H5_::group( data_group_id, name_t.str().c_str() );
         }
         // Warning if file unreachable
         if( status < 0 ) {

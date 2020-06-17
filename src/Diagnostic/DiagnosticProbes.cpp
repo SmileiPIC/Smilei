@@ -381,25 +381,25 @@ void DiagnosticProbes::openFile( Params &params, SmileiMPI *smpi, bool newfile )
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
         H5Pclose( pid );
         
-        H5::attr( fileId_, "name", diag_name_ );
+        H5_::attr( fileId_, "name", diag_name_ );
         
         // Write the version of the code as an attribute
-        H5::attr( fileId_, "Version", string( __VERSION ) );
+        H5_::attr( fileId_, "Version", string( __VERSION ) );
         
         // Dimension of the probe grid
-        H5::attr( fileId_, "dimension", dimProbe );
+        H5_::attr( fileId_, "dimension", dimProbe );
         
         // Add arrays "p0", "p1", ...
-        H5::vect( fileId_, "p0", origin );
+        H5_::vect( fileId_, "p0", origin );
         ostringstream pk;
         for( unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++ ) {
             pk.str( "" );
             pk << "p" << ( iDimProbe+1 );
-            H5::vect( fileId_, pk.str(), corners[iDimProbe] );
+            H5_::vect( fileId_, pk.str(), corners[iDimProbe] );
         }
 
         // Add array "number"
-        H5::vect( fileId_, "number", vecNumber );
+        H5_::vect( fileId_, "number", vecNumber );
 
         // Add "fields"
         ostringstream fields( "" );
@@ -407,7 +407,7 @@ void DiagnosticProbes::openFile( Params &params, SmileiMPI *smpi, bool newfile )
         for( unsigned int i=1; i<fieldname.size(); i++ ) {
             fields << "," << fieldname[i];
         }
-        H5::attr( fileId_, "fields", fields.str() );
+        H5_::attr( fileId_, "fields", fields.str() );
 
     } else {
         hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
@@ -840,7 +840,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
         H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, probesArray->data_ );
 
         // Write x_moved
-        H5::attr( dset_id, "x_moved", x_moved );
+        H5_::attr( dset_id, "x_moved", x_moved );
 
         H5Dclose( dset_id );
         H5Pclose( transfer );

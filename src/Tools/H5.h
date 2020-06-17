@@ -1,12 +1,8 @@
-
-// -------------------
-// Some HDF5 overlays
-// -------------------
-
 #ifndef H5_H
 #define H5_H
 
 #include <hdf5.h>
+#include <H5_.h>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -16,74 +12,54 @@
 #error "HDF5 was not built with --enable-parallel option"
 #endif
 
-class DividedString
-{
-public:
-    DividedString( unsigned int w ) : width( std::max( w, ( unsigned int )1 ) ), numstr( 0 ), str( "" ) {};
-    ~DividedString() {};
-    
-    void addString( std::string s )
-    {
-        if( s.size() <= width ) {
-            str.append( s );
-            std::ostringstream t( "" );
-            for( unsigned int i=0; i<width-s.size(); i++ ) {
-                t<<"\0";
-            }
-            str.append( t.str() );
-        } else {
-            str.append( s.substr( 0, width ) );
-        }
-        numstr++;
-    };
-    
-    const char *c_str()
-    {
-        return str.c_str();
-    };
-    
-    unsigned int width, numstr;
-    std::string str;
-};
 
-//! HDF5 help functions
 class H5
 {
-
 public:
-
+    //! Open HDF5 file + location
+    H5( std::string file, unsigned access, bool parallel, bool _raise );
     
-    //! Attempt to open a file but does not display an error
-    static hid_t Fopen( std::string file, unsigned access = H5F_ACC_RDWR ) {
-        // Backup default error printing
-        H5E_auto2_t old_func;
-        void *old_client_data;
-        H5Eget_auto( H5E_DEFAULT, &old_func, &old_client_data );
-        H5Eset_auto( H5E_DEFAULT, NULL, NULL );
-        
-        // Open
-        hid_t status = H5Fopen( file.c_str(), access, H5P_DEFAULT );
-        
-        // Check error stack size
-        if( H5Eget_num( H5E_DEFAULT ) > 0 ) {
-            status = -1;
-        }
-        
-        // Restore previous error printing
-        H5Eset_auto( H5E_DEFAULT, old_func, old_client_data );
-        
-        return status;
+    //! Location already opened
+    H5( hid_t ID, bool parallel );
+    
+    ~H5();
+    
+    bool valid() {
+        return id >= 0;
     }
+    
+    void flush() {
+        H5Fflush( id, H5F_SCOPE_GLOBAL );
+    }
+    
+protected:
+    std::string filepath;
+    std::string grouppath;
+    hid_t fid;
+    hid_t id;
+    hid_t dxpl;
+    hid_t dcr;
+    bool parallel_;
+};
+
+class H5Write : public H5
+{
+public:
+    H5Write( std::string file, bool parallel = false, bool _raise = true )
+     : H5( file, H5F_ACC_RDWR, parallel, _raise ) {};
+    ~H5Write() {};
+    
+    H5Write( hid_t id, bool parallel ) : H5( id, parallel ) {};
+    //H5Write( hid_t lid, std::string grouppath, bool parallel ) : H5( lid, grouppath, parallel ) {};
     
     //! Make an empty group
-    // Returns the group ID
-    static hid_t group( hid_t locationId, std::string group_name )
+    H5Write group( std::string group_name )
     {
-        return H5Gcreate( locationId, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+        return H5Write( H5Gcreate( id, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT ), parallel_ );
     }
     
-    //! write a string as an attribute
-    static void attr( hid_t locationId, std::string attribute_name, std::string attribute_value )
+    //! Write a string as an attribute
+    void attr( std::string attribute_name, std::string attribute_value )
     {
         hid_t atype = H5Tcopy( H5T_C_S1 );
         if( attribute_value.size() == 0 ) {
@@ -91,134 +67,220 @@ public:
         } else {
             H5Tset_size( atype, attribute_value.size() );
         }
-        const char *tmp_var=attribute_value.c_str();
-        attr( locationId, attribute_name, *tmp_var, atype );
+        const char *tmp_var = attribute_value.c_str();
+        attr( attribute_name, *tmp_var, atype );
         H5Tclose( atype );
     }
     
-    //! write an unsigned int as an attribute
-    static void attr( hid_t locationId, std::string attribute_name, unsigned int attribute_value )
+    //! Write an unsigned int as an attribute
+    void attr( std::string attribute_name, unsigned int attribute_value )
     {
-        attr( locationId, attribute_name, attribute_value, H5T_NATIVE_UINT );
+        attr( attribute_name, attribute_value, H5T_NATIVE_UINT );
     }
     
     //! write unsigned long int as an attribute
-    static void attr( hid_t locationId, std::string attribute_name, unsigned long int attribute_value )
+    void attr( std::string attribute_name, unsigned long int attribute_value )
     {
-        attr( locationId, attribute_name, attribute_value, H5T_NATIVE_ULONG );
+        attr( attribute_name, attribute_value, H5T_NATIVE_ULONG );
     }
     
     //! write an int as an attribute
-    static void attr( hid_t locationId, std::string attribute_name, int attribute_value )
+    void attr( std::string attribute_name, int attribute_value )
     {
-        attr( locationId, attribute_name, attribute_value, H5T_NATIVE_INT );
+        attr( attribute_name, attribute_value, H5T_NATIVE_INT );
     }
     
     //! write a double as an attribute
-    static void attr( hid_t locationId, std::string attribute_name, double attribute_value )
+    void attr( std::string attribute_name, double attribute_value )
     {
-        attr( locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE );
+        attr( attribute_name, attribute_value, H5T_NATIVE_DOUBLE );
     }
     
     //! write anything as an attribute
     template<class T>
-    static void attr( hid_t locationId, std::string attribute_name, T &attribute_value, hid_t type )
+    void attr( std::string attribute_name, T &attribute_value, hid_t type )
     {
         hid_t sid = H5Screate( H5S_SCALAR );
-        hid_t aid = H5Acreate( locationId, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT );
+        hid_t aid = H5Acreate( id, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT );
         H5Awrite( aid, type, &attribute_value );
         H5Sclose( sid );
         H5Aclose( aid );
     }
     
     //! write a vector<unsigned int> as an attribute
-    static void attr( hid_t locationId, std::string attribute_name, std::vector<unsigned int> attribute_value )
+    void attr( std::string attribute_name, std::vector<unsigned int> attribute_value )
     {
-        attr( locationId, attribute_name, attribute_value, H5T_NATIVE_UINT );
+        attr( attribute_name, attribute_value, H5T_NATIVE_UINT );
     }
     
     //! write an vector<double> as an attribute
-    static void attr( hid_t locationId, std::string attribute_name, std::vector<double> attribute_value )
+    void attr( std::string attribute_name, std::vector<double> attribute_value )
     {
-        attr( locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE );
+        attr( attribute_name, attribute_value, H5T_NATIVE_DOUBLE );
     }
     
     //! write a vector<string> as an attribute
-    static void attr( hid_t locationId, std::string attribute_name, std::vector<std::string> attribute_value )
+    void attr( std::string attribute_name, std::vector<std::string> attribute_value )
     {
         std::vector<const char *> tmp_vec( attribute_value.size(), nullptr );
         for( unsigned int i=0; i<attribute_value.size(); i++ ) {
             tmp_vec[i] = attribute_value[i].c_str();
         }
-        attr( locationId, attribute_name, tmp_vec );
+        attr( attribute_name, tmp_vec );
     }
     
     //! write a vector<const char*> as an attribute
-    static void attr( hid_t locationId, std::string attribute_name, std::vector<const char *> attribute_value )
+    void attr( std::string attribute_name, std::vector<const char *> attribute_value )
     {
         hid_t atype = H5Tcopy( H5T_C_S1 );
         H5Tset_size( atype, H5T_VARIABLE );
-        attr( locationId, attribute_name, attribute_value, atype );
+        attr( attribute_name, attribute_value, atype );
         H5Tclose( atype );
     }
     
     //! write a vector<anything> as an attribute
     template<class T>
-    static void attr( hid_t locationId, std::string attribute_name, std::vector<T> &attribute_value, hid_t type )
+    void attr( std::string attribute_name, std::vector<T> &attribute_value, hid_t type )
     {
         hsize_t dims = attribute_value.size();
         hid_t sid = H5Screate_simple( 1, &dims, NULL );
-        hid_t aid = H5Acreate( locationId, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT );
+        hid_t aid = H5Acreate( id, attribute_name.c_str(), type, sid, H5P_DEFAULT, H5P_DEFAULT );
         H5Awrite( aid, type, &( attribute_value[0] ) );
         H5Aclose( aid );
         H5Sclose( sid );
     }
     
     //! write a DividedString as an attribute
-    static void attr( hid_t locationId, std::string attribute_name, DividedString &attribute_value )
+    void attr( std::string attribute_name, DividedString &attribute_value )
     {
         hid_t atype = H5Tcopy( H5T_C_S1 );
         H5Tset_size( atype, attribute_value.width );
         hsize_t n = attribute_value.numstr;
         hid_t sid = H5Screate_simple( 1, &n, NULL );
-        hid_t aid = H5Acreate( locationId, attribute_name.c_str(), atype, sid, H5P_DEFAULT, H5P_DEFAULT );
+        hid_t aid = H5Acreate( id, attribute_name.c_str(), atype, sid, H5P_DEFAULT, H5P_DEFAULT );
         H5Awrite( aid, atype, attribute_value.c_str() );
         H5Tclose( atype );
         H5Aclose( aid );
         H5Sclose( sid );
     }
     
-    //Check if attribute exists
-    static bool hasAttr( hid_t locationId, std::string attribute_name )
+    //! Write a vector<int>
+    void vect( std::string name, std::vector<int> v, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
     {
-        return H5Aexists( locationId, attribute_name.c_str() )>0 ;
+        vect( name, v[0], v.size(), H5T_NATIVE_INT, deflate, offset, npoints );
     }
     
-    //READ ATTRIBUTES
-    
-    //! retrieve a double attribute
-    static void getAttr( hid_t locationId, std::string attribute_name, double &attribute_value )
+    //! write a vector<unsigned int>
+    void vect(std::string name, std::vector<unsigned int> v, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
     {
-        getAttr( locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE );
+        vect(name, v[0], v.size(), H5T_NATIVE_UINT, deflate, offset, npoints );
+    }
+    
+    //! write a vector<short>
+    void vect( std::string name, std::vector<short> v, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
+    {
+        vect( name, v[0], v.size(), H5T_NATIVE_SHORT, deflate, offset, npoints );
+    }
+    
+    //! write a vector<doubles>
+    void vect( std::string name, std::vector<double> v, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
+    {
+        vect( name, v[0], v.size(), H5T_NATIVE_DOUBLE, deflate, offset, npoints );
+    }
+    
+    //! write any vector
+    template<class T>
+    void vect( std::string name, std::vector<T> v, hid_t type, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
+    {
+        vect( name, v[0], v.size(), type, deflate, offset, npoints );
+    }
+    
+    //! Write a portion of a vector
+    template<class T>
+    void vect( std::string name, T &v, int size, hid_t type, int deflate=0, hsize_t offset=0, hsize_t npoints=0 )
+    {
+        // create dataspace for 1D array with good number of elements
+        hsize_t dim = size;
+        if( deflate>0 ) {
+            H5Pset_chunk( dcr, 1, &dim );
+            H5Pset_deflate( dcr, std::min( 9, deflate ) );
+        } else {
+            H5Premove_filter( dcr, H5Z_FILTER_DEFLATE );
+        }
+        // Select portion
+        if( npoints == 0 ) {
+            npoints = dim - offset;
+        }
+        hid_t memspace = H5Screate_simple( 1, &npoints, NULL );
+        hid_t filespace = H5Screate_simple( 1, &dim, NULL );
+        if( offset > 0 || npoints < dim ) {
+            hsize_t o = offset;
+            hsize_t c = 1;
+            hsize_t n = npoints;
+            H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &o, NULL, &c, &n );
+        }
+        // create dataset
+        hid_t did = H5Dcreate( id, name.c_str(), type, filespace, H5P_DEFAULT, dcr, H5P_DEFAULT );
+        // write vector in dataset
+        H5Dwrite( did, type, memspace, filespace, dxpl, &v );
+        // close all
+        H5Dclose( did );
+        H5Sclose( filespace );
+        H5Sclose( memspace );
+    }
+};
+
+class H5Read : public H5
+{
+public:
+    H5Read( std::string file, bool parallel = false, bool _raise = true )
+     : H5( file, H5F_ACC_RDONLY, parallel,  _raise ) {};
+    ~H5Read() {};
+    
+    H5Read( hid_t id, bool parallel ) : H5( id, parallel ) {};
+    //H5Read( hid_t lid, std::string grouppath, bool parallel ) : H5( lid, grouppath, parallel ) {};
+    
+    //! Open group
+    H5Read group( std::string group_name )
+    {
+        return H5Read( H5Oopen( id, group_name.c_str(), H5P_DEFAULT ), parallel_ );
+    }
+    
+    //! Check if group exists
+    bool hasGroup( std::string group_name )
+    {
+        return H5Lexists( id, group_name.c_str(), H5P_DEFAULT ) > 0;
+    }
+    
+    //! Check if attribute exists
+    bool hasAttr( std::string attribute_name )
+    {
+        return H5Aexists( id, attribute_name.c_str() ) > 0;
+    }
+    
+    //! Retrieve a double attribute
+    void attr( std::string attribute_name, double &attribute_value )
+    {
+        attr( attribute_name, attribute_value, H5T_NATIVE_DOUBLE );
     }
     
     //! retrieve a unsigned int attribute
-    static void getAttr( hid_t locationId, std::string attribute_name, unsigned int &attribute_value )
+    void attr( std::string attribute_name, unsigned int &attribute_value )
     {
-        getAttr( locationId, attribute_name, attribute_value, H5T_NATIVE_UINT );
+        attr( attribute_name, attribute_value, H5T_NATIVE_UINT );
     }
     
     //! retrieve a int attribute
-    static void getAttr( hid_t locationId, std::string attribute_name, int &attribute_value )
+    void attr( std::string attribute_name, int &attribute_value )
     {
-        getAttr( locationId, attribute_name, attribute_value, H5T_NATIVE_INT );
+        attr( attribute_name, attribute_value, H5T_NATIVE_INT );
     }
     
     //! retrieve a string attribute (specialized)
-    static void getAttr( hid_t locationId, std::string attribute_name, std::string &attribute_value )
+    void attr( std::string attribute_name, std::string &attribute_value )
     {
-        if( H5Aexists( locationId, attribute_name.c_str() )>0 ) {
-            hid_t aid = H5Aopen_name( locationId, attribute_name.c_str() );
+        if( H5Aexists( id, attribute_name.c_str() )>0 ) {
+            hid_t aid = H5Aopen_name( id, attribute_name.c_str() );
             hid_t attr_type = H5Aget_type( aid );
             int sdim = H5Tget_size( attr_type );
             hid_t mem_type = H5Tcopy( H5T_C_S1 );
@@ -242,10 +304,10 @@ public:
     
     //! retrieve anything (but string) as an attribute
     template<class T>
-    static void getAttr( hid_t locationId, std::string attribute_name, T &attribute_value, hid_t type )
+    void attr( std::string attribute_name, T &attribute_value, hid_t type )
     {
-        if( H5Aexists( locationId, attribute_name.c_str() )>0 ) {
-            hid_t aid = H5Aopen( locationId, attribute_name.c_str(), H5P_DEFAULT );
+        if( H5Aexists( id, attribute_name.c_str() )>0 ) {
+            hid_t aid = H5Aopen( id, attribute_name.c_str(), H5P_DEFAULT );
             H5Aread( aid, type, &( attribute_value ) );
             H5Aclose( aid );
         } else {
@@ -254,18 +316,17 @@ public:
     }
     
     //! retrieve a vector<double> as an attribute
-    template<class T>
-    static void getAttr( hid_t locationId, std::string attribute_name, std::vector<T> &attribute_value )
+    void attr( std::string attribute_name, std::vector<double> &attribute_value )
     {
-        getAttr( locationId, attribute_name, attribute_value, H5T_NATIVE_DOUBLE );
+        attr( attribute_name, attribute_value, H5T_NATIVE_DOUBLE );
     }
     
     //! retrieve a vector<anything> as an attribute
     template<class T>
-    static void getAttr( hid_t locationId, std::string attribute_name, std::vector<T> &attribute_value, hid_t type )
+    void attr( std::string attribute_name, std::vector<T> &attribute_value, hid_t type )
     {
-        if( H5Aexists( locationId, attribute_name.c_str() )>0 ) {
-            hid_t aid = H5Aopen( locationId, attribute_name.c_str(), H5P_DEFAULT );
+        if( H5Aexists( id, attribute_name.c_str() )>0 ) {
+            hid_t aid = H5Aopen( id, attribute_name.c_str(), H5P_DEFAULT );
             hid_t sid = H5Aget_space( aid );
             hssize_t npoints = H5Sget_simple_extent_npoints( sid );
             attribute_value.resize( npoints );
@@ -277,10 +338,11 @@ public:
         }
     }
     
-    static int getAttrSize( hid_t locationId, std::string attribute_name )
+    //! read attribute size (when vector)
+    int attrSize( std::string attribute_name )
     {
-        if( H5Aexists( locationId, attribute_name.c_str() )>0 ) {
-            hid_t aid = H5Aopen( locationId, attribute_name.c_str(), H5P_DEFAULT );
+        if( H5Aexists( id, attribute_name.c_str() )>0 ) {
+            hid_t aid = H5Aopen( id, attribute_name.c_str(), H5P_DEFAULT );
             if( aid < 0 ) {
                 return -1;
             }
@@ -294,122 +356,91 @@ public:
         }
     }
     
-    //! write a vector of unsigned ints
-    //! v is the vector
-    //! size is the number of elements in the vector
-    
-    //! write a vector<int>
-    static void vect( hid_t locationId, std::string name, std::vector<int> v, int deflate=0 )
-    {
-        vect( locationId, name, v[0], v.size(), H5T_NATIVE_INT, deflate );
-    }
-    
-    //! write a vector<unsigned int>
-    static void vect( hid_t locationId, std::string name, std::vector<unsigned int> v, int deflate=0 )
-    {
-        vect( locationId, name, v[0], v.size(), H5T_NATIVE_UINT, deflate );
-    }
-    
-    //! write a vector<short>
-    static void vect( hid_t locationId, std::string name, std::vector<short> v, int deflate=0 )
-    {
-        vect( locationId, name, v[0], v.size(), H5T_NATIVE_SHORT, deflate );
-    }
-    
-    //! write a vector<doubles>
-    static void vect( hid_t locationId, std::string name, std::vector<double> v, int deflate=0 )
-    {
-        vect( locationId, name, v[0], v.size(), H5T_NATIVE_DOUBLE, deflate );
-    }
-    
-    
-    //! write any vector
-    template<class T>
-    static void vect( hid_t locationId, std::string name, std::vector<T> v, hid_t type, int deflate=0 )
-    {
-        vect( locationId, name, v[0], v.size(), type, deflate );
-    }
-    
-    //! Write a portion of a vector
-    //! type is the h5 type (H5T_NATIVE_DOUBLE, H5T_NATIVE_INT, etc.)
-    template<class T>
-    static void vect( hid_t locationId, std::string name, T &v, int size, hid_t type, int deflate=0 )
-    {
-        // create dataspace for 1D array with good number of elements
-        hsize_t dims = size;
-        hid_t sid = H5Screate_simple( 1, &dims, NULL );
-        hid_t pid = H5Pcreate( H5P_DATASET_CREATE ); // property list
-        
-        if( deflate>0 ) {
-            H5Pset_chunk( pid, 1, &dims );
-            H5Pset_deflate( pid, std::min( 9, deflate ) );
-        }
-        
-        // create dataset
-        hid_t did = H5Dcreate( locationId, name.c_str(), type, sid, H5P_DEFAULT, pid, H5P_DEFAULT );
-        // write vector in dataset
-        H5Dwrite( did, type, sid, sid, H5P_DEFAULT, &v );
-        // close all
-        H5Dclose( did );
-        H5Pclose( pid );
-        H5Sclose( sid );
-    }
-    
-    
-    
     //! retrieve a double vector
-    static void getVect( hid_t locationId, std::string vect_name,  std::vector<double> &vect, bool resizeVect=false )
+    void vect( std::string vect_name,  std::vector<double> &v, bool resizeVect=false, hsize_t offset=0, hsize_t npoints=0 )
     {
-        getVect( locationId, vect_name, vect, H5T_NATIVE_DOUBLE, resizeVect );
+        vect( vect_name, v, H5T_NATIVE_DOUBLE, resizeVect, offset, npoints );
     }
     
     //! retrieve an unsigned int vector
-    static void getVect( hid_t locationId, std::string vect_name,  std::vector<unsigned int> &vect, bool resizeVect=false )
+    void vect( std::string vect_name,  std::vector<unsigned int> &v, bool resizeVect=false, hsize_t offset=0, hsize_t npoints=0 )
     {
-        getVect( locationId, vect_name, vect, H5T_NATIVE_UINT, resizeVect );
+        vect( vect_name, v, H5T_NATIVE_UINT, resizeVect, offset, npoints );
     }
     
     //! retrieve a int vector
-    static void getVect( hid_t locationId, std::string vect_name,  std::vector<int> &vect, bool resizeVect=false )
+    void vect( std::string vect_name,  std::vector<int> &v, bool resizeVect=false, hsize_t offset=0, hsize_t npoints=0 )
     {
-        getVect( locationId, vect_name, vect, H5T_NATIVE_INT, resizeVect );
+        vect( vect_name, v, H5T_NATIVE_INT, resizeVect, offset, npoints );
     }
     
     //! retrieve a short vector
-    static void getVect( hid_t locationId, std::string vect_name,  std::vector<short> &vect, bool resizeVect=false )
+    void vect( std::string vect_name,  std::vector<short> &v, bool resizeVect=false, hsize_t offset=0, hsize_t npoints=0 )
     {
-        getVect( locationId, vect_name, vect, H5T_NATIVE_SHORT, resizeVect );
+        vect( vect_name, v, H5T_NATIVE_SHORT, resizeVect, offset, npoints );
     }
     
-    //! template to read generic 1d vector
+    //! template to read generic 1d vector (optionally offset and npoints)
     template<class T>
-    static void getVect( hid_t locationId, std::string vect_name, std::vector<T> &vect, hid_t type, bool resizeVect=false )
+    void vect( std::string vect_name, std::vector<T> &v, hid_t type, bool resizeVect=false, hsize_t offset=0, hsize_t npoints=0 )
     {
-        hid_t did = H5Dopen( locationId, vect_name.c_str(), H5P_DEFAULT );
-        hid_t sid = H5Dget_space( did );
-        int sdim = H5Sget_simple_extent_ndims( sid );
-        if( sdim!=1 ) {
-            ERROR( "Reading vector " << vect_name << " is not 1D but " <<sdim << "D" );
-        }
-        hsize_t dim[1];
-        H5Sget_simple_extent_dims( sid, dim, NULL );
-        if( dim[0] != vect.size() ) {
-            if( resizeVect ) {
-                vect.resize( dim[0] );
-            } else {
-                ERROR( "Reading vector " << vect_name << " mismatch " << vect.size() << " != " << dim[0] );
+        if( resizeVect ) {
+            std::vector<hsize_t> s = shape( vect_name );
+            hsize_t n = 1;
+            for( unsigned int i=0; i<s.size(); i++ ) {
+                n *= s[i];
             }
+            if( npoints == 0 ) {
+                npoints = n - offset ;
+            }
+            v.resize( npoints );
         }
-        H5Sclose( sid );
-        H5Dread( did, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vect[0] );
+        vect( vect_name, v[0], type, offset, npoints );
+    }
+    
+    //! template to read generic 1d data (optionally offset and npoints)
+    template<class T>
+    void vect( std::string vect_name, T &v, hid_t type, hsize_t offset=0, hsize_t npoints=0 )
+    {
+        // Open dataset
+        hid_t did = H5Dopen( id, vect_name.c_str(), H5P_DEFAULT );
+        if( did < 0 ) {
+            ERROR( "Cannot read dataset " << vect_name );
+        }
+        if( offset != 0 || npoints != 0 ) {
+            // Get shape and resize vector
+            hid_t sid = H5Dget_space( did );
+            int sdim = H5Sget_simple_extent_ndims( sid );
+            if( sdim!=1 ) {
+                ERROR( "Reading vector " << vect_name << " is not 1D but " <<sdim << "D" );
+            }
+            hsize_t dim = H5Sget_simple_extent_npoints( sid );
+            H5Sclose( sid );
+            if( npoints == 0 ) {
+                npoints = dim - offset;
+            }
+            // Select portion
+            hid_t memspace = H5Screate_simple( 1, &npoints, NULL );
+            hid_t filespace = H5Screate_simple( 1, &dim, NULL );
+            hsize_t o = offset;
+            hsize_t c = 1;
+            hsize_t n = npoints;
+            H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &o, NULL, &c, &n );
+            // Read data
+            H5Dread( did, type, memspace, filespace, dxpl, &v );
+            H5Sclose( filespace );
+            H5Sclose( memspace );
+        } else {
+            H5Dread( did, type, H5S_ALL, H5S_ALL, dxpl, &v );
+        }
         H5Dclose( did );
     }
     
-    static std::vector<hsize_t> getShape( hid_t locationId, std::string name )
+    std::vector<hsize_t> shape( std::string name )
     {
         std::vector<hsize_t> shape( 0 );
-        if( H5Lexists( locationId, name.c_str(), H5P_DEFAULT ) >0 ) {
-            hid_t did = H5Dopen( locationId, name.c_str(), H5P_DEFAULT );
+        if( H5Lexists( id, name.c_str(), H5P_DEFAULT ) >0 ) {
+            hid_t did = H5Dopen( id, name.c_str(), H5P_DEFAULT );
             if( did >= 0 ) {
                 hid_t sid = H5Dget_space( did );
                 int sdim = H5Sget_simple_extent_ndims( sid );
@@ -422,18 +453,18 @@ public:
         return shape;
     }
     
-    static int getVectSize( hid_t locationId, std::string vect_name )
+    int vectSize( std::string vect_name )
     {
-        std::vector<hsize_t> shape = getShape( locationId, vect_name );
-        if( shape.size() == 0 ) {
+        std::vector<hsize_t> s = shape( vect_name );
+        if( s.size() == 0 ) {
             return -1;
         }
-        if( shape.size() != 1 ) {
-            ERROR( "Reading vector " << vect_name << " is not 1D but " << shape.size() << "D" );
+        if( s.size() != 1 ) {
+            ERROR( "Reading vector " << vect_name << " is not 1D but " << s.size() << "D" );
         }
-        return shape[0];
+        return s[0];
     }
-    
 };
+
 
 #endif

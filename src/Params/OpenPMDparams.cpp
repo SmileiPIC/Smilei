@@ -125,23 +125,23 @@ OpenPMDparams::OpenPMDparams( Params &p ):
 
 void OpenPMDparams::writeRootAttributes( hid_t location, string meshesPath, string particlesPath )
 {
-    H5::attr( location, "openPMDextension", extension, H5T_NATIVE_UINT32 );
-    H5::attr( location, "openPMD", version );
-    H5::attr( location, "basePath", "/data/%T/" );
-    H5::attr( location, "software", "Smilei" );
-    H5::attr( location, "softwareVersion", __VERSION );
-    H5::attr( location, "date", getLocalTime() );
-    H5::attr( location, "iterationEncoding", "groupBased" );
-    H5::attr( location, "iterationFormat", "/data/%T/" );
-    H5::attr( location, "meshesPath", meshesPath );
-    H5::attr( location, "particlesPath", particlesPath );
+    H5_::attr( location, "openPMDextension", extension, H5T_NATIVE_UINT32 );
+    H5_::attr( location, "openPMD", version );
+    H5_::attr( location, "basePath", "/data/%T/" );
+    H5_::attr( location, "software", "Smilei" );
+    H5_::attr( location, "softwareVersion", __VERSION );
+    H5_::attr( location, "date", getLocalTime() );
+    H5_::attr( location, "iterationEncoding", "groupBased" );
+    H5_::attr( location, "iterationFormat", "/data/%T/" );
+    H5_::attr( location, "meshesPath", meshesPath );
+    H5_::attr( location, "particlesPath", particlesPath );
 }
 
 void OpenPMDparams::writeBasePathAttributes( hid_t location, unsigned int itime )
 {
-    H5::attr( location, "time", ( double )( itime * params->timestep ) );
-    H5::attr( location, "dt", ( double )params->timestep );
-    H5::attr( location, "timeUnitSI", unitSI[SMILEI_UNIT_TIME] );
+    H5_::attr( location, "time", ( double )( itime * params->timestep ) );
+    H5_::attr( location, "dt", ( double )params->timestep );
+    H5_::attr( location, "timeUnitSI", unitSI[SMILEI_UNIT_TIME] );
 }
 
 void OpenPMDparams::writeParticlesAttributes( hid_t location )
@@ -150,29 +150,29 @@ void OpenPMDparams::writeParticlesAttributes( hid_t location )
 
 void OpenPMDparams::writeMeshesAttributes( hid_t location )
 {
-    H5::attr( location, "patchSize", patchSize ); // this one is not openPMD
-    H5::attr( location, "fieldSolver", fieldSolver );
-    H5::attr( location, "fieldSolverParameters", fieldSolverParameters );
-    H5::attr( location, "fieldBoundary", fieldBoundary );
-    H5::attr( location, "fieldBoundaryParameters", fieldBoundaryParameters );
-    H5::attr( location, "particleBoundary", particleBoundary );
-    H5::attr( location, "particleBoundaryParameters", particleBoundaryParameters );
-    H5::attr( location, "currentSmoothing", currentSmoothing );
-    H5::attr( location, "currentSmoothingParameters", currentSmoothingParameters );
-    H5::attr( location, "chargeCorrection", "none" );
-    H5::attr( location, "chargeCorrectionParameters", "" );
-    H5::attr( location, "fieldSmoothing", "none" );
-    H5::attr( location, "fieldSmoothingParameters", "" );
+    H5_::attr( location, "patchSize", patchSize ); // this one is not openPMD
+    H5_::attr( location, "fieldSolver", fieldSolver );
+    H5_::attr( location, "fieldSolverParameters", fieldSolverParameters );
+    H5_::attr( location, "fieldBoundary", fieldBoundary );
+    H5_::attr( location, "fieldBoundaryParameters", fieldBoundaryParameters );
+    H5_::attr( location, "particleBoundary", particleBoundary );
+    H5_::attr( location, "particleBoundaryParameters", particleBoundaryParameters );
+    H5_::attr( location, "currentSmoothing", currentSmoothing );
+    H5_::attr( location, "currentSmoothingParameters", currentSmoothingParameters );
+    H5_::attr( location, "chargeCorrection", "none" );
+    H5_::attr( location, "chargeCorrectionParameters", "" );
+    H5_::attr( location, "fieldSmoothing", "none" );
+    H5_::attr( location, "fieldSmoothingParameters", "" );
 }
 
 void OpenPMDparams::writeFieldAttributes( hid_t location, vector<unsigned int> subgrid_start, vector<unsigned int> subgrid_step )
 {
-    H5::attr( location, "geometry", "cartesian" );
-    H5::attr( location, "dataOrder", "C" );
-    H5::attr( location, "axisLabels", axisLabels );
+    H5_::attr( location, "geometry", "cartesian" );
+    H5_::attr( location, "dataOrder", "C" );
+    H5_::attr( location, "axisLabels", axisLabels );
     if( subgrid_start.size() == 0 ) {
-        H5::attr( location, "gridSpacing", gridSpacing );
-        H5::attr( location, "gridGlobalOffset", gridGlobalOffset );
+        H5_::attr( location, "gridSpacing", gridSpacing );
+        H5_::attr( location, "gridGlobalOffset", gridGlobalOffset );
     } else {
         unsigned int ndim = subgrid_start.size();
         vector<double> subgridSpacing( ndim );
@@ -181,11 +181,11 @@ void OpenPMDparams::writeFieldAttributes( hid_t location, vector<unsigned int> s
             subgridSpacing[i] = gridSpacing [i] * subgrid_step [i];
             subgridOffset [i] = gridSpacing [i] * subgrid_start[i];
         }
-        H5::attr( location, "gridSpacing", subgridSpacing );
-        H5::attr( location, "gridGlobalOffset", subgridOffset );
+        H5_::attr( location, "gridSpacing", subgridSpacing );
+        H5_::attr( location, "gridGlobalOffset", subgridOffset );
     }
-    //H5::attr( location, "gridOffset", gridOffset);
-    H5::attr( location, "gridUnitSI", unitSI[SMILEI_UNIT_POSITION] );
+    //H5_::attr( location, "gridOffset", gridOffset);
+    H5_::attr( location, "gridUnitSI", unitSI[SMILEI_UNIT_POSITION] );
 }
 
 void OpenPMDparams::writeSpeciesAttributes( hid_t location )
@@ -194,18 +194,18 @@ void OpenPMDparams::writeSpeciesAttributes( hid_t location )
 
 void OpenPMDparams::writeRecordAttributes( hid_t location, unsigned int unit_type )
 {
-    H5::attr( location, "unitDimension", unitDimension[unit_type] );
-    H5::attr( location, "timeOffset", 0. );
+    H5_::attr( location, "unitDimension", unitDimension[unit_type] );
+    H5_::attr( location, "timeOffset", 0. );
 }
 
 void OpenPMDparams::writeFieldRecordAttributes( hid_t location )
 {
-    H5::attr( location, "position", position );
+    H5_::attr( location, "position", position );
 }
 
 void OpenPMDparams::writeComponentAttributes( hid_t location, unsigned int unit_type )
 {
-    H5::attr( location, "unitSI", unitSI[unit_type] );
+    H5_::attr( location, "unitSI", unitSI[unit_type] );
 }
 
 

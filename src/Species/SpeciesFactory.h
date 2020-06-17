@@ -34,7 +34,7 @@
 #include "ParticleCreator.h"
 
 #include "Tools.h"
-#include "H5File.h"
+#include "H5.h"
 #ifdef SMILEI_USE_NUMPY
 #include <numpy/arrayobject.h>
 #endif
@@ -499,7 +499,7 @@ public:
                 this_species->position_initialization_on_species_ = true;
             // HDF5 file where arrays are stored
             } else {
-                H5FileRead f = H5FileRead( this_species->position_initialization_ );
+                H5Read f = H5Read( this_species->position_initialization_ );
                 std::vector<std::string> ax = {"weight", "position/x", "position/y", "position/z"};
                 for( unsigned int i=0; i<params.nDim_particle+1; i++ ) {
                     std::vector<hsize_t> shape = f.shape( ax[i] );
@@ -587,7 +587,7 @@ public:
                 }
             // HDF5 file where arrays are stored
             } else if( this_species->file_position_npart_ > 0 ) {
-                H5FileRead f = H5FileRead( this_species->momentum_initialization_ );
+                H5Read f = H5Read( this_species->momentum_initialization_ );
                 std::vector<std::string> ax = {"momentum/x", "momentum/y", "momentum/z"};
                 for( unsigned int i=0; i<ax.size(); i++ ) {
                     std::vector<hsize_t> shape = f.shape( ax[i] );

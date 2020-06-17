@@ -147,11 +147,11 @@ void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi, b
     if( newfile ) {
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
         // write all parameters as HDF5 attributes
-        H5::attr( fileId_, "Version", string( __VERSION ) );
-        H5::attr( fileId_, "name", diag_name_ );
-        H5::attr( fileId_, "deposited_quantity", histogram->deposited_quantity );
+        H5_::attr( fileId_, "Version", string( __VERSION ) );
+        H5_::attr( fileId_, "name", diag_name_ );
+        H5_::attr( fileId_, "deposited_quantity", histogram->deposited_quantity );
         if( ! time_accumulate ) {
-            H5::attr( fileId_, "time_average", time_average );
+            H5_::attr( fileId_, "time_average", time_average );
         }
         // write all species
         ostringstream mystream( "" );
@@ -159,7 +159,7 @@ void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi, b
         for( unsigned int i=0 ; i < species.size() ; i++ ) {
             mystream << species[i] << " ";
         }
-        H5::attr( fileId_, "species", mystream.str() );
+        H5_::attr( fileId_, "species", mystream.str() );
         // write each axis
         for( unsigned int iaxis=0 ; iaxis < histogram->axes.size() ; iaxis++ ) {
             mystream.str( "" ); // clear
@@ -176,7 +176,7 @@ void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi, b
             }
             mystream << "]";
             string str2 = mystream.str();
-            H5::attr( fileId_, str1, str2 );
+            H5_::attr( fileId_, str1, str2 );
         }
         H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     } else {

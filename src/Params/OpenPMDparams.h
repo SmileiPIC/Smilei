@@ -2,7 +2,7 @@
 #define OPENPMDPARAMS_H
 
 #include "Params.h"
-#include "H5.h"
+#include "H5_.h"
 
 #define SMILEI_NUNITS 9
 #define SMILEI_UNIT_NONE     0

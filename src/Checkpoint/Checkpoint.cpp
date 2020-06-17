@@ -96,7 +96,7 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             restart_file = "";
             for( unsigned int num_dump=0; num_dump<restart_files.size(); num_dump++ ) {
                 string dump_name = restart_files[num_dump];
-                H5FileRead f = H5FileRead( dump_name, false, false );
+                H5Read f = H5Read( dump_name, false, false );
                 if( f.valid() ) {
                     unsigned int dump_step = 0;
                     f.attr( "dump_step", dump_step );
@@ -228,7 +228,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     std::string dumpName=nameDumpTmp.str();
     
     
-    H5FileWrite f = H5FileWrite( dumpName );
+    H5Write f = H5Write( dumpName );
     dump_number++;
     
 #ifdef  __DEBUG
@@ -287,7 +287,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << vecPatches( ipatch )->Hindex();
         string patchName=Tools::merge( "patch-", patch_name.str() );
-        H5GroupWrite g = f.group( patchName.c_str() );
+        H5Write g = f.group( patchName.c_str() );
         
         dumpPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, g );
         
@@ -312,7 +312,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
 }
 
-void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5GroupWrite &g )
+void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Write &g )
 {
     if (  params.geometry != "AMcylindrical" ) {
         dumpFieldsPerProc( g, EMfields->Ex_ );
@@ -375,7 +375,7 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name( "" );
         group_name << "FieldsForDiag" << idiag;
-        H5GroupWrite diag = g.group( group_name.str() );
+        H5Write diag = g.group( group_name.str() );
         
         for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ ) {
             dumpFieldsPerProc( diag, EMfields->allFields_avg[idiag][ifield] );
@@ -392,7 +392,7 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
-                H5GroupWrite b = g.group( groupName );
+                H5Write b = g.group( groupName );
                 b.attr( "By_val", embc->By_val );
                 b.attr( "Bz_val", embc->Bz_val );
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EMfields->emBoundCond[bcId] ) ) {
@@ -400,7 +400,7 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
-                H5GroupWrite b = g.group( groupName );
+                H5Write b = g.group( groupName );
                 g.vect( "Bx_val", embc->Bx_val );
                 g.vect( "By_val", embc->By_val );
                 g.vect( "Bz_val", embc->Bz_val );
@@ -409,7 +409,7 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
-                H5GroupWrite b = g.group( groupName );
+                H5Write b = g.group( groupName );
                 if( embc->Bx_val ) {
                     dumpFieldsPerProc( b, embc->Bx_val );
                 }
@@ -430,7 +430,7 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
         ostringstream name( "" );
         name << setfill( '0' ) << setw( 2 ) << ispec;
         string groupName=Tools::merge( "species-", name.str(), "-", vecSpecies[ispec]->name_ );
-        H5GroupWrite s = g.group( groupName );
+        H5Write s = g.group( groupName );
         
         s.attr( "partCapacity", vecSpecies[ispec]->particles->capacity() );
         s.attr( "partSize", vecSpecies[ispec]->particles->size() );
@@ -503,7 +503,7 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
 
 void Checkpoint::readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin )
 {
-    H5FileRead f = H5FileRead( restart_file );
+    H5Read f = H5Read( restart_file );
     
     // Read basic attributes
     string dump_version;
@@ -536,7 +536,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
 {
     MESSAGE( 1, "READING fields and particles for restart" );
     
-    H5FileRead f = H5FileRead( restart_file );
+    H5Read f = H5Read( restart_file );
     
     // Write diags scalar data
     DiagnosticScalar *scalars = static_cast<DiagnosticScalar *>( vecPatches.globalDiags[0] );
@@ -584,7 +584,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << vecPatches( ipatch )->Hindex();
         string patchName = Tools::merge( "patch-", patch_name.str() );
-        H5GroupRead g = f.group( patchName );
+        H5Read g = f.group( patchName );
         
         restartPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, g );
         
@@ -609,7 +609,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
 }
 
 
-void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5GroupRead &g )
+void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Read &g )
 {
     if ( params.geometry != "AMcylindrical" ) {
         restartFieldsPerProc( g, EMfields->Ex_ );
@@ -679,7 +679,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
         group_name << "FieldsForDiag" << idiag;
         if( g.hasGroup( group_name.str() ) ) {
             
-            H5GroupRead d = g.group( group_name.str() );
+            H5Read d = g.group( group_name.str() );
             for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ ) {
                 restartFieldsPerProc( d, EMfields->allFields_avg[idiag][ifield] );
             }
@@ -701,7 +701,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName = Tools::merge( "EM_boundary-species-", name.str() );
-                H5GroupRead b = g.group( groupName );
+                H5Read b = g.group( groupName );
                 b.attr( "By_val", embc->By_val );
                 b.attr( "Bz_val", embc->Bz_val );
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EMfields->emBoundCond[bcId] ) ) {
@@ -709,7 +709,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName = Tools::merge( "EM_boundary-species-", name.str() );
-                H5GroupRead b = g.group( groupName );
+                H5Read b = g.group( groupName );
                 b.vect( "Bx_val", embc->Bx_val );
                 b.vect( "By_val", embc->By_val );
                 b.vect( "Bz_val", embc->Bz_val );
@@ -718,7 +718,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName = Tools::merge( "EM_boundary-species-", name.str() );
-                H5GroupRead b = g.group( groupName );
+                H5Read b = g.group( groupName );
                 if( embc->Bx_val ) {
                     restartFieldsPerProc( b, embc->Bx_val );
                 }
@@ -744,7 +744,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
         ostringstream name( "" );
         name << setfill( '0' ) << setw( 2 ) << ispec;
         string groupName = Tools::merge( "species-", name.str(), "-", vecSpecies[ispec]->name_ );
-        H5GroupRead s = g.group( groupName );
+        H5Read s = g.group( groupName );
         
         unsigned int partCapacity=0;
         s.attr( "partCapacity", partCapacity );
@@ -832,34 +832,34 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
     }
 }
 
-void Checkpoint::dumpFieldsPerProc( H5GroupWrite &g, Field *field )
+void Checkpoint::dumpFieldsPerProc( H5Write &g, Field *field )
 {
     g.vect( field->name, *field->data_, field->globalDims_, H5T_NATIVE_DOUBLE );
 }
 
-void Checkpoint::dump_cFieldsPerProc( H5GroupWrite &g, Field *field )
+void Checkpoint::dump_cFieldsPerProc( H5Write &g, Field *field )
 {
     cField *cfield = static_cast<cField *>( field );
     g.vect( field->name, *cfield->cdata_, 2*field->globalDims_, H5T_NATIVE_DOUBLE );
 }
 
-void Checkpoint::restartFieldsPerProc( H5GroupRead &g, Field *field )
+void Checkpoint::restartFieldsPerProc( H5Read &g, Field *field )
 {
     g.vect( field->name, *field->data_, H5T_NATIVE_DOUBLE );
 }
 
-void Checkpoint::restart_cFieldsPerProc( H5GroupRead &g, Field *field )
+void Checkpoint::restart_cFieldsPerProc( H5Read &g, Field *field )
 {
     cField *cfield = static_cast<cField *>( field );
     g.vect( field->name, *cfield->cdata_, H5T_NATIVE_DOUBLE );
 }
 
-void Checkpoint::dumpMovingWindow( H5FileWrite &f, SimWindow *simWin )
+void Checkpoint::dumpMovingWindow( H5Write &f, SimWindow *simWin )
 {
     f.attr( "x_moved", simWin->getXmoved() );
     f.attr( "n_moved", simWin->getNmoved() );
 }
-void Checkpoint::restartMovingWindow( H5FileRead &f, SimWindow *simWin )
+void Checkpoint::restartMovingWindow( H5Read &f, SimWindow *simWin )
 {
     
     double x_moved=0.;

@@ -1,7 +1,7 @@
 #ifndef DIAGNOSTIC_H
 #define DIAGNOSTIC_H
 
-#include "H5.h"
+#include "H5_.h"
 #include "Patch.h"
 #include "Timers.h"
 

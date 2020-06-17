@@ -228,13 +228,13 @@ void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi, bool newfile )
         fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
         H5Pclose( pid );
         
-        H5::attr( fileId_, "name", diag_name_ );
+        H5_::attr( fileId_, "name", diag_name_ );
         
         // Attributes for openPMD
         openPMD_->writeRootAttributes( fileId_, "", "no_particles" );
         
         // Make main "data" group where everything will be stored (required by openPMD)
-        data_group_id = H5::group( fileId_, "data" );
+        data_group_id = H5_::group( fileId_, "data" );
     } else {
         // Open the existing file
         hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
@@ -332,7 +332,7 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
         name_t << setfill( '0' ) << setw( 10 ) << itime;
         status = H5Lexists( data_group_id, name_t.str().c_str(), H5P_DEFAULT );
         if( status==0 ) {
-            iteration_group_id = H5::group( data_group_id, name_t.str().c_str() );
+            iteration_group_id = H5_::group( data_group_id, name_t.str().c_str() );
         }
         // Warning if file unreachable
         if( status < 0 ) {
@@ -387,7 +387,7 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
     {
         // write x_moved
         double x_moved = simWindow ? simWindow->getXmoved() : 0.;
-        H5::attr( iteration_group_id, "x_moved", x_moved );
+        H5_::attr( iteration_group_id, "x_moved", x_moved );
         
         H5Gclose( iteration_group_id );
         if( tmp_dset_id>0 ) {

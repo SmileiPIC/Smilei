@@ -87,15 +87,15 @@ void DiagnosticPerformances::openFile( Params &params, SmileiMPI *smpi, bool new
         H5Pclose( pid );
         
         // write all parameters as HDF5 attributes
-        H5::attr( fileId_, "MPI_SIZE", smpi->getSize() );
-        H5::attr( fileId_, "patch_arrangement", params.patch_arrangement );
+        H5_::attr( fileId_, "MPI_SIZE", smpi->getSize() );
+        H5_::attr( fileId_, "patch_arrangement", params.patch_arrangement );
         
         vector<string> quantities_uint( n_quantities_uint );
         quantities_uint[0] = "hindex"                    ;
         quantities_uint[1] = "number_of_cells"           ;
         quantities_uint[2] = "number_of_particles"       ;
         quantities_uint[3] = "number_of_frozen_particles";
-        H5::attr( fileId_, "quantities_uint", quantities_uint );
+        H5_::attr( fileId_, "quantities_uint", quantities_uint );
         
         vector<string> quantities_double( n_quantities_double );
         quantities_double[ 0] = "total_load"      ;
@@ -113,7 +113,7 @@ void DiagnosticPerformances::openFile( Params &params, SmileiMPI *smpi, bool new
         quantities_double[12] = "timer_grids"     ;
         quantities_double[13] = "timer_total"     ;
         quantities_double[14] = "memory_total"    ;
-        H5::attr( fileId_, "quantities_double", quantities_double );
+        H5_::attr( fileId_, "quantities_double", quantities_double );
         
     } else {
         // Open the existing file
@@ -177,7 +177,7 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
         status = H5Lexists( fileId_, name_t.str().c_str(), H5P_DEFAULT );
         if( status==0 )
         {
-            iteration_group_id = H5::group( fileId_, name_t.str().c_str() );
+            iteration_group_id = H5_::group( fileId_, name_t.str().c_str() );
         }
         // Warning if file unreachable
         if( status < 0 )
@@ -264,7 +264,7 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
         if( patch_information ) {
         
             // Creation of the group
-            hid_t patch_group = H5::group( iteration_group_id, "patches" );
+            hid_t patch_group = H5_::group( iteration_group_id, "patches" );
             
             // Prepare the hyperslab
             hsize_t matrix  = tot_number_of_patches;
@@ -322,7 +322,7 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
             // Creation and treatment of the species groups
             hid_t species_group;
             for( unsigned int ispecies = 0; ispecies < number_of_species; ispecies++ ) {
-                species_group = H5::group( patch_group, vecPatches( 0 )->vecSpecies[ispecies]->name_ );
+                species_group = H5_::group( patch_group, vecPatches( 0 )->vecSpecies[ispecies]->name_ );
                 
                 // Vectorization properties
                 if( has_adaptive_vectorization ) {

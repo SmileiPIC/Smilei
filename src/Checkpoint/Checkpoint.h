@@ -13,7 +13,7 @@
 #include <hdf5.h>
 #include <Tools.h>
 
-#include <H5File.h>
+#include <H5.h>
 
 class Params;
 class OpenPMDparams;
@@ -45,14 +45,14 @@ public:
     //! restart everything to file per processor
     void readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin );
     void restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD );
-    void restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5GroupRead &g );
+    void restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Read &g );
     
     //! restart field per proc
-    void restartFieldsPerProc( H5GroupRead &g, Field *field );
-    void restart_cFieldsPerProc( H5GroupRead &g, Field *field );
+    void restartFieldsPerProc( H5Read &g, Field *field );
+    void restart_cFieldsPerProc( H5Read &g, Field *field );
     
     //! load moving window parameters
-    void restartMovingWindow( H5FileRead &f, SimWindow *simWindow );
+    void restartMovingWindow( H5Read &f, SimWindow *simWindow );
     
     //! test before writing everything to file per processor
     //bool dump(unsigned int itime, double time, Params &params);
@@ -61,7 +61,7 @@ public:
     
     //! dump everything to file per processor
     void dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI *smpi, SimWindow *simWin, Params &params );
-    void dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5GroupWrite &g );
+    void dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Write &g );
     
     //! incremental number of times we've done a dump
     unsigned int dump_number;
@@ -105,11 +105,11 @@ private:
     void initDumpCases();
     
     //! dump field per proc
-    void dumpFieldsPerProc( H5GroupWrite &g, Field *field );
-    void dump_cFieldsPerProc( H5GroupWrite &g, Field *field );
+    void dumpFieldsPerProc( H5Write &g, Field *field );
+    void dump_cFieldsPerProc( H5Write &g, Field *field );
     
     //! dump moving window parameters
-    void dumpMovingWindow( H5FileWrite &f, SimWindow *simWindow );
+    void dumpMovingWindow( H5Write &f, SimWindow *simWindow );
     
     //! function that returns elapsed time from creator (uses private var time_reference)
     //double time_seconds();

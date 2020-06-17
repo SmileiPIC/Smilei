@@ -108,7 +108,7 @@ void DiagnosticRadiationSpectrum::openFile( Params& params, SmileiMPI* smpi, boo
         mystream << photon_axis->min << " " << photon_axis->max << " "
                  << photon_axis->nbins << " " << photon_axis->logscale << " " << photon_axis->edge_inclusive;
         string str2 = mystream.str();
-        H5::attr( fileId_, str1, str2 );
+        H5_::attr( fileId_, str1, str2 );
         
         H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }

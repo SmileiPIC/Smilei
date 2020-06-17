@@ -9,7 +9,7 @@
 // ----------------------------------------------------------------------------
 
 #include "RadiationTables.h"
-#include "H5File.h"
+#include "H5.h"
 
 // -----------------------------------------------------------------------------
 // INITILIZATION AND DESTRUCTION
@@ -581,10 +581,10 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
     std::string file = table_path_ + "/radiation_tables.h5";
     if( Tools::fileExists( file ) ) {
         if( smpi->isMaster() ) {
-            H5FileRead f = H5FileRead( file );
+            H5Read f = H5Read( file );
             
             // First, we read attributes
-            H5GroupRead h = f.group( "h" );
+            H5Read h = f.group( "h" );
             h.attr( "size_particle_chi", niel_.size_particle_chi_ );
             h.attr( "min_particle_chi", niel_.min_particle_chi_ );
             h.attr( "max_particle_chi", niel_.max_particle_chi_ );
@@ -619,10 +619,10 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
     std::string file = table_path_ + "/radiation_tables.h5";
     if( Tools::fileExists( file ) ) {
         if( smpi->isMaster() ) {
-            H5FileRead f = H5FileRead( file );
+            H5Read f = H5Read( file );
             
             // First, we read attributes
-            H5GroupRead c = f.group( "integfochi" );
+            H5Read c = f.group( "integfochi" );
             c.attr( "size_particle_chi", integfochi_.size_particle_chi_ );
             c.attr( "min_particle_chi", integfochi_.min_particle_chi_ );
             c.attr( "max_particle_chi", integfochi_.max_particle_chi_ );
@@ -653,10 +653,10 @@ void RadiationTables::readXiTable( SmileiMPI *smpi )
     std::string file = table_path_ + "/radiation_tables.h5";
     if( Tools::fileExists( file ) ) {
         if( smpi->isMaster() ) {
-            H5FileRead f = H5FileRead( file );
+            H5Read f = H5Read( file );
             
             // First, we read attributes
-            H5GroupRead xi = f.group( "xi" );
+            H5Read xi = f.group( "xi" );
             xi.attr( "size_particle_chi", xi_.size_particle_chi_ );
             xi.attr( "size_photon_chi", xi_.size_photon_chi_ );
             xi.attr( "min_particle_chi", xi_.min_particle_chi_ );
