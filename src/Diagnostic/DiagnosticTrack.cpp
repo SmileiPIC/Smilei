@@ -168,31 +168,22 @@ DiagnosticTrack::~DiagnosticTrack()
 }
 
 
-void DiagnosticTrack::openFile( Params &params, SmileiMPI *smpi, bool newfile )
+void DiagnosticTrack::openFile( Params &params, SmileiMPI *smpi )
 {
 
-    if( newfile ) {
-        // Create HDF5 file
-        hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
-        H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
-        fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
-        H5Pclose( pid );
-        
-        H5_::attr( fileId_, "name", diag_name_ );
-        
-        // Attributes for openPMD
-        openPMD_->writeRootAttributes( fileId_, "no_meshes", "particles/" );
-        
-        // Create "data" group for openPMD compatibility
-        data_group_id = H5_::group( fileId_, "data" );
-        
-    } else {
-        // Open the file
-        hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
-        H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
-        fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
-        H5Pclose( pid );
-    }
+    // Create HDF5 file
+    hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
+    H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
+    fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
+    H5Pclose( pid );
+    
+    H5_::attr( fileId_, "name", diag_name_ );
+    
+    // Attributes for openPMD
+    openPMD_->writeRootAttributes( fileId_, "no_meshes", "particles/" );
+    
+    // Create "data" group for openPMD compatibility
+    data_group_id = H5_::group( fileId_, "data" );
     
 }
 
@@ -221,7 +212,7 @@ void DiagnosticTrack::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPat
     }
     
     // create the file
-    openFile( params, smpi, true );
+    openFile( params, smpi );
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     
 }

@@ -74,54 +74,46 @@ DiagnosticPerformances::~DiagnosticPerformances()
 
 
 // Called only by patch master of process master
-void DiagnosticPerformances::openFile( Params &params, SmileiMPI *smpi, bool newfile )
+void DiagnosticPerformances::openFile( Params &params, SmileiMPI *smpi )
 {
     if( fileId_>0 ) {
         return;
     }
     
-    if( newfile ) {
-        hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
-        H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
-        fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
-        H5Pclose( pid );
-        
-        // write all parameters as HDF5 attributes
-        H5_::attr( fileId_, "MPI_SIZE", smpi->getSize() );
-        H5_::attr( fileId_, "patch_arrangement", params.patch_arrangement );
-        
-        vector<string> quantities_uint( n_quantities_uint );
-        quantities_uint[0] = "hindex"                    ;
-        quantities_uint[1] = "number_of_cells"           ;
-        quantities_uint[2] = "number_of_particles"       ;
-        quantities_uint[3] = "number_of_frozen_particles";
-        H5_::attr( fileId_, "quantities_uint", quantities_uint );
-        
-        vector<string> quantities_double( n_quantities_double );
-        quantities_double[ 0] = "total_load"      ;
-        quantities_double[ 1] = "timer_global"    ;
-        quantities_double[ 2] = "timer_particles" ;
-        quantities_double[ 3] = "timer_maxwell"   ;
-        quantities_double[ 4] = "timer_densities" ;
-        quantities_double[ 5] = "timer_collisions";
-        quantities_double[ 6] = "timer_movWindow" ;
-        quantities_double[ 7] = "timer_loadBal"   ;
-        quantities_double[ 8] = "timer_syncPart"  ;
-        quantities_double[ 9] = "timer_syncField" ;
-        quantities_double[10] = "timer_syncDens"  ;
-        quantities_double[11] = "timer_diags"     ;
-        quantities_double[12] = "timer_grids"     ;
-        quantities_double[13] = "timer_total"     ;
-        quantities_double[14] = "memory_total"    ;
-        H5_::attr( fileId_, "quantities_double", quantities_double );
-        
-    } else {
-        // Open the existing file
-        hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
-        H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
-        fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
-        H5Pclose( pid );
-    }
+    hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
+    H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
+    fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
+    H5Pclose( pid );
+    
+    // write all parameters as HDF5 attributes
+    H5_::attr( fileId_, "MPI_SIZE", smpi->getSize() );
+    H5_::attr( fileId_, "patch_arrangement", params.patch_arrangement );
+    
+    vector<string> quantities_uint( n_quantities_uint );
+    quantities_uint[0] = "hindex"                    ;
+    quantities_uint[1] = "number_of_cells"           ;
+    quantities_uint[2] = "number_of_particles"       ;
+    quantities_uint[3] = "number_of_frozen_particles";
+    H5_::attr( fileId_, "quantities_uint", quantities_uint );
+    
+    vector<string> quantities_double( n_quantities_double );
+    quantities_double[ 0] = "total_load"      ;
+    quantities_double[ 1] = "timer_global"    ;
+    quantities_double[ 2] = "timer_particles" ;
+    quantities_double[ 3] = "timer_maxwell"   ;
+    quantities_double[ 4] = "timer_densities" ;
+    quantities_double[ 5] = "timer_collisions";
+    quantities_double[ 6] = "timer_movWindow" ;
+    quantities_double[ 7] = "timer_loadBal"   ;
+    quantities_double[ 8] = "timer_syncPart"  ;
+    quantities_double[ 9] = "timer_syncField" ;
+    quantities_double[10] = "timer_syncDens"  ;
+    quantities_double[11] = "timer_diags"     ;
+    quantities_double[12] = "timer_grids"     ;
+    quantities_double[13] = "timer_total"     ;
+    quantities_double[14] = "memory_total"    ;
+    H5_::attr( fileId_, "quantities_double", quantities_double );
+    
 }
 
 
@@ -150,7 +142,7 @@ void DiagnosticPerformances::closeFile()
 void DiagnosticPerformances::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
 {
     // create the file
-    openFile( params, smpi, true );
+    openFile( params, smpi );
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 }
 

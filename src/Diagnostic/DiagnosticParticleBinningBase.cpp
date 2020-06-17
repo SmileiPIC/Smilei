@@ -138,50 +138,46 @@ DiagnosticParticleBinningBase::~DiagnosticParticleBinningBase()
 
 
 // Called only by patch master of process master
-void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi, bool newfile )
+void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi )
 {
     if( !smpi->isMaster() || fileId_>0 ) {
         return;
     }
     
-    if( newfile ) {
-        fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
-        // write all parameters as HDF5 attributes
-        H5_::attr( fileId_, "Version", string( __VERSION ) );
-        H5_::attr( fileId_, "name", diag_name_ );
-        H5_::attr( fileId_, "deposited_quantity", histogram->deposited_quantity );
-        if( ! time_accumulate ) {
-            H5_::attr( fileId_, "time_average", time_average );
-        }
-        // write all species
-        ostringstream mystream( "" );
-        mystream.str( "" ); // clear
-        for( unsigned int i=0 ; i < species.size() ; i++ ) {
-            mystream << species[i] << " ";
-        }
-        H5_::attr( fileId_, "species", mystream.str() );
-        // write each axis
-        for( unsigned int iaxis=0 ; iaxis < histogram->axes.size() ; iaxis++ ) {
-            mystream.str( "" ); // clear
-            mystream << "axis" << iaxis;
-            string str1 = mystream.str();
-            mystream.str( "" ); // clear
-            mystream << histogram->axes[iaxis]->type << " " << histogram->axes[iaxis]->min << " " << histogram->axes[iaxis]->max << " "
-                     << histogram->axes[iaxis]->nbins << " " << histogram->axes[iaxis]->logscale << " " << histogram->axes[iaxis]->edge_inclusive << " [";
-            for( unsigned int idim=0; idim<histogram->axes[iaxis]->coefficients.size(); idim++ ) {
-                mystream << histogram->axes[iaxis]->coefficients[idim];
-                if( idim<histogram->axes[iaxis]->coefficients.size()-1 ) {
-                    mystream << ",";
-                }
-            }
-            mystream << "]";
-            string str2 = mystream.str();
-            H5_::attr( fileId_, str1, str2 );
-        }
-        H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
-    } else {
-        fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
+    fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
+    // write all parameters as HDF5 attributes
+    H5_::attr( fileId_, "Version", string( __VERSION ) );
+    H5_::attr( fileId_, "name", diag_name_ );
+    H5_::attr( fileId_, "deposited_quantity", histogram->deposited_quantity );
+    if( ! time_accumulate ) {
+        H5_::attr( fileId_, "time_average", time_average );
     }
+    // write all species
+    ostringstream mystream( "" );
+    mystream.str( "" ); // clear
+    for( unsigned int i=0 ; i < species.size() ; i++ ) {
+        mystream << species[i] << " ";
+    }
+    H5_::attr( fileId_, "species", mystream.str() );
+    // write each axis
+    for( unsigned int iaxis=0 ; iaxis < histogram->axes.size() ; iaxis++ ) {
+        mystream.str( "" ); // clear
+        mystream << "axis" << iaxis;
+        string str1 = mystream.str();
+        mystream.str( "" ); // clear
+        mystream << histogram->axes[iaxis]->type << " " << histogram->axes[iaxis]->min << " " << histogram->axes[iaxis]->max << " "
+                 << histogram->axes[iaxis]->nbins << " " << histogram->axes[iaxis]->logscale << " " << histogram->axes[iaxis]->edge_inclusive << " [";
+        for( unsigned int idim=0; idim<histogram->axes[iaxis]->coefficients.size(); idim++ ) {
+            mystream << histogram->axes[iaxis]->coefficients[idim];
+            if( idim<histogram->axes[iaxis]->coefficients.size()-1 ) {
+                mystream << ",";
+            }
+        }
+        mystream << "]";
+        string str2 = mystream.str();
+        H5_::attr( fileId_, str1, str2 );
+    }
+    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 }
 
 

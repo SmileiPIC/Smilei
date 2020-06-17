@@ -215,34 +215,25 @@ bool DiagnosticFields::hasField( string field_name, vector<string> fieldsToDump 
     return hasfield;
 }
 
-void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi, bool newfile )
+void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi )
 {
     if( fileId_>0 ) {
         return;
     }
     
-    if( newfile ) {
-        // Create file
-        hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
-        H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
-        fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
-        H5Pclose( pid );
-        
-        H5_::attr( fileId_, "name", diag_name_ );
-        
-        // Attributes for openPMD
-        openPMD_->writeRootAttributes( fileId_, "", "no_particles" );
-        
-        // Make main "data" group where everything will be stored (required by openPMD)
-        data_group_id = H5_::group( fileId_, "data" );
-    } else {
-        // Open the existing file
-        hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
-        H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
-        fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
-        H5Pclose( pid );
-        data_group_id = H5Gopen( fileId_, "data", H5P_DEFAULT );
-    }
+    // Create file
+    hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
+    H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
+    fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
+    H5Pclose( pid );
+    
+    H5_::attr( fileId_, "name", diag_name_ );
+    
+    // Attributes for openPMD
+    openPMD_->writeRootAttributes( fileId_, "", "no_particles" );
+    
+    // Make main "data" group where everything will be stored (required by openPMD)
+    data_group_id = H5_::group( fileId_, "data" );
 }
 
 void DiagnosticFields::closeFile()
@@ -284,7 +275,7 @@ void DiagnosticFields::closeFile()
 void DiagnosticFields::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
 {
     // create the file
-    openFile( params, smpi, true );
+    openFile( params, smpi );
     H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 }
 

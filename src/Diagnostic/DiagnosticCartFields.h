@@ -11,7 +11,7 @@ public :
     DiagnosticCartFields( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int, OpenPMDparams & );
     ~DiagnosticCartFields() override;
     
-    virtual void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
+    virtual void openFile( Params &params, SmileiMPI *smpi ) override;
     
     void closeFile() override;
     

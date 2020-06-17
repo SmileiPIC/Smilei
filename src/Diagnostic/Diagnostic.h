@@ -23,7 +23,7 @@ public :
     virtual ~Diagnostic() {};
     
     //! Opens the file. Only by MPI master for global diags. Only by patch master for local diags.
-    virtual void openFile( Params &params, SmileiMPI *smpi, bool newfile ) = 0;
+    virtual void openFile( Params &params, SmileiMPI *smpi ) = 0;
     //! Closes the file. Only by MPI master for global diags. Only by patch master for local diags.
     virtual void closeFile() = 0;
     

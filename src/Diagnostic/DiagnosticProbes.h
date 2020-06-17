@@ -17,7 +17,7 @@ public :
     //! Default destructor
     ~DiagnosticProbes() override;
     
-    void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
+    void openFile( Params &params, SmileiMPI *smpi ) override;
     
     void closeFile() override;
     

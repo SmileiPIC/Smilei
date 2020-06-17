@@ -372,50 +372,42 @@ DiagnosticProbes::~DiagnosticProbes()
 }
 
 
-void DiagnosticProbes::openFile( Params &params, SmileiMPI *smpi, bool newfile )
+void DiagnosticProbes::openFile( Params &params, SmileiMPI *smpi )
 {
-    if( newfile ) {
-        // Create file
-        hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
-        H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
-        fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
-        H5Pclose( pid );
-        
-        H5_::attr( fileId_, "name", diag_name_ );
-        
-        // Write the version of the code as an attribute
-        H5_::attr( fileId_, "Version", string( __VERSION ) );
-        
-        // Dimension of the probe grid
-        H5_::attr( fileId_, "dimension", dimProbe );
-        
-        // Add arrays "p0", "p1", ...
-        H5_::vect( fileId_, "p0", origin );
-        ostringstream pk;
-        for( unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++ ) {
-            pk.str( "" );
-            pk << "p" << ( iDimProbe+1 );
-            H5_::vect( fileId_, pk.str(), corners[iDimProbe] );
-        }
-
-        // Add array "number"
-        H5_::vect( fileId_, "number", vecNumber );
-
-        // Add "fields"
-        ostringstream fields( "" );
-        fields << fieldname[0];
-        for( unsigned int i=1; i<fieldname.size(); i++ ) {
-            fields << "," << fieldname[i];
-        }
-        H5_::attr( fileId_, "fields", fields.str() );
-
-    } else {
-        hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
-        H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
-        fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
-        H5Pclose( pid );
+    // Create file
+    hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
+    H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
+    fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
+    H5Pclose( pid );
+    
+    H5_::attr( fileId_, "name", diag_name_ );
+    
+    // Write the version of the code as an attribute
+    H5_::attr( fileId_, "Version", string( __VERSION ) );
+    
+    // Dimension of the probe grid
+    H5_::attr( fileId_, "dimension", dimProbe );
+    
+    // Add arrays "p0", "p1", ...
+    H5_::vect( fileId_, "p0", origin );
+    ostringstream pk;
+    for( unsigned int iDimProbe=0; iDimProbe<dimProbe; iDimProbe++ ) {
+        pk.str( "" );
+        pk << "p" << ( iDimProbe+1 );
+        H5_::vect( fileId_, pk.str(), corners[iDimProbe] );
     }
-
+    
+    // Add array "number"
+    H5_::vect( fileId_, "number", vecNumber );
+    
+    // Add "fields"
+    ostringstream fields( "" );
+    fields << fieldname[0];
+    for( unsigned int i=1; i<fieldname.size(); i++ ) {
+        fields << "," << fieldname[i];
+    }
+    H5_::attr( fileId_, "fields", fields.str() );
+    
 }
 
 
@@ -437,7 +429,7 @@ bool DiagnosticProbes::prepare( int timestep )
 void DiagnosticProbes::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
 {
     // create the file
-    openFile( params, smpi, true );
+    openFile( params, smpi );
 }
 
 

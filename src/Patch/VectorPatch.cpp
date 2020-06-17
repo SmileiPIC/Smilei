@@ -1235,7 +1235,7 @@ void VectorPatch::initAllDiags( Params &params, SmileiMPI *smpi )
         globalDiags[idiag]->init( params, smpi, *this );
         // MPI master creates the file
         if( smpi->isMaster() ) {
-            globalDiags[idiag]->openFile( params, smpi, true );
+            globalDiags[idiag]->openFile( params, smpi );
         }
     }
 
@@ -1258,21 +1258,6 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
     // All MPI close local diags
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
         localDiags[idiag]->closeFile();
-    }
-}
-
-
-void VectorPatch::openAllDiags( Params &params, SmileiMPI *smpi )
-{
-    // MPI master opens all global diags
-    if( smpi->isMaster() )
-        for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
-            globalDiags[idiag]->openFile( params, smpi, false );
-        }
-
-    // All MPI open local diags
-    for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
-        localDiags[idiag]->openFile( params, smpi, false );
     }
 }
 
