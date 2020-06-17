@@ -41,6 +41,7 @@ public:
     std::vector<cField2D *> rho_AM_s;
     void restartRhoJ() override;
     void restartRhoold() ;
+    void restartRhos() ;
     void restartRhoJs() override;
     
     // fields for Poisson solver

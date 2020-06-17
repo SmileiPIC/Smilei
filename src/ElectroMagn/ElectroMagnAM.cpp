@@ -420,6 +420,14 @@ void ElectroMagnAM::restartRhoJs()
     }
 }
 
+void ElectroMagnAM::restartRhos()
+{
+    for( unsigned int ispec=0 ; ispec < n_species*nmodes ; ispec++ ) {
+        if( rho_AM_s[ispec] ) {
+            rho_AM_s[ispec]->put_to( 0. );
+        }
+    }
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Begin of Solve Poisson methods
