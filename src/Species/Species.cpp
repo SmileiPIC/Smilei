@@ -444,6 +444,26 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
 
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[3] += MPI_Wtime() - timer;
+#endif
+
+                //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
+
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+
+                // Project currents if not a Test species and charges as well if a diag is needed.
+                // Do not project if a photon
+                if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
+                    Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
+                }
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[2] += MPI_Wtime() - timer;
+#endif
                 // Apply wall and boundary conditions
                 if( mass_>0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
@@ -488,26 +508,6 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                     }
 
                 }
-
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers[3] += MPI_Wtime() - timer;
-#endif
-
-                //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
-
-#ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
-#endif
-
-                // Project currents if not a Test species and charges as well if a diag is needed.
-                // Do not project if a photon
-                if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
-                    Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
-                }
-
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers[2] += MPI_Wtime() - timer;
-#endif
 
             }// ibin
         } // end if moving particle
