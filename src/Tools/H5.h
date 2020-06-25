@@ -85,7 +85,7 @@ protected:
         if( H5Lexists( id_, name.c_str(), H5P_DEFAULT ) > 0 ) {
             return H5Oopen( id_, name.c_str(), H5P_DEFAULT );
         } else {
-            ERROR( "In HDF5 file "<< name << " does not exist" );
+            ERROR( "In HDF5 file, "<< name << " does not exist" );
         }
         return -1;
     }
@@ -347,13 +347,13 @@ public:
     }
     
     //! Write a multi-dimensional array of uints
-    H5Write array( std::string name, unsigned int &v, H5Space *filespace, H5Space *memspace = NULL, bool independent = false )
+    H5Write array( std::string name, unsigned int &v, H5Space *filespace, H5Space *memspace, bool independent = false )
     {
         return array( name, v, H5T_NATIVE_UINT, filespace, memspace );
     }
     
     //! Write a multi-dimensional array of doubles
-    H5Write array( std::string name, double &v, H5Space *filespace, H5Space *memspace = NULL, bool independent = false )
+    H5Write array( std::string name, double &v, H5Space *filespace, H5Space *memspace, bool independent = false )
     {
         return array( name, v, H5T_NATIVE_DOUBLE, filespace, memspace );
     }
@@ -567,6 +567,29 @@ public:
             H5Sclose( memspace );
         } else {
             H5Dread( did, type, H5S_ALL, H5S_ALL, dxpl_, &v );
+        }
+        H5Dclose( did );
+    }
+    
+    //! Read a multi-dimensional array of uints
+    void array( std::string name, unsigned int &v, H5Space *filespace, H5Space *memspace )
+    {
+        return array( name, v, H5T_NATIVE_UINT, filespace, memspace );
+    }
+    
+    //! Read a multi-dimensional array of doubles
+    void array( std::string name, double &v, H5Space *filespace, H5Space *memspace )
+    {
+        return array( name, v, H5T_NATIVE_DOUBLE, filespace, memspace );
+    }
+    
+    //! Read a multi-dimensional array
+    template<class T>
+    void array( std::string name, T &v, hid_t type, H5Space *filespace, H5Space *memspace )
+    {
+        hid_t did = open( name );
+        if( filespace->global_ > 0 ) {
+            H5Dread( did, type, memspace->sid, filespace->sid, dxpl_, &v );
         }
         H5Dclose( did );
     }

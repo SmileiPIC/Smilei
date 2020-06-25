@@ -40,6 +40,7 @@ H5::H5( std::string file, unsigned access, bool parallel, bool _raise )
     } else {
         fid_ = H5Fopen( filepath.c_str(), access, fapl );
     }
+    H5Pclose( fapl );
     
     // Check error
     if( H5Eget_num( H5E_DEFAULT ) > 0 ) {
@@ -65,11 +66,13 @@ H5::H5( std::string file, unsigned access, bool parallel, bool _raise )
         }
     }
     
-    if( ! _raise ) {
+    if( _raise ) {
+        if( fid_ < 0 || id_ < 0 ) {
+            ERROR( "Cannot open file " << filepath );
+        }
+    } else {
         // Restore previous error printing
         H5Eset_auto( H5E_DEFAULT, old_func, old_client_data );
-    } else if( fid_ < 0 || id_ < 0 ) {
-        ERROR( "Cannot open file " << filepath );
     }
 }
 

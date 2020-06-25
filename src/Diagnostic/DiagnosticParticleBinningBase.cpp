@@ -281,7 +281,7 @@ void DiagnosticParticleBinningBase::write( int timestep, SmileiMPI *smpi )
     
     // write the array if it does not exist already
     if( ! file_->has( mystream.str() ) ) {
-        H5Space d = H5Space( dims );
+        H5Space d( dims );
         file_->array( mystream.str(), data_sum[0], &d, &d );
     }
     

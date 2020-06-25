@@ -643,8 +643,8 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
                 }
                 
                 // Define spaces
-                H5Space memspace = H5Space( {nPart_MPI, nDim_particle}, {}, {} );
-                H5Space filespace = H5Space( {nPart_total_actual, nDim_particle}, {offset_in_file[0], 0}, {nPart_MPI, nDim_particle} );
+                H5Space memspace( {nPart_MPI, nDim_particle}, {}, {} );
+                H5Space filespace( {nPart_total_actual, nDim_particle}, {offset_in_file[0], 0}, {nPart_MPI, nDim_particle} );
                 // Create dataset
                 file_->array( "positions", *(posArray->data_), &filespace, &memspace );
                 file_->flush();
@@ -766,8 +766,8 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
     #pragma omp master
     {
         // Define spaces
-        H5Space memspace = H5Space( {nPart_MPI, (hsize_t)nFields}, {}, {} );
-        H5Space filespace = H5Space( {nPart_total_actual, (hsize_t)nFields}, {offset_in_file[0], 0}, {nPart_MPI, (hsize_t)nFields} );
+        H5Space memspace( {nPart_MPI, (hsize_t)nFields}, {}, {} );
+        H5Space filespace( {nPart_total_actual, (hsize_t)nFields}, {offset_in_file[0], 0}, {nPart_MPI, (hsize_t)nFields} );
         // Create new dataset for this timestep
         H5Write d = file_->array( dataset_name, *(probesArray->data_), &filespace, &memspace, true );
         // Write x_moved

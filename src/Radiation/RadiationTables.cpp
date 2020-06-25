@@ -581,7 +581,7 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
     std::string file = table_path_ + "/radiation_tables.h5";
     if( Tools::fileExists( file ) ) {
         if( smpi->isMaster() ) {
-            H5Read f = H5Read( file );
+            H5Read f( file );
             
             // First, we read attributes
             H5Read h = f.dataset( "h" );
@@ -619,7 +619,7 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
     std::string file = table_path_ + "/radiation_tables.h5";
     if( Tools::fileExists( file ) ) {
         if( smpi->isMaster() ) {
-            H5Read f = H5Read( file );
+            H5Read f( file );
             
             // First, we read attributes
             H5Read c = f.dataset( "integfochi" );
@@ -653,7 +653,7 @@ void RadiationTables::readXiTable( SmileiMPI *smpi )
     std::string file = table_path_ + "/radiation_tables.h5";
     if( Tools::fileExists( file ) ) {
         if( smpi->isMaster() ) {
-            H5Read f = H5Read( file );
+            H5Read f( file );
             
             // First, we read attributes
             H5Read xi = f.dataset( "xi" );

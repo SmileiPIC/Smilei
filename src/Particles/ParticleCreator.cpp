@@ -344,7 +344,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
         // Case of HDF5 file
         } else {
             // Open file
-            H5Read f = H5Read( species_->position_initialization_ );
+            H5Read f( species_->position_initialization_ );
             // Loop in chunks
             unsigned int chunksize = 10000000;
             std::vector<double> buffer[species_->nDim_particle];

@@ -391,7 +391,7 @@ void Collisions::debug( Params &params, int itime, unsigned int icoll, VectorPat
         }
         
         // Open the HDF5 file
-        H5Write f = H5Write( vecPatches( 0 )->vecCollisions[icoll]->filename_, true );
+        H5Write f( vecPatches( 0 )->vecCollisions[icoll]->filename_, true );
         // Create H5 group for the current timestep
         ostringstream name( "" );
         name << "t" << setfill( '0' ) << setw( 8 ) << itime;

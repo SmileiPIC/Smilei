@@ -275,7 +275,7 @@ void MultiphotonBreitWheelerTables::readTableT( SmileiMPI *smpi )
         
         if( smpi->isMaster() ) {
             
-            H5Read f = H5Read( file );
+            H5Read f( file );
             
             // First, we read attributes
             H5Read d = f.dataset( "integration_dt_dchi" );
@@ -312,7 +312,7 @@ void MultiphotonBreitWheelerTables::readTableXi( SmileiMPI *smpi )
         
         if( smpi->isMaster() ) {
             
-            H5Read f = H5Read( file );
+            H5Read f( file );
             
             // First, we read attributes
             H5Read xi = f.dataset( "xi" );

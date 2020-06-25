@@ -262,7 +262,7 @@ public:
             std::ifstream file( filename );
             // Check if file exists
             if( ! file ) {
-                H5Write f = H5Write( filename, true );
+                H5Write f( filename, true );
                 // write all parameters as HDF5 attributes
                 f.attr( "Version", std::string( __VERSION ) );
                 mystream.str( "" );

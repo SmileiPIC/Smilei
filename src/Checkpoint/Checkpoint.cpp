@@ -96,7 +96,7 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             restart_file = "";
             for( unsigned int num_dump=0; num_dump<restart_files.size(); num_dump++ ) {
                 string dump_name = restart_files[num_dump];
-                H5Read f = H5Read( dump_name, false, false );
+                H5Read f( dump_name, false, false );
                 if( f.valid() ) {
                     unsigned int dump_step = 0;
                     f.attr( "dump_step", dump_step );
@@ -228,7 +228,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     std::string dumpName=nameDumpTmp.str();
     
     
-    H5Write f = H5Write( dumpName );
+    H5Write f( dumpName );
     dump_number++;
     
 #ifdef  __DEBUG
@@ -503,7 +503,7 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
 
 void Checkpoint::readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin )
 {
-    H5Read f = H5Read( restart_file );
+    H5Read f( restart_file );
     
     // Read basic attributes
     string dump_version;
@@ -536,7 +536,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
 {
     MESSAGE( 1, "READING fields and particles for restart" );
     
-    H5Read f = H5Read( restart_file );
+    H5Read f( restart_file );
     
     // Write diags scalar data
     DiagnosticScalar *scalars = static_cast<DiagnosticScalar *>( vecPatches.globalDiags[0] );

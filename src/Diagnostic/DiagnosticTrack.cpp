@@ -200,7 +200,7 @@ void DiagnosticTrack::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPat
     
     // create the file
     openFile( params, smpi );
-    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+    file_->flush();
     
 }
 
@@ -216,8 +216,8 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
     uint64_t nParticles_global = 0;
     string xyz = "xyz";
     
-    H5Write *momentum_group, *position_group, *species_group;
-    H5Space *file_space, *mem_space;
+    H5Write *momentum_group=NULL, *position_group=NULL, *species_group=NULL;
+    H5Space *file_space=NULL, *mem_space=NULL;
     #pragma omp master
     {
         // Obtain the particle partition of all the patches in this MPI
