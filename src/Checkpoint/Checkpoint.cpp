@@ -441,20 +441,20 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
             for( unsigned int i=0; i<vecSpecies[ispec]->particles->Position.size(); i++ ) {
                 ostringstream my_name( "" );
                 my_name << "Position-" << i;
-                s.vect( my_name.str(), vecSpecies[ispec]->particles->Position[i], dump_deflate );
+                s.vect( my_name.str(), vecSpecies[ispec]->particles->Position[i] );//, dump_deflate );
             }
             
             for( unsigned int i=0; i<vecSpecies[ispec]->particles->Momentum.size(); i++ ) {
                 ostringstream my_name( "" );
                 my_name << "Momentum-" << i;
-                s.vect( my_name.str(), vecSpecies[ispec]->particles->Momentum[i], dump_deflate );
+                s.vect( my_name.str(), vecSpecies[ispec]->particles->Momentum[i] );//, dump_deflate );
             }
             
-            s.vect( "Weight", vecSpecies[ispec]->particles->Weight, dump_deflate );
-            s.vect( "Charge", vecSpecies[ispec]->particles->Charge, dump_deflate );
+            s.vect( "Weight", vecSpecies[ispec]->particles->Weight );//, dump_deflate );
+            s.vect( "Charge", vecSpecies[ispec]->particles->Charge );//, dump_deflate );
             
             if( vecSpecies[ispec]->particles->tracked ) {
-                s.vect( "Id", vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64, dump_deflate );
+                s.vect( "Id", vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64 );//, dump_deflate );
             }
             
             s.vect( "first_index", vecSpecies[ispec]->particles->first_index );
@@ -677,7 +677,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name( "" );
         group_name << "FieldsForDiag" << idiag;
-        if( g.hasGroup( group_name.str() ) ) {
+        if( g.has( group_name.str() ) ) {
             
             H5Read d = g.group( group_name.str() );
             for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ ) {

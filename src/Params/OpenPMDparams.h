@@ -2,7 +2,7 @@
 #define OPENPMDPARAMS_H
 
 #include "Params.h"
-#include "H5_.h"
+#include "H5.h"
 
 #define SMILEI_NUNITS 9
 #define SMILEI_UNIT_NONE     0
@@ -55,31 +55,31 @@ public:
     std::string getLocalTime();
     
     //! Write the attributes for the root of the HDF5 file
-    void writeRootAttributes( hid_t, std::string, std::string );
+    void writeRootAttributes( H5Write&, std::string, std::string );
     
     //! Write the attributes for the basePath
-    void writeBasePathAttributes( hid_t, unsigned int );
+    void writeBasePathAttributes( H5Write&, unsigned int );
     
     //! Write the attributes for the meshesPath
-    void writeMeshesAttributes( hid_t );
+    void writeMeshesAttributes( H5Write& );
     
     //! Write the attributes for the particlesPath
-    void writeParticlesAttributes( hid_t );
+    void writeParticlesAttributes( H5Write& );
     
     //! Write the attributes for a field in the meshesPath
-    void writeFieldAttributes( hid_t, std::vector<unsigned int> subgrid_start= {}, std::vector<unsigned int> subgrid_step= {} );
+    void writeFieldAttributes( H5Write&, std::vector<unsigned int> subgrid_start= {}, std::vector<unsigned int> subgrid_step= {} );
     
     //! Write the attributes for the particlesPath
-    void writeSpeciesAttributes( hid_t );
+    void writeSpeciesAttributes( H5Write& );
     
     //! Write the attributes for a record
-    void writeRecordAttributes( hid_t, unsigned int );
+    void writeRecordAttributes( H5Write&, unsigned int );
     
     //! Write the attributes for a field record
-    void writeFieldRecordAttributes( hid_t );
+    void writeFieldRecordAttributes( H5Write& );
     
     //! Write the attributes for a component
-    void writeComponentAttributes( hid_t, unsigned int );
+    void writeComponentAttributes( H5Write&, unsigned int );
     
     
 private:

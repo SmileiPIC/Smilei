@@ -278,7 +278,7 @@ void MultiphotonBreitWheelerTables::readTableT( SmileiMPI *smpi )
             H5Read f = H5Read( file );
             
             // First, we read attributes
-            H5Read d = f.group( "integration_dt_dchi" );
+            H5Read d = f.dataset( "integration_dt_dchi" );
             d.attr( "size_photon_chi", T_.size_photon_chi_ );
             d.attr( "min_photon_chi", T_.min_photon_chi_ );
             d.attr( "max_photon_chi", T_.max_photon_chi_ );
@@ -315,7 +315,7 @@ void MultiphotonBreitWheelerTables::readTableXi( SmileiMPI *smpi )
             H5Read f = H5Read( file );
             
             // First, we read attributes
-            H5Read xi = f.group( "xi" );
+            H5Read xi = f.dataset( "xi" );
             xi.attr( "size_photon_chi", xi_.size_photon_chi_ );
             xi.attr( "size_particle_chi", xi_.size_particle_chi_ );
             xi.attr( "min_photon_chi", xi_.min_photon_chi_ );

@@ -19,7 +19,7 @@ public:
     //! Copy patch field to current "data" buffer
     void getField( Patch *patch, unsigned int ) override;
     
-    void writeField( hid_t, int ) override;
+    H5Write writeField( H5Write*, std::string, int ) override;
     
 private:
 

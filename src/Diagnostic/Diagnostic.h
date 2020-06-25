@@ -1,7 +1,7 @@
 #ifndef DIAGNOSTIC_H
 #define DIAGNOSTIC_H
 
-#include "H5_.h"
+#include "H5.h"
 #include "Patch.h"
 #include "Timers.h"
 
@@ -16,11 +16,15 @@ class Diagnostic
 
 public :
 
-    Diagnostic( ) : openPMD_( NULL ) {};
-    Diagnostic( OpenPMDparams *o, std::string diag_type, int idiag ) : openPMD_( o ) {
+    Diagnostic( ) : file_ ( NULL ), openPMD_( NULL ) {};
+    Diagnostic( OpenPMDparams *o, std::string diag_type, int idiag ) : file_ ( NULL ), openPMD_( o ) {
         PyTools::extract( "name", diag_name_, diag_type, idiag );
     };
-    virtual ~Diagnostic() {};
+    virtual ~Diagnostic() {
+        if( file_ ) {
+            delete file_;
+        }
+    };
     
     //! Opens the file. Only by MPI master for global diags. Only by patch master for local diags.
     virtual void openFile( Params &params, SmileiMPI *smpi ) = 0;
@@ -74,8 +78,9 @@ public :
     
 protected :
 
-    //! Id of the file for one diagnostic
+    //! File for one diagnostic
     hid_t fileId_;
+    H5Write * file_;
     
     //! Pointer to all parameters needed for openPMD compatibility
     OpenPMDparams *openPMD_;

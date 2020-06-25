@@ -506,7 +506,7 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
 
     // Obtain the omega dataset containing the different values of omega
     hid_t pid = H5Pcreate( H5P_DATASET_ACCESS );
-    hssize_t npoints;
+    hssize_t npoints = 0;
     if( H5Lexists( fid, "omega", H5P_DEFAULT ) >0 ) {
         hid_t did = H5Dopen( fid, "omega", pid );
         hid_t filespace = H5Dget_space( did );

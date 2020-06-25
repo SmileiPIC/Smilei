@@ -20,7 +20,6 @@ DiagnosticParticleBinningBase::DiagnosticParticleBinningBase(
     vector<string> excluded_axes
 ) : Diagnostic( nullptr, Tools::merge( "Diag", diagName ), diagId )
 {
-    fileId_ = 0;
     int idiag = diagId;
     time_accumulate = time_accumulate_;
     
@@ -140,17 +139,17 @@ DiagnosticParticleBinningBase::~DiagnosticParticleBinningBase()
 // Called only by patch master of process master
 void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi )
 {
-    if( !smpi->isMaster() || fileId_>0 ) {
+    if( !smpi->isMaster() || file_ ) {
         return;
     }
     
-    fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
+    file_ = new H5Write( filename );
     // write all parameters as HDF5 attributes
-    H5_::attr( fileId_, "Version", string( __VERSION ) );
-    H5_::attr( fileId_, "name", diag_name_ );
-    H5_::attr( fileId_, "deposited_quantity", histogram->deposited_quantity );
+    file_->attr( "Version", string( __VERSION ) );
+    file_->attr( "name", diag_name_ );
+    file_->attr( "deposited_quantity", histogram->deposited_quantity );
     if( ! time_accumulate ) {
-        H5_::attr( fileId_, "time_average", time_average );
+        file_->attr( "time_average", time_average );
     }
     // write all species
     ostringstream mystream( "" );
@@ -158,7 +157,7 @@ void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi )
     for( unsigned int i=0 ; i < species.size() ; i++ ) {
         mystream << species[i] << " ";
     }
-    H5_::attr( fileId_, "species", mystream.str() );
+    file_->attr( "species", mystream.str() );
     // write each axis
     for( unsigned int iaxis=0 ; iaxis < histogram->axes.size() ; iaxis++ ) {
         mystream.str( "" ); // clear
@@ -175,19 +174,18 @@ void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi )
         }
         mystream << "]";
         string str2 = mystream.str();
-        H5_::attr( fileId_, str1, str2 );
+        file_->attr( str1, str2 );
     }
-    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+    file_->flush();
 }
 
 
 void DiagnosticParticleBinningBase::closeFile()
 {
-    if( fileId_!=0 ) {
-        H5Fclose( fileId_ );
-        fileId_ = 0;
+    if( file_ ) {
+        delete file_;
+        file_ = NULL;
     }
-    
 } // END closeFile
 
 
@@ -282,22 +280,13 @@ void DiagnosticParticleBinningBase::write( int timestep, SmileiMPI *smpi )
     mystream << "timestep" << setw( 8 ) << setfill( '0' ) << timestep;
     
     // write the array if it does not exist already
-    if( ! H5Lexists( fileId_, mystream.str().c_str(), H5P_DEFAULT ) ) {
-        // Create file space
-        hid_t sid = H5Screate_simple( total_axes, &dims[0], NULL );
-        hid_t pid = H5Pcreate( H5P_DATASET_CREATE );
-        // create dataset
-        hid_t did = H5Dcreate( fileId_, mystream.str().c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT, pid, H5P_DEFAULT );
-        // write vector in dataset
-        H5Dwrite( did, H5T_NATIVE_DOUBLE, sid, sid, H5P_DEFAULT, &data_sum[0] );
-        // close all
-        H5Dclose( did );
-        H5Pclose( pid );
-        H5Sclose( sid );
+    if( ! file_->has( mystream.str() ) ) {
+        H5Space d = H5Space( dims );
+        file_->array( mystream.str(), data_sum[0], &d, &d );
     }
     
     if( flush_timeSelection->theTimeIsNow( timestep ) ) {
-        H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+        file_->flush();
     }
     
     if( ! time_accumulate ) {

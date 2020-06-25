@@ -95,7 +95,7 @@ DiagnosticRadiationSpectrum::~DiagnosticRadiationSpectrum()
 // Called only by patch master of process master
 void DiagnosticRadiationSpectrum::openFile( Params& params, SmileiMPI* smpi )
 {
-    if( !smpi->isMaster() || fileId_>0 ) {
+    if( !smpi->isMaster() || file_ ) {
         return;
     }
     
@@ -107,9 +107,9 @@ void DiagnosticRadiationSpectrum::openFile( Params& params, SmileiMPI* smpi )
     mystream << photon_axis->min << " " << photon_axis->max << " "
              << photon_axis->nbins << " " << photon_axis->logscale << " " << photon_axis->edge_inclusive;
     string str2 = mystream.str();
-    H5_::attr( fileId_, str1, str2 );
+    file_->attr( str1, str2 );
     
-    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+    file_->flush();
 }
 
 // run one particle binning diagnostic

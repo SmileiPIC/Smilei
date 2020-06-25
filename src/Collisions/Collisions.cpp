@@ -395,13 +395,13 @@ void Collisions::debug( Params &params, int itime, unsigned int icoll, VectorPat
         // Create H5 group for the current timestep
         ostringstream name( "" );
         name << "t" << setfill( '0' ) << setw( 8 ) << itime;
-        H5Write group = f.group( name.str() );
+        H5Write g = f.group( name.str() );
         // Create new datasets for this timestep and write
-        group.vect( "s"                          , smean                      , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );
-        group.vect( "coulomb_log"                , logLmean                   , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );
-        group.vect( "debyelength"                , debye_length               , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );
-        //group.vect( "temperature"                , temperature                , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );
-        group.vect( "nuclear_reaction_multiplier", nuclear_reaction_multiplier, params.tot_number_of_patches, H5T_NATIVE_DOUBLE, 0, vecPatches.refHindex_, npatch );
+        g.vect( "s"                          , smean                      , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        g.vect( "coulomb_log"                , logLmean                   , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        g.vect( "debyelength"                , debye_length               , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        //g.vect( "temperature"                , temperature                , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        g.vect( "nuclear_reaction_multiplier", nuclear_reaction_multiplier, params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
         
     }
     

@@ -584,7 +584,7 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
             H5Read f = H5Read( file );
             
             // First, we read attributes
-            H5Read h = f.group( "h" );
+            H5Read h = f.dataset( "h" );
             h.attr( "size_particle_chi", niel_.size_particle_chi_ );
             h.attr( "min_particle_chi", niel_.min_particle_chi_ );
             h.attr( "max_particle_chi", niel_.max_particle_chi_ );
@@ -622,7 +622,7 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
             H5Read f = H5Read( file );
             
             // First, we read attributes
-            H5Read c = f.group( "integfochi" );
+            H5Read c = f.dataset( "integfochi" );
             c.attr( "size_particle_chi", integfochi_.size_particle_chi_ );
             c.attr( "min_particle_chi", integfochi_.min_particle_chi_ );
             c.attr( "max_particle_chi", integfochi_.max_particle_chi_ );
@@ -656,7 +656,7 @@ void RadiationTables::readXiTable( SmileiMPI *smpi )
             H5Read f = H5Read( file );
             
             // First, we read attributes
-            H5Read xi = f.group( "xi" );
+            H5Read xi = f.dataset( "xi" );
             xi.attr( "size_particle_chi", xi_.size_particle_chi_ );
             xi.attr( "size_photon_chi", xi_.size_photon_chi_ );
             xi.attr( "min_particle_chi", xi_.min_particle_chi_ );

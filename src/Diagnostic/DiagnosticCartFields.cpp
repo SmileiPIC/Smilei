@@ -9,15 +9,15 @@ using namespace std;
 DiagnosticCartFields::DiagnosticCartFields( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int ndiag, OpenPMDparams &oPMD ):
     Diagnostic( &oPMD, "DiagFields", ndiag )
 {
-    fileId_ = 0;
-    data_group_id = 0;
-    tmp_dset_id = 0;
+    tmp_dset_ = NULL;
     diag_n = ndiag;
     
-    filespace_firstwrite = 0;
-    memspace_firstwrite = 0;
-    filespace_reread = 0;
-    memspace_reread = 0;
+    filespace_firstwrite = NULL;
+    memspace_firstwrite = NULL;
+    filespace_reread = NULL;
+    memspace_reread = NULL;
+    filespace = NULL;
+    memspace = NULL;
     
     // Extract the time_average parameter
     time_average = 1;
@@ -43,20 +43,19 @@ DiagnosticCartFields::DiagnosticCartFields( Params &params, SmileiMPI *smpi, Vec
     fields_names  .resize( 0 );
     hasRhoJs = false;
     // Loop fields
-    for( unsigned int i=0; i<vecPatches( 0 )->EMfields->allFields.size(); i++ ) {
-        string field_name = vecPatches( 0 )->EMfields->allFields[i]->name;
-        bool RhoJ = field_name.at( 0 )=='J' || field_name.at( 0 )=='R';
-        bool species_field = ( field_name.at( 0 )=='J' && field_name.length()>2 ) || ( field_name.at( 0 )=='R' && field_name.length()>3 );
+    for( unsigned int i=0; i<vecPatches.emfields( 0 )->allFields.size(); i++ ) {
+        string field_name = vecPatches.emfields( 0 )->allFields[i]->name;
+        
         // If field in list of fields to dump, then add it
         if( hasField( field_name, fieldsToDump ) ) {
             ss << field_name << " ";
             fields_indexes.push_back( i );
             fields_names  .push_back( field_name );
-            if( RhoJ ) {
+            if( field_name.at( 0 )=='J' || field_name.at( 0 )=='R' ) {
                 hasRhoJs = true;
             }
             // If field specific to a species, then allocate it
-            if( species_field ) {
+            if( params.speciesField( field_name ) != "" ) {
                 Field *field = vecPatches( 0 )->EMfields->allFields[i];
                 if( field->data_ != NULL ) {
                     continue;
@@ -106,10 +105,6 @@ DiagnosticCartFields::DiagnosticCartFields( Params &params, SmileiMPI *smpi, Vec
         tot_number_of_patches /= params.global_factor[i];
     }
     
-    // Prepare the property list for HDF5 output
-    write_plist = H5Pcreate( H5P_DATASET_XFER );
-    H5Pset_dxpl_mpio( write_plist, H5FD_MPIO_COLLECTIVE );
-    
     // Prepare some openPMD parameters
     field_type.resize( fields_names.size() );
     for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ ) {
@@ -131,8 +126,24 @@ DiagnosticCartFields::DiagnosticCartFields( Params &params, SmileiMPI *smpi, Vec
 
 DiagnosticCartFields::~DiagnosticCartFields()
 {
-    H5Pclose( write_plist );
-    
+    if( filespace_firstwrite ) {
+        delete filespace_firstwrite;
+    }
+    if( memspace_firstwrite ) {
+        delete memspace_firstwrite;
+    }
+    if( filespace_reread ) {
+        delete filespace_reread;
+    }
+    if( memspace_reread ) {
+        delete memspace_reread;
+    }
+    if( filespace ) {
+        delete filespace;
+    }
+    if( memspace ) {
+        delete memspace;
+    }
     delete timeSelection;
     delete flush_timeSelection;
 }
@@ -157,55 +168,37 @@ bool DiagnosticCartFields::hasField( string field_name, vector<string> fieldsToD
 
 void DiagnosticCartFields::openFile( Params &params, SmileiMPI *smpi )
 {
-    if( fileId_>0 ) {
+    if( file_ ) {
         return;
     }
     
     // Create file
-    hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
-    H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
-    fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
-    H5Pclose( pid );
+    file_ = new H5Write( filename, true );
+    
     
     // Attributes for openPMD
-    openPMD_->writeRootAttributes( fileId_, "", "no_particles" );
+    openPMD_->writeRootAttributes( *file_, "", "no_particles" );
     
     // Make main "data" group where everything will be stored (required by openPMD)
-    data_group_id = H5_::group( fileId_, "data" );
+    data_group_ = new H5Write( file_, "data" );
+    
+    file_->flush();
 }
 
 void DiagnosticCartFields::closeFile()
 {
-    if( filespace_firstwrite>0 ) {
-        H5Sclose( filespace_firstwrite );
-    }
-    if( memspace_firstwrite >0 ) {
-        H5Sclose( memspace_firstwrite );
-    }
-    if( filespace_reread    >0 ) {
-        H5Sclose( filespace_reread );
-    }
-    if( memspace_reread     >0 ) {
-        H5Sclose( memspace_reread );
-    }
-    if( filespace           >0 ) {
-        H5Sclose( filespace );
-    }
-    if( memspace            >0 ) {
-        H5Sclose( memspace );
-    }
-    if( tmp_dset_id         >0 ) {
-        H5Dclose( tmp_dset_id );
-    }
     
-    if( data_group_id>0 ) {
-        H5Gclose( data_group_id );
+    if( tmp_dset_ ) {
+        delete tmp_dset_;
     }
-    data_group_id = 0;
-    if( fileId_>0 ) {
-        H5Fclose( fileId_ );
+    if( data_group_ ) {
+        delete data_group_;
+        data_group_ = NULL;
     }
-    fileId_ = 0;
+    if( file_ ) {
+        delete file_;
+        file_ = NULL;
+    }
 }
 
 
@@ -214,7 +207,6 @@ void DiagnosticCartFields::init( Params &params, SmileiMPI *smpi, VectorPatch &v
 {
     // create the file
     openFile( params, smpi );
-    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
 }
 
 bool DiagnosticCartFields::prepare( int itime )
@@ -256,18 +248,11 @@ void DiagnosticCartFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int it
         ostringstream name_t;
         name_t.str( "" );
         name_t << setfill( '0' ) << setw( 10 ) << itime;
-        status = H5Lexists( data_group_id, name_t.str().c_str(), H5P_DEFAULT );
-        if( status==0 ) {
-            iteration_group_id = H5_::group( data_group_id, name_t.str().c_str() );
-        }
-        // Warning if file unreachable
-        if( status < 0 ) {
-            WARNING( "Fields diagnostics could not write" );
-        }
+        iteration_group_ = new H5Write( data_group_, name_t.str() );
         // Add openPMD attributes ( "basePath" )
-        openPMD_->writeBasePathAttributes( iteration_group_id, itime );
+        openPMD_->writeBasePathAttributes( *iteration_group_, itime );
         // Add openPMD attributes ( "meshesPath" )
-        openPMD_->writeMeshesAttributes( iteration_group_id );
+        openPMD_->writeMeshesAttributes( *iteration_group_ );
     }
     #pragma omp barrier
     
@@ -287,34 +272,27 @@ void DiagnosticCartFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int it
         
         #pragma omp master
         {
-            // Create field dataset in HDF5
-            hid_t plist_id = H5Pcreate( H5P_DATASET_CREATE );
-            hid_t dset_id  = H5Dcreate( iteration_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT );
-            H5Pclose( plist_id );
-            
             // Write
-            writeField( dset_id, itime );
+            H5Write dset = writeField( iteration_group_, fields_names[ifield], itime );
             
             // Attributes for openPMD
-            openPMD_->writeFieldAttributes( dset_id );
-            openPMD_->writeRecordAttributes( dset_id, field_type[ifield] );
-            openPMD_->writeFieldRecordAttributes( dset_id );
-            openPMD_->writeComponentAttributes( dset_id, field_type[ifield] );
+            openPMD_->writeFieldAttributes( dset );
+            openPMD_->writeRecordAttributes( dset, field_type[ifield] );
+            openPMD_->writeFieldRecordAttributes( dset );
+            openPMD_->writeComponentAttributes( dset, field_type[ifield] );
             
-            // Close dataset
-            H5Dclose( dset_id );
         }
     }
     
     #pragma omp master
     {
-        H5Gclose( iteration_group_id );
-        if( tmp_dset_id>0 ) {
-            H5Dclose( tmp_dset_id );
+        delete iteration_group_;
+        if( tmp_dset_ ) {
+            delete tmp_dset_;
         }
-        tmp_dset_id=0;
+        tmp_dset_ = NULL;
         if( flush_timeSelection->theTimeIsNow( itime ) ) {
-            H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+            file_->flush();
         }
     }
 }
