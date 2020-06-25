@@ -436,13 +436,16 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread );
             //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
 
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[1] += MPI_Wtime() - timer;
+#endif
+
         } //ibin
         
         if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[1] += MPI_Wtime() - timer;
                 timer = MPI_Wtime();
 #endif
 
