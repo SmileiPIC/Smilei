@@ -384,7 +384,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 //                               first_index[ibin],
                 //                               last_index[ibin],
                 //                               ithread );
-                
+
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[5] += MPI_Wtime() - timer;
 #endif
@@ -434,13 +434,16 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread );
             //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
 
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[1] += MPI_Wtime() - timer;
+#endif
+
         } //ibin
         
         if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[1] += MPI_Wtime() - timer;
                 timer = MPI_Wtime();
 #endif
 
@@ -1174,7 +1177,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
     // -------------------------------
     // calculate the particle updated momentum
     // -------------------------------
-    if( time_dual>time_frozen_ ) { // moving particle
+    if( time_dual>time_frozen_ || Ionize) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -1188,6 +1191,25 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
 
+            // Ionization
+            if( Ionize ) {
+            
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+                vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+                vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
+                vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
+                vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
+                Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
+                Ionize->envelopeIonization( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
+                
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif            
+            }
+            
+            if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
 
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
@@ -1252,7 +1274,6 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
-
 
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
@@ -1401,21 +1422,31 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
         if( diag_flag &&( !particles->is_test ) ) {
             double *b_rho=nullptr;
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                // only 3D is implemented actually
-                if( nDim_field==2 ) {
+
+                if( params.geometry != "AMcylindrical" ) {
                     b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                }
-                if( nDim_field==3 ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                } else if( nDim_field==1 ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                }
-                for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                } //End loop on particles
+                    for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
+                        Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                    } 
+                } else {
+                    int n_species = patch->vecSpecies.size();
+                    complex<double> *b_rho=nullptr;
+                    ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+
+                    for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                        int ifield = imode*n_species+ispec;
+                        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                            b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                            for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+                                Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                            } // end loop on particles
+                        } //end loop for projection on buffer_proj
+
+                    } // end loop on modes
+                } // end if on geometry
+
             }//End loop on bins
         } // end condition on diag and not particle test
-
     }//END if time vs. time_frozen_
 } // End ponderomotive_position_update
 

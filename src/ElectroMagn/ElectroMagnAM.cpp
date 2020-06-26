@@ -223,9 +223,10 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
     }
 
     if( params.Laser_Envelope_model ) {
-        Env_A_abs_ = new Field2D( dimPrim, "Env_A_abs_mode_0" );
-        Env_Chi_   = new Field2D( dimPrim, "Env_Chi_mode_0" );
-        Env_E_abs_ = new Field2D( dimPrim, "Env_E_abs_mode_0" );
+        Env_A_abs_  = new Field2D( dimPrim, "Env_A_abs_mode_0" );
+        Env_Chi_    = new Field2D( dimPrim, "Env_Chi_mode_0" );
+        Env_E_abs_  = new Field2D( dimPrim, "Env_E_abs_mode_0" );
+        Env_Ex_abs_ = new Field2D( dimPrim, "Env_Ex_abs_mode_0" );
     }
     
     // ----------------------------------------------------------------
@@ -313,6 +314,7 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
             allFields.push_back( Env_A_abs_ );
             allFields.push_back( Env_Chi_ );
             allFields.push_back( Env_E_abs_ );
+            allFields.push_back( Env_Ex_abs_ );
         }
     }
     
@@ -1321,6 +1323,8 @@ Field *ElectroMagnAM::createField( string fieldname, Params& params )
     } else if( fieldname.substr( 0, 7 )=="Env_Chi" ) {
         return new Field2D( dimPrim, 0, false, fieldname );
     } else if( fieldname.substr( 0, 9 )=="Env_E_abs" ) {
+        return new Field2D( dimPrim, 0, false, fieldname );
+    } else if( fieldname.substr( 0, 10 )=="Env_Ex_abs" ) {
         return new Field2D( dimPrim, 0, false, fieldname );
     }
     

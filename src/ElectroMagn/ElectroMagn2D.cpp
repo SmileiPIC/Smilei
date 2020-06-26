@@ -151,9 +151,10 @@ void ElectroMagn2D::initElectroMagn2DQuantities( Params &params, Patch *patch )
     Bz_m = FieldFactory::create( dimPrim, 2, true,  "Bz_m", params );
     
     if( params.Laser_Envelope_model ) {
-        Env_A_abs_ = new Field2D( dimPrim, "Env_A_abs" );
-        Env_Chi_   = new Field2D( dimPrim, "Env_Chi" );
-        Env_E_abs_ = new Field2D( dimPrim, "Env_E_abs" );
+        Env_A_abs_  = new Field2D( dimPrim, "Env_A_abs" );
+        Env_Chi_    = new Field2D( dimPrim, "Env_Chi" );
+        Env_E_abs_  = new Field2D( dimPrim, "Env_E_abs" );
+        Env_Ex_abs_ = new Field2D( dimPrim, "Env_Ex_abs" );
     }
     // Allocation of filtered fields when Friedman filtering is required
     if( params.Friedman_filter ) {
@@ -927,82 +928,82 @@ void ElectroMagn2D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
     Field2D *Jx2D = static_cast<Field2D *>( Jx_ );
     Field2D *Jy2D = static_cast<Field2D *>( Jy_ );
     Field2D *Jz2D = static_cast<Field2D *>( Jz_ );
-    
+
     // applying a single pass of the binomial filter
     // 9-point filter: (4*point itself + 2*(4*direct neighbors) + 1*(4*cross neghbors))/16
-      // applying a single pass of the binomial filter along X
-   if (ipass < passes[0]){
-       // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
-       for( unsigned int i=0; i<nx_d-1; i++ ) {
-           for( unsigned int j=0; j<ny_p; j++ ) {
-                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i+1, j) )*0.5;
-           }
-       }
-       for( unsigned int i=nx_d-2; i>0; i-- ) {
-           for( unsigned int j=0; j<ny_p; j++ ) {
-                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i-1, j) )*0.5;
-           }
-       }
-       // Jy
-       for( unsigned int i=0; i<nx_p-1; i++ ) {
-           for( unsigned int j=0; j<ny_d; j++ ) {
-                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i+1, j) )*0.5;
-           }
-       }
-       for( unsigned int i=nx_p-2; i>0; i-- ) {
-           for( unsigned int j=0; j<ny_d; j++ ) {
-                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i-1, j) )*0.5;
-           }
-       }
-       // Jz
-       for( unsigned int i=0; i<nx_p-1; i++ ) {
-           for( unsigned int j=0; j<ny_p; j++ ) {
-                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i+1, j) )*0.5;
-           }
-       }
-       for( unsigned int i=nx_p-2; i>0; i-- ) {
-           for( unsigned int j=0; j<ny_p; j++ ) {
-                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i-1, j) )*0.5;
-           }
-       }
-   }
+    // applying a single pass of the binomial filter along X
+    if (ipass < passes[0]){
+        // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+        for( unsigned int i=0; i<nx_d-1; i++ ) {
+            for( unsigned int j=0; j<ny_p; j++ ) {
+                    ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i+1, j) )*0.5;
+            }
+        }
+        for( unsigned int i=nx_d-2; i>0; i-- ) {
+            for( unsigned int j=0; j<ny_p; j++ ) {
+                    ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i-1, j) )*0.5;
+            }
+        }
+        // Jy
+        for( unsigned int i=0; i<nx_p-1; i++ ) {
+             for( unsigned int j=0; j<ny_d; j++ ) {
+                     ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i+1, j) )*0.5;
+             }
+         }
+         for( unsigned int i=nx_p-2; i>0; i-- ) {
+             for( unsigned int j=0; j<ny_d; j++ ) {
+                     ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i-1, j) )*0.5;
+             }
+         }
+         // Jz
+         for( unsigned int i=0; i<nx_p-1; i++ ) {
+             for( unsigned int j=0; j<ny_p; j++ ) {
+                     ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i+1, j) )*0.5;
+             }
+         }
+         for( unsigned int i=nx_p-2; i>0; i-- ) {
+             for( unsigned int j=0; j<ny_p; j++ ) {
+                     ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i-1, j) )*0.5;
+             }
+         }
+    }
 
-   // applying a single pass of the binomial filter along Y
-   if (ipass < passes[1]){
-       //Jx
-       for( unsigned int i=1; i<nx_d-1; i++ ) {
-           for( unsigned int j=0; j<ny_p-1; j++ ) {
-                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i, j+1) )*0.5;
-           }
-       }
-       for( unsigned int i=1; i<nx_d-1; i++ ) {
-           for( unsigned int j=ny_p-2; j>0; j-- ) {
-                   ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i, j-1) )*0.5;
-           }
-       }
-       //Jy
-       for( unsigned int i=1; i<nx_p-1; i++ ) {
-           for( unsigned int j=0; j<ny_d-1; j++ ) {
-                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i, j+1) )*0.5;
-           }
-       }
-       for( unsigned int i=1; i<nx_p-1; i++ ) {
-           for( unsigned int j=ny_d-2; j>0; j-- ) {
-                   ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i, j-1) )*0.5;
-           }
-       }
-       //Jz
-       for( unsigned int i=1; i<nx_p-1; i++ ) {
-           for( unsigned int j=0; j<ny_p-1; j++ ) {
-                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i, j+1) )*0.5;
-           }
-       }
-       for( unsigned int i=1; i<nx_p-1; i++ ) {
-           for( unsigned int j=ny_p-2; j>0; j-- ) {
-                   ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i, j-1) )*0.5;
-           }
-       }
-   }
+    // applying a single pass of the binomial filter along Y
+    if (ipass < passes[1]){
+        //Jx
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=0; j<ny_p-1; j++ ) {
+                    ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i, j+1) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=ny_p-2; j>0; j-- ) {
+                    ( *Jx2D )( i, j) = ( ( *Jx2D )( i, j) + ( *Jx2D )( i, j-1) )*0.5;
+            }
+        }
+        //Jy
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=0; j<ny_d-1; j++ ) {
+                    ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i, j+1) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=ny_d-2; j>0; j-- ) {
+                    ( *Jy2D )( i, j) = ( ( *Jy2D )( i, j) + ( *Jy2D )( i, j-1) )*0.5;
+            }
+        }
+        //Jz
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=0; j<ny_p-1; j++ ) {
+                    ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i, j+1) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=ny_p-2; j>0; j-- ) {
+                    ( *Jz2D )( i, j) = ( ( *Jz2D )( i, j) + ( *Jz2D )( i, j-1) )*0.5;
+            }
+        }
+    }
  
     //// on Jx^(d,p) -- external points are treated by exchange
     //Field2D *tmp   = new Field2D( dimPrim, 0, false );
@@ -1035,6 +1036,112 @@ void ElectroMagn2D::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
     //delete tmp;
     
 }//END binomialCurrentFilter
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Apply a single pass custom FIR based filter on currents
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn2D::customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff)
+{
+    // Static-cast of the currents
+    Field2D *Jx2D = static_cast<Field2D *>( Jx_ );
+    Field2D *Jy2D = static_cast<Field2D *>( Jy_ );
+    Field2D *Jz2D = static_cast<Field2D *>( Jz_ );
+
+    // Upsampling factor
+    // m=1 : No upsampling ......................... f_Nyquist *= 1
+    // m=2 : 1 zero(s) between two data points ..... f_Nyquist *= 2
+    // m=3 : 2 zero(s) between two data points ..... f_Nyquist *= 3
+    // m=4 : 3 zero(s) between two data points ..... f_Nyquist *= 4
+    unsigned int m=1 ;
+
+    // Guard-Cell Current
+    unsigned int gcfilt=0 ;
+
+    // Applying a single pass of the custom FIR based filter along X
+    if (ipass < passes[0]){
+        Field2D *tmp   = new Field2D( dimPrim, 0, false );
+        tmp->copyFrom( Jx2D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_d-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
+                ( *Jx2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jx2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m, j ) ;
+                }
+                ( *Jx2D )( i, j ) *= m ;
+           }
+        }
+        delete tmp;
+        tmp   = new Field2D( dimPrim, 1, false );
+        tmp->copyFrom( Jy2D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            for( unsigned int j=1; j<ny_d-1; j++ ) {
+                ( *Jy2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jy2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m, j ) ;
+                }
+                ( *Jy2D )( i, j ) *= m ;
+           }
+        }
+        delete tmp;
+        tmp   = new Field2D( dimPrim, 2, false );
+        tmp->copyFrom( Jz2D );
+        for( unsigned int i=((filtering_coeff.size()-1)/(m*2)+gcfilt); i<nx_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); i++ ) {
+            for( unsigned int j=1; j<ny_p-1; j++ ) {
+                ( *Jz2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jz2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m, j ) ;
+                }
+                ( *Jz2D )( i, j ) *= m ;
+            }
+        }
+        delete tmp;
+    }
+
+    // Applying a single pass of the custom FIR based filter along Y
+    if (ipass < passes[1]){
+        // On Jx^(d,p) -- External points are treated by exchange
+        Field2D *tmp   = new Field2D( dimPrim, 0, false );
+        tmp->copyFrom( Jx2D );
+        for( unsigned int i=1; i<nx_d-1; i++ ) {
+            for( unsigned int j=((filtering_coeff.size()-1)/(m*2)+gcfilt); j<ny_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); j++ ) {
+                ( *Jx2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jx2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i, j - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+                }
+                ( *Jx2D )( i, j ) *= m ;
+            }
+        }
+        delete tmp;
+        // On Jy^(p,d) -- External points are treated by exchange
+        tmp   = new Field2D( dimPrim, 1, false );
+        tmp->copyFrom( Jy2D );
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=((filtering_coeff.size()-1)/(m*2)+gcfilt); j<ny_d-((filtering_coeff.size()-1)/(m*2)+gcfilt); j++ ) {
+                ( *Jy2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jy2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i, j - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+                }
+                ( *Jy2D )( i, j ) *= m ;
+            }
+        }
+        delete tmp;
+        // On Jz^(p,p) -- External points are treated by exchange
+        tmp   = new Field2D( dimPrim, 2, false );
+        tmp->copyFrom( Jz2D );
+        for( unsigned int i=1; i<nx_p-1; i++ ) {
+            for( unsigned int j=((filtering_coeff.size()-1)/(m*2)+gcfilt); j<ny_p-((filtering_coeff.size()-1)/(m*2)+gcfilt); j++ ) {
+                ( *Jz2D )( i, j ) = 0. ;
+                for ( unsigned int kernel_idx = 0; kernel_idx < filtering_coeff.size(); kernel_idx+=m) {
+                    ( *Jz2D )( i, j ) += filtering_coeff[kernel_idx]*( *tmp )( i, j - (filtering_coeff.size()-1)/(m*2) + kernel_idx/m ) ;
+                }
+                ( *Jz2D )( i, j ) *= m ;
+            }
+        }
+        delete tmp;
+    }
+
+}//END customFIRCurrentFilter
+
 
 
 //// ---------------------------------------------------------------------------------------------------------------------
@@ -1144,7 +1251,7 @@ Field * ElectroMagn2D::createField( string fieldname, Params& params )
     else if(fieldname.substr(0,2)=="Jy" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
     else if(fieldname.substr(0,2)=="Jz" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
     else if(fieldname.substr(0,3)=="Rho") return new Field2D(dimPrim, fieldname );
-    
+
     ERROR("Cannot create field "<<fieldname);
     return NULL;
 }
@@ -1400,8 +1507,8 @@ void ElectroMagn2D::initAntennas( Patch *patch, Params& params )
             antennas[i].field = FieldFactory::create(dimPrim, 1, false, "Jy", params);
         else if (antennas[i].fieldName == "Jz")
             antennas[i].field = FieldFactory::create(dimPrim, 2, false, "Jz", params);
-       
-        if (antennas[i].field) 
+
+        if (antennas[i].field)
             applyExternalField(antennas[i].field, antennas[i].space_profile, patch);
     }
     

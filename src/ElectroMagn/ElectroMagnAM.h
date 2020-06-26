@@ -144,7 +144,10 @@ public:
     
     //! Method used to apply a single-pass binomial filter on currents
     void binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes) override;
-    
+
+    //! Method used to apply a single-pass custom FIR based filter on currents
+    void customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff){return ;} ;
+ 
     //! Creates a new field with the right characteristics, depending on the name
     Field *createField( std::string fieldname, Params& params ) override;
     

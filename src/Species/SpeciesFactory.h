@@ -719,13 +719,16 @@ public:
                     ERROR( "For species '" << species_name << ": undefined atomic_number & maximum_charge_state (required for ionization)" );
                 }
 
-                if( model == "tunnel" ) {
-                    
-                    if( params.Laser_Envelope_model & this_species->ponderomotive_dynamics ) {
-                        ERROR( "For species '" << species_name << ": Ionization is not yet implemented for species interacting with Laser Envelope model." );
+                if( model == "tunnel" ){
+                    if (params.Laser_Envelope_model){
+                        ERROR("An envelope is present, so tunnel_envelope or tunnel_envelope_averaged ionization model should be selected for species "<<species_name);
                     }
+                }else if ( (model == "tunnel_envelope") or (model == "tunnel_envelope_averaged") ){
 
-                } else if( model == "from_rate" ) {
+                    if (!params.Laser_Envelope_model) ERROR("An envelope ionization model has been selected but no envelope is present");
+
+                    if (!this_species->ponderomotive_dynamics) ERROR("An envelope ionization model has been selected, but species" <<species_name<<" has ponderomotive_dynamics = False ");
+                }else if( model == "from_rate" ) {
                     
                     if( this_species->maximum_charge_state_ == 0 ) {
                         this_species->maximum_charge_state_ = this_species->atomic_number_;

@@ -516,7 +516,21 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( doubl
         patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
 
-
+        // Ionization
+        if (Ionize){  
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+            vector<double> *EnvEabs_part  = &( smpi->dynamics_EnvEabs_part[ithread] );
+            vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
+            vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
+            Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[0] ), &( particles->last_index[particles->last_index.size()-1] ), ithread );
+            Ionize->envelopeIonization( particles, ( particles->first_index[0] ), ( particles->last_index[particles->last_index.size()-1] ), Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif
+        }
         // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();

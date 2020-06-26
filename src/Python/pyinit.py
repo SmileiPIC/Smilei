@@ -156,6 +156,8 @@ class Main(SmileiSingleton):
     simulation_time = None
     number_of_timesteps = None
     interpolation_order = 2
+    custom_oversize = 2
+    custom_region_oversize = 2
     number_of_patches = None
     patch_arrangement = "hilbertian"
     clrw = -1
@@ -314,6 +316,7 @@ class CurrentFilter(SmileiSingleton):
     """Current filtering parameters"""
     model = "binomial"
     passes = [0]
+    kernelFIR = [0.25,0.5,0.25]
 
 class FieldFilter(SmileiSingleton):
     """Fields filtering parameters"""
@@ -411,6 +414,8 @@ class LaserEnvelope(SmileiSingleton):
     envelope_solver = "explicit"
     envelope_profile = None
     Envelope_boundary_conditions = [["reflective"]]
+    polarization_phi = 0.
+    ellipticity = 0.
 
 
 class Collisions(SmileiComponent):

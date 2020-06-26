@@ -210,7 +210,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: 'Yee'
 
-  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"`` are available for ``2DCartesian`` and ``"Lehe"`` is available for ``3DCartesian``. The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
+  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``. ``"Lehe"`` and ``"Bouchard"`` is available for ``3DCartesian``. The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
 
 .. py:data:: solve_poisson
 
@@ -341,6 +341,18 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   | If `False`, the parallelization of the simulation is done according to the see :doc:`parallelization`.
   | If `True`, the simulated domain is decomposed in dedicated shapes for particles and fields operations. Benefits of this option is illustrated in `Single Domain Multiple Decompositions for Particle-in-Cell simulations <https://arxiv.org/abs/1912.04064>`_
+
+.. py:data:: custom_oversize
+
+   :default: 2
+
+   The number of ghost-cell for each patches. The default value is set accordingly with the ``interpolation_order`` value.
+
+.. py:data:: custom_region_oversize
+
+   :default: 2
+
+   The number of ghost-cell for each region when ``uncoupled_grids=True``. The default value is set accordingly with the ``interpolation_order`` value.
 
 ----
 
@@ -521,13 +533,14 @@ which parameters are controlled in the following block::
   CurrentFilter(
       model = "binomial",
       passes = [0],
+      kernelFIR = [0.25,0.5,0.25]
   )
 
 .. py:data:: model
 
   :default: ``"binomial"``
 
-  The model for current filtering. Presently, only ``"binomial"`` current filtering is available.
+  The model for current filtering. ``"binomial"`` current filtering is available. With ``"customFIR"`` the user can provide a self made FIR kernel.
 
 .. py:data:: passes
 
@@ -536,6 +549,13 @@ which parameters are controlled in the following block::
 
   The number of passes in the filter at each timestep given for all dimensions.
   If the list is of length 1, the same number of passes is assumed for all dimensions.
+
+.. py:data:: kernelFIR
+
+  :default: ``"[0.25,0.5,0.25]"``
+
+  The FIR kernel for the ``"customFIR"`` model. Be carefull, the number of coefficients of the kernel have to be less than 2 times the number of ghost-cell.
+  If you use a kernel with more than 3 coefficients, you have to increase the number of ghost-cell with ``"custom_oversize"`` in ``"Main()"``
 
 
 ----
@@ -782,6 +802,7 @@ Each species has to be defined in a ``Species`` block::
   The model for ionization:
 
   * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
+  * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>` (requires species with an :py:data:`atomic_number` and :py:data:`ponderomotive_dynamics=True`)
   * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
 
 .. py:data:: ionization_rate
@@ -829,7 +850,7 @@ Each species has to be defined in a ``Species`` block::
   Flag for particles interacting with an envelope model for the laser, if present.
   If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
   See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
-.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
+.. note:: Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
 
 
 .. .. py:data:: c_part_max
@@ -1529,6 +1550,8 @@ Following is the generic laser envelope creator ::
         envelope_solver = 'explicit',
         envelope_profile = envelope_profile,
         Envelope_boundary_conditions = [["reflective"]]
+        polarization_phi = 0.,
+        ellipticity      = 0.
     )
 
 
@@ -1571,6 +1594,18 @@ Following is the generic laser envelope creator ::
   For the moment, only reflective boundary conditions are implemented in the
   resolution of the envelope equation.
 
+.. py:data:: polarization_phi
+
+  :default: 0.
+
+  The angle of the polarization ellipse major axis relative to the X-Y plane, in radians. Needed only for ionization.
+
+.. py:data:: ellipticity
+
+  :default: 0.
+
+  The polarization ellipticity: 0 for linear and 1 for circular. For the moment, only these two polarizations are available.
+
 .. rubric:: 2. Defining a 1D laser envelope
 
 ..
@@ -1582,6 +1617,8 @@ Following is the simplified laser envelope creator in 1D ::
         time_envelope   = tgaussian(center=150., fwhm=40.),
         envelope_solver = 'explicit',
         Envelope_boundary_conditions = [ ["reflective"] ],
+        polarization_phi = 0.,
+        ellipticity      = 0.
     )
 
 .. rubric:: 3. Defining a 2D gaussian laser envelope
@@ -1597,6 +1634,8 @@ Following is the simplified gaussian laser envelope creator in 2D ::
         time_envelope   = tgaussian(center=150., fwhm=40.),
         envelope_solver = 'explicit',
         Envelope_boundary_conditions = [ ["reflective"] ],
+        polarization_phi = 0.,
+        ellipticity      = 0.
     )
 
 .. rubric:: 4. Defining a 3D gaussian laser envelope
@@ -1612,6 +1651,8 @@ Following is the simplified laser envelope creator in 3D ::
         time_envelope   = tgaussian(center=150., fwhm=40.),
         envelope_solver = 'explicit',
         Envelope_boundary_conditions = [ ["reflective"] ],
+        polarization_phi = 0.,
+        ellipticity      = 0.
     )
 
 .. rubric:: 5. Defining a cylindrical gaussian laser envelope
@@ -1628,6 +1669,8 @@ in this geometry the envelope model can be used only if ``number_of_AM = 1``) ::
         time_envelope   = tgaussian(center=150., fwhm=40.),
         envelope_solver = 'explicit',
         Envelope_boundary_conditions = [ ["reflective"] ],
+        polarization_phi = 0.,
+        ellipticity      = 0.
     )
 
 
@@ -1659,8 +1702,15 @@ correspond to the complex envelope of the laser vector potential component
 :math:`\tilde{A}` in the polarization direction.
 The calculation of the correspondent complex envelope for the laser electric field
 component in that direction is described in :doc:`laser_envelope`.
+
 Note that only order 2 interpolation and projection are supported in presence of
 the envelope model for the laser.
+
+The parameters ``polarization_phi`` and ``ellipticity`` specify the polarization state of the laser. In envelope model implemented in :program:`Smilei`, 
+they are only used to compute the rate of ionization and the initial momentum of the electrons newly created by ionization, 
+where the polarization of the laser plays an important role (see :doc:`ionization`). 
+For all other purposes (e.g. the particles equations of motions, the computation of the ponderomotive force, 
+the evolution of the laser), the polarization of the laser plays no role in the envelope model.
 
 
 ----
@@ -2422,15 +2472,20 @@ This is done by including a block ``DiagFields``::
 
   +----------------+-------------------------------------------------------+
   | |              | | Module of laser vector potential's complex envelope |
-  | | Env_A_abs    | | :math:`\tilde{A}` (component along the polarization |
+  | | Env_A_abs    | | :math:`\tilde{A}` (component along the transverse   |
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
   | | Env_Chi      | | Total  susceptibility :math:`\chi`                  |
   +----------------+-------------------------------------------------------+
   | |              | | Module of laser electric field's complex envelope   |
-  | | Env_E_abs    | | :math:`\tilde{E}` (component along the polarization |
+  | | Env_E_abs    | | :math:`\tilde{E}` (component along the transverse   |
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
+  | |              | | Module of laser electric field's complex envelope   |
+  | | Env_Ex_abs   | | :math:`\tilde{E}_x` (component along the propagation|
+  | |              | | direction)                                          |
+  +----------------+-------------------------------------------------------+
+
 
 .. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry,
           a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs_mode_0", "Env_Chi_mode_0"]``.
@@ -2556,7 +2611,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   species name.
 
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
-  the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
+  the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``, ``"Env_Ex_abs"``.
 
   .. warning::
 

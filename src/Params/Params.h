@@ -137,8 +137,14 @@ public:
 
     //! Define if laser envelope model is used (default = false)
     bool Laser_Envelope_model=false;
+
+    //! Define if there is at least one species ionized by envelope
+    bool envelope_ionization_is_active = false;
+    double envelope_ellipticity = 0.; // (0: linear polarization, 1: circular polarization)
+    double envelope_polarization_phi = 0.; // used only for envelope ionization; in radians, angle with the xy plane
     // define the solver for the envelope equation
     std::string envelope_solver;
+
     
     //Poisson solver
     //! Do we solve poisson
@@ -166,6 +172,8 @@ public:
 
     //! Current spatial filter: number of binomial passes
     std::vector<unsigned int> currentFilter_passes;
+    std::string currentFilter_model;
+    std::vector<double> currentFilter_kernelFIR;
 
     //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 201, 665 (2004)]
     bool Friedman_filter;
@@ -225,7 +233,9 @@ public:
 
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
+    unsigned int custom_oversize ;
     std::vector<unsigned int> region_oversize;
+    unsigned int custom_region_oversize ;
     //! Number of damping cells
     std::vector<unsigned int> number_of_damping_cells;
 

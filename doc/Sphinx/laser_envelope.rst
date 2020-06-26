@@ -3,15 +3,16 @@ Laser envelope model
 --------------------
 
 In many physical situations, the spatial and temporal scales of interest (e.g. the plasma wavelength :math:`\lambda_p`) are much larger than the scales related to the laser central wavelength :math:`\lambda_0`.
-In these cases, if the laser pulse is much longer than :math:`\lambda_0`, the computation time can be substantially reduced: one may need to sample only the laser envelope  instead of :math:`\lambda_0`, as depicted in the following figure.
+In these cases, if the laser pulse is much longer than :math:`\lambda_0`, the computation time can be substantially reduced: one only needs to sample the laser envelope instead of :math:`\lambda_0`, as depicted in the following figure.
 
 .. figure:: _static/Envelope_Figure.png
   :width: 10cm
 
-  Blue: laser vector potential component :math:`\hat{A}` along the polarization direction. Red: the module of its complex envelope :math:`|\tilde{A}|`. Both the lines display a suitable number of points for a proper sampling. In this case, the envelope is sampled by a number of points smaller by a factor ten. 
+  Blue: laser vector potential component :math:`\hat{A}` along the transverse direction. Red: the module of its complex envelope :math:`|\tilde{A}|`. Both the lines display a suitable number of points for a proper sampling. In this case, the envelope is sampled by a number of points smaller by a factor ten. 
    
 
-The description of the physical system in terms of the complex envelope of the laser vector potential, neglecting its fast oscillations, is the essence of the envelope approximation. We remark that all the equations involved in the envelope model do not take into account the laser polarization. This is a main limit of the envelope approximation, as well as the impossibility to model phenomena at the scale of :math:`\lambda_0`.
+The description of the physical system in terms of the complex envelope of the laser vector potential, neglecting its fast oscillations, is the essence of the envelope approximation.  
+However, a main limit of this technique is the impossibility to model phenomena at the scale of :math:`\lambda_0`.
 
 In the following, the equations of the envelope model are presented, following mainly [Cowan2011]_, [Terzani]_, [MassimoPPCF2019]_ . Their numerical solution is briefly described as well.
 
@@ -25,42 +26,25 @@ The effect of the plasma on laser propagation is taken into account in the envel
 The various PIC codes using an envelope model for the laser solve different versions of the envelope equation, depending mostly on which terms are retained and which ones are neglected, or the set of coordinates used to derive the envelope equation. Also the numerical schemes used to solve the envelope equation and the equations of motion of the macro-particles vary accordingly.
 In :program:`Smilei`, the version of the envelope model written in laboratory frame coordinates, first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [Terzani]_ is implemented, including the same numerical scheme to solve the lab frame coordinates envelope equation.
 
-The basic assumption of the model is the description of the laser pulse vector potential in the complex polarization direction :math:`\hat{A}(\mathbf{x},t)` as a slowly varying envelope :math:`\tilde{A}(\mathbf{x},t)` modulated by fast oscillations at wavelength :math:`\lambda_0`, moving at the speed of light :math:`c`:
+The basic assumption of the model is the description of the laser pulse vector potential in the transverse direction :math:`\mathbf{\hat{A}}(\mathbf{x},t)` as a slowly varying envelope :math:`\mathbf{\tilde{A}}(\mathbf{x},t)` modulated by fast oscillations at wavelength :math:`\lambda_0`, moving at the speed of light :math:`c`:
 
 .. math::
   :label: envelope
 
-  \hat{A}(\mathbf{x},t)=\textrm{Re}\left[\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right],
+  \mathbf{\hat{A}}(\mathbf{x},t)=\textrm{Re}\left[\mathbf{\tilde{A}}(\mathbf{x},t)e^{ik_0(x-ct)}\right],
 
-where :math:`k_0=2\pi/\lambda_0`. In the language of signal processing, :math:`\tilde{A}` is the complex envelope of :math:`\hat{A}`. In other words, the spectral content of :math:`\tilde{A}` is given by the positive frequency components of :math:`\hat{A}` around :math:`k_0`, but centered around the origin of the frequency :math:`k` axis. As the laser is the source term of the phenomena of interest, in general any physical quantity :math:`A` will be therefore given by the summation of a slowly varying part :math:`\bar{A}` and a fast oscillating part :math:`\hat{A}` with the same form of Eq. :eq:`envelope`:
+where :math:`k_0=2\pi/\lambda_0`. In the language of signal processing, :math:`\mathbf{\tilde{A}}` is the complex envelope of :math:`\mathbf{\hat{A}}`. In other words, the spectral content of :math:`\mathbf{\tilde{A}}` is given by the positive frequency components of :math:`\mathbf{\hat{A}}` around :math:`k_0`, but centered around the origin of the frequency :math:`k` axis. 
+As the laser is the source term of the phenomena of interest, in general any vector :math:`\mathbf{A}` will be therefore given by the summation of a slowly varying part :math:`\mathbf{\bar{A}}` and a fast oscillating part :math:`\mathbf{\hat{A}}` with the same form of Eq. :eq:`envelope`:
 
 .. math::
 
-  A=\bar{A} + \hat{A}
+  \mathbf{A}=\mathbf{\bar{A}} + \mathbf{\hat{A}}.
 
-In the envelope model context, "slowly varying" means that the spatial and temporal variations of :math:`\bar{A}` and :math:`\tilde{A}` are small enough to be treated perturbatively with respect to the ratio :math:`\epsilon=\lambda_0/\lambda_p`, as described in detail in [Mora1997]_, [Quesnel1998]_, [Cowan2011]_. The laser envelope transverse size :math:`R` and longitudinal size :math:`L` are thus assumed to scale as :math:`R \approx L \approx \lambda_0 / \epsilon` [Mora1997]_, [Quesnel1998]_.
+In the envelope model context, "slowly varying" means that the spatial and temporal variations of :math:`\mathbf{\bar{A}}` and :math:`\mathbf{\tilde{A}}` are small enough to be treated perturbatively with respect to the ratio :math:`\epsilon=\lambda_0/\lambda_p`, as described in detail in [Mora1997]_, [Quesnel1998]_, [Cowan2011]_. The laser envelope transverse size :math:`R` and longitudinal size :math:`L` are thus assumed to scale as :math:`R \approx L \approx \lambda_0 / \epsilon` [Mora1997]_, [Quesnel1998]_.
 As described thoroughly in the same references, the coupling between the laser envelope and the plasma macro-particles can be modeled through the addiction of a ponderomotive force term in the macro-particles equations of motion. This term, not representing a real force, is a term rising from an averaging process in the perturbative treatment of the macro-particles motion over the laser optical cycles. 
 
 Modeling the laser through a complex envelope and its coupling with the plasma through the ponderomotive force will yield physically meaningful results only if the variation scales in space and time are greater than :math:`\lambda_0`, :math:`1/\omega_0`. Examples violating these hypotheses include, but are not limited to, tightly focused lasers, few optical cycles lasers, sharp gradients in the plasma density. 
 
-From Eq. :eq:`envelope`, the laser electric field's complex envelope :math:`\tilde{E}` can be derived. In the context of the perturbative treatment, the laser scalar potential can be neglected [Cowan2011]_, yielding:
-
-.. math::
-
-  \hat{E} = -\partial_t \hat{A} = -\partial_t \Big\{\textrm{Re}\left[\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right]\Big\} = \textrm{Re}\left[-\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right],
-
-which can be expressed, following the definition in Eq. :eq:`envelope`, also as  
-
-.. math::
-
-  \hat{E} = \textrm{Re}\left[\tilde{E}(\mathbf{x},t)e^{ik_0(x-ct)}\right].
- 
-
-The laser electric field's complex envelope along the polarization direction :math:`\tilde{E}` can thus be defined:
-
-.. math::
-
-  \tilde{E} = -\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t)
 
 
 ----
@@ -74,39 +58,39 @@ The evolution of the laser pulse is described by d'Alembert's equation, which in
 .. math::
   :label: dalembert
 
-  \nabla^2 \hat{A}-\partial^2_t\hat{A}=-\hat{J},
+  \nabla^2 \mathbf{\hat{A}}-\partial^2_t\mathbf{\hat{A}}=-\mathbf{\hat{J}},
 
-where :math:`\hat{J}` is the fast oscillating part of the current density in the laser polarization direction. Through the assumption given by Eq. :eq:`envelope`, Eq. :eq:`dalembert` can be reduced to an envelope equation:
+where :math:`\mathbf{\hat{J}}` is the fast oscillating part of the current density in the laser polarization direction. Through the assumption given by Eq. :eq:`envelope`, Eq. :eq:`dalembert` can be reduced to an envelope equation:
 
 .. math::
   :label: envelope_equation
 
-  \nabla^2 \tilde{A}+2i\left(\partial_x \tilde{A} + \partial_t \tilde{A}\right)-\partial^2_t\tilde{A}=\chi \tilde{A},
+  \nabla^2 \mathbf{\tilde{A}}+2i\left(\partial_x \mathbf{\tilde{A}} + \partial_t \mathbf{\tilde{A}}\right)-\partial^2_t\mathbf{\tilde{A}}=\chi \mathbf{\tilde{A}},
 
-which describes the evolution of the laser pulse only in terms of the laser envelope :math:`\tilde{A}`. The function :math:`\chi` represents the plasma susceptibility, which is computed similarly to the charge density (see :doc:`algorithms`) as
+which describes the evolution of the laser pulse only in terms of the laser envelope :math:`\mathbf{\tilde{A}}`. The function :math:`\chi` represents the plasma susceptibility, which is computed similarly to the charge density (see :doc:`algorithms`) as
 
 .. math::
   :label: susceptibility
 
   \chi(\mathbf{x}) = \sum_s\,\frac{q^2_s}{m_s}\,\sum_p\,\frac{w_p}{\bar{\gamma}_p}\,S\big(\mathbf{x}-\mathbf{\bar{x}}_p\big)\,
 
-where :math:`\bar{\gamma}_p` is the averaged Lorentz factor of the macro-particle :math:`p`. This averaged quantity is computed from the averaged macro-particle momentum :math:`\mathbf{\bar{u}}_p=\mathbf{\bar{p}}_p/m_s` and the envelope :math:`\tilde{A}`:
+where :math:`\bar{\gamma}_p` is the averaged Lorentz factor of the macro-particle :math:`p`. This averaged quantity is computed from the averaged macro-particle momentum :math:`\mathbf{\bar{u}}_p=\mathbf{\bar{p}}_p/m_s` and the envelope :math:`\mathbf{\tilde{A}}`:
 
 .. math::
   :label: gamma_ponderomotive
 
-  \bar{\gamma}_p = \sqrt{1+\mathbf{\bar{u}}^2_p+\frac{|\tilde{A}(\mathbf{\bar{x}}_p)|^2}{2}}.
+  \bar{\gamma}_p = \sqrt{1+\mathbf{\bar{u}}^2_p+\frac{|\mathbf{\tilde{A}}(\mathbf{\bar{x}}_p)|^2}{2}}.
 
 The term at the right hand side of Eq. :eq:`envelope`, where the plasma susceptibility :math:`\chi` appears, allows to describe phenomena where the plasma alters the propagation of the laser pulse, as relativistic self-focusing.
 
-Note that if in Eq. :eq:`envelope` the temporal variation of the envelope :math:`\tilde{A}` is neglected, and :math:`\partial^2_x \tilde{A} \ll 2i\partial_x \tilde{A}` is assumed, the well-known paraxial wave equation is retrieved in vacuum (:math:`\chi=0`):
+Note that if in Eq. :eq:`envelope` the temporal variation of the envelope :math:`\mathbf{\tilde{A}}` is neglected, and :math:`\partial^2_x \mathbf{\tilde{A}} \ll 2i\partial_x \mathbf{\tilde{A}}` is assumed, the well-known paraxial wave equation is retrieved in vacuum (:math:`\chi=0`):
 
 .. math::
   :label: paraxial_wave_equation
 
-  \nabla_{\perp}^2 \tilde{A}+2i\partial_x \tilde{A}=0. 
+  \nabla_{\perp}^2 \mathbf{\tilde{A}}+2i\partial_x \mathbf{\tilde{A}}=0. 
 
-In :program:`Smilei`, none of these assumptions are made and the full version of Eq. :eq:`envelope_equation` is solved.
+In :program:`Smilei`, no assumptions on the derivatives are made and the scalar versions of Eq. :eq:`envelope_equation` is solved (see next sections).
 
 ----
 
@@ -121,10 +105,12 @@ The averaged position :math:`\mathbf{\bar{x}}_p` and momentum :math:`\mathbf{\ba
  
   \begin{eqnarray}
   \frac{d\mathbf{\bar{x}}_p}{dt} &=& \frac{\mathbf{\bar{u}_p}}{\bar{\gamma}_p}, \,\\
-  \frac{d\mathbf{\bar{u}}_p}{dt} &=& r_s \, \left( \mathbf{\bar{E}}_p + \frac{\mathbf{\bar{u}}_p}{\bar{\gamma}_p} \times \mathbf{\bar{B}}_p \right)-r^2_s\thinspace\frac{1}{4\bar{\gamma}_p}\nabla\left(|\tilde{A}_p|^2\right),
+  \frac{d\mathbf{\bar{u}}_p}{dt} &=& r_s \, \left( \mathbf{\bar{E}}_p + \frac{\mathbf{\bar{u}}_p}{\bar{\gamma}_p} \times \mathbf{\bar{B}}_p \right)-r^2_s\thinspace\frac{1}{4\bar{\gamma}_p}\nabla\left(|\mathbf{\tilde{A}}_p|^2\right),
   \end{eqnarray}
 
-where :math:`r_s = q_s/m_s` is the charge-over-mass ratio (for species :math:`s`). The presence of the ponderomotive force :math:`\mathbf{F}_{pond}=-r^2_s\thinspace\frac{1}{4\bar{\gamma}_p}\nabla\left(|\tilde{A}|^2\right)` and of the ponderomotive potential :math:`\Phi_{pond}=\frac{|\tilde{A}|^2}{2}` in the envelope and particle equations is the reason why the envelope model is also called ponderomotive guiding center model [Gordon2000]_. 
+where :math:`r_s = q_s/m_s` is the charge-over-mass ratio (for species :math:`s`). 
+The presence of the ponderomotive force :math:`\mathbf{F}_{pond}=-r^2_s\thinspace\frac{1}{4\bar{\gamma}_p}\nabla\left(|\mathbf{\tilde{A}}|^2\right)` and of the ponderomotive potential :math:`\Phi_{pond}=\frac{|\mathbf{\tilde{A}}|^2}{2}` 
+in the envelope and particle equations is the reason why the envelope model is also called ponderomotive guiding center model [Gordon2000]_. 
 
 ----
 
@@ -152,7 +138,7 @@ The ponderomotive PIC loop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Since Maxwell's equations :eq:`Maxwell_envelope` remain unaltered, their solution can employ the same techniques used in a standard PIC code. The main difficulty in the solution of the other equations, namely the envelope equation Eq. :eq:`envelope_equation` and the macroparticles equations of motion Eqs. :eq:`ponderomotive_equations_of_motion`, is that the source terms contain the unknown terms.
-For example, in the envelope equations, the source term involves the unknown envelope :math:`\tilde{A}` itself and :math:`\chi`, which depends on the envelope. The equations of motion contain the term :math:`\bar{\gamma}`, which depends on the envelope :math:`\tilde{A}`.
+For example, in the envelope equations, the source term involves the unknown envelope itself and the susceptibility, which depends on the envelope. Also, the equations of motion contain the term :math:`\bar{\gamma}`, which depends on the envelope.
 The PIC loop described in :doc:`algorithms` is thus modified to self-consistently solve the envelope model equations. At each timestep, the code performs the following operations
 
 #. interpolating the electromagnetic fields and the ponderomotive potential at the macro-particle positions,
@@ -185,24 +171,31 @@ and :math:`V_c` denotes the volume of a cell.
 
 Susceptibility deposition
 """"""""""""""""""""""""""""
-The macro-particle averaged positions :math:`\mathbf{\bar{x}}_p^{(n)}` and averaged momenta :math:`\mathbf{\bar{p}}_p^{(n)}` and the ponderomotive potential :math:`\mathbf{\Phi}_p^{(n)}` are used to compute the ponderomotive Lorentz factor :math:`\bar{\gamma}_p` :eq:`gamma_ponderomotive` and deposit the susceptibility on the grid through Eq. :eq:`susceptibility`.
+The macro-particle averaged positions :math:`\mathbf{\bar{x}}_p^{(n)}` and averaged momenta :math:`\mathbf{\bar{p}}_p^{(n)}` 
+and the ponderomotive potential :math:`\mathbf{\Phi}_p^{(n)}` are used to compute the ponderomotive Lorentz factor :math:`\bar{\gamma}_p` :eq:`gamma_ponderomotive` 
+and deposit the susceptibility on the grid through Eq. :eq:`susceptibility`.
 
 Ponderomotive momentum push
 """"""""""""""""""""""""""""
-The momentum push is performed through a modified version of the well-known `Boris Pusher <https://archive.org/stream/DTIC_ADA023511#page/n7/mode/2up>`_, derived and proposed in [Terzani]_.
-The plasma electric, magnetic and ponderomotive potential fields at the macro-particle position :math:`\mathbf{\bar{E}}_p^{(n)}`, :math:`\mathbf{\bar{B}}_p^{(n)}`, :math:`\mathbf{\Phi}_p^{(n)}` are used to advance the momentum :math:`\mathbf{\bar{p}}_p^{(n-1/2)}` from time-step :math:`n−1/2` to time-step :math:`n + 1/2`, solving the momentum equation in Eqs. :eq:`ponderomotive_equations_of_motion`
+The momentum push is performed through a modified version of the well-known `Boris Pusher <https://archive.org/stream/DTIC_ADA023511#page/n7/mode/2up>`_, derived 
+and proposed in [Terzani]_.
+The plasma electric, magnetic and ponderomotive potential fields at the macro-particle position :math:`\mathbf{\bar{E}}_p^{(n)}`, 
+:math:`\mathbf{\bar{B}}_p^{(n)}`, :math:`\mathbf{\Phi}_p^{(n)}` are used to advance the momentum :math:`\mathbf{\bar{p}}_p^{(n-1/2)}` 
+from time-step :math:`n−1/2` to time-step :math:`n + 1/2`, solving the momentum equation in Eqs. :eq:`ponderomotive_equations_of_motion`
 
 Envelope equation solution
 """"""""""""""""""""""""""""
 Now that the averaged susceptibility is known at time-step :math:`n`, the envelope can be advanced solving the envelope equation :eq:`envelope_equation`. 
-In the two solver schemes available in the code (see below), the envelope :math:`A` at time-step :math:`n+1` is computed from its value at timesteps :math:`n`, :math:`n-1` and the suceptibility :math:`\chi` at time-step :math:`n`. The value of the envelope at timestep :math:`n` is conserved for the next iteration of the time loop. 
+In the two solver schemes available in the code (see below), the envelope :math:`\mathbf{\tilde{A}}` at time-step :math:`n+1` is computed from its value 
+at timesteps :math:`n`, :math:`n-1` and the suceptibility :math:`\chi` at time-step :math:`n`. The value of the envelope at timestep :math:`n` is conserved for the next iteration of the time loop. 
 A main advantage of these explicit numerical schemes is their straightforward parallelization in 3D, due to the locality of the operations involved.
 
 Ponderomotive position push
 """"""""""""""""""""""""""""
 The updated ponderomotive potential is interpolated at macro-particle positions to obtain :math:`\mathbf{\Phi}_p^{(n+1)}`. 
 Afterwards, the temporal interpolation :math:`\mathbf{\Phi}_p^{(n+1/2)}=\left(\mathbf{\Phi}_p^{(n)}+\mathbf{\Phi}_p^{(n+1)}\right)/2` is performed. 
-The updated ponderomotive Lorentz factor :math:`\bar{\gamma}_p^{(n+1/2)}` can be computed and the averaged position of each macro-particle can be advanced solving the last of Eqs. :eq:`ponderomotive_equations_of_motion`:
+The updated ponderomotive Lorentz factor :math:`\bar{\gamma}_p^{(n+1/2)}` can be computed and the averaged position of each macro-particle 
+can be advanced solving the last of Eqs. :eq:`ponderomotive_equations_of_motion`:
 
 .. math::
 
@@ -224,10 +217,95 @@ fields can be advanced solving Maxwell's equations :eq:`Maxwell_envelope`. Their
 
 ----
 
+Laser polarization in the envelope model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In :program:`Smilei`, the envelope model is implemented to take into account either linear or circular polarization 
+(`ellipticity = 0` and `ellipticity = 1` in the input namelist respectively). The default polarization is linear along the `y` direction.
+The envelope of a laser pulse propagating in the positive `x` direction can be written as 
+
+.. math::
+
+  \mathbf{\tilde{A}} (\mathbf{x},t)= \tilde{A}(\mathbf{x},t) \left[ \eta\thinspace\hat{y} + i(1-\eta^2)^{1/2}\hat{z}   \right] ,
+
+where :math:`\eta=1` or :math:`\eta=0` for linear polarization along `y` or `z`, and :math:`\eta\pm1/\sqrt{2}` for circular polarization.
+Although Eq. :eq:`envelope_equation` is a vector equation nonlinear, these two polarizations allow to solve only one scalar equation
+at each timestep, because once the susceptibility at a given timestep is known, the envelope equation can be considered linear.
+Thus, after calculating the susceptibility we can solve the equation:
+
+.. math::
+  :label: envelope_equation_scalar
+
+  \nabla^2 \tilde{A}+2i\left(\partial_x \tilde{A} + \partial_t \tilde{A}\right)-\partial^2_t\tilde{A}=\chi \tilde{A},
+
+where :math:`\tilde{A}` is the nonzero component of :math:`\mathbf{\tilde{A}}` for linear polarization and :math:`\tilde{A}/\sqrt{2}` for circular polarization.
+This approach gives accurate results only if the ponderomotive potential :math:`\Phi_{pond}=\frac{|\mathbf{\tilde{A}}|^2}{2}` is computed 
+accordingly to the vector definition of :math:`\mathbf{\tilde{A}}`. This means that :math:`\Phi_{pond}=\frac{|\tilde{A}|^2}{2}` for both linear and 
+circular polarization.
+Besides, with this approach the absolute value of :math:`\tilde{A}` and the derived electric field :math:`\tilde{E}` (see next section) are directly comparable with
+standard laser simulations with the same polarization and :math:`a_0`. 
+
+
+----
+
+Computing the laser electric field from the laser envelope
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is always useful (and recommendable) to compare the results of an envelope simulation and of a standard laser simulation,
+to check if the envelope approximation is suitable for the physical case that is simulated. 
+For this purpose, the plasma electromagnetic fields and the charge densities are easily comparable. 
+However, in an envelope simulation all the plasma dynamics is written as function of the envelope of the transverse component 
+of the vector potential :math:`\tilde{A}`, as explained in the previous sections, and not as function of the laser electric field.
+
+Furthermore, in case of envelope simulations with ionization, the ionization rate formula is computed using the electric field 
+(longitudinal and transverse components) of the laser. 
+
+For these two reasons (diagnostic and ionization), in an envelope simulation two additional fields are computed, 
+:math:`\tilde{E}` and :math:`\tilde{E_x}`, which represent respectively the envelope of the transverse component 
+and of the longitudinal component of the laser electric field.
+
+
+From Eq. :eq:`envelope`, the laser transverse electric field's complex envelope :math:`\tilde{E}` can be derived. 
+In the context of the perturbative treatment, the laser scalar potential can be neglected [Cowan2011]_, yielding:
+
+.. math::
+
+  \hat{E} = -\partial_t \hat{A} = -\partial_t \Big\{\textrm{Re}\left[\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right]\Big\} = \textrm{Re}\left[-\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right],
+
+which can be expressed, following the definition in Eq. :eq:`envelope`, also as  
+
+.. math::
+
+  \hat{E} = \textrm{Re}\left[\tilde{E}(\mathbf{x},t)e^{ik_0(x-ct)}\right].
+ 
+
+The laser transverse electric field's complex envelope :math:`\tilde{E}` can thus be defined:
+
+.. math::
+
+  \tilde{E} = -\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t).
+
+In the same theoretical framework, it can be shown that the laser longitudinal electric field's envelope can be computed through 
+a partial derivative along the direction perpendicular to the laser propagation direction:
+
+.. math::
+
+  \tilde{E_x} = -\partial_{\perp}\tilde{A}(\mathbf{x},t).
+
+In the diagnostics, the absolute value of the fields :math:`\tilde{E}`, :math:`\tilde{E_x}` are available, under the names `Env_E_abs` and `Env_Ex_abs`.
+
+
+ 
+
+
+
+
+----
+
 The numerical solution of the envelope equation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To solve Eq. :eq:`envelope_equation`, two explicit numerical schemes are implemented in the code, first implemented in the PIC code :program:`ALaDyn` [Benedetti2008]_ and described in [Terzani]_.
+To solve Eq. :eq:`envelope_equation_scalar`, two explicit numerical schemes are implemented in the code, first implemented in the PIC code :program:`ALaDyn` [Benedetti2008]_ and described in [Terzani]_.
 
 In the first scheme, denoted as ``"explicit"`` in the input namelist, the well known central finite differences are used to discretize the envelope equation.
 In 1D for example, the spatial and time derivatives of the envelope :math:`\tilde{A}` at time-step :math:`n` and spatial index :math:`i` are thus approximated by:
@@ -262,6 +340,8 @@ In cylindrical geometry (see :doc:`azimuthal_modes_decomposition`), the transver
   D^2_{\perp, cyl}\tilde{A}\rvert^{n}_{i,j} = \frac{\tilde{A}^n_{i,j+1}-2\tilde{A}^n_{i,j}+\tilde{A}^n_{i,j-1}}{\Delta r^2} + \frac{1}{r_j}\frac{\tilde{A}^n_{i,j+1}-\tilde{A}^n_{i,j-1}}{2\Delta r},
 
 where :math:`j, r, \Delta r` are the transverse index, the distance from the propagation axis and the radial cell size respectively.
+
+
 
 
 ----
