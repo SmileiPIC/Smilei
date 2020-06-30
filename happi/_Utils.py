@@ -217,7 +217,7 @@ class Units(object):
 	def _getUnits(self, units):
 		if self.UnitRegistry:
 			u = self.ureg(units)
-			try: u = u.units
+			try: u = u.units.format_babel()
 			except: u = ""
 			return u
 		else:
@@ -279,7 +279,7 @@ class Units(object):
 			self.ureg.define("K_r = M_r * V_r**2"                     ) # energy
 			self.ureg.define("N_r = epsilon_0 * M_r * W_r**2 / Q_r**2") # density
 			self.ureg.define("J_r = V_r * Q_r * N_r"                  ) # current
-			self.ureg.define("B_r = M_r * W_r / Q_r "                 ) # magnetic field
+			self.ureg.define("B_r = M_r * W_r / Q_r"                  ) # magnetic field
 			self.ureg.define("E_r = B_r * V_r"                        ) # electric field
 			self.ureg.define("S_r = K_r * V_r * N_r"                  ) # poynting
 	
