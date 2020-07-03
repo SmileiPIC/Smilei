@@ -293,6 +293,6 @@ H5Write DiagnosticFields3D::writeField( H5Write * loc, string name, int itime )
     }
     
     // Rewrite the file with the previously defined partition
-    return loc->array( name, data_rewrite[0], H5T_NATIVE_DOUBLE, filespace, memspace );
+    return loc->array( name, data_rewrite[0], filespace, memspace );
 }
 
