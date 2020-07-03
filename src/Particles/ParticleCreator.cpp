@@ -74,6 +74,8 @@ void ParticleCreator::associate( ParticleInjector * particle_injector, Particles
     density_profile_type_ = particle_injector->density_profile_type_;
     time_profile_ = particle_injector->time_profile_;
     particles_per_cell_profile_ = particle_injector->particles_per_cell_profile_;
+    
+    regular_number_array_ = particle_injector->regular_number_array_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -101,6 +103,8 @@ void ParticleCreator::associate( Species * species)
     density_profile_ = species->density_profile_;
     density_profile_type_ = species->density_profile_type_;
     particles_per_cell_profile_ = species->particles_per_cell_profile_;
+    
+    regular_number_array_ = species->regular_number_array_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -347,7 +351,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                             }
                         }
                         if( !position_initialization_on_species_ ) {
-                            ParticleCreator::createPosition( position_initialization_, particles_, species_, nPart, iPart, indexes, params );
+                            ParticleCreator::createPosition( position_initialization_, regular_number_array_,  particles_, species_, nPart, iPart, indexes, params );
                         }
                         ParticleCreator::createMomentum( momentum_initialization_, particles_, species_,  nPart, iPart, temp, vel );
                         
@@ -501,6 +505,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
 //! Creation of the position for all particles (nPart)
 // ---------------------------------------------------------------------------------------------------------------------
 void ParticleCreator::createPosition( std::string position_initialization,
+                                      std::vector<int> regular_number_array,
                                     Particles * particles,
                                     Species * species,
                                     unsigned int nPart,
@@ -510,13 +515,13 @@ void ParticleCreator::createPosition( std::string position_initialization,
 {
     if( position_initialization == "regular" ) {
 
-        if ( species->regular_number_array_.size()!=0){
-            if ( species->regular_number_array_.size() != species->nDim_particle){
+        if ( regular_number_array.size()!=0){
+            if ( regular_number_array.size() != species->nDim_particle){
                 ERROR( "The number of particles required per cell per dimension (regular_number) must be of length " << species->nDim_particle << " in this geometry." );
             }
             unsigned int npart_check=1;
             for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
-                npart_check *= species->regular_number_array_[idim];
+                npart_check *= regular_number_array[idim];
             }
             if( nPart != npart_check) {
                 ERROR( "The number of particles required per cell and per dimension is not coherent with the total number of particles per cell." );
@@ -527,7 +532,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
             double inv_coeff_array[3];
             int    coeff_array[3];
 
-            if ( species->regular_number_array_.size()==0){
+            if ( regular_number_array.size()==0){
                 double coeff = pow( ( double )nPart, species->inv_nDim_particles );
                 if( nPart != ( unsigned int ) pow( round( coeff ), ( double ) species->nDim_particle ) ) {
                     ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
@@ -538,7 +543,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
                 }
             } else{
                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
-                   coeff_array[idim] = species->regular_number_array_[idim];
+                   coeff_array[idim] = regular_number_array[idim];
                    inv_coeff_array[idim] = 1./(double)coeff_array[idim];
                }
             }
@@ -555,7 +560,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
             unsigned int Np_array[species->nDim_particle];
             double dx, dr, dtheta, theta_offset;
 
-            if ( species->regular_number_array_.size()==0){
+            if ( regular_number_array.size()==0){
                 //Trick to derive number of particles per dimension from total number of particles per cell
                 int Np = nPart;
                 int counter = 0;
@@ -579,7 +584,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
             } else{
 
                 for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
-                    Np_array[idim] = species->regular_number_array_[idim];
+                    Np_array[idim] = regular_number_array[idim];
                 }
             }
 

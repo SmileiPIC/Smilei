@@ -45,6 +45,7 @@ public:
     
     //! Creation of the particle positions
     static void createPosition( std::string position_initialization,
+                              std::vector<int> regular_number_array,
                               Particles * particles,
                               Species * species,
                               unsigned int nPart,
@@ -115,7 +116,10 @@ public:
     
     //! Flag for the addition of the energy coming from the created particles
     bool add_new_particle_energy_;
-    
+
+    //! Pointer toward regular number of particles array
+    std::vector<int> regular_number_array_;
+
 private:
 
     //! Provides a Maxwell-Juttner distribution of energies

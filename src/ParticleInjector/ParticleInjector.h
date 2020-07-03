@@ -78,6 +78,9 @@ public:
     //! Profile for the particles per cell
     Profile *particles_per_cell_profile_;
 
+    //! Pointer toward regular number of particles array
+    std::vector<int> regular_number_array_;
+
     // -----------------------------------------------------------------------------
     //  3. Methods
 
