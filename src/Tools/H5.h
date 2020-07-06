@@ -18,7 +18,8 @@ class H5Space
 public:
     
     //! 1D
-    H5Space( hsize_t size, hsize_t offset=0, hsize_t npoints=0, hsize_t chunk = 0 );
+    H5Space( hsize_t size );
+    H5Space( hsize_t size, hsize_t offset, hsize_t npoints, hsize_t chunk = 0 );
     
     //! ND
     H5Space( std::vector<hsize_t> size, std::vector<hsize_t> offset = {}, std::vector<hsize_t> npoints = {}, std::vector<hsize_t> chunk = {} );

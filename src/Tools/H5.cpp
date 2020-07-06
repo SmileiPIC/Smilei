@@ -100,16 +100,22 @@ H5::~H5()
 
 
 //! 1D
+H5Space::H5Space( hsize_t size ) {
+    dims_ = { size };
+    global_ = size;
+    sid = H5Screate_simple( 1, &size, NULL );
+}
+
+//! 1D
 H5Space::H5Space( hsize_t size, hsize_t offset, hsize_t npoints, hsize_t chunk ) {
     dims_ = { size };
+    global_ = size;
     sid = H5Screate_simple( 1, &size, NULL );
-    if( offset || npoints ) {
-        if( npoints <= 0 ) {
-            H5Sselect_none( sid );
-        } else {
-            hsize_t count = 1;
-            H5Sselect_hyperslab( sid, H5S_SELECT_SET, &offset, NULL, &count, &npoints );
-        }
+    if( npoints <= 0 ) {
+        H5Sselect_none( sid );
+    } else {
+        hsize_t count = 1;
+        H5Sselect_hyperslab( sid, H5S_SELECT_SET, &offset, NULL, &count, &npoints );
     }
     if( chunk > 1 ) {
         chunk_.resize( 1, chunk );
