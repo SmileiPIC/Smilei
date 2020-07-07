@@ -766,8 +766,8 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
     #pragma omp master
     {
         // Define spaces
-        H5Space memspace( {nPart_MPI, (hsize_t)nFields}, {}, {} );
-        H5Space filespace( {nPart_total_actual, (hsize_t)nFields}, {offset_in_file[0], 0}, {nPart_MPI, (hsize_t)nFields} );
+        H5Space memspace( {(hsize_t)nFields, nPart_MPI}, {}, {} );
+        H5Space filespace( {(hsize_t)nFields, nPart_total_actual}, {0, offset_in_file[0]}, {(hsize_t)nFields, nPart_MPI} );
         // Create new dataset for this timestep
         H5Write d = file_->array( dataset_name, *(probesArray->data_), &filespace, &memspace, true );
         // Write x_moved
