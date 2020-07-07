@@ -318,14 +318,16 @@ public:
     // Write to an open dataset
     template<class T>
     void write( T &v, hid_t type, H5Space *filespace, H5Space *memspace, bool independent = false ) {
-        if( memspace->global_ > 0 ) {
-            if( independent ) {
+        if( independent ) {
+            if( memspace->global_ > 0 ) {
                 H5FD_mpio_xfer_t xfer;
                 H5Pget_dxpl_mpio( dxpl_, &xfer );
                 H5Pset_dxpl_mpio( dxpl_, H5FD_MPIO_INDEPENDENT );
                 H5Dwrite( id_, type, memspace->sid, filespace->sid, dxpl_, &v );
                 H5Pset_dxpl_mpio( dxpl_, xfer );
-            } else {
+            }
+        } else {
+            if( filespace->global_ > 0 ) {
                 H5Dwrite( id_, type, memspace->sid, filespace->sid, dxpl_, &v );
             }
         }
@@ -335,7 +337,7 @@ public:
     template<class T>
     void read( T &v, hid_t type, H5Space *filespace, H5Space *memspace, bool independent = false ) {
         if( independent ) {
-            if( filespace->global_ > 0 ) {
+            if( memspace->global_ > 0 ) {
                 H5FD_mpio_xfer_t xfer;
                 H5Pget_dxpl_mpio( dxpl_, &xfer );
                 H5Pset_dxpl_mpio( dxpl_, H5FD_MPIO_INDEPENDENT );
@@ -343,7 +345,9 @@ public:
                 H5Pset_dxpl_mpio( dxpl_, xfer );
             }
         } else {
-            H5Dread( id_, type, memspace->sid, filespace->sid, dxpl_, &v );
+            if( filespace->global_ > 0 ) {
+                H5Dread( id_, type, memspace->sid, filespace->sid, dxpl_, &v );
+            }
         }
     }
     

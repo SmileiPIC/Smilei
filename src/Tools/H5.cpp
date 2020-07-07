@@ -104,6 +104,9 @@ H5Space::H5Space( hsize_t size ) {
     dims_ = { size };
     global_ = size;
     sid = H5Screate_simple( 1, &size, NULL );
+    if( size <= 0 ) {
+        H5Sselect_none( sid );
+    }
 }
 
 //! 1D
@@ -111,7 +114,7 @@ H5Space::H5Space( hsize_t size, hsize_t offset, hsize_t npoints, hsize_t chunk )
     dims_ = { size };
     global_ = size;
     sid = H5Screate_simple( 1, &size, NULL );
-    if( npoints <= 0 ) {
+    if( size <= 0 || npoints <= 0 ) {
         H5Sselect_none( sid );
     } else {
         hsize_t count = 1;
@@ -130,7 +133,9 @@ H5Space::H5Space( std::vector<hsize_t> size, std::vector<hsize_t> offset, std::v
         global_ *= size[i];
     }
     sid = H5Screate_simple( size.size(), &size[0], NULL );
-    if( ! offset.empty() || ! npoints.empty() ) {
+    if( global_ <= 0 ) {
+        H5Sselect_none( sid );
+    } else if( ! offset.empty() || ! npoints.empty() ) {
         unsigned int i;
         for( i=0; i<npoints.size() && npoints[i]>0; i++ ) {}
         if( i < npoints.size() ) {
