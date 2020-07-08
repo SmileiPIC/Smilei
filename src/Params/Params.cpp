@@ -453,6 +453,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "is_spectral", is_spectral, "Main"   );
     if( is_spectral ) {
         full_B_exchange=true;
+        if (geometry == "AMcylindrical") {
+            interpolation_order = 1;
+            WARNING( "The interpolation order is set to 1 for the AM geometry using the pseudo-spectral solver." );
+        }
     }
     PyTools::extract( "is_pxr", is_pxr, "Main" );
 #ifndef _PICSAR
