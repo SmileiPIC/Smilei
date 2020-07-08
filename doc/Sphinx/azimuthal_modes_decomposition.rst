@@ -294,7 +294,7 @@ transverse size for the simulated physical space.
 On-Axis boundary conditions in FDTD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In the AM geometry, specific boundary conditions are derived on-axis.
+In the AM geometry, specific boundary conditions are derived on-axis for the FDTD solver using a Yee lattice.
 This section presents the actual implementation in :program:`Smilei`.
 It is mostly based on the `original paper <http://doi.org/10.1016/j.jcp.2008.11.017>`_ but also includes
 original contributions from X. Davoine and the :program:`Smilei` team.
@@ -307,6 +307,8 @@ So if you have :math:`N_{ghost}` ghost cells, you have as many primal points on 
 reaching the actual geometric axis :math:`r=0`.
 If :math:`dr` is a radial cell size, the dual radial axis is shifted by :math:`-dr/2`.
 Below is an example for :math:`N_{ghost}=2`.
+All equations in this section are given for this specific case.
+For different numbers of ghost cells, simply add the difference in all indices.
 :math:`jp` and :math:`jd` stand for the primal and dual indices.
 
 .. figure:: _static/transverse_axis.png
@@ -317,5 +319,25 @@ Cancellation on axis
 
 The first basic principle is that a mode 0 field defined on axis can only be longitudinal otherwise it would be ill defined.
 On the opposite, longitudinal fields on axis can only be of mode 0 since they do not depend on :math:`theta`.
-From this we can already state that :math:`E_r^{m=0},\ E_t^{m=0},\ B_r^{m=0},\ B_t^{m=0},\ E_l^{m>0},\ B_l^{m>0}}` are zero on axis.
+From this we can already state that :math:`E_r^{m=0},\ E_t^{m=0},\ B_r^{m=0},\ B_t^{m=0},\ E_l^{m>0},\ B_l^{m>0}` are zero on axis.
+
+
+This condition is straight forward for primal fields in R which take a value on axis exactly.
+We simply set this value to zero.
+
+.. math::
+   E_t^{m=0}[2] = 0
+.. math::
+   B_r^{m=0}[2] = 0
+.. math::
+   E_l^{m>0}[2] = 0
+
+For dual fields in R, we set a value such as a linear interpolation between nearest grid points gives a zero on axis.
+
+.. math::
+   E_r^{m=0}[2] = -E_r^{m=0}[3]
+.. math::
+   B_t^{m=0}[2] = -B_t^{m=0}[3]
+.. math::
+   B_l^{m>0}[2] = -B_l^{m>0}[3]
 
