@@ -208,7 +208,7 @@ void DiagnosticFieldsAM::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
         data.resize( buffer_size );
     }
     
-    filespace_firstwrite = new H5Space( file_size, factor_ * one_patch_buffer_size * refHindex, factor_ * buffer_size, chunk_size_firstwrite );
+    filespace_firstwrite = new H5Space( ifile_size, factor_ * one_patch_buffer_size * refHindex, factor_ * buffer_size, chunk_size_firstwrite );
     memspace_firstwrite  = new H5Space( factor_ * buffer_size );
     
     // Create/Open temporary dataset
