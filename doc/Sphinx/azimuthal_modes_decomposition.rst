@@ -289,5 +289,33 @@ These comparisons assume the same longitudinal window size and the same
 transverse size for the simulated physical space.
 
 
+----
 
+On-Axis boundary conditions in FDTD
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In the AM geometry, specific boundary conditions are derived on-axis.
+This section presents the actual implementation in :program:`Smilei`.
+It is mostly based on the `original paper <http://doi.org/10.1016/j.jcp.2008.11.017>`_ but also includes
+original contributions from X. Davoine and the :program:`Smilei` team.
+
+Primal and Dual grids
+""""""""""""""""""""""""""""""
+
+In :program:`Smilei`, ghost cells in the radial direction are located "before" the axis.
+So if you have :math:`N_{ghost}` ghost cells, you have as many primal points on the radial axis before
+reaching the actual geometric axis :math:`r=0`.
+If :math:`dr` is a radial cell size, the dual radial axis is shifted by :math:`-dr/2`.
+Below is an example for :math:`N_{ghost}=2`.
+:math:`jp` and :math:`jd` stand for the primal and dual indices.
+
+.. figure:: _static/transverse_axis.png
+   :width: 10cm
+
+Cancellation on axis
+"""""""""""""""""""""""
+
+The first basic principle is that a mode 0 field defined on axis can only be longitudinal otherwise it would be ill defined.
+On the opposite, longitudinal fields on axis can only be of mode 0 since they do not depend on :math:`theta`.
+From this we can already state that :math:`E_r^{m=0},\ E_t^{m=0},\ B_r^{m=0},\ B_t^{m=0},\ E_l^{m>0},\ B_l^{m>0}}` are zero on axis.
 
