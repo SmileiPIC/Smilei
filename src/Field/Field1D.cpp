@@ -47,8 +47,8 @@ Field1D::Field1D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal
 // without allocating
 Field1D::Field1D( string name_in, vector<unsigned int> dims ) : Field( dims, name_in )
 {
-    data_=NULL;
     dims_ = dims;
+    globalDims_ = dims_[0];
 }
 
 

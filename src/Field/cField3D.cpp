@@ -15,42 +15,37 @@ using namespace std;
 // with no input argument
 cField3D::cField3D() : cField()
 {
-    cdata_=NULL;
 }
 
 // with the dimensions as input argument
 cField3D::cField3D( vector<unsigned int> dims ) : cField( dims )
 {
-    cdata_=NULL;
     allocateDims( dims );
 }
 
 // with the dimensions and output (dump) file name as input argument
 cField3D::cField3D( vector<unsigned int> dims, string name_in ) : cField( dims, name_in )
 {
-    cdata_=NULL;
     allocateDims( dims );
 }
 
 // with the dimensions as input argument
 cField3D::cField3D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : cField( dims, mainDim, isPrimal )
 {
-    cdata_=NULL;
     allocateDims( dims, mainDim, isPrimal );
 }
 
 // with the dimensions and output (dump) file name as input argument
 cField3D::cField3D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in ) : cField( dims, mainDim, isPrimal, name_in )
 {
-    cdata_=NULL;
     allocateDims( dims, mainDim, isPrimal );
 }
 
 // without allocating
 cField3D::cField3D( string name_in, vector<unsigned int> dims ) : cField( dims, name_in )
 {
-    cdata_=NULL;
-    dims_=dims;
+    dims_ = dims;
+    globalDims_ = dims_[0]*dims_[1]*dims_[2];
 }
 
 

@@ -111,7 +111,7 @@ public :
     //! Default destructor
     ~DiagnosticScalar() override;
     
-    void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
+    void openFile( Params &params, SmileiMPI *smpi ) override;
     
     void closeFile() override;
     
