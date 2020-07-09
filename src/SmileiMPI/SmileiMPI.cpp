@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <algorithm>
 
 #include <iostream>
 #include <sstream>
@@ -194,6 +195,26 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
         if( params.EM_BCs[i][0]=="periodic" ) {
             periods_[i] = 1;
             MESSAGE( 1, "applied topology for periodic BCs in "<<"xyz"[i]<<"-direction" );
+        }
+    }
+
+    // Extract the maximum MPI tag value in *tag_ub_ptr
+    int flag;
+    int* tag_ub_ptr;
+    MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &tag_ub_ptr, &flag);
+
+    // Estimate the maximum tag requires by Smilei regarding the current patch distribution
+    auto it = max_element(std::begin(patch_count), std::end(patch_count));
+    // the maximum tag use the maximum local patch id, iDim=1, iNeghibor=1, 8 for Jx
+    int tagmax = buildtag( (*it)-1, 1, 1, 8 );
+
+    if ( tagmax > (*tag_ub_ptr) ) {
+        int ratio = ceil( (double)tagmax/(*tag_ub_ptr) );
+        if (!smilei_rk) {
+            ERROR( "The MPI library you are using authorizes as upper bound for a tag : " << (*tag_ub_ptr) << endl <<
+                   "Regarding the number of patches you are using and the number of MPI process, Smilei will at least generate as larger tag : " << tagmax << endl <<
+                   "You should use " << ratio << " more MPI process, or " << ratio << " less patches or change of MPI library." << endl << 
+                   "This is a trough estimation, which depends of the plasma load imbalance." );
         }
     }
 } // END init
