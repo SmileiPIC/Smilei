@@ -86,7 +86,6 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
     nDim_particle = params.nDim_particle;
     nDim_field = params.nDim_field;
     geometry = params.geometry;
-    fileId_ = 0;
     hasRhoJs = false;
     last_iteration_points_calculated = 0;
     positions_written = false;

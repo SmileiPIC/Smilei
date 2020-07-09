@@ -62,6 +62,8 @@ public :
     
 private :
     
+    H5Write *data_group;
+    
     //! Number of spatial dimensions
     unsigned int nDim_particle;
     

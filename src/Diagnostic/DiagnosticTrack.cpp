@@ -160,6 +160,7 @@ DiagnosticTrack::~DiagnosticTrack()
     delete timeSelection;
     delete flush_timeSelection;
     Py_DECREF( filter );
+    closeFile();
 }
 
 
@@ -173,12 +174,16 @@ void DiagnosticTrack::openFile( Params &params, SmileiMPI *smpi )
     // Attributes for openPMD
     openPMD_->writeRootAttributes( *file_, "no_meshes", "particles/" );
     
+    data_group = new H5Write( file_, "data" );
+    
+    file_->flush();
 }
 
 
 void DiagnosticTrack::closeFile()
 {
     if( file_ ) {
+        delete data_group;
         delete file_;
         file_ = NULL;
     }
@@ -200,7 +205,6 @@ void DiagnosticTrack::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPat
     
     // create the file
     openFile( params, smpi );
-    file_->flush();
     
 }
 
@@ -287,8 +291,7 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         ostringstream t( "" );
         t << setfill( '0' ) << setw( 10 ) << itime;
         // Create "data" group for openPMD compatibility
-        H5Write data_group = file_->group( "data" );
-        H5Write iteration_group = data_group.group( t.str() );
+        H5Write iteration_group = data_group->group( t.str() );
         H5Write particles_group = iteration_group.group( "particles" );
         species_group = new H5Write( &particles_group, vecPatches( 0 )->vecSpecies[speciesId_]->name_ );
         
@@ -311,14 +314,15 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
             if( nParticles_global%maximum_chunk_size != 0 ) {
                 number_of_chunks++;
             }
-            if( number_of_chunks==0 ) {
-                number_of_chunks = 1;
+            if( number_of_chunks <= 1 ) {
+                chunk = 0;
+            } else {
+                unsigned int chunk_size = nParticles_global/number_of_chunks;
+                if( nParticles_global%number_of_chunks != 0 ) {
+                    chunk_size++;
+                }
+                chunk = chunk_size;
             }
-            unsigned int chunk_size = nParticles_global/number_of_chunks;
-            if( nParticles_global%number_of_chunks != 0 ) {
-                chunk_size++;
-            }
-            chunk = chunk_size;
         }
         file_space = new H5Space( nParticles_global, offset, nParticles_local, chunk );
         

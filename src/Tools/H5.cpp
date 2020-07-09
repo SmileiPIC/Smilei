@@ -107,6 +107,7 @@ H5Space::H5Space( hsize_t size ) {
     if( size <= 0 ) {
         H5Sselect_none( sid );
     }
+    chunk_.resize(0);
 }
 
 //! 1D
@@ -122,6 +123,8 @@ H5Space::H5Space( hsize_t size, hsize_t offset, hsize_t npoints, hsize_t chunk )
     }
     if( chunk > 1 ) {
         chunk_.resize( 1, chunk );
+    } else {
+        chunk_.resize( 0 );
     }
 }
 

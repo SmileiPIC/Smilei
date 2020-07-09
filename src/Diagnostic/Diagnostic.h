@@ -79,7 +79,6 @@ public :
 protected :
 
     //! File for one diagnostic
-    hid_t fileId_;
     H5Write * file_;
     
     //! Pointer to all parameters needed for openPMD compatibility
