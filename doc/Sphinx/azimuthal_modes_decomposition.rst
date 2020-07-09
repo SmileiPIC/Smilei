@@ -326,18 +326,153 @@ This condition is straight forward for primal fields in R which take a value on 
 We simply set this value to zero.
 
 .. math::
-   E_t^{m=0}[2] = 0
-.. math::
+   E_{\theta}^{m=0}[2] = 0
+
    B_r^{m=0}[2] = 0
-.. math::
+
    E_l^{m>0}[2] = 0
 
 For dual fields in R, we set a value such as a linear interpolation between nearest grid points gives a zero on axis.
 
 .. math::
    E_r^{m=0}[2] = -E_r^{m=0}[3]
-.. math::
-   B_t^{m=0}[2] = -B_t^{m=0}[3]
-.. math::
+
+   B_{\theta}^{m=0}[2] = -B_{\theta}^{m=0}[3]
+
    B_l^{m>0}[2] = -B_l^{m>0}[3]
+
+Transverse field on axis
+""""""""""""""""""""""""""""
+
+The transverse electric field can be written as follows
+
+.. math::
+   \mathbf{E_\perp} = \mathbf{E_y} + \mathbf{E_z} = (E_r\cos{\theta}-E_{\theta}\sin{\theta})\mathbf{e_y} + (E_r\sin{\theta}+E_{\theta}\cos{\theta})\mathbf{e_z}
+
+The transverse field on axis can not depend on :math:`\theta` otherwise it would be ill defined.
+Therefore we have the following condition on axis:
+
+.. math::
+   \frac{\partial\mathbf{E_\perp}}{\partial\theta} = 0\ \forall\theta
+
+which leads to the following relation:
+
+.. math::
+   \cos{\theta}\left(\frac{\partial E_r}{\partial\theta}-E_{\theta}\right) + \sin{\theta}\left(\frac{\partial E_{\theta}}{\partial\theta}+E_r\right)=0\ \forall\theta
+
+Being true for all :math:`\theta`, this leads to
+
+.. math::
+   \frac{\partial E_r}{\partial\theta}-E_{\theta}=0\ \forall\theta
+
+   \frac{\partial E_{\theta}}{\partial\theta}+E_r=0\ \forall\theta
+
+Remembering that for a given mode :math:`m` and a given field :math:`F`, we have :math:`F=Re\left(\tilde{F}^m\exp{(-im\theta)}\right)`, 
+we can write the previous equations for all modes :math:`m` as follows:
+
+.. math::
+  :label: transverse_on_axis
+
+   \tilde{E_r}^m=\frac{i\tilde{E_{\theta}}^m}{m}
+
+   \tilde{E_r}^m=mi\tilde{E_{\theta}}^m
+
+We have already established in the previuos section that the modes :math:`m=0` must cancel on axis and we are concerned only about :math:`m>0`.
+Equations :eq:`transverse_on_axis` can have a non zero solution only for :math:`m=1`.
+We therefore conclude that all modes must cancel on axis except for :math:`m=1`.
+
+.. math::
+   E_{\theta}^{m>1}[2] = 0
+
+   B_r^{m>1}[2] = 0
+
+   E_r^{m>1}[2] = -E_r^{m>1}[3]
+
+   B_{\theta}^{m>1}[2] = -B_{\theta}^{m>1}[3]
+
+Let's now write the continuity equation for mode :math:`m=1`:
+
+.. math::
+   div(\mathbf{\tilde{E}^{m=1}})=\tilde{\rho}^{m=1}
+
+where :math:`\rho` is the charge density.
+We have already established that on axis the longitudinal field are zero for all modes :math:`m>0`.
+The charge density being a scalar field, it follows the same rule and is zero as well on axis.
+The continuity equation on axis and written in cylindrical coordinates becomes:
+
+.. math::
+   \frac{\tilde{E_r}^{m=1}-im\tilde{E_{\theta}}^{m=1}}{r} + \frac{\partial \tilde{E_r}^{m=1}}{\partial r} = 0
+
+Eq. :eq:`transverse_on_axis` already establishes that the first term is zero.
+It is only necessary to cancel the second term.
+
+In order to do so, let's build an uncentered finite dfference scheme of the second order.
+Simple Taylor developments give for any quantity :math:`u`:
+
+.. math::
+   u(x+\frac{dx}{2})=u(x)+\frac{dx}{2}u'(x)+\frac{dx^2}{8}u''(x)+O(dx3)
+
+   u(x+\frac{3dx}{2})=u(x)+\frac{3dx}{2}u'(x)+\frac{9dx^2}{8}u''(x)+O(dx3)
+
+By combination we obtain the scheme we are looking for:
+
+.. math::
+   u'(x) = \frac{9u(x+\frac{dx}{2})-u(x+\frac{3dx}{2})-8u(x)}{3dx}
+
+We can therefore write:
+
+.. math::
+   \frac{\partial \tilde{E_r}^{m=1}}{\partial r}(r=0)= 9\tilde{E_r}^{m=1}(r=\frac{dr}{2})-\tilde{E_r}^{m=1}(r=\frac{3dr}{2})-8\tilde{E_r}^{m=1}(r=0) = 0
+
+which gives:
+
+.. math::
+   \tilde{E_r}^{m=1}(r=0)=\frac{1}{8}\left(9\tilde{E_r}^{m=1}(r=\frac{dr}{2})-\tilde{E_r}^{m=1}(r=\frac{3dr}{2})\right)
+
+And from :eq:`transverse_on_axis` this turns into:
+
+.. math::
+   \tilde{E_{\theta}}^{m=1}(r=0)=\frac{-i}{8}\left(9\tilde{E_r}^{m=1}(r=\frac{dr}{2})-\tilde{E_r}^{m=1}(r=\frac{3dr}{2})\right)
+
+giving the corresponding boundary condition for :math:`E_{\theta}^{m=1}`:
+
+.. math::
+   E_{\theta}^{m=1}[2] = \frac{-i}{8}\left(9E_r^{m=1}[3]-E_r^{m=1}[4]\right)
+
+Once :math:`E_{\theta}^{m=1}` is defined on axis,  we need to pick :math:`E_r^{m=1}` so that :eq:`transverse_on_axis` is matched.
+With a linear interpolation we obtain:
+
+.. math::
+   E_r^{m=1}[2] = 2iE_{\theta}^{m=1}[2]-E_r^{m=1}[3]
+
+All the equation derived here are also valid for the magnetic field.
+But because of a different duality, it is more convenient to use a different approach.
+The equations :eq:`MaxwellEqsAzimuthalModes` has a :math:`\frac{E_l}{r}` term in the expression of :math:`B_r` which makes it undefined on axis.
+Nevertheless, we need to evaluate this term for the mode :math:`m=1` and it can be done as follows.
+
+.. math::
+   \lim_{r\to 0}\frac{E_l^{m=1}(r)}{r} = \lim_{r\to 0}\frac{E_l^{m=1}(r)-E_l^{m=1}(0)}{r}
+
+since we established in the previous section that :math:`E_l^{m=1}(r=0)=0`.
+And by definition of a derivative we have:
+
+.. math::
+   \lim_{r\to 0}\frac{E_l^{m=1}(r)-E_l^{m=1}(0)}{r}=\frac{\partial E_l^{m=1} }{r}(r=0)
+
+This derivative can be evaluated by a simple finite difference scheme and using again that  :math:`E_l^{m=1}` is zero on axis we get:
+
+.. math::
+   \lim_{r\to 0}\frac{E_l^{m=1}(r)}{r} = \frac{E_l^{m=1}(dr)}{dr}
+
+Introducing this result in the standard FDTD scheme for :math:`B_r` we get the axis bounday condition:
+
+.. math::
+   B_{r}^{m=1,n+1}[i,2] = B_{r}^{m=1,n}[i,2] + dt\left(\frac{i}{dr}E_l^{m=1}[i,3]+\frac{E_{\theta}^{m=1}[i+1,2]-E_{\theta}^{m=1}[i,2]}{dl}\right)
+
+where the :math:`n` indice indicates the time step and :math:`i` the longitudinal indice.
+Exactly as for the electric field, we need to have :math:`B_{r}^{m=1}=iB_{\theta}^{m=1}`.
+With a similar interpolation we obtain the boundary condition on axis for :math:`B_{\theta}^{m=1}`:
+
+.. math::
+   B_{\theta}^{m=1}[2]=-2iB_{r}^{m=1}[2]-B_{\theta}^{m=1}[3]
 
