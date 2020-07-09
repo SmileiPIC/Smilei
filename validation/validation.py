@@ -366,12 +366,12 @@ def RUN_LLR(command, dir):
 			+"module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles_el7\n"
 			+"module load compilers/icc/17.4.196\n"
 			+"module load compilers/gcc/4.9.2\n"
-                        +"module load h5py/hdf5_1.8.19-icc-omp2.1.2-py3.7.0\n"
+                        +"module load h5py/hdf5_1.8.19-icc-omp2.1.6-py3.7.0\n"
 			+"export OMP_NUM_THREADS="+str(OMP)+" \n"
 			+"export OMP_SCHEDULE=DYNAMIC \n"
 			+"export KMP_AFFINITY=verbose \n"
 			+"export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n"
-			+"module load fftw/3.3.7-opm-2.1.2-icc-17 \n"
+			+"module load fftw/3.3.8-omp-2.1.6-icc-17 \n"
 			+"export LIBPXR=/home/llr/galop/derouil/applications/picsar/lib \n"
 			+"export LD_LIBRARY_PATH=$LIBPXR:$LD_LIBRARY_PATH \n"
 			+"ulimit -s unlimited \n"
@@ -471,19 +471,19 @@ if COMPILE_MODE:
 # Find commands according to the host
 if LLR in HOSTNAME :
 	if (PARTITION=="jollyjumper"):
-		PPN = 24
+		PPN = 12
 	elif (PARTITION=="tornado"):
 		PPN = 18
 	if PPN % OMP != 0:
 		print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
 		sys.exit(4)
 	NODES=int(ceil(MPI/2.))
-	NPERSOCKET = 2
+	NPERSOCKET = 1
 	COMPILE_COMMAND = str(MAKE)+' -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_COMMAND = str(MAKE)+' -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-	RUN_COMMAND = "mpirun --mca io ^ompio -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+"1" + " -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+	RUN_COMMAND = "mpirun --mca io ^ompio -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+ str(OMP) + " -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_LLR
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
