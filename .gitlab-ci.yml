@@ -104,7 +104,7 @@ use_picsar:
   stage: use_picsar
   only:
     - develop
-    - vecto2D_new_currentsAndDensity
+    - merge_sdmd_dev
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
