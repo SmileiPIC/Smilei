@@ -366,7 +366,7 @@ def RUN_LLR(command, dir):
 			+"module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles_el7\n"
 			+"module load compilers/icc/17.4.196\n"
 			+"module load compilers/gcc/4.9.2\n"
-                        +"module load h5py/hdf5_1.8.19-icc-omp2.1.6-py3.7.0\n"
+                        +"module load h5py/hdf5_1.8.19-icc-omp2.1.2-py3.7.0\n"
 			+"export OMP_NUM_THREADS="+str(OMP)+" \n"
 			+"export OMP_SCHEDULE=DYNAMIC \n"
 			+"export KMP_AFFINITY=verbose \n"
