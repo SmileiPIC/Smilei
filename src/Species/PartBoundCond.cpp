@@ -56,10 +56,6 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
             y_max = min( y_max_global, patch->getDomainLocalMax( 1 ) );
             y_max2 = y_max * y_max;
             y_min2 = y_min * y_min;
-            if (params.geometry=="AMcylindrical" && params.is_spectral){
-                y_min2 = 0.; // No parallrlization along R
-                y_max2 = patch->getDomainLocalMax( 1 )*patch->getDomainLocalMax( 1 ); 
-            }
        }
         
         if( ( nDim_particle > 2 ) && ( !isAM ) ) {
