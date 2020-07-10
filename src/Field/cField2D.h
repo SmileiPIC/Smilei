@@ -108,6 +108,7 @@ public:
     std::complex<double> **data_2D;
 
 private:
+    bool cleaned_;
 
 };
 

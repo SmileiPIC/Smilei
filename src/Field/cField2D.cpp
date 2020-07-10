@@ -19,35 +19,41 @@ using namespace std;
 // with no input argument
 cField2D::cField2D() : cField()
 {
+    cleaned_ = false;
 }
 
 // with the dimensions as input argument
 cField2D::cField2D( vector<unsigned int> dims ) : cField( dims )
 {
+    cleaned_ = false;
     allocateDims( dims );
 }
 
 // with the dimensions and output (dump) file name as input argument
 cField2D::cField2D( vector<unsigned int> dims, string name_in ) : cField( dims, name_in )
 {
+    cleaned_ = false;
     allocateDims( dims );
 }
 
 // with the dimensions as input argument
 cField2D::cField2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : cField( dims, mainDim, isPrimal )
 {
+    cleaned_ = false;
     allocateDims( dims, mainDim, isPrimal );
 }
 
 // with the dimensions and output (dump) file name as input argument
 cField2D::cField2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in ) : cField( dims, mainDim, isPrimal, name_in )
 {
+    cleaned_ = false;
     allocateDims( dims, mainDim, isPrimal );
 }
 
 // without allocating
 cField2D::cField2D( string name_in, vector<unsigned int> dims ) : cField( dims, name_in )
 {
+    cleaned_ = false;
     dims_ = dims;
     globalDims_ = dims_[0]*dims_[1];
 }
@@ -59,7 +65,8 @@ cField2D::cField2D( string name_in, vector<unsigned int> dims ) : cField( dims, 
 // ---------------------------------------------------------------------------------------------------------------------
 cField2D::~cField2D()
 {
-
+    if (cleaned_ )
+        return;
     if( cdata_!=NULL ) {
         delete [] cdata_;
         delete [] data_2D;
@@ -103,6 +110,7 @@ void cField2D::deallocateDataAndSetTo( Field* f )
     cdata_ = NULL;
     delete [] data_2D;
     data_2D = NULL;
+    cleaned_ = true;
 
     cdata_ = (static_cast<cField2D *>(f))->cdata_;
     data_2D = (static_cast<cField2D *>(f))->data_2D;
