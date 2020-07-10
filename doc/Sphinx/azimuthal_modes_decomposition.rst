@@ -457,11 +457,13 @@ since we established in the previous section that :math:`E_l^{m=1}(r=0)=0`.
 And by definition of a derivative we have:
 
 .. math::
-   \lim_{r\to 0}\frac{E_l^{m=1}(r)-E_l^{m=1}(0)}{r}=\frac{\partial E_l^{m=1} }{r}(r=0)
+   \lim_{r\to 0}\frac{E_l^{m=1}(r)-E_l^{m=1}(0)}{r}=\frac{\partial E_l^{m=1} }{\partial r}(r=0)
 
 This derivative can be evaluated by a simple finite difference scheme and using again that  :math:`E_l^{m=1}` is zero on axis we get:
 
 .. math::
+   :label: derivative_limit
+
    \lim_{r\to 0}\frac{E_l^{m=1}(r)}{r} = \frac{E_l^{m=1}(dr)}{dr}
 
 Introducing this result in the standard FDTD scheme for :math:`B_r` we get the axis bounday condition:
@@ -475,4 +477,28 @@ With a similar interpolation we obtain the boundary condition on axis for :math:
 
 .. math::
    B_{\theta}^{m=1}[2]=-2iB_{r}^{m=1}[2]-B_{\theta}^{m=1}[3]
+
+Longitudinal fields on axis
+"""""""""""""""""""""""""""""
+
+We have alreayd established that only modes :math:`m=0` of longitudinal fields are non zero on axis.
+In order to get an evaluation of :math:`E_l^{m=0}` on axis one can use the same approach as for :math:`B_r^{m=1}`.
+Since we have already shown that :math:`E_{\theta}^{m=0}` is zero on axis, we have the following relation which is demonstrated using
+similar arguments as Eq. :eq:`derivative_limit`:
+
+.. math::
+   \lim_{r\to 0}\frac{1}{r}\frac{\partial rB_{\theta}^{m=0}}{\partial r} = \frac{4B_{\theta}^{m=0}(dr/2)}{dr}
+
+Introducing this result in the standard FDTD expression of :math:`E_l` we get:
+
+.. math::
+   E_{l}^{m=0,n+1}[i,2] = E_{l}^{m=0,n}[i,2] + dt\left(\frac{4}{dr}B_{\theta}^{m=0}[i,3]-J_{l}^{m=0}[i,2]\right)
+
+Again, the :math:`n` indice indicates the time step here.
+
+:math:`B_l^{m=0}` if independant of :math:`\theta`. If we assume it is differentiable at :math:`r=0` then its derivative along math:`r` is necessary zero
+on axis. From this we get:
+
+.. math::
+   B_{l}^{m=0}[2]=B_{l}^{m=0}[3]
 
