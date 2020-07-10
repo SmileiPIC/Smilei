@@ -472,6 +472,9 @@ public:
             return nargs;
         }
     }
+    
+    //! Finds if there is a species with a given name
+    static bool isSpecies( std::string name );
 };
 
 #endif

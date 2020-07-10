@@ -23,7 +23,7 @@ compile:
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs_sdmd"
+    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs"
 
 makerun1D:
   stage: makerun
@@ -74,7 +74,7 @@ makerunAM:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -l "/sps2/gitlab-runner/logs_sdmd"
+    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -l "/sps2/gitlab-runner/logs"
 
 makerunV:
   stage: makerun
@@ -104,7 +104,7 @@ use_picsar:
   stage: use_picsar
   only:
     - develop
-    - vecto2D_new_currentsAndDensity
+    - merge_sdmd_dev
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

@@ -184,7 +184,6 @@ public :
     void runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow );
     void initAllDiags( Params &params, SmileiMPI *smpi );
     void closeAllDiags( SmileiMPI *smpi );
-    void openAllDiags( Params &params, SmileiMPI *smpi );
     
     //! Check if rho is null (MPI & patch sync)
     bool isRhoNull( SmileiMPI *smpi );

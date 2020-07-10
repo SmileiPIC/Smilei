@@ -54,25 +54,16 @@ DiagnosticScalar::~DiagnosticScalar()
 } // END DiagnosticScalar::#DiagnosticScalar
 
 
-void DiagnosticScalar::openFile( Params &params, SmileiMPI *smpi, bool newfile )
+void DiagnosticScalar::openFile( Params &params, SmileiMPI *smpi )
 {
-    if( !smpi->isMaster() ) {
+    if( !smpi->isMaster() || fout.is_open() ) {
         return;
     }
     
-    if( fout.is_open() ) {
-        return;
-    }
-    
-    //open file scalars.txt
-    if( newfile ) {
-        fout.open( "scalars.txt" );
-    } else {
-        fout.open( "scalars.txt", std::ofstream::app );
-    }
+    fout.open( "scalars.txt" );
     
     if( !fout.is_open() ) {
-        ERROR( "Can't open scalar file" );
+        ERROR( "Can't open scalar.txt file" );
     }
     
 } // END openFile

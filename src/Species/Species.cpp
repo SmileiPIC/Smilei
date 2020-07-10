@@ -68,6 +68,8 @@ Species::Species( Params &params, Patch *patch ) :
     particles_per_cell_profile_( NULL ),
     max_charge_( 0. ),
     particles( &particles_sorted[0] ),
+    file_position_npart_( 0 ),
+    file_momentum_npart_( 0 ),
     position_initialization_array_( NULL ),
     momentum_initialization_array_( NULL ),
     n_numpy_particles_( 0 ),

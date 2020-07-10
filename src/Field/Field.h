@@ -39,32 +39,38 @@ public:
     //! Constructor for Field: with no input argument
     Field()
     {
+        data_ = NULL;
+        globalDims_ = 0;
     };
     
     //! Constructor for Field: with the Field dimensions as input argument
     Field( std::vector<unsigned int> dims )
     {
+        data_ = NULL;
     };
     //! Constructor, isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal )
     {
+        data_ = NULL;
     };
     
     //! Constructor for Field: with the Field dimensions and dump file name as input argument
     Field( std::vector<unsigned int> dims, std::string name_in ) : name( name_in )
     {
-    } ;
+        data_ = NULL;
+    };
     
     //! Constructor for Field: isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name( name_in )
     {
-    } ;
+        data_ = NULL;
+    };
     
     //! Destructor for Field
     virtual ~Field()
     {
         ;
-    } ;
+    };
     
     //! Virtual method used to allocate Field
     virtual void allocateDims() = 0;

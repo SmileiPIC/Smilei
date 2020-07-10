@@ -10,15 +10,15 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     Diagnostic( &oPMD, "DiagFields", ndiag )
 {
     //MESSAGE("Starting diag field creation " );
-    fileId_ = 0;
-    data_group_id = 0;
-    tmp_dset_id = 0;
+    tmp_dset_ = NULL;
     diag_n = ndiag;
     
-    filespace_firstwrite = 0;
-    memspace_firstwrite = 0;
-    filespace_reread = 0;
-    memspace_reread = 0;
+    filespace_firstwrite = NULL;
+    memspace_firstwrite = NULL;
+    filespace_reread = NULL;
+    memspace_reread = NULL;
+    filespace = NULL;
+    memspace = NULL;
     
     // Extract the time_average parameter
     time_average = 1;
@@ -164,11 +164,6 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     // Copy the total number of patches
     tot_number_of_patches = params.tot_number_of_patches;
     
-    // Prepare the property list for HDF5 output
-    write_plist = H5Pcreate( H5P_DATASET_XFER );
-    H5Pset_dxpl_mpio( write_plist, H5FD_MPIO_COLLECTIVE );
-    dcreate = H5Pcreate( H5P_DATASET_CREATE );
-    
     // Prepare some openPMD parameters
     field_type.resize( fields_names.size() );
     for( unsigned int ifield=0; ifield<fields_names.size(); ifield++ ) {
@@ -190,9 +185,25 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
 
 DiagnosticFields::~DiagnosticFields()
 {
-    H5Pclose( write_plist );
-    H5Pclose( dcreate );
-    
+    closeFile();
+    if( filespace_firstwrite ) {
+        delete filespace_firstwrite;
+    }
+    if( memspace_firstwrite ) {
+        delete memspace_firstwrite;
+    }
+    if( filespace_reread ) {
+        delete filespace_reread;
+    }
+    if( memspace_reread ) {
+        delete memspace_reread;
+    }
+    if( filespace ) {
+        delete filespace;
+    }
+    if( memspace ) {
+        delete memspace;
+    }
     delete timeSelection;
     delete flush_timeSelection;
 }
@@ -215,68 +226,41 @@ bool DiagnosticFields::hasField( string field_name, vector<string> fieldsToDump 
     return hasfield;
 }
 
-void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi, bool newfile )
+void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi )
 {
-    if( fileId_>0 ) {
+    if( file_ ) {
         return;
     }
     
-    if( newfile ) {
-        // Create file
-        hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
-        H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
-        fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid );
-        H5Pclose( pid );
-        
-        H5::attr( fileId_, "name", diag_name_ );
-        
-        // Attributes for openPMD
-        openPMD_->writeRootAttributes( fileId_, "", "no_particles" );
-        
-        // Make main "data" group where everything will be stored (required by openPMD)
-        data_group_id = H5::group( fileId_, "data" );
-    } else {
-        // Open the existing file
-        hid_t pid = H5Pcreate( H5P_FILE_ACCESS );
-        H5Pset_fapl_mpio( pid, MPI_COMM_WORLD, MPI_INFO_NULL );
-        fileId_ = H5Fopen( filename.c_str(), H5F_ACC_RDWR, pid );
-        H5Pclose( pid );
-        data_group_id = H5Gopen( fileId_, "data", H5P_DEFAULT );
-    }
+    // Create file
+    file_ = new H5Write( filename, true );
+    
+    file_->attr( "name", diag_name_ );
+    
+    // Attributes for openPMD
+    openPMD_->writeRootAttributes( *file_, "", "no_particles" );
+    
+    // Make main "data" group where everything will be stored (required by openPMD)
+    data_group_ = new H5Write( file_, "data" );
+    
+    file_->flush();
 }
 
 void DiagnosticFields::closeFile()
 {
-    if( filespace_firstwrite>0 ) {
-        H5Sclose( filespace_firstwrite );
-    }
-    if( memspace_firstwrite >0 ) {
-        H5Sclose( memspace_firstwrite );
-    }
-    if( filespace_reread    >0 ) {
-        H5Sclose( filespace_reread );
-    }
-    if( memspace_reread     >0 ) {
-        H5Sclose( memspace_reread );
-    }
-    if( filespace           >0 ) {
-        H5Sclose( filespace );
-    }
-    if( memspace            >0 ) {
-        H5Sclose( memspace );
-    }
-    if( tmp_dset_id         >0 ) {
-        H5Dclose( tmp_dset_id );
-    }
     
-    if( data_group_id>0 ) {
-        H5Gclose( data_group_id );
+    if( tmp_dset_ ) {
+        delete tmp_dset_;
+        tmp_dset_ = NULL;
     }
-    data_group_id = 0;
-    if( fileId_>0 ) {
-        H5Fclose( fileId_ );
+    if( data_group_ ) {
+        delete data_group_;
+        data_group_ = NULL;
     }
-    fileId_ = 0;
+    if( file_ ) {
+        delete file_;
+        file_ = NULL;
+    }
 }
 
 
@@ -284,8 +268,7 @@ void DiagnosticFields::closeFile()
 void DiagnosticFields::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
 {
     // create the file
-    openFile( params, smpi, true );
-    H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+    openFile( params, smpi );
 }
 
 bool DiagnosticFields::prepare( int itime )
@@ -330,23 +313,19 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
         ostringstream name_t;
         name_t.str( "" );
         name_t << setfill( '0' ) << setw( 10 ) << itime;
-        status = H5Lexists( data_group_id, name_t.str().c_str(), H5P_DEFAULT );
-        if( status==0 ) {
-            iteration_group_id = H5::group( data_group_id, name_t.str().c_str() );
+        status = data_group_->has( name_t.str() );
+        if( ! status ) {
+            iteration_group_ = new H5Write( data_group_, name_t.str() );
+            // Add openPMD attributes ( "basePath" )
+            openPMD_->writeBasePathAttributes( *iteration_group_, itime );
+            // Add openPMD attributes ( "meshesPath" )
+            openPMD_->writeMeshesAttributes( *iteration_group_ );
         }
-        // Warning if file unreachable
-        if( status < 0 ) {
-            WARNING( "Fields diagnostics could not write" );
-        }
-        // Add openPMD attributes ( "basePath" )
-        openPMD_->writeBasePathAttributes( iteration_group_id, itime );
-        // Add openPMD attributes ( "meshesPath" )
-        openPMD_->writeMeshesAttributes( iteration_group_id );
     }
     #pragma omp barrier
     
     // Do not output diag if this iteration has already been written or if problem with file
-    if( status != 0 ) {
+    if( status ) {
         return;
     }
     
@@ -364,22 +343,15 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
         
         #pragma omp master
         {
-            // Create field dataset in HDF5
-            hid_t dset_id  = H5Dcreate( iteration_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, dcreate, H5P_DEFAULT );
-            
             // Write
-            writeField( dset_id, itime );
-            
+            H5Write dset = writeField( iteration_group_, fields_names[ifield], itime );
             // Attributes for openPMD
-            openPMD_->writeFieldAttributes( dset_id, subgrid_start_, subgrid_step_ );
-            openPMD_->writeRecordAttributes( dset_id, field_type[ifield] );
-            openPMD_->writeFieldRecordAttributes( dset_id );
-            openPMD_->writeComponentAttributes( dset_id, field_type[ifield] );
-            
-            // Close dataset
-            H5Dclose( dset_id );
+            openPMD_->writeFieldAttributes( dset, subgrid_start_, subgrid_step_ );
+            openPMD_->writeRecordAttributes( dset, field_type[ifield] );
+            openPMD_->writeFieldRecordAttributes( dset );
+            openPMD_->writeComponentAttributes( dset, field_type[ifield] );
         }
-        #pragma omp barrier
+        #pragma omp barrier 
 
     }
     
@@ -387,15 +359,14 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
     {
         // write x_moved
         double x_moved = simWindow ? simWindow->getXmoved() : 0.;
-        H5::attr( iteration_group_id, "x_moved", x_moved );
-        
-        H5Gclose( iteration_group_id );
-        if( tmp_dset_id>0 ) {
-            H5Dclose( tmp_dset_id );
+        iteration_group_->attr( "x_moved", x_moved );
+        delete iteration_group_;
+        if( tmp_dset_ ) {
+            delete tmp_dset_;
         }
-        tmp_dset_id=0;
+        tmp_dset_ = NULL;
         if( flush_timeSelection->theTimeIsNow( itime ) ) {
-            H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
+            file_->flush();
         }
     }
     #pragma omp barrier
