@@ -365,16 +365,17 @@ def RUN_LLR(command, dir):
 			+"unset MODULEPATH;\n"
 			+"module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles_el7\n"
 			+"module load compilers/icc/17.4.196\n"
-			+"module load python/2.7.9\n"
-			+"module load mpi/openmpi/1.6.5-ib-icc\n"
-			+"module load hdf5/1.8.19-icc-omp1.6.5\n"
-			+"module load h5py/hdf5_1.8.19-icc-omp1.6.5-py2.7.9\n"
+			+"module load mpi/openmpi/2.1.6-ib-icc\n"
+			+"module load hdf5/1.8.19-icc-omp2.1.6\n"
+			+"module load python/3.7.0\n"
+			+"module load h5py/hdf5_1.8.19-icc-omp2.1.6-py3.7.0\n"
+			+"module load mpi4py/omp2.1.6-ib-icc_py3.7.0\n"
 			+"module load compilers/gcc/4.9.2\n"
 			+"export OMP_NUM_THREADS="+str(OMP)+" \n"
 			+"export OMP_SCHEDULE=DYNAMIC \n"
 			+"export KMP_AFFINITY=verbose \n"
 			+"export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n"
-			+"module load fftw/3.3.7-opm-1.6.5-icc-17 \n"
+			+"module load fftw/3.3.8-omp-2.1.6-icc-17 \n"
 			+"export LIBPXR=/home/llr/galop/derouil/applications/picsar/lib \n"
 			+"export LD_LIBRARY_PATH=$LIBPXR:$LD_LIBRARY_PATH \n"
 			+"ulimit -s unlimited \n"
@@ -486,7 +487,7 @@ if LLR in HOSTNAME :
 	COMPILE_COMMAND = str(MAKE)+' -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN)+" -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(OMP) + " -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_LLR
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
