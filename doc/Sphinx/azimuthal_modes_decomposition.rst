@@ -502,3 +502,25 @@ on axis (derivative of a pair function is zero at :math:`x=0` ). From this we ge
 .. math::
    B_{l}^{m=0}[2]=B_{l}^{m=0}[3]
 
+Below axis
+""""""""""""""""""""""""""""
+
+Fields "below" axis are primal fields data with indice :math:`j<2` and dual fields with indice :math:`j<3`.
+These fields are not physical in the sense that they do not contribute to the reconstruction of any physical field in real space and are not obtained by solving Maxwell's equations.
+Nevertheless, it is numerically convenient to give them a value in order to facilitate field interpolation for macro-particles near axis.
+This is already what is done for dual fields in :math:`r` which cancel on axis for instance.
+We extend this logic to primal fields in :math:`r`:
+
+.. math::
+
+   E_{l}^{m=0}[1] = E_{l}^{m=0}[3]
+
+   E_{l}^{m>0}[1] = -E_{l}^{m>0}[3]
+
+   E_{\theta}^{m\neq1}[1] = -E_{\theta}^{m\neq1}[3]
+
+   E_{\theta}^{m=1}[1] = E_{\theta}^{m=1}[3]
+
+   B_{r}^{m\neq1}[1] = -B_{r}^{m\neq1}[3]
+
+   B_{r}^{m=1}[1] = B_{r}^{m=1}[3]
