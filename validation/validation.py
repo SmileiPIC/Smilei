@@ -487,6 +487,7 @@ if LLR in HOSTNAME :
 	COMPILE_COMMAND = str(MAKE)+' -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
+	#RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(OMP) + " -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(OMP) + " -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_LLR
 elif POINCARE in HOSTNAME :
