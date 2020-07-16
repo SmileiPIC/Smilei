@@ -496,8 +496,8 @@ Introducing this result in the standard FDTD expression of :math:`E_l` we get:
 
 Again, the :math:`n` indice indicates the time step here.
 
-:math:`B_l^{m=0}` if independant of :math:`\theta`. If we assume it is differentiable at :math:`r=0` then its derivative along math:`r` is necessary zero
-on axis. From this we get:
+:math:`B_l^{m=0}` is independant of :math:`\theta`. If we assume it is differentiable at :math:`r=0` then its derivative along :math:`r` is zero
+on axis (derivative of a pair function is zero at :math:`x=0` ). From this we get:
 
 .. math::
    B_{l}^{m=0}[2]=B_{l}^{m=0}[3]
