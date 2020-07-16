@@ -365,7 +365,7 @@ void VectorPatch::dynamics( Params &params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags );
                     }
-                } // end if condition on envelope dynamics
+                } // end if condition on vectorization
             } // end if condition on species
         } // end loop on species
         //MESSAGE("species dynamics");
