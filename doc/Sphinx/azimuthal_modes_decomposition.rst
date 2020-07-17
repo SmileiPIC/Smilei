@@ -378,7 +378,7 @@ we can write the previous equations for all modes :math:`m` as follows:
    \tilde{E_r}^m=mi\tilde{E_{\theta}}^m
 
 We have already established in the previuos section that the modes :math:`m=0` must cancel on axis and we are concerned only about :math:`m>0`.
-Equations :eq:`transverse_on_axis` can have a non zero solution only for :math:`m=1`.
+Equations :eq:`transverse_on_axis` can have a non zero solution only for :math:`m=1` and is also valid for the magnetic field.
 We therefore conclude that all modes must cancel on axis except for :math:`m=1`.
 
 .. math::
@@ -390,7 +390,7 @@ We therefore conclude that all modes must cancel on axis except for :math:`m=1`.
 
    B_{\theta}^{m>1}[2] = -B_{\theta}^{m>1}[3]
 
-Let's now write the continuity equation for mode :math:`m=1`:
+Let's now write the Gauss law for mode :math:`m=1`:
 
 .. math::
    div(\mathbf{\tilde{E}^{m=1}})=\tilde{\rho}^{m=1}
@@ -524,3 +524,13 @@ We extend this logic to primal fields in :math:`r`:
    B_{r}^{m\neq1}[1] = -B_{r}^{m\neq1}[3]
 
    B_{r}^{m=1}[1] = B_{r}^{m=1}[3]
+
+Currents near axis
+"""""""""""""""""""""
+
+A specific treatment must be applied to charge and current densities near axis because the projector deposits charge and current "below" axis.
+Quantities below axis must be brought back in the "physical" terms on and above axis.
+
+Using the continuity equation instead of Gauss law for transverse current of mode :math:`m=1` on axis, we can derive the exact same boundary conditions
+on axis for current density as for the electric field.
+
