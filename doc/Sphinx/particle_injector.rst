@@ -30,6 +30,18 @@ Recommendation
   a neutral plasma. To strengthen neutrality, species may be created at
   the same positions.
 
+* If the particle momentum is drawn from a Maxwellian, we recommend to use a random
+  positionning instead of the regular one.
+  Regular positionning may induce numerical effects such as loss of charge and spurious field near the boundary.
+  The reason is explained in the following figure.
+  The regular positionning works when injecting a drifting cold plasma with a drift velocity
+  sufficiently high to let the particles entering the simulation domain.
+
+.. _fig_particle_injector:
+
+.. figure:: _static/figures/particle_injector_regular_random.png
+    :width: 100%
+
 ----
 
 Implementation
