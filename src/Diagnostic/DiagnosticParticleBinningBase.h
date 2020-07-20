@@ -25,7 +25,7 @@ public :
     //! Default destructor
     ~DiagnosticParticleBinningBase() override;
     
-    virtual void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
+    virtual void openFile( Params &params, SmileiMPI *smpi ) override;
     
     void closeFile() override;
     

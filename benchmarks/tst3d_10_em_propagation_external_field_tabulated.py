@@ -1,6 +1,6 @@
 import math
 from numpy import exp, sqrt, arctan, vectorize, real, sin, cos, arctan, zeros_like, arange, meshgrid, linspace
-from scipy import integrate,zeros_like 
+from scipy import integrate
 from math import log
 import h5py
 

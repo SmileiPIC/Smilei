@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------
 import math
 import cmath
-from numpy import exp, sqrt, arctan, vectorize, real
+from numpy import exp, sqrt, arctan, vectorize, real, zeros_like
 from math import log
 
 dx = 0.125
@@ -138,15 +138,15 @@ def time_gaussian(fwhm, center, order=2):
     return f
 
 def time_sin2(fwhm, center):
-    import scipy
+    import numpy
     import math
     slope1=fwhm
     slope2=fwhm
     start=center-fwhm
     def f(t):
-        w = scipy.zeros_like(t)
-        w[t < start+slope1+slope2] = scipy.cos(0.5*math.pi*(t[t < start+slope1+slope2]-start-slope1)/slope2)**2
-        w[t < start+slope1]        = scipy.sin(0.5*math.pi*(t[t < start+slope1]-start)/slope1)**2 
+        w = zeros_like(t)
+        w[t < start+slope1+slope2] = numpy.cos(0.5*math.pi*(t[t < start+slope1+slope2]-start-slope1)/slope2)**2
+        w[t < start+slope1]        = numpy.sin(0.5*math.pi*(t[t < start+slope1]-start)/slope1)**2
         w[t<start] = 0.
         return w
     return f

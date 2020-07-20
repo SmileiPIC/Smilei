@@ -514,7 +514,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     // --------------------------------
 
     // Set the file region where each proc will write
-    hsize_t dims[ndim], start[ndim], count[ndim];
+    vector<hsize_t> dims(ndim), start(ndim), count(ndim);
     if( _2D ) {
         unsigned int MPI_omega_offset;
         MPI_Scan( &n_omega_local, &MPI_omega_offset, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD );
@@ -536,58 +536,30 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         start[2] = 0;
         count[2] = n_omega  ;
     }
-
+    
     // Create File with parallel access
-    hid_t faid = H5Pcreate( H5P_FILE_ACCESS );
-    H5Pset_fapl_mpio( faid, MPI_COMM_WORLD, MPI_INFO_NULL );
-    hid_t fid  = H5Fcreate( file.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, faid );
-    H5Pclose( faid );
-
+    H5Write f( file, true );
+    
     // Store "omega" dataset
-    hsize_t len = n_omega, len_local = n_omega_local;
-    hid_t filespace = H5Screate_simple( 1, &len, NULL );
-    hid_t memspace  = H5Screate_simple( 1, &len_local, NULL );
-    hid_t dcid = H5Pcreate( H5P_DATASET_CREATE );
-    hid_t did = H5Dcreate( fid, "omega", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, dcid, H5P_DEFAULT );
-    if( _2D && n_omega_local > 0 ) {
-        H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &start[1], NULL, &count[1], NULL );
-    } else if( !_2D && MPI_rank==0 ) { // Only rank 0 writes in 3D
-        H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &start[2], NULL, &count[2], NULL );
-    } else {
-        H5Sselect_none( filespace );
-        H5Sselect_none( memspace );
-    }
-    hid_t transfer = H5Pcreate( H5P_DATASET_XFER );
-    H5Pset_dxpl_mpio( transfer, H5FD_MPIO_COLLECTIVE );
-    H5Dwrite( did, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &omega[0] );
-    H5Sclose( filespace );
-    H5Sclose( memspace );
-    H5Dclose( did );
-
+    hsize_t npoints = (!_2D && MPI_rank!=0) ? 0 : n_omega_local; // Only rank 0 writes in 3D
+    H5Space filespace1( n_omega, start[ndim-1], npoints );
+    H5Space memspace1( n_omega_local, 0, npoints );
+    f.array( "omega", omega[0], &filespace1, &memspace1 );
+    
     // Store the magnitude and the phase
-    filespace = H5Screate_simple( ndim, dims, NULL );
-    H5Sselect_hyperslab( filespace, H5S_SELECT_SET, start, NULL, count, NULL );
-    memspace  = H5Screate_simple( ndim, count, NULL );
+    H5Space filespace2( dims, start, count );
+    H5Space memspace2( count );
     for( unsigned int i=0; i<nprofiles; i++ ) {
         // Magnitude
         ostringstream name( "" );
         name << "magnitude" << profiles_n[i];
-        did = H5Dcreate( fid, name.str().c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, dcid, H5P_DEFAULT );
-        H5Dwrite( did, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &( magnitude[i][0] ) );
-        H5Dclose( did );
+        f.array( name.str(), magnitude[i][0], &filespace2, &memspace2 );
         // Phase
         name.str( "" );
         name << "phase" << profiles_n[i];
-        did = H5Dcreate( fid, name.str().c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, dcid, H5P_DEFAULT );
-        H5Dwrite( did, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &( phase[i][0] ) );
-        H5Dclose( did );
+        f.array( name.str(), phase[i][0], &filespace2, &memspace2 );
     }
-    H5Sclose( filespace );
-    H5Sclose( memspace );
-    H5Pclose( dcid );
-    H5Pclose( transfer );
-    H5Fclose( fid );
-
+    
     Py_DECREF( fft );
     Py_DECREF( ifft );
     Py_DECREF( fft2 );

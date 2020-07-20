@@ -20,11 +20,11 @@ public:
     void getField( Patch *patch, unsigned int ) override;
     template<typename T, typename F>  void getField( Patch *patch, unsigned int, F& out_data );
     
-    void writeField( hid_t, int ) override;
-    template<typename F> void writeField( hid_t dset_id, int itime, F& linearized_data, F& read_data, F& final_data );
+    H5Write writeField( H5Write*, std::string, int ) override;
+    template<typename F> H5Write writeField( H5Write*, std::string, int itime, F& linearized_data, F& read_data, F& final_data );
 
 private:
-
+    hsize_t ifile_size;
     unsigned int rewrite_npatch, rewrite_xmin, rewrite_ymin, rewrite_npatchx, rewrite_npatchy;
     std::vector<std::vector<unsigned int> > rewrite_patch;
     unsigned int rewrite_size[2], rewrite_start_in_file[2];

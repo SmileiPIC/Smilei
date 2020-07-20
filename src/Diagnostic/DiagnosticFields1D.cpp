@@ -28,11 +28,9 @@ DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI *smpi, VectorP
         0, global_size,
         istart, istart_in_file, nsteps
     );
-    hsize_t file_size = nsteps;
+    file_size = nsteps;
     one_patch_buffer_size = nsteps;
     total_dataset_size = nsteps;
-    filespace = H5Screate_simple( 1, &file_size, NULL );
-    memspace  = H5Screate_simple( 1, &file_size, NULL );
 }
 
 DiagnosticFields1D::~DiagnosticFields1D()
@@ -61,25 +59,9 @@ void DiagnosticFields1D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
         istart_in_MPI, MPI_start_in_file, nsteps
     );
     
-    if( nsteps > 0 ) {
-        data.resize( nsteps );
-        
-        // Define offset and size for HDF5 file
-        hsize_t offset[1], block[1], count[1];
-        offset[0] = MPI_start_in_file;
-        block[0] = nsteps;
-        count[0] = 1;
-        // Select portion of the file where this MPI will write to
-        H5Sselect_hyperslab( filespace, H5S_SELECT_SET, offset, NULL, count, block );
-        
-        // define space in memory
-        offset[0] = 0;
-        H5Sselect_hyperslab( memspace, H5S_SELECT_SET, offset, NULL, count, block );
-    } else {
-        data.resize( 0 );
-        H5Sselect_none( filespace );
-        H5Sselect_none( memspace );
-    }
+    data.resize( nsteps );
+    filespace = new H5Space( file_size, MPI_start_in_file, nsteps );
+    memspace = new H5Space( file_size, 0, nsteps );
 }
 
 
@@ -127,10 +109,8 @@ void DiagnosticFields1D::getField( Patch *patch, unsigned int ifield )
 
 
 // Write current buffer to file
-void DiagnosticFields1D::writeField( hid_t dset_id, int itime )
+H5Write DiagnosticFields1D::writeField( H5Write * loc, std::string name, int itime )
 {
-
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &( data[0] ) );
-    
+    return loc->array( name, data[0], filespace, memspace );
 }
 

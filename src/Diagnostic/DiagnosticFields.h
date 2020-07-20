@@ -11,7 +11,7 @@ public :
     DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int, OpenPMDparams & );
     ~DiagnosticFields() override;
     
-    virtual void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
+    virtual void openFile( Params &params, SmileiMPI *smpi ) override;
     
     void closeFile() override;
     
@@ -23,7 +23,7 @@ public :
     
     virtual void run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers ) override;
     
-    virtual void writeField( hid_t, int ) = 0;
+    virtual H5Write writeField( H5Write*, std::string, int ) = 0;
     
     virtual bool needsRhoJs( int itime ) override;
     
@@ -66,9 +66,6 @@ protected :
     //! Subgrid requested
     std::vector<unsigned int> subgrid_start_, subgrid_stop_, subgrid_step_;
     
-    //! Property list for collective dataset write, set for // IO.
-    hid_t write_plist;
-    
     //! Number of cells to skip in each direction
     std::vector<unsigned int> patch_offset_in_grid;
     //! Number of cells in each direction
@@ -79,7 +76,8 @@ protected :
     //! 1st patch index of vecPatches
     unsigned int refHindex;
     
-    hid_t data_group_id, iteration_group_id, filespace, memspace;
+    H5Write *data_group_, *iteration_group_;
+    H5Space *filespace, *memspace;
     
     //! Total number of patches
     int tot_number_of_patches;
@@ -88,18 +86,17 @@ protected :
     virtual void getField( Patch *patch, unsigned int ) = 0;
     
     //! Temporary dataset that is used for folding the 2D hilbert curve
-    hid_t tmp_dset_id;
+    H5Write * tmp_dset_;
     
     //! Variable to store the status of a dataset (whether it exists or not)
-    htri_t status;
+    bool status;
     
     //! Tools for re-reading and re-writing the file in a folded pattern
+    hsize_t file_size, chunk_size_firstwrite;
+    std::vector<hsize_t> chunk_size;
     unsigned int one_patch_buffer_size, total_dataset_size;
-    hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;
+    H5Space *filespace_reread, *filespace_firstwrite, *memspace_reread, *memspace_firstwrite;
     std::vector<double> data_reread, data_rewrite;
-    
-    //! Dataset creation property list
-    hid_t dcreate, dcreate_firstwrite;
     
     //! True if this diagnostic requires the pre-calculation of the particle J & Rho
     bool hasRhoJs;

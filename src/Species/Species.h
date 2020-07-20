@@ -143,7 +143,11 @@ public:
     Particles *particles;
     Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
-
+    
+    //! If initialization from file, this contains the number of particles. Otherwise 0
+    unsigned int file_position_npart_;
+    unsigned int file_momentum_npart_;
+    
     //! Pointer toward position array
     double *position_initialization_array_;
     //! Pointer toward regular number of particles array
