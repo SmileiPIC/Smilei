@@ -114,7 +114,7 @@ void ParticleCreator::associate( Species * species)
 //! \param n_space_to_create: space area concerned by the particle creation
 //! \param params: general parameters
 // ---------------------------------------------------------------------------------------------------------------------
-int ParticleCreator::create( struct SubSpace sub_space_,
+int ParticleCreator::create( struct SubSpace sub_space,
                              Params &params,
                              Patch *patch,
                              int new_cell_idx,
@@ -126,7 +126,7 @@ int ParticleCreator::create( struct SubSpace sub_space_,
     
     std::vector<unsigned int> n_space_to_create( 3, 0 );
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
-        n_space_to_create[idim] = sub_space_.box_size_[idim];
+        n_space_to_create[idim] = sub_space.box_size_[idim];
     }
     
     // Create particles_ in a space starting at cell_position
@@ -147,8 +147,8 @@ int ParticleCreator::create( struct SubSpace sub_space_,
             for( ijk[2]=0; ijk[2]<n_space_to_create[2]; ijk[2]++ ) {
                 for( unsigned int idim=0 ; idim<species_->nDim_field ; idim++ ) {
                     ( *xyz[idim] )( ijk[0], ijk[1], ijk[2] ) = cell_position[idim] + ( ijk[idim]+0.5 )*species_->cell_length[idim];
+                    ( *xyz[idim] )( ijk[0], ijk[1], ijk[2] ) += sub_space.cell_index_[idim]*species_->cell_length[idim];
                 }
-                ( *xyz[0] )( ijk[0], ijk[1], ijk[2] ) += new_cell_idx*species_->cell_length[0];
             }
         }
     }

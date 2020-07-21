@@ -577,7 +577,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             // Parameters that depend on the patch location
             if ( patch->isXmin() ) {
                 
-                init_space.cell_index_[0] = 1;
+                init_space.cell_index_[0] = 0;
                 init_space.box_size_[0]   = 1;
                 
                 //index = (new_cell_idx)/params.clrw;
@@ -586,6 +586,11 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 init_space.cell_index_[0] = params.n_space[0]-1;
                 init_space.box_size_[0]   = 1;
                 //index = (new_cell_idx)/params.clrw;
+            }
+            
+            if ( patch->isYmin() ) {
+                init_space.cell_index_[1] = 0;
+                init_space.box_size_[1]   = 1;
             }
 
             // Creation of the new particles for all injectors
