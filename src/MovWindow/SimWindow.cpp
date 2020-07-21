@@ -332,7 +332,17 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             ParticleCreator particle_creator;
                             particle_creator.associate(mypatch->vecSpecies[ispec]);
-                            particle_creator.create( params.n_space, params, mypatch, 0, 0 );
+                            
+                            // Aera for particle creation
+                            struct SubSpace init_space;
+                            init_space.cell_index_[0] = 0;
+                            init_space.cell_index_[1] = 0;
+                            init_space.cell_index_[2] = 0;
+                            init_space.box_size_[0]   = params.n_space[0];
+                            init_space.box_size_[1]   = params.n_space[1];
+                            init_space.box_size_[2]   = params.n_space[2];
+                            
+                            particle_creator.create( init_space, params, mypatch, 0, 0 );
                             
                             // mypatch->vecSpecies[ispec]->ParticleCreator( params.n_space, params, mypatch, 0 );
 
@@ -672,7 +682,7 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
 {
     ElectroMagnAM * region_fields = static_cast<ElectroMagnAM *>( region.patch_->EMfields );
    
-    for (unsigned int imode = 0; imode < nmodes; imode++){ 
+    for (unsigned int imode = 0; imode < nmodes; imode++){
         region.patch_->exchangeField_movewin( region_fields->El_[imode], params.n_space[0] );
         region.patch_->exchangeField_movewin( region_fields->Er_[imode], params.n_space[0] );
         region.patch_->exchangeField_movewin( region_fields->Et_[imode], params.n_space[0] );

@@ -929,7 +929,17 @@ public:
             // Particle creator object
             ParticleCreator particle_creator;
             particle_creator.associate(this_species);
-            particle_creator.create( params.n_space, params, patch, 0, 0 );
+            
+            // Aera for particler creation
+            struct SubSpace init_space;
+            init_space.cell_index_[0] = 0;
+            init_space.cell_index_[1] = 0;
+            init_space.cell_index_[2] = 0;
+            init_space.box_size_[0]   = params.n_space[0];
+            init_space.box_size_[1]   = params.n_space[1];
+            init_space.box_size_[2]   = params.n_space[2];
+            
+            particle_creator.create( init_space, params, patch, 0, 0 );
         } else {
             this_species->particles->initialize( 0, params.nDim_particle );
         }
@@ -1056,9 +1066,21 @@ public:
 
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if( ( !params.restart ) && ( with_particles ) ) {
+            
+            // Aera for particler creation
+            struct SubSpace init_space;
+            init_space.cell_index_[0] = 0;
+            init_space.cell_index_[1] = 0;
+            init_space.cell_index_[2] = 0;
+            init_space.box_size_[0]   = params.n_space[0];
+            init_space.box_size_[1]   = params.n_space[1];
+            init_space.box_size_[2]   = params.n_space[2];
+            
+            // Creation of the particle creator and association to the new species
             ParticleCreator particle_creator;
             particle_creator.associate(new_species);
-            particle_creator.create( params.n_space, params, patch, 0, 0 );
+            particle_creator.create( init_space, params, patch, 0, 0 );
+            
         } else {
             new_species->particles->initialize( 0, ( *species->particles ) );
         }

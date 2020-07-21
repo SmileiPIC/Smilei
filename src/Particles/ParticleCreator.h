@@ -21,6 +21,15 @@
 #include "Field3D.h"
 #include "H5.h"
 
+// Subspace structure used to define an initialization area
+
+struct SubSpace {
+    unsigned int cell_index_[3];
+    unsigned int box_size_[3];
+};
+
+// ParticleCreator class
+
 class ParticleCreator
 {
 public:
@@ -38,11 +47,11 @@ public:
     void associate( Species * species );
     
     //! Creation of the particle properties in the given particle vector `particles`
-    int create( std::vector<unsigned int> n_space_to_create,
-                       Params &params,
-                       Patch *patch,
-                       int new_cell_idx,
-                       unsigned int itime );
+    int create( struct SubSpace n_space_to_create,
+                Params &params,
+                Patch *patch,
+                int new_cell_idx,
+                unsigned int itime );
     
     //! Creation of the particle positions
     static void createPosition( std::string position_initialization,
@@ -75,6 +84,9 @@ public:
     // For all particles in a mesh initialize its charge state
     static void createCharge( Particles * particles, Species * species,
                                        unsigned int nPart, unsigned int iPart, double q );
+    
+    // ___________________________________________________________________
+    // Parameters
     
     //! Pointer the associated particle vector
     Particles * particles_;

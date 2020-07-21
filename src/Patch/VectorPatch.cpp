@@ -323,7 +323,7 @@ void VectorPatch::dynamics( Params &params,
         diag_flag = needsRhoJsNow( itime );
         diag_flag = ( needsRhoJsNow( itime ) || params.is_spectral );
 
-    }    
+    }
 	
     timers.particles.restart();
     ostringstream t;
@@ -547,11 +547,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             // Targeted species and species index
             unsigned int i_species ;
             
-            vector<unsigned int> init_space( 3, 1 );
-            init_space[0] = 1;
-            init_space[1] = params.n_space[1];
-            init_space[2] = params.n_space[2];
-            
             vector<int>  previous_particle_number_per_species(patch->vecSpecies.size(),0);
             vector<unsigned int>  particle_index(patch->particle_injector_vector_.size(),0);
             
@@ -569,13 +564,27 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
 
             // Cell index for the particle creation
             int new_cell_idx = 0;
-
+            
+            // Aera for injection
+            struct SubSpace init_space;
+            init_space.cell_index_[0] = 0;
+            init_space.cell_index_[1] = 0;
+            init_space.cell_index_[2] = 0;
+            init_space.box_size_[0]   = params.n_space[0];
+            init_space.box_size_[1]   = params.n_space[1];
+            init_space.box_size_[2]   = params.n_space[2];
+            
             // Parameters that depend on the patch location
             if ( patch->isXmin() ) {
-                new_cell_idx=0;
+                
+                init_space.cell_index_[0] = 1;
+                init_space.box_size_[0]   = 1;
+                
                 //index = (new_cell_idx)/params.clrw;
             } else if ( patch->isXmax() ) {
-                new_cell_idx=params.n_space[0]-1;
+                
+                init_space.cell_index_[0] = params.n_space[0]-1;
+                init_space.box_size_[0]   = 1;
                 //index = (new_cell_idx)/params.clrw;
             }
 
@@ -871,7 +880,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
             // Per species in global, Attention if output -> Sync / per species fields
             ( *this )( ipatch )->EMfields->computeTotalRhoJ();
         }
-    } 
+    }
     timers.densities.update();
 
     timers.syncDens.restart();
@@ -978,7 +987,7 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
         #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-            if (emAM->isYmin){  
+            if (emAM->isYmin){
                 ( *this )( ipatch )->vecSpecies[0]->Proj->axisBCEnvChi( &( *emAM->Env_Chi_ )( 0 ) );
                 //Also apply BC on axis on species diagnostics
                 if (diag_flag) {
@@ -1035,7 +1044,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                     SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
                     SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJz_, *this, smpi );
                     SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
-                }                   
+                }
             } else {
                 for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
                     SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJl_[imode], *this, smpi );
@@ -1092,7 +1101,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
     timers.syncField.update( params.printNow( itime ) );
     
     
-    if ( (params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true 
+    if ( (params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true
         timers.syncField.restart();
         if( params.is_spectral && params.geometry != "AMcylindrical" ) {
             SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
@@ -1153,7 +1162,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-            // Compute ponderomotive potential Phi=|A|^2/2, |A| and |E| from the envelope 
+            // Compute ponderomotive potential Phi=|A|^2/2, |A| and |E| from the envelope
             ( *this )( ipatch )->EMfields->envelope->computePhiEnvAEnvE( ( *this )( ipatch )->EMfields );
             // Compute gradients of Phi
             ( *this )( ipatch )->EMfields->envelope->computeGradientPhi( ( *this )( ipatch )->EMfields );
@@ -1176,7 +1185,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
-    if ( (!params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true 
+    if ( (!params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true
         if( params.geometry != "AMcylindrical" ) {
             timers.syncField.restart();
             SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
@@ -3694,7 +3703,7 @@ void VectorPatch::saveOldRho( Params &params )
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM* amfield = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields);
-            n = amfield->rho_old_AM_[0]->dims_[0] * amfield->rho_old_AM_[0]->dims_[1]; 
+            n = amfield->rho_old_AM_[0]->dims_[0] * amfield->rho_old_AM_[0]->dims_[1];
             for( unsigned int imode=0 ; imode < params.nmodes ; imode++ ) {
                 rho = amfield->rho_AM_[imode];
                 rhoold = amfield->rho_old_AM_[imode];

@@ -109,12 +109,12 @@ void ParticleCreator::associate( Species * species)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! \brief Creation of the particle properties in the given particle vector `particles`
-//! \param particles : vector of particles
-//! \param species : species object necessary for some properties
-//! \param n_space_to_create
-//! \param params : general parameters
+//! \param particles: vector of particles
+//! \param species: species object necessary for some properties
+//! \param n_space_to_create: space area concerned by the particle creation
+//! \param params: general parameters
 // ---------------------------------------------------------------------------------------------------------------------
-int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
+int ParticleCreator::create( struct SubSpace sub_space_,
                              Params &params,
                              Patch *patch,
                              int new_cell_idx,
@@ -123,6 +123,11 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     
     unsigned int n_existing_particles = particles_->size();
     unsigned int n_new_particles = 0;
+    
+    std::vector<unsigned int> n_space_to_create( 3, 0 );
+    for( unsigned int idim=0 ; idim<3 ; idim++ ) {
+        n_space_to_create[idim] = sub_space_.box_size_[idim];
+    }
     
     // Create particles_ in a space starting at cell_position
     std::vector<double> cell_position( 3, 0 );
