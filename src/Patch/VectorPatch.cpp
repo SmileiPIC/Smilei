@@ -561,9 +561,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             
             // Pointer to the current species
             Species * injector_species;
-
-            // Cell index for the particle creation
-            int new_cell_idx = 0;
             
             // Aera for injection
             struct SubSpace init_space;
@@ -601,7 +598,8 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 particle_injector = patch->particle_injector_vector_[i_injector];
                 
                 if ( (patch->isXmin() && particle_injector->isXmin()) ||
-                     (patch->isXmax() && particle_injector->isXmax()) ) {
+                     (patch->isXmax() && particle_injector->isXmax()) ||
+                     (patch->isYmin() && particle_injector->isYmin())) {
                     
                     // We first get the species id associated to this injector
                     i_species = particle_injector->getSpeciesNumber();
@@ -624,7 +622,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     
                     //particle_index[i_injector] = previous_particle_number_per_species[i_species];
                     // Creation of the particles in local_particles_vector
-                    particle_creator.create( init_space, params, patch, new_cell_idx, itime );
+                    particle_creator.create( init_space, params, patch, itime );
                 }
             }
 

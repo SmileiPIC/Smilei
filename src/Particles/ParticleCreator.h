@@ -50,7 +50,6 @@ public:
     int create( struct SubSpace n_space_to_create,
                 Params &params,
                 Patch *patch,
-                int new_cell_idx,
                 unsigned int itime );
     
     //! Creation of the particle positions

@@ -102,6 +102,18 @@ public:
         return (box_side_ == "xmax");
     }
 
+    //! Return if the injector is from Xmin
+    inline bool isYmin()
+    {
+        return (box_side_ == "ymin");
+    }
+
+    //! Return if the injector is from Xmin
+    inline bool isYmax()
+    {
+        return (box_side_ == "ymax");
+    }
+
 };
 
 #endif

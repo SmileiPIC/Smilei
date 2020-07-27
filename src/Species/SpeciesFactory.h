@@ -939,7 +939,7 @@ public:
             init_space.box_size_[1]   = params.n_space[1];
             init_space.box_size_[2]   = params.n_space[2];
             
-            particle_creator.create( init_space, params, patch, 0, 0 );
+            particle_creator.create( init_space, params, patch, 0 );
         } else {
             this_species->particles->initialize( 0, params.nDim_particle );
         }
@@ -1079,7 +1079,7 @@ public:
             // Creation of the particle creator and association to the new species
             ParticleCreator particle_creator;
             particle_creator.associate(new_species);
-            particle_creator.create( init_space, params, patch, 0, 0 );
+            particle_creator.create( init_space, params, patch, 0 );
             
         } else {
             new_species->particles->initialize( 0, ( *species->particles ) );

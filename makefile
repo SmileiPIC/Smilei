@@ -216,7 +216,7 @@ $(BUILD_DIR)/%.o : %.cpp
 # Link the main program
 $(EXEC): $(OBJS)
 	@echo "Linking $@"
-	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS)
+	$(Q) $(SMILEICXX) -fno-lto $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS)
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Compile the the main program again for test mode

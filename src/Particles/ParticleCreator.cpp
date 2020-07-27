@@ -117,7 +117,6 @@ void ParticleCreator::associate( Species * species)
 int ParticleCreator::create( struct SubSpace sub_space,
                              Params &params,
                              Patch *patch,
-                             int new_cell_idx,
                              unsigned int itime)
 {
     
@@ -142,9 +141,9 @@ int ParticleCreator::create( struct SubSpace sub_space,
     }
     // Create the x,y,z maps where profiles will be evaluated
     std::vector<double> ijk( 3 );
-    for( ijk[0]=0; ijk[0]<n_space_to_create[0]; ijk[0]++ ) {
-        for( ijk[1]=0; ijk[1]<n_space_to_create[1]; ijk[1]++ ) {
-            for( ijk[2]=0; ijk[2]<n_space_to_create[2]; ijk[2]++ ) {
+    for( ijk[0]=0; ijk[0]<sub_space.box_size_[0]; ijk[0]++ ) {
+        for( ijk[1]=0; ijk[1]<sub_space.box_size_[1]; ijk[1]++ ) {
+            for( ijk[2]=0; ijk[2]<sub_space.box_size_[2]; ijk[2]++ ) {
                 for( unsigned int idim=0 ; idim<species_->nDim_field ; idim++ ) {
                     ( *xyz[idim] )( ijk[0], ijk[1], ijk[2] ) = cell_position[idim] + ( ijk[idim]+0.5 )*species_->cell_length[idim];
                     ( *xyz[idim] )( ijk[0], ijk[1], ijk[2] ) += sub_space.cell_index_[idim]*species_->cell_length[idim];
@@ -284,7 +283,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
         double *indexes = new double[species_->nDim_particle];
         for( unsigned int i=0; i<n_space_to_create[0]; i++ ) {
             if(( !n_existing_particles )&&( i%species_->clrw == 0 )&&( initialized_in_species_ )) {
-                species_->particles->first_index[(new_cell_idx+i)/species_->clrw] = iPart;
+                species_->particles->first_index[(sub_space.cell_index_[0]+i)/species_->clrw] = iPart;
             }
             for( unsigned int j=0; j<n_space_to_create[1]; j++ ) {
                 for( unsigned int k=0; k<n_space_to_create[2]; k++ ) {
@@ -292,7 +291,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                     if( density( i, j, k )>0 ) {
                         unsigned int nPart = n_part_in_cell( i, j, k );
                         
-                        indexes[0]=i*species_->cell_length[0]+cell_position[0] + new_cell_idx*species_->cell_length[0];;
+                        indexes[0]=i*species_->cell_length[0]+cell_position[0] + sub_space.cell_index_[0]*species_->cell_length[0];
                         if( species_->nDim_particle > 1 ) {
                             indexes[1]=j*species_->cell_length[1]+cell_position[1];
                             if( species_->nDim_particle > 2 ) {
@@ -320,7 +319,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                 }//k
             }//j
             if((!n_existing_particles)&&( i%species_->clrw == species_->clrw -1 ) &&(initialized_in_species_)) {
-                 species_->particles->last_index[(new_cell_idx+i)/species_->clrw] = iPart;
+                 species_->particles->last_index[(sub_space.cell_index_[0]+i)/species_->clrw] = iPart;
             }
         }//i
         

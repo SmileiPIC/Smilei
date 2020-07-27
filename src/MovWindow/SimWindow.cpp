@@ -342,7 +342,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                             init_space.box_size_[1]   = params.n_space[1];
                             init_space.box_size_[2]   = params.n_space[2];
                             
-                            particle_creator.create( init_space, params, mypatch, 0, 0 );
+                            particle_creator.create( init_space, params, mypatch, 0 );
                             
                             // mypatch->vecSpecies[ispec]->ParticleCreator( params.n_space, params, mypatch, 0 );
 
