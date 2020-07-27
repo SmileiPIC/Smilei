@@ -585,10 +585,17 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 //index = (new_cell_idx)/params.clrw;
             }
             
-            if ( patch->isYmin() ) {
-                init_space.cell_index_[1] = 0;
-                init_space.box_size_[1]   = 1;
+            if (params.nDim_field > 1) {
+                if ( patch->isYmin() ) {
+                    init_space.cell_index_[1] = 0;
+                    init_space.box_size_[1]   = 1;
+                }
+                if ( patch->isYmax() ) {
+                    init_space.cell_index_[1] = params.n_space[1]-1;
+                    init_space.box_size_[1]   = 1;
+                }
             }
+            
 
             // Creation of the new particles for all injectors
             // Create particles as if t0 with ParticleCreator
@@ -597,9 +604,25 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 // Pointer to the current particle injector
                 particle_injector = patch->particle_injector_vector_[i_injector];
                 
+                bool activate_injection = false;
+                
                 if ( (patch->isXmin() && particle_injector->isXmin()) ||
-                     (patch->isXmax() && particle_injector->isXmax()) ||
-                     (patch->isYmin() && particle_injector->isYmin())) {
+                     (patch->isXmax() && particle_injector->isXmax()) ) {
+                         
+                    activate_injection = true;
+                    
+                }
+                    
+                if (params.nDim_field > 1 && !activate_injection) {
+                    if ( patch->isYmin() && particle_injector->isYmin() ) {
+                        activate_injection = true;
+                    }
+                    if ( patch->isYmax() && particle_injector->isYmax() ) {
+                        activate_injection = true;
+                    }
+                }
+                    
+                if (activate_injection) {
                     
                     // We first get the species id associated to this injector
                     i_species = particle_injector->getSpeciesNumber();

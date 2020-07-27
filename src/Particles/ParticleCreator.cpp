@@ -293,7 +293,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                         
                         indexes[0]=i*species_->cell_length[0]+cell_position[0] + sub_space.cell_index_[0]*species_->cell_length[0];
                         if( species_->nDim_particle > 1 ) {
-                            indexes[1]=j*species_->cell_length[1]+cell_position[1];
+                            indexes[1]=j*species_->cell_length[1]+cell_position[1] + sub_space.cell_index_[1]*species_->cell_length[0];
                             if( species_->nDim_particle > 2 ) {
                                 indexes[2]=k*species_->cell_length[2]+cell_position[2];
                             }
