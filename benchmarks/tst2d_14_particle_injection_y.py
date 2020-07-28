@@ -23,13 +23,13 @@ Debye_length = 1. / np.sqrt( n0 / Te + Zi * n0 / Ti )
 # Cell length
 cell_length = [Debye_length*0.5, Debye_length*0.5]
 # Number of patches
-number_of_patches =[2, 16]
+number_of_patches =[16, 4]
 # Cells per patches (patch shape)
-cells_per_patch = [16., 16.]
+cells_per_patch = [8., 32.]
 # Grid length
 grid_length = [0.,0.]
 for i in range(2):
-    grid_length[i] = [8,8][i] * cell_length[i] * cells_per_patch[i]
+    grid_length[i] = number_of_patches[i] * cell_length[i] * cells_per_patch[i]
 # Number of particles per cell
 particles_per_cell = 32
 # Position init
@@ -37,9 +37,16 @@ position_initialization = 'random'
 # Time step
 timestep = 0.95/np.sqrt(1./ cell_length[0]**2 + 1./ cell_length[1]**2 )
 # Total simulation time
-simulation_time = ((1.5 - 0.125)*grid_length[0])/mean_velocity          # duration of the simulation
+simulation_time = ((1.5 - 0.125)*grid_length[1])/mean_velocity
 # Period of output for the diags
 diag_every = int(simulation_time / timestep)
+
+particle_boundary_conditions = [
+    ["periodic", "periodic"],
+    ["remove", "remove"],
+]
+
+field_boundary_conditions = [['periodic'],['silver-muller']]
 
 Main(
     geometry = "2Dcartesian",
@@ -50,10 +57,7 @@ Main(
     #cell_sorting = True,
     timestep = timestep,
     simulation_time = simulation_time,
-    EM_boundary_conditions = [
-        ['silver-muller'],
-        ['periodic'],
-    ],
+    EM_boundary_conditions = field_boundary_conditions,
     random_seed = smilei_mpi_rank,
 )
 
@@ -62,8 +66,8 @@ LoadBalancing(
 )
 
 # Initial plasma shape
-fp = trapezoidal(1., xvacuum=0.        ,xplateau=grid_length[0]/8., yplateau=grid_length[0]/2.)
-fm = trapezoidal(1., xvacuum=7*grid_length[0]/8.,xplateau=grid_length[0])
+fp = trapezoidal(1., yvacuum=0.                 ,yplateau=grid_length[1]/8.)
+fm = trapezoidal(1., yvacuum=7*grid_length[1]/8.,yplateau=grid_length[1])
 
 Species(
 	name = 'pon1',
@@ -75,18 +79,15 @@ Species(
 	mass = 1836.0,
 	charge = 1.0,
 	number_density = fp,
-	mean_velocity = [mean_velocity,0.,0.],
+	mean_velocity = [0,mean_velocity,0.],
 	temperature = [Ti],
 	time_frozen = 0.0,
-	boundary_conditions = [
-		["remove", "remove"],
-		["periodic", "periodic"],
-	],
+	boundary_conditions = particle_boundary_conditions
 )
 
 ParticleInjector(
     species = 'pon1',
-    box_side = 'xmin',
+    box_side = 'ymin',
 )
 
 Species(
@@ -99,17 +100,14 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	number_density = fp,
-	mean_velocity = [mean_velocity,0.,0.],
+	mean_velocity = [0.,mean_velocity,0.],
 	temperature = [Te],
 	time_frozen = 0.0,
-	boundary_conditions = [
-		["remove", "remove"],
-		["periodic", "periodic"],
-	],
+	boundary_conditions = particle_boundary_conditions
 )
 ParticleInjector(
     species = 'eon1',
-    box_side = 'xmin',
+    box_side = 'ymin',
 )
 
 Species(
@@ -122,17 +120,14 @@ Species(
 	mass = 1836.0,
 	charge = 1.0,
 	number_density = fm,
-	mean_velocity = [-mean_velocity,0.,0.],
+	mean_velocity = [0.,-mean_velocity,0.],
 	temperature = [Ti],
 	time_frozen = 0.0,
-	boundary_conditions = [
-		["remove", "remove"],
-		["periodic", "periodic"],
-	],
+	boundary_conditions = particle_boundary_conditions
 )
 ParticleInjector(
     species = 'pon2',
-    box_side = 'xmax',
+    box_side = 'ymax',
 )
 
 Species(
@@ -145,20 +140,30 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	number_density = fm,
-	mean_velocity = [-mean_velocity,0.,0.],
+	mean_velocity = [0.,-mean_velocity,0.],
 	temperature = [Te],
 	time_frozen = 0.0,
-	boundary_conditions = [
-		["remove", "remove"],
-		["periodic", "periodic"],
-	],
+	boundary_conditions = particle_boundary_conditions
 )
 ParticleInjector(
     species = 'eon2',
-    box_side = 'xmax',
+    box_side = 'ymax',
 )
 
 DiagScalar(every=1)
+
+for species in ["eon1","pon1","eon2","pon2"]:
+    DiagParticleBinning(
+        deposited_quantity = "weight",
+        every = diag_every,
+        time_average = 1,
+        species = [species],
+        axes = [
+            ["x", 0, grid_length[0], int(grid_length[0]/cell_length[0])],
+            ["y", 0, grid_length[1], int(grid_length[1]/cell_length[1])],
+        ]
+    )
+
 
 DiagParticleBinning(
     deposited_quantity = "weight",
