@@ -188,9 +188,9 @@ int ParticleCreator::create( struct SubSpace sub_space,
         // Initialize charge profile
         species_->charge_profile_->valuesAt( xyz, charge );
         // Loop cells
-        for( unsigned int i=0; i<n_space_to_create[0]; i++ ) {
-            for( unsigned int j=0; j<n_space_to_create[1]; j++ ) {
-                for( unsigned int k=0; k<n_space_to_create[2]; k++ ) {
+        for( unsigned int i=0; i< sub_space.box_size_[0]; i++ ) {
+            for( unsigned int j=0; j< sub_space.box_size_[1]; j++ ) {
+                for( unsigned int k=0; k< sub_space.box_size_[2]; k++ ) {
                     // Calculate max_charge_
                     if( charge( i, j, k ) > species_->max_charge_ ) {
                         species_->max_charge_ = charge( i, j, k );
@@ -219,9 +219,9 @@ int ParticleCreator::create( struct SubSpace sub_space,
         }
         // Loop cells
         double remainder, nppc;
-        for( unsigned int i=0; i<n_space_to_create[0]; i++ ) {
-            for( unsigned int j=0; j<n_space_to_create[1]; j++ ) {
-                for( unsigned int k=0; k<n_space_to_create[2]; k++ ) {
+        for( unsigned int i=0; i< sub_space.box_size_[0]; i++ ) {
+            for( unsigned int j=0; j< sub_space.box_size_[1]; j++ ) {
+                for( unsigned int k=0; k< sub_space.box_size_[2]; k++ ) {
                     
                     // Obtain the number of particles per cell
                     nppc = n_part_in_cell( i, j, k );
@@ -281,21 +281,21 @@ int ParticleCreator::create( struct SubSpace sub_space,
         // Loop cells
         unsigned int iPart = n_existing_particles;
         double *indexes = new double[species_->nDim_particle];
-        for( unsigned int i=0; i<n_space_to_create[0]; i++ ) {
+        for( unsigned int i=0; i< sub_space.box_size_[0]; i++ ) {
             if(( !n_existing_particles )&&( i%species_->clrw == 0 )&&( initialized_in_species_ )) {
                 species_->particles->first_index[(sub_space.cell_index_[0]+i)/species_->clrw] = iPart;
             }
-            for( unsigned int j=0; j<n_space_to_create[1]; j++ ) {
-                for( unsigned int k=0; k<n_space_to_create[2]; k++ ) {
+            for( unsigned int j=0; j<sub_space.box_size_[1]; j++ ) {
+                for( unsigned int k=0; k<sub_space.box_size_[2]; k++ ) {
                     // initialize particles in meshes where the density is non-zero
                     if( density( i, j, k )>0 ) {
                         unsigned int nPart = n_part_in_cell( i, j, k );
                         
                         indexes[0]=i*species_->cell_length[0]+cell_position[0] + sub_space.cell_index_[0]*species_->cell_length[0];
                         if( species_->nDim_particle > 1 ) {
-                            indexes[1]=j*species_->cell_length[1]+cell_position[1] + sub_space.cell_index_[1]*species_->cell_length[0];
+                            indexes[1]=j*species_->cell_length[1]+cell_position[1] + sub_space.cell_index_[1]*species_->cell_length[1];
                             if( species_->nDim_particle > 2 ) {
-                                indexes[2]=k*species_->cell_length[2]+cell_position[2];
+                                indexes[2]=k*species_->cell_length[2]+cell_position[2] + sub_space.cell_index_[2]*species_->cell_length[2];
                             }
                         }
                         

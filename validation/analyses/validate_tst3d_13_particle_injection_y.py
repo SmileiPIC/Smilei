@@ -2,6 +2,7 @@ import os, re, numpy as np, math
 import happi
 from matplotlib.pyplot import *
 from matplotlib.colors import LogNorm
+import yt
 
 S = happi.Open(["./restart*"], verbose=False)
 
@@ -147,3 +148,20 @@ if False:
         t.set_y(1.02)
         
     fig2.tight_layout()
+    
+    # data = dict(density = (density_binning_final[species], "g/cm**3"))
+    # shape = density_binning_final[species].shape
+    # bbox = np.array([[x_axis[species][0], x_axis[species][-1]], [-1.5, 1.5], [-1.5, 1.5]])
+    # ds = yt.load_uniform_grid(data, shape, length_unit="Mpc", bbox=bbox)
+    # yt.interactive_render(ds)
+    # sc = yt.create_scene(ds)
+    #
+    # sc.camera.set_width(ds.quan(20, 'kpc'))
+    # source = sc.sources['source_00']
+    #
+    # tf = yt.ColorTransferFunction((-28, -24))
+    # tf.add_layers(4, w=0.01)
+    #
+    # source.set_transfer_function(tf)
+    #
+    # sc.show()

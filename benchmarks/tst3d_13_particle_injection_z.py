@@ -22,7 +22,7 @@ Debye_length = 1. / np.sqrt( n0 / Te + Zi * n0 / Ti )
 # Cell length
 cell_length = [Debye_length*0.5, Debye_length*0.5, Debye_length*0.5]
 # Number of patches
-number_of_patches =[16, 2, 4]
+number_of_patches =[2, 4, 16]
 # Cells per patches (patch shape)
 cells_per_patch = [8., 8., 8.]
 # Grid length
@@ -36,21 +36,24 @@ position_initialization = 'random'
 # Time step
 timestep = 0.95/np.sqrt(1./ cell_length[0]**2 + 1./ cell_length[1]**2 + 1./ cell_length[2]**2)
 # Total simulation time
-simulation_time = ((0.5 - 0.125)*grid_length[0])/mean_velocity          # duration of the simulation
+simulation_time = ((0.5 - 0.125)*grid_length[2])/mean_velocity          # duration of the simulation
 # Period of output for the diags
 diag_every = int(simulation_time / timestep)
 
 EM_boundary_conditions = [
-    ['silver-muller'],
     ['periodic'],
-    ['periodic']
+    ['periodic'],
+    ['silver-muller']
 ]
 
 boundary_conditions = [
+    ["periodic", "periodic"],
+    ["periodic", "periodic"],
     ["remove", "remove"],
-    ["periodic", "periodic"],
-    ["periodic", "periodic"],
 ]
+
+mean_velocity_1 = [0.,0.,mean_velocity]
+mean_velocity_2 = [0.,0.,-mean_velocity]
 
 Main(
     geometry = "3Dcartesian",
@@ -66,8 +69,8 @@ Main(
 )
 
 # Initial plasma shape
-fp = trapezoidal(1., xvacuum=0.        ,xplateau=grid_length[0]/8.)
-fm = trapezoidal(1., xvacuum=7*grid_length[0]/8.,xplateau=grid_length[0])
+fp = trapezoidal(1., zvacuum=0.        ,zplateau=grid_length[2]/8.)
+fm = trapezoidal(1., zvacuum=7*grid_length[2]/8.,zplateau=grid_length[2])
 
 Species(
 	name = 'pon1',
@@ -79,7 +82,7 @@ Species(
 	mass = 1836.0,
 	charge = 1.0,
 	number_density = fp,
-	mean_velocity = [mean_velocity,0.,0.],
+	mean_velocity = mean_velocity_1,
 	temperature = [Ti],
 	time_frozen = 0.0,
 	boundary_conditions = boundary_conditions,
@@ -87,7 +90,7 @@ Species(
 
 ParticleInjector(
     species = 'pon1',
-    box_side = 'xmin',
+    box_side = 'zmin',
 )
 
 Species(
@@ -100,14 +103,14 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	number_density = fp,
-	mean_velocity = [mean_velocity,0.,0.],
+	mean_velocity = mean_velocity_1,
 	temperature = [Te],
 	time_frozen = 0.0,
 	boundary_conditions = boundary_conditions,
 )
 ParticleInjector(
     species = 'eon1',
-    box_side = 'xmin',
+    box_side = 'zmin',
 )
 
 Species(
@@ -120,14 +123,14 @@ Species(
 	mass = 1836.0,
 	charge = 1.0,
 	number_density = fm,
-	mean_velocity = [-mean_velocity,0.,0.],
+	mean_velocity = mean_velocity_2,
 	temperature = [Ti],
 	time_frozen = 0.0,
 	boundary_conditions = boundary_conditions,
 )
 ParticleInjector(
     species = 'pon2',
-    box_side = 'xmax',
+    box_side = 'zmax',
 )
 
 Species(
@@ -140,14 +143,14 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	number_density = fm,
-	mean_velocity = [-mean_velocity,0.,0.],
+	mean_velocity = mean_velocity_2,
 	temperature = [Te],
 	time_frozen = 0.0,
 	boundary_conditions = boundary_conditions,
 )
 ParticleInjector(
     species = 'eon2',
-    box_side = 'xmax',
+    box_side = 'zmax',
 )
 
 # Diags _______________________________________________________________

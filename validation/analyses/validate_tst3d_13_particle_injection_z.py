@@ -135,14 +135,14 @@ if False:
     ax["pon2"] = subplot(gs[2:4,2:4])
 
     for species in species_list:
-        im = ax[species].pcolormesh(x_axis[species],y_axis[species],np.mean(density_binning_final[species].T,axis=0),
+        im = ax[species].pcolormesh(y_axis[species],z_axis[species],np.mean(density_binning_final[species],axis=0).T,
                         cmap=get_cmap('jet'),
                         shading='none')
 
         im.set_norm(LogNorm())
         cb = colorbar(im,ax=ax[species])
-        ax[species].set_xlabel(r'$x$')
-        ax[species].set_ylabel(r'$y$')
+        ax[species].set_xlabel(r'$y$')
+        ax[species].set_ylabel(r'$z$')
         t = ax[species].set_title(r'{} ({})'.format(species,diag_every))
         t.set_y(1.02)
         

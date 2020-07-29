@@ -596,6 +596,17 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 }
             }
             
+            if (params.nDim_field > 2) {
+                if ( patch->isZmin() ) {
+                    init_space.cell_index_[2] = 0;
+                    init_space.box_size_[2]   = 1;
+                }
+                if ( patch->isZmax() ) {
+                    init_space.cell_index_[2] = params.n_space[2]-1;
+                    init_space.box_size_[2]   = 1;
+                }
+            }
+            
 
             // Creation of the new particles for all injectors
             // Create particles as if t0 with ParticleCreator
@@ -614,10 +625,15 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 }
                     
                 if (params.nDim_field > 1 && !activate_injection) {
-                    if ( patch->isYmin() && particle_injector->isYmin() ) {
+                    if ( ( patch->isYmin() && particle_injector->isYmin() ) ||
+                         ( patch->isYmax() && particle_injector->isYmax() )) {
                         activate_injection = true;
                     }
-                    if ( patch->isYmax() && particle_injector->isYmax() ) {
+                }
+                    
+                if (params.nDim_field > 2 && !activate_injection) {
+                    if ( ( patch->isZmin() && particle_injector->isZmin() ) ||
+                         ( patch->isZmax() && particle_injector->isZmax() )) {
                         activate_injection = true;
                     }
                 }
