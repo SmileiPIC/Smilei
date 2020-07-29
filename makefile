@@ -157,6 +157,15 @@ ifneq (,$(call parse_config,no_mpi_tm))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
+#-----------------------------------------------------
+# Set the verbosity prefix
+ifeq (,$(call parse_config,verbose))
+    Q := @
+else
+    Q :=
+endif
+
+
 #last: check remaining arguments and raise error
 ifneq ($(strip $(my_config)),)
 $(error "Unused parameters in config : $(my_config)")
@@ -164,14 +173,6 @@ endif
 
 
 
-
-#-----------------------------------------------------
-# Set the verbosity prefix
-ifeq (,$(findstring verbose,$(config)))
-    Q := @
-else
-    Q :=
-endif
 
 #-----------------------------------------------------
 # Rules for building the excutable smilei
