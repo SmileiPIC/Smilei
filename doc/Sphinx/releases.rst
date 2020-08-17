@@ -18,13 +18,15 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* New 4th order Non-Standard FDTD solver ``Bouchard`` for 2D and 3D geometry
-* New method for current filtering with a user provide FIR kernel for 1D, 2D and 3D geometry
-* Diagnostics may now have a ``name`` to be found more easily
-  during post-processing
+* New 4th-order non-standard FDTD solver ``Bouchard`` for 2D and 3D geometries
+* New method for current filtering with a user-provided FIR kernel for 1D, 2D and 3D geometries
+* Diagnostics may now have a ``name`` (useful during post-processing)
+* Laser Envelope:
 
-* Laser Envelope: both linear and circular polarization are available; added ionization model for envelope simulations
+  * linear and circular polarization
+  * ionization model
 
+* Particles can be imported from a file
 * Bugfixes:
 
   * ...
