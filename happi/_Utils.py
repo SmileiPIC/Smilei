@@ -111,6 +111,7 @@ class Options(object):
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
+		self.axes_font = {"title":None, "xlabel":None, "xticklabels":None, "ylabel":None, "yticklabels":None}
 		self.plot = {}
 		self.image = {"cmap":"smilei", "interpolation":"nearest", "aspect":"auto"}
 		self.colorbar = {}
@@ -146,6 +147,9 @@ class Options(object):
 					   "frame_on","position","title","visible","xlabel","xscale","xticklabels",
 					   "xticks","ylabel","yscale","yticklabels","yticks","zorder"]:
 				self.axes[kwa] = val
+			elif kwa in ["title_font","xlabel_font","xticklabels_font","ylabel_font","yticklabels_font"]:
+				kw = kwa[:-5]
+				self.axes_font[kw] = val
 			elif kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
 					   "linewidth","marker","markeredgecolor","markeredgewidth",
 					   "markerfacecolor","markerfacecoloralt","markersize","markevery",
