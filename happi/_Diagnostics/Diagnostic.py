@@ -743,6 +743,9 @@ class Diagnostic(object):
 		return self._plot
 	def _animateOnAxes_2D_(self, ax, A):
 		self._plot.set_data( self._np.rot90(A) )
+		self._plot.set_extent( self._extent )
+		self._plot.axes.relim()
+		self._plot.axes.autoscale_view()
 		return self._plot
 
 	# set options during animation
