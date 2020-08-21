@@ -330,6 +330,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
         bool init_momentum = species_->momentum_initialization_array_ || ( species_->file_momentum_npart_ > 0 );
         // Case of numpy array
         if( species_->position_initialization_array_ ) {
+            MESSAGE(species_->n_numpy_particles_);
             // Position arrays
             for( unsigned int idim = 0; idim < species_->nDim_particle; idim++ ) {
                 position[idim] = &( species_->position_initialization_array_[idim*species_->n_numpy_particles_] );
@@ -344,7 +345,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
             }
             // Find particles in the patch
             my_particles_indices = patch->indicesInDomain( position, species_->n_numpy_particles_ );
-        
+            
         // Case of HDF5 file
         } else {
             // Open file
@@ -460,8 +461,14 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
             }
             // Assign momentum
             if( init_momentum ) {
-                for( unsigned int idim=0; idim < 3; idim++ ) {
-                    particles_->momentum( idim, ip ) = momentum[idim][ippy]/species_->mass_ ;
+                if( species_->mass_ == 0 ) { // photons
+                    for( unsigned int idim=0; idim < 3; idim++ ) {
+                        particles_->momentum( idim, ip ) = momentum[idim][ippy] ;
+                    }
+                } else { // not photons
+                    for( unsigned int idim=0; idim < 3; idim++ ) {
+                        particles_->momentum( idim, ip ) = momentum[idim][ippy]/species_->mass_ ;
+                    }
                 }
             } else {
                 double vel[3], temp[3];
