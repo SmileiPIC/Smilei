@@ -2,7 +2,6 @@
 #define H5_H
 
 #include <hdf5.h>
-#include <H5_.h>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -12,6 +11,35 @@
 #error "HDF5 was not built with --enable-parallel option"
 #endif
 
+class DividedString
+{
+public:
+    DividedString( unsigned int w ) : width( std::max( w, ( unsigned int )1 ) ), numstr( 0 ), str( "" ) {};
+    ~DividedString() {};
+    
+    void addString( std::string s )
+    {
+        if( s.size() <= width ) {
+            str.append( s );
+            std::ostringstream t( "" );
+            for( unsigned int i=0; i<width-s.size(); i++ ) {
+                t<<"\0";
+            }
+            str.append( t.str() );
+        } else {
+            str.append( s.substr( 0, width ) );
+        }
+        numstr++;
+    };
+    
+    const char *c_str()
+    {
+        return str.c_str();
+    };
+    
+    unsigned int width, numstr;
+    std::string str;
+};
 
 class H5Space
 {
