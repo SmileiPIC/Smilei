@@ -755,15 +755,19 @@ there are many more optional arguments. They are directly passed to the *matplot
 
 .. rubric:: For the figure: ``figsize``, ``dpi``, ``facecolor``, ``edgecolor``
 
-Please refer to
-`matplotlib's figure options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.figure>`_.
+..
+
+  Please refer to
+  `matplotlib's figure options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.figure>`_.
 
 .. rubric:: For the axes frame: ``aspect``, ``axis_bgcolor``, ``frame_on``, ``position``,
   ``title``, ``visible``,  ``xlabel``, ``xscale``, ``xticklabels``, ``xticks``,
   ``ylabel``, ``yscale``, ``yticklabels``, ``yticks``, ``zorder``
 
-Please refer to matplotlib's axes options: the same as functions starting
-with ``set_`` listed `here <http://matplotlib.org/api/axes_api.html>`_.
+..
+
+  Please refer to matplotlib's axes options: the same as functions starting
+  with ``set_`` listed `here <http://matplotlib.org/api/axes_api.html>`_.
 
 .. rubric:: For the lines: ``color``, ``dashes``, ``drawstyle``, ``fillstyle``,
   ``label``, ``linestyle``, ``linewidth``,
@@ -771,40 +775,46 @@ with ``set_`` listed `here <http://matplotlib.org/api/axes_api.html>`_.
   ``markerfacecolor``, ``markerfacecoloralt``, ``markersize``, ``markevery``,
   ``visible``, ``zorder``
 
-Please refer to
-`matplotlib's line options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.plot>`_.
+..
+
+  Please refer to
+  `matplotlib's line options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.plot>`_.
 
 .. rubric:: For the image: ``cmap``, ``aspect``, ``interpolation``
 
-Please refer to
-`matplotlib's image options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.imshow>`_.
+..
+
+  Please refer to
+  `matplotlib's image options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.imshow>`_.
 
 .. rubric:: For the colorbar: ``cbaspect``, ``orientation``, ``fraction``, ``pad``,
   ``shrink``, ``anchor``, ``panchor``, ``extend``, ``extendfrac``, ``extendrect``,
   ``spacing``, ``ticks``, ``format``, ``drawedges``
 
-Please refer to
-`matplotlib's colorbar options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.colorbar>`_.
+..
 
-.. rubric:: For the tick labels: ``style_x``, ``scilimits_x``, ``useOffset_x``,
+  Please refer to
+  `matplotlib's colorbar options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.colorbar>`_.
+
+.. rubric:: For the tick number format: ``style_x``, ``scilimits_x``, ``useOffset_x``,
   ``style_y``, ``scilimits_y``, ``useOffset_y``
 
-Please refer to
-`matplotlib's tick label format <http://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.ticklabel_format.html>`_.
+
+..
+
+  Please refer to
+  `matplotlib's tick label format <http://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.ticklabel_format.html>`_.
 
 .. rubric:: For fonts: ``title_font``, ``xlabel_font``, ``xticklabels_font``,
   ``ylabel_font``, ``yticklabels_font``
   
-These options are dictionnaries that may contain the following entries, for instance::
+..
 
-  {'fontsize': 15,
-  'fontweight': 'bold',
-  'color': 'k',
-  'verticalalignment': 'baseline',
-  'horizontalalignment': 'center'}
+  These options are dictionnaries that may contain the entries available in
+  `matplotlib's text options <https://matplotlib.org/api/text_api.html#matplotlib.text.Text>`_,
+  for instance::
 
-Note that ``xticklabels_font`` (or ``yticklabels_font``) must be provided after
-``xticklabels`` (or ``yticklabels``).
+    title_font = {'fontsize': 15, 'fontweight': 'bold', 'fontfamily':'serif', 'color': 'k'}
 
 **Example**:
 

@@ -111,7 +111,10 @@ class Options(object):
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
-		self.axes_font = {"title":None, "xlabel":None, "xticklabels":None, "ylabel":None, "yticklabels":None}
+		self.labels = {}
+		self.labels_font = {"title":None, "xlabel":None, "ylabel":None}
+		self.ticklabels = {}
+		self.ticklabels_font = {}
 		self.plot = {}
 		self.image = {"cmap":"smilei", "interpolation":"nearest", "aspect":"auto"}
 		self.colorbar = {}
@@ -139,28 +142,41 @@ class Options(object):
 		self.export_dir  = kwargs.pop("export_dir", self.export_dir )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa, val in kwargs.copy().items():
+			# figure
 			if kwa in ["figsize"]:
 				self.figure0[kwa] = val
 			elif kwa in ["facecolor","edgecolor"]:
 				self.figure1[kwa] = val
-			elif kwa in ["aspect","axis_bgcolor",
-					   "frame_on","position","title","visible","xlabel","xscale","xticklabels",
-					   "xticks","ylabel","yscale","yticklabels","yticks","zorder"]:
+			# axes
+			elif kwa in ["aspect","axis_bgcolor","frame_on","position","visible",
+					     "xscale","xticks","yscale","yticks","zorder"]:
 				self.axes[kwa] = val
-			elif kwa in ["title_font","xlabel_font","xticklabels_font","ylabel_font","yticklabels_font"]:
+			# labels
+			elif kwa in ["title","xlabel","ylabel"]:
+				self.labels[kwa] = val
+			elif kwa in ["title_font","xlabel_font","ylabel_font"]:
 				kw = kwa[:-5]
-				self.axes_font[kw] = val
+				self.labels_font[kw] = val
+			elif kwa in ["xticklabels", "yticklabels"]:
+				self.ticklabels[kw] = val
+			elif kwa in ["xticklabels_font", "yticklabels_font"]:
+				kw = kwa[:-5]
+				self.ticklabels_font[kw] = val
+			# lines
 			elif kwa in ["color","dashes","drawstyle","fillstyle","label","linestyle",
-					   "linewidth","marker","markeredgecolor","markeredgewidth",
-					   "markerfacecolor","markerfacecoloralt","markersize","markevery",
-					   "visible","zorder"]:
+					     "linewidth","marker","markeredgecolor","markeredgewidth",
+					     "markerfacecolor","markerfacecoloralt","markersize","markevery",
+					     "visible","zorder"]:
 				self.plot[kwa] = val
+			# image
 			elif kwa in ["cmap","aspect","interpolation"]:
 				self.image[kwa] = val
+			# colorbar
 			elif kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
-					   "extend","extendfrac","extendrect","spacing","ticks","format",
-					   "drawedges"]:
+					     "extend","extendfrac","extendrect","spacing","ticks","format",
+					     "drawedges"]:
 				self.colorbar[kwa] = val
+			# tick format
 			elif kwa in ["style_x","scilimits_x","useOffset_x"]:
 				self.xtick[kwa] = val
 			elif kwa in ["style_y","scilimits_y","useOffset_y"]:
