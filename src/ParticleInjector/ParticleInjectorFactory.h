@@ -70,10 +70,10 @@ public:
         PyTools::extract( "box_side", box_side, "ParticleInjector", injector_index );
         
         // check box side according to the dimension
-        if ( box_side !="xmin" && box_side !="xmax") {
-            ERROR( "For particle injector "<< injector_name << " (# " << injector_index
-                   << "), box side must be 'xmin' or 'xmax'.");
-        }
+        // if ( box_side !="xmin" && box_side !="xmax") {
+        //     ERROR( "For particle injector "<< injector_name << " (# " << injector_index
+        //            << "), box side must be 'xmin' or 'xmax'.");
+        // }
 
         if( patch->isMaster() ) {
             MESSAGE( 2, "> Injection from from the side: " << box_side);
