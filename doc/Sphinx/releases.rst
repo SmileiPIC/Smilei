@@ -31,6 +31,7 @@ Changes made in the repository (not released)
 * Bugfixes:
 
   * Photons could not be read from numpy array
+  * DiagFields with ``time_average`` did not work for densities
 
 ----
 
