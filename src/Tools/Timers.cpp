@@ -26,7 +26,8 @@ Timers::Timers( SmileiMPI *smpi ) :
     reconfiguration( "Reconfiguration" ),   // Patch reconfiguration
     envelope( "Envelope" ),
     susceptibility( "Sync_Susceptibility" ),
-    grids("Grids")
+    grids("Grids"),
+    densitiesCorrection("Dens Correction")
 #ifdef __DETAILED_TIMERS
     // Details of Dynamic
     , interpolator( "Interpolator" ),
@@ -66,6 +67,7 @@ Timers::Timers( SmileiMPI *smpi ) :
     timers.push_back( &envelope );
     timers.push_back( &susceptibility );
     timers.push_back( &grids );
+    timers.push_back( &densitiesCorrection );
     patch_timer_id_start = timers.size()-1;
 #ifdef __DETAILED_TIMERS
     timers.push_back( &interpolator );

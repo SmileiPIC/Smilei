@@ -224,8 +224,6 @@ int main( int argc, char *argv[] )
     TITLE( "Species creation summary" );
     vecPatches.printNumberOfParticles( &smpi );
 
-    timers.reboot();
-    
 
     // divergence cleaning
     if ( params.apply_rotational_cleaning ) {
@@ -290,6 +288,8 @@ int main( int argc, char *argv[] )
     if( params.is_spectral && params.geometry != "AMcylindrical") {
         vecPatches.saveOldRho( params );
     }
+
+    timers.reboot();
 
     timers.global.reboot();
 
@@ -407,14 +407,17 @@ int main( int argc, char *argv[] )
                     for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
                         DoubleGridsAM::syncCurrentsOnRegion( vecPatches, region, params, &smpi, timers, itime, imode );
                 }
-                timers.syncDens.restart();
                 region.vecPatch_.diag_flag = false;
 
                 //here filter + divergence cleaning
-                if ( params.is_spectral and params.geometry == "AMcylindrical")
+                if ( params.is_spectral and params.geometry == "AMcylindrical") {
+                    timers.densitiesCorrection.restart();
                     region.vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->densities_correction( region.vecPatch_( 0 )->EMfields );
+                    timers.densitiesCorrection.update();
+                }
 
 
+                timers.syncDens.restart();
                 if( params.geometry != "AMcylindrical" )
                     SyncVectorPatch::sumRhoJ( params, region.vecPatch_, &smpi, timers, itime ); // MPI
                 else
