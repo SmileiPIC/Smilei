@@ -3,7 +3,7 @@ Contribute
 
 Contributions to the development of :program:`Smilei` are welcome.
 
-* `Chatroom <https://riot.im/app/#/room/!LQrdVpOJEohPSWMlmf:matrix.org>`_ for discussion and sharing.
+* `Chatroom <https://app.element.io/#/room/!LQrdVpOJEohPSWMlmf:matrix.org>`_ for discussion and sharing.
 * `GitHub issues <https://github.com/SmileiPIC/Smilei/issues>`_ for bugs and requests.
 * `GitHub fork <https://github.com/SmileiPIC/Smilei/issues>`_ to develop new features
   (you can make a `pull request <https://github.com/SmileiPIC/Smilei/pulls>`_ when
