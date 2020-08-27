@@ -416,6 +416,8 @@ class Diagnostic(object):
 		save = SaveAs(saveAs, fig, self._plt)
 		# Plot first time
 		self._plotOnAxes(ax, self._timesteps[0])
+		mov.grab_frame()
+		save.frame(self._timesteps[0])
 		# Loop times for animation
 		for time in self._timesteps[1:]:
 			if self._verbose: print("timestep "+str(time))
@@ -743,6 +745,9 @@ class Diagnostic(object):
 		return self._plot
 	def _animateOnAxes_2D_(self, ax, A):
 		self._plot.set_data( self._np.rot90(A) )
+		self._plot.set_extent( self._extent )
+		self._plot.axes.relim()
+		self._plot.axes.autoscale_view()
 		return self._plot
 
 	# set options during animation
