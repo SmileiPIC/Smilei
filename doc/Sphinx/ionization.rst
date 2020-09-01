@@ -208,6 +208,9 @@ thus the electric field can be considered static within a single timestep where 
 and the ionization rate in 
 DC, i.e. :math:`\Gamma_{\rm ADK, DC}` from Eq. :eq:`ionizationRate` can be used at 
 each timestep. 
+Furthermore, if the atom/ion from which the electrons are stripped through ionization is at rest, 
+for momentum conservation the new electrons can be initialized with zero momentum. 
+If a laser ionized the atom/ion, the new electrons momenta will quickly change due to the Lorentz force.
 
 Instead, in presence of a laser envelope (see :doc:`laser_envelope`) an ad hoc treatment of the 
 ionization process averaged over the scales of the optical cycle is necessary, since the
@@ -235,10 +238,10 @@ the (low frequency) electric field of the plasma, while :math:`\vert\tilde{E}_{e
 takes into account the envelopes of both the transverse and longitudinal components of the laser electric field
 (see :doc:`laser_envelope` for details on their calculation).
 
-After an electron is created by ionization, its initial transverse momentum :math:`p_{\perp}` is assigned as described in [Tomassini2017]_.
-For circular polarization, in the case of an electron subject to a laser transverse envelope vector potential :math:`\tilde{A}`, the magnitude of its transverse momentum is set as 
+After an electron is created through envelope tunnel ionization, its initial transverse momentum :math:`p_{\perp}` is assigned as described in [Tomassini2017]_.
+For circular polarization, in the case of an electron subject to a laser transverse envelope vector potential :math:`\tilde{A}`, the magnitude of its initial transverse momentum is set as 
 :math:`\vert p_{\perp}\vert = \vert\tilde{A}\vert` and its transverse direction is chosen randomly between :math:`0` and :math:`2\pi`. 
-For linear polarization, the transverse momentum along the polarization direction is drawn from a gaussian distribution with
+For linear polarization, the initial transverse momentum along the polarization direction is drawn from a gaussian distribution with
 rms width :math:`\sigma_{p_{\perp}} = \Delta\vert\tilde{A}\vert`, to reproduce the residual rms transverse momentum spread of electrons stripped from 
 atoms by a linearly polarized laser [Schroeder2014]_. The parameter :math:`\Delta` is defined as [Schroeder2014_]:
 
@@ -247,17 +250,23 @@ atoms by a linearly polarized laser [Schroeder2014]_. The parameter :math:`\Delt
 
   \Delta = \left(\frac{3}{2} \vert E \vert \right)^{1/2}\left(2I_p\right)^{-3/4}.
 
-Additionally, in :program:`Smilei` the initial longitudinal momentum of the new electrons is initialized. An electron initially at rest in a plane wave 
-with vector potential of amplitude :math:`\vert\tilde{A}\vert` propagating along the positive :math:`x` direction is subject to a drift, 
-with an average longitudinal momentum :math:`<p_x> = \vert\tilde{A}\vert^2/4` and its longitudinal momentum is equal to :math:`p_x = |p_{\perp}|^2/2` [Gibbon]_.
-Each electron, newly created from ionization, is thus initalized with :math:`p_x = \vert\tilde{A}\vert^2/4+\vert p_{\perp}\vert^2/2`, 
-where :math:`p_{\perp}` is drawn as described above and in [Tomassini2017]_. 
-This technique allows to take into account longitudinal effects on the initial momentum that are more visible when :math:`\vert\tilde{A}\vert>1`, 
-which manifest mainly as an initial average longitudinal momentum [MassimoIonization2020]_.
+This approximation is valid for regimes where :math:`\Delta\ll 1`.
+Additionally, in :program:`Smilei` the initial longitudinal momentum of the new electrons is initialized, to recreate the statistical features of the momentum distribution of the 
+electrons created through ionization. An electron initially at rest in a plane wave 
+with vector potential of amplitude :math:`\vert\tilde{A}\vert` propagating along the positive :math:`x` direction is subject to a drift in the wave propagation direction [Gibbon]_.
+An electron stripped from an atom/ion through envelope ionization by a laser can be approximated locally as in a plane wave, thus averaging over the laser oscillations
+yields a positive momentum in the :math:`x` direction.
+Thus, each electron created from envelope tunnel ionization is initialized with :math:`p_x = \vert\tilde{A}\vert^2/4+\vert p_{\perp}\vert^2/2` for linear polarization, 
+where :math:`p_{\perp}` is drawn as described above. For circular polarization, each of these electron is initalized with :math:`p_x = \vert\tilde{A}\vert^2/2`.
+This technique allows to take into account the longitudinal effects of the wave on the initial momentum, that start to be significant
+when :math:`\vert\tilde{A}\vert>1`, effects which manifest mainly as an initial average longitudinal momentum.
+For relativistic regimes, the longitudinal momentum effects significantly change the relativistic Lorentz factor
+and thus start to significantly influence also the evolution of the transverse momenta.
 
 If the envelope approximation hypotheses are satisfied, the charge created with ionization and the momentum distribution 
 of the newly created electrons computed with this procedure should agree with those obtained with a standard laser simulation,
-provided that the comparison is made after the end of the interaction with the laser. Examples of these comparisons can be found in [MassimoIonization2020]_.
+provided that the comparison is made after the end of the interaction with the laser. 
+Examples of these comparisons and the derivation of the described electron momentum initialization can be found in [MassimoIonization2020]_.
 A comparison made in a timestep where the interaction with the laser is still taking place would show the effects of the quiver motion in the electron momenta
 in the standard laser simulation (e.g. peaks in the transverse momentum spectrum). These effects would be absent in the envelope simulation. 
 
