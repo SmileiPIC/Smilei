@@ -477,7 +477,7 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
     }
 
     // Define the part of the array to obtain
-    vector<hsize_t> dim( 3 ), offset( 3 ), fulldim( 3 );
+    vector<hsize_t> dim( ndim ), offset( ndim );
     hsize_t ny_tot = params.n_space_global[1]+2+2*params.oversize[1];
     hsize_t ny_p = n_space[1]+1+2*oversize[1];
     hsize_t ny_d = ny_p+1;
@@ -485,8 +485,7 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
     dim[1] = 1;
     //offset[0] = patch->getCellStartingGlobalIndex( 1 ) + params.oversize[1];
     offset[1] = 0;
-    offset[2] = 0;
-
+    
     if( ndim == 3 ) {
         hsize_t nz_p = n_space[2]+1+2*oversize[2];
         hsize_t nz_d = nz_p+1;
@@ -495,67 +494,40 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
     }
 
     // Open file
-    ifstream f( file.c_str() );
-    if( !f.good() ) {
-        ERROR( "File " << file << " not found" );
-    }
-    if( H5Fis_hdf5( file.c_str() ) <= 0 ) {
-        ERROR( "File " << file << " is not HDF5" );
-    }
-    hid_t fid = H5Fopen( file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT );
-
+    H5Read f( file );
     // Obtain the omega dataset containing the different values of omega
-    hid_t pid = H5Pcreate( H5P_DATASET_ACCESS );
-    hssize_t npoints;
-    if( H5Lexists( fid, "omega", H5P_DEFAULT ) >0 ) {
-        hid_t did = H5Dopen( fid, "omega", pid );
-        hid_t filespace = H5Dget_space( did );
-        npoints = H5Sget_simple_extent_npoints( filespace );
-        omega.resize( npoints );
-        H5Dread( did, H5T_NATIVE_DOUBLE, filespace, filespace, H5P_DEFAULT, &omega[0] );
-        H5Sclose( filespace );
-        H5Dclose( did );
+    if( f.has( "omega" ) ) {
+        f.vect( "omega", omega, true );
     } else {
         ERROR( "File " << file << " does not contain the `omega` dataset" );
     }
-
+    
     // Allocate the fields
-    magnitude->allocateDims( dim[0], dim[1], npoints );
-    phase    ->allocateDims( dim[0], dim[1], npoints );
-
-    // Obtain the datasets for the magnitude and phase of the field
-    dim[ndim-1] = npoints;
-    hid_t memspace = H5Screate_simple( ndim, &dim[0], NULL );
+    magnitude->allocateDims( dim[0], dim[1], omega.size() );
+    phase    ->allocateDims( dim[0], dim[1], omega.size() );
+    
+    // Read the datasets for the magnitude and phase of the field
+    dim[ndim-1] = omega.size();
     string magnitude_name = primal_?"magnitude1":"magnitude2";
-    if( H5Lexists( fid, magnitude_name.c_str(), H5P_DEFAULT ) >0 ) {
-        hid_t did = H5Dopen( fid, magnitude_name.c_str(), pid );
-        hid_t filespace = H5Dget_space( did );
-        H5Sget_simple_extent_dims( filespace, &fulldim[0], NULL );
-        offset[0] = fulldim[0] - ny_tot + patch->getCellStartingGlobalIndex( 1 ) + params.oversize[1];
-        H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &offset[0], NULL, &dim[0], NULL );
-        H5Dread( did, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &magnitude->data_[0] );
-        H5Sclose( filespace );
-        H5Dclose( did );
+    if( f.has( magnitude_name ) ) {
+        vector<hsize_t> shape = f.shape( magnitude_name );
+        offset[0] = shape[0] - ny_tot + patch->getCellStartingGlobalIndex( 1 ) + params.oversize[1];
+        H5Space filespace( shape, offset, dim );
+        H5Space memspace( dim );
+        f.array( magnitude_name, magnitude->data_[0], &filespace, &memspace );
     } else {
         magnitude->put_to( 0. );
     }
     string phase_name = primal_?"phase1":"phase2";
-    if( H5Lexists( fid, phase_name.c_str(), H5P_DEFAULT ) >0 ) {
-        hid_t did = H5Dopen( fid, phase_name.c_str(), pid );
-        hid_t filespace = H5Dget_space( did );
-        H5Sget_simple_extent_dims( filespace, &fulldim[0], NULL );
-        offset[0] = fulldim[0] - ny_tot + patch->getCellStartingGlobalIndex( 1 ) + params.oversize[1];
-        H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &offset[0], NULL, &dim[0], NULL );
-        H5Dread( did, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &phase->data_[0] );
-        H5Sclose( filespace );
-        H5Dclose( did );
+    if( f.has( phase_name ) ) {
+        vector<hsize_t> shape = f.shape( phase_name );
+        offset[0] = shape[0] - ny_tot + patch->getCellStartingGlobalIndex( 1 ) + params.oversize[1];
+        H5Space filespace( shape, offset, dim );
+        H5Space memspace( dim );
+        f.array( phase_name, phase->data_[0], &filespace, &memspace );
     } else {
         phase->put_to( 0. );
     }
-
-    H5Sclose( memspace );
-    H5Pclose( pid );
-    H5Fclose( fid );
 }
 
 // Amplitude of a laser profile from a file (see LaserOffset)

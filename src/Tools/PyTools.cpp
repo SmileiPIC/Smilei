@@ -368,4 +368,18 @@ unsigned int PyTools::nComponents( std::string componentName )
     return retval;
 };
 
-
+//! Finds if there is a species with a given name
+bool PyTools::isSpecies( std::string name )
+{
+    PyObject *py_main = PyImport_AddModule( "__main__" );
+    Py_INCREF( py_main );
+    PyObject* py_species = PyObject_GetAttrString( py_main, "Species" );
+    PyObject* has_species = PyObject_CallMethod( py_species, "has", const_cast<char *>( "s" ), name.c_str() );
+    bool is_species = false;
+    py2scalar( has_species, is_species );
+    checkPyError();
+    Py_DECREF( has_species );
+    Py_DECREF( py_species );
+    Py_DECREF( py_main );
+    return is_species;
+};

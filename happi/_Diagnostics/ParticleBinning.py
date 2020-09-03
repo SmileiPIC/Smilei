@@ -270,33 +270,8 @@ class ParticleBinning(Diagnostic):
 		axes_units = [unit or "1" for unit in self._units if (self.hasComposite or unit!="L_r")]
 		axes_units = (" / ( " + " * ".join(axes_units) + " )") if axes_units else ""
 		for d in self._diags:
-			titles.update({ d:"??" })
-			val_units = "1"
 			deposited_quantity = self._myinfo[d]["deposited_quantity"]
-			if   deposited_quantity == "weight":
-				titles[d] = "Number" + ("" if self.hasComposite else " density")
-				val_units = "1" if self.hasComposite else "N_r"
-			elif deposited_quantity == "weight_charge":
-				titles[d] = "Charge" + ("" if self.hasComposite else " density")
-				val_units = "Q_r" if self.hasComposite else "N_r * Q_r"
-			elif deposited_quantity == "weight_ekin":
-				titles[d] = "Energy" + ("" if self.hasComposite else " density")
-				val_units = "K_r" if self.hasComposite else "N_r * K_r"
-			elif deposited_quantity[:15] == "weight_charge_v":
-				titles[d] = "J"+deposited_quantity[-1] + (" x Volume" if self.hasComposite else "")
-				val_units = "J_r/N_r" if self.hasComposite else "J_r"
-			elif deposited_quantity[:8] == "weight_p":
-				titles[d] = "P"+deposited_quantity[8:] + ("" if self.hasComposite else " density")
-				val_units = "P_r" if self.hasComposite else "N_r * P_r"
-			elif deposited_quantity[:8] == "weight_v":
-				titles[d] = "Pressure "+deposited_quantity[8]+deposited_quantity[11] + (" x Volume" if self.hasComposite else "")
-				val_units = "K_r" if self.hasComposite else "N_r * K_r"
-			elif deposited_quantity[:13] == "weight_ekin_v":
-				titles[d] = "Energy ("+deposited_quantity[-1]+") flux" + (" x Volume" if self.hasComposite else " density")
-				val_units = "K_r" if self.hasComposite else "N_r * K_r"
-			elif deposited_quantity[:13] == "weight_power": # for radiation spectrum
-				titles[d] = "Power" + ("" if self.hasComposite else " density")
-				val_units = "K_r / T_r" if self.hasComposite else "N_r * K_r / T_r"
+			titles[d], val_units = self._make_units(deposited_quantity, self.hasComposite)
 			units[d] = val_units + axes_units
 		# Make total units and title
 		self._vunits = self.operation
@@ -335,6 +310,37 @@ class ParticleBinning(Diagnostic):
 		# Finish constructor
 		self.valid = True
 		return kwargs
+	
+	@staticmethod
+	def _make_units(deposited_quantity, hasComposite):
+		if   deposited_quantity == "weight":
+			title = "Number" + ("" if hasComposite else " density")
+			units = "1" if hasComposite else "N_r"
+		elif deposited_quantity == "weight_charge":
+			title = "Charge" + ("" if hasComposite else " density")
+			units = "Q_r" if hasComposite else "N_r * Q_r"
+		elif deposited_quantity == "weight_ekin":
+			title = "Energy" + ("" if hasComposite else " density")
+			units = "K_r" if hasComposite else "N_r * K_r"
+		elif deposited_quantity[:15] == "weight_charge_v":
+			title = "J"+deposited_quantity[-1] + (" x Volume" if hasComposite else "")
+			units = "J_r/N_r" if hasComposite else "J_r"
+		elif deposited_quantity[:8] == "weight_p":
+			title = "P"+deposited_quantity[8:] + ("" if hasComposite else " density")
+			units = "P_r" if hasComposite else "N_r * P_r"
+		elif deposited_quantity[:8] == "weight_v":
+			title = "Pressure "+deposited_quantity[8]+deposited_quantity[11] + (" x Volume" if hasComposite else "")
+			units = "K_r" if hasComposite else "N_r * K_r"
+		elif deposited_quantity[:13] == "weight_ekin_v":
+			title = "Energy ("+deposited_quantity[-1]+") flux" + (" x Volume" if hasComposite else " density")
+			units = "K_r" if hasComposite else "N_r * K_r"
+		elif deposited_quantity[:13] == "weight_power": # for radiation spectrum
+			title = "Power" + ("" if hasComposite else " density")
+			units = "K_r / T_r" if hasComposite else "N_r * K_r / T_r"
+		else:
+			title = ""
+			units = "1"
+		return title, units
 	
 	# Gets info about diagnostic number "diagNumber"
 	def _getInfo(self,diagNumber):
@@ -385,7 +391,6 @@ class ParticleBinning(Diagnostic):
 					print(self._diagName+" #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
 		return info
-
 	
 	# Prints the info obtained by the function "getInfo"
 	@staticmethod
@@ -394,9 +399,9 @@ class ParticleBinning(Diagnostic):
 			return "Error while reading file(s)"
 		
 		# 1 - diag number, type and list of species
-		species = ""
-		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string
-		printedInfo = "#"+str(info["#"])+" - "+info["deposited_quantity"]+" of species # "+species+"\n"
+		species = ",".join([str(s) for s in info["species"]])
+		title, _ = ParticleBinning._make_units(info["deposited_quantity"], False)
+		printedInfo = "#"+str(info["#"])+" - "+title+" of species # "+species+"\n"
 		
 		# 2 - period and time-averaging
 		if info["tavg"] and info["tavg"] > 1:

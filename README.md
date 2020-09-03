@@ -14,7 +14,7 @@ Open-source, user-friendly and designed for high performances on super-computers
 
 * [Issues](https://github.com/SmileiPIC/Smilei/issues): bug reports, feature requests, reporting on bad doc or unexpected behaviour.
 
-* Riot [chat room](https://riot.im/app/#/room/!LQrdVpOJEohPSWMlmf:matrix.org): general discussions, suggestions, remarks, sharing results & papers or just to say hi!
+* [Chat room](https://app.element.io/#/room/!LQrdVpOJEohPSWMlmf:matrix.org): general discussions, suggestions, remarks, sharing results & papers or just to say hi!
 
 ## I want to contribute
 

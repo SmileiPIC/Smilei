@@ -9,6 +9,7 @@
 // ----------------------------------------------------------------------------
 
 #include "RadiationTables.h"
+#include "H5.h"
 
 // -----------------------------------------------------------------------------
 // INITILIZATION AND DESTRUCTION
@@ -130,7 +131,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
         // Computation of the factor for the classical radiated power
         factor_classical_radiated_power_ = 2.*params.fine_struct_cst/( 3.*normalized_Compton_wavelength_ );
 
-        MESSAGE( 1, "Factor classical radiated power: " << factor_classical_radiated_power_ )
+        MESSAGE( 1, "Factor classical radiated power: " << factor_classical_radiated_power_ );
 
     }
 
@@ -156,17 +157,18 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
                 niel_.computation_method_ == "fit5"  ||
                 niel_.computation_method_ == "fit10" ||
                 niel_.computation_method_ == "ridgers" ) {
-            MESSAGE( 1,"Niel h function computation method: " << niel_.computation_method_ )
+            MESSAGE( 1,"Niel h function computation method: " << niel_.computation_method_ );
         } else {
-            ERROR( " The parameter `Niel_computation_method` must be `table`, `fit5`, `fit10` or `ridgers`." )
+            ERROR( " The parameter `Niel_computation_method` must be `table`, `fit5`, `fit10` or `ridgers`." );
         }
     }
 
-    MESSAGE( "" )
+    MESSAGE( "" );
 
     // We read the table only if specified
     if( params.hasMCRadiation || params.hasNielRadiation ) {
         if (table_path_.size() > 0) {
+            MESSAGE( 1,"Reading of the external database" );
             readTables( params, smpi );
         } else {
             MESSAGE(1,"Default tables (stored in the code) are used:");
@@ -176,13 +178,11 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
     if( params.hasMCRadiation ) {
         MESSAGE( "" );
         MESSAGE( 1,"--- Integration F/particle_chi table:" );
-        MESSAGE( 2,"Reading of the external database" );
         MESSAGE( 2,"Dimension quantum parameter: " << integfochi_.size_particle_chi_ );
         MESSAGE( 2,"Minimum particle quantum parameter chi: " << integfochi_.min_particle_chi_ );
         MESSAGE( 2,"Maximum particle quantum parameter chi: " << integfochi_.max_particle_chi_ );
         MESSAGE( "" );
         MESSAGE( 1,"--- Table `min_photon_chi_for_xi` and `xi`:" );
-        MESSAGE( 2,"Reading of the external database" );
         MESSAGE( 2,"Dimension particle chi: " << xi_.size_particle_chi_ );
         MESSAGE( 2,"Dimension photon chi: " << xi_.size_photon_chi_ );
         MESSAGE( 2,"Minimum particle chi: " << xi_.min_particle_chi_ );
@@ -192,7 +192,6 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
     if( params.hasNielRadiation ) {
         MESSAGE( "" );
         MESSAGE( 1, "--- `h` table for the model of Niel et al.:" );
-        MESSAGE( 2, "Reading of the external database" );
         MESSAGE( 2,"Dimension quantum parameter: "
                  << niel_.size_particle_chi_ );
         MESSAGE( 2,"Minimum particle quantum parameter chi: "
@@ -579,47 +578,22 @@ double RadiationTables::getHNielFromTable( double particle_chi )
 // -----------------------------------------------------------------------------
 void RadiationTables::readHTable( SmileiMPI *smpi )
 {
-    if( Tools::fileExists( table_path_ + "/radiation_tables.h5" ) ) {
-
-        if( smpi->getRank()==0 ) {
-
-            hid_t       fileId;
-            hid_t       dataset_id;
-            std::string buffer;
-
-            buffer = table_path_ + "/radiation_tables.h5";
-
-            fileId = H5Fopen( buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
-
-            dataset_id = H5Dopen2( fileId, "h", H5P_DEFAULT );
-
-            // If this dataset exists, we read it
-            if( dataset_id > 0 ) {
-
-                // First, we read attributes
-                H5::getAttr( dataset_id, "size_particle_chi", niel_.size_particle_chi_ );
-                H5::getAttr( dataset_id, "min_particle_chi", niel_.min_particle_chi_ );
-                H5::getAttr( dataset_id, "max_particle_chi", niel_.max_particle_chi_ );
-
-                // Resize of the array integfochi_.table before reading
-                niel_.table_.resize( niel_.size_particle_chi_ );
-
-                // then the dataset
-                H5Dread( dataset_id,
-                         H5T_NATIVE_DOUBLE, H5S_ALL,
-                         H5S_ALL, H5P_DEFAULT,
-                         &niel_.table_[0] );
-
-                H5Dclose( dataset_id );
-                H5Fclose( fileId );
-            }
-            else {
-                ERROR("Dataset `H` does not exist in the specified file " << table_path_ << "radiation_tables.h5");
-            }
+    std::string file = table_path_ + "/radiation_tables.h5";
+    if( Tools::fileExists( file ) ) {
+        if( smpi->isMaster() ) {
+            H5Read f( file );
+            
+            // First, we read attributes
+            H5Read h = f.dataset( "h" );
+            h.attr( "size_particle_chi", niel_.size_particle_chi_ );
+            h.attr( "min_particle_chi", niel_.min_particle_chi_ );
+            h.attr( "max_particle_chi", niel_.max_particle_chi_ );
+            
+            // Resize and read array
+            niel_.table_.resize( niel_.size_particle_chi_ );
+            f.vect( "h", niel_.table_ );
         }
-
-    }
-    else {
+    } else {
         ERROR("The table H could not be read from the provided path: `"
               << table_path_<<"`. Please check that the path is correct.")
     }
@@ -642,46 +616,22 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
 // -----------------------------------------------------------------------------
 void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
 {
-
-    if( Tools::fileExists( table_path_ + "/radiation_tables.h5" ) ) {
-
-        if( smpi->getRank()==0 ) {
-
-            hid_t       fileId;
-            hid_t       dataset_id;
-            std::string buffer;
-
-            buffer = table_path_ + "/radiation_tables.h5";
-
-            fileId = H5Fopen( buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
-
-            dataset_id = H5Dopen2( fileId, "integfochi", H5P_DEFAULT );
-
-            // If this dataset exists, we read it
-            if( dataset_id > 0 ) {
-
-                // First, we read attributes
-                H5::getAttr( dataset_id, "size_particle_chi", integfochi_.size_particle_chi_ );
-                H5::getAttr( dataset_id, "min_particle_chi", integfochi_.min_particle_chi_ );
-                H5::getAttr( dataset_id, "max_particle_chi", integfochi_.max_particle_chi_ );
-
-                // Resize of the array integfochi_.table_ before reading
-                integfochi_.table_.resize( integfochi_.size_particle_chi_ );
-
-                // then the dataset
-                H5Dread( dataset_id,
-                         H5T_NATIVE_DOUBLE, H5S_ALL,
-                         H5S_ALL, H5P_DEFAULT,
-                         &integfochi_.table_[0] );
-
-                H5Dclose( dataset_id );
-                H5Fclose( fileId );
-            } else {
-                ERROR(" Dataset `integfochi` does not exist in "<< table_path_ << "radiation_tables.h5");
-            }
+    std::string file = table_path_ + "/radiation_tables.h5";
+    if( Tools::fileExists( file ) ) {
+        if( smpi->isMaster() ) {
+            H5Read f( file );
             
+            // First, we read attributes
+            H5Read c = f.dataset( "integfochi" );
+            c.attr( "size_particle_chi", integfochi_.size_particle_chi_ );
+            c.attr( "min_particle_chi", integfochi_.min_particle_chi_ );
+            c.attr( "max_particle_chi", integfochi_.max_particle_chi_ );
+            
+            // Resize and read array
+            integfochi_.table_.resize( integfochi_.size_particle_chi_ );
+            f.vect( "integfochi", integfochi_.table_ );
         }
-
+        
         // Bcast the table to all MPI ranks
         RadiationTables::bcastIntegfochiTable( smpi );
     }
@@ -700,65 +650,25 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
 // -----------------------------------------------------------------------------
 void RadiationTables::readXiTable( SmileiMPI *smpi )
 {
+    std::string file = table_path_ + "/radiation_tables.h5";
+    if( Tools::fileExists( file ) ) {
+        if( smpi->isMaster() ) {
+            H5Read f( file );
+            
+            // First, we read attributes
+            H5Read xi = f.dataset( "xi" );
+            xi.attr( "size_particle_chi", xi_.size_particle_chi_ );
+            xi.attr( "size_photon_chi", xi_.size_photon_chi_ );
+            xi.attr( "min_particle_chi", xi_.min_particle_chi_ );
+            xi.attr( "max_particle_chi", xi_.max_particle_chi_ );
 
-    if( Tools::fileExists( table_path_ + "/radiation_tables.h5" ) ) {
-        
-        if( smpi->getRank()==0 ) {
-
-            hid_t       fileId;
-            hid_t       dataset_id_chiphmin;
-            hid_t       dataset_id_xip;
-            std::string buffer;
-
-            buffer = table_path_ + "/radiation_tables.h5";
-
-            fileId = H5Fopen( buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
-
-            dataset_id_chiphmin = H5Dopen2( fileId, "min_photon_chi_for_xi", H5P_DEFAULT );
-            dataset_id_xip = H5Dopen2( fileId, "xi", H5P_DEFAULT );
-
-            if( dataset_id_chiphmin <= 0) {
-                ERROR(" Dataset `min_photon_chi_for_xi` does not exist in "<< table_path_ << "radiation_tables.h5");
-            }
-
-            if( dataset_id_xip <= 0) {
-                ERROR(" Dataset `xi` does not exist in "<< table_path_ << "radiation_tables.h5");
-            }
-
-            // If this dataset exists, we read it
-            if( dataset_id_chiphmin > 0 && dataset_id_xip > 0 ) {
-
-                // First, we read attributes
-                H5::getAttr( dataset_id_xip, "size_particle_chi", xi_.size_particle_chi_ );
-                H5::getAttr( dataset_id_xip, "size_photon_chi", xi_.size_photon_chi_ );
-                H5::getAttr( dataset_id_xip, "min_particle_chi", xi_.min_particle_chi_ );
-                H5::getAttr( dataset_id_xip, "max_particle_chi", xi_.max_particle_chi_ );
-
-                // Allocation of the array xi
-                xi_.min_photon_chi_table_.resize( xi_.size_particle_chi_ );
-                xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
-
-                // then the dataset for chiphmin
-                H5Dread( dataset_id_chiphmin,
-                         H5T_NATIVE_DOUBLE, H5S_ALL,
-                         H5S_ALL, H5P_DEFAULT,
-                         &xi_.min_photon_chi_table_[0] );
-
-                // then the dataset for xi
-                H5Dread( dataset_id_xip,
-                         H5T_NATIVE_DOUBLE, H5S_ALL,
-                         H5S_ALL, H5P_DEFAULT,
-                         &xi_.table_[0] );
-
-                H5Dclose( dataset_id_xip );
-                H5Dclose( dataset_id_chiphmin );
-                H5Fclose( fileId );
-            }
+            // Allocate and read arrays
+            xi_.min_photon_chi_table_.resize( xi_.size_particle_chi_ );
+            xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
+            f.vect( "min_photon_chi_for_xi", xi_.min_photon_chi_table_ );
+            f.vect( "xi", xi_.table_ );
         }
-
-        // Bcast table_exists
-        // MPI_Bcast( &table_exists, 1, MPI_INT, 0, smpi->getGlobalComm() );
-
+        
         // Bcast the table to all MPI ranks
         RadiationTables::bcastTableXi( smpi );
         

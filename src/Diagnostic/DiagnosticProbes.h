@@ -17,7 +17,7 @@ public :
     //! Default destructor
     ~DiagnosticProbes() override;
     
-    void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
+    void openFile( Params &params, SmileiMPI *smpi ) override;
     
     void closeFile() override;
     
@@ -101,7 +101,8 @@ private :
     std::vector<std::vector<unsigned int> > species_field_location;
     
     //! Variable to store the status of a dataset (whether it exists or not)
-    htri_t status;
+    bool has_dataset;
+    std::string dataset_name;
     
     //! Temporary buffer to write probes
     Field2D *probesArray;

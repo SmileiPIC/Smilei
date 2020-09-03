@@ -345,8 +345,8 @@ class Diagnostic(object):
 		extent = [xmin, xmax, self._yfactor*self._timesteps[0], self._yfactor*self._timesteps[-1]]
 		if self._log[0]: extent[0:2] = [self._np.log10(xmin), self._np.log10(xmax)]
 		im = ax.imshow(self._np.flipud(A), vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
-		ax.set_xlabel(self._xlabel)
-		ax.set_ylabel(ylabel)
+		ax.set_xlabel(self._xlabel, self.options.labels_font["xlabel"])
+		ax.set_ylabel(ylabel, self.options.labels_font["ylabel"])
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		try: # if colorbar exists
 			ax.cax.cla()
@@ -416,6 +416,8 @@ class Diagnostic(object):
 		save = SaveAs(saveAs, fig, self._plt)
 		# Plot first time
 		self._plotOnAxes(ax, self._timesteps[0])
+		mov.grab_frame()
+		save.frame(self._timesteps[0])
 		# Loop times for animation
 		for time in self._timesteps[1:]:
 			if self._verbose: print("timestep "+str(time))
@@ -674,7 +676,7 @@ class Diagnostic(object):
 		times = self._timesteps[self._timesteps<=t]
 		A     = self._tmpdata[self._timesteps<=t]
 		self._plot, = ax.plot(self._tfactor*times, A, **self.options.plot)
-		ax.set_xlabel(self._tlabel)
+		ax.set_xlabel(self._tlabel, self.options.labels_font["xlabel"])
 		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setTitle(ax, t)
 		self._setOptions(ax)
@@ -683,8 +685,8 @@ class Diagnostic(object):
 		A = self._dataAtTime(t)
 		self._plot, = ax.plot(self._xfactor*(self._xoffset+self._centers[0]), A, **self.options.plot)
 		if self._log[0]: ax.set_xscale("log")
-		ax.set_xlabel(self._xlabel)
-		ax.set_ylabel(self._ylabel)
+		ax.set_xlabel(self._xlabel, self.options.labels_font["xlabel"])
+		ax.set_ylabel(self._ylabel, self.options.labels_font["ylabel"])
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setTitle(ax, t)
 		self._setOptions(ax)
@@ -692,8 +694,8 @@ class Diagnostic(object):
 	def _plotOnAxes_2D(self, ax, t, cax_id=0):
 		A = self._dataAtTime(t)
 		self._plot = self._plotOnAxes_2D_(ax, A)
-		ax.set_xlabel(self._xlabel)
-		ax.set_ylabel(self._ylabel)
+		ax.set_xlabel(self._xlabel, self.options.labels_font["xlabel"])
+		ax.set_ylabel(self._ylabel, self.options.labels_font["ylabel"])
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		if 'cax' not in dir(ax):
 			ax.cax = {}
@@ -743,6 +745,9 @@ class Diagnostic(object):
 		return self._plot
 	def _animateOnAxes_2D_(self, ax, A):
 		self._plot.set_data( self._np.rot90(A) )
+		self._plot.set_extent( self._extent )
+		self._plot.axes.relim()
+		self._plot.axes.autoscale_view()
 		return self._plot
 
 	# set options during animation
@@ -752,23 +757,35 @@ class Diagnostic(object):
 			title += [self._vlabel]
 		if t is not None:
 			title += ["t = %.2f "%(t*self.timestep*self.units.tcoeff)+self.units.tname]
-		ax.set_title("  ".join(title))
+		ax.set_title("  ".join(title), self.options.labels_font["title"])
 	def _setOptions(self, ax):
+		# Generic axes option
 		for option, value in self.options.axes.items():
 			if type(value) is dict:
 				getattr(ax, "set_"+option)( **value )
 			else:
 				getattr(ax, "set_"+option)( value )
+		# Labels + fonts
+		for option, value in self.options.labels.items():
+			getattr(ax, "set_"+option)( value, self.options.labels_font[option] )
+		# Ticklabels + fonts
+		for option, value in self.options.ticklabels_font.items():
+			if option in self.options.ticklabels:
+				getattr(ax, "set_"+option)( value, self.options.ticklabels_font[option] )
+			else: # manage tick label fonts even when not setting tick labels first
+				ticklabels = getattr(ax, "get_"+option)()
+				self._plt.setp(ticklabels, **self.options.ticklabels_font[option])
+		# Tick formatting
 		try:
-			if len(self.options.xtick)>0: ax.ticklabel_format(axis="x",**self.options.xtick)
+			if self.options.xtick: ax.ticklabel_format(axis="x",**self.options.xtick)
 		except:
 			if self._verbose: print("Cannot format x ticks (typically happens with log-scale)")
-			self.xtickkwargs = []
+			self.options.xtick = []
 		try:
-			if len(self.options.ytick)>0: ax.ticklabel_format(axis="y",**self.options.ytick)
+			if self.options.ytick: ax.ticklabel_format(axis="y",**self.options.ytick)
 		except:
 			if self._verbose: print("Cannot format y ticks (typically happens with log-scale)")
-			self.xtickkwargs = []
+			self.options.ytick = []
 
 	# Define and output directory in case of exporting
 	def _setExportDir(self, diagName):

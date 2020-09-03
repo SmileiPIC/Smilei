@@ -13,7 +13,7 @@ This requires a system with cylindrical symmetry or close to cylindrical symmetr
 Mathematical definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: _static/Coordinate_Reference_AMcylindrical.png
+.. figure:: _static/Coordinate_Reference_AMcylindrical.pdf
   :width: 13cm
 
 Any scalar field :math:`F(x,r,\theta)` can be decomposed into a basis of

@@ -10,6 +10,7 @@ First, you will need to install Xcode and the Command Line Tools in order to be 
 
 and follow the instructions.
 
+Here we show how to install all dependendencies needed by Smilei using Brew or Macports. Please note that you need to install one *and only one* package manager.
 
 Brew : install Smilei
 ---------------------------------
