@@ -493,6 +493,11 @@ velocity of the moving window.
 
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
 
+.. warning::
+
+  When the window starts moving, all laser injections via Silver-Muller boundary conditions
+  are immediately stopped for physical correctness.
+
 .. code-block:: python
 
   MovingWindow(
