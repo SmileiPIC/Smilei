@@ -152,8 +152,8 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
         position[0] += dx;
     }
     
-    profile_->complexValuesAt( xyz, t, *A3D );
-    profile_->complexValuesAt( xyz, t_previous_timestep, *A03D );
+    profile_->complexValuesAtTimes( xyz, t, *A3D );
+    profile_->complexValuesAtTimes( xyz, t_previous_timestep, *A03D );
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];
