@@ -40,9 +40,7 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI *smpi, VectorP
         );
     }
     one_patch_buffer_size = nsteps[0] * nsteps[1];
-    hsize_t file_size = ( hsize_t )one_patch_buffer_size * ( hsize_t )tot_number_of_patches;
-    filespace_firstwrite = H5Screate_simple( 1, &file_size, NULL );
-    memspace_firstwrite  = H5Screate_simple( 1, &file_size, NULL );
+    file_size = ( hsize_t )one_patch_buffer_size * ( hsize_t )tot_number_of_patches;
     
     if( smpi->test_mode ) {
         return;
@@ -67,14 +65,26 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI *smpi, VectorP
         first_patch_of_this_proc = npatch_local*( first_proc_with_less_patches+iproc );
     }
     // Define space in file for re-reading
-    filespace_reread = H5Screate_simple( 1, &file_size, NULL );
     hsize_t offset = ( hsize_t )one_patch_buffer_size * ( hsize_t )first_patch_of_this_proc;
     hsize_t block  = ( hsize_t )one_patch_buffer_size * ( hsize_t )npatch_local;
-    hsize_t count  = 1;
-    H5Sselect_hyperslab( filespace_reread, H5S_SELECT_SET, &offset, NULL, &count, &block );
+    filespace_reread = new H5Space( file_size, offset, block );
     // Define space in memory for re-reading
-    memspace_reread = H5Screate_simple( 1, &block, NULL );
+    memspace_reread = new H5Space( block );
     data_reread.resize( block );
+    
+    
+    // Define the chunk size (necessary above 2^28 points)
+    const hsize_t max_size = 4294967295/2/sizeof( double );
+    // For the first write
+    if( file_size > max_size ) {
+        hsize_t n_chunks = 1 + ( file_size-1 ) / max_size;
+        chunk_size_firstwrite = file_size / n_chunks;
+        if( n_chunks * chunk_size_firstwrite < file_size ) {
+            chunk_size_firstwrite++;
+        }
+    } else {
+        chunk_size_firstwrite = 0;
+    }
     // Define the list of patches for re-writing
     rewrite_npatch = ( unsigned int )npatch_local;
     rewrite_patch.resize( rewrite_npatch );
@@ -101,15 +111,13 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI *smpi, VectorP
     rewrite_npatchx = rewrite_xmax - rewrite_xmin + 1;
     rewrite_npatchy = rewrite_ymax - rewrite_ymin + 1;
     // Define space in file for re-writing
-    hsize_t final_array_size[2], offset2[2], block2[2], count2[2];
+    vector<hsize_t> final_array_size(2), offset2(2), block2(2);
     final_array_size[0] = params.number_of_patches[0] * params.n_space[0] + 1;
     final_array_size[1] = params.number_of_patches[1] * params.n_space[1] + 1;
     offset2[0] = rewrite_xmin * params.n_space[0] + ( ( rewrite_xmin==0 )?0:1 );
     offset2[1] = rewrite_ymin * params.n_space[1] + ( ( rewrite_ymin==0 )?0:1 );
     block2 [0] = rewrite_npatchx * params.n_space[0] + ( ( rewrite_xmin==0 )?1:0 );
     block2 [1] = rewrite_npatchy * params.n_space[1] + ( ( rewrite_ymin==0 )?1:0 );
-    count2 [0] = 1;
-    count2 [1] = 1;
     // Take subgrid into account
     unsigned int istart[2];
     total_dataset_size = 1;
@@ -129,50 +137,30 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI *smpi, VectorP
         offset2[i] = rewrite_start_in_file[i];
         block2 [i] = rewrite_size[i];
     }
-    filespace = H5Screate_simple( 2, final_array_size, NULL );
-    if( rewrite_size[0]==0 || rewrite_size[1]==0 ) {
-        H5Sselect_none( filespace );
-    } else {
-        H5Sselect_hyperslab( filespace, H5S_SELECT_SET, offset2, NULL, count2, block2 );
-    }
-    // Define space in memory for re-writing
-    memspace = H5Screate_simple( 2, block2, NULL );
-    data_rewrite.resize( rewrite_size[0]*rewrite_size[1] );
-    
-    // Define the chunk size (necessary above 2^28 points)
-    const hsize_t max_size = 4294967295/2/sizeof( double );
-    // For the first write
-    dcreate_firstwrite = H5Pcreate( H5P_DATASET_CREATE );
-    if( file_size > max_size ) {
-        hsize_t n_chunks = 1 + ( file_size-1 ) / max_size;
-        hsize_t chunk_size = file_size / n_chunks;
-        if( n_chunks * chunk_size < file_size ) {
-            chunk_size++;
-        }
-        H5Pset_layout( dcreate_firstwrite, H5D_CHUNKED );
-        H5Pset_chunk( dcreate_firstwrite, 1, &chunk_size );
-    }
-    // For the second write
+    // Chunks for the second write
     hsize_t final_size = final_array_size[0]
                          *final_array_size[1];
     if( final_size > max_size ) {
         hsize_t n_chunks = 1 + ( final_size-1 ) / max_size;
-        hsize_t chunk_size[2];
+        chunk_size.resize( 2 );
         chunk_size[0] = final_array_size[0] / n_chunks;
         chunk_size[1] = final_array_size[1];
         if( n_chunks * chunk_size[0] < final_array_size[0] ) {
             chunk_size[0]++;
         }
-        H5Pset_layout( dcreate, H5D_CHUNKED );
-        H5Pset_chunk( dcreate, 2, chunk_size );
+    } else {
+        chunk_size.resize( 0 );
     }
+    filespace = new H5Space( final_array_size, offset2, block2, chunk_size );
+    // Define space in memory for re-writing
+    memspace = new H5Space( block2 );
+    data_rewrite.resize( rewrite_size[0]*rewrite_size[1] );
     
-    tmp_dset_id=0;
+    tmp_dset_ = NULL;
 }
 
 DiagnosticFields2D::~DiagnosticFields2D()
 {
-    H5Pclose( dcreate_firstwrite );
 }
 
 
@@ -184,24 +172,11 @@ void DiagnosticFields2D::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
     // Resize the data
     data.resize( buffer_size );
     
-    // Define offset and size for HDF5 file
-    hsize_t offset = one_patch_buffer_size * refHindex;
-    hsize_t block  = buffer_size;
-    hsize_t count  = 1;
-    // Select portion of the file where this MPI will write to
-    H5Sselect_hyperslab( filespace_firstwrite, H5S_SELECT_SET, &offset, NULL, &count, &block );
-    // define space in memory
-    H5Sset_extent_simple( memspace_firstwrite, 1, &block, &block );
+    filespace_firstwrite = new H5Space( file_size, one_patch_buffer_size * refHindex, buffer_size, chunk_size_firstwrite );
+    memspace_firstwrite  = new H5Space( buffer_size );
     
     // Create/Open temporary dataset
-    status = H5Lexists( fileId_, "tmp", H5P_DEFAULT );
-    if( status == 0 ) {
-        tmp_dset_id  = H5Dcreate( fileId_, "tmp", H5T_NATIVE_DOUBLE, filespace_firstwrite, H5P_DEFAULT, dcreate_firstwrite, H5P_DEFAULT );
-    } else {
-        hid_t pid = H5Pcreate( H5P_DATASET_ACCESS );
-        tmp_dset_id = H5Dopen( fileId_, "tmp", pid );
-        H5Pclose( pid );
-    }
+    tmp_dset_ = new H5Write( file_, "tmp", H5T_NATIVE_DOUBLE, filespace_firstwrite );
 }
 
 
@@ -253,14 +228,14 @@ void DiagnosticFields2D::getField( Patch *patch, unsigned int ifield )
 
 
 // Write current buffer to file
-void DiagnosticFields2D::writeField( hid_t dset_id, int itime )
+H5Write DiagnosticFields2D::writeField( H5Write * loc, std::string name, int itime )
 {
 
     // Write the buffer in a temporary location
-    H5Dwrite( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_firstwrite, filespace_firstwrite, write_plist, &( data[0] ) );
+    tmp_dset_->write( data[0], H5T_NATIVE_DOUBLE, filespace_firstwrite, memspace_firstwrite );
     
     // Read the file with the previously defined partition
-    H5Dread( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_reread, filespace_reread, write_plist, &( data_reread[0] ) );
+    tmp_dset_->read( data_reread[0], H5T_NATIVE_DOUBLE, filespace_reread, memspace_reread );
     
     // Fold the data according to the Hilbert curve
     unsigned int read_position, write_position, write_skip;
@@ -297,7 +272,6 @@ void DiagnosticFields2D::writeField( hid_t dset_id, int itime )
     }
     
     // Rewrite the file with the previously defined partition
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &( data_rewrite[0] ) );
-    
+    return loc->array( name, data_rewrite[0], filespace, memspace );
 }
 

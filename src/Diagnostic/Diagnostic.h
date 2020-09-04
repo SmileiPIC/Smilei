@@ -16,14 +16,18 @@ class Diagnostic
 
 public :
 
-    Diagnostic( ) : openPMD_( NULL ) {};
-    Diagnostic( OpenPMDparams *o, std::string diag_type, int idiag ) : openPMD_( o ) {
+    Diagnostic( ) : file_ ( NULL ), openPMD_( NULL ) {};
+    Diagnostic( OpenPMDparams *o, std::string diag_type, int idiag ) : file_ ( NULL ), openPMD_( o ) {
         PyTools::extract( "name", diag_name_, diag_type, idiag );
     };
-    virtual ~Diagnostic() {};
+    virtual ~Diagnostic() {
+        if( file_ ) {
+            delete file_;
+        }
+    };
     
     //! Opens the file. Only by MPI master for global diags. Only by patch master for local diags.
-    virtual void openFile( Params &params, SmileiMPI *smpi, bool newfile ) = 0;
+    virtual void openFile( Params &params, SmileiMPI *smpi ) = 0;
     //! Closes the file. Only by MPI master for global diags. Only by patch master for local diags.
     virtual void closeFile() = 0;
     
@@ -74,8 +78,8 @@ public :
     
 protected :
 
-    //! Id of the file for one diagnostic
-    hid_t fileId_;
+    //! File for one diagnostic
+    H5Write * file_;
     
     //! Pointer to all parameters needed for openPMD compatibility
     OpenPMDparams *openPMD_;

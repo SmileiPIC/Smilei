@@ -39,7 +39,7 @@ Considering an ion with atomic number :math:`Z` being ionized from charge state
 of magnitude :math:`\vert E\vert`, the ionization rate reads:
 
 .. math::
-  :label: ionizationRate
+  :label: ionizationRate1
 
   \Gamma_{\rm ADK, DC} = A_{n^\star,l^\star}\,B_{l,\vert m\vert}\,
   I_p\,\left( \frac{2 (2 I_p)^{3/2}}{\vert E\vert} \right)^{2n^\star-\vert m \vert -1}\,
@@ -62,7 +62,7 @@ The coefficients :math:`A_{n^\star,l^\star}` and :math:`B_{l,\vert m\vert}` are 
 
 where :math:`\Gamma(x)` is the gamma function.
 Note that considering an electric field :math:`E=\vert E\vert\,\cos(\omega t)`
-oscillating in time at the frequency :math:`\omega`, averaging Eq. :eq:`ionizationRate`
+oscillating in time at the frequency :math:`\omega`, averaging Eq. :eq:`ionizationRate1`
 over a period :math:`2\pi/\omega` leads to the well-known cycle-averaged ionization rate:
 
 .. math::
@@ -72,7 +72,7 @@ over a period :math:`2\pi/\omega` leads to the well-known cycle-averaged ionizat
   \,I_p\,\left( \frac{2 (2 I_p)^{3/2}}{\vert E\vert} \right)^{2n^\star-\vert m \vert -3/2}\,
   \exp\!\left( -\frac{2 (2 I_p)^{3/2}}{3 \vert E\vert}  \right)\,.
 
-In :program:`Smilei`, following [Nuter2011]_, the ionization rate of :eq:`ionizationRate`
+In :program:`Smilei`, following [Nuter2011]_, the ionization rate of :eq:`ionizationRate1`
 is computed for :math:`\vert m \vert=0` only.
 Indeed, as shown in [Ammosov1986]_, the ratio :math:`R` of the ionization rate
 computed for :math:`\vert m\vert=0` by the rate computed for :math:`\vert m\vert=1` is:
@@ -206,7 +206,7 @@ Field ionization with a laser envelope
 In a typical PIC simulation, the laser oscillation is sampled frequently in time, 
 thus the electric field can be considered static within a single timestep where ionization takes place,
 and the ionization rate in 
-DC, i.e. :math:`\Gamma_{\rm ADK, DC}` from Eq. :eq:`ionizationRate` can be used at 
+DC, i.e. :math:`\Gamma_{\rm ADK, DC}` from Eq. :eq:`ionizationRate1` can be used at 
 each timestep. 
 Furthermore, if the atom/ion from which the electrons are stripped through ionization is at rest, 
 for momentum conservation the new electrons can be initialized with zero momentum. 
@@ -226,7 +226,7 @@ its magnitude over the laser oscillations.
 For linear polarization, i.e. `ellipticity = 0` :
 
 .. math::
-  :label: ionizationRate
+  :label: ionizationRate2
 
   \Gamma_{\rm ADK, AC} = \left(\frac{3}{\pi}\frac{\vert E\vert}{(2I_p)^{3/2}}\right)^{1/2}\Gamma_{\rm ADK, DC} .
 
@@ -246,7 +246,7 @@ rms width :math:`\sigma_{p_{\perp}} = \Delta\vert\tilde{A}\vert`, to reproduce t
 atoms by a linearly polarized laser [Schroeder2014]_. The parameter :math:`\Delta` is defined as [Schroeder2014_]:
 
 .. math::
-  :label: ionizationRate
+  :label: ionizationRate3
 
   \Delta = \left(\frac{3}{2} \vert E \vert \right)^{1/2}\left(2I_p\right)^{-3/4}.
 

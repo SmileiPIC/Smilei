@@ -29,6 +29,20 @@ public:
         return cell_volume;
     };
     
+    //! Given several arrays (x,y,z), return indices of points in patch
+    std::vector<unsigned int> indicesInDomain( double **position, unsigned int n_particles ) override
+    {
+        std::vector<unsigned int> indices( 0 );
+        for( unsigned int ip = 0; ip < n_particles; ip++ ) {
+            double distance =  sqrt( position[1][ip]*position[1][ip]+position[2][ip]*position[2][ip] );
+            if( position[0][ip] >= getDomainLocalMin( 0 ) && position[0][ip] < getDomainLocalMax( 0 )
+             && distance >= getDomainLocalMin( 1 ) && distance < getDomainLocalMax( 1 ) ) {
+                indices.push_back( ip );
+            }
+        }
+        return indices;
+    };
+    
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------

@@ -1725,7 +1725,7 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
          pos[0] += dl;
      }
      
-     profile->complexValuesAt( xr, *field2D );
+     profile->addComplexValuesAt( xr, *field2D );
      
      for( unsigned int idim=0 ; idim<2 ; idim++ ) {
          delete xr[idim];
@@ -1769,7 +1769,7 @@ void ElectroMagnAM::applyPrescribedField( Field *my_field,  Profile *profile, Pa
         pos[0] += dl;
     }
 
-    profile->complexValuesAtTime( xr, time, *field2D );
+    profile->addComplexValuesAtTime( xr, time, *field2D );
 
     for( unsigned int idim=0 ; idim<2 ; idim++ ) {
         delete xr[idim];

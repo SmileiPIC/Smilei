@@ -78,6 +78,9 @@ public:
     //! Profile for the particles per cell
     Profile *particles_per_cell_profile_;
 
+    //! Pointer toward regular number of particles array
+    std::vector<int> regular_number_array_;
+
     // -----------------------------------------------------------------------------
     //  3. Methods
 
@@ -93,10 +96,34 @@ public:
         return (box_side_ == "xmin");
     }
 
-    //! Return if the injector is from Xmin
+    //! Return if the injector is from Xmax
     inline bool isXmax()
     {
         return (box_side_ == "xmax");
+    }
+
+    //! Return if the injector is from Ymin
+    inline bool isYmin()
+    {
+        return (box_side_ == "ymin");
+    }
+
+    //! Return if the injector is from Ymax
+    inline bool isYmax()
+    {
+        return (box_side_ == "ymax");
+    }
+
+    //! Return if the injector is from Zmin
+    inline bool isZmin()
+    {
+        return (box_side_ == "zmin");
+    }
+
+    //! Return if the injector is from Zmax
+    inline bool isZmax()
+    {
+        return (box_side_ == "zmax");
     }
 
 };

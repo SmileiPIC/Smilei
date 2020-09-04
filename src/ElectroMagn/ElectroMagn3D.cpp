@@ -1895,7 +1895,7 @@ void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patc
         pos[0] += dx;
     }
     
-    profile->valuesAt( xyz, *field3D );
+    profile->addValuesAt( xyz, *field3D );
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];
@@ -1945,7 +1945,7 @@ void ElectroMagn3D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
         pos[0] += dx;
     }
     
-    profile->valuesAtTime( xyz, time, *field3D );
+    profile->addValuesAtTime( xyz, time, *field3D );
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];

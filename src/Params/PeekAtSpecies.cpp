@@ -17,17 +17,21 @@ PeekAtSpecies::PeekAtSpecies( Params &p, unsigned int species_id ) :
     std::string peek_position_initialization;
     PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", species_id );
     if( PyTools::py2scalar( py_pos_init, peek_position_initialization ) ) {
-        bool ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", species_id );
-        bool ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", species_id );
-        if( ok1 ) {
-            density_profile_type = "nb";
+        if( peek_position_initialization == "regular"
+         || peek_position_initialization == "random"
+         || peek_position_initialization == "centered" ) {
+            bool ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", species_id );
+            bool ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", species_id );
+            if( ok1 ) {
+                density_profile_type = "nb";
+            }
+            if( ok2 ) {
+                density_profile_type = "charge";
+            }
+            density_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( density_profile_type, "_density ", species_name ) );
+            PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", species_id );
+            particles_per_cell_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( "particles_per_cell ", species_name ) );
         }
-        if( ok2 ) {
-            density_profile_type = "charge";
-        }
-        density_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( density_profile_type, "_density ", species_name ) );
-        PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", species_id );
-        particles_per_cell_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( "particles_per_cell ", species_name ) );
     }
     Py_DECREF( py_pos_init );
 }

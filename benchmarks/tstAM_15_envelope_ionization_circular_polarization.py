@@ -73,10 +73,10 @@ R_plasma = 100.
 
 
 def my_profile(x,y):
-        radial_profile = 1.
-        if (y>R_plasma):
-		radial_profile = 0.
-	return g(x,y)*radial_profile
+    radial_profile = 1.
+    if (y>R_plasma):
+        radial_profile = 0.
+    return g(x,y)*radial_profile
 
 
 Species( 
@@ -168,43 +168,41 @@ Checkpoints(
 field_lists_forprobes=["Ex","Ey","Rho","Jx","Jy","Jz","Env_E_abs","Rho_neutralizingelectron","Rho_electronfromion","Rho_nitrogen5plus"]
 
 DiagProbe(	
-	every = 100,
-	
-	origin = [0., 2*dtrans, 0.],
-	
-	corners = [
-              [Main.grid_length[0], 2*dtrans, 0.]
-                  ],
-
-	number = [nx],
-	fields = field_lists_forprobes,
+    every = 100,
+        
+    origin = [0., 2*dtrans, 0.],
+        
+    corners = [
+        [Main.grid_length[0], 2*dtrans, 0.]
+    ],
+    number = [nx],
+    fields = field_lists_forprobes,
 )
-	
 DiagProbe(
-        every = 100,
+    every = 100,
 
-        origin = [0., 0., 0.],
+    origin = [0., 0., 0.],
 
-        corners = [
-              [Main.grid_length[0], 0., 0.]
-                  ],
+    corners = [
+        [Main.grid_length[0], 0., 0.]
+    ],
 
-        number = [nx],
-        fields = field_lists_forprobes,
+    number = [nx],
+    fields = field_lists_forprobes,
 )
 	
 DiagProbe(	
-	every = 100,
-	
-	origin = [0., -Main.grid_length[1], 0.],
-	
-	corners =  [	
-           [Main.grid_length[0], -Main.grid_length[1], 0.],	
-	   [0., Main.grid_length[1], 0.],
-                   ],
-	
- 	number = [nx,2*ntrans],	
-        fields = field_lists_forprobes,
+    every = 100,
+    
+    origin = [0., -Main.grid_length[1], 0.],
+    
+    corners =  [	
+        [Main.grid_length[0], -Main.grid_length[1], 0.],	
+        [0., Main.grid_length[1], 0.],
+    ],
+        
+    number = [nx,2*ntrans],	
+    fields = field_lists_forprobes,
 )
 
 DiagTrackParticles(

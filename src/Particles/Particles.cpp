@@ -908,10 +908,8 @@ void Particles::moveParticles( int iPart, int new_pos )
 bool Particles::isParticleInDomain( unsigned int ipart, Patch *patch )
 {
     for( unsigned int i=0; i<Position.size(); i++ ) {
-        if( Position[i][ipart] <  patch->getDomainLocalMin( i ) ) {
-            return false;
-        }
-        if( Position[i][ipart] >= patch->getDomainLocalMax( i ) ) {
+        if( Position[i][ipart] <  patch->getDomainLocalMin( i )
+         || Position[i][ipart] >= patch->getDomainLocalMax( i ) ) {
             return false;
         }
     }

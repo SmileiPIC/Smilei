@@ -13,7 +13,7 @@ This requires a system with cylindrical symmetry or close to cylindrical symmetr
 Mathematical definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: _static/Coordinate_Reference_AMcylindrical.png
+.. figure:: _static/Coordinate_Reference_AMcylindrical.pdf
   :width: 13cm
 
 Any scalar field :math:`F(x,r,\theta)` can be decomposed into a basis of
@@ -289,5 +289,248 @@ These comparisons assume the same longitudinal window size and the same
 transverse size for the simulated physical space.
 
 
+----
 
+On-Axis boundary conditions in FDTD
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In the AM geometry, specific boundary conditions are derived on-axis for the FDTD solver using a Yee lattice.
+This section presents the actual implementation in :program:`Smilei`.
+It is mostly based on the `original paper <http://doi.org/10.1016/j.jcp.2008.11.017>`_ but also includes
+original contributions from X. Davoine and the :program:`Smilei` team.
+
+Primal and Dual grids
+""""""""""""""""""""""""""""""
+
+In :program:`Smilei`, ghost cells in the radial direction are located "before" the axis.
+So if you have :math:`N_{ghost}` ghost cells, you have as many primal points on the radial axis before
+reaching the actual geometric axis :math:`r=0`.
+If :math:`dr` is a radial cell size, the dual radial axis is shifted by :math:`-dr/2`.
+Below is an example for :math:`N_{ghost}=2`.
+All equations in this section are given for this specific case.
+For different numbers of ghost cells, simply add the difference in all indices.
+:math:`jp` and :math:`jd` stand for the primal and dual indices.
+
+.. figure:: _static/transverse_axis.png
+   :width: 10cm
+
+Cancellation on axis
+"""""""""""""""""""""""
+
+The first basic principle is that a mode 0 field defined on axis can only be longitudinal otherwise it would be ill defined.
+On the opposite, longitudinal fields on axis can only be of mode 0 since they do not depend on :math:`theta`.
+From this we can already state that :math:`E_r^{m=0},\ E_t^{m=0},\ B_r^{m=0},\ B_t^{m=0},\ E_l^{m>0},\ B_l^{m>0}` are zero on axis.
+
+
+This condition is straight forward for primal fields in R which take a value on axis exactly.
+We simply set this value to zero.
+
+.. math::
+   E_{\theta}^{m=0}[2] = 0
+
+   B_r^{m=0}[2] = 0
+
+   E_l^{m>0}[2] = 0
+
+For dual fields in R, we set a value such as a linear interpolation between nearest grid points gives a zero on axis.
+
+.. math::
+   E_r^{m=0}[2] = -E_r^{m=0}[3]
+
+   B_{\theta}^{m=0}[2] = -B_{\theta}^{m=0}[3]
+
+   B_l^{m>0}[2] = -B_l^{m>0}[3]
+
+Transverse field on axis
+""""""""""""""""""""""""""""
+
+The transverse electric field can be written as follows
+
+.. math::
+   \mathbf{E_\perp} = \mathbf{E_y} + \mathbf{E_z} = (E_r\cos{\theta}-E_{\theta}\sin{\theta})\mathbf{e_y} + (E_r\sin{\theta}+E_{\theta}\cos{\theta})\mathbf{e_z}
+
+The transverse field on axis can not depend on :math:`\theta` otherwise it would be ill defined.
+Therefore we have the following condition on axis:
+
+.. math::
+   \frac{\partial\mathbf{E_\perp}}{\partial\theta} = 0\ \forall\theta
+
+which leads to the following relation:
+
+.. math::
+   \cos{\theta}\left(\frac{\partial E_r}{\partial\theta}-E_{\theta}\right) + \sin{\theta}\left(\frac{\partial E_{\theta}}{\partial\theta}+E_r\right)=0\ \forall\theta
+
+Being true for all :math:`\theta`, this leads to
+
+.. math::
+   \frac{\partial E_r}{\partial\theta}-E_{\theta}=0\ \forall\theta
+
+   \frac{\partial E_{\theta}}{\partial\theta}+E_r=0\ \forall\theta
+
+Remembering that for a given mode :math:`m` and a given field :math:`F`, we have :math:`F=Re\left(\tilde{F}^m\exp{(-im\theta)}\right)`, 
+we can write the previous equations for all modes :math:`m` as follows:
+
+.. math::
+  :label: transverse_on_axis
+
+   \tilde{E_r}^m=\frac{i\tilde{E_{\theta}}^m}{m}
+
+   \tilde{E_r}^m=mi\tilde{E_{\theta}}^m
+
+We have already established in the previuos section that the modes :math:`m=0` must cancel on axis and we are concerned only about :math:`m>0`.
+Equations :eq:`transverse_on_axis` can have a non zero solution only for :math:`m=1` and is also valid for the magnetic field.
+We therefore conclude that all modes must cancel on axis except for :math:`m=1`.
+
+.. math::
+   E_{\theta}^{m>1}[2] = 0
+
+   B_r^{m>1}[2] = 0
+
+   E_r^{m>1}[2] = -E_r^{m>1}[3]
+
+   B_{\theta}^{m>1}[2] = -B_{\theta}^{m>1}[3]
+
+Let's now write the Gauss law for mode :math:`m=1`:
+
+.. math::
+   div(\mathbf{\tilde{E}^{m=1}})=\tilde{\rho}^{m=1}
+
+where :math:`\rho` is the charge density.
+We have already established that on axis the longitudinal field are zero for all modes :math:`m>0`.
+The charge density being a scalar field, it follows the same rule and is zero as well on axis.
+The continuity equation on axis and written in cylindrical coordinates becomes:
+
+.. math::
+   \frac{\tilde{E_r}^{m=1}-im\tilde{E_{\theta}}^{m=1}}{r} + \frac{\partial \tilde{E_r}^{m=1}}{\partial r} = 0
+
+Eq. :eq:`transverse_on_axis` already establishes that the first term is zero.
+It is only necessary to cancel the second term.
+
+In order to do so, let's build an uncentered finite dfference scheme of the second order.
+Simple Taylor developments give for any quantity :math:`u`:
+
+.. math::
+   u(x+\frac{dx}{2})=u(x)+\frac{dx}{2}u'(x)+\frac{dx^2}{8}u''(x)+O(dx3)
+
+   u(x+\frac{3dx}{2})=u(x)+\frac{3dx}{2}u'(x)+\frac{9dx^2}{8}u''(x)+O(dx3)
+
+By combination we obtain the scheme we are looking for:
+
+.. math::
+   u'(x) = \frac{9u(x+\frac{dx}{2})-u(x+\frac{3dx}{2})-8u(x)}{3dx}
+
+We can therefore write:
+
+.. math::
+   \frac{\partial \tilde{E_r}^{m=1}}{\partial r}(r=0)= 9\tilde{E_r}^{m=1}(r=\frac{dr}{2})-\tilde{E_r}^{m=1}(r=\frac{3dr}{2})-8\tilde{E_r}^{m=1}(r=0) = 0
+
+which gives:
+
+.. math::
+   \tilde{E_r}^{m=1}(r=0)=\frac{1}{8}\left(9\tilde{E_r}^{m=1}(r=\frac{dr}{2})-\tilde{E_r}^{m=1}(r=\frac{3dr}{2})\right)
+
+And from :eq:`transverse_on_axis` this turns into:
+
+.. math::
+   \tilde{E_{\theta}}^{m=1}(r=0)=\frac{-i}{8}\left(9\tilde{E_r}^{m=1}(r=\frac{dr}{2})-\tilde{E_r}^{m=1}(r=\frac{3dr}{2})\right)
+
+giving the corresponding boundary condition for :math:`E_{\theta}^{m=1}`:
+
+.. math::
+   E_{\theta}^{m=1}[2] = \frac{-i}{8}\left(9E_r^{m=1}[3]-E_r^{m=1}[4]\right)
+
+Once :math:`E_{\theta}^{m=1}` is defined on axis,  we need to pick :math:`E_r^{m=1}` so that :eq:`transverse_on_axis` is matched.
+With a linear interpolation we obtain:
+
+.. math::
+   E_r^{m=1}[2] = 2iE_{\theta}^{m=1}[2]-E_r^{m=1}[3]
+
+All the equation derived here are also valid for the magnetic field.
+But because of a different duality, it is more convenient to use a different approach.
+The equations :eq:`MaxwellEqsAzimuthalModes` has a :math:`\frac{E_l}{r}` term in the expression of :math:`B_r` which makes it undefined on axis.
+Nevertheless, we need to evaluate this term for the mode :math:`m=1` and it can be done as follows.
+
+.. math::
+   \lim_{r\to 0}\frac{E_l^{m=1}(r)}{r} = \lim_{r\to 0}\frac{E_l^{m=1}(r)-E_l^{m=1}(0)}{r}
+
+since we established in the previous section that :math:`E_l^{m=1}(r=0)=0`.
+And by definition of a derivative we have:
+
+.. math::
+   \lim_{r\to 0}\frac{E_l^{m=1}(r)-E_l^{m=1}(0)}{r}=\frac{\partial E_l^{m=1} }{\partial r}(r=0)
+
+This derivative can be evaluated by a simple finite difference scheme and using again that  :math:`E_l^{m=1}` is zero on axis we get:
+
+.. math::
+   :label: derivative_limit
+
+   \lim_{r\to 0}\frac{E_l^{m=1}(r)}{r} = \frac{E_l^{m=1}(dr)}{dr}
+
+Introducing this result in the standard FDTD scheme for :math:`B_r` we get the axis bounday condition:
+
+.. math::
+   B_{r}^{m=1,n+1}[i,2] = B_{r}^{m=1,n}[i,2] + dt\left(\frac{i}{dr}E_l^{m=1}[i,3]+\frac{E_{\theta}^{m=1}[i+1,2]-E_{\theta}^{m=1}[i,2]}{dl}\right)
+
+where the :math:`n` indice indicates the time step and :math:`i` the longitudinal indice.
+Exactly as for the electric field, we need to have :math:`B_{r}^{m=1}=iB_{\theta}^{m=1}`.
+With a similar interpolation we obtain the boundary condition on axis for :math:`B_{\theta}^{m=1}`:
+
+.. math::
+   B_{\theta}^{m=1}[2]=-2iB_{r}^{m=1}[2]-B_{\theta}^{m=1}[3]
+
+Longitudinal fields on axis
+"""""""""""""""""""""""""""""
+
+We have alreayd established that only modes :math:`m=0` of longitudinal fields are non zero on axis.
+In order to get an evaluation of :math:`E_l^{m=0}` on axis one can use the same approach as for :math:`B_r^{m=1}`.
+Since we have already shown that :math:`E_{\theta}^{m=0}` is zero on axis, we have the following relation which is demonstrated using
+similar arguments as Eq. :eq:`derivative_limit`:
+
+.. math::
+   \lim_{r\to 0}\frac{1}{r}\frac{\partial rB_{\theta}^{m=0}}{\partial r} = \frac{4B_{\theta}^{m=0}(dr/2)}{dr}
+
+Introducing this result in the standard FDTD expression of :math:`E_l` we get:
+
+.. math::
+   E_{l}^{m=0,n+1}[i,2] = E_{l}^{m=0,n}[i,2] + dt\left(\frac{4}{dr}B_{\theta}^{m=0}[i,3]-J_{l}^{m=0}[i,2]\right)
+
+Again, the :math:`n` indice indicates the time step here.
+
+:math:`B_l^{m=0}` is independant of :math:`\theta`. If we assume it is differentiable at :math:`r=0` then its derivative along :math:`r` is zero
+on axis (derivative of a pair function is zero at :math:`x=0` ). From this we get:
+
+.. math::
+   B_{l}^{m=0}[2]=B_{l}^{m=0}[3]
+
+Below axis
+""""""""""""""""""""""""""""
+
+Fields "below" axis are primal fields data with indice :math:`j<2` and dual fields with indice :math:`j<3`.
+These fields are not physical in the sense that they do not contribute to the reconstruction of any physical field in real space and are not obtained by solving Maxwell's equations.
+Nevertheless, it is numerically convenient to give them a value in order to facilitate field interpolation for macro-particles near axis.
+This is already what is done for dual fields in :math:`r` which cancel on axis for instance.
+We extend this logic to primal fields in :math:`r`:
+
+.. math::
+
+   E_{l}^{m=0}[1] = E_{l}^{m=0}[3]
+
+   E_{l}^{m>0}[1] = -E_{l}^{m>0}[3]
+
+   E_{\theta}^{m\neq1}[1] = -E_{\theta}^{m\neq1}[3]
+
+   E_{\theta}^{m=1}[1] = E_{\theta}^{m=1}[3]
+
+   B_{r}^{m\neq1}[1] = -B_{r}^{m\neq1}[3]
+
+   B_{r}^{m=1}[1] = B_{r}^{m=1}[3]
+
+Currents near axis
+"""""""""""""""""""""
+
+A specific treatment must be applied to charge and current densities near axis because the projector deposits charge and current "below" axis.
+Quantities below axis must be brought back in the "physical" terms on and above axis.
+
+Using the continuity equation instead of Gauss law for transverse current of mode :math:`m=1` on axis, we can derive the exact same boundary conditions
+on axis for current density as for the electric field.
 
