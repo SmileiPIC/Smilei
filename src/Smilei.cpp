@@ -165,13 +165,6 @@ int main( int argc, char *argv[] )
         // Initialize the electromagnetic fields
         // -------------------------------------
 
-        TITLE( "Applying external fields at time t = 0" );
-        vecPatches.applyExternalFields();
-        vecPatches.saveExternalFields( params );
-
-        TITLE( "Applying prescribed fields at time t = 0" );
-        vecPatches.applyPrescribedFields(time_prim);        
-
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
         // Note: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
@@ -182,14 +175,22 @@ int main( int argc, char *argv[] )
         vecPatches.computeCharge();
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
 
-        // Apply antennas
-        // --------------
-        vecPatches.applyAntennas( 0.5 * params.timestep );
         // Init electric field (Ex/1D, + Ey/2D)
         if( params.solve_poisson == true && !vecPatches.isRhoNull( &smpi ) ) {
             TITLE( "Solving Poisson at time t = 0" );
             vecPatches.runNonRelativisticPoissonModule( params, &smpi,  timers );
         }
+
+        TITLE( "Applying external fields at time t = 0" );
+        vecPatches.applyExternalFields();
+        vecPatches.saveExternalFields( params );
+
+        TITLE( "Applying prescribed fields at time t = 0" );
+        vecPatches.applyPrescribedFields(time_prim);
+
+        // Apply antennas
+        // --------------
+        vecPatches.applyAntennas( 0.5 * params.timestep );
 
         // Patch reconfiguration
         if( params.has_adaptive_vectorization ) {
