@@ -7,7 +7,7 @@ compile:
   stage: compile
   only:
     - develop
-    - regular_number_with_injection
+    - fields_initialization
 
   script:
     # Force workdir cleaning in case of retried
@@ -29,7 +29,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - regular_number_with_injection
+    - fields_initialization
     
   script:
     # Move in test dir
@@ -42,7 +42,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - regular_number_with_injection
+    - fields_initialization
 
   script:
     # Move in test dir
@@ -55,7 +55,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - regular_number_with_injection
+    - fields_initialization
 
   script:
     # Move in test dir
@@ -68,7 +68,7 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - regular_number_with_injection
+    - fields_initialization
     
   script:
     # Move in test dir
@@ -80,7 +80,7 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - regular_number_with_injection
+    - fields_initialization
 
   script:
     # Move in test dir
@@ -92,7 +92,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - regular_number_with_injection
+    - fields_initialization
     
   script:
     # Move in test dir
@@ -104,7 +104,7 @@ use_picsar:
   stage: use_picsar
   only:
     - develop
-    - regular_number_with_injection
+    - fields_initialization
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
