@@ -1172,7 +1172,7 @@ bool Species::isProj( double time_dual, SimWindow *simWindow )
 
 void Species::disableXmax()
 {
-    partBoundCond->bc_xmax   = NULL;
+    partBoundCond->bc_xmax   = &internal_sup;
 }
 
 void Species::setXminBoundaryCondition()
