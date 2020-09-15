@@ -51,11 +51,13 @@ public:
         ( *bc_xmax )( particles, smpi, imin, imax, 0, x_max, dt_, species, ithread, nrj_iPart );
         nrj_tot += nrj_iPart;
         if( nDim_particle >= 2 ) {
-            ( *bc_ymin )( particles, smpi, imin, imax, 1, y_min, dt_, species, ithread, nrj_iPart );
-            nrj_tot += nrj_iPart;
+            if (!isAM) {
+                ( *bc_ymin )( particles, smpi, imin, imax, 1, y_min, dt_, species, ithread, nrj_iPart );
+                nrj_tot += nrj_iPart;
+            }
             ( *bc_ymax )( particles, smpi, imin, imax, 1, y_max, dt_, species, ithread, nrj_iPart );
             nrj_tot += nrj_iPart;
-            if( nDim_particle == 3 ) {
+            if( ( nDim_particle == 3 ) && (!isAM) ) {
                 ( *bc_zmin )( particles, smpi, imin, imax, 2, z_min, dt_, species, ithread, nrj_iPart );
                 nrj_tot += nrj_iPart;
                 ( *bc_zmax )( particles, smpi, imin, imax, 2, z_max, dt_, species, ithread, nrj_iPart );

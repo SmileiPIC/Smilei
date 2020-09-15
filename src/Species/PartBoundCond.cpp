@@ -248,6 +248,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     else if( isAM ) {
         
         // Ymax
+        bc_ymax = &internal_sup;
         if( species->boundary_conditions[1][1] == "remove" ) {
             if( patch->isYmax() ) {
                 bc_ymax = &remove_particle_sup;
