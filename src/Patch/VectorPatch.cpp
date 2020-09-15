@@ -383,6 +383,12 @@ void VectorPatch::dynamics( Params &params,
 #endif
 
     timers.syncPart.restart();
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+            Species *spec = species( ipatch, ispec );
+            spec->extractParticles();
+        }
+    }
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
         Species *spec = species( 0, ispec );
         if( !spec->ponderomotive_dynamics && spec->isProj( time_dual, simWindow ) ) {

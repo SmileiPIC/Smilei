@@ -88,24 +88,31 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     // Define the kind of applied boundary conditions
     // ----------------------------------------------
     
-    int ( *remove )( Particles &, int, int, double, Species *, double & );
+    void ( *remove_inf )( Particles &, int, int, int, double, Species *, double & );
     if( species->mass_ == 0 ) {
-        remove = &remove_photon;
+        remove_inf = &remove_photon_inf;
     } else {
-        remove = &remove_particle;
+        remove_inf = &remove_particle_inf;
+    }
+    void ( *remove_sup)( Particles &, int, int, int, double, Species *, double & );
+    if( species->mass_ == 0 ) {
+        remove_sup = &remove_photon_sup;
+    } else {
+        remove_sup = &remove_particle_sup;
     }
     // Xmin
+    bc_xmin = &internal_inf;
     if( species->boundary_conditions[0][0] == "reflective" ) {
         if( patch->isXmin() ) {
-            bc_xmin = &reflect_particle;
+            bc_xmin = &reflect_particle_inf;
         }
     } else if( species->boundary_conditions[0][0] == "remove" ) {
         if( patch->isXmin() ) {
-            bc_xmin = remove;
+            bc_xmin = remove_inf;
         }
     } else if( species->boundary_conditions[0][0] == "stop" ) {
         if( patch->isXmin() ) {
-            bc_xmin = &stop_particle;
+            bc_xmin = &stop_particle_inf;
         }
     } else if( species->boundary_conditions[0][0] == "thermalize" ) {
         if( patch->isXmin() ) {
@@ -117,17 +124,18 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     }
     
     // Xmax
+    bc_xmax = &internal_sup;
     if( species->boundary_conditions[0][1] == "reflective" ) {
         if( patch->isXmax() ) {
-            bc_xmax = &reflect_particle;
+            bc_xmax = &reflect_particle_sup;
         }
     } else if( species->boundary_conditions[0][1] == "remove" ) {
         if( patch->isXmax() ) {
-            bc_xmax = remove;
+            bc_xmax = remove_sup;
         }
     } else if( species->boundary_conditions[0][1] == "stop" ) {
         if( patch->isXmax() ) {
-            bc_xmax = &stop_particle;
+            bc_xmax = &stop_particle_sup;
         }
     } else if( species->boundary_conditions[0][1] == "thermalize" ) {
         if( patch->isXmax() ) {
@@ -141,17 +149,18 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     
     if( ( nDim_particle > 1 ) && ( !isAM ) ) {
         // Ymin
+        bc_ymin = &internal_inf;
         if( species->boundary_conditions[1][0] == "reflective" ) {
             if( patch->isYmin() ) {
-                bc_ymin = &reflect_particle;
+                bc_ymin = &reflect_particle_inf;
             }
         } else if( species->boundary_conditions[1][0] == "remove" ) {
             if( patch->isYmin() ) {
-                bc_ymin = remove;
+                bc_ymin = remove_inf;
             }
         } else if( species->boundary_conditions[1][0] == "stop" ) {
             if( patch->isYmin() ) {
-                bc_ymin = &stop_particle;
+                bc_ymin = &stop_particle_inf;
             }
         } else if( species->boundary_conditions[1][0] == "thermalize" ) {
             if( patch->isYmin() ) {
@@ -163,17 +172,18 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         }
         
         // Ymax
+        bc_ymax = &internal_sup;
         if( species->boundary_conditions[1][1] == "reflective" ) {
             if( patch->isYmax() ) {
-                bc_ymax = &reflect_particle;
+                bc_ymax = &reflect_particle_sup;
             }
         } else if( species->boundary_conditions[1][1] == "remove" ) {
             if( patch->isYmax() ) {
-                bc_ymax = remove;
+                bc_ymax = remove_sup;
             }
         } else if( species->boundary_conditions[1][1] == "stop" ) {
             if( patch->isYmax() ) {
-                bc_ymax = &stop_particle;
+                bc_ymax = &stop_particle_sup;
             }
         } else if( species->boundary_conditions[1][1] == "thermalize" ) {
             if( patch->isYmax() ) {
@@ -186,17 +196,18 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         
         
         if( nDim_particle > 2 ) {
+            bc_zmin = &internal_inf;
             if( species->boundary_conditions[2][0] == "reflective" ) {
                 if( patch->isZmin() ) {
-                    bc_zmin = &reflect_particle;
+                    bc_zmin = &reflect_particle_inf;
                 }
             } else if( species->boundary_conditions[2][0] == "remove" ) {
                 if( patch->isZmin() ) {
-                    bc_zmin = remove;
+                    bc_zmin = remove_inf;
                 }
             } else if( species->boundary_conditions[2][0] == "stop" ) {
                 if( patch->isZmin() ) {
-                    bc_zmin = &stop_particle;
+                    bc_zmin = &stop_particle_inf;
                 }
             } else if( species->boundary_conditions[2][0] == "thermalize" ) {
                 if( patch->isZmin() ) {
@@ -207,17 +218,18 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
                 ERROR( "Zmin boundary condition `"<< species->boundary_conditions[2][0] << "` unknown" );
             }
             
+            bc_zmax = &internal_sup;
             if( species->boundary_conditions[2][1] == "reflective" ) {
                 if( patch->isZmax() ) {
-                    bc_zmax = &reflect_particle;
+                    bc_zmax = &reflect_particle_sup;
                 }
             } else if( species->boundary_conditions[2][1] == "remove" )  {
                 if( patch->isZmax() ) {
-                    bc_zmax = remove;
+                    bc_zmax = remove_sup;
                 }
             } else if( species->boundary_conditions[2][1] == "stop" ) {
                 if( patch->isZmax() ) {
-                    bc_zmax = &stop_particle;
+                    bc_zmax = &stop_particle_sup;
                 }
             } else if( species->boundary_conditions[2][1] == "thermalize" ) {
                 if( patch->isZmax() ) {
@@ -236,7 +248,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         // Ymax
         if( species->boundary_conditions[1][1] == "remove" ) {
             if( patch->isYmax() ) {
-                bc_ymax = &remove_particle;
+                bc_ymax = &remove_particle_sup;
             }
         } else if( species->boundary_conditions[1][1] == "reflective" ) {
             if( patch->isYmax() ) {

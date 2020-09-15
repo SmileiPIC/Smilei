@@ -113,6 +113,8 @@ Species::Species( Params &params, Patch *patch ) :
 
     merge_min_momentum_cell_length_.resize(3);
 
+    particles_to_move = new Particles();
+
 }//END Species creator
 
 void Species::initCluster( Params &params )
@@ -238,6 +240,8 @@ void Species::initOperators( Params &params, Patch *patch )
     typePartRecv.resize( nDim_field*2, MPI_DATATYPE_NULL );
     exchangePatch = MPI_DATATYPE_NULL;
 
+    particles_to_move->initialize( 0, *particles );
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -245,6 +249,8 @@ void Species::initOperators( Params &params, Patch *patch )
 // ---------------------------------------------------------------------------------------------------------------------
 Species::~Species()
 {
+    delete particles_to_move;
+
     delete Push;
     delete Interp;
     delete Proj;
@@ -317,9 +323,6 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
     unsigned int iPart;
-
-    // Reset list of particles to exchange
-    clearExchList();
 
     double ener_iPart( 0. );
     std::vector<double> nrj_lost_per_thd( 1, 0. );
@@ -452,45 +455,28 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 // Apply wall and boundary conditions
                 if( mass_>0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-                            double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                            if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
-                                nrj_lost_per_thd[tid] += mass_ * ener_iPart;
-                            }
-                        }
+                        double dtgf = 1.; //params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        (*partWalls)[iwall]->apply( *particles, particles->first_index[ibin], particles->last_index[ibin], this, dtgf, ener_iPart );
+                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                     }
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
                     //        if omp, create a list per thread
-                    for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-                        if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                            addPartInExchList( iPart );
-                            nrj_lost_per_thd[tid] += mass_ * ener_iPart;
-                            //}
-                            //else if ( partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                            //std::cout<<"removed particle position"<< particles->position(0,iPart)<<" , "<<particles->position(1,iPart)<<" ,"<<particles->position(2,iPart)<<std::endl;
-                        }
-                    }
+                    partBoundCond->apply( *particles, particles->first_index[ibin], particles->last_index[ibin], this, ener_iPart );
+                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
 
                 } else if( mass_==0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-                            double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                            if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
-                                nrj_lost_per_thd[tid] += ener_iPart;
-                            }
-                        }
+                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        (*partWalls)[iwall]->apply( *particles, particles->first_index[ibin], particles->last_index[ibin], this, dtgf, ener_iPart );
+                        nrj_lost_per_thd[tid] += ener_iPart;
                     }
 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
                     //        if omp, create a list per thread
-                    for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-                        if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                            addPartInExchList( iPart );
-                            nrj_lost_per_thd[tid] += ener_iPart;
-                        }
-                    }
+                    partBoundCond->apply( *particles, particles->first_index[ibin], particles->last_index[ibin], this, ener_iPart );
+                    nrj_lost_per_thd[tid] += ener_iPart;
 
                 }
 
@@ -735,15 +721,73 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
 }//END computeCharge
 
 
+void Species::extractParticles()
+{
+    //particles->last_index[0] -= dev_particles->extractParticles( particles_to_move );
+
+    // Count cell_keys = -1
+    //count( particles->cell_keys.begin(), particles->cell_keys.end(), -1 );
+    //nparts_to_move_ = thrust::count(thrust::device, nvidia_cell_keys.begin(), nvidia_cell_keys.begin()+nparts, -1);
+    // resize particles_to_move
+    // ....resize( nparts_to_move )
+    // copy in particles_to_move if cell_keys = -1
+    //thrust::copy_if(thrust::device, iter, iter+nparts, nvidia_cell_keys.begin(), iter_copy, count_if_out());
+
+    particles_to_move->clear();
+    for ( int ipart=0 ; ipart<getNbrOfParticles() ; ipart++ ) {
+        if ( particles->cell_keys[ipart] == -1 ) {
+            particles->copyParticle( ipart, *particles_to_move );
+        }
+    }
+
+}
+
+void Species::injectParticles( Params &params )
+{
+    // through particles_to_move ... not in scalar but :
+
+    //thrust::remove_if( ... remove_if_out() ); cell_keys < 0
+    // resize particles (include in sortParticles)
+    //thrust::copy_n(thrust::device, iter_copy, nparts_add, iter+nparts); (include in sortParticles)
+
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sortParticles( Params &params, Patch * patch )
 {
+    injectParticles( params );
 
     int ndim = params.nDim_field;
     int idim;
-    //cleanupSentParticles(ispec, indexes_of_particles_to_exchange);
+
+    int blabla = 0;
+    //Merge all MPI_buffer_.partRecv in particles_to_move
+    for( int idim = 0; idim < params.nDim_field; idim++ ) {
+        for( int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
+            int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
+            if( ( n_part_recv!=0 ) ) {
+                 // insert n_part_recv in particles_to_move from 0
+                //MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
+                blabla += n_part_recv;;
+                //particles->last_index[particles->last_index.size()-1] += n_part_recv;
+                //particles->cell_keys.resize(particles->cell_keys.size()+n_part_recv);
+            }
+        }
+    }
+    //cout << "\t Species id : " << species_number_ << " - nparticles recv : " << blabla << endl;
+
+
+    // Sort to adapt do cell_keys usage
+    std::vector<int> indexes_of_particles_to_exchange;
+    for ( int ipart=0 ; ipart<getNbrOfParticles() ; ipart++ ) {
+        if ( particles->cell_keys[ipart] == -1 ) {
+            indexes_of_particles_to_exchange.push_back( ipart );
+        }
+    }
+    //cout << "\t Species id : " << species_number_ << " - nparticles send : " << indexes_of_particles_to_exchange.size() << endl;
 
     //We have stored in indexes_of_particles_to_exchange the list of all particles that needs to be removed.
     /********************************************************************************/
@@ -807,7 +851,6 @@ void Species::sortParticles( Params &params, Patch * patch )
     int nbNeighbors_ = 2;
     int n_part_recv;
 
-    indexes_of_particles_to_exchange.clear();
     particles->eraseParticleTrail( particles->last_index.back() );
 
     //Evaluation of the necessary shift of all bins.2
@@ -937,6 +980,8 @@ void Species::sortParticles( Params &params, Patch * patch )
         particles->last_index[bin-1] += particles->first_index[bin] - first_index_init;
         particles->first_index[bin] = particles->last_index[bin-1];
     }
+
+    particles->cell_keys.resize( particles->size() );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1133,7 +1178,7 @@ void Species::disableXmax()
 
 void Species::setXminBoundaryCondition()
 {
-    partBoundCond->bc_xmin   = &remove_particle;
+    partBoundCond->bc_xmin   = &remove_particle_inf;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1312,9 +1357,6 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
 
     unsigned int iPart;
 
-    // Reset list of particles to exchange - WARNING Should it be reset?
-    clearExchList();
-
     int tid( 0 );
     double ener_iPart( 0. );
     std::vector<double> nrj_lost_per_thd( 1, 0. );
@@ -1349,44 +1391,19 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
             // Apply wall and boundary conditions
             if( mass_>0 ) {
                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                    for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                        if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
-                            nrj_lost_per_thd[tid] += mass_ * ener_iPart;
-                        }
-                    }
+                    double dtgf = 1.; //params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                    (*partWalls)[iwall]->apply( *particles, particles->first_index[ibin], particles->last_index[ibin], this, dtgf, ener_iPart );
+                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                 }
 
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is not in the local domain anymore
                 //        if omp, create a list per thread
-                for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-                    if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                        addPartInExchList( iPart );
-                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
-                    }
-                }
+                partBoundCond->apply( *particles, particles->first_index[ibin], particles->last_index[ibin], this, ener_iPart );
+                nrj_lost_per_thd[tid] += mass_ * ener_iPart;
 
             } else if( mass_==0 ) {
                 ERROR( "Particles with zero mass cannot interact with envelope" );
-                // for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                //     for (iPart=particles->first_index[ibin] ; (int)iPart<particles->last_index[ibin]; iPart++ ) {
-                //         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                //         if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
-                //                 nrj_lost_per_thd[tid] += ener_iPart;
-                //         }
-                //     }
-                // }
-                //
-                // // Boundary Condition may be physical or due to domain decomposition
-                // // apply returns 0 if iPart is not in the local domain anymore
-                // //        if omp, create a list per thread
-                // for (iPart=particles->first_index[ibin] ; (int)iPart<particles->last_index[ibin]; iPart++ ) {
-                //     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                //         addPartInExchList( iPart );
-                //         nrj_lost_per_thd[tid] += ener_iPart;
-                //     }
-                //  }
 
             } // end mass_ = 0? condition
 

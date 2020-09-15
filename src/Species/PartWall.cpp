@@ -22,27 +22,29 @@ PartWall::PartWall( double pos, unsigned short dir, string kind ) :
 {
     // Define the "wall" function pointer
     if( kind == "reflective" ) {
-        wall = &reflect_particle;
+        wall = &reflect_particle_wall;
     } else if( kind == "remove" ) {
-        wall = &remove_particle;
+        wall = &remove_particle_wall;
     } else if( kind == "stop" ) {
-        wall = &stop_particle;
+        wall = &stop_particle_wall;
     } else if( kind == "thermalize" ) {
         wall = &thermalize_particle;
     }
 }
 
 // Applies the wall's boundary condition to one particle
-int PartWall::apply( Particles &particles, int ipart, Species *species, double dtgf, double &nrj_iPart )
+void PartWall::apply( Particles &particles, SmileiMPI *smpi, int imin, int imax, Species *species, double dtgf, double &nrj_iPart )
 {
+    ( *wall )( particles, imin, imax, direction, position, species, nrj_iPart );
+
     // The particle previous position needs to be computed
-    double particle_position     = particles.position( direction, ipart );
-    double particle_position_old = particle_position - dtgf*particles.momentum( direction, ipart );
-    if( ( position-particle_position_old )*( position-particle_position )<0. ) {
-        return ( *wall )( particles, ipart, direction, 2.*position, species, nrj_iPart );
-    } else {
-        return 1;
-    }
+    //double particle_position     = particles.position( direction, ipart );
+    //double particle_position_old = particle_position - dtgf*particles.momentum( direction, ipart );
+    //if( ( position-particle_position_old )*( position-particle_position )<0. ) {
+    //    return ( *wall )( particles, imin, imax, ipart, direction, 2.*position, species, nrj_iPart );
+    //} else {
+    //    return 1;
+    //}
 }
 
 

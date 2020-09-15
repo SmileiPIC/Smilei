@@ -21,10 +21,10 @@ public:
     
     //! Wall boundary condition pointer (same prototypes for all conditions)
     //! @see BoundaryConditionType.h for functions that this pointer will target
-    int ( *wall )( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart );
+    void ( *wall )( Particles &particles, int imin, int imax, int direction, double limit_pos, Species *species, double &nrj_iPart );
     
     //! Method which applies particles wall
-    int apply( Particles &particles, int ipart, Species *species, double dtgf, double &nrj_iPart );
+    void apply( Particles &particles, int imin, int imax, Species *species, double dtgf, double &nrj_iPart );
     
 private:
     //! position of a wall in its direction
