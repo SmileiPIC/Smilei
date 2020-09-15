@@ -118,7 +118,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         }
     } else if( species->boundary_conditions[0][0] == "thermalize" ) {
         if( patch->isXmin() ) {
-            bc_xmin = &thermalize_particle;
+            bc_xmin = &thermalize_particle_inf;
         }
     } else if( species->boundary_conditions[0][0] == "periodic" ) {
     } else {
@@ -141,7 +141,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         }
     } else if( species->boundary_conditions[0][1] == "thermalize" ) {
         if( patch->isXmax() ) {
-            bc_xmax = &thermalize_particle;
+            bc_xmax = &thermalize_particle_sup;
         }
     } else if( species->boundary_conditions[0][1] == "periodic" ) {
     } else {
@@ -166,7 +166,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
             }
         } else if( species->boundary_conditions[1][0] == "thermalize" ) {
             if( patch->isYmin() ) {
-                bc_ymin = &thermalize_particle;
+                bc_ymin = &thermalize_particle_inf;
             }
         } else if( species->boundary_conditions[1][0] == "periodic" ) {
         } else {
@@ -189,7 +189,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
             }
         } else if( species->boundary_conditions[1][1] == "thermalize" ) {
             if( patch->isYmax() ) {
-                bc_ymax = &thermalize_particle;
+                bc_ymax = &thermalize_particle_sup;
             }
         } else if( species->boundary_conditions[1][1] == "periodic" ) {
         } else {
@@ -213,7 +213,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
                 }
             } else if( species->boundary_conditions[2][0] == "thermalize" ) {
                 if( patch->isZmin() ) {
-                    bc_zmin = &thermalize_particle;
+                    bc_zmin = &thermalize_particle_inf;
                 }
             } else if( species->boundary_conditions[2][0] == "periodic" ) {
             } else {
@@ -235,7 +235,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
                 }
             } else if( species->boundary_conditions[2][1] == "thermalize" ) {
                 if( patch->isZmax() ) {
-                    bc_zmax = &thermalize_particle;
+                    bc_zmax = &thermalize_particle_sup;
                 }
             } else if( species->boundary_conditions[2][1] == "periodic" ) {
             } else {

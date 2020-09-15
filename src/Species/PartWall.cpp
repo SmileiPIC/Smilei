@@ -28,7 +28,7 @@ PartWall::PartWall( double pos, unsigned short dir, string kind, double dt ) :
     } else if( kind == "stop" ) {
         wall = &stop_particle_wall;
     } else if( kind == "thermalize" ) {
-        wall = &thermalize_particle;
+        wall = &thermalize_particle_wall;
     }
 
     dt_ = dt;
