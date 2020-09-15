@@ -16,7 +16,7 @@
 using namespace std;
 
 // Partwall constructor
-PartWall::PartWall( double pos, unsigned short dir, string kind ) :
+PartWall::PartWall( double pos, unsigned short dir, string kind, double dt ) :
     position( pos ),
     direction( dir )
 {
@@ -30,12 +30,15 @@ PartWall::PartWall( double pos, unsigned short dir, string kind ) :
     } else if( kind == "thermalize" ) {
         wall = &thermalize_particle;
     }
+
+    dt_ = dt;
+   
 }
 
 // Applies the wall's boundary condition to one particle
-void PartWall::apply( Particles &particles, SmileiMPI *smpi, int imin, int imax, Species *species, double dtgf, double &nrj_iPart )
+void PartWall::apply( Particles &particles, SmileiMPI *smpi, int imin, int imax, Species *species, int ithread, double &nrj_iPart )
 {
-    ( *wall )( particles, imin, imax, direction, position, species, nrj_iPart );
+    ( *wall )( particles, smpi, imin, imax, direction, position, dt_, species, ithread, nrj_iPart );
 
     // The particle previous position needs to be computed
     //double particle_position     = particles.position( direction, ipart );
@@ -100,7 +103,7 @@ PartWalls::PartWalls( Params &params, Patch *patch )
         // Find out wether this proc has the wall or not
         if( position[iwall] >= patch->getDomainLocalMin( direction[iwall] )
                 && position[iwall] <= patch->getDomainLocalMax( direction[iwall] ) ) {
-            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall] ) );
+            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall], params.timestep ) );
         }
         
         // Create new wall
@@ -122,9 +125,10 @@ PartWalls::PartWalls( PartWalls *partWalls, Patch *patch )
     for( unsigned int iwall = 0; iwall < nwalls; iwall++ ) {
         if( position[iwall] >= patch->getDomainLocalMin( direction[iwall] )
                 && position[iwall] <= patch->getDomainLocalMax( direction[iwall] ) ) {
-            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall] ) );
+            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall], partWalls->vecPartWall[iwall]->dt_ ) );
         }
     }
+
 }
 
 

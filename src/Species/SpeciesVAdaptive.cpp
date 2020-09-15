@@ -207,12 +207,11 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 // Apply wall and boundary conditions
                 if( mass_>0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        double dtgf = 1;//params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                        (*partWalls )[iwall]->apply( *particles, particles->first_index[scell], particles->last_index[scell], this, dtgf, ener_iPart );
+                        (*partWalls )[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
                         nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                     }
 
-                    partBoundCond->apply( *particles, particles->first_index[scell], particles->last_index[scell], this, ener_iPart );
+                    partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
                     nrj_lost_per_thd[tid] += mass_ * ener_iPart;
 
                     for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
@@ -229,15 +228,14 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 
                 } else if( mass_==0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        double dtgf = 1;//params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                        (*partWalls )[iwall]->apply( *particles, particles->first_index[scell], particles->last_index[scell], this, dtgf, ener_iPart );
+                        (*partWalls )[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
                         nrj_lost_per_thd[tid] += ener_iPart;
                     }
 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
                     //        if omp, create a list per thread
-                    partBoundCond->apply( *particles, particles->first_index[scell], particles->last_index[scell], this, ener_iPart );
+                    partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
                     nrj_lost_per_thd[tid] += ener_iPart;
 
                     for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
@@ -604,15 +602,14 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
             // Apply wall and boundary conditions
             if( mass_>0 ) {
                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                    double dtgf = 1;//params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                    (*partWalls)[iwall]->apply( *particles, particles->first_index[scell], particles->last_index[scell], this, dtgf, ener_iPart );
+                    (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
                     nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                 }
 
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is not in the local domain anymore
                 //        if omp, create a list per thread
-                partBoundCond->apply( *particles, particles->first_index[scell], particles->last_index[scell], this, ener_iPart );
+                partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
                 nrj_lost_per_thd[tid] += mass_ * ener_iPart;
 
                 for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {

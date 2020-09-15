@@ -36,6 +36,8 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     bc_ymax  = NULL;
     bc_zmin  = NULL;
     bc_zmax  = NULL;
+
+    dt_ = params.timestep;
     
     // -----------------------------
     // Define limits of local domain
@@ -88,13 +90,13 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     // Define the kind of applied boundary conditions
     // ----------------------------------------------
     
-    void ( *remove_inf )( Particles &, int, int, int, double, Species *, double & );
+    void ( *remove_inf )( Particles &, SmileiMPI*, int, int, int, double, double, Species *, int, double & );
     if( species->mass_ == 0 ) {
         remove_inf = &remove_photon_inf;
     } else {
         remove_inf = &remove_particle_inf;
     }
-    void ( *remove_sup)( Particles &, int, int, int, double, Species *, double & );
+    void ( *remove_sup)( Particles &, SmileiMPI*, int, int, int, double, double, Species *, int, double & );
     if( species->mass_ == 0 ) {
         remove_sup = &remove_photon_sup;
     } else {

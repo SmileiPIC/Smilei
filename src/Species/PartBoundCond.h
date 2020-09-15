@@ -21,17 +21,17 @@ public:
     
     //! Xmin particles boundary conditions pointers (same prototypes for all conditions)
     //! @see BoundaryConditionType.h for functions that this pointers will target
-    void ( *bc_xmin )( Particles &particles, int ifirst, int ilast, int direction, double limit_pos, Species *species, double &nrj_iPart );
+    void ( *bc_xmin )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
     //! Xmax particles boundary conditions pointers
-    void ( *bc_xmax )( Particles &particles, int ifirst, int ilast, int direction, double limit_pos, Species *species, double &nrj_iPart );
+    void ( *bc_xmax )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
     //! Ymin particles boundary conditions pointers
-    void ( *bc_ymin )( Particles &particles, int ifirst, int ilast, int direction, double limit_pos, Species *species, double &nrj_iPart );
+    void ( *bc_ymin )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
     //! Ymax particles boundary conditions pointers
-    void ( *bc_ymax )( Particles &particles, int ifirst, int ilast, int direction, double limit_pos, Species *species, double &nrj_iPart );
+    void ( *bc_ymax )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
     //! Zmin particles boundary conditions pointers
-    void ( *bc_zmin )( Particles &particles, int ifirst, int ilast, int direction, double limit_pos, Species *species, double &nrj_iPart );
+    void ( *bc_zmin )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
     //! Zmax particles boundary conditions pointers
-    void ( *bc_zmax )( Particles &particles, int ifirst, int ilast, int direction, double limit_pos, Species *species, double &nrj_iPart );
+    void ( *bc_zmax )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
     
     //! Method which applies particles boundary conditions.
     //! If the MPI process is not a border process, particles will be flagged as an exchange particle returning 0
@@ -39,26 +39,26 @@ public:
     //! The decision whether the particle is added or not on the Exchange Particle List is defined by the final
     //! value of keep_part.
     //! Be careful, once an a BC along a given dimension set keep_part to 0, it will remain to 0.
-    inline void apply( Particles &particles, int imin, int imax, Species *species, double &nrj_tot )
+    inline void apply( Particles &particles, SmileiMPI* smpi, int imin, int imax, Species *species, int ithread, double &nrj_tot )
     {
         for (int ipart=imin ; ipart<imax ; ipart++ ) {
             particles.cell_keys[ipart] = 0;
         }
 
         double nrj_iPart = 0.;
-        ( *bc_xmin )( particles, imin, imax, 0, x_min, species, nrj_iPart );
+        ( *bc_xmin )( particles, smpi, imin, imax, 0, x_min, dt_, species, ithread, nrj_iPart );
         nrj_tot += nrj_iPart;
-        ( *bc_xmax )( particles, imin, imax, 0, x_max, species, nrj_iPart );
+        ( *bc_xmax )( particles, smpi, imin, imax, 0, x_max, dt_, species, ithread, nrj_iPart );
         nrj_tot += nrj_iPart;
         if( nDim_particle >= 2 ) {
-            ( *bc_ymin )( particles, imin, imax, 1, y_min, species, nrj_iPart );
+            ( *bc_ymin )( particles, smpi, imin, imax, 1, y_min, dt_, species, ithread, nrj_iPart );
             nrj_tot += nrj_iPart;
-            ( *bc_ymax )( particles, imin, imax, 1, y_max, species, nrj_iPart );
+            ( *bc_ymax )( particles, smpi, imin, imax, 1, y_max, dt_, species, ithread, nrj_iPart );
             nrj_tot += nrj_iPart;
             if( nDim_particle == 3 ) {
-                ( *bc_zmin )( particles, imin, imax, 2, z_min, species, nrj_iPart );
+                ( *bc_zmin )( particles, smpi, imin, imax, 2, z_min, dt_, species, ithread, nrj_iPart );
                 nrj_tot += nrj_iPart;
-                ( *bc_zmax )( particles, imin, imax, 2, z_max, species, nrj_iPart );
+                ( *bc_zmax )( particles, smpi, imin, imax, 2, z_max, dt_, species, ithread, nrj_iPart );
                 nrj_tot += nrj_iPart;
             }
         }
@@ -92,7 +92,9 @@ private:
     int nDim_field;
 //<<<<<<< HEAD
     bool isAM;
-    
+
+    double dt_;
+
 };
 
 #endif

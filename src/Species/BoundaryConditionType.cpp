@@ -19,9 +19,9 @@
 //!         1 otherwise
 //!
 
-void internal_inf( Particles &particles, int imin, int imax,
+void internal_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax,
                           int direction, double limit_inf,
-                          Species *species, double &nrj_iPart )
+                          double dt, Species *species, int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during exchange
     double* position = &(particles.position(direction,0));
@@ -33,9 +33,9 @@ void internal_inf( Particles &particles, int imin, int imax,
     }
 }
 
-void internal_sup( Particles &particles, int imin, int imax,
+void internal_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax,
                           int direction, double limit_sup,
-                          Species *species, double &nrj_iPart )
+                          double dt, Species *species, int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during exchange
     double* position = &(particles.position(direction,0));
@@ -48,9 +48,9 @@ void internal_sup( Particles &particles, int imin, int imax,
 }
 
 
-void reflect_particle_inf( Particles &particles, int imin, int imax,
+void reflect_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax,
                                   int direction, double limit_inf,
-                                  Species *species, double &nrj_iPart )
+                                  double dt, Species *species, int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during reflection
     double* position = &(particles.position(direction,0));
@@ -63,9 +63,9 @@ void reflect_particle_inf( Particles &particles, int imin, int imax,
     }
 }
 
-void reflect_particle_sup( Particles &particles, int imin, int imax,
+void reflect_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax,
                                   int direction, double limit_sup,
-                                  Species *species, double &nrj_iPart )
+                                  double dt, Species *species, int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during reflection
     double* position = &(particles.position(direction,0));
@@ -78,19 +78,16 @@ void reflect_particle_sup( Particles &particles, int imin, int imax,
     }
 }
 
-void reflect_particle_wall( Particles &particles, int imin, int imax,
+void reflect_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, int imax,
                                   int direction, double wall_position,
-                                  Species *species, double &nrj_iPart )
+                                  double dt, Species *species, int ithread, double &nrj_iPart )
 {
-    MESSAGE( "gf not available here" );
-    double dtgf =1.;
-
     nrj_iPart = 0.;     // no energy loss during reflection
     double* position = &(particles.position(direction,0));
     double* momentum = &(particles.momentum(direction,0));
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         double particle_position     = position[ipart];
-        double particle_position_old = particle_position - dtgf*momentum[ipart];        
+        double particle_position_old = particle_position - dt*smpi->dynamics_invgf[ithread][ipart]*momentum[ipart]; 
         if ( ( wall_position-particle_position_old )*( wall_position-particle_position )<0) {
             position[ ipart ] = 2*wall_position - position[ ipart ];
             momentum[ ipart ] = -momentum[ ipart ];
@@ -99,8 +96,8 @@ void reflect_particle_wall( Particles &particles, int imin, int imax,
 }
 
 // direction not used below, direction is "r"
-void refl_particle_AM( Particles &particles, int imin, int imax, int direction, double limit_sup, Species *species,
-                             double &nrj_iPart )
+void refl_particle_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_sup, double dt, Species *species,
+                             int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during reflection
     
@@ -141,8 +138,8 @@ void refl_particle_AM( Particles &particles, int imin, int imax, int direction, 
     }    
 }
 
-void remove_particle_inf( Particles &particles, int imin, int imax, int direction, double limit_inf, Species *species,
-                                double &nrj_iPart )
+void remove_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_inf, double dt, Species *species,
+                                int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;
     double* position = &(particles.position(direction,0));
@@ -157,8 +154,8 @@ void remove_particle_inf( Particles &particles, int imin, int imax, int directio
     }
 }
 
-void remove_particle_sup( Particles &particles, int imin, int imax, int direction, double limit_sup, Species *species,
-                                double &nrj_iPart )
+void remove_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_sup, double dt, Species *species,
+                                int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;
     double* position = &(particles.position(direction,0));
@@ -173,12 +170,9 @@ void remove_particle_sup( Particles &particles, int imin, int imax, int directio
     }
 }
 
-void remove_particle_wall( Particles &particles, int imin, int imax, int direction, double wall_position, Species *species,
-                                double &nrj_iPart )
+void remove_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double wall_position, double dt, Species *species,
+                                int ithread, double &nrj_iPart )
 {
-    MESSAGE( "gf not available here" );
-    double dtgf =1.;
-
     nrj_iPart = 0.;
     double* position = &(particles.position(direction,0));
     double* momentum = &(particles.momentum(direction,0));
@@ -186,7 +180,7 @@ void remove_particle_wall( Particles &particles, int imin, int imax, int directi
     int* cell_keys = &(particles.cell_keys[0]);
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         double particle_position     = position[ipart];
-        double particle_position_old = particle_position - dtgf*momentum[ipart];        
+        double particle_position_old = particle_position - dt*smpi->dynamics_invgf[ithread][ipart]*momentum[ipart]; 
         if ( ( wall_position-particle_position_old )*( wall_position-particle_position )<0) {
             nrj_iPart += particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
             charge[ ipart ] = 0;
@@ -196,8 +190,8 @@ void remove_particle_wall( Particles &particles, int imin, int imax, int directi
 }
 
 //! Delete photon (mass_==0) at the boundary and keep the energy for diagnostics
-void remove_photon_inf( Particles &particles, int imin, int imax, int direction, double limit_inf, Species *species,
-                              double &nrj_iPart )
+void remove_photon_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_inf, double dt, Species *species,
+                              int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;
     double* position = &(particles.position(direction,0));
@@ -212,8 +206,8 @@ void remove_photon_inf( Particles &particles, int imin, int imax, int direction,
     }
 }
 
-void remove_photon_sup( Particles &particles, int imin, int imax, int direction, double limit_sup, Species *species,
-                              double &nrj_iPart )
+void remove_photon_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_sup, double dt, Species *species,
+                              int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;
     double* position = &(particles.position(direction,0));
@@ -228,8 +222,8 @@ void remove_photon_sup( Particles &particles, int imin, int imax, int direction,
     }
 }
 
-void stop_particle_inf( Particles &particles, int imin, int imax, int direction, double limit_inf, Species *species,
-                              double &nrj_iPart )
+void stop_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_inf, double dt, Species *species,
+                              int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0;
     double* position = &(particles.position(direction,0));
@@ -248,8 +242,8 @@ void stop_particle_inf( Particles &particles, int imin, int imax, int direction,
     }
 }
 
-void stop_particle_sup( Particles &particles, int imin, int imax, int direction, double limit_sup, Species *species,
-                              double &nrj_iPart )
+void stop_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_sup, double dt, Species *species,
+                              int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0;
     double* position = &(particles.position(direction,0));
@@ -268,12 +262,9 @@ void stop_particle_sup( Particles &particles, int imin, int imax, int direction,
     }
 }
 
-void stop_particle_wall( Particles &particles, int imin, int imax, int direction, double wall_position, Species *species,
-                              double &nrj_iPart )
+void stop_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double wall_position, double dt, Species *species,
+                              int ithread, double &nrj_iPart )
 {
-    MESSAGE( "gf not available here" );
-    double dtgf =1.;
-
     nrj_iPart = 0;
     double* position = &(particles.position(direction,0));
     double* momentum_x = &(particles.momentum(0,0));
@@ -282,7 +273,7 @@ void stop_particle_wall( Particles &particles, int imin, int imax, int direction
     double* weight = &(particles.weight(0));
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         double particle_position     = position[ipart];
-        double particle_position_old = particle_position - dtgf*particles.Momentum[direction][ipart];        
+        double particle_position_old = particle_position - dt*smpi->dynamics_invgf[ithread][ipart]*particles.Momentum[direction][ipart]; 
         if ( ( wall_position-particle_position_old )*( wall_position-particle_position )<0 ) {
             nrj_iPart += particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
             position[ ipart ] = 2.*wall_position - position[ ipart ];
@@ -293,8 +284,8 @@ void stop_particle_wall( Particles &particles, int imin, int imax, int direction
     }
 }
 
-void stop_particle_AM( Particles &particles, int imin, int imax, int direction, double limit_pos, Species *species,
-                             double &nrj_iPart )
+void stop_particle_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_pos, double dt, Species *species,
+                             int ithread, double &nrj_iPart )
 {
     double* position_y = &(particles.position(1,0));
     double* position_z = &(particles.position(2,0));
