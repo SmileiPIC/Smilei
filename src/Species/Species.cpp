@@ -1127,6 +1127,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
             istop = npart;
 
     } // End cell loop
+    particles->cell_keys.resize( particles->size() );
 
     source_particles.clear();
 }
