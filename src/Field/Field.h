@@ -239,6 +239,14 @@ public:
     virtual void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch  *outPatch ) = 0;
     virtual void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) = 0;
     
+    std::vector<Field*> sendFields_;
+    std::vector<Field*> recvFields_;
+    virtual void create_sub_fields  ( int iDim, int iNeighbor, int ghost_size ) = 0;
+    virtual void extract_fields_exch( int iDim, int iNeighbor, int ghost_size ) = 0;
+    virtual void inject_fields_exch ( int iDim, int iNeighbor, int ghost_size ) = 0;
+    virtual void extract_fields_sum ( int iDim, int iNeighbor, int ghost_size ) = 0;
+    virtual void inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size ) = 0;
+
     
 protected:
 

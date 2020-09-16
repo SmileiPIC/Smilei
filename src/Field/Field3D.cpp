@@ -20,30 +20,40 @@ using namespace std;
 // with no input argument
 Field3D::Field3D() : Field()
 {
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
 }
 
 // with the dimensions as input argument
 Field3D::Field3D( vector<unsigned int> dims ) : Field( dims )
 {
     allocateDims( dims );
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
 }
 
 // with the dimensions and output (dump) file name as input argument
 Field3D::Field3D( vector<unsigned int> dims, string name_in ) : Field( dims, name_in )
 {
     allocateDims( dims );
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
 }
 
 // with the dimensions as input argument
 Field3D::Field3D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : Field( dims, mainDim, isPrimal )
 {
     allocateDims( dims, mainDim, isPrimal );
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
 }
 
 // with the dimensions and output (dump) file name as input argument
 Field3D::Field3D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in ) : Field( dims, mainDim, isPrimal, name_in )
 {
     allocateDims( dims, mainDim, isPrimal );
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
 }
 
 
@@ -52,6 +62,8 @@ Field3D::Field3D( string name_in, vector<unsigned int> dims ) : Field( dims, nam
 {
     dims_ = dims;
     globalDims_ = dims_[0]*dims_[1]*dims_[2];
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
     
 }
 
@@ -305,4 +317,135 @@ void Field3D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPat
         }
     }
     
+}
+
+void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = ghost_size;
+    if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
+        sendFields_[iDim*2+iNeighbor]       = new Field3D(n_space);
+        recvFields_[iDim*2+(iNeighbor+1)%2] = new Field3D(n_space);
+    }
+}
+
+void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = ghost_size;
+
+    vector<int> idx( 3, 0 );
+    idx[iDim] = 1;
+    int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * ( ghost_size + 1 + isDual_[iDim] );
+    int ix = idx[0]*istart;
+    int iy = idx[1]*istart;
+    int iz = idx[2]*istart;
+
+    int NX = n_space[0];
+    int NY = n_space[1];
+    int NZ = n_space[2];
+
+    int dimY = dims_[1];
+    int dimZ = dims_[2];
+
+    double* sub = sendFields_[iDim*2+iNeighbor]->data_;
+    double* field = data_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        for( unsigned int j=0; j<NY; j++ ) {
+            for( unsigned int k=0; k<NZ; k++ ) {
+                sub[i*NY*NZ+j*NZ+k] = field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ];
+            }
+        }
+    }
+}
+
+void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = ghost_size;
+
+    vector<int> idx( 3, 0 );
+    idx[iDim] = 1;
+    int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - 1- ( ghost_size-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
+    int ix = idx[0]*istart;
+    int iy = idx[1]*istart;
+    int iz = idx[2]*istart;
+
+    int NX = n_space[0];
+    int NY = n_space[1];
+    int NZ = n_space[2];
+
+    int dimY = dims_[1];
+    int dimZ = dims_[2];
+
+    double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
+    double* field = data_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        for( unsigned int j=0; j<NY; j++ ) {
+            for( unsigned int k=0; k<NZ; k++ ) {
+                field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ] = sub[i*NY*NZ+j*NZ+k];
+            }
+        }
+    }
+}
+
+void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
+
+    vector<int> idx( 3, 0 );
+    idx[iDim] = 1;
+    int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * 0;
+    int ix = idx[0]*istart;
+    int iy = idx[1]*istart;
+    int iz = idx[2]*istart;
+
+    int NX = n_space[0];
+    int NY = n_space[1];
+    int NZ = n_space[2];
+
+    int dimY = dims_[1];
+    int dimZ = dims_[2];
+
+    double* sub = sendFields_[iDim*2+iNeighbor]->data_;
+    double* field = data_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        for( unsigned int j=0; j<NY; j++ ) {
+            for( unsigned int k=0; k<NZ; k++ ) {
+                sub[i*NY*NZ+j*NZ+k] = field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ];
+            }
+        }
+    }
+}
+
+void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
+
+    vector<int> idx( 3, 0 );
+    idx[iDim] = 1;
+    int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
+    int ix = idx[0]*istart;
+    int iy = idx[1]*istart;
+    int iz = idx[2]*istart;
+
+    int NX = n_space[0];
+    int NY = n_space[1];
+    int NZ = n_space[2];
+
+    int dimY = dims_[1];
+    int dimZ = dims_[2];
+
+    double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
+    double* field = data_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        for( unsigned int j=0; j<NY; j++ ) {
+            for( unsigned int k=0; k<NZ; k++ ) {
+                field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ] += sub[i*NY*NZ+j*NZ+k];
+            }
+        }
+    }
+
 }

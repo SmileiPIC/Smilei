@@ -18,30 +18,40 @@ using namespace std;
 // with no input argument
 Field1D::Field1D() : Field()
 {
+    sendFields_.resize(2,NULL);
+    recvFields_.resize(2,NULL);
 }
 
 // with the dimensions as input argument
 Field1D::Field1D( vector<unsigned int> dims ) : Field( dims )
 {
     allocateDims( dims );
+    sendFields_.resize(2,NULL);
+    recvFields_.resize(2,NULL);
 }
 
 // with the dimensions and output (dump) file name as input argument
 Field1D::Field1D( vector<unsigned int> dims, string name_in ) : Field( dims, name_in )
 {
     allocateDims( dims );
+    sendFields_.resize(2,NULL);
+    recvFields_.resize(2,NULL);
 }
 
 // with the dimensions as input argument
 Field1D::Field1D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : Field( dims, mainDim, isPrimal )
 {
     allocateDims( dims, mainDim, isPrimal );
+    sendFields_.resize(2,NULL);
+    recvFields_.resize(2,NULL);
 }
 
 // with the dimensions and output (dump) file name as input argument
 Field1D::Field1D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in ) : Field( dims, mainDim, isPrimal, name_in )
 {
     allocateDims( dims, mainDim, isPrimal );
+    sendFields_.resize(2,NULL);
+    recvFields_.resize(2,NULL);
 }
 
 // without allocating
@@ -49,6 +59,8 @@ Field1D::Field1D( string name_in, vector<unsigned int> dims ) : Field( dims, nam
 {
     dims_ = dims;
     globalDims_ = dims_[0];
+    sendFields_.resize(2,NULL);
+    recvFields_.resize(2,NULL);
 }
 
 
@@ -210,4 +222,90 @@ void Field1D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPat
         ( *this )( i ) = ( *in1D )( iin+i );
     }
     
+}
+
+void Field1D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = ghost_size;
+    if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
+        sendFields_[iDim*2+iNeighbor]       = new Field1D(n_space);
+        recvFields_[iDim*2+(iNeighbor+1)%2] = new Field1D(n_space);
+    }
+}
+
+void Field1D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = ghost_size;
+
+    vector<int> idx( 1, 0 );
+    idx[iDim] = 1;
+    int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * ( ghost_size + 1 + isDual_[iDim] );
+    int ix = idx[0]*istart;
+
+    int NX = n_space[0];
+
+    double* sub = sendFields_[iDim*2+iNeighbor]->data_;
+    double* field = data_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        sub[i] = field[ (ix+i) ];
+    }
+}
+
+void Field1D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = ghost_size;
+
+    vector<int> idx( 1, 0 );
+    idx[iDim] = 1;
+    int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - 1- ( ghost_size-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
+    int ix = idx[0]*istart;
+
+    int NX = n_space[0];
+
+    double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
+    double* field = data_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        field[ (ix+i) ] = sub[i];
+    }
+}
+
+void Field1D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
+
+    vector<int> idx( 1, 0 );
+    idx[iDim] = 1;
+    int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * 0;
+    int ix = idx[0]*istart;
+
+    int NX = n_space[0];
+
+    double* sub = sendFields_[iDim*2+iNeighbor]->data_;
+    double* field = data_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        sub[i] = field[ (ix+i) ];
+    }
+}
+
+void Field1D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
+
+    vector<int> idx( 1, 0 );
+    idx[iDim] = 1;
+    int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
+    int ix = idx[0]*istart;
+
+    int NX = n_space[0];
+
+    double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
+    double* field = data_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        field[ (ix+i) ] += sub[i];
+    }
 }

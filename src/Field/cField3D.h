@@ -88,6 +88,12 @@ public:
     void add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) override;
     void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) override;
     
+    void create_sub_fields  ( int iDim, int iNeighbor, int ghost_size ) override;
+    void extract_fields_exch( int iDim, int iNeighbor, int ghost_size ) override;
+    void inject_fields_exch ( int iDim, int iNeighbor, int ghost_size ) override;
+    void extract_fields_sum ( int iDim, int iNeighbor, int ghost_size ) override;
+    void inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size ) override;
+
 private:
     //! this will present the data as a 2d matrix
     std::complex<double> ***data_3D;
