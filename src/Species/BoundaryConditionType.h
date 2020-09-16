@@ -29,6 +29,12 @@ void internal_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax, in
 void internal_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_sup, double dt, Species *species,
                    int ithread, double &nrj_iPart );
 
+void internal_inf_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_inf, double dt, Species *species,
+                   int ithread, double &nrj_iPart );
+
+void internal_sup_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_sup, double dt, Species *species,
+                   int ithread, double &nrj_iPart );
+
 void reflect_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_inf, double dt, Species *species,
                            int ithread, double &nrj_iPart );
 
@@ -49,6 +55,9 @@ void remove_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, int i
                          int ithread, double &nrj_iPart );
 
 void remove_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_sup, double dt, Species *species,
+                         int ithread, double &nrj_iPart );
+
+void remove_particle_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_sup, double dt, Species *species,
                          int ithread, double &nrj_iPart );
 
 //! Delete photon (mass_==0) at the boundary and keep the energy for diagnostics

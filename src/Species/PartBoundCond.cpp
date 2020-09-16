@@ -248,10 +248,11 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     else if( isAM ) {
         
         // Ymax
-        bc_ymax = &internal_sup;
+        bc_ymin = &internal_inf_AM;
+        bc_ymax = &internal_sup_AM;
         if( species->boundary_conditions[1][1] == "remove" ) {
             if( patch->isYmax() ) {
-                bc_ymax = &remove_particle_sup;
+                bc_ymax = &remove_particle_AM;
             }
         } else if( species->boundary_conditions[1][1] == "reflective" ) {
             if( patch->isYmax() ) {

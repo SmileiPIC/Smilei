@@ -47,6 +47,33 @@ void internal_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax,
     }
 }
 
+void internal_inf_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax,
+                          int direction, double limit_inf,
+                          double dt, Species *species, int ithread, double &nrj_iPart )
+{
+    nrj_iPart = 0.;     // no energy loss during exchange
+    //double* position = &(particles.position(direction,0));
+    int* cell_keys = &(particles.cell_keys[0]);
+    for (int ipart=imin ; ipart<imax ; ipart++ ) {
+        if ( particles.distance2ToAxis( ipart ) < limit_inf*limit_inf ) {
+            cell_keys[ ipart ] = -1;
+        }
+    }
+}
+
+void internal_sup_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax,
+                          int direction, double limit_sup,
+                          double dt, Species *species, int ithread, double &nrj_iPart )
+{
+    nrj_iPart = 0.;     // no energy loss during exchange
+    //double* position = &(particles.position(direction,0));
+    int* cell_keys = &(particles.cell_keys[0]);
+    for (int ipart=imin ; ipart<imax ; ipart++ ) {
+        if ( particles.distance2ToAxis( ipart ) >= limit_sup*limit_sup ) {
+            cell_keys[ ipart ] = -1;
+        }
+    }
+}
 
 void reflect_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax,
                                   int direction, double limit_inf,
@@ -182,6 +209,22 @@ void remove_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, int 
         double particle_position     = position[ipart];
         double particle_position_old = particle_position - dt*smpi->dynamics_invgf[ithread][ipart]*momentum[ipart]; 
         if ( ( wall_position-particle_position_old )*( wall_position-particle_position )<0) {
+            nrj_iPart += particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
+            charge[ ipart ] = 0;
+            cell_keys[ipart] = -1;
+        }
+    }
+}
+
+void remove_particle_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_sup, double dt, Species *species,
+                                int ithread, double &nrj_iPart )
+{
+    nrj_iPart = 0.;
+    double* position = &(particles.position(direction,0));
+    short* charge = &(particles.charge(0));
+    int* cell_keys = &(particles.cell_keys[0]);
+    for (int ipart=imin ; ipart<imax ; ipart++ ) {
+        if ( particles.distance2ToAxis( ipart ) >= limit_sup*limit_sup ) {
             nrj_iPart += particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
             charge[ ipart ] = 0;
             cell_keys[ipart] = -1;
