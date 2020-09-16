@@ -1210,7 +1210,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                     nrj_lost_per_thd[tid] += mass_ * ener_iPart;
 
                     for( iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] == -1 ) {
+                        if ( particles->cell_keys[iPart] != -1 ) {
                             //First reduction of the count sort algorithm. Lost particles are not included.
                             for( int i = 0 ; i<( int )nDim_field; i++ ) {
                                 particles->cell_keys[iPart] *= length[i];
