@@ -324,7 +324,6 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
     unsigned int iPart;
 
-    double ener_iPart( 0. );
     std::vector<double> nrj_lost_per_thd( 1, 0. );
 
     // -------------------------------
@@ -447,6 +446,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         
         if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+                double ener_iPart( 0. );
 
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
@@ -1357,7 +1357,6 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
     unsigned int iPart;
 
     int tid( 0 );
-    double ener_iPart( 0. );
     std::vector<double> nrj_lost_per_thd( 1, 0. );
 
     // -------------------------------
@@ -1368,6 +1367,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
         smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+            double ener_iPart( 0. );
 
             // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
 #ifdef  __DETAILED_TIMERS

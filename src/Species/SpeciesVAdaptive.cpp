@@ -84,7 +84,6 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
     unsigned int iPart;
 
     int tid( 0 );
-    double ener_iPart( 0. );
     std::vector<double> nrj_lost_per_thd( 1, 0. );
 
     // -------------------------------
@@ -204,6 +203,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             // this->compute_bin_cell_keys(params,0, particles->last_index.back());
 
             for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+                double ener_iPart( 0. );
                 // Apply wall and boundary conditions
                 if( mass_>0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
@@ -563,7 +563,6 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
     unsigned int iPart;
 
     int tid( 0 );
-    double ener_iPart( 0. );
     std::vector<double> nrj_lost_per_thd( 1, 0. );
 
     // -------------------------------
@@ -599,6 +598,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
 #endif
 
         for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+            double ener_iPart( 0. );
             // Apply wall and boundary conditions
             if( mass_>0 ) {
                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
