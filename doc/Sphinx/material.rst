@@ -55,15 +55,16 @@ Publications
   `Efficient cylindrical envelope modeling for laser wakefield acceleration`,
   `arXiv:1912.04674 <http://arxiv.org/abs/1912.04674>`_
 
+----
+
 .. rst-class:: bigcitation
 
 .. [MassimoIonization2020]
 
   F. Massimo, A. Beck, J. Derouillat, I. Zemzemi and A. Specka,
   `Numerical modeling of laser tunneling ionization in Particle in Cell Codes with a laser envelope model`,
+  `Phys. Rev. E 102, 033204 (2020) <https://doi.org/10.1103/PhysRevE.102.033204>`_,
   `arXiv:2006.04433 <https://arxiv.org/abs/2006.04433>`_
-
-----
 
 .. rst-class:: bigcitation
 
