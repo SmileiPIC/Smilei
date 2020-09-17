@@ -267,8 +267,8 @@ void Field2D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
     std::vector<unsigned int> n_space = dims_;
     n_space[iDim] = ghost_size;
     if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
-        sendFields_[iDim*2+iNeighbor]       = new Field2D(n_space);
-        recvFields_[iDim*2+(iNeighbor+1)%2] = new Field2D(n_space);
+        sendFields_[iDim*2+iNeighbor] = new Field2D(n_space);
+        recvFields_[iDim*2+iNeighbor] = new Field2D(n_space);
     }
 }
 

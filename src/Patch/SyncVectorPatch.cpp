@@ -262,6 +262,16 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 #endif
     for( unsigned int ifield=0 ; ifield<nPatchMPIx ; ifield++ ) {
         unsigned int ipatch = vecPatches.MPIxIdx[ifield];
+        for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][iNeighbor] ) {
+                vecPatches.densitiesMPIx[ifield             ]->create_sub_fields ( 0, iNeighbor, 2*oversize[0]+1+1 ); // +1, Jx dual in X
+                vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->create_sub_fields ( 0, iNeighbor, 2*oversize[0]+1+0 ); // +0, Jy prim in X
+                vecPatches.densitiesMPIx[ifield+2*nPatchMPIx]->create_sub_fields ( 0, iNeighbor, 2*oversize[0]+1+0 ); // +0, Jz prim in X
+                vecPatches.densitiesMPIx[ifield             ]->extract_fields_sum( 0, iNeighbor, oversize[0] );
+                vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->extract_fields_sum( 0, iNeighbor, oversize[0] );
+                vecPatches.densitiesMPIx[ifield+2*nPatchMPIx]->extract_fields_sum( 0, iNeighbor, oversize[0] );
+            }
+        }
         vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield             ], 0, smpi ); // Jx
         vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+  nPatchMPIx], 0, smpi ); // Jy
         vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0, smpi ); // Jz
@@ -314,6 +324,14 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
         vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIx[ifield             ], 0 ); // Jx
         vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIx[ifield+nPatchMPIx  ], 0 ); // Jy
         vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0 ); // Jz
+        for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][(iNeighbor+1)%2] ) {
+                vecPatches.densitiesMPIx[ifield             ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
+                vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
+                vecPatches.densitiesMPIx[ifield+2*nPatchMPIx]->inject_fields_sum( 0, iNeighbor, oversize[0] );
+            }
+        }
+
     }
     // END iDim = 0 sync
     // -----------------
@@ -331,6 +349,16 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 #endif
         for( unsigned int ifield=0 ; ifield<nPatchMPIy ; ifield++ ) {
             unsigned int ipatch = vecPatches.MPIyIdx[ifield];
+            for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][iNeighbor] ) {
+                    vecPatches.densitiesMPIy[ifield             ]->create_sub_fields ( 1, iNeighbor, 2*oversize[1]+1+0 ); // +0, Jx dual in Y
+                    vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->create_sub_fields ( 1, iNeighbor, 2*oversize[1]+1+1 ); // +1, Jy prim in Y
+                    vecPatches.densitiesMPIy[ifield+2*nPatchMPIy]->create_sub_fields ( 1, iNeighbor, 2*oversize[1]+1+0 ); // +0, Jz prim in Y
+                    vecPatches.densitiesMPIy[ifield             ]->extract_fields_sum( 1, iNeighbor, oversize[1] );
+                    vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->extract_fields_sum( 1, iNeighbor, oversize[1] );
+                    vecPatches.densitiesMPIy[ifield+2*nPatchMPIy]->extract_fields_sum( 1, iNeighbor, oversize[1] );
+                }
+            }
             vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield             ], 1, smpi ); // Jx
             vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+nPatchMPIy  ], 1, smpi ); // Jy
             vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1, smpi ); // Jz
@@ -388,6 +416,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
             vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIy[ifield             ], 1 ); // Jx
             vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIy[ifield+nPatchMPIy  ], 1 ); // Jy
             vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1 ); // Jz
+            for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][(iNeighbor+1)%2] ) {
+                    vecPatches.densitiesMPIy[ifield             ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
+                    vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
+                    vecPatches.densitiesMPIy[ifield+2*nPatchMPIy]->inject_fields_sum( 1, iNeighbor, oversize[1] );
+                }
+            }
         }
         // END iDim = 1 sync
         // -----------------
@@ -405,6 +440,16 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
 #endif
             for( unsigned int ifield=0 ; ifield<nPatchMPIz ; ifield++ ) {
                 unsigned int ipatch = vecPatches.MPIzIdx[ifield];
+                for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                    if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][iNeighbor] ) {
+                        vecPatches.densitiesMPIz[ifield             ]->create_sub_fields ( 2, iNeighbor, 2*oversize[2]+1+0 ); // +0, Jx dual in Z
+                        vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->create_sub_fields ( 2, iNeighbor, 2*oversize[2]+1+0 ); // +0, Jy prim in Z
+                        vecPatches.densitiesMPIz[ifield+2*nPatchMPIz]->create_sub_fields ( 2, iNeighbor, 2*oversize[2]+1+1 ); // +1, Jz prim in Z
+                        vecPatches.densitiesMPIz[ifield             ]->extract_fields_sum( 2, iNeighbor, oversize[2] );
+                        vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->extract_fields_sum( 2, iNeighbor, oversize[2] );
+                        vecPatches.densitiesMPIz[ifield+2*nPatchMPIz]->extract_fields_sum( 2, iNeighbor, oversize[2] );
+                    }
+                }
                 vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield             ], 2, smpi ); // Jx
                 vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+nPatchMPIz  ], 2, smpi ); // Jy
                 vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2, smpi ); // Jz
@@ -463,6 +508,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIz[ifield             ], 2 ); // Jx
                 vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIz[ifield+nPatchMPIz  ], 2 ); // Jy
                 vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2 ); // Jz
+                for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                    if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][(iNeighbor+1)%2] ) {
+                        vecPatches.densitiesMPIz[ifield             ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
+                        vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
+                        vecPatches.densitiesMPIz[ifield+2*nPatchMPIz]->inject_fields_sum( 2, iNeighbor, oversize[2] );
+                    }
+                }
             }
             // END iDim = 2 sync
             // -----------------
