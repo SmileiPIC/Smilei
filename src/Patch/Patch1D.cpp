@@ -187,30 +187,21 @@ void Patch1D::initExchange( Field *field, int iDim, SmileiMPI *smpi )
         field->MPIbuff.defineTags( this, smpi, tagp );
     }
     
-    std::vector<unsigned int> n_elem   = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    Field1D *f1D =  static_cast<Field1D *>( field );
-    
-    int istart, ix;
-    
-    MPI_Datatype ntype = ntype_[iDim][isDual[0]];
     for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
     
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
         
-            istart = iNeighbor * ( n_elem[iDim]- ( 2*oversize[iDim]+1+isDual[iDim] ) ) + ( 1-iNeighbor ) * ( oversize[iDim] + 1 + isDual[iDim] );
-            ix = ( 1-iDim )*istart;
-            int tag = f1D->MPIbuff.send_tags_[iDim][iNeighbor];
-            MPI_Isend( &( f1D->data_[ix] ), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &( f1D->MPIbuff.srequest[iDim][iNeighbor] ) );
+            int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
+            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
             
         } // END of Send
         
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
         
-            istart = ( ( iNeighbor+1 )%2 ) * ( n_elem[iDim] - 1 - ( oversize[iDim]-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
-            ix = ( 1-iDim )*istart;
-            int tag = f1D->MPIbuff.recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( &( f1D->data_[ix] ), 1, ntype, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag, MPI_COMM_WORLD, &( f1D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+            int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
+            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
             
         } // END of Recv
         
@@ -237,31 +228,18 @@ void Patch1D::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
         field->MPIbuff.defineTags( this, smpi, tagp );
     }
     
-    std::vector<unsigned int> n_elem   = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    cField1D *f1D =  static_cast<cField1D *>( field );
-    
-    int istart, ix;
-    
-    MPI_Datatype ntype = ntype_complex_[iDim][isDual[0]];
     for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
     
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-        
-            istart = iNeighbor * ( n_elem[iDim]- ( 2*oversize[iDim]+1+isDual[iDim] ) ) + ( 1-iNeighbor ) * ( oversize[iDim] + 1 + isDual[iDim] );
-            ix = ( 1-iDim )*istart;
-            int tag = f1D->MPIbuff.send_tags_[iDim][iNeighbor];
-            //MPI_Isend( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.srequest[iDim][iNeighbor]) );
-            MPI_Isend( &( ( *f1D )( ix ) ), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &( f1D->MPIbuff.srequest[iDim][iNeighbor] ) );
+            int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
+            MPI_Isend( static_cast<cField *>(field->sendFields_[iDim*2+iNeighbor])->cdata_, 2*field->sendFields_[iDim*2+iNeighbor]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
         } // END of Send
         
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-        
-            istart = ( ( iNeighbor+1 )%2 ) * ( n_elem[iDim] - 1 - ( oversize[iDim]-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
-            ix = ( 1-iDim )*istart;
-            int tag = f1D->MPIbuff.recv_tags_[iDim][iNeighbor];
-            //MPI_Irecv( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
-            MPI_Irecv( &( ( *f1D )( ix ) ), 1, ntype, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag, MPI_COMM_WORLD, &( f1D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+            int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
+            MPI_Irecv( static_cast<cField *>(field->recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_, 2*field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
         } // END of Recv
         
     } // END for iNeighbor
@@ -274,17 +252,15 @@ void Patch1D::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch1D::finalizeExchange( Field *field, int iDim )
 {
-    Field1D *f1D =  static_cast<Field1D *>( field );
-    
     MPI_Status sstat    [nDim_fields_][2];
     MPI_Status rstat    [nDim_fields_][2];
     
     for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            MPI_Wait( &( f1D->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
+            MPI_Wait( &( field->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
         }
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-            MPI_Wait( &( f1D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
+            MPI_Wait( &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
         }
     }
     
@@ -292,17 +268,15 @@ void Patch1D::finalizeExchange( Field *field, int iDim )
 
 void Patch1D::finalizeExchangeComplex( Field *field, int iDim )
 {
-    cField1D *f1D =  static_cast<cField1D *>( field );
-    
     MPI_Status sstat    [nDim_fields_][2];
     MPI_Status rstat    [nDim_fields_][2];
     
     for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            MPI_Wait( &( f1D->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
+            MPI_Wait( &( field->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
         }
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-            MPI_Wait( &( f1D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
+            MPI_Wait( &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
         }
     }
     
