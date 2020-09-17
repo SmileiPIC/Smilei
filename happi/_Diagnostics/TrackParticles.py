@@ -59,11 +59,11 @@ class TrackParticles(Diagnostic):
 		else:
 			self._timesteps = []
 			for file in disorderedfiles:
-				f = self._h5py.File(file)
+				f = self._h5py.File(file, "r")
 				for it, t in enumerate(f["data"].keys()):
 					self._locationForTime[int(t)] = [f, it]
 					self._timesteps += [int(t)]
-			self._timesteps = self._np.array(self._timesteps)
+			self._timesteps = self._np.unique(self._timesteps)
 			self._alltimesteps = self._np.copy(self._timesteps)
 			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
 			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
@@ -79,7 +79,7 @@ class TrackParticles(Diagnostic):
 		# Add moving_x in the list of properties
 		if "x" in self.available_properties:
 			file = disorderedfiles[0]
-			with self._h5py.File(file) as f:
+			with self._h5py.File(file, "r") as f:
 				try: # python 2
 					D = next(f["data"].itervalues())
 				except: # python 3
@@ -275,7 +275,7 @@ class TrackParticles(Diagnostic):
 		if "moving_x" in self.axes:
 			self._XmovedForTime = {}
 			for file in disorderedfiles:
-				with self._h5py.File(file) as f:
+				with self._h5py.File(file, "r") as f:
 					for t in f["data"].keys():
 						self._XmovedForTime[int(t)] = f["data"][t].attrs["x_moved"]
 		
@@ -338,7 +338,7 @@ class TrackParticles(Diagnostic):
 			return True
 		else:
 			try:
-				f = self._h5py.File(orderedfile)
+				f = self._h5py.File(orderedfile, "r")
 				if "finished_ordering" not in f.attrs.keys():
 					return True
 			except:
@@ -660,7 +660,7 @@ class TrackParticles(Diagnostic):
 
 		disorderedfiles = self._findDisorderedFiles()
 		for file in disorderedfiles:
-			f = self._h5py.File(file)
+			f = self._h5py.File(file, "r")
 			# This is the timestep for which we want to produce an iterator
 			group = f["data/"+("%010d"%timestep)+"/particles/"+self.species]
 			npart = group["id"].size
