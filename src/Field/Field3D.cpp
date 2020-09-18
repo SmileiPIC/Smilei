@@ -327,6 +327,12 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
         sendFields_[iDim*2+iNeighbor] = new Field3D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field3D(n_space);
     }
+    else if ( ghost_size != sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
+        delete sendFields_[iDim*2+iNeighbor];
+        sendFields_[iDim*2+iNeighbor] = new Field3D(n_space);
+        delete recvFields_[iDim*2+iNeighbor];
+        recvFields_[iDim*2+iNeighbor] = new Field3D(n_space);
+    }
 }
 
 void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
