@@ -263,7 +263,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
     for( unsigned int ifield=0 ; ifield<nPatchMPIx ; ifield++ ) {
         unsigned int ipatch = vecPatches.MPIxIdx[ifield];
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][iNeighbor] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, iNeighbor ) ) {
                 vecPatches.densitiesMPIx[ifield             ]->create_sub_fields ( 0, iNeighbor, 2*oversize[0]+1+1 ); // +1, Jx dual in X
                 vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->create_sub_fields ( 0, iNeighbor, 2*oversize[0]+1+0 ); // +0, Jy prim in X
                 vecPatches.densitiesMPIx[ifield+2*nPatchMPIx]->create_sub_fields ( 0, iNeighbor, 2*oversize[0]+1+0 ); // +0, Jz prim in X
@@ -325,7 +325,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
         vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIx[ifield+nPatchMPIx  ], 0 ); // Jy
         vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0 ); // Jz
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][(iNeighbor+1)%2] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
                 vecPatches.densitiesMPIx[ifield             ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+2*nPatchMPIx]->inject_fields_sum( 0, iNeighbor, oversize[0] );
@@ -350,7 +350,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
         for( unsigned int ifield=0 ; ifield<nPatchMPIy ; ifield++ ) {
             unsigned int ipatch = vecPatches.MPIyIdx[ifield];
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][iNeighbor] ) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, iNeighbor ) ) {
                     vecPatches.densitiesMPIy[ifield             ]->create_sub_fields ( 1, iNeighbor, 2*oversize[1]+1+0 ); // +0, Jx dual in Y
                     vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->create_sub_fields ( 1, iNeighbor, 2*oversize[1]+1+1 ); // +1, Jy prim in Y
                     vecPatches.densitiesMPIy[ifield+2*nPatchMPIy]->create_sub_fields ( 1, iNeighbor, 2*oversize[1]+1+0 ); // +0, Jz prim in Y
@@ -417,7 +417,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
             vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIy[ifield+nPatchMPIy  ], 1 ); // Jy
             vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1 ); // Jz
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][(iNeighbor+1)%2] ) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
                     vecPatches.densitiesMPIy[ifield             ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+2*nPatchMPIy]->inject_fields_sum( 1, iNeighbor, oversize[1] );
@@ -441,7 +441,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
             for( unsigned int ifield=0 ; ifield<nPatchMPIz ; ifield++ ) {
                 unsigned int ipatch = vecPatches.MPIzIdx[ifield];
                 for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                    if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][iNeighbor] ) {
+                    if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, iNeighbor ) ) {
                         vecPatches.densitiesMPIz[ifield             ]->create_sub_fields ( 2, iNeighbor, 2*oversize[2]+1+0 ); // +0, Jx dual in Z
                         vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->create_sub_fields ( 2, iNeighbor, 2*oversize[2]+1+0 ); // +0, Jy prim in Z
                         vecPatches.densitiesMPIz[ifield+2*nPatchMPIz]->create_sub_fields ( 2, iNeighbor, 2*oversize[2]+1+1 ); // +1, Jz prim in Z
@@ -509,7 +509,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIz[ifield+nPatchMPIz  ], 2 ); // Jy
                 vecPatches( ipatch )->finalizeSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2 ); // Jz
                 for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                    if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][(iNeighbor+1)%2] ) {
+                    if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
                         vecPatches.densitiesMPIz[ifield             ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+2*nPatchMPIz]->inject_fields_sum( 2, iNeighbor, oversize[2] );
@@ -852,7 +852,7 @@ void SyncVectorPatch::exchangeAlongAllDirections( std::vector<Field *> fields, V
 #endif
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[iDim][iNeighbor] ) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( iDim, iNeighbor ) ) {
                     fields[ipatch]->create_sub_fields  ( iDim, iNeighbor, oversize[iDim] );
                     fields[ipatch]->extract_fields_exch( iDim, iNeighbor, oversize[iDim] );
                 }
@@ -956,7 +956,7 @@ void SyncVectorPatch::finalizeExchangeAlongAllDirections( std::vector<Field *> f
                 vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], iDim );
 
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[iDim][(iNeighbor+1)%2] ) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
                     fields[ipatch]->inject_fields_exch( iDim, iNeighbor, oversize[iDim] );
                 }
             }
@@ -979,7 +979,7 @@ void SyncVectorPatch::exchangeAlongAllDirectionsNoOMP( std::vector<Field *> fiel
     for( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[iDim][iNeighbor] ) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( iDim, iNeighbor ) ) {
                     fields[ipatch]->create_sub_fields  ( iDim, iNeighbor, oversize[iDim] );
                     fields[ipatch]->extract_fields_exch( iDim, iNeighbor, oversize[iDim] );
                 }
@@ -1078,7 +1078,7 @@ void SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( std::vector<Field
                 vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], iDim );
 
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[iDim][(iNeighbor+1)%2] ) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
                     fields[ipatch]->inject_fields_exch( iDim, iNeighbor, oversize[iDim] );
                 }
             }
@@ -1130,7 +1130,7 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
 #endif
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][iNeighbor] ) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, iNeighbor ) ) {
                     fields[ipatch]->create_sub_fields  ( 2, iNeighbor, oversize[2] );
                     fields[ipatch]->extract_fields_exch( 2, iNeighbor, oversize[2] );
                 }
@@ -1154,7 +1154,7 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
                 vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], 2 );
 
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][(iNeighbor+1)%2] ) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
                     fields[ipatch]->inject_fields_exch( 2, iNeighbor, oversize[2] );
                 }
             }
@@ -1194,7 +1194,7 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
 #endif
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][iNeighbor] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, iNeighbor ) ) {
                 fields[ipatch]->create_sub_fields  ( 1, iNeighbor, oversize[1] );
                 fields[ipatch]->extract_fields_exch( 1, iNeighbor, oversize[1] );
             }
@@ -1217,7 +1217,7 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
             vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], 1 );
 
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][(iNeighbor+1)%2] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
                 fields[ipatch]->inject_fields_exch( 1, iNeighbor, oversize[1] );
             }
         }
@@ -1253,7 +1253,7 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
 #endif
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][iNeighbor] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, iNeighbor ) ) {
                 fields[ipatch]->create_sub_fields  ( 0, iNeighbor, oversize[0] );
                 fields[ipatch]->extract_fields_exch( 0, iNeighbor, oversize[0] );
             }
@@ -1276,7 +1276,7 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
             vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], 0 );
 
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][(iNeighbor+1)%2] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
                 fields[ipatch]->inject_fields_exch( 0, iNeighbor, oversize[0] );
             }
         }
@@ -1323,7 +1323,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
     for( unsigned int ifield=0 ; ifield<nMPIx ; ifield++ ) {
         unsigned int ipatch = vecPatches.MPIxIdx[ifield];
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][iNeighbor] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, iNeighbor ) ) {
                 vecPatches.B_MPIx[ifield      ]->create_sub_fields  ( 0, iNeighbor, oversize );
                 vecPatches.B_MPIx[ifield      ]->extract_fields_exch( 0, iNeighbor, oversize );
                 vecPatches.B_MPIx[ifield+nMPIx]->create_sub_fields  ( 0, iNeighbor, oversize );
@@ -1394,7 +1394,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongX( std::vector<Field *> 
         vecPatches( ipatch )->finalizeExchange( vecPatches.B_MPIx[ifield      ], 0 ); // By
         vecPatches( ipatch )->finalizeExchange( vecPatches.B_MPIx[ifield+nMPIx], 0 ); // Bz
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][(iNeighbor+1)%2] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
                 vecPatches.B_MPIx[ifield      ]->inject_fields_exch( 0, iNeighbor, oversize );
                 vecPatches.B_MPIx[ifield+nMPIx]->inject_fields_exch( 0, iNeighbor, oversize );
             }
@@ -1423,7 +1423,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongY( std::vector<Field *> &fields,
     for( unsigned int ifield=0 ; ifield<nMPIy ; ifield++ ) {
         unsigned int ipatch = vecPatches.MPIyIdx[ifield];
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][iNeighbor] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, iNeighbor ) ) {
                 vecPatches.B1_MPIy[ifield      ]->create_sub_fields  ( 1, iNeighbor, oversize );
                 vecPatches.B1_MPIy[ifield      ]->extract_fields_exch( 1, iNeighbor, oversize );
                 vecPatches.B1_MPIy[ifield+nMPIy]->create_sub_fields  ( 1, iNeighbor, oversize );
@@ -1497,7 +1497,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongY( std::vector<Field *> 
         vecPatches( ipatch )->finalizeExchange( vecPatches.B1_MPIy[ifield      ], 1 ); // By
         vecPatches( ipatch )->finalizeExchange( vecPatches.B1_MPIy[ifield+nMPIy], 1 ); // Bz
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][(iNeighbor+1)%2] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
                 vecPatches.B1_MPIy[ifield      ]->inject_fields_exch( 1, iNeighbor, oversize );
                 vecPatches.B1_MPIy[ifield+nMPIy]->inject_fields_exch( 1, iNeighbor, oversize );
             }
@@ -1527,7 +1527,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongZ( std::vector<Field *> fields, 
     for( unsigned int ifield=0 ; ifield<nMPIz ; ifield++ ) {
         unsigned int ipatch = vecPatches.MPIzIdx[ifield];
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][iNeighbor] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, iNeighbor ) ) {
                 vecPatches.B2_MPIz[ifield      ]->create_sub_fields  ( 2, iNeighbor, oversize );
                 vecPatches.B2_MPIz[ifield      ]->extract_fields_exch( 2, iNeighbor, oversize );
                 vecPatches.B2_MPIz[ifield+nMPIz]->create_sub_fields  ( 2, iNeighbor, oversize );
@@ -1598,7 +1598,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongZ( std::vector<Field *> 
         vecPatches( ipatch )->finalizeExchange( vecPatches.B2_MPIz[ifield      ], 2 ); // Bx
         vecPatches( ipatch )->finalizeExchange( vecPatches.B2_MPIz[ifield+nMPIz], 2 ); // By
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][(iNeighbor+1)%2] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
                 vecPatches.B2_MPIz[ifield      ]->inject_fields_exch( 2, iNeighbor, oversize );
                 vecPatches.B2_MPIz[ifield+nMPIz]->inject_fields_exch( 2, iNeighbor, oversize );
             }
@@ -1625,7 +1625,7 @@ void SyncVectorPatch::exchangeAlongX( std::vector<Field *> fields, VectorPatch &
 #endif
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][iNeighbor] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, iNeighbor ) ) {
                 fields[ipatch]->create_sub_fields  ( 0, iNeighbor, oversize );
                 fields[ipatch]->extract_fields_exch( 0, iNeighbor, oversize );
             }
@@ -1680,7 +1680,7 @@ void SyncVectorPatch::finalizeExchangeAlongX( std::vector<Field *> fields, Vecto
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
         vecPatches( ipatch )->finalizeExchange( fields[ipatch], 0 );
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][(iNeighbor+1)%2] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
                 fields[ipatch]->inject_fields_exch( 0, iNeighbor, oversize );
             }
         }
@@ -1699,7 +1699,7 @@ void SyncVectorPatch::exchangeAlongY( std::vector<Field *> fields, VectorPatch &
 #endif
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][iNeighbor] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, iNeighbor ) ) {
                 fields[ipatch]->create_sub_fields  ( 1, iNeighbor, oversize );
                 fields[ipatch]->extract_fields_exch( 1, iNeighbor, oversize );
             }
@@ -1754,7 +1754,7 @@ void SyncVectorPatch::finalizeExchangeAlongY( std::vector<Field *> fields, Vecto
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
         vecPatches( ipatch )->finalizeExchange( fields[ipatch], 1 );
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][(iNeighbor+1)%2] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
                 fields[ipatch]->inject_fields_exch( 1, iNeighbor, oversize );
             }
         }
@@ -1773,7 +1773,7 @@ void SyncVectorPatch::exchangeAlongZ( std::vector<Field *> fields, VectorPatch &
 #endif
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][iNeighbor] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, iNeighbor ) ) {
                 fields[ipatch]->create_sub_fields  ( 2, iNeighbor, oversize );
                 fields[ipatch]->extract_fields_exch( 2, iNeighbor, oversize );
             }
@@ -1826,7 +1826,7 @@ void SyncVectorPatch::finalizeExchangeAlongZ( std::vector<Field *> fields, Vecto
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
         vecPatches( ipatch )->finalizeExchange( fields[ipatch], 2 );
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][(iNeighbor+1)%2] ) {
+            if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
                 fields[ipatch]->inject_fields_exch( 2, iNeighbor, oversize );
             }
         }

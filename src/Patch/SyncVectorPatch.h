@@ -68,7 +68,7 @@ public :
         for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
             unsigned int ipatch = ifield%nPatches;
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][iNeighbor] ) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, iNeighbor ) ) {
                     fields[ifield]->create_sub_fields ( 0, iNeighbor, 2*oversize[0]+1+fields[ifield]->isDual_[0] );
                     fields[ifield]->extract_fields_sum( 0, iNeighbor, oversize[0] );
                 }
@@ -123,7 +123,7 @@ public :
             else
                 vecPatches( ipatch )->finalizeSumFieldComplex( fields[ifield], 0 );
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[0][(iNeighbor+1)%2] ) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
                     fields[ifield]->inject_fields_sum( 0, iNeighbor, oversize[0] );
                 }
             }
@@ -144,7 +144,7 @@ public :
             for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
                 unsigned int ipatch = ifield%nPatches;
                 for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                    if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][iNeighbor] ) {
+                    if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, iNeighbor ) ) {
                         fields[ifield]->create_sub_fields ( 1, iNeighbor, 2*oversize[1]+1+fields[ifield]->isDual_[1] );
                         fields[ifield]->extract_fields_sum( 1, iNeighbor, oversize[1] );
                     }
@@ -203,7 +203,7 @@ public :
                 else
                     vecPatches( ipatch )->finalizeSumFieldComplex( fields[ifield], 1 );
                 for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                    if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[1][(iNeighbor+1)%2] ) {
+                    if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
                         fields[ifield]->inject_fields_sum( 1, iNeighbor, oversize[1] );
                     }
                 }
@@ -224,7 +224,7 @@ public :
                 for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
                     unsigned int ipatch = ifield%nPatches;
                     for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                        if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][iNeighbor] ) {
+                        if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, iNeighbor ) ) {
                             fields[ifield]->create_sub_fields ( 2, iNeighbor, 2*oversize[2]+1+fields[ifield]->isDual_[2] );
                             fields[ifield]->extract_fields_sum( 2, iNeighbor, oversize[2] );
                         }
@@ -277,7 +277,7 @@ public :
                     unsigned int ipatch = ifield%nPatches;
                     vecPatches( ipatch )->finalizeSumField( fields[ifield], 2 );
                     for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-                        if ( vecPatches( ipatch )->MPI_me_ != vecPatches( ipatch )->MPI_neighbor_[2][(iNeighbor+1)%2] ) {
+                        if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
                             fields[ifield]->inject_fields_sum( 2, iNeighbor, oversize[2] );
                         }
                     }
