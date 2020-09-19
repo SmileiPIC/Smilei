@@ -42,9 +42,9 @@ struct ExtField {
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! This structure contains the properties of each ExtTimeField
+//! This structure contains the properties of each PrescribedField
 // ---------------------------------------------------------------------------------------------------------------------
-struct ExtTimeField { 
+struct PrescribedField { 
    
     Profile *profile;
     
@@ -389,7 +389,7 @@ public:
     std::vector<ExtField> extFields;
     
     //! external time fields parameters the key string is the name of the field and the value is a vector of ExtField
-    std::vector<ExtTimeField> extTimeFields;
+    std::vector<PrescribedField> prescribedFields;
     
     //! Method used to impose external fields (apply to all Fields)
     virtual void applyExternalFields( Patch * );
