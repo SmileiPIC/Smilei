@@ -2093,8 +2093,8 @@ reflect, stop, thermalize or kill particles which reach it::
 
 .. _Collisions:
 
-Collisions
-^^^^^^^^^^
+Collisions & reactions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :doc:`collisions` are specified by one or several ``Collisions`` blocks::
 
@@ -2175,7 +2175,7 @@ Collisions
   :type: a list of strings
   :default: ``None`` (no nuclear reaction)
 
-  A list of the species names for the products of nuclear reactions
+  A list of the species names for the products of :ref:`Nuclear reactions <CollNuclearReactions>`
   that may occur during collisions. You may omit product species if they are not necessary
   for the simulation.
 

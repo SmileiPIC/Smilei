@@ -104,12 +104,12 @@ public:
         // -----------------
         // PrescribedFields properties
         // -----------------
-        unsigned int external_time_field_number =PyTools::nComponents( "PrescribedField" );
-        if( patch->isMaster() && external_time_field_number > 0) {
-            TITLE("Initializing Prescribed (external) Fields" );
+        unsigned int prescribed_field_number = PyTools::nComponents( "PrescribedField" );
+        if( patch->isMaster() && prescribed_field_number > 0) {
+            TITLE("Initializing Prescribed Fields" );
         }
         for( unsigned int n_extfield = 0; n_extfield < PyTools::nComponents( "PrescribedField" ); n_extfield++ ) {
-            ExtTimeField extField;
+            PrescribedField extField;
             PyObject *profile;
             std::string fieldName("");
             PyTools::extract( "field", fieldName, "PrescribedField", n_extfield );
@@ -125,14 +125,14 @@ public:
             for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
                 if( EMfields->allFields[ifield]
                         && fieldName==EMfields->allFields[ifield]->name ) {
-                	
-                	if (params.nDim_field == 1) {
-                		extField.savedField = new Field1D(EMfields->allFields[ifield]->dims());
-                	} else if (params.nDim_field == 2){
-                		extField.savedField = new Field2D(EMfields->allFields[ifield]->dims());
-                	} else if (params.nDim_field == 3){
-                		extField.savedField = new Field3D(EMfields->allFields[ifield]->dims());
-                	}
+                    
+                    if (params.nDim_field == 1) {
+                        extField.savedField = new Field1D(EMfields->allFields[ifield]->dims());
+                    } else if (params.nDim_field == 2){
+                        extField.savedField = new Field2D(EMfields->allFields[ifield]->dims());
+                    } else if (params.nDim_field == 3){
+                        extField.savedField = new Field3D(EMfields->allFields[ifield]->dims());
+                    }
                     extField.savedField->copyFrom(EMfields->allFields[ifield]);
                     extField.savedField->name = EMfields->allFields[ifield]->name;
                     extField.index =  ifield;
@@ -144,7 +144,7 @@ public:
             }
             
             MESSAGE(1, "Prescribed field " << fieldName << ": " << extField.profile->getInfo());
-            EMfields->extTimeFields.push_back( extField );
+            EMfields->prescribedFields.push_back( extField );
         }
         
         
@@ -284,12 +284,19 @@ public:
         // -----------------
         // Clone PrescribedFields properties
         // -----------------
-        for( unsigned int n_extfield = 0; n_extfield < EMfields->extTimeFields.size(); n_extfield++ ) {
-            ExtTimeField extField;
-            extField.savedField   = EMfields->extTimeFields[n_extfield].savedField;
-            extField.profile = EMfields->extTimeFields[n_extfield].profile;
-            extField.index   = EMfields->extTimeFields[n_extfield].index;
-            newEMfields->extTimeFields.push_back( extField );
+        for( unsigned int n_extfield = 0; n_extfield < EMfields->prescribedFields.size(); n_extfield++ ) {
+            PrescribedField newpf;
+            newpf.profile = EMfields->prescribedFields[n_extfield].profile;
+            newpf.index   = EMfields->prescribedFields[n_extfield].index;
+            if (params.nDim_field == 1) {
+                newpf.savedField = new Field1D(EMfields->prescribedFields[n_extfield].savedField->dims());
+            } else if (params.nDim_field == 2){
+                newpf.savedField = new Field2D(EMfields->prescribedFields[n_extfield].savedField->dims());
+            } else if (params.nDim_field == 3){
+                newpf.savedField = new Field3D(EMfields->prescribedFields[n_extfield].savedField->dims());
+            }
+            newpf.savedField->copyFrom(EMfields->allFields[newpf.index]);
+            newEMfields->prescribedFields.push_back( newpf );
         }
         
         // -----------------
