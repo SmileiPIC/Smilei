@@ -51,7 +51,7 @@ double normal( double stddev )
 #define DO_EXPAND(VAL)  VAL ## 1
 #define EXPAND(VAL)     DO_EXPAND(VAL)
 #ifdef SMILEI_USE_NUMPY
-#if !defined(NUMPY_IMPORT_ARRAY_RETVAL) || (EXPAND(NUMPY_IMPORT_ARRAY_RETVAL) == 1)
+#if PY_MAJOR_VERSION < 3
 void smilei_import_array()   // python 2
 {
     import_array();
