@@ -331,14 +331,6 @@ public :
     static void exchangeAllComponentsAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeExchangeAllComponentsAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches );
 
-    //! Deprecated field functions
-    static void exchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeExchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches );
-    static void exchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeExchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches );
-    static void exchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeExchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches );
-
 };
 
 #endif
