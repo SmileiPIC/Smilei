@@ -71,7 +71,14 @@ cField2D::cField2D( string name_in, vector<unsigned int> dims ) : cField( dims, 
 // ---------------------------------------------------------------------------------------------------------------------
 cField2D::~cField2D()
 {
-
+    for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
+        if ( sendFields_[iside] == NULL ) {
+            delete sendFields_[iside];
+            sendFields_[iside] = NULL;
+            delete recvFields_[iside];
+            recvFields_[iside] = NULL;
+        }
+    }
     if( cdata_!=NULL ) {
         delete [] cdata_;
         delete [] data_2D;

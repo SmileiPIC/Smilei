@@ -67,7 +67,14 @@ cField3D::cField3D( string name_in, vector<unsigned int> dims ) : cField( dims, 
 // ---------------------------------------------------------------------------------------------------------------------
 cField3D::~cField3D()
 {
-
+    for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
+        if ( sendFields_[iside] == NULL ) {
+            delete sendFields_[iside];
+            sendFields_[iside] = NULL;
+            delete recvFields_[iside];
+            recvFields_[iside] = NULL;
+        }
+    }
     if( cdata_!=NULL ) {
         delete [] cdata_;
         for( unsigned int i=0; i<dims_[0]; i++ ) {

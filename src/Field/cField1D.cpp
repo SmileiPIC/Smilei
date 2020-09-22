@@ -69,6 +69,14 @@ cField1D::cField1D( string name, vector<unsigned int> dims ) : cField( dims, nam
 // ---------------------------------------------------------------------------------------------------------------------
 cField1D::~cField1D()
 {
+    for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
+        if ( sendFields_[iside] == NULL ) {
+            delete sendFields_[iside];
+            sendFields_[iside] = NULL;
+            delete recvFields_[iside];
+            recvFields_[iside] = NULL;
+        }
+    }
     if( cdata_!=NULL ) {
         delete [] cdata_;
     }

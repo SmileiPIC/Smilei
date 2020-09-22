@@ -30,18 +30,7 @@ Patch2D::Patch2D( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
         
         for( int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++ ) {
             for( int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++ ) {
-                ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-                ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-                ntype_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-                ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-                ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-                
-                ntype_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-                ntype_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-                ntype_complex_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-                ntypeSum_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-                ntypeSum_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-                
+                ntype_[ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             }
         }
         
@@ -103,11 +92,7 @@ void Patch2D::initStep2( Params &params, DomainDecomposition *domain_decompositi
     
     for( int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++ ) {
         for( int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++ ) {
-            ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            ntype_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            ntype_[ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
         }
     }
     //cout << endl;
@@ -126,313 +111,11 @@ Patch2D::~Patch2D()
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Initialize current patch sum Fields communications through MPI in direction iDim
-// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
-// ---------------------------------------------------------------------------------------------------------------------
-void Patch2D::initSumField( Field *field, int iDim, SmileiMPI *smpi )
-{
-    if( field->MPIbuff.srequest.size()==0 ) {
-        field->MPIbuff.allocate( 2 );
-        
-        int tagp( 0 );
-        if( field->name == "Jx" ) {
-            tagp = 1;
-        }
-        if( field->name == "Jy" ) {
-            tagp = 2;
-        }
-        if( field->name == "Jz" ) {
-            tagp = 3;
-        }
-        if( field->name == "Rho" ) {
-            tagp = 4;
-        }
-        
-        field->MPIbuff.defineTags( this, smpi, tagp );
-    }
-    
-    int patch_nbNeighbors_( 2 );
-    
-    /********************************************************************************/
-    // Send/Recv in a buffer data to sum
-    /********************************************************************************/
-    for( int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++ ) {
-    
-        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
-            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
-                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
-        } // END of Send
-        
-        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-            int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
-                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
-        } // END of Recv
-        
-    } // END for iNeighbor
-    
-} // END initSumField
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Finalize current patch sum Fields communications through MPI for direction iDim
-// Proceed to the local reduction
-// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
-// ---------------------------------------------------------------------------------------------------------------------
-void Patch2D::finalizeSumField( Field *field, int iDim )
-{
-    MPI_Status sstat    [2][2];
-    MPI_Status rstat    [2][2];
-    
-    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            MPI_Wait( &( field->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
-        }
-        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-            MPI_Wait( &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
-        }
-    }
-    
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Initialize current patch exhange Fields communications through MPI for direction iDim
-// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
-// ---------------------------------------------------------------------------------------------------------------------
-void Patch2D::initExchange( Field *field, int iDim, SmileiMPI *smpi )
-{
-    if( field->MPIbuff.srequest.size()==0 ) {
-        field->MPIbuff.allocate( 2 );
-        
-        int tagp( 0 );
-        if( field->name == "Bx" ) {
-            tagp = 6;
-        }
-        if( field->name == "By" ) {
-            tagp = 7;
-        }
-        if( field->name == "Bz" ) {
-            tagp = 8;
-        }
-        
-        if( field->name == "Ex" ) {
-            tagp = 6;
-        }
-        if( field->name == "Ey" ) {
-            tagp = 7;
-        }
-        if( field->name == "Ez" ) {
-            tagp = 8;
-        }
-        
-        field->MPIbuff.defineTags( this, smpi, tagp );
-    }
-    
-    int patch_nbNeighbors_( 2 );
-    
-    for( int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++ ) {
-    
-        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
-            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
-                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
-            
-        } // END of Send
-        
-        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-            int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
-                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
-        } // END of Recv
-        
-    } // END for iNeighbor
-    
-    
-} // END initExchange( Field* field, int iDim )
-
-void Patch2D::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
-{
-    if( field->MPIbuff.srequest.size()==0 ) {
-        field->MPIbuff.allocate( 2 );
-        
-        int tagp( 0 );
-        if( field->name == "Bx" ) {
-            tagp = 6;
-        }
-        if( field->name == "By" ) {
-            tagp = 7;
-        }
-        if( field->name == "Bz" ) {
-            tagp = 8;
-        }
-        
-        if( field->name == "Ex" ) {
-            tagp = 6;
-        }
-        if( field->name == "Ey" ) {
-            tagp = 7;
-        }
-        if( field->name == "Ez" ) {
-            tagp = 8;
-        }
-        
-        field->MPIbuff.defineTags( this, smpi, tagp );
-    }
-    
-    int patch_nbNeighbors_( 2 );
-    
-    for( int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++ ) {
-    
-        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-        
-            int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
-            MPI_Isend( static_cast<cField *>(field->sendFields_[iDim*2+iNeighbor])->cdata_, 2*field->sendFields_[iDim*2+iNeighbor]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
-                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
-           
-        } // END of Send
-        
-        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-        
-            int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( static_cast<cField *>(field->recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_, 2*field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_, MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
-                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
-            
-        } // END of Recv
-        
-    } // END for iNeighbor
-} // END initExchangeComplex( Field* field, int iDim )
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Initialize current patch exhange Fields communications through MPI for direction iDim
-// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
-// ---------------------------------------------------------------------------------------------------------------------
-void Patch2D::finalizeExchange( Field *field, int iDim )
-{
-    MPI_Status sstat    [2][2];
-    MPI_Status rstat    [2][2];
-    
-    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            MPI_Wait( &( field->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
-        }
-        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-            MPI_Wait( &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
-        }
-    }
-    
-} // END finalizeExchange( Field* field, int iDim )
-
-void Patch2D::finalizeExchangeComplex( Field *field, int iDim )
-{
-    MPI_Status sstat    [2][2];
-    MPI_Status rstat    [2][2];
-    
-    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            MPI_Wait( &( field->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
-        }
-        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-            MPI_Wait( &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
-        }
-    }
-} // END finalizeExchangeComplex( Field* field, int iDim )
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Create MPI_Datatypes used in initSumField and initExchange
-// ---------------------------------------------------------------------------------------------------------------------
-void Patch2D::createType( Params &params )
-{
-    if( ntype_[0][0][0] != MPI_DATATYPE_NULL ) {
-        return;
-    }
-    
-    int nx0 = params.n_space[0] + 1 + 2*oversize[0];
-    int ny0 = params.n_space[1] + 1 + 2*oversize[1];
-    unsigned int clrw = params.clrw;
-    
-    // MPI_Datatype ntype_[nDim][primDual][primDual]
-    int nx, ny;
-    int nline, ncol;
-    int nx_sum, ny_sum;
-    
-    for( int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++ ) {
-        nx = nx0 + ix_isPrim;
-        for( int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++ ) {
-            ny = ny0 + iy_isPrim;
-            
-            // Standard Type
-            ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( oversize[0]*ny, MPI_DOUBLE, &( ntype_[0][ix_isPrim][iy_isPrim] ) ); //line
-            MPI_Type_commit( &( ntype_[0][ix_isPrim][iy_isPrim] ) );
-            ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector( nx, oversize[1], ny, MPI_DOUBLE, &( ntype_[1][ix_isPrim][iy_isPrim] ) ); // column
-            MPI_Type_commit( &( ntype_[1][ix_isPrim][iy_isPrim] ) );
-            
-            // Still used ???
-            ntype_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( ny*clrw, MPI_DOUBLE, &( ntype_[2][ix_isPrim][iy_isPrim] ) ); //clrw lines
-            MPI_Type_commit( &( ntype_[2][ix_isPrim][iy_isPrim] ) );
-            
-            ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            nline = 1 + 2*oversize[0] + ix_isPrim;
-            //MPI_Type_contiguous(nline, ntype_[0][ix_isPrim][iy_isPrim], &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
-            
-            MPI_Datatype tmpType = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( ny, MPI_DOUBLE, &( tmpType ) ); //line
-            MPI_Type_commit( &( tmpType ) );
-            
-            MPI_Type_contiguous( nline, tmpType, &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) ); //line
-            MPI_Type_commit( &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
-            
-            MPI_Type_free( &tmpType );
-            
-            ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            ncol  = 1 + 2*oversize[1] + iy_isPrim;
-            MPI_Type_vector( nx, ncol, ny, MPI_DOUBLE, &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) ); // column
-            MPI_Type_commit( &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
-            
-            
-            // Complex Type
-            ntype_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( 2*oversize[0]*ny, MPI_DOUBLE, &( ntype_complex_[0][ix_isPrim][iy_isPrim] ) ); //line
-            MPI_Type_commit( &( ntype_complex_[0][ix_isPrim][iy_isPrim] ) );
-            ntype_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector( nx, 2*oversize[1], 2*ny, MPI_DOUBLE, &( ntype_complex_[1][ix_isPrim][iy_isPrim] ) ); // column
-            MPI_Type_commit( &( ntype_complex_[1][ix_isPrim][iy_isPrim] ) );
-            
-            // Sum
-            nx_sum = 1 + 2*oversize[0] + ix_isPrim;
-            ny_sum = 1 + 2*oversize[1] + iy_isPrim;
-            
-            ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( nx_sum*ny,
-                                 MPI_DOUBLE, &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
-            MPI_Type_commit( &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
-            
-            ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector( nx, ny_sum, ny,
-                             MPI_DOUBLE, &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
-            MPI_Type_commit( &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
-            
-            // Complex sum
-            ntypeSum_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            ntypeSum_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            
-        }
-    }
-    
-} //END createType
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Create MPI_Datatypes used in initSumField and initExchange
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch2D::createType2( Params &params )
 {
-    if( ntype_[0][0][0] != MPI_DATATYPE_NULL ) {
+    if( ntype_[0][0] != MPI_DATATYPE_NULL ) {
         return;
     }
     
@@ -440,7 +123,6 @@ void Patch2D::createType2( Params &params )
     int ny0 = params.n_space_region[1] + 1 + 2*oversize[1];
     //unsigned int clrw = params.clrw;
     
-    // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;
     int nline, ncol;
     
@@ -449,37 +131,11 @@ void Patch2D::createType2( Params &params )
         for( int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++ ) {
             ny = ny0 + iy_isPrim;
             
-            // Standard Type
-            ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( oversize[0]*ny, MPI_DOUBLE, &( ntype_[0][ix_isPrim][iy_isPrim] ) ); //line
-            MPI_Type_commit( &( ntype_[0][ix_isPrim][iy_isPrim] ) );
-            ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector( nx, oversize[1], ny, MPI_DOUBLE, &( ntype_[1][ix_isPrim][iy_isPrim] ) ); // column
-            MPI_Type_commit( &( ntype_[1][ix_isPrim][iy_isPrim] ) );
-            
             // Still used ???
-            ntype_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous(ny*params.n_space[0], MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim]));   //clrw lines
-            MPI_Type_commit( &( ntype_[2][ix_isPrim][iy_isPrim] ) );
-            
-            ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            nline = 1 + 2*oversize[0] + ix_isPrim;
-            //MPI_Type_contiguous(nline, ntype_[0][ix_isPrim][iy_isPrim], &(ntypeSum_[0][ix_isPrim][iy_isPrim]));    //line
-            
-            MPI_Datatype tmpType = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( ny, MPI_DOUBLE, &( tmpType ) ); //line
-            MPI_Type_commit( &( tmpType ) );
-            
-            MPI_Type_contiguous( nline, tmpType, &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) ); //line
-            MPI_Type_commit( &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
-            
-            MPI_Type_free( &tmpType );
-            
-            ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            ncol  = 1 + 2*oversize[1] + iy_isPrim;
-            MPI_Type_vector( nx, ncol, ny, MPI_DOUBLE, &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) ); // column
-            MPI_Type_commit( &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
-            
+            ntype_[ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_contiguous(ny*params.n_space[0], MPI_DOUBLE, &(ntype_[ix_isPrim][iy_isPrim]));   //clrw lines
+            MPI_Type_commit( &( ntype_[ix_isPrim][iy_isPrim] ) );
+
         }
     }
     
@@ -487,23 +143,13 @@ void Patch2D::createType2( Params &params )
 
 void Patch2D::cleanType()
 {
-    if( ntype_[0][0][0] == MPI_DATATYPE_NULL ) {
+    if( ntype_[0][0] == MPI_DATATYPE_NULL ) {
         return;
     }
     
     for( int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++ ) {
         for( int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++ ) {
-            MPI_Type_free( &( ntype_[0][ix_isPrim][iy_isPrim] ) );
-            MPI_Type_free( &( ntype_[1][ix_isPrim][iy_isPrim] ) );
-            MPI_Type_free( &( ntype_[2][ix_isPrim][iy_isPrim] ) );
-            MPI_Type_free( &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
-            MPI_Type_free( &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
-            
-            if ( ntype_complex_[0][ix_isPrim][iy_isPrim] != MPI_DATATYPE_NULL ) {
-                MPI_Type_free( &( ntype_complex_[0][ix_isPrim][iy_isPrim] ) );
-                MPI_Type_free( &( ntype_complex_[1][ix_isPrim][iy_isPrim] ) );
-                //MPI_Type_free( &(ntype_complex_[2][ix_isPrim][iy_isPrim]) );
-            }
+            MPI_Type_free( &( ntype_[ix_isPrim][iy_isPrim] ) );
         }
     }
 }
@@ -523,7 +169,7 @@ void Patch2D::exchangeField_movewin( Field* field, int clrw )
     iDim = 0; // We exchange only in the X direction for movewin.
     iNeighbor = 0; // We send only towards the West and receive from the East.
 
-    MPI_Datatype ntype = ntype_[2][isDual[0]][isDual[1]]; //ntype_[2] is clrw columns.
+    MPI_Datatype ntype = ntype_[isDual[0]][isDual[1]]; //ntype_[2] is clrw columns.
     MPI_Status rstat    ;
     MPI_Request rrequest;
 

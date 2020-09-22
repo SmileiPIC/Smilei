@@ -118,10 +118,7 @@ public :
     #endif
         for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
             unsigned int ipatch = ifield%nPatches;
-            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
-                vecPatches( ipatch )->finalizeSumField( fields[ifield], 0 );
-            else
-                vecPatches( ipatch )->finalizeSumFieldComplex( fields[ifield], 0 );
+            vecPatches( ipatch )->finalizeSumField( fields[ifield], 0 );
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
                 if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
                     fields[ifield]->inject_fields_sum( 0, iNeighbor, oversize[0] );
@@ -198,10 +195,7 @@ public :
     #endif
             for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
                 unsigned int ipatch = ifield%nPatches;
-                if ( !dynamic_cast<cField*>( fields[ipatch] ) )
-                    vecPatches( ipatch )->finalizeSumField( fields[ifield], 1 );
-                else
-                    vecPatches( ipatch )->finalizeSumFieldComplex( fields[ifield], 1 );
+                vecPatches( ipatch )->finalizeSumField( fields[ifield], 1 );
                 for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
                     if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
                         fields[ifield]->inject_fields_sum( 1, iNeighbor, oversize[1] );

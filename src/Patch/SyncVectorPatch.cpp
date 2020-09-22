@@ -949,10 +949,7 @@ void SyncVectorPatch::finalizeExchangeAlongAllDirections( std::vector<Field *> f
         #pragma omp single
 #endif
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
-                vecPatches( ipatch )->finalizeExchange       ( fields[ipatch], iDim );
-            else
-                vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], iDim );
+            vecPatches( ipatch )->finalizeExchange( fields[ipatch], iDim );
 
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
                 if ( vecPatches( ipatch )->is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
@@ -1071,10 +1068,7 @@ void SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( std::vector<Field
 
     for( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
-                vecPatches( ipatch )->finalizeExchange       ( fields[ipatch], iDim );
-            else
-                vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], iDim );
+            vecPatches( ipatch )->finalizeExchange( fields[ipatch], iDim );
 
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
                 if ( vecPatches( ipatch )->is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
@@ -1147,10 +1141,7 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
         #pragma omp single
 #endif
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
-                vecPatches( ipatch )->finalizeExchange( fields[ipatch], 2 );
-            else
-                vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], 2 );
+            vecPatches( ipatch )->finalizeExchange( fields[ipatch], 2 );
 
             for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
                 if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
@@ -1210,10 +1201,7 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
     #pragma omp single
 #endif
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-        if ( !dynamic_cast<cField*>( fields[ipatch] ) )
-            vecPatches( ipatch )->finalizeExchange( fields[ipatch], 1 );
-        else
-            vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], 1 );
+        vecPatches( ipatch )->finalizeExchange( fields[ipatch], 1 );
 
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
@@ -1269,10 +1257,7 @@ void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fie
     #pragma omp single
 #endif
     for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-        if ( !dynamic_cast<cField*>( fields[ipatch] ) )
-            vecPatches( ipatch )->finalizeExchange( fields[ipatch], 0 );
-        else
-            vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], 0 );
+        vecPatches( ipatch )->finalizeExchange( fields[ipatch], 0 );
 
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
             if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {

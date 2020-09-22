@@ -177,10 +177,6 @@ void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition
 
     probesInterp = InterpolatorFactory::create( params, this, false );
 
-    if( has_an_MPI_neighbor() ) {
-        createType( params );
-    }
-
 }
 
 
@@ -205,10 +201,6 @@ void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsign
     probes = DiagnosticFactory::cloneProbes( patch->probes );
 
     probesInterp = InterpolatorFactory::create( params, this, false );
-
-    if( has_an_MPI_neighbor() ) {
-        createType( params );
-    }
 
 }
 
@@ -1273,3 +1265,179 @@ void Patch::copyPositions( std::vector<Species *> vecSpecies_to_update )
     }
     return;
 }
+
+void Patch::initExchange( Field *field, int iDim, SmileiMPI *smpi )
+{
+    if( field->MPIbuff.srequest.size()==0 ) {
+        field->MPIbuff.allocate( nDim_fields_ );
+
+        int tagp( 0 );
+        if( field->name == "Bx" ) {
+            tagp = 6;
+        }
+        if( field->name == "By" ) {
+            tagp = 7;
+        }
+        if( field->name == "Bz" ) {
+            tagp = 8;
+        }
+
+        field->MPIbuff.defineTags( this, smpi, tagp );
+    }
+
+    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
+
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+
+            int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
+            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
+
+        } // END of Send
+
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+
+            int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
+            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+
+        } // END of Recv
+
+    } // END for iNeighbor
+
+} // END initExchange( Field* field, int iDim )
+
+void Patch::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
+{
+    if( field->MPIbuff.srequest.size()==0 ) {
+        field->MPIbuff.allocate( nDim_fields_ );
+
+        int tagp( 0 );
+        if( field->name == "Bl" ) {
+            tagp = 6;
+        }
+        if( field->name == "Br" ) {
+            tagp = 7;
+        }
+        if( field->name == "Bt" ) {
+            tagp = 8;
+        }
+
+        field->MPIbuff.defineTags( this, smpi, tagp );
+    }
+
+    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
+
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
+            MPI_Isend( static_cast<cField *>(field->sendFields_[iDim*2+iNeighbor])->cdata_, 2*field->sendFields_[iDim*2+iNeighbor]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
+        } // END of Send
+
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
+            MPI_Irecv( static_cast<cField *>(field->recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_, 2*field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+        } // END of Recv
+
+    } // END for iNeighbor
+} // END initExchangeComplex( Field* field, int iDim )
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch exhange Fields communications through MPI for direction iDim
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::finalizeExchange( Field *field, int iDim )
+{
+    MPI_Status sstat    [nDim_fields_][2];
+    MPI_Status rstat    [nDim_fields_][2];
+
+    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            MPI_Wait( &( field->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
+        }
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            MPI_Wait( &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
+        }
+    }
+
+} // END finalizeExchange( Field* field, int iDim )
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch sum Fields communications through MPI in direction iDim
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::initSumField( Field *field, int iDim, SmileiMPI *smpi )
+{
+    if( field->MPIbuff.srequest.size()==0 ) {
+        field->MPIbuff.allocate( nDim_fields_ );
+
+        int tagp( 0 );
+        if( field->name == "Jx" ) {
+            tagp = 1;
+        }
+        if( field->name == "Jy" ) {
+            tagp = 2;
+        }
+        if( field->name == "Jz" ) {
+            tagp = 3;
+        }
+        if( field->name == "Rho" ) {
+            tagp = 4;
+        }
+
+        field->MPIbuff.defineTags( this, smpi, tagp );
+    }
+
+    int patch_nbNeighbors_( 2 );
+
+    /********************************************************************************/
+    // Send/Recv in a buffer data to sum
+    /********************************************************************************/
+    for( int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++ ) {
+
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
+            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
+        } // END of Send
+
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
+            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+        } // END of Recv
+
+    } // END for iNeighbor
+
+} // END initSumField
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Finalize current patch sum Fields communications through MPI for direction iDim
+// Proceed to the local reduction
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::finalizeSumField( Field *field, int iDim )
+{
+    MPI_Status sstat    [nDim_fields_][2];
+    MPI_Status rstat    [nDim_fields_][2];
+
+    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            MPI_Wait( &( field->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
+        }
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            MPI_Wait( &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
+        }
+    }
+
+} // END finalizeSumField
+
