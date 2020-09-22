@@ -74,7 +74,7 @@ Field3D::Field3D( string name_in, vector<unsigned int> dims ) : Field( dims, nam
 Field3D::~Field3D()
 {
     for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
-        if ( sendFields_[iside] == NULL ) {
+        if ( sendFields_[iside] != NULL ) {
             delete sendFields_[iside];
             sendFields_[iside] = NULL;
             delete recvFields_[iside];

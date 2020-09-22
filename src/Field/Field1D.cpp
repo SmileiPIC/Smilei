@@ -70,7 +70,7 @@ Field1D::Field1D( string name_in, vector<unsigned int> dims ) : Field( dims, nam
 Field1D::~Field1D()
 {
     for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
-        if ( sendFields_[iside] == NULL ) {
+        if ( sendFields_[iside] != NULL ) {
             delete sendFields_[iside];
             sendFields_[iside] = NULL;
             delete recvFields_[iside];
