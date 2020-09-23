@@ -24,8 +24,8 @@ void internal_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax,
                           double dt, Species *species, int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during exchange
-    double* position = &(particles.position(direction,0));
-    int* cell_keys = &(particles.cell_keys[0]);
+    double* position = particles.getPtrPosition(direction);
+    int* cell_keys = particles.getPtrCellKeys();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf) {
             cell_keys[ ipart ] = -1;
@@ -38,8 +38,8 @@ void internal_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax,
                           double dt, Species *species, int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during exchange
-    double* position = &(particles.position(direction,0));
-    int* cell_keys = &(particles.cell_keys[0]);
+    double* position = particles.getPtrPosition(direction);
+    int* cell_keys = particles.getPtrCellKeys();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
             cell_keys[ ipart ] = -1;
@@ -52,10 +52,12 @@ void internal_inf_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax,
                           double dt, Species *species, int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during exchange
-    //double* position = &(particles.position(direction,0));
-    int* cell_keys = &(particles.cell_keys[0]);
+    double* position_y = particles.getPtrPosition(1);
+    double* position_z = particles.getPtrPosition(2);
+    int* cell_keys = particles.getPtrCellKeys();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( particles.distance2ToAxis( ipart ) < limit_inf*limit_inf ) {
+        double distance2ToAxis = position_y[ipart]*position_y[ipart]+position_z[ipart]*position_z[ipart];
+        if ( distance2ToAxis < limit_inf*limit_inf ) {
             cell_keys[ ipart ] = -1;
         }
     }
@@ -66,10 +68,12 @@ void internal_sup_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax,
                           double dt, Species *species, int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during exchange
-    //double* position = &(particles.position(direction,0));
-    int* cell_keys = &(particles.cell_keys[0]);
+    double* position_y = particles.getPtrPosition(1);
+    double* position_z = particles.getPtrPosition(2);
+    int* cell_keys = particles.getPtrCellKeys();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( particles.distance2ToAxis( ipart ) >= limit_sup*limit_sup ) {
+        double distance2ToAxis = position_y[ipart]*position_y[ipart]+position_z[ipart]*position_z[ipart];
+        if ( distance2ToAxis >= limit_sup*limit_sup ) {
             cell_keys[ ipart ] = -1;
         }
     }
@@ -80,8 +84,8 @@ void reflect_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int 
                                   double dt, Species *species, int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during reflection
-    double* position = &(particles.position(direction,0));
-    double* momentum = &(particles.momentum(direction,0));
+    double* position = particles.getPtrPosition(direction);
+    double* momentum = particles.getPtrMomentum(direction);
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf ) {
             position[ ipart ] = 2.*limit_inf - position[ ipart ];
@@ -95,8 +99,8 @@ void reflect_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, int 
                                   double dt, Species *species, int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during reflection
-    double* position = &(particles.position(direction,0));
-    double* momentum = &(particles.momentum(direction,0));
+    double* position = particles.getPtrPosition(direction);
+    double* momentum = particles.getPtrMomentum(direction);
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
             position[ ipart ] = 2*limit_sup - position[ ipart ];
@@ -110,8 +114,8 @@ void reflect_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, int
                                   double dt, Species *species, int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;     // no energy loss during reflection
-    double* position = &(particles.position(direction,0));
-    double* momentum = &(particles.momentum(direction,0));
+    double* position = particles.getPtrPosition(direction);
+    double* momentum = particles.getPtrMomentum(direction);
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         double particle_position     = position[ipart];
         double particle_position_old = particle_position - dt*smpi->dynamics_invgf[ithread][ipart]*momentum[ipart]; 
@@ -128,15 +132,16 @@ void refl_particle_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax
 {
     nrj_iPart = 0.;     // no energy loss during reflection
     
-    double* position_y = &(particles.position(1,0));
-    double* position_z = &(particles.position(2,0));
-    double* momentum_y = &(particles.momentum(1,0));
-    double* momentum_z = &(particles.momentum(2,0));
+    double* position_y = particles.getPtrPosition(1);
+    double* position_z = particles.getPtrPosition(2);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
     //limite_sup = 2*Rmax.
     //We look for the coordiunate of the point at which the particle crossed the boundary
     //We need to fine the parameter t at which (y + py*t)+(z+pz*t) = Rmax^2
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( particles.distance2ToAxis( ipart ) >= limit_sup*limit_sup ) {
+        double distance2ToAxis = position_y[ipart]*position_y[ipart]+position_z[ipart]*position_z[ipart];
+        if ( distance2ToAxis >= limit_sup*limit_sup ) {
             limit_sup *= 2.;
             double b = 2*( position_y[ ipart ]*momentum_y[ ipart ] + position_z[ ipart ]*momentum_z[ ipart ] );
             double r2 = ( position_y[ ipart ]*position_y[ ipart ] + position_z[ ipart ]*position_z[ ipart ] );
@@ -169,12 +174,17 @@ void remove_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int i
                                 int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;
-    double* position = &(particles.position(direction,0));
-    short* charge = &(particles.charge(0));
-    int* cell_keys = &(particles.cell_keys[0]);
+    double* position = particles.getPtrPosition(direction);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    short* charge    = particles.getPtrCharge();
+    double* weight   = particles.getPtrWeight();
+    int* cell_keys   = particles.getPtrCellKeys();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf) {
-            nrj_iPart += particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
+            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart += weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
             charge[ ipart ] = 0;
             cell_keys[ipart] = -1;
         }
@@ -185,12 +195,17 @@ void remove_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, int i
                                 int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;
-    double* position = &(particles.position(direction,0));
-    short* charge = &(particles.charge(0));
-    int* cell_keys = &(particles.cell_keys[0]);
+    double* position = particles.getPtrPosition(direction);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    short* charge    = particles.getPtrCharge();
+    double* weight   = particles.getPtrWeight();
+    int* cell_keys   = particles.getPtrCellKeys();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
-            nrj_iPart += particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
+            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart += weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
             charge[ ipart ] = 0;
             cell_keys[ipart] = -1;
         }
@@ -201,15 +216,20 @@ void remove_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, int 
                                 int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;
-    double* position = &(particles.position(direction,0));
-    double* momentum = &(particles.momentum(direction,0));
-    short* charge = &(particles.charge(0));
-    int* cell_keys = &(particles.cell_keys[0]);
+    double* position = particles.getPtrPosition(direction);
+    double* momentum = particles.getPtrMomentum(direction);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    short* charge    = particles.getPtrCharge();
+    double* weight   = particles.getPtrWeight();
+    int* cell_keys   = particles.getPtrCellKeys();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         double particle_position     = position[ipart];
         double particle_position_old = particle_position - dt*smpi->dynamics_invgf[ithread][ipart]*momentum[ipart]; 
         if ( ( wall_position-particle_position_old )*( wall_position-particle_position )<0) {
-            nrj_iPart += particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
+            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart += weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
             charge[ ipart ] = 0;
             cell_keys[ipart] = -1;
         }
@@ -220,12 +240,19 @@ void remove_particle_AM( Particles &particles, SmileiMPI* smpi, int imin, int im
                                 int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;
-    double* position = &(particles.position(direction,0));
-    short* charge = &(particles.charge(0));
-    int* cell_keys = &(particles.cell_keys[0]);
+    double* position_y = particles.getPtrPosition(1);
+    double* position_z = particles.getPtrPosition(2);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    short* charge    = particles.getPtrCharge();
+    double* weight   = particles.getPtrWeight();
+    int* cell_keys   = particles.getPtrCellKeys();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        if ( particles.distance2ToAxis( ipart ) >= limit_sup*limit_sup ) {
-            nrj_iPart += particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
+        double distance2ToAxis = position_y[ipart]*position_y[ipart]+position_z[ipart]*position_z[ipart];
+        if ( distance2ToAxis >= limit_sup*limit_sup ) {
+            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart += weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
             charge[ ipart ] = 0;
             cell_keys[ipart] = -1;
         }
@@ -237,12 +264,17 @@ void remove_photon_inf( Particles &particles, SmileiMPI* smpi, int imin, int ima
                               int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;
-    double* position = &(particles.position(direction,0));
-    short* charge = &(particles.charge(0));
-    int* cell_keys = &(particles.cell_keys[0]);
+    double* position = particles.getPtrPosition(direction);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    double* weight     = particles.getPtrWeight();
+    short* charge    = particles.getPtrCharge();
+    int* cell_keys   = particles.getPtrCellKeys();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf) {
-            nrj_iPart += particles.weight( ipart )*( particles.momentumNorm( ipart ) ); // energy lost REDUCTION
+            double momentumNorm = sqrt( pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart += weight[ ipart ]*( momentumNorm ); // energy lost REDUCTION
             charge[ ipart ] = 0;
             cell_keys[ipart] = -1;
         }
@@ -253,12 +285,17 @@ void remove_photon_sup( Particles &particles, SmileiMPI* smpi, int imin, int ima
                               int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0.;
-    double* position = &(particles.position(direction,0));
-    short* charge = &(particles.charge(0));
-    int* cell_keys = &(particles.cell_keys[0]);
+    double* position = particles.getPtrPosition(direction);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    double* weight     = particles.getPtrWeight();
+    short* charge    = particles.getPtrCharge();
+    int* cell_keys   = particles.getPtrCellKeys();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
-            nrj_iPart += particles.weight( ipart )*( particles.momentumNorm( ipart ) ); // energy lost REDUCTION
+            double momentumNorm = sqrt( pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart += weight[ ipart ]*( momentumNorm ); // energy lost REDUCTION
             charge[ ipart ] = 0;
             cell_keys[ipart] = -1;
         }
@@ -269,14 +306,15 @@ void stop_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int ima
                               int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0;
-    double* position = &(particles.position(direction,0));
-    double* momentum_x = &(particles.momentum(0,0));
-    double* momentum_y = &(particles.momentum(1,0));
-    double* momentum_z = &(particles.momentum(2,0));
-    double* weight = &(particles.weight(0));
+    double* position = particles.getPtrPosition(direction);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    double* weight     = particles.getPtrWeight();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf) {
-            nrj_iPart = particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
+            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart = weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
             position[ ipart ] = 2.*limit_inf - position[ ipart ];
             momentum_x[ ipart ] = 0.;
             momentum_y[ ipart ] = 0.;
@@ -289,14 +327,15 @@ void stop_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, int ima
                               int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0;
-    double* position = &(particles.position(direction,0));
-    double* momentum_x = &(particles.momentum(0,0));
-    double* momentum_y = &(particles.momentum(1,0));
-    double* momentum_z = &(particles.momentum(2,0));
-    double* weight = &(particles.weight(0));
+    double* position = particles.getPtrPosition(direction);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    double* weight     = particles.getPtrWeight();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
-            nrj_iPart += particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
+            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart = weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
             position[ ipart ] = 2.*limit_sup - position[ ipart ];
             momentum_x[ ipart ] = 0.;
             momentum_y[ ipart ] = 0.;
@@ -309,16 +348,18 @@ void stop_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, int im
                               int ithread, double &nrj_iPart )
 {
     nrj_iPart = 0;
-    double* position = &(particles.position(direction,0));
-    double* momentum_x = &(particles.momentum(0,0));
-    double* momentum_y = &(particles.momentum(1,0));
-    double* momentum_z = &(particles.momentum(2,0));
-    double* weight = &(particles.weight(0));
+    double* position = particles.getPtrPosition(direction);
+    double* momentum = particles.getPtrMomentum(direction);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    double* weight     = particles.getPtrWeight();
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         double particle_position     = position[ipart];
-        double particle_position_old = particle_position - dt*smpi->dynamics_invgf[ithread][ipart]*particles.Momentum[direction][ipart]; 
+        double particle_position_old = particle_position - dt*smpi->dynamics_invgf[ithread][ipart]*momentum[ipart];
         if ( ( wall_position-particle_position_old )*( wall_position-particle_position )<0 ) {
-            nrj_iPart += particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
+            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart += weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
             position[ ipart ] = 2.*wall_position - position[ ipart ];
             momentum_x[ ipart ] = 0.;
             momentum_y[ ipart ] = 0.;
@@ -327,33 +368,37 @@ void stop_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, int im
     }
 }
 
-void stop_particle_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_pos, double dt, Species *species,
+void stop_particle_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_sup, double dt, Species *species,
                              int ithread, double &nrj_iPart )
 {
-    double* position_y = &(particles.position(1,0));
-    double* position_z = &(particles.position(2,0));
-    double* momentum_y = &(particles.momentum(1,0));
-    double* momentum_z = &(particles.momentum(2,0));
-
+    double* position_y = particles.getPtrPosition(1);
+    double* position_z = particles.getPtrPosition(2);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    double* weight     = particles.getPtrWeight();
 
     nrj_iPart = 0;
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
-        nrj_iPart += particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost REDUCTION
-        double distance_to_axis = sqrt( particles.distance2ToAxis( ipart ) );
-        // limit_pos = 2*limit_pos
-        double new_dist_to_axis = limit_pos - distance_to_axis;
+        double distance2ToAxis = position_y[ipart]*position_y[ipart]+position_z[ipart]*position_z[ipart];
+        if ( distance2ToAxis >= limit_sup*limit_sup ) {
+            double LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart += weight[ ipart ]*( LorentzFactor-1.0 ); // energy lost REDUCTION
+            double distance_to_axis = sqrt( distance2ToAxis );
+            // limit_pos = 2*limit_pos
+            double new_dist_to_axis = limit_sup - distance_to_axis;
     
-        double delta = distance_to_axis - new_dist_to_axis;
-        double cos = position_y[ ipart ] / distance_to_axis;
-        double sin = position_z[ ipart ] / distance_to_axis;
+            double delta = distance_to_axis - new_dist_to_axis;
+            double cos = position_y[ ipart ] / distance_to_axis;
+            double sin = position_z[ ipart ] / distance_to_axis;
     
-        position_y[ ipart ] -= delta * cos ;
-        position_z[ ipart ] -= delta * sin ;
+            position_y[ ipart ] -= delta * cos ;
+            position_z[ ipart ] -= delta * sin ;
     
-        particles.momentum( 0, ipart ) = 0.;
-        momentum_y[ ipart ] = 0.;
-        momentum_z[ ipart ] = 0.;
-
+            momentum_x[ ipart ] = 0.;
+            momentum_y[ ipart ] = 0.;
+            momentum_z[ ipart ] = 0.;
+        }
     }
     
 }
@@ -361,20 +406,26 @@ void stop_particle_AM( Particles &particles, SmileiMPI* smpi, int imin, int imax
 void thermalize_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_inf,
                               double dt, Species *species, int ithread, double &nrj_iPart )
 {
-    double* position = &(particles.position(direction,0));
+    int nDim = species->nDim_particle;
+    double* position = particles.getPtrPosition(direction);
+    double* momentum = particles.getPtrMomentum(direction);
+    double* momentumRefl_2D = particles.getPtrMomentum((direction+1)%nDim);
+    double* momentumRefl_3D = particles.getPtrMomentum((direction+2)%nDim);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    double* weight     = particles.getPtrWeight();
 
     nrj_iPart = 0;
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf) {
             // checking the particle's velocity compared to the thermal one
-            double p2 = 0.;
-            for( unsigned int i=0; i<3; i++ ) {
-                p2 += particles.momentum( i, ipart )*particles.momentum( i, ipart );
-            }
-            double v = sqrt( p2 )/particles.LorentzFactor( ipart );
+            double p2 = pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 );
+            double LorentzFactor = sqrt( 1.+p2 );
+            double v = sqrt( p2 )/LorentzFactor;
 
             // energy before thermalization
-            nrj_iPart = particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 );
+            nrj_iPart = weight[ ipart ]*( LorentzFactor-1.0 );
 
             // Apply bcs depending on the particle velocity
             // --------------------------------------------
@@ -382,23 +433,25 @@ void thermalize_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, i
 
                 // velocity of the particle after thermalization/reflection
                 //for (int i=0; i<species->nDim_fields; i++) {
-                for( int i=0; i<3; i++ ) {
 
-                    if( i==direction ) {
-                        // change of velocity in the direction normal to the reflection plane
-                        double sign_vel = -particles.momentum( i, ipart )/std::abs( particles.momentum( i, ipart ) );
-                        particles.momentum( i, ipart ) = sign_vel * species->thermal_momentum_[i]
-                            *                             std::sqrt( -std::log( 1.0-Rand::uniform1() ) );
+                // change of velocity in the direction normal to the reflection plane
+                double sign_vel = -momentum[ ipart ]/std::abs( momentum[ ipart ] );
+                momentum[ ipart ] = sign_vel * species->thermal_momentum_[direction]
+                    *                             std::sqrt( -std::log( 1.0-Rand::uniform1() ) );
 
-                    } else {
-                        // change of momentum in the direction(s) along the reflection plane
+                // change of momentum in the direction(s) along the reflection plane
+                if (nDim>1) {
+                    double sign_rnd = Rand::uniform() - 0.5;
+                    sign_rnd = ( sign_rnd )/std::abs( sign_rnd );
+                    momentumRefl_2D[ ipart ] = sign_rnd * species->thermal_momentum_[(direction+1)%nDim]
+                        *                             userFunctions::erfinv( Rand::uniform1() );
+                    if (nDim>2) {
                         double sign_rnd = Rand::uniform() - 0.5;
                         sign_rnd = ( sign_rnd )/std::abs( sign_rnd );
-                        particles.momentum( i, ipart ) = sign_rnd * species->thermal_momentum_[i]
+                        momentumRefl_3D[ ipart ] = sign_rnd * species->thermal_momentum_[(direction+2)%nDim]
                             *                             userFunctions::erfinv( Rand::uniform1() );
-                    }//if
-
-                }//i
+                    }
+                }
 
                 // Adding the mean velocity (using relativistic composition)
                 double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
@@ -421,27 +474,27 @@ void thermalize_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, i
                     Lyz = gm1 * vy*vz/v2;
 
                     // Lorentz transformation of the momentum
-                    gp = sqrt( 1.0 + pow( particles.momentum( 0, ipart ), 2 ) + pow( particles.momentum( 1, ipart ), 2 )
-                               + pow( particles.momentum( 2, ipart ), 2 ) );
-                    px = -gp*g*vx + Lxx * particles.momentum( 0, ipart ) + Lxy * particles.momentum( 1, ipart ) + Lxz * particles.momentum( 2, ipart );
-                    py = -gp*g*vy + Lxy * particles.momentum( 0, ipart ) + Lyy * particles.momentum( 1, ipart ) + Lyz * particles.momentum( 2, ipart );
-                    pz = -gp*g*vz + Lxz * particles.momentum( 0, ipart ) + Lyz * particles.momentum( 1, ipart ) + Lzz * particles.momentum( 2, ipart );
-                    particles.momentum( 0, ipart ) = px;
-                    particles.momentum( 1, ipart ) = py;
-                    particles.momentum( 2, ipart ) = pz;
+                    gp = sqrt( 1.0 + pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+                    px = -gp*g*vx + Lxx * momentum_x[ ipart ] + Lxy * momentum_y[ ipart ] + Lxz * momentum_z[ ipart ];
+                    py = -gp*g*vy + Lxy * momentum_x[ ipart ] + Lyy * momentum_y[ ipart ] + Lyz * momentum_z[ ipart ];
+                    pz = -gp*g*vz + Lxz * momentum_x[ ipart ] + Lyz * momentum_y[ ipart ] + Lzz * momentum_z[ ipart ];
+                    momentum_x[ ipart ] = px;
+                    momentum_y[ ipart ] = py;
+                    momentum_z[ ipart ] = pz;
 
                 }//ENDif vel != 0
 
             } else {                                    // IF VELOCITY < 3*THERMAL SIMPLY REFLECT IT
-                particles.momentum( direction, ipart ) = -particles.momentum( direction, ipart );
+                momentum[ ipart ] = -momentum[ ipart ];
 
             }// endif on v vs. thermal_velocity_
 
             // position of the particle after reflection
-            particles.position( direction, ipart ) = limit_inf - particles.position( direction, ipart );
+            position[ ipart ] = limit_inf - position[ ipart ];
 
             // energy lost during thermalization
-            nrj_iPart -= particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 );
+            LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart -= weight[ ipart ]*( LorentzFactor-1.0 );
 
 
             /* HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
@@ -463,20 +516,26 @@ void thermalize_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, i
 void thermalize_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double limit_sup,
                               double dt, Species *species, int ithread, double &nrj_iPart )
 {
-    double* position = &(particles.position(direction,0));
+    int nDim = species->nDim_particle;
+    double* position = particles.getPtrPosition(direction);
+    double* momentum = particles.getPtrMomentum(direction);
+    double* momentumRefl_2D = particles.getPtrMomentum((direction+1)%nDim);
+    double* momentumRefl_3D = particles.getPtrMomentum((direction+2)%nDim);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    double* weight     = particles.getPtrWeight();
 
     nrj_iPart = 0;
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
             // checking the particle's velocity compared to the thermal one
-            double p2 = 0.;
-            for( unsigned int i=0; i<3; i++ ) {
-                p2 += particles.momentum( i, ipart )*particles.momentum( i, ipart );
-            }
-            double v = sqrt( p2 )/particles.LorentzFactor( ipart );
+            double p2 = pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 );
+            double LorentzFactor = sqrt( 1.+p2 );
+            double v = sqrt( p2 )/LorentzFactor;
 
             // energy before thermalization
-            nrj_iPart = particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 );
+            nrj_iPart = weight[ ipart ]*( LorentzFactor-1.0 );
 
             // Apply bcs depending on the particle velocity
             // --------------------------------------------
@@ -484,23 +543,25 @@ void thermalize_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, i
 
                 // velocity of the particle after thermalization/reflection
                 //for (int i=0; i<species->nDim_fields; i++) {
-                for( int i=0; i<3; i++ ) {
 
-                    if( i==direction ) {
-                        // change of velocity in the direction normal to the reflection plane
-                        double sign_vel = -particles.momentum( i, ipart )/std::abs( particles.momentum( i, ipart ) );
-                        particles.momentum( i, ipart ) = sign_vel * species->thermal_momentum_[i]
-                            *                             std::sqrt( -std::log( 1.0-Rand::uniform1() ) );
+                // change of velocity in the direction normal to the reflection plane
+                double sign_vel = -momentum[ ipart ]/std::abs( momentum[ ipart ] );
+                momentum[ ipart ] = sign_vel * species->thermal_momentum_[direction]
+                    *                             std::sqrt( -std::log( 1.0-Rand::uniform1() ) );
 
-                    } else {
-                        // change of momentum in the direction(s) along the reflection plane
+                // change of momentum in the direction(s) along the reflection plane
+                if (nDim>1) {
+                    double sign_rnd = Rand::uniform() - 0.5;
+                    sign_rnd = ( sign_rnd )/std::abs( sign_rnd );
+                    momentumRefl_2D[ ipart ] = sign_rnd * species->thermal_momentum_[(direction+1)%nDim]
+                        *                             userFunctions::erfinv( Rand::uniform1() );
+                    if (nDim>2) {
                         double sign_rnd = Rand::uniform() - 0.5;
                         sign_rnd = ( sign_rnd )/std::abs( sign_rnd );
-                        particles.momentum( i, ipart ) = sign_rnd * species->thermal_momentum_[i]
+                        momentumRefl_3D[ ipart ] = sign_rnd * species->thermal_momentum_[(direction+2)%nDim]
                             *                             userFunctions::erfinv( Rand::uniform1() );
-                    }//if
-
-                }//i
+                    }
+                }
 
                 // Adding the mean velocity (using relativistic composition)
                 double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
@@ -523,27 +584,27 @@ void thermalize_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, i
                     Lyz = gm1 * vy*vz/v2;
 
                     // Lorentz transformation of the momentum
-                    gp = sqrt( 1.0 + pow( particles.momentum( 0, ipart ), 2 ) + pow( particles.momentum( 1, ipart ), 2 )
-                               + pow( particles.momentum( 2, ipart ), 2 ) );
-                    px = -gp*g*vx + Lxx * particles.momentum( 0, ipart ) + Lxy * particles.momentum( 1, ipart ) + Lxz * particles.momentum( 2, ipart );
-                    py = -gp*g*vy + Lxy * particles.momentum( 0, ipart ) + Lyy * particles.momentum( 1, ipart ) + Lyz * particles.momentum( 2, ipart );
-                    pz = -gp*g*vz + Lxz * particles.momentum( 0, ipart ) + Lyz * particles.momentum( 1, ipart ) + Lzz * particles.momentum( 2, ipart );
-                    particles.momentum( 0, ipart ) = px;
-                    particles.momentum( 1, ipart ) = py;
-                    particles.momentum( 2, ipart ) = pz;
+                    gp = sqrt( 1.0 + pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+                    px = -gp*g*vx + Lxx * momentum_x[ ipart ] + Lxy * momentum_y[ ipart ] + Lxz * momentum_z[ ipart ];
+                    py = -gp*g*vy + Lxy * momentum_x[ ipart ] + Lyy * momentum_y[ ipart ] + Lyz * momentum_z[ ipart ];
+                    pz = -gp*g*vz + Lxz * momentum_x[ ipart ] + Lyz * momentum_y[ ipart ] + Lzz * momentum_z[ ipart ];
+                    momentum_x[ ipart ] = px;
+                    momentum_y[ ipart ] = py;
+                    momentum_z[ ipart ] = pz;
 
                 }//ENDif vel != 0
 
             } else {                                    // IF VELOCITY < 3*THERMAL SIMPLY REFLECT IT
-                particles.momentum( direction, ipart ) = -particles.momentum( direction, ipart );
+                momentum[ ipart ] = -momentum[ ipart ];
 
             }// endif on v vs. thermal_velocity_
 
             // position of the particle after reflection
-            particles.position( direction, ipart ) = limit_sup - particles.position( direction, ipart );
+            position[ ipart ] = limit_sup - position[ ipart ];
 
             // energy lost during thermalization
-            nrj_iPart -= particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 );
+            LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart -= weight[ ipart ]*( LorentzFactor-1.0 );
 
 
             /* HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
@@ -566,7 +627,15 @@ void thermalize_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, i
 void thermalize_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, int imax, int direction, double wall_position,
                               double dt, Species *species, int ithread, double &nrj_iPart )
 {
-    double* position = &(particles.position(direction,0));
+    int nDim = species->nDim_particle;
+    double* position = particles.getPtrPosition(direction);
+    double* momentum = particles.getPtrMomentum(direction);
+    double* momentumRefl_2D = particles.getPtrMomentum((direction+1)%nDim);
+    double* momentumRefl_3D = particles.getPtrMomentum((direction+2)%nDim);
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    double* weight     = particles.getPtrWeight();
 
     nrj_iPart = 0;
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
@@ -574,14 +643,12 @@ void thermalize_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, 
         double particle_position_old = particle_position - dt*smpi->dynamics_invgf[ithread][ipart]*particles.Momentum[direction][ipart];
         if ( ( wall_position-particle_position_old )*( wall_position-particle_position )<0 ) {
             // checking the particle's velocity compared to the thermal one
-            double p2 = 0.;
-            for( unsigned int i=0; i<3; i++ ) {
-                p2 += particles.momentum( i, ipart )*particles.momentum( i, ipart );
-            }
-            double v = sqrt( p2 )/particles.LorentzFactor( ipart );
+            double p2 = pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 );
+            double LorentzFactor = sqrt( 1.+p2 );
+            double v = sqrt( p2 )/LorentzFactor;
 
             // energy before thermalization
-            nrj_iPart = particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 );
+            nrj_iPart = weight[ ipart ]*( LorentzFactor-1.0 );
 
             // Apply bcs depending on the particle velocity
             // --------------------------------------------
@@ -589,23 +656,25 @@ void thermalize_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, 
 
                 // velocity of the particle after thermalization/reflection
                 //for (int i=0; i<species->nDim_fields; i++) {
-                for( int i=0; i<3; i++ ) {
 
-                    if( i==direction ) {
-                        // change of velocity in the direction normal to the reflection plane
-                        double sign_vel = -particles.momentum( i, ipart )/std::abs( particles.momentum( i, ipart ) );
-                        particles.momentum( i, ipart ) = sign_vel * species->thermal_momentum_[i]
-                            *                             std::sqrt( -std::log( 1.0-Rand::uniform1() ) );
+                // change of velocity in the direction normal to the reflection plane
+                double sign_vel = -momentum[ ipart ]/std::abs( momentum[ ipart ] );
+                momentum[ ipart ] = sign_vel * species->thermal_momentum_[direction]
+                    *                             std::sqrt( -std::log( 1.0-Rand::uniform1() ) );
 
-                    } else {
-                        // change of momentum in the direction(s) along the reflection plane
+                // change of momentum in the direction(s) along the reflection plane
+                if (nDim>1) {
+                    double sign_rnd = Rand::uniform() - 0.5;
+                    sign_rnd = ( sign_rnd )/std::abs( sign_rnd );
+                    momentumRefl_2D[ ipart ] = sign_rnd * species->thermal_momentum_[(direction+1)%nDim]
+                        *                             userFunctions::erfinv( Rand::uniform1() );
+                    if (nDim>2) {
                         double sign_rnd = Rand::uniform() - 0.5;
                         sign_rnd = ( sign_rnd )/std::abs( sign_rnd );
-                        particles.momentum( i, ipart ) = sign_rnd * species->thermal_momentum_[i]
+                        momentumRefl_3D[ ipart ] = sign_rnd * species->thermal_momentum_[(direction+2)%nDim]
                             *                             userFunctions::erfinv( Rand::uniform1() );
-                    }//if
-
-                }//i
+                    }
+                }
 
                 // Adding the mean velocity (using relativistic composition)
                 double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
@@ -628,27 +697,27 @@ void thermalize_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, 
                     Lyz = gm1 * vy*vz/v2;
 
                     // Lorentz transformation of the momentum
-                    gp = sqrt( 1.0 + pow( particles.momentum( 0, ipart ), 2 ) + pow( particles.momentum( 1, ipart ), 2 )
-                               + pow( particles.momentum( 2, ipart ), 2 ) );
-                    px = -gp*g*vx + Lxx * particles.momentum( 0, ipart ) + Lxy * particles.momentum( 1, ipart ) + Lxz * particles.momentum( 2, ipart );
-                    py = -gp*g*vy + Lxy * particles.momentum( 0, ipart ) + Lyy * particles.momentum( 1, ipart ) + Lyz * particles.momentum( 2, ipart );
-                    pz = -gp*g*vz + Lxz * particles.momentum( 0, ipart ) + Lyz * particles.momentum( 1, ipart ) + Lzz * particles.momentum( 2, ipart );
-                    particles.momentum( 0, ipart ) = px;
-                    particles.momentum( 1, ipart ) = py;
-                    particles.momentum( 2, ipart ) = pz;
+                    gp = sqrt( 1.0 + pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+                    px = -gp*g*vx + Lxx * momentum_x[ ipart ] + Lxy * momentum_y[ ipart ] + Lxz * momentum_z[ ipart ];
+                    py = -gp*g*vy + Lxy * momentum_x[ ipart ] + Lyy * momentum_y[ ipart ] + Lyz * momentum_z[ ipart ];
+                    pz = -gp*g*vz + Lxz * momentum_x[ ipart ] + Lyz * momentum_y[ ipart ] + Lzz * momentum_z[ ipart ];
+                    momentum_x[ ipart ] = px;
+                    momentum_y[ ipart ] = py;
+                    momentum_z[ ipart ] = pz;
 
                 }//ENDif vel != 0
 
             } else {                                    // IF VELOCITY < 3*THERMAL SIMPLY REFLECT IT
-                particles.momentum( direction, ipart ) = -particles.momentum( direction, ipart );
+                momentum[ ipart ] = -momentum[ ipart ];
 
             }// endif on v vs. thermal_velocity_
 
             // position of the particle after reflection
-            particles.position( direction, ipart ) = wall_position - particles.position( direction, ipart );
+            position[ ipart ] = wall_position - position[ ipart ];
 
             // energy lost during thermalization
-            nrj_iPart -= particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 );
+            LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
+            nrj_iPart -= weight[ ipart ]*( LorentzFactor-1.0 );
 
 
             /* HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
