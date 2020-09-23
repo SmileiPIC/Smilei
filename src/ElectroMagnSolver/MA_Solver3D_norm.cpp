@@ -17,23 +17,23 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
 {
 
     // Static-cast of the fields
-    Field3D *Ex3D = static_cast<Field3D *>( fields->Ex_ );
-    Field3D *Ey3D = static_cast<Field3D *>( fields->Ey_ );
-    Field3D *Ez3D = static_cast<Field3D *>( fields->Ez_ );
-    Field3D *Bx3D = static_cast<Field3D *>( fields->Bx_ );
-    Field3D *By3D = static_cast<Field3D *>( fields->By_ );
-    Field3D *Bz3D = static_cast<Field3D *>( fields->Bz_ );
-    Field3D *Jx3D = static_cast<Field3D *>( fields->Jx_ );
-    Field3D *Jy3D = static_cast<Field3D *>( fields->Jy_ );
-    Field3D *Jz3D = static_cast<Field3D *>( fields->Jz_ );
+    double *Ex3D = &(fields->Ex_->data_[0]);
+    double *Ey3D = &(fields->Ey_->data_[0]);
+    double *Ez3D = &(fields->Ez_->data_[0]);
+    double *Bx3D = &(fields->Bx_->data_[0]);
+    double *By3D = &(fields->By_->data_[0]);
+    double *Bz3D = &(fields->Bz_->data_[0]);
+    double *Jx3D = &(fields->Jx_->data_[0]);
+    double *Jy3D = &(fields->Jy_->data_[0]);
+    double *Jz3D = &(fields->Jz_->data_[0]);
     
     // Electric field Ex^(d,p,p)
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
             for( unsigned int k=0 ; k<nz_p ; k++ ) {
-                ( *Ex3D )( i, j, k ) += -dt*( *Jx3D )( i, j, k )
-                                        +                 dt_ov_dy * ( ( *Bz3D )( i, j+1, k ) - ( *Bz3D )( i, j, k ) )
-                                        -                 dt_ov_dz * ( ( *By3D )( i, j, k+1 ) - ( *By3D )( i, j, k ) );
+                Ex3D[ i*(ny_p*nz_p) + j*(nz_p) + k ] += -dt*Jx3D[ i*(ny_p*nz_p) + j*(nz_p) + k ]
+                    +                 dt_ov_dy * ( Bz3D[ i*(ny_d*nz_p) + (j+1)*(nz_p) + k   ] - Bz3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] )
+                    -                 dt_ov_dz * ( By3D[ i*(ny_p*nz_d) +  j   *(nz_d) + k+1 ] - By3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] );
             }
         }
     }
@@ -42,9 +42,9 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
             for( unsigned int k=0 ; k<nz_p ; k++ ) {
-                ( *Ey3D )( i, j, k ) += -dt*( *Jy3D )( i, j, k )
-                                        -                  dt_ov_dx * ( ( *Bz3D )( i+1, j, k ) - ( *Bz3D )( i, j, k ) )
-                                        +                  dt_ov_dz * ( ( *Bx3D )( i, j, k+1 ) - ( *Bx3D )( i, j, k ) );
+                Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] += -dt*Jy3D[ i*(ny_d*nz_p) + j*(nz_p) + k ]
+                    -                  dt_ov_dx * ( Bz3D[ (i+1)*(ny_d*nz_p) + j*(nz_p) + k   ] - Bz3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] )
+                    +                  dt_ov_dz * ( Bx3D[  i   *(ny_d*nz_d) + j*(nz_d) + k+1 ] - Bx3D[ i*(ny_d*nz_d) + j*(nz_d) + k ] );
             }
         }
     }
@@ -53,9 +53,9 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     for( unsigned int i=0 ;  i<nx_p ; i++ ) {
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
             for( unsigned int k=0 ; k<nz_d ; k++ ) {
-                ( *Ez3D )( i, j, k ) += -dt*( *Jz3D )( i, j, k )
-                                        +                  dt_ov_dx * ( ( *By3D )( i+1, j, k ) - ( *By3D )( i, j, k ) )
-                                        -                  dt_ov_dy * ( ( *Bx3D )( i, j+1, k ) - ( *Bx3D )( i, j, k ) );
+                Ez3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] += -dt*Jz3D[ i*(ny_p*nz_d) + j*(nz_d) + k ]
+                    +                  dt_ov_dx * ( By3D[ (i+1)*(ny_p*nz_d) +  j   *(nz_d) + k ] - By3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] )
+                    -                  dt_ov_dy * ( Bx3D[  i   *(ny_d*nz_d) + (j+1)*(nz_d) + k ] - Bx3D[ i*(ny_d*nz_d) + j*(nz_d) + k ] );
             }
         }
     }
