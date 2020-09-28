@@ -1666,7 +1666,7 @@ void ElectroMagnAM::applyPrescribedFields( Patch *patch, double time )
     Field *field;
 
     for (int imode=0;imode<Nmodes;imode++){
-        for( vector<ExtTimeField>::iterator extfield=extTimeFields.begin(); extfield!=extTimeFields.end(); extfield++ ) {
+        for( vector<PrescribedField>::iterator extfield=prescribedFields.begin(); extfield!=prescribedFields.end(); extfield++ ) {
 			string name = LowerCase( extfield->savedField->name );
 			if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
 				field = El_[imode];

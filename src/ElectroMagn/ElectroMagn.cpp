@@ -372,14 +372,14 @@ ElectroMagn::~ElectroMagn()
         antenna->field=NULL;
     }
 
-//     for ( unsigned int iExt = 0 ; iExt < extTimeFields.size() ; iExt++ ) {
-//     	delete extTimeFields[iExt].savedField;
+//     for ( unsigned int iExt = 0 ; iExt < prescribedFields.size() ; iExt++ ) {
+//     	delete prescribedFields[iExt].savedField;
 //     	#pragma omp single
-//         if (extTimeFields[iExt].profile!=NULL) {
-// 	    	delete extTimeFields[iExt].profile;
+//         if (prescribedFields[iExt].profile!=NULL) {
+// 	    	delete prescribedFields[iExt].profile;
 // 	    }
 //     }
-//     extTimeFields.clear();
+//     prescribedFields.clear();
     
     /*for ( unsigned int iExt = 0 ; iExt < extFields.size() ; iExt++ ) {
         if (extFields[iExt].profile!=NULL) {
@@ -554,26 +554,6 @@ void ElectroMagn::applyExternalFields( Patch *patch )
     Bz_m->copyFrom( Bz_ );
 }
 
-void ElectroMagn::applyPrescribedFields( Patch *patch, double time )
-{
-    for( vector<ExtTimeField>::iterator extfield=extTimeFields.begin(); extfield!=extTimeFields.end(); extfield++ ) {
-        if( extfield->index < allFields.size() ) {
-            extfield->savedField->copyFrom(allFields[extfield->index]);
-            applyPrescribedField( allFields[extfield->index], extfield->profile, patch, time );
-        }
-    }
-}
-
-void ElectroMagn::resetPrescribedFields()
-{
-    for( vector<ExtTimeField>::iterator extfield=extTimeFields.begin(); extfield!=extTimeFields.end(); extfield++ ) {
-        if( extfield->index < allFields.size() ) {
-            allFields[extfield->index]->copyFrom(extfield->savedField);
-        }
-    }
-}
-
-
 void ElectroMagn::saveExternalFields( Patch *patch )
 {
     for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
@@ -586,6 +566,26 @@ void ElectroMagn::saveExternalFields( Patch *patch )
         }
     }
 }
+
+void ElectroMagn::applyPrescribedFields( Patch *patch, double time )
+{
+    for( vector<PrescribedField>::iterator pf=prescribedFields.begin(); pf!=prescribedFields.end(); pf++ ) {
+        if( pf->index < allFields.size() ) {
+            pf->savedField->copyFrom(allFields[pf->index]);
+            applyPrescribedField( allFields[pf->index], pf->profile, patch, time );
+        }
+    }
+}
+
+void ElectroMagn::resetPrescribedFields()
+{
+    for( vector<PrescribedField>::iterator pf=prescribedFields.begin(); pf!=prescribedFields.end(); pf++ ) {
+        if( pf->index < allFields.size() ) {
+            allFields[pf->index]->copyFrom(pf->savedField);
+        }
+    }
+}
+
 
 
 

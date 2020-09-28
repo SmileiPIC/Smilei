@@ -3,7 +3,7 @@
 Generation of the external tables
 --------------------------------------------------------------------------------
 
-By default, :program:`Smilei` embebded tables directly in the sources.
+By default, :program:`Smilei` embeds tables directly in the sources.
 Nonetheless, a user may want to use different tables.
 For this reason, :program:`Smilei` can read external tables.
 
@@ -48,8 +48,8 @@ Execution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The tool works with command line arguments.
-For each physical mechanism, :program:`smilei_tables` generates all tables for this mechanism.
-The first argument therefore corresonds to the physical mechanism:
+For each physical mechanism, :program:`smilei_tables` generates all the tables for this mechanism.
+The first argument therefore corresponds to the physical mechanism:
 
 * Nonlinear inverse Compton scattering: ``nics``
 * Multiphoton Breit-Wheeler: ``mbw``
@@ -59,7 +59,7 @@ The first argument therefore corresonds to the physical mechanism:
 
   mpirun -np <number of processes> ./smilei_tables -h
 
-Then, once the physical mechanism selected, the following arguments are numerical parameters for the table generation.
+Then, once the physical mechanism is selected, the following arguments are the numerical parameters for the table generation.
 For each physical argument, ``-h`` or ``--help`` gives the full list of arguments.
 
 **For Nonlinear inverse Compton Scattering:**
@@ -120,7 +120,7 @@ The tables are generated where the code is executed using HDF5 with the followin
 Precomputed tables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We have computed some tables with several levels of discretizations that you can download here.
+We have computed some tables with several levels of discretization that you can download here.
 
 256 points
 """""""""""
@@ -266,7 +266,7 @@ This minimum value :math:`\chi_{\gamma,\min}` is computed using the following in
 We generally use :math:`\varepsilon = 10^{-3}`.
 It corresponds to the argument parameter ``xi_threshold``.
 We have to determine a minimum photon quantum parameter because
-we can not have a logarithmic discretization starting from 0.
+we cannot have a logarithmic discretization starting from 0.
 It basically means that we ignore the radiated energy below :math:`\chi_{\gamma,\min}`
 that is less than :math:`10^{-3}` of the total radiated energy.
 The parameter ``xi_power`` is the precision of the :math:`\chi_{\gamma,\min}` value.
@@ -366,7 +366,7 @@ This minimum value :math:`\chi_{\pm,\min}` is computed using the following inequ
 We use here :math:`\varepsilon = 10^{-9}`.
 It corresponds to the argument parameter ``xi_threshold``.
 We have to determine a minimum photon quantum parameter because
-we can not have a logarithmic discretization starting from 0.
+we cannot have a logarithmic discretization starting from 0.
 The parameter ``xi_power`` is the precision of the :math:`\chi_{\pm,\min}` value.
 For instance, a ``xi_power`` of 4 as used for our tables mean that we look for a precision of 4 digits.
  

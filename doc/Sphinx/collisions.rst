@@ -1,17 +1,20 @@
-Binary collisions
------------------
+Binary collisions & reactions
+-----------------------------
 
 
 Relativistic binary collisions between particles have been implemented in
-:program:`Smilei` with the same scheme as the one developed for the
-code :program:`Calder`. The following references describe the physics
-and numerics of this implementation.
+:program:`Smilei` following these references:
 
-| [Perez2012]_ gives an overview of the technique.
-| [Nanbu1997]_ and [Nanbu1998]_ give the original technique from which [Perez2012]_ was developed.
-| [Sentoku2008]_, [Lee1984]_ and [Frankel1979]_ provide additional information.
+* [Perez2012]_: overview of the technique.
+* [Nanbu1997]_ and [Nanbu1998]_: the original approach.
+* [Sentoku2008]_, [Lee1984]_ and [Frankel1979]_: additional information.
+* The correction suggested in [Higginson2020]_ has been applied since v4.5.
 
-The correction suggested in [Higginson2020]_ has been applied since v4.5.
+This collision scheme can host reactions between the colliding
+macro-particles, when requested:
+
+* Ionization of an atom by collision with an electron.
+* Nuclear reaction between two atoms.
 
 Please refer to :ref:`that doc <Collisions>` for an explanation of how to add
 collisions in the namelist file.
@@ -23,40 +26,30 @@ The binary collision scheme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Collisions are calculated at each timestep and for each collision block
-given in the input file.
+given in the input file:
 
-If *intra-collisions*:
+* Macro-particles that should collide are randomly paired.
+* Average parameters are calculated (densities, etc.).
+* For each pair:
   
-  | Create one array of indices pointing to all particles of the species group.
-  | Shuffle the array.
-  | Split the array in two halves.
+  * Calculate the momenta in the center-of-mass (COM) frame.
+  * Calculate the coulomb log if requested (see [Perez2012]_).
+  * If the collision corresponds to a nuclear reaction (optional),
+    the reaction probability is computed and new particles are created
+    if successful.
+  * Calculate the collision rate.
+  * Randomly pick the deflection angle.
+  * Deflect particles in the COM frame and switch back to the laboratory frame.
+  * If the collision corresponds to ionization (optional),
+    its probability is computed and new electrons are created
+    if successful.
 
-If *inter-collisions*:
-  
-  | Create two arrays of indices pointing to all particles of each species group.
-  | Shuffle the largest array. The other array is not shuffled.
-  | => The two resulting arrays represent pairs of particles (see algorithm in [Nanbu1998]_).
+.. rubric:: Modifications in Smilei
 
-Calculate a few intermediate quantities:
-  
-  | Particle density :math:`n_1` of group 1.
-  | Particle density :math:`n_2`  of group 2.
-  | Other constants.
+* A typo from [Perez2012]_ is corrected: in Eq. (22), corresponding to
+  the calculation of the Coulomb Logarithm, the last parenthesis is
+  written as a squared expression, but should not.
 
-For each pair of particles:
-
-  | Calculate the momenta in the center-of-mass (COM) frame.
-  | Calculate the coulomb log if requested (see [Perez2012]_).
-  | Calculate the parameter :math:`s` and its correction at low temperature (see [Perez2012]_).
-  | Pick the deflection angle (see [Nanbu1997]_).
-  | Deflect particles in the COM frame and go back to the laboratory frame.
-
-
-.. rubric:: Modification in Smilei
-
-A typo has been introduced in [Perez2012]_, Eq. (22), corresponding to the calculation of
-the Coulomb Logarithm: the last parenthesis is written as a squared expression,
-but should not. This was corrected in :program:`Smilei`.
 
 
 ----
@@ -415,6 +408,116 @@ of the ionization state. Detailed comparison to atomic codes has not been done y
 
 ----
 
+.. _CollNuclearReactions:
+
+.. rst-class:: experimental
+
+Nuclear reactions
+^^^^^^^^^^^^^^^^^^^^
+
+Nuclear reactions may occur during collisions when requested. The reaction
+scheme is largely inspired from [Higginson2019]_.
+
+.. rubric:: 1. Outline of the nuclear reaction process
+
+We take advantage of the
+relativistic kinematics calculations of the binary collision scheme
+to introduce the nuclear reactions in the COM frame:
+
+* The cross-section :math:`\sigma` (tabulated for some reactions)
+  is interpolated, given the kinetic energies.
+* The probability for the reaction to occur is calculated.
+* This probability is randomly sampled and, if successful:
+
+  * New macro-particles (the reaction products) are created.
+  * Their angle is sampled from a tabulated distribution.
+  * Their mpmenta are calculated from the conservation of total energy and momentum.
+  * Their momenta are boosted back to the simulation frame.
+  
+* Otherwise: the collision process proceeds as usual.
+
+.. rubric:: 2. Nuclear reaction probability
+
+The probability for the reaction to occur is calculated as
+:math:`P=1-\exp(R\, v\, n\, \sigma\, \Delta t)` where *v* is the relative
+velocity, *n* is a corrected density (see [Higginson2020]_), and *R* is
+a *rate multiplier* (see [Higginson2019]_).
+
+This factor *R* is of great importance for most applications, because
+almost no reactions would occur when :math:`R=1`. This factor artificially
+increases the number of reactions to ensure enough statistics. The weights
+of the products are adjusted accordingly, and the reactants are not destroyed
+in the process: we simply decrease their weight by the same amount.
+
+In Smilei, this factor `R` can be forced by the user to some value, but by
+default, it is automatically adjusted so that the final number of created particles
+approches the initial number of pairs.
+
+.. rubric:: 3. Creation of the reaction products
+
+Special care must be taken when creating new charged particles while
+conserving Poisson's equation. Following Ref. [Higginson2019], we choose to
+create two macro-particles of each type. To explain in detail, let us write
+the following reaction:
+
+.. math::
+
+  1 + 2 \rightarrow 3 + 4
+
+Two particles of species 3 are created: one at the position of particle 1,
+the other at the position of particle 2. Two particles of species 4 are also
+created. To conserve the charge at each position, the weights of the new
+particles must be:
+
+.. math::
+
+  W_3^{@1} = w \frac{q_1}{q_1+q_2} q_3\\
+  W_3^{@2} = w \frac{q_2}{q_1+q_2} q_3\\
+  W_4^{@1} = w \frac{q_1}{q_1+q_2} q_4\\
+  W_4^{@2} = w \frac{q_2}{q_1+q_2} q_4
+
+where :math:`w` is the products' weight, and the :math:`q_i` are the charges.
+
+.. rubric:: 4. Calculation of the resulting momenta
+
+The conservation of energy reads:
+
+.. math::
+
+  K_1 + K_2 + Q = K_3 + K_4
+
+where the :math:`K_i` are kinetic energies, and :math:`Q` is the reaction's
+Q-value. In the COM frame, we have, by definition, equal momenta: :math:`p_3 = p_4`.
+Using the relativistic expression :math:`(K_k+m_k)^2=p_k^2+m_k^2`, we can
+calculate that
+
+.. math::
+
+  0=p_4^2-p_3^2=K_4 (K_4 + 2m_4) - K_3(K_3+2m_3)
+
+Substituting for :math:`K_4` using the conservation of energy, this translates into
+
+.. math::
+
+  0=A_{00} A_{02} - (A_{20}+A_{02})K_3
+
+where we have defined :math:`A_{ij}=K_1 + K_2 +Q+i\,m_3+j\,m_4`. We thus obtain
+
+.. math::
+
+  K_3 = \frac{A_{00}A_{02}}{A_{20}+A_{02}}\\
+  K_3+2m_3 = ... = \frac{A_{20}A_{22}}{A_{20}+A_{02}}
+
+Finally,
+
+.. math:: 
+
+  p_3^2 = K_3(K_3+2m_3) = ... = \frac{A_{00}A_{02}A_{20}A_{22}}{(2A_{11})^2}
+  
+which expresses the resulting momentum as a function of the initial energies.
+
+----
+
 Collisions debugging
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -450,6 +553,8 @@ References
 .. [Desjarlais2001] `M. Desjarlais, Contrib. Plasma Phys. 41, 267 (2001) <http://dx.doi.org/10.1002/1521-3986%28200103%2941%3A2%2F3%3C267%3A%3AAID-CTPP267%3E3.0.CO%3B2-P>`_
 
 .. [Frankel1979] `N. E. Frankel, K. C. Hines, and R. L. Dewar, Phys. Rev. A 20, 2120 (1979) <https://doi.org/10.1103/PhysRevA.20.2120>`_
+
+.. [Higginson2019] `D. P. Higginson, A. Link, A. Schmidt, J. Comput. Phys. 388, 439 (2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`_
 
 .. [Higginson2020] `D. P. Higginson, I. Holod and A. Link, J. Comput. Phys. 413, 109450 (2020) <https://doi.org/10.1016/j.jcp.2020.109450>`_
 
