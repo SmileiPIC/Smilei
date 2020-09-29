@@ -534,7 +534,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
     timers.particleInjection.restart();
     
     //#pragma omp for schedule(runtime)
-    #pragma omp master
+    #pragma omp single
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         
         Patch * patch = ( *this )( ipatch );
