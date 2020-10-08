@@ -219,28 +219,29 @@ int main( int argc, char *argv[] )
         TITLE( "Running diags at time t = 0" );
         vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
 
+        // divergence cleaning
+        if ( params.apply_rotational_cleaning ) {
+            Region region_global( params );
+            region_global.build( params, &smpi, vecPatches, openPMD, true );
+            region_global.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+            region_global.identify_missing_patches( &smpi, vecPatches, params );
+            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                DoubleGridsAM::syncFieldsOnRegion( vecPatches, region_global, params, &smpi, imode );
+            if( params.is_pxr && smpi.isMaster()) {
+                region_global.coupling( params, true );
+            }
+            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                DoubleGridsAM::syncFieldsOnPatches( region_global, vecPatches, params, &smpi, timers, 0, imode );
+            vecPatches.setMagneticFieldsForDiagnostic( params );
+            region_global.clean();
+        }
+
     }
 
     TITLE( "Species creation summary" );
     vecPatches.printNumberOfParticles( &smpi );
 
 
-    // divergence cleaning
-    if ( params.apply_rotational_cleaning ) {
-        Region region_global( params );
-        region_global.build( params, &smpi, vecPatches, openPMD, true );
-        region_global.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-        region_global.identify_missing_patches( &smpi, vecPatches, params );
-        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-            DoubleGridsAM::syncFieldsOnRegion( vecPatches, region_global, params, &smpi, imode );
-        if( params.is_pxr && smpi.isMaster()) {
-            region_global.coupling( params, true );
-        }
-        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-            DoubleGridsAM::syncFieldsOnPatches( region_global, vecPatches, params, &smpi, timers, 0, imode );
-        vecPatches.setMagneticFieldsForDiagnostic( params );
-        region_global.clean();
-    }
     
     Region region( params );
     if (params.uncoupled_grids) {
