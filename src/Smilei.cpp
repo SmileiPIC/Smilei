@@ -293,10 +293,10 @@ int main( int argc, char *argv[] )
                     SyncVectorPatch::exchangeB( params, region.vecPatch_, imode, &smpi );
                 }
             }
+        }
 
-            if( params.is_pxr ){
-                region.coupling( params, false );
-            }
+        if( params.is_pxr ){
+            region.coupling( params, false );
         }
     }
     else {
