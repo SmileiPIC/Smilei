@@ -24,8 +24,6 @@ class DiagnosticParticleBinning;
 class DiagnosticScreen;
 class DiagnosticRadiationSpectrum;
 
-#define SMILEI_COMM_DUMP_TIME 16777216
-
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class SmileiMPI
 //  --------------------------------------------------------------------------------------------------------------------
@@ -157,7 +155,15 @@ public:
     {
         return smilei_omp_max_threads;
     }
-
+    
+    //! Return tag upper bound of this MPI implementation
+    inline int getTagUB()
+    {
+        int flag;
+        int* tag_ub_ptr;
+        MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &tag_ub_ptr, &flag);
+        return *tag_ub_ptr;
+    }
 
     // Global buffers for vectorization of Species::dynamics
     // -----------------------------------------------------
