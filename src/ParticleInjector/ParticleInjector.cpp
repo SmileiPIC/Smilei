@@ -10,7 +10,7 @@ ParticleInjector::ParticleInjector( Params &params, Patch *patch ):
     time_profile_( NULL ),
     particles_per_cell_profile_( NULL )
 {
-
+    regular_number_array_.clear();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

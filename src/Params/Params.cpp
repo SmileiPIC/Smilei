@@ -51,7 +51,7 @@ double normal( double stddev )
 #define DO_EXPAND(VAL)  VAL ## 1
 #define EXPAND(VAL)     DO_EXPAND(VAL)
 #ifdef SMILEI_USE_NUMPY
-#if !defined(NUMPY_IMPORT_ARRAY_RETVAL) || (EXPAND(NUMPY_IMPORT_ARRAY_RETVAL) == 1)
+#if PY_MAJOR_VERSION < 3
 void smilei_import_array()   // python 2
 {
     import_array();
@@ -196,17 +196,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     if( ! smpi->test_mode ) {
         PyTools::runPyFunction( "_prepare_checkpoint_dir" );
         smpi->barrier();
-    }
-
-    // Now the string "namelist" contains all the python files concatenated
-    // It is written as a file: smilei.py
-    if( smpi->isMaster() ) {
-        ofstream out_namelist( "smilei.py" );
-        if( out_namelist.is_open() ) {
-            out_namelist << "# coding: utf-8" << endl << endl ;
-            out_namelist << namelist;
-            out_namelist.close();
-        }
     }
 
     // random seed
@@ -792,6 +781,20 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // also defines defaults values for the species lengths
     // -------------------------------------------------------
     compute();
+ 
+    // add the read or computed value of clrw to the content of smilei.py
+    namelist += string( "Main.clrw= " ) + to_string( clrw ) + "\n";
+
+    // Now the string "namelist" contains all the python files concatenated
+    // It is written as a file: smilei.py
+    if( smpi->isMaster() ) {
+        ofstream out_namelist( "smilei.py" );
+        if( out_namelist.is_open() ) {
+            out_namelist << "# coding: utf-8" << endl << endl ;
+            out_namelist << namelist;
+            out_namelist.close();
+        }
+    }
 
     // -------------------------------------------------------
     // Print

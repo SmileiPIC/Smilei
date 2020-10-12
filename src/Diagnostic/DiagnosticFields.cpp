@@ -374,7 +374,8 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
 
 bool DiagnosticFields::needsRhoJs( int itime )
 {
-    return hasRhoJs && timeSelection->theTimeIsNow( itime );
+    
+    return hasRhoJs && (itime - timeSelection->previousTime( itime ) < time_average);
 }
 
 // SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI

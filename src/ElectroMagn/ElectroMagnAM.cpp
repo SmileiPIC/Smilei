@@ -1700,7 +1700,7 @@ void ElectroMagnAM::applyPrescribedFields( Patch *patch, double time )
     Field *field;
 
     for (int imode=0;imode<Nmodes;imode++){
-        for( vector<ExtTimeField>::iterator extfield=extTimeFields.begin(); extfield!=extTimeFields.end(); extfield++ ) {
+        for( vector<PrescribedField>::iterator extfield=prescribedFields.begin(); extfield!=prescribedFields.end(); extfield++ ) {
 			string name = LowerCase( extfield->savedField->name );
 			if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
 				field = El_[imode];
@@ -1759,7 +1759,7 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
          pos[0] += dl;
      }
      
-     profile->complexValuesAt( xr, *field2D );
+     profile->addComplexValuesAt( xr, *field2D );
      
      for( unsigned int idim=0 ; idim<2 ; idim++ ) {
          delete xr[idim];
@@ -1803,7 +1803,7 @@ void ElectroMagnAM::applyPrescribedField( Field *my_field,  Profile *profile, Pa
         pos[0] += dl;
     }
 
-    profile->complexValuesAtTime( xr, time, *field2D );
+    profile->addComplexValuesAtTime( xr, time, *field2D );
 
     for( unsigned int idim=0 ; idim<2 ; idim++ ) {
         delete xr[idim];

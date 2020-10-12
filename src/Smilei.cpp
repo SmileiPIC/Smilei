@@ -183,13 +183,6 @@ int main( int argc, char *argv[] )
         // Initialize the electromagnetic fields
         // -------------------------------------
 
-        TITLE( "Applying external fields at time t = 0" );
-        vecPatches.applyExternalFields();
-        vecPatches.saveExternalFields( params );
-
-        TITLE( "Applying prescribed fields at time t = 0" );
-        vecPatches.applyPrescribedFields(time_prim);        
-
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
         // Note: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
@@ -200,14 +193,22 @@ int main( int argc, char *argv[] )
         vecPatches.computeCharge();
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
 
-        // Apply antennas
-        // --------------
-        vecPatches.applyAntennas( 0.5 * params.timestep );
         // Init electric field (Ex/1D, + Ey/2D)
         if( params.solve_poisson == true && !vecPatches.isRhoNull( &smpi ) ) {
             TITLE( "Solving Poisson at time t = 0" );
             vecPatches.runNonRelativisticPoissonModule( params, &smpi,  timers );
         }
+
+        TITLE( "Applying external fields at time t = 0" );
+        vecPatches.applyExternalFields();
+        vecPatches.saveExternalFields( params );
+
+        TITLE( "Applying prescribed fields at time t = 0" );
+        vecPatches.applyPrescribedFields(time_prim);
+
+        // Apply antennas
+        // --------------
+        vecPatches.applyAntennas( 0.5 * params.timestep );
 
         // Patch reconfiguration
         if( params.has_adaptive_vectorization ) {
@@ -402,21 +403,13 @@ int main( int argc, char *argv[] )
             if( time_dual > params.time_fields_frozen ) {
                 #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
                 {
-                    // de-apply external time fields if requested
-                    if ( vecPatches(0)->EMfields->extTimeFields.size() ) {
+                    // de-apply prescribed fields if requested
+                    if ( vecPatches(0)->EMfields->prescribedFields.size() ) {
                         vecPatches.resetPrescribedFields();
                     }
-
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 }
                 
-                // apply external time fields if requested
-                if( vecPatches(0)->EMfields->extTimeFields.size() ) {
-                    #pragma omp single
-                    vecPatches.applyPrescribedFields(time_prim);
-                    #pragma omp barrier
-                }
-
             }
         }
         else { //if ( params.uncoupled_grids ) {
@@ -448,8 +441,9 @@ int main( int argc, char *argv[] )
 
 
                 // apply external time fields if requested
-                if ( region.vecPatch_(0)->EMfields->extTimeFields.size() )
-                    region.vecPatch_.applyPrescribedFields(time_prim);
+                if( region.vecPatch_(0)->EMfields->prescribedFields.size() ) {
+                    region.vecPatch_.applyPrescribedFields( time_prim );
+                }
 
                 region.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 if ( params.geometry != "AMcylindrical" )
@@ -517,7 +511,19 @@ int main( int argc, char *argv[] )
 
             // Finalize field synchronization and exchanges
             vecPatches.finalizeSyncAndBCFields( params, &smpi, simWindow, time_dual, timers, itime );
-
+            
+            if( !params.uncoupled_grids ) {
+                if( time_dual > params.time_fields_frozen ) {
+                    // Standard fields operations (maxwell + comms + boundary conditions) are completed
+                    // apply prescribed fields can be considered if requested
+                    if( vecPatches(0)->EMfields->prescribedFields.size() ) {
+                        #pragma omp single
+                        vecPatches.applyPrescribedFields( time_prim );
+                        #pragma omp barrier
+                    }
+                }
+            }
+            
             // call the various diagnostics
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
 

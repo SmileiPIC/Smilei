@@ -493,6 +493,11 @@ velocity of the moving window.
 
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
 
+.. warning::
+
+  When the window starts moving, all laser injections via Silver-Muller boundary conditions
+  are immediately stopped for physical correctness.
+
 .. code-block:: python
 
   MovingWindow(
@@ -868,9 +873,9 @@ Each species has to be defined in a ``Species`` block::
 
 
 .. .. py:data:: c_part_max
-.. 
+..
 ..   :red:`to do`
-.. 
+..
 
 .. py:data:: pusher
 
@@ -1012,6 +1017,10 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
     * ``"xmin"``
     * ``"xmax"``
+    * ``"ymin"``
+    * ``"ymax"``
+    * ``"zmax"``
+    * ``"zmin"``
 
 .. py:data:: time_envelope
 
@@ -1027,7 +1036,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     The method for initialization of particle positions. Options are:
 
     * ``"species"`` or empty ``""``: injector uses the option of the specified :py:data:`species`.
-    * ``"regular"`` for regularly spaced
+    * ``"regular"`` for regularly spaced. See :py:data:`regular_number`.
     * ``"random"`` for randomly distributed
     * ``"centered"`` for centered in each cell
     * The :py:data:`name` of another injector from which the positions are copied.
@@ -1075,6 +1084,13 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
     The absolute value of the number density or charge density (choose one only)
     of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`)
+
+.. py:data:: regular_number
+
+    :type: A list of as many integers as the simulation dimension
+
+    Same as for :ref:`species`. When ``position_initialization = "regular"``, this sets the number of evenly-spaced
+    particles per cell in each direction: ``[Nx, Ny, Nz]`` in cartesian geometries.
 
 ----
 
@@ -1720,10 +1736,10 @@ component in that direction is described in :doc:`laser_envelope`.
 Note that only order 2 interpolation and projection are supported in presence of
 the envelope model for the laser.
 
-The parameters ``polarization_phi`` and ``ellipticity`` specify the polarization state of the laser. In envelope model implemented in :program:`Smilei`, 
-they are only used to compute the rate of ionization and the initial momentum of the electrons newly created by ionization, 
-where the polarization of the laser plays an important role (see :doc:`ionization`). 
-For all other purposes (e.g. the particles equations of motions, the computation of the ponderomotive force, 
+The parameters ``polarization_phi`` and ``ellipticity`` specify the polarization state of the laser. In envelope model implemented in :program:`Smilei`,
+they are only used to compute the rate of ionization and the initial momentum of the electrons newly created by ionization,
+where the polarization of the laser plays an important role (see :doc:`ionization`).
+For all other purposes (e.g. the particles equations of motions, the computation of the ponderomotive force,
 the evolution of the laser), the polarization of the laser plays no role in the envelope model.
 
 
@@ -2077,8 +2093,8 @@ reflect, stop, thermalize or kill particles which reach it::
 
 .. _Collisions:
 
-Collisions
-^^^^^^^^^^
+Collisions & reactions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :doc:`collisions` are specified by one or several ``Collisions`` blocks::
 
@@ -2159,7 +2175,7 @@ Collisions
   :type: a list of strings
   :default: ``None`` (no nuclear reaction)
 
-  A list of the species names for the products of nuclear reactions
+  A list of the species names for the products of :ref:`Nuclear reactions <CollNuclearReactions>`
   that may occur during collisions. You may omit product species if they are not necessary
   for the simulation.
 
@@ -3157,7 +3173,7 @@ for instance::
         return (particles.px>-1.)*(particles.px<1.) + (particles.pz>3.)
 
 .. Warning:: The ``px``, ``py`` and ``pz`` quantities are not exactly the momenta.
-  They are actually the velocities multiplied by the lorentz factor, i.e., 
+  They are actually the velocities multiplied by the lorentz factor, i.e.,
   :math:`\gamma v_x`, :math:`\gamma v_y` and :math:`\gamma v_z`. This is true only
   inside the `filter` function (not for the output of the diagnostic).
 

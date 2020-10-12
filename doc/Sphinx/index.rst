@@ -34,9 +34,9 @@ interaction to astrophysics.
 
 .. raw:: html
 
-  <a href="https://riot.im/app/#/room/!LQrdVpOJEohPSWMlmf:matrix.org" class="icon">
+  <a href="https://app.element.io/#/room/!LQrdVpOJEohPSWMlmf:matrix.org" class="icon">
 
-.. image:: _static/riot.im-logo.svg
+.. image:: _static/element-logo.svg
 
 .. raw:: html
 

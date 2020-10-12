@@ -70,10 +70,10 @@ public:
         PyTools::extract( "box_side", box_side, "ParticleInjector", injector_index );
         
         // check box side according to the dimension
-        if ( box_side !="xmin" && box_side !="xmax") {
-            ERROR( "For particle injector "<< injector_name << " (# " << injector_index
-                   << "), box side must be 'xmin' or 'xmax'.");
-        }
+        // if ( box_side !="xmin" && box_side !="xmax") {
+        //     ERROR( "For particle injector "<< injector_name << " (# " << injector_index
+        //            << "), box side must be 'xmin' or 'xmax'.");
+        // }
 
         if( patch->isMaster() ) {
             MESSAGE( 2, "> Injection from from the side: " << box_side);
@@ -249,6 +249,24 @@ public:
             << this_particle_injector->particles_per_cell_profile_->getInfo() << ".");
         }
 
+        if( PyTools::extractV( "regular_number", this_particle_injector->regular_number_array_, "ParticleInjector", injector_index )){
+             if (this_particle_injector->position_initialization_ != "regular") {
+                 ERROR("regular_number may not be provided if species position_initialization is not set to 'regular'.");
+             }
+             if (this_particle_injector->regular_number_array_.size() != species->nDim_particle) {
+                 ERROR("Please provide as many regular numbers of particles as there are particle dimensions in the domain ("<< species->nDim_particle <<").");
+             }
+            std::string  regular_positioning = " ";
+            for (unsigned int idim= 0 ; idim < this_particle_injector->regular_number_array_.size() ; idim ++) {
+                regular_positioning += std::to_string(this_particle_injector->regular_number_array_[idim]);
+                if (idim > 0) {
+                    regular_positioning += ", ";
+                }
+            }
+            MESSAGE( 2, "> Particle regular positioning: ["
+            << regular_positioning << "].");
+        }
+
         return this_particle_injector;
         
     }
@@ -334,12 +352,14 @@ public:
             new_particle_injector->temperature_profile_[2]                = new Profile( particle_injector->temperature_profile_[2] );
         }
         
-        new_particle_injector->density_profile_type_ = particle_injector->density_profile_type_;
-        new_particle_injector->density_profile_     = new Profile( particle_injector->density_profile_ );
+        new_particle_injector->density_profile_type_       = particle_injector->density_profile_type_;
+        new_particle_injector->density_profile_            = new Profile( particle_injector->density_profile_ );
         
-        new_particle_injector->time_profile_     = new Profile( particle_injector->time_profile_ );
+        new_particle_injector->time_profile_               = new Profile( particle_injector->time_profile_ );
         
         new_particle_injector->particles_per_cell_profile_ = new Profile( particle_injector->particles_per_cell_profile_ );
+        
+        new_particle_injector->regular_number_array_       = new_particle_injector->regular_number_array_;
         
         return new_particle_injector;
         

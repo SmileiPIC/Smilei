@@ -397,6 +397,7 @@ class ParticleInjector(SmileiComponent):
     charge_density = None
     number_density = None
     particles_per_cell = None
+    regular_number = []
     time_envelope = 1
     
     
