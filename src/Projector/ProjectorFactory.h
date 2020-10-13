@@ -7,6 +7,7 @@
 #include "Projector2D2Order.h"
 #include "Projector2D4Order.h"
 #include "Projector3D2Order.h"
+#include "Projector3D2OrderGPU.h"
 #include "Projector3D4Order.h"
 #include "ProjectorAM2Order.h"
 #include "ProjectorAM1Order.h"
@@ -56,7 +57,7 @@ public:
         // ---------------
         else if( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
             if( !vectorization ) {
-                Proj = new Projector3D2Order( params, patch );
+                Proj = new Projector3D2OrderGPU( params, patch );
             }
 #ifdef _VECTO
             else {
