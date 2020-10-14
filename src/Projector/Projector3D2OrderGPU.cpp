@@ -63,9 +63,12 @@ void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particl
 
     int nparts = particles.size();
 
-    int npack = 10;
-    int packsize = nparts/npack;
-    if ( npack*packsize!=nparts )
+    if (iend==istart)
+        return;
+
+    int packsize = 8;
+    int npack = (iend-istart)/packsize;
+    if ( npack*packsize!=iend-istart )
         npack++;
 
     double* Sx0 = (double*) malloc( 5*packsize*sizeof(double) ); //acc_malloc
@@ -77,12 +80,12 @@ void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particl
     double* sumX = (double*) malloc( 5*packsize*sizeof(double) ); 
 
     for (int ipack=0 ; ipack<npack ; ipack++) {
-        int istart_pack = ipack*packsize;
+        int istart_pack = istart+ipack*packsize;
         int iend_pack = (ipack+1)*packsize;
-        iend_pack = min( nparts, iend_pack );
+        iend_pack = istart + min( iend-istart, iend_pack );
 
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
-            int ipart_pack = ipart - ipack*packsize;
+            int ipart_pack = ipart - (istart+ipack*packsize);
 
             // -------------------------------------
             // Variable declaration & initialization
