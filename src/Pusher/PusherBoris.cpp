@@ -107,8 +107,12 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         
         // Move the particle
 #ifdef  __DEBUG
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            position_old[i][ipart] = position[i][ipart];
+        position_old[0][ipart] = position_x[ipart];
+        if (nDim_>1) {
+            position_old[1][ipart] = position_y[ipart];
+            if (nDim_>2) {
+                position_old[2][ipart] = position_z[ipart];
+            }
         }
 #endif
         position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart];
