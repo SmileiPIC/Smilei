@@ -429,6 +429,9 @@ public:
         return &(cell_keys[0]);
     };
 
+    virtual void extractParticles( Particles* particles_to_move );
+    virtual int injectParticles( Particles* particles_to_move ) {return 0;};
+
 
 private:
 

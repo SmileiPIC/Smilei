@@ -688,6 +688,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     //MESSAGE("Sorting per cell : " << cell_sorting );
     //if (cell_sorting)
     //    vectorization_mode = "on";
+
+    PyTools::extract( "gpu_computing", gpu_computing, "Main"  );
     
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {

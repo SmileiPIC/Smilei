@@ -361,6 +361,7 @@ public:
     unsigned int timestep_width;
 
     bool cell_sorting;
+    bool gpu_computing;
 };
 
 #endif

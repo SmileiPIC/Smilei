@@ -940,6 +940,16 @@ void Particles::sortById()
 
 }
 
+void Particles::extractParticles( Particles* particles_to_move )
+{
+    particles_to_move->clear();
+    for ( int ipart=0 ; ipart<size() ; ipart++ ) {
+        if ( cell_keys[ipart] == -1 ) {
+            copyParticle( ipart, *particles_to_move );
+        }
+    }
+}
+
 #ifdef __DEBUG
 bool Particles::testMove( int iPartStart, int iPartEnd, Params &params )
 {

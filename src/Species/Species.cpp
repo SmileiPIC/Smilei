@@ -17,6 +17,7 @@
 #include "RadiationFactory.h"
 #include "MultiphotonBreitWheelerFactory.h"
 #include "MergingFactory.h"
+#include "ParticlesFactory.h"
 #include "PartBoundCond.h"
 #include "PartWall.h"
 #include "BoundaryConditionType.h"
@@ -67,7 +68,6 @@ Species::Species( Params &params, Patch *patch ) :
     temperature_profile_( 3, NULL ),
     particles_per_cell_profile_( NULL ),
     max_charge_( 0. ),
-    particles( &particles_sorted[0] ),
     file_position_npart_( 0 ),
     file_momentum_npart_( 0 ),
     position_initialization_array_( NULL ),
@@ -90,6 +90,10 @@ Species::Species( Params &params, Patch *patch ) :
     nDim_field(    params.nDim_field  ),
     merging_time_selection_( 0 )
 {
+    // &particles_sorted[0]
+    particles         = ParticlesFactory::create( params );
+    particles_to_move = ParticlesFactory::create( params );
+
     regular_number_array_.clear();
     partBoundCond = NULL;
     min_loc = patch->getDomainLocalMin( 0 );
@@ -112,8 +116,6 @@ Species::Species( Params &params, Patch *patch ) :
     merge_momentum_cell_size_.resize(3);
 
     merge_min_momentum_cell_length_.resize(3);
-
-    particles_to_move = new Particles();
 
 }//END Species creator
 
@@ -721,33 +723,11 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
 
 void Species::extractParticles()
 {
-    //particles->last_index[0] -= dev_particles->extractParticles( particles_to_move );
-
-    // Count cell_keys = -1
-    //count( particles->cell_keys.begin(), particles->cell_keys.end(), -1 );
-    //nparts_to_move_ = thrust::count(thrust::device, nvidia_cell_keys.begin(), nvidia_cell_keys.begin()+nparts, -1);
-    // resize particles_to_move
-    // ....resize( nparts_to_move )
-    // copy in particles_to_move if cell_keys = -1
-    //thrust::copy_if(thrust::device, iter, iter+nparts, nvidia_cell_keys.begin(), iter_copy, count_if_out());
-
-    particles_to_move->clear();
-    for ( int ipart=0 ; ipart<getNbrOfParticles() ; ipart++ ) {
-        if ( particles->cell_keys[ipart] == -1 ) {
-            particles->copyParticle( ipart, *particles_to_move );
-        }
-    }
-
+    particles->extractParticles( particles_to_move );
 }
 
 void Species::injectParticles( Params &params )
 {
-    // through particles_to_move ... not in scalar but :
-
-    //thrust::remove_if( ... remove_if_out() ); cell_keys < 0
-    // resize particles (include in sortParticles)
-    //thrust::copy_n(thrust::device, iter_copy, nparts_add, iter+nparts); (include in sortParticles)
-
 }
 
 
@@ -756,26 +736,25 @@ void Species::injectParticles( Params &params )
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sortParticles( Params &params, Patch * patch )
 {
-    injectParticles( params );
-
-    int ndim = params.nDim_field;
-    int idim;
-
-    int blabla = 0;
-    //Merge all MPI_buffer_.partRecv in particles_to_move
-    for( int idim = 0; idim < params.nDim_field; idim++ ) {
-        for( int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
-            int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
-            if( ( n_part_recv!=0 ) ) {
-                 // insert n_part_recv in particles_to_move from 0
-                //MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
-                blabla += n_part_recv;;
-                //particles->last_index[particles->last_index.size()-1] += n_part_recv;
-                //particles->cell_keys.resize(particles->cell_keys.size()+n_part_recv);
+    if (params.gpu_computing) {
+        // particles_to_move contains, up to here, send particles
+        //   clean it to manage recv particles
+        particles_to_move->clear();
+        //Merge all MPI_buffer_.partRecv in particles_to_move
+        for( int idim = 0; idim < params.nDim_field; idim++ ) {
+            for( int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
+                int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
+                if( ( n_part_recv!=0 ) ) {
+                    // insert n_part_recv in particles_to_move from 0
+                    MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
+                }
             }
         }
+        particles_to_move->syncGPU();
+        particles->last_index[0] += particles->injectParticles( particles_to_move );
+
+        return;
     }
-    //cout << "\t Species id : " << species_number_ << " - nparticles recv : " << blabla << endl;
 
 
     // Sort to adapt do cell_keys usage
@@ -785,6 +764,10 @@ void Species::sortParticles( Params &params, Patch * patch )
             indexes_of_particles_to_exchange.push_back( ipart );
         }
     }
+
+    int ndim = params.nDim_field;
+    int idim;
+
     //cout << "\t Species id : " << species_number_ << " - nparticles send : " << indexes_of_particles_to_exchange.size() << endl;
 
     //We have stored in indexes_of_particles_to_exchange the list of all particles that needs to be removed.
