@@ -69,6 +69,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     double delta, delta2;
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
+#ifndef _GPU
     complex<double>  Jl_p[5][5], Jr_p[5][5];
     complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m = 1.; //, C_m_old;
     complex<double> *Jl, *Jr, *Jt, *rho;
@@ -250,7 +251,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
         if (imode == 0) e_delta = 1. ; //Restore e_delta correct initial value.
     }// end loop on modes
-    
+#endif
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
 // ---------------------------------------------------------------------------------------------------------------------
