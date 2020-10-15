@@ -24,7 +24,7 @@
 MultiphotonBreitWheelerTables::MultiphotonBreitWheelerTables()
 {
 #ifndef _GPU
-    setDefault();
+    //setDefault();
 #endif
 }
 

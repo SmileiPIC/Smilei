@@ -69,8 +69,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     double delta, delta2;
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
-#ifndef _GPU
-    complex<double>  Jl_p[5][5], Jr_p[5][5];
+    complex<double>  Jl_p[5], Jr_p[5];
     complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m = 1.; //, C_m_old;
     complex<double> *Jl, *Jr, *Jt, *rho;
     
@@ -149,12 +148,6 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
-    for( unsigned int j=0 ; j<5 ; j++ ) {
-        Jl_p[0][j]= 0.;
-    }
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        Jr_p[i][4]= 0.;
-    }
     
     // ---------------------------
     // Calculate the total current
@@ -164,20 +157,26 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     complex<double> crt_p= charge_weight*( particles.momentum( 2, ipart )* real(e_bar_m1) - particles.momentum( 1, ipart )*imag(e_bar_m1) ) * invgf;
 
     // Compute everything independent of theta
+    double tmpJl[5];
     for( unsigned int j=0 ; j<5 ; j++ ) {
-        double tmp = crl_p * ( Sr0[j] + 0.5*DSr[j] )* invR_local[j];
-        for( unsigned int i=1 ; i<5 ; i++ ) {
-            Jl_p[i][j]= Jl_p[i-1][j] - DSl[i-1] * tmp;
-        }
+        tmpJl[j] = crl_p * ( Sr0[j] + 0.5*DSr[j] )* invR_local[j];
+    }
+    Jl_p[0]= 0.;
+    for( unsigned int i=1 ; i<5 ; i++ ) {
+        Jl_p[i]= Jl_p[i-1] - DSl[i-1];
     }
 
+
+    double Vd[5];
+    double tmpJr[5];
     for( int j=3 ; j>=0 ; j-- ) {
         jloc = j+jpo+1;
-        double Vd = abs( jloc + j_domain_begin + 0.5 )* invRd[jloc]*dr ;
-        double tmp = crr_p * DSr[j+1] * invRd[jpo+j+1]*dr;
-        for( unsigned int i=0 ; i<5 ; i++ ) {
-            Jr_p[i][j] =  Jr_p[i][j+1] * Vd + ( Sl0[i] + 0.5*DSl[i] ) * tmp;
-        }
+        Vd[j] = abs( jloc + j_domain_begin + 0.5 )* invRd[jloc]*dr ;
+        tmpJr[j] = crr_p * DSr[j+1] * invRd[jpo+j+1]*dr;
+    }
+    Jr_p[4]= 0.;
+    for( int j=3 ; j>=0 ; j-- ) {
+        Jr_p[j] =  Jr_p[j+1] * Vd[j] + tmpJr[j];
     }
  
     e_delta = 1.5;
@@ -227,7 +226,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             iloc = ( i+ipo )*nprimr+jpo;
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 linindex = iloc+j;
-                Jl [linindex] += C_m * Jl_p[i][j] ;
+                Jl [linindex] += C_m * Jl_p[i]*tmpJl[j] ;
             }
         }//i
 
@@ -236,7 +235,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             iloc = ( i+ipo )*( nprimr+1 )+jpo+1;
             for( unsigned int j=0 ; j<4 ; j++ ) {
                 linindex = iloc+j;
-                Jr [linindex] += C_m * Jr_p[i][j] ;
+                Jr [linindex] += C_m * ( Sl0[i] + 0.5*DSl[i] ) * Jr_p[j] ;
             }
         }//i
 
@@ -251,7 +250,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
         if (imode == 0) e_delta = 1. ; //Restore e_delta correct initial value.
     }// end loop on modes
-#endif
+
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
 // ---------------------------------------------------------------------------------------------------------------------

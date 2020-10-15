@@ -384,7 +384,9 @@ public :
     {
         return ( *this )( ipatch )->partWalls;
     }
-    
+
+    void initGPU( SmileiMPI *smpi );
+    void getDataBackFromGPU();
 private :
 
     //  Internal balancing members

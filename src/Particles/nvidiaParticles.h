@@ -23,7 +23,7 @@ public:
     nvidiaParticles();
 
     //! Destructor for Particle
-    ~nvidiaParticles() {};
+    virtual ~nvidiaParticles() {};
 
     void initGPU() override;
     void syncGPU() override;

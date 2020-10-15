@@ -162,6 +162,10 @@ int main( int argc, char *argv[] )
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
         vecPatches.sortAllParticles( params );
 
+        if (params.gpu_computing) {
+            vecPatches.initGPU( &smpi );
+        }
+
         // Initialize the electromagnetic fields
         // -------------------------------------
 

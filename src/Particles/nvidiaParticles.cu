@@ -24,7 +24,7 @@ struct remove_if_out
     }
 };
 
-nvidiaParticles::nvidiaParticles()
+nvidiaParticles::nvidiaParticles() : Particles()
 {
     gpu_nparts_ = 0;
 }

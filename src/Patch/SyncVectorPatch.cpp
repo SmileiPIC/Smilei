@@ -25,10 +25,8 @@ void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Par
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        for( unsigned int species=0 ; species<vecPatches( ipatch )->vecSpecies.size() ; species++ ) {
-            Species *spec = vecPatches.species( ipatch, species );
-            spec->extractParticles();
-        }
+        Species *spec = vecPatches.species( ipatch, spec );
+        spec->extractParticles();
         vecPatches( ipatch )->initExchParticles( smpi, ispec, params );
     }
 

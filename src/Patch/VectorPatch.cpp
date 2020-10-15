@@ -1318,10 +1318,17 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
+    bool data_on_cpu_updated( false );
+
     // Global diags: scalars + particles
     timers.diags.restart();
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers[idiag]->restart();
+
+        if ( (params.gpu_computing) && ( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) && (!data_on_cpu_updated) && (itime>0) ) {
+            getDataBackFromGPU();
+            data_on_cpu_updated = true;
+        }
 
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
@@ -1346,6 +1353,11 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     // Local diags : fields, probes, tracks
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
         diag_timers[globalDiags.size()+idiag]->restart();
+
+        if ( (params.gpu_computing) && ( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) && (!data_on_cpu_updated) && (itime>0) ) {
+            getDataBackFromGPU();
+            data_on_cpu_updated = true;
+        }
 
         #pragma omp single
         localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
@@ -4041,3 +4053,31 @@ void VectorPatch::initNewEnvelope( Params &params )
         } // end loop on patches
     }
 } // END initNewEnvelope
+
+void VectorPatch::initGPU( SmileiMPI *smpi )
+{
+    int npatches = this->size();
+    int nspecies =  patches_[0]->vecSpecies.size();
+    for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+
+        // Initialize  particles data structures on GPU, and synchronize it
+        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+            Species *spec = species( ipatch, ispec );
+            spec->particles->initGPU();
+            spec->particles_to_move->initGPU();
+        }
+    }
+
+}
+
+void VectorPatch::getDataBackFromGPU()
+{
+    int npatches = this->size();
+    int nspecies =  patches_[0]->vecSpecies.size();
+    for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+            Species *spec = species( ipatch, ispec );
+            spec->particles->syncCPU();
+        }
+    }
+}
