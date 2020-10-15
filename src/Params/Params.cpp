@@ -690,6 +690,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     //    vectorization_mode = "on";
 
     PyTools::extract( "gpu_computing", gpu_computing, "Main"  );
+#ifndef _GPU
+    if (gpu_computing) {
+        ERROR( "Smilei is not compiled for GPU" );
+    }
+#endif
     
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
