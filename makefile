@@ -246,7 +246,7 @@ $(EXEC): $(OBJS)
 # Compile the the main program again for test mode
 $(BUILD_DIR)/src/Smilei_test.o: src/Smilei.cpp $(EXEC)
 	@echo "Compiling src/Smilei.cpp for test mode"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -DSMILEI_TESTMODE -c src/Smilei.cpp -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCFLAGS) -DSMILEI_TESTMODE -c src/Smilei.cpp -o $@
 
 # Link the main program for test mode
 $(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
