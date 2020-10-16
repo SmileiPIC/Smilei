@@ -7,6 +7,7 @@
 # PYTHON_CONFIG : the executable `python-config` usually shipped with python installation
 
 SMILEICXX ?= mpicxx
+SMILEICXX.DEPS ?= mpicxx
 HDF5_ROOT_DIR ?= $(HDF5_ROOT)
 BOOST_ROOT_DIR ?= $(BOOST_ROOT)
 BUILD_DIR ?= build
@@ -160,6 +161,7 @@ endif
 CUOBJS = ""
 ACCFLAGS = ""
 ifneq (,$(call parse_config,gpu))
+    SMILEICXX.DEPS = g++
     ACCFLAGS += -D_GPU -w #-ta=tesla:cc70 -Minfo=accel
     LDFLAGS += -L/usr/local/cuda-10.1/lib64 -lcudart #-ta=tesla:cc70
     #LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/pgi/19.10/linux86-64-llvm/2019/cuda/10.1/lib64 -lcudart
@@ -221,7 +223,7 @@ $(BUILD_DIR)/%.pyh: %.py
 $(BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) g++ $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+	$(Q) $(SMILEICXX.DEPS) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
