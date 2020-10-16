@@ -57,7 +57,12 @@ public:
         // ---------------
         else if( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
             if( !vectorization ) {
-                Proj = new Projector3D2OrderGPU( params, patch );
+                if (!params.gpu_computing) {
+                    Proj = new Projector3D2Order( params, patch );
+                }
+                else {
+                    Proj = new Projector3D2OrderGPU( params, patch );
+                }
             }
 #ifdef _VECTO
             else {
