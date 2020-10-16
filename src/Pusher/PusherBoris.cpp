@@ -53,9 +53,9 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         position_old[i] =  &( particles.position_old( i, 0 ) );
     }
 #endif
-    short *charge = &( particles.charge( 0 ) );
+    short *charge = particles.getPtrCharge();
     
-    int nparts = particles.size();
+    int nparts = particles.last_index.back();
     double *Ex = &( ( *Epart )[0*nparts] );
     double *Ey = &( ( *Epart )[1*nparts] );
     double *Ez = &( ( *Epart )[2*nparts] );

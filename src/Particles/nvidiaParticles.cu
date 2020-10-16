@@ -196,6 +196,10 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
     // Copy recv particles in main data structure
     thrust::copy_n(thrust::host, iter_copy, nparts_add, iter+nparts);
     gpu_nparts_ += nparts_add;
+
+    // Resize below useless : nvidia_cell_keys resized if necessary above, cell_keys not used on cpu
+    //nvidia_cell_keys.resize( gpu_nparts_ );
+    //cell_keys.resize       ( gpu_nparts_ );
  
     cp_parts->gpu_nparts_ = 0;
     nparts_add -= nparts_to_move_; // update return value to update last_index

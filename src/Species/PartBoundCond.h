@@ -41,8 +41,9 @@ public:
     //! Be careful, once an a BC along a given dimension set keep_part to 0, it will remain to 0.
     inline void apply( Particles &particles, SmileiMPI* smpi, int imin, int imax, Species *species, int ithread, double &nrj_tot )
     {
+        int* cell_keys = particles.getPtrCellKeys();
         for (int ipart=imin ; ipart<imax ; ipart++ ) {
-            particles.cell_keys[ipart] = 0;
+            cell_keys[ipart] = 0;
         }
 
         double nrj_iPart = 0.;

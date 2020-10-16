@@ -54,7 +54,7 @@ public:
     };
 
     //! Get number of particules
-    inline unsigned int gpu_size() const
+    unsigned int gpu_size() const override
     {
         return gpu_nparts_;
     }

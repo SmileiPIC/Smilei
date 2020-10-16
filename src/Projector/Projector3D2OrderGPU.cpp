@@ -61,7 +61,7 @@ void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particl
     short  *charge = particles.getPtrCharge();
     double *weight = particles.getPtrWeight();
 
-    int nparts = particles.size();
+    int nparts = particles.last_index.back();
 
     if (iend==istart)
         return;
@@ -673,9 +673,10 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
         double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
         double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
         double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-            currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
-        }
+        currents( b_Jx, b_Jy, b_Jz, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
+        //for( int ipart=istart ; ipart<iend; ipart++ ) {
+        //    currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
+        //}
     }
     
 }

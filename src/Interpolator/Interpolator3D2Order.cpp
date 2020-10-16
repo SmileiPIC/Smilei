@@ -158,7 +158,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     int nz_d = nz_p+1;
     
     //Loop on bin particles
-    int nparts( particles.size() );
+    int nparts = particles.last_index.back();
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         //Interpolation on current particle
