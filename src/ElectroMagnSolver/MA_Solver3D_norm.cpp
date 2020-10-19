@@ -27,7 +27,18 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     double *Jy3D = &(fields->Jy_->data_[0]);
     double *Jz3D = &(fields->Jz_->data_[0]);
     
+    int sizeofEx = fields->Ex_->globalDims_;
+    int sizeofEy = fields->Ey_->globalDims_;
+    int sizeofEz = fields->Ez_->globalDims_;
+    int sizeofBx = fields->Bx_->globalDims_;
+    int sizeofBy = fields->By_->globalDims_;
+    int sizeofBz = fields->Bz_->globalDims_;
+
     // Electric field Ex^(d,p,p)
+#ifdef __PGI
+    #pragma acc parallel present( Ex3D[0:sizeofEx], Jx3D[0:sizeofEx], By3D[0:sizeofBy], Bz3D[0:sizeofBz] )
+    #pragma acc loop gang worker vector
+#endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
             for( unsigned int k=0 ; k<nz_p ; k++ ) {
@@ -39,6 +50,10 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     }
     
     // Electric field Ey^(p,d,p)
+#ifdef __PGI
+    #pragma acc parallel present( Ey3D[0:sizeofEy], Jy3D[0:sizeofEy], Bx3D[0:sizeofBx], Bz3D[0:sizeofBz] )
+    #pragma acc loop gang worker vector
+#endif
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
             for( unsigned int k=0 ; k<nz_p ; k++ ) {
@@ -50,6 +65,10 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     }
     
     // Electric field Ez^(p,p,d)
+#ifdef __PGI
+    #pragma acc parallel present( Ez3D[0:sizeofEz], Jz3D[0:sizeofEz], Bx3D[0:sizeofBx], By3D[0:sizeofBy] )
+    #pragma acc loop gang worker vector
+#endif
     for( unsigned int i=0 ;  i<nx_p ; i++ ) {
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
             for( unsigned int k=0 ; k<nz_d ; k++ ) {

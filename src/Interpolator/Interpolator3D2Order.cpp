@@ -150,6 +150,13 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     double* By3D = EMfields->By_m->data_;
     double* Bz3D = EMfields->Bz_m->data_;
 
+    int sizeofEx = EMfields->Ex_->globalDims_;
+    int sizeofEy = EMfields->Ey_->globalDims_;
+    int sizeofEz = EMfields->Ez_->globalDims_;
+    int sizeofBx = EMfields->Bx_m->globalDims_;
+    int sizeofBy = EMfields->By_m->globalDims_;
+    int sizeofBz = EMfields->Bz_m->globalDims_;
+
     int nx_p = EMfields->Bx_m->dims_[0];
     int ny_p = EMfields->By_m->dims_[1];
     int nz_p = EMfields->Bz_m->dims_[2];
@@ -159,6 +166,10 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     
     //Loop on bin particles
     int nparts = particles.last_index.back();
+#ifdef __PGI
+    #pragma acc parallel present(ELoc[0:3*nparts],BLoc[0:3*nparts],iold[0:3*nparts],delta[0:3*nparts],Ex3D[0:sizeofEx],Ey3D[0:sizeofEy],Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],Bz3D[0:sizeofBz]) deviceptr(position_x,position_y,position_z)
+    #pragma acc loop gang worker vector
+#endif
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         //Interpolation on current particle

@@ -334,12 +334,25 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
     if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
         sendFields_[iDim*2+iNeighbor] = new Field3D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field3D(n_space);
+#ifdef __PGI
+        double* dsend = sendFields_[iDim*2+iNeighbor]->data_;
+        double* drecv = recvFields_[iDim*2+iNeighbor]->data_;
+        int dSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
+        bool fieldName( (name.substr(0,1) == "B") || (name.substr(0,1) == "J") );
+        #pragma acc enter data copyin( dsend[0:dSize], drecv[0:dSize] ) if (fieldName)
+#endif
     }
     else if ( ghost_size != sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
         delete sendFields_[iDim*2+iNeighbor];
-        sendFields_[iDim*2+iNeighbor] = new Field3D(n_space);
         delete recvFields_[iDim*2+iNeighbor];
+#ifdef __PGI
+        ERROR( "To Do GPU : envelope" );
+#endif
+        sendFields_[iDim*2+iNeighbor] = new Field3D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field3D(n_space);
+#ifdef __PGI
+        ERROR( "To Do GPU : envelope" );
+#endif
     }
 }
 
@@ -364,6 +377,13 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 
     double* sub = sendFields_[iDim*2+iNeighbor]->data_;
     double* field = data_;
+#ifdef __PGI
+    int subSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
+    int fSize = globalDims_;
+    bool fieldName( (name.substr(0,1) == "B") );
+    #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
+    #pragma acc loop gang worker vector
+#endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
             for( unsigned int k=0; k<NZ; k++ ) {
@@ -394,6 +414,13 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 
     double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
     double* field = data_;
+#ifdef __PGI
+    int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_;
+    int fSize = globalDims_;
+    bool fieldName( name.substr(0,1) == "B" );
+    #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
+    #pragma acc loop gang worker vector
+#endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
             for( unsigned int k=0; k<NZ; k++ ) {
@@ -424,6 +451,13 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 
     double* sub = sendFields_[iDim*2+iNeighbor]->data_;
     double* field = data_;
+#ifdef __PGI
+    int subSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
+    int fSize = globalDims_;
+    bool fieldName( (name.substr(0,1) == "J") );
+    #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
+    #pragma acc loop gang worker vector
+#endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
             for( unsigned int k=0; k<NZ; k++ ) {
@@ -454,6 +488,13 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
 
     double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
     double* field = data_;
+#ifdef __PGI
+    int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_;
+    int fSize = globalDims_;
+    bool fieldName( name.substr(0,1) == "J" );
+    #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
+    #pragma acc loop gang worker vector
+#endif
     for( unsigned int i=0; i<NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
             for( unsigned int k=0; k<NZ; k++ ) {

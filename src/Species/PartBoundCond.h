@@ -42,6 +42,10 @@ public:
     inline void apply( Particles &particles, SmileiMPI* smpi, int imin, int imax, Species *species, int ithread, double &nrj_tot )
     {
         int* cell_keys = particles.getPtrCellKeys();
+#ifdef __PGI
+        #pragma acc parallel deviceptr(cell_keys)
+        #pragma acc loop gang worker vector
+#endif
         for (int ipart=imin ; ipart<imax ; ipart++ ) {
             cell_keys[ipart] = 0;
         }

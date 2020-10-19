@@ -9,8 +9,8 @@
 
 #include "Particles.h"
 
-typedef thrust::host_vector<double>::iterator Diter;
-typedef thrust::host_vector<short>::iterator  Siter;
+typedef thrust::device_vector<double>::iterator Diter;
+typedef thrust::device_vector<short>::iterator  Siter;
 // typedef a tuple of these iterators
 typedef thrust::tuple<Diter, Diter, Diter, Diter, Diter, Diter, Diter, Siter> IteratorParticles;
 // typedef the zip_iterator of this tuple
@@ -29,13 +29,13 @@ public:
     void syncGPU() override;
     void syncCPU() override;
 
-    std::vector< thrust::host_vector<double> > nvidiaPosition;
-    std::vector< thrust::host_vector<double> > nvidiaMomentum;
-    thrust::host_vector<double> nvidiaWeight;
-    thrust::host_vector<short>  nvidiaCharge;
+    std::vector< thrust::device_vector<double> > nvidiaPosition;
+    std::vector< thrust::device_vector<double> > nvidiaMomentum;
+    thrust::device_vector<double> nvidiaWeight;
+    thrust::device_vector<short>  nvidiaCharge;
 
     //! cell_keys of the particle
-    thrust::host_vector<int> nvidia_cell_keys;
+    thrust::device_vector<int> nvidia_cell_keys;
 
     double* getPtrPosition( int idim ) override {
         return thrust::raw_pointer_cast( nvidiaPosition[idim].data() );

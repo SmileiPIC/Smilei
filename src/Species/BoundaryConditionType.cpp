@@ -26,6 +26,10 @@ void internal_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax,
     nrj_iPart = 0.;     // no energy loss during exchange
     double* position = particles.getPtrPosition(direction);
     int* cell_keys = particles.getPtrCellKeys();
+#ifdef __PGI
+    #pragma acc parallel deviceptr(position,cell_keys)
+    #pragma acc loop gang worker vector
+#endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf) {
             cell_keys[ ipart ] = -1;
@@ -40,6 +44,10 @@ void internal_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax,
     nrj_iPart = 0.;     // no energy loss during exchange
     double* position = particles.getPtrPosition(direction);
     int* cell_keys = particles.getPtrCellKeys();
+#ifdef __PGI
+    #pragma acc parallel deviceptr(position,cell_keys)
+    #pragma acc loop gang worker vector
+#endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
             cell_keys[ ipart ] = -1;

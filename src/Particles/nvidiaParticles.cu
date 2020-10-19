@@ -5,7 +5,7 @@
 
 struct count_if_out
 {
-    __host__ //__device__
+    __host__ __device__
   bool operator()(const int x)
   {
     return (x  == -1);
@@ -15,7 +15,7 @@ struct count_if_out
 struct remove_if_out
 {
     typedef thrust::tuple<double,double,double,double,double,double,double,short,int> Tuple;
-    __host__ //__device__
+    __host__ __device__
     bool operator()(const Tuple&  t)
     {
         // thrust::get<8>(t) = cell_keys
@@ -113,7 +113,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                                          nvidiaWeight.begin(), nvidiaCharge.begin() ) );
 
     // Count particles to send
-    nparts_to_move_ = thrust::count(thrust::host, nvidia_cell_keys.begin(), nvidia_cell_keys.begin()+nparts, -1);
+    nparts_to_move_ = thrust::count(thrust::device, nvidia_cell_keys.begin(), nvidia_cell_keys.begin()+nparts, -1);
 
     // Manage the send data structure
     nvidiaParticles* cp_parts = static_cast<nvidiaParticles*>( particles_to_move );
@@ -135,7 +135,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
                                               cp_parts->nvidiaWeight.begin(), cp_parts->nvidiaCharge.begin() ) );
 
     // Copy send particles in dedicated data structure if nvidia_cell_keys=0 (currently = 1 if keeped, new PartBoundCond::apply(...))
-    thrust::copy_if(thrust::host, iter, iter+nparts, nvidia_cell_keys.begin(), iter_copy, count_if_out());
+    thrust::copy_if(thrust::device, iter, iter+nparts, nvidia_cell_keys.begin(), iter_copy, count_if_out());
     cp_parts->gpu_nparts_ = nparts_to_move_;
 
     particles_to_move->syncCPU();
@@ -146,7 +146,7 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
 {
     int nparts = gpu_nparts_;
     // Remove particles which leaves current patch
-    thrust::remove_if(thrust::host,
+    thrust::remove_if(thrust::device,
                       thrust::make_zip_iterator(thrust::make_tuple(
                                                                    nvidiaPosition[0].begin(), nvidiaPosition[1].begin(), nvidiaPosition[2].begin(),
                                                                    nvidiaMomentum[0].begin(), nvidiaMomentum[1].begin(), nvidiaMomentum[2].begin(),
@@ -194,7 +194,7 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
  
  
     // Copy recv particles in main data structure
-    thrust::copy_n(thrust::host, iter_copy, nparts_add, iter+nparts);
+    thrust::copy_n(thrust::device, iter_copy, nparts_add, iter+nparts);
     gpu_nparts_ += nparts_add;
 
     // Resize below useless : nvidia_cell_keys resized if necessary above, cell_keys not used on cpu

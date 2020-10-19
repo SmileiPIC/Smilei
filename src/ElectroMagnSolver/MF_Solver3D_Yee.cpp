@@ -22,8 +22,20 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     double *Bx3D = &(fields->Bx_->data_[0]);
     double *By3D = &(fields->By_->data_[0]);
     double *Bz3D = &(fields->Bz_->data_[0]);
+
+    int sizeofEx = fields->Ex_->globalDims_;
+    int sizeofEy = fields->Ey_->globalDims_;
+    int sizeofEz = fields->Ez_->globalDims_;
+    int sizeofBx = fields->Bx_->globalDims_;
+    int sizeofBy = fields->By_->globalDims_;
+    int sizeofBz = fields->Bz_->globalDims_;
+
     
     // Magnetic field Bx^(p,d,d)
+#ifdef __PGI
+    #pragma acc parallel present( Bx3D[0:sizeofBx], Ey3D[0:sizeofEy], Ez3D[0:sizeofEz] )
+    #pragma acc loop gang worker vector
+#endif
     for( unsigned int i=0 ; i<nx_p;  i++ ) {
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
             for( unsigned int k=1 ; k<nz_d-1 ; k++ ) {
@@ -35,6 +47,10 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     
     // Magnetic field By^(d,p,d)
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
+#ifdef __PGI
+    #pragma acc parallel present( By3D[0:sizeofBy], Ex3D[0:sizeofEx], Ez3D[0:sizeofEz] )
+    #pragma acc loop gang worker vector
+#endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
             for( unsigned int k=1 ; k<nz_d-1 ; k++ ) {
                 By3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] += -dt_ov_dz * ( Ex3D[ i*(ny_p*nz_p) + j*(nz_p) + k ] - Ex3D[  i   *(ny_p*nz_p) + j*(nz_p) + k-1 ] )
@@ -44,6 +60,10 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     }
     
     // Magnetic field Bz^(d,d,p)
+#ifdef __PGI
+    #pragma acc parallel present( Bz3D[0:sizeofBz], Ex3D[0:sizeofEx], Ey3D[0:sizeofEy] )
+    #pragma acc loop gang worker vector
+#endif
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
             for( unsigned int k=0 ; k<nz_p ; k++ ) {
