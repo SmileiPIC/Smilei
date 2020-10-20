@@ -4,6 +4,9 @@
 
 #include <iostream>
 #include <string>
+#ifdef __PGI
+#include <openacc.h>
+#endif
 
 #include "Params.h"
 #include "Patch.h"
@@ -303,7 +306,6 @@ void ElectroMagnBC3D_SM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-
     // Static cast of the fields
     double *Ex3D = &(EMfields->Ex_->data_[0]);
     double *Ey3D = &(EMfields->Ey_->data_[0]);
@@ -311,23 +313,58 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
     double *Bx3D = &(EMfields->Bx_->data_[0]);
     double *By3D = &(EMfields->By_->data_[0]);
     double *Bz3D = &(EMfields->Bz_->data_[0]);
+    int sizeofEx = EMfields->Ex_->globalDims_;
+    int sizeofEy = EMfields->Ey_->globalDims_;
+    int sizeofEz = EMfields->Ez_->globalDims_;
+    int sizeofBx = EMfields->Bx_->globalDims_;
+    int sizeofBy = EMfields->By_->globalDims_;
+    int sizeofBz = EMfields->Bz_->globalDims_;
+    int byw_size = ny_p*nz_d;
+    int bzw_size = ny_d*nz_p;
+
     vector<double> pos( 2 );
 
     vector<double> byW( ny_p*nz_d, 0. );
     vector<double> byE( ny_p*nz_d, 0. );
     vector<double> bzW( ny_d*nz_p, 0. );
     vector<double> bzE( ny_d*nz_p, 0. );
+    double* dbyW = &(byW[0]);
+    double* dbyE = &(byE[0]);
+    double* dbzW = &(bzW[0]);
+    double* dbzE = &(bzE[0]);
+    int isymin = patch->isYmin();
+    int isymax = patch->isYmax();
+    int iszmin = patch->isZmin();
+    int iszmax = patch->isZmax();
 
+    int Bx_ext_size, By_ext_size, Bz_ext_size;
     double* Bx_ext = NULL;
-    if (Bx_val!=nullptr)
+    if (Bx_val!=nullptr) {
         Bx_ext = &(Bx_val->data_[0]);
+        Bx_ext_size = Bx_val->globalDims_;
+    }
     double* By_ext = NULL;
-    if (By_val!=nullptr)
+    if (By_val!=nullptr) {
         By_ext = &(By_val->data_[0]);
+        By_ext_size = By_val->globalDims_;
+    }
     double* Bz_ext = NULL;
-    if (Bz_val!=nullptr)
+    if (Bz_val!=nullptr) {
         Bz_ext = &(Bz_val->data_[0]);
-    
+        Bz_ext_size = Bz_val->globalDims_;
+    }
+#ifdef __PGI
+    if ( (Bx_ext!=NULL) && (!acc_deviceptr( Bx_ext )) ) {
+        #pragma acc enter data copyin(Bx_ext[0:Bx_ext_size])
+    }
+    if ( (By_ext!=NULL) && (!acc_deviceptr( By_ext )) ) {
+        #pragma acc enter data copyin(By_ext[0:By_ext_size])
+    }
+    if ( (Bz_ext!=NULL) && !acc_deviceptr( Bz_ext ) ) {
+        #pragma acc enter data copyin(Bz_ext[0:Bz_ext_size])
+    }
+#endif
+
     if( min_max==0 && patch->isXmin() ) {
     
         // for By^(d,p,d)
@@ -336,39 +373,48 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
                 pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k -0.5 - ( int )EMfields->oversize[2] )*dz;
                 // Lasers
+                byW[ j*nz_d+k ] = 0.;
                 for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                     byW[ j*nz_d+k ] += vecLaser[ilaser]->getAmplitude0( pos, time_dual, j, k );
                 }
             }
         }
-        for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
-            for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
-                
+#ifdef __PGI
+        #pragma acc parallel present(Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],By_ext[0:By_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbyW[0:byw_size])
+        #pragma acc loop gang worker vector
+#endif
+        for( unsigned int j=isymin ; j<ny_p-isymax ; j++ ) {
+            for( unsigned int k=iszmin ; k<nz_d-iszmax ; k++ ) {
                 By3D[ 0*(ny_p*nz_d) + j*nz_d + k ] = Alpha_SM_W   * Ez3D[ 0*(ny_p*nz_d) + j*nz_d + k ]
                                        +              Beta_SM_W    *( By3D[ 1*(ny_p*nz_d) + j*nz_d + k ]-By_ext[ j*nz_d + k ] )
-                                       +              Gamma_SM_W   * byW[ j*nz_d+k ]
+                                       +              Gamma_SM_W   * dbyW[ j*nz_d+k ]
                                        +              Delta_SM_W   *( Bx3D[ 0*(ny_d*nz_d) + (j+1)*nz_d + k ]-Bx_ext[ (j+1)*nz_d + k ] )
                                        +              Epsilon_SM_W *( Bx3D[ 0*(ny_d*nz_d) +  j   *nz_d + k ]-Bx_ext[  j   *nz_d + k ] )
                                        + By_ext[ j*nz_d + k ];
             }// k  ---end compute By
         }//j  ---end compute By
-        
+
         // for Bz^(d,d,p)
         for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++ ) {
             pos[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - 0.5 - ( int )EMfields->oversize[1] )*dy;
             for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
                 pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k - ( int )EMfields->oversize[2] )*dz;
                 // Lasers
+                bzW[ j*nz_p+k ] = 0.;
                 for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                     bzW[ j*nz_p+k ] += vecLaser[ilaser]->getAmplitude1( pos, time_dual, j, k );
                 }
             }
         }
-        for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++ ) {
-            for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
+#ifdef __PGI
+        #pragma acc parallel present(Ey3D[0:sizeofEy],Bx3D[0:sizeofBx],Bz3D[0:sizeofBz],Bz_ext[0:Bz_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbzW[0:bzw_size])
+        #pragma acc loop gang worker vector
+#endif
+        for( unsigned int j=isymin ; j<ny_d-isymax ; j++ ) {
+            for( unsigned int k=iszmin ; k<nz_p-iszmax ; k++ ) {
                 Bz3D[ 0*(ny_d*nz_p) + j*nz_p + k ] = - Alpha_SM_W   * Ey3D[ 0*(ny_d*nz_p) + j*nz_p + k ]
                                        +              Beta_SM_W    *( Bz3D[ 1*(ny_d*nz_p) + j*nz_p + k ]-Bz_ext[ j*nz_p + k ] )
-                                       +              Gamma_SM_W   * bzW[ j*nz_p+k ]
+                                       +              Gamma_SM_W   * dbzW[ j*nz_p+k ]
                                        +              Zeta_SM_W    *( Bx3D[ 0*(ny_d*nz_d) + j*nz_d + k+1 ]-Bx_ext[ j*nz_d + (k+1) ] )
                                        +              Eta_SM_W     *( Bx3D[ 0*(ny_d*nz_d) + j*nz_d + k   ]-Bx_ext[ j*nz_d +  k    ] )
                                        + Bz_ext[ j*nz_p + k ];
@@ -388,11 +434,15 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
             }
         }
-        for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
-            for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
+#ifdef __PGI
+        #pragma acc parallel present(Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],By_ext[0:By_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbyE[0:byw_size])
+        #pragma acc loop gang worker vector
+#endif
+        for( unsigned int j=isymin ; j<ny_p-isymax ; j++ ) {
+            for( unsigned int k=iszmin ; k<nz_d-iszmax ; k++ ) {
                 By3D[ (nx_d-1)*(ny_p*nz_d) + j*nz_d + k ] = Alpha_SM_E   * Ez3D[ (nx_p-1)*(ny_p*nz_d) + j*nz_d + k ]
                                             +                   Beta_SM_E    *( By3D[ (nx_d-2)*(ny_p*nz_d) + j*nz_d + k ] -By_ext[ j*nz_d + k ] )
-                                            +                   Gamma_SM_E   * byE[ j*nz_d+k ]
+                                            +                   Gamma_SM_E   * dbyE[ j*nz_d+k ]
                                             +                   Delta_SM_E   *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + (j+1)*nz_d + k ] -Bx_ext[ (j+1)*nz_d + k ] ) // Check x-index
                                             +                   Epsilon_SM_E *( Bx3D[ (nx_p-1)*(ny_d*nz_d) +  j   *nz_d + k ] -Bx_ext[  j   *nz_d + k ] )
                                             + By_ext[ j*nz_d + k ];
@@ -411,11 +461,15 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
             }
         }
-        for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax(); j++ ) {
-            for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
+#ifdef __PGI
+        #pragma acc parallel present(Ey3D[0:sizeofEy],Bx3D[0:sizeofBx],Bz3D[0:sizeofBz],Bz_ext[0:Bz_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbzE[0:bzw_size])
+        #pragma acc loop gang worker vector
+#endif
+        for( unsigned int j=isymin ; j<ny_d-isymax; j++ ) {
+            for( unsigned int k=iszmin ; k<nz_p-iszmax ; k++ ) {
                 Bz3D[ (nx_d-1)*(ny_d*nz_p) + j*nz_p + k ] = -Alpha_SM_E * Ey3D[ (nx_p-1)*(ny_d*nz_p) + j*nz_p + k ]
                                             +                    Beta_SM_E  *( Bz3D[ (nx_d-2)*(ny_d*nz_p) + j*nz_p + k ] -Bz_ext[ j*nz_p + k ] )
-                                            +                    Gamma_SM_E * bzE[ j*nz_p+k ]
+                                            +                    Gamma_SM_E * dbzE[ j*nz_p+k ]
                                             +                    Zeta_SM_E  *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + j*nz_d + k+1 ]-Bx_ext[ j*nz_d + (k+1) ] )
                                             +                    Eta_SM_E   *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + j*nz_d + k   ]-Bx_ext[ j*nz_d +  k    ] )
                                             + Bz_ext[ j*nz_p + k ];

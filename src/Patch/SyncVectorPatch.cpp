@@ -1431,8 +1431,10 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
 
     bool gpu_computing( false );
 #ifdef __PGI
-    if ( acc_deviceptr( &(vecPatches.B_localx[0]->data_[0]) )!=NULL ) {
-        gpu_computing = true;
+    if ( vecPatches.B_localx.size() ) {
+        if ( acc_deviceptr( &(vecPatches.B_localx[0]->data_[0]) )!=NULL ) {
+            gpu_computing = true;
+        }
     }
 #endif
 

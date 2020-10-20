@@ -175,6 +175,7 @@ int main( int argc, char *argv[] )
         vecPatches.sortAllParticles( params );
 
         if (params.gpu_computing) {
+            TITLE( "Init GPU" );
             vecPatches.initGPU( &smpi );
         }
 

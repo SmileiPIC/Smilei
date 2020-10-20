@@ -12,6 +12,7 @@ Timers::Timers( SmileiMPI *smpi ) :
     global( "Global" ),           // The entire time loop
     particles( "Particles" ),     // Call dynamics + restartRhoJ(s)
     maxwell( "Maxwell" ),         // Maxwell
+    maxwellBC( "Maxwell_BC" ),    // Maxwell boundary conditions
     diags( "Diagnostics" ),       // Diags.runAllDiags + MPI & Patch sync
     densities( "Densities" ),     // Local sum of rho, Jxyz
     collisions( "Collisions" ),             // Call to Collisions methods
@@ -51,6 +52,7 @@ Timers::Timers( SmileiMPI *smpi ) :
     timers.push_back( &global );
     timers.push_back( &particles );
     timers.push_back( &maxwell );
+    timers.push_back( &maxwellBC );
     timers.push_back( &diags );
     timers.push_back( &densities );
     timers.push_back( &collisions );

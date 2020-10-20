@@ -1151,6 +1151,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
         timers.syncField.update( params.printNow( itime ) );
 
+        timers.maxwellBC.restart();
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
@@ -1160,6 +1161,8 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
             }
         }
+        timers.maxwellBC.update( params.printNow( itime ) );
+
         if( params.is_spectral ) {
             saveOldRho( params );
         }
@@ -1232,6 +1235,7 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
             timers.syncField.update( params.printNow( itime ) );
         }
 
+        timers.maxwellBC.restart();
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
@@ -1246,6 +1250,7 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
             //    ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
             //}
         }
+        timers.maxwellBC.update( params.printNow( itime ) );
     }
 
 } // END finalizeSyncAndBCFields

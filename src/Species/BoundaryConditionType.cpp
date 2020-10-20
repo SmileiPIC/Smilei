@@ -94,6 +94,10 @@ void reflect_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int 
     nrj_iPart = 0.;     // no energy loss during reflection
     double* position = particles.getPtrPosition(direction);
     double* momentum = particles.getPtrMomentum(direction);
+#ifdef __PGI
+    #pragma acc parallel deviceptr(position,momentum)
+    #pragma acc loop gang worker vector
+#endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf ) {
             position[ ipart ] = 2.*limit_inf - position[ ipart ];
@@ -109,6 +113,10 @@ void reflect_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, int 
     nrj_iPart = 0.;     // no energy loss during reflection
     double* position = particles.getPtrPosition(direction);
     double* momentum = particles.getPtrMomentum(direction);
+#ifdef __PGI
+    #pragma acc parallel deviceptr(position,momentum)
+    #pragma acc loop gang worker vector
+#endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
             position[ ipart ] = 2*limit_sup - position[ ipart ];
