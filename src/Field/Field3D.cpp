@@ -382,10 +382,16 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     int fSize = globalDims_;
     bool fieldName( (name.substr(0,1) == "B") );
     #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
-    #pragma acc loop gang worker vector
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
+#ifdef __PGI
+	#pragma acc loop worker
+#endif
         for( unsigned int j=0; j<NY; j++ ) {
+#ifdef __PGI
+	    #pragma acc loop vector
+#endif
             for( unsigned int k=0; k<NZ; k++ ) {
                 sub[i*NY*NZ+j*NZ+k] = field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ];
             }
@@ -419,10 +425,16 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     int fSize = globalDims_;
     bool fieldName( name.substr(0,1) == "B" );
     #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
-    #pragma acc loop gang worker vector
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
+#ifdef __PGI
+	#pragma acc loop worker
+#endif
         for( unsigned int j=0; j<NY; j++ ) {
+#ifdef __PGI
+	    #pragma acc loop vector
+#endif
             for( unsigned int k=0; k<NZ; k++ ) {
                 field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ] = sub[i*NY*NZ+j*NZ+k];
             }
@@ -456,10 +468,16 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     int fSize = globalDims_;
     bool fieldName( (name.substr(0,1) == "J") );
     #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
-    #pragma acc loop gang worker vector
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
+#ifdef __PGI
+	#pragma acc loop worker
+#endif
         for( unsigned int j=0; j<NY; j++ ) {
+#ifdef __PGI
+	    #pragma acc loop vector
+#endif
             for( unsigned int k=0; k<NZ; k++ ) {
                 sub[i*NY*NZ+j*NZ+k] = field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ];
             }
@@ -493,10 +511,16 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     int fSize = globalDims_;
     bool fieldName( name.substr(0,1) == "J" );
     #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
-    #pragma acc loop gang worker vector
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<NX; i++ ) {
+#ifdef __PGI
+	#pragma acc loop worker
+#endif
         for( unsigned int j=0; j<NY; j++ ) {
+#ifdef __PGI
+	    #pragma acc loop vector
+#endif
             for( unsigned int k=0; k<NZ; k++ ) {
                 field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ] += sub[i*NY*NZ+j*NZ+k];
             }
