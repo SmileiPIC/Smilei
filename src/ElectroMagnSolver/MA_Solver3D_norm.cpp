@@ -37,10 +37,16 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     // Electric field Ex^(d,p,p)
 #ifdef __PGI
     #pragma acc parallel present( Ex3D[0:sizeofEx], Jx3D[0:sizeofEx], By3D[0:sizeofBy], Bz3D[0:sizeofBz] )
-    #pragma acc loop gang worker vector
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
+#ifdef __PGI
+        #pragma acc loop worker
+#endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
+#ifdef __PGI
+            #pragma acc loop vector
+#endif
             for( unsigned int k=0 ; k<nz_p ; k++ ) {
                 Ex3D[ i*(ny_p*nz_p) + j*(nz_p) + k ] += -dt*Jx3D[ i*(ny_p*nz_p) + j*(nz_p) + k ]
                     +                 dt_ov_dy * ( Bz3D[ i*(ny_d*nz_p) + (j+1)*(nz_p) + k   ] - Bz3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] )
@@ -52,10 +58,16 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     // Electric field Ey^(p,d,p)
 #ifdef __PGI
     #pragma acc parallel present( Ey3D[0:sizeofEy], Jy3D[0:sizeofEy], Bx3D[0:sizeofBx], Bz3D[0:sizeofBz] )
-    #pragma acc loop gang worker vector
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
+#ifdef __PGI
+        #pragma acc loop worker
+#endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
+#ifdef __PGI
+            #pragma acc loop vector
+#endif
             for( unsigned int k=0 ; k<nz_p ; k++ ) {
                 Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] += -dt*Jy3D[ i*(ny_d*nz_p) + j*(nz_p) + k ]
                     -                  dt_ov_dx * ( Bz3D[ (i+1)*(ny_d*nz_p) + j*(nz_p) + k   ] - Bz3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] )
@@ -67,10 +79,16 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     // Electric field Ez^(p,p,d)
 #ifdef __PGI
     #pragma acc parallel present( Ez3D[0:sizeofEz], Jz3D[0:sizeofEz], Bx3D[0:sizeofBx], By3D[0:sizeofBy] )
-    #pragma acc loop gang worker vector
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0 ;  i<nx_p ; i++ ) {
+#ifdef __PGI
+        #pragma acc loop worker
+#endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
+#ifdef __PGI
+            #pragma acc loop vector
+#endif
             for( unsigned int k=0 ; k<nz_d ; k++ ) {
                 Ez3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] += -dt*Jz3D[ i*(ny_p*nz_d) + j*(nz_d) + k ]
                     +                  dt_ov_dx * ( By3D[ (i+1)*(ny_p*nz_d) +  j   *(nz_d) + k ] - By3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] )

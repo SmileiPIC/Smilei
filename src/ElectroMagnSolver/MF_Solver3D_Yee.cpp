@@ -34,10 +34,16 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     // Magnetic field Bx^(p,d,d)
 #ifdef __PGI
     #pragma acc parallel present( Bx3D[0:sizeofBx], Ey3D[0:sizeofEy], Ez3D[0:sizeofEz] )
-    #pragma acc loop gang worker vector
+    #pragma acc loop gang
 #endif
     for( unsigned int i=0 ; i<nx_p;  i++ ) {
+#ifdef __PGI
+        #pragma acc loop worker
+#endif
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
+#ifdef __PGI
+            #pragma acc loop vector
+#endif
             for( unsigned int k=1 ; k<nz_d-1 ; k++ ) {
                 Bx3D[ i*(ny_d*nz_d) + j*(nz_d) + k ] += -dt_ov_dy * ( Ez3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] - Ez3D[ i*(ny_p*nz_d) + (j-1)*(nz_d) + k   ] )
                                                      +   dt_ov_dz * ( Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] - Ey3D[ i*(ny_d*nz_p) +  j   *(nz_p) + k-1 ] );
@@ -46,12 +52,18 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     }
     
     // Magnetic field By^(d,p,d)
-    for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
 #ifdef __PGI
     #pragma acc parallel present( By3D[0:sizeofBy], Ex3D[0:sizeofEx], Ez3D[0:sizeofEz] )
-    #pragma acc loop gang worker vector
+    #pragma acc loop gang
+#endif
+    for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
+#ifdef __PGI
+        #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
+#ifdef __PGI
+            #pragma acc loop vector
+#endif
             for( unsigned int k=1 ; k<nz_d-1 ; k++ ) {
                 By3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] += -dt_ov_dz * ( Ex3D[ i*(ny_p*nz_p) + j*(nz_p) + k ] - Ex3D[  i   *(ny_p*nz_p) + j*(nz_p) + k-1 ] )
                                                      +   dt_ov_dx * ( Ez3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] - Ez3D[ (i-1)*(ny_p*nz_d) + j*(nz_d) + k   ] );
@@ -62,10 +74,16 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     // Magnetic field Bz^(d,d,p)
 #ifdef __PGI
     #pragma acc parallel present( Bz3D[0:sizeofBz], Ex3D[0:sizeofEx], Ey3D[0:sizeofEy] )
-    #pragma acc loop gang worker vector
+    #pragma acc loop gang
 #endif
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
+#ifdef __PGI
+        #pragma acc loop worker
+#endif
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
+#ifdef __PGI
+            #pragma acc loop vector
+#endif
             for( unsigned int k=0 ; k<nz_p ; k++ ) {
                 Bz3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] += -dt_ov_dx * ( Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] - Ey3D[ (i-1)*(ny_d*nz_p) +  j   *(nz_p) + k ] )
                                                      +   dt_ov_dy * ( Ex3D[ i*(ny_p*nz_p) + j*(nz_p) + k ] - Ex3D[  i   *(ny_p*nz_p) + (j-1)*(nz_p) + k ] );
