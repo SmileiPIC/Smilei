@@ -2,6 +2,9 @@
 
 #include <cmath>
 #include <iostream>
+#ifdef __PGI
+#include <accelmath.h>
+#endif
 
 #include "ElectroMagn.h"
 #include "Field3D.h"

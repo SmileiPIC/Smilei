@@ -163,8 +163,8 @@ ACCFLAGS = ""
 ifneq (,$(call parse_config,gpu))
     SMILEICXX.DEPS = g++
     ACCFLAGS += -D_GPU -w -ta=tesla:cc70 -Minfo=accel
-    LDFLAGS += -L/usr/local/cuda-10.1/lib64 -lcudart -ta=tesla:cc70
-    #LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/pgi/19.10/linux86-64-llvm/2019/cuda/10.1/lib64 -lcudart
+    #LDFLAGS += -L/usr/local/cuda-10.1/lib64 -lcudart -ta=tesla:cc70
+    LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/pgi/19.10/linux86-64-llvm/2019/cuda/10.1/lib64 -lcudart
 
     CUSRCS := $(shell find src/* -name \*.cu)
     CUOBJS := $(addprefix $(BUILD_DIR)/, $(CUSRCS:.cu=.o))

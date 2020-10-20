@@ -381,9 +381,12 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }
 #ifdef __PGI
         #pragma acc parallel present(Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],By_ext[0:By_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbyW[0:byw_size])
-        #pragma acc loop gang worker vector
+        #pragma acc loop gang
 #endif
         for( unsigned int j=isymin ; j<ny_p-isymax ; j++ ) {
+#ifdef __PGI
+            #pragma acc loop worker vector
+#endif
             for( unsigned int k=iszmin ; k<nz_d-iszmax ; k++ ) {
                 By3D[ 0*(ny_p*nz_d) + j*nz_d + k ] = Alpha_SM_W   * Ez3D[ 0*(ny_p*nz_d) + j*nz_d + k ]
                                        +              Beta_SM_W    *( By3D[ 1*(ny_p*nz_d) + j*nz_d + k ]-By_ext[ j*nz_d + k ] )
@@ -408,9 +411,12 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }
 #ifdef __PGI
         #pragma acc parallel present(Ey3D[0:sizeofEy],Bx3D[0:sizeofBx],Bz3D[0:sizeofBz],Bz_ext[0:Bz_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbzW[0:bzw_size])
-        #pragma acc loop gang worker vector
+        #pragma acc loop gang
 #endif
         for( unsigned int j=isymin ; j<ny_d-isymax ; j++ ) {
+#ifdef __PGI
+            #pragma acc loop worker vector
+#endif
             for( unsigned int k=iszmin ; k<nz_p-iszmax ; k++ ) {
                 Bz3D[ 0*(ny_d*nz_p) + j*nz_p + k ] = - Alpha_SM_W   * Ey3D[ 0*(ny_d*nz_p) + j*nz_p + k ]
                                        +              Beta_SM_W    *( Bz3D[ 1*(ny_d*nz_p) + j*nz_p + k ]-Bz_ext[ j*nz_p + k ] )
@@ -436,9 +442,12 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }
 #ifdef __PGI
         #pragma acc parallel present(Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],By_ext[0:By_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbyE[0:byw_size])
-        #pragma acc loop gang worker vector
+        #pragma acc loop gang
 #endif
         for( unsigned int j=isymin ; j<ny_p-isymax ; j++ ) {
+#ifdef __PGI
+            #pragma acc loop worker vector
+#endif
             for( unsigned int k=iszmin ; k<nz_d-iszmax ; k++ ) {
                 By3D[ (nx_d-1)*(ny_p*nz_d) + j*nz_d + k ] = Alpha_SM_E   * Ez3D[ (nx_p-1)*(ny_p*nz_d) + j*nz_d + k ]
                                             +                   Beta_SM_E    *( By3D[ (nx_d-2)*(ny_p*nz_d) + j*nz_d + k ] -By_ext[ j*nz_d + k ] )
@@ -463,9 +472,12 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }
 #ifdef __PGI
         #pragma acc parallel present(Ey3D[0:sizeofEy],Bx3D[0:sizeofBx],Bz3D[0:sizeofBz],Bz_ext[0:Bz_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbzE[0:bzw_size])
-        #pragma acc loop gang worker vector
+        #pragma acc loop gang
 #endif
         for( unsigned int j=isymin ; j<ny_d-isymax; j++ ) {
+#ifdef __PGI
+            #pragma acc loop worker vector
+#endif
             for( unsigned int k=iszmin ; k<nz_p-iszmax ; k++ ) {
                 Bz3D[ (nx_d-1)*(ny_d*nz_p) + j*nz_p + k ] = -Alpha_SM_E * Ey3D[ (nx_p-1)*(ny_d*nz_p) + j*nz_p + k ]
                                             +                    Beta_SM_E  *( Bz3D[ (nx_d-2)*(ny_d*nz_p) + j*nz_p + k ] -Bz_ext[ j*nz_p + k ] )

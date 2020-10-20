@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #ifdef __PGI
+#include <accelmath.h>
 #include <openacc.h>
 #endif
 #include "ElectroMagn.h"

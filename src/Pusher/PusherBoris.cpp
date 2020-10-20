@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <cmath>
+#ifdef __PGI
+#include <accelmath.h>
+#endif
 
 #include "Species.h"
 
