@@ -12,7 +12,7 @@ Env_A_abs = S.Probe.Probe0.Env_A_abs(timesteps=300).getData()[0]
 Validate("1-D probe Env_A_abs at iteration 300", Env_A_abs, 0.01)
 
 # TEST THE GRID PARAMETERS
-with h5py.File("./restart000/Fields0.h5") as f:
+with h5py.File("./restart000/Fields0.h5", "r") as f:
 	dt = f["data/0000000000"].attrs["dt"]
 	dx = f["data/0000000000/Env_A_abs"].attrs["gridSpacing"]
 	patchSize = f["data/0000000000"].attrs["patchSize"]
