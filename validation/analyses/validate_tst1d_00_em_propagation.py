@@ -41,7 +41,7 @@ max_ubal = np.max( np.abs(S.Scalar.Ubal().getData()) )
 Validate("Max Ubal is below 3%", max_ubal<0.03 )
 
 # TEST THE GRID PARAMETERS
-with h5py.File("./restart000/Fields0.h5") as f:
+with h5py.File("./restart000/Fields0.h5", "r") as f:
 	dt = f["data/0000000000"].attrs["dt"]
 	dx = f["data/0000000000/Ex"].attrs["gridSpacing"]
 	patchSize = f["data/0000000000"].attrs["patchSize"]

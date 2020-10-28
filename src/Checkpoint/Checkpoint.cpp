@@ -180,6 +180,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *s
 
     // check for excedeed time
     if( dump_minutes != 0.0 ) {
+        int tagUB = smpi->getTagUB();
         // master checks whenever we passed the time limit
         if( smpi->isMaster() && time_dump_step==0 ) {
             double elapsed_time = ( MPI_Wtime() - time_reference )/60.;
@@ -188,14 +189,14 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *s
                 MESSAGE( "Reached time limit : " << elapsed_time << " minutes. Dump timestep : " << time_dump_step );
                 // master does a non-blocking send
                 for( unsigned int dest=0; dest < ( unsigned int ) smpi->getSize(); dest++ ) {
-                    MPI_Isend( &time_dump_step, 1, MPI_UNSIGNED, dest, SMILEI_COMM_DUMP_TIME, smpi->SMILEI_COMM_WORLD, &dump_request[dest] );
+                    MPI_Isend( &time_dump_step, 1, MPI_UNSIGNED, dest, tagUB, smpi->SMILEI_COMM_WORLD, &dump_request[dest] );
                 }
             }
         } else { // non master nodes receive the time_dump_step (non-blocking)
             int todump=0;
-            MPI_Iprobe( 0, SMILEI_COMM_DUMP_TIME, MPI_COMM_WORLD, &todump, &dump_status_prob );
+            MPI_Iprobe( 0, tagUB, MPI_COMM_WORLD, &todump, &dump_status_prob );
             if( todump ) {
-                MPI_Recv( &time_dump_step, 1, MPI_UNSIGNED, 0, SMILEI_COMM_DUMP_TIME, smpi->SMILEI_COMM_WORLD, &dump_status_recv );
+                MPI_Recv( &time_dump_step, 1, MPI_UNSIGNED, 0, tagUB, smpi->SMILEI_COMM_WORLD, &dump_status_recv );
             }
         }
         smpi->barrier();
