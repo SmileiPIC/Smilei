@@ -27,7 +27,7 @@ Ex = S.Probe.Probe0.Ex(timesteps=0.).getData()[0]
 Validate("1-D probe for initialized Ex at first iteration", Ex, 0.01)
 
 # TEST THE GRID PARAMETERS
-with h5py.File("./restart000/Fields0.h5") as f:
+with h5py.File("./restart000/Fields0.h5", "r") as f:
 	dt = f["data/0000000000"].attrs["dt"]
 	dx = f["data/0000000000/Ex"].attrs["gridSpacing"]
 	patchSize = f["data/0000000000"].attrs["patchSize"]

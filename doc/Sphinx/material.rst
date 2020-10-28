@@ -39,12 +39,16 @@ Publications
   `Laser wakefield driven generation of isolated CEP-tunable intense sub-cycle pulses`,
   `arXiv:1902.05014 <https://arxiv.org/abs/1902.05014>`_
 
+
+----
+
 .. rst-class:: bigcitation
 
 .. [Derouillat]
 
   J. Derouillat and A. Beck,
   `Single Domain Multiple Decompositions for Particle-in-Cell simulations`,
+  `J. Phys.: Conf. Ser. 1596, 012052 (2020) <https://iopscience.iop.org/article/10.1088/1742-6596/1596/1/012052/pdf>`_,
   `arXiv:1912.04064 <https://arxiv.org/abs/1912.04064>`_
 
 .. rst-class:: bigcitation
@@ -53,9 +57,8 @@ Publications
 
   F. Massimo, I. Zemzemi, A. Beck, J. Derouillat and A. Specka,
   `Efficient cylindrical envelope modeling for laser wakefield acceleration`,
+  `J. Phys.: Conf. Ser. 1596, 012055 (2020) <https://iopscience.iop.org/article/10.1088/1742-6596/1596/1/012055/pdf>`_,
   `arXiv:1912.04674 <http://arxiv.org/abs/1912.04674>`_
-
-----
 
 .. rst-class:: bigcitation
 
