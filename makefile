@@ -209,6 +209,10 @@ $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar
 	@echo "SPECIAL COMPILATION FOR $<"
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -O1 -c $< -o $@
 
+$(BUILD_DIR)/src/*/*TablesDefault.o : src/*/*TablesDefault.cpp
+	@echo "SPECIAL COMPILATION FOR $<"
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -O0 -c $< -o $@
+
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
 	@echo "Compiling $<"

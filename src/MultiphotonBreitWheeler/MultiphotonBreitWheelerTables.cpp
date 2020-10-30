@@ -12,6 +12,7 @@
 // ----------------------------------------------------------------------------
 
 #include "MultiphotonBreitWheelerTables.h"
+#include "MultiphotonBreitWheelerTablesDefault.h"
 #include "H5.h"
 
 // -----------------------------------------------------------------------------
@@ -24,7 +25,7 @@
 MultiphotonBreitWheelerTables::MultiphotonBreitWheelerTables()
 {
     
-    setDefault();
+    MultiphotonBreitWheelerTablesDefault::setDefault( T_, xi_ );
     
 }
 
