@@ -157,6 +157,8 @@ ifneq (,$(call parse_config,no_mpi_tm))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
+CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
+
 #-----------------------------------------------------
 # Set the verbosity prefix
 ifeq (,$(call parse_config,verbose))
@@ -209,9 +211,13 @@ $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar
 	@echo "SPECIAL COMPILATION FOR $<"
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -O1 -c $< -o $@
 
-$(BUILD_DIR)/src/*/*TablesDefault.o : src/*/*TablesDefault.cpp
+$(BUILD_DIR)/src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.o : src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -O0 -c $< -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS0) -c $< -o $@
+
+$(BUILD_DIR)/src/Radiation/RadiationTablesDefault.o : src/Radiation/RadiationTablesDefault.cpp
+	@echo "SPECIAL COMPILATION FOR $<"
+	$(Q) $(SMILEICXX) $(CXXFLAGS0) -c $< -o $@
 
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
