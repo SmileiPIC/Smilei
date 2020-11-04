@@ -23,7 +23,14 @@ bool PyTools::pyconvert( PyObject *py_val, T &val )
     if( py_val && PyNumber_Check( py_val ) ) {
         PyObject *v = PyNumber_Long( py_val );
         if( PyObject_RichCompareBool( v, py_val, Py_EQ ) < 1 ) {
-            return false;
+            std::string py_val_str, v_str;
+            PyObject *py_val_repr = PyObject_Repr( py_val );
+            pyconvert( py_val_repr, py_val_str );
+            Py_DECREF( py_val_repr );
+            PyObject *v_repr = PyObject_Repr( v );
+            pyconvert( v_repr, v_str );
+            Py_DECREF( v_repr );
+            WARNING( "Number " << py_val_str << " was converted to integer "<< v_str );
         }
         val=( T ) PyLong_AsLong( v );
         Py_XDECREF( v );

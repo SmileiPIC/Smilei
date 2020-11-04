@@ -800,8 +800,8 @@ Each species has to be defined in a ``Species`` block::
 
   :default: []
 
-  A list of floats representing the components of the drift velocity of
-  the thermal boundaries (those set to ``"thermalize"`` in :py:data:`boundary_conditions`).
+  A list of floats representing the components of the particles' drift velocity after
+  encountering the thermal boundaries (those set to ``"thermalize"`` in :py:data:`boundary_conditions`).
 
 .. py:data:: time_frozen
 
