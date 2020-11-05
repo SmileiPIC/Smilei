@@ -338,7 +338,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
-#ifdef __PGI
+#ifdef _GPU
         int np = particles->last_index.back();
         double* E = &(smpi->dynamics_Epart[0][0]);
         double* B = &(smpi->dynamics_Bpart[0][0]);
@@ -548,7 +548,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 //            }
 //        }
 
-#ifdef __PGI
+#ifdef _GPU
         }
         #pragma acc exit data delete(E[0:3*np],B[0:3*np],gf[0:np],iold[0:3*np],deltaold[0:3*np])
 #endif

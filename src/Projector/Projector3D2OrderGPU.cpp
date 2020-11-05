@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <iostream>
-#ifdef __PGI
+#ifdef _GPU
 #include <accelmath.h>
 #include <openacc.h>
 #endif
@@ -81,7 +81,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     int npack = (iend-istart)/packsize;
     if ( npack*packsize!=iend-istart )
         npack++;
-#ifndef __PGI
+#ifndef _GPU
     double* Sx0 = (double*) malloc( 5*packsize*sizeof(double) ); //acc_malloc
     double* Sy0 = (double*) malloc( 5*packsize*sizeof(double) ); // "
     double* Sz0 = (double*) malloc( 5*packsize*sizeof(double) );
@@ -102,7 +102,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         int istart_pack = istart+ipack*packsize;
         int iend_pack = (ipack+1)*packsize;
         iend_pack = istart + min( iend-istart, iend_pack );
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc parallel present( iold[0:3*nparts], deltaold[0:3*nparts] ) deviceptr( position_x, position_y, position_z, Sx0, Sy0, Sz0, DSx, DSy, DSz )
         #pragma acc loop gang worker vector
 #endif
@@ -208,7 +208,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         }
     
         // Jx^(d,p,p)
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc parallel deviceptr( DSx, sumX )
         #pragma acc loop gang worker vector
 #endif
@@ -221,7 +221,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             }
         }
 
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc parallel present( iold[0:3*nparts], Jx[0:sizeofEx] ) deviceptr( charge, weight, Sy0, Sz0, DSy, DSz, sumX ) vector_length(8)
         #pragma acc loop gang worker
 #endif
@@ -234,7 +234,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             int  z_size0 = nprimz;
             int yz_size0 = nprimz*nprimy;
             int linindex0 = iold[ipart+0*nparts]*yz_size0+iold[ipart+1*nparts]*z_size0+iold[ipart+2*nparts];
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop vector
 #endif
             for( int k=0 ; k<5 ; k++ ) {
@@ -244,7 +244,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                     for( int i=1 ; i<5 ; i++ ) {
                         double val = sumX[ipart_pack+(i)*packsize] * tmp;
                         int jdx = idx + i*yz_size0;
-#ifdef __PGI
+#ifdef _GPU
                         #pragma acc atomic
 #endif
                         Jx [ jdx ] += val;
@@ -254,7 +254,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         }
 
         // Jy^(p,d,p)
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc parallel deviceptr( DSy, sumX )
         #pragma acc loop gang worker vector
 #endif
@@ -267,7 +267,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             }
         }
 
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc parallel present( iold[0:3*nparts], Jy[0:sizeofEy] ) deviceptr( charge, weight, Sx0, Sz0, DSx, DSz, sumX ) vector_length(8)
         #pragma acc loop gang worker
 #endif
@@ -281,7 +281,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             int  z_size1 = nprimz;
             int yz_size1 = nprimz*( nprimy+1 );
             int linindex1 = iold[ipart+0*nparts]*yz_size1+iold[ipart+1*nparts]*z_size1+iold[ipart+2*nparts];
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop vector
 #endif
             for( int k=0 ; k<5 ; k++ ) {
@@ -291,7 +291,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                     for( int j=1 ; j<5 ; j++ ) {
                         double val = sumX[ipart_pack+(j)*packsize] * tmp;
                         int jdx = idx + j*z_size1;
-#ifdef __PGI
+#ifdef _GPU
                         #pragma acc atomic
 #endif
                         Jy [ jdx ] += val;
@@ -301,7 +301,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         }
 
         // Jz^(p,p,d)
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc parallel deviceptr( DSz, sumX )
         #pragma acc loop gang worker vector 
 #endif
@@ -314,7 +314,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             }
         }
 
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc parallel present( iold[0:3*nparts], Jz[0:sizeofEz] ) deviceptr( charge, weight, Sx0, Sy0, DSx, DSy, sumX ) vector_length(4)
         #pragma acc loop gang worker
 #endif
@@ -327,7 +327,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             int z_size2 =  nprimz+1;
             int yz_size2 = ( nprimz+1 )*nprimy;
             int linindex2 = iold[ipart+0*nparts]*yz_size2+iold[ipart+1*nparts]*z_size2+iold[ipart+2*nparts];
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop vector
 #endif
             for( int k=1 ; k<5 ; k++ ) {
@@ -337,7 +337,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                         int idx = linindex2 + j*z_size2 + i*yz_size2;
                         double val = sumX[ipart_pack+(k)*packsize] * tmp;
                         int jdx = idx + k;
-#ifdef __PGI
+#ifdef _GPU
                         #pragma acc atomic
 #endif
                         Jz[ jdx ] += val;
@@ -349,7 +349,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         } // End for ipart
 
     } // End for ipack
-#ifndef __PGI
+#ifndef _GPU
     free( Sx0 ); // acc_free
     free( Sy0 );
     free( Sz0 );

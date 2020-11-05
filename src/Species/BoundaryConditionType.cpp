@@ -26,7 +26,7 @@ void internal_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax,
     nrj_iPart = 0.;     // no energy loss during exchange
     double* position = particles.getPtrPosition(direction);
     int* cell_keys = particles.getPtrCellKeys();
-#ifdef __PGI
+#ifdef _GPU
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #endif
@@ -44,7 +44,7 @@ void internal_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax,
     nrj_iPart = 0.;     // no energy loss during exchange
     double* position = particles.getPtrPosition(direction);
     int* cell_keys = particles.getPtrCellKeys();
-#ifdef __PGI
+#ifdef _GPU
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #endif
@@ -94,7 +94,7 @@ void reflect_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int 
     nrj_iPart = 0.;     // no energy loss during reflection
     double* position = particles.getPtrPosition(direction);
     double* momentum = particles.getPtrMomentum(direction);
-#ifdef __PGI
+#ifdef _GPU
     #pragma acc parallel deviceptr(position,momentum)
     #pragma acc loop gang worker vector
 #endif
@@ -113,7 +113,7 @@ void reflect_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, int 
     nrj_iPart = 0.;     // no energy loss during reflection
     double* position = particles.getPtrPosition(direction);
     double* momentum = particles.getPtrMomentum(direction);
-#ifdef __PGI
+#ifdef _GPU
     #pragma acc parallel deviceptr(position,momentum)
     #pragma acc loop gang worker vector
 #endif

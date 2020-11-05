@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <cmath>
-#ifdef __PGI
+#ifdef _GPU
 #include <accelmath.h>
 #endif
 
@@ -66,7 +66,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
     
-#ifndef __PGI
+#ifndef _GPU
     #pragma omp simd
 #else
     int np = iend-istart;

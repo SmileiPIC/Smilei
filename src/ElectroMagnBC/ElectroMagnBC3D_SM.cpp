@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <string>
-#ifdef __PGI
+#ifdef _GPU
 #include <openacc.h>
 #endif
 
@@ -353,7 +353,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         Bz_ext = &(Bz_val->data_[0]);
         Bz_ext_size = Bz_val->globalDims_;
     }
-#ifdef __PGI
+#ifdef _GPU
     if ( (Bx_ext!=NULL) && (!acc_deviceptr( Bx_ext )) ) {
         #pragma acc enter data copyin(Bx_ext[0:Bx_ext_size])
     }
@@ -379,12 +379,12 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
             }
         }
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc parallel present(Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],By_ext[0:By_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbyW[0:byw_size])
         #pragma acc loop gang
 #endif
         for( unsigned int j=isymin ; j<ny_p-isymax ; j++ ) {
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop worker vector
 #endif
             for( unsigned int k=iszmin ; k<nz_d-iszmax ; k++ ) {
@@ -409,12 +409,12 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
             }
         }
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc parallel present(Ey3D[0:sizeofEy],Bx3D[0:sizeofBx],Bz3D[0:sizeofBz],Bz_ext[0:Bz_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbzW[0:bzw_size])
         #pragma acc loop gang
 #endif
         for( unsigned int j=isymin ; j<ny_d-isymax ; j++ ) {
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop worker vector
 #endif
             for( unsigned int k=iszmin ; k<nz_p-iszmax ; k++ ) {
@@ -440,12 +440,12 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
             }
         }
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc parallel present(Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],By_ext[0:By_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbyE[0:byw_size])
         #pragma acc loop gang
 #endif
         for( unsigned int j=isymin ; j<ny_p-isymax ; j++ ) {
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop worker vector
 #endif
             for( unsigned int k=iszmin ; k<nz_d-iszmax ; k++ ) {
@@ -470,12 +470,12 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
             }
         }
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc parallel present(Ey3D[0:sizeofEy],Bx3D[0:sizeofBx],Bz3D[0:sizeofBz],Bz_ext[0:Bz_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbzE[0:bzw_size])
         #pragma acc loop gang
 #endif
         for( unsigned int j=isymin ; j<ny_d-isymax; j++ ) {
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop worker vector
 #endif
             for( unsigned int k=iszmin ; k<nz_p-iszmax ; k++ ) {

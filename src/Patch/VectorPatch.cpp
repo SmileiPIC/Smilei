@@ -4061,7 +4061,7 @@ void VectorPatch::initNewEnvelope( Params &params )
 
 void VectorPatch::initGPU( SmileiMPI *smpi )
 {
-#ifdef __PGI
+#ifdef _GPU
     int npatches = this->size();
     int nspecies =  patches_[0]->vecSpecies.size();
 
@@ -4110,7 +4110,7 @@ void VectorPatch::initGPU( SmileiMPI *smpi )
 
 void VectorPatch::getDataBackFromGPU()
 {
-#ifdef __PGI
+#ifdef _GPU
     int npatches = this->size();
     int nspecies =  patches_[0]->vecSpecies.size();
 

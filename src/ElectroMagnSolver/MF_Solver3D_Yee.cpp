@@ -32,16 +32,16 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
 
     
     // Magnetic field Bx^(p,d,d)
-#ifdef __PGI
+#ifdef _GPU
     #pragma acc parallel present( Bx3D[0:sizeofBx], Ey3D[0:sizeofEy], Ez3D[0:sizeofEz] )
     #pragma acc loop gang
 #endif
     for( unsigned int i=0 ; i<nx_p;  i++ ) {
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc loop worker
 #endif
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop vector
 #endif
             for( unsigned int k=1 ; k<nz_d-1 ; k++ ) {
@@ -52,16 +52,16 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     }
     
     // Magnetic field By^(d,p,d)
-#ifdef __PGI
+#ifdef _GPU
     #pragma acc parallel present( By3D[0:sizeofBy], Ex3D[0:sizeofEx], Ez3D[0:sizeofEz] )
     #pragma acc loop gang
 #endif
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop vector
 #endif
             for( unsigned int k=1 ; k<nz_d-1 ; k++ ) {
@@ -72,16 +72,16 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     }
     
     // Magnetic field Bz^(d,d,p)
-#ifdef __PGI
+#ifdef _GPU
     #pragma acc parallel present( Bz3D[0:sizeofBz], Ex3D[0:sizeofEx], Ey3D[0:sizeofEy] )
     #pragma acc loop gang
 #endif
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc loop worker
 #endif
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop vector
 #endif
             for( unsigned int k=0 ; k<nz_p ; k++ ) {

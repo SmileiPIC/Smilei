@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <string>
 #include <omp.h>
-#ifdef __PGI
+#ifdef _GPU
 #include <openacc.h>
 #endif
 
@@ -72,7 +72,7 @@ int main( int argc, char *argv[] )
     Params params( &smpi, vector<string>( argv + 1, argv + argc ) );
     OpenPMDparams openPMD( params );
 
-#ifdef __PGI
+#ifdef _GPU
     int ngpus = acc_get_num_devices( acc_device_nvidia );
     if ( (ngpus>0) && (params.gpu_computing) ) {
         int gpunum = smpi.getRank()%ngpus;

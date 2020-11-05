@@ -1,7 +1,7 @@
 #include "Field.h"
 
 #include <iostream>
-#ifdef __PGI
+#ifdef _GPU
 #include <openacc.h>
 #endif
 
@@ -9,7 +9,7 @@ void Field::put_to( double val )
 {
     if( data_ ) {
         double* hostptr = data_;
-#ifdef __PGI
+#ifdef _GPU
         void* dataptr = acc_deviceptr( hostptr );
         // Test if data exists on GPU, put_to can be used on CPU and GPU during a simulation
         #pragma acc  parallel present(hostptr[0:globalDims_]) if (dataptr!=NULL)

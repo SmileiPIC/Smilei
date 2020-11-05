@@ -5,7 +5,7 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef __PGI
+#ifdef _GPU
 #include <openacc.h>
 #endif
 
@@ -1032,7 +1032,7 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 
         bool gpu_computing( false );
 
-#ifdef __PGI
+#ifdef _GPU
         if ( acc_deviceptr( Bx3D )!=NULL ) {
             gpu_computing = true;
 
@@ -1152,16 +1152,16 @@ void ElectroMagn3D::centerMagneticFields()
     int sizeofBz = Bz_->globalDims_;
     
     // Magnetic field Bx^(p,d,d)
-#ifdef __PGI
+#ifdef _GPU
     #pragma acc parallel present(Bx3D[0:sizeofBx],Bx3D_m[0:sizeofBx])
     #pragma acc loop gang
 #endif
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop vector
 #endif
             for( unsigned int k=0 ; k<nz_d ; k++ ) {
@@ -1171,16 +1171,16 @@ void ElectroMagn3D::centerMagneticFields()
     }
 
     // Magnetic field By^(d,p,d)
-#ifdef __PGI
+#ifdef _GPU
     #pragma acc parallel present(By3D[0:sizeofBy],By3D_m[0:sizeofBy])
     #pragma acc loop gang
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop vector
 #endif
             for( unsigned int k=0 ; k<nz_d ; k++ ) {
@@ -1190,16 +1190,16 @@ void ElectroMagn3D::centerMagneticFields()
     }
     
     // Magnetic field Bz^(d,d,p)
-#ifdef __PGI
+#ifdef _GPU
     #pragma acc parallel present(Bz3D[0:sizeofBz],Bz3D_m[0:sizeofBz])
     #pragma acc loop gang
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
-#ifdef __PGI
+#ifdef _GPU
         #pragma acc loop worker
 #endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
-#ifdef __PGI
+#ifdef _GPU
             #pragma acc loop vector
 #endif
             for( unsigned int k=0 ; k<nz_p ; k++ ) {

@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <iostream>
-#ifdef __PGI
+#ifdef _GPU
 #include <accelmath.h>
 #endif
 
@@ -169,7 +169,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     
     //Loop on bin particles
     int nparts = particles.last_index.back();
-#ifdef __PGI
+#ifdef _GPU
     #pragma acc parallel present(ELoc[0:3*nparts],BLoc[0:3*nparts],iold[0:3*nparts],delta[0:3*nparts],Ex3D[0:sizeofEx],Ey3D[0:sizeofEy],Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],Bz3D[0:sizeofBz]) deviceptr(position_x,position_y,position_z)
     #pragma acc loop gang worker vector
 #endif

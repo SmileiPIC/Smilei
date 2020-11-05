@@ -25,7 +25,7 @@ RadiationTables::RadiationTables()
     
     minimum_chi_continuous_ = 1e-3;
     minimum_chi_discontinuous_ = 1e-2;
-#ifndef __PGI
+#ifndef _GPU
     // Default init of the tables
     setDefault();
 #endif
