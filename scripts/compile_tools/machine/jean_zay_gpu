@@ -1,0 +1,33 @@
+#
+# Machine file for Jean Zay at IDRIS
+# __________________________________________________________
+#
+# Documentation:
+# http://www.idris.fr/jean-zay
+#
+# Load the correct modules:
+#
+#module purge
+#module load anaconda-py2/2019.03
+#export PYTHONHOME=/gpfslocalsup/pub/anaconda-py2/2019.03
+#export LD_LIBRARY_PATH=$PYTHONHOME/lib:$LD_LIBRARY_PATH 
+#
+#module purge
+#
+#
+#module load cuda/10.1.1
+#module load pgi/19.10
+#module load intel-compilers/19.0.5 intel-mpi/19.0.5
+# No HDF5 available for now, this will crash at runtime
+#module load hdf5/1.10.5-mpi
+#
+#export HDF5_ROOT_DIR=/gpfslocalsup/spack_soft/hdf5/1.10.5/intel-19.0.4-lnysdcbocfokaq4yxc72wiplpfknw7e6
+#export I_MPI_CXX=pgc++
+#
+#export SMILEICXX=mpiicpc
+#export SMILEICXX.DEPS = mpiicpc
+
+ACCFLAGS += -ta=tesla:cc70
+LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/pgi/19.10/linux86-64-llvm/2019/cuda/10.1/lib64 -lcudart
+
+CUFLAGS  += -arch=sm_70

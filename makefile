@@ -161,7 +161,6 @@ endif
 ifneq (,$(call parse_config,gpu))
     SMILEICXX.DEPS = g++
     ACCFLAGS += -D_GPU -w -Minfo=accel
-    #LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/pgi/19.10/linux86-64-llvm/2019/cuda/10.1/lib64 -lcudart
 
     CUSRCS := $(shell find src/* -name \*.cu)
     CUOBJS := $(addprefix $(BUILD_DIR)/, $(CUSRCS:.cu=.o))
