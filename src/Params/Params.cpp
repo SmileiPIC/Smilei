@@ -694,7 +694,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 #ifndef _GPU
         ERROR( "Smilei is not compiled for GPU" );
 #else
+#ifdef _OPENACC
         MESSAGE( "Smilei will be exeecuted on CPU through Thrust" );
+#else
+        ERROR( "Smilei is not compiled with OpenACC" );
+#endif
 #endif
     }
     
