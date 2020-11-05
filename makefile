@@ -158,20 +158,15 @@ ifneq (,$(call parse_config,no_mpi_tm))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
-CUOBJS = ""
-ACCFLAGS = ""
 ifneq (,$(call parse_config,gpu))
     SMILEICXX.DEPS = g++
-    ACCFLAGS += -D_GPU -w -ta=tesla:cc70 -Minfo=accel
-    #LDFLAGS += -L/usr/local/cuda-10.1/lib64 -lcudart -ta=tesla:cc70
-    LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/pgi/19.10/linux86-64-llvm/2019/cuda/10.1/lib64 -lcudart
+    ACCFLAGS += -D_GPU -w -Minfo=accel
+    #LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/pgi/19.10/linux86-64-llvm/2019/cuda/10.1/lib64 -lcudart
 
     CUSRCS := $(shell find src/* -name \*.cu)
     CUOBJS := $(addprefix $(BUILD_DIR)/, $(CUSRCS:.cu=.o))
     THRUSTCXX = nvcc
-    #CUFLAGS = -O3 -arch=sm_70 $(DIRS:%=-I%) -I/home/llr/galop/derouil/applications/pgi-19.10_mpi/linux86-64-llvm/2019/mpi/openmpi-3.1.3/include
-    CUFLAGS = -O3 --std c++11 $(DIRS:%=-I%) -I/home/llr/galop/derouil/applications/pgi-19.10_mpi/linux86-64-llvm/2019/mpi/openmpi-3.1.3/include
-    #CUFLAGS = -O3 -arch=sm_37 $(DIRS:%=-I%) -I/gpfs1l/opt/Intel/impi_5.0.1/intel64/include
+    CUFLAGS += -O3 --std c++11 $(DIRS:%=-I%)
     CUFLAGS += $(shell $(PYTHONCONFIG) --includes)
 
     OBJS += $(CUOBJS)
