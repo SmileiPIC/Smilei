@@ -701,6 +701,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 #endif
 #endif
     }
+    else {
+#ifdef _OPENACC
+        ERROR( "Smilei will be exeecuted on GPU,set Main.gpu_computing = True" );
+#endif
+    }
     
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
