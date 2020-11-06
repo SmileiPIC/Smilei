@@ -15,11 +15,6 @@ MF_Solver3D_Bouchard::MF_Solver3D_Bouchard( Params &params )
     dy = params.cell_length[1];
     dz = params.cell_length[2];
     double dx_ov_dt  = dx/dt;
-    double dy_ov_dt  = dy/dt;
-    double dz_ov_dt  = dz/dt;
-    double dt_ov_dx  = dt/dx;
-    double dt_ov_dy  = dt/dy;
-    double dt_ov_dz  = dt/dz;
     if( (dx!=dy)||(dx!=dz)||(dy!=dz) ) {
         ERROR( "Bouchard solver requires the same cell-length in x, y and z directions" );
     }

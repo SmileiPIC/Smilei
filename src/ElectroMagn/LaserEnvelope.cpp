@@ -120,12 +120,10 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved ) :
     cell_length( envelope->cell_length ),
     timestep( envelope->timestep ),
-    i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ),
-    i1_2k0_over_2dl( envelope->i1_2k0_over_2dl ),
-    one_plus_ik0dt( envelope->one_plus_ik0dt ),
-    one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq ),
+    polarization_phi(envelope->polarization_phi),
+    ellipticity(envelope->ellipticity),
+    ellipticity_factor(envelope->ellipticity_factor),
     envelope_solver(envelope->envelope_solver),
-    delta(envelope->delta),
     one_ov_2dt(envelope->one_ov_2dt),
     dt_sq(envelope->dt_sq),
     one_ov_dx_sq(envelope->one_ov_dx_sq),
@@ -140,9 +138,11 @@ LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn
     one_ov_2dr(envelope->one_ov_2dr),
     dr(envelope->dr),
     i1(envelope->i1),
-    polarization_phi(envelope->polarization_phi),
-    ellipticity(envelope->ellipticity),
-    ellipticity_factor(envelope->ellipticity_factor)
+    i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ),
+    i1_2k0_over_2dl( envelope->i1_2k0_over_2dl ),
+    one_plus_ik0dt( envelope->one_plus_ik0dt ),
+    one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq ),
+    delta(envelope->delta)
 {
     if( n_moved ==0 ) {
         profile_ = new Profile( envelope->profile_ );

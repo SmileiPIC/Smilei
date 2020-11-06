@@ -81,7 +81,7 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     cField3D *A03D         = static_cast<cField3D *>( A0_ );
     Field3D *Env_Aabs3D    = static_cast<Field3D *>( EMfields->Env_A_abs_ );
     Field3D *Env_Eabs3D    = static_cast<Field3D *>( EMfields->Env_E_abs_ );
-    Field3D *Env_Exabs3D   = static_cast<Field3D *>( EMfields->Env_Ex_abs_ );
+    //Field3D *Env_Exabs3D   = static_cast<Field3D *>( EMfields->Env_Ex_abs_ );
     
     Field3D *Phi3D         = static_cast<Field3D *>( Phi_ );
     Field3D *Phi_m3D       = static_cast<Field3D *>( Phi_m );
