@@ -22,6 +22,7 @@ public:
     Timer global    ;
     Timer particles ;
     Timer maxwell   ;
+    Timer maxwellBC ;
     Timer diags     ;
     Timer densities ;
     Timer collisions;

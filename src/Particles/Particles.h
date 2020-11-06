@@ -430,7 +430,9 @@ public:
     };
 
     virtual void extractParticles( Particles* particles_to_move );
-    virtual int injectParticles( Particles* particles_to_move ) {return 0;};
+    virtual int injectParticles( Particles* particles_to_move ) {  std::cout << "Managed in sortParticles" << std::endl; return 0;};
+
+    virtual unsigned int gpu_size() const {  std::cout << "Should not came here" << std::endl; return 0;};
 
 
 private:

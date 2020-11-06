@@ -20,6 +20,9 @@
 #include <iomanip>
 #include <string>
 #include <omp.h>
+#ifdef _GPU
+#include <openacc.h>
+#endif
 
 #include "Smilei.h"
 #include "SmileiMPI_test.h"
@@ -68,6 +71,15 @@ int main( int argc, char *argv[] )
     TITLE( "Reading the simulation parameters" );
     Params params( &smpi, vector<string>( argv + 1, argv + argc ) );
     OpenPMDparams openPMD( params );
+
+#ifdef _GPU
+    int ngpus = acc_get_num_devices( acc_device_nvidia );
+    if ( (ngpus>0) && (params.gpu_computing) ) {
+        int gpunum = smpi.getRank()%ngpus;
+        cout << gpunum << endl;
+        acc_set_device_num( gpunum, acc_device_nvidia );
+    }
+#endif
 
     // Need to move it here because of domain decomposition need in smpi->init(_patch_count)
     //     abstraction of Hilbert curve
@@ -161,6 +173,11 @@ int main( int argc, char *argv[] )
 
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
         vecPatches.sortAllParticles( params );
+
+        if (params.gpu_computing) {
+            TITLE( "Init GPU" );
+            vecPatches.initGPU( &smpi );
+        }
 
         // Initialize the electromagnetic fields
         // -------------------------------------

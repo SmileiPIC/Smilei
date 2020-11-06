@@ -1151,6 +1151,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
         timers.syncField.update( params.printNow( itime ) );
 
+        timers.maxwellBC.restart();
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
@@ -1160,6 +1161,8 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
             }
         }
+        timers.maxwellBC.update( params.printNow( itime ) );
+
         if( params.is_spectral ) {
             saveOldRho( params );
         }
@@ -1232,6 +1235,7 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
             timers.syncField.update( params.printNow( itime ) );
         }
 
+        timers.maxwellBC.restart();
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
@@ -1246,6 +1250,7 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
             //    ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
             //}
         }
+        timers.maxwellBC.update( params.printNow( itime ) );
     }
 
 } // END finalizeSyncAndBCFields
@@ -1318,10 +1323,17 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
+    bool data_on_cpu_updated( false );
+
     // Global diags: scalars + particles
     timers.diags.restart();
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers[idiag]->restart();
+
+        if ( (params.gpu_computing) && ( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) && (!data_on_cpu_updated) && (itime>0) ) {
+            getDataBackFromGPU();
+            data_on_cpu_updated = true;
+        }
 
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
@@ -1346,6 +1358,11 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     // Local diags : fields, probes, tracks
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
         diag_timers[globalDiags.size()+idiag]->restart();
+
+        if ( (params.gpu_computing) && ( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) && (!data_on_cpu_updated) && (itime>0) ) {
+            getDataBackFromGPU();
+            data_on_cpu_updated = true;
+        }
 
         #pragma omp single
         localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
@@ -4041,3 +4058,89 @@ void VectorPatch::initNewEnvelope( Params &params )
         } // end loop on patches
     }
 } // END initNewEnvelope
+
+void VectorPatch::initGPU( SmileiMPI *smpi )
+{
+#ifdef _GPU
+    int npatches = this->size();
+    int nspecies =  patches_[0]->vecSpecies.size();
+
+    int sizeofJx = patches_[0]->EMfields->Jx_->globalDims_;
+    int sizeofJy = patches_[0]->EMfields->Jy_->globalDims_;
+    int sizeofJz = patches_[0]->EMfields->Jz_->globalDims_;
+    int sizeofRho = patches_[0]->EMfields->rho_->globalDims_;
+
+    int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
+    int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
+    int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
+
+    for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+
+        // Initialize  particles data structures on GPU, and synchronize it
+        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+            Species *spec = species( ipatch, ispec );
+            spec->particles->initGPU();
+            spec->particles_to_move->initGPU();
+        }
+
+        double* Jx = &(patches_[ipatch]->EMfields->Jx_->data_[0]);
+        double* Jy = &(patches_[ipatch]->EMfields->Jy_->data_[0]);
+        double* Jz = &(patches_[ipatch]->EMfields->Jz_->data_[0]);
+        double* Rho = &(patches_[ipatch]->EMfields->rho_->data_[0]);
+        double* Ex = &(patches_[ipatch]->EMfields->Ex_->data_[0]);
+        double* Ey = &(patches_[ipatch]->EMfields->Ey_->data_[0]);
+        double* Ez = &(patches_[ipatch]->EMfields->Ez_->data_[0]);
+        double* Bxm = &(patches_[ipatch]->EMfields->Bx_m->data_[0]);
+        double* Bym = &(patches_[ipatch]->EMfields->By_m->data_[0]);
+        double* Bzm = &(patches_[ipatch]->EMfields->Bz_m->data_[0]);
+
+        #pragma acc enter data copyin(Jx[0:sizeofJx],Jy[0:sizeofJy],Jz[0:sizeofJz],Rho[0:sizeofRho])
+        #pragma acc enter data copyin(Ex[0:sizeofJx],Ey[0:sizeofJy],Ez[0:sizeofJz])
+        #pragma acc enter data copyin(Bxm[0:sizeofBx],Bym[0:sizeofBy],Bzm[0:sizeofBz])
+
+        double* Bx = &(patches_[ipatch]->EMfields->Bx_->data_[0]);
+        double* By = &(patches_[ipatch]->EMfields->By_->data_[0]);
+        double* Bz = &(patches_[ipatch]->EMfields->Bz_->data_[0]);
+
+        #pragma acc enter data copyin(Bx[0:sizeofBx],By[0:sizeofBy],Bz[0:sizeofBz])
+
+    }
+#endif
+}
+
+void VectorPatch::getDataBackFromGPU()
+{
+#ifdef _GPU
+    int npatches = this->size();
+    int nspecies =  patches_[0]->vecSpecies.size();
+
+    int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
+    int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
+    int sizeofEz = patches_[0]->EMfields->Ez_->globalDims_;
+    int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
+    int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
+    int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
+
+    for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+            Species *spec = species( ipatch, ispec );
+            spec->particles->syncCPU();
+        }
+
+        double* Ex = &(patches_[ipatch]->EMfields->Ex_->data_[0]);
+        double* Ey = &(patches_[ipatch]->EMfields->Ey_->data_[0]);
+        double* Ez = &(patches_[ipatch]->EMfields->Ez_->data_[0]);
+        double* Bx = &(patches_[ipatch]->EMfields->Bx_->data_[0]);
+        double* By = &(patches_[ipatch]->EMfields->By_->data_[0]);
+        double* Bz = &(patches_[ipatch]->EMfields->Bz_->data_[0]);
+        double* Bmx = &(patches_[ipatch]->EMfields->Bx_m->data_[0]);
+        double* Bmy = &(patches_[ipatch]->EMfields->By_m->data_[0]);
+        double* Bmz = &(patches_[ipatch]->EMfields->Bz_m->data_[0]);
+        double* Jx = &(patches_[ipatch]->EMfields->Jx_->data_[0]);
+        double* Jy = &(patches_[ipatch]->EMfields->Jy_->data_[0]);
+        double* Jz = &(patches_[ipatch]->EMfields->Jz_->data_[0]);
+
+        #pragma acc update host(Ex[0:sizeofEx],Ey[0:sizeofEy],Ez[0:sizeofEz],Bmx[0:sizeofBx],Bmy[0:sizeofBy],Bmz[0:sizeofBz])
+    }
+#endif
+}

@@ -250,7 +250,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
         if (imode == 0) e_delta = 1. ; //Restore e_delta correct initial value.
     }// end loop on modes
-    
+
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
 // ---------------------------------------------------------------------------------------------------------------------

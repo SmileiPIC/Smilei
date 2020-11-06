@@ -26,6 +26,10 @@ void internal_inf( Particles &particles, SmileiMPI* smpi, int imin, int imax,
     nrj_iPart = 0.;     // no energy loss during exchange
     double* position = particles.getPtrPosition(direction);
     int* cell_keys = particles.getPtrCellKeys();
+#ifdef _GPU
+    #pragma acc parallel deviceptr(position,cell_keys)
+    #pragma acc loop gang worker vector
+#endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf) {
             cell_keys[ ipart ] = -1;
@@ -40,6 +44,10 @@ void internal_sup( Particles &particles, SmileiMPI* smpi, int imin, int imax,
     nrj_iPart = 0.;     // no energy loss during exchange
     double* position = particles.getPtrPosition(direction);
     int* cell_keys = particles.getPtrCellKeys();
+#ifdef _GPU
+    #pragma acc parallel deviceptr(position,cell_keys)
+    #pragma acc loop gang worker vector
+#endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
             cell_keys[ ipart ] = -1;
@@ -86,6 +94,10 @@ void reflect_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, int 
     nrj_iPart = 0.;     // no energy loss during reflection
     double* position = particles.getPtrPosition(direction);
     double* momentum = particles.getPtrMomentum(direction);
+#ifdef _GPU
+    #pragma acc parallel deviceptr(position,momentum)
+    #pragma acc loop gang worker vector
+#endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf ) {
             position[ ipart ] = 2.*limit_inf - position[ ipart ];
@@ -101,6 +113,10 @@ void reflect_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, int 
     nrj_iPart = 0.;     // no energy loss during reflection
     double* position = particles.getPtrPosition(direction);
     double* momentum = particles.getPtrMomentum(direction);
+#ifdef _GPU
+    #pragma acc parallel deviceptr(position,momentum)
+    #pragma acc loop gang worker vector
+#endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
             position[ ipart ] = 2*limit_sup - position[ ipart ];

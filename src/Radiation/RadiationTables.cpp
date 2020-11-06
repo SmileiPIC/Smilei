@@ -26,7 +26,6 @@ RadiationTables::RadiationTables()
     
     minimum_chi_continuous_ = 1e-3;
     minimum_chi_discontinuous_ = 1e-2;
-    
     // Default init of the tables
     RadiationTablesDefault::setDefault( niel_, integfochi_, xi_ );
 

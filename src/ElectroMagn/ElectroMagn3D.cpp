@@ -5,6 +5,10 @@
 #include <iostream>
 #include <sstream>
 
+#ifdef _GPU
+#include <openacc.h>
+#endif
+
 #include "Params.h"
 #include "Field3D.h"
 #include "FieldFactory.h"
@@ -1019,21 +1023,41 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 {
     // Static cast of the fields
     if( !is_spectral ) {
-        Field3D *Bx3D   = static_cast<Field3D *>( Bx_ );
-        Field3D *By3D   = static_cast<Field3D *>( By_ );
-        Field3D *Bz3D   = static_cast<Field3D *>( Bz_ );
-        Field3D *Bx3D_m = static_cast<Field3D *>( Bx_m );
-        Field3D *By3D_m = static_cast<Field3D *>( By_m );
-        Field3D *Bz3D_m = static_cast<Field3D *>( Bz_m );
+        double *Bx3D   = &(Bx_->data_[0]);
+        double *By3D   = &(By_->data_[0]);
+        double *Bz3D   = &(Bz_->data_[0]);
+        double *Bx3D_m = &(Bx_m->data_[0]);
+        double *By3D_m = &(By_m->data_[0]);
+        double *Bz3D_m = &(Bz_m->data_[0]);
+
+        bool gpu_computing( false );
+
+#ifdef _GPU
+        if ( acc_deviceptr( Bx3D )!=NULL ) {
+            gpu_computing = true;
+
+            // Magnetic field Bx^(p,d,d)
+            acc_memcpy_device( acc_deviceptr( Bx3D_m ), acc_deviceptr( Bx3D ), nx_p*ny_d*nz_d*sizeof( double ) );
+
+            // Magnetic field By^(d,p,d)
+            acc_memcpy_device( acc_deviceptr( By3D_m ), acc_deviceptr( By3D ), nx_d*ny_p*nz_d*sizeof( double ) );
+
+            // Magnetic field Bz^(d,d,p)
+            acc_memcpy_device( acc_deviceptr( Bz3D_m ), acc_deviceptr( Bz3D ), nx_d*ny_d*nz_p*sizeof( double ) );
+
+        }
+#endif
+        if (!gpu_computing) {
+            // Magnetic field Bx^(p,d,d)
+            memcpy( Bx3D_m, Bx3D, nx_p*ny_d*nz_d*sizeof( double ) );
+
+            // Magnetic field By^(d,p,d)
+            memcpy( By3D_m, By3D, nx_d*ny_p*nz_d*sizeof( double ) );
+
+            // Magnetic field Bz^(d,d,p)
+            memcpy( Bz3D_m, Bz3D, nx_d*ny_d*nz_p*sizeof( double ) );
+        }
         
-        // Magnetic field Bx^(p,d,d)
-        memcpy( &( ( *Bx3D_m )( 0, 0, 0 ) ), &( ( *Bx3D )( 0, 0, 0 ) ), nx_p*ny_d*nz_d*sizeof( double ) );
-        
-        // Magnetic field By^(d,p,d)
-        memcpy( &( ( *By3D_m )( 0, 0, 0 ) ), &( ( *By3D )( 0, 0, 0 ) ), nx_d*ny_p*nz_d*sizeof( double ) );
-        
-        // Magnetic field Bz^(d,d,p)
-        memcpy( &( ( *Bz3D_m )( 0, 0, 0 ) ), &( ( *Bz3D )( 0, 0, 0 ) ), nx_d*ny_d*nz_p*sizeof( double ) );
     } else {
         Bx_m->deallocateDataAndSetTo( Bx_ );
         By_m->deallocateDataAndSetTo( By_ );
@@ -1116,36 +1140,70 @@ Field *ElectroMagn3D::createField( string fieldname, Params& params )
 void ElectroMagn3D::centerMagneticFields()
 {
     // Static cast of the fields
-    Field3D *Bx3D   = static_cast<Field3D *>( Bx_ );
-    Field3D *By3D   = static_cast<Field3D *>( By_ );
-    Field3D *Bz3D   = static_cast<Field3D *>( Bz_ );
-    Field3D *Bx3D_m = static_cast<Field3D *>( Bx_m );
-    Field3D *By3D_m = static_cast<Field3D *>( By_m );
-    Field3D *Bz3D_m = static_cast<Field3D *>( Bz_m );
+    double *Bx3D   = &(Bx_->data_[0]);
+    double *By3D   = &(By_->data_[0]);
+    double *Bz3D   = &(Bz_->data_[0]);
+    double *Bx3D_m = &(Bx_m->data_[0]);
+    double *By3D_m = &(By_m->data_[0]);
+    double *Bz3D_m = &(Bz_m->data_[0]);
+
+    int sizeofBx = Bx_->globalDims_;
+    int sizeofBy = By_->globalDims_;
+    int sizeofBz = Bz_->globalDims_;
     
     // Magnetic field Bx^(p,d,d)
+#ifdef _GPU
+    #pragma acc parallel present(Bx3D[0:sizeofBx],Bx3D_m[0:sizeofBx])
+    #pragma acc loop gang
+#endif
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
+#ifdef _GPU
+        #pragma acc loop worker
+#endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
+#ifdef _GPU
+            #pragma acc loop vector
+#endif
             for( unsigned int k=0 ; k<nz_d ; k++ ) {
-                ( *Bx3D_m )( i, j, k ) = ( ( *Bx3D )( i, j, k ) + ( *Bx3D_m )( i, j, k ) )*0.5;
+                Bx3D_m[ i*(ny_d*nz_d) + j*nz_d + k ] = ( Bx3D[ i*(ny_d*nz_d) + j*nz_d + k ] + Bx3D_m[ i*(ny_d*nz_d) + j*nz_d + k ] )*0.5;
             }
         }
     }
-    
+
     // Magnetic field By^(d,p,d)
+#ifdef _GPU
+    #pragma acc parallel present(By3D[0:sizeofBy],By3D_m[0:sizeofBy])
+    #pragma acc loop gang
+#endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
+#ifdef _GPU
+        #pragma acc loop worker
+#endif
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
+#ifdef _GPU
+            #pragma acc loop vector
+#endif
             for( unsigned int k=0 ; k<nz_d ; k++ ) {
-                ( *By3D_m )( i, j, k ) = ( ( *By3D )( i, j, k ) + ( *By3D_m )( i, j, k ) )*0.5;
+                By3D_m[ i*(ny_p*nz_d) + j*nz_d + k ] = ( By3D[ i*(ny_p*nz_d) + j*nz_d + k ] + By3D_m[ i*(ny_p*nz_d) + j*nz_d + k ] )*0.5;
             }
         }
     }
     
     // Magnetic field Bz^(d,d,p)
+#ifdef _GPU
+    #pragma acc parallel present(Bz3D[0:sizeofBz],Bz3D_m[0:sizeofBz])
+    #pragma acc loop gang
+#endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
+#ifdef _GPU
+        #pragma acc loop worker
+#endif
         for( unsigned int j=0 ; j<ny_d ; j++ ) {
+#ifdef _GPU
+            #pragma acc loop vector
+#endif
             for( unsigned int k=0 ; k<nz_p ; k++ ) {
-                ( *Bz3D_m )( i, j, k ) = ( ( *Bz3D )( i, j, k ) + ( *Bz3D_m )( i, j, k ) )*0.5;
+                Bz3D_m[ i*(ny_d*nz_p) + j*nz_p + k ] = ( Bz3D[ i*(ny_d*nz_p) + j*nz_p + k ] + Bz3D_m[ i*(ny_d*nz_p) + j*nz_p + k ] )*0.5;
             }
         } // end for j
     } // end for i

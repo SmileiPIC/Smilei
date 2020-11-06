@@ -1,0 +1,22 @@
+# module use /opt/exp_soft/vo.gridcl.fr/software/modules
+# module purge
+#
+# export PGI_HOME=/home/llr/galop/derouil/applications/pgi-19.10_mpi_2
+# export PATH=$PGI_HOME/linux86-64-llvm/19.10/bin:$PATH
+# export PATH=$PGI_HOME/linux86-64-llvm/2019/mpi/openmpi-3.1.3/bin:$PATH
+# export MANPATH=$PGI_HOME/linux86-64-llvm/19.10/man:$MANPATH
+#
+# export LD_LIBRARY_PATH=$PGI_HOME/linux86-64-llvm/19.10/lib:$LD_LIBRARY_PATH
+# export LD_LIBRARY_PATH=$PGI_HOME/linux86-64-llvm/2019/mpi/openmpi-3.1.3/lib:$LD_LIBRARY_PATH
+#
+# export HDF5_ROOT_DIR=/home/llr/galop/derouil/applications/hdf5-1.13
+# export LD_LIBRARY_PATH=$HDF5_ROOT_DIR/lib:$LD_LIBRARY_PATH
+#
+# module load cuda/10.1
+# export MANPATH=/usr/local/cuda-10.1/doc/man:$MANPATH
+
+ACCFLAGS += -ta=tesla:cc70
+LDFLAGS  += -ta=tesla:cc70 -L/usr/local/cuda-10.1/lib64 -lcudart
+
+CUFLAGS  += -arch=sm_70 -I/home/llr/galop/derouil/applications/pgi-19.10_mpi/linux86-64-llvm/2019/mpi/openmpi-3.1.3/include
+

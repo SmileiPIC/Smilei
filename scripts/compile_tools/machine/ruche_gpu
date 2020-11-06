@@ -1,0 +1,21 @@
+#
+# Machine file for Ruche GPU
+# __________________________________________________________
+#
+# Load the correct modules:
+#
+# module load cuda/10.1.243/intel-19.0.3.199 pgi/20.1/gcc-4.8.5 intel-mpi/2019.3.199/intel-19.0.3.199 hdf5/1.10.6/intel-19.0.3.199-intel-mpi
+# export HDF5_ROOT_DIR=/gpfs/softs/spack/opt/spack/linux-centos7-cascadelake/intel-19.0.3.199/hdf5-1.10.6-na3ilncuwbx2pdim2xaqwf23sgqza6qo
+# export SMILEICXX=mpiicpc
+# export I_MPI_CXX=pgc++
+#
+# export LD_LIBRARY_PATH=/gpfs/softs/spack/opt/spack/linux-centos7-haswell/gcc-4.8.5/intel-19.0.3-k6ro4ofsaw2mzxakwhkygta3ihg5e4aj/lib/intel64:$LD_LIBRARY_PATH 
+
+# For HDF5 (Intel compiled) compatibility in this PGI environment
+LDFLAGS  += -L/gpfs/softs/spack/opt/spack/linux-centos7-haswell/gcc-4.8.5/intel-19.0.3-k6ro4ofsaw2mzxakwhkygta3ihg5e4aj/lib/intel64 -lintlc -lsvml -lz
+
+ACCFLAGS += -ta=tesla:cc70
+LDFLAGS  += -ta=tesla:cc70 -L/gpfs/softs/spack/opt/spack/linux-centos7-haswell/gcc-4.8.5/pgi-20.1-5qavttbng2gxzgsoq6jujyocczsvlc2o/linux86-64-llvm/2020/cuda/10.1/lib64 -lcudart
+
+CUFLAGS  += -arch=sm_70
+

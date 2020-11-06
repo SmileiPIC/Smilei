@@ -3,7 +3,7 @@
 #define PARTICLESFACTORY_H
 
 #include "Particles.h"
-#ifdef _CUDA
+#ifdef _GPU
 #include "nvidiaParticles.h"
 #endif
 #include "Params.h"
@@ -17,7 +17,7 @@ public:
         if( !params.gpu_computing ) {
             particles = new Particles();
         }
-#ifdef _CUDA
+#ifdef _GPU
         else {
             particles = new nvidiaParticles();
         }

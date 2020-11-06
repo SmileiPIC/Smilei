@@ -7,6 +7,7 @@
 # PYTHON_CONFIG : the executable `python-config` usually shipped with python installation
 
 SMILEICXX ?= mpicxx
+SMILEICXX.DEPS ?= mpicxx
 HDF5_ROOT_DIR ?= $(HDF5_ROOT)
 BOOST_ROOT_DIR ?= $(BOOST_ROOT)
 BUILD_DIR ?= build
@@ -157,18 +158,14 @@ ifneq (,$(call parse_config,no_mpi_tm))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
-CUOBJS = ""
-ACCFLAGS = ""
 ifneq (,$(call parse_config,gpu))
-    #ACCFLAGS += -D_GPU -w -ta=tesla:cc70 -Minfo=accel
-    #LDFLAGS += -ta=tesla:cc70 -L/usr/local/cuda-10.1/lib64 -lcudart
-    #LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/pgi/19.10/linux86-64-llvm/2019/cuda/10.1/lib64 -lcudart
+    SMILEICXX.DEPS = g++
+    ACCFLAGS += -D_GPU -w -Minfo=accel
 
     CUSRCS := $(shell find src/* -name \*.cu)
     CUOBJS := $(addprefix $(BUILD_DIR)/, $(CUSRCS:.cu=.o))
     THRUSTCXX = nvcc
-    #CUFLAGS = -O3 -arch=sm_70 $(DIRS:%=-I%) -I/home/llr/galop/derouil/applications/pgi-19.10_mpi/linux86-64-llvm/2019/mpi/openmpi-3.1.3/include
-    CUFLAGS = -O3 -arch=sm_37 $(DIRS:%=-I%) -I/gpfs1l/opt/Intel/impi_5.0.1/intel64/include
+    CUFLAGS += -O3 --std c++11 $(DIRS:%=-I%)
     CUFLAGS += $(shell $(PYTHONCONFIG) --includes)
 
     OBJS += $(CUOBJS)
@@ -221,7 +218,7 @@ $(BUILD_DIR)/%.pyh: %.py
 $(BUILD_DIR)/%.d: %.cpp
 	@echo "Checking dependencies for $<"
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
+	$(Q) $(SMILEICXX.DEPS) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
@@ -238,7 +235,7 @@ $(BUILD_DIR)/src/Radiation/RadiationTablesDefault.o : src/Radiation/RadiationTab
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
 	@echo "Compiling $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCFLAGS)-c $< -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCFLAGS) -c $< -o $@
 
 # Compile cus
 $(BUILD_DIR)/%.o : %.cu
@@ -254,7 +251,7 @@ $(EXEC): $(OBJS)
 # Compile the the main program again for test mode
 $(BUILD_DIR)/src/Smilei_test.o: src/Smilei.cpp $(EXEC)
 	@echo "Compiling src/Smilei.cpp for test mode"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -DSMILEI_TESTMODE -c src/Smilei.cpp -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCFLAGS) -DSMILEI_TESTMODE -c src/Smilei.cpp -o $@
 
 # Link the main program for test mode
 $(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)

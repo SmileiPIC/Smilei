@@ -2,7 +2,10 @@
 
 #include <cmath>
 #include <iostream>
-
+#ifdef _GPU
+#include <accelmath.h>
+#include <openacc.h>
+#endif
 #include "ElectroMagn.h"
 #include "Field3D.h"
 #include "Particles.h"
@@ -53,24 +56,32 @@ Projector3D2OrderGPU::~Projector3D2OrderGPU()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particles &particles, int istart, int iend, double *invgf, int *iold, double *deltaold )
+void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles, int istart, int iend, double *invgf, int *iold, double *deltaold )
 {
+    double* Jx =  &( *EMfields->Jx_ )( 0 );
+    double* Jy =  &( *EMfields->Jy_ )( 0 );
+    double* Jz =  &( *EMfields->Jz_ )( 0 );
+
     double* position_x = particles.getPtrPosition(0);
     double* position_y = particles.getPtrPosition(1);
     double* position_z = particles.getPtrPosition(2);
     short  *charge = particles.getPtrCharge();
     double *weight = particles.getPtrWeight();
 
-    int nparts = particles.size();
+    int nparts = particles.last_index.back();
+
+    int sizeofEx = EMfields->Jx_->globalDims_;
+    int sizeofEy = EMfields->Jy_->globalDims_;
+    int sizeofEz = EMfields->Jz_->globalDims_;
 
     if (iend==istart)
         return;
 
-    int packsize = 8;
+    int packsize = nparts;
     int npack = (iend-istart)/packsize;
     if ( npack*packsize!=iend-istart )
         npack++;
-
+#ifndef _GPU
     double* Sx0 = (double*) malloc( 5*packsize*sizeof(double) ); //acc_malloc
     double* Sy0 = (double*) malloc( 5*packsize*sizeof(double) ); // "
     double* Sz0 = (double*) malloc( 5*packsize*sizeof(double) );
@@ -78,12 +89,23 @@ void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particl
     double* DSy = (double*) malloc( 5*packsize*sizeof(double) );
     double* DSz = (double*) malloc( 5*packsize*sizeof(double) );
     double* sumX = (double*) malloc( 5*packsize*sizeof(double) ); 
-
+#else
+    double* Sx0 = (double*) acc_malloc( 5*packsize*sizeof(double) );
+    double* Sy0 = (double*) acc_malloc( 5*packsize*sizeof(double) );
+    double* Sz0 = (double*) acc_malloc( 5*packsize*sizeof(double) );
+    double* DSx = (double*) acc_malloc( 5*packsize*sizeof(double) );
+    double* DSy = (double*) acc_malloc( 5*packsize*sizeof(double) );
+    double* DSz = (double*) acc_malloc( 5*packsize*sizeof(double) );
+    double* sumX = (double*) acc_malloc( 5*packsize*sizeof(double) );
+#endif
     for (int ipack=0 ; ipack<npack ; ipack++) {
         int istart_pack = istart+ipack*packsize;
         int iend_pack = (ipack+1)*packsize;
         iend_pack = istart + min( iend-istart, iend_pack );
-
+#ifdef _GPU
+        #pragma acc parallel present( iold[0:3*nparts], deltaold[0:3*nparts] ) deviceptr( position_x, position_y, position_z, Sx0, Sy0, Sz0, DSx, DSy, DSz )
+        #pragma acc loop gang worker vector
+#endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
             int ipart_pack = ipart - (istart+ipack*packsize);
 
@@ -183,15 +205,38 @@ void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particl
             // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
             iold[ipart+1*nparts] -= 2;
             iold[ipart+2*nparts] -= 2;
+        }
     
-            // Jx^(d,p,p)
+        // Jx^(d,p,p)
+#ifdef _GPU
+        #pragma acc parallel deviceptr( DSx, sumX )
+        #pragma acc loop gang worker vector
+#endif
+        for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
+            int ipart_pack = ipart - ipack*packsize;
+
             sumX[ipart_pack+0*packsize] = 0.;
             for( unsigned int k=1 ; k<5 ; k++ ) {
-                sumX[ipart_pack+k*packsize] = sumX[ipart_pack+(k-1)*packsize]-DSy[ ipart_pack+(k-1)*packsize ];
+                sumX[ipart_pack+k*packsize] = sumX[ipart_pack+(k-1)*packsize]-DSx[ ipart_pack+(k-1)*packsize ];
             }
+        }
+
+#ifdef _GPU
+        #pragma acc parallel present( iold[0:3*nparts], Jx[0:sizeofEx] ) deviceptr( charge, weight, Sy0, Sz0, DSy, DSz, sumX ) vector_length(8)
+        #pragma acc loop gang worker
+#endif
+        for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
+            int ipart_pack = ipart - ipack*packsize;
+
+            double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
+            double crx_p = charge_weight*dx_ov_dt;
+
             int  z_size0 = nprimz;
             int yz_size0 = nprimz*nprimy;
             int linindex0 = iold[ipart+0*nparts]*yz_size0+iold[ipart+1*nparts]*z_size0+iold[ipart+2*nparts];
+#ifdef _GPU
+            #pragma acc loop vector
+#endif
             for( int k=0 ; k<5 ; k++ ) {
                 for( int j=0 ; j<5 ; j++ ) {
                     double tmp = crx_p * ( Sy0[ipart_pack+j*packsize]*Sz0[ipart_pack+k*packsize] + 0.5*DSy[ipart_pack+j*packsize]*Sz0[ipart_pack+k*packsize] + 0.5*DSz[ipart_pack+k*packsize]*Sy0[ipart_pack+j*packsize] + one_third*DSy[ipart_pack+j*packsize]*DSz[ipart_pack+k*packsize] );
@@ -199,19 +244,46 @@ void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particl
                     for( int i=1 ; i<5 ; i++ ) {
                         double val = sumX[ipart_pack+(i)*packsize] * tmp;
                         int jdx = idx + i*yz_size0;
+#ifdef _GPU
+                        #pragma acc atomic
+#endif
                         Jx [ jdx ] += val;
                     }
                 }
             }//i
+        }
 
-            // Jy^(p,d,p)
+        // Jy^(p,d,p)
+#ifdef _GPU
+        #pragma acc parallel deviceptr( DSy, sumX )
+        #pragma acc loop gang worker vector
+#endif
+        for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
+            int ipart_pack = ipart - ipack*packsize;
+
             sumX[ipart_pack+0*packsize] = 0.;
             for( unsigned int k=1 ; k<5 ; k++ ) {
                 sumX[ipart_pack+k*packsize] = sumX[ipart_pack+(k-1)*packsize]-DSy[ ipart_pack+(k-1)*packsize ];
-            }                                   
+            }
+        }
+
+#ifdef _GPU
+        #pragma acc parallel present( iold[0:3*nparts], Jy[0:sizeofEy] ) deviceptr( charge, weight, Sx0, Sz0, DSx, DSz, sumX ) vector_length(8)
+        #pragma acc loop gang worker
+#endif
+        for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
+            int ipart_pack = ipart - ipack*packsize;
+
+
+            double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
+            double cry_p = charge_weight*dy_ov_dt;
+
             int  z_size1 = nprimz;
             int yz_size1 = nprimz*( nprimy+1 );
             int linindex1 = iold[ipart+0*nparts]*yz_size1+iold[ipart+1*nparts]*z_size1+iold[ipart+2*nparts];
+#ifdef _GPU
+            #pragma acc loop vector
+#endif
             for( int k=0 ; k<5 ; k++ ) {
                 for( int i=0 ; i<5 ; i++ ) {
                     double tmp = cry_p * ( Sz0[ipart_pack+k*packsize]*Sx0[ipart_pack+i*packsize] + 0.5*DSz[ipart_pack+k*packsize]*Sx0[ipart_pack+i*packsize] + 0.5*DSx[ipart_pack+i*packsize]*Sz0[ipart_pack+k*packsize] + one_third*DSz[ipart_pack+k*packsize]*DSx[ipart_pack+i*packsize] );
@@ -219,19 +291,45 @@ void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particl
                     for( int j=1 ; j<5 ; j++ ) {
                         double val = sumX[ipart_pack+(j)*packsize] * tmp;
                         int jdx = idx + j*z_size1;
+#ifdef _GPU
+                        #pragma acc atomic
+#endif
                         Jy [ jdx ] += val;
                     }
                 }
             }//i
+        }
 
-            // Jz^(p,p,d)
+        // Jz^(p,p,d)
+#ifdef _GPU
+        #pragma acc parallel deviceptr( DSz, sumX )
+        #pragma acc loop gang worker vector 
+#endif
+        for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
+            int ipart_pack = ipart - ipack*packsize;
+
             sumX[ipart_pack+0*packsize] = 0.;
             for( unsigned int k=1 ; k<5 ; k++ ) {
                 sumX[ipart_pack+k*packsize] = sumX[ipart_pack+(k-1)*packsize]-DSz[ ipart_pack+(k-1)*packsize ];
             }
+        }
+
+#ifdef _GPU
+        #pragma acc parallel present( iold[0:3*nparts], Jz[0:sizeofEz] ) deviceptr( charge, weight, Sx0, Sy0, DSx, DSy, sumX ) vector_length(4)
+        #pragma acc loop gang worker
+#endif
+        for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
+            int ipart_pack = ipart - ipack*packsize;
+
+            double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
+            double crz_p = charge_weight*dz_ov_dt;
+
             int z_size2 =  nprimz+1;
             int yz_size2 = ( nprimz+1 )*nprimy;
             int linindex2 = iold[ipart+0*nparts]*yz_size2+iold[ipart+1*nparts]*z_size2+iold[ipart+2*nparts];
+#ifdef _GPU
+            #pragma acc loop vector
+#endif
             for( int k=1 ; k<5 ; k++ ) {
                 for( int i=0 ; i<5 ; i++ ) {
                     for( int j=0 ; j<5 ; j++ ) {
@@ -239,6 +337,9 @@ void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particl
                         int idx = linindex2 + j*z_size2 + i*yz_size2;
                         double val = sumX[ipart_pack+(k)*packsize] * tmp;
                         int jdx = idx + k;
+#ifdef _GPU
+                        #pragma acc atomic
+#endif
                         Jz[ jdx ] += val;
                     }
                 }
@@ -248,7 +349,7 @@ void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particl
         } // End for ipart
 
     } // End for ipack
-
+#ifndef _GPU
     free( Sx0 ); // acc_free
     free( Sy0 );
     free( Sz0 );
@@ -256,6 +357,15 @@ void Projector3D2OrderGPU::currents( double *Jx, double *Jy, double *Jz, Particl
     free( DSy );
     free( DSz );
     free( sumX );
+#else
+    acc_free( Sx0 ); // acc_free
+    acc_free( Sy0 );
+    acc_free( Sz0 );
+    acc_free( DSx );
+    acc_free( DSy );
+    acc_free( DSz );
+    acc_free( sumX );
+#endif
 
 } // END Project local current densities (Jx, Jy, Jz, sort)
 
@@ -661,7 +771,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
         if( !is_spectral ) {        
-            currents( Jx_, Jy_, Jz_, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
+            currents( EMfields, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
         } else {
             for( int ipart=istart ; ipart<iend; ipart++ ) {
                 currentsAndDensity( Jx_, Jy_, Jz_, rho_, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
@@ -673,9 +783,10 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
         double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
         double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
         double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-            currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
-        }
+        currents( EMfields, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
+        //for( int ipart=istart ; ipart<iend; ipart++ ) {
+        //    currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
+        //}
     }
     
 }

@@ -127,7 +127,7 @@ public:
         std::ostringstream tot( "" );
         tot << s1 << s2 << s3 << s4;
         return tot.str();
-    };
+    }
 };
 
 

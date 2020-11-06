@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <cmath>
+#ifdef _GPU
+#include <accelmath.h>
+#endif
 
 #include "Species.h"
 
@@ -53,9 +56,9 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         position_old[i] =  &( particles.position_old( i, 0 ) );
     }
 #endif
-    short *charge = &( particles.charge( 0 ) );
+    short *charge = particles.getPtrCharge();
     
-    int nparts = particles.size();
+    int nparts = particles.last_index.back();
     double *Ex = &( ( *Epart )[0*nparts] );
     double *Ey = &( ( *Epart )[1*nparts] );
     double *Ez = &( ( *Epart )[2*nparts] );
@@ -63,7 +66,13 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
     
+#ifndef _GPU
     #pragma omp simd
+#else
+    int np = iend-istart;
+    #pragma acc parallel present(Ex[istart:np],Ey[istart:np],Ez[istart:np],Bx[istart:np],By[istart:np],Bz[istart:np],invgf[0:nparts]) deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z,charge)
+    #pragma acc loop gang worker vector
+#endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
         

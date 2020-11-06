@@ -338,6 +338,17 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
+#ifdef _GPU
+        int np = particles->last_index.back();
+        double* E = &(smpi->dynamics_Epart[0][0]);
+        double* B = &(smpi->dynamics_Bpart[0][0]);
+        double* gf = &(smpi->dynamics_invgf[0][0]);
+        int* iold = &(smpi->dynamics_iold[0][0]);
+        double* deltaold = &(smpi->dynamics_deltaold[0][0]);
+        #pragma acc data create(E[0:3*np],B[0:3*np],gf[0:np],iold[0:3*np],deltaold[0:3*np])
+        {
+
+#endif
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 
 #ifdef  __DETAILED_TIMERS
@@ -537,6 +548,10 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 //            }
 //        }
 
+#ifdef _GPU
+        }
+        #pragma acc exit data delete(E[0:3*np],B[0:3*np],gf[0:np],iold[0:3*np],deltaold[0:3*np])
+#endif
     } //End if moving or ionized particles
 
     if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
