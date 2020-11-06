@@ -721,7 +721,7 @@ class TrackParticles(Diagnostic):
 		ax.set_ylabel(self.axes[0]+" ("+self.units.vname+")")
 		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
 		ax.set_title(self._title) # override title
-		self._setOptions(ax)
+		self._setAxesOptions(ax)
 		return self._plot
 	
 	def _animateOnAxes_2D(self, ax, t):
@@ -761,7 +761,7 @@ class TrackParticles(Diagnostic):
 		ax.set_ylabel(self._ylabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		self._setTitle(ax, t)
-		self._setOptions(ax)
+		self._setAxesOptions(ax)
 		return 1
 	
 	_plotOnAxes_0D = _animateOnAxes_0D

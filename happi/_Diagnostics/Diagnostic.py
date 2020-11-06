@@ -353,7 +353,8 @@ class Diagnostic(object):
 			self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
 		except AttributeError:
 			ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
-		self._setOptions(ax)
+			self._setColorbarOptions(ax.cax)
+		self._setAxesOptions(ax)
 		self._plt.draw()
 		self._plt.pause(0.00001)
 
@@ -679,7 +680,7 @@ class Diagnostic(object):
 		ax.set_xlabel(self._tlabel, self.options.labels_font["xlabel"])
 		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setTitle(ax, t)
-		self._setOptions(ax)
+		self._setAxesOptions(ax)
 		return self._plot
 	def _plotOnAxes_1D(self, ax, t, cax_id=0):
 		A = self._dataAtTime(t)
@@ -689,7 +690,7 @@ class Diagnostic(object):
 		ax.set_ylabel(self._ylabel, self.options.labels_font["ylabel"])
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setTitle(ax, t)
-		self._setOptions(ax)
+		self._setAxesOptions(ax)
 		return self._plot
 	def _plotOnAxes_2D(self, ax, t, cax_id=0):
 		A = self._dataAtTime(t)
@@ -702,7 +703,8 @@ class Diagnostic(object):
 		if "aspect" not in self.options.colorbar.keys() or self.options.colorbar["aspect"]>0:
 			ax.cax[cax_id] = ax.figure.colorbar(mappable=self._plot, ax=ax, use_gridspec=False, **self.options.colorbar)
 		self._setTitle(ax, t)
-		self._setOptions(ax)
+		self._setAxesOptions(ax)
+		self._setColorbarOptions(ax.cax[cax_id].ax)
 		return self._plot
 
 	# Methods to re-plot
@@ -758,7 +760,7 @@ class Diagnostic(object):
 		if t is not None:
 			title += ["t = %.2f "%(t*self.timestep*self.units.tcoeff)+self.units.tname]
 		ax.set_title("  ".join(title), self.options.labels_font["title"])
-	def _setOptions(self, ax):
+	def _setAxesOptions(self, ax):
 		# Generic axes option
 		for option, value in self.options.axes.items():
 			if type(value) is dict:
@@ -786,7 +788,12 @@ class Diagnostic(object):
 		except:
 			if self._verbose: print("Cannot format y ticks (typically happens with log-scale)")
 			self.options.ytick = []
-
+	def _setColorbarOptions(self, ax):
+		# Colorbar tick font
+		if self.options.colorbar_font:
+			ticklabels = ax.get_yticklabels()
+			self._plt.setp(ticklabels, **self.options.colorbar_font)
+	
 	# Define and output directory in case of exporting
 	def _setExportDir(self, diagName):
 		if self.options.export_dir is not None:
