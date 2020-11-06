@@ -9,6 +9,7 @@
 // ----------------------------------------------------------------------------
 
 #include "RadiationTables.h"
+#include "RadiationTablesDefault.h"
 #include "H5.h"
 
 // -----------------------------------------------------------------------------
@@ -27,7 +28,7 @@ RadiationTables::RadiationTables()
     minimum_chi_discontinuous_ = 1e-2;
     
     // Default init of the tables
-    setDefault();
+    RadiationTablesDefault::setDefault( niel_, integfochi_, xi_ );
 
 }
 

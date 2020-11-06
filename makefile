@@ -173,6 +173,7 @@ ifneq (,$(call parse_config,gpu))
 
     OBJS += $(CUOBJS)
 endif
+CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
 
 #-----------------------------------------------------
 # Set the verbosity prefix
@@ -225,6 +226,14 @@ $(BUILD_DIR)/%.d: %.cpp
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
 	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCFLAGS) -O1 -c $< -o $@
+
+$(BUILD_DIR)/src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.o : src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.cpp
+	@echo "SPECIAL COMPILATION FOR $<"
+	$(Q) $(SMILEICXX) $(CXXFLAGS0) -c $< -o $@
+
+$(BUILD_DIR)/src/Radiation/RadiationTablesDefault.o : src/Radiation/RadiationTablesDefault.cpp
+	@echo "SPECIAL COMPILATION FOR $<"
+	$(Q) $(SMILEICXX) $(CXXFLAGS0) -c $< -o $@
 
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp

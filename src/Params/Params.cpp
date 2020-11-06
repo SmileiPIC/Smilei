@@ -198,17 +198,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         smpi->barrier();
     }
 
-    // Now the string "namelist" contains all the python files concatenated
-    // It is written as a file: smilei.py
-    if( smpi->isMaster() ) {
-        ofstream out_namelist( "smilei.py" );
-        if( out_namelist.is_open() ) {
-            out_namelist << "# coding: utf-8" << endl << endl ;
-            out_namelist << namelist;
-            out_namelist.close();
-        }
-    }
-
     // random seed
     if( PyTools::extractOrNone( "random_seed", random_seed, "Main" ) ) {
         // Init of the seed for the vectorized C++ random generator recommended by Intel
@@ -790,6 +779,20 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // also defines defaults values for the species lengths
     // -------------------------------------------------------
     compute();
+ 
+    // add the read or computed value of clrw to the content of smilei.py
+    namelist += string( "Main.clrw= " ) + to_string( clrw ) + "\n";
+
+    // Now the string "namelist" contains all the python files concatenated
+    // It is written as a file: smilei.py
+    if( smpi->isMaster() ) {
+        ofstream out_namelist( "smilei.py" );
+        if( out_namelist.is_open() ) {
+            out_namelist << "# coding: utf-8" << endl << endl ;
+            out_namelist << namelist;
+            out_namelist.close();
+        }
+    }
 
     // -------------------------------------------------------
     // Print

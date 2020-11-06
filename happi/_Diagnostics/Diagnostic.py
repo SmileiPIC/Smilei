@@ -732,7 +732,7 @@ class Diagnostic(object):
 		vmax = self.options.vmax
 		if vmax is None: vmax = A.max()
 		self._plot.set_clim(vmin, vmax)
-		ax.cax[cax_id].set_clim(vmin, vmax)
+		ax.cax[cax_id].mappable.set_clim(vmin, vmax)
 		self._setTitle(ax, t)
 		return self._plot
 

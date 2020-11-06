@@ -29,7 +29,7 @@ Validate("Species probe", S.Probe(0, 'Rho_eon1', timesteps=2000).getData()[0], 1
 #   check available quantities
 Validate("Performances available quantities", sorted(S.Performances().getAvailableQuantities()))
 #   check number of MPI processes
-with h5py.File("./restart000/Performances.h5") as f:
+with h5py.File("./restart000/Performances.h5", "r") as f:
 	MPI_SIZE = f.attrs["MPI_SIZE"]
 performances_size = len(S.Performances(raw="hindex").getData(timestep=0)[0])
 Validate("Performances MPI_SIZE", MPI_SIZE == performances_size)
