@@ -496,6 +496,19 @@ public:
                 ;
             // Copy positions of other species
             } else if( PyTools::isSpecies( this_species->position_initialization_ ) ) {
+                // Find the linked species
+                bool ok = false;
+                for( unsigned int ispec = 0; ispec<patch->vecSpecies.size(); ispec++ ) {
+                    if( patch->vecSpecies[ispec]->name_ == this_species->position_initialization_ ) {
+                        ok = true;
+                        this_species->position_initialization_on_species_index = ispec;
+                        break;
+                    }
+                }
+                // The link species must already exist
+                if( ok == false ) {
+                    ERROR( "For species '" << species_name << "' cannot initialize positions on a species ('"<<this_species->position_initialization_<<"') defined afterwards");
+                }
                 this_species->position_initialization_on_species_ = true;
             // HDF5 file where arrays are stored
             } else {
@@ -982,7 +995,6 @@ public:
         new_species->photon_species_                            = species->photon_species_;
         new_species->species_number_                           = species->species_number_;
         new_species->position_initialization_on_species_       = species->position_initialization_on_species_;
-        new_species->position_initialization_on_species_type_  = species->position_initialization_on_species_type_;
         new_species->position_initialization_on_species_index  = species->position_initialization_on_species_index;
         new_species->position_initialization_                  = species->position_initialization_;
         new_species->position_initialization_array_            = species->position_initialization_array_;
@@ -1113,51 +1125,7 @@ public:
             // Put the newly created species in the vector of species
             returned_species.push_back( this_species );
         }
-
-        // Loop species to find species which their particles positions is on another species
-        for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
-            if( returned_species[ispec1]->position_initialization_on_species_==true ) {
-                // If true then position_initialization of spec1 is not 'centered', 'regular' or 'random'
-                // So we have to check if :
-                // - 'position_initialization' of spec1 is another already created species name;
-                // - 'position_initialization' of spec1 is not the spec1 name;
-                // - 'position_initialization' of spec2 is centered,regular,random;
-                // - The number of particle of spec1 is equal to spec2
-
-                // Loop all other species
-                for( unsigned int ispec2 = 0; ispec2<returned_species.size(); ispec2++ ) {
-                    if( returned_species[ispec1]->position_initialization_ == returned_species[ispec2]->name_ ) {
-                        if( returned_species[ispec1]->position_initialization_==returned_species[ispec1]->name_ ) {
-                            ERROR( "For species '"<<returned_species[ispec1]->name_<<"' position_initialization must be different from '"<<returned_species[ispec1]->name_<<"'." );
-                        }
-                        if( returned_species[ispec2]->position_initialization_on_species_==true ) {
-                            ERROR( "For species '"<<returned_species[ispec2]->name_<<"' position_initialization must be 'centered', 'regular' or 'random' (pre-defined position) in order to attach '"<<returned_species[ispec1]->name_<<"' to its initial position." );
-                        }
-                        if( returned_species[ispec1]->getNbrOfParticles() != returned_species[ispec2]->getNbrOfParticles() ) {
-                            ERROR( "Number of particles in species '"<<returned_species[ispec1]->name_<<"' is not equal to the number of particles in species '"<<returned_species[ispec2]->name_<<"'." );
-                        }
-                        // We copy ispec2 which is the index of the species, already created, on which initialize particle of the new created species
-                        returned_species[ispec1]->position_initialization_on_species_index=ispec2;
-                        returned_species[ispec1]->position_initialization_on_species_type_ = returned_species[ispec2]->position_initialization_;
-                        // We copy position of species 2 (index ispec2), for position on species 1 (index ispec1)
-                        returned_species[ispec1]->particles->Position=returned_species[ispec2]->particles->Position;
-                    }
-                }
-                if( returned_species[ispec1]->position_initialization_on_species_index==-1 ) {
-                    ERROR( "For species '"<<returned_species[ispec1]->name_<<"', invalid initialisation '"<< returned_species[ispec1]->position_initialization_<<"'" );
-                }
-            } else {
-                returned_species[ispec1]->position_initialization_on_species_type_ = returned_species[ispec1]->position_initialization_;
-            }
-        }
-
-        // Update particles weight in specific case
-        if (params.geometry=="AMcylindrical") {
-            for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
-                ParticleCreator::regulateWeightwithPositionAM( returned_species[ispec1]->particles, returned_species[ispec1]->position_initialization_on_species_type_, returned_species[ispec1]->cell_length[1]  );
-            }
-        }
-
+        
         // Loop species to find related species
         for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
             
@@ -1273,15 +1241,7 @@ public:
             Species *new_species = SpeciesFactory::clone( vector_species[ispec], params, patch, with_particles );
             returned_species.push_back( new_species );
         }
-        patch->copyPositions(returned_species);
         
-        // Update particles weight in specific case
-        if (params.geometry=="AMcylindrical") {
-            for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
-                ParticleCreator::regulateWeightwithPositionAM( returned_species[ispec1]->particles, returned_species[ispec1]->position_initialization_on_species_type_, returned_species[ispec1]->cell_length[1]);
-            }
-        }
-
         // Ionization
         for( unsigned int i=0; i<returned_species.size(); i++ ) {
             if( returned_species[i]->Ionize ) {

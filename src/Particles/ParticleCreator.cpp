@@ -90,7 +90,6 @@ void ParticleCreator::associate( Species * species)
     
     position_initialization_ = species->position_initialization_;
     position_initialization_on_species_ = species->position_initialization_on_species_;
-    position_initialization_on_species_type_ = species->position_initialization_on_species_type_;
     momentum_initialization_ = species->momentum_initialization_;
     velocity_profile_.resize(species->velocity_profile_.size());
     for (unsigned int i = 0 ; i < velocity_profile_.size() ; i++) {
@@ -187,11 +186,10 @@ int ParticleCreator::create( struct SubSpace sub_space,
     if( species_->mass_ > 0 ) {
         // Initialize charge profile
         species_->charge_profile_->valuesAt( xyz, charge );
-        // Loop cells
+        // Find max charge
         for( unsigned int i=0; i< sub_space.box_size_[0]; i++ ) {
             for( unsigned int j=0; j< sub_space.box_size_[1]; j++ ) {
                 for( unsigned int k=0; k< sub_space.box_size_[2]; k++ ) {
-                    // Calculate max_charge_
                     if( charge( i, j, k ) > species_->max_charge_ ) {
                         species_->max_charge_ = charge( i, j, k );
                     }
@@ -202,7 +200,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
         charge.put_to( 0. );
     }
     
-    // POSITION & WEIGHT PROFILE
+    // WEIGHT & NPPC PROFILE
     if( species_->position_initialization_array_ == NULL
      && species_->file_position_npart_ == 0 ) {
         // Get density and ppc profiles
@@ -278,6 +276,15 @@ int ParticleCreator::create( struct SubSpace sub_space,
         // Increase array size
         particles_->initialize( n_existing_particles + n_new_particles, species_->nDim_particle );
         
+        // If requested, copy positions from other species
+        if( position_initialization_on_species_ ) {
+            unsigned int ispec = species_->position_initialization_on_species_index;
+            if( species_->getNbrOfParticles() != patch->vecSpecies[ispec]->getNbrOfParticles() ) {
+                ERROR( "Copying particles: species '"<<species_->name_<<"' and '"<<patch->vecSpecies[ispec]->name_<<"' should have the same number of particles");
+            }
+            particles_->Position = patch->vecSpecies[ispec]->particles->Position;
+        }
+        
         // Loop cells
         unsigned int iPart = n_existing_particles;
         double *indexes = new double[species_->nDim_particle];
@@ -307,7 +314,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                         temp[1] = temperature[1]( i, j, k );
                         temp[2] = temperature[2]( i, j, k );
                         
-                        if( !position_initialization_on_species_ ) {
+                        if( ! position_initialization_on_species_ ) {
                             ParticleCreator::createPosition( position_initialization_, regular_number_array_,  particles_, species_, nPart, iPart, indexes, params );
                         }
                         ParticleCreator::createMomentum( momentum_initialization_, particles_, species_,  nPart, iPart, &temp[0], &vel[0] );
@@ -322,7 +329,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                  species_->particles->last_index[(sub_space.cell_index_[0]+i)/species_->clrw] = iPart;
             }
         }//i
-        
+    
     } else if( n_existing_particles == 0 ) {
         // Here particles are created from a numpy array or from an HDF5 file
         // Based on a count sort to comply with initial sorting.
@@ -820,35 +827,29 @@ void ParticleCreator::createWeight( std::string position_initialization,
                                     Params &params )
 {
     double w = n_real_particles / nPart;
-    for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
+    for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
         particles->weight( p ) = w ;
     }
-}
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! For all (nPart) particles in a mesh initialize its numerical weight (equivalent to a number density)
-// ---------------------------------------------------------------------------------------------------------------------
-void ParticleCreator::regulateWeightwithPositionAM( Particles * particles, std::string position_initialization_on_species_type_, double dr )
-{
-    unsigned int nParts = particles->Weight.size();
-
-    if ( position_initialization_on_species_type_ == "regular" ){
-        //Particles in regular have a weight proportional to their position along r.
-        for (unsigned int ipart=0; ipart < nParts ; ipart++){
-            double radius = sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
-            particles->weight(ipart) *= radius;
+    
+    // In AM, we have a correction to make : multiply by radius
+    // because the "density" was computed with the cell section, not cell volume
+    // See above : density( i, j, k ) *= params.cell_volume;
+    // where params.cell_volume is 2*pi*dR*dL (in AM only)
+    if( params.geometry == "AMcylindrical" ) {
+        double total_weight = 0., radius = 0.;
+        for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
+            radius = sqrt(particles->position(1,iPart)*particles->position(1,iPart) + particles->position(2,iPart)*particles->position(2,iPart));
+            particles->weight( p ) *= radius;
+            total_weight += particles->weight( p );
         }
-    } else {
-        //Particles in AM have a weight proportional to their intial cell radius
-        double dr_inv = 1./dr;
-        for (unsigned int ipart=0; ipart < nParts ; ipart++){
-            double cell_radius = dr * (floor ( sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart)) * dr_inv) + 0.5);
-            particles->weight(ipart) *= cell_radius;
+        // We also need to renormalize in case total weight is not exaclty the same anymore
+        double cell_radius = params.cell_length[1] * (floor(radius/params.cell_length[1]) + 0.5);
+        double coeff = w * cell_radius / total_weight;
+        for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
+            particles->weight( p ) *= coeff;
         }
     }
 }
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize its charge state
