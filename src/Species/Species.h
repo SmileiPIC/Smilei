@@ -324,6 +324,9 @@ public:
 
     virtual void resizeCluster( Params & );
 
+    //! Initialize particles
+    void initParticles( Params &params, Patch *patch, bool with_particles = true, Particles * like_particles = NULL );
+
     //! Initialize operators (must be separate from parameters init, because of cloning)
     void initOperators( Params &, Patch * );
 
