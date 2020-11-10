@@ -463,27 +463,37 @@ class Diagnostic(object):
 		if not self._validate(): return
 		if not self._prepare(): return
 		if not self._setAndCheck(**kwargs): return
-		self.info()
 		ax = self._make_axes(axes)
 		fig = ax.figure
 		ax.set_position([0.1,0.2,0.85,0.7])
 		
-		from matplotlib.widgets import Slider
-		slider_axes = self._plt.axes([0.2, 0.05, 0.55, 0.03])
-		slider = Slider(slider_axes, 'time', self._timesteps[0], self._timesteps[-1], valinit=self._timesteps[0])
 		def update(t):
 			time = self._timesteps[(self._np.abs(self._timesteps - t)).argmin()]
 			self._animateOnAxes(ax, time)
 			self._plt.draw()
-		slider.on_changed(update)
 		
 		self._plotOnAxes(ax, self._timesteps[0])
 		
-		# We need to make a global variable to prevent garbage collecting
-		n = 0
-		while '_happi_slider%d'%n in globals(): n += 1
-		globals()['_happi_slider%d'%n] = slider
+		# Find out if jupyter notebook
+		jupyter = False
+		try:
+			if get_ipython().__class__.__name__ == 'ZMQInteractiveShell':
+				jupyter = True
+		except:
+			pass
 		
+		if jupyter:
+			from ipywidgets import FloatSlider, interact, VBox
+			self.slider = FloatSlider( value=self._timesteps[0], min=self._timesteps[0], max=self._timesteps[-1] )
+			self.slider.layout.width = "100%"
+			self.interact = interact( update, t=self.slider )
+		else:
+			from matplotlib.widgets import Slider
+			slider_axes = self._plt.axes([0.2, 0.05, 0.55, 0.03])
+			self.slider = Slider(slider_axes, 'time', self._timesteps[0], self._timesteps[-1], valinit=self._timesteps[0])
+			self.slider.on_changed(update)
+		
+		self.info()
 	
 	
 	# Method to select specific timesteps among those available in times
