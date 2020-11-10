@@ -935,8 +935,6 @@ public:
             ERROR( "For species '" << species_name << "' test & ionized is currently impossible" );
         }
         
-        this_species->initOperators( params, patch );
-        //MESSAGE("init operators");
         return this_species;
     } // End Species* create()
 
@@ -1053,8 +1051,6 @@ public:
         new_species->particles->isQuantumParameter            = species->particles->isQuantumParameter;
         new_species->particles->isMonteCarlo                  = species->particles->isMonteCarlo;
         
-        new_species->initOperators( params, patch );
-        
         return new_species;
     } // End Species* clone()
 
@@ -1080,9 +1076,10 @@ public:
             patch->vecSpecies.push_back( this_species );
         }
         
-        // Initialize particles
+        // Initialize particles & operators
         for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
             patch->vecSpecies[ispec]->initParticles( params, patch );
+            patch->vecSpecies[ispec]->initOperators( params, patch );
         }
         
         // Loop species to find related species
@@ -1199,9 +1196,10 @@ public:
             patch->vecSpecies.push_back( new_species );
         }
         
-        // Initialize particles
+        // Initialize particles & operators
         for( unsigned int i = 0; i < vector_species.size(); i++ ) {
             patch->vecSpecies[i]->initParticles( params, patch, with_particles, vector_species[i]->particles );
+            patch->vecSpecies[i]->initOperators( params, patch );
         }
         
         // Ionization
