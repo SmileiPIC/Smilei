@@ -33,6 +33,7 @@ Changes made in the repository (not released)
   * Photons could not be read from numpy array
   * DiagFields with ``time_average`` did not work for densities
   * Prescribed fields caused unstable real fields
+  * Initialisation from numpy or hdf5 caused wrong weights in AM geometry
 
 ----
 

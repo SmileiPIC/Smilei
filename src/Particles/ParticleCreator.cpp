@@ -337,7 +337,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
         // Get pointers to position arrays and find which particles are in the patch
         double *momentum[3], *position[species_->nDim_particle], *weight;
         std::vector< std::vector<double> > arrays( 4+species_->nDim_particle );
-        std::vector<unsigned int> my_particles_indices;
+        std::vector<unsigned int> my_particles_indices(0);
         bool init_momentum = species_->momentum_initialization_array_ || ( species_->file_momentum_npart_ > 0 );
         // Case of numpy array
         if( species_->position_initialization_array_ ) {
@@ -358,7 +358,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
             my_particles_indices = patch->indicesInDomain( position, species_->n_numpy_particles_ );
             
         // Case of HDF5 file
-        } else {
+        } else if( ! species_->position_initialization_.empty() ) {
             // Open file
             H5Read f( species_->position_initialization_ );
             // Loop in chunks
@@ -416,86 +416,87 @@ int ParticleCreator::create( struct SubSpace sub_space,
             }
         }
         
-        // Increase array size
+        // Create new particles
         n_new_particles = my_particles_indices.size();
         particles_->initialize( n_existing_particles + n_new_particles, species_->nDim_particle );
-        
-        // Prepare sorting
-        int nbins = species_->particles->first_index.size();
-        int indices[nbins];
-        double one_ov_dbin = 1. / ( species_->cell_length[0] * species_->clrw ) ;
-        for( int ibin=0; ibin < nbins ; ibin++ ) {
-            indices[ibin] = 0 ;
-        }
-        
-        // Compute proper indices for particles using a count sort
-        for( unsigned int ipart = 0; ipart < n_new_particles ; ipart++ ) {
-            unsigned int ip = my_particles_indices[ipart];
-            double x = position[0][ip]-species_->min_loc ;
-            int ibin = int( x * one_ov_dbin ) ;
-            indices[ibin] ++;
-        }
-        unsigned int tot=0;
-        for( int ibin=0; ibin < nbins; ibin++ ) {
-            unsigned int oc = indices[ibin];
-            indices[ibin] = tot;
-            tot += oc;
-        }
-        for( int ibin=0; ibin < nbins   ; ibin++ ) {
-            species_->particles->first_index[ibin] = indices[ibin] ;
-        }
-        for( int ibin=0; ibin < nbins-1 ; ibin++ ) {
-            species_->particles->last_index[ibin] = species_->particles->first_index[ibin+1] ;
-        }
-        species_->particles->last_index[nbins-1] = n_new_particles ;
-        
-        // Now initialize particles at their proper indices
-        for( unsigned int ipart = 0; ipart < n_new_particles ; ipart++ ) {
-            unsigned int ippy = my_particles_indices[ipart];// Index in the python array
-            double x = position[0][ippy]-species_->min_loc;
-            unsigned int ibin = int( x * one_ov_dbin );
-            int ip = indices[ibin]; // Index in the particles array
-            unsigned int int_ijk[3] = {0, 0, 0};
-            // Find the particle's cell
-            if( params.geometry != "AMcylindrical" ) {
+        if( n_new_particles > 0 ) {
+            // Prepare sorting
+            int nbins = species_->particles->first_index.size();
+            int indices[nbins];
+            double one_ov_dbin = 1. / ( species_->cell_length[0] * species_->clrw ) ;
+            for( int ibin=0; ibin < nbins ; ibin++ ) {
+                indices[ibin] = 0 ;
+            }
+            
+            // Compute proper indices for particles using a count sort
+            for( unsigned int ipart = 0; ipart < n_new_particles ; ipart++ ) {
+                unsigned int ip = my_particles_indices[ipart];
+                double x = position[0][ip]-species_->min_loc ;
+                int ibin = int( x * one_ov_dbin ) ;
+                indices[ibin] ++;
+            }
+            unsigned int tot=0;
+            for( int ibin=0; ibin < nbins; ibin++ ) {
+                unsigned int oc = indices[ibin];
+                indices[ibin] = tot;
+                tot += oc;
+            }
+            for( int ibin=0; ibin < nbins   ; ibin++ ) {
+                species_->particles->first_index[ibin] = indices[ibin] ;
+            }
+            for( int ibin=0; ibin < nbins-1 ; ibin++ ) {
+                species_->particles->last_index[ibin] = species_->particles->first_index[ibin+1] ;
+            }
+            species_->particles->last_index[nbins-1] = n_new_particles ;
+            
+            // Now initialize particles at their proper indices
+            for( unsigned int ipart = 0; ipart < n_new_particles ; ipart++ ) {
+                unsigned int ippy = my_particles_indices[ipart];// Index in the python array
+                double x = position[0][ippy]-species_->min_loc;
+                unsigned int ibin = int( x * one_ov_dbin );
+                int ip = indices[ibin]; // Index in the particles array
+                unsigned int int_ijk[3] = {0, 0, 0};
+                // Find the particle's cell
+                if( params.geometry != "AMcylindrical" ) {
+                    for( unsigned int idim=0; idim<species_->nDim_particle; idim++ ) {
+                        int_ijk[idim] = ( unsigned int )( ( position[idim][ippy] - species_->min_loc_vec[idim] )/species_->cell_length[idim] );
+                    }
+                } else {
+                    int_ijk[0] = ( unsigned int )( ( position[0][ippy] - species_->min_loc_vec[0] )/species_->cell_length[0] );
+                    int_ijk[1] = ( unsigned int )( ( sqrt( position[1][ippy]*position[1][ippy]+position[2][ippy]*position[2][ippy] )
+                                                - species_->min_loc_vec[1] )/species_->cell_length[1] );
+                }
+                // Assign position
                 for( unsigned int idim=0; idim<species_->nDim_particle; idim++ ) {
-                    int_ijk[idim] = ( unsigned int )( ( position[idim][ippy] - species_->min_loc_vec[idim] )/species_->cell_length[idim] );
+                    particles_->position( idim, ip ) = position[idim][ippy];
                 }
-            } else {
-                int_ijk[0] = ( unsigned int )( ( position[0][ippy] - species_->min_loc_vec[0] )/species_->cell_length[0] );
-                int_ijk[1] = ( unsigned int )( ( sqrt( position[1][ippy]*position[1][ippy]+position[2][ippy]*position[2][ippy] )
-                                               - species_->min_loc_vec[1] )/species_->cell_length[1] );
-            }
-            // Assign position
-            for( unsigned int idim=0; idim<species_->nDim_particle; idim++ ) {
-                particles_->position( idim, ip ) = position[idim][ippy];
-            }
-            // Assign momentum
-            if( init_momentum ) {
-                if( species_->mass_ == 0 ) { // photons
-                    for( unsigned int idim=0; idim < 3; idim++ ) {
-                        particles_->momentum( idim, ip ) = momentum[idim][ippy] ;
+                // Assign momentum
+                if( init_momentum ) {
+                    if( species_->mass_ == 0 ) { // photons
+                        for( unsigned int idim=0; idim < 3; idim++ ) {
+                            particles_->momentum( idim, ip ) = momentum[idim][ippy] ;
+                        }
+                    } else { // not photons
+                        for( unsigned int idim=0; idim < 3; idim++ ) {
+                            particles_->momentum( idim, ip ) = momentum[idim][ippy]/species_->mass_ ;
+                        }
                     }
-                } else { // not photons
-                    for( unsigned int idim=0; idim < 3; idim++ ) {
-                        particles_->momentum( idim, ip ) = momentum[idim][ippy]/species_->mass_ ;
-                    }
+                } else {
+                    double vel[3], temp[3];
+                    vel [0] = velocity   [0]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                    vel [1] = velocity   [1]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                    vel [2] = velocity   [2]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                    temp[0] = temperature[0]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                    temp[1] = temperature[1]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                    temp[2] = temperature[2]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                    ParticleCreator::createMomentum( momentum_initialization_, particles_, species_, 1, ip, temp, vel );
                 }
-            } else {
-                double vel[3], temp[3];
-                vel [0] = velocity   [0]( int_ijk[0], int_ijk[1], int_ijk[2] );
-                vel [1] = velocity   [1]( int_ijk[0], int_ijk[1], int_ijk[2] );
-                vel [2] = velocity   [2]( int_ijk[0], int_ijk[1], int_ijk[2] );
-                temp[0] = temperature[0]( int_ijk[0], int_ijk[1], int_ijk[2] );
-                temp[1] = temperature[1]( int_ijk[0], int_ijk[1], int_ijk[2] );
-                temp[2] = temperature[2]( int_ijk[0], int_ijk[1], int_ijk[2] );
-                ParticleCreator::createMomentum( momentum_initialization_, particles_, species_, 1, ip, temp, vel );
+                // Assign weight
+                particles_->weight( ip ) = weight[ippy];
+                // Assign charge
+                ParticleCreator::createCharge( particles_, species_, 1, ip, charge( int_ijk[0], int_ijk[1], int_ijk[2] ) );
+                indices[ibin]++;
             }
-            // Assign weight
-            particles_->weight( ip ) = weight[ippy];
-            // Assign charge
-            ParticleCreator::createCharge( particles_, species_, 1, ip, charge( int_ijk[0], int_ijk[1], int_ijk[2] ) );
-            indices[ibin]++;
         }
     }
     
