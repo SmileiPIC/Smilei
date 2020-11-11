@@ -686,9 +686,8 @@ Each species has to be defined in a ``Species`` block::
    * ``"random"`` for randomly distributed.
    * ``"centered"`` for centered in each cell.
    * The :py:data:`name` of another species from which the positions are copied.
-     This option requires (1) that the *target* species' positions are initialized
-     using one of the three other options above and (2) that the number of particles
-     of both species are identical in each cell.
+     The *source* species must have positions initialized using one of the three
+     other options above, and must be defined before this species.
    * A *numpy* array or an *HDF5* file defining all the positions of the particles.
      In this case you must also provide the weight of each particle (see :ref:`Weights`).
      See :doc:`particle_initialization`.
