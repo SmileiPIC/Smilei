@@ -845,7 +845,7 @@ void ParticleCreator::createWeight( std::string position_initialization,
         }
         // We also need to renormalize in case total weight is not exaclty the same anymore
         double cell_radius = params.cell_length[1] * (floor(radius/params.cell_length[1]) + 0.5);
-        double coeff = w * cell_radius / total_weight;
+        double coeff = n_real_particles * cell_radius / total_weight;
         for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
             particles->weight( p ) *= coeff;
         }
