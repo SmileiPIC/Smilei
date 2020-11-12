@@ -318,7 +318,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                             ParticleCreator::createPosition( position_initialization_, regular_number_array_,  particles_, species_, nPart, iPart, indexes, params );
                         }
                         ParticleCreator::createMomentum( momentum_initialization_, particles_, species_,  nPart, iPart, &temp[0], &vel[0] );
-                        ParticleCreator::createWeight( position_initialization_, particles_, nPart, iPart, density( i, j, k ), params );
+                        ParticleCreator::createWeight( position_initialization_, particles_, nPart, iPart, density( i, j, k ), params, patch );
                         ParticleCreator::createCharge( particles_, species_, nPart, iPart, charge( i, j, k ) );
                         
                         iPart += nPart;
@@ -825,7 +825,7 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
 // ---------------------------------------------------------------------------------------------------------------------
 void ParticleCreator::createWeight( std::string position_initialization,
                                     Particles * particles, unsigned int nPart, unsigned int iPart, double n_real_particles,
-                                    Params &params )
+                                    Params &params, Patch *patch )
 {
     double w = n_real_particles / nPart;
     for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
@@ -837,17 +837,24 @@ void ParticleCreator::createWeight( std::string position_initialization,
     // See above : density( i, j, k ) *= params.cell_volume;
     // where params.cell_volume is 2*pi*dR*dL (in AM only)
     if( params.geometry == "AMcylindrical" ) {
-        double total_weight = 0., radius = 0.;
+        double radius;
         for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
-            radius = sqrt(particles->position(1,iPart)*particles->position(1,iPart) + particles->position(2,iPart)*particles->position(2,iPart));
+            radius = sqrt(particles->position(1,p)*particles->position(1,p) + particles->position(2,p)*particles->position(2,p));
             particles->weight( p ) *= radius;
-            total_weight += particles->weight( p );
         }
         // We also need to renormalize in case total weight is not exaclty the same anymore
-        double cell_radius = params.cell_length[1] * (floor(radius/params.cell_length[1]) + 0.5);
-        double coeff = n_real_particles * cell_radius / total_weight;
-        for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
-            particles->weight( p ) *= coeff;
+        if(position_initialization != "regular" && patch->vecSpecies[species_->position_initialization_on_species_index]->position_initialization != "regular" ){
+            // We also need to renormalize in case total weight is not exaclty the same anymore
+            double total_weight = 0., radius = 0.;
+            for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
+                total_weight += particles->weight( p );
+            }
+            radius = sqrt(particles->position(1,iPart)*particles->position(1,iPart) + particles->position(2,iPart)*particles->position(2,iPart));
+            double cell_radius = params.cell_length[1] * (floor(radius/params.cell_length[1]) + 0.5);
+            double coeff = n_real_particles * cell_radius / total_weight;
+            for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
+                particles->weight( p ) *= coeff;
+            }
         }
     }
 }
