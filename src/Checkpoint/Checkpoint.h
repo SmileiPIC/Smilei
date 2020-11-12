@@ -25,6 +25,7 @@ class Field;
 class cField;
 class Species;
 class VectorPatch;
+class Region;
 class Collisions;
 
 #include <csignal>
@@ -44,7 +45,7 @@ public:
     
     //! restart everything to file per processor
     void readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin );
-    void restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD );
+    void restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD );
     void restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Read &g );
     
     //! restart field per proc
@@ -56,11 +57,11 @@ public:
     
     //! test before writing everything to file per processor
     //bool dump(unsigned int itime, double time, Params &params);
-    void dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *smpi, SimWindow *simWindow, Params &params );
+    void dump( VectorPatch &vecPatches, Region &region, unsigned int itime, SmileiMPI *smpi, SimWindow *simWindow, Params &params );
     // OK
     
     //! dump everything to file per processor
-    void dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI *smpi, SimWindow *simWin, Params &params );
+    void dumpAll( VectorPatch &vecPatches, Region &region, unsigned int itime,  SmileiMPI *smpi, SimWindow *simWin, Params &params );
     void dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Write &g );
     
     //! incremental number of times we've done a dump
