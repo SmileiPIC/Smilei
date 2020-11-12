@@ -55,7 +55,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
     // Variable declaration & initialization
     // -------------------------------------
     
-    int npart_total = invgf->size();
+    //int npart_total = invgf->size();
     int ipo = iold[0];
     int jpo = iold[1];
     int ipom2 = ipo-2;
@@ -92,7 +92,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
     
         int np_computed( min( cell_nparts-ivect, vecSize ) );
-        int istart0 = ( int )istart + ivect;
+        //int istart0 = ( int )istart + ivect;
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {

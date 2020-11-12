@@ -420,7 +420,7 @@ void ProjectorAM1Order::axisBCEnvChi( double *EnvChi )
     if(EnvChi == NULL)
         return;
 
-    const double one_ov_9  = 1./9.; 
+    //const double one_ov_9  = 1./9.; 
     const double one_ov_16 = 1./16.; 
     
     for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {

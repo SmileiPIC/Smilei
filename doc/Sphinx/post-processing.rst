@@ -806,7 +806,7 @@ there are many more optional arguments. They are directly passed to the *matplot
   `matplotlib's tick label format <http://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.ticklabel_format.html>`_.
 
 .. rubric:: For fonts: ``title_font``, ``xlabel_font``, ``xticklabels_font``,
-  ``ylabel_font``, ``yticklabels_font``
+  ``ylabel_font``, ``yticklabels_font``, ``colorbar_font``
   
 ..
 
@@ -814,7 +814,7 @@ there are many more optional arguments. They are directly passed to the *matplot
   `matplotlib's text options <https://matplotlib.org/api/text_api.html#matplotlib.text.Text>`_,
   for instance::
 
-    title_font = {'fontsize': 15, 'fontweight': 'bold', 'fontfamily':'serif', 'color': 'k'}
+    title_font = {'size': 15, 'weight': 'bold', 'family':'serif', 'color': 'k'}
 
 **Example**:
 

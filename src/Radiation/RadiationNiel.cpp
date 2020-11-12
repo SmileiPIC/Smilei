@@ -75,7 +75,7 @@ void RadiationNiel::operator()(
     double *gamma = &( smpi->dynamics_invgf[ithread][0] );
 
     // Charge divided by the square of the mass
-    double charge_over_mass_square;
+    double charge_over_mass_square = 0.;
 
     // 1/mass^2
     const double one_over_mass_square = pow( one_over_mass_, 2. );

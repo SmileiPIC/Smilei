@@ -107,7 +107,7 @@ class ParticleBinning(Diagnostic):
 			# Gather data from all timesteps, and the list of timesteps
 			items = {}
 			for path in self._results_path:
-				f = self._h5py.File(path+self._os.sep+self._diagName+str(d)+'.h5','r')
+				f = self._h5py.File(path+self._os.sep+self._diagName+str(d)+'.h5', 'r')
 				items.update( dict(f) )
 			items = sorted(items.items())
 			self._h5items[d] = [it[1] for it in items]

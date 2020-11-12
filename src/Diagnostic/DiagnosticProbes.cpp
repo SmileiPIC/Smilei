@@ -80,7 +80,9 @@ vector<double> matrixTimesVector( vector<double> A, vector<double> v )
 
 
 DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int n_probe )
-    : Diagnostic( nullptr, "DiagProbe", n_probe ), offset_in_MPI( 0 )
+    : Diagnostic( nullptr, "DiagProbe", n_probe )
+    , vecNumber( 0 )
+    , offset_in_MPI( 0 )
 {
     probe_n = n_probe;
     nDim_particle = params.nDim_particle;

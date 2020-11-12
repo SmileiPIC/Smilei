@@ -13,7 +13,7 @@ Ey = S.Field(0, "Er", theta=0, timesteps=1700.).getData()[0][::4,::4]
 Validate("Ey field subgrid at iteration 1700", Ey, 0.01)
 
 # TEST THE GRID PARAMETERS
-with h5py.File("./restart000/Fields0.h5") as f:
+with h5py.File("./restart000/Fields0.h5", "r") as f:
 	dt = f["data/0000000000"].attrs["dt"]
 	dx = f["data/0000000000/Er_mode_0"].attrs["gridSpacing"]
 	patchSize = f["data/0000000000"].attrs["patchSize"]

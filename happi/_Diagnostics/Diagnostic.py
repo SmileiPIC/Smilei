@@ -353,7 +353,8 @@ class Diagnostic(object):
 			self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
 		except AttributeError:
 			ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
-		self._setOptions(ax)
+			self._setColorbarOptions(ax.cax)
+		self._setAxesOptions(ax)
 		self._plt.draw()
 		self._plt.pause(0.00001)
 
@@ -462,27 +463,37 @@ class Diagnostic(object):
 		if not self._validate(): return
 		if not self._prepare(): return
 		if not self._setAndCheck(**kwargs): return
-		self.info()
 		ax = self._make_axes(axes)
 		fig = ax.figure
 		ax.set_position([0.1,0.2,0.85,0.7])
 		
-		from matplotlib.widgets import Slider
-		slider_axes = self._plt.axes([0.2, 0.05, 0.55, 0.03])
-		slider = Slider(slider_axes, 'time', self._timesteps[0], self._timesteps[-1], valinit=self._timesteps[0])
 		def update(t):
 			time = self._timesteps[(self._np.abs(self._timesteps - t)).argmin()]
 			self._animateOnAxes(ax, time)
 			self._plt.draw()
-		slider.on_changed(update)
 		
 		self._plotOnAxes(ax, self._timesteps[0])
 		
-		# We need to make a global variable to prevent garbage collecting
-		n = 0
-		while '_happi_slider%d'%n in globals(): n += 1
-		globals()['_happi_slider%d'%n] = slider
+		# Find out if jupyter notebook
+		jupyter = False
+		try:
+			if get_ipython().__class__.__name__ == 'ZMQInteractiveShell':
+				jupyter = True
+		except:
+			pass
 		
+		if jupyter:
+			from ipywidgets import FloatSlider, interact, VBox
+			self.slider = FloatSlider( value=self._timesteps[0], min=self._timesteps[0], max=self._timesteps[-1] )
+			self.slider.layout.width = "100%"
+			self.interact = interact( update, t=self.slider )
+		else:
+			from matplotlib.widgets import Slider
+			slider_axes = self._plt.axes([0.2, 0.05, 0.55, 0.03])
+			self.slider = Slider(slider_axes, 'time', self._timesteps[0], self._timesteps[-1], valinit=self._timesteps[0])
+			self.slider.on_changed(update)
+		
+		self.info()
 	
 	
 	# Method to select specific timesteps among those available in times
@@ -679,7 +690,7 @@ class Diagnostic(object):
 		ax.set_xlabel(self._tlabel, self.options.labels_font["xlabel"])
 		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setTitle(ax, t)
-		self._setOptions(ax)
+		self._setAxesOptions(ax)
 		return self._plot
 	def _plotOnAxes_1D(self, ax, t, cax_id=0):
 		A = self._dataAtTime(t)
@@ -689,7 +700,7 @@ class Diagnostic(object):
 		ax.set_ylabel(self._ylabel, self.options.labels_font["ylabel"])
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setTitle(ax, t)
-		self._setOptions(ax)
+		self._setAxesOptions(ax)
 		return self._plot
 	def _plotOnAxes_2D(self, ax, t, cax_id=0):
 		A = self._dataAtTime(t)
@@ -702,7 +713,8 @@ class Diagnostic(object):
 		if "aspect" not in self.options.colorbar.keys() or self.options.colorbar["aspect"]>0:
 			ax.cax[cax_id] = ax.figure.colorbar(mappable=self._plot, ax=ax, use_gridspec=False, **self.options.colorbar)
 		self._setTitle(ax, t)
-		self._setOptions(ax)
+		self._setAxesOptions(ax)
+		self._setColorbarOptions(ax.cax[cax_id].ax)
 		return self._plot
 
 	# Methods to re-plot
@@ -732,7 +744,7 @@ class Diagnostic(object):
 		vmax = self.options.vmax
 		if vmax is None: vmax = A.max()
 		self._plot.set_clim(vmin, vmax)
-		ax.cax[cax_id].set_clim(vmin, vmax)
+		ax.cax[cax_id].mappable.set_clim(vmin, vmax)
 		self._setTitle(ax, t)
 		return self._plot
 
@@ -758,7 +770,7 @@ class Diagnostic(object):
 		if t is not None:
 			title += ["t = %.2f "%(t*self.timestep*self.units.tcoeff)+self.units.tname]
 		ax.set_title("  ".join(title), self.options.labels_font["title"])
-	def _setOptions(self, ax):
+	def _setAxesOptions(self, ax):
 		# Generic axes option
 		for option, value in self.options.axes.items():
 			if type(value) is dict:
@@ -786,7 +798,12 @@ class Diagnostic(object):
 		except:
 			if self._verbose: print("Cannot format y ticks (typically happens with log-scale)")
 			self.options.ytick = []
-
+	def _setColorbarOptions(self, ax):
+		# Colorbar tick font
+		if self.options.colorbar_font:
+			ticklabels = ax.get_yticklabels()
+			self._plt.setp(ticklabels, **self.options.colorbar_font)
+	
 	# Define and output directory in case of exporting
 	def _setExportDir(self, diagName):
 		if self.options.export_dir is not None:

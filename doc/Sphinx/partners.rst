@@ -51,6 +51,7 @@ Partners
 |            |   * `Julien Dérouillat <julien.derouillat@cea.fr>`_                                                     |
 |            |   * `Haithem Kallala <haithem.kallala@cea.fr>`_                                                         |
 |            |   * `Mathieu Lobet <mathieu.lobet@cea.fr>`_                                                             |
+|            |   * `Francesco Massimo <francesco.massimo@cea.fr>`_                                                     |
 |            |                                                                                                         |
 +------------+---------------------------------------------------------------------------------------------------------+
 
@@ -79,7 +80,7 @@ Partners
 |            |                                                                                                         |
 |            |   * `Arnaud Beck <beck@llr.in2p3.fr>`_                                                                  |
 |            |   * `Imen Zemzemi <zemzemi@llr.in2p3.fr>`_                                                              |
-|            |   * `Francesco Massimo <massimo@llr.in2p3.fr>`_                                                         |
+|            |   * `Guillaume Bouchard <bouchard@llr.in2p3.fr>`_                                                       |
 +------------+---------------------------------------------------------------------------------------------------------+
 
 .. rst-class:: noborder
@@ -111,7 +112,6 @@ Partners
 |            |   `Institut Rayonnement Matière de Saclay  <http://iramis.cea.fr>`_ (Iramis)                                     |
 +            +------------------------------------------------------------------------------------------------------------------+
 |            |                                                                                                                  |
-|            |   * `Guillaume Bouchard <guillaume.bouchard@cea.fr>`_                                                            |
 |            |                                                                                                                  |
 +------------+------------------------------------------------------------------------------------------------------------------+
 
