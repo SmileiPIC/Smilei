@@ -285,6 +285,17 @@ int ParticleCreator::create( struct SubSpace sub_space,
             particles_->Position = patch->vecSpecies[ispec]->particles->Position;
         }
         
+        // In AM, normalization of weights might be required
+        bool renormalize = true;
+        if( position_initialization_ == "regular" ) {
+            renormalize = false;
+        } else if( position_initialization_on_species_ ) {
+            unsigned int ispec = species_->position_initialization_on_species_index;
+            if( patch->vecSpecies[ispec]->position_initialization_ == "regular" ) {
+                renormalize = false;
+            }
+        }
+        
         // Loop cells
         unsigned int iPart = n_existing_particles;
         double *indexes = new double[species_->nDim_particle];
@@ -318,7 +329,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                             ParticleCreator::createPosition( position_initialization_, regular_number_array_,  particles_, species_, nPart, iPart, indexes, params );
                         }
                         ParticleCreator::createMomentum( momentum_initialization_, particles_, species_,  nPart, iPart, &temp[0], &vel[0] );
-                        ParticleCreator::createWeight( position_initialization_, particles_, nPart, iPart, density( i, j, k ), params, patch );
+                        ParticleCreator::createWeight( position_initialization_, particles_, nPart, iPart, density( i, j, k ), params, renormalize );
                         ParticleCreator::createCharge( particles_, species_, nPart, iPart, charge( i, j, k ) );
                         
                         iPart += nPart;
@@ -825,7 +836,7 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
 // ---------------------------------------------------------------------------------------------------------------------
 void ParticleCreator::createWeight( std::string position_initialization,
                                     Particles * particles, unsigned int nPart, unsigned int iPart, double n_real_particles,
-                                    Params &params, Patch *patch )
+                                    Params &params, bool renormalize )
 {
     double w = n_real_particles / nPart;
     for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
@@ -843,13 +854,11 @@ void ParticleCreator::createWeight( std::string position_initialization,
             particles->weight( p ) *= radius;
         }
         // We also need to renormalize in case total weight is not exaclty the same anymore
-        if(position_initialization != "regular" && patch->vecSpecies[species_->position_initialization_on_species_index]->position_initialization != "regular" ){
-            // We also need to renormalize in case total weight is not exaclty the same anymore
-            double total_weight = 0., radius = 0.;
+        if( renormalize ) {
+            double total_weight = 0.;
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
                 total_weight += particles->weight( p );
             }
-            radius = sqrt(particles->position(1,iPart)*particles->position(1,iPart) + particles->position(2,iPart)*particles->position(2,iPart));
             double cell_radius = params.cell_length[1] * (floor(radius/params.cell_length[1]) + 0.5);
             double coeff = n_real_particles * cell_radius / total_weight;
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {

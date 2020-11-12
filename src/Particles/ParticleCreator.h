@@ -76,7 +76,7 @@ public:
                             unsigned int iPart,
                             double n_real_particles,
                             Params &params,
-                            Patch *patch );
+                            bool renormalize );
     
     // For all particles in a mesh initialize its charge state
     static void createCharge( Particles * particles, Species * species,
