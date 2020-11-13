@@ -11,10 +11,6 @@ Particles initialized outside of the initial simulation domain will not be creat
 The momentum initialization is incompatible with :py:data:`temperature`
 and :py:data:`mean_velocity`.
 
-.. warning:: 
-  Momenta are normalized to :math:`M c` where :math:`M` is the mass of the particle.
-  This is different from the usual normalization :math:`m_e c`.
-
 ----
 
 From a numpy array

@@ -403,12 +403,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                                                     }
                             #endif*/
                         }
-                        mypatch->copyPositions(mypatch->vecSpecies);
-                        if (params.geometry=="AMcylindrical") {
-                            for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                                ParticleCreator::regulateWeightwithPositionAM( mypatch->vecSpecies[ispec]->particles, mypatch->vecSpecies[ispec]->position_initialization_on_species_type_, mypatch->vecSpecies[ispec]->cell_length[1]);
-                            }
-                        }
                         
                         mypatch->EMfields->applyExternalFields( mypatch );
                         if( params.save_magnectic_fields_for_SM ) {
