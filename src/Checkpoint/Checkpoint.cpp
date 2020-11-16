@@ -605,13 +605,13 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
         
     }
 
-    if (params.uncoupled_grids) {
-        ostringstream patch_name( "" );
-        patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
-        string patchName = Tools::merge( "region-", patch_name.str() );
-        H5Read g = f.group( patchName );
-        restartPatch( region.patch_->EMfields, region.patch_->vecSpecies, region.patch_->vecCollisions, params, g );
-    }
+    //if (params.uncoupled_grids) {
+    //    ostringstream patch_name( "" );
+    //    patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
+    //    string patchName = Tools::merge( "region-", patch_name.str() );
+    //    H5Read g = f.group( patchName );
+    //    restartPatch( region.patch_->EMfields, region.patch_->vecSpecies, region.patch_->vecCollisions, params, g );
+    //}
     
     // Read the latest Id that the MPI processes have given to each species
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
@@ -626,6 +626,20 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
         }
     }
     
+}
+
+
+void Checkpoint::readRegionDistribution( Region &region )
+{
+    int read_hindex( -1 );
+    H5Read f( restart_file );
+
+    //ostringstream patch_name( "" );
+    //patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
+    //string patchName = Tools::merge( "region-", patch_name.str() );
+
+    region.vecPatch_.refHindex_ = read_hindex;
+
 }
 
 

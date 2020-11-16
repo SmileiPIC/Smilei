@@ -45,6 +45,7 @@ public:
     
     //! restart everything to file per processor
     void readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin );
+    void readRegionDistribution( Region &region );
     void restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD );
     void restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Read &g );
     

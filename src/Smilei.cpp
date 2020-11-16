@@ -153,10 +153,25 @@ int main( int argc, char *argv[] )
 
             region.clean();
             region.reset_mapping();
+            // Define region.vecPatch_.refHindex_
+            //checkpoint.readRegionDistribution( region );
 
             region.build( params, &smpi, vecPatches, openPMD, false );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
+
+            if( params.is_pxr ){
+                region.coupling( params, false );
+                MESSAGE( "Rho_old not loaded" );
+            }
+
+            if ( params.geometry != "AMcylindrical" ) {
+                DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, &smpi );
+            }
+            else {
+                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                    DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
+            }
         }
 
         checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
