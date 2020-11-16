@@ -142,6 +142,7 @@ int main( int argc, char *argv[] )
         // allocate patches according to smpi.patch_count
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, checkpoint.this_run_start_step+1, simWindow->getNmoved() );
         // vecPatches data read in restartAll according to smpi.patch_count
+        checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
 
         if (params.uncoupled_grids) {
             region.vecPatch_.refHindex_ = smpi.getRank();
@@ -174,7 +175,6 @@ int main( int argc, char *argv[] )
             }
         }
 
-        checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
         vecPatches.sortAllParticles( params );
 
         // Patch reconfiguration for the adaptive vectorization
