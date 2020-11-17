@@ -474,24 +474,22 @@ class Diagnostic(object):
 		
 		self._plotOnAxes(ax, self._timesteps[0])
 		
-		# Find out if jupyter notebook
-		jupyter = False
-		try:
-			if get_ipython().__class__.__name__ == 'ZMQInteractiveShell':
-				jupyter = True
-		except:
-			pass
+		# # Find out if jupyter notebook
+		# jupyter = False
+		# try:
+		# 	if get_ipython().__class__.__name__ == 'ZMQInteractiveShell':
+		# 		jupyter = True
+		# except:
+		# 	pass
+		# from ipywidgets import FloatSlider, interact, VBox
+		# self.slider = FloatSlider( value=self._timesteps[0], min=self._timesteps[0], max=self._timesteps[-1] )
+		# self.slider.layout.width = "100%"
+		# self.interact = interact( update, t=self.slider )
 		
-		if jupyter:
-			from ipywidgets import FloatSlider, interact, VBox
-			self.slider = FloatSlider( value=self._timesteps[0], min=self._timesteps[0], max=self._timesteps[-1] )
-			self.slider.layout.width = "100%"
-			self.interact = interact( update, t=self.slider )
-		else:
-			from matplotlib.widgets import Slider
-			slider_axes = self._plt.axes([0.2, 0.05, 0.55, 0.03])
-			self.slider = Slider(slider_axes, 'time', self._timesteps[0], self._timesteps[-1], valinit=self._timesteps[0])
-			self.slider.on_changed(update)
+		from matplotlib.widgets import Slider
+		slider_axes = self._plt.axes([0.2, 0.05, 0.55, 0.03])
+		self.slider = Slider(slider_axes, 'time', self._timesteps[0], self._timesteps[-1], valinit=self._timesteps[0])
+		self.slider.on_changed(update)
 		
 		self.info()
 	
