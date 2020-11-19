@@ -251,6 +251,7 @@ void Species::initOperators( Params &params, Patch *patch )
 // ---------------------------------------------------------------------------------------------------------------------
 Species::~Species()
 {
+    delete particles;
     delete particles_to_move;
 
     delete Push;
