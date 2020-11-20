@@ -675,6 +675,10 @@ int executeTestMode( VectorPatch &vecPatches,
     PatchesFactory::createVector( vecPatches, params, smpi, openPMD, radiation_tables_, itime, moving_window_movement );
 
     if( params.restart ) {
+        if (params.uncoupled_grids) {
+            checkpoint.readRegionDistribution( region );
+            region.build( params, smpi, vecPatches, openPMD, false );
+        }
         checkpoint.restartAll( vecPatches, region, smpi, simWindow, params, openPMD );
     }
 
