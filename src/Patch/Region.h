@@ -38,6 +38,7 @@ public:
     std::vector<int> missing_patches_ranks;
 
     void reset_fitting(SmileiMPI* smpi, Params& params);
+    void define_regions_map(int* target_map, SmileiMPI* smpi, Params& params);
 
     void reset_mapping();
 

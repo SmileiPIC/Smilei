@@ -141,22 +141,20 @@ int main( int argc, char *argv[] )
         checkpoint.readPatchDistribution( &smpi, simWindow );
         // allocate patches according to smpi.patch_count
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, checkpoint.this_run_start_step+1, simWindow->getNmoved() );
-        // vecPatches data read in restartAll according to smpi.patch_count
-        checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
 
+        // allocate region according to dump
         if (params.uncoupled_grids) {
-            region.vecPatch_.refHindex_ = smpi.getRank();
-            region.build( params, &smpi, vecPatches, openPMD, false );
-            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-            region.identify_missing_patches( &smpi, vecPatches, params );
+            // read region hindex
+            checkpoint.readRegionDistribution( region );
 
-            region.reset_fitting( &smpi, params );
+            // Build params.map_rank contains MPI ranks assuming that regions are distributed linearly
+            int target_map[smpi.getSize()];
+            MPI_Allgather(&(region.vecPatch_.refHindex_), 1, MPI_INT,
+                          target_map, 1, MPI_INT,
+                          MPI_COMM_WORLD);
+            region.define_regions_map(target_map, &smpi, params);
 
-            region.clean();
-            region.reset_mapping();
-            // Define region.vecPatch_.refHindex_
-            //checkpoint.readRegionDistribution( region );
-
+            // params.map_rank used to defined regions neighborood
             region.build( params, &smpi, vecPatches, openPMD, false );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
@@ -166,14 +164,9 @@ int main( int argc, char *argv[] )
                 MESSAGE( "Rho_old not loaded" );
             }
 
-            if ( params.geometry != "AMcylindrical" ) {
-                DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, &smpi );
-            }
-            else {
-                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-                    DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
-            }
         }
+        // vecPatches data read in restartAll according to smpi.patch_count
+        checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
 
         vecPatches.sortAllParticles( params );
 
