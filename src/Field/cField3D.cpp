@@ -15,30 +15,40 @@ using namespace std;
 // with no input argument
 cField3D::cField3D() : cField()
 {
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
 }
 
 // with the dimensions as input argument
 cField3D::cField3D( vector<unsigned int> dims ) : cField( dims )
 {
     allocateDims( dims );
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
 }
 
 // with the dimensions and output (dump) file name as input argument
 cField3D::cField3D( vector<unsigned int> dims, string name_in ) : cField( dims, name_in )
 {
     allocateDims( dims );
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
 }
 
 // with the dimensions as input argument
 cField3D::cField3D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : cField( dims, mainDim, isPrimal )
 {
     allocateDims( dims, mainDim, isPrimal );
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
 }
 
 // with the dimensions and output (dump) file name as input argument
 cField3D::cField3D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in ) : cField( dims, mainDim, isPrimal, name_in )
 {
     allocateDims( dims, mainDim, isPrimal );
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
 }
 
 // without allocating
@@ -46,6 +56,8 @@ cField3D::cField3D( string name_in, vector<unsigned int> dims ) : cField( dims, 
 {
     dims_ = dims;
     globalDims_ = dims_[0]*dims_[1]*dims_[2];
+    sendFields_.resize(6,NULL);
+    recvFields_.resize(6,NULL);
 }
 
 
@@ -55,7 +67,14 @@ cField3D::cField3D( string name_in, vector<unsigned int> dims ) : cField( dims, 
 // ---------------------------------------------------------------------------------------------------------------------
 cField3D::~cField3D()
 {
-
+    for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
+        if ( sendFields_[iside] != NULL ) {
+            delete sendFields_[iside];
+            sendFields_[iside] = NULL;
+            delete recvFields_[iside];
+            recvFields_[iside] = NULL;
+        }
+    }
     if( cdata_!=NULL ) {
         delete [] cdata_;
         for( unsigned int i=0; i<dims_[0]; i++ ) {
@@ -254,6 +273,142 @@ void cField3D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPa
         for( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
             for( unsigned int k = 0 ; k < this->dims_[2] ; k++ ) {
                 ( *this )( i, j, k ) = ( *in3D )( iin+i, jin+j, kin+k );
+            }
+        }
+    }
+}
+
+void cField3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = ghost_size;
+    if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
+        sendFields_[iDim*2+iNeighbor] = new cField3D(n_space);
+        recvFields_[iDim*2+iNeighbor] = new cField3D(n_space);
+    }
+    else if ( ghost_size != sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
+        delete sendFields_[iDim*2+iNeighbor];
+        sendFields_[iDim*2+iNeighbor] = new cField3D(n_space);
+        delete recvFields_[iDim*2+iNeighbor];
+        recvFields_[iDim*2+iNeighbor] = new cField3D(n_space);
+    }
+}
+
+void cField3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = ghost_size;
+
+    vector<int> idx( 3, 0 );
+    idx[iDim] = 1;
+    int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * ( ghost_size + 1 + isDual_[iDim] );
+    int ix = idx[0]*istart;
+    int iy = idx[1]*istart;
+    int iz = idx[2]*istart;
+
+    int NX = n_space[0];
+    int NY = n_space[1];
+    int NZ = n_space[2];
+
+    int dimY = dims_[1];
+    int dimZ = dims_[2];
+
+    complex<double>* sub = static_cast<cField*>(sendFields_[iDim*2+iNeighbor])->cdata_;
+    complex<double>* field = cdata_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        for( unsigned int j=0; j<NY; j++ ) {
+            for( unsigned int k=0; k<NZ; k++ ) {
+                sub[i*NY*NZ+j*NZ+k] = field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ];
+            }
+        }
+    }
+}
+
+void cField3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = ghost_size;
+
+    vector<int> idx( 3, 0 );
+    idx[iDim] = 1;
+    int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - 1- ( ghost_size-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
+    int ix = idx[0]*istart;
+    int iy = idx[1]*istart;
+    int iz = idx[2]*istart;
+
+    int NX = n_space[0];
+    int NY = n_space[1];
+    int NZ = n_space[2];
+
+    int dimY = dims_[1];
+    int dimZ = dims_[2];
+
+    complex<double>* sub = static_cast<cField*>(recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_;
+    complex<double>* field = cdata_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        for( unsigned int j=0; j<NY; j++ ) {
+            for( unsigned int k=0; k<NZ; k++ ) {
+                field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ] = sub[i*NY*NZ+j*NZ+k];
+            }
+        }
+    }
+}
+
+void cField3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
+
+    vector<int> idx( 3, 0 );
+    idx[iDim] = 1;
+    int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * 0;
+    int ix = idx[0]*istart;
+    int iy = idx[1]*istart;
+    int iz = idx[2]*istart;
+
+    int NX = n_space[0];
+    int NY = n_space[1];
+    int NZ = n_space[2];
+
+    int dimY = dims_[1];
+    int dimZ = dims_[2];
+
+    complex<double>* sub = static_cast<cField*>(sendFields_[iDim*2+iNeighbor])->cdata_;
+    complex<double>* field = cdata_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        for( unsigned int j=0; j<NY; j++ ) {
+            for( unsigned int k=0; k<NZ; k++ ) {
+                sub[i*NY*NZ+j*NZ+k] = field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ];
+            }
+        }
+    }
+}
+
+void cField3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
+{
+    std::vector<unsigned int> n_space = dims_;
+    n_space[iDim] = 2*ghost_size+1+isDual_[iDim];
+
+    vector<int> idx( 3, 0 );
+    idx[iDim] = 1;
+    int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
+    int ix = idx[0]*istart;
+    int iy = idx[1]*istart;
+    int iz = idx[2]*istart;
+
+    int NX = n_space[0];
+    int NY = n_space[1];
+    int NZ = n_space[2];
+
+    int dimY = dims_[1];
+    int dimZ = dims_[2];
+
+    complex<double>* sub = static_cast<cField*>(recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_;
+    complex<double>* field = cdata_;
+    for( unsigned int i=0; i<NX; i++ ) {
+        for( unsigned int j=0; j<NY; j++ ) {
+            for( unsigned int k=0; k<NZ; k++ ) {
+                field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ] += sub[i*NY*NZ+j*NZ+k];
             }
         }
     }

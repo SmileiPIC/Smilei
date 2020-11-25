@@ -7,6 +7,7 @@
 #include "Projector2D2Order.h"
 #include "Projector2D4Order.h"
 #include "Projector3D2Order.h"
+#include "Projector3D2OrderGPU.h"
 #include "Projector3D4Order.h"
 #include "ProjectorAM2Order.h"
 #include "ProjectorAM1Order.h"

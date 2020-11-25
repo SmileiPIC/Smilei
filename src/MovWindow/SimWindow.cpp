@@ -275,13 +275,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     mypatch->vecSpecies[ispec]->setXminBoundaryCondition();
                 }
             }
-            if( mypatch->has_an_MPI_neighbor() ) {
-                mypatch->createType( params );
-            } else
-            
-            {
-                mypatch->cleanType();
-            }
             
             if( mypatch->isXmin() ) {
                 for( auto &embc:mypatch->EMfields->emBoundCond ) {
