@@ -800,7 +800,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
         
         unsigned int partSize=0;
         s.attr( "partSize", partSize );
-        vecSpecies[ispec]->particles->initialize( partSize, nDim_particle );
+        vecSpecies[ispec]->particles->initialize( partSize, nDim_particle, params.keep_position_old );
         
         double nrj_radiation;
         if( s.hasAttr( "nrj_radiation" ) ) {

@@ -200,7 +200,7 @@ void Species::initParticles( Params &params, Patch *patch, bool with_particles, 
         if( like_particles ) {
             particles->initialize( 0, *like_particles );
         } else {
-            particles->initialize( 0, params.nDim_particle );
+            particles->initialize( 0, params.nDim_particle, params.keep_position_old );
         }
         
     } else {

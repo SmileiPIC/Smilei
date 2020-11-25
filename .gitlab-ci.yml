@@ -8,7 +8,8 @@ compile:
   only:
     - develop
     - develop_restart_SDMD
-
+    - keep_position_old
+    
   script:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
@@ -30,6 +31,7 @@ makerun1D:
   only:
     - develop
     - develop_restart_SDMD
+    - keep_position_old
     
   script:
     # Move in test dir
@@ -43,6 +45,7 @@ makerun2D:
   only:
     - develop
     - develop_restart_SDMD
+    - keep_position_old
 
   script:
     # Move in test dir
@@ -56,6 +59,7 @@ makerun3D:
   only:
     - develop
     - develop_restart_SDMD
+    - keep_position_old
 
   script:
     # Move in test dir
@@ -69,7 +73,8 @@ makerunAM:
   only:
     - develop
     - develop_restart_SDMD
-    
+    - keep_position_old
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -81,6 +86,7 @@ makerunV:
   only:
     - develop
     - develop_restart_SDMD
+    - keep_position_old
 
   script:
     # Move in test dir
@@ -93,7 +99,8 @@ makerunCollisions:
   only:
     - develop
     - develop_restart_SDMD
-    
+    - keep_position_old
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -105,6 +112,7 @@ use_picsar:
   only:
     - develop
     - develop_restart_SDMD
+    - keep_position_old
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

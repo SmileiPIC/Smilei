@@ -1210,7 +1210,7 @@ public:
                 patch->vecSpecies[i]->Ionize->new_electrons.tracked = patch->vecSpecies[i]->electron_species->particles->tracked;
                 patch->vecSpecies[i]->Ionize->new_electrons.isQuantumParameter = patch->vecSpecies[i]->electron_species->particles->isQuantumParameter;
                 patch->vecSpecies[i]->Ionize->new_electrons.isMonteCarlo = patch->vecSpecies[i]->electron_species->particles->isMonteCarlo;
-                patch->vecSpecies[i]->Ionize->new_electrons.initialize( 0, params.nDim_particle );
+                patch->vecSpecies[i]->Ionize->new_electrons.initialize( 0, params.nDim_particle, params.keep_position_old );
             }
         }
 
@@ -1226,7 +1226,7 @@ public:
                     patch->vecSpecies[i]->Radiate->new_photons_.isMonteCarlo = patch->vecSpecies[i]->photon_species_->particles->isMonteCarlo;
                     //patch->vecSpecies[i]->Radiate->new_photons_.initialize(patch->vecSpecies[i]->getNbrOfParticles(),
                     //                                               params.nDim_particle );
-                    patch->vecSpecies[i]->Radiate->new_photons_.initialize( 0, params.nDim_particle );
+                    patch->vecSpecies[i]->Radiate->new_photons_.initialize( 0, params.nDim_particle, params.keep_position_old );
                 } else {
                     patch->vecSpecies[i]->photon_species_ = NULL;
                 }
@@ -1245,7 +1245,7 @@ public:
                     patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].isQuantumParameter = patch->vecSpecies[i]->mBW_pair_species[k]->particles->isQuantumParameter;
                     patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].isMonteCarlo = patch->vecSpecies[i]->mBW_pair_species[k]->particles->isMonteCarlo;
                     patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].initialize(
-                        0, params.nDim_particle );
+                        0, params.nDim_particle, params.keep_position_old );
                 }
             } else {
                 patch->vecSpecies[i]->mBW_pair_species[0] = NULL;
