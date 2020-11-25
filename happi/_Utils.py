@@ -118,6 +118,7 @@ class Options(object):
 		self.plot = {}
 		self.image = {"cmap":"smilei", "interpolation":"nearest", "aspect":"auto"}
 		self.colorbar = {}
+		self.colorbar_font = {}
 		self.xtick = {"useOffset":False}
 		self.ytick = {"useOffset":False}
 		self.side = "left"
@@ -176,6 +177,8 @@ class Options(object):
 					     "extend","extendfrac","extendrect","spacing","ticks","format",
 					     "drawedges"]:
 				self.colorbar[kwa] = val
+			elif kwa == "colorbar_font":
+				self.colorbar_font = val
 			# tick format
 			elif kwa in ["style_x","scilimits_x","useOffset_x"]:
 				self.xtick[kwa] = val

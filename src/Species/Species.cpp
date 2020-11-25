@@ -193,6 +193,38 @@ void Species::resizeCluster( Params &params )
 
 }// end resizeCluster
 
+
+// Create the particles once the namelist is read
+void Species::initParticles( Params &params, Patch *patch, bool with_particles, Particles * like_particles )
+{
+    if( params.restart || !with_particles ) {
+        
+        if( like_particles ) {
+            particles->initialize( 0, *like_particles );
+        } else {
+            particles->initialize( 0, params.nDim_particle );
+        }
+        
+    } else {
+        
+        // Area for particle creation
+        struct SubSpace init_space;
+        init_space.cell_index_[0] = 0;
+        init_space.cell_index_[1] = 0;
+        init_space.cell_index_[2] = 0;
+        init_space.box_size_[0]   = params.n_space[0];
+        init_space.box_size_[1]   = params.n_space[1];
+        init_space.box_size_[2]   = params.n_space[2];
+        
+        // Creation of the particle creator and association to the new species
+        ParticleCreator particle_creator;
+        particle_creator.associate(this);
+        particle_creator.create( init_space, params, patch, 0 );
+        
+    }
+    
+}
+
 // Initialize the operators (Push, Ionize, PartBoundCond)
 // This must be separate from the parameters because the Species cloning copies
 // the parameters but not the operators.

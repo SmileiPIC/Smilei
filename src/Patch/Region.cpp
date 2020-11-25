@@ -464,6 +464,12 @@ void Region::reset_fitting(SmileiMPI* smpi, Params& params)
     //    cout << target_map[i] <<" " ;
     //cout << endl;
 
+    define_regions_map(target_map, smpi, params);
+}
+
+
+void Region::define_regions_map(int* target_map, SmileiMPI* smpi, Params& params)
+{
 
     int mpi_map[smpi->getSize()];
     for (int i=0 ; i< smpi->getSize() ;i++) {

@@ -92,7 +92,7 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     Field2D *GradPhir_m2Dcyl  = static_cast<Field2D *>( GradPhir_m );
 
     bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
-    int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
+    //int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
     
     
     vector<double> position( 2, 0 );
@@ -372,7 +372,7 @@ void LaserEnvelopeAM::computePhiEnvAEnvE( ElectroMagn *EMfields )
 
     bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
 
-    int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
+    //int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
     
     
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells

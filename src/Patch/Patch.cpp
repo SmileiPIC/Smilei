@@ -157,8 +157,8 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
 
 void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition )
 {
-    // initialize vector of Species (virtual)
-    vecSpecies = SpeciesFactory::createVector( params, this );
+    // initialize vector of Species (virtual) in place
+    SpeciesFactory::createVector( params, this );
 
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create( params, domain_decomposition, vecSpecies, this );
@@ -182,8 +182,8 @@ void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition
 
 void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsigned int n_moved, bool with_particles = true )
 {
-    // clone vector of Species (virtual)
-    vecSpecies = SpeciesFactory::cloneVector( patch->vecSpecies, params, this, with_particles );
+    // clone vector of Species (virtual) in place
+    SpeciesFactory::cloneVector( patch->vecSpecies, params, this, with_particles );
 
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone( patch->EMfields, params, vecSpecies, this, n_moved );
