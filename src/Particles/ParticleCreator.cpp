@@ -274,7 +274,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
     if( species_->position_initialization_array_ == NULL
      && species_->file_position_npart_ == 0 ) {
         // Increase array size
-        particles_->initialize( n_existing_particles + n_new_particles, species_->nDim_particle );
+        particles_->initialize( n_existing_particles + n_new_particles, species_->nDim_particle, params.keep_position_old );
         
         // If requested, copy positions from other species
         if( position_initialization_on_species_ ) {
@@ -429,7 +429,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
         
         // Create new particles
         n_new_particles = my_particles_indices.size();
-        particles_->initialize( n_existing_particles + n_new_particles, species_->nDim_particle );
+        particles_->initialize( n_existing_particles + n_new_particles, species_->nDim_particle, params.keep_position_old );
         if( n_new_particles > 0 ) {
             // Prepare sorting
             int nbins = species_->particles->first_index.size();

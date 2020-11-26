@@ -40,7 +40,7 @@ Particles::~Particles()
 // ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles null particles of nDim size
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::initialize( unsigned int nParticles, unsigned int nDim )
+void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool keep_position_old )
 {
     //if (nParticles > Weight.capacity()) {
     //    WARNING("You should increase c_part_max in specie namelist");
@@ -52,7 +52,7 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim )
         reserve( round( c_part_max * nParticles ), nDim );
     }
 
-    resize( nParticles, nDim );
+    resize( nParticles, nDim, keep_position_old );
     cell_keys.resize( nParticles );
 
     if( double_prop.empty() ) {  // do this just once
@@ -68,12 +68,12 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim )
 
         double_prop.push_back( &Weight );
 
-#ifdef  __DEBUG
-        Position_old.resize( nDim );
-        for( unsigned int i=0 ; i< nDim ; i++ ) {
-            double_prop.push_back( &( Position_old[i] ) );
+        if( keep_position_old ) {
+            Position_old.resize( nDim );
+            for( unsigned int i=0 ; i< nDim ; i++ ) {
+                double_prop.push_back( &( Position_old[i] ) );
+            }
         }
-#endif
 
         short_prop.push_back( &Charge );
         if( tracked ) {
@@ -111,7 +111,7 @@ void Particles::initialize( unsigned int nParticles, Particles &part )
 
     isMonteCarlo=part.isMonteCarlo;
 
-    initialize( nParticles, part.Position.size() );
+    initialize( nParticles, part.Position.size(), part.Position_old.size() > 0 );
 }
 
 
@@ -161,18 +161,19 @@ void Particles::initializeReserve( unsigned int npart_max, Particles &part )
 // ---------------------------------------------------------------------------------------------------------------------
 //Resize Particle vectors
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::resize( unsigned int nParticles, unsigned int nDim )
+void Particles::resize( unsigned int nParticles, unsigned int nDim, bool keep_position_old )
 {
     Position.resize( nDim );
     for( unsigned int i=0 ; i<nDim ; i++ ) {
         Position[i].resize( nParticles, 0. );
     }
-#ifdef  __DEBUG
-    Position_old.resize( nDim );
-    for( unsigned int i=0 ; i<nDim ; i++ ) {
-        Position_old[i].resize( nParticles, 0. );
+    
+    if( keep_position_old ) {
+        Position_old.resize( nDim );
+        for( unsigned int i=0 ; i<nDim ; i++ ) {
+            Position_old[i].resize( nParticles, 0. );
+        }
     }
-#endif
 
     Momentum.resize( 3 );
     for( unsigned int i=0 ; i< 3 ; i++ ) {
@@ -938,6 +939,21 @@ void Particles::sortById()
         jPart++;
     } while( !stop );
 
+}
+
+void Particles::savePositions() {
+    unsigned int ndim = Position.size(), npart = size();
+    double *p[3], *pold[3];
+    for( unsigned int i = 0 ; i<ndim ; i++ ) {
+        p[i] =  &( Position[i][0] );
+        pold[i] =  &( Position_old[i][0] );
+    }
+    #pragma omp simd
+    for( unsigned int ipart=0 ; ipart<npart; ipart++ ) {
+        for( unsigned int i = 0 ; i<ndim ; i++ ) {
+            pold[i][ipart] = p[i][ipart];
+        }
+    }
 }
 
 #ifdef __DEBUG

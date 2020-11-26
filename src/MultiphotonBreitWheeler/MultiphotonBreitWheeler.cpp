@@ -345,11 +345,11 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
             }
 
             // Old positions
-#ifdef  __DEBUG
-            for( i=0; i<n_dimensions_; i++ ) {
-                new_pair[k].position_old( i, idNew )=particles.position( i, ipart ) ;
+            if( particles.Position_old.size() > 0 ) {
+                for( i=0; i<n_dimensions_; i++ ) {
+                    new_pair[k].position_old( i, idNew )=particles.position( i, ipart ) ;
+                }
             }
-#endif
 
             new_pair[k].weight( idNew )=particles.weight( ipart )*mBW_pair_creation_inv_sampling_[k];
             new_pair[k].charge( idNew )= k*2-1;

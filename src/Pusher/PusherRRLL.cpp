@@ -72,7 +72,6 @@ void PusherRRLL::operator()( Particles &particles, int ipart, LocalFields Epart,
     
     // Move the particle
     for( int i = 0 ; i<nDim_ ; i++ ) {
-        //particles.position_old(i, ipart)  = particles.position(i, ipart);
         particles.position( i, ipart )     += dt*particles.momentum( i, ipart )*invgf;
     }
     

@@ -47,12 +47,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double* momentum_x = particles.getPtrMomentum(0);
     double* momentum_y = particles.getPtrMomentum(1);
     double* momentum_z = particles.getPtrMomentum(2);
-#ifdef  __DEBUG
-    double *position_old[3];
-    for( int i = 0 ; i<nDim_ ; i++ ) {
-        position_old[i] =  &( particles.position_old( i, 0 ) );
-    }
-#endif
+    
     short *charge = &( particles.charge( 0 ) );
     
     int nparts = particles.size();
@@ -106,15 +101,6 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         momentum_z[ipart] = pzsm;
         
         // Move the particle
-#ifdef  __DEBUG
-        position_old[0][ipart] = position_x[ipart];
-        if (nDim_>1) {
-            position_old[1][ipart] = position_y[ipart];
-            if (nDim_>2) {
-                position_old[2][ipart] = position_z[ipart];
-            }
-        }
-#endif
         position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart];
         if (nDim_>1) {
             position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart];

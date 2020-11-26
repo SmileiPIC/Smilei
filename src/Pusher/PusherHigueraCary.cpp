@@ -60,12 +60,6 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     for( int i = 0 ; i<nDim_ ; i++ ) {
         position[i] =  &( particles.position( i, 0 ) );
     }
-#ifdef  __DEBUG
-    double *position_old[3];
-    for( int i = 0 ; i<nDim_ ; i++ ) {
-        position_old[i] =  &( particles.position_old( i, 0 ) );
-    }
-#endif
     short *charge = &( particles.charge( 0 ) );
     
     #pragma omp simd
@@ -127,11 +121,6 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         momentum[2][ipart] = pzsm;
         
         // Move the particle
-#ifdef  __DEBUG
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            position_old[i][ipart] = position[i][ipart];
-        }
-#endif
         for( int i = 0 ; i<nDim_ ; i++ ) {
             position[i][ipart]     += dt*momentum[i][ipart]*( *invgf )[ipart];
         }

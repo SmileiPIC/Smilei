@@ -331,9 +331,15 @@ void VectorPatch::dynamics( Params &params,
         //MESSAGE("restart rhoj");
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             Species *spec = species( ipatch, ispec );
+            
+            if( params.keep_position_old ) {
+                spec->particles->savePositions();
+            }
+            
             if( spec->ponderomotive_dynamics ) {
                 continue;
             }
+            
             if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
                 // Dynamics with vectorized operators
                 if( spec->vectorized_operators || params.cell_sorting ) {
