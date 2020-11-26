@@ -15,17 +15,19 @@ class PartWall
 {
 public:
     //! PartWall constructor
-    PartWall( double, unsigned short, std::string );
+    PartWall( double, unsigned short, std::string, double dt );
     //! PartWall destructor
     ~PartWall() {};
     
     //! Wall boundary condition pointer (same prototypes for all conditions)
     //! @see BoundaryConditionType.h for functions that this pointer will target
-    int ( *wall )( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart );
+    void ( *wall )( Particles &particles, SmileiMPI *smpi, int imin, int imax, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
     
     //! Method which applies particles wall
-    int apply( Particles &particles, int ipart, Species *species, double dtgf, double &nrj_iPart );
+    void apply( Particles &particles, SmileiMPI *smpi, int imin, int imax, Species *species, int ithread, double &nrj_iPart );
     
+    double dt_;
+
 private:
     //! position of a wall in its direction
     double position;
@@ -88,6 +90,7 @@ private:
     std::vector<double> position;
     //! kind of all walls (type of boundary condition applied)
     std::vector<std::string> kind;
+
 };
 
 #endif

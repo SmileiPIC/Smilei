@@ -401,6 +401,35 @@ public:
     //! Indices of first and last particles in each bin/cell
     std::vector<int> first_index, last_index;
 
+    virtual void initGPU() { std::cout << "Should not came here" << std::endl; };
+    virtual void syncGPU() { std::cout << "Should not came here" << std::endl; };
+    virtual void syncCPU() { std::cout << "Should not came here" << std::endl; };
+    virtual double* getPtrPosition( int idim ) {
+        return &(Position[idim][0]);
+    };
+    virtual double* getPtrMomentum( int idim ) {
+        return &(Momentum[idim][0]);
+    };
+    virtual double* getPtrWeight() {
+        return &(Weight[0]);
+    };
+    virtual double* getPtrChi() {
+        return &(Chi[0]);
+    };
+    virtual short* getPtrCharge() {
+        return &(Charge[0]);
+    };
+    virtual uint64_t* getPtrId() {
+        return &(Id[0]);
+    };
+    virtual double* getPtrTau() {
+        return &(Tau[0]);
+    };
+    virtual int* getPtrCellKeys() {
+        return &(cell_keys[0]);
+    };
+
+
 private:
 
 };

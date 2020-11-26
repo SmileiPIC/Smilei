@@ -141,6 +141,8 @@ public:
 
     //! Vector containing all Particles of the considered Species
     Particles *particles;
+    //! Data structure through which passes particles which move fomr one patch to another
+    Particles *particles_to_move;
     Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
     
@@ -425,6 +427,11 @@ public:
     //! Method calculating the Particle charge on the grid (projection)
     virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields );
 
+    //! Method used to select particles which will change of patches
+    virtual void extractParticles();
+    //! Method used to integrate particles which come from another patches
+    virtual void injectParticles( Params &params );
+
     //! Method used to sort particles
     virtual void sortParticles( Params &param, Patch * patch );
 
@@ -449,24 +456,6 @@ public:
     {
         particles->last_index[particles->last_index.size()-1]++;
     }
-
-    //inline void clearExchList(int tid) {
-    //        indexes_of_particles_to_exchange_per_thd[tid].clear();
-    //}
-    inline void clearExchList()
-    {
-        indexes_of_particles_to_exchange.clear();
-    }
-    //inline void addPartInExchList(int tid, int iPart) {
-    //    indexes_of_particles_to_exchange_per_thd[tid].push_back(iPart);
-    //}
-    inline void addPartInExchList( int iPart )
-    {
-        indexes_of_particles_to_exchange.push_back( iPart );
-    }
-    //std::vector< std::vector<int> > indexes_of_particles_to_exchange_per_thd;
-    std::vector<int>                indexes_of_particles_to_exchange;
-    //std::vector<int>                new_indexes_of_particles_to_exchange;
 
     //! Method to know if we have to project this species or not.
     bool  isProj( double time_dual, SimWindow *simWindow );

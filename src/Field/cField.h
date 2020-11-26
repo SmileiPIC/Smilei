@@ -91,6 +91,13 @@ public:
     void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) = 0;
     
     std::complex<double> *cdata_;
+
+    void create_sub_fields  ( int iDim, int iNeighbor, int ghost_size ) = 0;
+    void extract_fields_exch( int iDim, int iNeighbor, int ghost_size ) = 0;
+    void inject_fields_exch ( int iDim, int iNeighbor, int ghost_size ) = 0;
+    void extract_fields_sum ( int iDim, int iNeighbor, int ghost_size ) = 0;
+    void inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size ) = 0;
+
 protected:
 };
 

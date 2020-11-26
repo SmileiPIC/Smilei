@@ -7,9 +7,8 @@ compile:
   stage: compile
   only:
     - develop
-    - develop_restart_SDMD
-    - keep_position_old
-    
+    - refactor_for_GPU
+
   script:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
@@ -30,8 +29,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - develop_restart_SDMD
-    - keep_position_old
+    - refactor_for_GPU
     
   script:
     # Move in test dir
@@ -44,8 +42,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - develop_restart_SDMD
-    - keep_position_old
+    - refactor_for_GPU
 
   script:
     # Move in test dir
@@ -58,8 +55,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - develop_restart_SDMD
-    - keep_position_old
+    - refactor_for_GPU
 
   script:
     # Move in test dir
@@ -72,9 +68,8 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - develop_restart_SDMD
-    - keep_position_old
-
+    - refactor_for_GPU
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -85,8 +80,7 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - develop_restart_SDMD
-    - keep_position_old
+    - refactor_for_GPU
 
   script:
     # Move in test dir
@@ -98,9 +92,8 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - develop_restart_SDMD
-    - keep_position_old
-
+    - refactor_for_GPU
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -111,8 +104,7 @@ use_picsar:
   stage: use_picsar
   only:
     - develop
-    - develop_restart_SDMD
-    - keep_position_old
+    - refactor_for_GPU
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
