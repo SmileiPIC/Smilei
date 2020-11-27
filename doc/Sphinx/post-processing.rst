@@ -727,6 +727,16 @@ Simultaneous plotting of multiple diagnostics
   * ``skipAnimation`` : if True, plots only the last frame.
   * ``timesteps``: same as the ``timesteps`` argument of the :py:func:`plot` method.
 
+
+.. py:function:: happi.multiSlide(diag1, diag2, ... , **kwargs)
+
+  Identical to ``happi.multiPlot`` but uses a time slider instead of an animation.
+
+  * ``diag1``, ``diag2``, etc.
+     | Diagnostics prepared by ``Scalar()``, ``Field()``, ``Probe()``, etc.
+  * ``figure`` and ``shape``: same as in ``happi.multiPlot``.
+
+
 **Example**::
 
     S = happi.Open("path/to/my/results")

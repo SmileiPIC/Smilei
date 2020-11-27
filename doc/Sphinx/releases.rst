@@ -27,7 +27,11 @@ Changes made in the repository (not released)
   * ionization model
 
 * Particles can be imported from a file
-* Happi now handles fonts
+* Happi:
+
+  * handles fonts
+  * time slider available with multiple plotting
+
 * Bugfixes:
 
   * Photons could not be read from numpy array
