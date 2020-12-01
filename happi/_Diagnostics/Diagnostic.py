@@ -490,6 +490,7 @@ class Diagnostic(object):
 		slider_axes = self._plt.axes([0.2, 0.05, 0.55, 0.03])
 		self.slider = Slider(slider_axes, 'time', self._timesteps[0], self._timesteps[-1], valinit=self._timesteps[0])
 		self.slider.on_changed(update)
+		slider_axes.prevent_garbage_collect = self.slider
 		
 		self.info()
 	

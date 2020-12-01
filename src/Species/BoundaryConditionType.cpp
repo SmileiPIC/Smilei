@@ -490,7 +490,7 @@ void thermalize_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, i
             }// endif on v vs. thermal_velocity_
 
             // position of the particle after reflection
-            position[ ipart ] = limit_inf - position[ ipart ];
+            position[ ipart ] = 2.*limit_inf - position[ ipart ];
 
             // energy lost during thermalization
             LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
@@ -600,7 +600,7 @@ void thermalize_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, i
             }// endif on v vs. thermal_velocity_
 
             // position of the particle after reflection
-            position[ ipart ] = limit_sup - position[ ipart ];
+            position[ ipart ] = 2.*limit_sup - position[ ipart ];
 
             // energy lost during thermalization
             LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
@@ -713,7 +713,7 @@ void thermalize_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, 
             }// endif on v vs. thermal_velocity_
 
             // position of the particle after reflection
-            position[ ipart ] = wall_position - position[ ipart ];
+            position[ ipart ] = 2.*wall_position - position[ ipart ];
 
             // energy lost during thermalization
             LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );

@@ -578,7 +578,7 @@ class _multiPlotUtil(object):
 		
 		from matplotlib.widgets import Slider
 		slider_axes = self.plt.axes([0.2, 0.05, 0.55, 0.03])
-		self.slider = Slider(slider_axes, 'time', self.alltimes[0], self.alltimes[-1], valinit=self.alltimes[-1])
+		self.slider = Slider(slider_axes, 'time', self.alltimes[0], self.alltimes[-1], valinit=self.alltimes[0])
 		self.slider.on_changed(self.update)
 		slider_axes.prevent_garbage_collect = self.slider
 
