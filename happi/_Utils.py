@@ -420,7 +420,8 @@ class _multiPlotUtil(object):
 		self.Diags = Diags
 		if self.nDiags == 0: return
 		for Diag in Diags:
-			if not Diag.valid: return
+			if not Diag.valid:
+				raise Exception( "Cannot multiPlot because invalid diagnostic" )
 		self.np  = Diags[0]._np  # numpy
 		self.plt = Diags[0]._plt # pyplot
 		# Get keyword arguments
@@ -528,8 +529,10 @@ class _multiPlotUtil(object):
 	def staticPlot(self):
 		for Diag in self.Diags:
 			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[-1])
-			self.plt.draw()
-			self.plt.pause(0.00001)
+		if self.nlegends > 0:
+			self.plt.legend()
+		self.plt.draw()
+		self.plt.pause(0.00001)
 	
 	def animate(self):
 		# Loop all times
