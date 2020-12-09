@@ -23,6 +23,7 @@ class Diagnostic(object):
 		self._units = []
 		self._log = []
 		self._data_log = False
+		self._data_transform = None
 		self._error = []
 		self._xoffset = 0.
 		

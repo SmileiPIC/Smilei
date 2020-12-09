@@ -4,7 +4,7 @@ from .._Utils import *
 class Probe(Diagnostic):
 	"""Class for loading a Probe diagnostic"""
 
-	def _init(self, probeNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, chunksize=10000000, **kwargs):
+	def _init(self, probeNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, chunksize=10000000, data_transform=None, **kwargs):
 
 		self._h5probe = []
 		self._alltimesteps = []
@@ -113,6 +113,7 @@ class Probe(Diagnostic):
 
 		# Put data_log as object's variable
 		self._data_log = data_log
+		self._data_transform = data_transform
 
 		# Get the shape of the probe
 		self._myinfo = self._getMyInfo()
@@ -413,6 +414,8 @@ class Probe(Diagnostic):
 			if self._averages[iaxis]:
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		A = self._np.squeeze(A) # remove averaged axes
+
+		if callable(self._data_transform): A = self._data_transform(A)
 		return A
 
 	# We override _prepare4
