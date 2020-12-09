@@ -145,6 +145,7 @@ class Probe(Diagnostic):
 		self._averages = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
 		p = []
+		self.p_plot = []
 		for iaxis in range(self._naxes):
 
 			# calculate grid points locations
@@ -196,6 +197,7 @@ class Probe(Diagnostic):
 					self._label  .append(label)
 					self._units  .append(axisunits)
 					self._log    .append(False)
+					self.p_plot  .append(p[-1])
 		
 		self._selection = tuple(s if type(s) is slice else slice(s,s+1) for s in self._selection)
 		
@@ -219,8 +221,8 @@ class Probe(Diagnostic):
 			# Trick in a 3D simulation (the probe has to be projected)
 			if self._ndim_particles==3:
 				# unit vectors in the two dimensions + perpendicular
-				u1 = p[0] / self._np.linalg.norm(p[0])
-				u2 = p[1] / self._np.linalg.norm(p[1])
+				u1 = self.p_plot[0] / self._np.linalg.norm(self.p_plot[0])
+				u2 = self.p_plot[1] / self._np.linalg.norm(self.p_plot[1])
 				# Distances along first direction
 				p1[:,0] = self._np.dot(p1, u1)
 				p1[:,1:] = 0.
