@@ -713,8 +713,11 @@ class Diagnostic(object):
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		if 'cax' not in dir(ax):
 			ax.cax = {}
-		if "aspect" not in self.options.colorbar.keys() or self.options.colorbar["aspect"]>0:
-			ax.cax[cax_id] = ax.figure.colorbar(mappable=self._plot, ax=ax, use_gridspec=False, **self.options.colorbar)
+		if cax_id not in ax.cax and ("aspect" not in self.options.cax or self.options.cax["aspect"]>0):
+			from mpl_toolkits.axes_grid1 import make_axes_locatable
+			divider = make_axes_locatable(ax)
+			cax = divider.append_axes(**self.options.cax)
+			ax.cax[cax_id] = self._plt.colorbar(mappable=self._plot, cax=cax, **self.options.colorbar)
 		self._setTitle(ax, t)
 		self._setAxesOptions(ax)
 		self._setColorbarOptions(ax.cax[cax_id].ax)

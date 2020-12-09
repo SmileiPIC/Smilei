@@ -121,6 +121,7 @@ class Options(object):
 		self.image = {"interpolation":"nearest", "aspect":"auto"}
 		self.colorbar = {}
 		self.colorbar_font = {}
+		self.cax = {"size": "5%", "pad": 0.15}
 		self.xtick = {"useOffset":False}
 		self.ytick = {"useOffset":False}
 		self.side = "left"
@@ -176,8 +177,11 @@ class Options(object):
 			# image
 			elif kwa in ["aspect","interpolation","norm"]:
 				self.image[kwa] = val
+			# colorbar axes
+			elif kwa in ["pad", "size"]:
+				self.cax[kwa] = val
 			# colorbar
-			elif kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
+			elif kwa in ["orientation","fraction","shrink","anchor","panchor",
 					     "extend","extendfrac","extendrect","spacing","ticks","format",
 					     "drawedges"]:
 				self.colorbar[kwa] = val
@@ -193,9 +197,8 @@ class Options(object):
 			kwargs.pop(kwa)
 		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
 		if "cbaspect" in kwargs:
-			self.colorbar["aspect"] = kwargs.pop("cbaspect")
-		if self.side=="right" and "pad" not in self.colorbar:
-			self.colorbar["pad"] = 0.15
+			self.cax["aspect"] = kwargs.pop("cbaspect")
+		self.cax['position'] = 'bottom' if ( 'orientation' in self.colorbar and self.colorbar['orientation'] == 'horizontal' ) else 'right'
 		if self.explicit_cmap is None:
 			self.image['cmap'] = 'smileiD' if self.vsym else 'smilei'
 		else:
