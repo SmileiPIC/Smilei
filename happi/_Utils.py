@@ -170,7 +170,7 @@ class Options(object):
 					     "visible","zorder"]:
 				self.plot[kwa] = val
 			# image
-			elif kwa in ["cmap","aspect","interpolation"]:
+			elif kwa in ["cmap","aspect","interpolation","norm"]:
 				self.image[kwa] = val
 			# colorbar
 			elif kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
