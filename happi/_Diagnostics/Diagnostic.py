@@ -706,6 +706,10 @@ class Diagnostic(object):
 		self._plot = self._plotOnAxes_2D_(ax, A)
 		ax.set_xlabel(self._xlabel, self.options.labels_font["xlabel"])
 		ax.set_ylabel(self._ylabel, self.options.labels_font["ylabel"])
+		if self.options.vmin is None and self.options.vmax is None and self.options.vsym:
+			vmax = self._np.abs(A).max()
+			vmin = -1 * vmax
+			self._plot.set_clim(vmin, vmax)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		if 'cax' not in dir(ax):
 			ax.cax = {}
@@ -739,8 +743,11 @@ class Diagnostic(object):
 		self._plot = self._animateOnAxes_2D_(ax, A)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		vmin = self.options.vmin
-		if vmin is None: vmin = A.min()
 		vmax = self.options.vmax
+		if vmin is None and vmax is None and self.options.vsym:
+			vmax = self._np.abs(A).max()
+			vmin = -1 * vmax
+		if vmin is None: vmin = A.min()
 		if vmax is None: vmax = A.max()
 		self._plot.set_clim(vmin, vmax)
 		ax.cax[cax_id].mappable.set_clim(vmin, vmax)

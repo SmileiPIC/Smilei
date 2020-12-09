@@ -105,9 +105,11 @@ class Options(object):
 		self.yfactor = None
 		self.ymin    = None
 		self.ymax    = None
+		self.vsym    = False
 		self.vfactor = None
 		self.vmin    = None
 		self.vmax    = None
+		self.explicit_cmap = None
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
@@ -116,7 +118,7 @@ class Options(object):
 		self.ticklabels = {}
 		self.ticklabels_font = {}
 		self.plot = {}
-		self.image = {"cmap":"smilei", "interpolation":"nearest", "aspect":"auto"}
+		self.image = {"interpolation":"nearest", "aspect":"auto"}
 		self.colorbar = {}
 		self.colorbar_font = {}
 		self.xtick = {"useOffset":False}
@@ -138,6 +140,8 @@ class Options(object):
 		self.vfactor     = kwargs.pop("vfactor"    , self.vfactor  )
 		self.vmin        = kwargs.pop("vmin"       , self.vmin )
 		self.vmax        = kwargs.pop("vmax"       , self.vmax )
+		self.vsym        = kwargs.pop("vsym"       , self.vsym )
+		self.explicit_cmap = kwargs.pop("cmap"     , self.explicit_cmap )
 		self.side        = kwargs.pop("side"       , self.side )
 		self.transparent = kwargs.pop("transparent", self.transparent )
 		self.export_dir  = kwargs.pop("export_dir", self.export_dir )
@@ -170,7 +174,7 @@ class Options(object):
 					     "visible","zorder"]:
 				self.plot[kwa] = val
 			# image
-			elif kwa in ["cmap","aspect","interpolation","norm"]:
+			elif kwa in ["aspect","interpolation","norm"]:
 				self.image[kwa] = val
 			# colorbar
 			elif kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
@@ -192,6 +196,10 @@ class Options(object):
 			self.colorbar["aspect"] = kwargs.pop("cbaspect")
 		if self.side=="right" and "pad" not in self.colorbar:
 			self.colorbar["pad"] = 0.15
+		if self.explicit_cmap is None:
+			self.image['cmap'] = 'smileiD' if self.vsym else 'smilei'
+		else:
+			self.image['cmap'] = self.explicit_cmap
 		return kwargs
 
 PintWarningIssued = False
