@@ -663,8 +663,7 @@ class Diagnostic(object):
 		if self.dim == 2 and self.options.transparent:
 			cmap = self.options.image["cmap"]
 			if type(cmap)==str: cmap = self._plt.matplotlib.cm.get_cmap(cmap)
-			d = cmap._segmentdata
-			new_cmap = self._plt.matplotlib.colors.LinearSegmentedColormap("tmp_cmap", cmap._segmentdata, N=256, gamma=1.0)
+			new_cmap = cmap.__copy__()
 			if self.options.transparent in ["both", "under"]:
 				new_cmap.set_under(color="white", alpha="0")
 			if self.options.transparent in ["both", "over"]:
