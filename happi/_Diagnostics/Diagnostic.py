@@ -714,8 +714,12 @@ class Diagnostic(object):
 		if 'cax' not in dir(ax):
 			ax.cax = {}
 		if cax_id not in ax.cax and ("aspect" not in self.options.cax or self.options.cax["aspect"]>0):
-			from mpl_toolkits.axes_grid1 import make_axes_locatable
-			divider = make_axes_locatable(ax)
+			try:
+				divider = ax.divider
+			except:
+				from mpl_toolkits.axes_grid1 import make_axes_locatable
+				divider = make_axes_locatable(ax)
+				ax.divider = divider
 			cax = divider.append_axes(**self.options.cax)
 			ax.cax[cax_id] = self._plt.colorbar(mappable=self._plot, cax=cax, **self.options.colorbar)
 		self._setTitle(ax, t)
