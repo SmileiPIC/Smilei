@@ -804,7 +804,7 @@ there are many more optional arguments. They are directly passed to the *matplot
 
 .. rubric:: For the colorbar: ``cbaspect``, ``orientation``, ``fraction``, ``pad``,
   ``shrink``, ``anchor``, ``panchor``, ``extend``, ``extendfrac``, ``extendrect``,
-  ``spacing``, ``ticks``, ``format``, ``drawedges``, ``size``
+  ``spacing``, ``ticks``, ``format``, ``drawedges``, ``size``, ``clabel``
 
 ..
 

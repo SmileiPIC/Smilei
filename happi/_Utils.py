@@ -198,6 +198,8 @@ class Options(object):
 		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
 		if "cbaspect" in kwargs:
 			self.cax["aspect"] = kwargs.pop("cbaspect")
+		if "clabel" in kwargs:
+			self.colorbar["label"] = kwargs.pop("clabel")
 		self.cax['position'] = 'bottom' if ( 'orientation' in self.colorbar and self.colorbar['orientation'] == 'horizontal' ) else 'right'
 		if self.explicit_cmap is None:
 			self.image['cmap'] = 'smileiD' if self.vsym else 'smilei'
