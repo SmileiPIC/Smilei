@@ -57,7 +57,9 @@ LoadBalancing(
 
 ####### Define multiple laser envelopes
 ####### IMPORTANT: they represent laser pulses with the same carrier frequency omega, BC, ellipticity and polarization angle
-####### Their initial vector potentials can thus be summed at t=0 and be evolved with the same envelope solver
+####### Their initial transverse vector potentials can thus be summed at t=0 and be evolved with the same envelope equation solver
+####### The diagnostics will not separate the single envelopes' fields
+####### The ponderomotive force acting on the particles will be computed from the total envelope
 
 # parameters in common for the envelopes
 omega = 1.
@@ -76,10 +78,9 @@ a0_envelopes = [a0_0,a0_1,a0_2]
 Number_of_envelopes = len(a0_envelopes)
 
 # fwhm duration of the envelopes
-
-laser_fwhm_0 = 10. #70.
-laser_fwhm_1 = 10. #75.
-laser_fwhm_2 = 10. #80.
+laser_fwhm_0 = 10. 
+laser_fwhm_1 = 10. 
+laser_fwhm_2 = 10. 
 
 laser_fwhm_envelopes = [laser_fwhm_0,laser_fwhm_1,laser_fwhm_2]
 
@@ -91,7 +92,6 @@ waist_2 = 90.
 waist_envelopes = [waist_0,waist_1,waist_2]
 
 # initial position of the envelopes
-
 center_laser_0 = Lx-150.
 center_laser_1 = center_laser_0-150.
 center_laser_2 = center_laser_1-150.
@@ -113,7 +113,6 @@ time_envelope_2 = tgaussian(center=center_laser_envelopes[2], fwhm=laser_fwhm_en
 time_envelope_envelopes = [time_envelope_0,time_envelope_1,time_envelope_2]
 
 # profile of the vector potential of the single envelope
-
 def gaussian_beam_with_temporal_profile(x,r,t,i_envelope):
         polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
         Zr = omega * waist_envelopes[i_envelope]**2/2.
@@ -126,15 +125,14 @@ def gaussian_beam_with_temporal_profile(x,r,t,i_envelope):
         space_time_envelope = spatial_amplitude * vectorize(time_envelope_envelopes[i_envelope])(t)
         return space_time_envelope * exponential_with_total_phase
 
-# sum the vector potentials of the single envelopes
-
+# sum the transverse vector potentials of the single envelopes
 def summed_envelope_profiles(x,r,t):
 	total_vector_potential = 0.
 	for i_envelope in range(0,Number_of_envelopes):
 		total_vector_potential += gaussian_beam_with_temporal_profile(x,r,t,i_envelope)
 	return total_vector_potential 
 
-
+# define the envelope with the cumulative profile for the transverse vector potential
 LaserEnvelope(
         omega               = omega,
         envelope_profile    = summed_envelope_profiles,
