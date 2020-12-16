@@ -99,7 +99,7 @@ Open a Scalar diagnostic
   * ``data_log``:
      | If ``True``, then :math:`\log_{10}` is applied to the output.
   * ``data_transform``:
-     | If ``callable``, is applied to the output.
+     | If this is set to a function, the function is applied to the output before plotting.
   * See also :ref:`otherkwargs`
 
 **Example**::
