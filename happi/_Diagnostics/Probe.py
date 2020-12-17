@@ -432,8 +432,20 @@ class Probe(Diagnostic):
 
 	# Overloading a plotting function in order to use pcolormesh instead of imshow
 	def _plotOnAxes_2D_(self, ax, A):
+		vmin = self.options.vmin
+		vmax = self.options.vmax
+		if self.options.vsym:
+			if vmin or vmax:
+				print("WARNING: vsym set on the same Diagnostic as vmin and/or vmax. Ignoring vmin/vmax.")
+		        
+			if self.options.vsym is True:
+				vmax = self._np.abs(A).max()
+			else:
+				vmax = self._np.abs(self.options.vsym)
+
+			vmin = -vmax
 		self._plot = ax.pcolormesh(self._xfactor*self._edges[0], self._yfactor*self._edges[1], (A),
-			vmin = self.options.vmin, vmax = self.options.vmax, **self.options.image)
+			vmin = vmin, vmax = vmax, **self.options.image)
 		return self._plot
 	def _animateOnAxes_2D_(self, ax, A):
 		self._plot.set_array( A.flatten() )

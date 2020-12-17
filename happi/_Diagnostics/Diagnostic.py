@@ -706,10 +706,6 @@ class Diagnostic(object):
 		self._plot = self._plotOnAxes_2D_(ax, A)
 		ax.set_xlabel(self._xlabel, self.options.labels_font["xlabel"])
 		ax.set_ylabel(self._ylabel, self.options.labels_font["ylabel"])
-		if self.options.vmin is None and self.options.vmax is None and self.options.vsym:
-			vmax = self._np.abs(A).max()
-			vmin = -1 * vmax
-			self._plot.set_clim(vmin, vmax)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		if 'cax' not in dir(ax):
 			ax.cax = {}
@@ -751,9 +747,14 @@ class Diagnostic(object):
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		vmin = self.options.vmin
 		vmax = self.options.vmax
-		if vmin is None and vmax is None and self.options.vsym:
-			vmax = self._np.abs(A).max()
-			vmin = -1 * vmax
+		if self.options.vsym:
+			# Don't warn here, it will be annoying if every frame
+			if self.options.vsym is True:
+				vmax = self._np.abs(A).max()
+			else:
+				vmax = self._np.abs(self.options.vsym)
+
+			vmin = -vmax
 		if vmin is None: vmin = A.min()
 		if vmax is None: vmax = A.max()
 		self._plot.set_clim(vmin, vmax)
@@ -765,8 +766,20 @@ class Diagnostic(object):
 	# This is overloaded by class "Probe" because it requires to replace imshow
 	# Also overloaded by class "Performances" to add a line plot
 	def _plotOnAxes_2D_(self, ax, A):
+		vmin = self.options.vmin
+		vmax = self.options.vmax
+		if self.options.vsym:
+			if vmin or vmax:
+				print("WARNING: vsym set on the same Diagnostic as vmin and/or vmax. Ignoring vmin/vmax.")
+		        
+			if self.options.vsym is True:
+				vmax = self._np.abs(A).max()
+			else:
+				vmax = self._np.abs(self.options.vsym)
+
+			vmin = -vmax
 		self._plot = ax.imshow( self._np.rot90(A),
-			vmin = self.options.vmin, vmax = self.options.vmax, extent=self._extent, **self.options.image)
+			vmin = vmin, vmax = vmax, extent=self._extent, **self.options.image)
 		return self._plot
 	def _animateOnAxes_2D_(self, ax, A):
 		self._plot.set_data( self._np.rot90(A) )
