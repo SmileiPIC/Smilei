@@ -4,7 +4,7 @@ from .._Utils import *
 class Field(Diagnostic):
 	"""Class for loading a Field diagnostic"""
 	
-	def _init(self, diagNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, moving=False, **kwargs):
+	def _init(self, diagNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, data_transform=None, moving=False, **kwargs):
 		
 		self.moving = moving
 		self._subsetinfo = {}
@@ -171,7 +171,8 @@ class Field(Diagnostic):
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
-		
+		self._data_transform = data_transform
+
 		# Case of a cylindrical geometry
 		# Check whether "theta" or "build3d" option is chosen
 		if self.cylindrical :
@@ -455,6 +456,8 @@ class Field(Diagnostic):
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
+		# transform if requested
+		if callable(self._data_transform): A = self._data_transform(A)
 		return A
 	
 	# Method to obtain the data only
@@ -505,6 +508,7 @@ class Field(Diagnostic):
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
+		if callable(self._data_transform): A = self._data_transform(A)
 		return A
 	
 	# Method to obtain the data only
@@ -552,4 +556,5 @@ class Field(Diagnostic):
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
+		if callable(self._data_transform): A = self._data_transform(A)
 		return A

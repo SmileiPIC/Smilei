@@ -7,7 +7,7 @@ class ParticleBinning(Diagnostic):
 	_diagName = "ParticleBinning"
 	hasComposite = False
 	
-	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, include={}, **kwargs):
+	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, data_transform=None, include={}, **kwargs):
 		
 		# Search available diags
 		diag_numbers, diag_names = self.simulation.getDiags(self._diagName)
@@ -95,7 +95,8 @@ class ParticleBinning(Diagnostic):
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
-		
+		self._data_transform = data_transform
+
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# Get available timesteps
@@ -483,4 +484,6 @@ class ParticleBinning(Diagnostic):
 				A = self._np.sum(A, axis=iaxis, keepdims=True)
 		# remove summed axes
 		A = self._np.squeeze(A)
+		# transform if requested
+		if callable(self._data_transform): A = self._data_transform(A)
 		return A
