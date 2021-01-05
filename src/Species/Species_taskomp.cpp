@@ -152,11 +152,13 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                         vector<Diagnostic *> &localDiags )
 {
     int ithread, tid( 0 );
-#ifdef _OPENMP
-    ithread = omp_get_thread_num();
-#else
+// #ifdef _OPENMP
+//     ithread = omp_get_thread_num();
+// #else
+//     ithread = 0;
+// #endif
+
     ithread = 0;
-#endif
 
 #ifdef  __DETAILED_TIMERS
     double timer;
@@ -177,7 +179,8 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-
+            //#pragma omp task default(shared) firstprivate(ibin,ithread) depend(out:bin_has_pushed[ibin])
+            {
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
@@ -201,11 +204,11 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[1] += MPI_Wtime() - timer;
 #endif
-
+            } // end task
         } //ibin
       
         } // end first if moving particle 
-
+#pragma omp taskwait
 
         if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
@@ -244,7 +247,9 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[3] += MPI_Wtime() - timer;
 #endif
+            } // ibin
 
+            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
                 //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
 #ifdef  __DETAILED_TIMERS
