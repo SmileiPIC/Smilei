@@ -169,6 +169,7 @@ class Main(SmileiSingleton):
     number_of_patches = None
     patch_arrangement = "hilbertian"
     clrw = -1
+    tasks_on_projection = False
     every_clean_particles_overhead = 100
     timestep = None
     number_of_AM = 2
