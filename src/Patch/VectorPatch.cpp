@@ -362,14 +362,25 @@ void VectorPatch::dynamics( Params &params,
                                                MultiphotonBreitWheelerTables,
                                                localDiags );
                     } else {
-                        spec->Species::dynamics( time_dual, ispec,
+                                if (!params.tasks_on_projection){
+                                    spec->Species::dynamics( time_dual, ispec,
                                                  emfields( ipatch ),
                                                  params, diag_flag, partwalls( ipatch ),
                                                  ( *this )( ipatch ), smpi,
                                                  RadiationTables,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags );
-                    }
+                                } else {
+                                    Species_taskomp *spec_task = static_cast<Species_taskomp *>(spec);
+                                    spec_task->Species_taskomp::dynamicsWithTasks( time_dual, ispec,
+                                                 emfields( ipatch ),
+                                                 params, diag_flag, partwalls( ipatch ),
+                                                 ( *this )( ipatch ), smpi,
+                                                 RadiationTables,
+                                                 MultiphotonBreitWheelerTables,
+                                                 localDiags );    
+                                } // end if condition on tasks 
+                    } 
                 } // end if condition on vectorization
             } // end if condition on species
         } // end loop on species
