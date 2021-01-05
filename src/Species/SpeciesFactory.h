@@ -1001,6 +1001,10 @@ public:
             Py_INCREF( new_species->ionization_rate_ );
         }
         new_species->ionization_model                         = species->ionization_model;
+        new_species->size_proj_buffer_Jx                      = species->size_proj_buffer_Jx;
+        new_species->size_proj_buffer_Jy                      = species->size_proj_buffer_Jy;
+        new_species->size_proj_buffer_Jz                      = species->size_proj_buffer_Jz;
+        new_species->size_proj_buffer_rho                     = species->size_proj_buffer_rho;
         new_species->density_profile_type_                       = species->density_profile_type_;
         new_species->vectorized_operators                     = species->vectorized_operators;
         new_species->merging_method_                          = species->merging_method_;
