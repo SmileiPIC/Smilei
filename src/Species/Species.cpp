@@ -131,22 +131,35 @@ void Species::initCluster( Params &params )
     f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
     f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
 
+    //Dual dimension of fields.
+    f_dim0_d =  params.n_space[0] + 2 * oversize[0] +2;
+    f_dim1_d =  params.n_space[1] + 2 * oversize[1] +2;
+    f_dim2_d =  params.n_space[2] + 2 * oversize[2] +2;
+
     b_dim.resize( params.nDim_field, 1 );
     if( nDim_particle == 1 ) {
         b_dim[0] = ( 1 + clrw ) + 2 * oversize[0];
         f_dim1 = 1;
         f_dim2 = 1;
+        f_dim1_d = 1;
+        f_dim2_d = 1;
     }
     if( nDim_particle == 2 ) {
         b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] =  f_dim1;
         f_dim2 = 1;
+        f_dim2_d = 1;
     }
     if( nDim_particle == 3 ) {
         b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] = f_dim1;
         b_dim[2] = f_dim2;
     }
+
+    size_proj_buffer_rho = b_dim[0]*b_dim[1]*f_dim2;
+    size_proj_buffer_Jx  = b_dim[0]*b_dim[1]*f_dim2;
+    size_proj_buffer_Jy  = b_dim[0]*f_dim1_d*f_dim2;
+    size_proj_buffer_Jz  = b_dim[0]*b_dim[1]*f_dim2_d;
 
     //Initialize specMPI
     MPI_buffer_.allocate( nDim_field );

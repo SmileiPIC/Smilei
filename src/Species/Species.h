@@ -234,6 +234,9 @@ public:
     //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
 
+    //! sub dual dimensions of fields
+    unsigned int f_dim0_d, f_dim1_d, f_dim2_d;
+
     //! Accumulate energy lost with bc
     double nrj_bc_lost;
     //! Accumulate energy lost with moving window
@@ -592,6 +595,9 @@ public:
     
     //! Erase all particles with zero weight
     void eraseWeightlessParticles();
+
+    //! Size of the projection buffer
+    unsigned int size_proj_buffer_Jx,size_proj_buffer_Jy,size_proj_buffer_Jz,size_proj_buffer_rho;
 
 protected:
 
