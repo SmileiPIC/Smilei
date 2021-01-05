@@ -325,7 +325,8 @@ void VectorPatch::dynamics( Params &params,
     
     timers.particles.restart();
     ostringstream t;
-    #pragma omp for schedule(runtime)
+    #pragma omp single
+    {
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
         //MESSAGE("restart rhoj");
@@ -387,6 +388,7 @@ void VectorPatch::dynamics( Params &params,
         //MESSAGE("species dynamics");
     } // end loop on patches
 
+    } //end omp single
 
     timers.particles.update( params.printNow( itime ) );
 #ifdef __DETAILED_TIMERS
