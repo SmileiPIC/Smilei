@@ -166,7 +166,9 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 
     unsigned int iPart;
 
-    std::vector<double> nrj_lost_per_thd( 1, 0. );
+    //std::vector<double> nrj_lost_per_thd( 1, 0. );
+    int Nbins = particles->first_index.size();
+    std::vector<double> nrj_lost_per_bin( Nbins, 0. );
 
     // -------------------------------
     // calculate the particle dynamics
@@ -209,10 +211,12 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
       
         } // end first if moving particle 
 
-#pragma omp taskwait
+
 
         if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+                {
                 double ener_iPart( 0. );
 
 #ifdef  __DETAILED_TIMERS
@@ -223,32 +227,35 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                 if( mass_>0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                        nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
                     }
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
                     //        if omp, create a list per thread
                     partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                    nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
 
                 } else if( mass_==0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                        nrj_lost_per_thd[tid] += ener_iPart;
+                        nrj_lost_per_bin[ibin] += ener_iPart;
                     }
 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
                     //        if omp, create a list per thread
                     partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += ener_iPart;
+                    nrj_lost_per_bin[ibin] += ener_iPart;
 
                 }
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[3] += MPI_Wtime() - timer;
 #endif
+                } // end task
             } // ibin
+
+#pragma omp taskwait
 
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
                 //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
@@ -270,8 +277,8 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
             }// ibin
      } // end second if moving particle
 
-     for( unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++ ) {
-         nrj_bc_lost += nrj_lost_per_thd[tid];
+     for( unsigned int ibin=0 ; ibin<nrj_lost_per_bin.size() ; ibin++ ) {
+         nrj_bc_lost += nrj_lost_per_bin[ibin];
      }
 
     
