@@ -2,28 +2,55 @@
 Install dependencies on Linux
 -----------------------------
 
+Here we present the packages you need to install in order to be able to compile Smilei. Please be aware that distribution change quite often the package names. As 
+result this guide could partially or totally outdated. In case you find some error, please fill a `github issue <https://github.com/SmileiPIC/Smilei/issues/new?assignees=&labels=installation&template=installation-errors.md&title=>`_ . 
 
-Fedora
+
+ArchLinux
 ^^^^^^^^^
 
 .. code-block:: bash
 
-  dnf install -y gcc-c++ hdf5-openmpi hdf5-openmpi-devel openmpi-devel git which findutils python python-devel
-  dnf install -y h5py ipython python2-pint sphinx python2-matplotlib
+	sudo pacman -S git hdf5-openmpi python-numpy python-sphinx python-h5py-openmpi python-matplotlib python-pint make gcc
 
 
+Fedora
+^^^^^^
 
-Debian (Ubuntu, Mint etc...)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: bash
 
-1. Install these packages
+	sudo dnf install gcc-c++ git hdf5-openmpi hdf5-openmpi-devel openmpi-devel python python-devel python3-h5py ipython python3-pint python3-sphinx python3-matplotlib
 
-  .. code-block:: bash
-  
-    sudo apt-get install python-h5py ipython python-pint python-sphinx python-matplotlib python-dev  python-numpy
+Add the following lines to your `~/.bashrc` or `~/.bash_profile` file
 
-2. Since the system ``openmpi`` is not compiled with
-   ``--enable-mpi-thread-multiple``, a manual installation is required.
+.. code-block:: bash
+
+	module load mpi
+
+
+Debian or Ubuntu
+^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+	sudo apt-get install git python3-h5py python3-ipython python3-pint python3-sphinx python3-matplotlib python3-dev python3-numpy build-essential gcc libhdf5-openmpi-dev
+
+Add the following lines to your `~/.bashrc` or `~/.bash_profile` file
+
+.. code-block:: bash
+
+	export PYTHONEXE=python3 
+	export HDF5_ROOT_DIR=/usr/lib/x86_64-linux-gnu/hdf5/openmpi 
+
+
+Troubleshooting:
+^^^^^^^^^^^^^^^^
+
+Besides Python Smilei need a quite recent mpi (with mpi-thread-multiple enabled) and a parallel hdf5 library. 
+In case you system doe not provide them, here is a (non exhaustive) help to instlal them:
+
+
+1. If your system ``openmpi`` is not compiled with ``--enable-mpi-thread-multiple``, a manual installation is required.
    Add the following lines to your `~/.bashrc` or `~/.bash_profile` file
    (You may choose any ``${INSTALL_DIR}``)
 
@@ -36,9 +63,9 @@ Debian (Ubuntu, Mint etc...)
     export LD_LIBRARY_PATH=${INSTALL_DIR}/hdf5/lib:${LD_LIBRARY_PATH}
     export HDF5_ROOT_DIR=${INSTALL_DIR}/hdf5
 
-3. Restart your terminal
+2. Restart your terminal
 
-4. Download `OpenMPI <https://www.open-mpi.org/software/ompi>`_ and install.
+3. Download `OpenMPI <https://www.open-mpi.org/software/ompi>`_ and install.
 
   .. code-block:: bash
   
@@ -48,9 +75,9 @@ Debian (Ubuntu, Mint etc...)
     make
     sudo make install
 
-5. Restart your terminal
+4. Restart your terminal
 
-6. Download `HDF5 <https://portal.hdfgroup.org/display/support/Downloads>`_ and install
+5. Download `HDF5 <https://portal.hdfgroup.org/display/support/Downloads>`_ and install
 
   .. code-block:: bash
 

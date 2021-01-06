@@ -1,4 +1,4 @@
-############################# Laser envelope propagation in vacuum
+############################# Laser envelope propagation in underdense plasma
 dx = 0.69 
 dr = 5. 
 dt = 0.57#0.8*dx

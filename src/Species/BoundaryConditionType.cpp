@@ -425,7 +425,7 @@ void thermalize_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, i
             double v = sqrt( p2 )/LorentzFactor;
 
             // energy before thermalization
-            nrj_iPart = weight[ ipart ]*( LorentzFactor-1.0 );
+            double initial_energy = LorentzFactor-1.0;
 
             // Apply bcs depending on the particle velocity
             // --------------------------------------------
@@ -494,7 +494,7 @@ void thermalize_particle_inf( Particles &particles, SmileiMPI* smpi, int imin, i
 
             // energy lost during thermalization
             LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
-            nrj_iPart -= weight[ ipart ]*( LorentzFactor-1.0 );
+            nrj_iPart += weight[ ipart ]*( initial_energy - LorentzFactor+1.0 );
 
 
             /* HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
@@ -535,7 +535,7 @@ void thermalize_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, i
             double v = sqrt( p2 )/LorentzFactor;
 
             // energy before thermalization
-            nrj_iPart = weight[ ipart ]*( LorentzFactor-1.0 );
+            double initial_energy = LorentzFactor-1.0;
 
             // Apply bcs depending on the particle velocity
             // --------------------------------------------
@@ -604,7 +604,7 @@ void thermalize_particle_sup( Particles &particles, SmileiMPI* smpi, int imin, i
 
             // energy lost during thermalization
             LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
-            nrj_iPart -= weight[ ipart ]*( LorentzFactor-1.0 );
+            nrj_iPart += weight[ ipart ]*( initial_energy - LorentzFactor+1.0 );
 
 
             /* HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
@@ -648,7 +648,7 @@ void thermalize_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, 
             double v = sqrt( p2 )/LorentzFactor;
 
             // energy before thermalization
-            nrj_iPart = weight[ ipart ]*( LorentzFactor-1.0 );
+            double initial_energy = LorentzFactor-1.0;
 
             // Apply bcs depending on the particle velocity
             // --------------------------------------------
@@ -717,7 +717,7 @@ void thermalize_particle_wall( Particles &particles, SmileiMPI* smpi, int imin, 
 
             // energy lost during thermalization
             LorentzFactor = sqrt( 1.+pow( momentum_x[ipart], 2 )+pow( momentum_y[ipart], 2 )+pow( momentum_z[ipart], 2 ) );
-            nrj_iPart -= weight[ ipart ]*( LorentzFactor-1.0 );
+            nrj_iPart += weight[ ipart ]*( initial_energy - LorentzFactor+1.0 );
 
 
             /* HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
