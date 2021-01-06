@@ -179,7 +179,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-            //#pragma omp task default(shared) firstprivate(ibin,ithread) depend(out:bin_has_pushed[ibin])
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_pushed[ibin])
             {
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -208,6 +208,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
         } //ibin
       
         } // end first if moving particle 
+
 #pragma omp taskwait
 
         if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
