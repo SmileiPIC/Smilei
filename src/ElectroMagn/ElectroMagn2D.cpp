@@ -1514,3 +1514,70 @@ void ElectroMagn2D::initAntennas( Patch *patch, Params& params )
     
 }
 
+void ElectroMagn2D::copyInLocalDensities(int ispec, int ibin, double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, std::vector<unsigned int> b_dim, bool diag_flag)
+{
+    Field2D *Jx2D,*Jy2D,*Jz2D,*rho2D;
+    
+    if (Jx_s [ispec] != NULL & diag_flag){
+        Jx2D  = static_cast<Field2D *>( Jx_s [ispec] ) ;
+    } else {
+        Jx2D  = static_cast<Field2D *>( Jx_ )  ;
+    }
+
+    if (Jy_s [ispec] != NULL & diag_flag){
+        Jy2D  = static_cast<Field2D *>( Jy_s [ispec] ) ;
+    } else {
+        Jy2D  = static_cast<Field2D *>( Jy_ )  ;
+    }
+
+    if (Jz_s [ispec] != NULL & diag_flag){
+        Jz2D  = static_cast<Field2D *>( Jz_s [ispec] ) ;
+    } else {
+        Jz2D  = static_cast<Field2D *>( Jz_ )  ;
+    }
+
+    if (rho_s [ispec] != NULL & diag_flag){
+        rho2D  = static_cast<Field2D *>( rho_s [ispec] ) ;
+    } else {
+        rho2D  = static_cast<Field2D *>( rho_ )  ;
+    }
+    
+
+    //cout << "In";
+    int iloc;
+    int f_dim1 = f_dim1 =  n_space[1] + 2 * oversize[1] +1;
+    // Introduced to avoid indirection in data access b_rho[i*b_dim[1]+j]
+    int b_dim1 = b_dim[1];
+
+    // Jx (d,p)
+    for (int i = 0; i < b_dim[0] ; i++) {
+	      iloc = ibin + i ;
+        for (int j = 0; j < (b_dim[1]) ; j++) {
+            (*Jx2D) (iloc,j) += b_Jx [i*b_dim1+j];   //  primal along y
+        }
+    }
+
+    // Jy (p,d)
+    for (int i = 0; i < (b_dim[0]) ; i++) {
+	      iloc = ibin + i ;
+        for (int j = 0; j < (b_dim[1]+1) ; j++) {
+            Jy2D->data_[ iloc*Jy2D->dims_[1]+j ] += b_Jy [i*(b_dim1+1)+j];
+            //(*Jy2D)(iloc,j) +=  b_Jy [i*(b_dim1+1)+j];   //  dual along y
+        }
+    }
+
+    // Jz (p,p) and rho (p,p)
+    for (int i = 0; i < (b_dim[0]) ; i++) {
+	      iloc = ibin + i ;
+        for (int j = 0; j < (b_dim[1]) ; j++) {
+            (*Jz2D) (iloc,j) +=  b_Jz [i*b_dim1+j];   //  primal along y
+            if (diag_flag){
+	              (*rho2D)(iloc,j) +=  b_rho[i*b_dim1+j];   // primal along y
+            }
+        }
+    }
+
+} // end ElectroMagn2D::copyInLocalDensities
+
+
+
