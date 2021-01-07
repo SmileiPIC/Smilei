@@ -329,6 +329,9 @@ void VectorPatch::dynamics( Params &params,
     {
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
+        if( params.tasks_on_projection & diag_flag) {
+            ( *this )( ipatch )->EMfields->restartRhoJs();
+        }
         //MESSAGE("restart rhoj");
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             Species *spec = species( ipatch, ispec );
