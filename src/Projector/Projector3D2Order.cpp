@@ -766,6 +766,41 @@ void Projector3D2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     }
     
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Wrapper for projection on buffers
+// ---------------------------------------------------------------------------------------------------------------------
+void Projector3D2Order::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_shift, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+{
+    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
+    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
+    std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
+    
+    // If no field diagnostics this timestep, then the projection is done directly on the total arrays
+    if( !diag_flag ) {
+        if( !is_spectral ) {
+            for( unsigned int ipart= (unsigned int) istart ; ipart< (unsigned int ) iend; ipart++ ) {
+                // cerr << ipart << endl;
+                // cerr << ( *iold )[ipart] << endl;
+                currentsForTasks( b_Jx, b_Jy, b_Jz, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
+            }
+        } else {
+            for( unsigned int ipart= (unsigned int) istart ; ipart< (unsigned int ) iend; ipart++ ) {
+                currentsAndDensityForTasks( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
+            }
+        }
+        // Otherwise, the projection may apply to the species-specific arrays
+    } else {
+        // double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
+        // double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
+        // double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
+        // double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+        for( int ipart=istart ; ipart<iend; ipart++ ) {
+            currentsAndDensityForTasks( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
+        }
+    }
+}
+
 // Projector for susceptibility used as source term in envelope equation
 void Projector3D2Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 
@@ -886,4 +921,475 @@ void Projector3D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
         
     }
     
-}
+} // end sumSusceptibility
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project local currents (sort)
+// ---------------------------------------------------------------------------------------------------------------------
+void Projector3D2Order::currentsForTasks( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift )
+{
+    int nparts = particles.size();
+    
+    // -------------------------------------
+    // Variable declaration & initialization
+    // -------------------------------------
+    
+    // (x,y,z) components of the current density for the macro-particle
+    double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
+    double crx_p = charge_weight*dx_ov_dt;
+    double cry_p = charge_weight*dy_ov_dt;
+    double crz_p = charge_weight*dz_ov_dt;
+    
+    // variable declaration
+    double xpn, ypn, zpn;
+    double delta, delta2;
+    // arrays used for the Esirkepov projection method
+    double Sx0[5], Sx1[5], Sy0[5], Sy1[5], Sz0[5], Sz1[5], DSx[5], DSy[5], DSz[5];
+    double tmpJx[5][5], tmpJy[5][5], tmpJz[5][5];
+    
+    for( unsigned int i=0; i<5; i++ ) {
+        Sx1[i] = 0.;
+        Sy1[i] = 0.;
+        Sz1[i] = 0.;
+    }
+    for( unsigned int j=0; j<5; j++ )
+        for( unsigned int k=0; k<5; k++ ) {
+            tmpJx[j][k] = 0.;
+        }
+    for( unsigned int i=0; i<5; i++ )
+        for( unsigned int k=0; k<5; k++ ) {
+            tmpJy[i][k] = 0.;
+        }
+    for( unsigned int i=0; i<5; i++ )
+        for( unsigned int j=0; j<5; j++ ) {
+            tmpJz[i][j] = 0.;
+        }
+        
+    // --------------------------------------------------------
+    // Locate particles & Calculate Esirkepov coef. S, DS and W
+    // --------------------------------------------------------
+    
+    // locate the particle on the primal grid at former time-step & calculate coeff. S0
+    delta = deltaold[0*nparts];
+    delta2 = delta*delta;
+    Sx0[0] = 0.;
+    Sx0[1] = 0.5 * ( delta2-delta+0.25 );
+    Sx0[2] = 0.75-delta2;
+    Sx0[3] = 0.5 * ( delta2+delta+0.25 );
+    Sx0[4] = 0.;
+    
+    delta = deltaold[1*nparts];
+    delta2 = delta*delta;
+    Sy0[0] = 0.;
+    Sy0[1] = 0.5 * ( delta2-delta+0.25 );
+    Sy0[2] = 0.75-delta2;
+    Sy0[3] = 0.5 * ( delta2+delta+0.25 );
+    Sy0[4] = 0.;
+    
+    delta = deltaold[2*nparts];
+    delta2 = delta*delta;
+    Sz0[0] = 0.;
+    Sz0[1] = 0.5 * ( delta2-delta+0.25 );
+    Sz0[2] = 0.75-delta2;
+    Sz0[3] = 0.5 * ( delta2+delta+0.25 );
+    Sz0[4] = 0.;
+    
+    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    xpn = particles.position( 0, ipart ) * dx_inv_;
+    int ip = round( xpn );
+    int ipo = iold[0*nparts];
+    int ip_m_ipo = ip-ipo-i_domain_begin;
+    delta  = xpn - ( double )ip;
+    delta2 = delta*delta;
+    Sx1[ip_m_ipo+1] = 0.5 * ( delta2-delta+0.25 );
+    Sx1[ip_m_ipo+2] = 0.75-delta2;
+    Sx1[ip_m_ipo+3] = 0.5 * ( delta2+delta+0.25 );
+    
+    ypn = particles.position( 1, ipart ) * dy_inv_;
+    int jp = round( ypn );
+    int jpo = iold[1*nparts];
+    int jp_m_jpo = jp-jpo-j_domain_begin;
+    delta  = ypn - ( double )jp;
+    delta2 = delta*delta;
+    Sy1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
+    Sy1[jp_m_jpo+2] = 0.75-delta2;
+    Sy1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
+    
+    zpn = particles.position( 2, ipart ) * dz_inv_;
+    int kp = round( zpn );
+    int kpo = iold[2*nparts];
+    int kp_m_kpo = kp-kpo-k_domain_begin;
+    delta  = zpn - ( double )kp;
+    delta2 = delta*delta;
+    Sz1[kp_m_kpo+1] = 0.5 * ( delta2-delta+0.25 );
+    Sz1[kp_m_kpo+2] = 0.75-delta2;
+    Sz1[kp_m_kpo+3] = 0.5 * ( delta2+delta+0.25 );
+    
+    // computes Esirkepov coefficients
+    for( unsigned int i=0; i < 5; i++ ) {
+        DSx[i] = Sx1[i] - Sx0[i];
+        DSy[i] = Sy1[i] - Sy0[i];
+        DSz[i] = Sz1[i] - Sz0[i];
+    }
+    
+    // ---------------------------
+    // Calculate the total current
+    // ---------------------------
+    
+    ipo -= 2 + bin_shift;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    jpo -= 2;
+    kpo -= 2;
+    
+    int linindex, linindex_x, linindex_y;
+    double tmp, tmp2;
+    double vtmp[5];
+    
+    // Jx^(d,p,p)
+    int  z_size = nprimz;
+    int yz_size = nprimz*nprimy;
+    int linindex0 = ipo*yz_size+jpo*z_size+kpo;
+    tmp = 0.;
+    linindex = linindex0;
+    tmp2 = crx_p * ( one_third*Sy1[0]*Sz1[0] );
+    for( int i=1 ; i<5 ; i++ ) {
+        tmp -= DSx[i-1] * tmp2;
+        linindex += yz_size;
+        Jx [linindex] += tmp;
+    }//i
+    for( unsigned int i=0 ; i<5 ; i++ ) {
+        vtmp[i] = 0.;
+    }
+    linindex_x = linindex0;
+    for( int k=1 ; k<5 ; k++ ) {
+        linindex_x += 1;
+        linindex    = linindex_x;
+        tmp = crx_p * ( 0.5*Sy1[0]*Sz0[k] + one_third*Sy1[0]*DSz[k] );
+        for( int i=1 ; i<5 ; i++ ) {
+            vtmp[k] -= DSx[i-1] * tmp;
+            linindex += yz_size;
+            Jx [linindex] += vtmp[k];
+        }
+    }//i
+    for( unsigned int i=0 ; i<5 ; i++ ) {
+        vtmp[i] = 0.;
+    }
+    linindex_x = linindex0;
+    for( int j=1 ; j<5 ; j++ ) {
+        linindex_x += z_size;
+        linindex    = linindex_x;
+        tmp = crx_p * ( 0.5*Sz1[0]*Sy0[j] + one_third*DSy[j]*Sz1[0] );
+        for( int i=1 ; i<5 ; i++ ) {
+            vtmp[j] -= DSx[i-1] * tmp;
+            linindex += yz_size;
+            Jx [linindex] += vtmp[j];
+        }
+    }//i
+    linindex_x = linindex0;
+    for( int j=1 ; j<5 ; j++ ) {
+        linindex_x += z_size;
+        linindex_y  = linindex_x;
+        for( int k=1 ; k<5 ; k++ ) {
+            linindex_y += 1;
+            linindex    = linindex_y;
+            tmp = crx_p * ( Sy0[j]*Sz0[k] + 0.5*DSy[j]*Sz0[k] + 0.5*DSz[k]*Sy0[j] + one_third*DSy[j]*DSz[k] );
+            for( int i=1 ; i<5 ; i++ ) {
+                tmpJx[j][k] -= DSx[i-1] * tmp;
+                linindex += yz_size;
+                Jx [linindex] += tmpJx[j][k];
+            }
+        }
+    }//i
+    
+    
+    // Jy^(p,d,p)
+    yz_size = nprimz*( nprimy+1*pxr );
+    linindex0 = ipo*yz_size+jpo*z_size+kpo;
+    tmp = 0.;
+    linindex = linindex0;
+    tmp2 = cry_p * ( one_third*Sz1[0]*Sx1[0] );
+    for( int j=1 ; j<5 ; j++ ) {
+        tmp -= DSy[j-1] * tmp2;
+        linindex += z_size;
+        Jy [linindex] += tmp; //
+    }//i
+    for( unsigned int i=0 ; i<5 ; i++ ) {
+        vtmp[i] = 0.;
+    }
+    linindex_x = linindex0;
+    for( int k=1 ; k<5 ; k++ ) {
+        linindex_x += 1;
+        linindex    = linindex_x;
+        tmp  = cry_p * ( 0.5*Sx1[0]*Sz0[k] + one_third*DSz[k]*Sx1[0] );
+        for( int j=1 ; j<5 ; j++ ) {
+            vtmp[k] -= DSy[j-1] * tmp;
+            linindex += z_size;
+            Jy [linindex] += vtmp[k]; //
+        }
+    }
+    for( unsigned int i=0 ; i<5 ; i++ ) {
+        vtmp[i] = 0.;
+    }
+    linindex_x = linindex0;
+    for( int i=1 ; i<5 ; i++ ) {
+        linindex_x += yz_size;
+        linindex    = linindex_x;
+        tmp = cry_p * ( 0.5*Sz1[0]*Sx0[i] + one_third*Sz1[0]*DSx[i] );
+        for( int j=1 ; j<5 ; j++ ) {
+            vtmp[i] -= DSy[j-1] * tmp;
+            linindex += z_size;
+            Jy [linindex] += vtmp[i]; //
+        }
+    }//i
+    linindex_x = linindex0;
+    for( int i=1 ; i<5 ; i++ ) {
+        linindex_x += yz_size;
+        linindex_y  = linindex_x;
+        for( int k=1 ; k<5 ; k++ ) {
+            linindex_y += 1;
+            linindex    = linindex_y;
+            tmp = cry_p * ( Sz0[k]*Sx0[i] + 0.5*DSz[k]*Sx0[i] + 0.5*DSx[i]*Sz0[k] + one_third*DSz[k]*DSx[i] );
+            for( int j=1 ; j<5 ; j++ ) {
+                tmpJy[i][k] -= DSy[j-1] * tmp;
+                linindex +=z_size;
+                Jy [linindex] += tmpJy[i][k]; //
+            }
+        }
+    }//i
+    
+    // Jz^(p,p,d)
+    z_size =  nprimz+1*pxr;
+    yz_size = ( nprimz+1*pxr )*nprimy;
+    linindex0 = ipo*yz_size+jpo*z_size+kpo;
+    tmp = 0.;
+    linindex = linindex0;
+    tmp2 = crz_p * ( one_third*Sx1[0]*Sy1[0] );
+    for( int k=1 ; k<5 ; k++ ) {
+        tmp -= DSz[k-1] * tmp2;
+        linindex += 1;
+        Jz [linindex] += tmp; //
+    }//i
+    for( unsigned int i=0 ; i<5 ; i++ ) {
+        vtmp[i] = 0.;
+    }
+    linindex_x = linindex0;
+    for( int j=1 ; j<5 ; j++ ) {
+        linindex_x += z_size;
+        linindex    = linindex_x;
+        tmp = crz_p * ( 0.5*Sx1[0]*Sy0[j] + one_third*Sx1[0]*DSy[j] );
+        for( int k=1 ; k<5 ; k++ ) {
+            vtmp[j] -= DSz[k-1] * tmp;
+            linindex += 1;
+            Jz [linindex] += vtmp[j]; //
+        }
+    }//i
+    for( unsigned int i=0 ; i<5 ; i++ ) {
+        vtmp[i] = 0.;
+    }
+    linindex_x = linindex0;
+    for( int i=1 ; i<5 ; i++ ) {
+        linindex_x += yz_size;
+        linindex    = linindex_x;
+        tmp = crz_p * ( 0.5*Sy1[0]*Sx0[i] + one_third*DSx[i]*Sy1[0] );
+        for( int k=1 ; k<5 ; k++ ) {
+            vtmp[i] -= DSz[k-1] * tmp;
+            linindex += 1;
+            Jz [linindex] += vtmp[i]; //
+        }
+    }//i
+    linindex_x = linindex0;
+    for( int i=1 ; i<5 ; i++ ) {
+        linindex_x += yz_size;
+        linindex_y  = linindex_x;
+        for( int j=1 ; j<5 ; j++ ) {
+            linindex_y += z_size;
+            linindex    = linindex_y;
+            tmp = crz_p*( Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j] + 0.5*DSy[j]*Sx0[i] + one_third*DSx[i]*DSy[j] );
+            for( int k=1 ; k<5 ; k++ ) {
+                tmpJz[i][j] -= DSz[k-1] * tmp;
+                linindex += 1;
+                Jz [linindex] += tmpJz[i][j]; //
+            }
+        }
+    }//i
+    
+    
+} // END Project local current densities Jx, Jy, Jz on buffers
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project local current densities (sort)
+// ---------------------------------------------------------------------------------------------------------------------
+void Projector3D2Order::currentsAndDensityForTasks( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift )
+{
+    int nparts = particles.size();
+    
+    // -------------------------------------
+    // Variable declaration & initialization
+    // -------------------------------------
+    
+    // (x,y,z) components of the current density for the macro-particle
+    double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
+    double crx_p = charge_weight*dx_ov_dt;
+    double cry_p = charge_weight*dy_ov_dt;
+    double crz_p = charge_weight*dz_ov_dt;
+    
+    // variable declaration
+    double xpn, ypn, zpn;
+    double delta, delta2;
+    // arrays used for the Esirkepov projection method
+    double Sx0[5], Sx1[5], Sy0[5], Sy1[5], Sz0[5], Sz1[5], DSx[5], DSy[5], DSz[5];
+    double tmpJx[5][5], tmpJy[5][5], tmpJz[5][5];
+    
+    for( unsigned int i=0; i<5; i++ ) {
+        Sx1[i] = 0.;
+        Sy1[i] = 0.;
+        Sz1[i] = 0.;
+    }
+    
+    for( unsigned int j=0; j<5; j++ )
+        for( unsigned int k=0; k<5; k++ ) {
+            tmpJx[j][k] = 0.;
+        }
+    for( unsigned int i=0; i<5; i++ )
+        for( unsigned int k=0; k<5; k++ ) {
+            tmpJy[i][k] = 0.;
+        }
+    for( unsigned int i=0; i<5; i++ )
+        for( unsigned int j=0; j<5; j++ ) {
+            tmpJz[i][j] = 0.;
+        }
+    // --------------------------------------------------------
+    // Locate particles & Calculate Esirkepov coef. S, DS and W
+    // --------------------------------------------------------
+    
+    // locate the particle on the primal grid at former time-step & calculate coeff. S0
+    delta = deltaold[0*nparts];
+    delta2 = delta*delta;
+    Sx0[0] = 0.;
+    Sx0[1] = 0.5 * ( delta2-delta+0.25 );
+    Sx0[2] = 0.75-delta2;
+    Sx0[3] = 0.5 * ( delta2+delta+0.25 );
+    Sx0[4] = 0.;
+    
+    delta = deltaold[1*nparts];
+    delta2 = delta*delta;
+    Sy0[0] = 0.;
+    Sy0[1] = 0.5 * ( delta2-delta+0.25 );
+    Sy0[2] = 0.75-delta2;
+    Sy0[3] = 0.5 * ( delta2+delta+0.25 );
+    Sy0[4] = 0.;
+    
+    delta = deltaold[2*nparts];
+    delta2 = delta*delta;
+    Sz0[0] = 0.;
+    Sz0[1] = 0.5 * ( delta2-delta+0.25 );
+    Sz0[2] = 0.75-delta2;
+    Sz0[3] = 0.5 * ( delta2+delta+0.25 );
+    Sz0[4] = 0.;
+    
+    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    xpn = particles.position( 0, ipart ) * dx_inv_;
+    int ip = round( xpn );
+    int ipo = iold[0*nparts];
+    int ip_m_ipo = ip-ipo-i_domain_begin;
+    delta  = xpn - ( double )ip;
+    delta2 = delta*delta;
+    Sx1[ip_m_ipo+1] = 0.5 * ( delta2-delta+0.25 );
+    Sx1[ip_m_ipo+2] = 0.75-delta2;
+    Sx1[ip_m_ipo+3] = 0.5 * ( delta2+delta+0.25 );
+    
+    ypn = particles.position( 1, ipart ) * dy_inv_;
+    int jp = round( ypn );
+    int jpo = iold[1*nparts];
+    int jp_m_jpo = jp-jpo-j_domain_begin;
+    delta  = ypn - ( double )jp;
+    delta2 = delta*delta;
+    Sy1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
+    Sy1[jp_m_jpo+2] = 0.75-delta2;
+    Sy1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
+    
+    zpn = particles.position( 2, ipart ) * dz_inv_;
+    int kp = round( zpn );
+    int kpo = iold[2*nparts];
+    int kp_m_kpo = kp-kpo-k_domain_begin;
+    delta  = zpn - ( double )kp;
+    delta2 = delta*delta;
+    Sz1[kp_m_kpo+1] = 0.5 * ( delta2-delta+0.25 );
+    Sz1[kp_m_kpo+2] = 0.75-delta2;
+    Sz1[kp_m_kpo+3] = 0.5 * ( delta2+delta+0.25 );
+    
+    // computes Esirkepov coefficients
+    for( unsigned int i=0; i < 5; i++ ) {
+        DSx[i] = Sx1[i] - Sx0[i];
+        DSy[i] = Sy1[i] - Sy0[i];
+        DSz[i] = Sz1[i] - Sz0[i];
+    }
+    
+    // ---------------------------
+    // Calculate the total current
+    // ---------------------------
+    
+    ipo -= 2 + bin_shift;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    jpo -= 2;
+    kpo -= 2;
+    
+    int iloc, jloc, kloc, linindex;
+    
+    // Jx^(d,p,p)
+    for( unsigned int i=1 ; i<5 ; i++ ) {
+        iloc = i+ipo;
+        for( unsigned int j=0 ; j<5 ; j++ ) {
+            jloc = j+jpo;
+            for( unsigned int k=0 ; k<5 ; k++ ) {
+                tmpJx[j][k] -= crx_p * DSx[i-1] * ( Sy0[j]*Sz0[k] + 0.5*DSy[j]*Sz0[k] + 0.5*DSz[k]*Sy0[j] + one_third*DSy[j]*DSz[k] );
+                kloc = k+kpo;
+                linindex = iloc*nprimz*nprimy+jloc*nprimz+kloc;
+                Jx [linindex] += tmpJx[j][k];
+            }
+        }
+    }//i
+    
+    // Jy^(p,d,p)
+    for( unsigned int i=0 ; i<5 ; i++ ) {
+        iloc = i+ipo;
+        for( unsigned int j=1 ; j<5 ; j++ ) {
+            jloc = j+jpo;
+            for( unsigned int k=0 ; k<5 ; k++ ) {
+                tmpJy[i][k] -= cry_p * DSy[j-1] * ( Sz0[k]*Sx0[i] + 0.5*DSz[k]*Sx0[i] + 0.5*DSx[i]*Sz0[k] + one_third*DSz[k]*DSx[i] );
+                kloc = k+kpo;
+                linindex = iloc*nprimz*( nprimy+1*pxr )+jloc*nprimz+kloc;
+                Jy [linindex] += tmpJy[i][k]; //
+            }
+        }
+    }//i
+    
+    // Jz^(p,p,d)
+    for( unsigned int i=0 ; i<5 ; i++ ) {
+        iloc = i+ipo;
+        for( unsigned int j=0 ; j<5 ; j++ ) {
+            jloc = j+jpo;
+            for( unsigned int k=1 ; k<5 ; k++ ) {
+                tmpJz[i][j] -= crz_p * DSz[k-1] * ( Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j] + 0.5*DSy[j]*Sx0[i] + one_third*DSx[i]*DSy[j] );
+                kloc = k+kpo;
+                linindex = iloc*( nprimz+1*pxr )*nprimy+jloc*( nprimz+1*pxr )+kloc;
+                Jz [linindex] += tmpJz[i][j]; //
+            }
+        }
+    }//i
+    
+    // Rho^(p,p,p)
+    for( unsigned int i=0 ; i<5 ; i++ ) {
+        iloc = i+ipo;
+        for( unsigned int j=0 ; j<5 ; j++ ) {
+            jloc = j+jpo;
+            for( unsigned int k=0 ; k<5 ; k++ ) {
+                kloc = k+kpo;
+                linindex = iloc*nprimz*nprimy+jloc*nprimz+kloc;
+                rho[linindex] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
+            }
+        }
+    }//i
+    
+} // END Project local densities Jx, Jy, Jz, rho, on buffers
