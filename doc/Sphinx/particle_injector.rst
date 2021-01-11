@@ -37,7 +37,7 @@ Recommendation
   The regular positionning works when injecting a drifting cold plasma with a drift velocity
   sufficiently high to let the particles entering the simulation domain.
 
-.. _fig_particle_injector:
+.. _fig_particle_injector_regular_random:
 
 .. figure:: _static/figures/particle_injector_regular_random.png
     :width: 100%
