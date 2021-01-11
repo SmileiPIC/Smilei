@@ -278,11 +278,10 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                     if (params.geometry == "2Dcartesian"){
                         Projector2D2Order *Proj2D = static_cast<Projector2D2Order *>(Proj);
                         Proj2D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], ibin*clrw, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
-                    }
-                    // } else if (params.geometry == "3Dcartesian"){
-                    //     Projector3D2Order *Proj3D = static_cast<Projector3D2Order *>(Proj);
-                    //     Proj3D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], ibin*clrw, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
-                    // } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
+                    } else if (params.geometry == "3Dcartesian"){
+                        Projector3D2Order *Proj3D = static_cast<Projector3D2Order *>(Proj);
+                        Proj3D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], ibin*clrw, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
+                    } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
 
                 } // end condition on test and mass
 
@@ -292,15 +291,17 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                 }//end task
             }// ibin
 
+        }// end taskgroup  
 
-        }// end taskgroup
      } // end second if moving particle
 
-     for( unsigned int ibin=0 ; ibin<nrj_lost_per_bin.size() ; ibin++ ) {
-         nrj_bc_lost += nrj_lost_per_bin[ibin];
-     }
 
-    
+     // #pragma omp task default(shared)
+     // {
+         for( unsigned int ibin=0 ; ibin<nrj_lost_per_bin.size() ; ibin++ ) {
+             nrj_bc_lost += nrj_lost_per_bin[ibin];
+         }
+     // } // end task
 
 
 //////// Projection for frozen particles
@@ -329,5 +330,6 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
     //         }
     //     }
     // } // End projection for frozen particles
-}
+
+} // end dynamicsWithTasks
 

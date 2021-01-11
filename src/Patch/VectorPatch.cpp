@@ -407,10 +407,9 @@ void VectorPatch::dynamics( Params &params,
             ElectroMagn2D *emfields2D; ElectroMagn3D *emfields3D; 
             if (params.geometry == "2Dcartesian"){
                 emfields2D = static_cast<ElectroMagn2D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
-            }
-            // } else if (params.geometry == "3Dcartesian"){
-            //     emfields3D = static_cast<ElectroMagn3D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
-            // } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
+            } else if (params.geometry == "3Dcartesian"){
+                emfields3D = static_cast<ElectroMagn3D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
+            } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
             
             for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
 
@@ -424,10 +423,9 @@ void VectorPatch::dynamics( Params &params,
                     // Copy density buffer back to the patch density
                     if (params.geometry == "2Dcartesian"){
              	          emfields2D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                    } else if (params.geometry == "3Dcartesian"){
+             	          emfields3D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
                     }
-                    // } else if (params.geometry == "3Dcartesian"){
-             	      //     emfields3D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
-                    // }
                 } // ibin
             } // end species loop
         } // end patch loop
