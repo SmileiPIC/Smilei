@@ -28,10 +28,8 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
     unsigned int i1=0, i2, first_index1, first_index2, N2max;
     Species   *s1, *s2;
     Particles *p1=NULL, *p2;
-    double coeff3, coeff4, logL, logL_factor, s, ncol, debye2=0.;
+    double coeff3, coeff4, logL, s, ncol, debye2=0.;
     
-    logL_factor = coulomb_log_factor_;
-
     s1 = patch->vecSpecies[species_group1_[0]];
     s2 = patch->vecSpecies[species_group2_[0]];
     
@@ -118,7 +116,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
         double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, s1->particles->first_index[ibin], params );
         unsigned int ncorr = intra_collisions_ ? 2*npairs-1 : npairs;
         double dt_corr = params.timestep * ((double)ncorr) * inv_cell_volume;
-        coeff3 = coeff2_ * dt_corr * logL_factor;
+        coeff3 = coeff2_ * dt_corr * coulomb_log_factor_;
         coeff4 = pow( 3.*coeff2_, -1./3. ) * dt_corr;
         double weight_correction_1 = 1. / (double)( (npairs-1) / N2max );
         double weight_correction_2 = 1. / (double)( (npairs-1) / N2max + 1. );

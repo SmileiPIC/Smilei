@@ -2150,13 +2150,9 @@ Collisions & reactions
 
   :default: 1.
 
-  The Coulomb logarithm will be multiplied by ``coulomb_log_factor`` (needs to be :math:`>0`).
-  This can be handy when considering collisions with artificially reduced ion-to-electron mass ratio.
-  
-  .. note:: 
-
-    This factor is applied only when considering elastic collisions, and whether one uses 
-    the user defined Coulomb logarithm (``coulomb_log``:math:`>0` in the namelist) or its automatically computed value (``coulomb_log``:math:`\le 0`). 
+  A constant, strictly positive factor that multiplies the Coulomb logarithm, regardless
+  of :py:data:`coulomb_log` being automatically computed or set to a constant value.
+  This can help, for example, to compensate artificially-reduced ion masses.
 
 .. py:data:: debug_every
 

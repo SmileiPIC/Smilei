@@ -70,8 +70,8 @@ public:
         // possibility to multiply the Coulomb by a factor
         clog_factor = 1.; // default
         PyTools::extract( "coulomb_log_factor", clog_factor, "Collisions", n_collisions );
-        if( clog_factor < 0. ) {
-            ERROR( "In collisions #" << n_collisions << ": coulomb_log_factor must be positive");
+        if( clog_factor <= 0. ) {
+            ERROR( "In collisions #" << n_collisions << ": coulomb_log_factor must be strictly positive");
         }
 
         // Number of timesteps between each debug output (if 0 or unset, no debug)
