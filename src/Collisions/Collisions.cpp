@@ -271,7 +271,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         for( ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
             s1 = patch->vecSpecies[( *sg1 )[ispec1]];
             p1 = s1->particles;
-            for( int i = s1->particles->first_index[ibin]; i < s1->particles->last_index[ibin]; i++ ) {
+            for( int i = p1->first_index[ibin]; i < p1->last_index[ibin]; i++ ) {
                 n1 += p1->weight( i );
             }
         }
@@ -279,15 +279,20 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         for( ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
             s2 = patch->vecSpecies[( *sg2 )[ispec2]];
             p2 = s2->particles;
-            for( int i = s2->particles->first_index[ibin]; i < s2->particles->last_index[ibin]; i++ ) {
+            for( int i = p2->first_index[ibin]; i < p2->last_index[ibin]; i++ ) {
                 n2 += p2->weight( i );
             }
         }
         
+        // Get cell volume
+        ispec1 = -1;
+        do {
+            ispec1++;
+            p1 = patch->vecSpecies[( *sg1 )[ispec1]]->particles;
+        } while( ispec1<nspec1 && p1->first_index[ibin] == p1->last_index[ibin] );
+        double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, p1->first_index[ibin], params );
+        
         // Pre-calculate some numbers before the big loop
-        s1 = patch->vecSpecies[( *sg1 )[0]];
-        p1 = s1->particles;
-        double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, s1->particles->first_index[ibin], params );
         unsigned int ncorr = intra_collisions_ ? 2*npairs-1 : npairs;
         double dt_corr = params.timestep * ((double)ncorr) * inv_cell_volume;
         coeff3 = coeff2_ * dt_corr;
