@@ -521,9 +521,6 @@ void Checkpoint::readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin )
     string dump_version;
     f.attr( "Version", dump_version );
     
-    string dump_date;
-    f.attr( "CommitDate", dump_date );
-    
     if( dump_version != string( __VERSION ) ) {
         WARNING( "The code version that dumped the file is " << dump_version );
         WARNING( "                while running version is " << string( __VERSION ) );
