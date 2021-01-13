@@ -2100,7 +2100,8 @@ Collisions & reactions
   Collisions(
       species1 = ["electrons1",  "electrons2"],
       species2 = ["ions1"],
-      coulomb_log = 5.,
+      coulomb_log = 0.,
+      coulomb_log_factor = 1.,
       debug_every = 1000,
       ionizing = False,
   #      nuclear_reaction = [],
@@ -2134,6 +2135,7 @@ Collisions & reactions
     species in one or the other list. This is especially true if the
     machine accepts SIMD vectorization.
 
+
 .. py:data:: coulomb_log
 
   :default: 0.
@@ -2143,6 +2145,18 @@ Collisions & reactions
   * If :math:`= 0`, the Coulomb logarithm is automatically computed for each collision.
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
 
+
+.. py:data:: coulomb_log_factor
+
+  :default: 1.
+
+  The Coulomb logarithm will be multiplied by ``coulomb_log_factor`` (needs to be :math:`>0`).
+  This can be handy when considering collisions with artificially reduced ion-to-electron mass ratio.
+  
+  .. note:: 
+
+    This factor is applied only when considering elastic collisions, and whether one uses 
+    the user defined Coulomb logarithm (``coulomb_log``:math:`>0` in the namelist) or its automatically computed value (``coulomb_log``:math:`\le 0`). 
 
 .. py:data:: debug_every
 
