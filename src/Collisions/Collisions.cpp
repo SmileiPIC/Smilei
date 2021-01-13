@@ -22,6 +22,7 @@ Collisions::Collisions(
     vector<unsigned int> species_group1,
     vector<unsigned int> species_group2,
     double coulomb_log,
+    double coulomb_log_factor,
     bool intra_collisions,
     int debug_every,
     CollisionalIonization *ionization,
@@ -34,6 +35,7 @@ Collisions::Collisions(
     species_group1_( species_group1 ),
     species_group2_( species_group2 ),
     coulomb_log_( coulomb_log ),
+    coulomb_log_factor_( coulomb_log_factor ),
     intra_collisions_( intra_collisions ),
     debug_every_( debug_every ),
     filename_( filename )
@@ -47,15 +49,16 @@ Collisions::Collisions(
 Collisions::Collisions( Collisions *coll )
 {
 
-    n_collisions_     = coll->n_collisions_    ;
-    species_group1_   = coll->species_group1_  ;
-    species_group2_   = coll->species_group2_  ;
-    coulomb_log_      = coll->coulomb_log_     ;
-    intra_collisions_ = coll->intra_collisions_;
-    debug_every_      = coll->debug_every_     ;
-    filename_         = coll->filename_        ;
-    coeff1_           = coll->coeff1_        ;
-    coeff2_           = coll->coeff2_        ;
+    n_collisions_       = coll->n_collisions_      ;
+    species_group1_     = coll->species_group1_    ;
+    species_group2_     = coll->species_group2_    ;
+    coulomb_log_        = coll->coulomb_log_       ;
+    coulomb_log_factor_ = coll->coulomb_log_factor_;
+    intra_collisions_   = coll->intra_collisions_  ;
+    debug_every_        = coll->debug_every_       ;
+    filename_           = coll->filename_          ;
+    coeff1_             = coll->coeff1_            ;
+    coeff2_             = coll->coeff2_            ;
     
     if( dynamic_cast<CollisionalNoIonization *>( coll->Ionization ) ) {
         Ionization = new CollisionalNoIonization();
@@ -177,7 +180,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
     unsigned int i1=0, i2, ispec1, ispec2, N2max;
     Species   *s1, *s2;
     Particles *p1=NULL, *p2;
-    double coeff3, coeff4, logL, s, ncol, debye2=0.;
+    double coeff3, coeff4, logL, logL_factor, s, ncol, debye2=0.;
     
     sg1 = &species_group1_;
     sg2 = &species_group2_;
@@ -290,7 +293,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, s1->particles->first_index[ibin], params );
         unsigned int ncorr = intra_collisions_ ? 2*npairs-1 : npairs;
         double dt_corr = params.timestep * ((double)ncorr) * inv_cell_volume;
-        coeff3 = coeff2_ * dt_corr;
+        coeff3 = coeff2_ * dt_corr * logL_factor;
         coeff4 = pow( 3.*coeff2_, -1./3. ) * dt_corr;
         double weight_correction_1 = 1. / (double)( (npairs-1) / N2max );
         double weight_correction_2 = 1. / (double)( (npairs-1) / N2max + 1 );
@@ -330,6 +333,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             }
             
             logL = coulomb_log_;
+            logL_factor = coulomb_log_factor_;
             double U1  = patch->rand_->uniform();
             double U2  = patch->rand_->uniform();
             double phi = patch->rand_->uniform_2pi();
