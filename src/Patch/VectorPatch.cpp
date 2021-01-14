@@ -330,6 +330,13 @@ void VectorPatch::dynamics( Params &params,
     ostringstream t;
     #pragma omp single
     {
+
+    if (params.tasks_on_projection)
+    {
+        int n_buffers = (( *this ).size()) * (( *this )( 0 )->vecSpecies.size());
+        smpi->resize_buffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
+    }
+
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
         if( params.tasks_on_projection & diag_flag) {
@@ -385,7 +392,7 @@ void VectorPatch::dynamics( Params &params,
                                                  ( *this )( ipatch ), smpi,
                                                  RadiationTables,
                                                  MultiphotonBreitWheelerTables,
-                                                 localDiags );    
+                                                 localDiags, (ipatch*(( *this )(0)->vecSpecies.size())+ispec) );    
                                 } // end if condition on tasks 
                     } 
                 } // end if condition on vectorization
@@ -393,6 +400,11 @@ void VectorPatch::dynamics( Params &params,
         } // end loop on species
         //MESSAGE("species dynamics");
     } // end loop on patches
+
+    if (params.tasks_on_projection)
+    {
+        smpi->resize_buffers(omp_get_num_threads(),params.geometry=="AMcylindrical"); // resize buffers to their original size
+    }
 
     } //end omp single
 

@@ -62,7 +62,7 @@ public:
                            PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
                            RadiationTables &RadiationTables,
                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                           std::vector<Diagnostic *> &localDiags );
+                           std::vector<Diagnostic *> &localDiags, int buffer_id );
 
     
     int *bin_has_pushed;

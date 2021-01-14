@@ -149,7 +149,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                         Patch *patch, SmileiMPI *smpi,
                         RadiationTables &RadiationTables,
                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                        vector<Diagnostic *> &localDiags )
+                        vector<Diagnostic *> &localDiags, int buffer_id )
 {
     int ithread, tid( 0 );
 // #ifdef _OPENMP
@@ -158,7 +158,8 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 //     ithread = 0;
 // #endif
 
-    ithread = 0;
+    //ithread = 0;
+    ithread = buffer_id;
 
 #ifdef  __DETAILED_TIMERS
     double timer;
@@ -302,6 +303,8 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
              nrj_bc_lost += nrj_lost_per_bin[ibin];
          }
      // } // end task
+
+     smpi->reduce_dynamics_buffer_size( ithread, params.geometry=="AMcylindrical" );
 
 
 //////// Projection for frozen particles

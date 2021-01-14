@@ -219,6 +219,56 @@ public:
         }
     }
     
+        // Resize buffers vector for a given number of buffers
+    inline void resize_buffers( int n_buffers, bool isAM = false)
+    {
+        dynamics_Epart.resize( n_buffers );
+        dynamics_Bpart.resize( n_buffers );
+        dynamics_invgf.resize( n_buffers );
+        dynamics_iold.resize( n_buffers );
+        dynamics_deltaold.resize( n_buffers );
+        if( isAM ) {
+            dynamics_thetaold.resize( n_buffers );
+        }
+
+        if( dynamics_GradPHIpart.size() > 0 ) {
+            dynamics_GradPHIpart.resize( n_buffers );
+            dynamics_GradPHI_mpart.resize( n_buffers );
+            dynamics_PHIpart.resize( n_buffers );
+            dynamics_PHI_mpart.resize( n_buffers );
+            dynamics_inv_gamma_ponderomotive.resize( n_buffers );
+            if ( dynamics_EnvEabs_part.size() > 0 ){
+                dynamics_EnvEabs_part.resize( n_buffers );
+                dynamics_EnvExabs_part.resize( n_buffers );
+            }
+        }
+    }
+
+    // Resize buffers to avoid memory leak with tasks
+    inline void reduce_dynamics_buffer_size( int buffer_id, bool isAM = false )
+    {
+        dynamics_Epart[buffer_id].resize( 1 );
+        dynamics_Bpart[buffer_id].resize( 1 );
+        dynamics_invgf[buffer_id].resize( 1 );
+        dynamics_iold[buffer_id].resize( 1 );
+        dynamics_deltaold[buffer_id].resize( 1 );
+        if( isAM ) {
+            dynamics_thetaold[buffer_id].resize( 1 );
+        }
+
+        if( dynamics_GradPHIpart.size() > 0 ) {
+            dynamics_GradPHIpart[buffer_id].resize( 1 );
+            dynamics_GradPHI_mpart[buffer_id].resize( 1 );
+            dynamics_PHIpart[buffer_id].resize( 1 );
+            dynamics_PHI_mpart[buffer_id].resize( 1 );
+            dynamics_inv_gamma_ponderomotive[buffer_id].resize( 1 );
+            if ( dynamics_EnvEabs_part.size() > 0 ){
+                dynamics_EnvEabs_part[buffer_id].resize( 1 );
+                dynamics_EnvExabs_part[buffer_id].resize( 1 );
+            }
+        }
+    }
+
     // Resize buffers for old properties only
     inline void resizeOldPropertiesBuffer( int ithread, int ndim_field, int npart, bool isAM = false )
     {
