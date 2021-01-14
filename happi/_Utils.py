@@ -450,7 +450,7 @@ class _multiPlotUtil(object):
 		for Diag in Diags:
 			diagtimes = Diag.getTimesteps()
 			if self.timesteps is not None:
-				diagtimes = Diag._selectTimesteps(timesteps, diagtimes)
+				diagtimes = Diag._selectTimesteps(self.timesteps, diagtimes)
 			diagtimes = list( diagtimes*Diag.timestep )
 			if self.skipAnimation: self.alltimes += [diagtimes[-1]]
 			else                 : self.alltimes += diagtimes
