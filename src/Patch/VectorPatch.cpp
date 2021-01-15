@@ -337,6 +337,8 @@ void VectorPatch::dynamics( Params &params,
         smpi->resize_buffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
     }
 
+    #pragma omp taskgroup
+    {
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
         if( params.tasks_on_projection & diag_flag) {
@@ -385,6 +387,8 @@ void VectorPatch::dynamics( Params &params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags );
                                 } else {
+                                    #pragma omp task default(shared) firstprivate(ipatch,ispec,spec) 
+                                    {
                                     Species_taskomp *spec_task = static_cast<Species_taskomp *>(spec);
                                     spec_task->Species_taskomp::dynamicsWithTasks( time_dual, ispec,
                                                  emfields( ipatch ),
@@ -392,7 +396,9 @@ void VectorPatch::dynamics( Params &params,
                                                  ( *this )( ipatch ), smpi,
                                                  RadiationTables,
                                                  MultiphotonBreitWheelerTables,
-                                                 localDiags, (ipatch*(( *this )(0)->vecSpecies.size())+ispec) );    
+                                                 localDiags, (ipatch*(( *this )(0)->vecSpecies.size())+ispec) );
+                                    } // end task
+                                    
                                 } // end if condition on tasks 
                     } 
                 } // end if condition on vectorization
@@ -400,6 +406,8 @@ void VectorPatch::dynamics( Params &params,
         } // end loop on species
         //MESSAGE("species dynamics");
     } // end loop on patches
+    
+    } // end taskgroup
 
     if (params.tasks_on_projection)
     {
