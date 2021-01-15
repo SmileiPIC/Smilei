@@ -260,6 +260,7 @@ public:
             mystream << "Collisions" << n_collisions << ".h5";
             filename = mystream.str();
             std::ifstream file( filename );
+            MESSAGE( "!" << filename << "!");
             // Check if file exists
             if( ! file ) {
                 H5Write f( filename, true );

@@ -40,6 +40,11 @@ Collisions::Collisions(
 {
     coeff1_ = 4.046650232e-21*params.reference_angular_frequency_SI; // h*omega/(2*me*c^2)
     coeff2_ = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
+    
+    // Open the HDF5 file
+    if( debug_every > 0 ) {
+        debug_file_ = new H5Write( filename_, true );
+    }
 }
 
 
@@ -68,6 +73,8 @@ Collisions::Collisions( Collisions *coll )
     } else if ( dynamic_cast<CollisionalFusionDD *>( coll->NuclearReaction ) ) {
         NuclearReaction = new CollisionalFusionDD( coll->NuclearReaction );
     }
+    
+    debug_file_ = coll->debug_file_;
 }
 
 
@@ -81,7 +88,7 @@ Collisions::~Collisions()
 bool   Collisions::debye_length_required;
 
 
-// Calculates the debye length squared in each patch
+// Calculates the debye length squared in each bin
 // The formula for the inverse debye length squared is sumOverSpecies(density*charge^2/temperature)
 void Collisions::calculate_debye_length( Params &params, Patch *patch )
 {
@@ -395,18 +402,16 @@ void Collisions::debug( Params &params, int itime, unsigned int icoll, VectorPat
             nuclear_reaction_multiplier[ipatch] = vecPatches( ipatch )->vecCollisions[icoll]->NuclearReaction->rate_multiplier_;
         }
         
-        // Open the HDF5 file
-        H5Write f( vecPatches( 0 )->vecCollisions[icoll]->filename_, true );
         // Create H5 group for the current timestep
         ostringstream name( "" );
         name << "t" << setfill( '0' ) << setw( 8 ) << itime;
-        H5Write g = f.group( name.str() );
+        H5Write g = vecPatches( 0 )->vecCollisions[icoll]->debug_file_->group( name.str() );
         // Create new datasets for this timestep and write
-        g.vect( "s"                          , smean                      , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
-        g.vect( "coulomb_log"                , logLmean                   , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
-        g.vect( "debyelength"                , debye_length               , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
-        //g.vect( "temperature"                , temperature                , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
-        g.vect( "nuclear_reaction_multiplier", nuclear_reaction_multiplier, params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        g.vect( "s"                          , smean                      [0], params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        g.vect( "coulomb_log"                , logLmean                   [0], params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        g.vect( "debyelength"                , debye_length               [0], params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        g.vect( "nuclear_reaction_multiplier", nuclear_reaction_multiplier[0], params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        vecPatches( 0 )->vecCollisions[icoll]->debug_file_->flush();
         
     }
     

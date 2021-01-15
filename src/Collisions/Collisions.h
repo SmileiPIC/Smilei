@@ -37,7 +37,7 @@ public:
     //! destructor
     virtual ~Collisions();
     
-    //! Method to calculate the Debye length in each cluster
+    //! Method to calculate the Debye length in each bin
     static void calculate_debye_length( Params &, Patch * );
     
     //! is true if any of the collisions objects need automatically-computed coulomb log
@@ -53,6 +53,8 @@ public:
     CollisionalIonization *Ionization;
     
     CollisionalNuclearReaction *NuclearReaction;
+    
+    H5Write * debug_file_;
     
 protected:
 
