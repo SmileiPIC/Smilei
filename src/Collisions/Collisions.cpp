@@ -22,6 +22,7 @@ Collisions::Collisions(
     vector<unsigned int> species_group1,
     vector<unsigned int> species_group2,
     double coulomb_log,
+    double coulomb_log_factor,
     bool intra_collisions,
     int debug_every,
     CollisionalIonization *ionization,
@@ -34,6 +35,7 @@ Collisions::Collisions(
     species_group1_( species_group1 ),
     species_group2_( species_group2 ),
     coulomb_log_( coulomb_log ),
+    coulomb_log_factor_( coulomb_log_factor ),
     intra_collisions_( intra_collisions ),
     debug_every_( debug_every ),
     filename_( filename )
@@ -52,15 +54,16 @@ Collisions::Collisions(
 Collisions::Collisions( Collisions *coll )
 {
 
-    n_collisions_     = coll->n_collisions_    ;
-    species_group1_   = coll->species_group1_  ;
-    species_group2_   = coll->species_group2_  ;
-    coulomb_log_      = coll->coulomb_log_     ;
-    intra_collisions_ = coll->intra_collisions_;
-    debug_every_      = coll->debug_every_     ;
-    filename_         = coll->filename_        ;
-    coeff1_           = coll->coeff1_        ;
-    coeff2_           = coll->coeff2_        ;
+    n_collisions_       = coll->n_collisions_      ;
+    species_group1_     = coll->species_group1_    ;
+    species_group2_     = coll->species_group2_    ;
+    coulomb_log_        = coll->coulomb_log_       ;
+    coulomb_log_factor_ = coll->coulomb_log_factor_;
+    intra_collisions_   = coll->intra_collisions_  ;
+    debug_every_        = coll->debug_every_       ;
+    filename_           = coll->filename_          ;
+    coeff1_             = coll->coeff1_            ;
+    coeff2_             = coll->coeff2_            ;
     
     if( dynamic_cast<CollisionalNoIonization *>( coll->Ionization ) ) {
         Ionization = new CollisionalNoIonization();
@@ -302,7 +305,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         // Pre-calculate some numbers before the big loop
         unsigned int ncorr = intra_collisions_ ? 2*npairs-1 : npairs;
         double dt_corr = params.timestep * ((double)ncorr) * inv_cell_volume;
-        coeff3 = coeff2_ * dt_corr;
+        coeff3 = coeff2_ * dt_corr * coulomb_log_factor_;
         coeff4 = pow( 3.*coeff2_, -1./3. ) * dt_corr;
         double weight_correction_1 = 1. / (double)( (npairs-1) / N2max );
         double weight_correction_2 = 1. / (double)( (npairs-1) / N2max + 1 );

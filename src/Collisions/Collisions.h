@@ -26,6 +26,7 @@ public:
         std::vector<unsigned int>,
         std::vector<unsigned int>,
         double coulomb_log,
+        double coulomb_log_factor,
         bool intra_collisions,
         int debug_every,
         CollisionalIonization *ionization,
@@ -67,6 +68,9 @@ protected:
     //! Coulomb logarithm (zero or negative means automatic)
     double coulomb_log_;
     
+//! Coulomb logarithm (zero or negative means automatic)
+    double coulomb_log_factor_;
+
     //! True if collisions inside a group of species, False if collisions between different groups of species
     bool intra_collisions_;
     
