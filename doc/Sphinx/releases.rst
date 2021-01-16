@@ -27,10 +27,12 @@ Changes made in the repository (not released)
   * ionization model
 
 * Particles can be imported from a file
+* Coulomb logarithm may be multiplied by a constant factor
 * Happi:
 
   * handles fonts
   * time slider available with multiple plotting
+  * ``vsym`` option for symmetric graph
 
 * Bugfixes:
 
@@ -38,6 +40,8 @@ Changes made in the repository (not released)
   * DiagFields with ``time_average`` did not work for densities
   * Prescribed fields caused unstable real fields
   * Initialisation from numpy or hdf5 caused wrong weights in AM geometry
+  * Better positionning of collisionally-ionised electrons
+  * Fix segfault from thermalizing boundary
 
 ----
 
