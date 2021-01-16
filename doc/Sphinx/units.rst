@@ -171,10 +171,11 @@ This integrated Poynting flux appears, for instance, in the :ref:`DiagScalar` as
 Macro-particle weights
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Macro-particles are assigned a *statistical weight* which represents
+Macro-particles are assigned a *statistical weight* which measures
 their contribution to the plasma distribution function. 
-In :program:`Smilei`, this weight is defined at the beginning of the simulation
-for each particle and is never modified afterwards. Its definition reads:
+In :program:`Smilei`, this weight is defined for each particle at the moment of its creation
+(usually at the beginning of the simulation),
+and is never modified afterwards. Its definition reads:
 
 .. math::
   
