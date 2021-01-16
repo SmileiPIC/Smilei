@@ -134,7 +134,7 @@ integrated.
 
 The particle kinetic energy density is naturally in units of :math:`K_r N_r`.
 Integrating over space give different results depending on the simulation dimension.
-In 1D, this space a length, with units :math:`L_r`; in 2D, it is a surface, with units
+In 1D, this space is a length, with units :math:`L_r`; in 2D, it is a surface, with units
 :math:`L_r^2`; and in 3D, it is a volume, with units :math:`L_r^3`.
 Overall, the integrated energy has the units :math:`K_r N_r L_r^D`
 where :math:`D` is the simulation dimension. Note that we could expect
