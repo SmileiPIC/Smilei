@@ -328,22 +328,37 @@ void VectorPatch::dynamics( Params &params,
     
     timers.particles.restart();
     ostringstream t;
+    // #pragma omp single
+    // {
+
     #pragma omp single
     {
-
     if (params.tasks_on_projection)
     {
         int n_buffers = (( *this ).size()) * (( *this )( 0 )->vecSpecies.size());
         smpi->resize_buffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
     }
+    }
 
-    #pragma omp taskgroup
-    {
+    #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
         if( params.tasks_on_projection & diag_flag) {
             ( *this )( ipatch )->EMfields->restartRhoJs();
         }
+    } // end ipatch 
+    
+    
+
+    #pragma omp taskgroup
+    {
+    #pragma omp single nowait
+    {
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        // ( *this )( ipatch )->EMfields->restartRhoJ();
+        // if( params.tasks_on_projection & diag_flag) {
+        //     ( *this )( ipatch )->EMfields->restartRhoJs();
+        // }
         //MESSAGE("restart rhoj");
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             Species *spec = species( ipatch, ispec );
@@ -387,9 +402,10 @@ void VectorPatch::dynamics( Params &params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags );
                                 } else {
-                                    #pragma omp task default(shared) firstprivate(ipatch,ispec,spec) 
+                                    //#pragma omp single nowait
+                                    //#pragma omp task default(shared) firstprivate(ipatch,ispec) 
                                     {
-                                    Species_taskomp *spec_task = static_cast<Species_taskomp *>(spec);
+                                    Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
                                     spec_task->Species_taskomp::dynamicsWithTasks( time_dual, ispec,
                                                  emfields( ipatch ),
                                                  params, diag_flag, partwalls( ipatch ),
@@ -406,24 +422,28 @@ void VectorPatch::dynamics( Params &params,
         } // end loop on species
         //MESSAGE("species dynamics");
     } // end loop on patches
-    
+    }
     } // end taskgroup
 
+    #pragma omp single
+    {
     if (params.tasks_on_projection)
     {
         smpi->resize_buffers(omp_get_num_threads(),params.geometry=="AMcylindrical"); // resize buffers to their original size
     }
+    }
 
-    } //end omp single
+    // } //end omp single
 
     // Copy the bin species buffers for the densities to patch grid densities
     #pragma omp single
     if (params.tasks_on_projection){
 
         unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
-
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-
+        
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) { 
+            #pragma omp task firstprivate(ipatch)
+            { // only the ipatch iterations are parallelized
             ElectroMagn2D *emfields2D; ElectroMagn3D *emfields3D; 
             if (params.geometry == "2Dcartesian"){
                 emfields2D = static_cast<ElectroMagn2D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
@@ -431,7 +451,8 @@ void VectorPatch::dynamics( Params &params,
                 emfields3D = static_cast<ElectroMagn3D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
             } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
             
-            for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
+            for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) { 
+                // DO NOT parallelize this species loop unless race condition prevention is used!
 
                 Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
                 std::vector<unsigned int> b_dim = spec_task->b_dim;
@@ -447,7 +468,8 @@ void VectorPatch::dynamics( Params &params,
              	          emfields3D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
                     }
                 } // ibin
-            } // end species loop
+            } // end species loop 
+            } // end task
         } // end patch loop
     } // end condition on tasks
 

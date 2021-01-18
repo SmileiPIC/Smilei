@@ -94,21 +94,19 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         pxsm += upx;
         pysm += upy;
         pzsm += upz;
-    //     invgf[ipart] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        invgf[ipart] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
     
-        cout<<ipart<<" "<<momentum_x[ipart]<<endl;
-        //(*( momentum_x+ipart ))= pxsm;
-        //momentum_x[ipart] = pxsm;
-        //momentum_y[ipart] = pysm;
-        //momentum_z[ipart] = pzsm;
-    // 
-    //     // Move the particle
-    //     position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart];
-    //     if (nDim_>1) {
-    //         position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart];
-    //         if (nDim_>2) {
-    //             position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart];
-    //         }
-    //     }
+        momentum_x[ipart] = pxsm;
+        momentum_y[ipart] = pysm;
+        momentum_z[ipart] = pzsm;
+    
+        // Move the particle
+        position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart];
+        if (nDim_>1) {
+            position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart];
+            if (nDim_>2) {
+                position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart];
+            }
+        }
     }
 }
