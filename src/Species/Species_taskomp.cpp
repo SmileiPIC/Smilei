@@ -176,7 +176,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
     // -------------------------------
     if( time_dual>time_frozen_ ) { // moving particle
     
-        smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+        //smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
@@ -304,7 +304,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
          }
      // } // end task
 
-     smpi->reduce_dynamics_buffer_size( ithread, params.geometry=="AMcylindrical" );
+     //smpi->reduce_dynamics_buffer_size( ithread, params.geometry=="AMcylindrical" );
 
 
 //////// Projection for frozen particles

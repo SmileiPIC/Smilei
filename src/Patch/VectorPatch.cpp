@@ -346,20 +346,27 @@ void VectorPatch::dynamics( Params &params,
         if( params.tasks_on_projection & diag_flag) {
             ( *this )( ipatch )->EMfields->restartRhoJs();
         }
+        if( params.tasks_on_projection) {
+            for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+                Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                smpi->dynamics_resize( buffer_id, spec_task->nDim_field, spec_task->particles->last_index.back(), params.geometry=="AMcylindrical" );
+            }
+        }
     } // end ipatch 
     
-    
-
+   
+    #pragma omp single 
+    {
     #pragma omp taskgroup
-    {
-    #pragma omp single nowait
-    {
+    { 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         // ( *this )( ipatch )->EMfields->restartRhoJ();
         // if( params.tasks_on_projection & diag_flag) {
         //     ( *this )( ipatch )->EMfields->restartRhoJs();
         // }
         //MESSAGE("restart rhoj");
+        
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             Species *spec = species( ipatch, ispec );
             
@@ -402,36 +409,45 @@ void VectorPatch::dynamics( Params &params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags );
                                 } else {
-                                    //#pragma omp single nowait
-                                    //#pragma omp task default(shared) firstprivate(ipatch,ispec) 
+                                 
+                                    // #pragma omp taskgroup
+                                    // {
+                                    #pragma omp task default(shared) firstprivate(ipatch,ispec)
                                     {
                                     Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                                    int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                                    // smpi->dynamics_resize( buffer_id, spec_task->nDim_field, spec_task->particles->last_index.back(), params.geometry=="AMcylindrical" );
                                     spec_task->Species_taskomp::dynamicsWithTasks( time_dual, ispec,
                                                  emfields( ipatch ),
                                                  params, diag_flag, partwalls( ipatch ),
                                                  ( *this )( ipatch ), smpi,
                                                  RadiationTables,
                                                  MultiphotonBreitWheelerTables,
-                                                 localDiags, (ipatch*(( *this )(0)->vecSpecies.size())+ispec) );
+                                                 localDiags, buffer_id );
                                     } // end task
-                                    
+                                    // }
                                 } // end if condition on tasks 
-                    } 
+                      }
                 } // end if condition on vectorization
             } // end if condition on species
         } // end loop on species
+      
         //MESSAGE("species dynamics");
     } // end loop on patches
-    }
+    
+    
     } // end taskgroup
+    } // end omp single 
 
-    #pragma omp single
-    {
-    if (params.tasks_on_projection)
-    {
-        smpi->resize_buffers(omp_get_num_threads(),params.geometry=="AMcylindrical"); // resize buffers to their original size
-    }
-    }
+    //#pragma omp taskwait
+
+    // #pragma omp single
+    // {
+    // if (params.tasks_on_projection)
+    // {
+    //     smpi->resize_buffers(omp_get_num_threads(),params.geometry=="AMcylindrical"); // resize buffers to their original size
+    // }
+    // }
 
     // } //end omp single
 
@@ -472,6 +488,8 @@ void VectorPatch::dynamics( Params &params,
             } // end task
         } // end patch loop
     } // end condition on tasks
+
+    #pragma omp taskwait
 
     timers.particles.update( params.printNow( itime ) );
 #ifdef __DETAILED_TIMERS
