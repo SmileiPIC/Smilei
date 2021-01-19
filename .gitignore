@@ -30,3 +30,4 @@ exec_script.sh.*
 .tags*
 .vscode*
 .DS_Store
+tables/*

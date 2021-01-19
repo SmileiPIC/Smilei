@@ -16,6 +16,7 @@
 #include "OpenPMDparams.h"
 #include "SmileiMPI.h"
 #include "Patch.h"
+#include "Region.h"
 #include "SimWindow.h"
 #include "ElectroMagn.h"
 #include "ElectroMagnBC1D_SM.h"
@@ -175,7 +176,7 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
     nDim_particle=params.nDim_particle;
 }
 
-void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *smpi, SimWindow *simWindow, Params &params )
+void Checkpoint::dump( VectorPatch &vecPatches, Region &region, unsigned int itime, SmileiMPI *smpi, SimWindow *simWindow, Params &params )
 {
 
     // check for excedeed time
@@ -205,7 +206,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *s
     if( signal_received!=0 ||
             ( dump_step != 0 && ( ( itime-this_run_start_step ) % dump_step == 0 ) ) ||
             ( time_dump_step!=0 && itime==time_dump_step ) ) {
-        dumpAll( vecPatches, itime,  smpi, simWindow, params );
+        dumpAll( vecPatches, region, itime,  smpi, simWindow, params );
         if( exit_after_dump || ( ( signal_received!=0 ) && ( signal_received != SIGUSR2 ) ) ) {
             exit_asap=true;
         }
@@ -215,7 +216,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *s
     }
 }
 
-void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI *smpi, SimWindow *simWin,  Params &params )
+void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int itime,  SmileiMPI *smpi, SimWindow *simWin,  Params &params )
 {
     unsigned int num_dump=dump_number % keep_n_dumps;
     
@@ -296,7 +297,16 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         g.attr( "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
         
     }
-    
+
+    if (params.uncoupled_grids) {
+        // Open a group
+        ostringstream patch_name( "" );
+        patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
+        string patchName=Tools::merge( "region-", patch_name.str() );
+        H5Write g = f.group( patchName.c_str() );
+        dumpPatch( region.patch_->EMfields, region.patch_->vecSpecies, region.patch_->vecCollisions, params, g );
+    }
+
     // Write the latest Id that the MPI processes have given to each species
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack *track = dynamic_cast<DiagnosticTrack *>( vecPatches.localDiags[idiag] ) ) {
@@ -312,6 +322,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     }
     
 }
+
 
 void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Write &g )
 {
@@ -402,9 +413,9 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
                 H5Write b = g.group( groupName );
-                g.vect( "Bx_val", embc->Bx_val );
-                g.vect( "By_val", embc->By_val );
-                g.vect( "Bz_val", embc->Bz_val );
+                b.vect( "Bx_val", embc->Bx_val );
+                b.vect( "By_val", embc->By_val );
+                b.vect( "Bz_val", embc->Bz_val );
             } else if( dynamic_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );
@@ -510,9 +521,6 @@ void Checkpoint::readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin )
     string dump_version;
     f.attr( "Version", dump_version );
     
-    string dump_date;
-    f.attr( "CommitDate", dump_date );
-    
     if( dump_version != string( __VERSION ) ) {
         WARNING( "The code version that dumped the file is " << dump_version );
         WARNING( "                while running version is " << string( __VERSION ) );
@@ -533,7 +541,7 @@ void Checkpoint::readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin )
 }
 
 
-void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD )
+void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD )
 {
     MESSAGE( 1, "READING fields and particles for restart" );
     
@@ -593,6 +601,14 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
         g.attr( "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
         
     }
+
+    if (params.uncoupled_grids) {
+        ostringstream patch_name( "" );
+        patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
+        string patchName = Tools::merge( "region-", patch_name.str() );
+        H5Read g = f.group( patchName );
+        restartPatch( region.patch_->EMfields, region.patch_->vecSpecies, region.patch_->vecCollisions, params, g );
+    }
     
     // Read the latest Id that the MPI processes have given to each species
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
@@ -607,6 +623,34 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
         }
     }
     
+}
+
+
+void Checkpoint::readRegionDistribution( Region &region )
+{
+    int read_hindex( -1 );
+
+    hid_t file = H5Fopen(restart_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    hid_t grp = H5Gopen(file,"/",H5P_DEFAULT);
+
+    hsize_t nobj;
+    H5Gget_num_objs(grp, &nobj);
+    char memb_name[1024];
+    for (int i = 0; i < nobj; i++) {
+        H5Gget_objname_by_idx(grp, (hsize_t)i, memb_name, (size_t)1024 );
+        string test( memb_name );
+        if ( test.find("region") != std::string::npos ) {
+            //patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex(); -> 6
+            //string patchName=Tools::merge( "region-", patch_name.str() );         -> 7
+            read_hindex = std::stoi( test.substr(7,6) );
+        }
+    }
+
+    H5Gclose(grp);
+    H5Fclose(file);
+
+    region.vecPatch_.refHindex_ = read_hindex;
+
 }
 
 
@@ -753,7 +797,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
         
         unsigned int partSize=0;
         s.attr( "partSize", partSize );
-        vecSpecies[ispec]->particles->initialize( partSize, nDim_particle );
+        vecSpecies[ispec]->particles->initialize( partSize, nDim_particle, params.keep_position_old );
         
         double nrj_radiation;
         if( s.hasAttr( "nrj_radiation" ) ) {

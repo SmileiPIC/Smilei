@@ -162,8 +162,6 @@ public:
     bool position_initialization_on_species_;
     //! Index of the species where position initialization is made
     int position_initialization_on_species_index;
-    //! Initialization type of the species where position initialization is made
-    std::string position_initialization_on_species_type_;
     //! Boolean to know if species follows ponderomotive loop (laser modeled with envelope)
     bool ponderomotive_dynamics;
     //! Pointer to the species where field-ionized electrons go
@@ -327,6 +325,9 @@ public:
     virtual void initCluster( Params & );
 
     virtual void resizeCluster( Params & );
+
+    //! Initialize particles
+    void initParticles( Params &params, Patch *patch, bool with_particles = true, Particles * like_particles = NULL );
 
     //! Initialize operators (must be separate from parameters init, because of cloning)
     void initOperators( Params &, Patch * );

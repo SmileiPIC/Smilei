@@ -26,6 +26,7 @@ public:
         std::vector<unsigned int>,
         std::vector<unsigned int>,
         double coulomb_log,
+        double coulomb_log_factor,
         bool intra_collisions,
         int debug_every,
         CollisionalIonization *ionization,
@@ -37,7 +38,7 @@ public:
     //! destructor
     virtual ~Collisions();
     
-    //! Method to calculate the Debye length in each cluster
+    //! Method to calculate the Debye length in each bin
     static void calculate_debye_length( Params &, Patch * );
     
     //! is true if any of the collisions objects need automatically-computed coulomb log
@@ -54,6 +55,8 @@ public:
     
     CollisionalNuclearReaction *NuclearReaction;
     
+    H5Write * debug_file_;
+    
 protected:
 
     //! Identification number of the Collisions object
@@ -65,6 +68,9 @@ protected:
     //! Coulomb logarithm (zero or negative means automatic)
     double coulomb_log_;
     
+//! Coulomb logarithm (zero or negative means automatic)
+    double coulomb_log_factor_;
+
     //! True if collisions inside a group of species, False if collisions between different groups of species
     bool intra_collisions_;
     

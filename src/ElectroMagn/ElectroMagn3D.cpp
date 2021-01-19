@@ -1975,6 +1975,7 @@ void ElectroMagn3D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
     int N1 = ( int )field3D->dims()[1];
     int N2 = ( int )field3D->dims()[2];
     
+    /* MG/2021/01/08 --- This section doesn't work; I rewrite it as done for 2D
     // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
     // Create the x,y,z maps where profiles will be evaluated
     vector<Field *> xyz( 3 );
@@ -2007,6 +2008,23 @@ void ElectroMagn3D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];
+    }
+    MG/2021/0108 */
+
+    // MG/2021/01/08 --- doing like in 2D works
+    
+    // Unsigned int lead to pbs with periodic boundary conditions
+    for( int i=0 ; i<N0 ; i++ ) {
+        pos[1] = pos1;
+        for( int j=0 ; j<N1 ; j++ ) {
+            pos[2] = pos2;
+            for( int k=0 ; k<N2 ; k++ ) {
+                (*field3D)(i,j,k) += profile->valueAt(pos,time);
+                pos[2] += dz;
+            }
+            pos[1] += dy;
+        }
+        pos[0] += dx;
     }
 
 }

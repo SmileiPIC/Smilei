@@ -13,8 +13,10 @@ This requires a system with cylindrical symmetry or close to cylindrical symmetr
 Mathematical definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: _static/Coordinate_Reference_AMcylindrical.pdf
-  :width: 13cm
+.. figure:: _static/Coordinate_Reference_AMcylindrical.png
+  :width: 11cm
+  
+  Coordinates in azimuthal geometry.
 
 Any scalar field :math:`F(x,r,\theta)` can be decomposed into a basis of
 azimuthal modes, or harmonics, defined as :math:`\exp(-im\theta)`,

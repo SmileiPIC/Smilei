@@ -725,7 +725,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Read the "print_expected_disk_usage" parameter
     PyTools::extract( "print_expected_disk_usage", print_expected_disk_usage, "Main"   );
-
+    
+    // Decide when necessary to keep position_old
+    keep_position_old = false;
+    DEBUGEXEC( keep_position_old = true );
+    
     // -------------------------------------------------------
     // Checking species order
     // -------------------------------------------------------

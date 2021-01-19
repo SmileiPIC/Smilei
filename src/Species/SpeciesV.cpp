@@ -490,7 +490,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
 
     // Resize the particle vector
     if( ( unsigned int )particles->last_index.back() > npart ) {
-        particles->resize( particles->last_index.back(), nDim_particle );
+        particles->resize( particles->last_index.back(), nDim_particle, params.keep_position_old );
         particles->cell_keys.resize( particles->last_index.back(), -1 ); // Merge this in particles.resize(..) ?
     }
 
@@ -631,7 +631,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
 
     // Resize the particle vector
     if( ( unsigned int )particles->last_index.back() < npart ) {
-        particles->resize( particles->last_index.back(), nDim_particle );
+        particles->resize( particles->last_index.back(), nDim_particle, params.keep_position_old );
         particles->cell_keys.resize( particles->last_index.back() ); // Merge this in particles.resize(..) ?
     }
 

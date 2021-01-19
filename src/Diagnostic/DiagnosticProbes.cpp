@@ -81,8 +81,8 @@ vector<double> matrixTimesVector( vector<double> A, vector<double> v )
 
 DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int n_probe )
     : Diagnostic( nullptr, "DiagProbe", n_probe )
-    , offset_in_MPI( 0 )
     , vecNumber( 0 )
+    , offset_in_MPI( 0 )
 {
     probe_n = n_probe;
     nDim_particle = params.nDim_particle;
@@ -512,7 +512,7 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, b
         }
         // Initialize the list of "fake" particles (points) just as actual macro-particles
         Particles *particles = &( vecPatches( ipatch )->probes[probe_n]->particles );
-        particles->initialize( ntot, nDim_particle );
+        particles->initialize( ntot, nDim_particle, false );
         // In AM, redefine patchmin as rmin and not -rmax anymore
         if( geometry == "AMcylindrical" ) {
             patchMin[1] = patchMax[1] - ( double )patch_size[1];
@@ -561,7 +561,7 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, b
         }
 
         // Resize the array with only particles in this patch
-        particles->resize( ipart_local, nDim_particle );
+        particles->resize( ipart_local, nDim_particle, false );
         particles->shrinkToFit();
 
         // Add the local offset

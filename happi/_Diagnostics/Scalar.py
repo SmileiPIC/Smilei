@@ -4,7 +4,7 @@ from .._Utils import *
 class Scalar(Diagnostic):
 	"""Class for loading a Scalar diagnostic"""
 	
-	def _init(self, scalar=None, timesteps=None, data_log=False, **kwargs):
+	def _init(self, scalar=None, timesteps=None, data_log=False, data_transform=None, **kwargs):
 		# Get available scalars
 		scalars = self.getScalars()
 		
@@ -42,6 +42,7 @@ class Scalar(Diagnostic):
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
+		self._data_transform = data_transform
 		
 		# Already get the data from the file
 		# Loop file line by line
@@ -152,4 +153,6 @@ class Scalar(Diagnostic):
 			return []
 		# Get value at selected time
 		A = self._values[ self._data[t] ]
+
+		if callable(self._data_transform): A = self._data_transform(A)
 		return A

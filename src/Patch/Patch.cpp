@@ -157,8 +157,8 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
 
 void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition )
 {
-    // initialize vector of Species (virtual)
-    vecSpecies = SpeciesFactory::createVector( params, this );
+    // initialize vector of Species (virtual) in place
+    SpeciesFactory::createVector( params, this );
 
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create( params, domain_decomposition, vecSpecies, this );
@@ -182,8 +182,8 @@ void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition
 
 void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsigned int n_moved, bool with_particles = true )
 {
-    // clone vector of Species (virtual)
-    vecSpecies = SpeciesFactory::cloneVector( patch->vecSpecies, params, this, with_particles );
+    // clone vector of Species (virtual) in place
+    SpeciesFactory::cloneVector( patch->vecSpecies, params, this, with_particles );
 
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone( patch->EMfields, params, vecSpecies, this, n_moved );
@@ -1249,22 +1249,6 @@ void Patch::cleanupSentParticles( int ispec, std::vector<int> *indexes_of_partic
 
 } // END cleanupSentParticles
 
-//Copy positions of all particles of the target species to the positions of the species to update.
-//Used for particle initialization on top of another species
-void Patch::copyPositions( std::vector<Species *> vecSpecies_to_update )
-{
-    for( unsigned int i=0; i<vecSpecies_to_update.size(); i++ ) {
-        if( vecSpecies_to_update[i]->position_initialization_on_species_==false )
-            continue;
-        unsigned int target_species = vecSpecies_to_update[i]->position_initialization_on_species_index;
-        if( vecSpecies_to_update[i]->getNbrOfParticles() != vecSpecies_to_update[target_species]->getNbrOfParticles() ) {
-            ERROR( "Number of particles in species '"<<vecSpecies_to_update[i]->name_<<"' is not equal to the number of particles in species '"<<vecSpecies_to_update[target_species]->name_<<"'." );
-        }
-        // We copy target_species which is the index of the species, already created, from which species_to_update particles positions are copied.
-        vecSpecies_to_update[i]->particles->Position = vecSpecies_to_update[target_species]->particles->Position;
-    }
-    return;
-}
 
 void Patch::initExchange( Field *field, int iDim, SmileiMPI *smpi )
 {

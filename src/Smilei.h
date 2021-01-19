@@ -8,6 +8,7 @@
 class Params;
 class SmileiMPI;
 class VectorPatch;
+class Region;
 class Checkpoint;
 class SimWindow;
 class OpenPMDparams;
@@ -16,6 +17,7 @@ class Timer;
 //! main function
 int main( int argc, char *argv[] );
 int executeTestMode( VectorPatch &vecPatches,
+		     Region &region,
                      SmileiMPI *smpi,
                      SimWindow *simWin, Params &params, Checkpoint &checkpoint, OpenPMDparams &openPMD, RadiationTables * radiation_tables_ );
 

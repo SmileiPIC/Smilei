@@ -296,6 +296,9 @@ public:
 
     //! Tells whether there is a species with multiphoton Breit-Wheeler
     bool hasMultiphotonBreitWheeler;
+    
+    //! Tells whether position_old is used
+    bool keep_position_old;
 
     //! Log2 of the number of patch in the whole simulation box in every direction.
     //! The number of patch in a given direction MUST be a power of 2 and is 2^(mi[i]).
