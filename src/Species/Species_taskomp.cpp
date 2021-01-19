@@ -151,15 +151,9 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                         vector<Diagnostic *> &localDiags, int buffer_id )
 {
-    int ithread, tid( 0 );
-// #ifdef _OPENMP
-//     ithread = omp_get_thread_num();
-// #else
-//     ithread = 0;
-// #endif
+    int tid( 0 );
 
-    //ithread = 0;
-    ithread = buffer_id;
+    
 
 #ifdef  __DETAILED_TIMERS
     double timer;
@@ -167,19 +161,16 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 
     unsigned int iPart;
 
-    //std::vector<double> nrj_lost_per_thd( 1, 0. );
     int Nbins = particles->first_index.size();
     std::vector<double> nrj_lost_per_bin( Nbins, 0. );
-
+    #pragma omp taskgroup 
+    {
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
     if( time_dual>time_frozen_ ) { // moving particle
-    
-        //smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
-        //Point to local thread dedicated buffers
-        //Still needed for ionization
-        vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+        // resize the dynamics buffers to treat all the particles in this Patch ipatch and Species ispec
+        smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_pushed[ibin])
@@ -189,7 +180,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #endif
 
             // Interpolate the fields at the particle position
-            Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
+            Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -201,138 +192,97 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #endif
 
             // Push the particles and the photons
-            ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread );
+            ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id );
             //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
 
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[1] += MPI_Wtime() - timer;
+            patch->patch_timers[1] += MPI_Wtime() - timer;
 #endif
-            } // end task
-        } //ibin
+            } // end task for Interp+Push on ibin
+        } // end ibin loop for Interp+Push
       
-        } // end first if moving particle 
 
-
-
-        if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
-
-            #pragma omp taskgroup
+        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
             {
-            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
-                {
-                double ener_iPart( 0. );
+            double ener_iPart( 0. );
 
 #ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
+            timer = MPI_Wtime();
 #endif
 
-                // Apply wall and boundary conditions
-                if( mass_>0 ) {
-                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                        nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
-                    }
-                    // Boundary Condition may be physical or due to domain decomposition
-                    // apply returns 0 if iPart is not in the local domain anymore
-                    //        if omp, create a list per thread
-                    partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
+            // Apply wall and boundary conditions
+            if( mass_>0 ) {
+                for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                    (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, buffer_id, ener_iPart );
                     nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
-                
-                } else if( mass_==0 ) {
-                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                        nrj_lost_per_bin[ibin] += ener_iPart;
-                    }
-                
-                    // Boundary Condition may be physical or due to domain decomposition
-                    // apply returns 0 if iPart is not in the local domain anymore
-                    //        if omp, create a list per thread
-                    partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                    nrj_lost_per_bin[ibin] += ener_iPart;
-                
                 }
-
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers[3] += MPI_Wtime() - timer;
-#endif
-                } // end task
-            } // ibin
-
-            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-                //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
-                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
-                {
-#ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
-#endif
-
-                // Reset densities sub-buffers
-                for (int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx [ibin][i]  = 0.0;
-                for (int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy [ibin][i]  = 0.0;
-                for (int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz [ibin][i]  = 0.0;
-                for (int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i] = 0.0;
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, buffer_id, ener_iPart );
+                nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
                 
-                // Project currents if not a Test species and charges as well if a diag is needed.
-                // Do not project if a photon
-                if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
-                    if (params.geometry == "2Dcartesian"){
-                        Projector2D2Order *Proj2D = static_cast<Projector2D2Order *>(Proj);
-                        Proj2D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], ibin*clrw, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
-                    } else if (params.geometry == "3Dcartesian"){
-                        Projector3D2Order *Proj3D = static_cast<Projector3D2Order *>(Proj);
-                        Proj3D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], ibin*clrw, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
-                    } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
+            } else if( mass_==0 ) {
+                for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                    (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, buffer_id, ener_iPart );
+                    nrj_lost_per_bin[ibin] += ener_iPart;
+                }
                 
-                } // end condition on test and mass
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, buffer_id, ener_iPart );
+                nrj_lost_per_bin[ibin] += ener_iPart;
+                
+            }
 
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[2] += MPI_Wtime() - timer;
+            patch->patch_timers[3] += MPI_Wtime() - timer;
 #endif
-                }//end task
-            }// ibin
+            } // end task for particles BC on ibin
+        } // end ibin loop for particles BC
 
-        }// end taskgroup  
+        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+            {
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
 
-     } // end second if moving particle
+            // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
+            for (int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx [ibin][i]  = 0.0;
+            for (int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy [ibin][i]  = 0.0;
+            for (int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz [ibin][i]  = 0.0;
+            for (int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i] = 0.0;
+                
+            // Project currents if not a Test species and charges as well if a diag is needed.
+            // Do not project if a photon
+            if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
+                if (params.geometry == "2Dcartesian"){
+                    Projector2D2Order *Proj2D = static_cast<Projector2D2Order *>(Proj);
+                    Proj2D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], ibin*clrw, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id, diag_flag, params.is_spectral, ispec );
+                } else if (params.geometry == "3Dcartesian"){
+                    Projector3D2Order *Proj3D = static_cast<Projector3D2Order *>(Proj);
+                    Proj3D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], ibin*clrw, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id, diag_flag, params.is_spectral, ispec );
+                } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}  
+            } // end condition on test and mass
 
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[2] += MPI_Wtime() - timer;
+#endif
+            }//end task for Proj of ibin
+         }// end ibin loop for Proj
 
-     // #pragma omp task default(shared)
-     // {
-         for( unsigned int ibin=0 ; ibin<nrj_lost_per_bin.size() ; ibin++ ) {
-             nrj_bc_lost += nrj_lost_per_bin[ibin];
-         }
-     // } // end task
+     } // end if moving particle   
+     }// end taskgroup for all the Interp, Push, Particles BC and Projector tasks
+  
+     // reduction of the lost energy in each ibin
+     for( unsigned int ibin=0 ; ibin<nrj_lost_per_bin.size() ; ibin++ ) {
+        nrj_bc_lost += nrj_lost_per_bin[ibin];
+     }
 
-     //smpi->reduce_dynamics_buffer_size( ithread, params.geometry=="AMcylindrical" );
-
-
-//////// Projection for frozen particles
-
-    // if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
-    //     if( params.geometry != "AMcylindrical" ) {
-    //         double *b_rho=nullptr;
-    //         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-    //             b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-    //             for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-    //                 Proj->basic( b_rho, ( *particles ), iPart, 0 );
-    //             }
-    //         }
-    //     } else {
-    //         int n_species = patch->vecSpecies.size();
-    //         complex<double> *b_rho=nullptr;
-    //         ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
-    //         for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
-    //             int ifield = imode*n_species+ispec;
-    //             b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
-    //             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-    //                 for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-    //                     Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
-    //                 }
-    //             }
-    //         }
-    //     }
-    // } // End projection for frozen particles
+     smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
 
 } // end dynamicsWithTasks
 

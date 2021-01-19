@@ -328,44 +328,26 @@ void VectorPatch::dynamics( Params &params,
     
     timers.particles.restart();
     ostringstream t;
-    // #pragma omp single
-    // {
 
     #pragma omp single
-    {
     if (params.tasks_on_projection)
     {
         int n_buffers = (( *this ).size()) * (( *this )( 0 )->vecSpecies.size());
         smpi->resize_buffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
     }
-    }
 
     #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
-        if( params.tasks_on_projection & diag_flag) {
-            ( *this )( ipatch )->EMfields->restartRhoJs();
-        }
-        if( params.tasks_on_projection) {
-            for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-                Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
-                int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
-                smpi->dynamics_resize( buffer_id, spec_task->nDim_field, spec_task->particles->last_index.back(), params.geometry=="AMcylindrical" );
-            }
-        }
+        if( params.tasks_on_projection & diag_flag) {( *this )( ipatch )->EMfields->restartRhoJs();}
     } // end ipatch 
     
    
-    #pragma omp single 
+    #pragma omp single
     {
     #pragma omp taskgroup
     { 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        // ( *this )( ipatch )->EMfields->restartRhoJ();
-        // if( params.tasks_on_projection & diag_flag) {
-        //     ( *this )( ipatch )->EMfields->restartRhoJs();
-        // }
-        //MESSAGE("restart rhoj");
         
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             Species *spec = species( ipatch, ispec );
@@ -409,14 +391,10 @@ void VectorPatch::dynamics( Params &params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags );
                                 } else {
-                                 
-                                    // #pragma omp taskgroup
-                                    // {
                                     #pragma omp task default(shared) firstprivate(ipatch,ispec)
-                                    {
+                                    { // every call of dynamics for a couple ipatch-ispec is an independent task
                                     Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
                                     int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
-                                    // smpi->dynamics_resize( buffer_id, spec_task->nDim_field, spec_task->particles->last_index.back(), params.geometry=="AMcylindrical" );
                                     spec_task->Species_taskomp::dynamicsWithTasks( time_dual, ispec,
                                                  emfields( ipatch ),
                                                  params, diag_flag, partwalls( ipatch ),
@@ -425,31 +403,22 @@ void VectorPatch::dynamics( Params &params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags, buffer_id );
                                     } // end task
-                                    // }
                                 } // end if condition on tasks 
-                      }
+                      } // end case vectorization non adaptive
                 } // end if condition on vectorization
             } // end if condition on species
         } // end loop on species
-      
-        //MESSAGE("species dynamics");
     } // end loop on patches
-    
-    
-    } // end taskgroup
+    } // end taskgroup to ensure all ipatch ispec performed dynamics method
     } // end omp single 
-
-    //#pragma omp taskwait
 
     // #pragma omp single
     // {
     // if (params.tasks_on_projection)
-    // {
+    // {   // put buffers back to their original size
     //     smpi->resize_buffers(omp_get_num_threads(),params.geometry=="AMcylindrical"); // resize buffers to their original size
     // }
     // }
-
-    // } //end omp single
 
     // Copy the bin species buffers for the densities to patch grid densities
     #pragma omp single
