@@ -282,7 +282,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
         nrj_bc_lost += nrj_lost_per_bin[ibin];
      }
 
-     smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
+     // smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
 
 } // end dynamicsWithTasks
 
