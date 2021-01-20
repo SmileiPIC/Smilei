@@ -125,22 +125,26 @@ def _keep_python_running():
         if hasattr(las, "_extra_envelope"):
             profiles += [las._extra_envelope]
     profiles += [ant.time_profile for ant in Antenna]
+    profiles += [e.profile for e in PrescribedField]
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
         for s in Species:
             profiles += [s.number_density, s.charge_density, s.particles_per_cell, s.charge] + s.mean_velocity + s.temperature
     if len(MovingWindow)>0:
-        for e in ExternalField:
-            profiles += [e.profile]
-    if len(LoadBalancing)>0:
-        if (Main.uncoupled_grids):
-            return True
-    for e in PrescribedField:
-        profiles += [e.profile]
-    for s in ParticleInjector:
-        profiles += [s.time_envelope, s.number_density, s.charge_density, s.particles_per_cell] + s.mean_velocity + s.temperature
+        profiles += [e.profile for e in ExternalField]
+    for i in ParticleInjector:
+        s = Species[i.species]
+        profiles += [
+                i.time_envelope,
+                i.number_density or s.number_density,
+                i.charge_density or s.charge_density,
+                i.particles_per_cell or s.particles_per_cell
+            ] + i.mean_velocity or s.mean_velocity + i.temperature or s.temperature
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True
+    # Verify uncoupled grids
+    if len(LoadBalancing)>0 and Main.uncoupled_grids:
+        return True
     # Verify the tracked species that require a particle selection
     for d in DiagTrackParticles:
         if d.filter is not None:
