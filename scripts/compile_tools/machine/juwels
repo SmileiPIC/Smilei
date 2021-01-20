@@ -1,0 +1,26 @@
+#
+# Machine file for JUWELS
+# __________________________________________________________
+#
+# 1. description
+#
+# JUWELS is a super-computer located at JSC, Germany.
+# Nodes are composed of Intel Skylake processors: Intel Xeon Platinum 8168 CPU, 2× 24 cores, 2.7 GHz
+#
+# Links:
+# - https://www.fz-juelich.de/ias/jsc/EN/Expertise/Supercomputers/JUWELS/Configuration/Configuration_node.html
+#
+# 2. Modules
+# Load the correct modules:
+#
+# module load intel-para/2020
+# module load Python/3.8.5
+#
+# You have to install your own hdf5:
+# export HDF5_ROOT=<path to your installation folder>
+# export HDF5_ROOT=/ccc/work/cont003/smilei/derouilj/hdf5-1.8.16-intelmpi2018.18
+# export PATH=${HDF5_ROOT}/bin:${PATH}
+# export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
+# export HDF5_ROOT_DIR=${HDF5_ROOT}
+
+CXXFLAGS += -xCOMMON-AVX512 -ip -inline-factor=1000 -D__INTEL_SKYLAKE_8168 -qopt-zmm-usage=high -fno-alias #-ipo
