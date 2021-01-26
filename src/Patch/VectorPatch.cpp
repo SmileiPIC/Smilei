@@ -2834,7 +2834,6 @@ void VectorPatch::createPatches( Params &params, SmileiMPI *smpi, SimWindow *sim
 void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
 {
 
-    //int newMPIrankbis, oldMPIrankbis, tmp;
     int newMPIrank = smpi->getRank() -1;
     int oldMPIrank = smpi->getRank() -1;
     int istart = 0;
@@ -2843,6 +2842,13 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
     for( int irk=0 ; irk<smpi->getRank() ; irk++ ) {
         istart += smpi->patch_count[irk];
     }
+    //tags keep track of the number of patches sent and received to/from the left and right.
+    //This works because sent and receive operations are queued in the same (increasing) order. 
+    int tagsend_right = 0;
+    int tagsend_left = 0;
+    int tagrecv_left = 0;
+    int tagrecv_right = 0;
+    int tag=0;
 
 
     // Send particles
@@ -2853,8 +2859,13 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         // if hindex of patch to be sent      >  future hindex of the first patch owned by this process
         if( send_patch_id_[ipatch]+refHindex_ > istart ) {
             newMPIrank = smpi->getRank() + 1;
+            tag = tagsend_right*nmessage;
+            tagsend_right ++;
+        } else {
+            tag = tagsend_left*nmessage;
+            tagsend_left ++;
         }
-        int tag = ( refHindex_+send_patch_id_[ipatch] )*nmessage;
+        //int tag = ( refHindex_+send_patch_id_[ipatch] )*nmessage;
         int maxtag = 0;
         smpi->isend_species( ( *this )( send_patch_id_[ipatch] ), newMPIrank, maxtag, tag, params );
     }
@@ -2863,8 +2874,13 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore.
         if( recv_patch_id_[ipatch] > refHindex_ ) {
             oldMPIrank = smpi->getRank() + 1;
+            tag = tagrecv_right*nmessage;
+            tagrecv_right ++;
+        } else {
+            tag = tagrecv_left*nmessage;
+            tagrecv_left ++;
         }
-        int tag = recv_patch_id_[ipatch]*nmessage;
+        //int tag = recv_patch_id_[ipatch]*nmessage;
         smpi->recv_species( recv_patches_[ipatch], oldMPIrank, tag, params );
     }
 
@@ -2889,18 +2905,30 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         // if hindex of patch to be sent      >  future hindex of the first patch owned by this process
         if( send_patch_id_[ipatch]+refHindex_ > istart ) {
             newMPIrank = smpi->getRank() + 1;
+            tag = tagsend_right;
+            tagsend_right ++;
+        } else {
+            tag = tagsend_left;
+            tagsend_left ++;
         }
 
-        smpi->isend_fields( ( *this )( send_patch_id_[ipatch] ), newMPIrank, ( refHindex_+send_patch_id_[ipatch] )*nmessage, params );
+        //smpi->isend_fields( ( *this )( send_patch_id_[ipatch] ), newMPIrank, ( refHindex_+send_patch_id_[ipatch] )*nmessage, params );
+        smpi->isend_fields( ( *this )( send_patch_id_[ipatch] ), newMPIrank, tag*nmessage, params );
     }
 
     for( unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++ ) {
         //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore.
         if( recv_patch_id_[ipatch] > refHindex_ ) {
             oldMPIrank = smpi->getRank() + 1;
+            tag = tagrecv_right;
+            tagrecv_right ++;
+        } else {
+            tag = tagrecv_left;
+            tagrecv_left ++;
         }
 
-        smpi->recv_fields( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
+        //smpi->recv_fields( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
+        smpi->recv_fields( recv_patches_[ipatch], oldMPIrank, tag*nmessage, params );
     }
 
 

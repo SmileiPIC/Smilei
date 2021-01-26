@@ -171,7 +171,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 if( mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL ) {
                     if ( vecPatches_old[ipatch]->Pcoordinates[0]!=0 ) {
                         send_patches_.push_back( mypatch ); // Stores pointers to patches to be sent later
-                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] ) * nmessage, params );
+                        //smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] ) * nmessage, params );
+                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] - vecPatches.refHindex_ ) * nmessage, params );
                     }
                 }
             } else { //In case my left neighbor belongs to me:
@@ -224,7 +225,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             //Receive Patch if necessary
             if( mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL ) {
                 if ( mypatch->Pcoordinates[0]!=params.number_of_patches[0]-1 ) {
-                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex )*nmessage, params );
+                    int Href_sender = 0;
+                    for (int irk = 0; irk < mypatch->MPI_neighbor_[0][1]; irk++) Href_sender += smpi->patch_count[irk];
+                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex - Href_sender )*nmessage, params );
                     patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
                 }
             }
