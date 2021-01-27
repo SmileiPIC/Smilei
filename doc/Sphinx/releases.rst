@@ -43,6 +43,7 @@ Changes made in the repository (not released)
   * Initialisation from numpy or hdf5 caused wrong weights in AM geometry
   * Better positionning of collisionally-ionised electrons
   * Fix segfault from thermalizing boundary
+  * Running a simulation displayed the wrong version v4.4
 
 ----
 
