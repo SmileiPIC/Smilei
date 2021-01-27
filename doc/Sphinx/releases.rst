@@ -33,6 +33,7 @@ Changes made in the repository (not released)
   * handles fonts
   * time slider available with multiple plotting
   * ``vsym`` option for symmetric graph
+  * ``getXmoved`` now accounts for requested units
 
 * Bugfixes:
 

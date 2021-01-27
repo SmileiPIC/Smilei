@@ -285,6 +285,8 @@ class Units(object):
 				if self.verbose:
 					print("WARNING: units unknown: "+str(knownUnits))
 				return 1., ""
+		elif requestedUnits:
+			print("WARNING: units `%s` requested on non-existent or dimensionless axis" % requestedUnits)
 		return 1., ""
 
 	def prepare(self, reference_angular_frequency_SI=None):

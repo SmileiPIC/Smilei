@@ -381,7 +381,9 @@ class Probe(Diagnostic):
 			return []
 		# get h5 iteration group
 		h5item = self._dataForTime[t]
-		return h5item.attrs["x_moved"] if "x_moved" in h5item.attrs else 0.
+		# Change units
+		factor, _ = self.units._convert("L_r", None)
+		return h5item.attrs["x_moved"]*factor if "x_moved" in h5item.attrs else 0.
 
 	# get all available timesteps
 	def getAvailableTimesteps(self):
