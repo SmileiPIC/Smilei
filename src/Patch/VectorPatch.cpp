@@ -2843,7 +2843,8 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         istart += smpi->patch_count[irk];
     }
     //tags keep track of the number of patches sent and received to/from the left and right.
-    //This works because sent and receive operations are queued in the same (increasing) order. 
+    //This works because send and receive operations are queued in the same index increasing order. 
+    //left and right refers to previous and next MPI process ranks.
     int tagsend_right = 0;
     int tagsend_left = 0;
     int tagrecv_left = 0;
@@ -2865,7 +2866,6 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
             tag = tagsend_left*nmessage;
             tagsend_left ++;
         }
-        //int tag = ( refHindex_+send_patch_id_[ipatch] )*nmessage;
         int maxtag = 0;
         smpi->isend_species( ( *this )( send_patch_id_[ipatch] ), newMPIrank, maxtag, tag, params );
     }
@@ -2880,7 +2880,6 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
             tag = tagrecv_left*nmessage;
             tagrecv_left ++;
         }
-        //int tag = recv_patch_id_[ipatch]*nmessage;
         smpi->recv_species( recv_patches_[ipatch], oldMPIrank, tag, params );
     }
 
@@ -2912,7 +2911,6 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
             tagsend_left ++;
         }
 
-        //smpi->isend_fields( ( *this )( send_patch_id_[ipatch] ), newMPIrank, ( refHindex_+send_patch_id_[ipatch] )*nmessage, params );
         smpi->isend_fields( ( *this )( send_patch_id_[ipatch] ), newMPIrank, tag*nmessage, params );
     }
 
@@ -2927,7 +2925,6 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
             tagrecv_left ++;
         }
 
-        //smpi->recv_fields( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
         smpi->recv_fields( recv_patches_[ipatch], oldMPIrank, tag*nmessage, params );
     }
 
