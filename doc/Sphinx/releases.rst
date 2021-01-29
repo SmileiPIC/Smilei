@@ -25,6 +25,7 @@ Changes made in the repository (not released)
 
   * linear and circular polarization
   * ionization model
+  * normalized laser frequency can be different from 1
 
 * Particles can be imported from a file
 * Coulomb logarithm may be multiplied by a constant factor

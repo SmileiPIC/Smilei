@@ -171,7 +171,7 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
                 // |A|
                 ( *Env_Aabs3D )( i, j, k )= std::abs( ( *A3D )( i, j, k ) );
                 // |E envelope| = |-(dA/dt-ik0cA)|
-                ( *Env_Eabs3D )( i, j, k )= std::abs( ( ( *A3D )( i, j, k )-( *A03D )( i, j, k ) )/timestep - i1*( *A3D )( i, j, k ) );
+                ( *Env_Eabs3D )( i, j, k )= std::abs( ( ( *A3D )( i, j, k )-( *A03D )( i, j, k ) )/timestep - i1*omega*( *A3D )( i, j, k ) );
                 // compute ponderomotive potential at timestep n
                 ( *Phi3D )( i, j, k )     = ellipticity_factor*std::abs( ( *A3D )( i, j, k ) ) * std::abs( ( *A3D )( i, j, k ) ) * 0.5;
                 // compute ponderomotive potential at timestep n-1
@@ -358,7 +358,7 @@ void LaserEnvelope3D::computePhiEnvAEnvE( ElectroMagn *EMfields )
                 ( *Phi3D )( i, j, k )      = ellipticity_factor*std::abs( ( *A3D )( i, j, k ) ) * std::abs( ( *A3D )( i, j, k ) ) * 0.5;
                 ( *Env_Aabs3D )( i, j, k ) = std::abs( ( *A3D )( i, j, k ) );
                 // |E envelope| = |-(dA/dt-ik0cA)|, forward finite differences for the time derivative
-                ( *Env_Eabs3D )( i, j, k ) = std::abs( ( ( *A3D )( i, j, k )-( *A03D )( i, j, k ) )/timestep - i1*( *A3D )( i, j, k ) );
+                ( *Env_Eabs3D )( i, j, k ) = std::abs( ( ( *A3D )( i, j, k )-( *A03D )( i, j, k ) )/timestep - i1*omega*( *A3D )( i, j, k ) );
                 // |Ex envelope| = |-(dA/dy|, central finite difference for the space derivative
                 ( *Env_Exabs3D )( i, j,k ) = std::abs( ( ( *A3D )( i, j+1,k)-( *A3D  )( i, j-1,k) )*one_ov_2dy );
             } // end z loop

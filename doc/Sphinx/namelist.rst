@@ -1588,7 +1588,7 @@ Following is the generic laser envelope creator ::
 
    :default: ``1.``
 
-   For the moment only a value of 1 is supported.
+   The laser angular frequency.
 
 .. py:data:: envelope_profile
 
