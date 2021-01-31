@@ -185,7 +185,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                                        ithread, particles->first_index[ipack*packsize_] );
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[0] += MPI_Wtime() - timer;
+            patch->patch_timers_[0] += MPI_Wtime() - timer;
 #endif
 
             // Ionization
@@ -197,7 +197,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     ( *Ionize )( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj );
                 }
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[4] += MPI_Wtime() - timer;
+                patch->patch_timers_[4] += MPI_Wtime() - timer;
 #endif
             }
             
@@ -226,7 +226,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     //                               ithread );
                 }
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[5] += MPI_Wtime() - timer;
+                patch->patch_timers_[5] += MPI_Wtime() - timer;
 #endif
             }
 
@@ -260,7 +260,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                         
                 }
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[6] += MPI_Wtime() - timer;
+                patch->patch_timers_[6] += MPI_Wtime() - timer;
 #endif
             }
 
@@ -274,7 +274,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                        ithread, particles->first_index[ipack*packsize_] );
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[1] += MPI_Wtime() - timer;
+            patch->patch_timers_[1] += MPI_Wtime() - timer;
             timer = MPI_Wtime();
 #endif
 
@@ -338,7 +338,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[3] += MPI_Wtime() - timer;
+            patch->patch_timers_[3] += MPI_Wtime() - timer;
 #endif
 
             // Project currents if not a Test species and charges as well if a diag is needed.
@@ -358,7 +358,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 );
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[2] += MPI_Wtime() - timer;
+            patch->patch_timers_[2] += MPI_Wtime() - timer;
 #endif
 
             for( unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++ ) {
@@ -988,7 +988,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
                 Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ), &( particles->last_index[ipack*packsize_+scell] ), ithread, particles->first_index[ipack*packsize_] );
             }
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[7] += MPI_Wtime() - timer;
+            patch->patch_timers_[7] += MPI_Wtime() - timer;
 #endif
 
             // Ionization
@@ -1006,8 +1006,8 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
                     Ionize->envelopeIonization( particles, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
                 }
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers[4] += MPI_Wtime() - timer;
-#endif            
+                patch->patch_timers_[4] += MPI_Wtime() - timer;
+#endif
             }
 
 
@@ -1021,7 +1021,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
             }
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[8] += MPI_Wtime() - timer;
+            patch->patch_timers_[8] += MPI_Wtime() - timer;
 #endif
 
             // Push the particles
@@ -1030,7 +1030,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
 #endif
             ( *Push )( *particles, smpi, particles->first_index[ipack*packsize_], particles->last_index[ipack*packsize_+packsize_-1], ithread, particles->first_index[ipack*packsize_] );
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[9] += MPI_Wtime() - timer;
+            patch->patch_timers_[9] += MPI_Wtime() - timer;
 #endif
         }
 
@@ -1100,7 +1100,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
                 Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ), &( particles->last_index[ipack*packsize_+scell] ), ithread, particles->first_index[ipack*packsize_] );
             }
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[4] += MPI_Wtime() - timer;
+            patch->patch_timers_[4] += MPI_Wtime() - timer;
 #endif
 
             // Project susceptibility, the source term of envelope equation
@@ -1112,7 +1112,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
             }
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[8] += MPI_Wtime() - timer;
+            patch->patch_timers_[8] += MPI_Wtime() - timer;
 #endif
 
         }
@@ -1178,7 +1178,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                 Interp->timeCenteredEnvelope( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ), &( particles->last_index[ipack*packsize_+scell] ), ithread, particles->first_index[ipack*packsize_] );
             }
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[10] += MPI_Wtime() - timer;
+            patch->patch_timers_[10] += MPI_Wtime() - timer;
 #endif
 
 #ifdef  __DETAILED_TIMERS
@@ -1187,7 +1187,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
             // Push only the particle position
             ( *Push_ponderomotive_position )( *particles, smpi, particles->first_index[ipack*packsize_], particles->last_index[ipack*packsize_+packsize_-1], ithread, particles->first_index[ipack*packsize_] );
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[11] += MPI_Wtime() - timer;
+            patch->patch_timers_[11] += MPI_Wtime() - timer;
             timer = MPI_Wtime();
 #endif
             unsigned int length[3];
@@ -1226,7 +1226,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
             }
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[3] += MPI_Wtime() - timer;
+            patch->patch_timers_[3] += MPI_Wtime() - timer;
 #endif
 
             // Project currents if not a Test species and charges as well if a diag is needed.
@@ -1240,7 +1240,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                 }
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[12] += MPI_Wtime() - timer;
+            patch->patch_timers_[12] += MPI_Wtime() - timer;
 #endif
         }
 

@@ -91,8 +91,8 @@ Species_taskomp::~Species_taskomp()
     // delete Push;
     // delete Interp;
     // delete Proj;
-    // 
-    // 
+    //
+    //
     // if( partBoundCond ) {
     //     delete partBoundCond;
     // }
@@ -157,13 +157,14 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 
 #ifdef  __DETAILED_TIMERS
     double timer;
+    int ithread;
 #endif
 
     unsigned int iPart;
 
     int Nbins = particles->first_index.size();
     std::vector<double> nrj_lost_per_bin( Nbins, 0. );
-    #pragma omp taskgroup 
+    #pragma omp taskgroup
     {
     // -------------------------------
     // calculate the particle dynamics
@@ -173,9 +174,15 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
         smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_pushed[ibin])
-            {
 #ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_pushed[ibin])
+#endif
+            {
+                
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
             timer = MPI_Wtime();
 #endif
 
@@ -183,7 +190,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[0] += MPI_Wtime() - timer;
+            patch->patch_timers_[0*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
 
 
@@ -196,18 +203,24 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
             //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[1] += MPI_Wtime() - timer;
+            patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task for Interp+Push on ibin
         } // end ibin loop for Interp+Push
       
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#else
             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#endif
+
             {
             double ener_iPart( 0. );
 
 #ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
             timer = MPI_Wtime();
 #endif
 
@@ -238,15 +251,21 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
             }
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[3] += MPI_Wtime() - timer;
+            patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task for particles BC on ibin
         } // end ibin loop for particles BC
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
-            {
 #ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+#endif
+            {
+                
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
             timer = MPI_Wtime();
 #endif
 
@@ -265,16 +284,16 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                 } else if (params.geometry == "3Dcartesian"){
                     Projector3D2Order *Proj3D = static_cast<Projector3D2Order *>(Proj);
                     Proj3D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], ibin*clrw, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id, diag_flag, params.is_spectral, ispec );
-                } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}  
+                } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
             } // end condition on test and mass
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[2] += MPI_Wtime() - timer;
+            patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
             }//end task for Proj of ibin
          }// end ibin loop for Proj
 
-     } // end if moving particle   
+     } // end if moving particle
      }// end taskgroup for all the Interp, Push, Particles BC and Projector tasks
   
      // reduction of the lost energy in each ibin
@@ -285,4 +304,3 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
      // smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
 
 } // end dynamicsWithTasks
-

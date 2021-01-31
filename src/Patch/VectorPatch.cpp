@@ -340,13 +340,13 @@ void VectorPatch::dynamics( Params &params,
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
         if( params.tasks_on_projection & diag_flag) {( *this )( ipatch )->EMfields->restartRhoJs();}
-    } // end ipatch 
+    } // end ipatch
     
    
     #pragma omp single
     {
     #pragma omp taskgroup
-    { 
+    {
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
@@ -403,14 +403,14 @@ void VectorPatch::dynamics( Params &params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags, buffer_id );
                                     } // end task
-                                } // end if condition on tasks 
+                                } // end if condition on tasks
                       } // end case vectorization non adaptive
                 } // end if condition on vectorization
             } // end if condition on species
         } // end loop on species
     } // end loop on patches
     } // end taskgroup to ensure all ipatch ispec performed dynamics method
-    } // end omp single 
+    } // end omp single
 
     // #pragma omp single
     // {
@@ -426,34 +426,45 @@ void VectorPatch::dynamics( Params &params,
 
         unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
         
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) { 
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             #pragma omp task firstprivate(ipatch)
             { // only the ipatch iterations are parallelized
-            ElectroMagn2D *emfields2D; ElectroMagn3D *emfields3D; 
-            if (params.geometry == "2Dcartesian"){
-                emfields2D = static_cast<ElectroMagn2D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
-            } else if (params.geometry == "3Dcartesian"){
-                emfields3D = static_cast<ElectroMagn3D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
-            } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
-            
-            for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) { 
-                // DO NOT parallelize this species loop unless race condition prevention is used!
+                
+#ifdef  __DETAILED_TIMERS
+                int ithread = omp_get_thread_num();
+                double timer = MPI_Wtime();
+#endif
+                
+                ElectroMagn2D *emfields2D; ElectroMagn3D *emfields3D;
+                if (params.geometry == "2Dcartesian"){
+                    emfields2D = static_cast<ElectroMagn2D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
+                } else if (params.geometry == "3Dcartesian"){
+                    emfields3D = static_cast<ElectroMagn3D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
+                } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
+                
+                for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
+                    // DO NOT parallelize this species loop unless race condition prevention is used!
 
-                Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
-                std::vector<unsigned int> b_dim = spec_task->b_dim;
-                for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-                    double *b_Jx = spec_task->b_Jx[ibin];
-                    double *b_Jy = spec_task->b_Jy[ibin];
-                    double *b_Jz = spec_task->b_Jz[ibin];
-                    double *b_rho = spec_task->b_rho[ibin];
-                    // Copy density buffer back to the patch density
-                    if (params.geometry == "2Dcartesian"){
-             	          emfields2D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
-                    } else if (params.geometry == "3Dcartesian"){
-             	          emfields3D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
-                    }
-                } // ibin
-            } // end species loop 
+                    Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                    std::vector<unsigned int> b_dim = spec_task->b_dim;
+                    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+                        double *b_Jx = spec_task->b_Jx[ibin];
+                        double *b_Jy = spec_task->b_Jy[ibin];
+                        double *b_Jz = spec_task->b_Jz[ibin];
+                        double *b_rho = spec_task->b_rho[ibin];
+                        // Copy density buffer back to the patch density
+                        if (params.geometry == "2Dcartesian"){
+                 	          emfields2D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                        } else if (params.geometry == "3Dcartesian"){
+                 	          emfields3D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                        }
+                    } // ibin
+                } // end species loop
+                
+#ifdef  __DETAILED_TIMERS
+                ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                
             } // end task
         } // end patch loop
     } // end condition on tasks
@@ -462,13 +473,13 @@ void VectorPatch::dynamics( Params &params,
 
     timers.particles.update( params.printNow( itime ) );
 #ifdef __DETAILED_TIMERS
-    timers.interpolator.update( *this, params.printNow( itime ) );
-    timers.pusher.update( *this, params.printNow( itime ) );
-    timers.projector.update( *this, params.printNow( itime ) );
-    timers.cell_keys.update( *this, params.printNow( itime ) );
-    timers.ionization.update( *this, params.printNow( itime ) );
-    timers.radiation.update( *this, params.printNow( itime ) );
-    timers.multiphoton_Breit_Wheeler_timer.update( *this, params.printNow( itime ) );
+    timers.interpolator.update_threaded( *this, params.printNow( itime ) );
+    timers.pusher.update_threaded( *this, params.printNow( itime ) );
+    timers.projector.update_threaded( *this, params.printNow( itime ) );
+    timers.cell_keys.update_threaded( *this, params.printNow( itime ) );
+    timers.ionization.update_threaded( *this, params.printNow( itime ) );
+    timers.radiation.update_threaded( *this, params.printNow( itime ) );
+    timers.multiphoton_Breit_Wheeler_timer.update_threaded( *this, params.printNow( itime ) );
 #endif
 
     timers.syncPart.restart();

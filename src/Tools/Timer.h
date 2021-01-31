@@ -25,6 +25,9 @@ public:
 #ifdef __DETAILED_TIMERS
     //! Accumulate time couting from last init/restart using patch detailed timers
     void update( VectorPatch &vecPatches, bool store = false );
+    
+    //! Accumulate time couting from last init/restart using patch detailed timers spreaded between threads
+    void update_threaded( VectorPatch &vecPatches, bool store = false );
 #endif
     
     //! Start a new cumulative period
