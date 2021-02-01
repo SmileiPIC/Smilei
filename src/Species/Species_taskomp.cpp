@@ -278,9 +278,12 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
      }// end taskgroup for all the Interp, Push, Particles BC and Projector tasks
   
      // reduction of the lost energy in each ibin
+     #pragma omp task default(shared)
+     {
      for( unsigned int ibin=0 ; ibin<nrj_lost_per_bin.size() ; ibin++ ) {
         nrj_bc_lost += nrj_lost_per_bin[ibin];
      }
+     } // end task for lost energy reduction
 
      // smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
 
