@@ -31,9 +31,6 @@ void PusherBorisV::operator()( Particles &particles, SmileiMPI *smpi, int istart
     double charge_over_mass_dts2;
     double inv_det_T, Tx, Ty, Tz;
     double local_invgf;
-    //int IX;
-    
-    //int* cell_keys;
     
     double *momentum[3];
     for( int i = 0 ; i<3 ; i++ ) {
@@ -52,9 +49,6 @@ void PusherBorisV::operator()( Particles &particles, SmileiMPI *smpi, int istart
     double *Bx = &( ( *Bpart )[0*nparts] );
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
-    
-    //particles.cell_keys.resize(nparts);
-    //cell_keys = &( particles.cell_keys[0]);
     
     vector<double> dcharge(nparts);
     for( int ipart=istart ; ipart<iend; ipart++ ) {

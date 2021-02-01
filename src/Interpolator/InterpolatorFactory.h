@@ -16,6 +16,7 @@
 #include "Interpolator2D2OrderV.h"
 #include "Interpolator3D2OrderV.h"
 #include "Interpolator3D4OrderV.h"
+#include "InterpolatorAM2OrderV.h"
 #endif
 
 #include "Params.h"
@@ -79,7 +80,14 @@ public:
         // ---------------
         else if( params.geometry == "AMcylindrical" ) {
             if ( !params.is_spectral){
-                Interp = new InterpolatorAM2Order( params, patch );
+                if( !vectorization ) {
+                    Interp = new InterpolatorAM2Order( params, patch );
+                }
+#ifdef _VECTO
+                else {
+                    Interp = new InterpolatorAM2OrderV( params, patch );
+                }
+#endif
             } else {
                 Interp = new InterpolatorAM1Order( params, patch );
             }
