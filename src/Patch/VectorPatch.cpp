@@ -345,8 +345,8 @@ void VectorPatch::dynamics( Params &params,
    
     #pragma omp single
     {
-    #pragma omp taskgroup
-    { 
+    // #pragma omp taskgroup
+    // { 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
@@ -409,7 +409,7 @@ void VectorPatch::dynamics( Params &params,
             } // end if condition on species
         } // end loop on species
     } // end loop on patches
-    } // end taskgroup to ensure all ipatch ispec performed dynamics method
+    //} // end taskgroup to ensure all ipatch ispec performed dynamics method
     } // end omp single 
 
     // #pragma omp single
@@ -425,10 +425,14 @@ void VectorPatch::dynamics( Params &params,
     if (params.tasks_on_projection){
 
         unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
-        
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) { 
-            #pragma omp task firstprivate(ipatch)
+        int Nspecies = ( *this )( 0 )->vecSpecies.size();
+
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {    
+  
+            int* last_species_has_projected =  static_cast<Species_taskomp *>(species( ipatch, (Nspecies-1) ))->bin_has_projected;
+            #pragma omp task firstprivate(ipatch) depend(in:last_species_has_projected[0:(Nbins-1)])
             { // only the ipatch iterations are parallelized
+
             ElectroMagn2D *emfields2D; ElectroMagn3D *emfields3D; 
             if (params.geometry == "2Dcartesian"){
                 emfields2D = static_cast<ElectroMagn2D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
@@ -436,7 +440,7 @@ void VectorPatch::dynamics( Params &params,
                 emfields3D = static_cast<ElectroMagn3D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
             } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
             
-            for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) { 
+            for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) { 
                 // DO NOT parallelize this species loop unless race condition prevention is used!
 
                 Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
@@ -452,9 +456,11 @@ void VectorPatch::dynamics( Params &params,
                     } else if (params.geometry == "3Dcartesian"){
              	          emfields3D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
                     }
+
                 } // ibin
+
             } // end species loop 
-            } // end task
+            } // end task on reduction of patch densities
         } // end patch loop
     } // end condition on tasks
 
