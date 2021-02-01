@@ -340,7 +340,7 @@ void VectorPatch::dynamics( Params &params,
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
         if( params.tasks_on_projection & diag_flag) {( *this )( ipatch )->EMfields->restartRhoJs();}
-    } // end ipatch 
+    } // end ipatch
     
    
     #pragma omp single
@@ -403,7 +403,7 @@ void VectorPatch::dynamics( Params &params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags, buffer_id );
                                     } // end task
-                                } // end if condition on tasks 
+                                } // end if condition on tasks
                       } // end case vectorization non adaptive
                 } // end if condition on vectorization
             } // end if condition on species
@@ -433,6 +433,11 @@ void VectorPatch::dynamics( Params &params,
             #pragma omp task firstprivate(ipatch) depend(in:last_species_has_projected[0:(Nbins-1)])
             { // only the ipatch iterations are parallelized
 
+#ifdef  __DETAILED_TIMERS
+                int ithread = omp_get_thread_num();
+                double timer = MPI_Wtime();
+#endif
+
             ElectroMagn2D *emfields2D; ElectroMagn3D *emfields3D; 
             if (params.geometry == "2Dcartesian"){
                 emfields2D = static_cast<ElectroMagn2D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
@@ -460,6 +465,11 @@ void VectorPatch::dynamics( Params &params,
                 } // ibin
 
             } // end species loop 
+
+#ifdef  __DETAILED_TIMERS
+                ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+
             } // end task on reduction of patch densities
         } // end patch loop
     } // end condition on tasks
@@ -468,13 +478,13 @@ void VectorPatch::dynamics( Params &params,
 
     timers.particles.update( params.printNow( itime ) );
 #ifdef __DETAILED_TIMERS
-    timers.interpolator.update( *this, params.printNow( itime ) );
-    timers.pusher.update( *this, params.printNow( itime ) );
-    timers.projector.update( *this, params.printNow( itime ) );
-    timers.cell_keys.update( *this, params.printNow( itime ) );
-    timers.ionization.update( *this, params.printNow( itime ) );
-    timers.radiation.update( *this, params.printNow( itime ) );
-    timers.multiphoton_Breit_Wheeler_timer.update( *this, params.printNow( itime ) );
+    timers.interpolator.update_threaded( *this, params.printNow( itime ) );
+    timers.pusher.update_threaded( *this, params.printNow( itime ) );
+    timers.projector.update_threaded( *this, params.printNow( itime ) );
+    timers.cell_keys.update_threaded( *this, params.printNow( itime ) );
+    timers.ionization.update_threaded( *this, params.printNow( itime ) );
+    timers.radiation.update_threaded( *this, params.printNow( itime ) );
+    timers.multiphoton_Breit_Wheeler_timer.update_threaded( *this, params.printNow( itime ) );
 #endif
 
     timers.syncPart.restart();

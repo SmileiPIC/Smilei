@@ -123,7 +123,7 @@ else
     CXXFLAGS += -O3 -g #-xHost -no-prec-div -ipo
 endif
 
-# Manage options in the "config" parameter
+# Detailed timers
 ifneq (,$(call parse_config,detailed_timers))
     CXXFLAGS += -D__DETAILED_TIMERS
 endif
@@ -167,13 +167,10 @@ else
     Q :=
 endif
 
-
 #last: check remaining arguments and raise error
 ifneq ($(strip $(my_config)),)
 $(error "Unused parameters in config : $(my_config)")
 endif
-
-
 
 
 #-----------------------------------------------------
@@ -181,7 +178,23 @@ endif
 
 EXEC = smilei
 
-default: $(EXEC) $(EXEC)_test
+default: header $(EXEC) $(EXEC)_test
+
+#-----------------------------------------------------
+# Header
+header:
+	@echo " _____________________________________"
+	@echo ""
+	@echo " SMILEI compilation"
+	@echo ""
+	@if [ $(call parse_config,debug) ]; then echo "- Debug option requested"; fi;
+	@if [ $(call parse_config,gdb) ]; then echo "- Compilation for GDB requested"; fi;
+	@if [ $(call parse_config,picsar) ]; then echo "- SMILEI linked to PICSAR requested"; fi;
+	@if [ $(call parse_config,opt-report) ]; then echo "- Optimization report requested"; fi;
+	@if [ $(call parse_config,detailed_timers) ]; then echo "- Detailed timers option requested"; fi;
+	@if [ $(call parse_config,no_mpi_tm) ]; then echo "- Compiled without MPI_THREAD_MULTIPLE"; fi;
+	@echo " _____________________________________"
+	@echo ""
 
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
@@ -297,6 +310,7 @@ happi:
 uninstall_happi:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
 	$(Q) rm -f "$(SITEDIR)/smilei.pth"
+
 
 #-----------------------------------------------------
 # Info rules

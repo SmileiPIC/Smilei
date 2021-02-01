@@ -46,8 +46,16 @@ Patch::Patch( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decom
     nDim_fields_ = params.nDim_field;
 
     initStep1( params );
+    
 
 #ifdef  __DETAILED_TIMERS
+
+    #ifdef _OPENMP
+        thread_number_ = omp_get_num_threads();
+    #else
+        threads_numbers_= 1;
+    #endif
+
     // Initialize timers
     // 0 - Interpolation
     // 1 - Pusher
@@ -63,7 +71,7 @@ Patch::Patch( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decom
     // 11 - Proj Currents
     // 12 - Push Pos
     // 13 - Sorting
-    patch_timers.resize( 15, 0. );
+    patch_timers_.resize( 15 * thread_number_, 0. );
 #endif
 
 } // END Patch::Patch
@@ -81,8 +89,15 @@ Patch::Patch( Patch *patch, Params &params, SmileiMPI *smpi, DomainDecomposition
     initStep1( params );
 
 #ifdef  __DETAILED_TIMERS
+
+#ifdef _OPENMP
+    thread_number_ = omp_get_num_threads();
+#else
+    threads_numbers_= 1;
+#endif
+
     // Initialize timers
-    patch_timers.resize( 15, 0. );
+    patch_timers_.resize( 15 * thread_number_, 0. );
 #endif
 
 }
@@ -273,7 +288,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 
     // Constraint to enforce 1 neighboor per side
     //double nppp_root = pow( vecPatch.size(), 1./(double)nDim_fields_ );
-    //if ( fabs( (double)(int)nppp_root - nppp_root ) > 0. ) 
+    //if ( fabs( (double)(int)nppp_root - nppp_root ) > 0. )
     //    ERROR( "Bad choice of decomposition" );
 
 // Coupling v0    for (int i = 0 ; i<nDim_fields_ ; i++) {
@@ -299,12 +314,12 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 // Coupling v0                cell_starting_global_index[i] = vecPatch( ipatch )->cell_starting_global_index[i];
 // Coupling v0            }
 // Coupling v0        }
-// Coupling v0        
+// Coupling v0
 // Coupling v0        center[i] = (min_local[i]+max_local[i])*0.5;
 // Coupling v0        radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);
 // Coupling v0    }
 
-    // New_DD 
+    // New_DD
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
     int sz(1);
@@ -331,16 +346,16 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             else if (params.EM_BCs[0][0]=="periodic") {
                                 MPI_neighbor_[0][0] = params.map_rank[xDom-1+params.number_of_region[0]][yDom][zDom];
                             }
-                            else 
+                            else
                                 MPI_neighbor_[0][0] = MPI_PROC_NULL;
 
                             if (xDom<params.number_of_region[0]-1)
                                 MPI_neighbor_[0][1] = params.map_rank[xDom+1][yDom][zDom];
                             else if (params.EM_BCs[0][1]=="periodic")
                                 MPI_neighbor_[0][1] = params.map_rank[(xDom+1)%params.number_of_region[0]][yDom][zDom];
-                            else 
+                            else
                                 MPI_neighbor_[0][1] = MPI_PROC_NULL;
-                        }                
+                        }
                     }
                 }
 
@@ -390,14 +405,14 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             else if (params.EM_BCs[0][0]=="periodic") {
                                 MPI_neighbor_[0][0] = params.map_rank[xDom-1+params.number_of_region[0]][yDom][zDom];
                             }
-                            else 
+                            else
                                 MPI_neighbor_[0][0] = MPI_PROC_NULL;
 
                             if (xDom<params.number_of_region[0]-1)
                                 MPI_neighbor_[0][1] = params.map_rank[xDom+1][yDom][zDom];
                             else if (params.EM_BCs[0][1]=="periodic")
                                 MPI_neighbor_[0][1] = params.map_rank[(xDom+1)%params.number_of_region[0]][yDom][zDom];
-                            else 
+                            else
                                 MPI_neighbor_[0][1] = MPI_PROC_NULL;
 
                             // ---------------- Y ----------------
@@ -406,20 +421,20 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             else if (params.EM_BCs[1][0]=="periodic") {
                                 MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1+params.number_of_region[1]][zDom];
                             }
-                            else 
+                            else
                                 MPI_neighbor_[1][0] = MPI_PROC_NULL;
 
                             if (yDom<params.number_of_region[1]-1)
                                 MPI_neighbor_[1][1] = params.map_rank[xDom][yDom+1][zDom];
                             else if (params.EM_BCs[1][1]=="periodic")
                                 MPI_neighbor_[1][1] = params.map_rank[xDom][(yDom+1)%params.number_of_region[1]][zDom];
-                            else 
+                            else
                                 MPI_neighbor_[1][1] = MPI_PROC_NULL;
-                        }                
+                        }
                     }
                 }
 
-            //cout << "HERE - " <<Pcoordinates[0] << " " << Pcoordinates[1]<< endl; 
+            //cout << "HERE - " <<Pcoordinates[0] << " " << Pcoordinates[1]<< endl;
             std::vector<int> xcall( 2, 0 );
             // 1st direction
             xcall[0] = Pcoordinates[0]-1;
@@ -499,14 +514,14 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             else if (params.EM_BCs[0][0]=="periodic") {
                                 MPI_neighbor_[0][0] = params.map_rank[xDom-1+params.number_of_region[0]][yDom][zDom];
                             }
-                            else 
+                            else
                                 MPI_neighbor_[0][0] = MPI_PROC_NULL;
 
                             if (xDom<params.number_of_region[0]-1)
                                 MPI_neighbor_[0][1] = params.map_rank[xDom+1][yDom][zDom];
                             else if (params.EM_BCs[0][1]=="periodic")
                                 MPI_neighbor_[0][1] = params.map_rank[(xDom+1)%params.number_of_region[0]][yDom][zDom];
-                            else 
+                            else
                                 MPI_neighbor_[0][1] = MPI_PROC_NULL;
 
 
@@ -518,14 +533,14 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             else if (params.EM_BCs[1][0]=="periodic") {
                                 MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1+params.number_of_region[1]][zDom];
                             }
-                            else 
+                            else
                                 MPI_neighbor_[1][0] = MPI_PROC_NULL;
 
                             if (yDom<params.number_of_region[1]-1)
                                 MPI_neighbor_[1][1] = params.map_rank[xDom][yDom+1][zDom];
                             else if (params.EM_BCs[1][1]=="periodic")
                                 MPI_neighbor_[1][1] = params.map_rank[xDom][(yDom+1)%params.number_of_region[1]][zDom];
-                            else 
+                            else
                                 MPI_neighbor_[1][1] = MPI_PROC_NULL;
 
                             // ---------------- Z ----------------
@@ -534,17 +549,17 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             else if (params.EM_BCs[2][0]=="periodic") {
                                 MPI_neighbor_[2][0] = params.map_rank[xDom][yDom][zDom-1+params.number_of_region[2]];
                             }
-                            else 
+                            else
                                 MPI_neighbor_[2][0] = MPI_PROC_NULL;
 
                             if (zDom<params.number_of_region[2]-1)
                                 MPI_neighbor_[2][1] = params.map_rank[xDom][yDom][zDom+1];
                             else if (params.EM_BCs[2][1]=="periodic")
                                 MPI_neighbor_[2][1] = params.map_rank[xDom][yDom][(zDom+1)%params.number_of_region[2]];
-                            else 
+                            else
                                 MPI_neighbor_[2][1] = MPI_PROC_NULL;
 
-                        }                
+                        }
                     }
                 }
 
@@ -606,7 +621,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             cell_starting_global_index[2] -= oversize[2];
         } // Fin 3D
 
-    } // ENd if 
+    } // ENd if
     else if ( domain_decomposition == NULL ) { // If current patch is the global Domain's patch
         if ( params.geometry != "AMcylindrical" ) {
             WARNING ("Global gathering not tested on non AM configuration" ) ;
@@ -1164,7 +1179,7 @@ void Patch::importAndSortParticles( SmileiMPI *smpi, int ispec, Params &params, 
     vecSpecies[ispec]->sortParticles( params , this);
 
 #ifdef  __DETAILED_TIMERS
-    this->patch_timers[13] += MPI_Wtime() - timer;
+    this->patch_timers_[13] += MPI_Wtime() - timer;
 #endif
 
 } // sortParticles(...)
@@ -1424,4 +1439,3 @@ void Patch::finalizeSumField( Field *field, int iDim )
     }
 
 } // END finalizeSumField
-
