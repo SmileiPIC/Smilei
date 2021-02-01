@@ -22,5 +22,26 @@
 # export PATH=${HDF5_ROOT}/bin:${PATH}
 # export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
 # export HDF5_ROOT_DIR=${HDF5_ROOT}
+#
+# 3. Compilation
+#
+# This script can be used to compile the code on a node
+#
+# ```
+##!/bin/bash -x
+##SBATCH --account=prcoe03
+##SBATCH --nodes=1
+##SBATCH --ntasks=1
+##SBATCH --cpus-per-task=48
+##SBATCH --output=output
+##SBATCH --error=error
+##SBATCH --time=00:05:00
+##SBATCH --exclusive
+#
+#source ~/.smilei_env
+#
+#make -j 48 machine=juwels
+# ```
+
 
 CXXFLAGS += -xCOMMON-AVX512 -ip -inline-factor=1000 -D__INTEL_SKYLAKE_8168 -qopt-zmm-usage=high -fno-alias #-ipo
