@@ -14,9 +14,9 @@ dy  = dx
 dz  = dx
 dt  = 0.95 * dx/m.sqrt(3.)		# timestep (0.95 x CFL)
 
-Lx    = 32.*dx
-Ly    = 32.*dy
-Lz    = 32.*dz
+Lx    = 40.*dx
+Ly    = 40.*dy
+Lz    = 40.*dz
 Tsim  = 2.*m.pi
 
 def n0_(x,y,z):
