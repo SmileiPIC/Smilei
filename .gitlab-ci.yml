@@ -8,7 +8,7 @@ compile:
   only:
     - develop
     - refactor_for_GPU
-#    - projection-correction
+    - projection-correction
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,7 +31,7 @@ makerun1D:
   only:
     - develop
     - refactor_for_GPU
-#    - projection-correction
+    - projection-correction
     
   script:
     # Move in test dir
@@ -45,7 +45,7 @@ makerun2D:
   only:
     - develop
     - refactor_for_GPU
-#    - projection-correction
+    - projection-correction
 
   script:
     # Move in test dir
@@ -59,7 +59,7 @@ makerun3D:
   only:
     - develop
     - refactor_for_GPU
-#    - projection-correction
+    - projection-correction
 
   script:
     # Move in test dir
@@ -74,7 +74,7 @@ makerunAM:
   only:
     - develop
     - refactor_for_GPU
-#    - projection-correction
+    - projection-correction
     
   script:
     # Move in test dir
@@ -87,7 +87,7 @@ makerunV:
   only:
     - develop
     - refactor_for_GPU
-#    - projection-correction
+    - projection-correction
 
   script:
     # Move in test dir
@@ -101,7 +101,7 @@ makerunCollisions:
   only:
     - develop
     - refactor_for_GPU
-#    - projection-correction
+    - projection-correction
     
   script:
     # Move in test dir
@@ -114,7 +114,7 @@ use_picsar:
   only:
     - develop
     - refactor_for_GPU
-#    - projection-correction
+    - projection-correction
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
