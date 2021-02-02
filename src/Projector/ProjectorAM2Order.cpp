@@ -51,7 +51,7 @@ ProjectorAM2Order::~ProjectorAM2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for all modes
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, bool diag_flag, int ispec)
+void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, bool diag_flag, int ispec)
 {
 
     // -------------------------------------
@@ -102,8 +102,8 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     double yp = particles.position( 1, ipart );
     double zp = particles.position( 2, ipart );
     double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
-    double theta_old = array_theta_old[0];
-    double theta = atan2( zp, yp );
+    std::complex<double> theta_old = array_eitheta_old[0];
+    std::complex<double> eitheta = ( particles.position( 1, ipart ) + Icpx * particles.position( 2, ipart ) ) / rp ; //exp(i theta)
     e_delta = 1.;
     e_bar = 1.;
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -133,10 +133,9 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     }
 
     double r_bar = ((jpo + j_domain_begin)*dr + deltaold[1*nparts] + rp) * 0.5; // r at t = t0 - dt/2
-    double dtheta = std::remainder( theta-theta_old, 2*M_PI )/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
-    double theta_bar = theta_old+dtheta; // theta at t = t0 - dt/2
-    e_delta_m1 = std::polar( 1.0, dtheta );
-    e_bar_m1 = std::polar( 1.0, theta_bar );
+
+    e_delta_m1 = std::sqrt(eitheta * (2.*std::real(theta_old) - theta_old)); // std::sqrt keeps the root with positive real part which is what we need here.
+    e_bar_m1 = theta_old * e_delta_m1;
     
     ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
@@ -513,11 +512,11 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
-    std::vector<double> *array_theta_old = &( smpi->dynamics_thetaold[ithread] );
+    std::vector<std::complex<double>> *array_eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
     ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
 
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        currents( emAM, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], diag_flag, ispec);
+        currents( emAM, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_eitheta_old )[ipart], diag_flag, ispec);
     }
 }
 

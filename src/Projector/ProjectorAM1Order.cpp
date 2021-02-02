@@ -128,7 +128,7 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents and charge densities for all modes, not charge conserving
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, bool diag_flag, int ispec)
+void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, bool diag_flag, int ispec)
 {
 
     // -------------------------------------
@@ -149,12 +149,15 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     complex<double> C_m[2] = { 1., 1. };
     complex<double> *Jl, *Jr, *Jt, *rho;
     
-    double theta_old = array_theta_old[0]; // theta at t = t0 - dt
-    double theta = atan2( particles.position( 2, ipart ) , particles.position( 1, ipart ) );// theta at t = t0
-    double dtheta = std::remainder( theta-theta_old, 2*M_PI )/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
-    theta_old += dtheta; // theta at t = t0 - dt/2
-    e_theta[0] = std::polar( 1.0, theta_old );
-    e_theta[1] = std::polar( 1.0, theta );
+    std::complex<double> theta_old = array_eitheta_old[0]; // theta at t = t0 - dt
+    rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
+    std::complex<double> eitheta = ( particles.position( 1, ipart ) + Icpx * particles.position( 2, ipart ) ) / rp ; //exp(i theta)
+
+    std::complex<double> e_delta_m1 = std::sqrt(eitheta * (2.*std::real(theta_old) - theta_old)); // std::sqrt keeps the root with positive real part which is what we need here.
+
+    theta_old += e_delta_m1; // eitheta at t = t0 - dt/2
+    e_theta[0] = theta_old;
+    e_theta[1] = eitheta;
 
     double crl_p =  ( particles.momentum( 0, ipart )) *invgf;
     double crt_p =  ( particles.momentum( 2, ipart )*real(e_theta[0]) - particles.momentum( 1, ipart )*imag(e_theta[0]) ) * invgf;
@@ -166,7 +169,6 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     xpn[1] = particles.position( 0, ipart ) * dl_inv_ ;
     xpn[0] = 0.5*(xpn[0]+xpn[1]);
     rpn[0] = j_domain_begin + iold[1*nparts] + deltaold[1*nparts];
-    rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
     rpn[1] = rp * dr_inv_ - 0.5 ;
     rpn[0] = 0.5*(rpn[0]+rpn[1]);
 
@@ -272,12 +274,12 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
-    std::vector<double> *array_theta_old = &( smpi->dynamics_thetaold[ithread] );
+    std::vector<std::complex<double>> *array_eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
     
     ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
 
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        currents( emAM, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], diag_flag, ispec);
+        currents( emAM, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_eitheta_old )[ipart], diag_flag, ispec);
     }
 }
 

@@ -31,8 +31,6 @@ InterpolatorAM2OrderV::InterpolatorAM2OrderV( Params &params, Patch *patch ) : I
 // ---------------------------------------------------------------------------------------------------------------------
 void InterpolatorAM2OrderV::fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc )
 {
-
-    cout << "fieldsV" << endl;
     //Treat mode 0 first
     
     // Static cast of the electromagnetic fields
@@ -237,27 +235,33 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
     int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
 
+    //std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+    //std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     double *Epart[3], *Bpart[3];
     for( unsigned int k=0; k<3; k++ ) {
         Epart[k]= &( smpi->dynamics_Epart[ithread][k*nparts] );
         Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts] );
     }
-    //std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
-    //std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
-    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
-    std::vector<double> *theta_old = &( smpi->dynamics_thetaold[ithread] );
+    //std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
+    double *deltaO[2];
+    deltaO[0] = &( smpi->dynamics_deltaold[ithread][0] );
+    deltaO[1] = &( smpi->dynamics_deltaold[ithread][nparts] );
+
+
+
+    //std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );  // Not used in V
+    std::vector<std::complex<double>> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
     
     //Loop on bin particles
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
         fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
         //Buffering of iol and delta
-        ( *iold )[ipart+0*nparts]  = ip_;
-        ( *iold )[ipart+1*nparts]  = jp_;
-        ( *delta )[ipart+0*nparts] = deltax;
-        ( *delta )[ipart+1*nparts] = deltar;
-        ( *theta_old )[ipart] = atan2( particles.position( 2, ipart ), particles.position( 1, ipart ));
+        //( *iold )[ipart+0*nparts]  = ip_;
+        //( *iold )[ipart+1*nparts]  = jp_;
+        deltaO[0][ipart] = deltax;
+        deltaO[1][ipart] = deltar;
+        ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta) - exp_m_theta ;  //exp(i theta)
     }
 }
 

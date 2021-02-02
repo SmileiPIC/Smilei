@@ -13,7 +13,7 @@ public:
     ProjectorAM2Order( Params &, Patch *patch );
     ~ProjectorAM2Order();
     
-    inline void currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, bool diag_flag, int ispec);
+    inline void currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, bool diag_flag, int ispec);
     
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) override final;

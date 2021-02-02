@@ -392,9 +392,9 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *deltaold = &( smpi->dynamics_deltaold[ithread] );
 
-    std::vector<double> *thetaold = NULL;
-    if ( smpi->dynamics_thetaold.size() )
-        thetaold = &( smpi->dynamics_thetaold[ithread] );
+    std::vector<std::complex<double>> *thetaold = NULL;
+    if ( smpi->dynamics_eithetaold.size() )
+        thetaold = &( smpi->dynamics_eithetaold[ithread] );
 
     int nparts = Epart->size()/3;
 
