@@ -8,7 +8,7 @@ compile:
   only:
     - develop
     - refactor_for_GPU
-    - projection-correction
+#    - projection-correction
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,7 +31,7 @@ makerun1D:
   only:
     - develop
     - refactor_for_GPU
-    - projection-correction
+#    - projection-correction
     
   script:
     # Move in test dir
@@ -45,7 +45,7 @@ makerun2D:
   only:
     - develop
     - refactor_for_GPU
-    - projection-correction
+#    - projection-correction
 
   script:
     # Move in test dir
@@ -59,13 +59,14 @@ makerun3D:
   only:
     - develop
     - refactor_for_GPU
-    - projection-correction
+#    - projection-correction
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst3d_s_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
     - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerunAM:
@@ -73,7 +74,7 @@ makerunAM:
   only:
     - develop
     - refactor_for_GPU
-    - projection-correction
+#    - projection-correction
     
   script:
     # Move in test dir
@@ -86,20 +87,21 @@ makerunV:
   only:
     - develop
     - refactor_for_GPU
-    - projection-correction
+#    - projection-correction
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst?d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst2d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst3d_v_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerunCollisions:
   stage: makerun
   only:
     - develop
     - refactor_for_GPU
-    - projection-correction
+#    - projection-correction
     
   script:
     # Move in test dir
@@ -112,7 +114,7 @@ use_picsar:
   only:
     - develop
     - refactor_for_GPU
-    - projection-correction
+#    - projection-correction
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
