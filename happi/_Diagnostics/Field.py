@@ -415,7 +415,9 @@ class Field(Diagnostic):
 		# get h5 iteration group
 		index = self._data[t]
 		h5item = self._h5items[index]
-		return h5item.attrs["x_moved"] if "x_moved" in h5item.attrs else 0.
+		# Change units
+		factor, _ = self.units._convert("L_r", None)
+		return h5item.attrs["x_moved"]*factor if "x_moved" in h5item.attrs else 0.
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):

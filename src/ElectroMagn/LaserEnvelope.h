@@ -74,6 +74,7 @@ public:
 
     // imaginary unit and quantities using it
     std::complex<double> i1 = std::complex<double>( 0., 1 );
+    double omega; // frequency of the laser
     std::complex<double> i1_2k0_over_2dx;
     std::complex<double> i1_2k0_over_2dl;
     std::complex<double> one_plus_ik0dt;

@@ -25,6 +25,7 @@ Changes made in the repository (not released)
 
   * linear and circular polarization
   * ionization model
+  * normalized laser frequency can be different from 1
 
 * Particles can be imported from a file
 * Coulomb logarithm may be multiplied by a constant factor
@@ -33,6 +34,7 @@ Changes made in the repository (not released)
   * handles fonts
   * time slider available with multiple plotting
   * ``vsym`` option for symmetric graph
+  * ``getXmoved`` now accounts for requested units
 
 * Bugfixes:
 
@@ -42,6 +44,7 @@ Changes made in the repository (not released)
   * Initialisation from numpy or hdf5 caused wrong weights in AM geometry
   * Better positionning of collisionally-ionised electrons
   * Fix segfault from thermalizing boundary
+  * Running a simulation displayed the wrong version v4.4
 
 ----
 
