@@ -47,7 +47,7 @@ public:
         std::complex<double> interp_res( 0. );
         for( int iloc=-1 ; iloc<2 ; iloc++ ) {
             for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                if( jloc+idy+j_domain_begin==0 ) {
+                if( jloc+idy+j_domain_begin_==0 ) {
                     interp_res -= *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
                 } else {
                     interp_res += *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
@@ -81,7 +81,7 @@ public:
         std::complex<double> interp_res( 0. );
         for( int iloc=-1 ; iloc<2 ; iloc++ ) {
             for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                if( jloc+idy+j_domain_begin==0 ) {
+                if( jloc+idy+j_domain_begin_==0 ) {
                     interp_res -= *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
                 } else {
                     interp_res += *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) )*( *exptheta );
@@ -146,10 +146,10 @@ private:
         coeffyp_[2] = 0.5 * ( delta2+deltar+0.25 );
         
         // First index for summation
-        ip_ = ip_ - i_domain_begin;
-        id_ = id_ - i_domain_begin;
-        jp_ = jp_ - j_domain_begin;
-        jd_ = jd_ - j_domain_begin;
+        ip_ = ip_ - i_domain_begin_;
+        id_ = id_ - i_domain_begin_;
+        jp_ = jp_ - j_domain_begin_;
+        jd_ = jd_ - j_domain_begin_;
     };
     
     // Last prim index computed
@@ -159,13 +159,13 @@ private:
     // Last delta computed
     double deltax, deltar ;
     // exp m theta
-    std::complex<double> exp_m_theta;
+    std::complex<double> exp_m_theta_;
     // Interpolation coefficient on Prim grid
     double coeffxp_[3], coeffyp_[3];
     // Interpolation coefficient on Dual grid
     double coeffxd_[3], coeffyd_[3];
     //! Number of modes;
-    unsigned int nmodes;
+    unsigned int nmodes_;
     
     
 };//END class

@@ -42,7 +42,7 @@ public:
         std::complex<double> interp_res( 0. );
         for( int iloc=0 ; iloc<2 ; iloc++ ) {
             for( int jloc=0 ; jloc<2 ; jloc++ ) {
-                //if( jloc+idy+j_domain_begin==0 ) {
+                //if( jloc+idy+j_domain_begin_==0 ) {
                 //    interp_res -= *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
                 //} else {
                     interp_res += *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
@@ -76,7 +76,7 @@ public:
         std::complex<double> interp_res( 0. );
         for( int iloc=0 ; iloc<2 ; iloc++ ) {
             for( int jloc=0 ; jloc<2 ; jloc++ ) {
-                //if( jloc+idy+j_domain_begin==0 ) {
+                //if( jloc+idy+j_domain_begin_==0 ) {
                 //    interp_res -= *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
                 //} else {
                     interp_res += *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) )*( *exptheta );
@@ -94,13 +94,13 @@ private:
         
         // Declaration and calculation of the coefficient for interpolation
         
-        deltax   = xpn - ( double )ip_;
-        coeffxp_[0] = 1. - deltax;
-        coeffxp_[1] = deltax;
+        deltax_   = xpn - ( double )ip_;
+        coeffxp_[0] = 1. - deltax_;
+        coeffxp_[1] = deltax_;
         
-        deltar   = rpn - ( double )jp_;
-        coeffyp_[0] = 1. - deltar;
-        coeffyp_[1] = deltar;
+        deltar_   = rpn - ( double )jp_;
+        coeffyp_[0] = 1. - deltar_;
+        coeffyp_[1] = deltar_;
         coeffyp_[2] = coeffyp_[0];
         coeffyp_[3] = coeffyp_[1];
 
@@ -112,24 +112,24 @@ private:
             // coeffs 0-1 are used when F(-dr/2) = + F(dr/2) <==> when field is constant on axis
             coeffyp_[0] = 1.; // = coeffyp_[1] + coeffyp_[0];    
             coeffyp_[1] = 0.; // Terms are already acuumulated in coeffyp_[0] 
-            deltar -= 1.; // To account for the cell shift and proper recomputation of r_old in projector
+            deltar_ -= 1.; // To account for the cell shift and proper recomputation of r_old in projector
         }
         
         // First index for summation
-        ip_ = ip_ - i_domain_begin;
-        jp_ = jp_ - j_domain_begin;
+        ip_ = ip_ - i_domain_begin_;
+        jp_ = jp_ - j_domain_begin_;
     };
     
     // Last prim index computed
     int ip_, jp_;
     // Last delta computed
-    double deltax, deltar ;
+    double deltax_, deltar_ ;
     // exp m theta
-    std::complex<double> exp_m_theta;
+    std::complex<double> exp_m_theta_;
     // Interpolation coefficient on Prim grid
     double coeffxp_[2], coeffyp_[4] ;// coeff[2-3] to use when fields are 0 on axis.
     //! Number of modes;
-    unsigned int nmodes;
+    unsigned int nmodes_;
     
     
 };//END class

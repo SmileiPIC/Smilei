@@ -47,7 +47,7 @@ public:
         std::complex<double> interp_res( 0. );
         for( int iloc=-1 ; iloc<2 ; iloc++ ) {
             for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                if( jloc+idy+j_domain_begin==0 ) {
+                if( jloc+idy+j_domain_begin_==0 ) {
                     interp_res -= *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
                 } else {
                     interp_res += *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
@@ -81,7 +81,7 @@ public:
         std::complex<double> interp_res( 0. );
         for( int iloc=-1 ; iloc<2 ; iloc++ ) {
             for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                if( jloc+idy+j_domain_begin==0 ) {
+                if( jloc+idy+j_domain_begin_==0 ) {
                     interp_res -= *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
                 } else {
                     interp_res += *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) )*( *exptheta );
@@ -121,35 +121,35 @@ private:
         // Declaration and calculation of the coefficient for interpolation
         double delta2;
         
-        deltax   = xpn - ( double )id_ + 0.5;
-        delta2  = deltax*deltax;
-        coeffxd_[0] = 0.5 * ( delta2-deltax+0.25 );
+        deltax_   = xpn - ( double )id_ + 0.5;
+        delta2  = deltax_*deltax_;
+        coeffxd_[0] = 0.5 * ( delta2-deltax_+0.25 );
         coeffxd_[1] = 0.75 - delta2;
-        coeffxd_[2] = 0.5 * ( delta2+deltax+0.25 );
+        coeffxd_[2] = 0.5 * ( delta2+deltax_+0.25 );
         
-        deltax   = xpn - ( double )ip_;
-        delta2  = deltax*deltax;
-        coeffxp_[0] = 0.5 * ( delta2-deltax+0.25 );
+        deltax_   = xpn - ( double )ip_;
+        delta2  = deltax_*deltax_;
+        coeffxp_[0] = 0.5 * ( delta2-deltax_+0.25 );
         coeffxp_[1] = 0.75 - delta2;
-        coeffxp_[2] = 0.5 * ( delta2+deltax+0.25 );
+        coeffxp_[2] = 0.5 * ( delta2+deltax_+0.25 );
         
-        deltar   = rpn - ( double )jd_ + 0.5;
-        delta2  = deltar*deltar;
-        coeffyd_[0] = 0.5 * ( delta2-deltar+0.25 );
+        deltar_   = rpn - ( double )jd_ + 0.5;
+        delta2  = deltar_*deltar_;
+        coeffyd_[0] = 0.5 * ( delta2-deltar_+0.25 );
         coeffyd_[1] = 0.75 - delta2;
-        coeffyd_[2] = 0.5 * ( delta2+deltar+0.25 );
+        coeffyd_[2] = 0.5 * ( delta2+deltar_+0.25 );
         
-        deltar   = rpn - ( double )jp_;
-        delta2  = deltar*deltar;
-        coeffyp_[0] = 0.5 * ( delta2-deltar+0.25 );
+        deltar_   = rpn - ( double )jp_;
+        delta2  = deltar_*deltar_;
+        coeffyp_[0] = 0.5 * ( delta2-deltar_+0.25 );
         coeffyp_[1] = 0.75 - delta2;
-        coeffyp_[2] = 0.5 * ( delta2+deltar+0.25 );
+        coeffyp_[2] = 0.5 * ( delta2+deltar_+0.25 );
         
         // First index for summation
-        ip_ = ip_ - i_domain_begin;
-        id_ = id_ - i_domain_begin;
-        jp_ = jp_ - j_domain_begin;
-        jd_ = jd_ - j_domain_begin;
+        ip_ = ip_ - i_domain_begin_;
+        id_ = id_ - i_domain_begin_;
+        jp_ = jp_ - j_domain_begin_;
+        jd_ = jd_ - j_domain_begin_;
     };
     
     // Last prim index computed
@@ -157,15 +157,15 @@ private:
     // Last dual index computed
     int id_, jd_;
     // Last delta computed
-    double deltax, deltar ;
+    double deltax_, deltar_ ;
     // exp m theta
-    std::complex<double> exp_m_theta;
+    std::complex<double> exp_m_theta_;
     // Interpolation coefficient on Prim grid
     double coeffxp_[3], coeffyp_[3];
     // Interpolation coefficient on Dual grid
     double coeffxd_[3], coeffyd_[3];
     //! Number of modes;
-    unsigned int nmodes;
+    unsigned int nmodes_;
     
     
 };//END class
