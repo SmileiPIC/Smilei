@@ -496,7 +496,7 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
 
     def space_time_envelope(x,t):
         polarization_amplitude_factor = 1/sqrt(1.+ellipticity**2)
-        return (a0*omega*polarization_amplitude_factor) * complex( vectorize(time_envelope)(t) )
+        return (a0*polarization_amplitude_factor) * complex( vectorize(time_envelope)(t) )
 
     # Create Laser Envelope
     LaserEnvelope(
@@ -568,7 +568,7 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
         phase = coeff * ( (y-focus[1])**2 )
         exponential_with_total_phase = exp(1j*(phase-arctan( (x-focus[0])/Zr )))
         invWaist2 = (w/waist)**2
-        spatial_amplitude = a0*polarization_amplitude_factor*omega * sqrt(w) * exp( -invWaist2*(y-focus[1])**2)
+        spatial_amplitude = a0 *polarization_amplitude_factor * sqrt(w) * exp( -invWaist2*(y-focus[1])**2)
         space_time_envelope = spatial_amplitude * vectorize(time_envelope)(t)
         return space_time_envelope * exponential_with_total_phase
 
@@ -646,7 +646,7 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
         phase = coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
         exponential_with_total_phase = exp(1j*(phase-arctan( (x-focus[0])/Zr )))
         invWaist2 = (w/waist)**2
-        spatial_amplitude = a0*omega*polarization_amplitude_factor* w * exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
+        spatial_amplitude = a0*polarization_amplitude_factor* w * exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
         space_time_envelope = spatial_amplitude * vectorize(time_envelope)(t)
         return space_time_envelope * exponential_with_total_phase
 
@@ -704,7 +704,7 @@ def LaserEnvelopeGaussianAM( a0=1., omega=1., focus=None, waist=3., time_envelop
         phase = coeff * ( r**2 )
         exponential_with_total_phase = exp(1j*(phase-arctan( (x-focus[0])/Zr )))
         invWaist2 = (w/waist)**2
-        spatial_amplitude = a0*omega *polarization_amplitude_factor* w * exp( -invWaist2*(  r**2  ) )
+        spatial_amplitude = a0 * polarization_amplitude_factor * w * exp( -invWaist2*(  r**2  ) )
         space_time_envelope = spatial_amplitude * vectorize(time_envelope)(t)
         return space_time_envelope * exponential_with_total_phase
 

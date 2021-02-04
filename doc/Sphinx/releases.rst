@@ -25,6 +25,7 @@ Changes made in the repository (not released)
 
   * linear and circular polarization
   * ionization model
+  * normalized laser frequency can be different from 1
 
 * Particles can be imported from a file
 * Coulomb logarithm may be multiplied by a constant factor
@@ -37,6 +38,7 @@ Changes made in the repository (not released)
 
 * Bugfixes:
 
+  * Fix in the vectorized projection at order 4
   * Photons could not be read from numpy array
   * DiagFields with ``time_average`` did not work for densities
   * Prescribed fields caused unstable real fields
