@@ -21,8 +21,6 @@ public:
     
 protected:
     //! Inverse of the spatial-step
-    double dl_inv_;
-    double dr_inv_;
     int i_domain_begin_;
     int j_domain_begin_;
     double D_inv_[2];

@@ -19,8 +19,8 @@ using namespace std;
 InterpolatorAM1Order::InterpolatorAM1Order( Params &params, Patch *patch ) : InterpolatorAM( params, patch )
 {
 
-    dl_inv_ = 1.0/params.cell_length[0];
-    dr_inv_ = 1.0/params.cell_length[1];
+    D_inv_[0] = 1.0/params.cell_length[0];
+    D_inv_[1] = 1.0/params.cell_length[1];
     nmodes_ = params.nmodes;
 }
 
@@ -43,9 +43,9 @@ void InterpolatorAM1Order::fields( ElectroMagn *EMfields, Particles &particles, 
     
     // Normalized particle position
     // Spectral grids are shifted by a half cell length along r.
-    double xpn = particles.position( 0, ipart ) * dl_inv_ ;
+    double xpn = particles.position( 0, ipart ) * D_inv_[0] ;
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-    double rpn = r * dr_inv_ - 0.5 ; //-0.5 because of cells being shifted by dr_/2
+    double rpn = r * D_inv_[1] - 0.5 ; //-0.5 because of cells being shifted by dr_/2
     exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
     complex<double> exp_mm_theta = 1. ;                                                          //exp(-i m theta)
     // Calculate coeffs
@@ -115,9 +115,9 @@ void InterpolatorAM1Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     cField2D *Rho= ( static_cast<ElectroMagnAM *>( EMfields ) )->rho_AM_[0];
     
     // Normalized particle position
-    double xpn = particles.position( 0, ipart ) * dl_inv_;
+    double xpn = particles.position( 0, ipart ) * D_inv_[0];
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-    double rpn = r * dr_inv_ - 0.5 ; //-0.5 because of cells being shifted by dr_/2
+    double rpn = r * D_inv_[1] - 0.5 ; //-0.5 because of cells being shifted by dr_/2
     complex<double> exp_mm_theta = 1. ;
     
     // Calculate coeffs
@@ -194,10 +194,10 @@ void InterpolatorAM1Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 void InterpolatorAM1Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *Jxloc, double *Jyloc, double *Jzloc, double *Rholoc )
 {
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        double xpn = particles.position( 0, ipart )*dl_inv_;
+        double xpn = particles.position( 0, ipart )*D_inv_[0];
         double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
         complex<double> exp_m_theta_, exp_mm_theta = 1. ;
-        double rpn = r * dr_inv_ - 0.5;
+        double rpn = r * D_inv_[1] - 0.5;
         coeffs( xpn, rpn);
         if (r > 0){ 
             exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;

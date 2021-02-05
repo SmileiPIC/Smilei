@@ -44,7 +44,7 @@ void InterpolatorAM2OrderV::fields( ElectroMagn *EMfields, Particles &particles,
     // Normalized particle position
     double xpn = particles.position( 0, ipart ) * D_inv_[0];
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-    double rpn = r * dr_inv_;
+    double rpn = r * D_inv_[1];
     exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
     complex<double> exp_mm_theta = 1. ;                                                          //exp(-i m theta)
     // Calculate coeffs
@@ -115,7 +115,7 @@ void InterpolatorAM2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
     // Normalized particle position
     double xpn = particles.position( 0, ipart ) * D_inv_[0];
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-    double rpn = r * dr_inv_;
+    double rpn = r * D_inv_[1];
     complex<double> exp_mm_theta = 1. ;
     
     // Calculate coeffs
@@ -197,7 +197,7 @@ void InterpolatorAM2OrderV::oneField( Field **field, Particles &particles, int *
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*D_inv_[0];
         double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-        double rpn = r * dr_inv_;
+        double rpn = r * D_inv_[1];
         coeffs( xpn, rpn);
         complex<double> exp_m_theta_ = 1., exp_mm_theta = 1. ;
         if (r > 0) {
@@ -248,7 +248,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
 
 
-    //std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );  // Not used in V
+    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );  // Not used in V
     std::vector<std::complex<double>> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
 
     int idx[2], idxO[2];
@@ -263,8 +263,8 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         //Interpolation on current particle
         fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
         //Buffering of iol and delta
-        //( *iold )[ipart+0*nparts]  = ip_;
-        //( *iold )[ipart+1*nparts]  = jp_;
+        ( *iold )[ipart+0*nparts]  = ip_; // Not used in V
+        ( *iold )[ipart+1*nparts]  = jp_; // Not used in V
         deltaO[0][ipart] = deltax;
         deltaO[1][ipart] = deltar;
         ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_) - exp_m_theta_ ;  //exp(i theta)
@@ -327,7 +327,7 @@ void InterpolatorAM2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
         // Normalized particle position
         xpn = particles.position( 0, ipart ) * D_inv_[0];
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-        rpn = r * dr_inv_;
+        rpn = r * D_inv_[1];
     
         // Calculate coeffs
         coeffs( xpn, rpn );
@@ -408,7 +408,7 @@ void InterpolatorAM2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
         // Normalized particle position
         xpn = particles.position( 0, ipart ) * D_inv_[0];
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-        rpn = r * dr_inv_;
+        rpn = r * D_inv_[1];
     
         // Compute coefficients
         coeffs( xpn, rpn );
@@ -472,7 +472,7 @@ void InterpolatorAM2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
     // Normalized particle position
     double xpn = particles.position( 0, ipart ) * D_inv_[0];
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-    double rpn = r * dr_inv_;
+    double rpn = r * D_inv_[1];
 
     // Compute coefficients
     coeffs( xpn, rpn );
@@ -516,7 +516,7 @@ void InterpolatorAM2OrderV::envelopeFieldForIonization( ElectroMagn *EMfields, P
         // Normalized particle position
         xpn = particles.position( 0, ipart ) * D_inv_[0];
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-        rpn = r * dr_inv_;
+        rpn = r * D_inv_[1];
                                      
         // Compute coefficients
         coeffs( xpn, rpn );
