@@ -100,7 +100,7 @@ class Diagnostic(object):
 			print("No valid Smilei simulation selected")
 			return False
 		if not self.simulation.valid or not self.valid:
-			print("Diagnostic is invalid")
+			print("***ERROR*** - Diagnostic is invalid")
 			print("\n".join(self._error))
 			return False
 		return True
