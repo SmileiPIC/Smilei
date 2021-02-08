@@ -236,7 +236,7 @@ int TimeSelection::nextTime( int timestep )
 int TimeSelection::previousTime( int timestep )
 {
     if( timestep<round( start ) ) {
-        PreviousTime = std::numeric_limits<int>::min();
+        PreviousTime = std::numeric_limits<int>::min() >> 1;
     } else if( timestep>=round( end ) ) {
         PreviousTime = end;
     } else {
