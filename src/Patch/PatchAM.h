@@ -8,7 +8,7 @@ class SimWindow;
 
 //! Class Patch : sub MPI domain
 //!     Collection of patch = MPI domain
-class PatchAM : public Patch
+class PatchAM final : public Patch
 {
 public:
     //! Constructor for Patch

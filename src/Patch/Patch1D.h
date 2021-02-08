@@ -9,7 +9,7 @@ class SimWindow;
 
 //! Class Patch : sub MPI domain
 //!     Collection of patch = MPI domain
-class Patch1D : public Patch
+class Patch1D final : public Patch
 {
 public:
     //! Constructor for Patch
@@ -27,7 +27,7 @@ public:
     double getPrimalCellVolume( Particles *p, unsigned int ipart, Params &params ) override final
     {
         double halfcell = 0.5 * params.cell_length[0];
-        if( p->position(0,ipart) - getDomainLocalMin(0) < halfcell 
+        if( p->position(0,ipart) - getDomainLocalMin(0) < halfcell
          || getDomainLocalMax(0) - p->position(0,ipart) < halfcell ) {
              return 0.5 * cell_volume;
         } else {

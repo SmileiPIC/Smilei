@@ -4,7 +4,7 @@
 #include "Interpolator1D.h"
 #include "Field1D.h"
 
-class Interpolator1D3Order : public Interpolator1D
+class Interpolator1D3Order final : public Interpolator1D
 {
 public:
     Interpolator1D3Order( Params &, Patch * );
