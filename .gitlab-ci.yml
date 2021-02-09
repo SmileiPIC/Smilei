@@ -8,6 +8,7 @@ compile:
   only:
     - develop
     - reduce_mpi_tags
+    - sdmd_init
 
   script:
     # Force workdir cleaning in case of retried
@@ -30,6 +31,7 @@ makerun1D:
   only:
     - develop
     - reduce_mpi_tags
+    - sdmd_init
     
   script:
     # Move in test dir
@@ -43,6 +45,7 @@ makerun2D:
   only:
     - develop
     - reduce_mpi_tags
+    - sdmd_init
 
   script:
     # Move in test dir
@@ -56,6 +59,7 @@ makerun3D:
   only:
     - develop
     - reduce_mpi_tags
+    - sdmd_init
 
   script:
     # Move in test dir
@@ -70,6 +74,7 @@ makerunAM:
   only:
     - develop
     - reduce_mpi_tags
+    - sdmd_init
     
   script:
     # Move in test dir
@@ -82,6 +87,7 @@ makerunV:
   only:
     - develop
     - reduce_mpi_tags
+    - sdmd_init
 
   script:
     # Move in test dir
@@ -95,6 +101,7 @@ makerunCollisions:
   only:
     - develop
     - reduce_mpi_tags
+    - sdmd_init
     
   script:
     # Move in test dir
@@ -107,6 +114,7 @@ use_picsar:
   only:
     - develop
     - reduce_mpi_tags
+    - sdmd_init
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
