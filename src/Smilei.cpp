@@ -142,6 +142,7 @@ int main( int argc, char *argv[] )
 
         // allocate region according to dump
         if (params.uncoupled_grids) {
+            TITLE( "Create uncoupled grids" );
             // read region hindex
             checkpoint.readRegionDistribution( region );
 
@@ -185,7 +186,50 @@ int main( int argc, char *argv[] )
 
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
         vecPatches.sortAllParticles( params );
-
+        
+        // Create uncoupled grids 
+        if( params.uncoupled_grids ) {
+            TITLE( "Create uncoupled grids" );
+            
+            region.vecPatch_.refHindex_ = smpi.getRank();
+            region.build( params, &smpi, vecPatches, openPMD, false );
+            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+            region.identify_missing_patches( &smpi, vecPatches, params );
+            
+            //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
+            //     <<  "\t - missing : " << region.missing_patches_.size()
+            //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
+            
+            region.reset_fitting( &smpi, params );
+            
+            region.clean();
+            region.reset_mapping();
+            
+            region.build( params, &smpi, vecPatches, openPMD, false );
+            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+            region.identify_missing_patches( &smpi, vecPatches, params );
+            
+            //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
+            //     <<  "\t - missing : " << region.missing_patches_.size()
+            //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
+            
+            if( params.apply_rotational_cleaning ) { // Need to upload corrected data on Region
+                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
+                    DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
+                    // Need to fill all ghost zones, not covered by patches ghost zones
+                    SyncVectorPatch::exchangeE( params, region.vecPatch_, imode, &smpi );
+                    SyncVectorPatch::exchangeB( params, region.vecPatch_, imode, &smpi );
+                }
+            }
+            
+            if( params.is_pxr ){
+                region.coupling( params, false );
+            }
+        }
+        
+        TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
+        vecPatches.checkMemoryConsumption( &smpi );
+        
         // Initialize the electromagnetic fields
         // -------------------------------------
 
@@ -250,13 +294,15 @@ int main( int argc, char *argv[] )
             region_global.build( params, &smpi, vecPatches, openPMD, true );
             region_global.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region_global.identify_missing_patches( &smpi, vecPatches, params );
-            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                 DoubleGridsAM::syncFieldsOnRegion( vecPatches, region_global, params, &smpi, imode );
+            }
             if( params.is_pxr && smpi.isMaster()) {
                 region_global.coupling( params, true );
             }
-            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                 DoubleGridsAM::syncFieldsOnPatches( region_global, vecPatches, params, &smpi, timers, 0, imode );
+            }
             vecPatches.setMagneticFieldsForDiagnostic( params );
             region_global.clean();
         }
@@ -266,48 +312,7 @@ int main( int argc, char *argv[] )
     TITLE( "Species creation summary" );
     vecPatches.printNumberOfParticles( &smpi );
     
-    // Create uncoupled grids 
-    if (params.uncoupled_grids) {
-        if (!params.restart) {
-            TITLE( "Create uncoupled grids" );
-            
-            region.vecPatch_.refHindex_ = smpi.getRank();
-            region.build( params, &smpi, vecPatches, openPMD, false );
-            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-            region.identify_missing_patches( &smpi, vecPatches, params );
-
-            //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
-            //     <<  "\t - missing : " << region.missing_patches_.size()
-            //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
-        
-            region.reset_fitting( &smpi, params );
-        
-            region.clean();
-            region.reset_mapping();
-        
-            region.build( params, &smpi, vecPatches, openPMD, false );
-            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-            region.identify_missing_patches( &smpi, vecPatches, params );
-        
-            //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
-            //     <<  "\t - missing : " << region.missing_patches_.size()
-            //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
-
-            if( params.apply_rotational_cleaning ) { // Need to upload corrected data on Region
-                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
-                    DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
-                    // Need to fill all ghost zones, not covered by patches ghost zones
-                    SyncVectorPatch::exchangeE( params, region.vecPatch_, imode, &smpi );
-                    SyncVectorPatch::exchangeB( params, region.vecPatch_, imode, &smpi );
-                }
-            }
-
-            if( params.is_pxr ){
-                region.coupling( params, false );
-            }
-        }
-    }
-    else if( params.is_pxr ) {
+    if( !params.uncoupled_grids && params.is_pxr ) {
         vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
     }
     
@@ -319,11 +324,8 @@ int main( int argc, char *argv[] )
     timers.global.reboot();
     
     // ------------------------------------------------------------------------
-    // Check memory consumption & expected disk usage
+    // Check expected disk usage
     // ------------------------------------------------------------------------
-    TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
-    vecPatches.checkMemoryConsumption( &smpi );
-    
     TITLE( "Expected disk usage (approximate)" );
     vecPatches.checkExpectedDiskUsage( &smpi, params, checkpoint );
     
