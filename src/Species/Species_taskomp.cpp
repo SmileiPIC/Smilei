@@ -194,6 +194,19 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #endif
 
 
+            // Ionization
+            if( Ionize ) {          
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+                vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
+                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, patch, Proj, ibin, ibin*clrw );
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end Ionize
+
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
@@ -296,12 +309,35 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
      } // end if moving particle
      }// end taskgroup for all the Interp, Push, Particles BC and Projector tasks
   
-     // reduction of the lost energy in each ibin
+     // reduction of the lost energy in each ibin 
+     // the taskgroup before ensures that it is done after the particles BC
+#ifdef  __DETAILED_TIMERS
+     #pragma omp task default(shared) private(ithread,timer) 
+#else
      #pragma omp task default(shared)
+#endif
      {
+     
+     // reduce the energy lost with BC per bin
      for( unsigned int ibin=0 ; ibin<nrj_lost_per_bin.size() ; ibin++ ) {
         nrj_bc_lost += nrj_lost_per_bin[ibin];
      }
+
+     // unite the electrons created by ionization in a unique list for the patch 
+     // The taskgroup above ensures that this is done after the ionization method
+     if( Ionize ) {          
+#ifdef  __DETAILED_TIMERS
+         timer = MPI_Wtime();
+         ithread = omp_get_thread_num();
+#endif
+         Ionize->joinNewElectrons(particles->first_index.size());
+
+#ifdef  __DETAILED_TIMERS
+         patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+     } // end Ionize     
+
+     
      } // end task for lost energy reduction
 
      // smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );

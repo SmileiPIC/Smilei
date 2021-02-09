@@ -1112,6 +1112,12 @@ public:
                         patch->vecSpecies[ispec1]->Ionize->new_electrons.initializeReserve(
                             max_eon_number, *patch->vecSpecies[ispec1]->electron_species->particles
                         );
+                        if (params.tasks_on_projection){
+                            int Nbins = patch->vecSpecies[ispec1]->particles->first_index.size();
+                            for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
+                                patch->vecSpecies[ispec1]->Ionize->new_electrons_per_bin[ibin].initializeReserve(max_eon_number, *patch->vecSpecies[ispec1]->electron_species->particles);   
+                            }
+                        }
                         break;
                     }
                 }
@@ -1218,6 +1224,15 @@ public:
                 patch->vecSpecies[i]->Ionize->new_electrons.isQuantumParameter = patch->vecSpecies[i]->electron_species->particles->isQuantumParameter;
                 patch->vecSpecies[i]->Ionize->new_electrons.isMonteCarlo = patch->vecSpecies[i]->electron_species->particles->isMonteCarlo;
                 patch->vecSpecies[i]->Ionize->new_electrons.initialize( 0, params.nDim_particle, params.keep_position_old );
+                if (params.tasks_on_projection){
+                    int Nbins = patch->vecSpecies[i]->particles->first_index.size();
+                    for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
+                        patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].tracked = patch->vecSpecies[i]->electron_species->particles->tracked;
+                        patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].isQuantumParameter = patch->vecSpecies[i]->electron_species->particles->isQuantumParameter;
+                        patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].isMonteCarlo = patch->vecSpecies[i]->electron_species->particles->isMonteCarlo;
+                        patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].initialize( 0, params.nDim_particle, params.keep_position_old );   
+                    }
+                }
             }
         }
 

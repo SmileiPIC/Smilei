@@ -24,8 +24,14 @@ public:
     virtual void operator()( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) {};
     //! method for envelope ionization
     virtual void envelopeIonization( Particles *, unsigned int, unsigned int, std::vector<double> *, std::vector<double> *, std::vector<double> *, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ){};
+    
+    // method for tunnel ionization using tasks
+    virtual void ionizationTunnelWithTasks( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int, int, int ipart_ref = 0 ){};
+    // join the lists of electrons created through ionization when tasks are used
+    void joinNewElectrons(unsigned int Nbins);
 
     Particles new_electrons;
+    Particles *new_electrons_per_bin;
     
 protected:
 
