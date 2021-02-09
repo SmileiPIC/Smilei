@@ -3680,71 +3680,73 @@ void VectorPatch::saveExternalFields( Params &params )
 // Print information on the memory consumption
 void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi )
 {
+    // Particles memory
     long int particlesMem( 0 );
-    for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ )
+    for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++ ) {
             particlesMem += patches_[ipatch]->vecSpecies[ispec]->getMemFootPrint();
         }
-    MESSAGE( 1, "(Master) Species part = " << ( int )( ( double )particlesMem / 1024./1024. ) << " MB" );
-
-    long double dParticlesMem = ( double )particlesMem / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, setprecision( 3 ) << "Global Species part = " << dParticlesMem << " GB" );
-
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, "Max Species part = " << ( int )( ( double )particlesMem / 1024./1024. ) << " MB" );
-
-    // fieldsMem contains field per species and average fields
+    }
+    
+    long int maxParticlesMem( 0 );
+    MPI_Reduce( &particlesMem, &maxParticlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    
+    long double globalParticlesMem = ( double )particlesMem / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalParticlesMem, &globalParticlesMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    
+    ostringstream t("");
+    t << "Particles: "
+      << "Master " << ( int )( ( double )particlesMem / 1024./1024. ) << " MB;   "
+      << "Max " << ( int )( ( double )maxParticlesMem / 1024./1024. ) << " MB;   "
+      << "Global " << setprecision( 3 ) << globalParticlesMem << " GB";
+    MESSAGE(1, t.str());
+    
+    // Fields memory (including per species and averaged fields, etc)
     long int fieldsMem( 0 );
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         fieldsMem += patches_[ipatch]->EMfields->getMemFootPrint();
     }
-    MESSAGE( 1, "(Master) Fields part = " << ( int )( ( double )fieldsMem / 1024./1024. ) << " MB" );
-
-    long double dFieldsMem = ( double )fieldsMem / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, setprecision( 3 ) << "Global Fields part = " << dFieldsMem << " GB" );
-
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, "Max Fields part = " << ( int )( ( double )fieldsMem / 1024./1024. ) << " MB" );
-
-
-    for( unsigned int idiags=0 ; idiags<globalDiags.size() ; idiags++ ) {
-        // fieldsMem contains field per species
+    
+    long int maxFieldsMem( 0 );
+    MPI_Reduce( &fieldsMem, &maxFieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    
+    long double globalFieldsMem = ( double )fieldsMem / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalFieldsMem, &globalFieldsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    
+    t.str("");
+    t << "Fields:    "
+      << "Master " << ( int )( ( double )fieldsMem / 1024./1024. ) << " MB;   "
+      << "Max " << ( int )( ( double )maxFieldsMem / 1024./1024. ) << " MB;   "
+      << "Global " << setprecision( 3 ) << globalFieldsMem << " GB";
+    MESSAGE(1, t.str());
+    
+    // Diags memory
+    vector<Diagnostic*> allDiags( 0 );
+    allDiags.insert( allDiags.end(), globalDiags.begin(), globalDiags.end() );
+    allDiags.insert( allDiags.end(), localDiags.begin(), localDiags.end() );
+    for( unsigned int idiags=0 ; idiags<allDiags.size() ; idiags++ ) {
+        t.str("");
+        t << allDiags[idiags]->filename << ":  ";
+        
         long int diagsMem( 0 );
-        diagsMem += globalDiags[idiags]->getMemFootPrint();
-
-        long double dDiagsMem = ( double )diagsMem / 1024./1024./1024.;
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "(Master) " <<  globalDiags[idiags]->filename << "  = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
-            MESSAGE( 1, setprecision( 3 ) << "Global " <<  globalDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
+        diagsMem += allDiags[idiags]->getMemFootPrint();
+        if( diagsMem>0. ) {
+            t << "Master " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB;   ";
         }
-
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "Max " <<  globalDiags[idiags]->filename << " = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
+        
+        long int maxDiagsMem;
+        MPI_Reduce( &diagsMem, &maxDiagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+        if( maxDiagsMem>0. ) {
+            t << "Max " << ( int )( ( double )maxDiagsMem / 1024./1024. ) << " MB;   ";
         }
+        
+        long double globalDiagsMem = ( double )diagsMem / 1024./1024./1024.;
+        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalDiagsMem, &globalDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+        t << "Global " << setprecision( 3 ) << globalDiagsMem << " GB";
+        
+        MESSAGE(1, t.str());
     }
-
-    for( unsigned int idiags=0 ; idiags<localDiags.size() ; idiags++ ) {
-        // fieldsMem contains field per species
-        long int diagsMem( 0 );
-        diagsMem += localDiags[idiags]->getMemFootPrint();
-
-        long double dDiagsMem = ( double )diagsMem / 1024./1024./1024.;
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "(Master) " <<  localDiags[idiags]->filename << "  = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
-            MESSAGE( 1, setprecision( 3 ) << "Global " <<  localDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
-        }
-
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "Max " <<  localDiags[idiags]->filename << " = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
-        }
-    }
-
+    
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
 }
