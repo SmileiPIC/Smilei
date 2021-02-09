@@ -539,73 +539,64 @@ int main( int argc, char *argv[] )
             
         } //End omp parallel region
             
-        if( params.has_load_balancing ) {
-            if( params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
-
-                count_dlb++;
-                if (params.uncoupled_grids && ((count_dlb%5)==0)) {
-                    if ( params.geometry != "AMcylindrical" )
-                        DoubleGrids::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime );
-                    else {
-                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-                            DoubleGridsAM::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
+        if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
+            count_dlb++;
+            if (params.uncoupled_grids && count_dlb%5 ==0 ) {
+                if ( params.geometry != "AMcylindrical" ) {
+                    DoubleGrids::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime );
+                } else {
+                    for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
+                        DoubleGridsAM::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime, imode );
                     }
                 }
-
-                timers.loadBal.restart();
-                #pragma omp single
-                vecPatches.loadBalance( params, time_dual, &smpi, simWindow, itime );
-                timers.loadBal.update( params.printNow( itime ) );
-
-                if (params.uncoupled_grids && ((count_dlb%5)==0)) {
-                    //if (params.uncoupled_grids ) {
+            }
+            
+            timers.loadBal.restart();
+            #pragma omp single
+            vecPatches.loadBalance( params, time_dual, &smpi, simWindow, itime );
+            timers.loadBal.update( params.printNow( itime ) );
+            
+            if( params.uncoupled_grids ) {
+                
+                if( count_dlb%5 == 0 ) {
                     region.reset_fitting( &smpi, params );
-
                     region.clean();
                     region.reset_mapping();
-
                     region.build( params, &smpi, vecPatches, openPMD, false );
-                    if( params.is_pxr ){
+                    if( params.is_pxr ) {
                         region.coupling( params, false );
                     }
                     region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
                     region.identify_missing_patches( &smpi, vecPatches, params );
-
+                    
                     if ( params.geometry != "AMcylindrical" ) {
                         DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, &smpi );
-
-                        //SyncVectorPatch::exchangeE( params, region.vecPatch_, &smpi );
-                        //SyncVectorPatch::finalizeexchangeE( params, region.vecPatch_ );
-                        //SyncVectorPatch::exchangeB( params, region.vecPatch_, &smpi );
-                        //SyncVectorPatch::finalizeexchangeB( params, region.vecPatch_ );
-                    }
-                    else {
-                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                    } else {
+                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                             DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
+                        }
                     }
-
-                }
-                else if (params.uncoupled_grids) {
+                    
+                } else {
                     region.reset_mapping();
                     region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
                     region.identify_missing_patches( &smpi, vecPatches, params );
                 }
-
             }
         }
-
+        
         // print message at given time-steps
         // --------------------------------
         if( smpi.isMaster() &&  params.printNow( itime ) ) {
             params.print_timestep( itime, time_dual, timers.global );    //contain a timer.update !!!
         }
-
+        
         if( params.printNow( itime ) ) {
             #pragma omp master
             timers.consolidate( &smpi );
             #pragma omp barrier
         }
-
+        
         itime++;
             
     }//END of the time loop

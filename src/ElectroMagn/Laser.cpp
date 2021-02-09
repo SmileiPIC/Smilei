@@ -10,7 +10,7 @@
 using namespace std;
 
 
-Laser::Laser( Params &params, int ilaser, Patch *patch )
+Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
 {
     ostringstream name( "" );
     name << "Laser #" << ilaser;
@@ -197,7 +197,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     }
 
     // Display info
-    if( patch->isMaster() ) {
+    if( patch->isMaster() && verbose ) {
         MESSAGE( info.str() );
     }
 }

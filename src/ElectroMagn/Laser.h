@@ -52,7 +52,7 @@ class Laser
     friend class Checkpoint;
 public:
     //! Normal laser constructor
-    Laser( Params &params, int ilaser, Patch *patch );
+    Laser( Params &params, int ilaser, Patch *patch, bool verbose = false );
     //! Cloning laser constructor
     Laser( Laser *, Params & );
     ~Laser();
