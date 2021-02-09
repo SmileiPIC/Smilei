@@ -49,7 +49,6 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI *smpi, VectorPatch &
     has_filter = ( filter != Py_None );
     if( has_filter ) {
 #ifdef SMILEI_USE_NUMPY
-        PyTools::setIteration( 0 );
         // Test the filter with temporary, "fake" particles
         name << " filter:";
         bool *dummy = NULL;
@@ -231,9 +230,6 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         if( has_filter ) {
         
 #ifdef SMILEI_USE_NUMPY
-            // Set a python variable "Main.iteration" to itime so that it can be accessed in the filter
-            PyTools::setIteration( itime );
-            
             patch_selection.resize( vecPatches.size() );
             PyArrayObject *ret;
             ParticleData particleData( 0 );

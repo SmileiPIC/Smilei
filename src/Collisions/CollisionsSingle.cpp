@@ -116,7 +116,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
         double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, s1->particles->first_index[ibin], params );
         unsigned int ncorr = intra_collisions_ ? 2*npairs-1 : npairs;
         double dt_corr = params.timestep * ((double)ncorr) * inv_cell_volume;
-        coeff3 = coeff2_ * dt_corr;
+        coeff3 = coeff2_ * dt_corr * coulomb_log_factor_;
         coeff4 = pow( 3.*coeff2_, -1./3. ) * dt_corr;
         double weight_correction_1 = 1. / (double)( (npairs-1) / N2max );
         double weight_correction_2 = 1. / (double)( (npairs-1) / N2max + 1. );

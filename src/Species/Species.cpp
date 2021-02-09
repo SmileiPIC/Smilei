@@ -777,7 +777,7 @@ void Species::extractParticles()
     //thrust::copy_if(thrust::device, iter, iter+nparts, nvidia_cell_keys.begin(), iter_copy, count_if_out());
 
     particles_to_move->clear();
-    for ( int ipart=0 ; ipart<getNbrOfParticles() ; ipart++ ) {
+    for ( int ipart=0 ; ipart<(int)(getNbrOfParticles()) ; ipart++ ) {
         if ( particles->cell_keys[ipart] == -1 ) {
             particles->copyParticle( ipart, *particles_to_move );
         }

@@ -28,7 +28,7 @@ public:
     Particles();
 
     //! Destructor for Particle
-    ~Particles();
+    virtual ~Particles();
 
     //! Create nParticles null particles of nDim size
     void initialize( unsigned int nParticles, unsigned int nDim, bool keep_position_old );
@@ -433,7 +433,5 @@ public:
 private:
 
 };
-
-
 
 #endif

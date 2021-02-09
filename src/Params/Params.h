@@ -343,7 +343,10 @@ public:
 
     //! Random seed
     unsigned int random_seed;
-
+    
+    //! True if python is needed during the PIC loop
+    bool keep_python_running_;
+    
     // ---------------------------------------------
     // Constants
     // ---------------------------------------------

@@ -791,7 +791,6 @@ public:
                         ERROR( "For species '" << species_name << " ionization 'from_rate' requires 'ionization_rate' " );
                     } else {
 #ifdef SMILEI_USE_NUMPY
-                        PyTools::setIteration( 0 );
                         // Test the ionization_rate function with temporary, "fake" particles
                         std::ostringstream name( "" );
                         name << " ionization_rate:";

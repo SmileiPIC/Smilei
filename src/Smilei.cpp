@@ -68,6 +68,7 @@ int main( int argc, char *argv[] )
     TITLE( "Reading the simulation parameters" );
     Params params( &smpi, vector<string>( argv + 1, argv + argc ) );
     OpenPMDparams openPMD( params );
+    PyTools::setIteration( 0 );
 
     // Need to move it here because of domain decomposition need in smpi->init(_patch_count)
     //     abstraction of Hilbert curve
@@ -97,9 +98,6 @@ int main( int argc, char *argv[] )
     // time at half-integer time-steps (dual grid)
     double time_dual = 0.5 * params.timestep;
 
-    // -------------------------------------------
-    // Declaration of the main objects & operators
-    // -------------------------------------------
     // --------------------
     // Define Moving Window
     // --------------------
@@ -117,7 +115,7 @@ int main( int argc, char *argv[] )
     MultiphotonBreitWheelerTables MultiphotonBreitWheelerTables;
 
     // ---------------------------------------------------
-    // Initialize patches (including particles and fields)
+    // Special test mode
     // ---------------------------------------------------
     if( smpi.test_mode ) {
         executeTestMode( vecPatches, region, &smpi, simWindow, params, checkpoint, openPMD, &radiation_tables_ );
@@ -262,15 +260,17 @@ int main( int argc, char *argv[] )
             vecPatches.setMagneticFieldsForDiagnostic( params );
             region_global.clean();
         }
-
+        
     }
-
+    
     TITLE( "Species creation summary" );
     vecPatches.printNumberOfParticles( &smpi );
-
+    
+    // Create uncoupled grids 
     if (params.uncoupled_grids) {
         if (!params.restart) {
-
+            TITLE( "Create uncoupled grids" );
+            
             region.vecPatch_.refHindex_ = smpi.getRank();
             region.build( params, &smpi, vecPatches, openPMD, false );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
@@ -293,7 +293,7 @@ int main( int argc, char *argv[] )
             //     <<  "\t - missing : " << region.missing_patches_.size()
             //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
 
-            if ( params.apply_rotational_cleaning ) { // Need to upload corrected data on Region
+            if( params.apply_rotational_cleaning ) { // Need to upload corrected data on Region
                 for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                     DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
                     // Need to fill all ghost zones, not covered by patches ghost zones
@@ -307,33 +307,30 @@ int main( int argc, char *argv[] )
             }
         }
     }
-    else {
-        if (params.is_pxr) {
-            vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
-        }
+    else if( params.is_pxr ) {
+        vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
     }
-
+    
     if( params.is_spectral ) {
         vecPatches.saveOldRho( params );
     }
-
-    timers.reboot();   
-
+    
+    timers.reboot();
     timers.global.reboot();
-
+    
     // ------------------------------------------------------------------------
     // Check memory consumption & expected disk usage
     // ------------------------------------------------------------------------
-    TITLE( "Memory consumption" );
+    TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
     vecPatches.checkMemoryConsumption( &smpi );
-
+    
     TITLE( "Expected disk usage (approximate)" );
     vecPatches.checkExpectedDiskUsage( &smpi, params, checkpoint );
-
+    
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
-    TITLE( "Cleaning up python runtime environement" );
+    TITLE( "Keeping or closing the python runtime environment" );
     params.cleanup( &smpi );
 
     /*tommaso
@@ -363,6 +360,9 @@ int main( int argc, char *argv[] )
             {
                 time_prim += params.timestep;
                 time_dual += params.timestep;
+                if( params.keep_python_running_ ) {
+                    PyTools::setIteration( itime ); // sets python variable "Main.iteration" for users
+                }
             }
 
             // Patch reconfiguration
@@ -655,7 +655,7 @@ int main( int argc, char *argv[] )
 
 
 int executeTestMode( VectorPatch &vecPatches,
-		     Region &region,
+                     Region &region,
                      SmileiMPI *smpi,
                      SimWindow *simWindow,
                      Params &params,
@@ -688,7 +688,7 @@ int executeTestMode( VectorPatch &vecPatches,
     }
 
     // If test mode enable, code stops here
-    TITLE( "Cleaning up python runtime environement" );
+    TITLE( "Keeping or closing the python runtime environment" );
     params.cleanup( smpi );
     delete simWindow;
     PyTools::closePython();

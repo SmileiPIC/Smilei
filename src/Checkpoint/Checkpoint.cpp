@@ -413,9 +413,9 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
                 H5Write b = g.group( groupName );
-                g.vect( "Bx_val", embc->Bx_val );
-                g.vect( "By_val", embc->By_val );
-                g.vect( "Bz_val", embc->Bz_val );
+                b.vect( "Bx_val", embc->Bx_val );
+                b.vect( "By_val", embc->By_val );
+                b.vect( "Bz_val", embc->Bz_val );
             } else if( dynamic_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );
@@ -520,9 +520,6 @@ void Checkpoint::readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin )
     // Read basic attributes
     string dump_version;
     f.attr( "Version", dump_version );
-    
-    string dump_date;
-    f.attr( "CommitDate", dump_date );
     
     if( dump_version != string( __VERSION ) ) {
         WARNING( "The code version that dumped the file is " << dump_version );

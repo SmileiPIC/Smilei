@@ -105,9 +105,11 @@ class Options(object):
 		self.yfactor = None
 		self.ymin    = None
 		self.ymax    = None
+		self.vsym    = False
 		self.vfactor = None
 		self.vmin    = None
 		self.vmax    = None
+		self.explicit_cmap = None
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
@@ -116,9 +118,10 @@ class Options(object):
 		self.ticklabels = {}
 		self.ticklabels_font = {}
 		self.plot = {}
-		self.image = {"cmap":"smilei", "interpolation":"nearest", "aspect":"auto"}
+		self.image = {"interpolation":"nearest", "aspect":"auto"}
 		self.colorbar = {}
 		self.colorbar_font = {}
+		self.cax = {"size": "5%", "pad": 0.15}
 		self.xtick = {"useOffset":False}
 		self.ytick = {"useOffset":False}
 		self.side = "left"
@@ -138,6 +141,8 @@ class Options(object):
 		self.vfactor     = kwargs.pop("vfactor"    , self.vfactor  )
 		self.vmin        = kwargs.pop("vmin"       , self.vmin )
 		self.vmax        = kwargs.pop("vmax"       , self.vmax )
+		self.vsym        = kwargs.pop("vsym"       , self.vsym )
+		self.explicit_cmap = kwargs.pop("cmap"     , self.explicit_cmap )
 		self.side        = kwargs.pop("side"       , self.side )
 		self.transparent = kwargs.pop("transparent", self.transparent )
 		self.export_dir  = kwargs.pop("export_dir", self.export_dir )
@@ -170,10 +175,13 @@ class Options(object):
 					     "visible","zorder"]:
 				self.plot[kwa] = val
 			# image
-			elif kwa in ["cmap","aspect","interpolation"]:
+			elif kwa in ["aspect","interpolation","norm"]:
 				self.image[kwa] = val
+			# colorbar axes
+			elif kwa in ["pad", "size"]:
+				self.cax[kwa] = val
 			# colorbar
-			elif kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
+			elif kwa in ["orientation","fraction","shrink","anchor","panchor",
 					     "extend","extendfrac","extendrect","spacing","ticks","format",
 					     "drawedges"]:
 				self.colorbar[kwa] = val
@@ -189,9 +197,14 @@ class Options(object):
 			kwargs.pop(kwa)
 		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
 		if "cbaspect" in kwargs:
-			self.colorbar["aspect"] = kwargs.pop("cbaspect")
-		if self.side=="right" and "pad" not in self.colorbar:
-			self.colorbar["pad"] = 0.15
+			self.cax["aspect"] = kwargs.pop("cbaspect")
+		if "clabel" in kwargs:
+			self.colorbar["label"] = kwargs.pop("clabel")
+		self.cax['position'] = 'bottom' if ( 'orientation' in self.colorbar and self.colorbar['orientation'] == 'horizontal' ) else 'right'
+		if self.explicit_cmap is None:
+			self.image['cmap'] = 'smileiD' if self.vsym else 'smilei'
+		else:
+			self.image['cmap'] = self.explicit_cmap
 		return kwargs
 
 PintWarningIssued = False
@@ -272,6 +285,8 @@ class Units(object):
 				if self.verbose:
 					print("WARNING: units unknown: "+str(knownUnits))
 				return 1., ""
+		elif requestedUnits:
+			print("WARNING: units `%s` requested on non-existent or dimensionless axis" % requestedUnits)
 		return 1., ""
 
 	def prepare(self, reference_angular_frequency_SI=None):
@@ -437,7 +452,7 @@ class _multiPlotUtil(object):
 		for Diag in Diags:
 			diagtimes = Diag.getTimesteps()
 			if self.timesteps is not None:
-				diagtimes = Diag._selectTimesteps(timesteps, diagtimes)
+				diagtimes = Diag._selectTimesteps(self.timesteps, diagtimes)
 			diagtimes = list( diagtimes*Diag.timestep )
 			if self.skipAnimation: self.alltimes += [diagtimes[-1]]
 			else                 : self.alltimes += diagtimes

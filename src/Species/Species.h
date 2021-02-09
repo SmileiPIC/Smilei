@@ -141,7 +141,7 @@ public:
 
     //! Vector containing all Particles of the considered Species
     Particles *particles;
-    //! Data structure through which passes particles which move fomr one patch to another
+    //! Data structure through which passes particles which move from one patch to another
     Particles *particles_to_move;
     Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
