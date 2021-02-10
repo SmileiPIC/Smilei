@@ -137,7 +137,7 @@ public:
             vecPatches.initExternals( params );
         }
         
-        MESSAGE( 1, "Done initializing diagnostics, antennas, and external fields" );
+        MESSAGE( 1, "Done creating diagnostics, antennas, and external fields" );
     }
     
 };

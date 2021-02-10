@@ -139,9 +139,9 @@ int main( int argc, char *argv[] )
         checkpoint.readPatchDistribution( &smpi, simWindow );
         // allocate patches according to smpi.patch_count
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, checkpoint.this_run_start_step+1, simWindow->getNmoved() );
-
+        
         // allocate region according to dump
-        if (params.uncoupled_grids) {
+        if( params.uncoupled_grids ) {
             TITLE( "Create uncoupled grids" );
             // read region hindex
             checkpoint.readRegionDistribution( region );
@@ -162,65 +162,54 @@ int main( int argc, char *argv[] )
                 region.coupling( params, false );
                 MESSAGE( "Rho_old not loaded" );
             }
-
         }
+        
         // vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
-
         vecPatches.sortAllParticles( params );
-
+        
+        TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
+        vecPatches.checkMemoryConsumption( &smpi, &region.vecPatch_ );
+        
         // Patch reconfiguration for the adaptive vectorization
         if( params.has_adaptive_vectorization ) {
             vecPatches.configuration( params, timers, 0 );
         }
-
+        
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
         time_dual = ( checkpoint.this_run_start_step +0.5 ) * params.timestep;
-
-        TITLE( "Initializing diagnostics" );
+        
+        TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
-
+        
     } else {
-
+        
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
         vecPatches.sortAllParticles( params );
         
         // Create uncoupled grids 
         if( params.uncoupled_grids ) {
             TITLE( "Create uncoupled grids" );
-            
             region.vecPatch_.refHindex_ = smpi.getRank();
             region.build( params, &smpi, vecPatches, openPMD, false );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
-            
             //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
             //     <<  "\t - missing : " << region.missing_patches_.size()
             //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
             
             region.reset_fitting( &smpi, params );
-            
             region.clean();
             region.reset_mapping();
             
             region.build( params, &smpi, vecPatches, openPMD, false );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
-            
             //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
             //     <<  "\t - missing : " << region.missing_patches_.size()
             //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
-            
-            if( params.apply_rotational_cleaning ) { // Need to upload corrected data on Region
-                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
-                    DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
-                    // Need to fill all ghost zones, not covered by patches ghost zones
-                    SyncVectorPatch::exchangeE( params, region.vecPatch_, imode, &smpi );
-                    SyncVectorPatch::exchangeB( params, region.vecPatch_, imode, &smpi );
-                }
-            }
             
             if( params.is_pxr ){
                 region.coupling( params, false );
@@ -228,68 +217,67 @@ int main( int argc, char *argv[] )
         }
         
         TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
-        vecPatches.checkMemoryConsumption( &smpi );
+        vecPatches.checkMemoryConsumption( &smpi, &region.vecPatch_ );
         
-        // Initialize the electromagnetic fields
-        // -------------------------------------
-
+        TITLE( "Initial fields setup" );
+        
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
         // Note: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
         if( params.solve_relativistic_poisson == true ) {
+            MESSAGE( 1, "Solving relativistic Poisson at time t = 0" );
             vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
         }
-
+        
         vecPatches.computeCharge();
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
-
+        
         // Init electric field (Ex/1D, + Ey/2D)
         if( params.solve_poisson == true && !vecPatches.isRhoNull( &smpi ) ) {
-            TITLE( "Solving Poisson at time t = 0" );
+            MESSAGE( 1, "Solving Poisson at time t = 0" );
             vecPatches.runNonRelativisticPoissonModule( params, &smpi,  timers );
         }
-
-        TITLE( "Applying external fields at time t = 0" );
+        
+        MESSAGE( 1, "Applying external fields at time t = 0" );
         vecPatches.applyExternalFields();
         vecPatches.saveExternalFields( params );
-
-        TITLE( "Applying prescribed fields at time t = 0" );
-        vecPatches.applyPrescribedFields(time_prim);
-
-        // Apply antennas
-        // --------------
+        
+        MESSAGE( 1, "Applying prescribed fields at time t = 0" );
+        vecPatches.applyPrescribedFields( time_prim );
+        
+        MESSAGE( 1, "Applying antennas at time t = 0" );
         vecPatches.applyAntennas( 0.5 * params.timestep );
-
+        
         // Patch reconfiguration
         if( params.has_adaptive_vectorization ) {
             vecPatches.configuration( params, timers, 0 );
         }
-
+        
         // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
         if( params.Laser_Envelope_model ) {
-            // initialize new envelope from scratch, following the input namelist
+            MESSAGE( 1, "Initialize envelope" );
             vecPatches.initNewEnvelope( params );
-        } // end condition if Laser Envelope Model is used
-
+        }
+        
         // Project charge and current densities (and susceptibility if envelope is used) only for diags at t=0
         vecPatches.projectionForDiags( params, &smpi, simWindow, time_dual, timers, 0 );
-
+        
         // If Laser Envelope is used, comm and synch susceptibility at t=0
         if( params.Laser_Envelope_model ) {
-            // comm and synch susceptibility
             vecPatches.sumSusceptibility( params, time_dual, timers, 0, simWindow, &smpi );
-        } // end condition if Laser Envelope Model is used
-
+        }
+        
         // Comm and synch charge and current densities
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
-
-        TITLE( "Initializing diagnostics" );
+        
+        TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
         vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
-
+        
         // divergence cleaning
-        if ( params.apply_rotational_cleaning ) {
+        if( params.apply_rotational_cleaning ) {
+            TITLE( "Rotational cleaning" );
             Region region_global( params );
             region_global.build( params, &smpi, vecPatches, openPMD, true );
             region_global.identify_additional_patches( &smpi, vecPatches, params, simWindow );
@@ -305,8 +293,17 @@ int main( int argc, char *argv[] )
             }
             vecPatches.setMagneticFieldsForDiagnostic( params );
             region_global.clean();
+            
+            if( params.uncoupled_grids ) {
+                // Need to upload corrected data on Region
+                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
+                    DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
+                    // Need to fill all ghost zones, not covered by patches ghost zones
+                    SyncVectorPatch::exchangeE( params, region.vecPatch_, imode, &smpi );
+                    SyncVectorPatch::exchangeB( params, region.vecPatch_, imode, &smpi );
+                }
+            }
         }
-        
     }
     
     TITLE( "Species creation summary" );

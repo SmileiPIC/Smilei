@@ -3676,9 +3676,25 @@ void VectorPatch::saveExternalFields( Params &params )
     }
 }
 
+// Combines info on memory from all MPI processes
+string combineMemoryConsumption( SmileiMPI *smpi, long int data, string name )
+{
+    long int maxData( 0 );
+    MPI_Reduce( &data, &maxData, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    
+    long double globalData = ( double )data / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalData, &globalData, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    
+    ostringstream t("");
+    t << setw(22) << name << ": "
+      << "Master " << ( int )( ( double )data / 1024./1024. ) << " MB;   "
+      << "Max " << ( int )( ( double )maxData / 1024./1024. ) << " MB;   "
+      << "Global " << setprecision( 3 ) << globalData << " GB";
+    return t.str();
+}
 
 // Print information on the memory consumption
-void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi )
+void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *uncoupled )
 {
     // Particles memory
     long int particlesMem( 0 );
@@ -3687,64 +3703,32 @@ void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi )
             particlesMem += patches_[ipatch]->vecSpecies[ispec]->getMemFootPrint();
         }
     }
-    
-    long int maxParticlesMem( 0 );
-    MPI_Reduce( &particlesMem, &maxParticlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    
-    long double globalParticlesMem = ( double )particlesMem / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalParticlesMem, &globalParticlesMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    
-    ostringstream t("");
-    t << "Particles: "
-      << "Master " << ( int )( ( double )particlesMem / 1024./1024. ) << " MB;   "
-      << "Max " << ( int )( ( double )maxParticlesMem / 1024./1024. ) << " MB;   "
-      << "Global " << setprecision( 3 ) << globalParticlesMem << " GB";
-    MESSAGE(1, t.str());
+    string m = combineMemoryConsumption( smpi, particlesMem, "Particles" );
+    MESSAGE( m );
     
     // Fields memory (including per species and averaged fields, etc)
     long int fieldsMem( 0 );
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         fieldsMem += patches_[ipatch]->EMfields->getMemFootPrint();
     }
+    m = combineMemoryConsumption( smpi, fieldsMem, "Fields" );
+    MESSAGE( m );
     
-    long int maxFieldsMem( 0 );
-    MPI_Reduce( &fieldsMem, &maxFieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    
-    long double globalFieldsMem = ( double )fieldsMem / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalFieldsMem, &globalFieldsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    
-    t.str("");
-    t << "Fields:    "
-      << "Master " << ( int )( ( double )fieldsMem / 1024./1024. ) << " MB;   "
-      << "Max " << ( int )( ( double )maxFieldsMem / 1024./1024. ) << " MB;   "
-      << "Global " << setprecision( 3 ) << globalFieldsMem << " GB";
-    MESSAGE(1, t.str());
+    // Fields from uncoupled grid
+    if( ! uncoupled->patches_.empty() ) {
+        long int uncoupledMem = uncoupled->patches_[0]->EMfields->getMemFootPrint();
+        m = combineMemoryConsumption( smpi, uncoupledMem, "Uncoupled grid" );
+        MESSAGE( m );
+    }
     
     // Diags memory
     vector<Diagnostic*> allDiags( 0 );
     allDiags.insert( allDiags.end(), globalDiags.begin(), globalDiags.end() );
     allDiags.insert( allDiags.end(), localDiags.begin(), localDiags.end() );
     for( unsigned int idiags=0 ; idiags<allDiags.size() ; idiags++ ) {
-        t.str("");
-        t << allDiags[idiags]->filename << ":  ";
-        
-        long int diagsMem( 0 );
-        diagsMem += allDiags[idiags]->getMemFootPrint();
-        if( diagsMem>0. ) {
-            t << "Master " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB;   ";
-        }
-        
-        long int maxDiagsMem;
-        MPI_Reduce( &diagsMem, &maxDiagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-        if( maxDiagsMem>0. ) {
-            t << "Max " << ( int )( ( double )maxDiagsMem / 1024./1024. ) << " MB;   ";
-        }
-        
-        long double globalDiagsMem = ( double )diagsMem / 1024./1024./1024.;
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalDiagsMem, &globalDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-        t << "Global " << setprecision( 3 ) << globalDiagsMem << " GB";
-        
-        MESSAGE(1, t.str());
+        long int diagsMem = allDiags[idiags]->getMemFootPrint();
+        m = combineMemoryConsumption( smpi, diagsMem, allDiags[idiags]->filename );
+        MESSAGE( m );
     }
     
     // Read value in /proc/pid/status
