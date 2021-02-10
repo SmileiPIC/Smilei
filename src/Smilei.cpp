@@ -270,11 +270,6 @@ int main( int argc, char *argv[] )
         // Comm and synch charge and current densities
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
         
-        TITLE( "Open files & initialize diagnostics" );
-        vecPatches.initAllDiags( params, &smpi );
-        TITLE( "Running diags at time t = 0" );
-        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
-        
         // divergence cleaning
         if( params.apply_rotational_cleaning ) {
             TITLE( "Rotational cleaning" );
@@ -304,6 +299,11 @@ int main( int argc, char *argv[] )
                 }
             }
         }
+        
+        TITLE( "Open files & initialize diagnostics" );
+        vecPatches.initAllDiags( params, &smpi );
+        TITLE( "Running diags at time t = 0" );
+        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
     }
     
     TITLE( "Species creation summary" );
