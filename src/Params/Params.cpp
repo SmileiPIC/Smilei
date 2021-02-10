@@ -242,9 +242,19 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
     setDimensions();
 
+    // Spectral solver
+    PyTools::extract( "is_spectral", is_spectral, "Main"   );
+    if( is_spectral ) {
+        full_B_exchange=true;
+    }
+
     // interpolation order
     PyTools::extract( "interpolation_order", interpolation_order, "Main"  );
-    if( interpolation_order!=2 && interpolation_order!=4 ) {
+    if( geometry=="AMcylindrical") {
+        if( (interpolation_order != 1 && is_spectral) || (interpolation_order != 2 && !is_spectral) ){
+            ERROR( "Main.interpolation_order " << interpolation_order << " should be 1 for PSATD solver or 2 for FDTD solver." );
+        }
+    } else if( interpolation_order!=2 && interpolation_order!=4 && !is_spectral ) {
         ERROR( "Main.interpolation_order " << interpolation_order << " should be 2 or 4" );
     }
 
@@ -439,14 +449,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "relativistic_poisson_max_error", relativistic_poisson_max_error, "Main"   );
 
     // PXR parameters
-    PyTools::extract( "is_spectral", is_spectral, "Main"   );
-    if( is_spectral ) {
-        full_B_exchange=true;
-        if (geometry == "AMcylindrical") {
-            interpolation_order = 1;
-            WARNING( "The interpolation order is set to 1 for the AM geometry using the pseudo-spectral solver." );
-        }
-    }
     PyTools::extract( "is_pxr", is_pxr, "Main" );
 #ifndef _PICSAR
     if (is_pxr) {
