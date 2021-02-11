@@ -20,7 +20,7 @@ Nit = 500
 Main(
     geometry = "AMcylindrical",
     number_of_AM=2,
-    interpolation_order = 2,
+    interpolation_order = 1,
     timestep = dt,
     simulation_time = dt*Nit,
     cell_length  = [dx, dtrans],
@@ -173,16 +173,14 @@ for field in ['Er_mode_1', 'Et_mode_1']:
         )
 
 DiagProbe(
-	every = 500,
+	every = [500,500],
 	origin = [0., -Ltrans, Ltrans/4.],
 	corners = [
               [Main.grid_length[0], -Ltrans, Ltrans/4.],
               [0.                 ,  Ltrans, Ltrans/4.]
                   ],
 	number = [nx,2*ntrans],
-)
-DiagFields(
-        every = 1000,
+        fields = ["Ey","Jy"],
 )
 
 DiagPerformances(
