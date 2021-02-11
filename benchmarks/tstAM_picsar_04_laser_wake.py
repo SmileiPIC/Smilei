@@ -183,6 +183,10 @@ DiagProbe(
         fields = ["Ey","Jy"],
 )
 
+DiagFields(
+        every = 500,
+)
+
 DiagPerformances(
 	every = 1000,
 )
