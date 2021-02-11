@@ -587,7 +587,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
         PyTools::extract( "apply_rotational_cleaning", apply_rotational_cleaning, "Main" );
         if ( ( apply_rotational_cleaning ) && ( smpi->getSize() > 1 ) ) {
-            WARNING("Divergence cleaning not parallelized for now");
+            WARNING("Rotational cleaning (laser initialization) is not parallelized for now and may use a large amount of memory.");
         }
 
     }
