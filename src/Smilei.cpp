@@ -238,7 +238,7 @@ int main( int argc, char *argv[] )
         TITLE( "Running diags at time t = 0" );
         vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
 
-        // divergence cleaning
+        // rotational cleaning
         if ( params.apply_rotational_cleaning ) {
             Region region_global( params );
             region_global.build( params, &smpi, vecPatches, openPMD, true );

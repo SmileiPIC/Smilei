@@ -174,12 +174,11 @@ for field in ['Er_mode_1', 'Et_mode_1']:
 
 DiagProbe(
 	every = [500,500],
-	origin = [0., -Ltrans, Ltrans/4.],
+	origin = [0., -Ltrans/6., Ltrans/6.],
 	corners = [
-              [Main.grid_length[0], -Ltrans, Ltrans/4.],
-              [0.                 ,  Ltrans, Ltrans/4.]
+              [Main.grid_length[0], -Ltrans/6., Ltrans/6.],
                   ],
-	number = [nx,2*ntrans],
+	number = [nx],
         fields = ["Ey","Jy"],
 )
 
