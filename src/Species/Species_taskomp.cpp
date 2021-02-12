@@ -180,6 +180,13 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_pushed[ibin])
 #endif
             {
+
+            // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
+            // This must be done before Projection and before Ionization (because of the ionization currents)
+            for (int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]  = 0.0;
+            for (int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]  = 0.0;
+            for (int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]  = 0.0;
+            for (int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i] = 0.0;
                 
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
@@ -200,7 +207,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
             timer = MPI_Wtime();
 #endif
                 vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
-                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, patch, Proj, ibin, ibin*clrw );
+                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, patch, Proj, ibin, ibin*clrw, b_Jx [ibin], b_Jy [ibin], b_Jz [ibin] );
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -282,11 +289,11 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
             timer = MPI_Wtime();
 #endif
 
-            // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
-            for (int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx [ibin][i]  = 0.0;
-            for (int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy [ibin][i]  = 0.0;
-            for (int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz [ibin][i]  = 0.0;
-            for (int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i] = 0.0;
+            // // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
+            // for (int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx [ibin][i]  = 0.0;
+            // for (int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy [ibin][i]  = 0.0;
+            // for (int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz [ibin][i]  = 0.0;
+            // for (int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i] = 0.0;
                 
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon

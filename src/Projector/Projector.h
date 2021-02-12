@@ -39,7 +39,10 @@ public:
     
     //! Project global current densities if Ionization in Species::dynamics,
     virtual void ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion ) = 0;
-    
+
+    //! Project global current densities if Ionization in Species::dynamics,
+    virtual void ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, double *b_Jz, Particles &particles, int ipart, LocalFields Jion, int bin_shift ) {};    
+
     //!Wrapper
     virtual void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell = 0, int ipart_ref = 0 ) = 0;
     

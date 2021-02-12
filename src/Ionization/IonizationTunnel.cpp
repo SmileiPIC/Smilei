@@ -178,7 +178,9 @@ void IonizationTunnel::operator()( Particles *particles, unsigned int ipart_min,
     } // Loop on particles
 }
 
-void IonizationTunnel::ionizationTunnelWithTasks( Particles *particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, Patch *patch, Projector *Proj, int ibin, int bin_shift, int ipart_ref )
+void IonizationTunnel::ionizationTunnelWithTasks( Particles *particles, unsigned int ipart_min, unsigned int ipart_max, 
+                                                  vector<double> *Epart, Patch *patch, Projector *Proj, int ibin, int bin_shift, 
+                                                  double *b_Jx, double *b_Jy, double *b_Jz, int ipart_ref )
 {
 
     unsigned int Z, Zp1, newZ, k_times;
@@ -281,7 +283,7 @@ void IonizationTunnel::ionizationTunnelWithTasks( Particles *particles, unsigned
             Jion.y = factorJion * *( Ey+ipart );
             Jion.z = factorJion * *( Ez+ipart );
         
-            //Proj->ionizationCurrentsForTasks( patch->EMfields->Jx_, patch->EMfields->Jy_, patch->EMfields->Jz_, *particles, ipart, Jion, bin_shift );
+            // Proj->ionizationCurrentsForTasks( b_Jx, b_Jy, b_Jz, *particles, ipart, Jion, bin_shift );
         }
         
         // Creation of the new electrons

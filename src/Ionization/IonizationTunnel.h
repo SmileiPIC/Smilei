@@ -21,7 +21,7 @@ public:
     //! apply the Tunnel Ionization model to the species (with ionization current)
     void operator()( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) override;
     //! method for tunnel ionization with tasks
-    void ionizationTunnelWithTasks( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int, int, int ipart_ref = 0 ) override;
+    void ionizationTunnelWithTasks( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int, int, double *b_Jx, double *b_Jy, double *b_Jz, int ipart_ref = 0 ) override;
     
 private:
     unsigned int atomic_number_;
