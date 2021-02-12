@@ -283,7 +283,7 @@ void IonizationTunnel::ionizationTunnelWithTasks( Particles *particles, unsigned
             Jion.y = factorJion * *( Ey+ipart );
             Jion.z = factorJion * *( Ez+ipart );
         
-            // Proj->ionizationCurrentsForTasks( b_Jx, b_Jy, b_Jz, *particles, ipart, Jion, bin_shift );
+            Proj->ionizationCurrentsForTasks( b_Jx, b_Jy, b_Jz, *particles, ipart, Jion, bin_shift );
         }
         
         // Creation of the new electrons

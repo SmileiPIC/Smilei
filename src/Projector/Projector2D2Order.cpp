@@ -486,104 +486,6 @@ void Projector2D2Order::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Par
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project global current densities : ionization for tasks
-// ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, double *b_Jz, Particles &particles, int ipart, LocalFields Jion, int bin_shift )
-{
-    
-    //Declaration of local variables
-    int ip, id, jp, jd;
-    double xpn, xpmxip, xpmxip2, xpmxid, xpmxid2;
-    double ypn, ypmyjp, ypmyjp2, ypmyjd, ypmyjd2;
-    double Sxp[3], Sxd[3], Syp[3], Syd[3];
-    
-    // weighted currents
-    double weight = inv_cell_volume * particles.weight( ipart );
-    double Jx_ion = Jion.x * weight;
-    double Jy_ion = Jion.y * weight;
-    double Jz_ion = Jion.z * weight;
-    
-    //Locate particle on the grid
-    xpn    = particles.position( 0, ipart ) * dx_inv_; // normalized distance to the first node
-    ypn    = particles.position( 1, ipart ) * dy_inv_; // normalized distance to the first node
-    
-    // x-primal index
-    ip      = round( xpn );                  // x-index of the central node
-    xpmxip  = xpn - ( double )ip;            // normalized distance to the nearest grid point
-    xpmxip2 = xpmxip*xpmxip;                 // square of the normalized distance to the nearest grid point
-    
-    // x-dual index
-    id      = round( xpn+0.5 );              // x-index of the central node
-    xpmxid  = xpn - ( double )id + 0.5;      // normalized distance to the nearest grid point
-    xpmxid2 = xpmxid*xpmxid;                 // square of the normalized distance to the nearest grid point
-    
-    // y-primal index
-    jp      = round( ypn );                  // y-index of the central node
-    ypmyjp  = ypn - ( double )jp;            // normalized distance to the nearest grid point
-    ypmyjp2 = ypmyjp*ypmyjp;                 // square of the normalized distance to the nearest grid point
-    
-    // y-dual index
-    jd      = round( ypn+0.5 );              // y-index of the central node
-    ypmyjd  = ypn - ( double )jd + 0.5;      // normalized distance to the nearest grid point
-    ypmyjd2 = ypmyjd*ypmyjd;                 // square of the normalized distance to the nearest grid point
-    
-    Sxp[0] = 0.5 * ( xpmxip2-xpmxip+0.25 );
-    Sxp[1] = ( 0.75-xpmxip2 );
-    Sxp[2] = 0.5 * ( xpmxip2+xpmxip+0.25 );
-    
-    Sxd[0] = 0.5 * ( xpmxid2-xpmxid+0.25 );
-    Sxd[1] = ( 0.75-xpmxid2 );
-    Sxd[2] = 0.5 * ( xpmxid2+xpmxid+0.25 );
-    
-    Syp[0] = 0.5 * ( ypmyjp2-ypmyjp+0.25 );
-    Syp[1] = ( 0.75-ypmyjp2 );
-    Syp[2] = 0.5 * ( ypmyjp2+ypmyjp+0.25 );
-    
-    Syd[0] = 0.5 * ( ypmyjd2-ypmyjd+0.25 );
-    Syd[1] = ( 0.75-ypmyjd2 );
-    Syd[2] = 0.5 * ( ypmyjd2+ypmyjd+0.25 );
-    
-    ip  -= i_domain_begin+bin_shift;
-    id  -= i_domain_begin;
-    jp  -= j_domain_begin;
-    jd  -= j_domain_begin;
-    
-    
-    // for( unsigned int i=0 ; i<3 ; i++ ) {
-    //     int iploc=ip+i-1;
-    //     int idloc=id+i-1;
-    //     for( unsigned int j=0 ; j<3 ; j++ ) {
-    //         int jploc=jp+j-1;
-    //         int jdloc=jd+j-1;
-    //         // Jx^(d,p)
-    //         ( *Jx2D )( idloc, jploc ) += Jx_ion * Sxd[i]*Syp[j];
-    //         // Jy^(p,d)
-    //         ( *Jy2D )( iploc, jdloc ) += Jy_ion * Sxp[i]*Syd[j];
-    //         // Jz^(p,p)
-    //         ( *Jz2D )( iploc, jploc ) += Jz_ion * Sxp[i]*Syp[j];
-    //     }
-    // }//i
-    
-    for( unsigned int i=0 ; i<3 ; i++ ) {
-        int iploc=ip+i-1;
-        int idloc=id+i-1;
-        for( unsigned int j=0 ; j<3 ; j++ ) {
-            int jploc=jp+j-1;
-            int jdloc=jd+j-1;
-            // Jx^(d,p)
-            b_Jx[idloc*nprimy+jploc]     += Jx_ion * Sxd[i]*Syp[j];
-            // Jy^(p,d)
-            b_Jy[iploc*(nprimy+1)+jdloc] += Jy_ion * Sxp[i]*Syd[j];
-            // Jz^(p,p)
-            b_Jz[iploc*nprimy+jploc]     += Jz_ion * Sxp[i]*Syp[j];
-        }
-    }//i
-    
-    
-} // END Project global current densities (ionize) for tasks
-
-
-// ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector2D2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
@@ -729,6 +631,105 @@ void Projector2D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
     }
     
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project global current densities : ionization for tasks
+// ---------------------------------------------------------------------------------------------------------------------
+void Projector2D2Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, double *b_Jz, Particles &particles, int ipart, LocalFields Jion, int bin_shift )
+{
+    
+    //Declaration of local variables
+    int ip, id, jp, jd;
+    double xpn, xpmxip, xpmxip2, xpmxid, xpmxid2;
+    double ypn, ypmyjp, ypmyjp2, ypmyjd, ypmyjd2;
+    double Sxp[3], Sxd[3], Syp[3], Syd[3];
+    
+    // weighted currents
+    double weight = inv_cell_volume * particles.weight( ipart );
+    double Jx_ion = Jion.x * weight;
+    double Jy_ion = Jion.y * weight;
+    double Jz_ion = Jion.z * weight;
+    
+    //Locate particle on the grid
+    xpn    = particles.position( 0, ipart ) * dx_inv_; // normalized distance to the first node
+    ypn    = particles.position( 1, ipart ) * dy_inv_; // normalized distance to the first node
+    
+    // x-primal index
+    ip      = round( xpn );                  // x-index of the central node
+    xpmxip  = xpn - ( double )ip;            // normalized distance to the nearest grid point
+    xpmxip2 = xpmxip*xpmxip;                 // square of the normalized distance to the nearest grid point
+    
+    // x-dual index
+    id      = round( xpn+0.5 );              // x-index of the central node
+    xpmxid  = xpn - ( double )id + 0.5;      // normalized distance to the nearest grid point
+    xpmxid2 = xpmxid*xpmxid;                 // square of the normalized distance to the nearest grid point
+    
+    // y-primal index
+    jp      = round( ypn );                  // y-index of the central node
+    ypmyjp  = ypn - ( double )jp;            // normalized distance to the nearest grid point
+    ypmyjp2 = ypmyjp*ypmyjp;                 // square of the normalized distance to the nearest grid point
+    
+    // y-dual index
+    jd      = round( ypn+0.5 );              // y-index of the central node
+    ypmyjd  = ypn - ( double )jd + 0.5;      // normalized distance to the nearest grid point
+    ypmyjd2 = ypmyjd*ypmyjd;                 // square of the normalized distance to the nearest grid point
+    
+    Sxp[0] = 0.5 * ( xpmxip2-xpmxip+0.25 );
+    Sxp[1] = ( 0.75-xpmxip2 );
+    Sxp[2] = 0.5 * ( xpmxip2+xpmxip+0.25 );
+    
+    Sxd[0] = 0.5 * ( xpmxid2-xpmxid+0.25 );
+    Sxd[1] = ( 0.75-xpmxid2 );
+    Sxd[2] = 0.5 * ( xpmxid2+xpmxid+0.25 );
+    
+    Syp[0] = 0.5 * ( ypmyjp2-ypmyjp+0.25 );
+    Syp[1] = ( 0.75-ypmyjp2 );
+    Syp[2] = 0.5 * ( ypmyjp2+ypmyjp+0.25 );
+    
+    Syd[0] = 0.5 * ( ypmyjd2-ypmyjd+0.25 );
+    Syd[1] = ( 0.75-ypmyjd2 );
+    Syd[2] = 0.5 * ( ypmyjd2+ypmyjd+0.25 );
+    
+    ip  -= i_domain_begin+bin_shift;
+    //id  -= i_domain_begin+bin_shift;
+    jp  -= j_domain_begin;
+    //jd  -= j_domain_begin;
+    
+    
+    // for( unsigned int i=0 ; i<3 ; i++ ) {
+    //     int iploc=ip+i-1;
+    //     int idloc=id+i-1;
+    //     for( unsigned int j=0 ; j<3 ; j++ ) {
+    //         int jploc=jp+j-1;
+    //         int jdloc=jd+j-1;
+    //         // Jx^(d,p)
+    //         ( *Jx2D )( idloc, jploc ) += Jx_ion * Sxd[i]*Syp[j];
+    //         // Jy^(p,d)
+    //         ( *Jy2D )( iploc, jdloc ) += Jy_ion * Sxp[i]*Syd[j];
+    //         // Jz^(p,p)
+    //         ( *Jz2D )( iploc, jploc ) += Jz_ion * Sxp[i]*Syp[j];
+    //     }
+    // }//i
+    
+    for( unsigned int i=0 ; i<3 ; i++ ) {
+        int iloc=ip+i-1;
+        //int iploc=ip+i-1;
+        //int idloc=id+i-1;
+        for( unsigned int j=0 ; j<3 ; j++ ) {
+            int jloc=jp+j-1;
+            //int jploc=jp+j-1;
+            //int jdloc=jd+j-1;
+            // Jx^(d,p)
+            b_Jx[iloc*nprimy+jloc]     += Jx_ion * Sxd[i]*Syp[j];
+            // Jy^(p,d)
+            b_Jy[iloc*(nprimy+1)+jloc] += Jy_ion * Sxp[i]*Syd[j];
+            // Jz^(p,p)
+            b_Jz[iloc*nprimy+jloc]     += Jz_ion * Sxp[i]*Syp[j];
+        }
+    }//i
+    
+    
+} // END Project global current densities (ionize) for tasks
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection on buffers
