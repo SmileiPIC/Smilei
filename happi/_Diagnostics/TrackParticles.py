@@ -49,6 +49,7 @@ class TrackParticles(Diagnostic):
 		self.species  = species
 		self._h5items = {}
 		disorderedfiles = self._findDisorderedFiles()
+		if not disorderedfiles: return
 		self._short_properties_from_raw = {
 			"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
 			"momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
@@ -82,7 +83,7 @@ class TrackParticles(Diagnostic):
 				f = self._h5py.File(file, "r")
 				self._locationForTime.update( {int(t):[f,it] for it, t in enumerate(f["data"].keys())} )
 			self._lastfile = f
-			self._timesteps = sorted(self._locationForTime)
+			self._timesteps = self._np.array(sorted(self._locationForTime))
 			self._alltimesteps = self._np.copy(self._timesteps)
 			
 			# List available properties
@@ -454,7 +455,7 @@ class TrackParticles(Diagnostic):
 			file = path+self._os.sep+"TrackParticlesDisordered_"+self.species+".h5"
 			if not self._os.path.isfile(file):
 				self._error += ["Missing TrackParticles file in directory "+path]
-				return
+				return []
 			disorderedfiles += [file]
 		return disorderedfiles
 
