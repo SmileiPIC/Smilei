@@ -62,7 +62,7 @@ class TrackParticles(Diagnostic):
 		if sort:
 			if type(sort) is str:
 				# The sorted file gets a name from `sorted_as`
-				if type(sorted_as) is not str or not ("_"+sorted_as).isidentifier():
+				if type(sorted_as) is not str or self._re.search(r"[^a-zA-Z0-9_]","_"+sorted_as):
 					self._error += ["Argument `sorted_as` must be a keyword composed of letters and numbers"]
 					return
 				if not sorted_as:
