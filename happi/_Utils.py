@@ -499,7 +499,7 @@ class _multiPlotUtil(object):
 			c = self.plt.matplotlib.rcParams["axes.prop_cycle"].by_key()["color"]
 		rightside = [d.options.side=="right" for d in Diags]
 		self.allright  = all(rightside)
-		self.bothsides = any(rightside) and not allright
+		self.bothsides = any(rightside) and not self.allright
 		for i, Diag in enumerate(Diags):
 			Diag._cax_id = 0
 			if self.sameAxes:
@@ -508,7 +508,7 @@ class _multiPlotUtil(object):
 			else:
 				Diag._ax = self.ax[i]
 			if Diag.options.side == "right":
-				if self.sameAxes and not allright:
+				if self.sameAxes and not self.allright:
 					try   : Diag._ax.twin # check if twin exists
 					except: Diag._ax.twin = Diag._ax.twinx()
 					Diag._ax = Diag._ax.twin
