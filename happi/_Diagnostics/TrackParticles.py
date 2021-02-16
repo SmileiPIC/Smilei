@@ -523,11 +523,12 @@ class TrackParticles(Diagnostic):
 					else:
 						_,selectedIndices,locs = self._np.intersect1d( group["id"][()], selectedIds, return_indices=True )
 					# Loop datasets and order them
-					for k, name in self._short_properties_from_raw.items():
-						if k not in group: continue
-						ordered = self._np.empty((nparticles_to_write, ), dtype=group[k].dtype)
-						ordered[locs] = group[k][()][selectedIndices]
-						f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
+					if len(locs) > 0:
+						for k, name in self._short_properties_from_raw.items():
+							if k not in group: continue
+							ordered = self._np.empty((nparticles_to_write, ), dtype=group[k].dtype)
+							ordered[locs] = group[k][()][selectedIndices]
+							f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
 				
 				# If too many particles, sort by chunks
 				else:
