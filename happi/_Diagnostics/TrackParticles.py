@@ -94,12 +94,12 @@ class TrackParticles(Diagnostic):
 				self._raw_properties_from_short = {v:k for k,v in self._short_properties_from_raw.items()}
 				T0 = next(iter(self._lastfile["data"].values()))["particles/"+self.species]
 			self.available_properties = [v for k,v in self._short_properties_from_raw.items() if k in T0]
-				
+		
 		# If sorting allowed, then do the sorting
 		if sort:
 			# If the first path does not contain the ordered file (or it is incomplete), we must create it
 			if needsOrdering:
-				self._orderFiles(disorderedfiles, orderedfile, chunksize, sort)
+				self._orderFiles(orderedfile, chunksize, sort)
 				if self._needsOrdering(orderedfile):
 					return
 			# Create arrays to store h5 items
@@ -154,7 +154,7 @@ class TrackParticles(Diagnostic):
 		# -------------------------------------------------------------------
 		# If the selection is a string (containing an operation)
 		if sort:
-			self.selectedParticles = self.selectParticles( select, True, chunksize )
+			self.selectedParticles = self._selectParticles( select, True, chunksize )
 			if self.selectedParticles is None:
 				self._error += ["Error: argument 'select' must be a string or a list of particle IDs"]
 				return
@@ -272,7 +272,7 @@ class TrackParticles(Diagnostic):
 				f.close()
 		return False
 
-	def selectParticles( self, select, already_sorted, chunksize ):
+	def _selectParticles( self, select, already_sorted, chunksize ):
 		if type(select) is str:
 			# Parse the selector
 			i = 0
@@ -370,7 +370,7 @@ class TrackParticles(Diagnostic):
 					selectedParticles = self._np.union1d( selectedParticles, eval(operation).nonzero()[0] )
 			else:
 				# Execute the selector item
-				selectedParticles = []
+				selectedParticles = self._np.array([], dtype="uint64")
 				k = 0
 				requiredProps = doubleProps[k] + int16Props[k] + ["Id"]
 				# Loop times
@@ -460,8 +460,7 @@ class TrackParticles(Diagnostic):
 		return disorderedfiles
 
 	# Make the particles ordered by Id in the file, in case they are not
-	def _orderFiles( self, filesDisordered, fileOrdered, chunksize, sort ):
-		import math
+	def _orderFiles( self, fileOrdered, chunksize, sort ):
 		if self._verbose:
 			print("Ordering particles ... (this could take a while)")
 			if type(sort) is str:
@@ -491,7 +490,7 @@ class TrackParticles(Diagnostic):
 			selectedIndices = self._np.s_[:]
 			nparticles_to_write = total_number_of_particles
 			if type(sort) is str:
-				selectedIds = self.selectParticles( sort, False, chunksize )
+				selectedIds = self._selectParticles( sort, False, chunksize )
 				nparticles_to_write = len(selectedIds)
 			# Make datasets if not existing already
 			size = (len(self._timesteps), nparticles_to_write)
