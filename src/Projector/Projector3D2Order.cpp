@@ -967,7 +967,7 @@ void Projector3D2Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, 
     Szd[1] = ( 0.75-zpmzkd2 );
     Szd[2] = 0.5 * ( zpmzkd2+zpmzkd+0.25 );
     
-    ip  -= i_domain_begin;
+    ip  -= i_domain_begin+bin_shift;
     //id  -= i_domain_begin;
     jp  -= j_domain_begin;
     //jd  -= j_domain_begin;
