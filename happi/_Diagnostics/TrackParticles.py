@@ -152,7 +152,6 @@ class TrackParticles(Diagnostic):
 		
 		# Select particles
 		# -------------------------------------------------------------------
-		# If the selection is a string (containing an operation)
 		if sort:
 			self.selectedParticles = self._selectParticles( select, True, chunksize )
 			if self.selectedParticles is None:
@@ -342,12 +341,12 @@ class TrackParticles(Diagnostic):
 				# Allocate buffers
 				selectedParticles = self._np.array([], dtype=self._np.uint64)
 				properties = makeBuffers(chunks.adjustedchunksize)
-				selection = self._np.empty((chunks.adjustedchunksize,), dtype=bool)
 				# Loop on chunks
 				for chunkstart, chunkstop, actual_chunksize in chunks:
 					# Execute each of the selector items
 					stack = []
 					for k in range(nOperations):
+						selection = self._np.empty((chunks.adjustedchunksize,), dtype=bool)
 						if   seltype[k] == "any(": selection.fill(False)
 						elif seltype[k] == "all(": selection.fill(True )
 						requiredProps = doubleProps[k] + int16Props[k] + ["Id"]
@@ -362,11 +361,12 @@ class TrackParticles(Diagnostic):
 							selectionAtTimeT = eval(particleSelector[k]) # array of True or False
 							# Combine with selection of previous times
 							selectionAtTimeT[self._np.isnan(selectionAtTimeT)] = False
-							loc = self._np.flatnonzero(properties["Id"][:actual_chunksize]>0) # indices of existing particles
-							if   seltype[k] == "any(": selection[loc] += selectionAtTimeT[loc]
-							elif seltype[k] == "all(": selection[loc] *= selectionAtTimeT[loc]
+							existing = properties["Id"][:actual_chunksize]>0 # existing particles at that timestep
+							if   seltype[k] == "any(": selection[existing] += selectionAtTimeT[existing]
+							elif seltype[k] == "all(": selection *= selectionAtTimeT * existing
 						stack.append(selection)
 					# Merge all stack items according to the operations
+					print(self._np.count_nonzero(stack[0]),self._np.count_nonzero(stack[1]),self._np.count_nonzero(eval(operation)))
 					selectedParticles = self._np.union1d( selectedParticles, eval(operation).nonzero()[0] )
 			else:
 				# Execute the selector item
