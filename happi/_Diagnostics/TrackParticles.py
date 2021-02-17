@@ -390,7 +390,7 @@ class TrackParticles(Diagnostic):
 							group[self._raw_properties_from_short[prop]].read_direct(properties[prop], source_sel=self._np.s_[chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
 						# Calculate the selector
 						sel = eval(particleSelector[k]) # array of True or False
-						selectionAtTimeT.append(group["id"][sel])
+						selectionAtTimeT.append(properties["Id"][sel])
 					selectionAtTimeT = self._np.concatenate(selectionAtTimeT)
 					# Combine with selection of previous times
 					if   seltype[k] == "any(": selectedParticles = self._np.union1d(selectedParticles, selectionAtTimeT)
@@ -526,6 +526,8 @@ class TrackParticles(Diagnostic):
 						for k, name in self._short_properties_from_raw.items():
 							if k not in group: continue
 							ordered = self._np.empty((nparticles_to_write, ), dtype=group[k].dtype)
+							if k == "id": ordered.fill(0)
+							else        : ordered.fill(self._np.nan)
 							ordered[locs] = group[k][()][selectedIndices]
 							f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
 				
@@ -536,6 +538,10 @@ class TrackParticles(Diagnostic):
 						data[k] = self._np.empty((chunksize,), dtype=self._np.int16 if k == "charge" else self._np.double)
 					# Loop chunks of the output
 					for first_o, last_o, npart_o in ChunkedRange(nparticles_to_write, chunksize):
+						for k, name in self._short_properties_from_raw.items():
+							if k not in group: continue
+							if k == "id": data[k].fill(0)
+							else        : data[k].fill(self._np.nan)
 						# Loop chunks of the input
 						for first_i, last_i, npart_i in ChunkedRange(nparticles, chunksize):
 							# Obtain IDs
@@ -546,12 +552,10 @@ class TrackParticles(Diagnostic):
 								keep = self._np.flatnonzero((loc_in_output >= first_o) * (loc_in_output < last_o))
 								loc_in_output = loc_in_output[keep] - first_o
 							else:
-								_,keep,loc_in_output = self._np.intersect1d( ID, selectedIds, return_indices=True )
-								loc_in_output -= first_o
-							# Loop datasets
+								_,keep,loc_in_output = self._np.intersect1d( ID, selectedIds[first_o:last_o], return_indices=True )
+							# Fill datasets with this chunk
 							for k, name in self._short_properties_from_raw.items():
 								if k not in group: continue
-								# Accumulate the data for this chunk
 								data[k][loc_in_output] = group[k][first_i:last_i][keep]
 						# Accumulated data is written out
 						for k, name in self._short_properties_from_raw.items():
