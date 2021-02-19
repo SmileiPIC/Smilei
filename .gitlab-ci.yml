@@ -8,7 +8,8 @@ compile:
   only:
     - develop
     - refactor_for_GPU
-
+    - particle_injector_correction
+    
   script:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
@@ -30,6 +31,7 @@ makerun1D:
   only:
     - develop
     - refactor_for_GPU
+    - particle_injector_correction
     
   script:
     # Move in test dir
@@ -43,6 +45,7 @@ makerun2D:
   only:
     - develop
     - refactor_for_GPU
+    - particle_injector_correction
 
   script:
     # Move in test dir
@@ -56,7 +59,8 @@ makerun3D:
   only:
     - develop
     - refactor_for_GPU
-
+    - particle_injector_correction
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -69,6 +73,7 @@ makerunAM:
   only:
     - develop
     - refactor_for_GPU
+    - particle_injector_correction
     
   script:
     # Move in test dir
@@ -81,6 +86,7 @@ makerunV:
   only:
     - develop
     - refactor_for_GPU
+    - particle_injector_correction
 
   script:
     # Move in test dir
@@ -93,6 +99,7 @@ makerunCollisions:
   only:
     - develop
     - refactor_for_GPU
+    - particle_injector_correction
     
   script:
     # Move in test dir
@@ -105,6 +112,7 @@ use_picsar:
   only:
     - develop
     - refactor_for_GPU
+    - particle_injector_correction
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

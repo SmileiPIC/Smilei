@@ -541,6 +541,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
     
     //#pragma omp for schedule(runtime)
     #pragma omp single
+    {
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         
         Patch * patch = ( *this )( ipatch );
@@ -767,22 +768,12 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     new_particle_number = particles->size() - 1;
 
                     // Suppr not interesting parts ...
-                    // 1D Xmin
+                    // 1D
                     if ( patch->isXmin()) {
                         for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
-                            if ( particles->Position[0][ip] < 0. ) {
-                                if (new_particle_number != ip) {
-                                    particles->overwriteParticle(new_particle_number,ip);
-                                }
-                                new_particle_number--;
-                            }
-                        } // end loop on particles
-                    }
-                    // 1D Xmax
-                    if ( patch->isXmax()) {
-                        for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
-                            if ( particles->Position[0][ip] > params.grid_length[0] ) {
-                                if (new_particle_number != ip) {
+                            if ( ( patch->isXmin() && (particles->Position[0][ip] < 0.) ) ||
+                                (  patch->isXmax() && ( particles->Position[0][ip] > params.grid_length[0] ) ) ) {
+                                if (new_particle_number > ip) {
                                     particles->overwriteParticle(new_particle_number,ip);
                                 }
                                 new_particle_number--;
@@ -822,7 +813,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     new_particle_number += 1;
                         
                     // New energy from particles
-                    if( patch->isXmin() || patch->isXmax() ) {
+                    //if( patch->isXmin() || patch->isXmax() || patch->isYmin() || patch->isYmax() || patch->isZmin() || patch->isZmax()) {
                         double energy = 0.;
                         // Matter particle case
                         if( injector_species->mass_ > 0 ) {
@@ -838,7 +829,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                             }
                             injector_species->new_particles_energy_ += energy;
                         }
-                    }
+                    //}
                         
                     // Insertion of the particles as a group in the vector of species
                     if (new_particle_number > 0) {
@@ -855,6 +846,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
         } // Test patch at boundary
 
     } // end for ipatch
+    } // end omp single
     
     timers.particleInjection.update( params.printNow( itime ) );
 }
