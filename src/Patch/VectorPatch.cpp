@@ -769,17 +769,15 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
 
                     // Suppr not interesting parts ...
                     // 1D
-                    if ( patch->isXmin()) {
-                        for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
-                            if ( ( patch->isXmin() && (particles->Position[0][ip] < 0.) ) ||
-                                (  patch->isXmax() && ( particles->Position[0][ip] > params.grid_length[0] ) ) ) {
-                                if (new_particle_number > ip) {
-                                    particles->overwriteParticle(new_particle_number,ip);
-                                }
-                                new_particle_number--;
+                    for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
+                        if ( ( patch->isXmin() && (particles->Position[0][ip] < 0.) ) ||
+                            (  patch->isXmax() && ( particles->Position[0][ip] > params.grid_length[0] ) ) ) {
+                            if (new_particle_number > ip) {
+                                particles->overwriteParticle(new_particle_number,ip);
                             }
-                        } // end loop on particles
-                    }
+                            new_particle_number--;
+                        }
+                    } // end loop on particles
 
                     // 2D
                     if (params.nDim_field > 1) {
@@ -2835,7 +2833,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         istart += smpi->patch_count[irk];
     }
     //tags keep track of the number of patches sent and received to/from the left and right.
-    //This works because send and receive operations are queued in the same index increasing order. 
+    //This works because send and receive operations are queued in the same index increasing order.
     //left and right refers to previous and next MPI process ranks.
     int tagsend_right = 0;
     int tagsend_left = 0;
