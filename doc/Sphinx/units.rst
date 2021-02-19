@@ -134,7 +134,7 @@ integrated.
 
 The particle kinetic energy density is naturally in units of :math:`K_r N_r`.
 Integrating over space give different results depending on the simulation dimension.
-In 1D, this space a length, with units :math:`L_r`; in 2D, it is a surface, with units
+In 1D, this space is a length, with units :math:`L_r`; in 2D, it is a surface, with units
 :math:`L_r^2`; and in 3D, it is a volume, with units :math:`L_r^3`.
 Overall, the integrated energy has the units :math:`K_r N_r L_r^D`
 where :math:`D` is the simulation dimension. Note that we could expect
@@ -171,10 +171,11 @@ This integrated Poynting flux appears, for instance, in the :ref:`DiagScalar` as
 Macro-particle weights
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Macro-particles are assigned a *statistical weight* which represents
+Macro-particles are assigned a *statistical weight* which measures
 their contribution to the plasma distribution function. 
-In :program:`Smilei`, this weight is defined at the beginning of the simulation
-for each particle and is never modified afterwards. Its definition reads:
+In :program:`Smilei`, this weight is defined for each particle at the moment of its creation
+(usually at the beginning of the simulation),
+and is never modified afterwards. Its definition reads:
 
 .. math::
   

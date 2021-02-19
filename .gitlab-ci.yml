@@ -7,9 +7,14 @@ compile:
   stage: compile
   only:
     - develop
+<<<<<<< HEAD
     - refactor_for_GPU
     - particle_injector_correction
     
+=======
+    - reduce_mpi_tags
+
+>>>>>>> develop
   script:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
@@ -30,8 +35,12 @@ makerun1D:
   stage: makerun
   only:
     - develop
+<<<<<<< HEAD
     - refactor_for_GPU
     - particle_injector_correction
+=======
+    - reduce_mpi_tags
+>>>>>>> develop
     
   script:
     # Move in test dir
@@ -44,8 +53,12 @@ makerun2D:
   stage: makerun
   only:
     - develop
+<<<<<<< HEAD
     - refactor_for_GPU
     - particle_injector_correction
+=======
+    - reduce_mpi_tags
+>>>>>>> develop
 
   script:
     # Move in test dir
@@ -66,6 +79,7 @@ makerun3D:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst3d_s_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
     - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerunAM:
@@ -92,7 +106,8 @@ makerunV:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst?d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst2d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst3d_v_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerunCollisions:
   stage: makerun

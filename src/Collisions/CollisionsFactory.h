@@ -17,6 +17,7 @@ public:
         std::vector<std::string> sg1, sg2;
         std::vector<std::vector<unsigned int>> sgroup;
         double clog;
+        double clog_factor;
         bool intra;
         int debug_every, Z, Z0, Z1, ionization_electrons;
         std::string filename;
@@ -66,6 +67,13 @@ public:
             debye_length_required = true;    // auto coulomb log requires debye length
         }
         
+        // possibility to multiply the Coulomb by a factor
+        clog_factor = 1.; // default
+        PyTools::extract( "coulomb_log_factor", clog_factor, "Collisions", n_collisions );
+        if( clog_factor <= 0. ) {
+            ERROR( "In collisions #" << n_collisions << ": coulomb_log_factor must be strictly positive");
+        }
+
         // Number of timesteps between each debug output (if 0 or unset, no debug)
         debug_every = 0; // default
         PyTools::extract( "debug_every", debug_every, "Collisions", n_collisions );
@@ -242,6 +250,10 @@ public:
             MESSAGE( 2, "Collisions between species " << mystream.str() << ")" );
         }
         MESSAGE( 2, "Coulomb logarithm: " << clog );
+        if (clog_factor != 1.) {
+            MESSAGE( 2, "Coulomb logarithm is multiplied by a factor " << clog_factor );
+        }
+
         if( debug_every>0 ) {
             MESSAGE( 2, "Debug every " << debug_every << " timesteps" );
         }
@@ -260,6 +272,7 @@ public:
             mystream << "Collisions" << n_collisions << ".h5";
             filename = mystream.str();
             std::ifstream file( filename );
+            MESSAGE( "!" << filename << "!");
             // Check if file exists
             if( ! file ) {
                 H5Write f( filename, true );
@@ -289,7 +302,7 @@ public:
                        n_collisions,
                        sgroup[0],
                        sgroup[1],
-                       clog, intra,
+                       clog, clog_factor, intra,
                        debug_every,
                        Ionization,
                        NuclearReaction,
@@ -301,7 +314,7 @@ public:
                        n_collisions,
                        sgroup[0],
                        sgroup[1],
-                       clog, intra,
+                       clog, clog_factor, intra,
                        debug_every,
                        Ionization,
                        NuclearReaction,

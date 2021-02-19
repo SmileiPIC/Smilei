@@ -182,7 +182,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     vector<PyObject *> arrays( nprofiles );
     for( unsigned int i=0; i<nprofiles; i++ ) {
         // Vectorize the profile
-        PyObject *profile = PyObject_CallMethod( numpy, "vectorize", "O", profiles[i] );
+        PyObject *profile = PyObject_CallMethod( numpy, const_cast<char *>("vectorize"), const_cast<char *>("O"), profiles[i] );
         // Apply to the mesh
         arrays[i] = PyObject_CallObject( profile, mesh );
         Py_DECREF( profile );

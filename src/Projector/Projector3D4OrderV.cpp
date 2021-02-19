@@ -213,7 +213,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sz0_buff_vect[4*vecSize+ipart] ;
             DSz [6*vecSize+ipart] =                                        p1 * S4                                  ;
             
-            charge_weight[ipart] = ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
         }
         
         // Jx^(d,p,p)
@@ -417,7 +417,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sz0_buff_vect[4*vecSize+ipart] ;
             DSz [6*vecSize+ipart] =                                        p1 * S4                                  ;
             
-            charge_weight[ipart] = ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
         }
         
         #pragma omp simd
@@ -611,7 +611,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sz0_buff_vect[4*vecSize+ipart] ;
             DSz [6*vecSize+ipart] =                                        p1 * S4                                  ;
             
-            charge_weight[ipart] = ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
         }
         
         #pragma omp simd
@@ -764,7 +764,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 ;
             DSz [6*vecSize+ipart] =                                        p1 * S4 ;
             
-            charge_weight[ipart] = ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
         }
         
         #pragma omp simd
@@ -823,7 +823,7 @@ void Projector3D4OrderV::basic( double *rhoj, Particles &particles, unsigned int
     int iloc, jloc;
     int ny( nprimy ), nz( nprimz ), nyz;
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = ( double )( particles.charge( ipart ) )*particles.weight( ipart );
+    double charge_weight = inv_cell_volume *( double )( particles.charge( ipart ) )*particles.weight( ipart );
     
     if( type > 0 ) {
         charge_weight *= 1./sqrt( 1.0 + particles.momentum( 0, ipart )*particles.momentum( 0, ipart )
@@ -1212,7 +1212,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sz0_buff_vect[4*vecSize+ipart] ;
             DSz [6*vecSize+ipart] =                                        p1 * S4                                  ;
             
-            charge_weight[ipart] = ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
         }
         
         // Jx^(d,p,p)
@@ -1420,7 +1420,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sz0_buff_vect[4*vecSize+ipart] ;
             DSz [6*vecSize+ipart] =                                        p1 * S4                                  ;
             
-            charge_weight[ipart] = ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
         }
         
         #pragma omp simd
@@ -1612,7 +1612,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sz0_buff_vect[4*vecSize+ipart] ;
             DSz [6*vecSize+ipart] =                                        p1 * S4                                  ;
             
-            charge_weight[ipart] = ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
         }
         
         #pragma omp simd
@@ -1732,4 +1732,3 @@ void Projector3D4OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
-

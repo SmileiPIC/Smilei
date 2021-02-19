@@ -764,7 +764,7 @@ void Species::extractParticles()
     //thrust::copy_if(thrust::device, iter, iter+nparts, nvidia_cell_keys.begin(), iter_copy, count_if_out());
 
     particles_to_move->clear();
-    for ( int ipart=0 ; ipart<getNbrOfParticles() ; ipart++ ) {
+    for ( int ipart=0 ; ipart<(int)(getNbrOfParticles()) ; ipart++ ) {
         if ( particles->cell_keys[ipart] == -1 ) {
             particles->copyParticle( ipart, *particles_to_move );
         }
@@ -1276,7 +1276,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
                 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[4] += MPI_Wtime() - timer;
-#endif            
+#endif
             }
             
             if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
@@ -1468,7 +1468,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
                     b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                     for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
                         Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                    } 
+                    }
                 } else {
                     int n_species = patch->vecSpecies.size();
                     complex<double> *b_rho=nullptr;

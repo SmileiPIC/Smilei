@@ -285,6 +285,8 @@ class Units(object):
 				if self.verbose:
 					print("WARNING: units unknown: "+str(knownUnits))
 				return 1., ""
+		elif requestedUnits:
+			print("WARNING: units `%s` requested on non-existent or dimensionless axis" % requestedUnits)
 		return 1., ""
 
 	def prepare(self, reference_angular_frequency_SI=None):
@@ -450,7 +452,7 @@ class _multiPlotUtil(object):
 		for Diag in Diags:
 			diagtimes = Diag.getTimesteps()
 			if self.timesteps is not None:
-				diagtimes = Diag._selectTimesteps(timesteps, diagtimes)
+				diagtimes = Diag._selectTimesteps(self.timesteps, diagtimes)
 			diagtimes = list( diagtimes*Diag.timestep )
 			if self.skipAnimation: self.alltimes += [diagtimes[-1]]
 			else                 : self.alltimes += diagtimes

@@ -44,7 +44,6 @@ void IonizationFromRate::operator()( Particles *particles, unsigned int ipart_mi
     {
         ParticleData particleData( npart );
         particleData.startAt( ipart_min );
-        PyTools::setIteration( itime );
         particleData.set( particles );
         ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( ionization_rate_, particleData.get(), NULL );
         PyTools::checkPyError();

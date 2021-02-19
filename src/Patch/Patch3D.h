@@ -9,7 +9,7 @@ class SimWindow;
 
 //! Class Patch : sub MPI domain
 //!     Collection of patch = MPI domain
-class Patch3D : public Patch
+class Patch3D final : public Patch
 {
 public:
     //! Constructor for Patch
@@ -29,19 +29,19 @@ public:
         double factor = 1.;
         
         double halfcell = 0.5 * params.cell_length[0];
-        if( p->position(0,ipart) - getDomainLocalMin(0) < halfcell 
+        if( p->position(0,ipart) - getDomainLocalMin(0) < halfcell
          || getDomainLocalMax(0) - p->position(0,ipart) < halfcell ) {
              factor *= 0.5;
         }
         
         halfcell = 0.5 * params.cell_length[1];
-        if( p->position(1,ipart) - getDomainLocalMin(1) < halfcell 
+        if( p->position(1,ipart) - getDomainLocalMin(1) < halfcell
          || getDomainLocalMax(1) - p->position(1,ipart) < halfcell ) {
              factor *= 0.5;
         }
         
         halfcell = 0.5 * params.cell_length[2];
-        if( p->position(2,ipart) - getDomainLocalMin(2) < halfcell 
+        if( p->position(2,ipart) - getDomainLocalMin(2) < halfcell
          || getDomainLocalMax(2) - p->position(2,ipart) < halfcell ) {
              factor *= 0.5;
         }
