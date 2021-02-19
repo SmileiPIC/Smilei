@@ -22,7 +22,7 @@ public:
     )
     {
 
-        Histogram *histogram;
+        Histogram *histogram = nullptr;
         std::string deposited_quantity = "";
         std::ostringstream deposited_quantityName( "" );
         deposited_quantityName << errorPrefix << ": parameter `deposited_quantity`";
@@ -117,7 +117,7 @@ public:
         bool hasType = true
     )
     {
-        HistogramAxis *axis;
+        HistogramAxis *axis = nullptr;
         std::string type = "";
         double min, max;
         int nbins;

@@ -18,7 +18,7 @@ protected:
 };
 
 
-class RegionDomainDecomposition1D : public RegionDomainDecomposition
+class RegionDomainDecomposition1D final : public RegionDomainDecomposition
 {
 public:
     RegionDomainDecomposition1D( Params &params );
@@ -29,7 +29,7 @@ public:
 };
 
 
-class RegionDomainDecomposition2D : public RegionDomainDecomposition
+class RegionDomainDecomposition2D final : public RegionDomainDecomposition
 {
 public:
     RegionDomainDecomposition2D( Params &params );
@@ -40,7 +40,7 @@ public:
 };
 
 
-class RegionDomainDecomposition3D : public RegionDomainDecomposition
+class RegionDomainDecomposition3D final : public RegionDomainDecomposition
 {
 public:
     RegionDomainDecomposition3D( Params &params );

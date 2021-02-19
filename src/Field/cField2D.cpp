@@ -303,8 +303,8 @@ void cField2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 
     complex<double>* sub = static_cast<cField*>(sendFields_[iDim*2+iNeighbor])->cdata_;
     complex<double>* field = cdata_;
-    for( unsigned int i=0; i<NX; i++ ) {
-        for( unsigned int j=0; j<NY; j++ ) {
+    for( unsigned int i=0; i< (unsigned int)(NX); i++ ) {
+        for( unsigned int j=0; j<(unsigned int)(NY); j++ ) {
             sub[i*NY+j] = field[ (ix+i)*dimY+(iy+j) ];
         }
     }
@@ -328,8 +328,8 @@ void cField2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 
     complex<double>* sub = static_cast<cField*>(recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_;
     complex<double>* field = cdata_;
-    for( unsigned int i=0; i<NX; i++ ) {
-        for( unsigned int j=0; j<NY; j++ ) {
+    for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
+        for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
             field[ (ix+i)*dimY+(iy+j) ] = sub[i*NY+j];
         }
     }
