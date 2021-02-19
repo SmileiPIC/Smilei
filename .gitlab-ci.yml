@@ -7,14 +7,10 @@ compile:
   stage: compile
   only:
     - develop
-<<<<<<< HEAD
     - refactor_for_GPU
     - particle_injector_correction
     
-=======
-    - reduce_mpi_tags
 
->>>>>>> develop
   script:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
@@ -35,12 +31,8 @@ makerun1D:
   stage: makerun
   only:
     - develop
-<<<<<<< HEAD
     - refactor_for_GPU
     - particle_injector_correction
-=======
-    - reduce_mpi_tags
->>>>>>> develop
     
   script:
     # Move in test dir
@@ -53,12 +45,9 @@ makerun2D:
   stage: makerun
   only:
     - develop
-<<<<<<< HEAD
     - refactor_for_GPU
     - particle_injector_correction
-=======
-    - reduce_mpi_tags
->>>>>>> develop
+
 
   script:
     # Move in test dir
