@@ -169,7 +169,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen_ ) { // moving particle
+    if( time_dual>time_frozen_  || Ionize ) { // if moving particle or it can be ionized
         // resize the dynamics buffers to treat all the particles in this Patch ipatch and Species ispec
         smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -214,21 +214,28 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #endif
             } // end Ionize
 
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-#endif
 
-            // Push the particles and the photons
-            ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id );
-            //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
+            if( time_dual>time_frozen_ ){ // if moving particle push
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                timer = MPI_Wtime();
 #endif
-            } // end task for Interp+Push on ibin
+
+                // Push the particles and the photons
+                ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id );
+                //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end if moving particle, push
+
+            } // end task for Interp+Ionize+Push on ibin
         } // end ibin loop for Interp+Push
-      
+    } // end if moving particle or it can be ionized 
 
+    if( time_dual>time_frozen_){ // do not apply particles BC nor projection on frozen particles     
+        
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
             #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
@@ -312,8 +319,8 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #endif
             }//end task for Proj of ibin
          }// end ibin loop for Proj
-
      } // end if moving particle
+
      }// end taskgroup for all the Interp, Push, Particles BC and Projector tasks
   
      // reduction of the lost energy in each ibin 
