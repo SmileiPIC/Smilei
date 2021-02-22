@@ -46,11 +46,11 @@ public:
         // Lasers properties
         // -----------------
         int nlaser = PyTools::nComponents( "Laser" );
-        if( patch->isMaster() && nlaser > 0) {
+        if( patch->isMaster() && nlaser > 0 && !domain_decomposition ) {
             TITLE("Initializing laser parameters" );
         }
         for( int ilaser = 0; ilaser < nlaser; ilaser++ ) {
-            Laser *laser = new Laser( params, ilaser, patch );
+            Laser *laser = new Laser( params, ilaser, patch, !domain_decomposition );
             if( laser->box_side == "xmin" && EMfields->emBoundCond[0] ) {
                 if( patch->isXmin() ) {
                     laser->createFields( params, patch );
