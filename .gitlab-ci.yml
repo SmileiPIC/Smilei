@@ -7,7 +7,9 @@ compile:
   stage: compile
   only:
     - develop
-    - reduce_mpi_tags
+    - refactor_for_GPU
+    - particle_injector_correction
+    
 
   script:
     # Force workdir cleaning in case of retried
@@ -29,7 +31,8 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - reduce_mpi_tags
+    - refactor_for_GPU
+    - particle_injector_correction
     
   script:
     # Move in test dir
@@ -42,7 +45,9 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - reduce_mpi_tags
+    - refactor_for_GPU
+    - particle_injector_correction
+
 
   script:
     # Move in test dir
@@ -55,8 +60,9 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - reduce_mpi_tags
-
+    - refactor_for_GPU
+    - particle_injector_correction
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -69,7 +75,8 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - reduce_mpi_tags
+    - refactor_for_GPU
+    - particle_injector_correction
     
   script:
     # Move in test dir
@@ -81,7 +88,8 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - reduce_mpi_tags
+    - refactor_for_GPU
+    - particle_injector_correction
 
   script:
     # Move in test dir
@@ -94,7 +102,8 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - reduce_mpi_tags
+    - refactor_for_GPU
+    - particle_injector_correction
     
   script:
     # Move in test dir
@@ -106,7 +115,8 @@ use_picsar:
   stage: use_picsar
   only:
     - develop
-    - reduce_mpi_tags
+    - refactor_for_GPU
+    - particle_injector_correction
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
