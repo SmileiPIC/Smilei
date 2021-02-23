@@ -164,6 +164,8 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 
     int Nbins = particles->first_index.size();
     std::vector<double> nrj_lost_per_bin( Nbins, 0. );
+    std::vector<double> nrj_radiation_per_bin( Nbins, 0. );
+
     #pragma omp taskgroup
     {
     // -------------------------------
@@ -217,6 +219,37 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 
             if( time_dual>time_frozen_ ){ // if moving particle push
 
+                // Radiation losses
+                if( Radiate ) {
+
+#ifdef  __DETAILED_TIMERS
+                    timer = MPI_Wtime();
+#endif
+
+                    // Radiation process
+                    ( *Radiate )( *particles, photon_species_, smpi,
+                                  RadiationTables,
+                                  nrj_radiation_per_bin[ibin],
+                                  particles->first_index[ibin],
+                                  particles->last_index[ibin], buffer_id );
+
+                    // Update scalar variable for diagnostics
+                    // nrj_radiation += Radiate->getRadiatedEnergy();
+
+                    // Update the quantum parameter chi
+                    // Radiate->computeParticlesChi( *particles,
+                    //                               smpi,
+                    //                               first_index[ibin],
+                    //                               last_index[ibin],
+                    //                               ithread );
+
+#ifdef  __DETAILED_TIMERS
+                    patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+
+                } // end if Radiate
+
+
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
@@ -230,7 +263,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #endif
             } // end if moving particle, push
 
-            } // end task for Interp+Ionize+Push on ibin
+            } // end task for Interp+Ionize+Radiate+Push on ibin
         } // end ibin loop for Interp+Push
     } // end if moving particle or it can be ionized 
 
@@ -349,10 +382,29 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
          patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-     } // end Ionize     
+     } // end if Ionize     
 
-     
-     } // end task for lost energy reduction
+     // unite the photons created by radiation montecarlo in a unique list for the patch 
+     // sum the radiated energy
+     // The taskgroup above ensures that this is done after the radiation method
+     if( Radiate ) {
+#ifdef  __DETAILED_TIMERS
+         timer = MPI_Wtime();
+         ithread = omp_get_thread_num();
+#endif
+
+         //Radiate->joinNewPhotons(particles->first_index.size());
+
+         for( unsigned int ibin=0 ; ibin<nrj_radiation_per_bin.size() ; ibin++ ) {
+            nrj_radiation += nrj_radiation_per_bin[ibin];
+         }
+#ifdef  __DETAILED_TIMERS
+         patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+
+     } // end if Radiate
+
+     } // end task for lost/radiated energy reduction + join electrons from ionization + join photons from Monte Carlo radiation
 
      // smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
 
