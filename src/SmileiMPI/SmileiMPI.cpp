@@ -829,7 +829,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         patch->vecSpecies[ispec]->particles->first_index[0]=0;
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->particles->last_index.back();
-        patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
+        patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle, params.keep_position_old );
         //Receive particles
         if( nbrOfPartsRecv > 0 ) {
             recvParts = createMPIparticles( patch->vecSpecies[ispec]->particles );
@@ -1542,7 +1542,7 @@ void SmileiMPI::recv( ProbeParticles *probe, int from, int tag, unsigned int nDi
     int nPart;
     MPI_Recv( &nPart, 1, MPI_INT, from, tag+1, MPI_COMM_WORLD, &status );
     // Resize particles
-    probe->particles.initialize( nPart, nDim_particles );
+    probe->particles.initialize( nPart, nDim_particles, false );
     // receive particles
     if( nPart>0 )
         for( unsigned int i=0; i<nDim_particles; i++ ) {

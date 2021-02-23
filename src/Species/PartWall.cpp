@@ -16,33 +16,38 @@
 using namespace std;
 
 // Partwall constructor
-PartWall::PartWall( double pos, unsigned short dir, string kind ) :
+PartWall::PartWall( double pos, unsigned short dir, string kind, double dt ) :
     position( pos ),
     direction( dir )
 {
     // Define the "wall" function pointer
     if( kind == "reflective" ) {
-        wall = &reflect_particle;
+        wall = &reflect_particle_wall;
     } else if( kind == "remove" ) {
-        wall = &remove_particle;
+        wall = &remove_particle_wall;
     } else if( kind == "stop" ) {
-        wall = &stop_particle;
+        wall = &stop_particle_wall;
     } else if( kind == "thermalize" ) {
-        wall = &thermalize_particle;
+        wall = &thermalize_particle_wall;
     }
+
+    dt_ = dt;
+   
 }
 
 // Applies the wall's boundary condition to one particle
-int PartWall::apply( Particles &particles, int ipart, Species *species, double dtgf, double &nrj_iPart )
+void PartWall::apply( Particles &particles, SmileiMPI *smpi, int imin, int imax, Species *species, int ithread, double &nrj_iPart )
 {
+    ( *wall )( particles, smpi, imin, imax, direction, position, dt_, species, ithread, nrj_iPart );
+
     // The particle previous position needs to be computed
-    double particle_position     = particles.position( direction, ipart );
-    double particle_position_old = particle_position - dtgf*particles.momentum( direction, ipart );
-    if( ( position-particle_position_old )*( position-particle_position )<0. ) {
-        return ( *wall )( particles, ipart, direction, 2.*position, species, nrj_iPart );
-    } else {
-        return 1;
-    }
+    //double particle_position     = particles.position( direction, ipart );
+    //double particle_position_old = particle_position - dtgf*particles.momentum( direction, ipart );
+    //if( ( position-particle_position_old )*( position-particle_position )<0. ) {
+    //    return ( *wall )( particles, imin, imax, ipart, direction, 2.*position, species, nrj_iPart );
+    //} else {
+    //    return 1;
+    //}
 }
 
 
@@ -98,7 +103,7 @@ PartWalls::PartWalls( Params &params, Patch *patch )
         // Find out wether this proc has the wall or not
         if( position[iwall] >= patch->getDomainLocalMin( direction[iwall] )
                 && position[iwall] <= patch->getDomainLocalMax( direction[iwall] ) ) {
-            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall] ) );
+            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall], params.timestep ) );
         }
         
         // Create new wall
@@ -120,9 +125,10 @@ PartWalls::PartWalls( PartWalls *partWalls, Patch *patch )
     for( unsigned int iwall = 0; iwall < nwalls; iwall++ ) {
         if( position[iwall] >= patch->getDomainLocalMin( direction[iwall] )
                 && position[iwall] <= patch->getDomainLocalMax( direction[iwall] ) ) {
-            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall] ) );
+            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall], partWalls->vecPartWall[iwall]->dt_ ) );
         }
     }
+
 }
 
 

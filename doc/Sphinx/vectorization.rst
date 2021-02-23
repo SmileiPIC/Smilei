@@ -261,7 +261,7 @@ The following video shows how the patches are dynamically switched in vectorized
 
 .. raw:: html
 
-  <video style="display:block; margin: 0 auto; width: 100%;" controls src="http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/videos/weibel_interp.mp4" width="100%">
+  <video style="display:block; margin: 0 auto; width: 100%;" controls src="http://www.maisondelasimulation.fr/projects/Smilei/uploads/videos/weibel_interp.mp4" width="100%">
   </video>
 
 For this specific benchmark, the speed-up obtained with vectorization is of x2.

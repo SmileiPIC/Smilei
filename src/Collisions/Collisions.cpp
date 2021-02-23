@@ -22,6 +22,7 @@ Collisions::Collisions(
     vector<unsigned int> species_group1,
     vector<unsigned int> species_group2,
     double coulomb_log,
+    double coulomb_log_factor,
     bool intra_collisions,
     int debug_every,
     CollisionalIonization *ionization,
@@ -34,12 +35,18 @@ Collisions::Collisions(
     species_group1_( species_group1 ),
     species_group2_( species_group2 ),
     coulomb_log_( coulomb_log ),
+    coulomb_log_factor_( coulomb_log_factor ),
     intra_collisions_( intra_collisions ),
     debug_every_( debug_every ),
     filename_( filename )
 {
     coeff1_ = 4.046650232e-21*params.reference_angular_frequency_SI; // h*omega/(2*me*c^2)
     coeff2_ = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
+    
+    // Open the HDF5 file
+    if( debug_every > 0 ) {
+        debug_file_ = new H5Write( filename_, true );
+    }
 }
 
 
@@ -47,15 +54,16 @@ Collisions::Collisions(
 Collisions::Collisions( Collisions *coll )
 {
 
-    n_collisions_     = coll->n_collisions_    ;
-    species_group1_   = coll->species_group1_  ;
-    species_group2_   = coll->species_group2_  ;
-    coulomb_log_      = coll->coulomb_log_     ;
-    intra_collisions_ = coll->intra_collisions_;
-    debug_every_      = coll->debug_every_     ;
-    filename_         = coll->filename_        ;
-    coeff1_           = coll->coeff1_        ;
-    coeff2_           = coll->coeff2_        ;
+    n_collisions_       = coll->n_collisions_      ;
+    species_group1_     = coll->species_group1_    ;
+    species_group2_     = coll->species_group2_    ;
+    coulomb_log_        = coll->coulomb_log_       ;
+    coulomb_log_factor_ = coll->coulomb_log_factor_;
+    intra_collisions_   = coll->intra_collisions_  ;
+    debug_every_        = coll->debug_every_       ;
+    filename_           = coll->filename_          ;
+    coeff1_             = coll->coeff1_            ;
+    coeff2_             = coll->coeff2_            ;
     
     if( dynamic_cast<CollisionalNoIonization *>( coll->Ionization ) ) {
         Ionization = new CollisionalNoIonization();
@@ -68,6 +76,8 @@ Collisions::Collisions( Collisions *coll )
     } else if ( dynamic_cast<CollisionalFusionDD *>( coll->NuclearReaction ) ) {
         NuclearReaction = new CollisionalFusionDD( coll->NuclearReaction );
     }
+    
+    debug_file_ = coll->debug_file_;
 }
 
 
@@ -81,7 +91,7 @@ Collisions::~Collisions()
 bool   Collisions::debye_length_required;
 
 
-// Calculates the debye length squared in each patch
+// Calculates the debye length squared in each bin
 // The formula for the inverse debye length squared is sumOverSpecies(density*charge^2/temperature)
 void Collisions::calculate_debye_length( Params &params, Patch *patch )
 {
@@ -271,7 +281,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         for( ispec1=0 ; ispec1<nspec1 ; ispec1++ ) {
             s1 = patch->vecSpecies[( *sg1 )[ispec1]];
             p1 = s1->particles;
-            for( int i = s1->particles->first_index[ibin]; i < s1->particles->last_index[ibin]; i++ ) {
+            for( int i = p1->first_index[ibin]; i < p1->last_index[ibin]; i++ ) {
                 n1 += p1->weight( i );
             }
         }
@@ -279,18 +289,23 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         for( ispec2=0 ; ispec2<nspec2 ; ispec2++ ) {
             s2 = patch->vecSpecies[( *sg2 )[ispec2]];
             p2 = s2->particles;
-            for( int i = s2->particles->first_index[ibin]; i < s2->particles->last_index[ibin]; i++ ) {
+            for( int i = p2->first_index[ibin]; i < p2->last_index[ibin]; i++ ) {
                 n2 += p2->weight( i );
             }
         }
         
+        // Get cell volume
+        ispec1 = -1;
+        do {
+            ispec1++;
+            p1 = patch->vecSpecies[( *sg1 )[ispec1]]->particles;
+        } while( ispec1<nspec1 && p1->first_index[ibin] == p1->last_index[ibin] );
+        double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, p1->first_index[ibin], params );
+        
         // Pre-calculate some numbers before the big loop
-        s1 = patch->vecSpecies[( *sg1 )[0]];
-        p1 = s1->particles;
-        double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, s1->particles->first_index[ibin], params );
         unsigned int ncorr = intra_collisions_ ? 2*npairs-1 : npairs;
         double dt_corr = params.timestep * ((double)ncorr) * inv_cell_volume;
-        coeff3 = coeff2_ * dt_corr;
+        coeff3 = coeff2_ * dt_corr * coulomb_log_factor_;
         coeff4 = pow( 3.*coeff2_, -1./3. ) * dt_corr;
         double weight_correction_1 = 1. / (double)( (npairs-1) / N2max );
         double weight_correction_2 = 1. / (double)( (npairs-1) / N2max + 1 );
@@ -390,18 +405,16 @@ void Collisions::debug( Params &params, int itime, unsigned int icoll, VectorPat
             nuclear_reaction_multiplier[ipatch] = vecPatches( ipatch )->vecCollisions[icoll]->NuclearReaction->rate_multiplier_;
         }
         
-        // Open the HDF5 file
-        H5Write f( vecPatches( 0 )->vecCollisions[icoll]->filename_, true );
         // Create H5 group for the current timestep
         ostringstream name( "" );
         name << "t" << setfill( '0' ) << setw( 8 ) << itime;
-        H5Write g = f.group( name.str() );
+        H5Write g = vecPatches( 0 )->vecCollisions[icoll]->debug_file_->group( name.str() );
         // Create new datasets for this timestep and write
-        g.vect( "s"                          , smean                      , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
-        g.vect( "coulomb_log"                , logLmean                   , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
-        g.vect( "debyelength"                , debye_length               , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
-        //g.vect( "temperature"                , temperature                , params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
-        g.vect( "nuclear_reaction_multiplier", nuclear_reaction_multiplier, params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        g.vect( "s"                          , smean                      [0], params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        g.vect( "coulomb_log"                , logLmean                   [0], params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        g.vect( "debyelength"                , debye_length               [0], params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        g.vect( "nuclear_reaction_multiplier", nuclear_reaction_multiplier[0], params.tot_number_of_patches, H5T_NATIVE_DOUBLE, vecPatches.refHindex_, npatch );
+        vecPatches( 0 )->vecCollisions[icoll]->debug_file_->flush();
         
     }
     

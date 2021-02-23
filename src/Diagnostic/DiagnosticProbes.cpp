@@ -331,7 +331,12 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
     ostringstream mystream( "" );
     mystream << "Probes" << n_probe << ".h5";
     filename = mystream.str();
-
+    
+    // Create points initially
+    if( ! params.restart ) {
+        createPoints( smpi, vecPatches, 0. );
+    }
+    
     // Display info
     MESSAGE( 1, "Probe diagnostic #"<<n_probe<<" created" );
 
@@ -426,7 +431,7 @@ void DiagnosticProbes::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
 }
 
 
-void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, bool createFile, double x_moved )
+void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, double x_moved )
 {
     nPart_MPI = 0;
     offset_in_MPI .resize( vecPatches.size() );
@@ -512,7 +517,7 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, b
         }
         // Initialize the list of "fake" particles (points) just as actual macro-particles
         Particles *particles = &( vecPatches( ipatch )->probes[probe_n]->particles );
-        particles->initialize( ntot, nDim_particle );
+        particles->initialize( ntot, nDim_particle, false );
         // In AM, redefine patchmin as rmin and not -rmax anymore
         if( geometry == "AMcylindrical" ) {
             patchMin[1] = patchMax[1] - ( double )patch_size[1];
@@ -561,7 +566,7 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, b
         }
 
         // Resize the array with only particles in this patch
-        particles->resize( ipart_local, nDim_particle );
+        particles->resize( ipart_local, nDim_particle, false );
         particles->shrinkToFit();
 
         // Add the local offset
@@ -614,7 +619,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
     {
         // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
         if( !positions_written || last_iteration_points_calculated <= vecPatches.lastIterationPatchesMoved ) {
-            createPoints( smpi, vecPatches, false, x_moved );
+            createPoints( smpi, vecPatches, x_moved );
             last_iteration_points_calculated = timestep;
 
             // Store the positions of all particles, unless done already

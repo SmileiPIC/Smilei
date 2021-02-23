@@ -88,27 +88,30 @@ public:
             vecPatches.patches_[ipatch] = clone( vecPatches( 0 ), params, smpi, vecPatches.domain_decomposition_, firstpatch + ipatch, n_moved );
         }
         
-        //Cleaning arrays and pointer
+        // Clean numpy/HDF5 arrays for particle initialization
         for( unsigned int ispec=0 ; ispec<vecPatches( 0 )->vecSpecies.size(); ispec++ ) {
-            //If a species was initialized via a numpy array
-            if( vecPatches.patches_[0]->vecSpecies[ispec]->position_initialization_array_ ) {
-                //delete the array
-                delete vecPatches.patches_[0]->vecSpecies[ispec]->position_initialization_array_;
-                //and never again create particles from this array. Pointer is kept to not NULL to remember this species was initialized from an array.
+            Species * s = vecPatches.patches_[0]->vecSpecies[ispec];
+            // If position from numpy array
+            if( s->position_initialization_array_ ) {
+                // delete the array but DO NOT set to NULL (to remember setting)
+                delete s->position_initialization_array_;
+                // and never again create particles from this array
                 for( unsigned int ipatch=0 ; ipatch < npatches ; ipatch++ ) {
-                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->n_numpy_particles_ = 0 ;
+                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->n_numpy_particles_ = 0;
+                }
+                // If momentum from numpy array as well
+                if( s->momentum_initialization_array_ ) {
+                    // delete the array but DO NOT set to NULL (to remember setting)
+                    delete s->momentum_initialization_array_;
+                }
+            //If a species was initialized via a HDF5 file
+            } else if( s->file_position_npart_ > 0 ) {
+                // Remove links to file
+                for( unsigned int ipatch=0 ; ipatch < npatches ; ipatch++ ) {
+                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->position_initialization_ = "";
                 }
             }
         }
-        for( unsigned int ispec=0 ; ispec<vecPatches( 0 )->vecSpecies.size(); ispec++ ) {
-            //If a species was initialized via a numpy array
-            if( vecPatches.patches_[0]->vecSpecies[ispec]->momentum_initialization_array_ ) {
-                //delete the array. Pointer is kept to not NULL to remember this species was initialized from an array.
-                delete vecPatches.patches_[0]->vecSpecies[ispec]->momentum_initialization_array_;
-            }
-        }
-        
-        
         
         MESSAGE( 1, "All patches created" );
         
@@ -134,7 +137,7 @@ public:
             vecPatches.initExternals( params );
         }
         
-        MESSAGE( 1, "Done initializing diagnostics, antennas, and external fields" );
+        MESSAGE( 1, "Done creating diagnostics, antennas, and external fields" );
     }
     
 };

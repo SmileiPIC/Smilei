@@ -50,7 +50,7 @@ public:
     cField2D *Et_Poisson_;
 
     void initPoisson( Patch *patch ) override;
-    double compute_r();
+    double compute_r() override;
     void compute_Ap( Patch *patch ) override;
     void compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     void compute_Ap_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode );
@@ -59,7 +59,7 @@ public:
     double compute_pAp() override {return 0.;};
     std::complex<double> compute_pAp_AM();
     void update_pand_r( double r_dot_r, double p_dot_Ap ) override {;};
-    void update_p( double rnew_dot_rnew, double r_dot_r );
+    void update_p( double rnew_dot_rnew, double r_dot_r ) override;
     void update_pand_r_AM( double r_dot_r, std::complex<double> p_dot_Ap );
     void initE( Patch *patch ) override;
     void delete_phi_r_p_Ap( Patch *patch );
@@ -146,7 +146,7 @@ public:
     void binomialCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes) override;
 
     //! Method used to apply a single-pass custom FIR based filter on currents
-    void customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff){return ;} ;
+    void customFIRCurrentFilter(unsigned int ipass, std::vector<unsigned int> passes, std::vector<double> filtering_coeff) override {return ;};
  
     //! Creates a new field with the right characteristics, depending on the name
     Field *createField( std::string fieldname, Params& params ) override;
@@ -232,7 +232,7 @@ public:
     void finishInitialization( int nspecies, Patch *patch ) override final;
     
     //!Pointers toward R inverse values stored in patch
-    double *invR, *invRd; 
+    double *invR, *invRd;
 };
 
 #endif

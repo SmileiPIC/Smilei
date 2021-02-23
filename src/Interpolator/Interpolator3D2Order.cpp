@@ -132,23 +132,70 @@ void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *i
 
 void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
-    std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
-    std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
-    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
+    double *ELoc = &( smpi->dynamics_Epart[ithread][0] );
+    double *BLoc = &( smpi->dynamics_Bpart[ithread][0] );
+
+    int*     iold = &( smpi->dynamics_iold    [ithread][0] );
+    double* delta = &( smpi->dynamics_deltaold[ithread][0] );
+
+    double* position_x = particles.getPtrPosition(0);
+    double* position_y = particles.getPtrPosition(1);
+    double* position_z = particles.getPtrPosition(2);
+
+    // Static cast of the electromagnetic fields
+    double* Ex3D = EMfields->Ex_->data_;
+    double* Ey3D = EMfields->Ey_->data_;
+    double* Ez3D = EMfields->Ez_->data_;
+    double* Bx3D = EMfields->Bx_m->data_;
+    double* By3D = EMfields->By_m->data_;
+    double* Bz3D = EMfields->Bz_m->data_;
+
+    int nx_p = EMfields->Bx_m->dims_[0];
+    int ny_p = EMfields->By_m->dims_[1];
+    int nz_p = EMfields->Bz_m->dims_[2];
+    int nx_d = nx_p+1;
+    int ny_d = ny_p+1;
+    int nz_d = nz_p+1;
     
     //Loop on bin particles
     int nparts( particles.size() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+
         //Interpolation on current particle
-        fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
+
+        // Normalized particle position
+        double xpn = position_x[ ipart ]*dx_inv_;
+        double ypn = position_y[ ipart ]*dy_inv_;
+        double zpn = position_z[ ipart ]*dz_inv_;
+        // Calculate coeffs
+
+        int idx_p[3], idx_d[3];
+        double delta_p[3];
+        double coeffxp[3], coeffyp[3], coeffzp[3];
+        double coeffxd[3], coeffyd[3], coeffzd[3];
+
+        coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
+
+        // Interpolation of Ex^(d,p,p)
+        *( ELoc+0*nparts+ipart ) = compute( &coeffxd[1], &coeffyp[1], &coeffzp[1], Ex3D, idx_d[0], idx_p[1], idx_p[2], nx_d, ny_p, nz_p );
+        // Interpolation of Ey^(p,d,p)
+        *( ELoc+1*nparts+ipart ) = compute( &coeffxp[1], &coeffyd[1], &coeffzp[1], Ey3D, idx_p[0], idx_d[1], idx_p[2], nx_p, ny_d, nz_p );
+        // Interpolation of Ez^(p,p,d)
+        *( ELoc+2*nparts+ipart ) = compute( &coeffxp[1], &coeffyp[1], &coeffzd[1], Ez3D, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d );
+        // Interpolation of Bx^(p,d,d)
+        *( BLoc+0*nparts+ipart ) = compute( &coeffxp[1], &coeffyd[1], &coeffzd[1], Bx3D, idx_p[0], idx_d[1], idx_d[2], nx_p, ny_d, nz_d );
+        // Interpolation of By^(d,p,d)
+        *( BLoc+1*nparts+ipart ) = compute( &coeffxd[1], &coeffyp[1], &coeffzd[1], By3D, idx_d[0], idx_p[1], idx_d[2], nx_d, ny_p, nz_d );
+        // Interpolation of Bz^(d,d,p)
+        *( BLoc+2*nparts+ipart ) = compute( &coeffxd[1], &coeffyd[1], &coeffzp[1], Bz3D, idx_d[0], idx_d[1], idx_p[2], nx_d, ny_d, nz_p );
+
         //Buffering of iol and delta
-        ( *iold )[ipart+0*nparts]  = ip_;
-        ( *iold )[ipart+1*nparts]  = jp_;
-        ( *iold )[ipart+2*nparts]  = kp_;
-        ( *delta )[ipart+0*nparts] = deltax;
-        ( *delta )[ipart+1*nparts] = deltay;
-        ( *delta )[ipart+2*nparts] = deltaz;
+        iold[ipart+0*nparts]  = idx_p[0];
+        iold[ipart+1*nparts]  = idx_p[1];
+        iold[ipart+2*nparts]  = idx_p[2];
+        delta[ipart+0*nparts] = delta_p[0];
+        delta[ipart+1*nparts] = delta_p[1];
+        delta[ipart+2*nparts] = delta_p[2];
     }
     
 }

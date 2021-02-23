@@ -9,7 +9,7 @@ class SimWindow;
 
 //! Class Patch : sub MPI domain
 //!     Collection of patch = MPI domain
-class Patch2D : public Patch
+class Patch2D final : public Patch
 {
 public:
     //! Constructor for Patch
@@ -29,13 +29,13 @@ public:
         double factor = 1.;
         
         double halfcell = 0.5 * params.cell_length[0];
-        if( p->position(0,ipart) - getDomainLocalMin(0) < halfcell 
+        if( p->position(0,ipart) - getDomainLocalMin(0) < halfcell
          || getDomainLocalMax(0) - p->position(0,ipart) < halfcell ) {
              factor *= 0.5;
         }
         
         halfcell = 0.5 * params.cell_length[1];
-        if( p->position(1,ipart) - getDomainLocalMin(1) < halfcell 
+        if( p->position(1,ipart) - getDomainLocalMin(1) < halfcell
          || getDomainLocalMax(1) - p->position(1,ipart) < halfcell ) {
              factor *= 0.5;
         }
@@ -60,41 +60,15 @@ public:
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
     
-    //! init comm / sum densities
-    void initSumField( Field *field, int iDim, SmileiMPI *smpi ) override final;
-    //! finalize comm / sum densities
-    void finalizeSumField( Field *field, int iDim ) override final;
-    //! init comm / sum densities
-    void initSumFieldComplex( Field *field, int iDim, SmileiMPI *smpi ) override final {};
-    //! finalize comm / sum densities
-    void finalizeSumFieldComplex( Field *field, int iDim ) override final {};
-    
-    //! init comm / exchange fields in direction iDim only
-    void initExchange( Field *field, int iDim, SmileiMPI *smpi ) override final;
-    //! init comm / exchange complex fields in direction iDim only
-    void initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi ) override final;
-    //! finalize comm / exchange fields in direction iDim only
-    void finalizeExchange( Field *field, int iDim ) override final;
-    //! finalize comm / exchange fields in direction iDim only
-    void finalizeExchangeComplex( Field *field, int iDim ) override final;
-    
     void exchangeField_movewin( Field* field, int clrw ) override final;
     
     // Create MPI_Datatype to exchange fields
-    void createType( Params &params ) override final;
     void createType2( Params &params ) override final;
     void cleanType() override final;
     
-    //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
-    MPI_Datatype ntypeSum_[2][2][2];
     //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial][iDim=1 prim/dial]
     //!   - +1 : an additional type to exchange clrw lines
-    MPI_Datatype ntype_[3][2][2];
-    
-    //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
-    MPI_Datatype ntypeSum_complex_[2][2][2];
-    //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial][iDim=1 prim/dial]
-    MPI_Datatype ntype_complex_[3][2][2];
+    MPI_Datatype ntype_[2][2];
     
 };
 

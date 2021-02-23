@@ -105,9 +105,11 @@ class Options(object):
 		self.yfactor = None
 		self.ymin    = None
 		self.ymax    = None
+		self.vsym    = False
 		self.vfactor = None
 		self.vmin    = None
 		self.vmax    = None
+		self.explicit_cmap = None
 		self.figure0 = {}
 		self.figure1 = {"facecolor":"w"}
 		self.axes = {}
@@ -116,9 +118,10 @@ class Options(object):
 		self.ticklabels = {}
 		self.ticklabels_font = {}
 		self.plot = {}
-		self.image = {"cmap":"smilei", "interpolation":"nearest", "aspect":"auto"}
+		self.image = {"interpolation":"nearest", "aspect":"auto"}
 		self.colorbar = {}
 		self.colorbar_font = {}
+		self.cax = {"size": "5%", "pad": 0.15}
 		self.xtick = {"useOffset":False}
 		self.ytick = {"useOffset":False}
 		self.side = "left"
@@ -138,6 +141,8 @@ class Options(object):
 		self.vfactor     = kwargs.pop("vfactor"    , self.vfactor  )
 		self.vmin        = kwargs.pop("vmin"       , self.vmin )
 		self.vmax        = kwargs.pop("vmax"       , self.vmax )
+		self.vsym        = kwargs.pop("vsym"       , self.vsym )
+		self.explicit_cmap = kwargs.pop("cmap"     , self.explicit_cmap )
 		self.side        = kwargs.pop("side"       , self.side )
 		self.transparent = kwargs.pop("transparent", self.transparent )
 		self.export_dir  = kwargs.pop("export_dir", self.export_dir )
@@ -170,10 +175,13 @@ class Options(object):
 					     "visible","zorder"]:
 				self.plot[kwa] = val
 			# image
-			elif kwa in ["cmap","aspect","interpolation"]:
+			elif kwa in ["aspect","interpolation","norm"]:
 				self.image[kwa] = val
+			# colorbar axes
+			elif kwa in ["pad", "size"]:
+				self.cax[kwa] = val
 			# colorbar
-			elif kwa in ["orientation","fraction","pad","shrink","anchor","panchor",
+			elif kwa in ["orientation","fraction","shrink","anchor","panchor",
 					     "extend","extendfrac","extendrect","spacing","ticks","format",
 					     "drawedges"]:
 				self.colorbar[kwa] = val
@@ -189,9 +197,14 @@ class Options(object):
 			kwargs.pop(kwa)
 		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
 		if "cbaspect" in kwargs:
-			self.colorbar["aspect"] = kwargs.pop("cbaspect")
-		if self.side=="right" and "pad" not in self.colorbar:
-			self.colorbar["pad"] = 0.15
+			self.cax["aspect"] = kwargs.pop("cbaspect")
+		if "clabel" in kwargs:
+			self.colorbar["label"] = kwargs.pop("clabel")
+		self.cax['position'] = 'bottom' if ( 'orientation' in self.colorbar and self.colorbar['orientation'] == 'horizontal' ) else 'right'
+		if self.explicit_cmap is None:
+			self.image['cmap'] = 'smileiD' if self.vsym else 'smilei'
+		else:
+			self.image['cmap'] = self.explicit_cmap
 		return kwargs
 
 PintWarningIssued = False
@@ -272,6 +285,8 @@ class Units(object):
 				if self.verbose:
 					print("WARNING: units unknown: "+str(knownUnits))
 				return 1., ""
+		elif requestedUnits:
+			print("WARNING: units `%s` requested on non-existent or dimensionless axis" % requestedUnits)
 		return 1., ""
 
 	def prepare(self, reference_angular_frequency_SI=None):
@@ -412,6 +427,179 @@ class SaveAs:
 			self.figure.savefig(file)
 
 
+class _multiPlotUtil(object):
+	def __init__(self, *Diags, **kwargs):
+		from ._Diagnostics import TrackParticles
+		# Verify Diags are valid
+		self.nDiags = len(Diags)
+		self.Diags = Diags
+		if self.nDiags == 0: return
+		for Diag in Diags:
+			if not Diag.valid:
+				raise Exception( "Cannot multiPlot because invalid diagnostic" )
+		self.np  = Diags[0]._np  # numpy
+		self.plt = Diags[0]._plt # pyplot
+		# Get keyword arguments
+		self.shape  = kwargs.pop("shape" , None)
+		self.movie  = kwargs.pop("movie" , ""  )
+		self.fps    = kwargs.pop("fps"   , 15  )
+		self.dpi    = kwargs.pop("dpi"   , 200 )
+		self.saveAs = kwargs.pop("saveAs", None)
+		self.skipAnimation = kwargs.pop("skipAnimation", False )
+		self.timesteps = kwargs.pop("timesteps", None )
+		# Gather all times
+		self.alltimes = []
+		for Diag in Diags:
+			diagtimes = Diag.getTimesteps()
+			if self.timesteps is not None:
+				diagtimes = Diag._selectTimesteps(self.timesteps, diagtimes)
+			diagtimes = list( diagtimes*Diag.timestep )
+			if self.skipAnimation: self.alltimes += [diagtimes[-1]]
+			else                 : self.alltimes += diagtimes
+		self.alltimes = self.np.sort(self.np.unique(self.alltimes))
+		# Determine whether to plot all cases on the same axes
+		self.sameAxes = False
+		if self.shape is None or self.shape == [1,1]:
+			self.sameAxes = True
+			for d in Diags:
+				if type(d) is TrackParticles or d._type!=Diags[0]._type or d.dim!=Diags[0].dim:
+					self.sameAxes = False
+					break
+		if not self.sameAxes and self.shape == [1,1] and self.nDiags>1:
+			print("Cannot have shape=[1,1] with these diagnostics")
+			return
+		# Determine the shape
+		if self.sameAxes: self.shape = [1,1]
+		if self.shape is None: self.shape = [self.nDiags,1]
+		self.nplots = self.np.array(self.shape).prod()
+		if not self.sameAxes and self.nplots != self.nDiags:
+			print("The 'shape' argument is incompatible with the number of diagnostics:")
+			print("  "+str(self.nDiags)+" diagnostics do not fit "+str(self.nplots)+" plots")
+			return
+		# Make the figure
+		if "facecolor" not in kwargs: kwargs.update({ "facecolor":"w" })
+		self.options = Options()
+		self.options.set(**kwargs)
+		self.fig = self.plt.figure(**self.options.figure0)
+		self.fig.set(**self.options.figure1) # Apply figure kwargs
+		self.fig.clf()
+		self.fig.subplots_adjust(wspace=0.5, hspace=0.5, bottom=0.15)
+		self.ax = [self.fig.add_subplot(self.shape[0], self.shape[1], i+1) for i in range(self.nplots)]
+		self.xmin =  float("inf")
+		self.xmax = -float("inf")
+		self.ymin =  float("inf")
+		self.ymax = -float("inf")
+		self.option_xmin = []
+		self.option_xmax = []
+		self.option_ymin = []
+		self.option_ymax = []
+		try:
+			c = self.plt.matplotlib.rcParams['axes.color_cycle']
+		except:
+			c = self.plt.matplotlib.rcParams["axes.prop_cycle"].by_key()["color"]
+		rightside = [d.options.side=="right" for d in Diags]
+		self.allright  = all(rightside)
+		self.bothsides = any(rightside) and not allright
+		for i, Diag in enumerate(Diags):
+			Diag._cax_id = 0
+			if self.sameAxes:
+				Diag._ax = self.ax[0]
+				if Diag.dim==2: Diag._cax_id = i
+			else:
+				Diag._ax = self.ax[i]
+			if Diag.options.side == "right":
+				if self.sameAxes and not allright:
+					try   : Diag._ax.twin # check if twin exists
+					except: Diag._ax.twin = Diag._ax.twinx()
+					Diag._ax = Diag._ax.twin
+				else:
+					Diag._ax.yaxis.tick_right()
+					Diag._ax.yaxis.set_label_position("right")
+			Diag._plot = None
+			if Diag.options.xmin is not None: self.option_xmin += [Diag.options.xmin]
+			if Diag.options.xmax is not None: self.option_xmax += [Diag.options.xmax]
+			if Diag.options.ymin is not None: self.option_ymin += [Diag.options.ymin]
+			if Diag.options.ymax is not None: self.option_ymax += [Diag.options.ymax]
+			if "color" not in Diag.options.plot:
+				Diag.options.plot.update({ "color":c[i%len(c)] })
+			Diag._prepare()
+			l = Diag.limits()
+			if len(l) > 0:
+				if Diag.options.xmin is None: self.xmin = min(self.xmin,l[0][0])
+				if Diag.options.xmax is None: self.xmax = max(self.xmax,l[0][1])
+				if len(l) > 1:
+					if Diag.options.ymin is None: self.ymin = min(self.ymin,l[1][0])
+					if Diag.options.ymax is None: self.ymax = max(self.ymax,l[1][1])
+		# Find min max
+		if self.option_xmin: self.xmin = min([self.xmin]+self.option_xmin)
+		if self.option_xmax: self.xmax = max([self.xmax]+self.option_xmax)
+		if self.option_ymin: self.ymin = min([self.ymin]+self.option_ymin)
+		if self.option_ymax: self.ymax = max([self.ymax]+self.option_ymax)
+		# Find number of legends
+		self.nlegends = 0
+		for Diag in Diags:
+			if "label" in Diag.options.plot:
+				self.nlegends += 1
+	
+	def staticPlot(self):
+		for Diag in self.Diags:
+			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[-1])
+		if self.nlegends > 0:
+			self.plt.legend()
+		self.plt.draw()
+		self.plt.pause(0.00001)
+	
+	def animate(self):
+		# Loop all times
+		mov = Movie(self.fig, self.movie, self.fps, self.dpi)
+		save = SaveAs(self.saveAs, self.fig, self.plt)
+		for i,time in enumerate(self.alltimes):
+			t = None
+			for Diag in self.Diags:
+				t = self.np.round(time/Diag.timestep) # convert time to timestep
+				if t in Diag.getTimesteps():
+					if Diag._plot is None:
+						Diag._plotOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
+					else:
+						Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
+					if self.sameAxes:
+						Diag._ax.set_xlim(self.xmin,self.xmax)
+						if Diag.dim<2 and self.bothsides:
+							color = Diag._plot.get_color()
+							Diag._ax.yaxis.label.set_color(color)
+							Diag._ax.tick_params(axis='y', colors=color)
+							if Diag.options.side == "right":
+								Diag._ax.spines['right'].set_color(color)
+								Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
+							else:
+								Diag._ax.spines['left'].set_color(color)
+					try: Diag._ax.set_position(Diag._ax.twin.get_position())
+					except: pass
+			if self.nlegends > 0: self.plt.legend()
+			self.plt.draw()
+			self.plt.pause(0.00001)
+			mov.grab_frame()
+			if t is not None: save.frame(int(t))
+		mov.finish()
+	
+	def update(self, time):
+		t = self.np.round(time/self.Diags[0].timestep)
+		for Diag in self.Diags:
+			i = self.np.argmin(self.np.abs(self.np.array(Diag._timesteps)-t))
+			Diag._animateOnAxes(Diag._ax, Diag._timesteps[i], cax_id = Diag._cax_id)
+			self.plt.draw()
+	
+	def slide(self):
+		for Diag in self.Diags:
+			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[0])
+		self.plt.draw()
+		
+		from matplotlib.widgets import Slider
+		slider_axes = self.plt.axes([0.2, 0.05, 0.55, 0.03])
+		self.slider = Slider(slider_axes, 'time', self.alltimes[0], self.alltimes[-1], valinit=self.alltimes[0])
+		self.slider.on_changed(self.update)
+		slider_axes.prevent_garbage_collect = self.slider
+
 
 def multiPlot(*Diags, **kwargs):
 	""" multiplot(Diag1, Diag2, ...,
@@ -432,155 +620,32 @@ def multiPlot(*Diags, **kwargs):
 	saveAs : path where to store individual frames as pictures, e.g. "my/path/fig.png"
 	skipAnimation : if True, plots only the last frame.
 	"""
-
-	from ._Diagnostics import TrackParticles
-
-	# Verify Diags are valid
-	nDiags = len(Diags)
-	if nDiags == 0: return
-	for Diag in Diags:
-		if not Diag.valid: return
-	np  = Diags[0]._np  # numpy
-	plt = Diags[0]._plt # pyplot
-	# Get keyword arguments
-	shape  = kwargs.pop("shape" , None)
-	movie  = kwargs.pop("movie" , ""  )
-	fps    = kwargs.pop("fps"   , 15  )
-	dpi    = kwargs.pop("dpi"   , 200 )
-	saveAs = kwargs.pop("saveAs", None)
-	skipAnimation = kwargs.pop("skipAnimation", False )
-	timesteps = kwargs.pop("timesteps", None )
-	# Gather all times
-	alltimes = []
-	for Diag in Diags:
-		diagtimes = Diag.getTimesteps()
-		if timesteps is not None:
-			diagtimes = Diag._selectTimesteps(timesteps, diagtimes)
-		diagtimes = list( diagtimes*Diag.timestep )
-		if skipAnimation: alltimes += [diagtimes[-1]]
-		else            : alltimes += diagtimes
-	alltimes = np.sort(np.unique(alltimes))
-	# Determine whether to plot all cases on the same axes
-	sameAxes = False
-	if shape is None or shape == [1,1]:
-		sameAxes = True
-		for d in Diags:
-			if type(d) is TrackParticles or d._type!=Diags[0]._type or d.dim!=Diags[0].dim:
-				sameAxes = False
-				break
-	if not sameAxes and shape == [1,1] and nDiags>1:
-		print("Cannot have shape=[1,1] with these diagnostics")
-		return
-	# Determine the shape
-	if sameAxes: shape = [1,1]
-	if shape is None: shape = [nDiags,1]
-	nplots = np.array(shape).prod()
-	if not sameAxes and nplots != nDiags:
-		print("The 'shape' argument is incompatible with the number of diagnostics:")
-		print("  "+str(nDiags)+" diagnostics do not fit "+str(nplots)+" plots")
-		return
-	# Make the figure
-	if "facecolor" not in kwargs: kwargs.update({ "facecolor":"w" })
-	options = Options()
-	options.set(**kwargs)
-	fig = plt.figure(**options.figure0)
-	fig.set(**options.figure1) # Apply figure kwargs
-	fig.clf()
-	fig.subplots_adjust(wspace=0.5, hspace=0.5, bottom=0.15)
-	ax = []
-	xmin =  float("inf")
-	xmax = -float("inf")
-	ymin =  float("inf")
-	ymax = -float("inf")
-	option_xmin = []
-	option_xmax = []
-	option_ymin = []
-	option_ymax = []
-	try:
-		c = plt.matplotlib.rcParams['axes.color_cycle']
-	except:
-		c = plt.matplotlib.rcParams["axes.prop_cycle"].by_key()["color"]
-	for i in range(nplots):
-		ax.append( fig.add_subplot(shape[0], shape[1], i+1) )
-	rightside = [d.options.side=="right" for d in Diags]
-	allright  = all(rightside)
-	bothsides = any(rightside) and not allright
-	for i, Diag in enumerate(Diags):
-		Diag._cax_id = 0
-		if sameAxes:
-			Diag._ax = ax[0]
-			if Diag.dim==2: Diag._cax_id = i
-		else:
-			Diag._ax = ax[i]
-		if Diag.options.side == "right":
-			if sameAxes and not allright:
-				try   : Diag._ax.twin # check if twin exists
-				except: Diag._ax.twin = Diag._ax.twinx()
-				Diag._ax = Diag._ax.twin
-			else:
-				Diag._ax.yaxis.tick_right()
-				Diag._ax.yaxis.set_label_position("right")
-		Diag._plot = None
-		if Diag.options.xmin is not None: option_xmin += [Diag.options.xmin]
-		if Diag.options.xmax is not None: option_xmax += [Diag.options.xmax]
-		if Diag.options.ymin is not None: option_ymin += [Diag.options.ymin]
-		if Diag.options.ymax is not None: option_ymax += [Diag.options.ymax]
-		if "color" not in Diag.options.plot:
-			Diag.options.plot.update({ "color":c[i%len(c)] })
-		Diag._prepare()
-		l = Diag.limits()
-		if len(l) > 0:
-			if Diag.options.xmin is None: xmin = min(xmin,l[0][0])
-			if Diag.options.xmax is None: xmax = max(xmax,l[0][1])
-			if len(l) > 1:
-				if Diag.options.ymin is None: ymin = min(ymin,l[1][0])
-				if Diag.options.ymax is None: ymax = max(ymax,l[1][1])
-	# Find min max
-	if option_xmin: xmin = min([xmin]+option_xmin)
-	if option_xmax: xmax = max([xmax]+option_xmax)
-	if option_ymin: ymin = min([ymin]+option_ymin)
-	if option_ymax: ymax = max([ymax]+option_ymax)
 	
-	# Static plot
-	if sameAxes and Diags[0].dim==0:
-		for Diag in Diags:
-			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[-1])
-			plt.draw()
-			plt.pause(0.00001)
-	# Animated plot
+	
+	mp = _multiPlotUtil( *Diags, **kwargs )
+	
+	if mp.sameAxes and Diags[0].dim==0:
+		mp.staticPlot()
 	else:
-		# Loop all times
-		mov = Movie(fig, movie, fps, dpi)
-		save = SaveAs(saveAs, fig, plt)
-		for i,time in enumerate(alltimes):
-			t = None
-			for Diag in Diags:
-				t = np.round(time/Diag.timestep) # convert time to timestep
-				if t in Diag.getTimesteps():
-					if Diag._plot is None:
-						Diag._plotOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
-					else:
-						Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
-					if sameAxes:
-						Diag._ax.set_xlim(xmin,xmax)
-						if Diag.dim<2 and bothsides:
-							color = Diag._plot.get_color()
-							Diag._ax.yaxis.label.set_color(color)
-							Diag._ax.tick_params(axis='y', colors=color)
-							if Diag.options.side == "right":
-								Diag._ax.spines['right'].set_color(color)
-								Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
-							else:
-								Diag._ax.spines['left'].set_color(color)
-					try: Diag._ax.set_position(Diag._ax.twin.get_position())
-					except: pass
-			plt.legend()
-			plt.draw()
-			plt.pause(0.00001)
-			mov.grab_frame()
-			if t is not None: save.frame(int(t))
-		mov.finish()
-		return
+		mp.animate()
+
+def multiSlide(*Diags, **kwargs):
+	""" multiplot(Diag1, Diag2, ...,
+	              shape=None,
+	              )
+
+	Plots simultaneously several diagnostics with a time slider.
+
+	Parameters:
+	-----------
+	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleBinning'
+	shape : 2-element list giving the number of figures in x and y.
+	"""
+	
+	
+	mp = _multiPlotUtil( *Diags, **kwargs )
+	mp.slide()
+	
 
 
 class VTKfile:

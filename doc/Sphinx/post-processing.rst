@@ -87,7 +87,7 @@ In the case of the species, you can also obtain a given species by its name::
 Open a Scalar diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Scalar(scalar=None, timesteps=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Scalar(scalar=None, timesteps=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
   * ``scalar``: The name of the scalar.
      | If not given, then a list of available scalars is printed.
@@ -98,6 +98,8 @@ Open a Scalar diagnostic
   * ``units``: A unit specification (see :ref:`units`)
   * ``data_log``:
      | If ``True``, then :math:`\log_{10}` is applied to the output.
+  * ``data_transform``:
+     | If this is set to a function, the function is applied to the output before plotting.
   * See also :ref:`otherkwargs`
 
 **Example**::
@@ -110,9 +112,9 @@ Open a Scalar diagnostic
 Open a Field diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, moving=False, export_dir=None, **kwargs)
+.. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, moving=False, export_dir=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``data_transform``: same as before.
   * ``diagNumber``: number or ``name`` of the fields diagnostic
      | If not given, then a list of available diagnostic numbers is printed.
   * ``field``: The name of a field (``"Ex"``, ``"Ey"``, etc.)
@@ -168,9 +170,9 @@ Open a Field diagnostic
 Open a Probe diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Probe(probeNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Probe(probeNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
   * ``probeNumber``: number or ``name`` of the probe (the first one has number 0).
      | If not given, a list of available probes is printed.
   * ``field``: name of the field (``"Bx"``, ``"By"``, ``"Bz"``, ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` or ``"Rho"``).
@@ -191,9 +193,9 @@ Open a Probe diagnostic
 Open a ParticleBinning diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
+.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
   * ``diagNumber``: number or ``name`` of the particle binning diagnostic (starts at 0).
      | If not given, a list of available diagnostics is printed.
      | It can also be an operation between several diagnostics.
@@ -236,9 +238,9 @@ Open a ParticleBinning diagnostic
 Open a Screen diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
   * ``diagNumber``, ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
   * See also :ref:`otherkwargs`
 
@@ -253,9 +255,9 @@ Open a Screen diagnostic
 Open a RadiationSpectrum diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
+.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
   * ``diagNumber``, ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
   * See also :ref:`otherkwargs`
 
@@ -331,9 +333,9 @@ The post-processing of the *performances* diagnostic may be achieved in three di
 modes: ``raw``, ``map``, or ``histogram``, described further below. You must choose one
 and only one mode between those three.
 
-.. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, species=None, **kwargs)
+.. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, data_transform=None, species=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
   * ``raw`` : The name of a quantity, or an operation between them (see quantities below).
     The requested quantity is listed for each process.
   * ``map`` : The name of a quantity, or an operation between them (see quantities below).
@@ -442,6 +444,11 @@ to manipulate the plotting options:
 
 * ``figure``: The figure number that is passed to matplotlib.
 * ``vmin``, ``vmax``: data value limits.
+* ``vsym``: indicates that data is symmetric about zero. If set to a number,
+  data limits are set to ``[-vsym, vsym]``. If set to ``True``, limits autoscale
+  to the values present in the simulation, but remain symmetric. If ``vmin`` or
+  ``vmax`` are set, they are ignored.
+  Sets default colormap to ``smileiD``.
 * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
 * ``xfactor``, ``yfactor``: factors to rescale axes.
 * ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left-
@@ -727,6 +734,16 @@ Simultaneous plotting of multiple diagnostics
   * ``skipAnimation`` : if True, plots only the last frame.
   * ``timesteps``: same as the ``timesteps`` argument of the :py:func:`plot` method.
 
+
+.. py:function:: happi.multiSlide(diag1, diag2, ... , **kwargs)
+
+  Identical to ``happi.multiPlot`` but uses a time slider instead of an animation.
+
+  * ``diag1``, ``diag2``, etc.
+     | Diagnostics prepared by ``Scalar()``, ``Field()``, ``Probe()``, etc.
+  * ``figure`` and ``shape``: same as in ``happi.multiPlot``.
+
+
 **Example**::
 
     S = happi.Open("path/to/my/results")
@@ -780,7 +797,7 @@ there are many more optional arguments. They are directly passed to the *matplot
   Please refer to
   `matplotlib's line options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.plot>`_.
 
-.. rubric:: For the image: ``cmap``, ``aspect``, ``interpolation``
+.. rubric:: For the image: ``cmap``, ``aspect``, ``interpolation``, ``norm``
 
 ..
 
@@ -789,7 +806,7 @@ there are many more optional arguments. They are directly passed to the *matplot
 
 .. rubric:: For the colorbar: ``cbaspect``, ``orientation``, ``fraction``, ``pad``,
   ``shrink``, ``anchor``, ``panchor``, ``extend``, ``extendfrac``, ``extendrect``,
-  ``spacing``, ``ticks``, ``format``, ``drawedges``
+  ``spacing``, ``ticks``, ``format``, ``drawedges``, ``size``, ``clabel``
 
 ..
 

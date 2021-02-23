@@ -4,7 +4,7 @@ from .._Utils import *
 class Probe(Diagnostic):
 	"""Class for loading a Probe diagnostic"""
 
-	def _init(self, probeNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, chunksize=10000000, **kwargs):
+	def _init(self, probeNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, chunksize=10000000, data_transform=None, **kwargs):
 
 		self._h5probe = []
 		self._alltimesteps = []
@@ -113,6 +113,7 @@ class Probe(Diagnostic):
 
 		# Put data_log as object's variable
 		self._data_log = data_log
+		self._data_transform = data_transform
 
 		# Get the shape of the probe
 		self._myinfo = self._getMyInfo()
@@ -144,6 +145,7 @@ class Probe(Diagnostic):
 		self._averages = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
 		p = []
+		self.p_plot = []
 		for iaxis in range(self._naxes):
 
 			# calculate grid points locations
@@ -195,6 +197,7 @@ class Probe(Diagnostic):
 					self._label  .append(label)
 					self._units  .append(axisunits)
 					self._log    .append(False)
+					self.p_plot  .append(p[-1])
 		
 		self._selection = tuple(s if type(s) is slice else slice(s,s+1) for s in self._selection)
 		
@@ -218,8 +221,8 @@ class Probe(Diagnostic):
 			# Trick in a 3D simulation (the probe has to be projected)
 			if self._ndim_particles==3:
 				# unit vectors in the two dimensions + perpendicular
-				u1 = p[0] / self._np.linalg.norm(p[0])
-				u2 = p[1] / self._np.linalg.norm(p[1])
+				u1 = self.p_plot[0] / self._np.linalg.norm(self.p_plot[0])
+				u2 = self.p_plot[1] / self._np.linalg.norm(self.p_plot[1])
 				# Distances along first direction
 				p1[:,0] = self._np.dot(p1, u1)
 				p1[:,1:] = 0.
@@ -378,7 +381,9 @@ class Probe(Diagnostic):
 			return []
 		# get h5 iteration group
 		h5item = self._dataForTime[t]
-		return h5item.attrs["x_moved"] if "x_moved" in h5item.attrs else 0.
+		# Change units
+		factor, _ = self.units._convert("L_r", None)
+		return h5item.attrs["x_moved"]*factor if "x_moved" in h5item.attrs else 0.
 
 	# get all available timesteps
 	def getAvailableTimesteps(self):
@@ -413,6 +418,8 @@ class Probe(Diagnostic):
 			if self._averages[iaxis]:
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		A = self._np.squeeze(A) # remove averaged axes
+
+		if callable(self._data_transform): A = self._data_transform(A)
 		return A
 
 	# We override _prepare4
@@ -427,8 +434,20 @@ class Probe(Diagnostic):
 
 	# Overloading a plotting function in order to use pcolormesh instead of imshow
 	def _plotOnAxes_2D_(self, ax, A):
+		vmin = self.options.vmin
+		vmax = self.options.vmax
+		if self.options.vsym:
+			if vmin or vmax:
+				print("WARNING: vsym set on the same Diagnostic as vmin and/or vmax. Ignoring vmin/vmax.")
+		        
+			if self.options.vsym is True:
+				vmax = self._np.abs(A).max()
+			else:
+				vmax = self._np.abs(self.options.vsym)
+
+			vmin = -vmax
 		self._plot = ax.pcolormesh(self._xfactor*self._edges[0], self._yfactor*self._edges[1], (A),
-			vmin = self.options.vmin, vmax = self.options.vmax, **self.options.image)
+			vmin = vmin, vmax = vmax, **self.options.image)
 		return self._plot
 	def _animateOnAxes_2D_(self, ax, A):
 		self._plot.set_array( A.flatten() )

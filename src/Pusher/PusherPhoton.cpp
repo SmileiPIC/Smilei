@@ -43,13 +43,6 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     for( int i = 0 ; i<nDim_ ; i++ ) {
         position[i] =  &( particles.position( i, 0 ) );
     }
-#ifdef  __DEBUG
-    double *position_old[3];
-    for( int i = 0 ; i<nDim_ ; i++ ) {
-        position_old[i] =  &( particles.position_old( i, 0 ) );
-    }
-#endif
-    
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
     
@@ -58,11 +51,6 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
                                        momentum[2][ipart]*momentum[2][ipart] );
                                        
         // Move the photons
-#ifdef  __DEBUG
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            position_old[i][ipart] = position[i][ipart];
-        }
-#endif
         for( int i = 0 ; i<nDim_ ; i++ ) {
             position[i][ipart]     += dt*momentum[i][ipart]*( *invgf )[ipart];
         }

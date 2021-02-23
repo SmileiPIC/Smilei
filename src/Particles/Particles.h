@@ -28,10 +28,10 @@ public:
     Particles();
 
     //! Destructor for Particle
-    ~Particles();
+    virtual ~Particles();
 
     //! Create nParticles null particles of nDim size
-    void initialize( unsigned int nParticles, unsigned int nDim );
+    void initialize( unsigned int nParticles, unsigned int nDim, bool keep_position_old );
 
     //! Create nParticles null particles of nDim size
     void initialize( unsigned int nParticles, Particles &part );
@@ -43,7 +43,7 @@ public:
     void initializeReserve( unsigned int n_part_max, Particles &part );
 
     //! Resize Particles vectors
-    void resize( unsigned int nParticles, unsigned int nDim );
+    void resize( unsigned int nParticles, unsigned int nDim, bool keep_position_old );
 
     //! Resize Particles vectors
     void resize( unsigned int nParticles);
@@ -356,12 +356,12 @@ public:
     {
         return Tau;
     }
-
-
+    
+    void savePositions();
+    
     std::vector< std::vector<double  >*> double_prop;
     std::vector< std::vector<short   >*> short_prop;
     std::vector< std::vector<uint64_t>*> uint64_prop;
-
 
 #ifdef __DEBUG
     bool testMove( int iPartStart, int iPartEnd, Params &params );
@@ -401,10 +401,37 @@ public:
     //! Indices of first and last particles in each bin/cell
     std::vector<int> first_index, last_index;
 
+    virtual void initGPU() { std::cout << "Should not came here" << std::endl; };
+    virtual void syncGPU() { std::cout << "Should not came here" << std::endl; };
+    virtual void syncCPU() { std::cout << "Should not came here" << std::endl; };
+    virtual double* getPtrPosition( int idim ) {
+        return &(Position[idim][0]);
+    };
+    virtual double* getPtrMomentum( int idim ) {
+        return &(Momentum[idim][0]);
+    };
+    virtual double* getPtrWeight() {
+        return &(Weight[0]);
+    };
+    virtual double* getPtrChi() {
+        return &(Chi[0]);
+    };
+    virtual short* getPtrCharge() {
+        return &(Charge[0]);
+    };
+    virtual uint64_t* getPtrId() {
+        return &(Id[0]);
+    };
+    virtual double* getPtrTau() {
+        return &(Tau[0]);
+    };
+    virtual int* getPtrCellKeys() {
+        return &(cell_keys[0]);
+    };
+
+
 private:
 
 };
-
-
 
 #endif

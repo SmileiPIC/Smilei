@@ -343,7 +343,7 @@ public :
         }
     }
     
-    void checkMemoryConsumption( SmileiMPI *smpi );
+    void checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *uncoupled );
     
     void checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint );
     

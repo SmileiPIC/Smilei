@@ -71,7 +71,7 @@ def PartitionMatrix( matrix, listOfValues, oversize=0 ):
 class Performances(Diagnostic):
 	"""Class for loading a Performances diagnostic"""
 
-	def _init(self, raw=None, map=None, histogram=None, timesteps=None, data_log=False, species=None, **kwargs):
+	def _init(self, raw=None, map=None, histogram=None, timesteps=None, data_log=False, data_transform=None, species=None, **kwargs):
 
 		# Open the file(s) and load the data
 		self._h5items = {}
@@ -193,6 +193,7 @@ class Performances(Diagnostic):
 
 		# Put data_log as object's variable
 		self._data_log = data_log
+		self._data_transform = data_transform
 
 		# In case of "vecto" quantity, get the species
 		if species is not None:
@@ -353,6 +354,8 @@ class Performances(Diagnostic):
 		else:
 			A = eval(self._operation)
 		
+		if callable(self._data_transform): A = self._data_transform(A)
+
 		# If raw requested
 		if self._mode == "raw":
 			return A

@@ -77,10 +77,11 @@ function :math:`f_s` as a sum of :math:`N_s` *quasi-particles* (also referred to
   :label: fs_discretized
 
   f_s(t,\mathbf{x},\mathbf{p}) =
-    \sum_{p=1}^{N_s}\,w_p\,\,S\big(\mathbf{x}-\mathbf{x}_p(t)\big)\,\delta\big(\mathbf{p}-\mathbf{p}_p(t)\big)\,,
+    \sum_{p=1}^{N_s}\,\frac{w_p}{V_c}\,\,S\big(\mathbf{x}-\mathbf{x}_p(t)\big)\,\delta\big(\mathbf{p}-\mathbf{p}_p(t)\big)\,,
 
 where :math:`w_p` is a quasi-particle *weight*, :math:`\mathbf{x}_p` is its position,
-:math:`\mathbf{p}_p` is its momentum, :math:`S` is the shape-function of all quasi-particles,
+:math:`\mathbf{p}_p` is its momentum, :math:`V_c` is the hypervolume of the cell,
+:math:`S` is the shape-function of all quasi-particles,
 and :math:`\delta` is the Dirac distribution.
 
 In PIC codes, Vlasov's equation :eq:`Vlasov` is integrated along the continuous trajectories
@@ -167,7 +168,7 @@ to the cell it originates from:
 
 .. math::
 
-  w_p = \frac{n_s\big(\mathbf{x}_p(t=0)\big)}{N_s}\,.
+  w_p = \frac{n_s\big(\mathbf{x}_p(t=0)\big)}{N_s} V_c\,.
 
 This variable weighting is particularly beneficial when considering initially
 highly-inhomogeneous density distributions.
@@ -178,7 +179,9 @@ are computed on the grid using a simple projection technique:
 
 .. math::
 
-  \rho(t=0,\mathbf{x}) = \sum_s\,q_s\,\sum_p\,w_p\,S\big(\mathbf{x}-\mathbf{x}_p(t=0)\big)\,.
+  \rho(t=0,\mathbf{x}) = \sum_s\,\sum_p\,W_p\,S\big(\mathbf{x}-\mathbf{x}_p(t=0)\big)\,,
+
+where :math:`W_p = q_s w_p / V_c`.
 
 Then, the initial electric fields are computed from :math:`\rho(t=0,\mathbf{x})`
 by solving Poisson's equation. In :program:`Smilei`, this is done using the conjugate gradient
@@ -190,7 +193,7 @@ External (divergence-free) electric and/or magnetic fields can then be added to 
 resulting electrostatic fields, provided they fullfill Maxwell's equations :eq:`Maxwell`,
 and in particular Gauss' and Poisson's.
 
-Note that a relativistic plasma needs :doc:`special treatment <relativistic_fields_initialization>`.
+Note that a relativistically drifting plasma needs :doc:`special treatment <relativistic_fields_initialization>`.
 
 ----
 
@@ -222,13 +225,12 @@ particle position using a simple interpolation technique:
 .. math::
 
   \begin{eqnarray}
-  \mathbf{E}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{x}_p^{(n)}\right) \mathbf{E}^{(n)}(\mathbf{x})\,,\\
-  \mathbf{B}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{x}_p^{(n)}\right) \mathbf{B}^{(n)}(\mathbf{x})\,,
+  \mathbf{E}_p^{(n)} = V_c^{-1} \int d^3\mathbf{x}\, S\left(\mathbf{x}-\mathbf{x}_p^{(n)}\right) \mathbf{E}^{(n)}(\mathbf{x})\,,\\
+  \mathbf{B}_p^{(n)} = V_c^{-1} \int d^3\mathbf{x}\, S\left(\mathbf{x}-\mathbf{x}_p^{(n)}\right) \mathbf{B}^{(n)}(\mathbf{x})\,,
   \end{eqnarray}
 
 where we have used the time-centered magnetic fields
-:math:`\mathbf{B}^{(n)}=\tfrac{1}{2}[\mathbf{B}^{(n+1/2) } + \mathbf{B}^{(n-1/2)}]`,
-and :math:`V_c` denotes the volume of a cell.
+:math:`\mathbf{B}^{(n)}=\tfrac{1}{2}[\mathbf{B}^{(n+1/2) } + \mathbf{B}^{(n-1/2)}]`.
 
 
 Particle push
@@ -277,11 +279,11 @@ with charge :math:`q` are computed as:
 .. math::
 
   \begin{eqnarray}
-  (J_x)_{i+\tfrac{1}{2},j}^{(n+\tfrac{1}{2})} = (J_x)_{i-\tfrac{1}{2},j}^{(n+\tfrac{1}{2})} + q\,w_p\,\frac{\Delta x}{\Delta t}\,(W_x)_{i+\tfrac{1}{2},j}^{(n+\tfrac{1}{2})}\,\\
-  (J_y)_{i,j+\tfrac{1}{2}}^{(n+\tfrac{1}{2})} = (J_y)_{i,j-\tfrac{1}{2}}^{(n+\tfrac{1}{2})} + q\,w_p\,\frac{\Delta y}{\Delta t}\,(W_y)_{j,i+\tfrac{1}{2}}^{(n+\tfrac{1}{2})}\,
+  (J_x)_{i+\tfrac{1}{2},j}^{(n+\tfrac{1}{2})} = (J_x)_{i-\tfrac{1}{2},j}^{(n+\tfrac{1}{2})} + W_p\,\frac{\Delta x}{\Delta t}\,(W_x)_{i+\tfrac{1}{2},j}^{(n+\tfrac{1}{2})}\,\\
+  (J_y)_{i,j+\tfrac{1}{2}}^{(n+\tfrac{1}{2})} = (J_y)_{i,j-\tfrac{1}{2}}^{(n+\tfrac{1}{2})} + W_p\,\frac{\Delta y}{\Delta t}\,(W_y)_{j,i+\tfrac{1}{2}}^{(n+\tfrac{1}{2})}\,
   \end{eqnarray}
 
-where :math:`(W_x)^{(n+\tfrac{1}{2})}` and :math:`(W_y)^{(n+\tfrac{1}{2})}` are computed
+where :math:`(W_x)^{(n+\tfrac{1}{2})}` and :math:`(W_y)^{(n+\tfrac{1}{2})}` are quantities computed
 from the particle current and former positions :math:`x_p^{(n+1)}` and :math:`x_p^{(n)}`,
 respectively, using the method developed by Esirkepov.
 The particle current in the :math:`z`-direction (not a dimension of the grid) is,
@@ -289,7 +291,7 @@ in this geometry, computed using a simple projection:
 
 .. math::
 
-  (J_z)_{i,j} = q w_r \mathbf{v}_p\,S(\mathbf{x}_{i,j}-\mathbf{x}_p)\,.
+  (J_z)_{i,j} = W_r \mathbf{v}_p\,S(\mathbf{x}_{i,j}-\mathbf{x}_p)\,.
 
 
 In all cases, the charge density deposited by the particle is obtained using the simple
@@ -297,7 +299,7 @@ projection:
 
 .. math::
 
-  (\rho)_{i,j}^{(n+1)} = q\,w_p\,S(\mathbf{x}_{i,j}-\mathbf{x}_p^{(n+1)})\,.
+  (\rho)_{i,j}^{(n+1)} = W_p\,S(\mathbf{x}_{i,j}-\mathbf{x}_p^{(n+1)})\,.
 
 The total charge and current densities henceforth gather the contributions of all
 quasi-particles of all species. It is worth noting that, within a charge-conserving

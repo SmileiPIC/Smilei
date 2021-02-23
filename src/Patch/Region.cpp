@@ -33,14 +33,16 @@ void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     vecPatch_.patches_.clear();
     //vecPatch_.refHindex_ = rk;
 
-    if (global_region) 
+    if( global_region ) {
         decomposition_ = NULL;
-    else
+    } else {
         decomposition_ = DomainDecompositionFactory::createGlobal( params );
-
-    if ( (global_region) && (rk) )
+    }
+    
+    if( global_region && rk ) {
         return;
-
+    }
+    
     patch_ = PatchesFactory::create( params, smpi, decomposition_, vecPatch_.refHindex_ );
     patch_->setLocationAndAllocateFields( params, decomposition_, vecPatches );
     vecPatch_.patches_.push_back( patch_ );
@@ -461,6 +463,12 @@ void Region::reset_fitting(SmileiMPI* smpi, Params& params)
     //    cout << target_map[i] <<" " ;
     //cout << endl;
 
+    define_regions_map(target_map, smpi, params);
+}
+
+
+void Region::define_regions_map(int* target_map, SmileiMPI* smpi, Params& params)
+{
 
     int mpi_map[smpi->getSize()];
     for (int i=0 ; i< smpi->getSize() ;i++) {

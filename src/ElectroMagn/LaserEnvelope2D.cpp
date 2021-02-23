@@ -114,7 +114,7 @@ void LaserEnvelope2D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
             // |A|
             ( *Env_Aabs2D )( i, j )  = std::abs( ( *A2D )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|
-            ( *Env_Eabs2D )( i, j )  = std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*( *A2D )( i, j ) );
+            ( *Env_Eabs2D )( i, j )  = std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*omega*( *A2D )( i, j ) );
             // compute ponderomotive potential at timestep n
             ( *Phi2D )( i, j )       = ellipticity_factor*std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
             // compute ponderomotive potential at timestep n-1
@@ -297,7 +297,7 @@ void LaserEnvelope2D::computePhiEnvAEnvE( ElectroMagn *EMfields )
             ( *Phi2D )( i, j )       = ellipticity_factor*std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
             ( *Env_Aabs2D )( i, j )  = std::abs( ( *A2D )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|, forward finite difference for the time derivative
-            ( *Env_Eabs2D )( i, j )  = std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*( *A2D )( i, j ) );
+            ( *Env_Eabs2D )( i, j )  = std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*omega*( *A2D )( i, j ) );
             // |Ex envelope| = |-(dA/dy|, central finite difference for the space derivative
             ( *Env_Exabs2D )( i, j ) = std::abs( ( ( *A2D )( i, j+1 )-( *A2D )( i, j-1 ) )*one_ov_2dy );      
         } // end y loop

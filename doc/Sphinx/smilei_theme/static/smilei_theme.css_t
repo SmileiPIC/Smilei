@@ -264,7 +264,7 @@ table.fancy * {
 	border:0 !important;
 }
 
-table.fancy tr.row-odd {
+table.fancy > tbody > tr.row-odd {
 	background-color: {{ theme_main_color_pale }};
 }
 
@@ -361,6 +361,7 @@ div.highlight > pre {
 code {
 	background-color: {{ theme_pre_bg }};
 	color: #222;
+	word-break: break-word;
 }
 
 code.xref {
@@ -664,9 +665,10 @@ div.experimental > h2:first-of-type::after,
 dl.experimental dt:first-of-type::after
 {
 	content: "experimental";
+	display: inline-block;
 	background:red;
 	color:white;
-	margin: 0 10px;
+	margin: 4px 10px;
 	padding: 0 5px;
 	border-radius: 5px;
 	font-size: 0.8em;
@@ -914,7 +916,9 @@ div.toctree-smilei hr {
 	}
 	
 	.document {
+		position: relative;
 		width: auto !important;
+		z-index:0;
 	}
 	
 	.footer {

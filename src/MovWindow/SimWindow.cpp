@@ -171,7 +171,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 if( mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL ) {
                     if ( vecPatches_old[ipatch]->Pcoordinates[0]!=0 ) {
                         send_patches_.push_back( mypatch ); // Stores pointers to patches to be sent later
-                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] ) * nmessage, params );
+                        int Href_receiver = 0;
+                        for (int irk = 0; irk < mypatch->MPI_neighbor_[0][0]; irk++) Href_receiver += smpi->patch_count[irk];
+                        // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
+                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] - Href_receiver ) * nmessage, params );
                     }
                 }
             } else { //In case my left neighbor belongs to me:
@@ -224,7 +227,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             //Receive Patch if necessary
             if( mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL ) {
                 if ( mypatch->Pcoordinates[0]!=params.number_of_patches[0]-1 ) {
-                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex )*nmessage, params );
+                    // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
+                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex - vecPatches.refHindex_ )*nmessage, params );
                     patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
                 }
             }
@@ -274,13 +278,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                     mypatch->vecSpecies[ispec]->setXminBoundaryCondition();
                 }
-            }
-            if( mypatch->has_an_MPI_neighbor() ) {
-                mypatch->createType( params );
-            } else
-            
-            {
-                mypatch->cleanType();
             }
             
             if( mypatch->isXmin() ) {
@@ -402,12 +399,6 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                                                         }
                                                     }
                             #endif*/
-                        }
-                        mypatch->copyPositions(mypatch->vecSpecies);
-                        if (params.geometry=="AMcylindrical") {
-                            for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                                ParticleCreator::regulateWeightwithPositionAM( mypatch->vecSpecies[ispec]->particles, mypatch->vecSpecies[ispec]->position_initialization_on_species_type_, mypatch->vecSpecies[ispec]->cell_length[1]);
-                            }
                         }
                         
                         mypatch->EMfields->applyExternalFields( mypatch );

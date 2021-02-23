@@ -97,6 +97,12 @@ public:
     //! this will present the data as a 2d matrix
     double **data_2D;
     
+    void create_sub_fields  ( int iDim, int iNeighbor, int ghost_size ) override;
+    void extract_fields_exch( int iDim, int iNeighbor, int ghost_size ) override;
+    void inject_fields_exch ( int iDim, int iNeighbor, int ghost_size ) override;
+    void extract_fields_sum ( int iDim, int iNeighbor, int ghost_size ) override;
+    void inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size ) override;
+
 };
 
 #endif

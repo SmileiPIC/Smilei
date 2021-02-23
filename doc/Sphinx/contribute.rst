@@ -5,9 +5,7 @@ Contributions to the development of :program:`Smilei` are welcome.
 
 * `Chatroom <https://app.element.io/#/room/!LQrdVpOJEohPSWMlmf:matrix.org>`_ for discussion and sharing.
 * `GitHub issues <https://github.com/SmileiPIC/Smilei/issues>`_ for bugs and requests.
-* `GitHub fork <https://github.com/SmileiPIC/Smilei/issues>`_ to develop new features
-  (you can make a `pull request <https://github.com/SmileiPIC/Smilei/pulls>`_ when
-  your features are ready).
+* Develop new features (clone the repository clicking the "fork" button the `GitHub page <https://github.com/SmileiPIC/Smilei>`_  so you can then make a `pull request <https://github.com/SmileiPIC/Smilei/pulls>`_ to integrate them in the main repository).
 
 Guidelines for new developments are:
 

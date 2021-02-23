@@ -23,6 +23,7 @@ class Diagnostic(object):
 		self._units = []
 		self._log = []
 		self._data_log = False
+		self._data_transform = None
 		self._error = []
 		self._xoffset = 0.
 		
@@ -474,24 +475,23 @@ class Diagnostic(object):
 		
 		self._plotOnAxes(ax, self._timesteps[0])
 		
-		# Find out if jupyter notebook
-		jupyter = False
-		try:
-			if get_ipython().__class__.__name__ == 'ZMQInteractiveShell':
-				jupyter = True
-		except:
-			pass
+		# # Find out if jupyter notebook
+		# jupyter = False
+		# try:
+		# 	if get_ipython().__class__.__name__ == 'ZMQInteractiveShell':
+		# 		jupyter = True
+		# except:
+		# 	pass
+		# from ipywidgets import FloatSlider, interact, VBox
+		# self.slider = FloatSlider( value=self._timesteps[0], min=self._timesteps[0], max=self._timesteps[-1] )
+		# self.slider.layout.width = "100%"
+		# self.interact = interact( update, t=self.slider )
 		
-		if jupyter:
-			from ipywidgets import FloatSlider, interact, VBox
-			self.slider = FloatSlider( value=self._timesteps[0], min=self._timesteps[0], max=self._timesteps[-1] )
-			self.slider.layout.width = "100%"
-			self.interact = interact( update, t=self.slider )
-		else:
-			from matplotlib.widgets import Slider
-			slider_axes = self._plt.axes([0.2, 0.05, 0.55, 0.03])
-			self.slider = Slider(slider_axes, 'time', self._timesteps[0], self._timesteps[-1], valinit=self._timesteps[0])
-			self.slider.on_changed(update)
+		from matplotlib.widgets import Slider
+		slider_axes = self._plt.axes([0.2, 0.05, 0.55, 0.03])
+		self.slider = Slider(slider_axes, 'time', self._timesteps[0], self._timesteps[-1], valinit=self._timesteps[0])
+		self.slider.on_changed(update)
+		slider_axes.prevent_garbage_collect = self.slider
 		
 		self.info()
 	
@@ -663,8 +663,7 @@ class Diagnostic(object):
 		if self.dim == 2 and self.options.transparent:
 			cmap = self.options.image["cmap"]
 			if type(cmap)==str: cmap = self._plt.matplotlib.cm.get_cmap(cmap)
-			d = cmap._segmentdata
-			new_cmap = self._plt.matplotlib.colors.LinearSegmentedColormap("tmp_cmap", cmap._segmentdata, N=256, gamma=1.0)
+			new_cmap = cmap.__copy__()
 			if self.options.transparent in ["both", "under"]:
 				new_cmap.set_under(color="white", alpha="0")
 			if self.options.transparent in ["both", "over"]:
@@ -710,8 +709,15 @@ class Diagnostic(object):
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		if 'cax' not in dir(ax):
 			ax.cax = {}
-		if "aspect" not in self.options.colorbar.keys() or self.options.colorbar["aspect"]>0:
-			ax.cax[cax_id] = ax.figure.colorbar(mappable=self._plot, ax=ax, use_gridspec=False, **self.options.colorbar)
+		if cax_id not in ax.cax and ("aspect" not in self.options.cax or self.options.cax["aspect"]>0):
+			try:
+				divider = ax.divider
+			except:
+				from mpl_toolkits.axes_grid1 import make_axes_locatable
+				divider = make_axes_locatable(ax)
+				ax.divider = divider
+			cax = divider.append_axes(**self.options.cax)
+			ax.cax[cax_id] = self._plt.colorbar(mappable=self._plot, cax=cax, **self.options.colorbar)
 		self._setTitle(ax, t)
 		self._setAxesOptions(ax)
 		self._setColorbarOptions(ax.cax[cax_id].ax)
@@ -740,8 +746,16 @@ class Diagnostic(object):
 		self._plot = self._animateOnAxes_2D_(ax, A)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		vmin = self.options.vmin
-		if vmin is None: vmin = A.min()
 		vmax = self.options.vmax
+		if self.options.vsym:
+			# Don't warn here, it will be annoying if every frame
+			if self.options.vsym is True:
+				vmax = self._np.abs(A).max()
+			else:
+				vmax = self._np.abs(self.options.vsym)
+
+			vmin = -vmax
+		if vmin is None: vmin = A.min()
 		if vmax is None: vmax = A.max()
 		self._plot.set_clim(vmin, vmax)
 		ax.cax[cax_id].mappable.set_clim(vmin, vmax)
@@ -752,8 +766,20 @@ class Diagnostic(object):
 	# This is overloaded by class "Probe" because it requires to replace imshow
 	# Also overloaded by class "Performances" to add a line plot
 	def _plotOnAxes_2D_(self, ax, A):
+		vmin = self.options.vmin
+		vmax = self.options.vmax
+		if self.options.vsym:
+			if vmin or vmax:
+				print("WARNING: vsym set on the same Diagnostic as vmin and/or vmax. Ignoring vmin/vmax.")
+		        
+			if self.options.vsym is True:
+				vmax = self._np.abs(A).max()
+			else:
+				vmax = self._np.abs(self.options.vsym)
+
+			vmin = -vmax
 		self._plot = ax.imshow( self._np.rot90(A),
-			vmin = self.options.vmin, vmax = self.options.vmax, extent=self._extent, **self.options.image)
+			vmin = vmin, vmax = vmax, extent=self._extent, **self.options.image)
 		return self._plot
 	def _animateOnAxes_2D_(self, ax, A):
 		self._plot.set_data( self._np.rot90(A) )

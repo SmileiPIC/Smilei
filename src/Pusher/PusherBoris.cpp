@@ -26,7 +26,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
+    double *invgf = &( smpi->dynamics_invgf[ithread][0] );
     
     double charge_over_mass_dts2;
     double umx, umy, umz, upx, upy, upz;
@@ -35,20 +35,19 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double pxsm, pysm, pzsm;
     double local_invgf;
     
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
+    double* position_x = particles.getPtrPosition(0);
+    double* position_y = NULL;
+    double* position_z = NULL;
+    if (nDim_>1) {
+        position_y = particles.getPtrPosition(1);
+        if (nDim_>2) {
+            position_z = particles.getPtrPosition(2);
+        }
     }
-    double *position[3];
-    for( int i = 0 ; i<nDim_ ; i++ ) {
-        position[i] =  &( particles.position( i, 0 ) );
-    }
-#ifdef  __DEBUG
-    double *position_old[3];
-    for( int i = 0 ; i<nDim_ ; i++ ) {
-        position_old[i] =  &( particles.position_old( i, 0 ) );
-    }
-#endif
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    
     short *charge = &( particles.charge( 0 ) );
     
     int nparts = particles.size();
@@ -69,9 +68,9 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         pzsm = charge_over_mass_dts2*( *( Ez+ipart ) );
         
         //(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);
-        umx = momentum[0][ipart] + pxsm;
-        umy = momentum[1][ipart] + pysm;
-        umz = momentum[2][ipart] + pzsm;
+        umx = momentum_x[ipart] + pxsm;
+        umy = momentum_y[ipart] + pysm;
+        umz = momentum_z[ipart] + pzsm;
         local_invgf = 1. / sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
         
         // Rotation in the magnetic field
@@ -95,21 +94,19 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         pxsm += upx;
         pysm += upy;
         pzsm += upz;
-        ( *invgf )[ipart] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        invgf[ipart] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
         
-        momentum[0][ipart] = pxsm;
-        momentum[1][ipart] = pysm;
-        momentum[2][ipart] = pzsm;
+        momentum_x[ipart] = pxsm;
+        momentum_y[ipart] = pysm;
+        momentum_z[ipart] = pzsm;
         
         // Move the particle
-#ifdef  __DEBUG
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            position_old[i][ipart] = position[i][ipart];
+        position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart];
+        if (nDim_>1) {
+            position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart];
+            if (nDim_>2) {
+                position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart];
+            }
         }
-#endif
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            position[i][ipart]     += dt*momentum[i][ipart]*( *invgf )[ipart];
-        }
-        
     }
 }

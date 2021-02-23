@@ -53,9 +53,6 @@ public:
     
     void setLocationAndAllocateFields( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
    
-    //Copy positions of particles from source species to species which are initialized on top of another one.
-    void copyPositions( std::vector<Species *> vecSpecies_to_update);
-
     //! Destructor for Patch
     virtual ~Patch();
     
@@ -130,27 +127,22 @@ public:
     void cleanupSentParticles( int ispec, std::vector<int> *indexes_of_particles_to_exchange );
     
     //! init comm / sum densities
-    virtual void initSumField( Field *field, int iDim, SmileiMPI *smpi ) = 0;
-    //! finalize comm / sum densities
-    virtual void finalizeSumField( Field *field, int iDim ) = 0;
+    virtual void initSumField( Field *field, int iDim, SmileiMPI *smpi );
     //! init comm / sum densities
-    virtual void initSumFieldComplex( Field *field, int iDim, SmileiMPI *smpi ) = 0;
+    virtual void initSumFieldComplex( Field *field, int iDim, SmileiMPI *smpi ) {};
     //! finalize comm / sum densities
-    virtual void finalizeSumFieldComplex( Field *field, int iDim ) = 0;
+    virtual void finalizeSumField( Field *field, int iDim );
     
     //! init comm / exchange fields in direction iDim only
-    virtual void initExchange( Field *field, int iDim, SmileiMPI *smpi ) = 0;
+    virtual void initExchange( Field *field, int iDim, SmileiMPI *smpi );
     //! init comm / exchange complex fields in direction iDim only
-    virtual void initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi ) = 0;
+    virtual void initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi );
     //! finalize comm / exchange fields
-    virtual void finalizeExchange( Field *field, int iDim ) = 0;
-    //! finalize comm / exchange complex fields in direction iDim only
-    virtual void finalizeExchangeComplex( Field *field, int iDim ) = 0;
+    virtual void finalizeExchange( Field *field, int iDim );
     
     virtual void exchangeField_movewin ( Field* field, int clrw ) = 0;
     
     // Create MPI_Datatype to exchange fields
-    virtual void createType( Params &params ) = 0;
     virtual void createType2( Params &params ) = 0;
     virtual void cleanType() = 0;
     

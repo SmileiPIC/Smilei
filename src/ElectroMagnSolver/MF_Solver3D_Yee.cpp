@@ -16,18 +16,19 @@ MF_Solver3D_Yee::~MF_Solver3D_Yee()
 void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
 {
     // Static-cast of the fields
-    Field3D *Ex3D = static_cast<Field3D *>( fields->Ex_ );
-    Field3D *Ey3D = static_cast<Field3D *>( fields->Ey_ );
-    Field3D *Ez3D = static_cast<Field3D *>( fields->Ez_ );
-    Field3D *Bx3D = static_cast<Field3D *>( fields->Bx_ );
-    Field3D *By3D = static_cast<Field3D *>( fields->By_ );
-    Field3D *Bz3D = static_cast<Field3D *>( fields->Bz_ );
+    double *Ex3D = &(fields->Ex_->data_[0]);
+    double *Ey3D = &(fields->Ey_->data_[0]);
+    double *Ez3D = &(fields->Ez_->data_[0]);
+    double *Bx3D = &(fields->Bx_->data_[0]);
+    double *By3D = &(fields->By_->data_[0]);
+    double *Bz3D = &(fields->Bz_->data_[0]);
     
     // Magnetic field Bx^(p,d,d)
     for( unsigned int i=0 ; i<nx_p;  i++ ) {
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
             for( unsigned int k=1 ; k<nz_d-1 ; k++ ) {
-                ( *Bx3D )( i, j, k ) += -dt_ov_dy * ( ( *Ez3D )( i, j, k ) - ( *Ez3D )( i, j-1, k ) ) + dt_ov_dz * ( ( *Ey3D )( i, j, k ) - ( *Ey3D )( i, j, k-1 ) );
+                Bx3D[ i*(ny_d*nz_d) + j*(nz_d) + k ] += -dt_ov_dy * ( Ez3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] - Ez3D[ i*(ny_p*nz_d) + (j-1)*(nz_d) + k   ] )
+                                                     +   dt_ov_dz * ( Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] - Ey3D[ i*(ny_d*nz_p) +  j   *(nz_p) + k-1 ] );
             }
         }
     }
@@ -36,7 +37,8 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
         for( unsigned int j=0 ; j<ny_p ; j++ ) {
             for( unsigned int k=1 ; k<nz_d-1 ; k++ ) {
-                ( *By3D )( i, j, k ) += -dt_ov_dz * ( ( *Ex3D )( i, j, k ) - ( *Ex3D )( i, j, k-1 ) ) + dt_ov_dx * ( ( *Ez3D )( i, j, k ) - ( *Ez3D )( i-1, j, k ) );
+                By3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] += -dt_ov_dz * ( Ex3D[ i*(ny_p*nz_p) + j*(nz_p) + k ] - Ex3D[  i   *(ny_p*nz_p) + j*(nz_p) + k-1 ] )
+                                                     +   dt_ov_dx * ( Ez3D[ i*(ny_p*nz_d) + j*(nz_d) + k ] - Ez3D[ (i-1)*(ny_p*nz_d) + j*(nz_d) + k   ] );
             }
         }
     }
@@ -45,7 +47,8 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
         for( unsigned int j=1 ; j<ny_d-1 ; j++ ) {
             for( unsigned int k=0 ; k<nz_p ; k++ ) {
-                ( *Bz3D )( i, j, k ) += -dt_ov_dx * ( ( *Ey3D )( i, j, k ) - ( *Ey3D )( i-1, j, k ) ) + dt_ov_dy * ( ( *Ex3D )( i, j, k ) - ( *Ex3D )( i, j-1, k ) );
+                Bz3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] += -dt_ov_dx * ( Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + k ] - Ey3D[ (i-1)*(ny_d*nz_p) +  j   *(nz_p) + k ] )
+                                                     +   dt_ov_dy * ( Ex3D[ i*(ny_p*nz_p) + j*(nz_p) + k ] - Ex3D[  i   *(ny_p*nz_p) + (j-1)*(nz_p) + k ] );
             }
         }
     }

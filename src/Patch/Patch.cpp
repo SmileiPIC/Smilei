@@ -157,8 +157,8 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
 
 void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition )
 {
-    // initialize vector of Species (virtual)
-    vecSpecies = SpeciesFactory::createVector( params, this );
+    // initialize vector of Species (virtual) in place
+    SpeciesFactory::createVector( params, this );
 
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create( params, domain_decomposition, vecSpecies, this );
@@ -177,17 +177,13 @@ void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition
 
     probesInterp = InterpolatorFactory::create( params, this, false );
 
-    if( has_an_MPI_neighbor() ) {
-        createType( params );
-    }
-
 }
 
 
 void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsigned int n_moved, bool with_particles = true )
 {
-    // clone vector of Species (virtual)
-    vecSpecies = SpeciesFactory::cloneVector( patch->vecSpecies, params, this, with_particles );
+    // clone vector of Species (virtual) in place
+    SpeciesFactory::cloneVector( patch->vecSpecies, params, this, with_particles );
 
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone( patch->EMfields, params, vecSpecies, this, n_moved );
@@ -205,10 +201,6 @@ void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsign
     probes = DiagnosticFactory::cloneProbes( patch->probes );
 
     probesInterp = InterpolatorFactory::create( params, this, false );
-
-    if( has_an_MPI_neighbor() ) {
-        createType( params );
-    }
 
 }
 
@@ -783,7 +775,6 @@ void Patch::cleanMPIBuffers( int ispec, Params &params )
             vecSpecies[ispec]->MPI_buffer_.part_index_recv_sz[iDim][iNeighbor] = 0;
         }
     }
-    vecSpecies[ispec]->indexes_of_particles_to_exchange.clear();
 } // cleanMPIBuffers
 
 
@@ -793,10 +784,9 @@ void Patch::cleanMPIBuffers( int ispec, Params &params )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch::initExchParticles( SmileiMPI *smpi, int ispec, Params &params )
 {
-    Particles &cuParticles = ( *vecSpecies[ispec]->particles );
+    Particles &cuParticles = ( *vecSpecies[ispec]->particles_to_move );
     int ndim = params.nDim_field;
     int idim, check;
-    std::vector<int> *indexes_of_particles_to_exchange = &vecSpecies[ispec]->indexes_of_particles_to_exchange;
 //    double xmax[3];
 
     for( int iDim=0 ; iDim < ndim ; iDim++ ) {
@@ -808,7 +798,7 @@ void Patch::initExchParticles( SmileiMPI *smpi, int ispec, Params &params )
         }
     }
 
-    int n_part_send = indexes_of_particles_to_exchange->size();
+    int n_part_send = cuParticles.size();
 
     int iPart;
 
@@ -816,7 +806,7 @@ void Patch::initExchParticles( SmileiMPI *smpi, int ispec, Params &params )
     //Put particles in the send buffer it belongs to. Priority to lower dimensions.
     if( params.geometry != "AMcylindrical" ) {
         for( int i=0 ; i<n_part_send ; i++ ) {
-            iPart = ( *indexes_of_particles_to_exchange )[i];
+            iPart = i;
             check = 0;
             idim = 0;
             //Put indexes of particles in the first direction they will be exchanged and correct their position according to periodicity for the first exchange only.
@@ -841,7 +831,7 @@ void Patch::initExchParticles( SmileiMPI *smpi, int ispec, Params &params )
         r_max2 = max_local[1] * max_local[1] ;
         r_min2 = min_local[1] * min_local[1] ;
         for( int i=0 ; i<n_part_send ; i++ ) {
-            iPart = ( *indexes_of_particles_to_exchange )[i];
+            iPart = i;
             //Put indexes of particles in the first direction they will be exchanged and correct their position according to periodicity for the first exchange only.
             if( cuParticles.position( 0, iPart ) < min_local[0] ) {
                 if( neighbor_[0][0]!=MPI_PROC_NULL ) {
@@ -919,7 +909,7 @@ void Patch::exchNbrOfParticles( SmileiMPI *smpi, int ispec, Params &params, int 
 
 void Patch::endNbrOfParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch )
 {
-    Particles &cuParticles = ( *vecSpecies[ispec]->particles );
+    Particles &cuParticles = ( *vecSpecies[ispec]->particles_to_move );
 
     /********************************************************************************/
     // Wait for end of communications over number of particles
@@ -953,7 +943,7 @@ void Patch::endNbrOfParticles( SmileiMPI *smpi, int ispec, Params &params, int i
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch::prepareParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch )
 {
-    Particles &cuParticles = ( *vecSpecies[ispec]->particles );
+    Particles &cuParticles = ( *vecSpecies[ispec]->particles_to_move );
 
     int n_part_send;
     int h0 = ( *vecPatch )( 0 )->hindex;
@@ -1072,7 +1062,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
     int ndim = params.nDim_field;
     int idim, check;
 
-    Particles &cuParticles = ( *vecSpecies[ispec]->particles );
+    Particles &cuParticles = ( *vecSpecies[ispec]->particles_to_move );
 
     int n_part_recv;
 
@@ -1098,11 +1088,9 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                     //... copy it at the back of the local particle vector ...
                                     ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );
                                     //...adjust particles->last_index or cell_keys ...
-                                    vecSpecies[ispec]->addSpaceForOneParticle();
+                                    //vecSpecies[ispec]->addSpaceForOneParticle();
                                     //... and add its index to the particles to be sent later...
                                     vecSpecies[ispec]->MPI_buffer_.part_index_send[idim][0].push_back( cuParticles.size()-1 );
-                                    //..without forgeting to add it to the list of particles to clean.
-                                    vecSpecies[ispec]->addPartInExchList( cuParticles.size()-1 );
                                 }
                                 //Remove it from receive buffer.
                                 ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).eraseParticle( iPart );
@@ -1114,9 +1102,8 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                 if( neighbor_[idim][1]!=MPI_PROC_NULL ) { //if neighbour exists
                                     ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );
                                     //...adjust particles->last_index or cell_keys ...
-                                    vecSpecies[ispec]->addSpaceForOneParticle();
+                                    //vecSpecies[ispec]->addSpaceForOneParticle();
                                     vecSpecies[ispec]->MPI_buffer_.part_index_send[idim][1].push_back( cuParticles.size()-1 );
-                                    vecSpecies[ispec]->addPartInExchList( cuParticles.size()-1 );
                                 }
                                 ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).eraseParticle( iPart );
                                 vecSpecies[ispec]->MPI_buffer_.part_index_recv_sz[iDim][( iNeighbor+1 )%2]--;
@@ -1137,11 +1124,10 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                 //... copy it at the back of the local particle vector ...
                                 ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );
                                 //...adjust particles->last_index or cell_keys ...
-                                vecSpecies[ispec]->addSpaceForOneParticle();
+                                //vecSpecies[ispec]->addSpaceForOneParticle();
                                 //... and add its index to the particles to be sent later...
                                 vecSpecies[ispec]->MPI_buffer_.part_index_send[1][0].push_back( cuParticles.size()-1 );
                                 //..without forgeting to add it to the list of particles to clean.
-                                vecSpecies[ispec]->addPartInExchList( cuParticles.size()-1 );
                             }
                             //Remove it from receive buffer.
                             ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).eraseParticle( iPart );
@@ -1153,9 +1139,8 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                 //MESSAGE("particle diag +R");
                                 ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );
                                 //...adjust particles->last_index or cell_keys ...
-                                vecSpecies[ispec]->addSpaceForOneParticle();
+                                //vecSpecies[ispec]->addSpaceForOneParticle();
                                 vecSpecies[ispec]->MPI_buffer_.part_index_send[1][1].push_back( cuParticles.size()-1 );
-                                vecSpecies[ispec]->addPartInExchList( cuParticles.size()-1 );
                             }
                             ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).eraseParticle( iPart );
                             vecSpecies[ispec]->MPI_buffer_.part_index_recv_sz[0][( iNeighbor+1 )%2]--;
@@ -1212,6 +1197,7 @@ void Patch::cleanParticlesOverhead( Params &params )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch::cleanupSentParticles( int ispec, std::vector<int> *indexes_of_particles_to_exchange )
 {
+    ERROR( "Not used, cleanup done in Species::sortParticles" );
     /********************************************************************************/
     // Delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
     /********************************************************************************/
@@ -1263,19 +1249,179 @@ void Patch::cleanupSentParticles( int ispec, std::vector<int> *indexes_of_partic
 
 } // END cleanupSentParticles
 
-//Copy positions of all particles of the target species to the positions of the species to update.
-//Used for particle initialization on top of another species
-void Patch::copyPositions( std::vector<Species *> vecSpecies_to_update )
+
+void Patch::initExchange( Field *field, int iDim, SmileiMPI *smpi )
 {
-    for( unsigned int i=0; i<vecSpecies_to_update.size(); i++ ) {
-        if( vecSpecies_to_update[i]->position_initialization_on_species_==false )
-            continue;
-        unsigned int target_species = vecSpecies_to_update[i]->position_initialization_on_species_index;
-        if( vecSpecies_to_update[i]->getNbrOfParticles() != vecSpecies_to_update[target_species]->getNbrOfParticles() ) {
-            ERROR( "Number of particles in species '"<<vecSpecies_to_update[i]->name_<<"' is not equal to the number of particles in species '"<<vecSpecies_to_update[target_species]->name_<<"'." );
+    if( field->MPIbuff.srequest.size()==0 ) {
+        field->MPIbuff.allocate( nDim_fields_ );
+
+        int tagp( 0 );
+        if( field->name == "Bx" ) {
+            tagp = 6;
         }
-        // We copy target_species which is the index of the species, already created, from which species_to_update particles positions are copied.
-        vecSpecies_to_update[i]->particles->Position = vecSpecies_to_update[target_species]->particles->Position;
+        if( field->name == "By" ) {
+            tagp = 7;
+        }
+        if( field->name == "Bz" ) {
+            tagp = 8;
+        }
+
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
-    return;
-}
+
+    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
+
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+
+            int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
+            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
+
+        } // END of Send
+
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+
+            int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
+            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+
+        } // END of Recv
+
+    } // END for iNeighbor
+
+} // END initExchange( Field* field, int iDim )
+
+void Patch::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
+{
+    if( field->MPIbuff.srequest.size()==0 ) {
+        field->MPIbuff.allocate( nDim_fields_ );
+
+        int tagp( 0 );
+        if( field->name == "Bl" ) {
+            tagp = 6;
+        }
+        if( field->name == "Br" ) {
+            tagp = 7;
+        }
+        if( field->name == "Bt" ) {
+            tagp = 8;
+        }
+
+        field->MPIbuff.defineTags( this, smpi, tagp );
+    }
+
+    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
+
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
+            MPI_Isend( static_cast<cField *>(field->sendFields_[iDim*2+iNeighbor])->cdata_, 2*field->sendFields_[iDim*2+iNeighbor]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
+        } // END of Send
+
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
+            MPI_Irecv( static_cast<cField *>(field->recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_, 2*field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+        } // END of Recv
+
+    } // END for iNeighbor
+} // END initExchangeComplex( Field* field, int iDim )
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch exhange Fields communications through MPI for direction iDim
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::finalizeExchange( Field *field, int iDim )
+{
+    MPI_Status sstat    [nDim_fields_][2];
+    MPI_Status rstat    [nDim_fields_][2];
+
+    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            MPI_Wait( &( field->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
+        }
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            MPI_Wait( &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
+        }
+    }
+
+} // END finalizeExchange( Field* field, int iDim )
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch sum Fields communications through MPI in direction iDim
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::initSumField( Field *field, int iDim, SmileiMPI *smpi )
+{
+    if( field->MPIbuff.srequest.size()==0 ) {
+        field->MPIbuff.allocate( nDim_fields_ );
+
+        int tagp( 0 );
+        if( field->name == "Jx" ) {
+            tagp = 1;
+        }
+        if( field->name == "Jy" ) {
+            tagp = 2;
+        }
+        if( field->name == "Jz" ) {
+            tagp = 3;
+        }
+        if( field->name == "Rho" ) {
+            tagp = 4;
+        }
+
+        field->MPIbuff.defineTags( this, smpi, tagp );
+    }
+
+    int patch_nbNeighbors_( 2 );
+
+    /********************************************************************************/
+    // Send/Recv in a buffer data to sum
+    /********************************************************************************/
+    for( int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++ ) {
+
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
+            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
+        } // END of Send
+
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
+            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
+                       MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+        } // END of Recv
+
+    } // END for iNeighbor
+
+} // END initSumField
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Finalize current patch sum Fields communications through MPI for direction iDim
+// Proceed to the local reduction
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::finalizeSumField( Field *field, int iDim )
+{
+    MPI_Status sstat    [nDim_fields_][2];
+    MPI_Status rstat    [nDim_fields_][2];
+
+    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            MPI_Wait( &( field->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
+        }
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            MPI_Wait( &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
+        }
+    }
+
+} // END finalizeSumField
+

@@ -67,6 +67,12 @@ public :
     #endif
         for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
             unsigned int ipatch = ifield%nPatches;
+            for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, iNeighbor ) ) {
+                    fields[ifield]->create_sub_fields ( 0, iNeighbor, 2*oversize[0]+1+fields[ifield]->isDual_[0] );
+                    fields[ifield]->extract_fields_sum( 0, iNeighbor, oversize[0] );
+                }
+            }
             if ( !dynamic_cast<cField*>( fields[ipatch] ) )
                 vecPatches( ipatch )->initSumField( fields[ifield], 0, smpi );
             else
@@ -112,10 +118,12 @@ public :
     #endif
         for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
             unsigned int ipatch = ifield%nPatches;
-            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
-                vecPatches( ipatch )->finalizeSumField( fields[ifield], 0 );
-            else
-                vecPatches( ipatch )->finalizeSumFieldComplex( fields[ifield], 0 );
+            vecPatches( ipatch )->finalizeSumField( fields[ifield], 0 );
+            for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
+                    fields[ifield]->inject_fields_sum( 0, iNeighbor, oversize[0] );
+                }
+            }
         }
         // END iDim = 0 sync
         // -----------------
@@ -132,6 +140,12 @@ public :
     #endif
             for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
                 unsigned int ipatch = ifield%nPatches;
+                for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                    if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, iNeighbor ) ) {
+                        fields[ifield]->create_sub_fields ( 1, iNeighbor, 2*oversize[1]+1+fields[ifield]->isDual_[1] );
+                        fields[ifield]->extract_fields_sum( 1, iNeighbor, oversize[1] );
+                    }
+                }
                 if ( !dynamic_cast<cField*>( fields[ipatch] ) )
                     vecPatches( ipatch )->initSumField( fields[ifield], 1, smpi );
                 else
@@ -181,10 +195,12 @@ public :
     #endif
             for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
                 unsigned int ipatch = ifield%nPatches;
-                if ( !dynamic_cast<cField*>( fields[ipatch] ) )
-                    vecPatches( ipatch )->finalizeSumField( fields[ifield], 1 );
-                else
-                    vecPatches( ipatch )->finalizeSumFieldComplex( fields[ifield], 1 );
+                vecPatches( ipatch )->finalizeSumField( fields[ifield], 1 );
+                for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                    if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
+                        fields[ifield]->inject_fields_sum( 1, iNeighbor, oversize[1] );
+                    }
+                }
             }
             // END iDim = 1 sync
             // -----------------
@@ -201,6 +217,12 @@ public :
     #endif
                 for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
                     unsigned int ipatch = ifield%nPatches;
+                    for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                        if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, iNeighbor ) ) {
+                            fields[ifield]->create_sub_fields ( 2, iNeighbor, 2*oversize[2]+1+fields[ifield]->isDual_[2] );
+                            fields[ifield]->extract_fields_sum( 2, iNeighbor, oversize[2] );
+                        }
+                    }
                     vecPatches( ipatch )->initSumField( fields[ifield], 2, smpi );
                 }
 
@@ -248,6 +270,11 @@ public :
                 for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
                     unsigned int ipatch = ifield%nPatches;
                     vecPatches( ipatch )->finalizeSumField( fields[ifield], 2 );
+                    for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                        if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
+                            fields[ifield]->inject_fields_sum( 2, iNeighbor, oversize[2] );
+                        }
+                    }
                 }
                 // END iDim = 2 sync
                 // -----------------
@@ -303,14 +330,6 @@ public :
     static void finalizeExchangeAllComponentsAlongY( std::vector<Field *> &fields, VectorPatch &vecPatches );
     static void exchangeAllComponentsAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeExchangeAllComponentsAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches );
-
-    //! Deprecated field functions
-    static void exchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeExchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches );
-    static void exchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeExchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches );
-    static void exchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeExchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches );
 
 };
 

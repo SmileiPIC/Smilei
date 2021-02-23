@@ -686,9 +686,8 @@ Each species has to be defined in a ``Species`` block::
    * ``"random"`` for randomly distributed.
    * ``"centered"`` for centered in each cell.
    * The :py:data:`name` of another species from which the positions are copied.
-     This option requires (1) that the *target* species' positions are initialized
-     using one of the three other options above and (2) that the number of particles
-     of both species are identical in each cell.
+     The *source* species must have positions initialized using one of the three
+     other options above, and must be defined before this species.
    * A *numpy* array or an *HDF5* file defining all the positions of the particles.
      In this case you must also provide the weight of each particle (see :ref:`Weights`).
      See :doc:`particle_initialization`.
@@ -701,7 +700,7 @@ Each species has to be defined in a ``Species`` block::
    When ``position_initialization = "regular"``, this sets the number of evenly-spaced
    particles per cell in each direction: ``[Nx, Ny, Nz]`` in cartesian geometries and
    ``[Nx, Nr, Ntheta]`` in ``AMcylindrical`` in which case we recommend
-   :math:`\textrm{Ntheta} \geq  4\times (\textrm{number\_of\_AM}-1)`.
+   ``Ntheta`` :math:`\geq 4\times (` ``number_of_AM`` :math:`-1)`.
    If unset, ``particles_per_cell`` must be a power of the simulation dimension,
    for instance, a power of 2 in ``2Dcartesian``.
 
@@ -1290,7 +1289,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :default: ``tconstant()``
 
     The variation of the laser frequency over time, such that
-    :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp\_profile}(t)`.
+    :math:`\omega(t)=` ``omega`` x ``chirp_profile`` :math:`(t)`.
 
   .. warning::
 
@@ -1589,7 +1588,7 @@ Following is the generic laser envelope creator ::
 
    :default: ``1.``
 
-   For the moment only a value of 1 is supported.
+   The laser angular frequency.
 
 .. py:data:: envelope_profile
 
@@ -2101,7 +2100,8 @@ Collisions & reactions
   Collisions(
       species1 = ["electrons1",  "electrons2"],
       species2 = ["ions1"],
-      coulomb_log = 5.,
+      coulomb_log = 0.,
+      coulomb_log_factor = 1.,
       debug_every = 1000,
       ionizing = False,
   #      nuclear_reaction = [],
@@ -2135,6 +2135,7 @@ Collisions & reactions
     species in one or the other list. This is especially true if the
     machine accepts SIMD vectorization.
 
+
 .. py:data:: coulomb_log
 
   :default: 0.
@@ -2144,6 +2145,14 @@ Collisions & reactions
   * If :math:`= 0`, the Coulomb logarithm is automatically computed for each collision.
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
 
+
+.. py:data:: coulomb_log_factor
+
+  :default: 1.
+
+  A constant, strictly positive factor that multiplies the Coulomb logarithm, regardless
+  of :py:data:`coulomb_log` being automatically computed or set to a constant value.
+  This can help, for example, to compensate artificially-reduced ion masses.
 
 .. py:data:: debug_every
 
@@ -2354,44 +2363,70 @@ The full list of available scalars is given in the table below.
 
 .. rst-class:: fancy
 
-+----------------+---------------------------------------------------------------------------+
++--------------------------------------------------------------------------------------------+
 | **Space-integrated energy densities**                                                      |
-+----------------+---------------------------------------------------------------------------+
-| | Utot         | | Total                                                                   |
-| | Ukin         | | Total kinetic (in the particles)                                        |
-| | Uelm         | | Total electromagnetic (in the fields)                                   |
-| | Uexp         | | Expected (Initial :math:`-` lost :math:`+` gained)                      |
-| | Ubal         | | Balance (Utot :math:`-` Uexp)                                           |
-| | Ubal_norm    | | Normalized balance (Ubal :math:`/` Utot)                                |
-| | Uelm_Ex      | | Ex field contribution (:math:`\int E_x^2 dV /2`)                        |
-| |              | |  ... same for fields Ey, Ez, Bx_m, By_m and Bz_m                        |
-| | Urad         | | Total radiated                                                          |
-+----------------+---------------------------------------------------------------------------+
++--------------------------------------------------------------------------------------------+
+| +--------------+-------------------------------------------------------------------------+ |
+| | Utot         | Total                                                                   | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Ukin         | Total kinetic (in the particles)                                        | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Uelm         | Total electromagnetic (in the fields)                                   | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Uexp         | Expected (Initial :math:`-` lost :math:`+` gained)                      | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Ubal         | Balance (Utot :math:`-` Uexp)                                           | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Ubal_norm    | Normalized balance (Ubal :math:`/` Utot)                                | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Uelm_Ex      | Ex field contribution (:math:`\int E_x^2 dV /2`)                        | |
+| |              |  ... same for fields Ey, Ez, Bx_m, By_m and Bz_m                        | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Urad         | Total radiated                                                          | |
+| +--------------+-------------------------------------------------------------------------+ |
++--------------------------------------------------------------------------------------------+
 | **Space- & time-integrated Energies lost/gained at boundaries**                            |
-+----------------+---------------------------------------------------------------------------+
-| | Ukin_bnd     | | Time-accumulated kinetic energy exchanged at the boundaries             |
-| | Uelm_bnd     | | Time-accumulated EM energy exchanged at boundaries                      |
-| |              | |                                                                         |
-| | PoyXminInst  | | Poynting contribution through xmin boundary during the timestep         |
-| | PoyXmin      | | Time-accumulated Poynting contribution through xmin boundary            |
-| |              | |  ... same for other boundaries                                          |
-+----------------+---------------------------------------------------------------------------+
++--------------------------------------------------------------------------------------------+
+| +--------------+-------------------------------------------------------------------------+ |
+| | Ukin_bnd     | Time-accumulated kinetic energy exchanged at the boundaries             | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Uelm_bnd     | Time-accumulated EM energy exchanged at boundaries                      | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | PoyXminInst  | Poynting contribution through xmin boundary during the timestep         | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | PoyXmin      | Time-accumulated Poynting contribution through xmin boundary            | |
+| |              |  ... same for other boundaries                                          | |
+| +--------------+-------------------------------------------------------------------------+ |
++--------------------------------------------------------------------------------------------+
 | **Particle information**                                                                   |
-+----------------+---------------------------------------------------------------------------+
-| | Zavg_abc     | | Average charge of species "abc" (equals `nan` if no particle)           |
-| | Dens_abc     | |  ... its integrated density                                             |
-| | Ukin_abc     | |  ... its integrated kinetic energy density                              |
-| | Urad_abc     | |  ... its integrated radiated energy density                             |
-| | Ntot_abc     | |  ... and number of macro-particles                                      |
-+----------------+---------------------------------------------------------------------------+
++--------------------------------------------------------------------------------------------+
+| +--------------+-------------------------------------------------------------------------+ |
+| | Zavg_abc     | Average charge of species "abc" (equals ``nan`` if no particle)         | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Dens_abc     |  ... its integrated density                                             | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Ukin_abc     |  ... its integrated kinetic energy density                              | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Urad_abc     |  ... its integrated radiated energy density                             | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Ntot_abc     |  ... and number of macro-particles                                      | |
+| +--------------+-------------------------------------------------------------------------+ |
+| +--------------+-------------------------------------------------------------------------+ |
++--------------------------------------------------------------------------------------------+
 | **Fields information**                                                                     |
-+----------------+---------------------------------------------------------------------------+
-| | ExMin        | | Minimum of :math:`E_x`                                                  |
-| | ExMinCell    | |  ... and its location (cell index)                                      |
-| | ExMax        | | Maximum of :math:`E_x`                                                  |
-| | ExMaxCell    | |  ... and its location (cell index)                                      |
-| |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-+----------------+---------------------------------------------------------------------------+
++--------------------------------------------------------------------------------------------+
+| +--------------+-------------------------------------------------------------------------+ |
+| | ExMin        | Minimum of :math:`E_x`                                                  | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | ExMinCell    |  ... and its location (cell index)                                      | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | ExMax        | Maximum of :math:`E_x`                                                  | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | ExMaxCell    |  ... and its location (cell index)                                      | |
+| +--------------+-------------------------------------------------------------------------+ |
+| |              |  ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                  | |
+| +--------------+-------------------------------------------------------------------------+ |
++--------------------------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.
 

@@ -99,6 +99,12 @@ public:
     //double *data_3D;
     //! this will present the data as a 3d matrix
     double ***data_3D;
+
+    void create_sub_fields  ( int iDim, int iNeighbor, int ghost_size ) override;
+    void extract_fields_exch( int iDim, int iNeighbor, int ghost_size ) override;
+    void inject_fields_exch ( int iDim, int iNeighbor, int ghost_size ) override;
+    void extract_fields_sum ( int iDim, int iNeighbor, int ghost_size ) override;
+    void inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size ) override;
     
 };
 
