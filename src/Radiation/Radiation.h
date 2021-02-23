@@ -93,9 +93,14 @@ public:
                               int iend,
                               int ithread,
                               int ipart_ref = 0 );
+
+    // join the lists of photons created through Monte Carlo when tasks are used
+    void joinNewPhotons(unsigned int Nbins);
                               
     // Local array of new photons
     Particles new_photons_;
+    Particles *new_photons_per_bin;
+
     
 protected:
 

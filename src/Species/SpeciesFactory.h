@@ -1149,6 +1149,15 @@ public:
                                 patch->vecSpecies[ispec1]->getNbrOfParticles(),
                                 *patch->vecSpecies[ispec1]->photon_species_->particles
                             );
+                            if (params.tasks_on_projection){
+                                int Nbins = patch->vecSpecies[ispec1]->particles->first_index.size();
+                                for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
+                                    patch->vecSpecies[ispec1]->Radiate->new_photons_per_bin[ibin].initializeReserve(
+                                        patch->vecSpecies[ispec1]->getNbrOfParticles(),
+                                        *patch->vecSpecies[ispec1]->photon_species_->particles
+                                    );   
+                                }
+                            }
                             break;
                         }
                     }
@@ -1248,6 +1257,15 @@ public:
                     //patch->vecSpecies[i]->Radiate->new_photons_.initialize(patch->vecSpecies[i]->getNbrOfParticles(),
                     //                                               params.nDim_particle );
                     patch->vecSpecies[i]->Radiate->new_photons_.initialize( 0, params.nDim_particle, params.keep_position_old );
+                    if (params.tasks_on_projection){
+                        int Nbins = patch->vecSpecies[i]->particles->first_index.size();
+                        for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
+                            patch->vecSpecies[i]->Radiate->new_photons_per_bin[ibin].tracked = patch->vecSpecies[i]->photon_species_->particles->tracked;
+                            patch->vecSpecies[i]->Radiate->new_photons_per_bin[ibin].isQuantumParameter = patch->vecSpecies[i]->photon_species_->particles->isQuantumParameter;
+                            patch->vecSpecies[i]->Radiate->new_photons_per_bin[ibin].isMonteCarlo = patch->vecSpecies[i]->photon_species_->particles->isMonteCarlo;
+                            patch->vecSpecies[i]->Radiate->new_photons_per_bin[ibin].initialize( 0, params.nDim_particle, params.keep_position_old );
+                        }
+                    }
                 } else {
                     patch->vecSpecies[i]->photon_species_ = NULL;
                 }
