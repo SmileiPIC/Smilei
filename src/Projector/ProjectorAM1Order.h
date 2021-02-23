@@ -20,7 +20,7 @@ public:
     
     //! Apply boundary conditions on Rho and J
     void axisBC( ElectroMagnAM *emAM, bool diag_flag ) override final;
-    void apply_axisBC(std::complex<double> *rho, unsigned int imode);
+    void apply_axisBC(std::complex<double> *rho, unsigned int imode, unsigned int nonzeromode);
     
     //! Apply boundary conditions on Env_Chi
     void axisBCEnvChi( double *EnvChi ) override final;

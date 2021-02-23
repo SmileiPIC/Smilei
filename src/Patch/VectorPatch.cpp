@@ -869,11 +869,6 @@ void VectorPatch::computeCharge(bool old /*=false*/)
                 species( ipatch, ispec )->Species::computeCharge( ispec, emfields( ipatch ), old );
             }
         }
-        //rho_old is projected onto per species arrays which need to be sumed
-        if (old){
-            static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields)->computeTotalRhoold();
-            static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields)->restartRhos();
-        }
     }
 
 } // END computeRho
