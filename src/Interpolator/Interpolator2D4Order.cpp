@@ -32,7 +32,8 @@ Interpolator2D4Order::Interpolator2D4Order( Params &params, Patch *patch ) : Int
     dble_1_ov_6 = 1.0/6.0;
     dble_115_ov_192 = 115.0/192.0;
     dble_5_ov_8 = 5.0/8.0;
-    
+
+    tasks_on_projection = params.tasks_on_projection;
     
 }
 
@@ -68,6 +69,51 @@ void Interpolator2D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     *( BLoc+1*nparts ) = compute( &coeffxd_[2], &coeffyp_[2], By2D, id_, jp_ );
     // Interpolation of Bz^(d,d)
     *( BLoc+2*nparts ) = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_ );
+} // END Interpolator2D4Order
+
+// ---------------------------------------------------------------------------------------------------------------------
+// 2nd Order Interpolation of the fields at a the particle position (3 nodes are used), task-safe
+// ---------------------------------------------------------------------------------------------------------------------
+void Interpolator2D4Order::fieldsForTasks( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc, int *iold, double *delta )
+{
+    // Static cast of the electromagnetic fields
+    Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
+    Field2D *Ey2D = static_cast<Field2D *>( EMfields->Ey_ );
+    Field2D *Ez2D = static_cast<Field2D *>( EMfields->Ez_ );
+    Field2D *Bx2D = static_cast<Field2D *>( EMfields->Bx_m );
+    Field2D *By2D = static_cast<Field2D *>( EMfields->By_m );
+    Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_m );
+    
+    // Normalized particle position
+    double xpn = particles.position( 0, ipart )*dx_inv_;
+    double ypn = particles.position( 1, ipart )*dy_inv_;
+
+    // Coeffs
+    int idx_p[2], idx_d[2];
+    double delta_p[2];
+    double coeffxp[5], coeffyp[5];
+    double coeffxd[5], coeffyd[5];
+
+    coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
+
+    // Interpolation of Ex^(d,p)
+    *( ELoc+0*nparts ) = compute( &coeffxd[2], &coeffyp[2], Ex2D, idx_d[0], idx_p[1] );
+    // Interpolation of Ey^(p,d)
+    *( ELoc+1*nparts ) = compute( &coeffxp[2], &coeffyd[2], Ey2D, idx_p[0], idx_d[1] );
+    // Interpolation of Ez^(p,p)
+    *( ELoc+2*nparts ) = compute( &coeffxp[2], &coeffyp[2], Ez2D, idx_p[0], idx_p[1] );
+    // Interpolation of Bx^(p,d)
+    *( BLoc+0*nparts ) = compute( &coeffxp[2], &coeffyd[2], Bx2D, idx_p[0], idx_d[1] );
+    // Interpolation of By^(d,p)
+    *( BLoc+1*nparts ) = compute( &coeffxd[2], &coeffyp[2], By2D, idx_d[0], idx_p[1] );
+    // Interpolation of Bz^(d,d)
+    *( BLoc+2*nparts ) = compute( &coeffxd[2], &coeffyd[2], Bz2D, idx_d[0], idx_d[1] );
+
+    //Buffering of iol and delta
+    *( iold+0*nparts)  = idx_p[0];
+    *( iold+1*nparts)  = idx_p[1];
+    *( delta+0*nparts) = delta_p[0];
+    *( delta+1*nparts) = delta_p[1];
 } // END Interpolator2D4Order
 
 void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
@@ -147,14 +193,22 @@ void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     
     //Loop on bin particles
     int nparts( particles.size() );
-    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        //Interpolation on current particle
-        fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
-        //Buffering of iol and delta
-        ( *iold )[ipart+0*nparts]  = ip_;
-        ( *iold )[ipart+1*nparts]  = jp_;
-        ( *delta )[ipart+0*nparts] = deltax;
-        ( *delta )[ipart+1*nparts] = deltay;
+
+    if (!tasks_on_projection){
+        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+            //Interpolation on current particle
+            fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
+            //Buffering of iol and delta
+            ( *iold )[ipart+0*nparts]  = ip_;
+            ( *iold )[ipart+1*nparts]  = jp_;
+            ( *delta )[ipart+0*nparts] = deltax;
+            ( *delta )[ipart+1*nparts] = deltay;
+        }
+    } else {
+        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+            //Interpolation on current particle with locally defined variables to avoid data races between threads
+            fieldsForTasks( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart], &( *iold )[ipart] , &( *delta )[ipart] );
+        }
     }
     
 }

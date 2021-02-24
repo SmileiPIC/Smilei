@@ -339,8 +339,19 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
             // Do not project if a photon
             if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
                 if (params.geometry == "2Dcartesian"){
-                    Projector2D2Order *Proj2D = static_cast<Projector2D2Order *>(Proj);
-                    Proj2D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], ibin*clrw, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id, diag_flag, params.is_spectral, ispec );
+                    if (params.interpolation_order == 2){
+                        Projector2D2Order *Proj2D = static_cast<Projector2D2Order *>(Proj);
+                        Proj2D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
+                                                                    ibin*clrw, *particles, smpi, 
+                                                                    particles->first_index[ibin], particles->last_index[ibin], 
+                                                                    buffer_id, diag_flag, params.is_spectral, ispec );
+                    } else if (params.interpolation_order == 4){
+                        Projector2D4Order *Proj2D = static_cast<Projector2D4Order *>(Proj);
+                        Proj2D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
+                                                                    ibin*clrw, *particles, smpi, 
+                                                                    particles->first_index[ibin], particles->last_index[ibin], 
+                                                                    buffer_id, diag_flag, params.is_spectral, ispec );
+                    }
                 } else if (params.geometry == "3Dcartesian"){
                     Projector3D2Order *Proj3D = static_cast<Projector3D2Order *>(Proj);
                     Proj3D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], ibin*clrw, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id, diag_flag, params.is_spectral, ispec );
