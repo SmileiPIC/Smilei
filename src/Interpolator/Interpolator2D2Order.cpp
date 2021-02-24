@@ -81,8 +81,8 @@ void Interpolator2D2Order::fieldsForTasks( ElectroMagn *EMfields, Particles &par
 
     int idx_p[2], idx_d[2];
     double delta_p[2];
-    double coeffxp[2], coeffyp[2];
-    double coeffxd[2], coeffyd[2];
+    double coeffxp[3], coeffyp[3];
+    double coeffxd[3], coeffyd[3];
 
     coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
 
