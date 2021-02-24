@@ -206,33 +206,6 @@ int main( int argc, char *argv[] )
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
         vecPatches.sortAllParticles( params );
         
-        // Create uncoupled grids 
-        if( params.uncoupled_grids ) {
-            TITLE( "Create uncoupled grids" );
-            region.vecPatch_.refHindex_ = smpi.getRank();
-            region.build( params, &smpi, vecPatches, openPMD, false );
-            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-            region.identify_missing_patches( &smpi, vecPatches, params );
-            //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
-            //     <<  "\t - missing : " << region.missing_patches_.size()
-            //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
-            
-            region.reset_fitting( &smpi, params );
-            region.clean();
-            region.reset_mapping();
-            
-            region.build( params, &smpi, vecPatches, openPMD, false );
-            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-            region.identify_missing_patches( &smpi, vecPatches, params );
-            //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
-            //     <<  "\t - missing : " << region.missing_patches_.size()
-            //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
-            
-            if( params.is_pxr ){
-                region.coupling( params, false );
-            }
-        }
-        
         TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
         vecPatches.checkMemoryConsumption( &smpi, &region.vecPatch_ );
         
@@ -298,7 +271,9 @@ int main( int argc, char *argv[] )
                 DoubleGridsAM::syncFieldsOnRegion( vecPatches, region_global, params, &smpi, imode );
             }
             if( params.is_pxr && smpi.isMaster()) {
+                cout << "coupling global region" << endl;
                 region_global.coupling( params, true );
+                cout << "done coupling global region" << endl;
             }
             for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                 DoubleGridsAM::syncFieldsOnPatches( region_global, vecPatches, params, &smpi, timers, 0, imode );
