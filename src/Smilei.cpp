@@ -271,31 +271,14 @@ int main( int argc, char *argv[] )
                 DoubleGridsAM::syncFieldsOnRegion( vecPatches, region_global, params, &smpi, imode );
             }
             if( params.is_pxr && smpi.isMaster()) {
-                cout << "coupling global region" << endl;
                 region_global.coupling( params, true );
-                cout << "done coupling global region" << endl;
             }
             for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                 DoubleGridsAM::syncFieldsOnPatches( region_global, vecPatches, params, &smpi, timers, 0, imode );
             }
             vecPatches.setMagneticFieldsForDiagnostic( params );
             region_global.clean();
-            
-            if( params.uncoupled_grids ) {
-                // Need to upload corrected data on Region
-                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
-                    DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
-                    // Need to fill all ghost zones, not covered by patches ghost zones
-                    SyncVectorPatch::exchangeE( params, region.vecPatch_, imode, &smpi );
-                    SyncVectorPatch::exchangeB( params, region.vecPatch_, imode, &smpi );
-                }
-            }
         }
-
-        TITLE( "Open files & initialize diagnostics" );
-        vecPatches.initAllDiags( params, &smpi );
-        TITLE( "Running diags at time t = 0" );
-        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
     }
     
     TITLE( "Species creation summary" );
@@ -345,6 +328,11 @@ int main( int argc, char *argv[] )
             vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
         }
     }
+
+    TITLE( "Open files & initialize diagnostics" );
+    vecPatches.initAllDiags( params, &smpi );
+    TITLE( "Running diags at time t = 0" );
+    vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
 
     if( params.is_spectral && params.geometry != "AMcylindrical") {
         vecPatches.saveOldRho( params );
