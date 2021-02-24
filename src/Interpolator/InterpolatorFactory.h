@@ -30,11 +30,6 @@ public:
     {
         Interpolator *Interp = NULL;
         if (params.tasks_on_projection){
-
-            if (params.interpolation_order !=2){
-                ERROR( "Tasks work only with interpolation_order = 2 at the moment." );
-            }
-
             if ((params.geometry == "1Dcartesian") or (params.geometry == "AMcylindrical")){
                 ERROR( "Tasks work only with the geometries 2Dcartesian and 3Dcartesian at the moment." );
             }
