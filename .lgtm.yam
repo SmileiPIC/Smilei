@@ -1,0 +1,10 @@
+# This configuration file is used by the service LGTM
+#
+# Doc
+# https://lgtm.com/help/lgtm/lgtm.yml-configuration-file#language_block
+
+extraction:
+  cpp:
+    prepare:
+      packages: "libhdf5-mpich-dev"
+    after_prepare: "export HDF5_ROOT_DIR=/usr/lib/x86_64-linux-gnu/hdf5/mpich/"
