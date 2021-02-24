@@ -353,8 +353,19 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                                                                     buffer_id, diag_flag, params.is_spectral, ispec );
                     }
                 } else if (params.geometry == "3Dcartesian"){
-                    Projector3D2Order *Proj3D = static_cast<Projector3D2Order *>(Proj);
-                    Proj3D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], ibin*clrw, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id, diag_flag, params.is_spectral, ispec );
+                    if (params.interpolation_order == 2){
+                        Projector3D2Order *Proj3D = static_cast<Projector3D2Order *>(Proj);
+                        Proj3D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
+                                                                    ibin*clrw, *particles, smpi, 
+                                                                    particles->first_index[ibin], particles->last_index[ibin], 
+                                                                    buffer_id, diag_flag, params.is_spectral, ispec );
+                    } else if (params.interpolation_order == 4){
+                        Projector3D4Order *Proj3D = static_cast<Projector3D4Order *>(Proj);
+                        Proj3D->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
+                                                                    ibin*clrw, *particles, smpi, 
+                                                                    particles->first_index[ibin], particles->last_index[ibin], 
+                                                                    buffer_id, diag_flag, params.is_spectral, ispec );
+                    }
                 } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
             } // end condition on test and mass
 

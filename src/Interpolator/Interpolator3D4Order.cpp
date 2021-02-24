@@ -32,11 +32,13 @@ Interpolator3D4Order::Interpolator3D4Order( Params &params, Patch *patch ) : Int
     dble_1_ov_6 = 1.0/6.0;
     dble_115_ov_192 = 115.0/192.0;
     dble_5_ov_8 = 5.0/8.0;
+
+    tasks_on_projection = params.tasks_on_projection;
     
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
+// 2nd Order Interpolation of the fields at a the particle position (5 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
 void Interpolator3D4Order::fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc )
 {
@@ -70,6 +72,54 @@ void Interpolator3D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     
 } // END Interpolator3D4Order
 
+// ---------------------------------------------------------------------------------------------------------------------
+// 2nd Order Interpolation of the fields at a the particle position (5 nodes are used) - task safe
+// ---------------------------------------------------------------------------------------------------------------------
+void Interpolator3D4Order::fieldsForTasks( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc, int *iold, double *delta )
+{
+    // Static cast of the electromagnetic fields
+    Field3D *Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
+    Field3D *Ey3D = static_cast<Field3D *>( EMfields->Ey_ );
+    Field3D *Ez3D = static_cast<Field3D *>( EMfields->Ez_ );
+    Field3D *Bx3D = static_cast<Field3D *>( EMfields->Bx_m );
+    Field3D *By3D = static_cast<Field3D *>( EMfields->By_m );
+    Field3D *Bz3D = static_cast<Field3D *>( EMfields->Bz_m );
+    
+    // Normalized particle position
+    double xpn = particles.position( 0, ipart )*dx_inv_;
+    double ypn = particles.position( 1, ipart )*dy_inv_;
+    double zpn = particles.position( 2, ipart )*dz_inv_;
+    
+    // Coeffs
+    int idx_p[3], idx_d[3];
+    double delta_p[3];
+    double coeffxp[5], coeffyp[5], coeffzp[5];
+    double coeffxd[5], coeffyd[5], coeffzd[5];
+
+    coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
+    
+    // Interpolation of Ex^(d,p,p)
+    *( ELoc+0*nparts ) = compute( &coeffxd[2], &coeffyp[2], &coeffzp[2], Ex3D, idx_d[0], idx_p[1], idx_p[2] );
+    // Interpolation of Ey^(p,d,p)
+    *( ELoc+1*nparts ) = compute( &coeffxp[2], &coeffyd[2], &coeffzp[2], Ey3D, idx_p[0], idx_d[1], idx_p[2] );
+    // Interpolation of Ez^(p,p,d)
+    *( ELoc+2*nparts ) = compute( &coeffxp[2], &coeffyp[2], &coeffzd[2], Ez3D, idx_p[0], idx_p[1], idx_d[2] );
+    // Interpolation of Bx^(p,d,d)
+    *( BLoc+0*nparts ) = compute( &coeffxp[2], &coeffyd[2], &coeffzd[2], Bx3D, idx_p[0], idx_d[1], idx_d[2] );
+    // Interpolation of By^(d,p,d)
+    *( BLoc+1*nparts ) = compute( &coeffxd[2], &coeffyp[2], &coeffzd[2], By3D, idx_d[0], idx_p[1], idx_d[2] );
+    // Interpolation of Bz^(d,d,p)
+    *( BLoc+2*nparts ) = compute( &coeffxd[2], &coeffyd[2], &coeffzp[2], Bz3D, idx_d[0], idx_d[1], idx_p[2] );
+
+    //Buffering of iol and delta
+    iold[ipart+0*nparts]  = idx_p[0];
+    iold[ipart+1*nparts]  = idx_p[1];
+    iold[ipart+2*nparts]  = idx_p[2];
+    delta[ipart+0*nparts] = delta_p[0];
+    delta[ipart+1*nparts] = delta_p[1];
+    delta[ipart+2*nparts] = delta_p[2];
+    
+} // END Interpolator3D4Order
 
 void Interpolator3D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
@@ -153,15 +203,26 @@ void Interpolator3D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     //Loop on bin particles
     int nparts( particles.size() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        //Interpolation on current particle
-        fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
-        //Buffering of iol and delta
-        ( *iold )[ipart+0*nparts]  = ip_;
-        ( *iold )[ipart+1*nparts]  = jp_;
-        ( *iold )[ipart+2*nparts]  = kp_;
-        ( *delta )[ipart+0*nparts] = deltax;
-        ( *delta )[ipart+1*nparts] = deltay;
-        ( *delta )[ipart+2*nparts] = deltaz;
+        
+    }
+
+    if (!tasks_on_projection){
+        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+            //Interpolation on current particle
+            fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
+            //Buffering of iol and delta
+            ( *iold )[ipart+0*nparts]  = ip_;
+            ( *iold )[ipart+1*nparts]  = jp_;
+            ( *iold )[ipart+2*nparts]  = kp_;
+            ( *delta )[ipart+0*nparts] = deltax;
+            ( *delta )[ipart+1*nparts] = deltay;
+            ( *delta )[ipart+2*nparts] = deltaz;
+        }
+    } else {
+        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+            //Interpolation on current particle with locally defined variables to avoid data races between threads
+            fieldsForTasks( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart], &( *iold )[ipart] , &( *delta )[ipart] );
+        }
     }
     
 }
