@@ -267,16 +267,15 @@ elif BENCH in list_bench:
 elif glob( SMILEI_BENCHS+BENCH ):
 	BENCH = glob( SMILEI_BENCHS+BENCH )
 	list_all = glob(SMILEI_BENCHS+"tst*py")
+	SMILEI_BENCH_LIST= []
 	for b in BENCH:
 		if b not in list_all:
 			if VERBOSE:
 				print( "Input file "+b+" invalid.")
 			sys.exit(4)
-		SMILEI_BENCH_LIST= []
-		for b in BENCH:
-				if b.replace(SMILEI_BENCHS,'') in list_bench:
-					SMILEI_BENCH_LIST.append( b.replace(SMILEI_BENCHS,'') )
-		BENCH = SMILEI_BENCH_LIST
+		if b.replace(SMILEI_BENCHS,'') in list_bench:
+			SMILEI_BENCH_LIST.append( b.replace(SMILEI_BENCHS,'') )
+	BENCH = SMILEI_BENCH_LIST
 else:
 	if VERBOSE:
 		print( "Input file "+BENCH+" invalid.")

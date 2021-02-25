@@ -1,3 +1,17 @@
+__all__ = [
+	"setMatplotLibBackend",
+	"updateMatplotLibColormaps",
+	"ChunkedRange",
+	"openNamelist",
+	"Options",
+	"Units",
+	"Movie",
+	"SaveAs",
+	"multiPlot",
+	"multiSlide",
+	"VTKfile"
+]
+
 
 def setMatplotLibBackend(show=True):
 	import matplotlib, sys
@@ -573,8 +587,10 @@ class _multiPlotUtil(object):
 								Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
 							else:
 								Diag._ax.spines['left'].set_color(color)
-					try: Diag._ax.set_position(Diag._ax.twin.get_position())
-					except Exception as e: pass
+					try:
+						Diag._ax.set_position(Diag._ax.twin.get_position())
+					except Exception as e:
+						pass
 			if self.nlegends > 0: self.plt.legend()
 			self.plt.draw()
 			self.plt.pause(0.00001)
