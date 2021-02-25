@@ -280,7 +280,7 @@ Open a TrackParticles diagnostic
 
   * ``timesteps``, ``units``, ``export_dir``: same as before.
   * ``species``: the name of a tracked-particle species.
-     | If omitted, a list of available tracked-particle species is printed.
+    If omitted, a list of available tracked-particle species is printed.
   * ``select``: Instructions for selecting particles among those available.
     A detailed explanation is provided below
   * ``axes``: A list of axes for plotting the trajectories or obtaining particle data.
@@ -290,10 +290,18 @@ Open a TrackParticles diagnostic
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time.
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories.
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
-  * ``sort``: If ``False``, the particles are not sorted by ID. This can save significant
-    time, but prevents plotting, exporting to VTK, and the ``select`` argument. Only
-    ``getData()`` is available in this mode. Read :doc:`this <ids>` for more information
-    on particle IDs.
+  * ``sort``: may be either
+    
+    * ``False``: the particles are not sorted by ID. This can save significant
+      time, but prevents plotting, exporting to VTK, and the ``select`` argument. Only
+      ``getData`` and ``iterParticles`` are available in this mode.
+      Read :doc:`this <ids>` for more information on particle IDs.
+    * ``True``: the particles are sorted in a new file, unless this file already exists.
+    * A string for selecting particles (same syntax as ``select``): only selected
+      particles are sorted in a new file. This requires the argument ``sorted_as``.
+    
+  * ``sorted_as``: a keyword that refers to the new sorted file (when ``sort`` is a
+    selection) or to a previously sorted file (when ``sort`` is not given).
   * ``length``: The length of each plotted trajectory, in number of timesteps.
   * See also :ref:`otherkwargs`
 

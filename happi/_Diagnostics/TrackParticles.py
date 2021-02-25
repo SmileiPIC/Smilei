@@ -1,10 +1,28 @@
 from .Diagnostic import Diagnostic
 from .._Utils import *
 
+# Define a function that finds the next closing character in a string
+def findClosingCharacter(string, character, start=0):
+	stack = []
+	associatedBracket = {")":"(", "]":"[", "}":"{"}
+	for i in range(start, len(string)):
+		if string[i] == character and len(stack)==0:
+			return i
+		elif string[i] in ("(", "[", "{"):
+			stack.append(string[i])
+		elif string[i] in (")", "]", "}"):
+			if len(stack)==0:
+				raise Exception("Error in selector syntax: missing `"+character+"`")
+			if stack[-1]!=associatedBracket[string[i]]:
+				raise Exception("Error in selector syntax: missing closing parentheses or brackets")
+			del stack[-1]
+	raise Exception("Error in selector syntax: missing `"+character+"`")
+
+
 class TrackParticles(Diagnostic):
 	"""Class for loading a TrackParticles diagnostic"""
 
-	def _init(self, species=None, select="", axes=[], timesteps=None, sort=True, length=None, chunksize=20000000, **kwargs):
+	def _init(self, species=None, select="", axes=[], timesteps=None, sort=True, sorted_as="", length=None, chunksize=20000000, **kwargs):
 
 		# If argument 'species' not provided, then print available species and leave
 		if species is None:
@@ -16,65 +34,86 @@ class TrackParticles(Diagnostic):
 			else:
 				self._error += ["No tracked particles files found"]
 			return
-
-		if sort not in [True, False]:
-			self._error += ["Argument `sort` must be `True` or `False`"]
+		
+		if type(sort) not in [bool, str]:
+			self._error += ["Argument `sort` must be `True` or `False` or a string"]
 			return
 		if not sort and select!="":
 			self._error += ["Cannot select particles if not sorted"]
 			return
 		self._sort = sort
-
-
+		
+		
 		# Get info from the hdf5 files + verifications
 		# -------------------------------------------------------------------
 		self.species  = species
 		self._h5items = {}
-		self._locationForTime = {}
 		disorderedfiles = self._findDisorderedFiles()
+		if not disorderedfiles: return
+		self._short_properties_from_raw = {
+			"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
+			"momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
+			"charge":"q", "weight":"w", "chi":"chi",
+			"E/x":"Ex", "E/y":"Ey", "E/z":"Ez", "B/x":"Bx", "B/y":"By", "B/z":"Bz"
+		}
+		
+		# If sorting allowed, find out if ordering needed
+		needsOrdering = False
+		if sort:
+			if type(sort) is str:
+				# The sorted file gets a name from `sorted_as`
+				if type(sorted_as) is not str or self._re.search(r"[^a-zA-Z0-9_]","_"+sorted_as):
+					self._error += ["Argument `sorted_as` must be a keyword composed of letters and numbers"]
+					return
+				if not sorted_as:
+					self._error += ["Argument `sorted_as` is required when `sort` is a selection"]
+					return
+			if sorted_as:
+				sorted_as = "_"+sorted_as
+			orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+sorted_as+".h5"
+			needsOrdering = self._needsOrdering(orderedfile)
+			if sorted_as and not needsOrdering and type(sort) is str:
+				print("WARNING: ordered file `"+"TrackParticles_"+species+sorted_as+".h5"+"` already exists.")
+				print("         Skipping sorting operation.")
+		
+		# Find times in disordered files
+		if not sort or needsOrdering:
+			self._locationForTime = {}
+			for file in disorderedfiles:
+				f = self._h5py.File(file, "r")
+				self._locationForTime.update( {int(t):[f,it] for it, t in enumerate(f["data"].keys())} )
+			self._lastfile = f
+			self._timesteps = self._np.array(sorted(self._locationForTime))
+			self._alltimesteps = self._np.copy(self._timesteps)
+			
+			# List available properties
+			try: # python 2
+				self._raw_properties_from_short = {v:k for k,v in self._short_properties_from_raw.iteritems()}
+				T0 = next(self._lastfile["data"].itervalues())["particles/"+self.species]
+			except: # python 3
+				self._raw_properties_from_short = {v:k for k,v in self._short_properties_from_raw.items()}
+				T0 = next(iter(self._lastfile["data"].values()))["particles/"+self.species]
+			self.available_properties = [v for k,v in self._short_properties_from_raw.items() if k in T0]
 		
 		# If sorting allowed, then do the sorting
 		if sort:
 			# If the first path does not contain the ordered file (or it is incomplete), we must create it
-			orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+".h5"
-			if self._needsOrdering(orderedfile):
-				self._orderFiles(disorderedfiles, orderedfile, chunksize)
+			if needsOrdering:
+				self._orderFiles(orderedfile, chunksize, sort)
 				if self._needsOrdering(orderedfile):
 					return
 			# Create arrays to store h5 items
-			f = self._h5py.File(orderedfile)
+			self._lastfile = self._h5py.File(orderedfile, "r")
 			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w", "chi",
 			             "Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
-				if prop in f:
-					self._h5items[prop] = f[prop]
+				if prop in self._lastfile:
+					self._h5items[prop] = self._lastfile[prop]
 			self.available_properties = list(self._h5items.keys())
 			# Memorize the locations of timesteps in the files
-			for it, t in enumerate(f["Times"]):
-				self._locationForTime[t] = it
-			self._timesteps = self._np.array(sorted(f["Times"]))
+			self._locationForTime = {t:it for it, t in enumerate(self._lastfile["Times"])}
+			self._timesteps = self._np.array(sorted(self._lastfile["Times"]))
 			self._alltimesteps = self._np.copy(self._timesteps)
 			self.nParticles = self._h5items["Id"].shape[1]
-		
-		# If sorting not allowed, only find the available times
-		else:
-			self._timesteps = []
-			for file in disorderedfiles:
-				f = self._h5py.File(file, "r")
-				for it, t in enumerate(f["data"].keys()):
-					self._locationForTime[int(t)] = [f, it]
-					self._timesteps += [int(t)]
-			self._timesteps = self._np.unique(self._timesteps)
-			self._alltimesteps = self._np.copy(self._timesteps)
-			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
-			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
-			              "charge":"q", "weight":"w", "chi":"chi",
-			              "E/x":"Ex", "E/y":"Ey", "E/z":"Ez",
-			              "B/x":"Bx", "B/y":"By", "B/z":"Bz"}
-			try: # python 2
-				T0 = next(f["data"].itervalues())["particles/"+self.species]
-			except: # python 3
-				T0 = next(iter(f["data"].values()))["particles/"+self.species]
-			self.available_properties = [v for k,v in properties.items() if k in T0]
 		
 		# Add moving_x in the list of properties
 		if "x" in self.available_properties:
@@ -113,128 +152,12 @@ class TrackParticles(Diagnostic):
 		
 		# Select particles
 		# -------------------------------------------------------------------
-		# If the selection is a string (containing an operation)
 		if sort:
-			if type(select) is str:
-				# Define a function that finds the next closing character in a string
-				def findClosingCharacter(string, character, start=0):
-					i = start
-					stack = []
-					associatedBracket = {")":"(", "]":"[", "}":"{"}
-					while i < len(string):
-						if string[i] == character and len(stack)==0: return i
-						if string[i] in ["(", "[", "{"]:
-							stack.append(string[i])
-						if string[i] in [")", "]", "}"]:
-							if len(stack)==0:
-								raise Exception("Error in selector syntax: missing `"+character+"`")
-							if stack[-1]!=associatedBracket[string[i]]:
-								raise Exception("Error in selector syntax: missing closing parentheses or brackets")
-							del stack[-1]
-						i+=1
-					raise Exception("Error in selector syntax: missing `"+character+"`")
-				# Parse the selector
-				i = 0
-				operation = ""
-				seltype = []
-				selstr = []
-				timeSelector = []
-				particleSelector = []
-				doubleProps = []
-				int16Props = []
-				while i < len(select):
-					if i+4<len(select) and select[i:i+4] in ["any(","all("]:
-						seltype += [select[i:i+4]]
-						if seltype[-1] not in ["any(","all("]:
-							raise Exception("Error in selector syntax: unknown argument "+seltype[-1][:-1])
-						comma = findClosingCharacter(select, ",", i+4)
-						parenthesis = findClosingCharacter(select, ")", comma+1)
-						timeSelector += [select[i+4:comma]]
-						selstr += [select[i:parenthesis]]
-						try:
-							timeSelector[-1] = "self._alltimesteps["+self._re.sub(r"\bt\b","self._alltimesteps",timeSelector[-1])+"]"
-							eval(timeSelector[-1])
-						except:
-							raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
-						try:
-							particleSelector += [select[comma+1:parenthesis]]
-							doubleProps += [[]]
-							int16Props += [[]]
-							for prop in self._h5items.keys():
-								(particleSelector[-1], nsubs) = self._re.subn(r"\b"+prop+r"\b", "properties['"+prop+"'][:actual_chunksize]", particleSelector[-1])
-								if nsubs > 0:
-									if   prop == "q" : int16Props [-1] += [prop]
-									else             : doubleProps[-1] += [prop]
-						except:
-							raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
-						operation += "stack["+str(len(seltype)-1)+"]"
-						i = parenthesis+1
-					else:
-						operation += select[i]
-						i+=1
-				nOperations = len(seltype)
-				# Execute the selector
-				if self._verbose: print("Selecting particles ... (this may take a while)")
-				if len(operation)==0.:
-					self.selectedParticles = self._np.s_[:]
-				else:
-					# Setup the chunks of particles (if too many particles)
-					chunksize = min(chunksize, self.nParticles)
-					nchunks = int(self.nParticles / chunksize)
-					chunksize = int(self.nParticles / nchunks)
-					self.selectedParticles = self._np.array([], dtype=self._np.uint64)
-					# Allocate buffers
-					properties = {}
-					for k in range(nOperations):
-						for prop in int16Props[k]:
-							if prop not in properties:
-								properties[prop] = self._np.empty((chunksize,), dtype=self._np.int16)
-						for prop in doubleProps[k]:
-							if prop not in properties:
-								properties[prop] = self._np.empty((chunksize,), dtype=self._np.double)
-					properties["Id"] = self._np.empty((chunksize,), dtype=self._np.uint64)
-					selection = self._np.empty((chunksize,), dtype=bool)
-					# Loop on chunks
-					chunkstop = 0
-					for ichunk in range(nchunks):
-						chunkstart = chunkstop
-						chunkstop  = min(chunkstart + chunksize, self.nParticles)
-						actual_chunksize = chunkstop - chunkstart
-						# Execute each of the selector items
-						stack = []
-						for k in range(nOperations):
-							if   seltype[k] == "any(": selection.fill(False)
-							elif seltype[k] == "all(": selection.fill(True )
-							requiredProps = doubleProps[k] + int16Props[k] + ["Id"]
-							# Loop times
-							times = eval(timeSelector[k])
-							for time in times:
-								if self._verbose: print("   Selecting block `"+selstr[k]+")`, at time "+str(time))
-								# Extract required properties
-								it = self._locationForTime[time]
-								for prop in requiredProps:
-									self._h5items[prop].read_direct(properties[prop], source_sel=self._np.s_[it,chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
-								# Calculate the selector
-								selectionAtTimeT = eval(particleSelector[k]) # array of True or False
-								selectionAtTimeT[self._np.isnan(selectionAtTimeT)] = False
-								loc = self._np.flatnonzero(properties["Id"][:actual_chunksize]>0) # indices of existing particles
-								# Combine wth selection of previous times
-								if   seltype[k] == "any(": selection[loc] += selectionAtTimeT[loc]
-								elif seltype[k] == "all(": selection[loc] *= selectionAtTimeT[loc]
-							stack.append(selection)
-						# Merge all stack items according to the operations
-						self.selectedParticles = self._np.union1d( self.selectedParticles, eval(operation).nonzero()[0] )
-					self.selectedParticles.sort()
-
-			# Otherwise, the selection can be a list of particle IDs
-			else:
-				try:
-					IDs = f["unique_Ids"] # get all available IDs
-					self.selectedParticles = self._np.flatnonzero(self._np.in1d(IDs, select)) # find the requested IDs
-				except:
-					self._error += ["Error: argument 'select' must be a string or a list of particle IDs"]
-					return
-
+			self.selectedParticles = self._selectParticles( select, True, chunksize )
+			if self.selectedParticles is None:
+				self._error += ["Error: argument 'select' must be a string or a list of particle IDs"]
+				return
+			
 			# Remove particles that are not actually tracked during the requested timesteps
 			if self._verbose: print("Removing dead particles ...")
 			if type(self.selectedParticles) is not slice and len(self.selectedParticles) > 0:
@@ -348,6 +271,141 @@ class TrackParticles(Diagnostic):
 				f.close()
 		return False
 
+	def _selectParticles( self, select, already_sorted, chunksize ):
+		if type(select) is str:
+			# Parse the selector
+			i = 0
+			operation = ""
+			seltype = []
+			selstr = []
+			timeSelector = []
+			particleSelector = []
+			doubleProps = []
+			int16Props = []
+			while i < len(select):
+				if i+4<len(select) and select[i:i+4] in ["any(","all("]:
+					seltype += [select[i:i+4]]
+					if seltype[-1] not in ["any(","all("]:
+						raise Exception("Error in selector syntax: unknown argument "+seltype[-1][:-1])
+					comma = findClosingCharacter(select, ",", i+4)
+					parenthesis = findClosingCharacter(select, ")", comma+1)
+					timeSelector += [select[i+4:comma]]
+					selstr += [select[i:parenthesis]]
+					try:
+						timeSelector[-1] = "self._alltimesteps["+self._re.sub(r"\bt\b","self._alltimesteps",timeSelector[-1])+"]"
+						eval(timeSelector[-1])
+					except:
+						raise Exception("Error in selector syntax: time selector not understood in "+select[i:i+3]+"()")
+					try:
+						particleSelector += [select[comma+1:parenthesis]]
+						doubleProps += [[]]
+						int16Props += [[]]
+						for prop in self.available_properties:
+							(particleSelector[-1], nsubs) = self._re.subn(r"\b"+prop+r"\b", "properties['"+prop+"'][:actual_chunksize]", particleSelector[-1])
+							if nsubs > 0:
+								if   prop == "q" : int16Props [-1] += [prop]
+								else             : doubleProps[-1] += [prop]
+					except:
+						raise Exception("Error in selector syntax: not understood: "+select[i:parenthesis+1])
+					operation += "stack["+str(len(seltype)-1)+"]"
+					i = parenthesis+1
+				elif not already_sorted and not select[i].isspace():
+					raise Exception("Complex selection operations not allowed for unsorted files (bad character %s)"%select[i])
+				else:
+					operation += select[i]
+					i+=1
+			nOperations = len(seltype)
+			
+			# Nothing to select if empty operation
+			if len(operation)==0.:
+				return self._np.s_[:]
+			
+			# Execute the selector
+			if self._verbose: print("Selecting particles ... (this may take a while)")
+			
+			def makeBuffers(size):
+				properties = {}
+				for k in range(nOperations):
+					for prop in int16Props[k]:
+						if prop not in properties:
+							properties[prop] = self._np.empty((size,), dtype=self._np.int16)
+					for prop in doubleProps[k]:
+						if prop not in properties:
+							properties[prop] = self._np.empty((size,), dtype=self._np.double)
+				properties["Id"] = self._np.empty((size,), dtype=self._np.uint64)
+				return properties
+			
+			if already_sorted:
+				# Setup the chunks of particles (if too many particles)
+				chunks = ChunkedRange(self.nParticles, chunksize)
+				# Allocate buffers
+				selectedParticles = self._np.array([], dtype=self._np.uint64)
+				properties = makeBuffers(chunks.adjustedchunksize)
+				# Loop on chunks
+				for chunkstart, chunkstop, actual_chunksize in chunks:
+					# Execute each of the selector items
+					stack = []
+					for k in range(nOperations):
+						selection = self._np.empty((chunks.adjustedchunksize,), dtype=bool)
+						if   seltype[k] == "any(": selection.fill(False)
+						elif seltype[k] == "all(": selection.fill(True )
+						requiredProps = doubleProps[k] + int16Props[k] + ["Id"]
+						# Loop times
+						for time in eval(timeSelector[k]):
+							if self._verbose: print("   Selecting block `"+selstr[k]+")`, at time "+str(time))
+							# Extract required properties from h5 files
+							it = self._locationForTime[time]
+							for prop in requiredProps:
+								self._h5items[prop].read_direct(properties[prop], source_sel=self._np.s_[it,chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
+							# Calculate the selector
+							selectionAtTimeT = eval(particleSelector[k]) # array of True or False
+							# Combine with selection of previous times
+							selectionAtTimeT[self._np.isnan(selectionAtTimeT)] = False
+							existing = properties["Id"][:actual_chunksize]>0 # existing particles at that timestep
+							if   seltype[k] == "any(": selection[existing] += selectionAtTimeT[existing]
+							elif seltype[k] == "all(": selection *= selectionAtTimeT * existing
+						stack.append(selection)
+					# Merge all stack items according to the operations
+					print(self._np.count_nonzero(stack[0]),self._np.count_nonzero(stack[1]),self._np.count_nonzero(eval(operation)))
+					selectedParticles = self._np.union1d( selectedParticles, eval(operation).nonzero()[0] )
+			else:
+				# Execute the selector item
+				selectedParticles = self._np.array([], dtype="uint64")
+				k = 0
+				requiredProps = doubleProps[k] + int16Props[k] + ["Id"]
+				# Loop times
+				for time in eval(timeSelector[k]):
+					if self._verbose: print("   Selecting block `"+selstr[k]+")`, at time "+str(time))
+					# Get group in file
+					[f, it] = self._locationForTime[time]
+					group = f["data/"+"%010i"%time+"/particles/"+self.species]
+					npart = group["id"].shape[0]
+					# Loop on chunks
+					selectionAtTimeT = []
+					for chunkstart, chunkstop, actual_chunksize in ChunkedRange(npart, chunksize):
+						# Allocate buffers
+						properties = makeBuffers(actual_chunksize)
+						# Extract required properties from h5 files
+						for prop in requiredProps:
+							group[self._raw_properties_from_short[prop]].read_direct(properties[prop], source_sel=self._np.s_[chunkstart:chunkstop], dest_sel=self._np.s_[:actual_chunksize])
+						# Calculate the selector
+						sel = eval(particleSelector[k]) # array of True or False
+						selectionAtTimeT.append(properties["Id"][sel])
+					selectionAtTimeT = self._np.concatenate(selectionAtTimeT)
+					# Combine with selection of previous times
+					if   seltype[k] == "any(": selectedParticles = self._np.union1d(selectedParticles, selectionAtTimeT)
+					elif seltype[k] == "all(": selectedParticles = self._np.intersect1d(selectedParticles, selectionAtTimeT)
+			selectedParticles.sort()
+			return selectedParticles
+
+		# Otherwise, the selection can be a list of particle IDs
+		else:
+			try:
+				IDs = self._lastfile["unique_Ids"] # get all available IDs
+				return self._np.flatnonzero(self._np.in1d(IDs, select)) # find the requested IDs
+			except:
+				return
+
 	# Method to get info
 	def _info(self):
 		info = "Track particles: species '"+self.species+"'"
@@ -368,7 +426,7 @@ class TrackParticles(Diagnostic):
 			n = len(indices)
 			result = self._np.empty(( last_time - first_time, n ), dtype=dataset.dtype)
 			chunksize = min(cs,n)
-			nchunks = int(n/cs)
+			nchunks = int(n/chunksize)
 			chunksize = int(n / nchunks)
 			chunkstop = 0
 			for ichunk in range(nchunks):
@@ -397,46 +455,17 @@ class TrackParticles(Diagnostic):
 			file = path+self._os.sep+"TrackParticlesDisordered_"+self.species+".h5"
 			if not self._os.path.isfile(file):
 				self._error += ["Missing TrackParticles file in directory "+path]
-				return
+				return []
 			disorderedfiles += [file]
 		return disorderedfiles
 
 	# Make the particles ordered by Id in the file, in case they are not
-	def _orderFiles( self, filesDisordered, fileOrdered, chunksize ):
-		import math
-		if self._verbose: print("Ordering particles ... (this could take a while)")
+	def _orderFiles( self, fileOrdered, chunksize, sort ):
+		if self._verbose:
+			print("Ordering particles ... (this could take a while)")
+			if type(sort) is str:
+				print("    Selecting particles according to "+sort)
 		try:
-			properties = {"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
-			              "momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
-			              "charge":"q", "weight":"w", "chi":"chi",
-			              "E/x":"Ex", "E/y":"Ey", "E/z":"Ez",
-			              "B/x":"Bx", "B/y":"By", "B/z":"Bz"}
-			# Obtain the list of all times in all disordered files
-			time_locations = {}
-			for fileIndex, fileD in enumerate(filesDisordered):
-				try:
-					f = self._h5py.File(fileD, "r")
-				except:
-					self._error += ["\tWarning: file cannot be opened: "+fileD]
-					continue
-				for t in f["data"].keys():
-					try   : time_locations[int(t)] = (fileIndex, t)
-					except: pass
-				f.close()
-			times = sorted(time_locations.keys())
-			if len(times) == 0:
-				self._error += ["Error: no times found"]
-				return
-			# Open the last file and get the number of particles from each MPI
-			last_file_index, tname = time_locations[times[-1]]
-			f = self._h5py.File(filesDisordered[last_file_index], "r")
-			number_of_particles = (f["data"][tname]["latest_IDs"][()] % (2**32)).astype('uint32')
-			if self._verbose: print("Number of particles: "+str(number_of_particles.sum()))
-			# Calculate the offset that each MPI needs
-			offset = self._np.cumsum(number_of_particles, dtype='uint64')
-			total_number_of_particles = offset[-1]
-			offset = self._np.roll(offset, 1)
-			offset[0] = 0
 			# If ordered file already exists, find out which timestep was done last
 			latestOrdered = -1
 			if self._os.path.isfile(fileOrdered):
@@ -446,86 +475,122 @@ class TrackParticles(Diagnostic):
 			# otherwise, make new (ordered) file
 			else:
 				f0 = self._h5py.File(fileOrdered, "w")
+			# Open the last file and get the number of particles from each MPI
+			last_time = self._timesteps[-1]
+			last_file, _ = self._locationForTime[last_time]
+			number_of_particles = (last_file["data/"+"%010i/"%last_time+"latest_IDs"][()] % (2**32)).astype('uint32')
+			if self._verbose: print("Number of particles: "+str(number_of_particles.sum()))
+			# Calculate the offset that each MPI needs
+			offset = self._np.cumsum(number_of_particles, dtype='uint64')
+			total_number_of_particles = offset[-1]
+			offset = self._np.roll(offset, 1)
+			offset[0] = 0
+			# Do the particle selection if requested
+			selectedIds = None
+			selectedIndices = self._np.s_[:]
+			nparticles_to_write = total_number_of_particles
+			if type(sort) is str:
+				selectedIds = self._selectParticles( sort, False, chunksize )
+				nparticles_to_write = len(selectedIds)
 			# Make datasets if not existing already
-			for k, name in properties.items():
-				try   : f0.create_dataset(name, (len(times), total_number_of_particles), f["data"][tname]["particles"][self.species][k].dtype, fillvalue=(0 if name=="Id" else self._np.nan))
+			size = (len(self._timesteps), nparticles_to_write)
+			group = last_file["data/"+"%010i/"%last_time+"particles/"+self.species]
+			for k, name in self._short_properties_from_raw.items():
+				try   : f0.create_dataset(name, size, group[k].dtype, fillvalue=(0 if name=="Id" else self._np.nan))
 				except: pass
-			f.close()
 			# Loop times and fill arrays
-			for it, t in enumerate(times):
-
+			for it, t in enumerate(self._timesteps):
+				
 				# Skip previously-ordered times
 				if it<=latestOrdered: continue
-
+				
 				if self._verbose: print("    Ordering @ timestep = "+str(t))
-				file_index, tname = time_locations[t]
-				f = self._h5py.File(filesDisordered[file_index], "r")
-				group = f["data"][tname]["particles"][self.species]
+				f, _ = self._locationForTime[t]
+				group = f["data/"+"%010i/"%t+"particles/"+self.species]
 				nparticles = group["id"].size
 				if nparticles == 0: continue
 				
 				# If not too many particles, sort all at once
-				if total_number_of_particles < chunksize:
+				if nparticles_to_write < chunksize and nparticles < chunksize:
 					# Get the Ids and find where they should be stored in the final file
-					locs = (
-						group["id"][()].astype("uint32") # takes the second hald of id (meaning particle number)
-						+ offset[ (group["id"][()]>>32).astype("uint32") & 16777215 ]# 0b111111111111111111111111
-						-1
-					)
+					if selectedIds is None:
+						locs = (
+							group["id"][()].astype("uint32") # takes the second hald of id (meaning particle number)
+							+ offset[ (group["id"][()]>>32).astype("uint32") & 0b111111111111111111111111 ]
+							-1
+						)
+					else:
+						_,selectedIndices,locs = self._np.intersect1d( group["id"][()], selectedIds, return_indices=True )
 					# Loop datasets and order them
-					for k, name in properties.items():
-						if k not in group: continue
-						disordered = group[k][()]
-						ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
-						ordered[locs] = disordered
-						f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
-
+					if len(locs) > 0:
+						for k, name in self._short_properties_from_raw.items():
+							if k not in group: continue
+							ordered = self._np.empty((nparticles_to_write, ), dtype=group[k].dtype)
+							if k == "id": ordered.fill(0)
+							else        : ordered.fill(self._np.nan)
+							ordered[locs] = group[k][()][selectedIndices]
+							f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
+				
 				# If too many particles, sort by chunks
 				else:
 					data = {}
-					for k, name in properties.items():
+					for k, name in self._short_properties_from_raw.items():
 						data[k] = self._np.empty((chunksize,), dtype=self._np.int16 if k == "charge" else self._np.double)
 					# Loop chunks of the output
-					for first_o, last_o, npart_o in ChunkedRange(total_number_of_particles, chunksize):
+					for first_o, last_o, npart_o in ChunkedRange(nparticles_to_write, chunksize):
+						for k, name in self._short_properties_from_raw.items():
+							if k not in group: continue
+							if k == "id": data[k].fill(0)
+							else        : data[k].fill(self._np.nan)
 						# Loop chunks of the input
 						for first_i, last_i, npart_i in ChunkedRange(nparticles, chunksize):
 							# Obtain IDs
 							ID = group["id"][first_i:last_i]
 							# Extract useful IDs for this output chunk
-							loc_in_output = ID.astype("uint32") + offset[ (ID>>32) & 16777215 ] - 1
-							keep = self._np.flatnonzero((loc_in_output >= first_o) * (loc_in_output < last_o))
-							loc_in_output = loc_in_output[keep] - first_o
-							# Loop datasets
-							for k, name in properties.items():
+							if selectedIds is None:
+								loc_in_output = ID.astype("uint32") + offset[ (ID>>32).astype("uint32") & 0b111111111111111111111111 ] - 1
+								keep = self._np.flatnonzero((loc_in_output >= first_o) * (loc_in_output < last_o))
+								loc_in_output = loc_in_output[keep] - first_o
+							else:
+								_,keep,loc_in_output = self._np.intersect1d( ID, selectedIds[first_o:last_o], return_indices=True )
+							# Fill datasets with this chunk
+							for k, name in self._short_properties_from_raw.items():
 								if k not in group: continue
-								# Accumulate the data for this chunk
 								data[k][loc_in_output] = group[k][first_i:last_i][keep]
 						# Accumulated data is written out
-						for k, name in properties.items():
+						for k, name in self._short_properties_from_raw.items():
 							if k not in group: continue
 							f0[name][it, first_o:last_o] = data[k][:npart_o]
 						
 				# Indicate that this iteration was succesfully ordered
 				f0.attrs["latestOrdered"] = it
 				f0.flush()
-				f.close()
 			if self._verbose: print("    Finalizing the ordering process")
 			# Create the "Times" dataset
-			f0.create_dataset("Times", data=times)
+			f0.create_dataset("Times", data=self._timesteps)
 			# Create the "unique_Ids" dataset
-			unique_Ids = self._np.empty((total_number_of_particles,), dtype=f0["Id"].dtype)
-			for iMPI in range(number_of_particles.size):
-				for first, last, npart in ChunkedRange(number_of_particles[iMPI], chunksize):
-					o = int(offset[iMPI])
-					unique_Ids[o+first : o+last] = ((iMPI<<32) + 1) + self._np.arange(first,last,dtype='uint64')
-			f0.create_dataset("unique_Ids", data=unique_Ids)
+			if selectedIds is None:
+				unique_Ids = self._np.empty((nparticles_to_write,), dtype=f0["Id"].dtype)
+				for iMPI in range(number_of_particles.size):
+					for first, last, npart in ChunkedRange(number_of_particles[iMPI], chunksize):
+						o = int(offset[iMPI])
+						unique_Ids[o+first : o+last] = ((iMPI<<32) + 1) + self._np.arange(first,last,dtype='uint64')
+				f0.create_dataset("unique_Ids", data=unique_Ids)
+			else:
+				f0.create_dataset("unique_Ids", data=selectedIds)
 			# Indicate that the ordering is finished
 			f0.attrs["finished_ordering"] = True
 			# Close file
 			f0.close()
-		except:
+		except Exception as e:
 			print("Error in the ordering of the tracked particles")
+			if self._verbose:
+				print(e)
 			raise
+		finally:
+			# Close disordered files
+			for t in self._locationForTime:
+				self._locationForTime[t][0].close()
 		if self._verbose: print("Ordering succeeded")
 
 	# Method to generate the raw data (only done once)
@@ -586,11 +651,7 @@ class TrackParticles(Diagnostic):
 				self._rawData = {}
 
 			if self._verbose: print("Loading data ...")
-			properties = {"Id":"id", "moving_x":"position/x", "x":"position/x", "y":"position/y", "z":"position/z",
-			              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z",
-			              "q":"charge", "w":"weight","chi":"chi",
-			              "Ex":"E/x", "Ey":"E/y", "Ez":"E/z",
-			              "Bx":"B/x", "By":"B/y", "Bz":"B/z"}
+			properties = dict(self._raw_properties_from_short, moving_x="position/x")
 			if times is None: times = self._timesteps
 			for time in times:
 				if time in self._rawData: continue
@@ -652,17 +713,17 @@ class TrackParticles(Diagnostic):
 			print("ERROR: timestep "+str(timestep)+" not available")
 			return
 
-		properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
-		              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z",
-		              "q":"charge", "w":"weight","chi":"chi",
-		              "Ex":"E/x", "Ey":"E/y", "Ez":"E/z",
-		              "Bx":"B/x", "By":"B/y", "Bz":"B/z"}
+		properties = self._raw_properties_from_short + {"moving_x":"x"}
 
 		disorderedfiles = self._findDisorderedFiles()
 		for file in disorderedfiles:
 			f = self._h5py.File(file, "r")
 			# This is the timestep for which we want to produce an iterator
-			group = f["data/"+("%010d"%timestep)+"/particles/"+self.species]
+			try:
+				group = f["data/"+("%010d"%timestep)+"/particles/"+self.species]
+			except:
+				f.close()
+				continue
 			npart = group["id"].size
 			ID          = self._np.empty((chunksize,), dtype=self._np.uint64)
 			data_double = self._np.empty((chunksize,), dtype=self._np.double)
@@ -689,7 +750,7 @@ class TrackParticles(Diagnostic):
 						group[properties[axis]].read_direct(data_double, source_sel=self._np.s_[chunkstart:chunkend])
 						data[axis] = data_double.copy()
 				yield data
-			return
+			f.close()
 
 	# We override _prepare3
 	def _prepare3(self):
