@@ -96,7 +96,7 @@ class Diagnostic(object):
 	def _validate(self):
 		try:
 			self.simulation.valid
-		except:
+		except Exception as e:
 			print("No valid Smilei simulation selected")
 			return False
 		if not self.simulation.valid or not self.valid:
@@ -201,7 +201,7 @@ class Diagnostic(object):
 		of the positions of the diagnostic data along x.
 		"""
 		try: axis_index = self._type.index(axis)
-		except: return []
+		except Exception as e: return []
 		if   axis_index == 0:
 			factor = (self.options.xfactor or 1.) * self.units.xcoeff
 		elif axis_index == 1:
@@ -514,7 +514,7 @@ class Diagnostic(object):
 		try:
 			s = self._np.double(portion)
 			if s.size>3 or s.size<1: raise
-		except:
+		except Exception as e:
 			self._error += ["`"+operation+"` along axis "+axisname+" should be a list of 1 to 3 floats"]
 			raise
 		step = 1
@@ -528,7 +528,7 @@ class Diagnostic(object):
 				try:
 					step = int(s[2])
 					if step - s[2] != 0: raise
-				except:
+				except Exception as e:
 					self._error += ["`"+operation+"` along axis "+axisname+": third number must be an integer"]
 					raise
 				indices = indices[::step]
@@ -558,7 +558,7 @@ class Diagnostic(object):
 			try:
 				s = self._np.double(portion)
 				if s.size>2 or s.size<1: raise
-			except:
+			except Exception as e:
 				self._error += ["`"+operation+"` along axis "+axisname+" should be one or two floats"]
 				raise
 			if s.size==1:
@@ -712,7 +712,7 @@ class Diagnostic(object):
 		if cax_id not in ax.cax and ("aspect" not in self.options.cax or self.options.cax["aspect"]>0):
 			try:
 				divider = ax.divider
-			except:
+			except Exception as e:
 				from mpl_toolkits.axes_grid1 import make_axes_locatable
 				divider = make_axes_locatable(ax)
 				ax.divider = divider
@@ -816,12 +816,12 @@ class Diagnostic(object):
 		# Tick formatting
 		try:
 			if self.options.xtick: ax.ticklabel_format(axis="x",**self.options.xtick)
-		except:
+		except Exception as e:
 			if self._verbose: print("Cannot format x ticks (typically happens with log-scale)")
 			self.options.xtick = []
 		try:
 			if self.options.ytick: ax.ticklabel_format(axis="y",**self.options.ytick)
-		except:
+		except Exception as e:
 			if self._verbose: print("Cannot format y ticks (typically happens with log-scale)")
 			self.options.ytick = []
 	def _setColorbarOptions(self, ax):

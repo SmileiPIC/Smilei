@@ -426,7 +426,7 @@ class TrackParticles(Diagnostic):
 			n = len(indices)
 			result = self._np.empty(( last_time - first_time, n ), dtype=dataset.dtype)
 			chunksize = min(cs,n)
-			nchunks = int(n/cs)
+			nchunks = int(n/chunksize)
 			chunksize = int(n / nchunks)
 			chunkstop = 0
 			for ichunk in range(nchunks):
