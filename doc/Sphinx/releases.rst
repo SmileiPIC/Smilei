@@ -35,6 +35,7 @@ Changes made in the repository (not released)
   * time slider available with multiple plotting
   * ``vsym`` option for symmetric graph
   * ``getXmoved`` now accounts for requested units
+  * Tracked particles can be selected before sorting
 
 * Bugfixes:
 
