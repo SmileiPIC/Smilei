@@ -166,21 +166,21 @@ int main( int argc, char *argv[] )
         
         // vecPatches data read in restartAll according to smpi.patch_count
 
-        if (params.uncoupled_grids) {
-            region.vecPatch_.refHindex_ = smpi.getRank();
-            region.build( params, &smpi, vecPatches, openPMD, false );
-            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-            region.identify_missing_patches( &smpi, vecPatches, params );
+        // if (params.uncoupled_grids) {
+        //     region.vecPatch_.refHindex_ = smpi.getRank();
+        //     region.build( params, &smpi, vecPatches, openPMD, false );
+        //     region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+        //     region.identify_missing_patches( &smpi, vecPatches, params );
 
-            region.reset_fitting( &smpi, params );
+        //     region.reset_fitting( &smpi, params );
 
-            region.clean();
-            region.reset_mapping();
+        //     region.clean();
+        //     region.reset_mapping();
 
-            region.build( params, &smpi, vecPatches, openPMD, false );
-            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-            region.identify_missing_patches( &smpi, vecPatches, params );
-        }
+        //     region.build( params, &smpi, vecPatches, openPMD, false );
+        //     region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+        //     region.identify_missing_patches( &smpi, vecPatches, params );
+        // }
 
         checkpoint.restartAll( vecPatches, region, &smpi, simWindow, params, openPMD );
         vecPatches.sortAllParticles( params );
@@ -205,6 +205,33 @@ int main( int argc, char *argv[] )
         
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
         vecPatches.sortAllParticles( params );
+        
+        // Create uncoupled grids 
+        if( params.uncoupled_grids ) {
+            TITLE( "Create uncoupled grids" );
+            region.vecPatch_.refHindex_ = smpi.getRank();
+            region.build( params, &smpi, vecPatches, openPMD, false );
+            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+            region.identify_missing_patches( &smpi, vecPatches, params );
+            //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
+            //     <<  "\t - missing : " << region.missing_patches_.size()
+            //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
+            
+            region.reset_fitting( &smpi, params );
+            region.clean();
+            region.reset_mapping();
+            
+            region.build( params, &smpi, vecPatches, openPMD, false );
+            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+            region.identify_missing_patches( &smpi, vecPatches, params );
+            //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
+            //     <<  "\t - missing : " << region.missing_patches_.size()
+            //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
+            
+            if( params.is_pxr ){
+                region.coupling( params, false );
+            }
+        }
         
         TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
         vecPatches.checkMemoryConsumption( &smpi, &region.vecPatch_ );
@@ -278,43 +305,9 @@ int main( int argc, char *argv[] )
             }
             vecPatches.setMagneticFieldsForDiagnostic( params );
             region_global.clean();
-        }
-
-        TITLE( "Open files & initialize diagnostics" );
-        vecPatches.initAllDiags( params, &smpi );
-        TITLE( "Running diags at time t = 0" );
-        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
-    }
-    
-    TITLE( "Species creation summary" );
-    vecPatches.printNumberOfParticles( &smpi );
-
-    if (params.uncoupled_grids) {
-        if (!params.restart) {
-
-            region.vecPatch_.refHindex_ = smpi.getRank();
-            region.build( params, &smpi, vecPatches, openPMD, false );
-            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-            region.identify_missing_patches( &smpi, vecPatches, params );
-
-            //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
-            //     <<  "\t - missing : " << region.missing_patches_.size()
-            //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
-        
-            region.reset_fitting( &smpi, params );
-        
-            region.clean();
-            region.reset_mapping();
-        
-            region.build( params, &smpi, vecPatches, openPMD, false );
-            region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-            region.identify_missing_patches( &smpi, vecPatches, params );
-        
-            //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
-            //     <<  "\t - missing : " << region.missing_patches_.size()
-            //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
-
-            if ( params.apply_rotational_cleaning ) { // Need to upload corrected data on Region
+            
+            if( params.uncoupled_grids ) {
+                // Need to upload corrected data on Region
                 for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                     DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
                     // Need to fill all ghost zones, not covered by patches ghost zones
@@ -323,24 +316,25 @@ int main( int argc, char *argv[] )
                 }
             }
         }
-
-        if( params.is_pxr ){
-            region.coupling( params, false );
-        }
+        
+        TITLE( "Open files & initialize diagnostics" );
+        vecPatches.initAllDiags( params, &smpi );
+        TITLE( "Running diags at time t = 0" );
+        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
     }
-    else {
-        if (params.is_pxr) {
-            vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
-        }
+    
+    TITLE( "Species creation summary" );
+    vecPatches.printNumberOfParticles( &smpi );
+    
+    if( ! params.uncoupled_grids && params.is_pxr ) {
+        vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
     }
-
-
+    
     if( params.is_spectral && params.geometry != "AMcylindrical") {
         vecPatches.saveOldRho( params );
     }
-
+    
     timers.reboot();
-
     timers.global.reboot();
     
     // ------------------------------------------------------------------------
@@ -452,7 +446,7 @@ int main( int argc, char *argv[] )
                 region.vecPatch_.diag_flag = false;
 
                 //here filter + divergence cleaning
-                if ( params.is_spectral and params.geometry == "AMcylindrical") {
+                if ( params.is_spectral && params.geometry == "AMcylindrical") {
                     timers.densitiesCorrection.restart();
                     region.vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->densities_correction( region.vecPatch_( 0 )->EMfields );
                     timers.densitiesCorrection.update();
