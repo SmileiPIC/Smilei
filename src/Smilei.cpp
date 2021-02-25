@@ -260,7 +260,7 @@ int main( int argc, char *argv[] )
         // Comm and synch charge and current densities
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
         
-        // divergence cleaning
+        // rotational cleaning on a single global region
         if( params.apply_rotational_cleaning ) {
             TITLE( "Rotational cleaning" );
             Region region_global( params );
@@ -279,6 +279,11 @@ int main( int argc, char *argv[] )
             vecPatches.setMagneticFieldsForDiagnostic( params );
             region_global.clean();
         }
+
+        TITLE( "Open files & initialize diagnostics" );
+        vecPatches.initAllDiags( params, &smpi );
+        TITLE( "Running diags at time t = 0" );
+        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
     }
     
     TITLE( "Species creation summary" );
@@ -329,10 +334,6 @@ int main( int argc, char *argv[] )
         }
     }
 
-    TITLE( "Open files & initialize diagnostics" );
-    vecPatches.initAllDiags( params, &smpi );
-    TITLE( "Running diags at time t = 0" );
-    vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
 
     if( params.is_spectral && params.geometry != "AMcylindrical") {
         vecPatches.saveOldRho( params );
