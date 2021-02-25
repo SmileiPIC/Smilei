@@ -68,8 +68,9 @@ void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
 void Region::coupling( Params &params, bool global_region )
 {
     vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields, global_region );
-    if ( ( params.geometry == "AMcylindrical" ) && ( global_region ) )
+    if( params.geometry == "AMcylindrical" && global_region ) {
         vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->rotational_cleaning( vecPatch_( 0 )->EMfields );
+    }
     coupled_ = true;
 }
 

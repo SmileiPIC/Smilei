@@ -157,11 +157,6 @@ int main( int argc, char *argv[] )
             region.build( params, &smpi, vecPatches, openPMD, false );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
-
-            if( params.is_pxr ){
-                region.coupling( params, false );
-                MESSAGE( "Rho_old not loaded" );
-            }
         }
         
         // vecPatches data read in restartAll according to smpi.patch_count
@@ -227,10 +222,6 @@ int main( int argc, char *argv[] )
             //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
             //     <<  "\t - missing : " << region.missing_patches_.size()
             //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
-            
-            if( params.is_pxr ){
-                region.coupling( params, false );
-            }
         }
         
         TITLE( "Minimum memory consumption (does not include all temporary buffers)" );
@@ -326,8 +317,12 @@ int main( int argc, char *argv[] )
     TITLE( "Species creation summary" );
     vecPatches.printNumberOfParticles( &smpi );
     
-    if( ! params.uncoupled_grids && params.is_pxr ) {
-        vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
+    if( params.is_pxr ){
+        if( params.uncoupled_grids ) {
+            region.coupling( params, false );
+        } else {
+            vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
+        }
     }
     
     if( params.is_spectral && params.geometry != "AMcylindrical") {
