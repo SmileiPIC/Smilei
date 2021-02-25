@@ -60,7 +60,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
             y_min2 = y_min * y_min;
             if (params.geometry=="AMcylindrical" && params.is_spectral){
                 y_min2 = 0.; // No parallrlization along R
-                y_max2 = patch->getDomainLocalMax( 1 )*patch->getDomainLocalMax( 1 ); 
+                y_max2 = patch->getDomainLocalMax( 1 )*patch->getDomainLocalMax( 1 );
             }
        }
         
@@ -80,7 +80,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     if( ! species->particles->tracked ) {
         for( unsigned int iDim=0; iDim<( unsigned int )nDim_field; iDim++ ) {
             if(     (  ( ( params.EM_BCs[iDim][0]=="periodic" )&&( species->boundary_conditions[iDim][0]!="periodic" ) )
-                    || ( ( params.EM_BCs[iDim][1]=="periodic" )&&( species->boundary_conditions[iDim][1]!="periodic" ) )) 
+                    || ( ( params.EM_BCs[iDim][1]=="periodic" )&&( species->boundary_conditions[iDim][1]!="periodic" ) ))
                  && (params.is_spectral==false)) {
                 WARNING( "For species " << species->name_ << ", periodic EM "<<"xyz"[iDim]<<"-boundary conditions require particle BCs to be periodic." );
             }
@@ -120,7 +120,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         if( patch->isXmin() ) {
             bc_xmin = &thermalize_particle_inf;
         }
-    } else if( species->boundary_conditions[0][0] == "periodic" ) {
+    // } else if( species->boundary_conditions[0][0] == "periodic" ) {
     } else {
         ERROR( "Xmin boundary condition `"<<species->boundary_conditions[0][0]<<"` unknown" );
     }
@@ -143,7 +143,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         if( patch->isXmax() ) {
             bc_xmax = &thermalize_particle_sup;
         }
-    } else if( species->boundary_conditions[0][1] == "periodic" ) {
+    // } else if( species->boundary_conditions[0][1] == "periodic" ) {
     } else {
         ERROR( "Xmax boundary condition `"<<species->boundary_conditions[0][1]<<"`  unknown" );
     }
@@ -168,7 +168,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
             if( patch->isYmin() ) {
                 bc_ymin = &thermalize_particle_inf;
             }
-        } else if( species->boundary_conditions[1][0] == "periodic" ) {
+        // } else if( species->boundary_conditions[1][0] == "periodic" ) {
         } else {
             ERROR( "Ymin boundary condition `"<< species->boundary_conditions[1][0] << "` unknown" );
         }
@@ -191,7 +191,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
             if( patch->isYmax() ) {
                 bc_ymax = &thermalize_particle_sup;
             }
-        } else if( species->boundary_conditions[1][1] == "periodic" ) {
+        // } else if( species->boundary_conditions[1][1] == "periodic" ) {
         } else {
             ERROR( "Ymax boundary condition `"<< species->boundary_conditions[1][1] <<"` undefined" );
         }
@@ -215,7 +215,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
                 if( patch->isZmin() ) {
                     bc_zmin = &thermalize_particle_inf;
                 }
-            } else if( species->boundary_conditions[2][0] == "periodic" ) {
+            // } else if( species->boundary_conditions[2][0] == "periodic" ) {
             } else {
                 ERROR( "Zmin boundary condition `"<< species->boundary_conditions[2][0] << "` unknown" );
             }
@@ -237,7 +237,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
                 if( patch->isZmax() ) {
                     bc_zmax = &thermalize_particle_sup;
                 }
-            } else if( species->boundary_conditions[2][1] == "periodic" ) {
+            // } else if( species->boundary_conditions[2][1] == "periodic" ) {
             } else {
                 ERROR( "Zmax boundary condition `"<< species->boundary_conditions[2][1] << "` unknown" );
             }
