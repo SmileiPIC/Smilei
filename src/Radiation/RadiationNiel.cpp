@@ -72,7 +72,7 @@ void RadiationNiel::operator()(
     double *Bz = &( ( *Bpart )[2*nparts] );
 
     // Used to store gamma directly
-    double *gamma = &( smpi->dynamics_invgf[ithread][0] );
+    //double *gamma = &( smpi->dynamics_invgf[ithread][0] );
 
     // Charge divided by the square of the mass
     double charge_over_mass_square = 0.;
@@ -100,6 +100,9 @@ void RadiationNiel::operator()(
 
     // Random Number
     double random_numbers[nbparticles];
+
+    // Lorentz factor
+    double gamma[nbparticles];
 
     // Momentum shortcut
     double *momentum[3];
