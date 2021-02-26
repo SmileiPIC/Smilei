@@ -51,7 +51,7 @@ void RadiationDiagRadiationSpectrum::operator() (
       double          &radiated_energy,
       int istart,
       int iend,
-      int ithread, int ipart_ref)
+      int ithread, int ibin, int ipart_ref)
 
 {
 

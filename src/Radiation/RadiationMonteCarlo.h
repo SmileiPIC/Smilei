@@ -54,6 +54,7 @@ public:
         int             istart,
         int             iend,
         int             ithread,
+        int             ibin,
         int             ipart_ref = 0
        );
         
@@ -69,6 +70,16 @@ public:
     //                        for nonlinear inverse Compton scattering
     // ---------------------------------------------------------------------
     double photonEmission( int ipart,
+                         double &particle_chi,
+                         double &particle_gamma,
+                         double *position[3],
+                         double *momentum[3],
+                         double *weight,
+                         Species *photon_species,
+                         RadiationTables &RadiationTables );
+
+    double photonEmissionForTasks( int ipart,
+                         int ibin,
                          double &particle_chi,
                          double &particle_gamma,
                          double *position[3],

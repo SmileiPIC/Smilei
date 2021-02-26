@@ -50,6 +50,7 @@ public:
         int             istart,
         int             iend,
         int             ithread,
+        int             ibin = 0,
         int             ipart_ref = 0) = 0;
         
     //! Computation of the Lorentz invariant quantum parameter
@@ -100,6 +101,7 @@ public:
     // Local array of new photons
     Particles new_photons_;
     Particles *new_photons_per_bin;
+    bool tasks_on_projection;
 
     
 protected:

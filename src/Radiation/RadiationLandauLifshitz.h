@@ -58,6 +58,7 @@ public:
         int istart,
         int iend,
         int ithread,
+        int ibin,
         int ipart_ref = 0);
         
 protected:

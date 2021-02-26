@@ -55,6 +55,7 @@ void RadiationNiel::operator()(
     int istart,
     int iend,
     int ithread,
+    int ibin,
     int ipart_ref )
 {
 
@@ -72,7 +73,7 @@ void RadiationNiel::operator()(
     double *Bz = &( ( *Bpart )[2*nparts] );
 
     // Used to store gamma directly
-    //double *gamma = &( smpi->dynamics_invgf[ithread][0] );
+    // double *gamma = &( smpi->dynamics_invgf[ithread][0] );
 
     // Charge divided by the square of the mass
     double charge_over_mass_square = 0.;

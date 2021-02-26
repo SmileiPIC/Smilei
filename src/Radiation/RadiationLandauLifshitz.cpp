@@ -52,6 +52,7 @@ void RadiationLandauLifshitz::operator()(
     int istart,
     int iend,
     int ithread,
+    int ibin,
     int ipart_ref )
 {
 
