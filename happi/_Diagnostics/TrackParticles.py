@@ -366,7 +366,6 @@ class TrackParticles(Diagnostic):
 							elif seltype[k] == "all(": selection *= selectionAtTimeT * existing
 						stack.append(selection)
 					# Merge all stack items according to the operations
-					print(self._np.count_nonzero(stack[0]),self._np.count_nonzero(stack[1]),self._np.count_nonzero(eval(operation)))
 					selectedParticles = self._np.union1d( selectedParticles, eval(operation).nonzero()[0] )
 			else:
 				# Execute the selector item
