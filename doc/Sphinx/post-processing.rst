@@ -302,7 +302,7 @@ Open a TrackParticles diagnostic
       particles are sorted in a new file. The file name must be defined
       in the argument ``sorted_as``.
     
-  * ``sorted_as``: a keyword that defines to the new sorted file name (when ``sort`` is a
+  * ``sorted_as``: a keyword that defines the new sorted file name (when ``sort`` is a
     selection) or refers to a previously user-defined sorted file name (when ``sort`` is not given).
   * ``length``: The length of each plotted trajectory, in number of timesteps.
   * See also :ref:`otherkwargs`
