@@ -297,11 +297,13 @@ Open a TrackParticles diagnostic
       ``getData`` and ``iterParticles`` are available in this mode.
       Read :doc:`this <ids>` for more information on particle IDs.
     * ``True``: the particles are sorted in a new file, unless this file already exists.
+      If it does, sorted particles are directly read from the sorted file.
     * A string for selecting particles (same syntax as ``select``): only selected
-      particles are sorted in a new file. This requires the argument ``sorted_as``.
+      particles are sorted in a new file. The file name must be defined
+      in the argument ``sorted_as``.
     
-  * ``sorted_as``: a keyword that refers to the new sorted file (when ``sort`` is a
-    selection) or to a previously sorted file (when ``sort`` is not given).
+  * ``sorted_as``: a keyword that defines the new sorted file name (when ``sort`` is a
+    selection) or refers to a previously user-defined sorted file name (when ``sort`` is not given).
   * ``length``: The length of each plotted trajectory, in number of timesteps.
   * See also :ref:`otherkwargs`
 
