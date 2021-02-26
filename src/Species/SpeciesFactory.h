@@ -188,7 +188,8 @@ public:
         // Photon species
         else if( mass == 0 ) {
             if( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
-                this_species = new SpeciesNorm( params, patch );
+                if (params.tasks_on_projection){ this_species = new Species_taskomp( params, patch );}
+                else {this_species = new SpeciesNorm( params, patch );}
             }
 #ifdef _VECTO
             else if( ( params.vectorization_mode == "on" ) || params.cell_sorting ) {
