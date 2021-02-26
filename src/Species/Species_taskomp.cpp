@@ -231,7 +231,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                                   RadiationTables,
                                   nrj_radiation_per_bin[ibin],
                                   particles->first_index[ibin],
-                                  particles->last_index[ibin], buffer_id );
+                                  particles->last_index[ibin], buffer_id, ibin );
 
                     // Update scalar variable for diagnostics
                     // nrj_radiation += Radiate->getRadiatedEnergy();
@@ -415,7 +415,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
          ithread = omp_get_thread_num();
 #endif
 
-         //Radiate->joinNewPhotons(particles->first_index.size());
+         Radiate->joinNewPhotons(particles->first_index.size());
 
          for( unsigned int ibin=0 ; ibin<nrj_radiation_per_bin.size() ; ibin++ ) {
             nrj_radiation += nrj_radiation_per_bin[ibin];
