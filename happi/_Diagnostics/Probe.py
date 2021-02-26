@@ -59,11 +59,11 @@ class Probe(Diagnostic):
 					npoints += 1
 				for i in range(npoints):
 					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)][()]
-
+		
 		# Extract available fields
 		fields = self.getFields()
 		if len(fields) == 0:
-			self._error += ["No fields found for probe #"+probeNumber]
+			self._error += ["No fields found for probe #"+str(probeNumber)]
 			return
 		# If no field, print available fields
 		if field is None:
@@ -365,14 +365,14 @@ class Probe(Diagnostic):
 	
 	# get all available fields
 	def getFields(self):
-		fields = []
 		for file in self._h5probe:
 			fields_here = bytes.decode(file.attrs["fields"]).split(",")
 			try:
 				fields = [f for f in fields_here if f in fields]
 			except Exception as e:
 				fields = fields_here
-		return fields
+		try   : return fields
+		except: return []
 	
 	# get the value of x_moved for a requested timestep
 	def getXmoved(self, t):
