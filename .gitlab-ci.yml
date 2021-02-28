@@ -2,13 +2,12 @@ stages:
     - compile
     - makerun
     - use_picsar
+    - no_mpi_threadmultiple
 
 compile:
   stage: compile
   only:
     - develop
-    - refactor_for_GPU
-    - particle_injector_correction
     
 
   script:
@@ -102,8 +101,6 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - refactor_for_GPU
-    - particle_injector_correction
     
   script:
     # Move in test dir
@@ -123,3 +120,14 @@ use_picsar:
     - make clean
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
+
+no_mpi_threadmultiple:
+  stage: no_mpi_threadmultiple
+  only:
+    - develop
+
+  script:
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make clean
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - python validation.py -k no_mpi_tm -c -v

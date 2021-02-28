@@ -67,7 +67,7 @@ cField3D::cField3D( string name_in, vector<unsigned int> dims ) : cField( dims, 
 // ---------------------------------------------------------------------------------------------------------------------
 cField3D::~cField3D()
 {
-    for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
+    for (int iside=0 ; iside<(int)(sendFields_.size()) ; iside++ ) {
         if ( sendFields_[iside] != NULL ) {
             delete sendFields_[iside];
             sendFields_[iside] = NULL;
@@ -286,7 +286,7 @@ void cField3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
         sendFields_[iDim*2+iNeighbor] = new cField3D(n_space);
         recvFields_[iDim*2+iNeighbor] = new cField3D(n_space);
     }
-    else if ( ghost_size != sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
+    else if ( (unsigned int)(ghost_size) != sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
         delete sendFields_[iDim*2+iNeighbor];
         sendFields_[iDim*2+iNeighbor] = new cField3D(n_space);
         delete recvFields_[iDim*2+iNeighbor];
@@ -306,16 +306,16 @@ void cField3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     int iy = idx[1]*istart;
     int iz = idx[2]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
-    int NZ = n_space[2];
+    unsigned int NX = n_space[0];
+    unsigned int NY = n_space[1];
+    unsigned int NZ = n_space[2];
 
     int dimY = dims_[1];
     int dimZ = dims_[2];
 
     complex<double>* sub = static_cast<cField*>(sendFields_[iDim*2+iNeighbor])->cdata_;
     complex<double>* field = cdata_;
-    for( unsigned int i=0; i<NX; i++ ) {
+    for( unsigned int i=0; i< NX; i++ ) {
         for( unsigned int j=0; j<NY; j++ ) {
             for( unsigned int k=0; k<NZ; k++ ) {
                 sub[i*NY*NZ+j*NZ+k] = field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ];
@@ -336,9 +336,9 @@ void cField3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     int iy = idx[1]*istart;
     int iz = idx[2]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
-    int NZ = n_space[2];
+    unsigned int NX = n_space[0];
+    unsigned int NY = n_space[1];
+    unsigned int NZ = n_space[2];
 
     int dimY = dims_[1];
     int dimZ = dims_[2];
