@@ -1,11 +1,12 @@
 stages:
-    - compile
-    - makerun
-    - use_picsar
+    - default
+    - picsar
+    - debug
     - no_mpi_threadmultiple
+    - no_openmp
 
 compile:
-  stage: compile
+  stage: default
   only:
     - develop
     
@@ -27,7 +28,7 @@ compile:
     - python validation.py -c  -v -l "/sps2/gitlab-runner/logs"
 
 makerun1D:
-  stage: makerun
+  stage: default
   only:
     - develop
     - refactor_for_GPU
@@ -41,7 +42,7 @@ makerun1D:
     - python validation.py -b "tst_ionization_current_1d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerun2D:
-  stage: makerun
+  stage: default
   only:
     - develop
     - refactor_for_GPU
@@ -56,7 +57,7 @@ makerun2D:
     - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerun3D:
-  stage: makerun
+  stage: default
   only:
     - develop
     - refactor_for_GPU
@@ -71,7 +72,7 @@ makerun3D:
     - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerunAM:
-  stage: makerun
+  stage: default
   only:
     - develop
     - refactor_for_GPU
@@ -84,7 +85,7 @@ makerunAM:
     - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -l "/sps2/gitlab-runner/logs"
 
 makerunV:
-  stage: makerun
+  stage: default
   only:
     - develop
     - refactor_for_GPU
@@ -98,7 +99,7 @@ makerunV:
     - python validation.py -b "tst3d_v_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 makerunCollisions:
-  stage: makerun
+  stage: default
   only:
     - develop
     
@@ -108,8 +109,8 @@ makerunCollisions:
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
-use_picsar:
-  stage: use_picsar
+picsar:
+  stage: picsar
   only:
     - develop
     - refactor_for_GPU
@@ -121,6 +122,17 @@ use_picsar:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
 
+debug:
+  stage: no_mpi_threadmultiple
+  only:
+    - develop
+
+  script:
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make clean
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - python validation.py -k debug -c -v
+
 no_mpi_threadmultiple:
   stage: no_mpi_threadmultiple
   only:
@@ -131,3 +143,14 @@ no_mpi_threadmultiple:
     - make clean
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     - python validation.py -k no_mpi_tm -c -v
+
+no_openmp:
+  stage: no_mpi_threadmultiple
+  only:
+    - develop
+
+  script:
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make clean
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - python validation.py -k noopenmp -c -v

@@ -366,9 +366,9 @@ void cField3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     int iy = idx[1]*istart;
     int iz = idx[2]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
-    int NZ = n_space[2];
+    unsigned int NX = n_space[0];
+    unsigned int NY = n_space[1];
+    unsigned int NZ = n_space[2];
 
     int dimY = dims_[1];
     int dimZ = dims_[2];
@@ -396,9 +396,9 @@ void cField3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     int iy = idx[1]*istart;
     int iz = idx[2]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
-    int NZ = n_space[2];
+    unsigned int NX = n_space[0];
+    unsigned int NY = n_space[1];
+    unsigned int NZ = n_space[2];
 
     int dimY = dims_[1];
     int dimZ = dims_[2];
