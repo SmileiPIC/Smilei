@@ -112,12 +112,13 @@ void Interpolator3D4Order::fieldsForTasks( ElectroMagn *EMfields, Particles &par
     *( BLoc+2*nparts ) = compute( &coeffxd[2], &coeffyd[2], &coeffzp[2], Bz3D, idx_d[0], idx_d[1], idx_p[2] );
 
     //Buffering of iol and delta
-    iold[ipart+0*nparts]  = idx_p[0];
-    iold[ipart+1*nparts]  = idx_p[1];
-    iold[ipart+2*nparts]  = idx_p[2];
-    delta[ipart+0*nparts] = delta_p[0];
-    delta[ipart+1*nparts] = delta_p[1];
-    delta[ipart+2*nparts] = delta_p[2];
+    //Buffering of iol and delta
+    *( iold+0*nparts)  = idx_p[0];
+    *( iold+1*nparts)  = idx_p[1];
+    *( iold+2*nparts)  = idx_p[2];
+    *( delta+0*nparts) = delta_p[0];
+    *( delta+1*nparts) = delta_p[1];
+    *( delta+2*nparts) = delta_p[2];
     
 } // END Interpolator3D4Order
 
