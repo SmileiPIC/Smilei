@@ -386,27 +386,11 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
      #pragma omp task default(shared)
 #endif
      {
-     
      // reduce the energy lost with BC per bin
      for( unsigned int ibin=0 ; ibin<nrj_lost_per_bin.size() ; ibin++ ) {
         nrj_bc_lost += nrj_lost_per_bin[ibin];
      }
 
-     // unite the electrons created by ionization in a unique list for the patch 
-     // The taskgroup above ensures that this is done after the ionization method
-     if( Ionize ) {          
-#ifdef  __DETAILED_TIMERS
-         timer = MPI_Wtime();
-         ithread = omp_get_thread_num();
-#endif
-         Ionize->joinNewElectrons(particles->first_index.size());
-
-#ifdef  __DETAILED_TIMERS
-         patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
-#endif
-     } // end if Ionize     
-
-     // unite the photons created by radiation montecarlo in a unique list for the patch 
      // sum the radiated energy
      // The taskgroup above ensures that this is done after the radiation method
      if( Radiate ) {
@@ -415,18 +399,14 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
          ithread = omp_get_thread_num();
 #endif
 
-         Radiate->joinNewPhotons(particles->first_index.size());
-
          for( unsigned int ibin=0 ; ibin<nrj_radiation_per_bin.size() ; ibin++ ) {
             nrj_radiation += nrj_radiation_per_bin[ibin];
          }
 #ifdef  __DETAILED_TIMERS
          patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-
      } // end if Radiate
-
-     } // end task for lost/radiated energy reduction + join electrons from ionization + join photons from Monte Carlo radiation
+     } // end task for lost/radiated energy reduction
 
      // smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
 

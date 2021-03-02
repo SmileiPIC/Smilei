@@ -428,7 +428,7 @@ void VectorPatch::dynamics( Params &params,
         int Nspecies = ( *this )( 0 )->vecSpecies.size();     
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {    
-  
+
             int* last_species_has_projected =  static_cast<Species_taskomp *>(species( ipatch, (Nspecies-1) ))->bin_has_projected;
             #pragma omp task firstprivate(ipatch) depend(in:last_species_has_projected[0:(Nbins-1)])
             { // only the ipatch iterations are parallelized
@@ -457,9 +457,9 @@ void VectorPatch::dynamics( Params &params,
                     double *b_rho = spec_task->b_rho[ibin];
                     // Copy density buffer back to the patch density
                     if (params.geometry == "2Dcartesian"){
-             	          emfields2D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                         emfields2D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
                     } else if (params.geometry == "3Dcartesian"){
-             	          emfields3D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                         emfields3D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
                     }
 
                 } // ibin
@@ -473,6 +473,52 @@ void VectorPatch::dynamics( Params &params,
             } // end task on reduction of patch densities
         } // end patch loop
     } // end condition on tasks
+
+    // Reduction of the new particles created through ionization and radiation, for each species
+    #pragma omp single
+    if (params.tasks_on_projection){
+
+        unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
+        int Nspecies = ( *this )( 0 )->vecSpecies.size();
+     
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
+
+                int* species_has_pushed =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_pushed;
+                #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_pushed[0:(Nbins-1)])
+                {
+                Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                if( spec_task->Ionize ) {     
+#ifdef  __DETAILED_TIMERS
+                    int ithread = omp_get_thread_num();
+                    double timer = MPI_Wtime();
+#endif     
+                    spec_task->Ionize->joinNewElectrons(Nbins);
+#ifdef  __DETAILED_TIMERS
+                    ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                } // end if Ionize   
+                } // end task on reduction of new electrons from ionization
+
+                #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_pushed[0:(Nbins-1)])
+                {
+                Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                if( spec_task->Radiate ) {     
+#ifdef  __DETAILED_TIMERS
+                    int ithread = omp_get_thread_num();
+                    double timer = MPI_Wtime();
+#endif     
+                    spec_task->Radiate->joinNewPhotons(Nbins);
+#ifdef  __DETAILED_TIMERS
+                    ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                } // end if Radiate
+                } // end task on reduction of new photons from radiation
+
+            } // end species loop     
+        } // end patch loop
+    } // end condition on tasks
+
 
     #pragma omp taskwait
 

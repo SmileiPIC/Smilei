@@ -206,13 +206,13 @@ void RadiationMonteCarlo::operator()(
                     } else {
                         // Emission of a photon
                         // Radiated energy is incremented only if the macro-photon is not created
-                        // radiated_energy += RadiationMonteCarlo::photonEmissionForTasks( ipart, ibin,
-                        //                                      particle_chi, gamma,
-                        //                                      position,
-                        //                                      momentum,
-                        //                                      weight,
-                        //                                      photon_species,
-                        //                                      RadiationTables );
+                        radiated_energy += RadiationMonteCarlo::photonEmissionForTasks( ipart, ibin,
+                                                             particle_chi, gamma,
+                                                             position,
+                                                             momentum,
+                                                             weight,
+                                                             photon_species,
+                                                             RadiationTables );
                     }
     
                     // Optical depth becomes negative meaning
