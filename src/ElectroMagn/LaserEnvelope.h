@@ -34,9 +34,10 @@ public:
     const std::vector<double> cell_length;
     const double timestep;
 
+    double omega; // frequency of the laser
     double polarization_phi;
     double ellipticity; // 0 for linear polarization, 1 for circular polarization
-    double ellipticity_factor; // 1 for linear polarization, 2 for circular polarization. 
+    double ellipticity_factor; // 1 for linear polarization, 2 for circular polarization.
     // This coefficient is used for the ponderomotive potential Phi = ellipticity_factor*|A|^2/2.
 
     std:: string envelope_solver  = "explicit"; // default value
@@ -74,14 +75,13 @@ public:
 
     // imaginary unit and quantities using it
     std::complex<double> i1 = std::complex<double>( 0., 1 );
-    double omega; // frequency of the laser
     std::complex<double> i1_2k0_over_2dx;
     std::complex<double> i1_2k0_over_2dl;
     std::complex<double> one_plus_ik0dt;
     std::complex<double> one_plus_ik0dt_ov_one_plus_k0sq_dtsq;
 
-    // coefficient necessary for the reduced dispersion envelope solver  
-    double delta; 
+    // coefficient necessary for the reduced dispersion envelope solver
+    double delta;
 };
 
 // Class for envelope

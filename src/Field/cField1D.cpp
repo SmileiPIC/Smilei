@@ -69,7 +69,7 @@ cField1D::cField1D( string name, vector<unsigned int> dims ) : cField( dims, nam
 // ---------------------------------------------------------------------------------------------------------------------
 cField1D::~cField1D()
 {
-    for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
+    for (int iside=0 ; iside<(int)(sendFields_.size()) ; iside++ ) {
         if ( sendFields_[iside] != NULL ) {
             delete sendFields_[iside];
             sendFields_[iside] = NULL;
@@ -242,7 +242,7 @@ void cField1D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
         sendFields_[iDim*2+iNeighbor] = new cField1D(n_space);
         recvFields_[iDim*2+iNeighbor] = new cField1D(n_space);
     }
-    else if ( ghost_size != sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
+    else if ( ghost_size != (int)(sendFields_[iDim*2+iNeighbor]->dims_[iDim]) ) {
         delete sendFields_[iDim*2+iNeighbor];
         sendFields_[iDim*2+iNeighbor] = new cField1D(n_space);
         delete recvFields_[iDim*2+iNeighbor];
@@ -275,7 +275,7 @@ void cField1D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     n_space[iDim] = ghost_size;
 
     vector<int> idx( 1, 0 );
-    idx[iDim] = 1; 
+    idx[iDim] = 1;
     int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - 1- ( ghost_size-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
     int ix = idx[0]*istart;
 
@@ -283,7 +283,7 @@ void cField1D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 
     complex<double>* sub = static_cast<cField*>(recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_;
     complex<double>* field = cdata_;
-    for( unsigned int i=0; i<NX; i++ ) { 
+    for( unsigned int i=0; i<NX; i++ ) {
         field[ (ix+i) ] = sub[i];
     }
 }
