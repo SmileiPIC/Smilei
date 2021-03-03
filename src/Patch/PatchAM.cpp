@@ -21,7 +21,7 @@ PatchAM::PatchAM( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
     : Patch( params, smpi, domain_decomposition, ipatch, n_moved )
 {
     // Test if the patch is a particle patch (Hilbert or Linearized are for VectorPatch)
-    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) ) 
+    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
         || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
         initStep2( params, domain_decomposition );
         initStep3( params, smpi, n_moved );
@@ -191,7 +191,7 @@ void PatchAM::createType2( Params &params )
 
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;
-    int nx_sum, ny_sum;
+    //int nx_sum, ny_sum;
     
     for( int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++ ) {
         nx = nx0 + ix_isPrim;
@@ -239,7 +239,7 @@ void PatchAM::exchangeField_movewin( Field* field, int nshift )
         MPI_Bsend(  &( ( *f2D )( ix, iy ) ), 1, ntype, MPI_neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
     } // END of Send
 
-    //Once the message is in the buffer we can safely shift the field in memory. 
+    //Once the message is in the buffer we can safely shift the field in memory.
     field->shift_x(nshift);
     // and then receive the complementary field from the East.
 
@@ -260,4 +260,3 @@ void PatchAM::exchangeField_movewin( Field* field, int nshift )
 
 
 } // END exchangeField_movewin
-

@@ -30,7 +30,7 @@ public :
     virtual bool needsRhoJs( int timestep ) override;
     
     //! Creates the probe's particles (or "points")
-    void createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, bool createFile, double x_moved );
+    void createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, double x_moved );
     
     //! Get memory footprint of current diagnostic
     int getMemFootPrint() override
@@ -39,7 +39,7 @@ public :
                    // Size of the simili particles structure
                    ( nDim_particle+3+1 )*sizeof( double ) + sizeof( short )
                    // eval probesArray (even if temporary)
-                   + 10*sizeof( double )
+                   + (nFields + 1)*sizeof( double )
                );
     }
     

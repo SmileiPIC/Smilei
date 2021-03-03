@@ -736,12 +736,12 @@ class SmileiSimulation(object):
 			error = "Error extracting 'timestep' from the input file"
 			timestep = self._np.double(namelist.Main.timestep)
 			if not self._np.isfinite(timestep): raise
-		except:
+		except Exception as e:
 			print(error)
 			return
 		try:
 			reference_angular_frequency_SI = namelist.Main.reference_angular_frequency_SI
-		except:
+		except Exception as e:
 			reference_angular_frequency_SI = None
 		return namelist, ndim_fields, ndim_particles, cell_length, ncels, timestep, reference_angular_frequency_SI
 
@@ -795,7 +795,7 @@ class SmileiSimulation(object):
 					):
 						print("The simulation in path '"+path+"' is not compatible with the other ones")
 						return
-				except:
+				except Exception as e:
 					pass
 				self._ndim_fields = ndim_fields
 				self._ndim_particles = ndim_particles

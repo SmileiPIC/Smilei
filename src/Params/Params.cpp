@@ -197,6 +197,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         PyTools::runPyFunction( "_prepare_checkpoint_dir" );
         smpi->barrier();
     }
+    
+    // Call python function _keep_python_running (see pyontrol.py)
+    // Return false if we can close the python interpreter
+    MESSAGE( 1, "Calling python _keep_python_running() :" );
+    keep_python_running_ = PyTools::runPyFunction<bool>( "_keep_python_running" );
 
     // random seed
     if( PyTools::extractOrNone( "random_seed", random_seed, "Main" ) ) {
@@ -890,10 +895,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     
     check_consistency();
     
-    MESSAGE( 1, "Calling python _keep_python_running() :" );
-    // function defined in Python/pyontrol.py file
-    // Return false if we can close the python interpreter
-    keep_python_running_ = PyTools::runPyFunction<bool>( "_keep_python_running" );
 }
 
 Params::~Params()

@@ -35,6 +35,15 @@ PYTHONCONFIG := $(PYTHONEXE) scripts/compile_tools/python-config.py
 VERSION:=$(shell $(PYTHONEXE) scripts/compile_tools/get-version.py )
 
 #-----------------------------------------------------
+# Compiler specific flags
+
+COMPILER_INFO := $(shell $(SMILEICXX) -show | cut -d' ' -f1)
+
+ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
+    CXXFLAGS += -Wno-reorder
+endif
+
+#-----------------------------------------------------
 # Directories and files
 
 # Smilei

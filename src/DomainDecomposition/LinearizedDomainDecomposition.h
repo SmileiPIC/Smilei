@@ -18,7 +18,7 @@ protected:
 };
 
 
-class LinearizedDomainDecomposition1D : public LinearizedDomainDecomposition
+class LinearizedDomainDecomposition1D final : public LinearizedDomainDecomposition
 {
 public:
     LinearizedDomainDecomposition1D( Params &params );
@@ -29,7 +29,7 @@ public:
 };
 
 
-class LinearizedDomainDecomposition2D : public LinearizedDomainDecomposition
+class LinearizedDomainDecomposition2D final : public LinearizedDomainDecomposition
 {
 public:
     LinearizedDomainDecomposition2D( Params &params );
@@ -39,7 +39,7 @@ public:
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
-class LinearizedDomainDecomposition2D_YX : public LinearizedDomainDecomposition
+class LinearizedDomainDecomposition2D_YX final : public LinearizedDomainDecomposition
 {
 public:
     LinearizedDomainDecomposition2D_YX( Params &params );
@@ -50,7 +50,7 @@ public:
 };
 
 
-class LinearizedDomainDecomposition3D : public LinearizedDomainDecomposition
+class LinearizedDomainDecomposition3D final : public LinearizedDomainDecomposition
 {
 public:
     LinearizedDomainDecomposition3D( Params &params );
@@ -60,7 +60,7 @@ public:
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
-class LinearizedDomainDecomposition3D_ZYX : public LinearizedDomainDecomposition
+class LinearizedDomainDecomposition3D_ZYX final : public LinearizedDomainDecomposition
 {
 public:
     LinearizedDomainDecomposition3D_ZYX( Params &params );

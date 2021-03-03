@@ -501,10 +501,10 @@ public:
             } else if( PyTools::isSpecies( this_species->position_initialization_ ) ) {
                 // Find the linked species
                 bool ok = false;
-                for( unsigned int ispec = 0; ispec<patch->vecSpecies.size(); ispec++ ) {
-                    if( patch->vecSpecies[ispec]->name_ == this_species->position_initialization_ ) {
+                for( unsigned int ispec2 = 0; ispec2<patch->vecSpecies.size(); ispec2++ ) {
+                    if( patch->vecSpecies[ispec2]->name_ == this_species->position_initialization_ ) {
                         ok = true;
-                        this_species->position_initialization_on_species_index = ispec;
+                        this_species->position_initialization_on_species_index = ispec2;
                         break;
                     }
                 }

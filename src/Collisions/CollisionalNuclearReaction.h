@@ -66,7 +66,7 @@ public:
     };
     void makeProducts( double U, double ekin, double log_ekin, double q, Particles *&p3, Particles *&p4, double &p3_COM, double &p4_COM, double &q3, double &q4, double &cosX ) override {};
     void finish( Params &params, Patch *patch, std::vector<Diagnostic *> &diags, bool, std::vector<unsigned int>, std::vector<unsigned int>, double npairs, int itime ) override {};
-    std::string name() { return ""; }
+    std::string name() override { return ""; }
 };
 
 
