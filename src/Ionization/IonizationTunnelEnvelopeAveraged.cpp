@@ -114,9 +114,9 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
         IonizRate_tunnel_envelope[Z] = beta_tunnel[Z] * exp( -delta*one_third + alpha_tunnel[Z]*log( delta ) );
     
         // Corrections on averaged ionization rate given by the polarization ellipticity  
-        if (ellipticity==0.){ // linear polarization
+        if( ellipticity==0. ){ // linear polarization
             coeff_ellipticity_in_ionization_rate = pow((3./M_PI)/delta*2.,0.5);
-        } else if (ellipticity==1.){ // circular polarization
+        } else if( ellipticity==1. ){ // circular polarization
             coeff_ellipticity_in_ionization_rate = 1.; // for circular polarization, the ionization rate is unchanged
         }
 
@@ -151,9 +151,9 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
                 delta = gamma_tunnel[newZ]*invE;
 
                 // Corrections on averaged ionization rate given by the polarization ellipticity  
-                if (ellipticity==0.){ // linear polarization
+                if( ellipticity==0. ){ // linear polarization
                     coeff_ellipticity_in_ionization_rate = pow((3./M_PI)/(gamma_tunnel[newZ-1]*invE)*2.,0.5);
-                } else if (ellipticity==1.){ // circular polarization
+                } else if( ellipticity==1. ){ // circular polarization
                     coeff_ellipticity_in_ionization_rate = 1.; // for circular polarization, the ionization rate is unchanged
                 }
 

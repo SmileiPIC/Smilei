@@ -168,7 +168,7 @@ public:
         
         // D-D fusion
         PyObject * py_nuclear_reaction = PyTools::extract_py( "nuclear_reaction", "Collisions", n_collisions );
-        CollisionalNuclearReaction *NuclearReaction;
+        CollisionalNuclearReaction *NuclearReaction = NULL;
         // If fusion, verify parameters
         if( py_nuclear_reaction == Py_None ) {
             
