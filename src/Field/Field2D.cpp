@@ -70,7 +70,7 @@ Field2D::Field2D( string name_in, vector<unsigned int> dims ) : Field( dims, nam
 // ---------------------------------------------------------------------------------------------------------------------
 Field2D::~Field2D()
 {
-    for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
+    for (int iside=0 ; iside<(int)(sendFields_.size()) ; iside++ ) {
         if ( sendFields_[iside] != NULL ) {
             delete sendFields_[iside];
             sendFields_[iside] = NULL;
@@ -277,7 +277,7 @@ void Field2D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
         sendFields_[iDim*2+iNeighbor] = new Field2D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field2D(n_space);
     }
-    else if ( ghost_size != sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
+    else if ( ghost_size != (int)(sendFields_[iDim*2+iNeighbor]->dims_[iDim]) ) {
         delete sendFields_[iDim*2+iNeighbor];
         sendFields_[iDim*2+iNeighbor] = new Field2D(n_space);
         delete recvFields_[iDim*2+iNeighbor];
@@ -296,8 +296,8 @@ void Field2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     int ix = idx[0]*istart;
     int iy = idx[1]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
+    unsigned int NX = n_space[0];
+    unsigned int NY = n_space[1];
 
     int dimY = dims_[1];
 
@@ -321,8 +321,8 @@ void Field2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     int ix = idx[0]*istart;
     int iy = idx[1]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
+    unsigned int NX = n_space[0];
+    unsigned int NY = n_space[1];
 
     int dimY = dims_[1];
 
@@ -346,8 +346,8 @@ void Field2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     int ix = idx[0]*istart;
     int iy = idx[1]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
+    unsigned int NX = n_space[0];
+    unsigned int NY = n_space[1];
 
     int dimY = dims_[1];
 
@@ -371,8 +371,8 @@ void Field2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     int ix = idx[0]*istart;
     int iy = idx[1]*istart;
 
-    int NX = n_space[0];
-    int NY = n_space[1];
+    unsigned int NX = n_space[0];
+    unsigned int NY = n_space[1];
 
     int dimY = dims_[1];
 

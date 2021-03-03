@@ -636,7 +636,7 @@ void Checkpoint::readRegionDistribution( Region &region )
     hsize_t nobj;
     H5Gget_num_objs(grp, &nobj);
     char memb_name[1024];
-    for (int i = 0; i < nobj; i++) {
+    for (int i = 0; i < (int)(nobj); i++) {
         H5Gget_objname_by_idx(grp, (hsize_t)i, memb_name, (size_t)1024 );
         string test( memb_name );
         if ( test.find("region") != std::string::npos ) {

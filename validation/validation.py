@@ -267,16 +267,15 @@ elif BENCH in list_bench:
 elif glob( SMILEI_BENCHS+BENCH ):
 	BENCH = glob( SMILEI_BENCHS+BENCH )
 	list_all = glob(SMILEI_BENCHS+"tst*py")
+	SMILEI_BENCH_LIST= []
 	for b in BENCH:
 		if b not in list_all:
 			if VERBOSE:
 				print( "Input file "+b+" invalid.")
 			sys.exit(4)
-		SMILEI_BENCH_LIST= []
-		for b in BENCH:
-				if b.replace(SMILEI_BENCHS,'') in list_bench:
-					SMILEI_BENCH_LIST.append( b.replace(SMILEI_BENCHS,'') )
-		BENCH = SMILEI_BENCH_LIST
+		if b.replace(SMILEI_BENCHS,'') in list_bench:
+			SMILEI_BENCH_LIST.append( b.replace(SMILEI_BENCHS,'') )
+	BENCH = SMILEI_BENCH_LIST
 else:
 	if VERBOSE:
 		print( "Input file "+BENCH+" invalid.")
@@ -485,7 +484,6 @@ if LLR in HOSTNAME :
 		sys.exit(4)
 	NODES=int(ceil(MPI/2.))
 	NPERSOCKET = 1
-	COMPILE_COMMAND = str(MAKE)+' -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_COMMAND = str(MAKE)+' -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
@@ -494,7 +492,6 @@ if LLR in HOSTNAME :
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
 	#CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
-	COMPILE_COMMAND = str(MAKE)+' -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_COMMAND = str(MAKE)+' -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'

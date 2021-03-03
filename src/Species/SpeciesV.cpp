@@ -744,7 +744,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
     for( unsigned int ip=0; ip < npart ; ip++ )
         src_count[src_cell_keys[ip]] ++;
 
-    // sort new parts par cells
+    // sort new parts per cells
     int istart = 0;
     int istop  = src_count[0];
 
@@ -1007,7 +1007,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
                 }
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[4] += MPI_Wtime() - timer;
-#endif            
+#endif
             }
 
 

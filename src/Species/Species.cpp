@@ -764,7 +764,7 @@ void Species::extractParticles()
     //thrust::copy_if(thrust::device, iter, iter+nparts, nvidia_cell_keys.begin(), iter_copy, count_if_out());
 
     particles_to_move->clear();
-    for ( int ipart=0 ; ipart<getNbrOfParticles() ; ipart++ ) {
+    for ( int ipart=0 ; ipart<(int)(getNbrOfParticles()) ; ipart++ ) {
         if ( particles->cell_keys[ipart] == -1 ) {
             particles->copyParticle( ipart, *particles_to_move );
         }
@@ -793,15 +793,15 @@ void Species::sortParticles( Params &params, Patch * patch )
     int ndim = params.nDim_field;
     int idim;
 
-    int blabla = 0;
+    int total_number_part_recv = 0;
     //Merge all MPI_buffer_.partRecv in particles_to_move
-    for( int idim = 0; idim < params.nDim_field; idim++ ) {
+    for( int idim = 0; idim < ndim; idim++ ) {
         for( int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
             int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
             if( ( n_part_recv!=0 ) ) {
                  // insert n_part_recv in particles_to_move from 0
                 //MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
-                blabla += n_part_recv;;
+                total_number_part_recv += n_part_recv;
                 //particles->last_index[particles->last_index.size()-1] += n_part_recv;
                 //particles->cell_keys.resize(particles->cell_keys.size()+n_part_recv);
             }
@@ -812,7 +812,7 @@ void Species::sortParticles( Params &params, Patch * patch )
 
     // Sort to adapt do cell_keys usage
     std::vector<int> indexes_of_particles_to_exchange;
-    for ( int ipart=0 ; ipart<getNbrOfParticles() ; ipart++ ) {
+    for ( int ipart=0 ; ipart< (int)(getNbrOfParticles()) ; ipart++ ) {
         if ( particles->cell_keys[ipart] == -1 ) {
             indexes_of_particles_to_exchange.push_back( ipart );
         }
@@ -1276,7 +1276,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
                 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[4] += MPI_Wtime() - timer;
-#endif            
+#endif
             }
             
             if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
@@ -1468,7 +1468,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
                     b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                     for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
                         Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                    } 
+                    }
                 } else {
                     int n_species = patch->vecSpecies.size();
                     complex<double> *b_rho=nullptr;

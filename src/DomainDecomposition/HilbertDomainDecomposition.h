@@ -19,7 +19,7 @@ protected:
 };
 
 
-class HilbertDomainDecomposition1D : public HilbertDomainDecomposition
+class HilbertDomainDecomposition1D final : public HilbertDomainDecomposition
 {
 public:
     HilbertDomainDecomposition1D( Params &params );
@@ -30,7 +30,7 @@ public:
 };
 
 
-class HilbertDomainDecomposition2D : public HilbertDomainDecomposition
+class HilbertDomainDecomposition2D final : public HilbertDomainDecomposition
 {
 public:
     HilbertDomainDecomposition2D( Params &params );
@@ -41,7 +41,7 @@ public:
 };
 
 
-class HilbertDomainDecomposition3D : public HilbertDomainDecomposition
+class HilbertDomainDecomposition3D final : public HilbertDomainDecomposition
 {
 public:
     HilbertDomainDecomposition3D( Params &params );
