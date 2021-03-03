@@ -541,6 +541,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
     
     //#pragma omp for schedule(runtime)
     #pragma omp single
+    {
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         
         Patch * patch = ( *this )( ipatch );
@@ -767,28 +768,16 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     new_particle_number = particles->size() - 1;
 
                     // Suppr not interesting parts ...
-                    // 1D Xmin
-                    if ( patch->isXmin()) {
-                        for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
-                            if ( particles->Position[0][ip] < 0. ) {
-                                if (new_particle_number != ip) {
-                                    particles->overwriteParticle(new_particle_number,ip);
-                                }
-                                new_particle_number--;
+                    // 1D
+                    for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
+                        if ( ( patch->isXmin() && (particles->Position[0][ip] < 0.) ) ||
+                            (  patch->isXmax() && ( particles->Position[0][ip] > params.grid_length[0] ) ) ) {
+                            if (new_particle_number > ip) {
+                                particles->overwriteParticle(new_particle_number,ip);
                             }
-                        } // end loop on particles
-                    }
-                    // 1D Xmax
-                    if ( patch->isXmax()) {
-                        for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
-                            if ( particles->Position[0][ip] > params.grid_length[0] ) {
-                                if (new_particle_number != ip) {
-                                    particles->overwriteParticle(new_particle_number,ip);
-                                }
-                                new_particle_number--;
-                            }
-                        } // end loop on particles
-                    }
+                            new_particle_number--;
+                        }
+                    } // end loop on particles
 
                     // 2D
                     if (params.nDim_field > 1) {
@@ -822,7 +811,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     new_particle_number += 1;
                         
                     // New energy from particles
-                    if( patch->isXmin() || patch->isXmax() ) {
+                    //if( patch->isXmin() || patch->isXmax() || patch->isYmin() || patch->isYmax() || patch->isZmin() || patch->isZmax()) {
                         double energy = 0.;
                         // Matter particle case
                         if( injector_species->mass_ > 0 ) {
@@ -838,7 +827,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                             }
                             injector_species->new_particles_energy_ += energy;
                         }
-                    }
+                    //}
                         
                     // Insertion of the particles as a group in the vector of species
                     if (new_particle_number > 0) {
@@ -855,6 +844,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
         } // Test patch at boundary
 
     } // end for ipatch
+    } // end omp single
     
     timers.particleInjection.update( params.printNow( itime ) );
 }
@@ -2843,7 +2833,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         istart += smpi->patch_count[irk];
     }
     //tags keep track of the number of patches sent and received to/from the left and right.
-    //This works because send and receive operations are queued in the same index increasing order. 
+    //This works because send and receive operations are queued in the same index increasing order.
     //left and right refers to previous and next MPI process ranks.
     int tagsend_right = 0;
     int tagsend_left = 0;
@@ -3676,75 +3666,61 @@ void VectorPatch::saveExternalFields( Params &params )
     }
 }
 
+// Combines info on memory from all MPI processes
+string combineMemoryConsumption( SmileiMPI *smpi, long int data, string name )
+{
+    long int maxData( 0 );
+    MPI_Reduce( &data, &maxData, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    
+    long double globalData = ( double )data / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalData, &globalData, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    
+    ostringstream t("");
+    t << setw(22) << name << ": "
+      << "Master " << ( int )( ( double )data / 1024./1024. ) << " MB;   "
+      << "Max " << ( int )( ( double )maxData / 1024./1024. ) << " MB;   "
+      << "Global " << setprecision( 3 ) << globalData << " GB";
+    return t.str();
+}
 
 // Print information on the memory consumption
-void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi )
+void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *uncoupled )
 {
+    // Particles memory
     long int particlesMem( 0 );
-    for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ )
+    for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++ ) {
             particlesMem += patches_[ipatch]->vecSpecies[ispec]->getMemFootPrint();
         }
-    MESSAGE( 1, "(Master) Species part = " << ( int )( ( double )particlesMem / 1024./1024. ) << " MB" );
-
-    long double dParticlesMem = ( double )particlesMem / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, setprecision( 3 ) << "Global Species part = " << dParticlesMem << " GB" );
-
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, "Max Species part = " << ( int )( ( double )particlesMem / 1024./1024. ) << " MB" );
-
-    // fieldsMem contains field per species and average fields
+    }
+    string m = combineMemoryConsumption( smpi, particlesMem, "Particles" );
+    MESSAGE( m );
+    
+    // Fields memory (including per species and averaged fields, etc)
     long int fieldsMem( 0 );
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         fieldsMem += patches_[ipatch]->EMfields->getMemFootPrint();
     }
-    MESSAGE( 1, "(Master) Fields part = " << ( int )( ( double )fieldsMem / 1024./1024. ) << " MB" );
-
-    long double dFieldsMem = ( double )fieldsMem / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, setprecision( 3 ) << "Global Fields part = " << dFieldsMem << " GB" );
-
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, "Max Fields part = " << ( int )( ( double )fieldsMem / 1024./1024. ) << " MB" );
-
-
-    for( unsigned int idiags=0 ; idiags<globalDiags.size() ; idiags++ ) {
-        // fieldsMem contains field per species
-        long int diagsMem( 0 );
-        diagsMem += globalDiags[idiags]->getMemFootPrint();
-
-        long double dDiagsMem = ( double )diagsMem / 1024./1024./1024.;
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "(Master) " <<  globalDiags[idiags]->filename << "  = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
-            MESSAGE( 1, setprecision( 3 ) << "Global " <<  globalDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
-        }
-
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "Max " <<  globalDiags[idiags]->filename << " = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
-        }
+    m = combineMemoryConsumption( smpi, fieldsMem, "Fields" );
+    MESSAGE( m );
+    
+    // Fields from uncoupled grid
+    if( ! uncoupled->patches_.empty() ) {
+        long int uncoupledMem = uncoupled->patches_[0]->EMfields->getMemFootPrint();
+        m = combineMemoryConsumption( smpi, uncoupledMem, "Uncoupled grid" );
+        MESSAGE( m );
     }
-
-    for( unsigned int idiags=0 ; idiags<localDiags.size() ; idiags++ ) {
-        // fieldsMem contains field per species
-        long int diagsMem( 0 );
-        diagsMem += localDiags[idiags]->getMemFootPrint();
-
-        long double dDiagsMem = ( double )diagsMem / 1024./1024./1024.;
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "(Master) " <<  localDiags[idiags]->filename << "  = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
-            MESSAGE( 1, setprecision( 3 ) << "Global " <<  localDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
-        }
-
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "Max " <<  localDiags[idiags]->filename << " = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
-        }
+    
+    // Diags memory
+    vector<Diagnostic*> allDiags( 0 );
+    allDiags.insert( allDiags.end(), globalDiags.begin(), globalDiags.end() );
+    allDiags.insert( allDiags.end(), localDiags.begin(), localDiags.end() );
+    for( unsigned int idiags=0 ; idiags<allDiags.size() ; idiags++ ) {
+        long int diagsMem = allDiags[idiags]->getMemFootPrint();
+        m = combineMemoryConsumption( smpi, diagsMem, allDiags[idiags]->filename );
+        MESSAGE( m );
     }
-
+    
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
 }

@@ -1,3 +1,17 @@
+__all__ = [
+	"setMatplotLibBackend",
+	"updateMatplotLibColormaps",
+	"ChunkedRange",
+	"openNamelist",
+	"Options",
+	"Units",
+	"Movie",
+	"SaveAs",
+	"multiPlot",
+	"multiSlide",
+	"VTKfile"
+]
+
 
 def setMatplotLibBackend(show=True):
 	import matplotlib, sys
@@ -242,7 +256,7 @@ class Units(object):
 		try:
 			from pint import UnitRegistry
 			self.UnitRegistry = UnitRegistry
-		except:
+		except Exception as e:
 			global PintWarningIssued
 			if self.verbose and not PintWarningIssued:
 				print("WARNING: you do not have the *pint* package, so you cannot modify units.")
@@ -254,7 +268,7 @@ class Units(object):
 		if self.UnitRegistry:
 			u = self.ureg(units)
 			try: u = u.units.format_babel()
-			except: u = ""
+			except Exception as e: u = ""
 			return u
 		else:
 			return "1"	
@@ -269,19 +283,19 @@ class Units(object):
 			if requestedUnits:
 				try:
 					return self._divide(knownUnits,requestedUnits)
-				except:
+				except Exception as e:
 					if self.verbose:
 						print("WARNING: cannot convert units to <"+requestedUnits+">")
 						print("       : Conversion discarded.")
 			else:
 				for units in self.requestedUnits:
 					try   : return self._divide(knownUnits,units)
-					except: pass
+					except Exception as e: pass
 			try:
 				if knownUnits=="1": knownUnits=""
 				val = self.ureg(knownUnits)
 				return 1., u"{0.units:P}".format(val)
-			except:
+			except Exception as e:
 				if self.verbose:
 					print("WARNING: units unknown: "+str(knownUnits))
 				return 1., ""
@@ -354,7 +368,7 @@ class Movie:
 				return
 			try:
 				import matplotlib.animation as anim
-			except:
+			except Exception as e:
 				print("ERROR: it looks like your version of matplotlib is too old for movies")
 				return
 			filename, file_extension = ospath.splitext(movie)
@@ -364,7 +378,7 @@ class Movie:
 				writer = 'ffmpeg'
 			try:
 				self.writer = anim.writers[writer](fps=fps)
-			except:
+			except Exception as e:
 				print("ERROR: you need the '"+writer+"' software to make movies")
 				return
 
@@ -495,7 +509,7 @@ class _multiPlotUtil(object):
 		self.option_ymax = []
 		try:
 			c = self.plt.matplotlib.rcParams['axes.color_cycle']
-		except:
+		except Exception as e:
 			c = self.plt.matplotlib.rcParams["axes.prop_cycle"].by_key()["color"]
 		rightside = [d.options.side=="right" for d in Diags]
 		self.allright  = all(rightside)
@@ -510,7 +524,7 @@ class _multiPlotUtil(object):
 			if Diag.options.side == "right":
 				if self.sameAxes and not allright:
 					try   : Diag._ax.twin # check if twin exists
-					except: Diag._ax.twin = Diag._ax.twinx()
+					except Exception as e: Diag._ax.twin = Diag._ax.twinx()
 					Diag._ax = Diag._ax.twin
 				else:
 					Diag._ax.yaxis.tick_right()
@@ -573,8 +587,10 @@ class _multiPlotUtil(object):
 								Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
 							else:
 								Diag._ax.spines['left'].set_color(color)
-					try: Diag._ax.set_position(Diag._ax.twin.get_position())
-					except: pass
+					try:
+						Diag._ax.set_position(Diag._ax.twin.get_position())
+					except Exception as e:
+						pass
 			if self.nlegends > 0: self.plt.legend()
 			self.plt.draw()
 			self.plt.pause(0.00001)
@@ -653,7 +669,7 @@ class VTKfile:
 	def __init__(self):
 		try:
 			import vtk
-		except:
+		except Exception as e:
 			print("Python module 'vtk' not found. Could not export to VTK format")
 			return
 
@@ -672,7 +688,7 @@ class VTKfile:
 		elif len(shape)==2: npoints, nComponents = shape
 		else: raise Exception("impossible")
 
-		if (data.dtype == int32):
+		if data.dtype is int32:
 
 			arr = self.vtk.vtkIntArray()
 			arr.SetNumberOfTuples(npoints)
@@ -687,7 +703,7 @@ class VTKfile:
 
 			return arr
 
-		elif (data.dtype == float32):
+		elif data.dtype is float32:
 
 			arr = self.vtk.vtkFloatArray()
 			arr.SetNumberOfTuples(npoints)
@@ -703,7 +719,7 @@ class VTKfile:
 			return arr
 
 		else:
-			raise Exception("In Array: Unknown data type for data {data.dtype}".format())
+			raise Exception("In Array: Unknown data type for data ("+str(data.dtype)+")")
 
 
 	def WriteImage(self, array, origin, extent, spacings, file, numberOfPieces):

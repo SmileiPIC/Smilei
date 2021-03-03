@@ -76,7 +76,7 @@ class Scalar(Diagnostic):
 		if timesteps is not None:
 			try:
 				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
-			except:
+			except Exception as e:
 				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
 				return
 		
@@ -121,7 +121,7 @@ class Scalar(Diagnostic):
 			try:
 				file = path+'/scalars.txt'
 				f = open(file, 'r')
-			except:
+			except Exception as e:
 				self._error += ["Cannot open 'scalars.txt' in directory '"+path+"'"]
 				return []
 			try:
@@ -133,11 +133,11 @@ class Scalar(Diagnostic):
 					prevline = line[1:].strip()
 				scalars = str(prevline).split() # list of scalars
 				scalars = scalars[1:] # remove first, which is "time"
-			except:
+			except Exception as e:
 				scalars = []
 			f.close()
 			try:    allScalars = self._np.intersect1d(allScalars, scalars)
-			except: allScalars = scalars
+			except Exception as e: allScalars = scalars
 		return allScalars
 	
 	# get all available timesteps

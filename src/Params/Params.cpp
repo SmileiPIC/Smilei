@@ -197,6 +197,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         PyTools::runPyFunction( "_prepare_checkpoint_dir" );
         smpi->barrier();
     }
+    
+    // Call python function _keep_python_running (see pyontrol.py)
+    // Return false if we can close the python interpreter
+    MESSAGE( 1, "Calling python _keep_python_running() :" );
+    keep_python_running_ = PyTools::runPyFunction<bool>( "_keep_python_running" );
 
     // random seed
     if( PyTools::extractOrNone( "random_seed", random_seed, "Main" ) ) {
@@ -887,6 +892,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
     
     check_consistency();
+    
 }
 
 Params::~Params()
@@ -1301,16 +1307,13 @@ void Params::cleanup( SmileiMPI *smpi )
     PyTools::runPyFunction( "cleanup" );
     // this will reset error in python in case cleanup doesn't exists
     PyErr_Clear();
-
+    
     smpi->barrier();
-
-    // this function is defined in the Python/pyontrol.py file and should return false if we can close
-    // the python interpreter
-    MESSAGE( 1, "Calling python _keep_python_running() :" );
-    if( PyTools::runPyFunction<bool>( "_keep_python_running" ) ) {
-        MESSAGE( 2, "Keeping Python interpreter alive" );
+    
+    if( keep_python_running_ ) {
+        MESSAGE( 1, "Keeping Python interpreter alive" );
     } else {
-        MESSAGE( 2, "Closing Python" );
+        MESSAGE( 1, "Closing Python" );
         PyErr_Print();
         Py_Finalize();
     }

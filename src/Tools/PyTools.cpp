@@ -205,7 +205,8 @@ PyObject * PyTools::extract_py( std::string name, std::string component, int nCo
     }
     PyObject *py_obj = PyImport_AddModule( "__main__" );
     Py_INCREF( py_obj );
-    PyObject *py_return, *py_component;
+    PyObject *py_return = nullptr;
+    PyObject *py_component = nullptr;
     // If component requested
     if( ! component.empty() ) {
         // Get the selected component (e.g. "Species" or "Laser")
@@ -380,8 +381,8 @@ bool PyTools::isSpecies( std::string name )
 {
     PyObject *py_main = PyImport_AddModule( "__main__" );
     Py_INCREF( py_main );
-    PyObject* py_species = PyObject_GetAttrString( py_main, "Species" );
-    PyObject* has_species = PyObject_CallMethod( py_species, "has", const_cast<char *>( "s" ), name.c_str() );
+    PyObject* py_species = PyObject_GetAttrString( py_main, const_cast<char *>("Species") );
+    PyObject* has_species = PyObject_CallMethod( py_species, const_cast<char *>("has"), const_cast<char *>( "s" ), name.c_str() );
     bool is_species = false;
     py2scalar( has_species, is_species );
     checkPyError();

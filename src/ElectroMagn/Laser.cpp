@@ -10,7 +10,7 @@
 using namespace std;
 
 
-Laser::Laser( Params &params, int ilaser, Patch *patch )
+Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
 {
     ostringstream name( "" );
     name << "Laser #" << ilaser;
@@ -111,7 +111,8 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
         info << "\t\t" << errorPrefix << endl;
         info << "\t\t\tData in file : " << file << endl;
         
-        Profile *ptime, *ptime2;
+        Profile *ptime = nullptr;
+        Profile *ptime2 = nullptr;
         if( PyTools::extract_pyProfile( "_extra_envelope", time_profile, "Laser", ilaser ) ) {
             // extra envelope
             name.str( "" );
@@ -197,7 +198,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     }
 
     // Display info
-    if( patch->isMaster() ) {
+    if( patch->isMaster() && verbose ) {
         MESSAGE( info.str() );
     }
 }
