@@ -259,7 +259,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[["periodic"]]``
 
   The boundary conditions for the electromagnetic fields. Each boundary may have one of
-  the following conditions: ``"periodic"``, ``"silver-muller"``, or ``"reflective"``.
+  the following conditions: ``"periodic"``, ``"silver-muller"``, ``"zero"`` or ``"reflective"``.
 
   | **Syntax 1:** ``[[bc_all]]``, identical for all boundaries.
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
@@ -273,6 +273,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
   When using ``"silver-muller"`` as an absorbing boundary,
   the optimal wave absorption on a given face will be along :math:`k_{abs}`
   the specular reflection of :math:`k_{inc}` on the considered face.
+
+  ``"zero"`` is a basic open boundary condition which consists in linearly damping EM fields over a user defined number of cells via the 
+  ``"number_of_damping_cells"`` argument. Over the first half of the damping cells, the fields remain untouched. Over the second half, a linear damping is applied. The fields are zero on all cells after that.
+  The number of damping cell must be smaller than the number of ghost cells because it must be included inside the ghost region. We advise to use slightly less damping cells than ghost cells.
+  This boundary condition is designed to be used longitudinally with SDMD and spectral solver.
 
 .. py:data:: EM_boundary_conditions_k
 
@@ -291,6 +296,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
 
+.. py:data:: number_of_damping_cells
+
+  :type: lists of floats
+  :default: ``[O]`` 
+
+  The number of cells over which EM fields are linearly damped when using the ``"zero"`` EM boundary condition.
 
 .. py:data:: time_fields_frozen
 
@@ -334,6 +345,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: number_of_AM
 
+  :type: integer
   :default: 2
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
@@ -359,6 +371,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: custom_oversize
 
+   :type: integer
    :default: 2
 
    The number of ghost-cell for each patches. The default value is set accordingly with
@@ -366,10 +379,63 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: custom_region_oversize
 
+   :type: integer
    :default: 2
 
    The number of ghost-cell for each region when ``uncoupled_grids=True``.
    The default value is set accordingly with the ``interpolation_order`` value.
+
+   .. rst-class:: experimental
+
+.. py:data:: is_spectral
+
+  :default: `False`
+
+  * If `False`, use a FDTD Maxwell solver.
+  * If `True`, use a spectral Maxwell solver. Today only picsar spectral solver can be used.
+    Spectral solvers require the use of SDMD so make sure to set ``"uncoupled_grids"`` to `True`. 
+
+   .. rst-class:: experimental
+
+.. py:data:: is_pxr
+
+  :default: `False`
+
+  * If `False`, do not use picsar library.
+  * If `True`, use the picsar library. This is used only for spectral solvers
+
+   .. rst-class:: experimental
+
+.. py:data:: norder
+
+  :type: A list of integer
+  :default: `[0,0]` in AM geometry.
+
+  The order of the spectral solver in each dimension. Set order to zero for infinite order.
+  In AM geometry, only infinite order is supported along the radial dimension.
+
+   .. rst-class:: experimental
+
+.. py:data:: pseudo_spectral_guardells
+
+   :type: integer
+   :default: None
+
+   The number of ghost cells for each region in the longitudinal direction in AM geometry when using a spectral solver.
+   This parameter MUST be defined by the user and has no default value. We advise to use twice as many ghost cells as the order of the solver.
+
+    .. rst-class:: experimental
+
+.. py:data:: apply_rotational_cleaning
+
+  :default: `False`
+
+  * If `False`, do not apply rotational cleaning.
+  * If `True`, use the picsar library to do the rotational cleaning.
+
+  Rotational cleaning correct field initialization in spectral space in order to make sure that the fields at `t=0` are a valid solution of the Maxwell equation.
+  This operation is only supported in AM geometry and with picsar spectral solver.
+  It requires a FFTW of the full domain on a single MPI process so very large simulations may face problems with this procedure.
 
 ----
 
