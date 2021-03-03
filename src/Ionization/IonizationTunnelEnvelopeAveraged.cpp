@@ -63,7 +63,7 @@ void IonizationTunnelEnvelopeAveraged::envelopeIonization( Particles *particles,
 {
     unsigned int Z, Zp1, newZ, k_times;
     double E, E_sq, EnvE_sq, Aabs, invE, delta, ran_p, Mult, D_sum, P_sum, Pint_tunnel;
-    double coeff_ellipticity_in_ionization_rate;
+    double coeff_ellipticity_in_ionization_rate = 1.;
     double p_perp; 
     vector<double> IonizRate_tunnel_envelope( atomic_number_ ), Dnom_tunnel( atomic_number_ );
     
