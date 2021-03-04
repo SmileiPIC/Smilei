@@ -191,7 +191,9 @@ public:
     const bool isZmin;
 
     // copy currents projected on sub-buffers to global currents
-    void copyInLocalDensities(int ispec, int ibin, double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, std::vector<unsigned int> b_dim, bool diag_flag);
+    void copyInLocalDensities(int ispec, int ibin, 
+                              double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, 
+                              std::vector<unsigned int> b_dim, bool diag_flag) override final;
     
 private:
 

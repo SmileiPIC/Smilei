@@ -143,7 +143,10 @@ public:
     //! Method used to impose external fields
     void applyPrescribedField( Field *, Profile *, Patch *, double time );
     
-    
+    // copy currents projected on sub-buffers to global currents
+    void copyInLocalDensities(int ispec, int ibin, 
+                              double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, 
+                              std::vector<unsigned int> b_dim, bool diag_flag) override final {}; 
 private:
     //! Initialize quantities needed in the creators of ElectroMagn1D
     void initElectroMagn1DQuantities( Params &params, Patch *patch );

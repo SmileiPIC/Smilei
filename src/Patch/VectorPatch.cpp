@@ -25,9 +25,6 @@
 #include "interface.h"
 #include "Timers.h"
 
-#include "ElectroMagn2D.h"
-#include "ElectroMagn3D.h"
-
 using namespace std;
 
 
@@ -432,22 +429,13 @@ void VectorPatch::dynamics( Params &params,
             int* last_species_has_projected =  static_cast<Species_taskomp *>(species( ipatch, (Nspecies-1) ))->bin_has_projected;
             #pragma omp task firstprivate(ipatch) depend(in:last_species_has_projected[0:(Nbins-1)])
             { // only the ipatch iterations are parallelized
-
 #ifdef  __DETAILED_TIMERS
                 int ithread = omp_get_thread_num();
                 double timer = MPI_Wtime();
 #endif
-
-            ElectroMagn2D *emfields2D; ElectroMagn3D *emfields3D; 
-            if (params.geometry == "2Dcartesian"){
-                emfields2D = static_cast<ElectroMagn2D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
-            } else if (params.geometry == "3Dcartesian"){
-                emfields3D = static_cast<ElectroMagn3D *>(( *this )( ipatch )->EMfields); //(emfields( ipatch ));
-            } else {ERROR("Task strategy not yet implemented in 1Dcartesian or AMcylindrical geometries");}
             
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) { 
                 // DO NOT parallelize this species loop unless race condition prevention is used!
-
                 Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
                 std::vector<unsigned int> b_dim = spec_task->b_dim;
                 for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
@@ -455,21 +443,13 @@ void VectorPatch::dynamics( Params &params,
                     double *b_Jy = spec_task->b_Jy[ibin];
                     double *b_Jz = spec_task->b_Jz[ibin];
                     double *b_rho = spec_task->b_rho[ibin];
-                    // Copy density buffer back to the patch density
-                    if (params.geometry == "2Dcartesian"){
-                         emfields2D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
-                    } else if (params.geometry == "3Dcartesian"){
-                         emfields3D->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
-                    }
-
+                    (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
                 } // ibin
-
             } // end species loop 
 
 #ifdef  __DETAILED_TIMERS
                 ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-
             } // end task on reduction of patch densities
         } // end patch loop
     } // end condition on tasks

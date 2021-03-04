@@ -79,6 +79,11 @@ public:
     void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
     virtual void finishInitialization( int nspecies, Patch *patch );
+
+    // copy currents projected on sub-buffers to global currents
+    virtual void copyInLocalDensities(int ispec, int ibin, 
+                                      double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, 
+                                      std::vector<unsigned int> b_dim, bool diag_flag) = 0;
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();

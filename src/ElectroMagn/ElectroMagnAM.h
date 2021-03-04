@@ -230,6 +230,11 @@ public:
     
     //!Pointers toward R inverse values stored in patch
     double *invR, *invRd;
+
+    // copy currents projected on sub-buffers to global currents
+    void copyInLocalDensities(int ispec, int ibin, 
+                              double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, 
+                              std::vector<unsigned int> b_dim, bool diag_flag) override final {}; 
 };
 
 #endif
