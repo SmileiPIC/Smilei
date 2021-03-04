@@ -220,10 +220,10 @@ should be used at each timestep to have a better agreement with a correspondent 
 Afterwards, the momentum of the newly created electrons must be properly initialized taking into account of the 
 averaging process in the definition of the particle-envelope interaction.
 
-For circular polarization, i.e. `ellipticity = 1`, 
+For circular polarization, i.e. ``ellipticity = 1``, 
 :math:`\Gamma_{\rm ADK, AC}=\Gamma_{\rm ADK, DC}`, since the field does not change 
 its magnitude over the laser oscillations.
-For linear polarization, i.e. `ellipticity = 0` :
+For linear polarization, i.e. ``ellipticity = 0`` :
 
 .. math::
   :label: ionizationRate2

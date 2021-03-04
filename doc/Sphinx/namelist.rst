@@ -280,13 +280,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[[1.,0.],[-1.,0.],[0.,1.],[0.,-1.]]`` in 2D
   :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
-  The incident unit wave vector `k` for each face
+  The incident unit wave vector ``k`` for each face
   (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax) is
-  defined by its coordinates in the `xyz` frame.
+  defined by its coordinates in the ``xyz`` frame.
   The number of coordinates is equal to the dimension of the simulation.
   The number of given vectors must be equal to 1 or to the number of faces
   which is twice the dimension of the simulation. In cylindrical geometry,
-  `k` coordinates are given in the `xr` frame and only the Rmax face is affected.
+  ``k`` coordinates are given in the ``xr`` frame and only the Rmax face is affected.
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
@@ -318,9 +318,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: print_expected_disk_usage
 
-  :default: `True`
+  :default: ``True``
 
-  If `False`, the calculation of the expected disk usage, that is usually printed in the
+  If ``False``, the calculation of the expected disk usage, that is usually printed in the
   standard output, is skipped. This might be useful in rare cases where this calculation
   is costly.
 
@@ -337,7 +337,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: 2
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
-  The modes range from mode 0 to mode `"number_of_AM-1"`.
+  The modes range from mode 0 to mode ``"number_of_AM-1"``.
 
 .. py:data:: number_of_AM_relativistic_field_initialization
 
@@ -350,10 +350,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: uncoupled_grids
 
-  :default: `False`
+  :default: ``False``
 
-  * If `False`, the parallelization of the simulation is done according to :doc:`parallelization`.
-  * If `True`, the simulated domain is decomposed in dedicated shapes for particles
+  * If ``False``, the parallelization of the simulation is done according to :doc:`parallelization`.
+  * If ``True``, the simulated domain is decomposed in dedicated shapes for particles
     and fields operations. Benefits of this option are illustrated
     `in this paper <https://arxiv.org/abs/1912.04064>`_.
 
@@ -521,7 +521,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
   :type: Float.
   :default: 0.
 
-  The average velocity of the moving window in the `x_max` direction. It muste be between 0 and 1.
+  The average velocity of the moving window in the ``x_max`` direction. It muste be between 0 and 1.
 
 .. py:data:: number_of_additional_shifts
 
@@ -541,7 +541,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 .. note::
 
   The :ref:`particle binning diagnostics <DiagParticleBinning>` accept an "axis" called ``moving_x``
-  corresponding to the `x` coordinate corrected by the moving window's current movement.
+  corresponding to the ``x`` coordinate corrected by the moving window's current movement.
 
 ----
 
@@ -990,7 +990,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
         box_side  = "xmin",
         time_envelope = tgaussian(start=0, duration=10., order=4),
 
-        # Parameters inherited from the associated `species` by default
+        # Parameters inherited from the associated ``species`` by default
 
         position_initialization = "species",
         momentum_initialization = "rectangular",
@@ -1233,15 +1233,15 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     functions taking several arguments depending on the simulation dimension:
     :math:`(t)` for a 1-D simulation, :math:`(y,t)` for a 2-D simulation (etc.)
     The two functions represent :math:`B_y` and :math:`B_z`, respectively.
-    This can be used only in `Cartesian` geometries.
+    This can be used only in Cartesian geometries.
 
 .. py:data:: space_time_profile_AM
 
-    :type: A list of maximum 2*`number_of_AM` *python* functions.
+    :type: A list of maximum 2*``number_of_AM`` *python* functions.
 
-    These profiles define the first modes of `Br` and `Bt` in the order shown in the above example.
+    These profiles define the first modes of ``Br`` and ``Bt`` in the order shown in the above example.
     Undefined modes are considered zero.
-    This can be used only in `AMcylindrical` geometry.
+    This can be used only in ``AMcylindrical`` geometry.
 
 
 
@@ -1447,7 +1447,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
-  two angles, corresponding to rotations around `y` and `z`, respectively.
+  two angles, corresponding to rotations around ``y`` and ``z``, respectively.
 
 
 .. rubric:: 6. Defining a gaussian wave with Azimuthal Fourier decomposition
@@ -1507,7 +1507,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :default:  ``lambda *z: 1.``, which means a profile of value 1 everywhere
 
     An extra envelope applied at the boundary, on top of the :py:data:`space_time_profile`.
-    This envelope takes two arguments (`y`, `t`) in 2D, and three arguments (`y`, `z`, `t`)
+    This envelope takes two arguments (``y``, ``t``) in 2D, and three arguments (``y``, ``z``, ``t``)
     in 3D.
     As the wave propagation technique stores a limited number of Fourier modes (in the time
     domain) of the wave, some periodicity can be obtained in the actual laser.
@@ -1612,7 +1612,7 @@ Following is the generic laser envelope creator ::
   The solver scheme for the envelope equation.
 
   * ``"explicit"``: an explicit scheme based  on central finite differences.
-  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along `x` in the ``"explicit"`` solver are substituted by
+  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along ``x`` in the ``"explicit"`` solver are substituted by
     optimized derivatives to reduce numerical dispersion.
 
 .. py:data:: Envelope_boundary_conditions
@@ -2266,19 +2266,19 @@ tables.
 
 .. py:data:: Niel_computation_method
 
-  :default: "table"
+  :default: ``"table"``
 
-  Method to compute the value of the table *h* of Niel `et al` during the emission process.
+  Method to compute the value of the table *h* of Niel *et al* during the emission process.
   The possible values are:
 
-  * "table": the *h* function is tabulated. The table is computed at initialization or read from an external file.
-  * "fit5": A polynomial fit of order 5 is used. No table is required.
+  * ``"table"``: the *h* function is tabulated. The table is computed at initialization or read from an external file.
+  * ``"fit5"``: A polynomial fit of order 5 is used. No table is required.
     The maximal relative error to the reference data is of maximum of 0.02.
     The fit is valid for quantum parameters :math:`\chi` between 1e-3 and 10.
-  * "fit10":  A polynomial fit of order 10 is used. No table is required.
+  * ``"fit10"``:  A polynomial fit of order 10 is used. No table is required.
     The precision if better than the fit of order 5 with a maximal relative error of 0.0002.
     The fit is valid for quantum parameters :math:`\chi` between 1e-3 and 10.
-  * "ridgers": The fit of Ridgers given in Ridgers et al., ArXiv 1708.04511 (2017)
+  * ``"ridgers"``: The fit of Ridgers given in Ridgers *et al.*, ArXiv 1708.04511 (2017)
 
   The use of tabulated values is best for accuracy but not for performance.
   Table access prevent total vectorization.
@@ -2380,9 +2380,11 @@ The full list of available scalars is given in the table below.
 | | Ubal_norm    | Normalized balance (Ubal :math:`/` Utot)                                | |
 | +--------------+-------------------------------------------------------------------------+ |
 | | Uelm_Ex      | Ex field contribution (:math:`\int E_x^2 dV /2`)                        | |
+| +--------------+-------------------------------------------------------------------------+ |
 | |              |  ... same for fields Ey, Ez, Bx_m, By_m and Bz_m                        | |
 | +--------------+-------------------------------------------------------------------------+ |
 | | Urad         | Total radiated                                                          | |
+| +--------------+-------------------------------------------------------------------------+ |
 | +--------------+-------------------------------------------------------------------------+ |
 +--------------------------------------------------------------------------------------------+
 | **Space- & time-integrated Energies lost/gained at boundaries**                            |
@@ -2395,7 +2397,9 @@ The full list of available scalars is given in the table below.
 | | PoyXminInst  | Poynting contribution through xmin boundary during the timestep         | |
 | +--------------+-------------------------------------------------------------------------+ |
 | | PoyXmin      | Time-accumulated Poynting contribution through xmin boundary            | |
+| +--------------+-------------------------------------------------------------------------+ |
 | |              |  ... same for other boundaries                                          | |
+| +--------------+-------------------------------------------------------------------------+ |
 | +--------------+-------------------------------------------------------------------------+ |
 +--------------------------------------------------------------------------------------------+
 | **Particle information**                                                                   |
@@ -2463,7 +2467,7 @@ This is done by including a block ``DiagFields``::
 
   Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
 
-  When `flush_every` coincides with `every`, the output
+  When ``flush_every`` coincides with ``every``, the output
   file is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
@@ -2634,7 +2638,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 
   Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
 
-  When `flush_every` coincides with `every`, the output
+  When ``flush_every`` coincides with ``every``, the output
   file is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
@@ -2815,7 +2819,7 @@ for instance::
 
   Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
 
-  When `flush_every` coincides with `every`, the output
+  When ``flush_every`` coincides with ``every``, the output
   file is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
@@ -3022,7 +3026,7 @@ for instance::
 
   Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
 
-  When `flush_every` coincides with `every`, the output
+  When ``flush_every`` coincides with ``every``, the output
   file is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
@@ -3083,7 +3087,7 @@ A radiation spectrum diagnostic is defined by a block ``RadiationSpectrum()``::
 
   Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
 
-  When `flush_every` coincides with `every`, the output
+  When ``flush_every`` coincides with ``every``, the output
   file is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
@@ -3210,7 +3214,7 @@ for instance::
 .. Warning:: The ``px``, ``py`` and ``pz`` quantities are not exactly the momenta.
   They are actually the velocities multiplied by the lorentz factor, i.e.,
   :math:`\gamma v_x`, :math:`\gamma v_y` and :math:`\gamma v_z`. This is true only
-  inside the `filter` function (not for the output of the diagnostic).
+  inside the ``filter`` function (not for the output of the diagnostic).
 
 .. Note:: The ``id`` attribute contains the :doc:`particles identification number<ids>`.
   This number is set to 0 at the beginning of the simulation. **Only after particles have
@@ -3267,9 +3271,9 @@ Only one block ``DiagPerformances()`` may be added in the namelist, for instance
 
 .. py:data:: patch_information
 
-  :default: False
+  :default: ``False``
 
-  If `True`, some information is calculated at the patch level (see :py:meth:`Performances`)
+  If ``True``, some information is calculated at the patch level (see :py:meth:`Performances`)
   but this may impact the code performances.
 
 ----

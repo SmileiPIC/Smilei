@@ -19,7 +19,7 @@ An external tool called :program:`smilei_tables` is available to generate these 
 Installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The C++ sources of this tool is located in `tools/tables`.
+The C++ sources of this tool is located in ``tools/tables``.
 
 Required dependencies are the following:
 
@@ -32,9 +32,9 @@ Boost is a C++ library that provides efficient advanced mathematical functions.
 This is the only dependency not required to install :program:`Smilei`.
 This library can be easily installed manually on Linux, MacOS or Windows systems.
 It is also available via different package managers (Debian, Homebrew).
-The environment variable `BOOST_ROOT` must be defined.
+The environment variable ``BOOST_ROOT`` must be defined.
 
-The tool can be then installed using the makefile and the argument `tables`:
+The tool can be then installed using the makefile and the argument ``tables``:
 
 .. code-block:: bash
 
@@ -185,10 +185,10 @@ With a size of 1024 points in 1D and 1024x1024 for 2D tables, these tables offer
 Python visualization scripts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can easily visualize the tables provided by our tools using the python scripts located in the `tools/tables` folder:
+You can easily visualize the tables provided by our tools using the python scripts located in the ``tools/tables`` folder:
 
-* `show_nonlinear_inverse_Compton_scattering.py`
-* `show_multiphoton_Breit_Wheeler.py`
+* ``show_nonlinear_inverse_Compton_scattering.py``
+* ``show_multiphoton_Breit_Wheeler.py``
 
 For instance:
 
@@ -309,7 +309,7 @@ For a given :math:`\chi_\pm`, :math:`\chi_\gamma` ranges from :math:`\chi_{\gamm
 Multiphoton Breit-Wheeler
 """"""""""""""""""""""""""""""""""""
 
-The file `multiphoton_breit_wheeler_tables.h5` is used for the multiphoton Breit-Wheeler process
+The file ``multiphoton_breit_wheeler_tables.h5`` is used for the multiphoton Breit-Wheeler process
 described in :doc:`the dedicated section <multiphoton_Breit_Wheeler>`.
 
 It first contains the ``T`` table that represents

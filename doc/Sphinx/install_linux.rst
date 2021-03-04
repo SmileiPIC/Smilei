@@ -21,7 +21,7 @@ Fedora
 
 	sudo dnf install gcc-c++ git hdf5-openmpi hdf5-openmpi-devel openmpi-devel python python-devel python3-h5py ipython python3-pint python3-sphinx python3-matplotlib
 
-Add the following lines to your `~/.bashrc` or `~/.bash_profile` file
+Add the following lines to your ``~/.bashrc`` or ``~/.bash_profile`` file
 
 .. code-block:: bash
 
@@ -35,7 +35,7 @@ Debian or Ubuntu
 
 	sudo apt-get install git python3-h5py python3-ipython python3-pint python3-sphinx python3-matplotlib python3-dev python3-numpy build-essential gcc libhdf5-openmpi-dev
 
-Add the following lines to your `~/.bashrc` or `~/.bash_profile` file
+Add the following lines to your ``~/.bashrc`` or ``~/.bash_profile`` file
 
 .. code-block:: bash
 
@@ -51,7 +51,7 @@ In case you system doe not provide them, here is a (non exhaustive) help to inst
 
 
 1. If your system ``openmpi`` is not compiled with ``--enable-mpi-thread-multiple``, a manual installation is required.
-   Add the following lines to your `~/.bashrc` or `~/.bash_profile` file
+   Add the following lines to your ``~/.bashrc`` or ``~/.bash_profile`` file
    (You may choose any ``${INSTALL_DIR}``)
 
   .. code-block:: bash

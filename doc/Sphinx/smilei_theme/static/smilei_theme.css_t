@@ -153,7 +153,16 @@ div.body p, div.body li {
 }
 
 div.body p {
+	margin-top: 0.5em;
 	margin-bottom: 0.5em;
+}
+
+div.body dd > p {
+	margin: 0;
+}
+
+dl.field-list > dt {
+	padding-top: 2px;
 }
 
 div.body table p {
@@ -254,7 +263,6 @@ table.docutils td, table.docutils th {
 table.fancy {
 	position: relative;
 	z-index:0;
-	display: block;
 	overflow-x: auto;
 	border:1px solid {{ theme_main_color_med }};
 	white-space: nowrap;
@@ -266,6 +274,22 @@ table.fancy * {
 
 table.fancy > tbody > tr.row-odd {
 	background-color: {{ theme_main_color_pale }};
+}
+
+table.fancy > tbody > tr > td {
+	padding: 0.5em;
+}
+
+table.fancy > tbody > tr > td td{
+	padding: 0 0.5em;
+}
+
+table.fancy p {
+	margin: 0;
+}
+
+table.fancy table {
+	width: 100%;
 }
 
 table.field-list, table.footnote {
@@ -311,12 +335,12 @@ table.noborder td:first-child > .reference {
 }
 
 dl {
-	margin: 0;
+	margin: 0.5em 0;
 	padding: 0;
 }
 
 dl dd {
-	margin-left: 1em;
+	margin: 0.5em 0 0.5em 1em;
 }
 
 blockquote {
@@ -662,7 +686,7 @@ div.header > * {
 
 div.experimental > h1:first-of-type::after,
 div.experimental > h2:first-of-type::after,
-dl.experimental dt:first-of-type::after
+dl.experimental > dt:first-of-type::after
 {
 	content: "experimental";
 	display: inline-block;
@@ -806,14 +830,13 @@ dl.citation > * {
 dl.citation p {
 	line-height: normal;
 }
+
 /* Make a "bigcitation" class for citations with several lines */
-table.bigcitation td.label,
-dt.bigcitation
+.bigcitation .citation td.label, .bigcitation .citation dt
 {
 	max-width: 0;
 }
-table.bigcitation td.label + td,
-dt.bigcitation + dd
+.bigcitation .citation td.label + td, .bigcitation .citation dt + dd
 {
 	padding-top: 1.5em;
 }
@@ -964,6 +987,11 @@ div.toctree-smilei hr {
 	#searchinput {
 		display:block !important;
 		width:100%;
+	}
+	
+	table.fancy, table.fancy > tbody, table.fancy > tbody > tr {
+		display: block;
+		width: 100%;
 	}
 }
 
