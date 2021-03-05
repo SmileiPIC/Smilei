@@ -120,6 +120,10 @@ public:
     
     // Local array of new pairs of electron-positron
     Particles new_pair[2];
+
+    // Local array of new pairs of electron-positron per bin
+    std::vector<Particles *> new_pair_per_bin;
+    bool tasks_on_projection;
     
 private:
 

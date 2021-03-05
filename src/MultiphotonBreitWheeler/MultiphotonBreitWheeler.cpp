@@ -44,6 +44,16 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
     // Local random generator
     rand_ = rand;
 
+    tasks_on_projection = params.tasks_on_projection;
+    if (tasks_on_projection){
+        //! vector of electron-positron pairs per bin
+        new_pair_per_bin.resize(species->particles->first_index.size());
+        for( unsigned int ibin = 0 ; ibin < species->particles->first_index.size() ; ibin++ ) {
+            // the pair electron-positron
+            new_pair_per_bin[ibin]  = new Particles[2];
+        }
+    }
+
 }
 
 // -----------------------------------------------------------------------------
