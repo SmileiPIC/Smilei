@@ -508,10 +508,10 @@ double RadiationMonteCarlo::photonEmissionForTasks( int ipart,
         // the parameter radiation_photon_sampling_
 
         // Creation of new photons in the temporary array new_photons_
-        new_photons_per_bin[ibin].createParticles( radiation_photon_sampling_ );
+        new_photons_per_bin_[ibin].createParticles( radiation_photon_sampling_ );
 
         // Final size
-        int npart = new_photons_per_bin[ibin].size();
+        int npart = new_photons_per_bin_[ibin].size();
 
         // Inverse of the momentum norm
         inv_old_norm_p = 1./sqrt( momentum[0][ipart]*momentum[0][ipart]
@@ -521,23 +521,23 @@ double RadiationMonteCarlo::photonEmissionForTasks( int ipart,
         // For all new photons...
         for( int idNew=npart-radiation_photon_sampling_; idNew<npart; idNew++ ) {
             for( int i=0; i<n_dimensions_; i++ ) {
-                new_photons_per_bin[ibin].position( i, idNew )=position[i][ipart];
+                new_photons_per_bin_[ibin].position( i, idNew )=position[i][ipart];
             }
 
             for( int i=0; i<3; i++ ) {
-                new_photons_per_bin[ibin].momentum( i, idNew ) =
+                new_photons_per_bin_[ibin].momentum( i, idNew ) =
                     gammaph*momentum[i][ipart]*inv_old_norm_p;
             }
 
-            new_photons_per_bin[ibin].weight( idNew )=weight[ipart]*inv_radiation_photon_sampling_;
-            new_photons_per_bin[ibin].charge( idNew )=0;
+            new_photons_per_bin_[ibin].weight( idNew )=weight[ipart]*inv_radiation_photon_sampling_;
+            new_photons_per_bin_[ibin].charge( idNew )=0;
 
             if( new_photons_.isQuantumParameter ) {
-                new_photons_per_bin[ibin].chi( idNew ) = photon_chi;
+                new_photons_per_bin_[ibin].chi( idNew ) = photon_chi;
             }
 
-            if( new_photons_per_bin[ibin].isMonteCarlo ) {
-                new_photons_per_bin[ibin].tau( idNew ) = -1.;
+            if( new_photons_per_bin_[ibin].isMonteCarlo ) {
+                new_photons_per_bin_[ibin].tau( idNew ) = -1.;
             }
 
         }

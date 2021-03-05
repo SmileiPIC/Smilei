@@ -37,7 +37,7 @@ Radiation::Radiation( Params &params, Species *species, Random * rand )
 
     tasks_on_projection = params.tasks_on_projection;
     if (tasks_on_projection){
-        new_photons_per_bin = new Particles[species->particles->first_index.size()];
+        new_photons_per_bin_ = new Particles[species->particles->first_index.size()];
     }
     
 }
@@ -126,29 +126,29 @@ void Radiation::joinNewPhotons(unsigned int Nbins)
     // if tasks on bins are used for Radiation, join the lists of new photons
     // created in each bin, to have the list of new photons for this species and patch
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-        for (unsigned int ipart = 0; ipart < new_photons_per_bin[ibin].size() ; ipart++){
+        for (unsigned int ipart = 0; ipart < new_photons_per_bin_[ibin].size() ; ipart++){
 
             new_photons_.createParticle();
             int idNew = new_photons_.size() - 1;
             for( unsigned int i=0; i<new_photons_.dimension(); i++ ) {
-                new_photons_.position( i, idNew ) = (new_photons_per_bin[ibin]).position( i, ipart );
+                new_photons_.position( i, idNew ) = (new_photons_per_bin_[ibin]).position( i, ipart );
             }
             for( unsigned int i=0; i<3; i++ ) {
-                new_photons_.momentum( i, idNew ) = (new_photons_per_bin[ibin]).momentum( i, ipart );
+                new_photons_.momentum( i, idNew ) = (new_photons_per_bin_[ibin]).momentum( i, ipart );
             }
-            new_photons_.weight( idNew ) = (new_photons_per_bin[ibin]).weight( ipart );
-            new_photons_.charge( idNew ) = (new_photons_per_bin[ibin]).charge( ipart );
+            new_photons_.weight( idNew ) = (new_photons_per_bin_[ibin]).weight( ipart );
+            new_photons_.charge( idNew ) = (new_photons_per_bin_[ibin]).charge( ipart );
 
             if( new_photons_.isQuantumParameter ) {
-                new_photons_.chi( idNew ) = (new_photons_per_bin[ibin]).chi( ipart );
+                new_photons_.chi( idNew ) = (new_photons_per_bin_[ibin]).chi( ipart );
             }
 
             if( new_photons_.isMonteCarlo ) {
-                new_photons_.tau( idNew ) = (new_photons_per_bin[ibin]).tau( ipart );
+                new_photons_.tau( idNew ) = (new_photons_per_bin_[ibin]).tau( ipart );
             }
        
         } // end ipart
-        new_photons_per_bin[ibin].clear();
+        new_photons_per_bin_[ibin].clear();
     } // end ibin
 
 }

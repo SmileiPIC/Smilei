@@ -1153,7 +1153,7 @@ public:
                             if (params.tasks_on_projection){
                                 int Nbins = patch->vecSpecies[ispec1]->particles->first_index.size();
                                 for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
-                                    patch->vecSpecies[ispec1]->Radiate->new_photons_per_bin[ibin].initializeReserve(
+                                    patch->vecSpecies[ispec1]->Radiate->new_photons_per_bin_[ibin].initializeReserve(
                                         patch->vecSpecies[ispec1]->getNbrOfParticles(),
                                         *patch->vecSpecies[ispec1]->photon_species_->particles
                                     );   
@@ -1261,10 +1261,10 @@ public:
                     if (params.tasks_on_projection){
                         int Nbins = patch->vecSpecies[i]->particles->first_index.size();
                         for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
-                            patch->vecSpecies[i]->Radiate->new_photons_per_bin[ibin].tracked = patch->vecSpecies[i]->photon_species_->particles->tracked;
-                            patch->vecSpecies[i]->Radiate->new_photons_per_bin[ibin].isQuantumParameter = patch->vecSpecies[i]->photon_species_->particles->isQuantumParameter;
-                            patch->vecSpecies[i]->Radiate->new_photons_per_bin[ibin].isMonteCarlo = patch->vecSpecies[i]->photon_species_->particles->isMonteCarlo;
-                            patch->vecSpecies[i]->Radiate->new_photons_per_bin[ibin].initialize( 0, params.nDim_particle, params.keep_position_old );
+                            patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].tracked = patch->vecSpecies[i]->photon_species_->particles->tracked;
+                            patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].isQuantumParameter = patch->vecSpecies[i]->photon_species_->particles->isQuantumParameter;
+                            patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].isMonteCarlo = patch->vecSpecies[i]->photon_species_->particles->isMonteCarlo;
+                            patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].initialize( 0, params.nDim_particle, params.keep_position_old );
                         }
                     }
                 } else {
