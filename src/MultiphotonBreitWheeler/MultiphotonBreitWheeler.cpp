@@ -46,9 +46,14 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
 
     tasks_on_projection = params.tasks_on_projection;
     if (tasks_on_projection){
+        int Nbins = species->particles->first_index.size();
+        
+        // initialize array per bin for energy conversion
+        pair_converted_energy_per_bin = new double[Nbins];
+      
         //! vector of electron-positron pairs per bin
-        new_pair_per_bin.resize(species->particles->first_index.size());
-        for( unsigned int ibin = 0 ; ibin < species->particles->first_index.size() ; ibin++ ) {
+        new_pair_per_bin.resize(Nbins);
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
             // the pair electron-positron
             new_pair_per_bin[ibin]  = new Particles[2];
         }
@@ -140,7 +145,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
         int istart,
         int iend,
-        int ithread, int ipart_ref )
+        int ithread, int ibin, int ipart_ref )
 {
     // _______________________________________________________________
     // Parameters
@@ -190,7 +195,11 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // uint64_t * id = &( particles.id(0));
 
     // Total energy converted into pairs for this species during this timestep
-    this->pair_converted_energy_ = 0;
+    if (!tasks_on_projection){
+        this->pair_converted_energy_ = 0;
+    } else {
+        this->pair_converted_energy_per_bin[ibin] = 0;
+    }
 
     // _______________________________________________________________
     // Computation
@@ -264,11 +273,20 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 //                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
 
                     // Generation of the pairs
-                    MultiphotonBreitWheeler::pair_emission( ipart,
-                                                            particles,
-                                                            ( *gamma )[ipart],
-                                                            dt_ - event_time,
-                                                            MultiphotonBreitWheelerTables );
+                    if (!tasks_on_projection){
+                        MultiphotonBreitWheeler::pair_emission( ipart,
+                                                                particles,
+                                                                ( *gamma )[ipart],
+                                                                dt_ - event_time,
+                                                                MultiphotonBreitWheelerTables );
+                    } else {
+                        MultiphotonBreitWheeler::PairEmissionForTasks( ipart,
+                                                                       particles,
+                                                                       ( *gamma )[ipart],
+                                                                       dt_ - event_time,
+                                                                       MultiphotonBreitWheelerTables,
+                                                                       ibin );
+                    }
 
 
                     // Optical depth becomes negative meaning
@@ -376,6 +394,96 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
 
     // Total energy converted into pairs during the current timestep
     pair_converted_energy_ += particles.weight( ipart )*gammaph;
+
+    // The photon with negtive weight will be deleted latter
+    particles.weight( ipart ) = -1;
+
+}
+
+void MultiphotonBreitWheeler::PairEmissionForTasks( int ipart,
+        Particles &particles,
+        double &gammaph,
+        double remaining_dt,
+        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+        int ibin )
+{
+
+    // _______________________________________________
+    // Parameters
+
+    int      nparticles;           // Total number of particles in the temporary arrays
+    int      k, i;
+    double   u[3];                 // propagation direction
+    double *chi = new double[2];   // temporary quantum parameters
+    double   inv_chiph_gammaph;    // (gamma_ph - 2) / chi
+    double   p;
+    // Commented particles displasment while particles injection not managed  in a better way
+    //    for now particles could be created outside of the local domain
+    //    without been subject do boundary conditions (including domain exchange)
+    //double   inv_gamma;
+
+    inv_chiph_gammaph = ( gammaph-2. )/particles.chi( ipart );
+
+    // Get the pair quantum parameters to compute the energy
+    chi = MultiphotonBreitWheelerTables.computePairQuantumParameter( particles.chi( ipart ), rand_ );
+    
+    // pair propagation direction // direction of the photon
+    for( k = 0 ; k<3 ; k++ ) {
+        u[k] = particles.momentum( k, ipart )/gammaph;
+    }
+
+    // _______________________________________________
+    // Electron (k=0) and positron (k=1) generation
+
+    for( k=0 ; k < 2 ; k++ ) {
+
+        // Creation of new electrons in the temporary array new_pair[0]
+        new_pair_per_bin[ibin][k].createParticles( mBW_pair_creation_sampling_[k] );
+        
+        // Final size
+        nparticles = new_pair_per_bin[ibin][k].size();
+
+        // For all new electrons...
+        for( int idNew=nparticles-mBW_pair_creation_sampling_[k]; idNew<nparticles; idNew++ ) {
+
+            // Momentum
+            p = sqrt( pow( 1.+chi[k]*inv_chiph_gammaph, 2 )-1 );
+            for( i=0; i<3; i++ ) {
+                new_pair_per_bin[ibin][k].momentum( i, idNew ) =
+                    p*u[i];
+            }
+
+            // gamma
+            //inv_gamma = 1./sqrt(1.+p*p);
+
+            // Positions
+            for( i=0; i<n_dimensions_; i++ ) {
+                new_pair_per_bin[ibin][k].position( i, idNew )=particles.position( i, ipart );
+//               + new_pair[k].momentum(i,idNew)*remaining_dt*inv_gamma;
+            }
+
+            // Old positions
+            if( particles.Position_old.size() > 0 ) {
+                for( i=0; i<n_dimensions_; i++ ) {
+                    new_pair_per_bin[ibin][k].position_old( i, idNew )=particles.position( i, ipart ) ;
+                }
+            }
+
+            new_pair_per_bin[ibin][k].weight( idNew )=particles.weight( ipart )*mBW_pair_creation_inv_sampling_[k];
+            new_pair_per_bin[ibin][k].charge( idNew )= k*2-1;
+
+            if( new_pair_per_bin[ibin][k].isQuantumParameter ) {
+                new_pair_per_bin[ibin][k].chi( idNew ) = chi[k];
+            }
+
+            if( new_pair_per_bin[ibin][k].isMonteCarlo ) {
+                new_pair_per_bin[ibin][k].tau( idNew ) = -1.;
+            }
+        }
+    }
+
+    // Total energy converted into pairs during the current timestep
+    pair_converted_energy_per_bin[ibin] += particles.weight( ipart )*gammaph;
 
     // The photon with negtive weight will be deleted latter
     particles.weight( ipart ) = -1;

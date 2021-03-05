@@ -44,7 +44,7 @@ public:
                      MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                      int istart,
                      int iend,
-                     int ithread, int ipart_ref = 0 );
+                     int ithread, int ibin = 0, int ipart_ref = 0 );
                      
     //! Computation of the photon Lorentz invariant quantum parameter
     //! for the given photon properties
@@ -99,6 +99,13 @@ public:
                         double &gammaph,
                         double remaining_dt,
                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables );
+
+    void PairEmissionForTasks( int ipart,
+                                      Particles &particles,
+                                      double &gammaph,
+                                      double remaining_dt,
+                                      MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                                      int ibin );
                         
     //! Clean photons that decayed into pairs (weight <= 0)
     //! \param particles   particle object containing the particle
@@ -116,6 +123,12 @@ public:
     double inline getPairEnergy( void )
     {
         return pair_converted_energy_;
+    }
+
+    //! Return the pair converted energy
+    double inline getPairEnergyOfBin( int ibin )
+    {
+        return pair_converted_energy_per_bin[ibin];
     }
     
     // Local array of new pairs of electron-positron
@@ -144,6 +157,9 @@ private:
     
     //! Energy lost after conversion into pairs
     double pair_converted_energy_;
+
+    //! Energy lost after conversion into pairs per bin
+    double *pair_converted_energy_per_bin;
     
     //! Threshold under which pair creation is not considered
     double chiph_threshold_;
