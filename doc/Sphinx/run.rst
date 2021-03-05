@@ -107,7 +107,7 @@ Using the provided script
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For simple cases such as the previous one, use the script ``smilei.sh``, provided in
-the `Smilei` directory. You only have to run
+the ``Smilei`` directory. You only have to run
 
 .. code-block:: bash
   

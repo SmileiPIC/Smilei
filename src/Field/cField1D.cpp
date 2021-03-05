@@ -260,7 +260,7 @@ void cField1D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * ( ghost_size + 1 + isDual_[iDim] );
     int ix = idx[0]*istart;
 
-    int NX = n_space[0];
+    unsigned int NX = n_space[0];
 
     complex<double>* sub = static_cast<cField*>(sendFields_[iDim*2+iNeighbor])->cdata_;
     complex<double>* field = cdata_;
@@ -279,7 +279,7 @@ void cField1D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - 1- ( ghost_size-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
     int ix = idx[0]*istart;
 
-    int NX = n_space[0];
+    unsigned int NX = n_space[0];
 
     complex<double>* sub = static_cast<cField*>(recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_;
     complex<double>* field = cdata_;
@@ -298,7 +298,7 @@ void cField1D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * 0;
     int ix = idx[0]*istart;
 
-    int NX = n_space[0];
+    unsigned int NX = n_space[0];
 
     complex<double>* sub = static_cast<cField*>(sendFields_[iDim*2+iNeighbor])->cdata_;
     complex<double>* field = cdata_;
@@ -317,7 +317,7 @@ void cField1D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
     int ix = idx[0]*istart;
 
-    int NX = n_space[0];
+    unsigned int NX = n_space[0];
 
     complex<double>* sub = static_cast<cField*>(recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_;
     complex<double>* field = cdata_;

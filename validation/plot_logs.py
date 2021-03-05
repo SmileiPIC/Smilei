@@ -6,6 +6,7 @@ from glob import glob
 from json import load
 from time import strptime
 from datetime import datetime
+from itertools import cycle
 #from os.path import splitext, basename
 import os
 ion()
@@ -40,7 +41,7 @@ else:
 cases = sorted(glob(path))
 if len(cases) ==0:
     raise Exception('\n No cases found for `{}`.\n The path may be invalid or not accessible.'.format(path))
-        
+
 # Class to create a plot with buttons to switch between cases
 class switchPlots:
     
@@ -48,7 +49,7 @@ class switchPlots:
     # Class parameters
     
     # Internal parameters
-    ind               = 0
+    ind = 0
     
     timers = ['Particles','Maxwell','Densities',
               'SyncParticles','SyncFields','SyncDensities','SyncSusceptibility',
@@ -58,9 +59,7 @@ class switchPlots:
     # Plot style
     marker_size       = 8
     menu_x_position   = 0.75
-    current_marker    = 0
-    current_color     = 0
-    custom_colors = ['C0','C1','C2','C3','C4','C5','C6']
+    custom_colors = ['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9']
     custom_markers = ['o','s','^','v','<','>']
     
     # _________________________________________________
@@ -77,8 +76,7 @@ class switchPlots:
         # Events
         self.fig.canvas.callbacks.connect('pick_event', self.on_pick)
         self.fig.canvas.mpl_connect("motion_notify_event", self.on_hover)
-        self.fig.canvas.mpl_connect("motion_notify_event", self.update_min_mean_max_annotations)
-        self.fig.canvas.mpl_connect("button_press_event", self.open_commit_link)
+        self.fig.canvas.mpl_connect("button_press_event", self.on_press)
         
         # Button previous -5
         axprev5 = axes([self.menu_x_position, 0.01, 0.05, 0.03])
@@ -104,8 +102,6 @@ class switchPlots:
         # Get all data from all cases
         self.data = []
         for case in cases:
-            
-            self.init_style()
             
             D = {"name":os.path.splitext(os.path.basename(case))[0]}
             
@@ -144,20 +140,40 @@ class switchPlots:
             D["commits"] = data["commit"]
             D["commit_ids"] = array([(b.split("-")[0]) for b in D["commits"]])
             D["branches"] = array(["-".join(b.split("-")[1:]) for b in D["commits"]])
+            
+            # Find 8 newest branches
+            recent_branches = []
+            for branch in D["branches"][::-1]:
+                if len(recent_branches) > 7:
+                    break
+                if branch not in recent_branches:
+                    recent_branches.append(branch)
+            
             # Set parameters for branch plotting
             D["branch_opt"] = {}
             D["branch_points"] = {}
+            markers = cycle(self.custom_markers)
+            colors = cycle(self.custom_colors)
             for branch in unique(D["branches"]):
-                if "HEAD" in branch or branch=="develop":
+                self.current_color  = 0
+                self.current_marker = 0
+                if branch not in recent_branches:
                     D["branch_opt"][branch] = dict(
-                        marker = self.get_marker(),
+                        marker = "s",
                         color = "k",
                         alpha = 0,
                     )
+                elif "HEAD" in branch or branch=="develop":
+                    D["branch_opt"][branch] = dict(
+                        marker = next(markers),
+                        color = "k",
+                        alpha = 1,
+                        label = "develop or HEAD"
+                    )
                 else:
                     D["branch_opt"][branch] = dict(
-                        marker = self.get_marker(),
-                        color = self.get_color(),
+                        marker = next(markers),
+                        color = next(colors),
                         alpha = 1,
                         label = branch
                     )
@@ -168,7 +184,7 @@ class switchPlots:
             self.data += [D]
             print("Loaded case %s"%case)
         
-        self.plot()
+        self.plot_summary()
     
     def next(self, event, jump):
         """
@@ -176,81 +192,94 @@ class switchPlots:
         """
         self.ind += jump
         self.ind %= self.nplots
-        self.plot()
-
-    def get_marker(self):
-        """
-        Select a marker in the custom list
-        """
-        marker = self.current_marker
-        self.current_marker = (self.current_marker+1)%len(self.custom_markers)
-        return self.custom_markers[marker]
-
-    def get_color(self):
-        """
-        Select a color in the custom list
-        """
-        color = self.current_color
-        self.current_color = (self.current_color+1)%len(self.custom_colors)
-        return self.custom_colors[color]
-
-    def init_style(self):
-        """
-        Reinitialize the plot style
-        """
-        self.current_color  = 0
-        self.current_marker = 0
-
+        self.plot_benchmark()
+    
     def on_pick(self,event):
         """
-        This method is used to make markers clickable.
-        Information is then shown in the terminal.
+        This method is used to make markers pickable.
         """
-        marker_indexes = event.ind
-        print("\n Selected points: {}".format(marker_indexes))
-        D = self.data[self.ind]
-        for k in marker_indexes:
-            print("  > Commit: {}".format(D["commits"][k]))
-            print("    Branch: {}".format(D["branches"][k]))
-            print("    Date: {}".format(D["date"][k]))
-            print("    Link: https://llrgit.in2p3.fr/smilei/smilei/-/commit/{}".format(D["commit_ids"][k]))
-            print("    ----------------------------------------------------------------------")
-            print("     Timers          | Times (s)  | Min (s)    | Mean (s)   | Max (s)    |")
-            print("    ----------------------------------------------------------------------")
-            for label, d, min, mean, max in zip(
-                D["labels"]+["Total"],
-                D["processed_data"]+[D["time_in_timeloop"]],
-                D["min_times"],
-                D["mean_times"],
-                D["max_times"]
-            ):
-                print("     {0:15} | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} |".format(label, d[k], min, mean, max))
-
+        if self.plottype == "summary":
+            pass
+        
+        elif self.plottype == "benchmark":
+            marker_indexes = event.ind
+            print("\n Selected points: {}".format(marker_indexes))
+            D = self.data[self.ind]
+            for k in marker_indexes:
+                print("  > Commit: {}".format(D["commits"][k]))
+                print("    Branch: {}".format(D["branches"][k]))
+                print("    Date: {}".format(D["date"][k]))
+                print("    Link: https://llrgit.in2p3.fr/smilei/smilei/-/commit/{}".format(D["commit_ids"][k]))
+                print("    ----------------------------------------------------------------------")
+                print("     Timers          | Times (s)  | Min (s)    | Mean (s)   | Max (s)    |")
+                print("    ----------------------------------------------------------------------")
+                for label, d, min, mean, max in zip(
+                    D["labels"]+["Total"],
+                    D["processed_data"]+[D["time_in_timeloop"]],
+                    D["min_times"],
+                    D["mean_times"],
+                    D["max_times"]
+                ):
+                    print("     {0:15} | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} |".format(label, d[k], min, mean, max))
+            
+        else:
+            raise Exception("Impossible")
     
     def on_hover(self, event):
         vis = self.annot.get_visible()
         if event.inaxes == self.ax:
-            cont, ind = self.sc.contains(event)
-            if cont:
-                i = ind["ind"][0]
-                self.annot.set_text(self.data[self.ind]["commits"][i])
-                self.annot.set_visible(True)
-                self.fig.canvas.draw_idle()
-            else:
-                if vis:
+            
+            if self.plottype == "summary":
+                for plot in self.plots:
+                    cont, _ = plot[0].contains(event)
+                    if cont:
+                        self.annot.set_text(plot[0].get_label())
+                        self.annot.set_visible(True)
+                        self.fig.canvas.draw_idle()
+                        break
+                else:
+                    if vis:
+                        self.annot.set_visible(False)
+                        self.fig.canvas.draw_idle()
+            
+            elif self.plottype == "benchmark":
+                cont, ind = self.sc.contains(event)
+                if cont:
+                    i = ind["ind"][0]
+                    self.annot.set_text(self.data[self.ind]["commits"][i])
+                    self.annot.set_visible(True)
+                    self.fig.canvas.draw_idle()
+                elif vis:
                     self.annot.set_visible(False)
                     self.fig.canvas.draw_idle()
+                
+                self.update_min_mean_max_annotations()
+            
+            else:
+                raise Exception("Impossible")
 
-    def open_commit_link(self,event):
+    def on_press(self,event):
         """
         """
-        if event.dblclick:
-            if event.inaxes == self.ax:
+        if event.dblclick and event.inaxes == self.ax:
+            
+            if self.plottype == "summary":
+                for plot in self.plots:
+                    cont, ind = plot[0].contains(event)
+                    if cont:
+                        break
+                self.ind = plot[1]
+                self.plot_benchmark()
+            
+            elif self.plottype == "benchmark":
                 cont, ind = self.sc.contains(event)
                 if cont:
                     D = self.data[self.ind]
-                    for i in  ind["ind"]:
+                    for i in ind["ind"]:
                         os.system("xdg-open https://llrgit.in2p3.fr/smilei/smilei/-/commit/{}".format(D["commit_ids"][i]))
+                
+            else:
+                raise Exception("Impossible")
 
     def display_min_mean_max_annotations(self):
         """
@@ -260,7 +289,7 @@ class switchPlots:
         ylim = self.ax.get_ylim()
         y_length = ylim[1] - ylim[0]
         
-        if ((D["min_times"][-1] < ylim[1]) and (D["min_times"][-1] > ylim[0])):
+        if D["min_times"][-1] < ylim[1] and D["min_times"][-1] > ylim[0]:
             ypos = (D["min_times"][-1]-ylim[0])/y_length
             self.min_annot = self.ax.annotate("min", xy=(1.0, ypos),
                                             xycoords='axes fraction',
@@ -270,7 +299,7 @@ class switchPlots:
                                             va = 'center')
             self.min_annot_drawn = True
                     
-        if ((D["mean_times"][-1] < ylim[1]) and (D["mean_times"][-1] > ylim[0])):
+        if D["mean_times"][-1] < ylim[1] and D["mean_times"][-1] > ylim[0]:
             ypos = (D["mean_times"][-1]-ylim[0])/y_length
             self.mean_annot = self.ax.annotate("mean", xy=(1.0, ypos),
                                             xycoords='axes fraction',
@@ -280,7 +309,7 @@ class switchPlots:
                                             va = 'center')
             self.mean_annot_drawn = True
         
-        if ((D["max_times"][-1] < ylim[1]) and (D["max_times"][-1] > ylim[0])):
+        if D["max_times"][-1] < ylim[1] and D["max_times"][-1] > ylim[0]:
             ypos = (D["max_times"][-1]-ylim[0])/y_length
             self.max_annot = self.ax.annotate("max", xy=(1.0, ypos),
                                             xycoords='axes fraction',
@@ -290,26 +319,71 @@ class switchPlots:
                                             va = 'center')
             self.max_annot_drawn = True
     
-    def update_min_mean_max_annotations(self,event):
+    def update_min_mean_max_annotations(self):
         """
         Update the min, mean, max annotations
         """
-        if (self.min_annot_drawn):
+        if self.min_annot_drawn:
             self.min_annot.remove()
             self.min_annot_drawn = False
-        if (self.mean_annot_drawn):
+        if self.mean_annot_drawn:
             self.mean_annot.remove()
             self.mean_annot_drawn = False
-        if (self.max_annot_drawn):
+        if self.max_annot_drawn:
             self.max_annot.remove()
             self.max_annot_drawn = False
         
         self.display_min_mean_max_annotations()
     
-    def plot(self):
+    def plot_summary(self):
+        self.plottype = "summary"
+        
+        # Put buttons away
+        self.bprev5.ax.set_position([0.,0.,0.,0.])
+        self.bprev .ax.set_position([0.,0.,0.,0.])
+        self.bnext .ax.set_position([0.,0.,0.,0.])
+        self.bnext5.ax.set_position([0.,0.,0.,0.])
+        
+        sca(self.ax)
+        self.ax.cla()
+        self.ax.xaxis_date()
+        self.ax.xaxis.set_major_formatter(dates.DateFormatter('%d/%m %H:%M'))
+        self.ax.set_title("All benchmarks")
+        self.ax.set_ylabel("relative time")
+        self.plots = []
+        for i, D in enumerate(self.data):
+            ncommits = min(40, len(D["t"]))
+            med = median(D["time_in_timeloop"][-ncommits:])
+            relative_time = D["time_in_timeloop"] / med
+            self.plots.append( self.ax.plot( D["t"], relative_time, '--', label=D["name"]) + [i] )
+        self.ax.set_ylim(0,3)
+        
+        self.ax.annotate(
+            """
+Help:
+> Fly over line to see benchmark
+> Double-click on line to get benchmark detail
+            """,
+            xy=(1.05,-0.05), xycoords='axes fraction',
+            bbox=dict(boxstyle="round",ec="#aaaaaa",fc="None",pad=1.0)
+        )
+        
+        # Hovering box
+        self.annot = self.ax.annotate("", xy=(0.01,0.95), xycoords='axes fraction')
+        self.annot.set_visible(False)
+    
+    def plot_benchmark(self):
         """
         Method to plot the log of index self.ind.
         """
+        
+        self.plottype = "benchmark"
+        
+        # Put buttons in their place
+        self.bprev5.ax.set_position([self.menu_x_position, 0.01, 0.05, 0.03])
+        self.bprev .ax.set_position([self.menu_x_position+0.06, 0.01, 0.05, 0.03])
+        self.bnext .ax.set_position([self.menu_x_position+2*0.06, 0.01, 0.05, 0.03])
+        self.bnext5.ax.set_position([self.menu_x_position+3*0.06, 0.01, 0.05, 0.03])
         
         D = self.data[self.ind]
         
@@ -329,13 +403,13 @@ class switchPlots:
         self.ax.plot( D["t"], D["time_in_timeloop"], '--k', label="time loop (total)",zorder=0)
         
         for branch in D["branch_points"]:
-            plot(
+            self.ax.plot(
                 D["branch_points"][branch][0], D["branch_points"][branch][1],
                 linestyle = "none",
                 ms = self.marker_size,
                 **D["branch_opt"][branch]
             )
-            
+        
         self.sc = self.ax.scatter(D["t"], D["time_in_timeloop"], alpha=0, picker=10, zorder=1)
         
         self.ax.legend(bbox_to_anchor=(1.08, 1.))
@@ -350,11 +424,17 @@ class switchPlots:
         self.annot = self.ax.annotate("", xy=(0.01,0.95), xycoords='axes fraction')
         self.annot.set_visible(False)
         
-        self.ax.annotate("Help:\n> Fly over markers to get commit id\n"+
-                         "> Click on markers to get full information\n    in the terminal\n"+
-                         "> Use arrows to change log plot", xy=(1.05,-0.05), xycoords='axes fraction',
-                         bbox=dict(boxstyle="round",ec="#aaaaaa",fc="None",pad=1.0)
-                         )
+        self.ax.annotate(
+            """
+Help:
+> Fly over markers to get commit id
+> Click on markers to get full information
+    in the terminal
+> Use arrows to change log plot
+            """,
+            xy=(1.05,-0.05), xycoords='axes fraction',
+            bbox=dict(boxstyle="round",ec="#aaaaaa",fc="None",pad=1.0)
+        )
         
         show()
 

@@ -454,11 +454,12 @@ to manipulate the plotting options:
 
 * ``figure``: The figure number that is passed to matplotlib.
 * ``vmin``, ``vmax``: data value limits.
-* ``vsym``: indicates that data is symmetric about zero. If set to a number,
-  data limits are set to ``[-vsym, vsym]``. If set to ``True``, limits autoscale
-  to the values present in the simulation, but remain symmetric. If ``vmin`` or
-  ``vmax`` are set, they are ignored.
-  Sets default colormap to ``smileiD``.
+* ``vsym``: makes data limits symmetric about 0 (``vmin`` and ``vmax`` are ignored),
+  and sets the colormap to ``smileiD``. 
+  
+  * If ``vsym = True``, autoscale symmetrically.
+  * If ``vsym`` is a number, limits are set to [-``vsym``, ``vsym``].
+  
 * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
 * ``xfactor``, ``yfactor``: factors to rescale axes.
 * ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left-

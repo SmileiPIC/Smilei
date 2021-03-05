@@ -197,7 +197,7 @@ Release 4.1
   * adaptive vectorization with dynamic load balancing
   * memory leak in the laser envelope model
 
-* Disable usage of `-ipo` to compile on supercomputers
+* Disable usage of ``-ipo`` to compile on supercomputers
   despite of saving time simulation
 
   * it needs too many resources (time and memory) to link
@@ -221,9 +221,9 @@ Release 4.0
 
 * :ref:`vectorization`
 * :ref:`laser_envelope`
-* MPI option `MPI_THREAD_MULTIPLE` is now optional (but recommended)
+* MPI option ``MPI_THREAD_MULTIPLE`` is now optional (but recommended)
 * Faster collisions
-* Bugfixes: handling `sum` for happi's `ParticleBinning`
+* Bugfixes: handling ``sum`` for happi's ``ParticleBinning``
 
 ----
 

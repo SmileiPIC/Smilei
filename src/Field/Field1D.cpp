@@ -69,7 +69,7 @@ Field1D::Field1D( string name_in, vector<unsigned int> dims ) : Field( dims, nam
 // ---------------------------------------------------------------------------------------------------------------------
 Field1D::~Field1D()
 {
-    for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
+    for( unsigned int iside=0 ; iside<sendFields_.size() ; iside++ ) {
         if ( sendFields_[iside] != NULL ) {
             delete sendFields_[iside];
             sendFields_[iside] = NULL;
@@ -240,7 +240,7 @@ void Field1D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
         sendFields_[iDim*2+iNeighbor] = new Field1D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field1D(n_space);
     }
-    else if ( ghost_size != sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
+    else if( ghost_size != (int) sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
         delete sendFields_[iDim*2+iNeighbor];
         sendFields_[iDim*2+iNeighbor] = new Field1D(n_space);
         delete recvFields_[iDim*2+iNeighbor];
@@ -258,7 +258,7 @@ void Field1D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * ( ghost_size + 1 + isDual_[iDim] );
     int ix = idx[0]*istart;
 
-    int NX = n_space[0];
+    unsigned int NX = n_space[0];
 
     double* sub = sendFields_[iDim*2+iNeighbor]->data_;
     double* field = data_;
@@ -277,7 +277,7 @@ void Field1D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - 1- ( ghost_size-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
     int ix = idx[0]*istart;
 
-    int NX = n_space[0];
+    unsigned int NX = n_space[0];
 
     double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
     double* field = data_;
@@ -296,7 +296,7 @@ void Field1D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     int istart = iNeighbor * ( dims_[iDim]- ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-iNeighbor ) * 0;
     int ix = idx[0]*istart;
 
-    int NX = n_space[0];
+    unsigned int NX = n_space[0];
 
     double* sub = sendFields_[iDim*2+iNeighbor]->data_;
     double* field = data_;
@@ -315,7 +315,7 @@ void Field1D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     int istart = ( ( iNeighbor+1 )%2 ) * ( dims_[iDim] - ( 2*ghost_size+1+isDual_[iDim] ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
     int ix = idx[0]*istart;
 
-    int NX = n_space[0];
+    unsigned int NX = n_space[0];
 
     double* sub = recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
     double* field = data_;
