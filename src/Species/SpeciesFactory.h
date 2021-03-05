@@ -1190,7 +1190,17 @@ public:
                                 patch->vecSpecies[ispec1]->getNbrOfParticles(),
                                 *patch->vecSpecies[ispec1]->mBW_pair_species[k]->particles
                             );
+                            if (params.tasks_on_projection){
+                                int Nbins = patch->vecSpecies[ispec1]->particles->first_index.size();
+                                for (unsigned int ibin = 0; ibin < Nbins; ibin++){
+                                    patch->vecSpecies[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].initializeReserve(
+                                        patch->vecSpecies[ispec1]->getNbrOfParticles(),
+                                        *patch->vecSpecies[ispec1]->mBW_pair_species[k]->particles
+                                    );    
+                                }
+                            }
                             ispec2 = patch->vecSpecies.size() + 1;
+                            
                         }
                         ispec2++ ;
                     }
@@ -1286,6 +1296,16 @@ public:
                     patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].isMonteCarlo = patch->vecSpecies[i]->mBW_pair_species[k]->particles->isMonteCarlo;
                     patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].initialize(
                         0, params.nDim_particle, params.keep_position_old );
+                    if (params.tasks_on_projection){
+                        int Nbins = patch->vecSpecies[i]->particles->first_index.size();
+                        for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
+                            patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].tracked = patch->vecSpecies[i]->mBW_pair_species[k]->particles->tracked;
+                            patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].isQuantumParameter = patch->vecSpecies[i]->mBW_pair_species[k]->particles->isQuantumParameter;
+                            patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].isMonteCarlo = patch->vecSpecies[i]->mBW_pair_species[k]->particles->isMonteCarlo;
+                            patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].initialize(
+                                0, params.nDim_particle, params.keep_position_old );
+                        }
+                    }
                 }
             } else {
                 patch->vecSpecies[i]->mBW_pair_species[0] = NULL;
