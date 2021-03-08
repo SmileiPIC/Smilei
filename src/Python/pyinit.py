@@ -165,7 +165,7 @@ class Main(SmileiSingleton):
     number_of_timesteps = None
     interpolation_order = 2
     custom_oversize = 2
-    custom_region_oversize = 2
+    region_ghost_cells = 2
     number_of_patches = None
     patch_arrangement = "hilbertian"
     clrw = -1
@@ -182,7 +182,6 @@ class Main(SmileiSingleton):
     uncoupled_grids = False
     global_factor = []
     norder = []
-    pseudo_spectral_guardells = 0
     apply_rotational_cleaning = False
     is_spectral = False
     is_pxr = False

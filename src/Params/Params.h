@@ -234,12 +234,13 @@ public:
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
     unsigned int custom_oversize ;
+    //! Number of region ghots cells in the simulation
     std::vector<unsigned int> region_oversize;
-    unsigned int custom_region_oversize ;
+    //! Number of region ghots cells asked by the user
+    unsigned int region_ghost_cells ;
     //! Number of damping cells
     std::vector<unsigned int> number_of_damping_cells;
 
-    unsigned int pseudo_spectral_guardells;
     bool apply_rotational_cleaning;
     
     //! True if restart requested

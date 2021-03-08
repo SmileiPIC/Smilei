@@ -573,23 +573,15 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 #endif
 
-    PyTools::extract( "uncoupled_grids", uncoupled_grids, "Main" );
 
     global_factor.resize( nDim_field, 1 );
     PyTools::extractV( "global_factor", global_factor, "Main" );
     norder.resize( nDim_field, 1 );
     norder.resize( nDim_field, 1 );
     PyTools::extractV( "norder", norder, "Main" );
-    //norderx=norder[0];
-    //nordery=norder[1];
-    //norderz=norder[2];
 
     apply_rotational_cleaning = false;
     if ( is_spectral && geometry == "AMcylindrical" ) {
-        PyTools::extract( "pseudo_spectral_guardells", pseudo_spectral_guardells, "Main" );
-        if (!pseudo_spectral_guardells) {
-            ERROR( "You must specify Main.pseudo_spectral_guardells with is_spectral=True in AM" );
-        }
         PyTools::extract( "apply_rotational_cleaning", apply_rotational_cleaning, "Main" );
         if ( ( apply_rotational_cleaning ) && ( smpi->getSize() > 1 ) ) {
             WARNING("Rotational cleaning (laser initialization) is not parallelized for now and may use a large amount of memory.");
@@ -609,6 +601,32 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             }
         }
     }
+
+    //PyTools::extract( "uncoupled_grids", uncoupled_grids, "Main" );
+    if( PyTools::nComponents( "MultipleDecomposition" )>0 ) {
+	uncoupled_grids = True;
+	//pseudo_spectral_guardells = > nothing
+	//custom_region_oversize = > region_ghost_cells
+        if ( is_spectral ) {
+            for( unsigned int i=0; i<nDim_field; i++ )
+                region_oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
+        }
+        PyTools::extract( "region_ghost_cells", region_ghost_cells, "MultipleDecomposition" );
+        for( unsigned int i=0; i<nDim_field; i++ ) {
+            region_oversize[i] = max( region_oversize[i], region_ghost_cells );
+        }
+        if ( is_spectral && geometry == "AMcylindrical" )  {
+            //Force ghost cells number in L when spectral
+            WARNING("Forcing region ghost cellss size along x from " << region_oversize[0] << " to " <<  region_ghost_cells)
+            region_oversize[0] = region_ghost_cells;
+            //Force zero ghost cells in R when spectral
+            region_oversize[1] = oversize[1];
+        }
+
+    } else {
+	uncoupled_grids = False;
+    }
+
 
 
     if( PyTools::nComponents( "LoadBalancing" )>0 ) {
@@ -983,21 +1001,6 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     } 
-    //region_oversize = oversize ;
-    if ( is_spectral && geometry == "AMcylindrical" )  {
-        //Force ghost cells number in L when spectral
-        region_oversize[0] = pseudo_spectral_guardells;
-        //Force zero ghost cells in R when spectral
-        region_oversize[1] = oversize[1];
-    }
-    else if ( is_spectral ) {
-        for( unsigned int i=0; i<nDim_field; i++ )
-            region_oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
-    }
-    PyTools::extract( "custom_region_oversize", custom_region_oversize, "Main"  );
-    for( unsigned int i=0; i<nDim_field; i++ ) {
-        region_oversize[i] = max( region_oversize[i], custom_region_oversize );
-    }
  
     // Set clrw if not set by the user
     if( clrw == -1 ) {
