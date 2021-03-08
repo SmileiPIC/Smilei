@@ -112,17 +112,17 @@ private:
         idx_d[1] = round( ypn+0.5 );
         
         // Declaration and calculation of the coefficient for interpolation
-        double deltax, deltay, delta2, delta3, delta4;
+        double delta_x, delta_y, delta2, delta3, delta4;
         
-        deltax     = xpn - ( double )idx_d[0] + 0.5;
-        delta2     = deltax*deltax;
-        delta3     = delta2*deltax;
-        delta4     = delta3*deltax;
-        coeffxd[0] = dble_1_ov_384   - dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-        coeffxd[1] = dble_19_ov_96   - dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+        delta_x     = xpn - ( double )idx_d[0] + 0.5;
+        delta2     = delta_x*delta_x;
+        delta3     = delta2*delta_x;
+        delta4     = delta3*delta_x;
+        coeffxd[0] = dble_1_ov_384   - dble_1_ov_48  * delta_x  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+        coeffxd[1] = dble_19_ov_96   - dble_11_ov_24 * delta_x  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
         coeffxd[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-        coeffxd[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-        coeffxd[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+        coeffxd[3] = dble_19_ov_96   + dble_11_ov_24 * delta_x  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+        coeffxd[4] = dble_1_ov_384   + dble_1_ov_48  * delta_x  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
         
         delta_p[0] = xpn - ( double )idx_p[0];
         delta2     = delta_p[0]*delta_p[0];
@@ -134,15 +134,15 @@ private:
         coeffxp[3] = dble_19_ov_96   + dble_11_ov_24 * delta_p[0]  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
         coeffxp[4] = dble_1_ov_384   + dble_1_ov_48  * delta_p[0]  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
         
-        deltay     = ypn - ( double )idx_d[1] + 0.5;
-        delta2     = deltay*deltay;
-        delta3     = delta2*deltay;
-        delta4     = delta3*deltay;
-        coeffyd[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-        coeffyd[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+        delta_y     = ypn - ( double )idx_d[1] + 0.5;
+        delta2     = delta_y*delta_y;
+        delta3     = delta2*delta_y;
+        delta4     = delta3*delta_y;
+        coeffyd[0] = dble_1_ov_384   - dble_1_ov_48  * delta_y  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+        coeffyd[1] = dble_19_ov_96   - dble_11_ov_24 * delta_y  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
         coeffyd[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-        coeffyd[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-        coeffyd[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+        coeffyd[3] = dble_19_ov_96   + dble_11_ov_24 * delta_y  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+        coeffyd[4] = dble_1_ov_384   + dble_1_ov_48  * delta_y  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
         
         delta_p[1] = ypn - ( double )idx_p[1];
         delta2     = delta_p[1]*delta_p[1];
