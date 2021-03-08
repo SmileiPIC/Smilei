@@ -60,6 +60,9 @@ Species_taskomp::Species_taskomp( Params &params, Patch *patch )
 {
 
     // Init tags for the task dependencies of the particle operations
+    bin_has_interpolated      = new int[particles->first_index.size()];
+    bin_has_ionized           = new int[particles->first_index.size()];
+    bin_has_radiated          = new int[particles->first_index.size()];
     bin_has_pushed            = new int[particles->first_index.size()];
     bin_has_done_particles_BC = new int[particles->first_index.size()];
     bin_has_projected         = new int[particles->first_index.size()];
@@ -116,6 +119,9 @@ Species_taskomp::~Species_taskomp()
     // }
 
     if (bin_has_pushed != NULL){
+        delete bin_has_interpolated;
+        delete bin_has_ionized;
+        delete bin_has_radiated;
         delete bin_has_pushed;
         delete bin_has_done_particles_BC;
         delete bin_has_projected;
@@ -177,9 +183,9 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
-            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
 #else
-            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_pushed[ibin])
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
 #endif
             {
 
@@ -201,70 +207,92 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[0*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
+            } //end task Interpolator
+        } // end ibin loop for Interpolator
 
-
+        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin])
+#endif
+            {
             // Ionization
             if( Ionize ) {          
 #ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
+                timer = MPI_Wtime();
 #endif
                 vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
                 Ionize->ionizationTunnelWithTasks( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, patch, Proj, ibin, ibin*clrw, b_Jx [ibin], b_Jy [ibin], b_Jz [ibin] );
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end Ionize
-
+            } // end taks Ionize
+        } // end ibin loop for Ionize
 
             if( time_dual>time_frozen_ ){ // if moving particle push
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                    #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_ionized[ibin]) depend(out:bin_has_radiated[ibin]) private(ithread,timer)
+#else
+                    #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_ionized[ibin]) depend(out:bin_has_radiated[ibin])
+#endif
+                    {
+                    // Radiation losses
+                    if( Radiate ) {
 
-                // Radiation losses
-                if( Radiate ) {
+#ifdef  __DETAILED_TIMERS
+                        timer = MPI_Wtime();
+#endif
 
+                        // Radiation process
+                        ( *Radiate )( *particles, photon_species_, smpi,
+                                      RadiationTables,
+                                      nrj_radiation_per_bin[ibin],
+                                      particles->first_index[ibin],
+                                      particles->last_index[ibin], buffer_id, ibin );
+
+                        // Update scalar variable for diagnostics
+                        // nrj_radiation += Radiate->getRadiatedEnergy();
+
+                        // Update the quantum parameter chi
+                        // Radiate->computeParticlesChi( *particles,
+                        //                               smpi,
+                        //                               first_index[ibin],
+                        //                               last_index[ibin],
+                        //                               ithread );
+
+#ifdef  __DETAILED_TIMERS
+                        patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+
+                    } // end if Radiate
+                    } // end task Radiate 
+                } // end ibin loop for Radiate
+
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                    #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_radiated[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+#else
+                    #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_radiated[ibin]) depend(out:bin_has_pushed[ibin])
+#endif
+                    {
 #ifdef  __DETAILED_TIMERS
                     timer = MPI_Wtime();
 #endif
 
-                    // Radiation process
-                    ( *Radiate )( *particles, photon_species_, smpi,
-                                  RadiationTables,
-                                  nrj_radiation_per_bin[ibin],
-                                  particles->first_index[ibin],
-                                  particles->last_index[ibin], buffer_id, ibin );
-
-                    // Update scalar variable for diagnostics
-                    // nrj_radiation += Radiate->getRadiatedEnergy();
-
-                    // Update the quantum parameter chi
-                    // Radiate->computeParticlesChi( *particles,
-                    //                               smpi,
-                    //                               first_index[ibin],
-                    //                               last_index[ibin],
-                    //                               ithread );
+                    // Push the particles and the photons
+                    ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id );
+                    //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
 
 #ifdef  __DETAILED_TIMERS
-                    patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                    patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-
-                } // end if Radiate
-
-
-#ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
-#endif
-
-                // Push the particles and the photons
-                ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id );
-                //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
-
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
-#endif
-            } // end if moving particle, push
-
-            } // end task for Interp+Ionize+Radiate+Push on ibin
-        } // end ibin loop for Interp+Push
+                    } // end task for Push on ibin
+                } // end ibin loop for Push
+        } // end if moving particle, radiate and push
     } // end if moving particle or it can be ionized 
 
     if( time_dual>time_frozen_){ // do not apply particles BC nor projection on frozen particles     
