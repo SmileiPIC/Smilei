@@ -84,46 +84,52 @@ An illustration of the roles of MPI and OpenMP is provided in :numref:`MPIandOpe
 
 ----
 
-Decomposition of the box
-^^^^^^^^^^^^^^^^^^^^^^^^
+Decomposition of the whole domain
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Traditionally, PIC codes would
-split the spatial grid into :math:`N` domains, where :math:`N` is the number
-of cores. Each core would manage its own domain on a separate memory space,
+split the spatial grid into :math:`N` portions, where :math:`N` is the number
+of cores. Each core would manage its own portion on a separate memory space,
 and information is communicated between cores using the MPI protocol.
 :program:`Smilei` proposes a different approach:
-it also decomposes the spatial grid in several domains,
-but one core is not exclusively associated to one domain.
+portions are much smaller so that each core handle many portions.
 
 Let us explain this difference in details.
 :numref:`PatchDecomposition` gives an example of a grid containing 960 cells.
-It is decomposed in :math:`4\times8 = 32` domains, called **patches**.
+It is decomposed in :math:`4\times8 = 32` portions, called **patches**.
 Each patch has :math:`5\times6` cells.
-These patches size is actually reasonable for :program:`Smilei`, whereas
-traditional PIC codes would have much larger domains.
+This patch size is actually reasonable for :program:`Smilei`, whereas
+traditional PIC codes would have much larger portions.
 
 The issue is now to decide where these patches will be stored in the memory,
 and to choose which cores should handle which patches.
 Recall that all the cores handled by one process share the same memory:
-we will refer to this memory as an *MPI region*.
-This means that one process manages one exclusive MPI region.
-:numref:`PatchDecomposition` shows an example with the 32 patches split in 5 regions
-recognized by their different colors.
-Note that these regions are formed by contiguous patches (the regions are connex), but not necessarily rectangular.
+we will refer to this memory as an *MPI patch collection*.
+This means that one process manages one exclusive MPI patch collection.
+:numref:`PatchDecomposition` shows an example with the 32 patches split
+in 5 collections recognized by their different colors.
+Note that these collections are connex, but not necessarily rectangular.
 
 .. _PatchDecomposition:
 
-.. figure:: _static/PatchDecomposition.png
-  :width: 10cm
+.. figure:: _static/PatchDecomposition.svg
+  :width: 600
   
-  Decomposition of a grid in *patches* and *MPI regions*.
+  Decomposition of a grid in *patches* and *MPI patch collections*.
 
-Each MPI region is handled by all the threads of the process. For example, if there are
-4 threads in the process that handles the region colored in green, this means the
+Each MPI patch collection is handled by all the threads of the process. For example, if there are
+4 threads in the process that handles the patch collection colored in green, this means the
 4 threads will handle 10 patches. The 4 threads will work in parallel, patch by patch,
 until all patches are done.
 
-The great advantage of this scheme is that, inside one MPI region, the threads do not
+.. figure:: _static/PatchDecompositionNodes.svg
+  :width: 700
+  
+  Each process handles one collection of patches. Patches are treated one by one by
+  the available threads.
+
+
+The great advantage of this scheme is that, inside one MPI patch collection, the threads do not
 need to wait for their colleagues to go to the next patch; they can continue working on
 the available patches, thus avoiding long waiting times.
 This is a form of **local dynamic load balancing**.
@@ -132,30 +138,30 @@ This is a form of **local dynamic load balancing**.
 
 .. _LoadBalancingExplanation:
 
-Load balancing between MPI regions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Load balancing between MPI patch collections
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As we just explained, threads treat patches asynchronously, thus balancing their computational loads.
 Indeed, some patches may have more particles than others and therefore represent a heavier load.
 In the meantime, other threads can take care of several lighter patches.
 Unfortunately, it may not be sufficient.
-When one MPI region holds more total load than the others, it will take a long
+When one MPI patch collection holds more total load than the others, it will take a long
 time to compute, while the other processes have already finished and wait for this one.
 This can cause large delays.
 
 :program:`Smilei` has an algorithm able to reduce this imbalance by exchanging patches
-from one MPI region to another. A process that has too much load will give patches to
-other processes in order to reduce the size of its MPI region. This algorithm is based
+from one MPI patch collection to another. A process that has too much load will give patches to
+other processes in order to reduce the size of its MPI patch collection. This algorithm is based
 on an ordering of the patches by a *Hilbert curve*, as drawn in
-:numref:`PatchDecompositionHilbert`. One MPI region contains only patches that contiguously
+:numref:`PatchDecompositionHilbert`. One MPI patch collection contains only patches that contiguously
 follow this curve. If this "portion" of the curve has too much load, it will send
 some patches to the portions ahead or after, along the same curve. By repeating this
 operation every now and then, we ensure that all regions manage an equitable computational load.
 
 .. _PatchDecompositionHilbert:
 
-.. figure:: _static/PatchDecompositionHilbert.png
-  :width: 8cm
+.. figure:: _static/PatchDecompositionHilbert.svg
+  :width: 400
   
   The shape of the Hilbert curve which determines the patch order.
 
@@ -165,7 +171,7 @@ Practical setup
 ^^^^^^^^^^^^^^^
 
 The user must choose the number of processes and threads (see :doc:`run`).
-Furthermore, they must define how the box is split into patches
+Furthermore, they must define how the whole domain is split into patches
 (see :py:data:`number_of_patches`). Here are a few rules and recommendations
 to help deciding this splitting.
 
@@ -205,11 +211,11 @@ to help deciding this splitting.
 
 ----
 
-Rectangular MPI regions
-^^^^^^^^^^^^^^^^^^^^^^^^
+MPI patch collections forming rectangular areas
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Depending on the plasma shape, the MPI regions shapes which follow the hilbert
-curve (as described above) may not be efficient in all cases.
+For some plasma shapes, following the hilbert
+curve (as described above) may not be efficient.
 In Smilei, it is possible to use a classical grouping of patches in rectangles
 or cubes.
 
