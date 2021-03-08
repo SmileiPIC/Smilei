@@ -35,13 +35,15 @@ Main(
     solve_poisson = False,
     print_every = 100,
     is_spectral=True,
-    uncoupled_grids = True,
     is_pxr = True,
     norder = [32,0],
-    pseudo_spectral_guardells = 64,
     apply_rotational_cleaning = True,
     number_of_damping_cells = [44],
 
+)
+
+MultipleDecomposition(
+    region_ghost_cells=64,
 )
 
 MovingWindow(

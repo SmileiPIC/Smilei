@@ -602,30 +602,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
     }
 
-    //PyTools::extract( "uncoupled_grids", uncoupled_grids, "Main" );
-    if( PyTools::nComponents( "MultipleDecomposition" )>0 ) {
-	uncoupled_grids = True;
-	//pseudo_spectral_guardells = > nothing
-	//custom_region_oversize = > region_ghost_cells
-        if ( is_spectral ) {
-            for( unsigned int i=0; i<nDim_field; i++ )
-                region_oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
-        }
-        PyTools::extract( "region_ghost_cells", region_ghost_cells, "MultipleDecomposition" );
-        for( unsigned int i=0; i<nDim_field; i++ ) {
-            region_oversize[i] = max( region_oversize[i], region_ghost_cells );
-        }
-        if ( is_spectral && geometry == "AMcylindrical" )  {
-            //Force ghost cells number in L when spectral
-            WARNING("Forcing region ghost cellss size along x from " << region_oversize[0] << " to " <<  region_ghost_cells)
-            region_oversize[0] = region_ghost_cells;
-            //Force zero ghost cells in R when spectral
-            region_oversize[1] = oversize[1];
-        }
-
-    } else {
-	uncoupled_grids = False;
-    }
 
 
 
@@ -960,6 +936,12 @@ void Params::compute()
     cell_volume=1.0;
     n_cell_per_patch = 1;
 
+    if( PyTools::nComponents( "MultipleDecomposition" )>0 ) {
+	uncoupled_grids = true;
+    } else {
+	uncoupled_grids = false;
+    }
+
     // compute number of cells & normalized lengths
     for( unsigned int i=0; i<nDim_field; i++ ) {
         n_space[i] = round( grid_length[i]/cell_length[i] );
@@ -1001,7 +983,28 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     } 
- 
+
+    if( uncoupled_grids == true ) {
+	//pseudo_spectral_guardells = > nothing
+	//custom_region_oversize = > region_ghost_cells
+        if ( is_spectral ) {
+            for( unsigned int i=0; i<nDim_field; i++ ){
+                region_oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
+            }
+        }
+        PyTools::extract( "region_ghost_cells", region_ghost_cells, "MultipleDecomposition" );
+        for( unsigned int i=0; i<nDim_field; i++ ) {
+            region_oversize[i] = max( region_oversize[i], region_ghost_cells );
+        }
+        if ( is_spectral && geometry == "AMcylindrical" )  {
+            //Force ghost cells number in L when spectral
+            WARNING("Forcing region ghost cellss size along x from " << region_oversize[0] << " to " <<  region_ghost_cells)
+            region_oversize[0] = region_ghost_cells;
+            //Force zero ghost cells in R when spectral
+            region_oversize[1] = oversize[1];
+        }
+    }  
+
     // Set clrw if not set by the user
     if( clrw == -1 ) {
 

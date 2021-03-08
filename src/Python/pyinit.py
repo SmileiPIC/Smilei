@@ -179,7 +179,6 @@ class Main(SmileiSingleton):
 
 
     # PXR tuning
-    uncoupled_grids = False
     global_factor = []
     norder = []
     apply_rotational_cleaning = False
@@ -286,6 +285,10 @@ class LoadBalancing(SmileiSingleton):
     initial_balance      = True
     cell_load            = 1.0
     frozen_particle_load = 0.1
+
+class MultipleDecomposition(SmileiSingleton):
+    """Multiple Decomposition parameters"""
+    region_ghost_cells   = 2
 
 # Radiation reaction configuration (continuous and MC algorithms)
 class Vectorization(SmileiSingleton):
