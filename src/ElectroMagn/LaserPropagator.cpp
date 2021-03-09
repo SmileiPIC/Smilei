@@ -75,7 +75,7 @@ PyObject *PyCall( PyObject *callable, PyObject *args, PyObject *kwargs )
 }
 
 
-void LaserPropagator::init( Params *params, SmileiMPI *smpi, unsigned int side )
+LaserPropagator::LaserPropagator( Params *params, SmileiMPI *smpi, unsigned int side, double fft_time_window )
 {
 
 #ifdef SMILEI_USE_NUMPY
@@ -99,8 +99,8 @@ void LaserPropagator::init( Params *params, SmileiMPI *smpi, unsigned int side )
     ox = params->oversize[0] * params->cell_length[0];
 
     // Set the grid temporal dimension
-    N[ndim-1] = params->n_time;
-    L[ndim-1] = params->simulation_time;
+    N[ndim-1] = ( int )( fft_time_window / params->timestep );
+    L[ndim-1] = fft_time_window;
 
     // Make the array bigger to accommodate for the parallel FFT
     double old_L = L[0];

@@ -813,9 +813,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // -------------------------------------------------------
     // Handle the pre-processing of LaserOffset
     // -------------------------------------------------------
+    TITLE( "Calculate LaserOffset" );
     unsigned int n_laser = PyTools::nComponents( "Laser" );
     unsigned int n_laser_offset = 0;
-    LaserPropagator propagateX;
     
     for( unsigned int i_laser=0; i_laser<n_laser; i_laser++ ) {
         double offset = 0.;
@@ -831,13 +831,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             double angle_z = 0.;
             PyTools::extract( "_angle", angle_z, "Laser", i_laser );
             
-            // Prepare propagator
-            if( n_laser_offset == 0 ) {
-                TITLE( "Pre-processing LaserOffset" );
-                propagateX.init( this, smpi, 0 );
-            }
+            // Extract _fft_time_window
+            double fft_time_window = 0.;
+            PyTools::extract( "_fft_time_window", fft_time_window, "Laser", i_laser );
             
+            // Prepare propagator
             MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
+            LaserPropagator propagateX( this, smpi, 0, fft_time_window );
             
             // Extract the file name
             string file( "" );

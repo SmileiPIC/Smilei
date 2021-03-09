@@ -37,10 +37,8 @@ inline std::complex<double> complex_interpolate( std::complex<double> *z, unsign
 class LaserPropagator
 {
 public:
-    LaserPropagator() {};
+    LaserPropagator(Params *params, SmileiMPI *smpi, unsigned int side, double fft_time_window);
     ~LaserPropagator() {};
-    
-    void init( Params *params, SmileiMPI *smpi, unsigned int side );
     
     // Propagates the fields profiles with some offset, and writes result to file
     void operator()( std::vector<PyObject *>, std::vector<int>, double, std::string, int, double );
