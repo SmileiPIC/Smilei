@@ -132,7 +132,7 @@ public:
     //! Method to synchronize MPI process in the current MPI communicator
     inline void barrier()
     {
-        MPI_Barrier( SMILEI_COMM_WORLD );
+        MPI_Barrier( world_ );
     }
     //! Return MPI_Comm_rank
     inline int getRank()
@@ -146,9 +146,9 @@ public:
     }
 
     //! Return MPI_Comm_world
-    inline MPI_Comm getGlobalComm()
+    inline MPI_Comm& world()
     {
-        return SMILEI_COMM_WORLD;
+        return world_;
     }
 
     //! Return MPI_Comm_size
@@ -236,7 +236,7 @@ public:
     inline int globalNbrParticles( Species *species, int locNbrParticles )
     {
         int nParticles( 0 );
-        MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, SMILEI_COMM_WORLD );
+        MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, world_ );
         return nParticles;
     }
 
@@ -244,7 +244,7 @@ public:
 
 protected:
     //! Global MPI Communicator
-    MPI_Comm SMILEI_COMM_WORLD;
+    MPI_Comm world_;
 
     //! Number of MPI process in the current communicator
     int smilei_sz;

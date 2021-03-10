@@ -1536,6 +1536,15 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     ``LaserOffset`` on the whole simulation duration can be costly). Note that
     the Fourier approach will naturally repeat the signal periodically.
 
+  .. py:data:: number_of_processes
+
+    :default: *all available processes*
+
+    The number of MPI processes that will be used for computing the ``LaserOffset``.
+    Using more processes computes the FFT faster, but too many processes may
+    be very costly in communication. In addition, using too few may not allow
+    the arrays to fit in memory.
+
 ----
 
 .. _laser_envelope:

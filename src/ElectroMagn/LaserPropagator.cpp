@@ -75,14 +75,19 @@ PyObject *PyCall( PyObject *callable, PyObject *args, PyObject *kwargs )
 }
 
 
-LaserPropagator::LaserPropagator( Params *params, SmileiMPI *smpi, unsigned int side, double fft_time_window )
+LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_time_window, MPI_Comm &comm )
 {
 
 #ifdef SMILEI_USE_NUMPY
     ndim = params->nDim_field;
     _2D = ndim==2;
-    MPI_size = smpi->getSize();
-    MPI_rank = smpi->getRank();
+    
+    comm_ = comm;
+    int size, rank;
+    MPI_Comm_size( comm, &size );
+    MPI_Comm_rank( comm, &rank );
+    MPI_size = size;
+    MPI_rank = rank;
 
     N     .resize( 3, 0 ); // third value not used in 2D
     L     .resize( ndim );
@@ -237,7 +242,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         MPI_Alltoall(
             PyArray_GETPTR1( ( PyArrayObject * ) arrays[i], 0 ), 2*block_size, MPI_DOUBLE,
             PyArray_GETPTR1( ( PyArrayObject * ) a, 0 ), 2*block_size, MPI_DOUBLE,
-            MPI_COMM_WORLD
+            comm_
         );
         Py_DECREF( arrays[i] );
 
@@ -267,7 +272,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         }
         MPI_Gather( &local_spectrum[0], Nlocal[1], MPI_DOUBLE,
                     &      spectrum[0], Nlocal[1], MPI_DOUBLE,
-                    0, MPI_COMM_WORLD );
+                    0, comm_ );
         // Remove the negative frequencies
         if( MPI_rank==0 ) {
             spectrum.resize( N[1]/2 );
@@ -288,7 +293,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         if( MPI_rank==0 ) {
             spectrum.resize( lmax );
         }
-        MPI_Reduce( &local_spectrum[0], &spectrum[0], lmax, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+        MPI_Reduce( &local_spectrum[0], &spectrum[0], lmax, MPI_DOUBLE, MPI_SUM, 0, comm_ );
     }
 
     // Rank 0 finds the most intense points of the spectrum
@@ -301,11 +306,11 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     }
 
     // Broadcast the number of selected points
-    MPI_Bcast( &n_omega, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD );
+    MPI_Bcast( &n_omega, 1, MPI_UNSIGNED, 0, comm_ );
     indices.resize( n_omega );
 
     // Broadcast the selected indices to all processes
-    MPI_Bcast( &indices[0], n_omega, MPI_UNSIGNED, 0, MPI_COMM_WORLD );
+    MPI_Bcast( &indices[0], n_omega, MPI_UNSIGNED, 0, comm_ );
 
     MESSAGE( 2, "keeping the "<<n_omega<<" strongest temporal modes" );
 
@@ -460,7 +465,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
             MPI_Alltoall(
                 PyArray_GETPTR1( ( PyArrayObject * ) arrays[i], 0 ), 2*block_size, MPI_DOUBLE,
                 PyArray_GETPTR1( ( PyArrayObject * ) a, 0 ), 2*block_size, MPI_DOUBLE,
-                MPI_COMM_WORLD
+                comm_
             );
             Py_DECREF( arrays[i] );
 
@@ -517,7 +522,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     vector<hsize_t> dims(ndim), start(ndim), count(ndim);
     if( _2D ) {
         unsigned int MPI_omega_offset;
-        MPI_Scan( &n_omega_local, &MPI_omega_offset, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD );
+        MPI_Scan( &n_omega_local, &MPI_omega_offset, 1, MPI_UNSIGNED, MPI_SUM, comm_ );
         MPI_omega_offset -= n_omega_local;
         dims[0] = N[0];
         start[0] = 0;
@@ -538,7 +543,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     }
     
     // Create File with parallel access
-    H5Write f( file, true );
+    H5Write f( file, &comm_ );
     
     // Store "omega" dataset
     hsize_t npoints = (!_2D && MPI_rank!=0) ? 0 : n_omega_local; // Only rank 0 writes in 3D

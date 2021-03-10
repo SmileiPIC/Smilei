@@ -835,9 +835,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             double fft_time_window = 0.;
             PyTools::extract( "_fft_time_window", fft_time_window, "Laser", i_laser );
             
-            // Prepare propagator
-            MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
-            LaserPropagator propagateX( this, smpi, 0, fft_time_window );
+            // Extract _number_of_processes
+            int number_of_processes = 0;
+            MPI_Comm comm;
+            if( PyTools::extractOrNone( "_number_of_processes", number_of_processes, "Laser", i_laser ) ) {
+                int color = smpi->getRank() < number_of_processes ? 1 : MPI_UNDEFINED;
+                MPI_Comm_split( smpi->world(), color, smpi->getRank(), &comm );
+            } else {
+                number_of_processes = smpi->getSize();
+                MPI_Comm_dup( smpi->world(), &comm );
+            }
             
             // Extract the file name
             string file( "" );
@@ -882,9 +889,15 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 ERROR( "For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer" );
             }
             
-            // Make the propagation happen and write out the file
-            if( ! smpi->test_mode && ! restart ) {
-                propagateX( profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
+            if( smpi->getRank() < number_of_processes ) {
+                // Prepare propagator
+                MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
+                LaserPropagator propagateX( this, 0, fft_time_window, comm );
+                
+                // Make the propagation happen and write out the file
+                if( ! smpi->test_mode && ! restart ) {
+                    propagateX( profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
+                }
             }
             
             n_laser_offset ++;

@@ -233,7 +233,7 @@ void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi )
     }
     
     // Create file
-    file_ = new H5Write( filename, true );
+    file_ = new H5Write( filename, &smpi->world() );
     
     file_->attr( "name", diag_name_ );
     

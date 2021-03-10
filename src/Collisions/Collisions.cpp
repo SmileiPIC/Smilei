@@ -45,7 +45,8 @@ Collisions::Collisions(
     
     // Open the HDF5 file
     if( debug_every > 0 ) {
-        debug_file_ = new H5Write( filename_, true );
+        MPI_Comm comm = MPI_COMM_WORLD;
+        debug_file_ = new H5Write( filename_, &comm );
     }
 }
 
