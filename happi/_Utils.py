@@ -680,15 +680,14 @@ class VTKfile:
 		Convert a numpy array in a vtkFloatArray
 		"""
 
-		from numpy import float32
-		from numpy import int32
+		from numpy import float32, int32
 
 		shape = data.shape
 		if len(shape)==1:   npoints, nComponents = shape[0], 1
 		elif len(shape)==2: npoints, nComponents = shape
 		else: raise Exception("impossible")
 
-		if data.dtype is int32:
+		if data.dtype == int32:
 
 			arr = self.vtk.vtkIntArray()
 			arr.SetNumberOfTuples(npoints)
@@ -700,10 +699,9 @@ class VTKfile:
 			# else pcoords would be deleted
 			# (see the trick: http://vtk.1045678.n5.nabble.com/More-zero-copy-array-support-for-Python-td5743662.html)
 			arr.array = data
-
 			return arr
 
-		elif data.dtype is float32:
+		elif data.dtype == float32:
 
 			arr = self.vtk.vtkFloatArray()
 			arr.SetNumberOfTuples(npoints)
@@ -715,7 +713,6 @@ class VTKfile:
 			# else pcoords would be deleted
 			# (see the trick: http://vtk.1045678.n5.nabble.com/More-zero-copy-array-support-for-Python-td5743662.html)
 			arr.array = data
-
 			return arr
 
 		else:
