@@ -377,7 +377,7 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
    double sign = -1.;
    for (int i=0; i< imode; i++) sign *= -1;
    
-   if (diag_flag and rhoj) {
+   if (diag_flag && rhoj) {
        for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
            //Fold rho 
            for( unsigned int j=1 ; j<3; j++ ) {
@@ -409,7 +409,7 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
        }
    }
 
-   if (Jt and Jr) {
+   if (Jt && Jr) {
        for( unsigned int i=0 ; i<npriml; i++ ) {
            int iloc = i*nprimr+2;
            int ilocr = i*(nprimr+1)+3;

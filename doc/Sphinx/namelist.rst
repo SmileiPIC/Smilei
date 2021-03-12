@@ -466,11 +466,13 @@ occur every 150 iterations.
 Multiple decomposition of the domain
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The block ``MultipleDecomposition`` is optional. When present, it activates
+The block ``MultipleDecomposition`` is necessary for spectral solvers and optional in all other cases. 
+When present, it activates
 the :doc:`SDMD` (SDMD) technique
 which separates the decomposition of the field grids from that of the particles.
-Fields are set on large grids called *regions* (1 region per MPI process) while
-particles are kept as small *patches* (many patches per MPI process).
+Fields are set on large sub-domain called *regions* (1 region per MPI process) while
+particles are kept as small *patches* as in the standard decomposition (many patches per MPI process).
+Benefits of this option are illustrated `in this paper <https://hal.archives-ouvertes.fr/hal-02973139>`_.
 
 .. py:data:: region_ghost_cells
 
