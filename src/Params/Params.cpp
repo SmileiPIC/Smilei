@@ -991,9 +991,9 @@ void Params::compute()
         }
         if( is_spectral && geometry == "AMcylindrical" )  {
             //Force ghost cells number in L when spectral
-            WARNING("Forcing region ghost-cell size along x from " << region_oversize[0] << " to " <<  region_ghost_cells)
             region_oversize[0] = region_ghost_cells;
             //Force zero ghost cells in R when spectral
+            WARNING("Forcing region ghost-cell size along r from " << region_ghost_cells << " to " <<  oversize[1])
             region_oversize[1] = oversize[1];
         }
     }  

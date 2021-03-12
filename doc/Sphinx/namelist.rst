@@ -481,6 +481,7 @@ Benefits of this option are illustrated `in this paper <https://hal.archives-ouv
 
    The number of ghost cells for each region.
    The default value is set accordingly with the ``interpolation_order``.
+   The same number of ghost cells is used in all dimensions except for spectral solver in AM geometry for which the number of radial ghost cells is always automatically set to be the same as patches.
 
 
 ----
