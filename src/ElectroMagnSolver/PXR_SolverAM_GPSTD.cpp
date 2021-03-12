@@ -53,13 +53,13 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     std::vector<unsigned int> n_space(params.n_space);
     if (full_domain)
         n_space = params.n_space_global;
-    else if (params.uncoupled_grids)
+    else if (params.multiple_decomposition)
         n_space = params.n_space_region;
     
     nl=( int ) (0 + n_space[0]);
     nr=( int ) (0 + n_space[1]);
     
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         ovl=( int ) params.region_oversize[0];
         ovr=( int ) params.region_oversize[1];
     }
@@ -74,7 +74,7 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     for( size_t i=0 ; i<params.nDim_field ; i++ ) {
         // Standard scheme
         dimPrim[i+1] = n_space[i]+1;
-        if (params.uncoupled_grids)
+        if (params.multiple_decomposition)
             dimPrim[i+1] += 2*params.region_oversize[i];
         else
             dimPrim[i+1] += 2*params.oversize[i];

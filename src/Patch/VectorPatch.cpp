@@ -926,11 +926,11 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
 
     timers.syncDens.restart();
     if( params.geometry != "AMcylindrical" ) {
-        if ( (!params.uncoupled_grids)||(itime==0) )
+        if ( (!params.multiple_decomposition)||(itime==0) )
             SyncVectorPatch::sumRhoJ( params, ( *this ), smpi, timers, itime ); // MPI
     } else {
 
-        if ( (!params.uncoupled_grids)||(itime==0) )
+        if ( (!params.multiple_decomposition)||(itime==0) )
             for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->Jl_.size() ; imode++ ) {
                 SyncVectorPatch::sumRhoJ( params, ( *this ), imode, smpi, timers, itime );
             }
@@ -1120,7 +1120,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
     timers.syncField.update( params.printNow( itime ) );
     
     
-    if ( (params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true
+    if ( (params.multiple_decomposition) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // multiple_decomposition = true -> is_spectral = true
         timers.syncField.restart();
         if( params.is_spectral && params.geometry != "AMcylindrical" ) {
             SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
@@ -1204,7 +1204,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
-    if ( (!params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true
+    if ( (!params.multiple_decomposition) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // multiple_decomposition = true -> is_spectral = true
         if( params.geometry != "AMcylindrical" ) {
             timers.syncField.restart();
             SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
@@ -3676,7 +3676,7 @@ string combineMemoryConsumption( SmileiMPI *smpi, long int data, string name )
 }
 
 // Print information on the memory consumption
-void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *uncoupled )
+void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *region_vecpatches )
 {
     // Particles memory
     long int particlesMem( 0 );
@@ -3696,10 +3696,10 @@ void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *uncouple
     m = combineMemoryConsumption( smpi, fieldsMem, "Fields" );
     MESSAGE( m );
     
-    // Fields from uncoupled grid
-    if( ! uncoupled->patches_.empty() ) {
-        long int uncoupledMem = uncoupled->patches_[0]->EMfields->getMemFootPrint();
-        m = combineMemoryConsumption( smpi, uncoupledMem, "Uncoupled grid" );
+    // Fields from SDMD grid
+    if( ! region_vecpatches->patches_.empty() ) {
+        long int RegionMem = region_vecpatches->patches_[0]->EMfields->getMemFootPrint();
+        m = combineMemoryConsumption( smpi, RegionMem, "SDMD grid" );
         MESSAGE( m );
     }
     

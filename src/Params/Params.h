@@ -321,12 +321,12 @@ public:
     
     // Double grids parameters (particles and fields)
     std::vector<unsigned int> global_factor;
-    void uncoupled_decomposition();
-    void uncoupled_decomposition_1D();
-    void uncoupled_decomposition_2D();
-    void uncoupled_decomposition_3D();
-    void print_uncoupled_params();
-    bool uncoupled_grids;
+    void multiple_decompose();
+    void multiple_decompose_1D();
+    void multiple_decompose_2D();
+    void multiple_decompose_3D();
+    void print_multiple_decomposition_params();
+    bool multiple_decomposition;
 
     // PXR parameters
     bool  is_spectral=false ;

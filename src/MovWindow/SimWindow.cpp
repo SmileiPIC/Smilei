@@ -242,7 +242,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 }
                 mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
                 mypatch->EMfields->laserDisabled();
-                if (!params.uncoupled_grids)
+                if (!params.multiple_decomposition)
                     mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
             }
             
@@ -288,7 +288,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 }
                 mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
                 mypatch->EMfields->laserDisabled();
-                if (!params.uncoupled_grids)
+                if (!params.multiple_decomposition)
                     mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
             }
             if( mypatch->wasXmax( params ) ) {
@@ -598,7 +598,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     #pragma omp barrier
     #pragma omp master
     {
-        if (params.uncoupled_grids) {
+        if (params.multiple_decomposition) {
             if ( params.geometry != "AMcylindrical" )
                 operate(region, vecPatches, smpi, params, time_dual);
             else {
@@ -609,7 +609,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     #pragma omp barrier
 
 
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         if ( params.geometry != "AMcylindrical" ) {
             // warkaround for !params.full_B_exchange (in 3D, with SM some border elements are not computed)
             SyncVectorPatch::exchangeE( params, region.vecPatch_, smpi );
@@ -659,7 +659,7 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
 
     // Deadlock if moving window & load balancing enabled
     //     Recompute patch distribution does not change
-    //if (params.uncoupled_grids) {
+    //if (params.multiple_decomposition) {
     //    region.reset_mapping();
     //    region.identify_additional_patches( smpi, vecPatches, params );
     //    region.identify_missing_patches( smpi, vecPatches, params );
@@ -705,7 +705,7 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
 
     // Deadlock if moving window & load balancing enabled
     //     Recompute patch distribution does not change
-    //if (params.uncoupled_grids) {
+    //if (params.multiple_decomposition) {
     //    region.reset_mapping();
     //    region.identify_additional_patches( smpi, vecPatches, params );
     //    region.identify_missing_patches( smpi, vecPatches, params );

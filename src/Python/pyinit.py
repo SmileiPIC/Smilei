@@ -165,7 +165,6 @@ class Main(SmileiSingleton):
     number_of_timesteps = None
     interpolation_order = 2
     custom_oversize = 2
-    region_ghost_cells = 2
     number_of_patches = None
     patch_arrangement = "hilbertian"
     clrw = -1

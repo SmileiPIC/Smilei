@@ -142,8 +142,8 @@ def _keep_python_running():
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True
-    # Verify uncoupled grids
-    if len(LoadBalancing)>0 and Main.uncoupled_grids:
+    # Verify SDMD grids
+    if len(LoadBalancing)>0 and len(MultipleDecomposition)>0:
         return True
     # Verify the tracked species that require a particle selection
     for d in DiagTrackParticles:

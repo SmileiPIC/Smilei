@@ -298,7 +298,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
         
     }
 
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         // Open a group
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
@@ -602,7 +602,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
         
     }
 
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
         string patchName = Tools::merge( "region-", patch_name.str() );

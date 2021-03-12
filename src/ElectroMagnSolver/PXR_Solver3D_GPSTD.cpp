@@ -29,7 +29,7 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
         n_space = params.n_space_global;
         oversize = params.region_oversize;
     }
-    else if (params.uncoupled_grids) {
+    else if (params.multiple_decomposition) {
         n_space = params.n_space_region;
         oversize = params.region_oversize;
     }

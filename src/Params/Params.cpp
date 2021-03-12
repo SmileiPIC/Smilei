@@ -935,13 +935,9 @@ void Params::compute()
     patch_dimensions.resize( 3, 0. );
     cell_volume=1.0;
     n_cell_per_patch = 1;
-
-    if( PyTools::nComponents( "MultipleDecomposition" )>0 ) {
-	uncoupled_grids = true;
-    } else {
-	uncoupled_grids = false;
-    }
-
+    
+    multiple_decomposition = PyTools::nComponents( "MultipleDecomposition" )>0;
+    
     // compute number of cells & normalized lengths
     for( unsigned int i=0; i<nDim_field; i++ ) {
         n_space[i] = round( grid_length[i]/cell_length[i] );
@@ -963,13 +959,12 @@ void Params::compute()
     //Define number of cells per patch and number of ghost cells
     for( unsigned int i=0; i<nDim_field; i++ ) {
         PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
-        if (uncoupled_grids==false){
+        if( ! multiple_decomposition ) {
             oversize[i]  = max( interpolation_order, max( ( unsigned int )( norder[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
             if ( (currentFilter_model == "customFIR") && (oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) ) {
                 ERROR( "With the `customFIR` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2" );
             }
-        }
-        if (uncoupled_grids==true){
+        } else {
             oversize[i] = interpolation_order + ( exchange_particles_each-1 );
         }
         n_space_global[i] = n_space[i];
@@ -984,10 +979,8 @@ void Params::compute()
         n_cell_per_patch *= n_space[i];
     } 
 
-    if( uncoupled_grids == true ) {
-	//pseudo_spectral_guardells = > nothing
-	//custom_region_oversize = > region_ghost_cells
-        if ( is_spectral ) {
+    if( multiple_decomposition ) {
+        if( is_spectral ) {
             for( unsigned int i=0; i<nDim_field; i++ ){
                 region_oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
             }
@@ -996,9 +989,9 @@ void Params::compute()
         for( unsigned int i=0; i<nDim_field; i++ ) {
             region_oversize[i] = max( region_oversize[i], region_ghost_cells );
         }
-        if ( is_spectral && geometry == "AMcylindrical" )  {
+        if( is_spectral && geometry == "AMcylindrical" )  {
             //Force ghost cells number in L when spectral
-            WARNING("Forcing region ghost cellss size along x from " << region_oversize[0] << " to " <<  region_ghost_cells)
+            WARNING("Forcing region ghost-cell size along x from " << region_oversize[0] << " to " <<  region_ghost_cells)
             region_oversize[0] = region_ghost_cells;
             //Force zero ghost cells in R when spectral
             region_oversize[1] = oversize[1];
@@ -1050,8 +1043,8 @@ void Params::compute()
     }
 
     // Define domain decomposition if double grids are used for particles and fields
-    if ( uncoupled_grids ) {
-        uncoupled_decomposition();
+    if ( multiple_decomposition ) {
+        multiple_decompose();
         full_B_exchange = true;
     }
 
@@ -1333,27 +1326,28 @@ void Params::cleanup( SmileiMPI *smpi )
 }
 
 
-void Params::uncoupled_decomposition()
+void Params::multiple_decompose()
 {
     n_space_region.resize(3,1);
     number_of_region.resize( 3, 1 );
 
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-    if (rk==0) {
+    if( rk==0 ) {
         cout << "Number of patches : ";
         for ( unsigned int iDim  = 0 ; iDim < nDim_field ; iDim++ )
             cout << number_of_patches[iDim] << " ";
         cout << endl;
     }
-
-    if (nDim_field==1)
-        uncoupled_decomposition_1D();
-    else if (nDim_field==2)
-        uncoupled_decomposition_2D();
-    else if (nDim_field==3)
-        uncoupled_decomposition_3D();
-
+    
+    if( nDim_field==1 ) {
+        multiple_decompose_1D();
+    } else if( nDim_field==2 ) {
+        multiple_decompose_2D();
+    } else if( nDim_field==3 ) {
+        multiple_decompose_3D();
+    }
+    
     // Build the map of offset, contains offset for each domain, expressed in number of cells
     offset_map.resize( nDim_field );
     for ( unsigned int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
@@ -1376,11 +1370,11 @@ void Params::uncoupled_decomposition()
         }
     }
 
-    print_uncoupled_params();
+    print_multiple_decomposition_params();
 }
 
 
-void Params::print_uncoupled_params()
+void Params::print_multiple_decomposition_params()
 {
     int rk(0);
     int sz(1);
@@ -1412,7 +1406,7 @@ void Params::print_uncoupled_params()
     }
 }
 
-void Params::uncoupled_decomposition_1D()
+void Params::multiple_decompose_1D()
 {
     int rk(0);
     int sz(1);
@@ -1454,7 +1448,7 @@ void Params::uncoupled_decomposition_1D()
 }
 
 
-void Params::uncoupled_decomposition_2D()
+void Params::multiple_decompose_2D()
 {
     int rk(0);
     int sz(1);
@@ -1531,7 +1525,7 @@ void Params::uncoupled_decomposition_2D()
 }
 
 
-void Params::uncoupled_decomposition_3D()
+void Params::multiple_decompose_3D()
 {
     int rk(0);
     int sz(1);

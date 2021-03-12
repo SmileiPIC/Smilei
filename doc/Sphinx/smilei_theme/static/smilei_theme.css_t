@@ -686,7 +686,8 @@ div.header > * {
 
 div.experimental > h1:first-of-type::after,
 div.experimental > h2:first-of-type::after,
-dl.experimental > dt:first-of-type::after
+dl.experimental > dt:first-of-type::after,
+ul.experimental p:first-of-type::after
 {
 	content: "experimental";
 	display: inline-block;
@@ -698,6 +699,7 @@ dl.experimental > dt:first-of-type::after
 	font-size: 0.8em;
 	font-family: "BPreplay";
 	font-weight: bold;
+	line-height: normal;
 }
 
 /* --------------------------------------------------------------------*/

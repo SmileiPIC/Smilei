@@ -24,7 +24,7 @@ ElectroMagnBCAM_zero::ElectroMagnBCAM_zero( Params &params, Patch *patch, unsign
     Nmode = params.nmodes;
     number_of_damping_cells.push_back(params.number_of_damping_cells[0]);  
  
-    if (params.uncoupled_grids)
+    if (params.multiple_decomposition)
         region_oversize_l = params.region_oversize[0];
     else
         region_oversize_l = 0;

@@ -115,7 +115,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``"1Dcartesian"``
   * ``"2Dcartesian"``
   * ``"3Dcartesian"``
-  * ``"AMcylindrical"``: cylindrical geometry with azimuthal Fourier decomposition. See :doc:`algorithms`.
+
+  .. rst-class:: experimental
+
+  * ``"AMcylindrical"``: cylindrical geometry with :doc:`azimuthal_modes_decomposition`.
 
   In the following documentation, all references to dimensions or coordinates
   depend on the ``geometry``.
@@ -358,17 +361,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
   Note that this number must be lower or equal to the number of modes of the simulation.
 
-.. rst-class:: experimental
-
-.. py:data:: uncoupled_grids
-
-  :default: ``False``
-
-  * If ``False``, the parallelization of the simulation is done according to :doc:`parallelization`.
-  * If ``True``, the simulated domain is decomposed in dedicated shapes for particles
-    and fields operations. Benefits of this option are illustrated
-    `in this paper <https://arxiv.org/abs/1912.04064>`_.
-
 .. py:data:: custom_oversize
 
    :type: integer
@@ -377,25 +369,17 @@ The block ``Main`` is **mandatory** and has the following syntax::
    The number of ghost-cell for each patches. The default value is set accordingly with
    the ``interpolation_order`` value.
 
-.. py:data:: custom_region_oversize
-
-   :type: integer
-   :default: 2
-
-   The number of ghost-cell for each region when ``uncoupled_grids=True``.
-   The default value is set accordingly with the ``interpolation_order`` value.
-
-   .. rst-class:: experimental
+.. rst-class:: experimental
 
 .. py:data:: is_spectral
 
   :default: `False`
 
   * If `False`, use a FDTD Maxwell solver.
-  * If `True`, use a spectral Maxwell solver. Today only picsar spectral solver can be used.
-    Spectral solvers require the use of SDMD so make sure to set ``"uncoupled_grids"`` to `True`. 
+  * If `True`, use a spectral Maxwell solver (at this time, only *PICSAR* is available).
+    This requires ``MultipleDecomposition``.
 
-   .. rst-class:: experimental
+.. rst-class:: experimental
 
 .. py:data:: is_pxr
 
@@ -404,7 +388,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * If `False`, do not use picsar library.
   * If `True`, use the picsar library. This is used only for spectral solvers
 
-   .. rst-class:: experimental
+.. rst-class:: experimental
 
 .. py:data:: norder
 
@@ -414,17 +398,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The order of the spectral solver in each dimension. Set order to zero for infinite order.
   In AM geometry, only infinite order is supported along the radial dimension.
 
-   .. rst-class:: experimental
-
-.. py:data:: pseudo_spectral_guardells
-
-   :type: integer
-   :default: None
-
-   The number of ghost cells for each region in the longitudinal direction in AM geometry when using a spectral solver.
-   This parameter MUST be defined by the user and has no default value. We advise to use twice as many ghost cells as the order of the solver.
-
-    .. rst-class:: experimental
+.. rst-class:: experimental
 
 .. py:data:: apply_rotational_cleaning
 
@@ -484,6 +458,28 @@ occur every 150 iterations.
 
   Computational load of a single frozen particle considered by the dynamic load balancing algorithm.
   This load is normalized to the load of a single particle.
+
+----
+
+.. rst-class:: experimental
+
+Multiple decomposition of the domain
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The block ``MultipleDecomposition`` is optional. When present, it activates
+the :doc:`SDMD` (SDMD) technique
+which separates the decomposition of the field grids from that of the particles.
+Fields are set on large grids called *regions* (1 region per MPI process) while
+particles are kept as small *patches* (many patches per MPI process).
+
+.. py:data:: region_ghost_cells
+
+   :type: integer
+   :default: 2
+
+   The number of ghost cells for each region.
+   The default value is set accordingly with the ``interpolation_order``.
+
 
 ----
 

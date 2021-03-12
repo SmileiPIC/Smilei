@@ -141,8 +141,8 @@ int main( int argc, char *argv[] )
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, checkpoint.this_run_start_step+1, simWindow->getNmoved() );
         
         // allocate region according to dump
-        if( params.uncoupled_grids ) {
-            TITLE( "Create uncoupled grids" );
+        if( params.multiple_decomposition ) {
+            TITLE( "Create SDMD grids" );
             // read region hindex
             checkpoint.readRegionDistribution( region );
 
@@ -161,7 +161,7 @@ int main( int argc, char *argv[] )
         
         // vecPatches data read in restartAll according to smpi.patch_count
 
-        // if (params.uncoupled_grids) {
+        // if (params.multiple_decomposition) {
         //     region.vecPatch_.refHindex_ = smpi.getRank();
         //     region.build( params, &smpi, vecPatches, openPMD, false );
         //     region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
@@ -201,9 +201,9 @@ int main( int argc, char *argv[] )
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
         vecPatches.sortAllParticles( params );
         
-        // Create uncoupled grids 
-        if( params.uncoupled_grids ) {
-            TITLE( "Create uncoupled grids" );
+        // Create SDMD grids 
+        if( params.multiple_decomposition ) {
+            TITLE( "Create SDMD grids" );
             region.vecPatch_.refHindex_ = smpi.getRank();
             region.build( params, &smpi, vecPatches, openPMD, false );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
@@ -297,7 +297,7 @@ int main( int argc, char *argv[] )
             vecPatches.setMagneticFieldsForDiagnostic( params );
             region_global.clean();
             
-            if( params.uncoupled_grids ) {
+            if( params.multiple_decomposition ) {
                 // Need to upload corrected data on Region
                 for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                     DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
@@ -318,7 +318,7 @@ int main( int argc, char *argv[] )
     vecPatches.printNumberOfParticles( &smpi );
     
     if( params.is_pxr ){
-        if( params.uncoupled_grids ) {
+        if( params.multiple_decomposition ) {
             region.coupling( params, false );
         } else {
             vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
@@ -417,7 +417,7 @@ int main( int argc, char *argv[] )
         } //End omp parallel region
 
         // solve Maxwell's equations
-        if (!params.uncoupled_grids) {
+        if (!params.multiple_decomposition) {
             if( time_dual > params.time_fields_frozen ) {
                 #pragma omp parallel shared (time_dual,smpi,params, vecPatches, region, simWindow, checkpoint, itime)
                 {
@@ -430,7 +430,7 @@ int main( int argc, char *argv[] )
                 
             }
         }
-        else { //if ( params.uncoupled_grids ) {
+        else { //if ( params.multiple_decomposition ) {
             if( time_dual > params.time_fields_frozen ) {
                 if ( params.geometry != "AMcylindrical" )
                     DoubleGrids::syncCurrentsOnRegion( vecPatches, region, params, &smpi, timers, itime );
@@ -530,7 +530,7 @@ int main( int argc, char *argv[] )
             // Finalize field synchronization and exchanges
             vecPatches.finalizeSyncAndBCFields( params, &smpi, simWindow, time_dual, timers, itime );
             
-            if( !params.uncoupled_grids ) {
+            if( !params.multiple_decomposition ) {
                 if( time_dual > params.time_fields_frozen ) {
                     // Standard fields operations (maxwell + comms + boundary conditions) are completed
                     // apply prescribed fields can be considered if requested
@@ -566,7 +566,7 @@ int main( int argc, char *argv[] )
             
         if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
             count_dlb++;
-            if (params.uncoupled_grids && count_dlb%5 ==0 ) {
+            if (params.multiple_decomposition && count_dlb%5 ==0 ) {
                 if ( params.geometry != "AMcylindrical" ) {
                     DoubleGrids::syncBOnPatches( region, vecPatches, params, &smpi, timers, itime );
                 } else {
@@ -581,7 +581,7 @@ int main( int argc, char *argv[] )
             vecPatches.loadBalance( params, time_dual, &smpi, simWindow, itime );
             timers.loadBal.update( params.printNow( itime ) );
             
-            if( params.uncoupled_grids ) {
+            if( params.multiple_decomposition ) {
                 
                 if( count_dlb%5 == 0 ) {
                     region.reset_fitting( &smpi, params );
@@ -652,7 +652,7 @@ int main( int argc, char *argv[] )
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         region.clean();
     }
     vecPatches.close( &smpi );
@@ -691,7 +691,7 @@ int executeTestMode( VectorPatch &vecPatches,
     PatchesFactory::createVector( vecPatches, params, smpi, openPMD, radiation_tables_, itime, moving_window_movement );
 
     if( params.restart ) {
-        if (params.uncoupled_grids) {
+        if (params.multiple_decomposition) {
             checkpoint.readRegionDistribution( region );
             region.build( params, smpi, vecPatches, openPMD, false );
         }

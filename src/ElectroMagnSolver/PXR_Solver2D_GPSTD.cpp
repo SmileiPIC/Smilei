@@ -25,14 +25,14 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     std::vector<unsigned int> n_space(params.n_space);
     if (full_domain)
         n_space = params.n_space_global;
-    else if (params.uncoupled_grids)
+    else if (params.multiple_decomposition)
         n_space = params.n_space_region;
     
     n0=(int) (0 +  n_space[0]);
     n1=(int) (0 +  n_space[1]);
     
     n2=0;
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         ov0=( int ) params.region_oversize[0];
         ov1=( int ) params.region_oversize[1];
     }
