@@ -306,6 +306,8 @@ void ProjectorAM1Order::axisBC(ElectroMagnAM *emAM, bool diag_flag )
 
 void ProjectorAM1Order::apply_axisBC(std::complex<double> *rho, unsigned int imode, unsigned int nonzeromode)
 {
+    //If pointer is NULL, nothing to do
+    if(!rho) return;
 
     const double one_ov_9  = 1./9.; 
     const double one_ov_16 = 1./16.; 
