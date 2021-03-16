@@ -406,7 +406,7 @@ void VectorPatch::dynamics( Params &params,
             } // end if condition on species
         } // end loop on species
     } // end loop on patches
-    //} // end taskgroup to ensure all ipatch ispec performed dynamics method
+    // } // end taskgroup to ensure all ipatch ispec performed dynamics method
     } // end omp single 
 
     // #pragma omp single
@@ -454,7 +454,7 @@ void VectorPatch::dynamics( Params &params,
         } // end patch loop
     } // end condition on tasks
 
-    // Reduction of the new particles created through ionization and radiation, for each species
+    // Reduction of the new particles created through ionization, radiation and Multiphoton Breit Wheeler, for each species
     #pragma omp single
     if (params.tasks_on_projection){
 
@@ -464,8 +464,10 @@ void VectorPatch::dynamics( Params &params,
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
 
-                int* species_has_ionized  =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_ionized;
-                int* species_has_radiated =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_radiated;
+                int* species_has_ionized                        =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_ionized;
+                int* species_has_radiated                       =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_radiated;
+                int* species_has_done_Multiphoton_Breit_Wheeler =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_done_Multiphoton_Breit_Wheeler;
+                
 
                 #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_ionized[0:(Nbins-1)])
                 {
@@ -497,10 +499,24 @@ void VectorPatch::dynamics( Params &params,
                 } // end if Radiate
                 } // end task on reduction of new photons from radiation
 
+                #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_done_Multiphoton_Breit_Wheeler[0:(Nbins-1)])
+                {
+                Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                if( spec_task->Multiphoton_Breit_Wheeler_process ) {     
+#ifdef  __DETAILED_TIMERS
+                    int ithread = omp_get_thread_num();
+                    double timer = MPI_Wtime();
+#endif     
+                    spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(Nbins);
+#ifdef  __DETAILED_TIMERS
+                    ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                } // end if Multiphoton Breit Wheeler
+                } // end task on reduction of new pairs from Multiphoton Breit Wheeler
+
             } // end species loop     
         } // end patch loop
     } // end condition on tasks
-
 
     #pragma omp taskwait
 

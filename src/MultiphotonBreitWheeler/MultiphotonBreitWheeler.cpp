@@ -47,10 +47,8 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
     tasks_on_projection = params.tasks_on_projection;
     if (tasks_on_projection){
         int Nbins = species->particles->first_index.size();
-        
         // initialize array per bin for energy conversion
         pair_converted_energy_per_bin = new double[Nbins];
-      
         //! vector of electron-positron pairs per bin
         new_pair_per_bin.resize(Nbins);
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
@@ -58,7 +56,6 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
             new_pair_per_bin[ibin]  = new Particles[2];
         }
     }
-
 }
 
 // -----------------------------------------------------------------------------
@@ -153,7 +150,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     // We use dynamics_invgf to store gamma
     std::vector<double> *gamma = &( smpi->dynamics_invgf[ithread] );
-
+    
     int nparts = Epart->size()/3;
     double *Ex = &( ( *Epart )[0*nparts] );
     double *Ey = &( ( *Epart )[1*nparts] );
@@ -161,19 +158,19 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     double *Bx = &( ( *Bpart )[0*nparts] );
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
-
+    
     // Temporary value
     double temp;
-
+    
     // Time to event
     double event_time;
-
+    
     // Momentum shortcut
     double *momentum[3];
     for( int i = 0 ; i<3 ; i++ ) {
         momentum[i] =  &( particles.momentum( i, 0 ) );
     }
-
+    
     // Position shortcut
     // Commented particles displasment while particles injection not managed  in a better way
     //    for now particles could be created outside of the local domain
@@ -181,26 +178,26 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     //double* position[3];
     //for ( int i = 0 ; i<n_dimensions_ ; i++ )
     //    position[i] =  &( particles.position(i,0) );
-
+    
     // Weight shortcut
     // double* weight = &( particles.weight(0) );
-
+    
     // Optical depth for the Monte-Carlo process
     double *tau = &( particles.tau( 0 ) );
-
+    
     // Quantum parameter
     double *photon_chi = &( particles.chi( 0 ) );
-
+    
     // Photon id
     // uint64_t * id = &( particles.id(0));
-
+  
     // Total energy converted into pairs for this species during this timestep
     if (!tasks_on_projection){
         this->pair_converted_energy_ = 0;
     } else {
         this->pair_converted_energy_per_bin[ibin] = 0;
     }
-
+    
     // _______________________________________________________________
     // Computation
 
@@ -212,7 +209,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
         ( *gamma )[ipart] = sqrt( momentum[0][ipart]*momentum[0][ipart]
                                   + momentum[1][ipart]*momentum[1][ipart]
                                   + momentum[2][ipart]*momentum[2][ipart] );
-
+    
         // Computation of the Lorentz invariant quantum parameter
         photon_chi[ipart] = MultiphotonBreitWheeler::compute_chiph(
                                 momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
@@ -248,7 +245,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
             else if( tau[ipart] > epsilon_tau_ ) {
                 // from the cross section
                 temp = MultiphotonBreitWheelerTables.computeBreitWheelerPairProductionRate( photon_chi[ipart], ( *gamma )[ipart] );
-                
+
                 // Time to decay
                 // If this time is above the remaining iteration time,
                 // There is a synchronization at the end of the pic iteration
@@ -600,3 +597,54 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
         }
     }
 }
+
+void MultiphotonBreitWheeler::joinNewElectronPositronPairs(unsigned int Nbins)
+{
+
+    for( int k=0 ; k < 2 ; k++ ) {
+       for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+           // number of particles to add from the bin
+           int nparticles = new_pair_per_bin[ibin][k].size();
+    
+           for (unsigned int ipart = 0; ipart < nparticles ; ipart++){
+              new_pair[k].createParticle();
+              int idNew = new_pair[k].size() - 1;
+           
+              // momenta
+              for( int i=0; i<3; i++ ) {
+                  new_pair[k].momentum( i, idNew ) = new_pair_per_bin[ibin][k].momentum( i, ipart );
+              }
+           
+              // positions
+              for( int i=0; i<n_dimensions_; i++ ) {
+                  new_pair[k].position( i, idNew ) = new_pair_per_bin[ibin][k].position( i, ipart );
+              }
+           
+              // old positions
+              if( new_pair[k].Position_old.size() > 0 ) {
+                  for( int i=0; i<n_dimensions_; i++ ) {
+                      new_pair[k].position_old( i, idNew ) = new_pair_per_bin[ibin][k].position_old( i, ipart );
+                  }
+              }
+           
+              // weight 
+              new_pair[k].weight( idNew ) = new_pair_per_bin[ibin][k].weight( ipart );
+           
+              // charge
+              new_pair[k].charge( idNew ) = new_pair_per_bin[ibin][k].charge( ipart );
+           
+              // chi
+              if( new_pair[k].isQuantumParameter ) {
+                  new_pair[k].chi( idNew ) = new_pair_per_bin[ibin][k].chi( ipart );
+              }
+           
+              //tau
+              if( new_pair[k].isMonteCarlo ) {
+                  new_pair[k].tau( idNew ) = new_pair_per_bin[ibin][k].tau( ipart );
+              }
+           } // end ipart 
+           new_pair_per_bin[ibin][k].clear();
+       } // end ibin loop
+    } // end k loop (different species loop)
+
+} // end joinNewElectronPositronPairs
