@@ -55,15 +55,18 @@ SmileiMPI::SmileiMPI( int *argc, char ***argv )
     }
 #endif
     smilei_omp_max_threads = omp_get_max_threads();
+    number_of_cores = min( omp_get_num_procs(), smilei_omp_max_threads );
 #else
     MPI_Init( argc, argv );
     smilei_omp_max_threads = 1;
+    number_of_cores = 1;
 #endif
-
+    
     world_ = MPI_COMM_WORLD;
     MPI_Comm_size( world_, &smilei_sz );
     MPI_Comm_rank( world_, &smilei_rk );
-
+    
+    MPI_Allreduce( &number_of_cores, &global_number_of_cores, 1, MPI_INT, MPI_SUM, world_ );
 } // END SmileiMPI::SmileiMPI
 
 

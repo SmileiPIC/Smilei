@@ -175,23 +175,23 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Running pycontrol.py
     runScript( string( reinterpret_cast<const char *>( pycontrol_py ), pycontrol_py_len ), "pycontrol.py", globals );
-
+    
     // Run custom pre-processing function
     MESSAGE( 1, "Check for function preprocess()" );
     PyTools::runPyFunction( "preprocess" );
     PyErr_Clear();
-
+    
     smpi->barrier();
-
+    
     // Error if no block Main() exists
     if( PyTools::nComponents( "Main" ) == 0 ) {
         ERROR( "Block Main() not defined" );
     }
-
+    
     // CHECK namelist on python side
     PyTools::runPyFunction( "_smilei_check" );
     smpi->barrier();
-
+    
     // Python makes the checkpoint dir tree
     if( ! smpi->test_mode ) {
         PyTools::runPyFunction( "_prepare_checkpoint_dir" );
@@ -202,7 +202,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // Return false if we can close the python interpreter
     MESSAGE( 1, "Calling python _keep_python_running() :" );
     keep_python_running_ = PyTools::runPyFunction<bool>( "_keep_python_running" );
-
+    
     // random seed
     if( PyTools::extractOrNone( "random_seed", random_seed, "Main" ) ) {
         // Init of the seed for the vectorized C++ random generator recommended by Intel
@@ -1175,35 +1175,41 @@ void Params::print_init()
 // ---------------------------------------------------------------------------------------------------------------------
 // Printing out some data at a given timestep
 // ---------------------------------------------------------------------------------------------------------------------
-void Params::print_timestep( unsigned int itime, double time_dual, Timer &timer )
+void Params::print_timestep( SmileiMPI *smpi, unsigned int itime, double time_dual, Timer &timer, double npart )
 {
-    double before = timer.getTime();
-    timer.update();
-    double now = timer.getTime();
-    ostringstream my_msg;
-    my_msg << "  " << setw( timestep_width ) << itime << "/" << n_time << " "
-           << "  " << scientific << setprecision( 4 ) << setw( 12 ) << time_dual << " "
-           << "  " << scientific << setprecision( 4 ) << setw( 12 ) << now << " "
-           << "  " << "(" << scientific << setprecision( 4 ) << setw( 12 ) << now - before << " )"
-           ;
-    #pragma omp master
-    MESSAGE( my_msg.str() );
-    #pragma omp barrier
+    if( smpi->isMaster() ) {
+        double before = timer.getTime();
+        timer.update();
+        double now = timer.getTime();
+        
+        double push_time = 1e9 * (now - before) * (double) smpi->getGlobalNumCores() / ( npart * (double) print_every );
+        
+        #pragma omp master
+        MESSAGE(
+            "  " << setw( timestep_width ) << itime << "/" << n_time << " "
+            << "  " << scientific << setprecision( 4 ) << setw( 12 ) << time_dual << " "
+            << "  " << scientific << setprecision( 4 ) << setw( 12 ) << now << " "
+            << "  " << "(" << scientific << setprecision( 4 ) << setw( 12 ) << now - before << " )"
+            << "  " << setw( 14 ) << (int) push_time << " "
+        );
+        #pragma omp barrier
+    }
 }
 
-void Params::print_timestep_headers()
+void Params::print_timestep_headers( SmileiMPI *smpi )
 {
     timestep_width = log10( n_time ) + 1;
     if( timestep_width<3 ) {
         timestep_width = 3;
     }
-    ostringstream my_msg;
-    my_msg << setw( timestep_width*2+4 ) << " timestep "
-           << setw( 15 ) << "sim time "
-           << setw( 15 ) << "cpu time [s] "
-           << "  (" << setw( 12 ) << "diff [s]" << " )"
-           ;
-    MESSAGE( my_msg.str() );
+    WARNING( "The following `push time` assumes a global number of "<<smpi->getGlobalNumCores()<<" cores (hyperthreading is unknown)" );
+    MESSAGE(
+        setw( timestep_width*2+4 ) << " timestep "
+        << setw( 15 ) << "sim time "
+        << setw( 15 ) << "cpu time [s] "
+        << "  (" << setw( 12 ) << "diff [s]" << " )"
+        << setw( 17 ) << "   push time [ns]"
+    );
 }
 
 

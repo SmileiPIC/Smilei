@@ -77,6 +77,8 @@ SmileiMPI_test::SmileiMPI_test( int *argc, char ***argv )
     smilei_sz = nMPI;
     smilei_rk = 0;
     smilei_omp_max_threads = nOMP;
+    number_of_cores = nOMP;
+    global_number_of_cores = nMPI * nOMP;
     
     MESSAGE( "    ----- TEST MODE WITH INTENDED PARTITION "<<nMPI<<"x"<<nOMP<<"-----" );
     

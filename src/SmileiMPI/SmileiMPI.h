@@ -151,10 +151,22 @@ public:
         return world_;
     }
 
-    //! Return MPI_Comm_size
+    //! Return omp_max_threads
     inline int getOMPMaxThreads()
     {
         return smilei_omp_max_threads;
+    }
+    
+    //! Return local number of cores
+    inline int getNumCores()
+    {
+        return number_of_cores;
+    }
+    
+    //! Return global number of cores
+    inline int getGlobalNumCores()
+    {
+        return global_number_of_cores;
     }
     
     //! Return tag upper bound of this MPI implementation
@@ -252,6 +264,10 @@ protected:
     int smilei_rk;
     //! OMP max number of threads in one MPI
     int smilei_omp_max_threads;
+    //! OMP available cores in one MPI
+    int number_of_cores;
+    //! Global number of cores
+    int global_number_of_cores;
 
     // Store periodicity (0/1) per direction
     // Should move in Params : last parameters of this type in this class
