@@ -70,6 +70,8 @@ public:
     int *bin_has_pushed;
     int *bin_has_done_particles_BC;
     int *bin_has_projected;
+    int *bin_has_done_Multiphoton_Breit_Wheeler;
+    int decayed_photons_cleaned;
 
     std::vector<double *> b_Jx;
     std::vector<double *> b_Jy;
