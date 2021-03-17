@@ -461,10 +461,10 @@ void VectorPatch::dynamics( Params &params,
         unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
         int Nspecies = ( *this )( 0 )->vecSpecies.size();
 
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-            for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
-
-                if( species( ipatch, ispec )->Ionize ) {     
+        // Ionization
+        for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
+            if( species( 0, ispec )->Ionize ) {
+                for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                     int* species_has_ionized  =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_ionized;
                     #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_ionized[0:(Nbins-1)])
                     {
@@ -479,9 +479,14 @@ void VectorPatch::dynamics( Params &params,
                     ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
                     } // end task on reduction of new electrons from ionization
-                } // end if Ionize
-        
-                if( species( ipatch, ispec )->Radiate ) {     
+                } // end patch loop
+            } // end if Ionize
+        } // end species loop
+
+        // Radiation
+        for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
+            if( species( 0, ispec )->Radiate ) {
+                for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                     int* species_has_radiated =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_radiated;
                     #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_radiated[0:(Nbins-1)])
                     {
@@ -496,10 +501,32 @@ void VectorPatch::dynamics( Params &params,
                     ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
                     } // end task on reduction of new photons from radiation
-                } // end if Radiate
+                } // end patch loop
+            } // end if Radiate
+        } // end species loop
 
-            } // end species loop
-        } // end patch loop
+//         // Multiphoton Breit Wheeler
+//         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
+//             if( species( 0, ispec )->Multiphoton_Breit_Wheeler_process ) {
+//                 for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+//                     int* species_has_pushed =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_pushed;     
+//                     #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_pushed[0:(Nbins-1)])
+//                     {
+// #ifdef  __DETAILED_TIMERS
+//                     int ithread = omp_get_thread_num();
+//                     double timer = MPI_Wtime();
+// #endif    
+//                     Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+//                     spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(Nbins);
+// #ifdef  __DETAILED_TIMERS
+//                     ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+// #endif
+//                     } // end task on reduction of new photons from Multiphoton Breit Wheeler
+// 
+//                 } // end patch loop
+//             } // end if Multiphoton Breit Wheeler
+//         } // end species loop
+
     } // end condition on tasks
 
 
