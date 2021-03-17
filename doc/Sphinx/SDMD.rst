@@ -1,3 +1,5 @@
+.. rst-class:: experimental
+
 Single-domain multiple decompositions
 -------------------------------------
 

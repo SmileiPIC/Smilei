@@ -474,6 +474,13 @@ Fields are set on large sub-domain called *regions* (1 region per MPI process) w
 particles are kept as small *patches* as in the standard decomposition (many patches per MPI process).
 Benefits of this option are illustrated `in this paper <https://hal.archives-ouvertes.fr/hal-02973139>`_.
 
+
+.. code-block:: python
+
+  MultipleDecomposition(
+      region_ghost_cells = 2
+  )
+
 .. py:data:: region_ghost_cells
 
    :type: integer
