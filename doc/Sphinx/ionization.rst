@@ -266,7 +266,7 @@ and thus start to significantly influence also the evolution of the transverse m
 If the envelope approximation hypotheses are satisfied, the charge created with ionization and the momentum distribution 
 of the newly created electrons computed with this procedure should agree with those obtained with a standard laser simulation,
 provided that the comparison is made after the end of the interaction with the laser. 
-Examples of these comparisons and the derivation of the described electron momentum initialization can be found in [MassimoIonization2020]_.
+Examples of these comparisons and the derivation of the described electron momentum initialization can be found in [Massimo2020Ionization]_.
 A comparison made in a timestep where the interaction with the laser is still taking place would show the effects of the quiver motion in the electron momenta
 in the standard laser simulation (e.g. peaks in the transverse momentum spectrum). These effects would be absent in the envelope simulation. 
 
