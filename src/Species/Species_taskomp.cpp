@@ -171,6 +171,28 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
     int Nbins = particles->first_index.size();
     std::vector<double> nrj_lost_per_bin( Nbins, 0. );
     std::vector<double> nrj_radiation_per_bin( Nbins, 0. );
+    int *bin_can_radiate;
+    int *bin_can_push;
+
+    if (Radiate){ // if Radiation True ... 
+        if (!Ionize) { 
+            // ... radiate only after ionization if present ...
+            bin_can_radiate = bin_has_interpolated;
+        } else { 
+            // ... radiate directly after interpolation if ionization is not present ...
+            bin_can_radiate = bin_has_ionized;
+        }
+        // ... and push only after radiation 
+        bin_can_push = bin_has_radiated;
+    } else { // if Radiation False ...
+        if (Ionize){ 
+            // ... push after ionization if present
+            bin_can_push = bin_has_ionized;
+        } else { 
+            // ... push directly after interpolation if ionization is not present
+            bin_can_push = bin_has_interpolated;
+        }
+    }
 
     #pragma omp taskgroup
     {
@@ -210,15 +232,16 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
             } //end task Interpolator
         } // end ibin loop for Interpolator
 
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+        // Ionization
+        if( Ionize ) {        
+            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin]) private(ithread,timer)
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin]) private(ithread,timer)
 #else
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin])
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin])
 #endif
-            {
-            // Ionization
-            if( Ionize ) {          
+                {
+    
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
@@ -228,20 +251,23 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-            } // end Ionize
-            } // end taks Ionize
-        } // end ibin loop for Ionize
+            
+                } // end task Ionize bin
+            } // end ibin loop for Ionize
+        } // end Ionize
 
             if( time_dual>time_frozen_ ){ // if moving particle push
-                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+
+                // Radiation losses
+                if( Radiate ) {
+                    for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
-                    #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_ionized[ibin]) depend(out:bin_has_radiated[ibin]) private(ithread,timer)
+                        #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_radiate[ibin]) depend(out:bin_has_radiated[ibin]) private(ithread,timer)
 #else
-                    #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_ionized[ibin]) depend(out:bin_has_radiated[ibin])
+                        #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_radiate[ibin]) depend(out:bin_has_radiated[ibin])
 #endif
-                    {
-                    // Radiation losses
-                    if( Radiate ) {
+                        {
+                    
 
 #ifdef  __DETAILED_TIMERS
                         timer = MPI_Wtime();
@@ -268,15 +294,16 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                         patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
 
-                    } // end if Radiate
-                    } // end task Radiate 
-                } // end ibin loop for Radiate
+                    
+                        } // end task Radiate bin
+                    } // end ibin loop for Radiate
+                } // end if Radiate
 
                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
-                    #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_radiated[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+                    #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
 #else
-                    #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_radiated[ibin]) depend(out:bin_has_pushed[ibin])
+                    #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin]) depend(out:bin_has_pushed[ibin])
 #endif
                     {
 #ifdef  __DETAILED_TIMERS
