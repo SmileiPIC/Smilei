@@ -1593,6 +1593,23 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     Angle between the boundary and the profile's plane, the rotation being around :math:`z`.
     See :doc:`this page <laser_offset>` for more details.
 
+  .. py:data:: fft_time_window
+
+    :default: :py:data:`simulation_time`
+
+    Time during which the ``space_time_profile`` is sampled (calculating the
+    ``LaserOffset`` on the whole simulation duration can be costly). Note that
+    the Fourier approach will naturally repeat the signal periodically.
+
+  .. py:data:: number_of_processes
+
+    :default: *all available processes*
+
+    The number of MPI processes that will be used for computing the ``LaserOffset``.
+    Using more processes computes the FFT faster, but too many processes may
+    be very costly in communication. In addition, using too few may not allow
+    the arrays to fit in memory.
+
 ----
 
 .. _laser_envelope:

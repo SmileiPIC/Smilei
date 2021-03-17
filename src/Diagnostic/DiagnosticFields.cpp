@@ -233,7 +233,7 @@ void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi )
     }
     
     // Create file
-    file_ = new H5Write( filename, true );
+    file_ = new H5Write( filename, &smpi->world() );
     
     file_->attr( "name", diag_name_ );
     
@@ -403,7 +403,7 @@ uint64_t DiagnosticFields::getDiskFootPrint( int istart, int istop, Patch *patch
 }
 
 // Calculates the intersection between a subgrid (aka slice in python) and a contiguous zone
-// of the PIC grid. The zone can be a patch or a MPI region.
+// of the PIC grid. The zone can be a patch or a MPI patch collection.
 void DiagnosticFields::findSubgridIntersection(
     unsigned int subgrid_start,
     unsigned int subgrid_stop,

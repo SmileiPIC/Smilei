@@ -275,7 +275,8 @@ public:
             MESSAGE( "!" << filename << "!");
             // Check if file exists
             if( ! file ) {
-                H5Write f( filename, true );
+                MPI_Comm comm = MPI_COMM_WORLD;
+                H5Write f( filename, &comm );
                 // write all parameters as HDF5 attributes
                 f.attr( "Version", std::string( __VERSION ) );
                 mystream.str( "" );

@@ -97,7 +97,7 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             restart_file = "";
             for( unsigned int num_dump=0; num_dump<restart_files.size(); num_dump++ ) {
                 string dump_name = restart_files[num_dump];
-                H5Read f( dump_name, false, false );
+                H5Read f( dump_name, NULL, false );
                 if( f.valid() ) {
                     unsigned int dump_step = 0;
                     f.attr( "dump_step", dump_step );
@@ -122,11 +122,11 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
                 MPI_Sendrecv(
                     &dump_number, 1, MPI_UNSIGNED, (smpi->getRank()+1) % smpi->getSize(), smpi->getRank(),
                     &prev_number, 1, MPI_UNSIGNED, (smpi->getRank()+smpi->getSize()-1) % smpi->getSize(), (smpi->getRank()+smpi->getSize()-1)%smpi->getSize(),
-                    smpi->SMILEI_COMM_WORLD, &status
+                    smpi->world(), &status
                 );
                 int problem = (prev_number != dump_number);
                 int any_problem;
-                MPI_Allreduce( &problem, &any_problem, 1, MPI_INT, MPI_LOR, smpi->SMILEI_COMM_WORLD );
+                MPI_Allreduce( &problem, &any_problem, 1, MPI_INT, MPI_LOR, smpi->world() );
                 if( any_problem ) {
                     if( problem ) {
                         ostringstream t("");
@@ -190,14 +190,14 @@ void Checkpoint::dump( VectorPatch &vecPatches, Region &region, unsigned int iti
                 MESSAGE( "Reached time limit : " << elapsed_time << " minutes. Dump timestep : " << time_dump_step );
                 // master does a non-blocking send
                 for( unsigned int dest=0; dest < ( unsigned int ) smpi->getSize(); dest++ ) {
-                    MPI_Isend( &time_dump_step, 1, MPI_UNSIGNED, dest, tagUB, smpi->SMILEI_COMM_WORLD, &dump_request[dest] );
+                    MPI_Isend( &time_dump_step, 1, MPI_UNSIGNED, dest, tagUB, smpi->world(), &dump_request[dest] );
                 }
             }
         } else { // non master nodes receive the time_dump_step (non-blocking)
             int todump=0;
             MPI_Iprobe( 0, tagUB, MPI_COMM_WORLD, &todump, &dump_status_prob );
             if( todump ) {
-                MPI_Recv( &time_dump_step, 1, MPI_UNSIGNED, 0, tagUB, smpi->SMILEI_COMM_WORLD, &dump_status_recv );
+                MPI_Recv( &time_dump_step, 1, MPI_UNSIGNED, 0, tagUB, smpi->world(), &dump_status_recv );
             }
         }
         smpi->barrier();

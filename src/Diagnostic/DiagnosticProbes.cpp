@@ -380,7 +380,7 @@ DiagnosticProbes::~DiagnosticProbes()
 
 void DiagnosticProbes::openFile( Params &params, SmileiMPI *smpi )
 {
-    file_ = new H5Write( filename, true );
+    file_ = new H5Write( filename, &smpi->world() );
     
     file_->attr( "name", diag_name_ );
     file_->attr( "Version", string( __VERSION ) );

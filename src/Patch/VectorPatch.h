@@ -326,8 +326,19 @@ public :
     //! 1st patch index of patches_ (stored for balancing op)
     int refHindex_;
     
+    //! Count global (MPI x patches) number of particles
+    uint64_t getGlobalNumberOfParticles( SmileiMPI *smpi )
+    {
+        std::vector<uint64_t> nParticles = getGlobalNumberOfParticlesPerSpecies( smpi );
+        
+        uint64_t global_number_particles = 0;
+        for( unsigned int i = 0; i<nParticles.size(); i++ ) {
+            global_number_particles += nParticles[i];
+        }
+        return global_number_particles;
+    }
     //! Count global (MPI x patches) number of particles per species
-    void printNumberOfParticles( SmileiMPI *smpi )
+    std::vector<uint64_t> getGlobalNumberOfParticlesPerSpecies( SmileiMPI *smpi )
     {
         unsigned int nSpecies( ( *this )( 0 )->vecSpecies.size() );
         std::vector< uint64_t > nParticles( nSpecies, 0 );
@@ -338,8 +349,16 @@ public :
         }
         for( unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {
             uint64_t tmp( 0 );
-            MPI_Reduce( &( nParticles[ispec] ), &tmp, 1, MPI_UINT64_T, MPI_SUM, 0, smpi->SMILEI_COMM_WORLD );
-            MESSAGE( 2, "Species " << ispec << " (" << ( *this )( 0 )->vecSpecies[ispec]->name_ << ") created with " << tmp << " particles" );
+            MPI_Reduce( &( nParticles[ispec] ), &tmp, 1, MPI_UINT64_T, MPI_SUM, 0, smpi->world() );
+        }
+        return nParticles;
+    }
+    //! Print global (MPI x patches) number of particles per species
+    void printGlobalNumberOfParticlesPerSpecies( SmileiMPI *smpi )
+    {
+        std::vector< uint64_t > nParticles = getGlobalNumberOfParticlesPerSpecies( smpi );
+        for( unsigned int ispec = 0 ; ispec < nParticles.size() ; ispec++ ) {
+            MESSAGE( 2, "Species " << ispec << " (" << ( *this )( 0 )->vecSpecies[ispec]->name_ << ") created with " << nParticles[ispec] << " particles" );
         }
     }
     

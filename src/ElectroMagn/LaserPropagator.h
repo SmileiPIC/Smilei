@@ -37,10 +37,10 @@ inline std::complex<double> complex_interpolate( std::complex<double> *z, unsign
 class LaserPropagator
 {
 public:
-    LaserPropagator() {};
-    ~LaserPropagator() {};
-    
-    void init( Params *params, SmileiMPI *smpi, unsigned int side );
+    LaserPropagator( Params *params, unsigned int side, double fft_time_window, MPI_Comm &comm );
+    ~LaserPropagator() {
+        MPI_Comm_free( &comm_ );
+    };
     
     // Propagates the fields profiles with some offset, and writes result to file
     void operator()( std::vector<PyObject *>, std::vector<int>, double, std::string, int, double );
@@ -50,6 +50,7 @@ protected:
 private:
     unsigned int ndim;
     unsigned int MPI_size, MPI_rank;
+    MPI_Comm comm_;
     
     //! Size of the arrays in pixels
     std::vector<unsigned int> N;

@@ -72,8 +72,8 @@ public:
     //! print a summary of the values in txt
     void print_init();
     //! Printing out some data at a given timestep
-    void print_timestep( unsigned int itime, double time_dual, Timer &timer );
-    void print_timestep_headers();
+    void print_timestep( SmileiMPI *smpi, unsigned int itime, double time_dual, Timer &timer, double npart );
+    void print_timestep_headers( SmileiMPI *smpi );
 
     //! Print information about the parallel aspects
     void print_parallelism_params( SmileiMPI *smpi );

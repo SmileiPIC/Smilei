@@ -240,6 +240,7 @@ class TrackParticles(Diagnostic):
 				self._factors += [factor]
 		self._title = "Track particles '"+species+"'"
 		self._shape = [0]*len(self.axes)
+		self._centers = [self._np.array(c) for c in self._centers]
 
 		# Hack to work with 1 axis
 		if len(axes)==1: self._vunits = self._units[0]
@@ -764,10 +765,10 @@ class TrackParticles(Diagnostic):
 
 
 	# We override the plotting methods
-	def _animateOnAxes_0D(self, ax, t):
+	def _animateOnAxes_0D(self, ax, t, cax_id=0):
 		pass
 	
-	def _animateOnAxes_1D(self, ax, t):
+	def _animateOnAxes_1D(self, ax, t, cax_id=0):
 		timeSelection = (self._timesteps<=t)*(self._timesteps>=t-self.length)
 		times = self._timesteps[timeSelection]
 		A     = self._tmpdata[0][timeSelection,:]
@@ -784,7 +785,14 @@ class TrackParticles(Diagnostic):
 		self._setAxesOptions(ax)
 		return self._plot
 	
-	def _animateOnAxes_2D(self, ax, t):
+	def _animateOnAxes_2D(self, ax, t, cax_id=0):
+		if hasattr(ax, "_lines"):
+			if self in ax._lines:
+				for line in ax._lines[self]:
+					line.remove()
+				del ax._lines[self]
+		else:
+			ax._lines = {}
 		tmin = t-self.length
 		tmax = t
 		timeSelection = (self._timesteps<=tmax)*(self._timesteps>=tmin)
@@ -796,7 +804,7 @@ class TrackParticles(Diagnostic):
 		y = self._tmpdata[1][timeSelection,:][:,~self._rawData["brokenLine"]]
 		try   : ax.set_prop_cycle (None)
 		except:	ax.set_color_cycle(None)
-		ax.plot(self._xfactor*x, self._yfactor*y, **self.options.plot)
+		ax._lines[self] = ax.plot(self._xfactor*x, self._yfactor*y, **self.options.plot)
 		# Then plot the broken lines
 		try   : ax.hold("on")
 		except: pass
@@ -810,9 +818,10 @@ class TrackParticles(Diagnostic):
 				if ibrk>0: iti = max(itmin, breaks[ibrk-1])
 				itf = min( itmax, breaks[ibrk] )
 				if prevline:
-					ax.plot(self._xfactor*x[iti:itf], self._yfactor*y[iti:itf], color=prevline.get_color(), **self.options.plot)
+					ax._lines[self] += ax.plot(self._xfactor*x[iti:itf], self._yfactor*y[iti:itf], color=prevline.get_color(), **self.options.plot)
 				else:
 					prevline, = ax.plot(self._xfactor*x[iti:itf], self._yfactor*y[iti:itf], **self.options.plot)
+				ax._lines[self] += [prevline]
 				if breaks[ibrk] > itmax: break
 		try   : ax.hold("off")
 		except: pass

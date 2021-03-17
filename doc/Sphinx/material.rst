@@ -29,22 +29,29 @@ Reference article
 Accepted
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. [Gelfer]
-
-  E. Gelfer, A. Fedotov and S. Weber,
-  `Radiation induced acceleration of ions`,
-  `arXiv:1907.02621 <https://arxiv.org/abs/1907.02621>`_
-
 .. [Thiele]
 
   I. Thiele and E. Siminos,
   `Laser wakefield driven generation of isolated CEP-tunable intense sub-cycle pulses`,
   `arXiv:1902.05014 <https://arxiv.org/abs/1902.05014>`_
 
+.. [Perez]
+
+  F. Pérez, F. Amiranoff, C. Briand, S. Depierreux, M. Grech, L. Lancia, P. Loiseau, J.-R. Marquès, C. Riconda and T. Vinci,
+  `Numerical study of Langmuir wave coalescence in laser-plasma interaction`,
+  `preprint <https://hal.archives-ouvertes.fr/hal-03172127>`_
+
 ----
 
 Published
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. [Gelfer2021]
+
+  E. Gelfer, A. Fedotov and S. Weber,
+  `Radiation induced acceleration of ions`,
+  `Phys. Rev. Lett. 126, 044801 (2021) <https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.126.044801>`_,
+  `arXiv:1907.02621 <https://arxiv.org/abs/1907.02621>`_
 
 .. [Derouillat2020]
 
@@ -60,7 +67,7 @@ Published
   `J. Phys.: Conf. Ser. 1596, 012055 (2020) <https://iopscience.iop.org/article/10.1088/1742-6596/1596/1/012055/pdf>`_,
   `arXiv:1912.04674 <http://arxiv.org/abs/1912.04674>`_
 
-.. [MassimoIonization2020]
+.. [Massimo2020Ionization]
 
   F. Massimo, A. Beck, J. Derouillat, I. Zemzemi and A. Specka,
   `Numerical modeling of laser tunneling ionization in Particle in Cell Codes with a laser envelope model`,
