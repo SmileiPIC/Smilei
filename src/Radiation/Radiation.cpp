@@ -130,7 +130,7 @@ void Radiation::joinNewPhotons(unsigned int Nbins)
         int nparticles_to_add = new_photons_per_bin_[ibin].size();
         new_photons_.createParticles(nparticles_to_add);
 
-        for (unsigned int ipart = 0; ipart < new_photons_per_bin_[ibin].size() ; ipart++){
+        for (unsigned int ipart = 0; ipart < nparticles_to_add ; ipart++){
             int idNew = (new_photons_.size() - nparticles_to_add) + ipart;
             
             for( unsigned int i=0; i<new_photons_.dimension(); i++ ) {
