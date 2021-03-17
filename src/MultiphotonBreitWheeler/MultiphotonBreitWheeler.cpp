@@ -600,3 +600,54 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
         }
     }
 }
+
+void MultiphotonBreitWheeler::joinNewElectronPositronPairs(unsigned int Nbins)
+{
+
+    for( int k=0 ; k < 2 ; k++ ) {
+       for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+           // number of particles to add from the bin
+           int nparticles = new_pair_per_bin[ibin][k].size();
+    
+           for (unsigned int ipart = 0; ipart < nparticles ; ipart++){
+              new_pair[k].createParticle();
+              int idNew = new_pair[k].size() - 1;
+           
+              // momenta
+              for( int i=0; i<3; i++ ) {
+                  new_pair[k].momentum( i, idNew ) = new_pair_per_bin[ibin][k].momentum( i, ipart );
+              }
+           
+              // positions
+              for( int i=0; i<n_dimensions_; i++ ) {
+                  new_pair[k].position( i, idNew ) = new_pair_per_bin[ibin][k].position( i, ipart );
+              }
+           
+              // old positions
+              if( new_pair[k].Position_old.size() > 0 ) {
+                  for( int i=0; i<n_dimensions_; i++ ) {
+                      new_pair[k].position_old( i, idNew ) = new_pair_per_bin[ibin][k].position_old( i, ipart );
+                  }
+              }
+           
+              // weight 
+              new_pair[k].weight( idNew ) = new_pair_per_bin[ibin][k].weight( ipart );
+           
+              // charge
+              new_pair[k].charge( idNew ) = new_pair_per_bin[ibin][k].charge( ipart );
+           
+              // chi
+              if( new_pair[k].isQuantumParameter ) {
+                  new_pair[k].chi( idNew ) = new_pair_per_bin[ibin][k].chi( ipart );
+              }
+           
+              //tau
+              if( new_pair[k].isMonteCarlo ) {
+                  new_pair[k].tau( idNew ) = new_pair_per_bin[ibin][k].tau( ipart );
+              }
+           } // end ipart 
+           new_pair_per_bin[ibin][k].clear();
+       } // end ibin loop
+    } // end k loop (different species loop)
+
+} // end joinNewElectronPositronPairs
