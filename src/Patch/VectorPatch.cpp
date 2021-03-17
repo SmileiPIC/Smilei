@@ -460,17 +460,16 @@ void VectorPatch::dynamics( Params &params,
 
         unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
         int Nspecies = ( *this )( 0 )->vecSpecies.size();
-     
+
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
 
-                int* species_has_ionized  =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_ionized;
-                int* species_has_radiated =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_radiated;
-
-                #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_ionized[0:(Nbins-1)])
-                {
-                Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
-                if( spec_task->Ionize ) {     
+                if( species( ipatch, ispec )->Ionize ) {     
+                    int* species_has_ionized  =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_ionized;
+                    #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_ionized[0:(Nbins-1)])
+                    {
+                    Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                    
 #ifdef  __DETAILED_TIMERS
                     int ithread = omp_get_thread_num();
                     double timer = MPI_Wtime();
@@ -479,13 +478,15 @@ void VectorPatch::dynamics( Params &params,
 #ifdef  __DETAILED_TIMERS
                     ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-                } // end if Ionize   
-                } // end task on reduction of new electrons from ionization
-
-                #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_radiated[0:(Nbins-1)])
-                {
-                Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
-                if( spec_task->Radiate ) {     
+                    } // end task on reduction of new electrons from ionization
+                } // end if Ionize
+        
+                if( species( ipatch, ispec )->Radiate ) {     
+                    int* species_has_radiated =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_radiated;
+                    #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_radiated[0:(Nbins-1)])
+                    {
+                    Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                    
 #ifdef  __DETAILED_TIMERS
                     int ithread = omp_get_thread_num();
                     double timer = MPI_Wtime();
@@ -494,10 +495,10 @@ void VectorPatch::dynamics( Params &params,
 #ifdef  __DETAILED_TIMERS
                     ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
+                    } // end task on reduction of new photons from radiation
                 } // end if Radiate
-                } // end task on reduction of new photons from radiation
 
-            } // end species loop     
+            } // end species loop
         } // end patch loop
     } // end condition on tasks
 
