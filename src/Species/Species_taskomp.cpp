@@ -68,6 +68,9 @@ Species_taskomp::Species_taskomp( Params &params, Patch *patch )
     bin_has_done_particles_BC              = new int[Nbins];
     bin_has_projected                      = new int[Nbins];
 
+    nrj_lost_per_bin                       = new double[Nbins];
+    nrj_radiation_per_bin                  = new double[Nbins];
+
     //! buffers for currents and charge
     b_Jx.resize(Nbins);
     b_Jy.resize(Nbins);
@@ -119,14 +122,32 @@ Species_taskomp::~Species_taskomp()
     //     Py_DECREF( ionization_rate_ );
     // }
 
-    if (bin_has_pushed != NULL){
+    if (bin_has_interpolated != NULL){
         delete bin_has_interpolated;
+    }
+    if (bin_has_ionized != NULL){
         delete bin_has_ionized;
+    }
+    if (bin_has_radiated != NULL){
         delete bin_has_radiated;
+    }
+    if (bin_has_done_Multiphoton_Breit_Wheeler != NULL){
         delete bin_has_done_Multiphoton_Breit_Wheeler;
+    }
+    if (bin_has_pushed != NULL){
         delete bin_has_pushed;
+    }
+    if (bin_has_done_particles_BC != NULL){
         delete bin_has_done_particles_BC;
+    }
+    if (bin_has_projected != NULL){
         delete bin_has_projected;
+    }
+    if (nrj_lost_per_bin != NULL){
+        delete nrj_lost_per_bin;
+    }
+    if (nrj_radiation_per_bin != NULL){
+        delete nrj_radiation_per_bin;
     }
 
     for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
@@ -171,8 +192,12 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
     unsigned int iPart;
 
     int Nbins = particles->first_index.size();
-    std::vector<double> nrj_lost_per_bin( Nbins, 0. );
-    std::vector<double> nrj_radiation_per_bin( Nbins, 0. );
+    // std::vector<double> nrj_lost_per_bin( Nbins, 0. );
+    // std::vector<double> nrj_radiation_per_bin( Nbins, 0. );
+    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+        nrj_lost_per_bin[ibin] = 0.;
+        nrj_radiation_per_bin[ibin] = 0.;
+    }
     int *bin_can_radiate;
     int *bin_can_push;
 
@@ -482,7 +507,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #endif
      {
      // reduce the energy lost with BC per bin
-     for( unsigned int ibin=0 ; ibin<nrj_lost_per_bin.size() ; ibin++ ) {
+     for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
         nrj_bc_lost += nrj_lost_per_bin[ibin];
      }
 
@@ -494,7 +519,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
          ithread = omp_get_thread_num();
 #endif
 
-         for( unsigned int ibin=0 ; ibin<nrj_radiation_per_bin.size() ; ibin++ ) {
+         for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
             nrj_radiation += nrj_radiation_per_bin[ibin];
          }
 #ifdef  __DETAILED_TIMERS
