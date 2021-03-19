@@ -1839,22 +1839,20 @@ void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patc
     Field3D *field3D = static_cast<Field3D *>( my_field );
     
     vector<bool> dual(3, false);
-    if ( ( field3D->name.substr(0,2) == "Jx" ) || ( field3D->name.substr(0,2) == "Ex" ) )
+    string sub = field3D->name.substr(0,2);
+    if( sub == "Jx" || sub == "Ex" ) {
         dual[0] = true;
-    if ( ( field3D->name.substr(0,2) == "Jy" ) || ( field3D->name.substr(0,2) == "Ey" ) )
+    } else if( sub == "Jy" || sub == "Ey" ) {
         dual[1] = true;
-    if ( ( field3D->name.substr(0,2) == "Jz" ) || ( field3D->name.substr(0,2) == "Ez" ) )
+    } else  if( sub == "Jz" || sub == "Ez" ) {
         dual[2] = true;
-
-    if ( field3D->name.substr(0,2) == "Bx" ) {
+    } else if( sub == "Bx" ) {
         dual[1] = true;
         dual[2] = true;
-    }
-    if ( field3D->name.substr(0,2) == "By" ) {
+    } else if( sub == "By" ) {
         dual[0] = true;
         dual[2] = true;
-    }
-    if ( field3D->name.substr(0,2) == "Bz" ) {
+    } else if( sub == "Bz" ) {
         dual[0] = true;
         dual[1] = true;
     }
@@ -1895,12 +1893,11 @@ void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patc
         pos[0] += dx;
     }
     
-    profile->addValuesAt( xyz, *field3D );
+    profile->valuesAt( xyz, *field3D, 1 );
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];
     }
-    
     
 }
 
@@ -1946,7 +1943,7 @@ void ElectroMagn3D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
         pos[0] += dx;
     }
     
-    profile->addValuesAtTime( xyz, time, *field3D );
+    profile->valuesAtTime( xyz, *field3D, 3, time );
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];

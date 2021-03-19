@@ -148,9 +148,9 @@ public:
         // std::vector<double> mean_velocity_input;
         std::vector<PyObject *> prof;
         if( PyTools::extract_1or3Profiles( "mean_velocity", "ParticleInjector" , injector_index, prof ) ) {
-            this_particle_injector->velocity_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "mean_velocity[0] ", this_particle_injector->name_ ), true );
-            this_particle_injector->velocity_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "mean_velocity[1] ", this_particle_injector->name_ ), true );
-            this_particle_injector->velocity_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "mean_velocity[2] ", this_particle_injector->name_ ), true );
+            this_particle_injector->velocity_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "mean_velocity[0] ", this_particle_injector->name_ ), params, true );
+            this_particle_injector->velocity_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "mean_velocity[1] ", this_particle_injector->name_ ), params, true );
+            this_particle_injector->velocity_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "mean_velocity[2] ", this_particle_injector->name_ ), params, true );
             MESSAGE( 2, "> Mean velocity redefined: " << this_particle_injector->velocity_profile_[0]->getInfo());
             // string message =  "> Mean velocity: ";
             // for (unsigned int i = 0 ; i < mean_velocity_input.size()-1 ; i++) {
@@ -168,9 +168,9 @@ public:
         // Temperature
         // std::vector<double> temperature_input;
         if( PyTools::extract_1or3Profiles( "temperature", "ParticleInjector", injector_index, prof ) ) {
-            this_particle_injector->temperature_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "temperature[0] ", this_particle_injector->name_ ), true );
-            this_particle_injector->temperature_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "temperature[1] ", this_particle_injector->name_ ), true );
-            this_particle_injector->temperature_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "temperature[2] ", this_particle_injector->name_ ), true );
+            this_particle_injector->temperature_profile_[0] = new Profile( prof[0], params.nDim_field, Tools::merge( "temperature[0] ", this_particle_injector->name_ ), params, true );
+            this_particle_injector->temperature_profile_[1] = new Profile( prof[1], params.nDim_field, Tools::merge( "temperature[1] ", this_particle_injector->name_ ), params, true );
+            this_particle_injector->temperature_profile_[2] = new Profile( prof[2], params.nDim_field, Tools::merge( "temperature[2] ", this_particle_injector->name_ ), params, true );
             
             // string message =  "> Temperature: ";
             // for (unsigned int i = 0 ; i < temperature_input.size()-1 ; i++) {
@@ -211,7 +211,7 @@ public:
                     this_particle_injector->density_profile_type_ = "charge";
                 }
                 this_particle_injector->density_profile_ =
-                new Profile( profile1, params.nDim_field, Tools::merge( this_particle_injector->density_profile_type_, "_density ", injector_name ), true );
+                new Profile( profile1, params.nDim_field, Tools::merge( this_particle_injector->density_profile_type_, "_density ", injector_name ), params, true );
             }
         }
         // Photons
@@ -229,12 +229,12 @@ public:
             } else {
                 species->density_profile_type_ = "nb";
                 this_particle_injector->density_profile_ =
-                new Profile( profile1, params.nDim_field, Tools::merge( this_particle_injector->density_profile_type_, "_density ", injector_name ), true );
+                new Profile( profile1, params.nDim_field, Tools::merge( this_particle_injector->density_profile_type_, "_density ", injector_name ), params, true );
             }
         }
         
         PyTools::extract_pyProfile( "time_envelope", profile1, "ParticleInjector", injector_index );
-        this_particle_injector->time_profile_ = new Profile( profile1, 1, Tools::merge( "time_profile_", injector_name ) );
+        this_particle_injector->time_profile_ = new Profile( profile1, 1, Tools::merge( "time_profile_", injector_name ), params );
         MESSAGE( 2, "> Time profile: " << this_particle_injector->time_profile_->getInfo());
 
         // Number of particles per cell
@@ -244,7 +244,7 @@ public:
             << this_particle_injector->particles_per_cell_profile_->getInfo() << ".");
         } else {
             this_particle_injector->particles_per_cell_profile_ = new Profile( profile1, params.nDim_field,
-                                          Tools::merge( "particles_per_cell ", injector_name ), true );
+                                          Tools::merge( "particles_per_cell ", injector_name ), params, true );
             MESSAGE( 2, "> Particles per cell profile: "
             << this_particle_injector->particles_per_cell_profile_->getInfo() << ".");
         }

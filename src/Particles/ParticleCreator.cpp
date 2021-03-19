@@ -107,11 +107,7 @@ void ParticleCreator::associate( Species * species)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! \brief Creation of the particle properties in the given particle vector `particles`
-//! \param particles: vector of particles
-//! \param species: species object necessary for some properties
-//! \param n_space_to_create: space area concerned by the particle creation
-//! \param params: general parameters
+//! Creation of the particle properties
 // ---------------------------------------------------------------------------------------------------------------------
 int ParticleCreator::create( struct SubSpace sub_space,
                              Params &params,
@@ -132,11 +128,9 @@ int ParticleCreator::create( struct SubSpace sub_space,
     std::vector<double> cell_index( 3, 0 );
     std::vector<Field *> xyz( species_->nDim_field );
     for( unsigned int idim=0 ; idim<species_->nDim_field ; idim++ ) {
-        //if (params.cell_length[idim]!=0) { // Useless, nDim_field defined for (params.cell_length[idim>=nDim_field]==0)
         cell_position[idim] = patch->getDomainLocalMin( idim );
         cell_index   [idim] = ( double ) patch->getCellStartingGlobalIndex( idim );
         xyz[idim] = new Field3D( n_space_to_create );
-        //}
     }
     // Create the x,y,z maps where profiles will be evaluated
     std::vector<double> ijk( 3 );
@@ -154,7 +148,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
     // ---------------------------------------------------------
     // Calculate density and number of particles_ for the species_
     // ---------------------------------------------------------
-
+    
     species_->max_charge_ = 0.;
     
     // fields containing the profiles values in each cell (always 3d)
@@ -174,7 +168,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
             
             velocity[m].allocateDims( n_space_to_create );
             if( velocity_profile_[m] ) {
-                velocity_profile_[m]   ->valuesAt( xyz, velocity   [m] );
+                velocity_profile_[m]->valuesAt( xyz, velocity[m] );
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }

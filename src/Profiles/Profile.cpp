@@ -8,166 +8,159 @@ using namespace std;
 
 
 // Default constructor.
-Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bool try_numpy ) :
-    profileName( "" ),
+Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, Params &params, bool try_numpy, bool try_file ) :
+    profileName_( "" ),
     nvariables_( nvariables ),
-    uses_numpy( false )
+    uses_numpy_( false ),
+    uses_file_( false ),
+    filename_( "" )
 {
-    ostringstream info_( "" );
-    info_ << nvariables_ << "D";
-    
-    if( !PyCallable_Check( py_profile ) ) {
-        ERROR( "Profile `"<<name<<"`: not a function" );
-    }
-    
     // In case the function was created in "pyprofiles.py", then we transform it
     //  in a "hard-coded" function
-    if( PyObject_HasAttrString( py_profile, "profileName" ) ) {
+    if( PyObject_HasAttrString( py_profile, "profileName_" ) ) {
     
-        PyTools::getAttr( py_profile, "profileName", profileName );
+        PyTools::getAttr( py_profile, "profileName_", profileName_ );
         
-        info_ << " built-in profile `" << profileName << "`" ;
-        
-        if( profileName == "constant" ) {
+        if( profileName_ == "constant" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_Constant1D( py_profile );
+                function_ = new Function_Constant1D( py_profile );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Constant2D( py_profile );
+                function_ = new Function_Constant2D( py_profile );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Constant3D( py_profile );
+                function_ = new Function_Constant3D( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: constant() profile defined only in 1D, 2D or 3D" );
             }
             
-        } else if( profileName == "trapezoidal" ) {
+        } else if( profileName_ == "trapezoidal" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_Trapezoidal1D( py_profile );
+                function_ = new Function_Trapezoidal1D( py_profile );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Trapezoidal2D( py_profile );
+                function_ = new Function_Trapezoidal2D( py_profile );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Trapezoidal3D( py_profile );
+                function_ = new Function_Trapezoidal3D( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: trapezoidal() profile defined only in 1D, 2D or 3D" );
             }
             
-        } else if( profileName == "gaussian" ) {
+        } else if( profileName_ == "gaussian" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_Gaussian1D( py_profile );
+                function_ = new Function_Gaussian1D( py_profile );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Gaussian2D( py_profile );
+                function_ = new Function_Gaussian2D( py_profile );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Gaussian3D( py_profile );
+                function_ = new Function_Gaussian3D( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: gaussian() profile defined only in 1D, 2D or 3D" );
             }
             
-        } else if( profileName == "polygonal" ) {
+        } else if( profileName_ == "polygonal" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_Polygonal1D( py_profile );
+                function_ = new Function_Polygonal1D( py_profile );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Polygonal2D( py_profile );
+                function_ = new Function_Polygonal2D( py_profile );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Polygonal3D( py_profile );
+                function_ = new Function_Polygonal3D( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: polygonal() profile defined only in 1D, 2D or 3D" );
             }
             
-        } else if( profileName == "cosine" ) {
+        } else if( profileName_ == "cosine" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_Cosine1D( py_profile );
+                function_ = new Function_Cosine1D( py_profile );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Cosine2D( py_profile );
+                function_ = new Function_Cosine2D( py_profile );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Cosine3D( py_profile );
+                function_ = new Function_Cosine3D( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: cosine() profile defined only in 1D, 2D or 3D" );
             }
             
-        } else if( profileName == "polynomial" ) {
+        } else if( profileName_ == "polynomial" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_Polynomial1D( py_profile );
+                function_ = new Function_Polynomial1D( py_profile );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Polynomial2D( py_profile );
+                function_ = new Function_Polynomial2D( py_profile );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Polynomial3D( py_profile );
+                function_ = new Function_Polynomial3D( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: polynomial() profile defined only in 1D, 2D or 3D" );
             }
             
-        } else if( profileName == "tconstant" ) {
+        } else if( profileName_ == "tconstant" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_TimeConstant( py_profile );
+                function_ = new Function_TimeConstant( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: tconstant() profile is only for time" );
             }
             
-        } else if( profileName == "ttrapezoidal" ) {
+        } else if( profileName_ == "ttrapezoidal" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_TimeTrapezoidal( py_profile );
+                function_ = new Function_TimeTrapezoidal( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: ttrapezoidal() profile is only for time" );
             }
             
-        } else if( profileName == "tgaussian" ) {
+        } else if( profileName_ == "tgaussian" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_TimeGaussian( py_profile );
+                function_ = new Function_TimeGaussian( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: tgaussian() profile is only for time" );
             }
             
-        } else if( profileName == "tpolygonal" ) {
+        } else if( profileName_ == "tpolygonal" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_TimePolygonal( py_profile );
+                function_ = new Function_TimePolygonal( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: tpolygonal() profile is only for time" );
             }
             
-        } else if( profileName == "tcosine" ) {
+        } else if( profileName_ == "tcosine" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_TimeCosine( py_profile );
+                function_ = new Function_TimeCosine( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: tcosine() profile is only for time" );
             }
             
-        } else if( profileName == "tpolynomial" ) {
+        } else if( profileName_ == "tpolynomial" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_TimePolynomial( py_profile );
+                function_ = new Function_TimePolynomial( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: tpolynomial() profile is only for time" );
             }
             
-        } else if( profileName == "tsin2plateau" ) {
+        } else if( profileName_ == "tsin2plateau" ) {
         
             if( nvariables_ == 1 ) {
-                function = new Function_TimeSin2Plateau( py_profile );
+                function_ = new Function_TimeSin2Plateau( py_profile );
             } else {
                 ERROR( "Profile `"<<name<<"`: tsin2plateau() profile is only for time" );
             }
         } else {
             
-            ERROR( "Undefined profile "<<profileName );
+            ERROR( "Undefined profile "<<profileName_ );
         
         }
         
     }
     
-    // Otherwise (if the python profile cannot be hard-coded) ....
-    else {
-        string message;
+    // If the profile is a python function (not hard-coded)
+    else if( PyCallable_Check( py_profile ) ) {
         
 #ifdef  __DEBUG
+        string message;
         // Check how the profile looks like
         PyObject *repr = PyObject_Repr( py_profile );
         PyTools::py2scalar( repr, message );
@@ -188,7 +181,6 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
             Py_DECREF( py_profile );
             py_profile = func;
         }
-        
         
         // Verify that the profile has the right number of arguments
         int nargs = PyTools::function_nargs( py_profile );
@@ -241,23 +233,23 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
                         && PyArray_Check( ret ) // must be a numpy array
                         && PyArray_ISNUMBER( ( PyArrayObject * )ret ) // must be an array of floats
                         && PyArray_SIZE( ( PyArrayObject * )ret ) == numel ) { // must have the same size as arguments
-                    uses_numpy = true;
+                    uses_numpy_ = true;
                 }
                 if( ret ) {
                     Py_DECREF( ret );
                 }
-                if( uses_numpy ) {
+                if( uses_numpy_ ) {
                     break;
                 }
             }
-            if( uses_numpy ) {
+            if( uses_numpy_ ) {
                 DEBUG( "Profile `"<<name<<"`: accepts numpy arrays of dimension " << ndim );
             } else {
                 DEBUG( "Profile `"<<name<<"`: does not seem to accept numpy arrays (and will be slow)" );
             }
         }
 #endif
-        if( !uses_numpy ) {
+        if( !uses_numpy_ ) {
             // Otherwise, try a float
             PyObject *z = PyFloat_FromDouble( 0. );
             PyObject *ret( nullptr );
@@ -282,27 +274,40 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
         
         // Assign the evaluating function, which depends on the number of arguments
         if( nvariables_ == 1 ) {
-            function = new Function_Python1D( py_profile );
+            function_ = new Function_Python1D( py_profile );
         } else if( nvariables_ == 2 ) {
-            function = new Function_Python2D( py_profile );
+            function_ = new Function_Python2D( py_profile );
         } else if( nvariables_ == 3 ) {
-            function = new Function_Python3D( py_profile );
+            function_ = new Function_Python3D( py_profile );
         } else if( nvariables_ == 4 ) {
-            function = new Function_Python4D( py_profile );
+            function_ = new Function_Python4D( py_profile );
+        }
+    
+    // If the profile is a string (hdf5 file)
+    } else if( PyTools::py2scalar( py_profile, filename_ ) ) {
+        
+        if( ! try_file ) {
+            ERROR( "Profile `"<<name<<"`: cannot be from a file" );
         }
         
-        info_ << " user-defined function";
-        if( try_numpy ) {
-            if( uses_numpy ) {
-                info_ << " (uses numpy)";
-            } else {
-                info_ << " (does not use numpy)";
-            }
+        // The filename_ should formed like myfile.h5/path/to/dataset
+        // We separate the last slash (/) to isolate the dataset name
+        size_t i = filename_.find_last_of( "/" );
+        if( i == std::string::npos || i == filename_.size() - 1 ) {
+            ERROR( "Profile `"<<name<<"`: could not find a dataset name in the path" );
         }
-    }
-    info = info_.str();
-    if (function) {
-        info += function->getInfo();
+        string dataset_name = filename_.substr( i + 1 );
+        string path = filename_.substr( 0, i );
+        
+        // Open the file + group
+        H5Read * file = new H5Read( path );
+        
+        // Create the function
+        function_ = new Function_File( path, dataset_name, file, params.cell_length );
+        uses_file_ = true;
+        
+    } else {
+        ERROR( "Profile `"<<name<<"`: should be a function or a string" );
     }
 }
 
@@ -310,83 +315,86 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
 // Cloning constructor
 Profile::Profile( Profile *p )
 {
-    profileName = p->profileName;
+    profileName_ = p->profileName_;
     nvariables_ = p->nvariables_;
-    info        = p->info       ;
-    uses_numpy  = p->uses_numpy ;
-    if( profileName != "" ) {
-        if( profileName == "constant" ) {
+    uses_numpy_  = p->uses_numpy_ ;
+    uses_file_ = p->uses_file_;
+    
+    if( profileName_ != "" ) {
+        if( profileName_ == "constant" ) {
             if( nvariables_ == 1 ) {
-                function = new Function_Constant1D( static_cast<Function_Constant1D *>( p->function ) );
+                function_ = new Function_Constant1D( static_cast<Function_Constant1D *>( p->function_ ) );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Constant2D( static_cast<Function_Constant2D *>( p->function ) );
+                function_ = new Function_Constant2D( static_cast<Function_Constant2D *>( p->function_ ) );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Constant3D( static_cast<Function_Constant3D *>( p->function ) );
+                function_ = new Function_Constant3D( static_cast<Function_Constant3D *>( p->function_ ) );
             }
-        } else if( profileName == "trapezoidal" ) {
+        } else if( profileName_ == "trapezoidal" ) {
             if( nvariables_ == 1 ) {
-                function = new Function_Trapezoidal1D( static_cast<Function_Trapezoidal1D *>( p->function ) );
+                function_ = new Function_Trapezoidal1D( static_cast<Function_Trapezoidal1D *>( p->function_ ) );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Trapezoidal2D( static_cast<Function_Trapezoidal2D *>( p->function ) );
+                function_ = new Function_Trapezoidal2D( static_cast<Function_Trapezoidal2D *>( p->function_ ) );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Trapezoidal3D( static_cast<Function_Trapezoidal3D *>( p->function ) );
+                function_ = new Function_Trapezoidal3D( static_cast<Function_Trapezoidal3D *>( p->function_ ) );
             }
-        } else if( profileName == "gaussian" ) {
+        } else if( profileName_ == "gaussian" ) {
             if( nvariables_ == 1 ) {
-                function = new Function_Gaussian1D( static_cast<Function_Gaussian1D *>( p->function ) );
+                function_ = new Function_Gaussian1D( static_cast<Function_Gaussian1D *>( p->function_ ) );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Gaussian2D( static_cast<Function_Gaussian2D *>( p->function ) );
+                function_ = new Function_Gaussian2D( static_cast<Function_Gaussian2D *>( p->function_ ) );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Gaussian3D( static_cast<Function_Gaussian3D *>( p->function ) );
+                function_ = new Function_Gaussian3D( static_cast<Function_Gaussian3D *>( p->function_ ) );
             }
-        } else if( profileName == "polygonal" ) {
+        } else if( profileName_ == "polygonal" ) {
             if( nvariables_ == 1 ) {
-                function = new Function_Polygonal1D( static_cast<Function_Polygonal1D *>( p->function ) );
+                function_ = new Function_Polygonal1D( static_cast<Function_Polygonal1D *>( p->function_ ) );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Polygonal2D( static_cast<Function_Polygonal2D *>( p->function ) );
+                function_ = new Function_Polygonal2D( static_cast<Function_Polygonal2D *>( p->function_ ) );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Polygonal3D( static_cast<Function_Polygonal3D *>( p->function ) );
+                function_ = new Function_Polygonal3D( static_cast<Function_Polygonal3D *>( p->function_ ) );
             }
-        } else if( profileName == "cosine" ) {
+        } else if( profileName_ == "cosine" ) {
             if( nvariables_ == 1 ) {
-                function = new Function_Cosine1D( static_cast<Function_Cosine1D *>( p->function ) );
+                function_ = new Function_Cosine1D( static_cast<Function_Cosine1D *>( p->function_ ) );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Cosine2D( static_cast<Function_Cosine2D *>( p->function ) );
+                function_ = new Function_Cosine2D( static_cast<Function_Cosine2D *>( p->function_ ) );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Cosine3D( static_cast<Function_Cosine3D *>( p->function ) );
+                function_ = new Function_Cosine3D( static_cast<Function_Cosine3D *>( p->function_ ) );
             }
-        } else if( profileName == "polynomial" ) {
+        } else if( profileName_ == "polynomial" ) {
             if( nvariables_ == 1 ) {
-                function = new Function_Polynomial1D( static_cast<Function_Polynomial1D *>( p->function ) );
+                function_ = new Function_Polynomial1D( static_cast<Function_Polynomial1D *>( p->function_ ) );
             } else if( nvariables_ == 2 ) {
-                function = new Function_Polynomial2D( static_cast<Function_Polynomial2D *>( p->function ) );
+                function_ = new Function_Polynomial2D( static_cast<Function_Polynomial2D *>( p->function_ ) );
             } else if( nvariables_ == 3 ) {
-                function = new Function_Polynomial3D( static_cast<Function_Polynomial3D *>( p->function ) );
+                function_ = new Function_Polynomial3D( static_cast<Function_Polynomial3D *>( p->function_ ) );
             }
-        } else if( profileName == "tconstant" ) {
-            function = new Function_TimeConstant( static_cast<Function_TimeConstant *>( p->function ) );
-        } else if( profileName == "ttrapezoidal" ) {
-            function = new Function_TimeTrapezoidal( static_cast<Function_TimeTrapezoidal *>( p->function ) );
-        } else if( profileName == "tgaussian" ) {
-            function = new Function_TimeGaussian( static_cast<Function_TimeGaussian *>( p->function ) );
-        } else if( profileName == "tpolygonal" ) {
-            function = new Function_TimePolygonal( static_cast<Function_TimePolygonal *>( p->function ) );
-        } else if( profileName == "tcosine" ) {
-            function = new Function_TimeCosine( static_cast<Function_TimeCosine *>( p->function ) );
-        } else if( profileName == "tpolynomial" ) {
-            function = new Function_TimePolynomial( static_cast<Function_TimePolynomial *>( p->function ) );
-        } else if( profileName == "tsin2plateau" ) {
-            function = new Function_TimeSin2Plateau( static_cast<Function_TimeSin2Plateau *>( p->function ) );
+        } else if( profileName_ == "tconstant" ) {
+            function_ = new Function_TimeConstant( static_cast<Function_TimeConstant *>( p->function_ ) );
+        } else if( profileName_ == "ttrapezoidal" ) {
+            function_ = new Function_TimeTrapezoidal( static_cast<Function_TimeTrapezoidal *>( p->function_ ) );
+        } else if( profileName_ == "tgaussian" ) {
+            function_ = new Function_TimeGaussian( static_cast<Function_TimeGaussian *>( p->function_ ) );
+        } else if( profileName_ == "tpolygonal" ) {
+            function_ = new Function_TimePolygonal( static_cast<Function_TimePolygonal *>( p->function_ ) );
+        } else if( profileName_ == "tcosine" ) {
+            function_ = new Function_TimeCosine( static_cast<Function_TimeCosine *>( p->function_ ) );
+        } else if( profileName_ == "tpolynomial" ) {
+            function_ = new Function_TimePolynomial( static_cast<Function_TimePolynomial *>( p->function_ ) );
+        } else if( profileName_ == "tsin2plateau" ) {
+            function_ = new Function_TimeSin2Plateau( static_cast<Function_TimeSin2Plateau *>( p->function_ ) );
         }
+    } else if( uses_file_ ) {
+        function_ = new Function_File( static_cast<Function_File *>( p->function_ ) );
     } else {
         if( nvariables_ == 1 ) {
-            function = new Function_Python1D( static_cast<Function_Python1D *>( p->function ) );
+            function_ = new Function_Python1D( static_cast<Function_Python1D *>( p->function_ ) );
         } else if( nvariables_ == 2 ) {
-            function = new Function_Python2D( static_cast<Function_Python2D *>( p->function ) );
+            function_ = new Function_Python2D( static_cast<Function_Python2D *>( p->function_ ) );
         } else if( nvariables_ == 3 ) {
-            function = new Function_Python3D( static_cast<Function_Python3D *>( p->function ) );
+            function_ = new Function_Python3D( static_cast<Function_Python3D *>( p->function_ ) );
         } else if( nvariables_ == 4 ) {
-            function = new Function_Python4D( static_cast<Function_Python4D *>( p->function ) );
+            function_ = new Function_Python4D( static_cast<Function_Python4D *>( p->function_ ) );
         }
     }
 }
@@ -395,5 +403,5 @@ Profile::Profile( Profile *p )
 
 Profile::~Profile()
 {
-    delete function;
+    delete function_;
 }

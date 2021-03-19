@@ -85,34 +85,6 @@ bool PyTools::pyconvert( PyObject *py_val, std::string &val )
     return false;
 };
 
-//! check error and display message
-double PyTools::get_py_result( PyObject *pyresult )
-{
-    checkPyError();
-    double cppresult=0;
-    if( pyresult ) {
-        if( !py2scalar( pyresult, cppresult ) ) {
-            ERROR( "A python function does not return float but " << pyresult->ob_type->tp_name );
-        }
-    } else {
-        ERROR( "A python function raised an error" );
-    }
-    return cppresult;
-};
-std::complex<double> PyTools::get_py_result_complex( PyObject *pyresult )
-{
-    checkPyError();
-    std::complex<double> cppresult=0;
-    if( pyresult ) {
-        if( !py2scalar( pyresult, cppresult ) ) {
-            ERROR( "A python function does not return complex but " << pyresult->ob_type->tp_name );
-        }
-    } else {
-        ERROR( "A python function raised an error" );
-    }
-    return cppresult;
-};
-
 // DECREF for vectors of python objects
 void PyTools::DECREF( std::vector<PyObject *> pyvec )
 {
@@ -257,7 +229,8 @@ std::vector<PyObject *> PyTools::extract_pyVec( std::string name, std::string co
 bool PyTools::extract_pyProfile( std::string name, PyObject *&prof, std::string component, int nComponent )
 {
     PyObject *py_obj = extract_py( name, component, nComponent );
-    if( PyCallable_Check( py_obj ) ) {
+    std::string test;
+    if( PyCallable_Check( py_obj ) || py2scalar( py_obj, test ) ) {
         prof = py_obj;
         return true;
     }

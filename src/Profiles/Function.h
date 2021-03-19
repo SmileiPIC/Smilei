@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 #include <complex>
+#include "H5.h"
+#include "Field3D.h"
 
 class Function
 {
@@ -128,16 +130,6 @@ private:
     PyObject *py_profile;
 };
 
-class Function_Python2D_Complex : public Function
-{
-public:
-    Function_Python2D_Complex( PyObject *pp ) : py_profile( pp ) {};
-    Function_Python2D_Complex( Function_Python2D_Complex *f ) : py_profile( f->py_profile ) {};
-    std::complex<double> valueAtComplex( std::vector<double>, double ); // space + time
-private:
-    PyObject *py_profile;
-};
-
 class Function_Python3D : public Function
 {
 public:
@@ -150,16 +142,6 @@ public:
     PyArrayObject *valueAt( std::vector<PyArrayObject *> ); // numpy
     PyArrayObject *valueAt( std::vector<PyArrayObject *> , double ); // numpy + time
 #endif
-private:
-    PyObject *py_profile;
-};
-
-class Function_Python3D_Complex : public Function
-{
-public:
-    Function_Python3D_Complex( PyObject *pp ) : py_profile( pp ) {};
-    Function_Python3D_Complex( Function_Python3D_Complex *f ) : py_profile( f->py_profile ) {};
-    std::complex<double> valueAtComplex( std::vector<double>, double ); // space + time
 private:
     PyObject *py_profile;
 };
@@ -178,20 +160,37 @@ public:
 private:
     PyObject *py_profile;
 };
-/*
-class Function_Python4D_Complex : public Function
+
+class Function_File : public Function
 {
 public:
-    Function_Python4D_Complex(PyObject *pp) : py_profile(pp) {};
-    Function_Python4D_Complex(Function_Python4D_Complex *f) : py_profile(f->py_profile) {};
-    std::complex<double> valueAtComplex(std::vector<double>, double); // space + time
-//#ifdef SMILEI_USE_NUMPY
-    //PyArrayObject* complexValueAt(std::vector<PyArrayObject*>,std::vector<PyArrayObject*>); // numpy
-//#endif
+    Function_File( std::string path, std::string dataset_name, H5Read *file, std::vector<double> cell_length )
+    : path_( path ), dataset_name_( dataset_name ), file_( file ), cell_length_( cell_length )
+    {
+        opened_file_count_ = new int( 0 );
+    };
+    Function_File( Function_File *f )
+    :path_( f->path_ ), dataset_name_( f->dataset_name_ ), file_( f->file_ ), cell_length_( f->cell_length_ )
+    {
+        opened_file_count_ = f->opened_file_count_;
+        (*opened_file_count_) ++;
+    };
+    ~Function_File()
+    {
+        (*opened_file_count_) --;
+        if( (*opened_file_count_) == 0 ) {
+            delete file_;
+            delete opened_file_count_;
+        }
+    }
+    double valueAt( std::vector<double> );
+    Field3D valuesAt( std::vector<double>, std::vector<double>, std::vector<unsigned int> );
 private:
-    PyObject *py_profile;
+    std::string path_, dataset_name_;
+    H5Read * file_;
+    int * opened_file_count_;
+    std::vector<double> cell_length_;
 };
-*/
 
 
 // Children classes for hard-coded functions

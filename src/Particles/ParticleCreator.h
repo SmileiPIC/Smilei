@@ -111,7 +111,7 @@ public:
     
     //! Density profile
     Profile * density_profile_;
-                                       
+    
     //! Type of profile
     std::string density_profile_type_;
 
