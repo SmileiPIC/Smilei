@@ -126,10 +126,13 @@ void Radiation::joinNewPhotons(unsigned int Nbins)
     // if tasks on bins are used for Radiation, join the lists of new photons
     // created in each bin, to have the list of new photons for this species and patch
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-        for (unsigned int ipart = 0; ipart < new_photons_per_bin_[ibin].size() ; ipart++){
 
-            new_photons_.createParticle();
-            int idNew = new_photons_.size() - 1;
+        int nparticles_to_add = new_photons_per_bin_[ibin].size();
+        new_photons_.createParticles(nparticles_to_add);
+
+        for (unsigned int ipart = 0; ipart < nparticles_to_add ; ipart++){
+            int idNew = (new_photons_.size() - nparticles_to_add) + ipart;
+            
             for( unsigned int i=0; i<new_photons_.dimension(); i++ ) {
                 new_photons_.position( i, idNew ) = (new_photons_per_bin_[ibin]).position( i, ipart );
             }
