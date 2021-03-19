@@ -336,9 +336,9 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                     patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-                        } // end Multiphoton Breit Wheeler onibin
+                        } // end Multiphoton Breit Wheeler on ibin
                     } // end ibin task for Multiphoton Breit Wheeler
-
+                    #pragma omp taskwait
 #ifdef  __DETAILED_TIMERS
                     #pragma omp task default(shared) depend(in:bin_has_done_Multiphoton_Breit_Wheeler[0:(Nbins-1)]) private(ithread,timer) depend(out:bin_has_interpolated[Nbins]) 
 #else
