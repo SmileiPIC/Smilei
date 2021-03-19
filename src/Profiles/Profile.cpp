@@ -17,9 +17,9 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, Pa
 {
     // In case the function was created in "pyprofiles.py", then we transform it
     //  in a "hard-coded" function
-    if( PyObject_HasAttrString( py_profile, "profileName_" ) ) {
+    if( PyObject_HasAttrString( py_profile, "profileName" ) ) {
     
-        PyTools::getAttr( py_profile, "profileName_", profileName_ );
+        PyTools::getAttr( py_profile, "profileName", profileName_ );
         
         if( profileName_ == "constant" ) {
         
@@ -319,6 +319,7 @@ Profile::Profile( Profile *p )
     nvariables_ = p->nvariables_;
     uses_numpy_  = p->uses_numpy_ ;
     uses_file_ = p->uses_file_;
+    filename_ = p->filename_;
     
     if( profileName_ != "" ) {
         if( profileName_ == "constant" ) {
