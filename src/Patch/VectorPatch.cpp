@@ -424,10 +424,19 @@ void VectorPatch::dynamics( Params &params,
         unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
         int Nspecies = ( *this )( 0 )->vecSpecies.size();     
 
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {    
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
 
-            int* last_species_has_projected =  static_cast<Species_taskomp *>(species( ipatch, (Nspecies-1) ))->bin_has_projected;
-            #pragma omp task firstprivate(ipatch) depend(in:last_species_has_projected[0:(Nbins-1)])
+            // Define the dependency array: 
+            // densities in a patch can be reduced 
+            // if all the species have projected on all the bins density subgrids
+            int species_has_projected_bin[Nspecies][Nbins];
+            for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
+                for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { 
+                    species_has_projected_bin[ispec][ibin] = (static_cast<Species_taskomp *>(species( ipatch, ispec )))->bin_has_projected[ibin];
+                } // end ibin
+            } // end ispec
+            
+            #pragma omp task firstprivate(ipatch) depend(in:species_has_projected_bin[0:(Nspecies-1)][0:(Nbins-1)])
             { // only the ipatch iterations are parallelized
 #ifdef  __DETAILED_TIMERS
             int ithread = omp_get_thread_num();
