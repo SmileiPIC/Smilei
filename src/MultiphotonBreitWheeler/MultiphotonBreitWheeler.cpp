@@ -604,11 +604,12 @@ void MultiphotonBreitWheeler::joinNewElectronPositronPairs(unsigned int Nbins)
     for( int k=0 ; k < 2 ; k++ ) {
        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
            // number of particles to add from the bin
-           int nparticles = new_pair_per_bin[ibin][k].size();
-    
-           for (unsigned int ipart = 0; ipart < nparticles ; ipart++){
-              new_pair[k].createParticle();
-              int idNew = new_pair[k].size() - 1;
+           int nparticles_to_add = new_pair_per_bin[ibin][k].size();
+           new_pair[k].createParticles(nparticles_to_add);
+
+           for (unsigned int ipart = 0; ipart < nparticles_to_add ; ipart++){
+
+              int idNew = (new_pair[k].size() - nparticles_to_add) + ipart;
            
               // momenta
               for( int i=0; i<3; i++ ) {
