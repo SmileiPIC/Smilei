@@ -18,6 +18,7 @@
 #endif
 
 #include <Python.h>
+#include <typeinfo>
 #include <vector>
 #include <sstream>
 #include <complex>
