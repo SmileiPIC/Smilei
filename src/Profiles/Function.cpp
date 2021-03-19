@@ -140,10 +140,10 @@ Field3D Function_File::valuesAt( vector<double> x_start, vector<double> x_end, v
     vector<hsize_t> n_cell( x_start.size() );
     std::vector<hsize_t> shape = file_->shape( dataset_name_ );
     for( unsigned int i=0; i<i_cell.size(); i++ ) {
-        i_cell[i] = (hsize_t) round( x_start[i] / cell_length_[i] );
-        n_cell[i] = (hsize_t) round( x_end[i] / cell_length_[i] ) - i_cell[i] + 1;
+        i_cell[i] = (hsize_t) round( x_start[i] / cell_length_[i] - 0.5 );
+        n_cell[i] = (hsize_t) round( x_end[i] / cell_length_[i] - 0.5 ) - i_cell[i] + 1;
         if( n_cell[i] != n[i] ) {
-            ERROR( "Profile in file expects "<<n[i]<<" points in direction "<<i<<", but is asked "<<n_cell[i] );
+            ERROR( "Profile in file is asked "<<n[i]<<" points in direction "<<i<<", but calculated "<<n_cell[i] );
         }
         if( i_cell[i] + n_cell[i] > shape[i] ) {
             ERROR( "Profile in file has only "<<shape[i]<<" points in direction "<<i<<", but requires at least "<<(i_cell[i] + n_cell[i]) );
