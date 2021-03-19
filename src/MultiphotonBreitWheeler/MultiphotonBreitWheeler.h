@@ -131,15 +131,15 @@ public:
         return pair_converted_energy_per_bin[ibin];
     }
     
-    // join the lists of pairs per bin created through Multiphoton Breit Wheeler when tasks are used
-    void joinNewElectronPositronPairs(unsigned int Nbins);
-
     // Local array of new pairs of electron-positron
     Particles new_pair[2];
 
     // Local array of new pairs of electron-positron per bin
     std::vector<Particles *> new_pair_per_bin;
     bool tasks_on_projection;
+
+    // join the lists of pairs per bin created through Multiphoton Breit Wheeler when tasks are used
+    void joinNewElectronPositronPairs(unsigned int Nbins);
     
 private:
 
