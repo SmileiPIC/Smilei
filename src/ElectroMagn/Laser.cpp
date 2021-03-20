@@ -77,7 +77,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
             name.str( "" );
             name << "Laser[" << ilaser <<"].space_time_profile["<< 2*imode << "]";
             if( spacetime[2*imode] ) {
-                Profile *p = new Profile( space_time_profile[2*imode], params.nDim_field, name.str() );
+                Profile *p = new Profile( space_time_profile[2*imode], params.nDim_field, name.str(), params );
                 profiles.push_back( new LaserProfileNonSeparable( p ) );
                 info << "\t\t\tfirst  component : " << p->getInfo();
                 if (has_space_time_AM) info << " mode " << imode ;
@@ -92,7 +92,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
             name.str( "" );
             name << "Laser[" << ilaser <<"].space_time_profile[" << 2*imode+1 << "]";
             if( spacetime[2*imode+1] ) {
-                Profile *p = new Profile( space_time_profile[2*imode+1], params.nDim_field, name.str() );
+                Profile *p = new Profile( space_time_profile[2*imode+1], params.nDim_field, name.str(), params );
                 profiles.push_back( new LaserProfileNonSeparable( p ) );
                 info << "\t\t\tsecond component : " << p->getInfo() ;
                 if (has_space_time_AM) info << " mode " << imode ;
@@ -117,8 +117,8 @@ Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
             // extra envelope
             name.str( "" );
             name << "Laser[" << ilaser <<"].extra_envelope";
-            ptime  = new Profile( time_profile, space_dims+1, name.str() );
-            ptime2 = new Profile( time_profile, space_dims+1, name.str() );
+            ptime  = new Profile( time_profile, space_dims+1, name.str(), params );
+            ptime2 = new Profile( time_profile, space_dims+1, name.str(), params );
             info << "\t\t\tExtra envelope: " << ptime->getInfo();
         } else {
             ERROR( errorPrefix << ": `extra_envelope` missing or not understood" );
@@ -150,39 +150,39 @@ Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
         // chirp
         name.str( "" );
         name << "Laser[" << ilaser <<"].chirp_profile";
-        Profile *pchirp = new Profile( chirp_profile, 1, name.str() );
-        Profile *pchirp2 = new Profile( chirp_profile, 1, name.str() );
+        Profile *pchirp = new Profile( chirp_profile, 1, name.str(), params );
+        Profile *pchirp2 = new Profile( chirp_profile, 1, name.str(), params );
         info << "\t\t\tchirp_profile      : " << pchirp->getInfo();
 
         // time envelope
         name.str( "" );
         name << "Laser[" << ilaser <<"].time_envelope";
-        Profile *ptime = new Profile( time_profile, 1, name.str() );
-        Profile *ptime2 = new Profile( time_profile, 1, name.str() );
+        Profile *ptime = new Profile( time_profile, 1, name.str(), params );
+        Profile *ptime2 = new Profile( time_profile, 1, name.str(), params );
         info << endl << "\t\t\ttime envelope      : " << ptime->getInfo();
 
         // space envelope (By)
         name.str( "" );
         name << "Laser[" << ilaser <<"].space_envelope[0]";
-        Profile *pspace1 = new Profile( space_profile[0], space_dims, name .str() );
+        Profile *pspace1 = new Profile( space_profile[0], space_dims, name .str(), params );
         info << endl << "\t\t\tspace envelope (y) : " << pspace1->getInfo();
 
         // space envelope (Bz)
         name.str( "" );
         name << "Laser[" << ilaser <<"].space_envelope[1]";
-        Profile *pspace2 = new Profile( space_profile[1], space_dims, name .str() );
+        Profile *pspace2 = new Profile( space_profile[1], space_dims, name .str(), params );
         info << endl << "\t\t\tspace envelope (z) : " << pspace2->getInfo();
 
         // phase (By)
         name.str( "" );
         name << "Laser[" << ilaser <<"].phase[0]";
-        Profile *pphase1 = new Profile( phase_profile[0], space_dims, name.str() );
+        Profile *pphase1 = new Profile( phase_profile[0], space_dims, name.str(), params );
         info << endl << "\t\t\tphase          (y) : " << pphase1->getInfo();
 
         // phase (Bz)
         name.str( "" );
         name << "Laser[" << ilaser <<"].phase[1]";
-        Profile *pphase2 = new Profile( phase_profile[1], space_dims, name.str() );
+        Profile *pphase2 = new Profile( phase_profile[1], space_dims, name.str(), params );
         info << endl << "\t\t\tphase          (z) : " << pphase2->getInfo();
 
         // delay phase
