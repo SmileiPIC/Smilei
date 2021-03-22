@@ -81,6 +81,8 @@ public:
     std::vector<double *> b_Jz;
     std::vector<double *> b_rho;
 
+    unsigned int Nbins;
+
 protected:
 
     //! Patch length

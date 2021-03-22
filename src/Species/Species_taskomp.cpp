@@ -58,7 +58,7 @@ using namespace std;
 Species_taskomp::Species_taskomp( Params &params, Patch *patch )
     : Species( params, patch )
 {
-    int Nbins = particles->first_index.size();
+    Nbins = particles->first_index.size();
     // Init tags for the task dependencies of the particle operations
     bin_has_interpolated                   = new int[Nbins+1]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
     bin_has_ionized                        = new int[Nbins];
@@ -76,7 +76,6 @@ Species_taskomp::Species_taskomp( Params &params, Patch *patch )
     b_Jy.resize(Nbins);
     b_Jz.resize(Nbins);
     b_rho.resize(Nbins);
-
 
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         // allocate current-buffers, then put to zero their content
@@ -180,20 +179,12 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                         vector<Diagnostic *> &localDiags, int buffer_id )
 {
-    int tid( 0 );
-
     
-
 #ifdef  __DETAILED_TIMERS
     double timer;
     int ithread;
 #endif
-
-    unsigned int iPart;
-
-    int Nbins = particles->first_index.size();
-    // std::vector<double> nrj_lost_per_bin( Nbins, 0. );
-    // std::vector<double> nrj_radiation_per_bin( Nbins, 0. );
+    
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         nrj_lost_per_bin[ibin] = 0.;
         nrj_radiation_per_bin[ibin] = 0.;
@@ -243,10 +234,10 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 
             // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
             // This must be done before Projection and before Ionization (because of the ionization currents)
-            for (int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]  = 0.0;
-            for (int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]  = 0.0;
-            for (int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]  = 0.0;
-            for (int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i] = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]  = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]  = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]  = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i] = 0.0;
                 
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
