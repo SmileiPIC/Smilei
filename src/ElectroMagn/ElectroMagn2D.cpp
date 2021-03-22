@@ -1480,17 +1480,32 @@ void ElectroMagn2D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
     vector<double> pos( 2, 0 );
     pos[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
     double pos1 = dy*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
-    int N0 = ( int )field2D->dims()[0];
-    int N1 = ( int )field2D->dims()[1];
     
-    // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
-    for( int i=0 ; i<N0 ; i++ ) {
+    vector<Field *> xyz( 2 );
+    vector<unsigned int> dims = { field2D->dims_[0], field2D->dims_[1], 1 };
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        xyz[idim] = new Field3D( dims );
+    }
+    
+    for( unsigned int i=0 ; i<dims[0] ; i++ ) {
         pos[1] = pos1;
-        for( int j=0 ; j<N1 ; j++ ) {
-            ( *field2D )( i, j ) += profile->valueAt( pos, time );
+        for( unsigned int j=0 ; j<dims[1] ; j++ ) {
+            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+                ( *xyz[idim] )( i, j ) = pos[idim];
+            }
             pos[1] += dy;
         }
         pos[0] += dx;
+    }
+    
+    vector<double> global_origin = { 
+        dx * ( ( field2D->isDual( 0 )?-0.5:0. ) - oversize[0] ),
+        dy * ( ( field2D->isDual( 1 )?-0.5:0. ) - oversize[1] )
+    };
+    profile->valuesAt( xyz, global_origin, *field2D, 1 );
+    
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        delete xyz[idim];
     }
     
 }

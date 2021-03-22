@@ -228,6 +228,7 @@ The following profiles may be given directly as an HDF5 file:
 * ``Species.charge``
 * ``Species.mean_velocity``
 * ``Species.temperature``
+* ``ExternalField.profile`` except when complex (cylindrical geometry)
 
 You must provide the path to the file, and the path to the dataset
 inside the file.
@@ -235,3 +236,9 @@ For instance ``charge_density = "myfile.h5/path/to/dataset"``.
 
 The targeted dataset located in the file must be an array with
 the same dimension and the same number of cells as the simulation grid.
+
+.. warning::
+
+  For ``ExternalField``, the array size must take into account the
+  number of ghost cells in each direction. There is also one extra cell
+  in specific directions due to the grid staggering (see :ref:`this doc <StaggeredGrid>`).

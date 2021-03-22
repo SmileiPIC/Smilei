@@ -51,7 +51,7 @@ public:
     //! mode = 1 : ADD values
     //! mode = 2 : set values at given time
     //! mode = 3 : ADD values at given time
-    inline void valuesAt( std::vector<Field *> &coordinates, Field &ret, int mode = 0, double time = 0 )
+    inline void valuesAt( std::vector<Field *> &coordinates, std::vector<double> global_origin, Field &ret, int mode = 0, double time = 0 )
     {
         unsigned int nvar = coordinates.size();
         unsigned int size = coordinates[0]->globalDims_;
@@ -97,8 +97,8 @@ public:
             std::vector<double> stop ( nvar );
             std::vector<unsigned int> n = static_cast<Field3D*>(coordinates[0])->dims();
             for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                start[ivar]=( *coordinates[ivar] )( 0 );
-                stop [ivar]=( *coordinates[ivar] )( size - 1 );
+                start[ivar]=( *coordinates[ivar] )( 0 ) - global_origin[ivar];
+                stop [ivar]=( *coordinates[ivar] )( size - 1 ) - global_origin[ivar];
             }
             Field3D values = static_cast<Function_File *>( function_ )->valuesAt( start, stop, n );
             Field * v = static_cast<Field *>( &values );
