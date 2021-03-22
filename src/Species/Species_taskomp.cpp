@@ -485,40 +485,71 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #endif
             }//end task for Proj of ibin
          }// end ibin loop for Proj
+
+        // reduction of the lost energy in each ibin 
+        // the taskgroup before ensures that it is done after the particles BC
+#ifdef  __DETAILED_TIMERS
+        #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+#else
+        #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+#endif
+        {
+        // reduce the energy lost with BC per bin
+        for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+           nrj_bc_lost += nrj_lost_per_bin[ibin];
+        }
+
+        // sum the radiated energy
+        // The taskgroup above ensures that this is done after the radiation method
+        if( Radiate ) {
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+            ithread = omp_get_thread_num();
+#endif
+
+            for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+               nrj_radiation += nrj_radiation_per_bin[ibin];
+            }
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+        } // end if Radiate
+        } // end task for lost/radiated energy reduction          
+
      } // end if moving particle
 
      }// end taskgroup for all the Interp, Push, Particles BC and Projector tasks
   
-     // reduction of the lost energy in each ibin 
-     // the taskgroup before ensures that it is done after the particles BC
-#ifdef  __DETAILED_TIMERS
-     #pragma omp task default(shared) private(ithread,timer) 
-#else
-     #pragma omp task default(shared)
-#endif
-     {
-     // reduce the energy lost with BC per bin
-     for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-        nrj_bc_lost += nrj_lost_per_bin[ibin];
-     }
-
-     // sum the radiated energy
-     // The taskgroup above ensures that this is done after the radiation method
-     if( Radiate ) {
-#ifdef  __DETAILED_TIMERS
-         timer = MPI_Wtime();
-         ithread = omp_get_thread_num();
-#endif
-
-         for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-            nrj_radiation += nrj_radiation_per_bin[ibin];
-         }
-#ifdef  __DETAILED_TIMERS
-         patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
-#endif
-     } // end if Radiate
-     } // end task for lost/radiated energy reduction
-
-     // smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
+//      // reduction of the lost energy in each ibin 
+//      // the taskgroup before ensures that it is done after the particles BC
+// #ifdef  __DETAILED_TIMERS
+//      #pragma omp task default(shared) private(ithread,timer) 
+// #else
+//      #pragma omp task default(shared)
+// #endif
+//      {
+//      // reduce the energy lost with BC per bin
+//      for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+//         nrj_bc_lost += nrj_lost_per_bin[ibin];
+//      }
+// 
+//      // sum the radiated energy
+//      // The taskgroup above ensures that this is done after the radiation method
+//      if( Radiate ) {
+// #ifdef  __DETAILED_TIMERS
+//          timer = MPI_Wtime();
+//          ithread = omp_get_thread_num();
+// #endif
+// 
+//          for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+//             nrj_radiation += nrj_radiation_per_bin[ibin];
+//          }
+// #ifdef  __DETAILED_TIMERS
+//          patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+// #endif
+//      } // end if Radiate
+//      } // end task for lost/radiated energy reduction
+// 
+//      // smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
 
 } // end dynamicsWithTasks
