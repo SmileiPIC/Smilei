@@ -22,16 +22,24 @@ public:
     //! Accumulate time couting from last init/restart
     void update( bool store = false );
     
+    //! Accumulate time couting from last init/restart without omp master for tasking
+    void updateInTask( bool store = false );
+
+    
 #ifdef __DETAILED_TIMERS
     //! Accumulate time couting from last init/restart using patch detailed timers
     void update( VectorPatch &vecPatches, bool store = false );
     
     //! Accumulate time couting from last init/restart using patch detailed timers spreaded between threads
-    void update_threaded( VectorPatch &vecPatches, bool store = false );
+    void updateThreaded( VectorPatch &vecPatches, bool store = false );
 #endif
     
     //! Start a new cumulative period
     void restart();
+    //! Start a new cumulative period without omp master for tasking
+    void restartInTask();
+
+    
     //! Start a new cumulative period
     void reboot();
     //! Return accumulated time

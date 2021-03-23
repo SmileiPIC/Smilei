@@ -343,7 +343,7 @@ void VectorPatch::dynamics( Params &params,
     #pragma omp single
     {
     #pragma omp taskgroup
-    { 
+    {
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
@@ -407,7 +407,7 @@ void VectorPatch::dynamics( Params &params,
         } // end loop on species
     } // end loop on patches
     } // end taskgroup to ensure all ipatch ispec performed dynamics method
-    } // end omp single 
+    } // end omp single
 
     // #pragma omp single
     // {
@@ -422,29 +422,29 @@ void VectorPatch::dynamics( Params &params,
     if (params.tasks_on_projection){
 
         unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
-        int Nspecies = ( *this )( 0 )->vecSpecies.size();     
+        int Nspecies = ( *this )( 0 )->vecSpecies.size();
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
 
-            // // Define the dependency array: 
-            // // densities in a patch can be reduced 
+            // // Define the dependency array:
+            // // densities in a patch can be reduced
             // // if all the species have projected on all the bins density subgrids
             // int species_has_projected_bin[Nspecies][Nbins];
             // for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
-            //     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { 
+            //     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
             //         species_has_projected_bin[ispec][ibin] = (static_cast<Species_taskomp *>(species( ipatch, ispec )))->bin_has_projected[ibin];
             //     } // end ibin
             // } // end ispec
             
             //#pragma omp task firstprivate(ipatch) depend(in:species_has_projected_bin[0:(Nspecies-1)][0:(Nbins-1)])
-            #pragma omp task firstprivate(ipatch) 
+            #pragma omp task firstprivate(ipatch)
             { // only the ipatch iterations are parallelized
 #ifdef  __DETAILED_TIMERS
             int ithread = omp_get_thread_num();
             double timer = MPI_Wtime();
 #endif
             
-            for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) { 
+            for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
                 // DO NOT parallelize this species loop unless race condition prevention is used!
                 Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
                 std::vector<unsigned int> b_dim = spec_task->b_dim;
@@ -455,7 +455,7 @@ void VectorPatch::dynamics( Params &params,
                     double *b_rho = spec_task->b_rho[ibin];
                     (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
                 } // ibin
-            } // end species loop 
+            } // end species loop
 
 #ifdef  __DETAILED_TIMERS
             ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -484,7 +484,7 @@ void VectorPatch::dynamics( Params &params,
 #ifdef  __DETAILED_TIMERS
                     int ithread = omp_get_thread_num();
                     double timer = MPI_Wtime();
-#endif     
+#endif
                     spec_task->Ionize->joinNewElectrons(Nbins);
 #ifdef  __DETAILED_TIMERS
                     ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -500,14 +500,14 @@ void VectorPatch::dynamics( Params &params,
                 for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                     // int* species_has_radiated =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_radiated;
                     // #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_radiated[0:(Nbins-1)])
-                    #pragma omp task firstprivate(ipatch,ispec) 
+                    #pragma omp task firstprivate(ipatch,ispec)
                     {
                     Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
                     
 #ifdef  __DETAILED_TIMERS
                     int ithread = omp_get_thread_num();
                     double timer = MPI_Wtime();
-#endif     
+#endif
                     spec_task->Radiate->joinNewPhotons(Nbins);
 #ifdef  __DETAILED_TIMERS
                     ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -521,14 +521,14 @@ void VectorPatch::dynamics( Params &params,
         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
             if( species( 0, ispec )->Multiphoton_Breit_Wheeler_process ) {
                 for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                    // int* species_has_done_Multiphoton_Breit_Wheeler =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_done_Multiphoton_Breit_Wheeler;     
+                    // int* species_has_done_Multiphoton_Breit_Wheeler =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_done_Multiphoton_Breit_Wheeler;
                     // #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_done_Multiphoton_Breit_Wheeler[0:(Nbins-1)])
-                    #pragma omp task firstprivate(ipatch,ispec) 
+                    #pragma omp task firstprivate(ipatch,ispec)
                     {
 #ifdef  __DETAILED_TIMERS
                     int ithread = omp_get_thread_num();
                     double timer = MPI_Wtime();
-#endif    
+#endif
                     Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
                     spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(Nbins);
 #ifdef  __DETAILED_TIMERS
@@ -1506,6 +1506,132 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
 
         diag_timers[idiag]->update();
     }
+
+    // Local diags : fields, probes, tracks
+    for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
+        diag_timers[globalDiags.size()+idiag]->restart();
+
+        #pragma omp single
+        localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
+        #pragma omp barrier
+        // All MPI run their stuff and write out
+        if( localDiags[idiag]->theTimeIsNow ) {
+            localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
+        }
+
+        diag_timers[globalDiags.size()+idiag]->update();
+    }
+
+    // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
+    if( diag_flag ) {
+        #pragma omp barrier
+        #pragma omp single
+        diag_flag = false;
+        #pragma omp for
+        for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
+            ( *this )( ipatch )->EMfields->restartRhoJs();
+        }
+    }
+    timers.diags.update();
+
+    if (itime==0) {
+        for( unsigned int idiag = 0 ; idiag < diag_timers.size() ; idiag++ )
+            diag_timers[idiag]->reboot();
+    }
+
+} // END runAllDiags
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all patch, Compute and Write all diags
+//   - Scalars, Probes, Phases, TrackParticles, Fields, Average fields
+//   - set diag_flag to 0 after write
+// ---------------------------------------------------------------------------------------------------------------------
+void VectorPatch::runAllDiagsTasks( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
+{
+
+    int preprocess_done[globalDiags.size()];
+
+    // Global diags: scalars + particles
+    timers.diags.restart();
+    #pragma omp single
+    {
+        for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
+
+            diag_timers[idiag]->restartInTask();
+            globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
+
+            if( globalDiags[idiag]->theTimeIsNow ) {
+            
+                #pragma omp task firstprivate(idiag) depend(out:preprocess_done[idiag])
+                {
+
+                    #pragma omp taskgroup
+                    {
+                        for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
+                            #pragma omp task firstprivate(ipatch,idiag)
+                            globalDiags[idiag]->run( ( *this )( ipatch ), itime, simWindow );
+                        }
+                    }
+                    
+
+                    // smpi->computeGlobalDiagsAsynchronousStart( globalDiags[idiag], itime, idiag );
+                    // smpi->computeGlobalDiagsAsynchronousWait( globalDiags[idiag], itime, idiag );
+
+                }
+            }
+        }
+    } // end single
+    
+    // #pragma omp taskwait
+    //
+    // #pragma omp single
+    // {
+    //     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
+    //
+    //         if( globalDiags[idiag]->theTimeIsNow ) {
+    //             #pragma omp task firstprivate(idiag) depend(in:preprocess_done[idiag])
+    //             {
+    //                 smpi->computeGlobalDiagsAsynchronousWait( globalDiags[idiag], itime, idiag );
+    //             }
+    //         }
+    //     }
+    // } // end single
+    
+    #pragma omp taskwait
+    
+    for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
+        if( globalDiags[idiag]->theTimeIsNow ) {
+            // MPI procs gather the data and compute
+            #pragma omp single
+            {
+                smpi->computeGlobalDiags( globalDiags[idiag], itime );
+                //smpi->computeGlobalDiagsAsynchronousStart( globalDiags[idiag], itime, idiag );
+                //smpi->computeGlobalDiagsAsynchronousWait( globalDiags[idiag], itime, idiag );
+            }
+            // MPI master writes
+            #pragma omp single
+            globalDiags[idiag]->write( itime, smpi );
+        }
+
+        diag_timers[idiag]->update();
+    }
+
+    // // Local diags : fields, probes, tracks
+    // #pragma omp single
+    // for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
+    //     // #pragma omp task firstprivate(idiag) default(shared)
+    //     // {
+    //     diag_timers[globalDiags.size()+idiag]->restartInTask();
+    //
+    //     localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
+    //     // All MPI run their stuff and write out
+    //     if( localDiags[idiag]->theTimeIsNow ) {
+    //         localDiags[idiag]->runInTask( smpi, *this, itime, simWindow, timers );
+    //     }
+    //
+    //     diag_timers[globalDiags.size()+idiag]->updateInTask();
+    //     // }
+    // }
 
     // Local diags : fields, probes, tracks
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {

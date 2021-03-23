@@ -182,6 +182,7 @@ public :
     
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow );
+    void runAllDiagsTasks( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow );
     void initAllDiags( Params &params, SmileiMPI *smpi );
     void closeAllDiags( SmileiMPI *smpi );
     

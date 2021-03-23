@@ -189,7 +189,7 @@ int main( int argc, char *argv[] )
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, &radiation_tables_, 0 );
         vecPatches.sortAllParticles( params );
         
-        // Create uncoupled grids 
+        // Create uncoupled grids
         if( params.uncoupled_grids ) {
             TITLE( "Create uncoupled grids" );
             region.vecPatch_.refHindex_ = smpi.getRank();
@@ -303,7 +303,9 @@ int main( int argc, char *argv[] )
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
-        vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+        //vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+        vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
+
     }
     
     TITLE( "Species creation summary" );
@@ -518,6 +520,7 @@ int main( int argc, char *argv[] )
             
             // call the various diagnostics
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
+            vecPatches.runAllDiagsTasks( params, &smpi, itime, timers, simWindow );
 
             timers.movWindow.restart();
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );

@@ -45,6 +45,18 @@ void Timer::update( bool store )
     }
 }
 
+//! Accumulate time couting from last init/restart in task
+void Timer::updateInTask( bool store )
+{
+    time_acc_ +=  MPI_Wtime()-last_start_;
+    last_start_ = MPI_Wtime();
+    if( store )
+    {
+        register_timers.push_back( time_acc_ );
+    }
+}
+
+
 #ifdef __DETAILED_TIMERS
 //!Accumulate time couting from last init/restart using patch detailed timers
 void Timer::update( VectorPatch &vecPatches, bool store )
@@ -79,7 +91,7 @@ void Timer::update( VectorPatch &vecPatches, bool store )
 }
 
 //! Accumulate time couting from last init/restart using patch detailed timers spreaded between threads
-void Timer::update_threaded( VectorPatch &vecPatches, bool store )
+void Timer::updateThreaded( VectorPatch &vecPatches, bool store )
 {
     #pragma omp barrier
     #pragma omp master
@@ -125,6 +137,13 @@ void Timer::restart()
         last_start_ = MPI_Wtime();
     }
 }
+
+// restart in a task
+void Timer::restartInTask()
+{
+    last_start_ = MPI_Wtime();
+}
+
 
 void Timer::reboot()
 {
