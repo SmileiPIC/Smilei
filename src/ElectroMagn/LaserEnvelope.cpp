@@ -33,7 +33,7 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
         try_numpy = true; // use numpy for quicker initialisation in 3D
     }
     
-    profile_ = new Profile( profile, params.nDim_field+1, "envelope", try_numpy );
+    profile_ = new Profile( profile, params.nDim_field+1, "envelope", params, try_numpy );
     // params.Laser_Envelope_model = true;
     
     ostringstream name( "" );

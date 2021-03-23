@@ -74,7 +74,7 @@ void DiagnosticPerformances::openFile( Params &params, SmileiMPI *smpi )
         return;
     }
     
-    file_ = new H5Write( filename, true );
+    file_ = new H5Write( filename, &smpi->world() );
     
     // write all parameters as HDF5 attributes
     file_->attr( "MPI_SIZE", smpi->getSize() );

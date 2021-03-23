@@ -2,6 +2,19 @@ import math
 
 L0 = 2.*math.pi # Wavelength in PIC units
 
+dx = 0.01 * L0
+Lsim = 1. * L0
+
+# Make a profile in a file
+def preprocess():
+	if smilei_mpi_rank == 0:
+		from numpy import linspace, ceil, exp
+		import h5py
+		x = linspace(0., Lsim, int(ceil(Lsim/dx)) + 1 )
+		with h5py.File("test_profile.h5","w") as f:
+			g = f.create_group("some_group")
+			g.create_dataset("the_profile", data = exp(-((x-0.4*L0)/(0.1*L0))**2) )
+
 Main(
 	geometry = "1Dcartesian",
 	
@@ -10,8 +23,8 @@ Main(
 	timestep = 0.005 * L0,
 	simulation_time  = 1. * L0,
 	
-	cell_length = [0.01 * L0],
-	grid_length  = [1. * L0],
+	cell_length = [dx],
+	grid_length  = [Lsim],
 	
 	number_of_patches = [ 4 ],
 	
@@ -38,7 +51,8 @@ profiles = {
 "polygonal"  :polygonal  (xpoints=[0.1*L0, 0.2*L0, 0.4*L0, 0.8*L0], xvalues=[1.,0.5,0.8, 0.1]),
 "cosine"     :cosine     (1., xamplitude=0.4, xvacuum=0.3*L0, xlength=0.4*L0, xphi=0.1*L0, xnumber=3),
 "polynomial" :polynomial (x0=0.4*L0, order0=1., order1=-1./L0, order2=(1./L0)**2),
-"custom"     :custom
+"custom"     :custom,
+"file"       :"test_profile.h5/some_group/the_profile"
 }
 for name, profile in profiles.items():
 	Species(

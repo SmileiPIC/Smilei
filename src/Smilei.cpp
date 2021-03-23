@@ -309,7 +309,7 @@ int main( int argc, char *argv[] )
     }
     
     TITLE( "Species creation summary" );
-    vecPatches.printNumberOfParticles( &smpi );
+    vecPatches.printGlobalNumberOfParticlesPerSpecies( &smpi );
     
     if( !params.uncoupled_grids && params.is_pxr ) {
         vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
@@ -344,7 +344,7 @@ int main( int argc, char *argv[] )
 
     TITLE( "Time-Loop started: number of time-steps n_time = " << params.n_time );
     if( smpi.isMaster() ) {
-        params.print_timestep_headers();
+        params.print_timestep_headers( &smpi );
     }
     
     int count_dlb = 0;
@@ -540,7 +540,7 @@ int main( int argc, char *argv[] )
             // ----------------------------------------------------------------------
             
         } //End omp parallel region
-            
+        
         if( params.has_load_balancing && params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
             count_dlb++;
             if (params.uncoupled_grids && count_dlb%5 ==0 ) {
@@ -589,20 +589,18 @@ int main( int argc, char *argv[] )
         
         // print message at given time-steps
         // --------------------------------
-        if( smpi.isMaster() &&  params.printNow( itime ) ) {
-            params.print_timestep( itime, time_dual, timers.global );    //contain a timer.update !!!
-        }
-        
         if( params.printNow( itime ) ) {
+            double npart = vecPatches.getGlobalNumberOfParticles( &smpi );
+            params.print_timestep( &smpi, itime, time_dual, timers.global, npart ); //contains a timer.update !!!
+            
             #pragma omp master
             timers.consolidate( &smpi );
             #pragma omp barrier
         }
         
         itime++;
-            
-    }//END of the time loop
         
+    }//END of the time loop
     
     smpi.barrier();
 

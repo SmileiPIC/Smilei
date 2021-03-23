@@ -63,7 +63,7 @@ in each MPI process.
 
 Using more OpenMP threads per MPI process (while keeping the total number
 of threads constant) clearly reduces the simulation time, because the
-computing power is balanced within each MPI region.
+computing power is balanced within each MPI patch collection.
 
 
 .. rubric :: 2. Dynamic load balancing between MPI processes

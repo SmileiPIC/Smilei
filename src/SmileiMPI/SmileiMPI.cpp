@@ -55,15 +55,18 @@ SmileiMPI::SmileiMPI( int *argc, char ***argv )
     }
 #endif
     smilei_omp_max_threads = omp_get_max_threads();
+    number_of_cores = min( omp_get_num_procs(), smilei_omp_max_threads );
 #else
     MPI_Init( argc, argv );
     smilei_omp_max_threads = 1;
+    number_of_cores = 1;
 #endif
-
-    SMILEI_COMM_WORLD = MPI_COMM_WORLD;
-    MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
-    MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
-
+    
+    world_ = MPI_COMM_WORLD;
+    MPI_Comm_size( world_, &smilei_sz );
+    MPI_Comm_rank( world_, &smilei_rk );
+    
+    MPI_Allreduce( &number_of_cores, &global_number_of_cores, 1, MPI_INT, MPI_SUM, world_ );
 } // END SmileiMPI::SmileiMPI
 
 
@@ -81,7 +84,7 @@ SmileiMPI::~SmileiMPI()
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Broadcast namelist in SMILEI_COMM_WORLD
+// Broadcast namelist in world_
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI::bcast( string &val )
 {
@@ -89,13 +92,13 @@ void SmileiMPI::bcast( string &val )
     if( isMaster() ) {
         charSize = val.size()+1;
     }
-    MPI_Bcast( &charSize, 1, MPI_INT, 0, SMILEI_COMM_WORLD );
+    MPI_Bcast( &charSize, 1, MPI_INT, 0, world_ );
 
     char tmp[charSize];
     if( isMaster() ) {
         strcpy( tmp, val.c_str() );
     }
-    MPI_Bcast( tmp, charSize, MPI_CHAR, 0, SMILEI_COMM_WORLD );
+    MPI_Bcast( tmp, charSize, MPI_CHAR, 0, world_ );
 
     if( !isMaster() ) {
         val=tmp;
@@ -109,9 +112,9 @@ void SmileiMPI::bcast( string &val )
 // ---------------------------------------------------------------------------------------------------------------------
 void SmileiMPI::bcast( int &val )
 {
-    MPI_Bcast( &val, 1, MPI_INT, 0, SMILEI_COMM_WORLD );
+    MPI_Bcast( &val, 1, MPI_INT, 0, world_ );
 
-} // END bcast( int ) in SMILEI_COMM_WORLD
+} // END bcast( int ) in world_
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -268,7 +271,7 @@ void SmileiMPI::init_patch_count( Params &params, DomainDecomposition *domain_de
     }
 //    // Test
 //    int tot, loc=Npatches_local;
-//    MPI_Allreduce( &loc, &tot, 1, MPI_INT, MPI_SUM, SMILEI_COMM_WORLD );
+//    MPI_Allreduce( &loc, &tot, 1, MPI_INT, MPI_SUM, world_ );
 //    if( tot != Npatches ) ERROR("Npatches should be "<<Npatches<<" but it is "<<tot);
 
     // Second, prepare the profiles for each species
@@ -381,7 +384,7 @@ void SmileiMPI::init_patch_count( Params &params, DomainDecomposition *domain_de
                 Npatches_local--;
                 PatchLoad.resize( Npatches_local );
             }
-            MPI_Recv( &PatchLoad[0], Npatches_local, MPI_DOUBLE, rk, rk, SMILEI_COMM_WORLD, &status );
+            MPI_Recv( &PatchLoad[0], Npatches_local, MPI_DOUBLE, rk, rk, world_, &status );
         }
 
         // The master cpu also writes the patch count to the file
@@ -395,11 +398,11 @@ void SmileiMPI::init_patch_count( Params &params, DomainDecomposition *domain_de
 
         // The other MPIs send their pre-calculated information
     } else {
-        MPI_Send( &PatchLoad[0], Npatches_local, MPI_DOUBLE, 0, smilei_rk, SMILEI_COMM_WORLD );
+        MPI_Send( &PatchLoad[0], Npatches_local, MPI_DOUBLE, 0, smilei_rk, world_ );
     }
 
     // Lastly, the patch count is broadcast to all ranks
-    MPI_Bcast( &patch_count[0], smilei_sz, MPI_INT, 0, SMILEI_COMM_WORLD );
+    MPI_Bcast( &patch_count[0], smilei_sz, MPI_INT, 0, world_ );
 
     patch_refHindexes.resize( patch_count.size(), 0 );
     patch_refHindexes[0] = 0;
@@ -736,7 +739,7 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &maxtag, int tag, Param
             i++;
         }
     }
-    MPI_Isend( &patch->buffer_scalars[0], patch->buffer_scalars.size(), MPI_DOUBLE, to, tag + maxtag, SMILEI_COMM_WORLD, &patch->requests_[maxtag] );
+    MPI_Isend( &patch->buffer_scalars[0], patch->buffer_scalars.size(), MPI_DOUBLE, to, tag + maxtag, world_, &patch->requests_[maxtag] );
     maxtag ++;
 }
 
@@ -850,7 +853,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
         patch->buffer_scalars.resize( 2*nspec );
     }
     MPI_Status status;
-    MPI_Recv( &patch->buffer_scalars[0], patch->buffer_scalars.size(), MPI_DOUBLE, from, tag, SMILEI_COMM_WORLD, &status );
+    MPI_Recv( &patch->buffer_scalars[0], patch->buffer_scalars.size(), MPI_DOUBLE, from, tag, world_, &status );
     tag++;
     unsigned int i = 0;
     // Energy lost at boundaries

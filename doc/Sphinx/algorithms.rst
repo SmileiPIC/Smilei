@@ -107,6 +107,8 @@ where :math:`r_s = q_s/m_s` is the charge-over-mass ratio (for species :math:`s`
 
 ----
 
+.. _StaggeredGrid:
+
 Time and space discretization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -107,11 +107,7 @@ void ParticleCreator::associate( Species * species)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! \brief Creation of the particle properties in the given particle vector `particles`
-//! \param particles: vector of particles
-//! \param species: species object necessary for some properties
-//! \param n_space_to_create: space area concerned by the particle creation
-//! \param params: general parameters
+//! Creation of the particle properties
 // ---------------------------------------------------------------------------------------------------------------------
 int ParticleCreator::create( struct SubSpace sub_space,
                              Params &params,
@@ -130,13 +126,12 @@ int ParticleCreator::create( struct SubSpace sub_space,
     // Create particles_ in a space starting at cell_position
     std::vector<double> cell_position( 3, 0 );
     std::vector<double> cell_index( 3, 0 );
+    std::vector<double> global_origin( 3, 0. );
     std::vector<Field *> xyz( species_->nDim_field );
     for( unsigned int idim=0 ; idim<species_->nDim_field ; idim++ ) {
-        //if (params.cell_length[idim]!=0) { // Useless, nDim_field defined for (params.cell_length[idim>=nDim_field]==0)
         cell_position[idim] = patch->getDomainLocalMin( idim );
         cell_index   [idim] = ( double ) patch->getCellStartingGlobalIndex( idim );
         xyz[idim] = new Field3D( n_space_to_create );
-        //}
     }
     // Create the x,y,z maps where profiles will be evaluated
     std::vector<double> ijk( 3 );
@@ -154,7 +149,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
     // ---------------------------------------------------------
     // Calculate density and number of particles_ for the species_
     // ---------------------------------------------------------
-
+    
     species_->max_charge_ = 0.;
     
     // fields containing the profiles values in each cell (always 3d)
@@ -167,14 +162,14 @@ int ParticleCreator::create( struct SubSpace sub_space,
         for( unsigned int m=0; m<3; m++ ) {
             temperature[m].allocateDims( n_space_to_create );
             if( temperature_profile_[m] ) {
-                temperature_profile_[m]->valuesAt( xyz, temperature[m] );
+                temperature_profile_[m]->valuesAt( xyz, global_origin, temperature[m] );
             } else {
                 temperature[m].put_to( 0.0000000001 ); // default value
             }
             
             velocity[m].allocateDims( n_space_to_create );
             if( velocity_profile_[m] ) {
-                velocity_profile_[m]   ->valuesAt( xyz, velocity   [m] );
+                velocity_profile_[m]->valuesAt( xyz, global_origin, velocity[m] );
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }
@@ -185,7 +180,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
     charge.allocateDims( n_space_to_create );
     if( species_->mass_ > 0 ) {
         // Initialize charge profile
-        species_->charge_profile_->valuesAt( xyz, charge );
+        species_->charge_profile_->valuesAt( xyz, global_origin, charge );
         // Find max charge
         for( unsigned int i=0; i< sub_space.box_size_[0]; i++ ) {
             for( unsigned int j=0; j< sub_space.box_size_[1]; j++ ) {
@@ -206,8 +201,8 @@ int ParticleCreator::create( struct SubSpace sub_space,
         // Get density and ppc profiles
         density.allocateDims( n_space_to_create );
         n_part_in_cell.allocateDims( n_space_to_create );
-        density_profile_->valuesAt( xyz, density );
-        particles_per_cell_profile_->valuesAt( xyz, n_part_in_cell );
+        density_profile_->valuesAt( xyz, global_origin, density );
+        particles_per_cell_profile_->valuesAt( xyz, global_origin, n_part_in_cell );
         // Take into account the time profile
         double time_amplitude;
         if (time_profile_) {

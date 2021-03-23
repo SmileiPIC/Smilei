@@ -449,7 +449,7 @@ increases the number of reactions to ensure enough statistics. The weights
 of the products are adjusted accordingly, and the reactants are not destroyed
 in the process: we simply decrease their weight by the same amount.
 
-In Smilei, this factor `R` can be forced by the user to some value, but by
+In Smilei, this factor *R* can be forced by the user to some value, but by
 default, it is automatically adjusted so that the final number of created particles
 approches the initial number of pairs.
 

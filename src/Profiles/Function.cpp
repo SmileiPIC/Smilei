@@ -31,11 +31,11 @@ double Function_Python2D::valueAt( vector<double> x_cell )
 // 2D complex
 std::complex<double> Function_Python2D::complexValueAt( vector<double> x_cell, double time )
 {
-    return PyTools::runPyFunction_complex( py_profile, x_cell[0], time );
+    return PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], time );
 }
 std::complex<double> Function_Python2D::complexValueAt( vector<double> x_cell )
 {
-    return PyTools::runPyFunction_complex( py_profile, x_cell[0], x_cell[1] );
+    return PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], x_cell[1] );
 }
 
 // 3D
@@ -50,7 +50,7 @@ double Function_Python3D::valueAt( vector<double> x_cell )
 // 3D complex
 std::complex<double> Function_Python3D::complexValueAt( vector<double> x_cell, double time )
 {
-    return PyTools::runPyFunction_complex( py_profile, x_cell[0], x_cell[1], time );
+    return PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], x_cell[1], time );
 }
 
 // 4D
@@ -61,7 +61,7 @@ double Function_Python4D::valueAt( vector<double> x_cell, double time )
 // 4D complex
 std::complex<double> Function_Python4D::complexValueAt( vector<double> x_cell, double time )
 {
-    return PyTools::runPyFunction_complex( py_profile, x_cell[0], x_cell[1], x_cell[2], time );
+    return PyTools::runPyFunction<std::complex<double>>( py_profile, x_cell[0], x_cell[1], x_cell[2], time );
 }
 
 // Special cases for locations specified in numpy arrays
@@ -116,6 +116,49 @@ PyArrayObject *Function_Python4D::complexValueAt( std::vector<PyArrayObject *> x
 }
 
 #endif
+
+// Profiles from file
+double Function_File::valueAt( vector<double> x_cell )
+{
+    vector<hsize_t> i_cell( x_cell.size() );
+    vector<hsize_t> n_cell( x_cell.size(), 1 );
+    for( unsigned int i=0; i<i_cell.size(); i++ ) {
+        i_cell[i] = (hsize_t) round( x_cell[i] / cell_length_[i] );
+    }
+    // Define spaces in memory and in file
+    std::vector<hsize_t> shape = file_->shape( dataset_name_ );
+    H5Space filespace( shape, i_cell, n_cell );
+    H5Space memspace( n_cell );
+    // Read the file portion
+    double ret;
+    file_->array( dataset_name_, ret, &filespace, &memspace );
+    return ret;
+}
+Field3D Function_File::valuesAt( vector<double> x_start, vector<double> x_end, vector<unsigned int> n )
+{
+    vector<hsize_t> i_cell( x_start.size() );
+    vector<hsize_t> n_cell( x_start.size() );
+    std::vector<hsize_t> shape = file_->shape( dataset_name_ );
+    for( unsigned int i=0; i<i_cell.size(); i++ ) {
+        i_cell[i] = (hsize_t) round( x_start[i] / cell_length_[i] - 0.1 );
+        n_cell[i] = (hsize_t) round( x_end[i] / cell_length_[i] - 0.1 ) - i_cell[i] + 1;
+        if( n_cell[i] != n[i] ) {
+            ERROR( "Profile in file is asked "<<n[i]<<" points in direction "<<i<<", but calculated "<<n_cell[i] );
+        }
+        if( i_cell[i] + n_cell[i] > shape[i] ) {
+            ERROR( "Profile in file has only "<<shape[i]<<" points in direction "<<i<<", but requires at least "<<(i_cell[i] + n_cell[i]) );
+        }
+    }
+    // Define spaces in memory and in file
+    H5Space filespace( shape, i_cell, n_cell );
+    H5Space memspace( n_cell );
+    // Read the file portion
+    vector<unsigned int> size( n_cell.begin(), n_cell.end() );
+    size.resize( 3, 1 );
+    Field3D values( size );
+    file_->array( dataset_name_, *values.data(), &filespace, &memspace );
+    return values;
+}
 
 
 // Constant profiles

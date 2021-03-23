@@ -83,7 +83,7 @@ public:
             if( !PyTools::extract_pyProfile( "profile", profile, "ExternalField", n_extfield ) ) {
                 ERROR( "ExternalField #"<<n_extfield<<": parameter 'profile' not understood" );
             }
-            extField.profile = new Profile( profile, params.nDim_field, name.str(), true );
+            extField.profile = new Profile( profile, params.nDim_field, name.str(), params, true, true );
             // Find which index the field is in the allFields vector
             extField.index = 1000;
             for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
@@ -119,7 +119,7 @@ public:
             if( !PyTools::extract_pyProfile( "profile", profile, "PrescribedField", n_extfield ) ) {
                 ERROR( "PrescribedField #"<<n_extfield<<": parameter 'profile' not understood" );
             }
-            extField.profile = new Profile( profile, params.nDim_field+1, name.str(), true );
+            extField.profile = new Profile( profile, params.nDim_field+1, name.str(), params, true );
             // Find which index the field is in the allFields vector
             extField.index = 1000;
             for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
@@ -171,7 +171,7 @@ public:
             if( !PyTools::extract_pyProfile( "space_profile", profile, "Antenna", n_antenna ) ) {
                 ERROR( " Antenna #"<<n_antenna<<": parameter 'space_profile' not understood" );
             }
-            antenna.space_profile = new Profile( profile, params.nDim_field, name.str() );
+            antenna.space_profile = new Profile( profile, params.nDim_field, name.str(), params );
             
             // Extract the time profile
             name.str( "" );
@@ -179,7 +179,7 @@ public:
             if( !PyTools::extract_pyProfile( "time_profile", profile, "Antenna", n_antenna ) ) {
                 ERROR( " Antenna #"<<n_antenna<<": parameter 'time_profile' not understood" );
             }
-            antenna.time_profile =  new Profile( profile, 1, name.str() );
+            antenna.time_profile =  new Profile( profile, 1, name.str(), params );
             
             // Find the index of the field in allFields
             antenna.index = 1000;

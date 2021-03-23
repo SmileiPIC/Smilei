@@ -66,9 +66,9 @@ SmileiMPI_test::SmileiMPI_test( int *argc, char ***argv )
     MPI_Init( argc, argv );
 #endif
     
-    SMILEI_COMM_WORLD = MPI_COMM_WORLD;
-    MPI_Comm_size( SMILEI_COMM_WORLD, &smilei_sz );
-    MPI_Comm_rank( SMILEI_COMM_WORLD, &smilei_rk );
+    world_ = MPI_COMM_WORLD;
+    MPI_Comm_size( world_, &smilei_sz );
+    MPI_Comm_rank( world_, &smilei_rk );
     
     if( smilei_sz > 1 ) {
         ERROR( "Test mode cannot be run with several MPI processes. Instead, indicate the MPIxOMP intended partition after the -T argument." );
@@ -77,6 +77,8 @@ SmileiMPI_test::SmileiMPI_test( int *argc, char ***argv )
     smilei_sz = nMPI;
     smilei_rk = 0;
     smilei_omp_max_threads = nOMP;
+    number_of_cores = nOMP;
+    global_number_of_cores = nMPI * nOMP;
     
     MESSAGE( "    ----- TEST MODE WITH INTENDED PARTITION "<<nMPI<<"x"<<nOMP<<"-----" );
     
