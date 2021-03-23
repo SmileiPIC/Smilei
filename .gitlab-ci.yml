@@ -9,7 +9,7 @@ compile:
   stage: default
   only:
     - develop
-    - profile_from_file
+    - laser_y
     
 
   script:
@@ -34,7 +34,7 @@ makerun1D:
     - develop
     - refactor_for_GPU
     - particle_injector_correction
-    - profile_from_file
+    - laser_y
     
   script:
     # Move in test dir
@@ -49,7 +49,7 @@ makerun2D:
     - develop
     - refactor_for_GPU
     - particle_injector_correction
-    - profile_from_file
+    - laser_y
 
 
   script:
@@ -65,7 +65,7 @@ makerun3D:
     - develop
     - refactor_for_GPU
     - particle_injector_correction
-    - profile_from_file
+    - laser_y
     
   script:
     # Move in test dir
@@ -81,7 +81,7 @@ makerunAM:
     - develop
     - refactor_for_GPU
     - particle_injector_correction
-    - profile_from_file
+    - laser_y
     
   script:
     # Move in test dir
@@ -95,7 +95,7 @@ makerunV:
     - develop
     - refactor_for_GPU
     - particle_injector_correction
-    - profile_from_file
+    - laser_y
 
   script:
     # Move in test dir
@@ -108,7 +108,7 @@ makerunCollisions:
   stage: default
   only:
     - develop
-    - profile_from_file
+    - laser_y
     
   script:
     # Move in test dir
@@ -122,7 +122,7 @@ picsar:
     - develop
     - refactor_for_GPU
     - particle_injector_correction
-    - profile_from_file
+    - laser_y
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -134,7 +134,7 @@ debug:
   stage: no_mpi_threadmultiple
   only:
     - develop
-    - profile_from_file
+    - laser_y
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -146,7 +146,7 @@ no_mpi_threadmultiple:
   stage: no_mpi_threadmultiple
   only:
     - develop
-    - profile_from_file
+    - laser_y
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -158,7 +158,7 @@ no_openmp:
   stage: no_mpi_threadmultiple
   only:
     - develop
-    - profile_from_file
+    - laser_y
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

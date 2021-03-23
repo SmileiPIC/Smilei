@@ -37,34 +37,34 @@ private:
     double conv_deg2rad;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Alpha_SM_Xmin;
+    double Alpha_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Beta_SM_Xmin;
+    double Beta_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Gamma_SM_Xmin;
+    double Gamma_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Delta_SM_Xmin;
+    double Delta_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    std::complex<double> Epsilon_SM_Xmin;
+    std::complex<double> Epsilon_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Alpha_SM_Xmax;
+    double Alpha_Xmax;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Beta_SM_Xmax;
+    double Beta_Xmax;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Gamma_SM_Xmax;
+    double Gamma_Xmax;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Delta_SM_Xmax;
+    double Delta_Xmax;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    std::complex<double> Epsilon_SM_Xmax;
+    std::complex<double> Epsilon_Xmax;
     
 };
 

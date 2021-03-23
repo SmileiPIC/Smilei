@@ -46,11 +46,11 @@ public:
         // Lasers properties
         // -----------------
         int nlaser = PyTools::nComponents( "Laser" );
-        if( patch->isMaster() && nlaser > 0 && !domain_decomposition ) {
-            TITLE("Initializing laser parameters" );
+        if( patch->isMaster() && nlaser > 0 ) {
+            TITLE( "Initializing laser parameters" );
         }
         for( int ilaser = 0; ilaser < nlaser; ilaser++ ) {
-            Laser *laser = new Laser( params, ilaser, patch, !domain_decomposition );
+            Laser *laser = new Laser( params, ilaser, patch, true );
             if( laser->box_side == "xmin" && EMfields->emBoundCond[0] ) {
                 if( patch->isXmin() ) {
                     laser->createFields( params, patch );
@@ -61,6 +61,16 @@ public:
                     laser->createFields( params, patch );
                 }
                 EMfields->emBoundCond[1]->vecLaser.push_back( laser );
+            } else if( laser->box_side == "ymin" && EMfields->emBoundCond[2] ) {
+                if( patch->isYmin() ) {
+                    laser->createFields( params, patch );
+                }
+                EMfields->emBoundCond[2]->vecLaser.push_back( laser );
+            } else if( laser->box_side == "ymax" && EMfields->emBoundCond[3] ) {
+                if( patch->isYmax() ) {
+                    laser->createFields( params, patch );
+                }
+                EMfields->emBoundCond[3]->vecLaser.push_back( laser );
             } else {
                 delete laser;
             }
@@ -206,8 +216,8 @@ public:
     {
         // Workaround for a Laser bug
         // count laser for later
-        int nlaser_tot( 0 );
-        for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
+        unsigned int nlaser_tot( 0 );
+        for( unsigned int iBC=0; iBC<EMfields->emBoundCond.size(); iBC++ ) { // xmax and xmin
             if( ! EMfields->emBoundCond[iBC] ) {
                 continue;
             }
@@ -247,21 +257,22 @@ public:
         // Clone Lasers properties
         // -----------------
         if( nlaser_tot>0 ) {
-            int nlaser;
-            for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
+            for( unsigned int iBC=0; iBC<newEMfields->emBoundCond.size(); iBC++ ) { // xmin, xmax, ymin, ymax
                 if( ! newEMfields->emBoundCond[iBC] ) {
                     continue;
                 }
                 
                 newEMfields->emBoundCond[iBC]->vecLaser.resize( 0 );
-                nlaser = EMfields->emBoundCond[iBC]->vecLaser.size();
+                unsigned int nlaser = EMfields->emBoundCond[iBC]->vecLaser.size();
                 // Create lasers one by one
-                for( int ilaser = 0; ilaser < nlaser; ilaser++ ) {
+                for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
                     // Create laser
                     Laser *laser = new Laser( EMfields->emBoundCond[iBC]->vecLaser[ilaser], params );
                     // If patch is on border, then fill the fields arrays
                     if( ( iBC==0 && patch->isXmin() )
-                            || ( iBC==1 && patch->isXmax() ) ) {
+                     || ( iBC==1 && patch->isXmax() )
+                     || ( iBC==2 && patch->isYmin() )
+                     || ( iBC==3 && patch->isYmax() ) ) {
                         laser->createFields( params, patch );
                     }
                     // Append the laser to the vector

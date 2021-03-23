@@ -20,6 +20,7 @@ Changes made in the repository (not released)
 
 * New 4th-order non-standard FDTD solver ``Bouchard`` for 2D and 3D geometries
 * New method for current filtering with a user-provided FIR kernel for 1D, 2D and 3D geometries
+* Lasers can be injected from the ``ymin`` or ``ymax`` boundaries
 * Diagnostics may now have a ``name`` (useful during post-processing)
 * Laser Envelope:
 

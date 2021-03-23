@@ -29,124 +29,25 @@ public:
     //! Save external fields for silver muller EM Boundary condition
     Field2D *Bx_val, *By_val, *Bz_val;
     
-    
-    
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Alpha_SM_W;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Beta_SM_W;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Gamma_SM_W;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Delta_SM_W;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Epsilon_SM_W;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_SM_W;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_SM_W;
+    //! Constants used for the Silver-Mueller boundary conditions (Xmin)
+    double Alpha_Xmin, Beta_Xmin, Gamma_Xmin, Delta_Xmin, Epsilon_Xmin, Zeta_Xmin, Eta_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Alpha_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Beta_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Gamma_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Delta_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Epsilon_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_SM_E;
+    double Alpha_Xmax, Beta_Xmax, Gamma_Xmax, Delta_Xmax, Epsilon_Xmax, Zeta_Xmax, Eta_Xmax;
     
     
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Alpha_SM_S;
+    //! Constant used for the Silver-Mueller boundary conditions (Ymin)
+    double Alpha_Ymin, Beta_Ymin, Gamma_Ymin, Delta_Ymin, Epsilon_Ymin, Zeta_Ymin, Eta_Ymin;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Beta_SM_S;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Delta_SM_S;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Epsilon_SM_S;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_SM_S;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_SM_S;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Alpha_SM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Beta_SM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Delta_SM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Y)
-    double Epsilon_SM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_SM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_SM_N;
+    //! Constant used for the Silver-Mueller boundary conditions (Ymax)
+    double Alpha_Ymax, Beta_Ymax, Gamma_Ymax, Delta_Ymax, Epsilon_Ymax, Zeta_Ymax, Eta_Ymax;
     
     
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Alpha_SM_B;
+    //! Constant used for the Silver-Mueller boundary conditions (Zmin)
+    double Alpha_Zmin, Beta_Zmin, Delta_Zmin, Epsilon_Zmin, Zeta_Zmin, Eta_Zmin;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Beta_SM_B;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Delta_SM_B;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Epsilon_SM_B;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_SM_B;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_SM_B;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Alpha_SM_T;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Beta_SM_T;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Delta_SM_T;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse Z)
-    double Epsilon_SM_T;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Zeta_SM_T;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Eta_SM_T;
+    //! Constant used for the Silver-Mueller boundary conditions (Zmax)
+    double Alpha_Zmax, Beta_Zmax, Delta_Zmax, Epsilon_Zmax, Zeta_Zmax, Eta_Zmax;
     
 };
 

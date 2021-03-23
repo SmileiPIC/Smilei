@@ -547,7 +547,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
         Patch * patch = ( *this )( ipatch );
         
         // Only for patch at the domain boundary
-        if (patch->isBoundary()) {
+        if (patch->isAnyBoundary()) {
             
             // Targeted species and species index
             unsigned int i_species ;
@@ -1251,18 +1251,17 @@ void VectorPatch::initExternals( Params &params )
 {
     // Init all lasers
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
-        if( ( *this )( ipatch )->isXmin() && ( *this )( ipatch )->EMfields->emBoundCond[0] != NULL ) {
-            unsigned int nlaser = ( *this )( ipatch )->EMfields->emBoundCond[0]->vecLaser.size();
-            for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
-                ( *this )( ipatch )->EMfields->emBoundCond[0]->vecLaser[ilaser]->initFields( params, ( *this )( ipatch ) );
+        Patch * patch = ( *this )( ipatch );
+        
+        for( unsigned ib=0; ib<2*params.nDim_field; ib++ ) {
+            
+            if( patch->isBoundary(ib) && patch->EMfields->emBoundCond[ib] ) {
+                unsigned int nlaser = patch->EMfields->emBoundCond[ib]->vecLaser.size();
+                for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
+                    patch->EMfields->emBoundCond[ib]->vecLaser[ilaser]->initFields( params, patch );
+                }
             }
-        }
-
-        if( ( *this )( ipatch )->isXmax() && ( *this )( ipatch )->EMfields->emBoundCond[1] != NULL ) {
-            unsigned int nlaser = ( *this )( ipatch )->EMfields->emBoundCond[1]->vecLaser.size();
-            for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
-                ( *this )( ipatch )->EMfields->emBoundCond[1]->vecLaser[ilaser]->initFields( params, ( *this )( ipatch ) );
-            }
+            
         }
     }
 

@@ -114,13 +114,13 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
     kz = omega*pyKz/Knorm;
     
     double factor = 1.0 / ( kx + dt_ov_dx );
-    Alpha_SM_W    = 2.0                     * factor;
-    Beta_SM_W     = - ( kx-dt_ov_dx ) * factor;
-    Gamma_SM_W    = 4.0 * kx        * factor;
-    Delta_SM_W    = - ( ky + dt_ov_dy ) * factor;
-    Epsilon_SM_W  = - ( ky - dt_ov_dy ) * factor;
-    Zeta_SM_W     = - ( kz + dt_ov_dz ) * factor;
-    Eta_SM_W      = - ( kz - dt_ov_dz ) * factor;
+    Alpha_Xmin    = 2.0 * factor;
+    Beta_Xmin     = - ( kx-dt_ov_dx ) * factor;
+    Gamma_Xmin    = 4.0 * kx * factor;
+    Delta_Xmin    = - ( ky + dt_ov_dy ) * factor;
+    Epsilon_Xmin  = - ( ky - dt_ov_dy ) * factor;
+    Zeta_Xmin     = - ( kz + dt_ov_dz ) * factor;
+    Eta_Xmin      = - ( kz - dt_ov_dz ) * factor;
     
     // Xmax boundary
     pyKx = params.EM_BCs_k[1][0];
@@ -132,13 +132,13 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
     kz = omega*pyKz/Knorm;
     
     factor        = 1.0 / ( kx - dt_ov_dx );
-    Alpha_SM_E    = 2.0                      * factor;
-    Beta_SM_E     = - ( kx+dt_ov_dx )  * factor;
-    Gamma_SM_E    = 4.0 * kx         * factor;
-    Delta_SM_E    = - ( ky + dt_ov_dy )  * factor;
-    Epsilon_SM_E  = - ( ky - dt_ov_dy )  * factor;
-    Zeta_SM_E     = - ( kz + dt_ov_dz ) * factor;
-    Eta_SM_E      = - ( kz - dt_ov_dz ) * factor;
+    Alpha_Xmax    = 2.0 * factor;
+    Beta_Xmax     = - ( kx+dt_ov_dx )  * factor;
+    Gamma_Xmax    = 4.0 * kx * factor;
+    Delta_Xmax    = - ( ky + dt_ov_dy )  * factor;
+    Epsilon_Xmax  = - ( ky - dt_ov_dy )  * factor;
+    Zeta_Xmax     = - ( kz + dt_ov_dz ) * factor;
+    Eta_Xmax      = - ( kz - dt_ov_dz ) * factor;
     
     // Ymin boundary
     pyKx = params.EM_BCs_k[2][0];
@@ -150,12 +150,13 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
     kz = omega*pyKz/Knorm;
     
     factor = 1.0 / ( ky + dt_ov_dy );
-    Alpha_SM_S    = 2.0                     * factor;
-    Beta_SM_S     = - ( ky - dt_ov_dy ) * factor;
-    Delta_SM_S    = - ( kz + dt_ov_dz ) * factor;
-    Epsilon_SM_S  = - ( kz -dt_ov_dz ) * factor;
-    Zeta_SM_S     = - ( kx + dt_ov_dx ) * factor;
-    Eta_SM_S      = - ( kx - dt_ov_dx ) * factor;
+    Alpha_Ymin    = 2.0 * factor;
+    Beta_Ymin     = - ( ky - dt_ov_dy ) * factor;
+    Gamma_Ymin    = 4.0 * ky * factor;
+    Delta_Ymin    = - ( kz + dt_ov_dz ) * factor;
+    Epsilon_Ymin  = - ( kz -dt_ov_dz ) * factor;
+    Zeta_Ymin     = - ( kx + dt_ov_dx ) * factor;
+    Eta_Ymin      = - ( kx - dt_ov_dx ) * factor;
     
     // Ymax boundary
     pyKx = params.EM_BCs_k[3][0];
@@ -167,12 +168,13 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
     kz = omega*pyKz/Knorm;
     
     factor = 1.0 / ( ky - dt_ov_dy );
-    Alpha_SM_N    = 2.0                     * factor;
-    Beta_SM_N     = - ( ky + dt_ov_dy ) * factor;
-    Delta_SM_N    = - ( kz + dt_ov_dz ) * factor;
-    Epsilon_SM_N  = - ( kz - dt_ov_dz ) * factor;
-    Zeta_SM_N     = - ( kx + dt_ov_dx ) * factor;
-    Eta_SM_N      = - ( kx - dt_ov_dx ) * factor;
+    Alpha_Ymax    = 2.0                     * factor;
+    Beta_Ymax     = - ( ky + dt_ov_dy ) * factor;
+    Gamma_Ymax    = 4.0 * ky * factor;
+    Delta_Ymax    = - ( kz + dt_ov_dz ) * factor;
+    Epsilon_Ymax  = - ( kz - dt_ov_dz ) * factor;
+    Zeta_Ymax     = - ( kx + dt_ov_dx ) * factor;
+    Eta_Ymax      = - ( kx - dt_ov_dx ) * factor;
     
     // Zmin boundary
     pyKx = params.EM_BCs_k[4][0];
@@ -184,12 +186,12 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
     kz = omega*pyKz/Knorm;
     
     factor = 1.0 / ( kz + dt_ov_dz );
-    Alpha_SM_B    = 2.0                     * factor;
-    Beta_SM_B     = - ( kz - dt_ov_dz ) * factor;
-    Delta_SM_B    = - ( kx + dt_ov_dx ) * factor;
-    Epsilon_SM_B  = - ( kx - dt_ov_dx ) * factor;
-    Zeta_SM_B     = - ( ky + dt_ov_dy ) * factor;
-    Eta_SM_B      = - ( ky - dt_ov_dy ) * factor;
+    Alpha_Zmin    = 2.0                     * factor;
+    Beta_Zmin     = - ( kz - dt_ov_dz ) * factor;
+    Delta_Zmin    = - ( kx + dt_ov_dx ) * factor;
+    Epsilon_Zmin  = - ( kx - dt_ov_dx ) * factor;
+    Zeta_Zmin     = - ( ky + dt_ov_dy ) * factor;
+    Eta_Zmin      = - ( ky - dt_ov_dy ) * factor;
     
     // Zmax boundary
     pyKx = params.EM_BCs_k[5][0];
@@ -201,12 +203,12 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch *patch, unsigned i
     kz = omega*pyKz/Knorm;
     
     factor        = 1.0 / ( kz - dt_ov_dz );
-    Alpha_SM_T    = 2.0                      * factor;
-    Beta_SM_T     = - ( kz + dt_ov_dz )  * factor;
-    Delta_SM_T    = - ( kx + dt_ov_dx )  * factor;
-    Epsilon_SM_T  = - ( kx - dt_ov_dx )  * factor;
-    Zeta_SM_T     = - ( ky + dt_ov_dy ) * factor;
-    Eta_SM_T      = - ( ky - dt_ov_dy ) * factor;
+    Alpha_Zmax    = 2.0                      * factor;
+    Beta_Zmax     = - ( kz + dt_ov_dz )  * factor;
+    Delta_Zmax    = - ( kx + dt_ov_dx )  * factor;
+    Epsilon_Zmax  = - ( kx - dt_ov_dx )  * factor;
+    Zeta_Zmax     = - ( ky + dt_ov_dy ) * factor;
+    Eta_Zmax      = - ( ky - dt_ov_dy ) * factor;
     
 }
 
@@ -312,65 +314,65 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
     double *By3D = &(EMfields->By_->data_[0]);
     double *Bz3D = &(EMfields->Bz_->data_[0]);
     vector<double> pos( 2 );
-
-    vector<double> byW( ny_p*nz_d, 0. );
-    vector<double> byE( ny_p*nz_d, 0. );
-    vector<double> bzW( ny_d*nz_p, 0. );
-    vector<double> bzE( ny_d*nz_p, 0. );
-
+    
     double* Bx_ext = NULL;
-    if (Bx_val!=nullptr)
+    if( Bx_val!=nullptr ) {
         Bx_ext = &(Bx_val->data_[0]);
+    }
     double* By_ext = NULL;
-    if (By_val!=nullptr)
+    if( By_val!=nullptr ) {
         By_ext = &(By_val->data_[0]);
+    }
     double* Bz_ext = NULL;
-    if (Bz_val!=nullptr)
+    if( Bz_val!=nullptr ) {
         Bz_ext = &(Bz_val->data_[0]);
+    }
     
     if( min_max==0 && patch->isXmin() ) {
     
         // for By^(d,p,d)
+        vector<double> by( ny_p*nz_d, 0. );
         for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
             pos[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - ( int )EMfields->oversize[1] )*dy;
             for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
                 pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k -0.5 - ( int )EMfields->oversize[2] )*dz;
                 // Lasers
                 for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                    byW[ j*nz_d+k ] += vecLaser[ilaser]->getAmplitude0( pos, time_dual, j, k );
+                    by[ j*nz_d+k ] += vecLaser[ilaser]->getAmplitude0( pos, time_dual, j, k );
                 }
             }
         }
         for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
             for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
                 
-                By3D[ 0*(ny_p*nz_d) + j*nz_d + k ] = Alpha_SM_W   * Ez3D[ 0*(ny_p*nz_d) + j*nz_d + k ]
-                                       +              Beta_SM_W    *( By3D[ 1*(ny_p*nz_d) + j*nz_d + k ]-By_ext[ j*nz_d + k ] )
-                                       +              Gamma_SM_W   * byW[ j*nz_d+k ]
-                                       +              Delta_SM_W   *( Bx3D[ 0*(ny_d*nz_d) + (j+1)*nz_d + k ]-Bx_ext[ (j+1)*nz_d + k ] )
-                                       +              Epsilon_SM_W *( Bx3D[ 0*(ny_d*nz_d) +  j   *nz_d + k ]-Bx_ext[  j   *nz_d + k ] )
+                By3D[ 0*(ny_p*nz_d) + j*nz_d + k ] = Alpha_Xmin   * Ez3D[ 0*(ny_p*nz_d) + j*nz_d + k ]
+                                       +              Beta_Xmin    *( By3D[ 1*(ny_p*nz_d) + j*nz_d + k ]-By_ext[ j*nz_d + k ] )
+                                       +              Gamma_Xmin   * by[ j*nz_d+k ]
+                                       +              Delta_Xmin   *( Bx3D[ 0*(ny_d*nz_d) + (j+1)*nz_d + k ]-Bx_ext[ (j+1)*nz_d + k ] )
+                                       +              Epsilon_Xmin *( Bx3D[ 0*(ny_d*nz_d) +  j   *nz_d + k ]-Bx_ext[  j   *nz_d + k ] )
                                        + By_ext[ j*nz_d + k ];
             }// k  ---end compute By
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
+        vector<double> bz( ny_d*nz_p, 0. );
         for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++ ) {
             pos[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - 0.5 - ( int )EMfields->oversize[1] )*dy;
             for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
                 pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k - ( int )EMfields->oversize[2] )*dz;
                 // Lasers
                 for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                    bzW[ j*nz_p+k ] += vecLaser[ilaser]->getAmplitude1( pos, time_dual, j, k );
+                    bz[ j*nz_p+k ] += vecLaser[ilaser]->getAmplitude1( pos, time_dual, j, k );
                 }
             }
         }
         for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++ ) {
             for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
-                Bz3D[ 0*(ny_d*nz_p) + j*nz_p + k ] = - Alpha_SM_W   * Ey3D[ 0*(ny_d*nz_p) + j*nz_p + k ]
-                                       +              Beta_SM_W    *( Bz3D[ 1*(ny_d*nz_p) + j*nz_p + k ]-Bz_ext[ j*nz_p + k ] )
-                                       +              Gamma_SM_W   * bzW[ j*nz_p+k ]
-                                       +              Zeta_SM_W    *( Bx3D[ 0*(ny_d*nz_d) + j*nz_d + k+1 ]-Bx_ext[ j*nz_d + (k+1) ] )
-                                       +              Eta_SM_W     *( Bx3D[ 0*(ny_d*nz_d) + j*nz_d + k   ]-Bx_ext[ j*nz_d +  k    ] )
+                Bz3D[ 0*(ny_d*nz_p) + j*nz_p + k ] = - Alpha_Xmin   * Ey3D[ 0*(ny_d*nz_p) + j*nz_p + k ]
+                                       +              Beta_Xmin    *( Bz3D[ 1*(ny_d*nz_p) + j*nz_p + k ]-Bz_ext[ j*nz_p + k ] )
+                                       +              Gamma_Xmin   * bz[ j*nz_p+k ]
+                                       +              Zeta_Xmin    *( Bx3D[ 0*(ny_d*nz_d) + j*nz_d + k+1 ]-Bx_ext[ j*nz_d + (k+1) ] )
+                                       +              Eta_Xmin     *( Bx3D[ 0*(ny_d*nz_d) + j*nz_d + k   ]-Bx_ext[ j*nz_d +  k    ] )
                                        + Bz_ext[ j*nz_p + k ];
                                        
             }// k  ---end compute Bz
@@ -378,109 +380,162 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
     } else if( min_max==1 && patch->isXmax() ) {
     
         // for By^(d,p,d)
+        vector<double> by( ny_p*nz_d, 0. );
         for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
             pos[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - ( int )EMfields->oversize[1] )*dy;
             for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
                 pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k - 0.5 - ( int )EMfields->oversize[2] )*dz;
                 // Lasers
                 for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                    byE[ j*nz_d+k ] += vecLaser[ilaser]->getAmplitude0( pos, time_dual, j, k );
+                    by[ j*nz_d+k ] += vecLaser[ilaser]->getAmplitude0( pos, time_dual, j, k );
                 }
             }
         }
         for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
             for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
-                By3D[ (nx_d-1)*(ny_p*nz_d) + j*nz_d + k ] = Alpha_SM_E   * Ez3D[ (nx_p-1)*(ny_p*nz_d) + j*nz_d + k ]
-                                            +                   Beta_SM_E    *( By3D[ (nx_d-2)*(ny_p*nz_d) + j*nz_d + k ] -By_ext[ j*nz_d + k ] )
-                                            +                   Gamma_SM_E   * byE[ j*nz_d+k ]
-                                            +                   Delta_SM_E   *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + (j+1)*nz_d + k ] -Bx_ext[ (j+1)*nz_d + k ] ) // Check x-index
-                                            +                   Epsilon_SM_E *( Bx3D[ (nx_p-1)*(ny_d*nz_d) +  j   *nz_d + k ] -Bx_ext[  j   *nz_d + k ] )
+                By3D[ (nx_d-1)*(ny_p*nz_d) + j*nz_d + k ] = Alpha_Xmax   * Ez3D[ (nx_p-1)*(ny_p*nz_d) + j*nz_d + k ]
+                                            +                   Beta_Xmax    *( By3D[ (nx_d-2)*(ny_p*nz_d) + j*nz_d + k ] -By_ext[ j*nz_d + k ] )
+                                            +                   Gamma_Xmax   * by[ j*nz_d+k ]
+                                            +                   Delta_Xmax   *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + (j+1)*nz_d + k ] -Bx_ext[ (j+1)*nz_d + k ] ) // Check x-index
+                                            +                   Epsilon_Xmax *( Bx3D[ (nx_p-1)*(ny_d*nz_d) +  j   *nz_d + k ] -Bx_ext[  j   *nz_d + k ] )
                                             + By_ext[ j*nz_d + k ];
                                             
             }//k  ---end compute By
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
+        vector<double> bz( ny_d*nz_p, 0. );
         for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax(); j++ ) {
             pos[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - 0.5 - ( int )EMfields->oversize[1] )*dy;
             for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
                 pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k - ( int )EMfields->oversize[2] )*dz;
                 // Lasers
                 for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                    bzE[ j*nz_p+k ] += vecLaser[ilaser]->getAmplitude1( pos, time_dual, j, k );
+                    bz[ j*nz_p+k ] += vecLaser[ilaser]->getAmplitude1( pos, time_dual, j, k );
                 }
             }
         }
         for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax(); j++ ) {
             for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
-                Bz3D[ (nx_d-1)*(ny_d*nz_p) + j*nz_p + k ] = -Alpha_SM_E * Ey3D[ (nx_p-1)*(ny_d*nz_p) + j*nz_p + k ]
-                                            +                    Beta_SM_E  *( Bz3D[ (nx_d-2)*(ny_d*nz_p) + j*nz_p + k ] -Bz_ext[ j*nz_p + k ] )
-                                            +                    Gamma_SM_E * bzE[ j*nz_p+k ]
-                                            +                    Zeta_SM_E  *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + j*nz_d + k+1 ]-Bx_ext[ j*nz_d + (k+1) ] )
-                                            +                    Eta_SM_E   *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + j*nz_d + k   ]-Bx_ext[ j*nz_d +  k    ] )
+                Bz3D[ (nx_d-1)*(ny_d*nz_p) + j*nz_p + k ] = -Alpha_Xmax * Ey3D[ (nx_p-1)*(ny_d*nz_p) + j*nz_p + k ]
+                                            +                    Beta_Xmax  *( Bz3D[ (nx_d-2)*(ny_d*nz_p) + j*nz_p + k ] -Bz_ext[ j*nz_p + k ] )
+                                            +                    Gamma_Xmax * bz[ j*nz_p+k ]
+                                            +                    Zeta_Xmax  *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + j*nz_d + k+1 ]-Bx_ext[ j*nz_d + (k+1) ] )
+                                            +                    Eta_Xmax   *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + j*nz_d + k   ]-Bx_ext[ j*nz_d +  k    ] )
                                             + Bz_ext[ j*nz_p + k ];
             }//k  ---end compute Bz
         }//j  ---end compute Bz
+    
     } else if( min_max==2 && patch->isYmin() ) {
     
         // for Bx^(p,d,d)
+        vector<double> bx( nx_p*nz_d, 0. );
+        for( unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++ ) {
+            pos[0] = patch->getDomainLocalMin( 0 ) + ( ( int )i - ( int )EMfields->oversize[0] )*dx;
+            for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
+                pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k -0.5 - ( int )EMfields->oversize[2] )*dz;
+                // Lasers
+                for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
+                    bx[ i*nz_d+k ] += vecLaser[ilaser]->getAmplitude0( pos, time_dual, i, k );
+                }
+            }
+        }
         for( unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++ ) {
             for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
-                Bx3D[ i*(ny_d*nz_d) + 0*nz_d + k ] = - Alpha_SM_S   * Ez3D[ i*(ny_p*nz_d) + 0*nz_d + k ]
-                                       +              Beta_SM_S     *( Bx3D[  i   *(ny_d*nz_d) + 1*nz_d + k ]-Bx_ext[  i   *nz_d + k ] )
-                                       +              Zeta_SM_S     *( By3D[ (i+1)*(ny_p*nz_d) + 0*nz_d + k ]-By_ext[ (i+1)*nz_d + k ] )
-                                       +              Eta_SM_S      *( By3D[  i   *(ny_p*nz_d) + 0*nz_d + k ]-By_ext[  i   *nz_d + k ] )
+                Bx3D[ i*(ny_d*nz_d) + 0*nz_d + k ] = - Alpha_Ymin   * Ez3D[ i*(ny_p*nz_d) + 0*nz_d + k ]
+                                       +              Beta_Ymin     *( Bx3D[  i   *(ny_d*nz_d) + 1*nz_d + k ]-Bx_ext[  i   *nz_d + k ] )
+                                       +              Gamma_Ymin   * bx[ i*nz_d+k ]
+                                       +              Zeta_Ymin     *( By3D[ (i+1)*(ny_p*nz_d) + 0*nz_d + k ]-By_ext[ (i+1)*nz_d + k ] )
+                                       +              Eta_Ymin      *( By3D[  i   *(ny_p*nz_d) + 0*nz_d + k ]-By_ext[  i   *nz_d + k ] )
                                        + Bx_ext[ i*nz_d + k ];
             }// k  ---end compute Bx
         }//i  ---end compute Bx
         
         // for Bz^(d,d,p)
+        vector<double> bz( nx_d*nz_p, 0. );
+        for( unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++ ) {
+            pos[0] = patch->getDomainLocalMin( 0 ) + ( ( int )i -0.5 - ( int )EMfields->oversize[0] )*dx;
+            for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
+                pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k - ( int )EMfields->oversize[2] )*dz;
+                // Lasers
+                for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
+                    bz[ i*nz_p+k ] += vecLaser[ilaser]->getAmplitude1( pos, time_dual, i, k );
+                }
+            }
+        }
         for( unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++ ) {
             for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
-                Bz3D[ i*(ny_d*nz_p) + 0*nz_p + k ] = Alpha_SM_S   * Ex3D[ i*(ny_p*nz_p) + 0*nz_p + k ]
-                                       +              Beta_SM_S    *( Bz3D[ i*(ny_d*nz_p) + 1*nz_p + k   ]-Bz_ext[ i*nz_p +  k    ] )
-                                       +              Delta_SM_S   *( By3D[ i*(ny_p*nz_d) + 0*nz_d + k+1 ]-By_ext[ i*nz_d + (k+1) ] )
-                                       +              Epsilon_SM_S *( By3D[ i*(ny_p*nz_d) + 0*nz_d + k   ]-By_ext[ i*nz_d +  k    ] )
+                Bz3D[ i*(ny_d*nz_p) + 0*nz_p + k ] = Alpha_Ymin   * Ex3D[ i*(ny_p*nz_p) + 0*nz_p + k ]
+                                       +              Beta_Ymin    *( Bz3D[ i*(ny_d*nz_p) + 1*nz_p + k   ]-Bz_ext[ i*nz_p +  k    ] )
+                                       +              Gamma_Ymin   * bz[ i*nz_p+k ]
+                                       +              Delta_Ymin   *( By3D[ i*(ny_p*nz_d) + 0*nz_d + k+1 ]-By_ext[ i*nz_d + (k+1) ] )
+                                       +              Epsilon_Ymin *( By3D[ i*(ny_p*nz_d) + 0*nz_d + k   ]-By_ext[ i*nz_d +  k    ] )
                                        + Bz_ext[ i*nz_p + k ];
             }// k  ---end compute Bz
-        }//i  ---end compute Bz       }
+        }//i  ---end compute Bz
+    
     } else if( min_max==3 && patch->isYmax() ) {
     
         // for Bx^(p,d,d)
+        vector<double> bx( nx_p*nz_d, 0. );
+        for( unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++ ) {
+            pos[0] = patch->getDomainLocalMin( 0 ) + ( ( int )i - ( int )EMfields->oversize[0] )*dx;
+            for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
+                pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k -0.5 - ( int )EMfields->oversize[2] )*dz;
+                // Lasers
+                for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
+                    bx[ i*nz_d+k ] += vecLaser[ilaser]->getAmplitude0( pos, time_dual, i, k );
+                }
+            }
+        }
         for( unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++ ) {
             for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
             
-                Bx3D[ i*(ny_d*nz_d) + (ny_d-1)*nz_d + k ] = -Alpha_SM_N * Ez3D[ i*(ny_p*nz_d) + (ny_p-1)*nz_d + k ]
-                                            +                    Beta_SM_N  *( Bx3D[  i   *(ny_d*nz_d) + (ny_d-2)*nz_d + k ]-Bx_ext[  i   *nz_d + k ] )
-                                            +                    Zeta_SM_N  *( By3D[ (i+1)*(ny_p*nz_d) + (ny_p-1)*nz_d + k ]-By_ext[ (i+1)*nz_d + k ] )
-                                            +                    Eta_SM_N   *( By3D[  i   *(ny_p*nz_d) + (ny_p-1)*nz_d + k ]-By_ext[  i   *nz_d + k ] )
+                Bx3D[ i*(ny_d*nz_d) + (ny_d-1)*nz_d + k ] = -Alpha_Ymax * Ez3D[ i*(ny_p*nz_d) + (ny_p-1)*nz_d + k ]
+                                            +                    Beta_Ymax  *( Bx3D[  i   *(ny_d*nz_d) + (ny_d-2)*nz_d + k ]-Bx_ext[  i   *nz_d + k ] )
+                                            +                    Gamma_Ymax   * bx[ i*nz_d+k ]
+                                            +                    Zeta_Ymax  *( By3D[ (i+1)*(ny_p*nz_d) + (ny_p-1)*nz_d + k ]-By_ext[ (i+1)*nz_d + k ] )
+                                            +                    Eta_Ymax   *( By3D[  i   *(ny_p*nz_d) + (ny_p-1)*nz_d + k ]-By_ext[  i   *nz_d + k ] )
                                             + Bx_ext[ i*nz_d + k ];
                                             
             }//k  ---end compute Bz
         }//j  ---end compute Bz
         
         // for Bz^(d,d,p)
+        vector<double> bz( nx_d*nz_p, 0. );
+        for( unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++ ) {
+            pos[0] = patch->getDomainLocalMin( 0 ) + ( ( int )i -0.5 - ( int )EMfields->oversize[0] )*dx;
+            for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
+                pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k - ( int )EMfields->oversize[2] )*dz;
+                // Lasers
+                for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
+                    bz[ i*nz_p+k ] += vecLaser[ilaser]->getAmplitude1( pos, time_dual, i, k );
+                }
+            }
+        }
         for( unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++ ) {
             for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
             
-                Bz3D[ i*(ny_d*nz_p) + (ny_d-1)*nz_p + k ] = Alpha_SM_N   * Ex3D[ i*(ny_p*nz_p) + (ny_p-1)*nz_p + k ]
-                                            +                   Beta_SM_N    *( Bz3D[ i*(ny_d*nz_p) + (ny_d-2)*nz_p + k   ] -Bz_ext[ i*nz_p +  k    ] )
-                                            +                   Delta_SM_N   *( By3D[ i*(ny_p*nz_d) + (ny_p-1)*nz_d + k+1 ] -By_ext[ i*nz_d + (k+1) ] )
-                                            +                   Epsilon_SM_N *( By3D[ i*(ny_p*nz_d) + (ny_p-1)*nz_d + k   ] -By_ext[ i*nz_d +  k    ] )
+                Bz3D[ i*(ny_d*nz_p) + (ny_d-1)*nz_p + k ] = Alpha_Ymax   * Ex3D[ i*(ny_p*nz_p) + (ny_p-1)*nz_p + k ]
+                                            +                   Beta_Ymax    *( Bz3D[ i*(ny_d*nz_p) + (ny_d-2)*nz_p + k   ] -Bz_ext[ i*nz_p +  k    ] )
+                                            +                   Gamma_Ymax * bz[ i*nz_p+k ]
+                                            +                   Delta_Ymax   *( By3D[ i*(ny_p*nz_d) + (ny_p-1)*nz_d + k+1 ] -By_ext[ i*nz_d + (k+1) ] )
+                                            +                   Epsilon_Ymax *( By3D[ i*(ny_p*nz_d) + (ny_p-1)*nz_d + k   ] -By_ext[ i*nz_d +  k    ] )
                                             + Bz_ext[ i*nz_p + k ];
                                             
             }//k  ---end compute Bz
         }//j  ---end compute Bz
+    
     } else if( min_max==4 && patch->isZmin() ) {
     
         // for Bx^(p,d,d)
         for( unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++ ) {
             for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++ ) {
             
-                Bx3D[ i*(ny_d*nz_d) + j*(nz_d) + 0 ] = Alpha_SM_B   * Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + 0 ]
-                                       +              Beta_SM_B    *( Bx3D[  i   *(ny_d*nz_d) + j*(nz_d) + 1 ]-Bx_ext[  i   *ny_d + j ] )
-                                       +              Delta_SM_B   *( Bz3D[ (i+1)*(ny_d*nz_p) + j*(nz_p) + 0 ]-Bz_ext[ (i+1)*ny_d + j ] )
-                                       +              Epsilon_SM_B *( Bz3D[  i   *(ny_d*nz_p) + j*(nz_p) + 0 ]-Bz_ext[  i   *ny_d + j ] )
+                Bx3D[ i*(ny_d*nz_d) + j*(nz_d) + 0 ] = Alpha_Zmin   * Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + 0 ]
+                                       +              Beta_Zmin    *( Bx3D[  i   *(ny_d*nz_d) + j*(nz_d) + 1 ]-Bx_ext[  i   *ny_d + j ] )
+                                       +              Delta_Zmin   *( Bz3D[ (i+1)*(ny_d*nz_p) + j*(nz_p) + 0 ]-Bz_ext[ (i+1)*ny_d + j ] )
+                                       +              Epsilon_Zmin *( Bz3D[  i   *(ny_d*nz_p) + j*(nz_p) + 0 ]-Bz_ext[  i   *ny_d + j ] )
                                        + Bx_ext[ i*ny_d + j ];
             }// j  ---end compute Bx
         }//i  ---end compute Bx
@@ -489,10 +544,10 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         for( unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++ ) {
             for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
             
-                By3D[ i*(ny_p*nz_d)+ j*(nz_d) + 0 ] = - Alpha_SM_B   * Ex3D[ i*(ny_p*nz_p)+ j*(nz_p) + 0 ]
-                                       +              Beta_SM_B   *( By3D[ i*(ny_p*nz_d)+  j   *(nz_d) + 1 ]-By_ext[ i*ny_p +  j   ] )
-                                       +              Zeta_SM_B   *( Bz3D[ i*(ny_d*nz_p)+ (j+1)*(nz_p) + 0 ]-Bz_ext[ i*ny_d + (j+1) ] )
-                                       +              Eta_SM_B    *( Bz3D[ i*(ny_d*nz_p)+  j   *(nz_p) + 0 ]-Bz_ext[ i*ny_d +  j   ] )
+                By3D[ i*(ny_p*nz_d)+ j*(nz_d) + 0 ] = - Alpha_Zmin   * Ex3D[ i*(ny_p*nz_p)+ j*(nz_p) + 0 ]
+                                       +              Beta_Zmin   *( By3D[ i*(ny_p*nz_d)+  j   *(nz_d) + 1 ]-By_ext[ i*ny_p +  j   ] )
+                                       +              Zeta_Zmin   *( Bz3D[ i*(ny_d*nz_p)+ (j+1)*(nz_p) + 0 ]-Bz_ext[ i*ny_d + (j+1) ] )
+                                       +              Eta_Zmin    *( Bz3D[ i*(ny_d*nz_p)+  j   *(nz_p) + 0 ]-Bz_ext[ i*ny_d +  j   ] )
                                        + By_ext[ i*ny_p + j ];
                                        
             }// j  ---end compute By
@@ -504,10 +559,10 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         for( unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++ ) {
             for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++ ) {
             
-                Bx3D[ i*(ny_d*nz_d) + j*(nz_d) + (nz_d-1) ] = Alpha_SM_T   * Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + (nz_p-1) ]
-                                            +                   Beta_SM_T    *( Bx3D[  i   *(ny_d*nz_d) + j*(nz_d) + (nz_d-2) ] -Bx_ext[  i   *ny_d + j ] )
-                                            +                   Delta_SM_T   *( Bz3D[ (i+1)*(ny_d*nz_p) + j*(nz_p) + (nz_p-1) ] -Bz_ext[ (i+1)*ny_d + j ] )
-                                            +                   Epsilon_SM_T *( Bz3D[  i   *(ny_d*nz_p) + j*(nz_p) + (nz_p-1) ] -Bz_ext[  i   *ny_d + j ] )
+                Bx3D[ i*(ny_d*nz_d) + j*(nz_d) + (nz_d-1) ] = Alpha_Zmax   * Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + (nz_p-1) ]
+                                            +                   Beta_Zmax    *( Bx3D[  i   *(ny_d*nz_d) + j*(nz_d) + (nz_d-2) ] -Bx_ext[  i   *ny_d + j ] )
+                                            +                   Delta_Zmax   *( Bz3D[ (i+1)*(ny_d*nz_p) + j*(nz_p) + (nz_p-1) ] -Bz_ext[ (i+1)*ny_d + j ] )
+                                            +                   Epsilon_Zmax *( Bz3D[  i   *(ny_d*nz_p) + j*(nz_p) + (nz_p-1) ] -Bz_ext[  i   *ny_d + j ] )
                                             + Bx_ext[ i*ny_d + j ];
                                             
             }//j  ---end compute Bx
@@ -518,10 +573,10 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         for( unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++ ) {
             for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
             
-                By3D[ i*(ny_p*nz_d) + j*(nz_d) + (nz_d-1) ] = -Alpha_SM_T * Ex3D[ i*(ny_p*nz_p) + j*(nz_p) + (nz_p-1) ]
-                                            +                    Beta_SM_T  *( By3D[ i*(ny_p*nz_d) +  j   *(nz_d) + (nz_d-2) ]-By_ext[ i*ny_p +  j ] )
-                                            +                    Zeta_SM_T  *( Bz3D[ i*(ny_d*nz_p) + (j+1)*(nz_p) + (nz_p-1) ]-Bz_ext[ i*ny_d + (j+1) ] )
-                                            +                    Eta_SM_T   *( Bz3D[ i*(ny_d*nz_p) +  j   *(nz_p) + (nz_p-1) ]-Bz_ext[ i*ny_d +  j ] )
+                By3D[ i*(ny_p*nz_d) + j*(nz_d) + (nz_d-1) ] = -Alpha_Zmax * Ex3D[ i*(ny_p*nz_p) + j*(nz_p) + (nz_p-1) ]
+                                            +                    Beta_Zmax  *( By3D[ i*(ny_p*nz_d) +  j   *(nz_d) + (nz_d-2) ]-By_ext[ i*ny_p +  j ] )
+                                            +                    Zeta_Zmax  *( Bz3D[ i*(ny_d*nz_p) + (j+1)*(nz_p) + (nz_p-1) ]-Bz_ext[ i*ny_d + (j+1) ] )
+                                            +                    Eta_Zmax   *( Bz3D[ i*(ny_d*nz_p) +  j   *(nz_p) + (nz_p-1) ]-Bz_ext[ i*ny_d +  j ] )
                                             + By_ext[ i*ny_p + j ];
                                             
             }//j  ---end compute By

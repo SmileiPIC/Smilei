@@ -60,19 +60,19 @@ ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch *patch, unsigned i
     // Xmin boundary
     //double theta  = 0.0*conv_deg2rad; //0.0;
     double factor = 1.0/( 1.0 + dt_ov_dl );
-    Alpha_SM_Xmin    = 2.0*factor;
-    Beta_SM_Xmin     = - ( 1-dt_ov_dl )*factor;
-    Gamma_SM_Xmin    = 4.0*factor;
-    Delta_SM_Xmin    = - dt_ov_dr*factor;
-    Epsilon_SM_Xmin  = Icpx*factor*dt ;
+    Alpha_Xmin    = 2.0*factor;
+    Beta_Xmin     = - ( 1-dt_ov_dl )*factor;
+    Gamma_Xmin    = 4.0*factor;
+    Delta_Xmin    = - dt_ov_dr*factor;
+    Epsilon_Xmin  = Icpx*factor*dt ;
     // Xmax boundary
     //theta         = M_PI;
     factor        = 1.0/( 1.0 + dt_ov_dl );
-    Alpha_SM_Xmax    = 2.0*factor;
-    Beta_SM_Xmax     = - ( 1.0 -dt_ov_dl )*factor;
-    Gamma_SM_Xmax    = 4.0*factor;
-    Delta_SM_Xmax    = - dt_ov_dr*factor;
-    Epsilon_SM_Xmax  = - Icpx*factor*dt;
+    Alpha_Xmax    = 2.0*factor;
+    Beta_Xmax     = - ( 1.0 -dt_ov_dl )*factor;
+    Gamma_Xmax    = 4.0*factor;
+    Delta_Xmax    = - dt_ov_dr*factor;
+    Epsilon_Xmax  = - Icpx*factor*dt;
    
 }
 
@@ -203,10 +203,10 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 
                 //x= Xmin
                 unsigned int i=0;
-                ( *Br )( i, j ) = Alpha_SM_Xmin   * ( *Et )( i, j )
-                                  +              Beta_SM_Xmin    * ( *Br )( i+1, j )
-                                  +              Gamma_SM_Xmin   * byW;
-                +              Delta_SM_Xmin   *( ( *Bl )( i, j+1 )- ( *Bl )( i, j ) );
+                ( *Br )( i, j ) = Alpha_Xmin   * ( *Et )( i, j )
+                                  +              Beta_Xmin    * ( *Br )( i+1, j )
+                                  +              Gamma_Xmin   * byW;
+                +              Delta_Xmin   *( ( *Bl )( i, j+1 )- ( *Bl )( i, j ) );
             }//j  ---end compute Br
             
             
@@ -229,10 +229,10 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 }
                 //x=Xmin
                 unsigned int i=0;
-                ( *Bt )( i, j ) = -Alpha_SM_Xmin * ( *Er )( i, j )
-                                  +               Beta_SM_Xmin  *( ( *Bt )( i+1, j ) )
-                                  +               Gamma_SM_Xmin * bzW
-                                  +               Epsilon_SM_Xmin *( double )imode/( ( j_glob+j-0.5 )*dr )*( *Bl )( i, j ) ;
+                ( *Bt )( i, j ) = -Alpha_Xmin * ( *Er )( i, j )
+                                  +               Beta_Xmin  *( ( *Bt )( i+1, j ) )
+                                  +               Gamma_Xmin * bzW
+                                  +               Epsilon_Xmin *( double )imode/( ( j_glob+j-0.5 )*dr )*( *Bl )( i, j ) ;
                 
             }//j  ---end compute Bt
             //Redo condition on axis for Bt because it was modified
@@ -257,10 +257,10 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     }
                 }
                 unsigned int i= nl_p;
-                ( *Br )( i, j ) = - Alpha_SM_Xmax   * ( *Et )( i-1, j )
-                                  +                   Beta_SM_Xmax    * ( *Br )( i-1, j )
-                                  +                   Gamma_SM_Xmax   * byE
-                                  +                   Delta_SM_Xmax   * ( ( *Bl )( i-1, j+1 )- ( *Bl )( i-1, j ) ); // Check x-index
+                ( *Br )( i, j ) = - Alpha_Xmax   * ( *Et )( i-1, j )
+                                  +                   Beta_Xmax    * ( *Br )( i-1, j )
+                                  +                   Gamma_Xmax   * byE
+                                  +                   Delta_Xmax   * ( ( *Bl )( i-1, j+1 )- ( *Bl )( i-1, j ) ); // Check x-index
                 
             }//j  ---end compute Br
             
@@ -278,10 +278,10 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     }
                 }
                 unsigned int i= nl_p;
-                ( *Bt )( i, j ) = Alpha_SM_Xmax * ( *Er )( i-1, j )
-                                  +                    Beta_SM_Xmax  * ( *Bt )( i-1, j )
-                                  +                    Gamma_SM_Xmax * bzE
-                                  +					  Epsilon_SM_Xmax * ( double )imode /( ( j_glob+j-0.5 )*dr )* ( *Bl )( i-1, j )	;
+                ( *Bt )( i, j ) = Alpha_Xmax * ( *Er )( i-1, j )
+                                  +                    Beta_Xmax  * ( *Bt )( i-1, j )
+                                  +                    Gamma_Xmax * bzE
+                                  +					  Epsilon_Xmax * ( double )imode /( ( j_glob+j-0.5 )*dr )* ( *Bl )( i-1, j )	;
                 
             }//j  ---end compute Bt
             //Redo condition on axis for Bt because it was modified

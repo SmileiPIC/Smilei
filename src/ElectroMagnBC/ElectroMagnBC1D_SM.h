@@ -24,13 +24,13 @@ private:
 
     //! \todo Create properties the laser time-profile (MG & TV)
     //! Constant used for the Silver-Mueller boundary conditions
-    double Alpha_SM;
+    double Alpha_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions
-    double Beta_SM;
+    double Beta_Xmin;
     
     //! Constant used for the Silver-Mueller boundary conditions
-    double Gamma_SM;
+    double Gamma_Xmin;
     
 };
 

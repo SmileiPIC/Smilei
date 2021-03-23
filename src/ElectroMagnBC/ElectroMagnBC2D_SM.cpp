@@ -60,11 +60,11 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch *patch, unsigned i
     ky = omega*pyKy/Knorm;
     
     double factor = 1.0 / ( kx + dt_ov_dx );
-    Alpha_SM_W    = 2.0                     * factor;
-    Beta_SM_W     = - ( kx - dt_ov_dx ) * factor;
-    Gamma_SM_W    = 4.0 * kx        * factor;
-    Delta_SM_W    = - ( ky + dt_ov_dy ) * factor;
-    Epsilon_SM_W  = - ( ky - dt_ov_dy ) * factor;
+    Alpha_Xmin    = 2.0                     * factor;
+    Beta_Xmin     = - ( kx - dt_ov_dx ) * factor;
+    Gamma_Xmin    = 4.0 * kx        * factor;
+    Delta_Xmin    = - ( ky + dt_ov_dy ) * factor;
+    Epsilon_Xmin  = - ( ky - dt_ov_dy ) * factor;
     
     // Xmax boundary
     pyKx = params.EM_BCs_k[1][0];
@@ -74,11 +74,11 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch *patch, unsigned i
     ky = omega*pyKy/Knorm;
     
     factor        = 1.0 / ( kx - dt_ov_dx );
-    Alpha_SM_E    = 2.0                      * factor;
-    Beta_SM_E     = - ( kx + dt_ov_dx )  * factor;
-    Gamma_SM_E    = 4.0 * kx         * factor;
-    Delta_SM_E    = - ( ky + dt_ov_dy )  * factor;
-    Epsilon_SM_E  = - ( ky - dt_ov_dy )  * factor;
+    Alpha_Xmax    = 2.0                      * factor;
+    Beta_Xmax     = - ( kx + dt_ov_dx )  * factor;
+    Gamma_Xmax    = 4.0 * kx         * factor;
+    Delta_Xmax    = - ( ky + dt_ov_dy )  * factor;
+    Epsilon_Xmax  = - ( ky - dt_ov_dy )  * factor;
     
     // Ymin boundary
     pyKx = params.EM_BCs_k[2][0];
@@ -88,10 +88,11 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch *patch, unsigned i
     ky = omega*pyKy/Knorm;
     
     factor = 1.0 / ( ky + dt_ov_dy );
-    Alpha_SM_S    = 2.0                     * factor;
-    Beta_SM_S     = - ( ky - dt_ov_dy ) * factor;
-    Delta_SM_S    = - ( kx + dt_ov_dx ) * factor;
-    Epsilon_SM_S  = - ( kx - dt_ov_dx ) * factor;
+    Alpha_Ymin    = 2.0                     * factor;
+    Beta_Ymin     = - ( ky - dt_ov_dy ) * factor;
+    Gamma_Ymin    = 4.0 * ky        * factor;
+    Delta_Ymin    = - ( kx + dt_ov_dx ) * factor;
+    Epsilon_Ymin  = - ( kx - dt_ov_dx ) * factor;
     
     // Ymax boundary
     pyKx = params.EM_BCs_k[3][0];
@@ -101,10 +102,11 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch *patch, unsigned i
     ky = omega*pyKy/Knorm;
     
     factor = 1.0 / ( ky - dt_ov_dy );
-    Alpha_SM_N    = 2.0                     * factor;
-    Beta_SM_N     = - ( ky + dt_ov_dy ) * factor;
-    Delta_SM_N    = - ( kx + dt_ov_dx ) * factor;
-    Epsilon_SM_N  = - ( kx - dt_ov_dx ) * factor;
+    Alpha_Ymax    = 2.0                     * factor;
+    Beta_Ymax     = - ( ky + dt_ov_dy ) * factor;
+    Gamma_Ymin    = 4.0 * ky        * factor;
+    Delta_Ymax    = - ( kx + dt_ov_dx ) * factor;
+    Epsilon_Ymax  = - ( kx - dt_ov_dx ) * factor;
     
 }
 
@@ -217,19 +219,19 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         vector<double> yp( 1 );
         for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
         
-            double byW = 0.;
+            double by = 0.;
             yp[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - ( int )EMfields->oversize[1] )*dy;
             
             // Lasers
             for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                byW += vecLaser[ilaser]->getAmplitude0( yp, time_dual, j, 0 );
+                by += vecLaser[ilaser]->getAmplitude0( yp, time_dual, j, 0 );
             }
             
-            ( *By2D )( 0, j ) = Alpha_SM_W   * ( *Ez2D )( 0, j )
-                                           +              Beta_SM_W    *( ( *By2D )( 1, j )-By_val[j] )
-                                           +              Gamma_SM_W   * byW
-                                           +              Delta_SM_W   *( ( *Bx2D )( 0, j+1 )-Bx_val[j+1] )
-                                           +              Epsilon_SM_W *( ( *Bx2D )( 0, j )-Bx_val[j] )
+            ( *By2D )( 0, j ) = Alpha_Xmin   * ( *Ez2D )( 0, j )
+                                           +              Beta_Xmin    *( ( *By2D )( 1, j )-By_val[j] )
+                                           +              Gamma_Xmin   * by
+                                           +              Delta_Xmin   *( ( *Bx2D )( 0, j+1 )-Bx_val[j+1] )
+                                           +              Epsilon_Xmin *( ( *Bx2D )( 0, j )-Bx_val[j] )
                                            +              By_val[j];
                                            
         }//j  ---end compute By
@@ -239,20 +241,20 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         vector<double> yd( 1 );
         for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++ ) {
         
-            double bzW = 0.;
+            double bz = 0.;
             yd[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - 0.5 - ( int )EMfields->oversize[1] )*dy;
             
             // Lasers
             for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                bzW += vecLaser[ilaser]->getAmplitude1( yd, time_dual, j, 0 );
+                bz += vecLaser[ilaser]->getAmplitude1( yd, time_dual, j, 0 );
             }
             
-            /*(*Bz2D)(0,j) = -Alpha_SM_W * (*Ey2D)(0,j)
-             +               Beta_SM_W  * (*Bz2D)(1,j)
-             +               Gamma_SM_W * bzW;*/
-            ( *Bz2D )( 0, j ) = -Alpha_SM_W * ( *Ey2D )( 0, j )
-                                           +               Beta_SM_W  *( ( *Bz2D )( 1, j )- Bz_val[j] )
-                                           +               Gamma_SM_W * bzW
+            /*(*Bz2D)(0,j) = -Alpha_Xmin * (*Ey2D)(0,j)
+             +               Beta_Xmin  * (*Bz2D)(1,j)
+             +               Gamma_Xmin * bzW;*/
+            ( *Bz2D )( 0, j ) = -Alpha_Xmin * ( *Ey2D )( 0, j )
+                                           +               Beta_Xmin  *( ( *Bz2D )( 1, j )- Bz_val[j] )
+                                           +               Gamma_Xmin * bz
                                            +               Bz_val[j];
                                            
         }//j  ---end compute Bz
@@ -271,24 +273,24 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         vector<double> yp( 1 );
         for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
         
-            double byE = 0.;
+            double by = 0.;
             yp[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - ( int )EMfields->oversize[1] )*dy;
             
             // Lasers
             for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                byE += vecLaser[ilaser]->getAmplitude0( yp, time_dual, j, 0 );
+                by += vecLaser[ilaser]->getAmplitude0( yp, time_dual, j, 0 );
             }
             
-            /*(*By2D)(nx_d-1,j) = Alpha_SM_E   * (*Ez2D)(nx_p-1,j)
-             +                   Beta_SM_E    * (*By2D)(nx_d-2,j)
-             +                   Gamma_SM_E   * byE
-             +                   Delta_SM_E   * (*Bx2D)(nx_p-1,j+1) // Check x-index
-             +                   Epsilon_SM_E * (*Bx2D)(nx_p-1,j);*/
-            ( *By2D )( nx_d-1, j ) = Alpha_SM_E   * ( *Ez2D )( nx_p-1, j )
-                                                +                   Beta_SM_E    *( ( *By2D )( nx_d-2, j ) -By_val[j] )
-                                                +                   Gamma_SM_E   * byE
-                                                +                   Delta_SM_E   *( ( *Bx2D )( nx_p-1, j+1 ) -Bx_val[j+1] ) // Check x-index
-                                                +                   Epsilon_SM_E *( ( *Bx2D )( nx_p-1, j ) -Bx_val[j] )
+            /*(*By2D)(nx_d-1,j) = Alpha_Xmax   * (*Ez2D)(nx_p-1,j)
+             +                   Beta_Xmax    * (*By2D)(nx_d-2,j)
+             +                   Gamma_Xmax   * byE
+             +                   Delta_Xmax   * (*Bx2D)(nx_p-1,j+1) // Check x-index
+             +                   Epsilon_Xmax * (*Bx2D)(nx_p-1,j);*/
+            ( *By2D )( nx_d-1, j ) = Alpha_Xmax   * ( *Ez2D )( nx_p-1, j )
+                                                +                   Beta_Xmax    *( ( *By2D )( nx_d-2, j ) -By_val[j] )
+                                                +                   Gamma_Xmax   * by
+                                                +                   Delta_Xmax   *( ( *Bx2D )( nx_p-1, j+1 ) -Bx_val[j+1] ) // Check x-index
+                                                +                   Epsilon_Xmax *( ( *Bx2D )( nx_p-1, j ) -Bx_val[j] )
                                                 +                   By_val[j];
                                                 
         }//j  ---end compute By
@@ -298,23 +300,24 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         vector<double> yd( 1 );
         for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++ ) {
         
-            double bzE = 0.;
+            double bz = 0.;
             yd[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - 0.5 - ( int )EMfields->oversize[1] )*dy;
             
             // Lasers
             for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                bzE += vecLaser[ilaser]->getAmplitude1( yd, time_dual, j, 0 );
+                bz += vecLaser[ilaser]->getAmplitude1( yd, time_dual, j, 0 );
             }
             
-            /*(*Bz2D)(nx_d-1,j) = -Alpha_SM_E * (*Ey2D)(nx_p-1,j)
-             +                    Beta_SM_E  * (*Bz2D)(nx_d-2,j)
-             +                    Gamma_SM_E * bzE;*/
-            ( *Bz2D )( nx_d-1, j ) = -Alpha_SM_E * ( *Ey2D )( nx_p-1, j )
-                                                +                    Beta_SM_E  *( ( *Bz2D )( nx_d-2, j ) -Bz_val[j] )
-                                                +                    Gamma_SM_E * bzE
+            /*(*Bz2D)(nx_d-1,j) = -Alpha_Xmax * (*Ey2D)(nx_p-1,j)
+             +                    Beta_Xmax  * (*Bz2D)(nx_d-2,j)
+             +                    Gamma_Xmax * bzE;*/
+            ( *Bz2D )( nx_d-1, j ) = -Alpha_Xmax * ( *Ey2D )( nx_p-1, j )
+                                                +                    Beta_Xmax  *( ( *Bz2D )( nx_d-2, j ) -Bz_val[j] )
+                                                +                    Gamma_Xmax * bz
                                                 +                    Bz_val[j];
                                                 
         }//j  ---end compute Bz
+    
     } else if( min_max == 2 && patch->isYmin() ) {
     
         // Static cast of the fields
@@ -326,25 +329,41 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_ );
         
         // for Bx^(p,d)
+        vector<double> xp( 1 );
         for( unsigned int j=patch->isXmin() ; j<nx_p-patch->isXmax() ; j++ ) {
-            /*(*Bx2D)(j,0) = -Alpha_SM_S   * (*Ez2D)(j,0)
-             +               Beta_SM_S    * (*Bx2D)(j,1)
-             +               Delta_SM_S   * (*By2D)(j+1,0)
-             +               Epsilon_SM_S * (*By2D)(j,0);*/
-            ( *Bx2D )( j, 0 ) = -Alpha_SM_S   * ( *Ez2D )( j, 0 )
-                                           +               Beta_SM_S    *( ( *Bx2D )( j, 1 )-Bx_val[j] )
-                                           +               Delta_SM_S   *( ( *By2D )( j+1, 0 )-By_val[j+1] )
-                                           +               Epsilon_SM_S *( ( *By2D )( j, 0 )-By_val[j] )
+            
+            double bx = 0.;
+            xp[0] = patch->getDomainLocalMin( 0 ) + ( ( int )j - ( int )EMfields->oversize[0] )*dx;
+            
+            // Lasers
+            for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
+                bx += vecLaser[ilaser]->getAmplitude0( xp, time_dual, j, 0 );
+            }
+            
+            ( *Bx2D )( j, 0 ) = -Alpha_Ymin   * ( *Ez2D )( j, 0 )
+                                           +               Beta_Ymin    *( ( *Bx2D )( j, 1 )-Bx_val[j] )
+                                           +               Gamma_Ymin   * bx
+                                           +               Delta_Ymin   *( ( *By2D )( j+1, 0 )-By_val[j+1] )
+                                           +               Epsilon_Ymin *( ( *By2D )( j, 0 )-By_val[j] )
                                            +               Bx_val[j];
         }//j  ---end Bx
         
         
         // for Bz^(d,d)
+        vector<double> xd( 1 );
         for( unsigned int j=patch->isXmin() ; j<nx_d-patch->isXmax() ; j++ ) {
-            /*(*Bz2D)(j,0) = Alpha_SM_S * (*Ex2D)(j,0)
-             +               Beta_SM_S * (*Bz2D)(j,1);*/
-            ( *Bz2D )( j, 0 ) = Alpha_SM_S * ( *Ex2D )( j, 0 )
-                                           +               Beta_SM_S  *( ( *Bz2D )( j, 1 )-Bz_val[j] )
+            
+            double bz = 0.;
+            xd[0] = patch->getDomainLocalMin( 0 ) + ( ( int )j - 0.5 - ( int )EMfields->oversize[0] )*dx;
+            
+            // Lasers
+            for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
+                bz += vecLaser[ilaser]->getAmplitude1( xd, time_dual, j, 0 );
+            }
+            
+            ( *Bz2D )( j, 0 ) = Alpha_Ymin * ( *Ex2D )( j, 0 )
+                                           +               Beta_Ymin  *( ( *Bz2D )( j, 1 )-Bz_val[j] )
+                                           +               Gamma_Ymin * bz
                                            +               Bz_val[j];
         }//j  ---end Bz
         
@@ -359,25 +378,40 @@ void ElectroMagnBC2D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_ );
         
         // for Bx^(p,d)
+        vector<double> xp( 1 );
         for( unsigned int j=patch->isXmin() ; j<nx_p-patch->isXmax() ; j++ ) {
-            /*(*Bx2D)(j,ny_d-1) = -Alpha_SM_N   * (*Ez2D)(j,ny_p-1)
-             +                    Beta_SM_N    * (*Bx2D)(j,ny_d-2)
-             +                    Delta_SM_N   * (*By2D)(j+1,ny_p-1)
-             +                    Epsilon_SM_N * (*By2D)(j,ny_p-1);*/
-            ( *Bx2D )( j, ny_d-1 ) = -Alpha_SM_N   * ( *Ez2D )( j, ny_p-1 )
-                                                +                   Beta_SM_N    *( ( *Bx2D )( j, ny_d-2 ) -Bx_val[j] )
-                                                +                   Delta_SM_N   *( ( *By2D )( j+1, ny_p-1 ) -By_val[j+1] )
-                                                +                   Epsilon_SM_N *( ( *By2D )( j, ny_p-1 ) -By_val[j] )
+        
+            double bx = 0.;
+            xp[0] = patch->getDomainLocalMin( 0 ) + ( ( int )j - ( int )EMfields->oversize[0] )*dx;
+            
+            // Lasers
+            for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
+                bx += vecLaser[ilaser]->getAmplitude0( xp, time_dual, j, 0 );
+            }
+            
+            ( *Bx2D )( j, ny_d-1 ) = -Alpha_Ymax   * ( *Ez2D )( j, ny_p-1 )
+                                                +                   Beta_Ymax    *( ( *Bx2D )( j, ny_d-2 ) -Bx_val[j] )
+                                                +                   Gamma_Ymax   * bx
+                                                +                   Delta_Ymax   *( ( *By2D )( j+1, ny_p-1 ) -By_val[j+1] )
+                                                +                   Epsilon_Ymax *( ( *By2D )( j, ny_p-1 ) -By_val[j] )
                                                 +                   Bx_val[j];
         }//j  ---end Bx
         
-        
         // for Bz^(d,d)
+        vector<double> xd( 1 );
         for( unsigned int j=patch->isXmin() ; j<nx_d-patch->isXmax() ; j++ ) {
-            /*(*Bz2D)(j,ny_d-1) = Alpha_SM_N * (*Ex2D)(j,ny_p-1)
-             +                   Beta_SM_N  * (*Bz2D)(j,ny_d-2);*/
-            ( *Bz2D )( j, ny_d-1 ) = Alpha_SM_N * ( *Ex2D )( j, ny_p-1 )
-                                                +                   Beta_SM_N  *( ( *Bz2D )( j, ny_d-2 )- Bz_val[j] )
+        
+            double bz = 0.;
+            xd[0] = patch->getDomainLocalMin( 0 ) + ( ( int )j - 0.5 - ( int )EMfields->oversize[0] )*dx;
+            
+            // Lasers
+            for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
+                bz += vecLaser[ilaser]->getAmplitude1( xd, time_dual, j, 0 );
+            }
+            
+            ( *Bz2D )( j, ny_d-1 ) = Alpha_Ymax * ( *Ex2D )( j, ny_p-1 )
+                                                +                   Beta_Ymax  *( ( *Bz2D )( j, ny_d-2 )- Bz_val[j] )
+                                                +                   Gamma_Ymax * bz
                                                 +                   Bz_val[j];
         }//j  ---end Bx
         

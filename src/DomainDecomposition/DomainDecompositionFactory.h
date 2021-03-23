@@ -16,9 +16,6 @@ public:
     {
         DomainDecomposition *domain_decomposition = NULL;
         
-        TITLE( "Patch arrangement : " );
-        
-        
         if( params.patch_arrangement=="hilbertian" ) {
             if( ( params.geometry == "1Dcartesian" ) ) {
                 domain_decomposition = new HilbertDomainDecomposition1D( params );

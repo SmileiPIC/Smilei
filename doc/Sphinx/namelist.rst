@@ -1206,6 +1206,12 @@ field on one of the box sides. The only boundary condition that supports lasers
 is ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
 There are several syntaxes to introduce a laser in :program:`Smilei`:
 
+.. note::
+
+  The following definitions are given for lasers incoming from the ``xmin`` or ``xmax``
+  boundaries. For lasers incoming from ``ymin`` or ``ymax``, simply replace the ``By``
+  profiles by ``Bx`` profiles.
+
 .. rubric:: 1. Defining a generic wave
 
 ..
@@ -1222,8 +1228,12 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     :default: ``"xmin"``
 
-    Side of the box from which the laser originates: at the moment, only ``"xmin"`` and
-    ``"xmax"`` are supported.
+    Side of the box from which the laser originates: ``"xmin"``, ``"xmax"``, ``"ymin"``
+    or ``"ymax"``.
+    
+    In the cases of ``"ymin"`` or ``"ymax"``, replace, in the following profiles,
+    coordinates :math:`(y,t)` by :math:`(x,t)`, and fields :math:`B_y` by :math:`B_x`.
+    
 
 .. py:data:: space_time_profile
 
@@ -1237,10 +1247,10 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
 .. py:data:: space_time_profile_AM
 
-    :type: A list of maximum 2*``number_of_AM`` *python* functions.
+    :type: A list of maximum 2 x ``number_of_AM`` *python* functions.
 
-    These profiles define the first modes of ``Br`` and ``Bt`` in the order shown in the above example.
-    Undefined modes are considered zero.
+    These profiles define the first modes of :math:`B_r` and :math:`B_\theta` in the
+    order shown in the above example. Undefined modes are considered zero.
     This can be used only in ``AMcylindrical`` geometry.
 
 
@@ -1420,7 +1430,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     :default: 0.
 
-    The angle of the laser beam relative to the X axis, in radians.
+    The angle of the laser beam relative to the normal to the injection plane, in radians.
 
   .. py:data:: time_envelope
 
@@ -1448,7 +1458,9 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
   two angles, corresponding to rotations around ``y`` and ``z``, respectively.
-
+  
+  When injecting on ``"ymin"`` or ``"ymax"``, the incidence angles corresponds to
+  rotations around ``x`` and ``z``, respectively.
 
 .. rubric:: 6. Defining a gaussian wave with Azimuthal Fourier decomposition
 
@@ -1552,7 +1564,8 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 Laser envelope model
 ^^^^^^^^^^^^^^^^^^^^^^
 
-In all the available geometries, it is possible to model a laser pulse propagating in the ``x`` direction
+In all the available geometries, it is possible to model a laser pulse
+propagating in the ``x`` direction
 using an envelope model (see :doc:`laser_envelope` for the advantages
 and limits of this approximation).
 The fast oscillations of the laser are neglected and all the physical

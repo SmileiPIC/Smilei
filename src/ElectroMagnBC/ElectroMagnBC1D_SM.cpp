@@ -17,9 +17,9 @@ ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch *patch, unsigned i
     : ElectroMagnBC1D( params, patch, _min_max )
 {
     // Parameters for the Silver-Mueller boundary conditions
-    Alpha_SM = 2./( 1.+dt_ov_dx );
-    Beta_SM  = ( dt_ov_dx-1. )/( 1.+dt_ov_dx );
-    Gamma_SM = 4./( 1.+dt_ov_dx );
+    Alpha_Xmin = 2./( 1.+dt_ov_dx );
+    Beta_Xmin  = ( dt_ov_dx-1. )/( 1.+dt_ov_dx );
+    Gamma_Xmin = 4./( 1.+dt_ov_dx );
     
     By_val = 0.;
     Bz_val = 0.;
@@ -77,8 +77,8 @@ void ElectroMagnBC1D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }
         
         // Apply Silver-Mueller EM boundary condition at x=xmin
-        ( *By1D )( 0 ) =  Alpha_SM*( *Ez1D )( 0 ) + Beta_SM*( ( *By1D )( 1 )-By_val ) + Gamma_SM*byL+By_val;
-        ( *Bz1D )( 0 ) = -Alpha_SM*( *Ey1D )( 0 ) + Beta_SM*( ( *Bz1D )( 1 )-Bz_val ) + Gamma_SM*bzL+Bz_val;
+        ( *By1D )( 0 ) =  Alpha_Xmin*( *Ez1D )( 0 ) + Beta_Xmin*( ( *By1D )( 1 )-By_val ) + Gamma_Xmin*byL+By_val;
+        ( *Bz1D )( 0 ) = -Alpha_Xmin*( *Ey1D )( 0 ) + Beta_Xmin*( ( *Bz1D )( 1 )-Bz_val ) + Gamma_Xmin*bzL+Bz_val;
         
     } else if( min_max == 1 && patch->isXmax() ) {
         //Field1D* Ex1D   = static_cast<Field1D*>(EMfields->Ex_);
@@ -97,8 +97,8 @@ void ElectroMagnBC1D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }
         
         // Silver-Mueller boundary conditions (right)
-        ( *By1D )( nx_d-1 ) = -Alpha_SM*( *Ez1D )( nx_p-1 )+ Beta_SM*( ( *By1D )( nx_d-2 )-By_val ) + Gamma_SM*byR+By_val;
-        ( *Bz1D )( nx_d-1 ) =  Alpha_SM*( *Ey1D )( nx_p-1 )+ Beta_SM*( ( *Bz1D )( nx_d-2 )-Bz_val ) + Gamma_SM*bzR+Bz_val;
+        ( *By1D )( nx_d-1 ) = -Alpha_Xmin*( *Ez1D )( nx_p-1 )+ Beta_Xmin*( ( *By1D )( nx_d-2 )-By_val ) + Gamma_Xmin*byR+By_val;
+        ( *Bz1D )( nx_d-1 ) =  Alpha_Xmin*( *Ey1D )( nx_p-1 )+ Beta_Xmin*( ( *Bz1D )( nx_d-2 )-Bz_val ) + Gamma_Xmin*bzR+Bz_val;
     }
     
 }

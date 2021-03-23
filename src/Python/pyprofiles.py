@@ -513,13 +513,16 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
     from math import cos, sin, tan, atan, sqrt, exp
     # Polarization and amplitude
-    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
+    dephasing, amplitudeZ, amplitudeY = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0 * omega
     amplitudeZ *= a0 * omega
+    # In case of ymin/ymax
+    if box_side[0] == "y":
+        focus = [focus[1],focus[0]]
+        amplitudeY = -amplitudeY
     # Space and phase envelopes
     Zr = omega * waist**2/2.
     if incidence_angle == 0.:
-        Y1 = focus[1]
         w  = sqrt(1./(1.+(focus[0]/Zr)**2))
         invWaist2 = (w/waist)**2
         coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
@@ -535,7 +538,7 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         omega_ = omega * sin(incidence_angle)
         Y1 = focus[1] + focus[0]/tan(incidence_angle)
         Y2 = focus[1] - focus[0]*tan(incidence_angle)
-        amplitudeZ *= cos(incidence_angle)
+        amplitudeY *= cos(incidence_angle)
         def spatial(y):
             w2 = 1./(1. + invZr2*(y-Y1)**2)
             return sqrt(sqrt(w2)) * exp( -invWaist2*w2*(y-Y2)**2 )
@@ -545,11 +548,11 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         phaseZero += phase(Y2)
     # Create Laser
     Laser(
-        box_side        = box_side,
+        box_side       = box_side,
         omega          = omega,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
-        space_envelope = [ lambda y:amplitudeZ*spatial(y), lambda y:amplitudeY*spatial(y) ],
+        space_envelope = [ lambda y:amplitudeY*spatial(y), lambda y:amplitudeZ*spatial(y) ],
         phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
         delay_phase    = [ 0., dephasing ]
     )
@@ -584,41 +587,45 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
 
 def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
-    import math
+    from math import cos, sin, tan, atan, sqrt, exp
     # Polarization and amplitude
-    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
+    [dephasing, amplitudeZ, amplitudeY] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0 * omega
     amplitudeZ *= a0 * omega
+    # In case of ymin/ymax
+    if box_side[0] == "y":
+        focus = [focus[1],focus[0],focus[2]]
+        amplitudeY = -amplitudeY
     # Space and phase envelopes
     Zr = omega * waist**2/2.
     if incidence_angle == [0.,0.]:
-        w  = math.sqrt(1./(1.+(focus[0]/Zr)**2))
+        w  = sqrt(1./(1.+(focus[0]/Zr)**2))
         invWaist2 = (w/waist)**2
         coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
         def spatial(y,z):
-            return w * math.exp( -invWaist2*((y-focus[1])**2 + (z-focus[2])**2 )  )
+            return w * exp( -invWaist2*((y-focus[1])**2 + (z-focus[2])**2 )  )
         def phase(y,z):
             return coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
     else:
         invZr = 1./Zr
         invW  = 1./waist
         alpha = omega * Zr
-        cy = math.cos(incidence_angle[0]); sy = math.sin(incidence_angle[0])
-        cz = math.cos(incidence_angle[1]); sz = math.sin(incidence_angle[1])
+        cy = cos(incidence_angle[0]); sy = sin(incidence_angle[0])
+        cz = cos(incidence_angle[1]); sz = sin(incidence_angle[1])
         cycz = cy*cz; cysz = cy*sz; sycz = sy*cz; sysz = sy*sz
-        amplitudeZ = sysz * amplitudeY + cy * amplitudeZ
-        amplitudeY *= cz
+        amplitudeY = sysz * amplitudeZ + cy * amplitudeY
+        amplitudeZ *= cz
         def spatial(y,z):
             X = invZr * (-focus[0]*cycz + (y-focus[1])*cysz - (z-focus[2])*sy )
             Y = invW  * ( focus[0]*sz   + (y-focus[1])*cz                     )
             Z = invW  * (-focus[0]*sycz + (y-focus[1])*sysz + (z-focus[2])*cy )
             invW2 = 1./(1.+X**2)
-            return math.sqrt(invW2) * math.exp(-(Y**2+Z**2)*invW2)
+            return sqrt(invW2) * exp(-(Y**2+Z**2)*invW2)
         def phase(y,z):
             X = invZr * (-focus[0]*cycz + (y-focus[1])*cysz - (z-focus[2])*sy )
             Y = invZr * ( focus[0]*sz   + (y-focus[1])*cz                     )
             Z = invZr * (-focus[0]*sycz + (y-focus[1])*sysz + (z-focus[2])*cy )
-            return alpha * X*(1.+0.5*(Y**2+Z**2)/(1.+X**2)) - math.atan(X)
+            return alpha * X*(1.+0.5*(Y**2+Z**2)/(1.+X**2)) - atan(X)
         phaseZero += phase(focus[1]-sz/cz*focus[0], focus[2]+sy/cy/cz*focus[0])
 
     # Create Laser
@@ -627,7 +634,7 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         omega          = omega,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
-        space_envelope = [ lambda y,z:amplitudeZ*spatial(y,z), lambda y,z:amplitudeY*spatial(y,z) ],
+        space_envelope = [ lambda y,z:amplitudeY*spatial(y,z), lambda y,z:amplitudeZ*spatial(y,z) ],
         phase          = [ lambda y,z:phase(y,z)-phaseZero+dephasing, lambda y,z:phase(y,z)-phaseZero ],
         delay_phase    = [ 0., dephasing ]
     )
