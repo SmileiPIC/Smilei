@@ -127,7 +127,7 @@ void Radiation::joinNewPhotons(unsigned int Nbins)
     // created in each bin, to have the list of new photons for this species and patch
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
 
-        int nparticles_to_add = new_photons_per_bin_[ibin].size();
+        unsigned int nparticles_to_add = new_photons_per_bin_[ibin].size();
         new_photons_.createParticles(nparticles_to_add);
 
         for (unsigned int ipart = 0; ipart < nparticles_to_add ; ipart++){

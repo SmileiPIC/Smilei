@@ -1113,7 +1113,7 @@ public:
                             max_eon_number, *patch->vecSpecies[ispec1]->electron_species->particles
                         );
                         if (params.tasks_on_projection){
-                            int Nbins = patch->vecSpecies[ispec1]->particles->first_index.size();
+                            unsigned int Nbins = patch->vecSpecies[ispec1]->particles->first_index.size();
                             for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
                                 patch->vecSpecies[ispec1]->Ionize->new_electrons_per_bin[ibin].initializeReserve(max_eon_number, *patch->vecSpecies[ispec1]->electron_species->particles);   
                             }
@@ -1151,7 +1151,7 @@ public:
                                 *patch->vecSpecies[ispec1]->photon_species_->particles
                             );
                             if (params.tasks_on_projection){
-                                int Nbins = patch->vecSpecies[ispec1]->particles->first_index.size();
+                                unsigned int Nbins = patch->vecSpecies[ispec1]->particles->first_index.size();
                                 for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
                                     patch->vecSpecies[ispec1]->Radiate->new_photons_per_bin_[ibin].initializeReserve(
                                         patch->vecSpecies[ispec1]->getNbrOfParticles(),
@@ -1191,7 +1191,7 @@ public:
                                 *patch->vecSpecies[ispec1]->mBW_pair_species[k]->particles
                             );
                             if (params.tasks_on_projection){
-                                int Nbins = patch->vecSpecies[ispec1]->particles->first_index.size();
+                                unsigned int Nbins = patch->vecSpecies[ispec1]->particles->first_index.size();
                                 for (unsigned int ibin = 0; ibin < Nbins; ibin++){
                                     patch->vecSpecies[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].initializeReserve(
                                         patch->vecSpecies[ispec1]->getNbrOfParticles(),
@@ -1244,7 +1244,7 @@ public:
                 patch->vecSpecies[i]->Ionize->new_electrons.isMonteCarlo = patch->vecSpecies[i]->electron_species->particles->isMonteCarlo;
                 patch->vecSpecies[i]->Ionize->new_electrons.initialize( 0, params.nDim_particle, params.keep_position_old );
                 if (params.tasks_on_projection){
-                    int Nbins = patch->vecSpecies[i]->particles->first_index.size();
+                    unsigned int Nbins = patch->vecSpecies[i]->particles->first_index.size();
                     for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
                         patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].tracked = patch->vecSpecies[i]->electron_species->particles->tracked;
                         patch->vecSpecies[i]->Ionize->new_electrons_per_bin[ibin].isQuantumParameter = patch->vecSpecies[i]->electron_species->particles->isQuantumParameter;
@@ -1269,7 +1269,7 @@ public:
                     //                                               params.nDim_particle );
                     patch->vecSpecies[i]->Radiate->new_photons_.initialize( 0, params.nDim_particle, params.keep_position_old );
                     if (params.tasks_on_projection){
-                        int Nbins = patch->vecSpecies[i]->particles->first_index.size();
+                        unsigned int Nbins = patch->vecSpecies[i]->particles->first_index.size();
                         for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
                             patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].tracked = patch->vecSpecies[i]->photon_species_->particles->tracked;
                             patch->vecSpecies[i]->Radiate->new_photons_per_bin_[ibin].isQuantumParameter = patch->vecSpecies[i]->photon_species_->particles->isQuantumParameter;
@@ -1297,7 +1297,7 @@ public:
                     patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair[k].initialize(
                         0, params.nDim_particle, params.keep_position_old );
                     if (params.tasks_on_projection){
-                        int Nbins = patch->vecSpecies[i]->particles->first_index.size();
+                        unsigned int Nbins = patch->vecSpecies[i]->particles->first_index.size();
                         for (unsigned int ibin = 0 ; ibin < Nbins ; ibin++){
                             patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].tracked = patch->vecSpecies[i]->mBW_pair_species[k]->particles->tracked;
                             patch->vecSpecies[i]->Multiphoton_Breit_Wheeler_process->new_pair_per_bin[ibin][k].isQuantumParameter = patch->vecSpecies[i]->mBW_pair_species[k]->particles->isQuantumParameter;

@@ -46,7 +46,7 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
 
     tasks_on_projection = params.tasks_on_projection;
     if (tasks_on_projection){
-        int Nbins = species->particles->first_index.size();
+        unsigned int Nbins = species->particles->first_index.size();
         
         // initialize array per bin for energy conversion
         pair_converted_energy_per_bin = new double[Nbins];
@@ -607,7 +607,7 @@ void MultiphotonBreitWheeler::joinNewElectronPositronPairs(unsigned int Nbins)
     for( int k=0 ; k < 2 ; k++ ) {
        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
            // number of particles to add from the bin
-           int nparticles_to_add = new_pair_per_bin[ibin][k].size();
+           unsigned int nparticles_to_add = new_pair_per_bin[ibin][k].size();
            new_pair[k].createParticles(nparticles_to_add);
            
            for (unsigned int ipart = 0; ipart < nparticles_to_add ; ipart++){

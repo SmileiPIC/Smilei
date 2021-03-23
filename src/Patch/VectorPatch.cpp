@@ -422,7 +422,7 @@ void VectorPatch::dynamics( Params &params,
     if (params.tasks_on_projection){
 
         unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
-        int Nspecies = ( *this )( 0 )->vecSpecies.size();
+        unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
 
@@ -469,7 +469,7 @@ void VectorPatch::dynamics( Params &params,
     if (params.tasks_on_projection){
 
         unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
-        int Nspecies = ( *this )( 0 )->vecSpecies.size();
+        unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
 
         // Ionization
         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {

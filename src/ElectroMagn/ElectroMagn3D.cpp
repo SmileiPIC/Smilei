@@ -1990,25 +1990,25 @@ void ElectroMagn3D::copyInLocalDensities(int ispec, int ibin, double* b_Jx, doub
 {
     Field3D *Jx3D,*Jy3D,*Jz3D,*rho3D;
 
-    if (Jx_s [ispec] != NULL & diag_flag){
+    if ( (Jx_s [ispec] != NULL) & diag_flag){
         Jx3D  = static_cast<Field3D *>( Jx_s [ispec] ) ;
     } else {
         Jx3D  = static_cast<Field3D *>( Jx_ )  ;
     }
 
-    if (Jy_s [ispec] != NULL & diag_flag){
+    if ( (Jy_s [ispec] != NULL) & diag_flag){
         Jy3D  = static_cast<Field3D *>( Jy_s [ispec] ) ;
     } else {
         Jy3D  = static_cast<Field3D *>( Jy_ )  ;
     }
 
-    if (Jz_s [ispec] != NULL & diag_flag){
+    if ( (Jz_s [ispec] != NULL) & diag_flag){
         Jz3D  = static_cast<Field3D *>( Jz_s [ispec] ) ;
     } else {
         Jz3D  = static_cast<Field3D *>( Jz_ )  ;
     }
 
-    if (rho_s [ispec] != NULL & diag_flag){
+    if ( (rho_s [ispec] != NULL) & diag_flag){
         rho3D  = static_cast<Field3D *>( rho_s [ispec] ) ;
     } else {
         rho3D  = static_cast<Field3D *>( rho_ )  ;
@@ -2017,36 +2017,37 @@ void ElectroMagn3D::copyInLocalDensities(int ispec, int ibin, double* b_Jx, doub
 
     //cout << "In";
     int iloc;
-    int f_dim1 = f_dim1 =  n_space[1] + 2 * oversize[1] +1;
+
     // Introduced to avoid indirection in data access b_rho[i*b_dim[1]+j]
+    int b_dim0 = b_dim[0];
     int b_dim1 = b_dim[1];
     int b_dim2 = b_dim[2];
 
     // Jx (d,p,p)
-    for (int i = 0; i < b_dim[0] ; i++) {
+    for (int i = 0; i < b_dim0 ; i++) {
 	      iloc = ibin + i ;
-        for (int j = 0; j < (b_dim[1]) ; j++) {
-            for (int k = 0; k < (b_dim[2]) ; k++) {
+        for (int j = 0; j < b_dim1 ; j++) {
+            for (int k = 0; k < b_dim2 ; k++) {
                 (*Jx3D) (iloc,j,k) += b_Jx [(i*b_dim1+j)*b_dim2+k];
             }
         }
     }
 
     // Jy (p,d,p)
-    for (int i = 0; i < (b_dim[0]) ; i++) {
+    for (int i = 0; i < b_dim0 ; i++) {
 	      iloc = ibin + i ;
-        for (int j = 0; j < (b_dim[1]+1) ; j++) {
-            for (int k = 0; k < (b_dim[2]) ; k++) {
+        for (int j = 0; j < (b_dim1+1) ; j++) {
+            for (int k = 0; k < b_dim2 ; k++) {
                 Jy3D->data_[ (iloc*Jy3D->dims_[1]+j)*b_dim2+k ] += b_Jy [(i*(b_dim1+1)+j)*b_dim2+k];
             }
         }
     }
 
     // Jz (p,p,d)
-    for (int i = 0; i < (b_dim[0]) ; i++) {
+    for (int i = 0; i < b_dim0 ; i++) {
 	      iloc = ibin + i ;
-        for (int j = 0; j < (b_dim[1]) ; j++) {
-            for (int k = 0; k < (b_dim[2]+1) ; k++) {
+        for (int j = 0; j < b_dim1 ; j++) {
+            for (int k = 0; k < b_dim2 ; k++) {
                 Jz3D->data_[ (iloc*b_dim1+j)*Jz3D->dims_[2]+k ] += b_Jz [(i*(b_dim1)+j)*(b_dim2+1)+k];
                 //(*Jz3D) (iloc,j,k) +=  b_Jz [(i*b_dim1+j)*(b_dim2+1)+k];   
             }
@@ -2055,10 +2056,10 @@ void ElectroMagn3D::copyInLocalDensities(int ispec, int ibin, double* b_Jx, doub
 
     // rho (p,p,p)
     if (diag_flag){
-        for (int i = 0; i < (b_dim[0]) ; i++) {
+        for (int i = 0; i < b_dim0 ; i++) {
 	          iloc = ibin + i ;
-            for (int j = 0; j < (b_dim[1]) ; j++) {
-                for (int k = 0; k < (b_dim[2]) ; k++) {        
+            for (int j = 0; j < b_dim1 ; j++) {
+                for (int k = 0; k < b_dim2 ; k++) {        
 	                  (*rho3D)(iloc,j,k) +=  b_rho[(i*b_dim1+j)*b_dim2+k];   
                 }
             }
