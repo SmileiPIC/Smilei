@@ -416,7 +416,7 @@ void VectorPatch::dynamics( Params &params,
     //     smpi->resize_buffers(omp_get_num_threads(),params.geometry=="AMcylindrical"); // resize buffers to their original size
     // }
     // }
-
+    #pragma omp taskwait
     // Copy the bin species buffers for the densities to patch grid densities
     #pragma omp single
     if (params.tasks_on_projection){
@@ -463,7 +463,7 @@ void VectorPatch::dynamics( Params &params,
             } // end task on reduction of patch densities
         } // end patch loop
     } // end condition on tasks
-
+    #pragma omp taskwait
     // Reduction of the new particles created through ionization and radiation, for each species
     #pragma omp single
     if (params.tasks_on_projection){
@@ -493,7 +493,7 @@ void VectorPatch::dynamics( Params &params,
                 } // end patch loop
             } // end if Ionize
         } // end species loop
-
+        #pragma omp taskwait
         // Radiation
         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
             if( species( 0, ispec )->Radiate ) {
@@ -516,7 +516,7 @@ void VectorPatch::dynamics( Params &params,
                 } // end patch loop
             } // end if Radiate
         } // end species loop
-
+#pragma omp taskwait
         // Multiphoton Breit Wheeler
         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
             if( species( 0, ispec )->Multiphoton_Breit_Wheeler_process ) {
