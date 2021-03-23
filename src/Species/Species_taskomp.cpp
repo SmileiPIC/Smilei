@@ -59,14 +59,14 @@ Species_taskomp::Species_taskomp( Params &params, Patch *patch )
     : Species( params, patch )
 {
     Nbins = particles->first_index.size();
-    // Init tags for the task dependencies of the particle operations
-    bin_has_interpolated                   = new int[Nbins+1]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
-    bin_has_ionized                        = new int[Nbins];
-    bin_has_radiated                       = new int[Nbins];
-    bin_has_done_Multiphoton_Breit_Wheeler = new int[Nbins];
-    bin_has_pushed                         = new int[Nbins];
-    bin_has_done_particles_BC              = new int[Nbins];
-    bin_has_projected                      = new int[Nbins];
+    // // Init tags for the task dependencies of the particle operations
+    // bin_has_interpolated                   = new int[Nbins+1]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
+    // bin_has_ionized                        = new int[Nbins];
+    // bin_has_radiated                       = new int[Nbins];
+    // bin_has_done_Multiphoton_Breit_Wheeler = new int[Nbins];
+    // bin_has_pushed                         = new int[Nbins];
+    // bin_has_done_particles_BC              = new int[Nbins];
+    // bin_has_projected                      = new int[Nbins];
 
     nrj_lost_per_bin                       = new double[Nbins];
     nrj_radiation_per_bin                  = new double[Nbins];
@@ -121,27 +121,27 @@ Species_taskomp::~Species_taskomp()
     //     Py_DECREF( ionization_rate_ );
     // }
 
-    if (bin_has_interpolated != NULL){
-        delete bin_has_interpolated;
-    }
-    if (bin_has_ionized != NULL){
-        delete bin_has_ionized;
-    }
-    if (bin_has_radiated != NULL){
-        delete bin_has_radiated;
-    }
-    if (bin_has_done_Multiphoton_Breit_Wheeler != NULL){
-        delete bin_has_done_Multiphoton_Breit_Wheeler;
-    }
-    if (bin_has_pushed != NULL){
-        delete bin_has_pushed;
-    }
-    if (bin_has_done_particles_BC != NULL){
-        delete bin_has_done_particles_BC;
-    }
-    if (bin_has_projected != NULL){
-        delete bin_has_projected;
-    }
+    // if (bin_has_interpolated != NULL){
+    //     delete bin_has_interpolated;
+    // }
+    // if (bin_has_ionized != NULL){
+    //     delete bin_has_ionized;
+    // }
+    // if (bin_has_radiated != NULL){
+    //     delete bin_has_radiated;
+    // }
+    // if (bin_has_done_Multiphoton_Breit_Wheeler != NULL){
+    //     delete bin_has_done_Multiphoton_Breit_Wheeler;
+    // }
+    // if (bin_has_pushed != NULL){
+    //     delete bin_has_pushed;
+    // }
+    // if (bin_has_done_particles_BC != NULL){
+    //     delete bin_has_done_particles_BC;
+    // }
+    // if (bin_has_projected != NULL){
+    //     delete bin_has_projected;
+    // }
     if (nrj_lost_per_bin != NULL){
         delete nrj_lost_per_bin;
     }
@@ -189,8 +189,17 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
         nrj_lost_per_bin[ibin] = 0.;
         nrj_radiation_per_bin[ibin] = 0.;
     }
-    int *bin_can_radiate;
-    int *bin_can_push;
+    // Init tags for the task dependencies of the particle operations
+    int *bin_has_interpolated                   = new int[Nbins+1]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
+    int *bin_has_ionized                        = new int[Nbins];
+    int *bin_has_radiated                       = new int[Nbins];
+    int *bin_has_done_Multiphoton_Breit_Wheeler = new int[Nbins];
+    int *bin_has_pushed                         = new int[Nbins];
+    int *bin_has_done_particles_BC              = new int[Nbins];
+    int *bin_has_projected                      = new int[Nbins];
+
+    int *bin_can_radiate = new int[Nbins];;
+    int *bin_can_push = new int[Nbins];;
 
     if (Radiate){ // if Radiation True ... 
         if (!Ionize) { 

@@ -64,14 +64,14 @@ public:
                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                            std::vector<Diagnostic *> &localDiags, int buffer_id );
 
-    int *bin_has_interpolated;
-    int *bin_has_ionized;
-    int *bin_has_radiated;
-    int *bin_has_pushed;
-    int *bin_has_done_particles_BC;
-    int *bin_has_projected;
-    int *bin_has_done_Multiphoton_Breit_Wheeler;
-    int decayed_photons_cleaned;
+    // int *bin_has_interpolated;
+    // int *bin_has_ionized;
+    // int *bin_has_radiated;
+    // int *bin_has_pushed;
+    // int *bin_has_done_particles_BC;
+    // int *bin_has_projected;
+    // int *bin_has_done_Multiphoton_Breit_Wheeler;
+    // int decayed_photons_cleaned;
 
     double *nrj_lost_per_bin;
     double *nrj_radiation_per_bin;
