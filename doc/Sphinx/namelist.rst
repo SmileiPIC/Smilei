@@ -115,9 +115,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``"1Dcartesian"``
   * ``"2Dcartesian"``
   * ``"3Dcartesian"``
-
-  .. rst-class:: experimental
-
   * ``"AMcylindrical"``: cylindrical geometry with :doc:`azimuthal_modes_decomposition`.
 
   In the following documentation, all references to dimensions or coordinates

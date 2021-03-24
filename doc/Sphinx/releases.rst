@@ -56,7 +56,6 @@ Projects
 
 * Already available, but experimental:
 
-  * ``AMcylindrical`` geometry
   * Interface with the PICSAR library for AM spectral solver
   * Single Domain Multiple Decomposition
   * Particle merging
