@@ -180,7 +180,7 @@ class Main(SmileiSingleton):
     # PXR tuning
     global_factor = []
     norder = []
-    apply_rotational_cleaning = False
+    initial_rotational_cleaning = False
     is_spectral = False
     is_pxr = False
 

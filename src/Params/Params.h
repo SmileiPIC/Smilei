@@ -241,7 +241,7 @@ public:
     //! Number of damping cells
     std::vector<unsigned int> number_of_damping_cells;
 
-    bool apply_rotational_cleaning;
+    bool initial_rotational_cleaning;
     
     //! True if restart requested
     bool restart;

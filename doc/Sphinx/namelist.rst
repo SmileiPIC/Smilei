@@ -400,14 +400,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. rst-class:: experimental
 
-.. py:data:: apply_rotational_cleaning
+.. py:data:: initial_rotational_cleaning
 
   :default: `False`
 
   * If `False`, do not apply rotational cleaning.
   * If `True`, use the picsar library to do the rotational cleaning.
 
-  Rotational cleaning correct field initialization in spectral space in order to make sure that the fields at `t=0` are a valid solution of the Maxwell equation.
+  Rotational cleaning corrects field initialization in spectral space in order to make sure that the fields at `t=0` are a valid solution of the Maxwell equation.
   This operation is only supported in AM geometry and with picsar spectral solver.
   It requires a FFTW of the full domain on a single MPI process so very large simulations may face problems with this procedure.
 

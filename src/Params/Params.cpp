@@ -580,10 +580,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     norder.resize( nDim_field, 1 );
     PyTools::extractV( "norder", norder, "Main" );
 
-    apply_rotational_cleaning = false;
+    initial_rotational_cleaning = false;
     if ( is_spectral && geometry == "AMcylindrical" ) {
-        PyTools::extract( "apply_rotational_cleaning", apply_rotational_cleaning, "Main" );
-        if ( ( apply_rotational_cleaning ) && ( smpi->getSize() > 1 ) ) {
+        PyTools::extract( "initial_rotational_cleaning", initial_rotational_cleaning, "Main" );
+        if ( ( initial_rotational_cleaning ) && ( smpi->getSize() > 1 ) ) {
             WARNING("Rotational cleaning (laser initialization) is not parallelized for now and may use a large amount of memory.");
         }
 
