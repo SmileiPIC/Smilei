@@ -269,11 +269,11 @@ public:
                     // Create laser
                     Laser *laser = new Laser( EMfields->emBoundCond[iBC]->vecLaser[ilaser], params );
                     // If patch is on border, then fill the fields arrays
-                    if( ( iBC==0 && patch->isXmin() )
-                     || ( iBC==1 && patch->isXmax() )
-                     || ( iBC==2 && patch->isYmin() )
-                     || ( iBC==3 && patch->isYmax() ) ) {
-                        laser->createFields( params, patch );
+                    if( patch->isBoundary( iBC ) ) {
+                        if( ( iBC / 2 == 0 && laser->box_side[0] == 'x' )
+                         || ( iBC / 2 == 1 && laser->box_side[0] == 'y' ) ) {
+                             laser->createFields( params, patch );
+                        }
                     }
                     // Append the laser to the vector
                     newEMfields->emBoundCond[iBC]->vecLaser.push_back( laser );

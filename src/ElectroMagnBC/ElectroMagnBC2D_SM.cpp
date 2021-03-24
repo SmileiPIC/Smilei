@@ -104,7 +104,7 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch *patch, unsigned i
     factor = 1.0 / ( ky - dt_ov_dy );
     Alpha_Ymax    = 2.0                     * factor;
     Beta_Ymax     = - ( ky + dt_ov_dy ) * factor;
-    Gamma_Ymin    = 4.0 * ky        * factor;
+    Gamma_Ymax    = 4.0 * ky        * factor;
     Delta_Ymax    = - ( kx + dt_ov_dx ) * factor;
     Epsilon_Ymax  = - ( kx - dt_ov_dx ) * factor;
     
