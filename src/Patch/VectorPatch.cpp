@@ -326,6 +326,11 @@ void VectorPatch::dynamics( Params &params,
     timers.particles.restart();
     ostringstream t;
 
+    unsigned int Npatches = this->size();
+    unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
+   
+    int has_done_dynamics[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
+
     #pragma omp single
     if (params.tasks_on_projection)
     {
@@ -342,8 +347,8 @@ void VectorPatch::dynamics( Params &params,
    
     #pragma omp single
     {
-    #pragma omp taskgroup
-    {
+    // #pragma omp taskgroup
+    // {
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
@@ -388,7 +393,7 @@ void VectorPatch::dynamics( Params &params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags );
                                 } else {
-                                    #pragma omp task default(shared) firstprivate(ipatch,ispec)
+                                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
                                     { // every call of dynamics for a couple ipatch-ispec is an independent task
                                     Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
                                     int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
@@ -406,7 +411,7 @@ void VectorPatch::dynamics( Params &params,
             } // end if condition on species
         } // end loop on species
     } // end loop on patches
-    } // end taskgroup to ensure all ipatch ispec performed dynamics method
+    // } // end taskgroup to ensure all ipatch ispec performed dynamics method
     } // end omp single
 
     // #pragma omp single
@@ -416,28 +421,18 @@ void VectorPatch::dynamics( Params &params,
     //     smpi->resize_buffers(omp_get_num_threads(),params.geometry=="AMcylindrical"); // resize buffers to their original size
     // }
     // }
-    #pragma omp taskwait
+    
     // Copy the bin species buffers for the densities to patch grid densities
     #pragma omp single
     if (params.tasks_on_projection){
 
-        unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
-        unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
+        // unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
+        // unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
+        int clrw = params.clrw;
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-
-            // // Define the dependency array:
-            // // densities in a patch can be reduced
-            // // if all the species have projected on all the bins density subgrids
-            // int species_has_projected_bin[Nspecies][Nbins];
-            // for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
-            //     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-            //         species_has_projected_bin[ispec][ibin] = (static_cast<Species_taskomp *>(species( ipatch, ispec )))->bin_has_projected[ibin];
-            //     } // end ibin
-            // } // end ispec
             
-            //#pragma omp task firstprivate(ipatch) depend(in:species_has_projected_bin[0:(Nspecies-1)][0:(Nbins-1)])
-            #pragma omp task firstprivate(ipatch)
+            #pragma omp task firstprivate(ipatch) private(clrw) depend(in:has_done_dynamics[ipatch][0:(Nspecies-1)])
             { // only the ipatch iterations are parallelized
 #ifdef  __DETAILED_TIMERS
             int ithread = omp_get_thread_num();
@@ -446,15 +441,14 @@ void VectorPatch::dynamics( Params &params,
             
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
                 // DO NOT parallelize this species loop unless race condition prevention is used!
-                //Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
-                Species *spec_task = (species( ipatch, ispec ));
+                Species *spec_task = species( ipatch, ispec );
                 std::vector<unsigned int> b_dim = spec_task->b_dim;
-                for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+                for( unsigned int ibin = 0 ; ibin < spec_task->particles->first_index.size()  ; ibin++ ) {
                     double *b_Jx = spec_task->b_Jx[ibin];
                     double *b_Jy = spec_task->b_Jy[ibin];
                     double *b_Jz = spec_task->b_Jz[ibin];
                     double *b_rho = spec_task->b_rho[ibin];
-                    (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*params.clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                    (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
                 } // ibin
             } // end species loop
 
@@ -464,29 +458,24 @@ void VectorPatch::dynamics( Params &params,
             } // end task on reduction of patch densities
         } // end patch loop
     } // end condition on tasks
-    #pragma omp taskwait
+ 
     // Reduction of the new particles created through ionization and radiation, for each species
     #pragma omp single
     if (params.tasks_on_projection){
-
-        unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
-        unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
-
+      
         // Ionization
         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
             if( species( 0, ispec )->Ionize ) {
                 for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                    // int* species_has_ionized  =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_ionized;
-                    // #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_ionized[0:(Nbins-1)])
-                    #pragma omp task firstprivate(ipatch,ispec)
+                    #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
                     {
-                    Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                    Species *spec_task = species( ipatch, ispec );
                     
 #ifdef  __DETAILED_TIMERS
                     int ithread = omp_get_thread_num();
                     double timer = MPI_Wtime();
 #endif
-                    spec_task->Ionize->joinNewElectrons(Nbins);
+                    spec_task->Ionize->joinNewElectrons(species( ipatch, ispec )->particles->first_index.size());
 #ifdef  __DETAILED_TIMERS
                     ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
@@ -494,22 +483,20 @@ void VectorPatch::dynamics( Params &params,
                 } // end patch loop
             } // end if Ionize
         } // end species loop
-        #pragma omp taskwait
+      
         // Radiation
         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
             if( species( 0, ispec )->Radiate ) {
                 for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                    // int* species_has_radiated =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_radiated;
-                    // #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_radiated[0:(Nbins-1)])
-                    #pragma omp task firstprivate(ipatch,ispec)
+                    #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
                     {
-                    Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                    Species *spec_task = species( ipatch, ispec );
                     
 #ifdef  __DETAILED_TIMERS
                     int ithread = omp_get_thread_num();
                     double timer = MPI_Wtime();
 #endif
-                    spec_task->Radiate->joinNewPhotons(Nbins);
+                    spec_task->Radiate->joinNewPhotons(spec_task->particles->first_index.size());
 #ifdef  __DETAILED_TIMERS
                     ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
@@ -517,21 +504,19 @@ void VectorPatch::dynamics( Params &params,
                 } // end patch loop
             } // end if Radiate
         } // end species loop
-#pragma omp taskwait
+
         // Multiphoton Breit Wheeler
         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
             if( species( 0, ispec )->Multiphoton_Breit_Wheeler_process ) {
                 for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                    // int* species_has_done_Multiphoton_Breit_Wheeler =  static_cast<Species_taskomp *>(species( ipatch, ispec ))->bin_has_done_Multiphoton_Breit_Wheeler;
-                    // #pragma omp task firstprivate(ipatch,ispec) depend(in:species_has_done_Multiphoton_Breit_Wheeler[0:(Nbins-1)])
-                    #pragma omp task firstprivate(ipatch,ispec)
+                    #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
                     {
 #ifdef  __DETAILED_TIMERS
                     int ithread = omp_get_thread_num();
                     double timer = MPI_Wtime();
 #endif
-                    Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
-                    spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(Nbins);
+                    Species *spec_task = species( ipatch, ispec );
+                    spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(spec_task->particles->first_index.size());
 #ifdef  __DETAILED_TIMERS
                     ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
