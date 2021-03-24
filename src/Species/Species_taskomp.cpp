@@ -71,19 +71,19 @@ Species_taskomp::Species_taskomp( Params &params, Patch *patch )
     nrj_lost_per_bin                       = new double[Nbins];
     nrj_radiation_per_bin                  = new double[Nbins];
 
-    //! buffers for currents and charge
-    b_Jx.resize(Nbins);
-    b_Jy.resize(Nbins);
-    b_Jz.resize(Nbins);
-    b_rho.resize(Nbins);
-
-    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-        // allocate current-buffers, then put to zero their content
-        b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
-        b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
-        b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
-        b_rho[ibin] = new double[size_proj_buffer_rho];
-    }
+    // //! buffers for currents and charge
+    // b_Jx.resize(Nbins);
+    // b_Jy.resize(Nbins);
+    // b_Jz.resize(Nbins);
+    // b_rho.resize(Nbins);
+    // 
+    // for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+    //     // allocate current-buffers, then put to zero their content
+    //     b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
+    //     b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
+    //     b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
+    //     b_rho[ibin] = new double[size_proj_buffer_rho];
+    // }
 
 }//END Species creator
 
@@ -149,13 +149,13 @@ Species_taskomp::~Species_taskomp()
         delete nrj_radiation_per_bin;
     }
 
-    for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-        // delete buffers
-        delete[] b_Jx[ibin];
-        delete[] b_Jy[ibin];
-        delete[] b_Jz[ibin];
-        delete[] b_rho[ibin];
-    }
+    // for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+    //     // delete buffers
+    //     delete[] b_Jx[ibin];
+    //     delete[] b_Jy[ibin];
+    //     delete[] b_Jz[ibin];
+    //     delete[] b_rho[ibin];
+    // }
 
 }
 

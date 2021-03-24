@@ -322,6 +322,12 @@ public:
     //! Merging
     Merging *Merge;
 
+    // buffers for bin projection when tasks are used
+    std::vector<double *> b_Jx;
+    std::vector<double *> b_Jy;
+    std::vector<double *> b_Jz;
+    std::vector<double *> b_rho;
+
     // -----------------------------------------------------------------------------
     //  5. Methods
 

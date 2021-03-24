@@ -76,10 +76,10 @@ public:
     double *nrj_lost_per_bin;
     double *nrj_radiation_per_bin;
 
-    std::vector<double *> b_Jx;
-    std::vector<double *> b_Jy;
-    std::vector<double *> b_Jz;
-    std::vector<double *> b_rho;
+    // std::vector<double *> b_Jx;
+    // std::vector<double *> b_Jy;
+    // std::vector<double *> b_Jz;
+    // std::vector<double *> b_rho;
 
     unsigned int Nbins;
 

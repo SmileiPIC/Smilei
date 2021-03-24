@@ -161,6 +161,23 @@ void Species::initCluster( Params &params )
     size_proj_buffer_Jy  = b_dim[0]*f_dim1_d*f_dim2;
     size_proj_buffer_Jz  = b_dim[0]*b_dim[1]*f_dim2_d;
 
+    if (params.tasks_on_projection){
+        unsigned int Nbins = particles->first_index.size();
+        //! buffers for currents and charge
+        b_Jx.resize(Nbins);
+        b_Jy.resize(Nbins);
+        b_Jz.resize(Nbins);
+        b_rho.resize(Nbins);
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+            // allocate current-buffers, then put to zero their content
+            b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
+            b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
+            b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
+            b_rho[ibin] = new double[size_proj_buffer_rho];
+        }
+    }
+
     //Initialize specMPI
     MPI_buffer_.allocate( nDim_field );
 
@@ -335,6 +352,15 @@ Species::~Species()
         Py_DECREF( ionization_rate_ );
     }
 
+    if (b_Jx[0]){
+        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+            // delete buffers
+            delete[] b_Jx[ibin];
+            delete[] b_Jy[ibin];
+            delete[] b_Jz[ibin];
+            delete[] b_rho[ibin];
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

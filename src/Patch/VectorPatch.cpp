@@ -446,7 +446,8 @@ void VectorPatch::dynamics( Params &params,
             
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
                 // DO NOT parallelize this species loop unless race condition prevention is used!
-                Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                //Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                Species *spec_task = (species( ipatch, ispec ));
                 std::vector<unsigned int> b_dim = spec_task->b_dim;
                 for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
                     double *b_Jx = spec_task->b_Jx[ibin];
