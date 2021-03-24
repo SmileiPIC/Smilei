@@ -42,9 +42,6 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     }
     ov2=0;
     double dzz = std::numeric_limits<double>::infinity() ;
-    params.norderx = params.norder[0];
-    params.nordery = params.norder[1];
-    params.norderz = 2;
     
     Field2D* Ex2D_pxr = static_cast<Field2D*>( EMfields->Ex_);
     Field2D* Ey2D_pxr = static_cast<Field2D*>( EMfields->Ey_);
@@ -64,7 +61,7 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     picsar::init_params_picsar( &n0, &n2, &n1,
                                 &pxr_dx, &dzz, &pxr_dy, &params.timestep,
                                 &ov0, &ov2, &ov1,
-                                &params.norderx, &params.norderz, &params.nordery,
+                                &spectral_solver_order[0], &orderz, &spectral_solver_order[1],
                                 &params.is_spectral,
                                 &( Ex2D_pxr->data_[0] ),
                                 &( Ez2D_pxr->data_[0] ),

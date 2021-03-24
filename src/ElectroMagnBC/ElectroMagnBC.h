@@ -38,7 +38,7 @@ protected:
     unsigned int min_max;
 
     // number of damping cells
-    std::vector<unsigned int> number_of_damping_cells;
+    unsigned int number_of_cells_;
     
 };
 

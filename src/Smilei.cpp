@@ -279,7 +279,7 @@ int main( int argc, char *argv[] )
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
         
         // rotational cleaning on a single global region
-        if( params.apply_rotational_cleaning ) {
+        if( params.initial_rotational_cleaning ) {
             TITLE( "Rotational cleaning" );
             Region region_global( params );
             region_global.build( params, &smpi, vecPatches, openPMD, true );

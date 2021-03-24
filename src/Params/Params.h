@@ -238,10 +238,8 @@ public:
     std::vector<unsigned int> region_oversize;
     //! Number of region ghots cells asked by the user
     unsigned int region_ghost_cells ;
-    //! Number of damping cells
-    std::vector<unsigned int> number_of_damping_cells;
-
-    bool apply_rotational_cleaning;
+    
+    bool initial_rotational_cleaning;
     
     //! True if restart requested
     bool restart;
@@ -329,12 +327,9 @@ public:
     bool multiple_decomposition;
 
     // PXR parameters
-    bool  is_spectral=false ;
-    bool  is_pxr=false ;
-    int   norderx = 2;
-    int   nordery = 2;
-    int   norderz = 2;
-    std::vector<int> norder;
+    bool  is_spectral;
+    bool  is_pxr;
+    std::vector<int> spectral_solver_order;
 
     //! Boolean for printing the expected disk usage or not
     bool print_expected_disk_usage;

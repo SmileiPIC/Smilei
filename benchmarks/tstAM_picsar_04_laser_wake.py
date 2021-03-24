@@ -21,6 +21,8 @@ Main(
     geometry = "AMcylindrical",
     number_of_AM=2,
     interpolation_order = 1,
+    maxwell_solver = "spectral",
+    spectral_solver_order = [32,0],
     timestep = dt,
     simulation_time = dt*Nit,
     cell_length  = [dx, dtrans],
@@ -28,17 +30,13 @@ Main(
     number_of_patches = [npatch_x, npatch_trans],
     #clrw = 5,
     EM_boundary_conditions = [
-        ["zero","zero"],
+        ["ramp44","ramp44"],
         ["silver-muller","buneman"],
     ],
     random_seed = smilei_mpi_rank,
     solve_poisson = False,
     print_every = 100,
-    is_spectral=True,
-    is_pxr = True,
-    norder = [32,0],
-    apply_rotational_cleaning = True,
-    number_of_damping_cells = [44],
+    initial_rotational_cleaning = True,
 
 )
 

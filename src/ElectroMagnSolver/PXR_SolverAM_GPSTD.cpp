@@ -105,7 +105,7 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     picsar::init_params_picsar_AM( &nr, &nl, &nmodes, &nmodes, 
                                 &pxr_dr, &pxr_dl, &params.timestep,
                                 &ovr, &ovl,
-                                &params.norder[1], &params.norder[0],
+                                &params.spectral_solver_order[1], &params.spectral_solver_order[0],
                                 &( Et_pxr->cdata_[0] ),
                                 &( Er_pxr->cdata_[0] ),
                                 &( El_pxr->cdata_[0] ),
