@@ -421,8 +421,6 @@ void VectorPatch::dynamics( Params &params,
     //     smpi->resize_buffers(omp_get_num_threads(),params.geometry=="AMcylindrical"); // resize buffers to their original size
     // }
     // }
-    
-    #pragma omp taskwait
         
     // Copy the bin species buffers for the densities to patch grid densities
     #pragma omp single
