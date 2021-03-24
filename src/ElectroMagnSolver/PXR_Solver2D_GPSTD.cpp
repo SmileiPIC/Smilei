@@ -58,10 +58,12 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     double pxr_dx = -params.cell_length[0];
     double pxr_dy = -params.cell_length[1];
     
+    int orderz = 2;
+    
     picsar::init_params_picsar( &n0, &n2, &n1,
                                 &pxr_dx, &dzz, &pxr_dy, &params.timestep,
                                 &ov0, &ov2, &ov1,
-                                &spectral_solver_order[0], &orderz, &spectral_solver_order[1],
+                                &params.spectral_solver_order[0], &orderz, &params.spectral_solver_order[1],
                                 &params.is_spectral,
                                 &( Ex2D_pxr->data_[0] ),
                                 &( Ez2D_pxr->data_[0] ),
