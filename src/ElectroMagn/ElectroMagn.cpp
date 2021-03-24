@@ -522,8 +522,10 @@ void ElectroMagn::incrementAvgField( Field *field, Field *field_avg )
 
 void ElectroMagn::laserDisabled()
 {
-    if( emBoundCond.size() && emBoundCond[0] ) {
-        emBoundCond[0]->laserDisabled();
+    for( unsigned int i=0; i<emBoundCond.size(); i++ ) {
+        if( emBoundCond[i] ) {
+            emBoundCond[i]->laserDisabled();
+        }
     }
 }
 
