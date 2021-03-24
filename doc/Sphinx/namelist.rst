@@ -362,7 +362,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
    the ``interpolation_order`` value.
 
 ..
-
   .. py:data:: spectral_solver_order
 
     :type: A list of integers
