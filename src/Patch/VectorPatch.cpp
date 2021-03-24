@@ -422,6 +422,8 @@ void VectorPatch::dynamics( Params &params,
     // }
     // }
     
+    #pragma omp taskwait
+        
     // Copy the bin species buffers for the densities to patch grid densities
     #pragma omp single
     if (params.tasks_on_projection){
@@ -432,7 +434,7 @@ void VectorPatch::dynamics( Params &params,
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             
-            #pragma omp task firstprivate(ipatch) private(clrw) depend(in:has_done_dynamics[ipatch][0:(Nspecies-1)])
+            #pragma omp task firstprivate(ipatch,clrw) depend(in:has_done_dynamics[ipatch][0:(Nspecies-1)])
             { // only the ipatch iterations are parallelized
 #ifdef  __DETAILED_TIMERS
             int ithread = omp_get_thread_num();

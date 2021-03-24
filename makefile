@@ -41,6 +41,8 @@ COMPILER_INFO := $(shell $(SMILEICXX) -show | cut -d' ' -f1)
 
 ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
     CXXFLAGS += -Wno-reorder
+else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
+    CXXFLAGS += -Wdeprecated-register
 endif
 
 #-----------------------------------------------------

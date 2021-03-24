@@ -303,9 +303,12 @@ int main( int argc, char *argv[] )
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
-        //vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
-        vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
 
+        if (params.tasks_on_projection){
+            vecPatches.runAllDiagsTasks( params, &smpi, 0, timers, simWindow );
+        } else {
+            vecPatches.runAllDiags( params, &smpi, 0, timers, simWindow );
+        }
     }
     
     TITLE( "Species creation summary" );
@@ -519,8 +522,11 @@ int main( int argc, char *argv[] )
             }
             
             // call the various diagnostics
-            vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
-            vecPatches.runAllDiagsTasks( params, &smpi, itime, timers, simWindow );
+            if (params.tasks_on_projection){
+                vecPatches.runAllDiagsTasks( params, &smpi, itime, timers, simWindow );
+            }else {
+                vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
+            }
 
             timers.movWindow.restart();
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
