@@ -273,6 +273,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                 {
     
 #ifdef  __DETAILED_TIMERS
+                ithread = omp_get_thread_num();
                 timer = MPI_Wtime();
 #endif
                 vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
@@ -300,6 +301,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                     
 
 #ifdef  __DETAILED_TIMERS
+                        ithread = omp_get_thread_num();
                         timer = MPI_Wtime();
 #endif
 
@@ -403,6 +405,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #endif
                     {
 #ifdef  __DETAILED_TIMERS
+                    ithread = omp_get_thread_num();
                     timer = MPI_Wtime();
 #endif
 
