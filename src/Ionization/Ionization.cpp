@@ -35,10 +35,14 @@ void Ionization::joinNewElectrons(unsigned int Nbins)
     // if tasks on bins are used for ionization, join the lists of new electrons 
     // created in each bin, to have the list of new electrons for this species and patch
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-        for (unsigned int ipart = 0; ipart < new_electrons_per_bin[ibin].size() ; ipart++){
+        // number of particles to add from the bin
+        unsigned int n_particles_to_create = new_electrons_per_bin[ibin].size();
+        new_electrons.createParticles(n_particles_to_create);
 
-            new_electrons.createParticle();
-            int idNew = new_electrons.size() - 1;
+        for (unsigned int ipart = 0; ipart < n_particles_to_create ; ipart++){
+
+            int idNew = (new_electrons.size() - n_particles_to_create) + ipart;
+
             for( unsigned int i=0; i<new_electrons.dimension(); i++ ) {
                 new_electrons.position( i, idNew ) = (new_electrons_per_bin[ibin]).position( i, ipart );
             }
