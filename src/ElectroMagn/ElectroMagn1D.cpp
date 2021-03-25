@@ -875,3 +875,58 @@ void ElectroMagn1D::initAntennas( Patch *patch, Params& params )
     }
     
 }
+
+void ElectroMagn1D::copyInLocalDensities(int ispec, int ibin, double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, std::vector<unsigned int> b_dim, bool diag_flag)
+{
+    Field1D *Jx1D,*Jy1D,*Jz1D,*rho1D;
+    
+    if ( (Jx_s [ispec] != NULL) & diag_flag){
+        Jx1D  = static_cast<Field1D *>( Jx_s [ispec] ) ;
+    } else {
+        Jx1D  = static_cast<Field1D *>( Jx_ )  ;
+    }
+
+    if ( (Jy_s [ispec] != NULL) & diag_flag){
+        Jy1D  = static_cast<Field1D *>( Jy_s [ispec] ) ;
+    } else {
+        Jy1D  = static_cast<Field1D *>( Jy_ )  ;
+    }
+
+    if ( (Jz_s [ispec] != NULL) & diag_flag){
+        Jz1D  = static_cast<Field1D *>( Jz_s [ispec] ) ;
+    } else {
+        Jz1D  = static_cast<Field1D *>( Jz_ )  ;
+    }
+
+    if ( (rho_s [ispec] != NULL) & diag_flag){
+        rho1D  = static_cast<Field1D *>( rho_s [ispec] ) ;
+    } else {
+        rho1D  = static_cast<Field1D *>( rho_ )  ;
+    }
+    
+    //cout << "In";
+    int iloc;
+
+    // Introduced to avoid indirection in data access b_rho[i*b_dim[1]+j]
+    int b_dim0 = b_dim[0];
+
+    for (int i = 0; i < b_dim0 ; i++) {
+	      iloc = ibin + i ;
+        // Jx (d)
+        (*Jx1D) (iloc) += b_Jx [i];   //  primal along y
+
+        // Jy (p)
+        (*Jy1D) (iloc) += b_Jy [i];
+        //(*Jy2D)(iloc,j) +=  b_Jy [i*(b_dim1+1)+j];   //  dual along y
+
+        // Jz (p)
+        (*Jz1D) (iloc) +=  b_Jz [i];   //  primal along y
+
+        // rho (p)
+        if (diag_flag){
+	          (*rho1D)(iloc) +=  b_rho[i];   // primal along y
+        }
+    }
+
+} // end ElectroMagn1D::copyInLocalDensities
+
