@@ -396,3 +396,266 @@ void Projector1D4Order::susceptibility( ElectroMagn *EMfields, Particles &partic
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Wrapper for projection on buffers
+// ---------------------------------------------------------------------------------------------------------------------
+void Projector1D4Order::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_shift, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
+{
+    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
+    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
+    std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
+    
+    // If no field diagnostics this timestep, then the projection is done directly on the total arrays
+    if( !diag_flag ) {
+        if( !is_spectral ) {
+            for( unsigned int ipart= (unsigned int) istart ; ipart< (unsigned int ) iend; ipart++ ) {
+                // cerr << ipart << endl;
+                // cerr << ( *iold )[ipart] << endl;
+                currentsForTasks( b_Jx, b_Jy, b_Jz, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
+            }
+        } else {
+            for( unsigned int ipart= (unsigned int) istart ; ipart< (unsigned int ) iend; ipart++ ) {
+                currentsAndDensityForTasks( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
+            }
+        }
+        // Otherwise, the projection may apply to the species-specific arrays
+    } else {
+        // double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
+        // double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
+        // double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
+        // double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+        for( int ipart=istart ; ipart<iend; ipart++ ) {
+            currentsAndDensityForTasks( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], bin_shift );
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project current densities : main projector
+// ---------------------------------------------------------------------------------------------------------------------
+void Projector1D4Order::currentsForTasks( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift )
+{
+    // Declare local variables
+    int ipo, ip;
+    int ip_m_ipo;
+    double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
+    double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xipo3, xj_m_xipo4, xj_m_xip, xj_m_xip2, xj_m_xip3, xj_m_xip4;
+    double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
+    double cry_p = charge_weight*particles.momentum( 1, ipart )*invgf;  // current density in the y-direction of the macroparticle
+    double crz_p = charge_weight*particles.momentum( 2, ipart )*invgf;  // current density allow the y-direction of the macroparticle
+    double S0[7], S1[7], Wl[7], Wt[7], Jx_p[7];            // arrays used for the Esirkepov projection method
+    // Initialize variables
+    for( unsigned int i=0; i<7; i++ ) {
+        S0[i]=0.;
+        S1[i]=0.;
+        Wl[i]=0.;
+        Wt[i]=0.;
+        Jx_p[i]=0.;
+    }//i
+    
+    
+    // Locate particle old position on the primal grid
+    xj_m_xipo  = *deltaold;                   // normalized distance to the nearest grid point
+    xj_m_xipo2 = xj_m_xipo  * xj_m_xipo;                 // square of the normalized distance to the nearest grid point
+    xj_m_xipo3 = xj_m_xipo2 * xj_m_xipo;              // cube of the normalized distance to the nearest grid point
+    xj_m_xipo4 = xj_m_xipo3 * xj_m_xipo;              // 4th power of the normalized distance to the nearest grid point
+    
+    // Locate particle new position on the primal grid
+    xjn       = particles.position( 0, ipart ) * dx_inv_;
+    ip        = round( xjn );                         // index of the central node
+    xj_m_xip  = xjn - ( double )ip;                   // normalized distance to the nearest grid point
+    xj_m_xip2 = xj_m_xip  * xj_m_xip;                    // square of the normalized distance to the nearest grid point
+    xj_m_xip3 = xj_m_xip2 * xj_m_xip;                 // cube of the normalized distance to the nearest grid point
+    xj_m_xip4 = xj_m_xip3 * xj_m_xip;                 // 4th power of the normalized distance to the nearest grid point
+    
+    
+    // coefficients 4th order interpolation on 5 nodes
+    
+    S0[1] = dble_1_ov_384   - dble_1_ov_48  * xj_m_xipo  + dble_1_ov_16 * xj_m_xipo2 - dble_1_ov_12 * xj_m_xipo3 + dble_1_ov_24 * xj_m_xipo4;
+    S0[2] = dble_19_ov_96   - dble_11_ov_24 * xj_m_xipo  + dble_1_ov_4 * xj_m_xipo2  + dble_1_ov_6  * xj_m_xipo3 - dble_1_ov_6  * xj_m_xipo4;
+    S0[3] = dble_115_ov_192 - dble_5_ov_8   * xj_m_xipo2 + dble_1_ov_4 * xj_m_xipo4;
+    S0[4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xipo  + dble_1_ov_4 * xj_m_xipo2  - dble_1_ov_6  * xj_m_xipo3 - dble_1_ov_6  * xj_m_xipo4;
+    S0[5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xipo  + dble_1_ov_16 * xj_m_xipo2 + dble_1_ov_12 * xj_m_xipo3 + dble_1_ov_24 * xj_m_xipo4;
+    
+    // coefficients 2nd order interpolation on 5 nodes
+    ipo        = *iold;                          // index of the central node
+    ip_m_ipo = ip-ipo-index_domain_begin;
+    
+    S1[ip_m_ipo+1] = dble_1_ov_384   - dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 - dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
+    S1[ip_m_ipo+2] = dble_19_ov_96   - dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  + dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
+    S1[ip_m_ipo+3] = dble_115_ov_192 - dble_5_ov_8   * xj_m_xip2 + dble_1_ov_4 * xj_m_xip4;
+    S1[ip_m_ipo+4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  - dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
+    S1[ip_m_ipo+5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 + dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
+    
+    // coefficients used in the Esirkepov method
+    for( unsigned int i=0; i<7; i++ ) {
+        Wl[i] = S0[i] - S1[i];           // for longitudinal current (x)
+        Wt[i] = 0.5 * ( S0[i] + S1[i] ); // for transverse currents (y,z)
+    }//i
+    
+    // local current created by the particle
+    // calculate using the charge conservation equation
+    for( unsigned int i=1; i<7; i++ ) {
+        Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
+    }
+    
+    ipo -= 3 + bin_shift;
+    
+    // 4th order projection for the total currents & charge density
+    // At the 4th order, oversize = 3.
+    for( unsigned int i=0; i<7; i++ ) {
+        Jx[i  + ipo]  += Jx_p[i];
+        Jy[i  + ipo]  += cry_p * Wt[i];
+        Jz[i  + ipo]  += crz_p * Wt[i];
+    }//i
+    
+} // END Project local current densities (sort)
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+//!  Project current densities & charge : diagFields timstep
+// ---------------------------------------------------------------------------------------------------------------------
+void Projector1D4Order::currentsAndDensityForTasks( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift )
+{
+    // Declare local variables
+    int ipo, ip;
+    int ip_m_ipo;
+    double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
+    double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xipo3, xj_m_xipo4, xj_m_xip, xj_m_xip2, xj_m_xip3, xj_m_xip4;
+    double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
+    double cry_p = charge_weight*particles.momentum( 1, ipart )*invgf;  // current density in the y-direction of the macroparticle
+    double crz_p = charge_weight*particles.momentum( 2, ipart )*invgf;  // current density allow the y-direction of the macroparticle
+    double S0[7], S1[7], Wl[7], Wt[7], Jx_p[7];            // arrays used for the Esirkepov projection method
+    // Initialize variables
+    for( unsigned int i=0; i<7; i++ ) {
+        S0[i]=0.;
+        S1[i]=0.;
+        Wl[i]=0.;
+        Wt[i]=0.;
+        Jx_p[i]=0.;
+    }//i
+    
+    
+    // Locate particle old position on the primal grid
+    xj_m_xipo  = *deltaold;                   // normalized distance to the nearest grid point
+    xj_m_xipo2 = xj_m_xipo  * xj_m_xipo;                 // square of the normalized distance to the nearest grid point
+    xj_m_xipo3 = xj_m_xipo2 * xj_m_xipo;              // cube of the normalized distance to the nearest grid point
+    xj_m_xipo4 = xj_m_xipo3 * xj_m_xipo;              // 4th power of the normalized distance to the nearest grid point
+    
+    // Locate particle new position on the primal grid
+    xjn       = particles.position( 0, ipart ) * dx_inv_;
+    ip        = round( xjn );                         // index of the central node
+    xj_m_xip  = xjn - ( double )ip;                   // normalized distance to the nearest grid point
+    xj_m_xip2 = xj_m_xip  * xj_m_xip;                    // square of the normalized distance to the nearest grid point
+    xj_m_xip3 = xj_m_xip2 * xj_m_xip;                 // cube of the normalized distance to the nearest grid point
+    xj_m_xip4 = xj_m_xip3 * xj_m_xip;                 // 4th power of the normalized distance to the nearest grid point
+    
+    
+    // coefficients 4th order interpolation on 5 nodes
+    
+    S0[1] = dble_1_ov_384   - dble_1_ov_48  * xj_m_xipo  + dble_1_ov_16 * xj_m_xipo2 - dble_1_ov_12 * xj_m_xipo3 + dble_1_ov_24 * xj_m_xipo4;
+    S0[2] = dble_19_ov_96   - dble_11_ov_24 * xj_m_xipo  + dble_1_ov_4 * xj_m_xipo2  + dble_1_ov_6  * xj_m_xipo3 - dble_1_ov_6  * xj_m_xipo4;
+    S0[3] = dble_115_ov_192 - dble_5_ov_8   * xj_m_xipo2 + dble_1_ov_4 * xj_m_xipo4;
+    S0[4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xipo  + dble_1_ov_4 * xj_m_xipo2  - dble_1_ov_6  * xj_m_xipo3 - dble_1_ov_6  * xj_m_xipo4;
+    S0[5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xipo  + dble_1_ov_16 * xj_m_xipo2 + dble_1_ov_12 * xj_m_xipo3 + dble_1_ov_24 * xj_m_xipo4;
+    
+    // coefficients 2nd order interpolation on 5 nodes
+    ipo        = *iold;                          // index of the central node
+    ip_m_ipo = ip-ipo-index_domain_begin;
+    
+    S1[ip_m_ipo+1] = dble_1_ov_384   - dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 - dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
+    S1[ip_m_ipo+2] = dble_19_ov_96   - dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  + dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
+    S1[ip_m_ipo+3] = dble_115_ov_192 - dble_5_ov_8   * xj_m_xip2 + dble_1_ov_4 * xj_m_xip4;
+    S1[ip_m_ipo+4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  - dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
+    S1[ip_m_ipo+5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 + dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
+    
+    // coefficients used in the Esirkepov method
+    for( unsigned int i=0; i<7; i++ ) {
+        Wl[i] = S0[i] - S1[i];           // for longitudinal current (x)
+        Wt[i] = 0.5 * ( S0[i] + S1[i] ); // for transverse currents (y,z)
+    }//i
+    
+    // local current created by the particle
+    // calculate using the charge conservation equation
+    for( unsigned int i=1; i<7; i++ ) {
+        Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
+    }
+    
+    ipo -= 3 + bin_shift;
+    
+    // 4th order projection for the total currents & charge density
+    // At the 4th order, oversize = 3.
+    for( unsigned int i=0; i<7; i++ ) {
+        Jx[i  + ipo ]  += Jx_p[i];
+        Jy[i  + ipo ]  += cry_p * Wt[i];
+        Jz[i  + ipo ]  += crz_p * Wt[i];
+        rho[i  + ipo ] += charge_weight * S1[i];
+    }//i
+    
+} // END Project local current densities
+
+/// ---------------------------------------------------------------------------------------------------------------------
+//! Project global current densities : ionization, for tasks
+// ---------------------------------------------------------------------------------------------------------------------
+void  Projector1D4Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, double *b_Jz, Particles &particles, int ipart, LocalFields Jion, int bin_shift )
+{
+    
+    //Declaration of local variables
+    int ip, id ;
+    double xpn, xpmxip, xpmxip2, xpmxip3, xpmxip4, xpmxid, xpmxid2, xpmxid3, xpmxid4;
+    double Sxp[5], Sxd[5];
+    
+    // weighted currents
+    double weight = inv_cell_volume * particles.weight( ipart );
+    double Jx_ion = Jion.x * weight;
+    double Jy_ion = Jion.y * weight;
+    double Jz_ion = Jion.z * weight;
+    
+    //Locate particle on the grid
+    xpn    = particles.position( 0, ipart ) * dx_inv_; // normalized distance to the first node
+  
+    // x-primal index
+    ip      = round( xpn );                  // x-index of the central node
+    xpmxip  = xpn - ( double )ip;            // normalized distance to the nearest grid point
+    xpmxip2 = xpmxip*xpmxip;                 // square of the normalized distance to the nearest grid point
+    xpmxip3 = xpmxip2*xpmxip;                // cube 
+    xpmxip4 = xpmxip2*xpmxip2;               // fourth-power
+    
+    // x-dual index
+    id      = round( xpn+0.5 );              // x-index of the central node
+    xpmxid  = xpn - ( double )id + 0.5;      // normalized distance to the nearest grid point
+    xpmxid2 = xpmxid*xpmxid;                 // square of the normalized distance to the nearest grid point
+    xpmxid3 = xpmxid2*xpmxid;                // cube
+    xpmxid4 = xpmxid2*xpmxid2;               // fourth-power
+    
+    Sxp[0] = dble_1_ov_384   - dble_1_ov_48  * xpmxip  + dble_1_ov_16 * xpmxip2 - dble_1_ov_12 * xpmxip3 + dble_1_ov_24 * xpmxip4;
+    Sxp[1] = dble_19_ov_96   - dble_11_ov_24 * xpmxip  + dble_1_ov_4  * xpmxip2 + dble_1_ov_6  * xpmxip3 - dble_1_ov_6  * xpmxip4;
+    Sxp[2] = dble_115_ov_192 - dble_5_ov_8   * xpmxip2 + dble_1_ov_4  * xpmxip4;
+    Sxp[3] = dble_19_ov_96   + dble_11_ov_24 * xpmxip  + dble_1_ov_4  * xpmxip2 - dble_1_ov_6  * xpmxip3 - dble_1_ov_6  * xpmxip4;
+    Sxp[4] = dble_1_ov_384   + dble_1_ov_48  * xpmxip  + dble_1_ov_16 * xpmxip2 + dble_1_ov_12 * xpmxip3 + dble_1_ov_24 * xpmxip4;
+
+    Sxd[0] = dble_1_ov_384   - dble_1_ov_48  * xpmxid  + dble_1_ov_16 * xpmxid2 - dble_1_ov_12 * xpmxid3 + dble_1_ov_24 * xpmxid4;
+    Sxd[1] = dble_19_ov_96   - dble_11_ov_24 * xpmxid  + dble_1_ov_4  * xpmxid2 + dble_1_ov_6  * xpmxid3 - dble_1_ov_6  * xpmxid4;
+    Sxd[2] = dble_115_ov_192 - dble_5_ov_8   * xpmxid2 + dble_1_ov_4  * xpmxid4;
+    Sxd[3] = dble_19_ov_96   + dble_11_ov_24 * xpmxid  + dble_1_ov_4  * xpmxid2 - dble_1_ov_6  * xpmxid3 - dble_1_ov_6  * xpmxid4;
+    Sxd[4] = dble_1_ov_384   + dble_1_ov_48  * xpmxid  + dble_1_ov_16 * xpmxid2 + dble_1_ov_12 * xpmxid3 + dble_1_ov_24 * xpmxid4;
+
+    ip  -= index_domain_begin+bin_shift;
+    // id  -= i_domain_begin;
+
+    for (unsigned int i=0 ; i<5 ; i++) {
+        int iloc=ip+i-2;
+        // int iploc=ip+i-2;
+        // int idloc=id+i-2;
+      
+        // Jx^(d)
+        b_Jx[iloc] += Jx_ion * Sxd[i];
+        // Jy^(p)
+        b_Jy[iloc] += Jy_ion * Sxp[i];
+        // Jz^(p)
+        b_Jz[iloc] += Jz_ion * Sxp[i];
+
+    }
+
+} // end projection of ionization currents for tasks
