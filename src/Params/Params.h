@@ -318,7 +318,6 @@ public:
     unsigned int print_every;
     
     // Double grids parameters (particles and fields)
-    std::vector<unsigned int> global_factor;
     void multiple_decompose();
     void multiple_decompose_1D();
     void multiple_decompose_2D();

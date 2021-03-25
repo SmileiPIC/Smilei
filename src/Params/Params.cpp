@@ -573,8 +573,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 #endif
 
 
-    global_factor.resize( nDim_field, 1 );
-    PyTools::extractV( "global_factor", global_factor, "Main" );
     spectral_solver_order.resize( nDim_field, 1 );
     PyTools::extractV( "spectral_solver_order", spectral_solver_order, "Main" );
 

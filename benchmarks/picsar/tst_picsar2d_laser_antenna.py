@@ -15,7 +15,6 @@ Main(
     geometry = "2Dcartesian",
     
     interpolation_order = 4 ,
-    global_factor=[4,4],
     maxwell_solver = "spectral",
     spectral_solver_order = [2,2],
 

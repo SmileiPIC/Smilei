@@ -176,7 +176,6 @@ class Main(SmileiSingleton):
     cell_sorting = False
 
     # PXR tuning
-    global_factor = []
     spectral_solver_order = []
     initial_rotational_cleaning = False
 
