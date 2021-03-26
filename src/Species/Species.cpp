@@ -139,6 +139,7 @@ void Species::initCluster( Params &params )
     b_dim.resize( params.nDim_field, 1 );
     if( nDim_particle == 1 ) {
         b_dim[0] = ( 1 + clrw ) + 2 * oversize[0];
+        b_dim[1] =  1;
         f_dim1 = 1;
         f_dim2 = 1;
         f_dim1_d = 1;
