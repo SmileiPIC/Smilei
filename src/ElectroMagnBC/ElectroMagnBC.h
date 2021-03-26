@@ -15,7 +15,7 @@ class Field;
 class ElectroMagnBC
 {
 public:
-    ElectroMagnBC( Params &params, Patch *patch, unsigned int _min_max );
+    ElectroMagnBC( Params &params, Patch *patch, unsigned int i_boundary );
     virtual ~ElectroMagnBC();
     void clean();
     
@@ -30,16 +30,24 @@ public:
     std::vector<Laser *> vecLaser;
     
 protected:
-
+    
+    // side of BC is applied 0:xmin 1:xmax 2:ymin 3:ymax 4:zmin 5:zmax
+    unsigned int i_boundary_;
+    
+    //! Number of nodes on the primal grid
+    std::vector<unsigned int> n_p;
+    
+    //! Number of nodes on the dual grid
+    std::vector<unsigned int> n_d;
+    
     //! time-step
     double dt;
     
-    // side of BC is applied 0:xmin 1:xmax 2:ymin 3:ymax 4:zmin 5:zmax
-    unsigned int min_max;
-
-    // number of damping cells
-    std::vector<unsigned int> number_of_damping_cells;
+    //! Spatial step
+    std::vector<double> d;
     
+    //! Ratio of the time-step by the spatial-step
+    std::vector<double> dt_ov_d;
 };
 
 #endif

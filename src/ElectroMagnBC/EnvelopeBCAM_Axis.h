@@ -19,7 +19,7 @@ class EnvelopeBCAM_Axis : public EnvelopeBC
 {
 public:
 
-    EnvelopeBCAM_Axis( Params &params, Patch *patch, unsigned int _min_max );
+    EnvelopeBCAM_Axis( Params &params, Patch *patch, unsigned int i_boundary );
     ~EnvelopeBCAM_Axis() {};
     
     void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch ) override;

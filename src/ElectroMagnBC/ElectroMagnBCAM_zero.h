@@ -19,7 +19,7 @@ class ElectroMagnBCAM_zero : public ElectroMagnBCAM
 {
 public:
 
-    ElectroMagnBCAM_zero( Params &params, Patch *patch, unsigned int _min_max );
+    ElectroMagnBCAM_zero( Params &params, Patch *patch, unsigned int i_boundary );
     ~ElectroMagnBCAM_zero() {};
     
     virtual void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
@@ -28,6 +28,9 @@ private:
 
     //! Number of modes
     unsigned int Nmode;
+    
+    // number of damping cells
+    std::vector<unsigned int> number_of_damping_cells;
     
 };
 
