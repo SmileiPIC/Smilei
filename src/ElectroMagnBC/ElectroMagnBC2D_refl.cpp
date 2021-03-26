@@ -37,7 +37,7 @@ ElectroMagnBC2D_refl::ElectroMagnBC2D_refl( Params &params, Patch *patch, unsign
     : ElectroMagnBC2D( params, patch, _min_max )
 {
     // oversize
-    if (!params.uncoupled_grids)
+    if (!params.multiple_decomposition)
         oversize_ = params.oversize[0];
     else
         oversize_ = params.region_oversize[0];

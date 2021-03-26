@@ -114,6 +114,7 @@ public:
     void inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size ) override;
 
 private:
+    bool cleaned_;
 
 };
 

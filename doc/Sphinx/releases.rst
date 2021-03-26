@@ -18,6 +18,7 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* :doc:`SDMD`
 * New 4th-order non-standard FDTD solver ``Bouchard`` for 2D and 3D geometries
 * New method for current filtering with a user-provided FIR kernel for 1D, 2D and 3D geometries
 * Diagnostics may now have a ``name`` (useful during post-processing)
@@ -56,15 +57,15 @@ Projects
 
 * Already available, but experimental:
 
-  * ``AMcylindrical`` geometry
+  * Interface with the PICSAR library for AM spectral solver
+  * Single Domain Multiple Decomposition
   * Particle merging
   * Nuclear reactions
-  * Interface with the PICSAR library for AM spectral solver
 
 * In the future:
 
-  * Single Domain Multiple Decomposition
-  * Spectral Solvers
+  * More spectral solvers
+  * GPU support
 
 ----
 

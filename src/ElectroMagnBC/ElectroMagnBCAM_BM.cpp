@@ -50,7 +50,7 @@ ElectroMagnBCAM_BM::ElectroMagnBCAM_BM( Params &params, Patch *patch, unsigned i
     double cosphi ;
     double Kx, Kr ;
     double one_ov_rlocal;
-    if (!params.uncoupled_grids)
+    if (!params.multiple_decomposition)
         one_ov_rlocal = 1./( params.grid_length[1]+params.oversize[1]*dr ); // BM conditions on rmax are written at the last primal r position.
     else
         one_ov_rlocal = 1./( params.grid_length[1]+params.region_oversize[1]*dr ); // BM conditions on rmax are written at the last primal r position.

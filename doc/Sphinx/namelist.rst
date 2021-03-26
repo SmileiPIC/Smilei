@@ -115,7 +115,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``"1Dcartesian"``
   * ``"2Dcartesian"``
   * ``"3Dcartesian"``
-  * ``"AMcylindrical"``: cylindrical geometry with azimuthal Fourier decomposition. See :doc:`algorithms`.
+  * ``"AMcylindrical"``: cylindrical geometry with :doc:`azimuthal_modes_decomposition`.
 
   In the following documentation, all references to dimensions or coordinates
   depend on the ``geometry``.
@@ -259,20 +259,27 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[["periodic"]]``
 
   The boundary conditions for the electromagnetic fields. Each boundary may have one of
-  the following conditions: ``"periodic"``, ``"silver-muller"``, or ``"reflective"``.
+  the following conditions: ``"periodic"``, ``"silver-muller"``, ``"reflective"`` or ``"ramp??"``.
 
   | **Syntax 1:** ``[[bc_all]]``, identical for all boundaries.
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
-  ``"silver-muller"`` is an open boundary condition.
-  The incident wave vector :math:`k_{inc}` on each face is defined by
-  ``"EM_boundary_conditions_k"``.
-  When using ``"silver-muller"`` as an injecting boundary,
-  make sure :math:`k_{inc}` is aligned with the wave you are injecting.
-  When using ``"silver-muller"`` as an absorbing boundary,
-  the optimal wave absorption on a given face will be along :math:`k_{abs}`
-  the specular reflection of :math:`k_{inc}` on the considered face.
+  * ``"silver-muller"`` is an open boundary condition.
+    The incident wave vector :math:`k_{inc}` on each face is defined by
+    ``"EM_boundary_conditions_k"``.
+    When using ``"silver-muller"`` as an injecting boundary,
+    make sure :math:`k_{inc}` is aligned with the wave you are injecting.
+    When using ``"silver-muller"`` as an absorbing boundary,
+    the optimal wave absorption on a given face will be along :math:`k_{abs}`
+    the specular reflection of :math:`k_{inc}` on the considered face.
+
+  * ``"ramp??"`` is a basic, open boundary condition designed
+    for the spectral solver in ``AMcylindrical`` geometry.
+    The ``??`` is an integer representing a number of cells
+    (smaller than the number of ghost cells).
+    Over the first half, the fields remain untouched. 
+    Over the second half, all fields are progressively reduced down to zero.
 
 .. py:data:: EM_boundary_conditions_k
 
@@ -290,7 +297,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
-
 
 .. py:data:: time_fields_frozen
 
@@ -334,6 +340,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: number_of_AM
 
+  :type: integer
   :default: 2
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
@@ -346,30 +353,35 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
   Note that this number must be lower or equal to the number of modes of the simulation.
 
-.. rst-class:: experimental
-
-.. py:data:: uncoupled_grids
-
-  :default: ``False``
-
-  * If ``False``, the parallelization of the simulation is done according to :doc:`parallelization`.
-  * If ``True``, the simulated domain is decomposed in dedicated shapes for particles
-    and fields operations. Benefits of this option are illustrated
-    `in this paper <https://arxiv.org/abs/1912.04064>`_.
-
 .. py:data:: custom_oversize
 
+   :type: integer
    :default: 2
 
    The number of ghost-cell for each patches. The default value is set accordingly with
    the ``interpolation_order`` value.
 
-.. py:data:: custom_region_oversize
+..
+  .. py:data:: spectral_solver_order
 
-   :default: 2
+    :type: A list of integers
+    :default: ``[0,0]`` in AM geometry.
 
-   The number of ghost-cell for each region when ``uncoupled_grids=True``.
-   The default value is set accordingly with the ``interpolation_order`` value.
+    The order of the spectral solver in each dimension. Set order to zero for infinite order.
+    In AM geometry, only infinite order is supported along the radial dimension.
+
+  .. py:data:: initial_rotational_cleaning
+
+    :default: ``False``
+
+    If ``True``, use the picsar library to do the rotational cleaning.
+
+    Rotational cleaning corrects field initialization in spectral space
+    in order to make sure that the fields at :math:`t=0` are a valid solution
+    of the Maxwell equation.
+    This operation is only supported in AM geometry and with picsar
+    spectral solver. It requires a FFT of the full domain on a single MPI
+    process so very large simulations may face problems with this procedure.
 
 ----
 
@@ -418,6 +430,38 @@ occur every 150 iterations.
 
   Computational load of a single frozen particle considered by the dynamic load balancing algorithm.
   This load is normalized to the load of a single particle.
+
+----
+
+.. rst-class:: experimental
+
+Multiple decomposition of the domain
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The block ``MultipleDecomposition`` is necessary for spectral solvers and optional in all other cases. 
+When present, it activates
+the :doc:`SDMD` (SDMD) technique
+which separates the decomposition of the field grids from that of the particles.
+Fields are set on large sub-domain called *regions* (1 region per MPI process) while
+particles are kept as small *patches* as in the standard decomposition (many patches per MPI process).
+Benefits of this option are illustrated `in this paper <https://hal.archives-ouvertes.fr/hal-02973139>`_.
+
+
+.. code-block:: python
+
+  MultipleDecomposition(
+      region_ghost_cells = 2
+  )
+
+.. py:data:: region_ghost_cells
+
+   :type: integer
+   :default: 2
+
+   The number of ghost cells for each region.
+   The default value is set accordingly with the ``interpolation_order``.
+   The same number of ghost cells is used in all dimensions except for spectral solver in AM geometry for which the number of radial ghost cells is always automatically set to be the same as patches.
+
 
 ----
 

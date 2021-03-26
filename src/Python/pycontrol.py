@@ -39,7 +39,7 @@ def _smilei_check():
             "DiagTrackParticles","DiagPerformances","ExternalField","PrescribedField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
             "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler",
-            "Vectorization"]:
+            "Vectorization", "MultipleDecomposition"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")
@@ -145,8 +145,8 @@ def _keep_python_running():
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True
-    # Verify uncoupled grids
-    if len(LoadBalancing)>0 and Main.uncoupled_grids:
+    # Verify SDMD grids
+    if len(LoadBalancing)>0 and len(MultipleDecomposition)>0:
         return True
     # Verify the tracked species that require a particle selection
     for d in DiagTrackParticles:

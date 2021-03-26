@@ -18,7 +18,7 @@ ElectroMagnBC3D_refl::ElectroMagnBC3D_refl( Params &params, Patch *patch, unsign
     : ElectroMagnBC3D( params, patch, _min_max )
 {
     // oversize
-    if (!params.uncoupled_grids) {
+    if (!params.multiple_decomposition) {
         oversize_x = params.oversize[0];
         oversize_y = params.oversize[1];
         oversize_z = params.oversize[2];

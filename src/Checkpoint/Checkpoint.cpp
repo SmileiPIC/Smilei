@@ -298,7 +298,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
         
     }
 
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         // Open a group
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
@@ -350,8 +350,9 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
             dump_cFieldsPerProc( g, emAM->Br_m[imode] );
             dump_cFieldsPerProc( g, emAM->Bt_m[imode] );
             
-            if(params.is_pxr == true)
+            if( params.is_pxr ) {
                 dump_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
+            }
             
         }
     }
@@ -602,7 +603,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
         
     }
 
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
         string patchName = Tools::merge( "region-", patch_name.str() );
@@ -680,8 +681,9 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
             restart_cFieldsPerProc( g, emAM->Br_m[imode] );
             restart_cFieldsPerProc( g, emAM->Bt_m[imode] );
             
-            if(params.is_pxr == true)
+            if( params.is_pxr ) {
                 restart_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
+            }
             
         }
     }

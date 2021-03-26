@@ -12,7 +12,7 @@ ElectroMagnBCAM::ElectroMagnBCAM( Params &params, Patch *patch, unsigned int _mi
 {
     std::vector<unsigned int> n_space(params.n_space);
     std::vector<unsigned int> oversize(params.oversize);
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         n_space = params.n_space_region;
         oversize = params.region_oversize;
     }

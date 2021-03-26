@@ -8,6 +8,7 @@ Understand
    units
    algorithms
    parallelization
+   SDMD
    vectorization
    collisions
    ionization
