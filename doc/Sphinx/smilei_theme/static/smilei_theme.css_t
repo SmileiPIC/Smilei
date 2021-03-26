@@ -90,6 +90,20 @@ div.logo a:hover {
 	border: none;
 }
 
+.version {
+    position: relative;
+}
+
+.version::before {
+	display: inline-block;
+	content: "v{{ version }}";
+	position: absolute;
+	bottom: 5%;
+	right: 5%;
+	font: bold 1.6em BPreplay;
+	color: {{ theme_main_color_bold }};;
+}
+
 /* -- body styles ----------------------------------------------------------- */
 
 a {
@@ -127,6 +141,7 @@ div.body h3 { font-size: 150%; }
 div.body h4 { font-size: 130%; }
 div.body h5 { font-size: 100%; }
 div.body h6 { font-size: 100%; }
+.small li { font-size: 1em !important; }
 
 :target {
 	margin-top: -{{ theme_head_height| float *1.2 }}mm;
@@ -934,6 +949,10 @@ div.toctree-smilei hr {
 
 	body, div.documentwrapper, .bodywrapper {
 		margin:0;
+	}
+	
+	.version::before {
+		font-size: 3vw;
 	}
 	
 	ul, ol {
