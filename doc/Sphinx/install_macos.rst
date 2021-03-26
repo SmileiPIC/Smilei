@@ -1,5 +1,5 @@
 
-Prerequisites
+Install dependencies on MacOS
 ---------------------------------
 
 First, you will need to install Xcode and the Command Line Tools in order to be able to compile Smilei
@@ -12,8 +12,10 @@ and follow the instructions.
 
 Here we show how to install all dependendencies needed by Smilei using Brew or Macports. Please note that you need to install one *and only one* package manager.
 
+----
+
 Brew : install Smilei
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 This installation procedure has been tested on macOS 10.14.4
 
@@ -50,8 +52,10 @@ To update Smilei with just type
   
      brew upgrade --fetch-HEAD smilei
 
+----
+
 Brew : install dependencies
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In case you want ot keep a private version of Smilei where you can make changes to the core code, 
 you might want to just install the Smilei dependencies to be able to compile Smilei from you directory:
@@ -78,10 +82,10 @@ you might want to just install the Smilei dependencies to be able to compile Smi
 
 #. In a new terminal window, you can now compile :program:`smilei` (see :ref:`compile` for other options)
 
-
+----
 
 Macports : install dependencies
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Please note that these guidelines might be slightly outdated. Tested on Mojave in january 2021**
 

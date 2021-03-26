@@ -493,8 +493,10 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
                     //        if omp, create a list per thread
-                    partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                    if(!params.is_spectral){
+                        partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
+                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                    }
 
                 } else if( mass_==0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
@@ -529,6 +531,10 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[2] += MPI_Wtime() - timer;
 #endif
+                if(params.is_spectral && mass_>0){
+                    partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
+                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                }
 
             }// ibin
         } // end if moving particle
@@ -720,33 +726,33 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
 //   - increment the charge (projection)
 //   - used at initialisation for Poisson (and diags if required, not for now dynamics )
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
+void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old /*=false*/ )
 {
     // -------------------------------
     // calculate the particle charge
     // -------------------------------
     if( ( !particles->is_test ) ) {
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-            // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
-            //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
-            if( !dynamic_cast<ElectroMagnAM *>( EMfields ) ) {
+        if( !dynamic_cast<ElectroMagnAM *>( EMfields ) ) {
+            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
                 double *b_rho = &( *EMfields->rho_ )( 0 );
 
                 for( unsigned int iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
                     Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 }
-            } else {
-                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
-                unsigned int Nmode = emAM->rho_AM_.size();
-                for( unsigned int imode=0; imode<Nmode; imode++ ) {
-                    complex<double> *b_rho = &( *emAM->rho_AM_[imode] )( 0 );
-                    for( unsigned int iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
+            }
+        } else {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            unsigned int Nmode = emAM->rho_AM_.size();
+            for( unsigned int imode=0; imode<Nmode; imode++ ) {
+                unsigned int ifield = imode*(*EMfields).n_species+ispec;
+                complex<double> *b_rho = old ? &( *emAM->rho_old_AM_[imode] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 );
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                    for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
                         Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
                     }
                 }
             }
         }
-
     }
 }//END computeCharge
 

@@ -319,7 +319,7 @@ void LaserProfileSeparable::createFields( Params &params, Patch *patch )
     // Region size for SDMD
     std::vector<unsigned int> n_space( params.n_space );
     std::vector<unsigned int> oversize( params.oversize );
-    if( params.uncoupled_grids && patch->vecSpecies.empty() ) {
+    if( params.multiple_decomposition && patch->vecSpecies.empty() ) {
         n_space = params.n_space_region;
         oversize = params.region_oversize;
     }
@@ -360,7 +360,7 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
     // Region size for SDMD
     std::vector<unsigned int> n_space(params.n_space);
     std::vector<unsigned int> oversize(params.oversize);
-    if( params.uncoupled_grids && patch->vecSpecies.empty() ) {
+    if( params.multiple_decomposition && patch->vecSpecies.empty() ) {
         n_space = params.n_space_region;
         oversize = params.region_oversize;
     }
@@ -475,7 +475,7 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
     // Region size for SDMD
     std::vector<unsigned int> n_space(params.n_space);
     std::vector<unsigned int> oversize(params.oversize);
-    if( params.uncoupled_grids && patch->vecSpecies.empty() ) {
+    if( params.multiple_decomposition && patch->vecSpecies.empty() ) {
         n_space = params.n_space_region;
         oversize = params.region_oversize;
     }

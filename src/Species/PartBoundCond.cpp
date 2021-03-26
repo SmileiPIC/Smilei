@@ -56,13 +56,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         } else {
             y_min = max( y_min_global, patch->getDomainLocalMin( 1 ) );
             y_max = min( y_max_global, patch->getDomainLocalMax( 1 ) );
-            y_max2 = y_max * y_max;
-            y_min2 = y_min * y_min;
-            if (params.geometry=="AMcylindrical" && params.is_spectral){
-                y_min2 = 0.; // No parallrlization along R
-                y_max2 = patch->getDomainLocalMax( 1 )*patch->getDomainLocalMax( 1 );
-            }
-       }
+        }
         
         if( ( nDim_particle > 2 ) && ( !isAM ) ) {
             if( params.EM_BCs[2][0]=="periodic" ) {

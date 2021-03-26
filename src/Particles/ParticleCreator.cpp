@@ -335,6 +335,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                  species_->particles->last_index[(sub_space.cell_index_[0]+i)/species_->clrw] = iPart;
             }
         }//i
+        delete [] indexes;
     
     } else if( n_existing_particles == 0 ) {
         // Here particles are created from a numpy array or from an HDF5 file

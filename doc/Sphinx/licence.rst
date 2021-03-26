@@ -12,8 +12,7 @@ Extract:
   license as circulated by CEA, CNRS and INRIA at the following URL*
   `http://www.cecill.info <http://www.cecill.info>`_.
   
-You can also find more information about the licence in the downloadable tarball of the
-:ref:`latest version of the code<latestVersion>`.
+More information `here <https://github.com/SmileiPIC/Smilei/tree/master/License>`_.
 
 ----
 

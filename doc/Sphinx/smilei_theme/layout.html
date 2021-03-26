@@ -221,35 +221,6 @@
 {%- endblock %}
 
 
-{%- block document %}
-    <div class="documentwrapper">
-        <div class="body" role="main">
-          {% block body %} {% endblock %}
-          {%- if title | lower == "index" %}
-            <div class="siteindex"><div>
-            
-            {%- for menu in menus %}
-                {%- set menu_name = menu[1] %}
-                {%- set sections = menu[2:] %}
-                <h2>{{ menu_name }}</h2>
-                <ul>
-                {%- for section in sections %}
-                    {%- set url = section[0] %}
-                    {%- set entry = section[1] %}
-                    <li>
-                        <a href="{{ url }}">{{ entry }}</a>
-                    </li>
-                {%- endfor %}
-                </ul>
-            {%- endfor %}
-            
-            </div>
-          {%- endif %}
-        </div></div>
-    </div>
-{%- endblock %}
-
-
 
 {%- block footer %}
     <div class="footer">

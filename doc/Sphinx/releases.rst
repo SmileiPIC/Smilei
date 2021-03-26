@@ -15,9 +15,40 @@ Get Smilei
 
 ----
 
+.. _latestVersion:
+
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* Laser injection from Ymin and Ymax boundaries
+
+**Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
+
+----
+
+Projects
+^^^^^^^^^^^^^^^^
+
+* Already available, but experimental:
+
+  * Interface with the PICSAR library for AM spectral solver
+  * :doc:`Single Domain Multiple Decomposition <SDMD>`
+  * Particle merging
+  * Nuclear reactions
+
+* In the future:
+
+  * More spectral solvers
+  * GPU support
+
+----
+
+Release 4.6
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.6 <_downloads/smilei-v4.6.tar.gz>`_
+
+* :doc:`SDMD`
 * New 4th-order non-standard FDTD solver ``Bouchard`` for 2D and 3D geometries
 * New method for current filtering with a user-provided FIR kernel for 1D, 2D and 3D geometries
 * Lasers can be injected from the ``ymin`` or ``ymax`` boundaries
@@ -49,34 +80,6 @@ Changes made in the repository (not released)
   * Better positionning of collisionally-ionised electrons
   * Fix segfault from thermalizing boundary
   * Running a simulation displayed the wrong version v4.4
-
-----
-
-Projects
-^^^^^^^^^^^^^^^^
-
-* Already available, but experimental:
-
-  * ``AMcylindrical`` geometry
-  * Particle merging
-  * Nuclear reactions
-  * Interface with the PICSAR library for AM spectral solver
-
-* In the future:
-
-  * Single Domain Multiple Decomposition
-  * Spectral Solvers
-
-----
-
-.. _latestVersion:
-
-Latest version
-^^^^^^^^^^^^^^^^^^^^^
-
-The latest version tarball can be donwloaded here:
-
-**Download**: `Smilei latest <_downloads/Smilei.tar.gz>`_
 
 ----
 

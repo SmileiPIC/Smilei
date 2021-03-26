@@ -14,7 +14,7 @@ public:
     SolverAM( Params &params ) : Solver( params )
     {
         std::vector<unsigned int> oversize(params.oversize);
-        if (params.uncoupled_grids)
+        if (params.multiple_decomposition)
             oversize = params.region_oversize;
         nl_p = params.n_space[0]+1+2*oversize[0];
         nl_d = params.n_space[0]+2+2*oversize[0];
@@ -22,7 +22,7 @@ public:
         nr_d = params.n_space[1]+2+2*oversize[1];
         
         std::vector<unsigned int> n_space(params.n_space);
-        if (params.uncoupled_grids)
+        if (params.multiple_decomposition)
             n_space = params.n_space_region;
 
         nl_p = n_space[0] +1+2*oversize[0];
