@@ -1805,3 +1805,86 @@ void ElectroMagnAM::initAntennas( Patch *patch, Params& params )
     
 }
 
+void ElectroMagnAM::copyInLocalAMDensities(int ispec, int ibin, 
+                          std::complex<double> *b_Jl, std::complex<double> *b_Jr, 
+                          std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, 
+                          std::vector<unsigned int> b_dim, bool diag_flag)
+{
+    cField2D *JlAM,*JrAM,*JtAM,*rhoAM;
+
+    unsigned int n_species = Jl_s.size() / nmodes;
+
+    //cout << "In";
+    int iloc;
+
+    // Introduced to avoid indirection in data access b_rho[i*b_dim[1]+j]
+    int b_dim0 = b_dim[0];
+    int b_dim1 = b_dim[1];
+
+    for ( unsigned int imode = 0; imode < nmodes ; imode++){
+
+        unsigned int ifield = imode*n_species+ispec;
+        // assign the J and Js
+
+        if ( (Jl_s [ispec] != NULL) & diag_flag){
+            JlAM  = Jl_s[ifield] ;
+        } else {
+            JlAM  = Jl_[imode] ;  
+        }
+
+        if ( (Jr_s [ispec] != NULL) & diag_flag){
+            JrAM  = Jr_s[ifield] ;
+        } else {
+            JrAM  = Jr_[imode] ;
+        }
+
+        if ( (Jt_s [ispec] != NULL) & diag_flag){
+            JtAM  = Jt_s[ifield] ;
+        } else {
+            JtAM  = Jt_[imode] ;
+        }
+
+        if ( (rho_AM_s [ispec] != NULL) & diag_flag){
+            rhoAM  = rho_AM_s[ifield] ;
+        } else {
+            rhoAM  = rho_AM_[imode] ;
+        }
+
+
+        // copy the densities from the bin buffers to the global/species densities
+        int mode_shift_JlJtRho = b_dim0*b_dim1       ; // for Jl, Jt, rho
+        int mode_shift_Jr      = b_dim0*(b_dim1+1)   ; // for Jr
+        
+        // Jl (d,p)
+        for (int i = 0; i < b_dim0 ; i++) {
+    	      iloc = ibin + i ;
+            for (int j = 0; j < b_dim1 ; j++) {
+                (*JlAM) (iloc,j) += b_Jl [ mode_shift_JlJtRho + i*b_dim1+j];   //  primal along y
+            }
+        }
+
+        // Jr (p,d)
+        for (int i = 0; i < b_dim0 ; i++) {
+    	      iloc = ibin + i ;
+            for (int j = 0; j < (b_dim1+1) ; j++) {
+                //JrAM->data_[ iloc*(*(Jr_).dims_[1])+j ] += b_Jr [ mode_shift_Jr + i*(b_dim1+1)+j];
+                JrAM->cdata_[ iloc*(b_dim1+1)+j ] += b_Jr [ mode_shift_Jr + i*(b_dim1+1)+j];
+                //(*Jy2D)(iloc,j) +=  b_Jy [i*(b_dim1+1)+j];   //  dual along y
+            }
+        }
+
+        // Jt (p,p) and rho (p,p)
+        for (int i = 0; i < b_dim0 ; i++) {
+    	      iloc = ibin + i ;
+            for (int j = 0; j < b_dim1 ; j++) {
+                (*JtAM) (iloc,j) +=  b_Jt [ mode_shift_JlJtRho + i*b_dim1+j];   //  primal along y
+                if (diag_flag){
+    	              (*rhoAM)(iloc,j) +=  b_rhoAM[ mode_shift_JlJtRho + i*b_dim1+j];   // primal along y
+                }
+            }
+        }
+
+    }
+    
+} // end ElectroMagnAM::copyInLocalAMDensities
+
