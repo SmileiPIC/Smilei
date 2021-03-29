@@ -610,6 +610,7 @@ public:
 
     //! Size of the projection buffer
     unsigned int size_proj_buffer_Jx,size_proj_buffer_Jy,size_proj_buffer_Jz,size_proj_buffer_rho;
+    unsigned int size_proj_buffer_Jl,size_proj_buffer_Jr,size_proj_buffer_Jt,size_proj_buffer_rhoAM;
 
 protected:
 

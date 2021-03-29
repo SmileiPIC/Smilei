@@ -157,11 +157,6 @@ void Species::initCluster( Params &params )
         b_dim[2] = f_dim2;
     }
 
-    size_proj_buffer_rho = b_dim[0]*b_dim[1]*f_dim2;
-    size_proj_buffer_Jx  = b_dim[0]*b_dim[1]*f_dim2;
-    size_proj_buffer_Jy  = b_dim[0]*f_dim1_d*f_dim2;
-    size_proj_buffer_Jz  = b_dim[0]*b_dim[1]*f_dim2_d;
-
     if (params.tasks_on_projection){
         
         unsigned int Nbins = particles->first_index.size();
@@ -172,6 +167,11 @@ void Species::initCluster( Params &params )
             b_Jz.resize(Nbins);
             b_rho.resize(Nbins);
 
+            size_proj_buffer_rho = b_dim[0]*b_dim[1]*f_dim2;
+            size_proj_buffer_Jx  = b_dim[0]*b_dim[1]*f_dim2;
+            size_proj_buffer_Jy  = b_dim[0]*f_dim1_d*f_dim2;
+            size_proj_buffer_Jz  = b_dim[0]*b_dim[1]*f_dim2_d;
+
             for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
                 // allocate current-buffers, then put to zero their content
                 b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
@@ -180,10 +180,10 @@ void Species::initCluster( Params &params )
                 b_rho[ibin] = new double[size_proj_buffer_rho];
             }
         } else { // AM geometry
-            size_proj_buffer_rho = size_proj_buffer_rho * params.nmodes; // used for Jl
-            size_proj_buffer_Jx  = size_proj_buffer_Jx  * params.nmodes; // used for Jr
-            size_proj_buffer_Jy  = size_proj_buffer_Jy  * params.nmodes; // used for Jt
-            size_proj_buffer_Jz  = size_proj_buffer_Jz  * params.nmodes; // used for rhoAM
+            size_proj_buffer_rho = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jl
+            size_proj_buffer_Jl  = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jr
+            size_proj_buffer_Jr  = b_dim[0]*f_dim1_d    * params.nmodes; // used for Jt
+            size_proj_buffer_Jt  = b_dim[0]*b_dim[1]    * params.nmodes; // used for rhoAM
 
             //! buffers for currents and charge
             b_Jl.resize(Nbins);
@@ -193,10 +193,10 @@ void Species::initCluster( Params &params )
 
             for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
                 // allocate current-buffers, then put to zero their content
-                b_Jl[ibin]    = new std::complex<double>[size_proj_buffer_Jx ];
-                b_Jr[ibin]    = new std::complex<double>[size_proj_buffer_Jy ];
-                b_Jt[ibin]    = new std::complex<double>[size_proj_buffer_Jz ];
-                b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rho];
+                b_Jl[ibin]    = new std::complex<double>[size_proj_buffer_Jl   ];
+                b_Jr[ibin]    = new std::complex<double>[size_proj_buffer_Jr   ];
+                b_Jt[ibin]    = new std::complex<double>[size_proj_buffer_Jt   ];
+                b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
             }
 
         }

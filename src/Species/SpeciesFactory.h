@@ -1005,6 +1005,10 @@ public:
         new_species->size_proj_buffer_Jy                      = species->size_proj_buffer_Jy;
         new_species->size_proj_buffer_Jz                      = species->size_proj_buffer_Jz;
         new_species->size_proj_buffer_rho                     = species->size_proj_buffer_rho;
+        new_species->size_proj_buffer_Jl                      = species->size_proj_buffer_Jl;
+        new_species->size_proj_buffer_Jr                      = species->size_proj_buffer_Jr;
+        new_species->size_proj_buffer_Jt                      = species->size_proj_buffer_Jt;
+        new_species->size_proj_buffer_rhoAM                   = species->size_proj_buffer_rhoAM;
         new_species->density_profile_type_                       = species->density_profile_type_;
         new_species->vectorized_operators                     = species->vectorized_operators;
         new_species->merging_method_                          = species->merging_method_;

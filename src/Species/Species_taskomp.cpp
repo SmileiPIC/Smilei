@@ -248,10 +248,10 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
             } else {
                 // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
                 // This must be done before Projection and before Ionization (because of the ionization currents)
-                for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jl[ibin][i]    = 0.0;
-                for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jr[ibin][i]    = 0.0;
-                for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jt[ibin][i]    = 0.0;
-                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rhoAM[ibin][i] = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jl; i++)  b_Jl[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jr; i++)  b_Jr[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jt; i++)  b_Jt[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
             }
                 
 #ifdef  __DETAILED_TIMERS
