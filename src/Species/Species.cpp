@@ -163,19 +163,42 @@ void Species::initCluster( Params &params )
     size_proj_buffer_Jz  = b_dim[0]*b_dim[1]*f_dim2_d;
 
     if (params.tasks_on_projection){
+        
         unsigned int Nbins = particles->first_index.size();
-        //! buffers for currents and charge
-        b_Jx.resize(Nbins);
-        b_Jy.resize(Nbins);
-        b_Jz.resize(Nbins);
-        b_rho.resize(Nbins);
+        if (params.geometry != "AMcylindrical" ){
+            //! buffers for currents and charge
+            b_Jx.resize(Nbins);
+            b_Jy.resize(Nbins);
+            b_Jz.resize(Nbins);
+            b_rho.resize(Nbins);
 
-        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-            // allocate current-buffers, then put to zero their content
-            b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
-            b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
-            b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
-            b_rho[ibin] = new double[size_proj_buffer_rho];
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+                // allocate current-buffers, then put to zero their content
+                b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
+                b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
+                b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
+                b_rho[ibin] = new double[size_proj_buffer_rho];
+            }
+        } else { // AM geometry
+            size_proj_buffer_rho = size_proj_buffer_rho * params.nmodes; // used for Jl
+            size_proj_buffer_Jx  = size_proj_buffer_Jx  * params.nmodes; // used for Jr
+            size_proj_buffer_Jy  = size_proj_buffer_Jy  * params.nmodes; // used for Jt
+            size_proj_buffer_Jz  = size_proj_buffer_Jz  * params.nmodes; // used for rhoAM
+
+            //! buffers for currents and charge
+            b_Jl.resize(Nbins);
+            b_Jr.resize(Nbins);
+            b_Jt.resize(Nbins);
+            b_rhoAM.resize(Nbins);
+
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+                // allocate current-buffers, then put to zero their content
+                b_Jl[ibin]    = new std::complex<double>[size_proj_buffer_Jx ];
+                b_Jr[ibin]    = new std::complex<double>[size_proj_buffer_Jy ];
+                b_Jt[ibin]    = new std::complex<double>[size_proj_buffer_Jz ];
+                b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rho];
+            }
+
         }
     }
 
@@ -360,6 +383,16 @@ Species::~Species()
             delete[] b_Jy[ibin];
             delete[] b_Jz[ibin];
             delete[] b_rho[ibin];
+        }
+    }
+
+    if (b_Jl[0]){
+        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+            // delete buffers
+            delete[] b_Jl[ibin];
+            delete[] b_Jr[ibin];
+            delete[] b_Jt[ibin];
+            delete[] b_rhoAM[ibin];
         }
     }
 }
