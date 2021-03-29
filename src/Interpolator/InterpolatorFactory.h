@@ -29,11 +29,6 @@ public:
     static Interpolator *create( Params &params, Patch *patch, bool vectorization )
     {
         Interpolator *Interp = NULL;
-        if (params.tasks_on_projection){
-            if (params.geometry == "AMcylindrical"){
-                ERROR( "Tasks only work with the geometries 1Dcartesian, 2Dcartesian and 3Dcartesian at the moment." );
-            }
-        }
         
         // ---------------
         // 1Dcartesian simulation
