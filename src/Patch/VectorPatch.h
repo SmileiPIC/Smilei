@@ -350,6 +350,7 @@ public :
         for( unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {
             uint64_t tmp( 0 );
             MPI_Reduce( &( nParticles[ispec] ), &tmp, 1, MPI_UINT64_T, MPI_SUM, 0, smpi->world() );
+            nParticles[ispec] = tmp;
         }
         return nParticles;
     }
