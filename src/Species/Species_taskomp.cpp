@@ -43,10 +43,7 @@
 #include "DiagnosticTrack.h"
 
 // necessary for the static_cast
-#include "ElectroMagn2D.h"
-#include "Projector2D2Order.h"
-#include "ElectroMagn3D.h"
-#include "Projector3D2Order.h"
+#include "ProjectorAM2Order.h"
 
 using namespace std;
 
@@ -184,7 +181,7 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
     double timer;
     int ithread;
 #endif
-    
+    int bin_size0 = b_dim[0];
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         nrj_lost_per_bin[ibin] = 0.;
         nrj_radiation_per_bin[ibin] = 0.;
@@ -241,12 +238,21 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 #endif
             {
 
-            // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
-            // This must be done before Projection and before Ionization (because of the ionization currents)
-            for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]  = 0.0;
-            for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]  = 0.0;
-            for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]  = 0.0;
-            for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i] = 0.0;
+            if ( params.geometry != "AMcylindrical" ){
+                // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+            } else {
+                // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jl[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jr[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jt[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rhoAM[ibin][i] = 0.0;
+            }
                 
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
@@ -472,9 +478,9 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
 
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
-            #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
 #else
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
 #endif
             {
                 
@@ -486,10 +492,18 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
             if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
-                Proj->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
-                                                          ibin*clrw, *particles, smpi, 
-                                                          particles->first_index[ibin], particles->last_index[ibin], 
-                                                          buffer_id, diag_flag, params.is_spectral, ispec );
+                if (params.geometry != "AMcylindrical"){
+                    Proj->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
+                                                              ibin*clrw, *particles, smpi, 
+                                                              particles->first_index[ibin], particles->last_index[ibin], 
+                                                              buffer_id, diag_flag, params.is_spectral, ispec );
+                } else {
+                    ProjectorAM2Order *ProjAM = static_cast<ProjectorAM2Order *>(Proj);
+                    ProjAM->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
+                                                                ibin*clrw, bin_size0, *particles, smpi, 
+                                                                particles->first_index[ibin], particles->last_index[ibin], 
+                                                                buffer_id, diag_flag);
+                }
             } // end condition on test and mass
 
 #ifdef  __DETAILED_TIMERS
