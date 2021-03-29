@@ -505,6 +505,98 @@ void ProjectorAM2Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Par
     
 } // END Project global current densities (ionize)
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project global current densities : ionization for tasks NOT DONE YET
+// ---------------------------------------------------------------------------------------------------------------------
+void ProjectorAM2Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, double *b_Jz, Particles &particles, int ipart, LocalFields Jion, int bin_shift )
+{
+
+    return;
+
+    // cField2D *JlAM  = static_cast<cField2D *>( Jl );
+    // cField2D *JrAM  = static_cast<cField2D *>( Jr );
+    // cField2D *JtAM  = static_cast<cField2D *>( Jt );
+    // 
+    // 
+    // //Declaration of local variables
+    // int ip, id, jp, jd;
+    // double xpn, xpmxip, xpmxip2, xpmxid, xpmxid2;
+    // double ypn, ypmyjp, ypmyjp2, ypmyjd, ypmyjd2;
+    // double Slp[3], Sld[3], Srp[3], Srd[3];
+    // 
+    // // weighted currents
+    // double weight = inv_cell_volume * particles.weight( ipart );
+    // double Jl_ion = Jion.x * weight;
+    // double Jr_ion = Jion.y * weight;
+    // double Jt_ion = Jion.z * weight;
+    // 
+    // //Locate particle on the grid
+    // xpn    = particles.position( 0, ipart ) * dl_inv_; // normalized distance to the first node
+    // ypn = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) )*dr_inv_ ;
+    // // x-primal index
+    // ip      = round( xpn );                  // x-index of the central node
+    // xpmxip  = xpn - ( double )ip;            // normalized distance to the nearest grid point
+    // xpmxip2 = xpmxip*xpmxip;                 // square of the normalized distance to the nearest grid point
+    // 
+    // // x-dual index
+    // id      = round( xpn+0.5 );              // x-index of the central node
+    // xpmxid  = xpn - ( double )id + 0.5;      // normalized distance to the nearest grid point
+    // xpmxid2 = xpmxid*xpmxid;                 // square of the normalized distance to the nearest grid point
+    // 
+    // // y-primal index
+    // jp      = round( ypn );                  // y-index of the central node
+    // ypmyjp  = ypn - ( double )jp;            // normalized distance to the nearest grid point
+    // ypmyjp2 = ypmyjp*ypmyjp;                 // square of the normalized distance to the nearest grid point
+    // 
+    // // y-dual index
+    // jd      = round( ypn+0.5 );              // y-index of the central node
+    // ypmyjd  = ypn - ( double )jd + 0.5;      // normalized distance to the nearest grid point
+    // ypmyjd2 = ypmyjd*ypmyjd;                 // square of the normalized distance to the nearest grid point
+    // 
+    // Slp[0] = 0.5 * ( xpmxip2-xpmxip+0.25 );
+    // Slp[1] = ( 0.75-xpmxip2 );
+    // Slp[2] = 0.5 * ( xpmxip2+xpmxip+0.25 );
+    // 
+    // Sld[0] = 0.5 * ( xpmxid2-xpmxid+0.25 );
+    // Sld[1] = ( 0.75-xpmxid2 );
+    // Sld[2] = 0.5 * ( xpmxid2+xpmxid+0.25 );
+    // 
+    // Srp[0] = 0.5 * ( ypmyjp2-ypmyjp+0.25 );
+    // Srp[1] = ( 0.75-ypmyjp2 );
+    // Srp[2] = 0.5 * ( ypmyjp2+ypmyjp+0.25 );
+    // 
+    // Srd[0] = 0.5 * ( ypmyjd2-ypmyjd+0.25 );
+    // Srd[1] = ( 0.75-ypmyjd2 );
+    // Srd[2] = 0.5 * ( ypmyjd2+ypmyjd+0.25 );
+    // 
+    // ip  -= i_domain_begin;
+    // id  -= i_domain_begin;
+    // jp  -= j_domain_begin;
+    // jd  -= j_domain_begin;
+    // 
+    // for( unsigned int i=0 ; i<3 ; i++ ) {
+    //     //int iploc=ip+i-1;
+    //     int idloc=id+i-1;
+    //     for( unsigned int j=0 ; j<3 ; j++ ) {
+    //         int jploc=jp+j-1;
+    //         //int jdloc=jd+j-1;
+    //         if( jploc+ j_domain_begin ==0 ) {
+    //             // Jl^(d,p)
+    //             ( *JlAM )( idloc, jploc ) += Jl_ion*8. /dr * Sld[i]*Srp[j];
+    //             ( *JrAM )( idloc, jploc ) += Jr_ion*8. /dr * Slp[i]*Srd[j];
+    //             ( *JtAM )( idloc, jploc ) += Jt_ion*8. /dr * Slp[i]*Srp[j]; //A corriger dualite et repliement
+    //         } else {
+    //             ( *JlAM )( idloc, jploc ) += Jl_ion /( ( jploc+ j_domain_begin )*dr ) * Sld[i]*Srp[j];
+    //             ( *JrAM )( idloc, jploc ) += Jr_ion /( ( jploc+ j_domain_begin )*dr ) * Slp[i]*Srd[j];
+    //             ( *JtAM )( idloc, jploc ) += Jt_ion /( ( jploc+ j_domain_begin )*dr ) * Slp[i]*Srp[j];
+    //         }
+    // 
+    //     }
+    // }//i
+    // 
+    
+} // END Project global current densities (ionize) for tasks
+
 //------------------------------------//
 //Wrapper for projection
 void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
@@ -521,6 +613,228 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! Wrapper for projection on buffers
+// ---------------------------------------------------------------------------------------------------------------------
+void ProjectorAM2Order::currentsAndDensityWrapperOnAMBuffers( ElectroMagn *EMfields, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, int bin_shift, int bdim0, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, int ipart_ref )
+{
+    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
+    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
+    std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
+    std::vector<double> *array_theta_old = &( smpi->dynamics_thetaold[ithread] );
+    ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+    
+    
+    
+    for( unsigned int ipart= (unsigned int) istart ; ipart< (unsigned int ) iend; ipart++ ) {
+        // cerr << ipart << endl;
+        // cerr << ( *iold )[ipart] << endl;
+
+        // Jx is used for Jl
+        // Jy is used fot Jr
+        // Jt is used for Jt
+        currentsForTasks( emAM, b_Jl, b_Jr, b_Jt, b_rhoAM, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], bin_shift, bdim0, diag_flag );
+    }
+    
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project local currents for all modes on bin sub-grid
+// ---------------------------------------------------------------------------------------------------------------------
+void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, int bin_shift, int bdim0, bool diag_flag )
+{
+   
+    // -------------------------------------
+    // Variable declaration & initialization
+    // -------------------------------------   int iloc,
+    int nparts= particles.size();
+    int iloc, jloc, linindex;
+    // (x,y,z) components of the current density for the macro-particle
+    double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
+    double crl_p = charge_weight*dl_ov_dt;
+    double crr_p = charge_weight*one_ov_dt;
+   
+    // variable declaration
+    double xpn, ypn;
+    double delta, delta2;
+    // arrays used for the Esirkepov projection method
+    double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
+    complex<double>  Jl_p[5][5], Jr_p[5][5];
+    complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m = 1.; //, C_m_old;
+    complex<double> *Jl, *Jr, *Jt, *rho;
+   
+    for( unsigned int i=0; i<5; i++ ) {
+        Sl1[i] = 0.;
+        Sr1[i] = 0.;
+    }
+    Sl0[0] = 0.;
+    Sl0[4] = 0.;
+    Sr0[0] = 0.;
+    Sr0[4] = 0.;
+    // --------------------------------------------------------
+    // Locate particles & Calculate Esirkepov coef. S, DS and W
+    // --------------------------------------------------------
+   
+    // locate the particle on the primal grid at former time-step & calculate coeff. S0
+    delta = deltaold[0*nparts];
+    delta2 = delta*delta;
+    Sl0[1] = 0.5 * ( delta2-delta+0.25 );
+    Sl0[2] = 0.75-delta2;
+    Sl0[3] = 0.5 * ( delta2+delta+0.25 );
+   
+    delta = deltaold[1*nparts];
+    delta2 = delta*delta;
+    Sr0[1] = 0.5 * ( delta2-delta+0.25 );
+    Sr0[2] = 0.75-delta2;
+    Sr0[3] = 0.5 * ( delta2+delta+0.25 );
+    //calculate exponential coefficients
+   
+    double yp = particles.position( 1, ipart );
+    double zp = particles.position( 2, ipart );
+    double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
+    double theta_old = array_theta_old[0];
+    double theta = atan2( zp, yp );
+    e_delta = 1.;
+    e_bar = 1.;
+    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    xpn = particles.position( 0, ipart ) * dl_inv_;
+    int ip = round( xpn );
+    int ipo = iold[0*nparts];
+    int ip_m_ipo = ip-ipo-i_domain_begin;
+    delta  = xpn - ( double )ip;
+    delta2 = delta*delta;
+    Sl1[ip_m_ipo+1] = 0.5 * ( delta2-delta+0.25 );
+    Sl1[ip_m_ipo+2] = 0.75-delta2;
+    Sl1[ip_m_ipo+3] = 0.5 * ( delta2+delta+0.25 );
+   
+    ypn = rp *dr_inv_ ;
+    int jp = round( ypn );
+    int jpo = iold[1*nparts];
+    int jp_m_jpo = jp-jpo-j_domain_begin;
+    delta  = ypn - ( double )jp;
+    delta2 = delta*delta;
+    Sr1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
+    Sr1[jp_m_jpo+2] = 0.75-delta2;
+    Sr1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
+   
+    for( unsigned int i=0; i < 5; i++ ) {
+        DSl[i] = Sl1[i] - Sl0[i];
+        DSr[i] = Sr1[i] - Sr0[i];
+    }
+   
+    double r_bar = ((jpo + j_domain_begin)*dr + deltaold[1*nparts] + rp) * 0.5; // r at t = t0 - dt/2
+    double dtheta = std::remainder( theta-theta_old, 2*M_PI )/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
+    double theta_bar = theta_old+dtheta; // theta at t = t0 - dt/2
+    e_delta_m1 = std::polar( 1.0, dtheta );
+    e_bar_m1 = std::polar( 1.0, theta_bar );
+   
+    ipo -= 2 + bin_shift;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    jpo -= 2;
+   
+    double *invR_local = &(invR[jpo]);
+   
+    // ------------------------------------------------
+    // Local current created by the particle
+    // calculate using the charge conservation equation
+    // ------------------------------------------------
+    for( unsigned int j=0 ; j<5 ; j++ ) {
+        Jl_p[0][j]= 0.;
+    }
+    for( unsigned int i=0 ; i<5 ; i++ ) {
+        Jr_p[i][4]= 0.;
+    }
+   
+    // ---------------------------
+    // Calculate the total current
+    // ---------------------------
+   
+    //initial value of crt_p for imode = 0.
+    complex<double> crt_p= charge_weight*( particles.momentum( 2, ipart )* real(e_bar_m1) - particles.momentum( 1, ipart )*imag(e_bar_m1) ) * invgf;
+   
+    // Compute everything independent of theta
+    for( unsigned int j=0 ; j<5 ; j++ ) {
+        double tmp = crl_p * ( Sr0[j] + 0.5*DSr[j] )* invR_local[j];
+        for( unsigned int i=1 ; i<5 ; i++ ) {
+            Jl_p[i][j]= Jl_p[i-1][j] - DSl[i-1] * tmp;
+        }
+    }
+   
+    for( int j=3 ; j>=0 ; j-- ) {
+        jloc = j+jpo+1;
+        double Vd = abs( jloc + j_domain_begin + 0.5 )* invRd[jloc]*dr ;
+        double tmp = crr_p * DSr[j+1] * invRd[jpo+j+1]*dr;
+        for( unsigned int i=0 ; i<5 ; i++ ) {
+            Jr_p[i][j] =  Jr_p[i][j+1] * Vd + ( Sl0[i] + 0.5*DSl[i] ) * tmp;
+        }
+    }
+   
+    e_delta = 1.5;
+    e_delta_inv = 0.5;   
+   
+   //Compute division by R in advance for Jt and rho evaluation. 
+    for( unsigned int j=0 ; j<5 ; j++ ) {
+        Sr0[j] *= invR_local[j];
+        Sr1[j] *= invR_local[j];
+    }
+   
+    for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
+   
+        if (imode > 0){
+            e_delta *= e_delta_m1;
+            e_bar *= e_bar_m1;
+            C_m = 2. * e_bar ; //multiply modes > 0 by 2 and C_m = 1 otherwise.
+            e_delta_inv =1./e_delta - 1.;
+            crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*r_bar;
+        }
+   
+        Jl = &(b_Jl[ imode*(bdim0*nprimr    ) ] );
+        Jr = &(b_Jr[ imode*(bdim0*(nprimr+1)) ] );
+        Jt = &(b_Jt[ imode*(bdim0*nprimr    ) ] );
+        // Add contribution J_p to global array
+        if (diag_flag){
+            rho = &(b_rhoAM[ imode*(bdim0*nprimr ) ] );
+            for( unsigned int i=0 ; i<5 ; i++ ) {
+                iloc = ( i+ipo )*nprimr;
+                for( unsigned int j=0 ; j<5 ; j++ ) {
+                    jloc = j+jpo;
+                    linindex = iloc+jloc;
+                    rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j];
+                }
+            }//i
+        }
+   
+        // Jl^(d,p)
+        for( unsigned int i=1 ; i<5 ; i++ ) {
+            iloc = ( i+ipo )*nprimr+jpo;
+            for( unsigned int j=0 ; j<5 ; j++ ) {
+                linindex = iloc+j;
+                Jl [linindex] += C_m * Jl_p[i][j] ;
+            }
+        }//i
+   
+        // Jr^(p,d)
+        for( unsigned int i=0 ; i<5 ; i++ ) {
+            iloc = ( i+ipo )*( nprimr+1 )+jpo+1;
+            for( unsigned int j=0 ; j<4 ; j++ ) {
+                linindex = iloc+j;
+                Jr [linindex] += C_m * Jr_p[i][j] ;
+            }
+        }//i
+   
+        // Jt^(p,p)
+        for( unsigned int i=0 ; i<5 ; i++ ) {
+            iloc = ( i+ipo )*nprimr + jpo;
+            for( unsigned int j=0 ; j<5 ; j++ ) {
+                linindex = iloc+j;
+                Jt [linindex] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0[j]*Sl0[i]*( e_delta-1. )); 
+            }
+        }
+   
+        if (imode == 0) e_delta = 1. ; //Restore e_delta correct initial value.
+    }// end loop on modes
+    
+} // END Project local current densities (Jl, Jr, Jt, sort) on bin subgrid
 
 // Projector for susceptibility used as source term in envelope equation
 void ProjectorAM2Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
