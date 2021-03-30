@@ -451,12 +451,12 @@ void VectorPatch::dynamics( Params &params,
                         double *b_rho            = spec_task->b_rho[ibin];
                         (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
                     } else { // AM geometry
-                        // complex<double> *b_Jl    = spec_task->b_Jl[ibin];
-                        // complex<double> *b_Jr    = spec_task->b_Jr[ibin];
-                        // complex<double> *b_Jt    = spec_task->b_Jt[ibin];
-                        // complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
-                        // ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-                        // emAM->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
+                        complex<double> *b_Jl    = spec_task->b_Jl[ibin];
+                        complex<double> *b_Jr    = spec_task->b_Jr[ibin];
+                        complex<double> *b_Jt    = spec_task->b_Jt[ibin];
+                        complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
+                        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                        emAM->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
                     }
                 } // ibin
             } // end species loop
