@@ -181,10 +181,10 @@ void Species::initCluster( Params &params )
             }
         } else { // AM geometry
             //! buffers for currents and charge
-            size_proj_buffer_rhoAM = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jl
-            size_proj_buffer_Jl    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jr
-            size_proj_buffer_Jr    = b_dim[0]*f_dim1_d    * params.nmodes; // used for Jt
-            size_proj_buffer_Jt    = b_dim[0]*b_dim[1]    * params.nmodes; // used for rhoAM
+            size_proj_buffer_rhoAM = b_dim[0]*b_dim[1]    * params.nmodes; // used for rhoAM
+            size_proj_buffer_Jl    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jl
+            size_proj_buffer_Jr    = b_dim[0]*f_dim1_d    * params.nmodes; // used for Jr
+            size_proj_buffer_Jt    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jt
 
             //! buffers for currents and charge
             b_Jl.resize(Nbins);
