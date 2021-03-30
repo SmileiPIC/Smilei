@@ -321,7 +321,7 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     
     //Loop on bin particles
     int nparts( particles.size() );
-    if (tasks_on_projection){
+    if (!tasks_on_projection){
         for( int ipart=*istart ; ipart<*iend; ipart++ ) {
             //Interpolation on current particle
             fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
@@ -332,7 +332,7 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
             ( *delta )[ipart+1*nparts] = deltar;
             ( *theta_old )[ipart] = atan2( particles.position( 2, ipart ), particles.position( 1, ipart ));
         }
-    } else {
+    } else { // with tasks
         for( int ipart=*istart ; ipart<*iend; ipart++ ) {
             //Interpolation on current particle with locally defined variables to avoid data races between threads
             fieldsForTasks( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart], &( *iold )[ipart] , &( *delta )[ipart], &( *theta_old )[ipart] );
