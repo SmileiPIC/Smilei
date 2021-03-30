@@ -1852,8 +1852,8 @@ void ElectroMagnAM::copyInLocalAMDensities(int ispec, int ibin,
 
 
         // copy the densities from the bin buffers to the global/species densities
-        int mode_shift_JlJtRho = b_dim0*b_dim1       ; // for Jl, Jt, rho
-        int mode_shift_Jr      = b_dim0*(b_dim1+1)   ; // for Jr
+        int mode_shift_JlJtRho = imode*b_dim0*b_dim1       ; // for Jl, Jt, rho
+        int mode_shift_Jr      = imode*b_dim0*(b_dim1+1)   ; // for Jr
         
         // Jl (d,p)
         for (int i = 0; i < b_dim0 ; i++) {
