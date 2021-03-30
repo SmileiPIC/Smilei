@@ -1001,6 +1001,8 @@ public:
             Py_INCREF( new_species->ionization_rate_ );
         }
         new_species->ionization_model                         = species->ionization_model;
+        new_species->geometry                                 = species->geometry;
+        new_species->tasks_on_projection                      = species->tasks_on_projection;
         new_species->size_proj_buffer_Jx                      = species->size_proj_buffer_Jx;
         new_species->size_proj_buffer_Jy                      = species->size_proj_buffer_Jy;
         new_species->size_proj_buffer_Jz                      = species->size_proj_buffer_Jz;

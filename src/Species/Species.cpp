@@ -115,6 +115,9 @@ Species::Species( Params &params, Patch *patch ) :
 
     particles_to_move = new Particles();
 
+    tasks_on_projection = params.tasks_on_projection;
+    geometry = params.geometry;
+
 }//END Species creator
 
 void Species::initCluster( Params &params )
@@ -377,23 +380,27 @@ Species::~Species()
         Py_DECREF( ionization_rate_ );
     }
 
-    if (b_Jx[0]){
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-            // delete buffers
-            delete[] b_Jx[ibin];
-            delete[] b_Jy[ibin];
-            delete[] b_Jz[ibin];
-            delete[] b_rho[ibin];
-        }
-    }
-
-    if (b_Jl[0]){
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-            // delete buffers
-            delete[] b_Jl[ibin];
-            delete[] b_Jr[ibin];
-            delete[] b_Jt[ibin];
-            delete[] b_rhoAM[ibin];
+    if (tasks_on_projection){
+        if (geometry != "AMcylindrical"){
+            if (b_Jx[0]){
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+                    // delete buffers
+                    delete[] b_Jx[ibin];
+                    delete[] b_Jy[ibin];
+                    delete[] b_Jz[ibin];
+                    delete[] b_rho[ibin];
+                }
+            }
+        } else {
+            if (b_Jl[0]){
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+                    // delete buffers
+                    delete[] b_Jl[ibin];
+                    delete[] b_Jr[ibin];
+                    delete[] b_Jt[ibin];
+                    delete[] b_rhoAM[ibin];
+                }
+            }
         }
     }
 }
