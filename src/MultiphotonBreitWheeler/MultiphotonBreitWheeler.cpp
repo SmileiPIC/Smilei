@@ -44,20 +44,20 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
     // Local random generator
     rand_ = rand;
 
-    tasks_on_projection = params.tasks_on_projection;
-    if (tasks_on_projection){
-        unsigned int Nbins = species->particles->first_index.size();
+  
+#ifdef _OMPTASKS
+    unsigned int Nbins = species->particles->first_index.size();
         
-        // initialize array per bin for energy conversion
-        pair_converted_energy_per_bin = new double[Nbins];
+    // initialize array per bin for energy conversion
+    pair_converted_energy_per_bin = new double[Nbins];
       
-        //! vector of electron-positron pairs per bin
-        new_pair_per_bin.resize(Nbins);
-        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-            // the pair electron-positron
-            new_pair_per_bin[ibin]  = new Particles[2];
-        }
+    //! vector of electron-positron pairs per bin
+    new_pair_per_bin.resize(Nbins);
+    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+        // the pair electron-positron
+        new_pair_per_bin[ibin]  = new Particles[2];
     }
+#endif
 
 }
 
@@ -195,11 +195,13 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // uint64_t * id = &( particles.id(0));
 
     // Total energy converted into pairs for this species during this timestep
-    if (!tasks_on_projection){
-        this->pair_converted_energy_ = 0;
-    } else {
-        this->pair_converted_energy_per_bin[ibin] = 0;
-    }
+#ifndef _OMPTASKS
+    // without tasks
+    this->pair_converted_energy_ = 0;
+#else
+    // with tasks
+    this->pair_converted_energy_per_bin[ibin] = 0;
+#endif
 
     // _______________________________________________________________
     // Computation
@@ -272,21 +274,23 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 //                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
 //                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
 
-                    // Generation of the pairs
-                    if (!tasks_on_projection){
-                        MultiphotonBreitWheeler::pair_emission( ipart,
-                                                                particles,
-                                                                ( *gamma )[ipart],
-                                                                dt_ - event_time,
-                                                                MultiphotonBreitWheelerTables );
-                    } else {
-                        MultiphotonBreitWheeler::PairEmissionForTasks( ipart,
-                                                                       particles,
-                                                                       ( *gamma )[ipart],
-                                                                       dt_ - event_time,
-                                                                       MultiphotonBreitWheelerTables,
-                                                                       ibin );
-                    }
+                    
+#ifndef _OMPTASKS
+                    // Generation of the pairs without tasks
+                    MultiphotonBreitWheeler::pair_emission( ipart,
+                                                            particles,
+                                                            ( *gamma )[ipart],
+                                                            dt_ - event_time,
+                                                            MultiphotonBreitWheelerTables );
+#else
+                    // Generation of the pairs with tasks
+                    MultiphotonBreitWheeler::PairEmissionForTasks( ipart,
+                                                                   particles,
+                                                                   ( *gamma )[ipart],
+                                                                    dt_ - event_time,
+                                                                    MultiphotonBreitWheelerTables,
+                                                                    ibin );
+#endif
 
 
                     // Optical depth becomes negative meaning
