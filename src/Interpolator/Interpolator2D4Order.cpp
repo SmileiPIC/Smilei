@@ -32,8 +32,6 @@ Interpolator2D4Order::Interpolator2D4Order( Params &params, Patch *patch ) : Int
     dble_1_ov_6 = 1.0/6.0;
     dble_115_ov_192 = 115.0/192.0;
     dble_5_ov_8 = 5.0/8.0;
-
-    tasks_on_projection = params.tasks_on_projection;
     
 }
 
@@ -194,22 +192,24 @@ void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     //Loop on bin particles
     int nparts( particles.size() );
 
-    if (!tasks_on_projection){
-        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-            //Interpolation on current particle
-            fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
-            //Buffering of iol and delta
-            ( *iold )[ipart+0*nparts]  = ip_;
-            ( *iold )[ipart+1*nparts]  = jp_;
-            ( *delta )[ipart+0*nparts] = deltax;
-            ( *delta )[ipart+1*nparts] = deltay;
-        }
-    } else {
-        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-            //Interpolation on current particle with locally defined variables to avoid data races between threads
-            fieldsForTasks( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart], &( *iold )[ipart] , &( *delta )[ipart] );
-        }
+#ifndef _OMPTASKS
+    // without tasks
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+        //Interpolation on current particle
+        fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
+        //Buffering of iol and delta
+        ( *iold )[ipart+0*nparts]  = ip_;
+        ( *iold )[ipart+1*nparts]  = jp_;
+        ( *delta )[ipart+0*nparts] = deltax;
+        ( *delta )[ipart+1*nparts] = deltay;
     }
+#else
+    // with tasks
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+        //Interpolation on current particle with locally defined variables to avoid data races between threads
+        fieldsForTasks( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart], &( *iold )[ipart] , &( *delta )[ipart] );
+    }
+#endif
     
 }
 

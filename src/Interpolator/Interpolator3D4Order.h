@@ -40,8 +40,6 @@ public:
         }
         return interp_res;
     };
-    
-    bool tasks_on_projection;
 
 private:
     inline void coeffs( double xpn, double ypn, double zpn )

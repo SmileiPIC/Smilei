@@ -27,7 +27,8 @@ Interpolator3D2Order::Interpolator3D2Order( Params &params, Patch *patch ) : Int
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
 void Interpolator3D2Order::fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc )
-{
+{   // This interpolator is already task-safe
+
     // Static cast of the electromagnetic fields
     Field3D *Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
     Field3D *Ey3D = static_cast<Field3D *>( EMfields->Ey_ );
@@ -131,7 +132,8 @@ void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *i
 }
 
 void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
-{
+{   // This interpolator is already task-safe
+
     double *ELoc = &( smpi->dynamics_Epart[ithread][0] );
     double *BLoc = &( smpi->dynamics_Bpart[ithread][0] );
 

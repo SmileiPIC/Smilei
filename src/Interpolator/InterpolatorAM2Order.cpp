@@ -25,7 +25,6 @@ InterpolatorAM2Order::InterpolatorAM2Order( Params &params, Patch *patch ) : Int
     nmodes = params.nmodes;
     dr =  params.cell_length[1];
 
-    tasks_on_projection = params.tasks_on_projection;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -321,23 +320,25 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     
     //Loop on bin particles
     int nparts( particles.size() );
-    if (!tasks_on_projection){
-        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-            //Interpolation on current particle
-            fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
-            //Buffering of iol and delta
-            ( *iold )[ipart+0*nparts]  = ip_;
-            ( *iold )[ipart+1*nparts]  = jp_;
-            ( *delta )[ipart+0*nparts] = deltax;
-            ( *delta )[ipart+1*nparts] = deltar;
-            ( *theta_old )[ipart] = atan2( particles.position( 2, ipart ), particles.position( 1, ipart ));
-        }
-    } else { // with tasks
-        for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-            //Interpolation on current particle with locally defined variables to avoid data races between threads
-            fieldsForTasks( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart], &( *iold )[ipart] , &( *delta )[ipart], &( *theta_old )[ipart] );
-        }
-    } // end condition on tasks
+#ifndef _OMPTASKS
+    // without tasks
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+        //Interpolation on current particle
+        fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
+        //Buffering of iol and delta
+        ( *iold )[ipart+0*nparts]  = ip_;
+        ( *iold )[ipart+1*nparts]  = jp_;
+        ( *delta )[ipart+0*nparts] = deltax;
+        ( *delta )[ipart+1*nparts] = deltar;
+        ( *theta_old )[ipart] = atan2( particles.position( 2, ipart ), particles.position( 1, ipart ));
+    }
+#else 
+    // with tasks
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+        //Interpolation on current particle with locally defined variables to avoid data races between threads
+        fieldsForTasks( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart], &( *iold )[ipart] , &( *delta )[ipart], &( *theta_old )[ipart] );
+    }
+#endif
 }
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
