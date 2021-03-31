@@ -539,9 +539,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // clrw
     PyTools::extract( "clrw", clrw, "Main"   );
 
-    // Use OpenMP tasks for projections on bins subgrids
-    PyTools::extract("tasks_on_projection",tasks_on_projection,"Main");
-
 
     // --------------------
     // Number of patches

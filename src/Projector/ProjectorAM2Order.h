@@ -29,7 +29,7 @@ public:
     //! Project global current densities if Ionization in Species::dynamics,
     void ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Particles &particles, int ipart, LocalFields Jion ) override final;
     
-    //! Project global current densities if Ionization in Species_taskomp::dynamics,
+    //! Project global current densities if Ionization in Species::dynamicsTasks
     void ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, double *b_Jz, Particles &particles, int ipart, LocalFields Jion, int bin_shift ) override final;
 
     //!Wrapper

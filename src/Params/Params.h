@@ -187,9 +187,6 @@ public:
     //! Number of cells per cluster
     int n_cell_per_patch;
 
-    // Use OpenMP tasks for projections on bins subgrids
-    bool tasks_on_projection;
-
     //! initial number of particles
     unsigned int n_particles;
 
