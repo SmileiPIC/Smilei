@@ -13,7 +13,6 @@
 
 #include "Species.h"
 #include "SpeciesNorm.h"
-#include "Species_taskomp.h"
 
 #ifdef _VECTO
 #include "SpeciesNormV.h"
