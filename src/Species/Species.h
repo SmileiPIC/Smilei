@@ -322,18 +322,6 @@ public:
     //! Merging
     Merging *Merge;
 
-    // buffers for bin projection when tasks are used
-    std::vector<double *> b_Jx;
-    std::vector<double *> b_Jy;
-    std::vector<double *> b_Jz;
-    std::vector<double *> b_rho;
-
-    // buffers for bin projection when tasks are used
-    std::vector< std::complex<double> *> b_Jl;
-    std::vector< std::complex<double> *> b_Jr;
-    std::vector< std::complex<double> *> b_Jt;
-    std::vector< std::complex<double> *> b_rhoAM;
-
     // -----------------------------------------------------------------------------
     //  5. Methods
 
@@ -377,6 +365,15 @@ public:
                            RadiationTables &RadiationTables,
                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                            std::vector<Diagnostic *> &localDiags );
+
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection, ...) with tasks
+    void dynamicsTasks(     double time, unsigned int ispec,
+                            ElectroMagn *EMfields,
+                            Params &params, bool diag_flag,
+                            PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                            RadiationTables &RadiationTables,
+                            MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                            std::vector<Diagnostic *> &localDiags, int buffer_id );
 
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     virtual void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
@@ -608,11 +605,29 @@ public:
     //! Erase all particles with zero weight
     void eraseWeightlessParticles();
 
+    // ---- Variables for tasks
+
+    // Number of bins for the use of tasks
+    unsigned int Nbins;
+
+    // buffers for bin projection when tasks are used
+    std::vector<double *> b_Jx;
+    std::vector<double *> b_Jy;
+    std::vector<double *> b_Jz;
+    std::vector<double *> b_rho;
+
+    // buffers for bin projection when tasks are used
+    std::vector< std::complex<double> *> b_Jl;
+    std::vector< std::complex<double> *> b_Jr;
+    std::vector< std::complex<double> *> b_Jt;
+    std::vector< std::complex<double> *> b_rhoAM;
+
     //! Size of the projection buffer
     unsigned int size_proj_buffer_Jx,size_proj_buffer_Jy,size_proj_buffer_Jz,size_proj_buffer_rho;
     unsigned int size_proj_buffer_Jl,size_proj_buffer_Jr,size_proj_buffer_Jt,size_proj_buffer_rhoAM;
-    bool tasks_on_projection;
     std::string geometry;
+    double *nrj_lost_per_bin;
+    double *nrj_radiation_per_bin;
 
 protected:
 

@@ -398,9 +398,9 @@ void VectorPatch::dynamics( Params &params,
 #else
                                     #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
                                     { // every call of dynamics for a couple ipatch-ispec is an independent task
-                                    Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
+                                    Species *spec_task = species( ipatch, ispec );
                                     int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
-                                    spec_task->Species_taskomp::dynamicsWithTasks( time_dual, ispec,
+                                    spec_task->Species::dynamicsTasks( time_dual, ispec,
                                                  emfields( ipatch ),
                                                  params, diag_flag, partwalls( ipatch ),
                                                  ( *this )( ipatch ), smpi,
