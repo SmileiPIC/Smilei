@@ -415,13 +415,12 @@ void VectorPatch::dynamics( Params &params,
         } // end loop on species
     } // end loop on patches
 
-    // #pragma omp single
-    // {
-    // if (params.tasks_on_projection)
-    // {   // put buffers back to their original size
-    //     smpi->resize_buffers(omp_get_num_threads(),params.geometry=="AMcylindrical"); // resize buffers to their original size
-    // }
-    // }
+// #ifdef _OMPTASKS
+//     #pragma omp single
+//     {   // put buffers back to their original size
+//         smpi->resize_buffers(omp_get_num_threads(),params.geometry=="AMcylindrical"); // resize buffers to their original size
+//     }
+// #endif
         
     
 #ifdef _OMPTASKS
