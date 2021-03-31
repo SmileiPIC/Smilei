@@ -101,7 +101,6 @@ public:
     // Local array of new photons
     Particles new_photons_;
     Particles *new_photons_per_bin_;
-    bool tasks_on_projection;
 
     
 protected:

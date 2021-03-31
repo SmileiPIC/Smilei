@@ -35,10 +35,9 @@ Radiation::Radiation( Params &params, Species *species, Random * rand )
     // Pointer to the local patch random generator
     rand_ = rand;
 
-    tasks_on_projection = params.tasks_on_projection;
-    if (tasks_on_projection){
-        new_photons_per_bin_ = new Particles[species->particles->first_index.size()];
-    }
+#ifdef _OMPTASKS
+    new_photons_per_bin_ = new Particles[species->particles->first_index.size()];
+#endif
     
 }
 

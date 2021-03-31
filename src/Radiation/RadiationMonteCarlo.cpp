@@ -193,27 +193,27 @@ void RadiationMonteCarlo::operator()(
                 // If the final optical depth is reached
                 if( tau[ipart] <= epsilon_tau_ ) {
     
-                    if (!tasks_on_projection){
-                        // Emission of a photon
-                        // Radiated energy is incremented only if the macro-photon is not created
-                        radiated_energy += RadiationMonteCarlo::photonEmission( ipart,
-                                                             particle_chi, gamma,
-                                                             position,
-                                                             momentum,
-                                                             weight,
-                                                             photon_species,
-                                                             RadiationTables );
-                    } else {
-                        // Emission of a photon
-                        // Radiated energy is incremented only if the macro-photon is not created
-                        radiated_energy += RadiationMonteCarlo::photonEmissionForTasks( ipart, ibin,
-                                                             particle_chi, gamma,
-                                                             position,
-                                                             momentum,
-                                                             weight,
-                                                             photon_species,
-                                                             RadiationTables );
-                    }
+#ifndef _OMPTASKS
+                    // Emission of a photon without tasks
+                    // Radiated energy is incremented only if the macro-photon is not created
+                    radiated_energy += RadiationMonteCarlo::photonEmission( ipart,
+                                                            particle_chi, gamma,
+                                                            position,
+                                                            momentum,
+                                                            weight,
+                                                            photon_species,
+                                                            RadiationTables );
+#else
+                    // Emission of a photon with tasks
+                    // Radiated energy is incremented only if the macro-photon is not created
+                    radiated_energy += RadiationMonteCarlo::photonEmissionForTasks( ipart, ibin,
+                                                            particle_chi, gamma,
+                                                            position,
+                                                            momentum,
+                                                            weight,
+                                                            photon_species,
+                                                            RadiationTables );
+#endif
     
                     // Optical depth becomes negative meaning
                     // that a new drawing is possible
