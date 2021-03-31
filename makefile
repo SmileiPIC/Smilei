@@ -80,7 +80,7 @@ ifneq ($(strip $(BOOST_ROOT_DIR)),)
 CXXFLAGS += -I$(BOOST_ROOT_DIR)/include
 LDFLAGS := -L$(BOOST_ROOT_DIR)/lib $(LDFLAGS)
 endif
-LDFLAGS += -lhdf5
+LDFLAGS += -lhdf5 
 # Include subdirs
 CXXFLAGS += $(DIRS:%=-I%)
 # Python-related flags
@@ -168,6 +168,11 @@ ifneq (,$(call parse_config,no_mpi_tm))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
+# Use OpenMP tasks
+ifneq (,$(call parse_config,omptasks))
+    CXXFLAGS += -D_OMPTASKS
+endif
+
 CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
 
 #-----------------------------------------------------
@@ -204,6 +209,7 @@ header:
 	@if [ $(call parse_config,opt-report) ]; then echo "- Optimization report requested"; fi;
 	@if [ $(call parse_config,detailed_timers) ]; then echo "- Detailed timers option requested"; fi;
 	@if [ $(call parse_config,no_mpi_tm) ]; then echo "- Compiled without MPI_THREAD_MULTIPLE"; fi;
+	@if [ $(call parse_config,omptasks) ]; then echo "- Compiled with OpenMP tasks"; fi;
 	@echo " _____________________________________"
 	@echo ""
 
@@ -385,6 +391,7 @@ help:
 	@echo '    advisor              : to compile for Intel Advisor analysis'
 	@echo '    vtune                : to compile for Intel Vtune analysis'
 	@echo '    inspector            : to compile for Intel Inspector analysis'
+	@echo '    omptasks             : to compile with OpenMP tasks'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'

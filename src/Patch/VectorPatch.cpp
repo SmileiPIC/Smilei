@@ -331,24 +331,27 @@ void VectorPatch::dynamics( Params &params,
    
     int has_done_dynamics[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
 
+#ifdef _OMPTASKS  
     #pragma omp single
-    if (params.tasks_on_projection)
     {
         int n_buffers = (( *this ).size()) * (( *this )( 0 )->vecSpecies.size());
         smpi->resize_buffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
     }
+#endif
 
     #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
-        if( params.tasks_on_projection & diag_flag) {( *this )( ipatch )->EMfields->restartRhoJs();}
+#ifdef _OMPTASKS  
+        if(diag_flag) {( *this )( ipatch )->EMfields->restartRhoJs();}
+#endif
     } // end ipatch
     
-   
+#ifdef _OMPTASKS   
     #pragma omp single
-    {
-    // #pragma omp taskgroup
-    // {
+#else 
+    #pragma omp for schedule(runtime)
+#endif
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
@@ -384,7 +387,7 @@ void VectorPatch::dynamics( Params &params,
                                                MultiphotonBreitWheelerTables,
                                                localDiags );
                     } else {
-                                if (!params.tasks_on_projection){
+#ifndef _OMPTASKS   
                                     spec->Species::dynamics( time_dual, ispec,
                                                  emfields( ipatch ),
                                                  params, diag_flag, partwalls( ipatch ),
@@ -392,7 +395,7 @@ void VectorPatch::dynamics( Params &params,
                                                  RadiationTables,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags );
-                                } else {
+#else
                                     #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
                                     { // every call of dynamics for a couple ipatch-ispec is an independent task
                                     Species_taskomp *spec_task = static_cast<Species_taskomp *>(species( ipatch, ispec ));
@@ -405,14 +408,12 @@ void VectorPatch::dynamics( Params &params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags, buffer_id );
                                     } // end task
-                                } // end if condition on tasks
+#endif
                       } // end case vectorization non adaptive
                 } // end if condition on vectorization
             } // end if condition on species
         } // end loop on species
     } // end loop on patches
-    // } // end taskgroup to ensure all ipatch ispec performed dynamics method
-    } // end omp single
 
     // #pragma omp single
     // {
@@ -422,12 +423,11 @@ void VectorPatch::dynamics( Params &params,
     // }
     // }
         
-    // Copy the bin species buffers for the densities to patch grid densities
+    
+#ifdef _OMPTASKS
     #pragma omp single
-    if (params.tasks_on_projection){
+    {   // Copy/Reduce the bin species buffers for the densities to patch grid densities
 
-        // unsigned int Nbins = species( 0, 0 )->particles->first_index.size();
-        // unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
         int clrw = params.clrw;
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -466,12 +466,14 @@ void VectorPatch::dynamics( Params &params,
 #endif
             } // end task on reduction of patch densities
         } // end patch loop
-    } // end condition on tasks
+    } // end omp single
+#endif
  
-    // Reduction of the new particles created through ionization and radiation, for each species
+    
+#ifdef _OMPTASKS
     #pragma omp single
-    if (params.tasks_on_projection){
-      
+    {   // Reduction of the new particles created through ionization and radiation, for each species
+
         // Ionization
         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
             if( species( 0, ispec )->Ionize ) {
@@ -535,10 +537,12 @@ void VectorPatch::dynamics( Params &params,
             } // end if Multiphoton Breit Wheeler
         } // end species loop
 
-    } // end condition on tasks
+    } // end omp single
+#endif
 
-
+#ifdef _OMPTASKS
     #pragma omp taskwait
+#endif
 
     timers.particles.update( params.printNow( itime ) );
 #ifdef __DETAILED_TIMERS
