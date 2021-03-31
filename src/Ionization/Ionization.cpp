@@ -18,9 +18,9 @@ Ionization::Ionization( Params &params, Species *species )
     EC_to_au   = 3.314742578e-15 * reference_angular_frequency_SI; // hbar omega / (me c^2 alpha^3)
     au_to_w0   = 4.134137172e+16 / reference_angular_frequency_SI; // alpha^2 me c^2 / (hbar omega)
     
-    if (params.tasks_on_projection){
+#ifdef _OMPTASKS
         new_electrons_per_bin = new Particles[species->particles->first_index.size()];
-    }
+#endif
 }
 
 
