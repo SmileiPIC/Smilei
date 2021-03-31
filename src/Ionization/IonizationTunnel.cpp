@@ -41,7 +41,7 @@ IonizationTunnel::IonizationTunnel( Params &params, Species *species ) : Ionizat
         beta_tunnel[Z]  = pow( 2, alpha_tunnel[Z] ) * ( 8.*Azimuthal_quantum_number[Z]+4.0 ) / ( cst*tgamma( cst ) ) * Potential[Z] * au_to_w0;
         gamma_tunnel[Z] = 2.0 * pow( 2.0*Potential[Z], 1.5 );
     }
-    
+
     DEBUG( "Finished Creating the Tunnel Ionizaton class" );
     
 }
@@ -277,7 +277,7 @@ void IonizationTunnel::ionizationTunnelWithTasks( Particles *particles, unsigned
         }//END Multiple ionization routine
         
         // Compute ionization current
-        if (patch->EMfields->Jx_ != NULL){  // For the moment ionization current is not accounted for in AM geometry
+        if (b_Jx != NULL){  // For the moment ionization current is not accounted for in AM geometry
             factorJion *= TotalIonizPot;
             Jion.x = factorJion * *( Ex+ipart );
             Jion.y = factorJion * *( Ey+ipart );

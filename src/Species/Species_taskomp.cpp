@@ -282,8 +282,20 @@ void Species_taskomp::dynamicsWithTasks( double time_dual, unsigned int ispec,
                 ithread = omp_get_thread_num();
                 timer = MPI_Wtime();
 #endif
+
+                double *bJx, *bJy, *bJz;
+                if (params.geometry != "AMcylindrical"){
+                    bJx         = b_Jx[ibin];
+                    bJy         = b_Jy[ibin];
+                    bJz         = b_Jz[ibin];
+                } else {
+                    bJx         = NULL;
+                    bJy         = NULL;
+                    bJz         = NULL;
+                }
+
                 vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
-                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, patch, Proj, ibin, ibin*clrw, b_Jx [ibin], b_Jy [ibin], b_Jz [ibin] );
+                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, patch, Proj, ibin, ibin*clrw, bJx, bJy, bJz );
 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
