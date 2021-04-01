@@ -31,6 +31,7 @@ compile_default:
   stage: compile_default
   only:
     - develop
+    - laser_y
 
   script:
     # Move in test dir
@@ -126,8 +127,7 @@ compile_picsar:
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k picsar -c -v
+    - python validation/validation.py -k picsar -c -v
 
 run_picsar:
   stage: run_picsar
@@ -147,8 +147,7 @@ compile_debug:
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k debug -c -v
+    - python validation/validation.py -k debug -c -v
 
 compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
@@ -159,8 +158,7 @@ compile_no_mpi_threadmultiple:
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k no_mpi_tm -c -v
+    - python validation/validation.py -k no_mpi_tm -c -v
 
 compile_no_openmp:
   stage: compile_no_openmp
@@ -171,5 +169,4 @@ compile_no_openmp:
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k noopenmp -c -v
+    - python validation/validation.py -k noopenmp -c -v

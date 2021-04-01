@@ -287,9 +287,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[[1.,0.],[-1.,0.],[0.,1.],[0.,-1.]]`` in 2D
   :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
-  The incident unit wave vector ``k`` for each face
-  (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax) is
-  defined by its coordinates in the ``xyz`` frame.
+  For ``silver-muller`` absorbing boundaries,
+  the *x,y,z* coordinates of the unit wave vector ``k`` incident on each face
+  (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax).
   The number of coordinates is equal to the dimension of the simulation.
   The number of given vectors must be equal to 1 or to the number of faces
   which is twice the dimension of the simulation. In cylindrical geometry,
@@ -1253,8 +1253,9 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 .. note::
 
   The following definitions are given for lasers incoming from the ``xmin`` or ``xmax``
-  boundaries. For lasers incoming from ``ymin`` or ``ymax``, simply replace the ``By``
-  profiles by ``Bx`` profiles.
+  boundaries. For lasers incoming from ``ymin`` or ``ymax``, replace the ``By``
+  profiles by ``Bx`` profiles. For lasers incoming from ``zmin`` or ``zmax``,
+  replace ``By`` and ``Bz`` profiles by ``Bx`` and ``By`` profiles, respectively.
 
 .. rubric:: 1. Defining a generic wave
 
@@ -1272,11 +1273,15 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     :default: ``"xmin"``
 
-    Side of the box from which the laser originates: ``"xmin"``, ``"xmax"``, ``"ymin"``
-    or ``"ymax"``.
+    Side of the box from which the laser originates: ``"xmin"``, ``"xmax"``, ``"ymin"``,
+    ``"ymax"``, ``"zmin"`` or ``"zmax"``.
     
     In the cases of ``"ymin"`` or ``"ymax"``, replace, in the following profiles,
-    coordinates :math:`(y,t)` by :math:`(x,t)`, and fields :math:`B_y` by :math:`B_x`.
+    coordinates *y* by *x*, and fields :math:`B_y` by :math:`B_x`.
+    
+    In the cases of ``"zmin"`` or ``"zmax"``, replace, in the following profiles,
+    coordinates *y* by *x*, coordinates *z* by *y*, fields :math:`B_y` by :math:`B_x`
+    and fields :math:`B_z` by :math:`B_y`.
     
 
 .. py:data:: space_time_profile

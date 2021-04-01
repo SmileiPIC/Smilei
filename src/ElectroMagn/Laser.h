@@ -82,8 +82,8 @@ public:
         profiles[1]->initFields( params, patch );
     };
     
-    //! Side (xmin/xmax) from which the laser enters the box
-    std::string box_side;
+    //! Boundary from which the laser enters the box (xmin, xmax, ymin, ymax, zmin, zmax)
+    unsigned int i_boundary_;
     
     //! Disables the laser
     void disable();

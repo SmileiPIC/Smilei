@@ -16,21 +16,34 @@ Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
     name << "Laser #" << ilaser;
     string errorPrefix = name.str();
     ostringstream info( "" );
-
-    // side from which the laser enters the simulation box (only xmin/xmax at the moment)
+    
+    // side from which the laser enters the simulation box
+    string box_side;
     PyTools::extract( "box_side", box_side, "Laser", ilaser );
     unsigned int normal_axis = 0;
     if( box_side == "xmin" || box_side == "xmax" ) {
+        i_boundary_ = 0;
         normal_axis = 0;
+    } else if( params.geometry == "1Dcartesian" ) {
+        ERROR( errorPrefix << ": in 1Dcartesian geometry, box_side must be `xmin` or `xmax`" );
+    } else if( params.geometry == "AMcylindrical" ) {
+        ERROR( errorPrefix << ": in AMcylindrical geometry, box_side must be `xmin` or `xmax`" );
     } else if( box_side == "ymin" || box_side == "ymax" ) {
+        i_boundary_ = 2;
         normal_axis = 1;
-        if( params.geometry=="AMcylindrical" ) {
-            ERROR( errorPrefix << ": in cylindrical geometry, box_side must be `xmin` or `xmax`" );
-        }
+    } else if( params.geometry == "2Dcartesian" ) {
+        ERROR( errorPrefix << ": in 2Dcartesian geometry, box_side must be `xmin`, `xmax`, `ymin` or `ymax`" );
+    } else if( box_side == "zmin" || box_side == "zmax" ) {
+        i_boundary_ = 4;
+        normal_axis = 2;
     } else {
-        ERROR( errorPrefix << ": box_side must be `xmin`, `xmax`, `ymin` or `ymax`" );
+        ERROR( errorPrefix << ": box_side must be `xmin`, `xmax`, `ymin`, `ymax`, `zmin` or `zmax`" );
     }
-
+    
+    if( box_side.substr(1) == "max" ) {
+        i_boundary_ ++;
+    }
+    
     // Profiles
     profiles.resize( 0 );
     PyObject *chirp_profile=nullptr, *time_profile=nullptr;
@@ -215,7 +228,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
 // Cloning constructor
 Laser::Laser( Laser *laser, Params &params )
 {
-    box_side  = laser->box_side;
+    i_boundary_  = laser->i_boundary_;
     spacetime = laser->spacetime;
     file      = laser->file;
     bool spacetime_defined=false;
@@ -338,7 +351,7 @@ void LaserProfileSeparable::createFields( Params &params, Patch *patch )
         dim[0] = primal_ ? n_p : n_d;
     } else if( params.geometry=="AMcylindrical" ) {
         unsigned int nr_p = n_space[1] + 1 + 2*oversize[1];
-        unsigned int nr_d = nr_p+1;
+        unsigned int nr_d = nr_p + 1;
         dim[0] = nr_p + nr_d;
     }
     
@@ -412,7 +425,7 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
         unsigned int n1_p = n_space[ax1] + 1 + 2*oversize[ax1];
         unsigned int n1_d = n1_p + 1;
         unsigned int n2_p = n_space[ax2] + 1 + 2*oversize[ax2];
-        unsigned int  n2_d = n2_p + 1;
+        unsigned int n2_d = n2_p + 1;
         double d1 = params.cell_length[ax1];
         double d2 = params.cell_length[ax2];
         unsigned int dim1 = primal_ ? n1_p : n1_d;

@@ -51,26 +51,11 @@ public:
         }
         for( int ilaser = 0; ilaser < nlaser; ilaser++ ) {
             Laser *laser = new Laser( params, ilaser, patch, true );
-            if( laser->box_side == "xmin" && EMfields->emBoundCond[0] ) {
-                if( patch->isXmin() ) {
+            if( EMfields->emBoundCond[laser->i_boundary_] ) {
+                if( patch->isBoundary( laser->i_boundary_ ) ) {
                     laser->createFields( params, patch );
                 }
-                EMfields->emBoundCond[0]->vecLaser.push_back( laser );
-            } else if( laser->box_side == "xmax" && EMfields->emBoundCond[1] ) {
-                if( patch->isXmax() ) {
-                    laser->createFields( params, patch );
-                }
-                EMfields->emBoundCond[1]->vecLaser.push_back( laser );
-            } else if( laser->box_side == "ymin" && EMfields->emBoundCond[2] ) {
-                if( patch->isYmin() ) {
-                    laser->createFields( params, patch );
-                }
-                EMfields->emBoundCond[2]->vecLaser.push_back( laser );
-            } else if( laser->box_side == "ymax" && EMfields->emBoundCond[3] ) {
-                if( patch->isYmax() ) {
-                    laser->createFields( params, patch );
-                }
-                EMfields->emBoundCond[3]->vecLaser.push_back( laser );
+                EMfields->emBoundCond[laser->i_boundary_]->vecLaser.push_back( laser );
             } else {
                 delete laser;
             }
@@ -269,11 +254,8 @@ public:
                     // Create laser
                     Laser *laser = new Laser( EMfields->emBoundCond[iBC]->vecLaser[ilaser], params );
                     // If patch is on border, then fill the fields arrays
-                    if( patch->isBoundary( iBC ) ) {
-                        if( ( iBC / 2 == 0 && laser->box_side[0] == 'x' )
-                         || ( iBC / 2 == 1 && laser->box_side[0] == 'y' ) ) {
-                             laser->createFields( params, patch );
-                        }
+                    if( iBC == laser->i_boundary_ && patch->isBoundary( iBC ) ) {
+                        laser->createFields( params, patch );
                     }
                     // Append the laser to the vector
                     newEMfields->emBoundCond[iBC]->vecLaser.push_back( laser );

@@ -237,7 +237,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     B[axis2_][ iB_[axis1_]*nyz_dp + j*nz_p + k ]
                         = -Alpha_ *  E[axis1_][ p0*nyz_dp + j*nz_p + k ]
                         +  Beta_  *( B[axis2_][ p1*nyz_dp + j*nz_p + k ]-B_ext[axis2_][ j*n2p + k ] )
-                        +  Gamma_ * b2[ j*n2p+k ]
+                        +  Gamma_ * b2[ j*n2p + k ]
                         +  Zeta_  *( B[axis0_][ p0*nyz_dd + j*nz_d + k+1 ]-B_ext[axis0_][ j*n2 + (k+1) ] )
                         +  Eta_   *( B[axis0_][ p0*nyz_dd + j*nz_d + k   ]-B_ext[axis0_][ j*n2 +  k    ] )
                         +  B_ext[axis2_][ j*n2p + k ];
@@ -249,7 +249,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     B[axis2_][ i*nyz_dp + iB_[axis1_]*nz_p + k ]
                         =  Alpha_ *  E[axis1_][ i*nyz_pp + p0*nz_p + k ]
                         +  Beta_  *( B[axis2_][ i*nyz_dp + p1*nz_p + k ]-B_ext[axis2_][ i*n2p + k ] )
-                        +  Gamma_ * b2[ i*n2p+k ]
+                        +  Gamma_ * b2[ i*n2p + k ]
                         +  Zeta_  *( B[axis0_][ i*nyz_pd + p0*nz_d + k+1 ]-B_ext[axis0_][ i*n2 + (k+1) ] )
                         +  Eta_   *( B[axis0_][ i*nyz_pd + p0*nz_d + k   ]-B_ext[axis0_][ i*n2 +  k    ] )
                         +  B_ext[axis2_][ i*n2p + k ];
@@ -261,7 +261,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     B[axis2_][ i*nyz_pd + j*nz_d + iB_[axis1_] ]
                         = -Alpha_ *  E[axis1_][ i*nyz_pp + j*nz_p + p0 ]
                         +  Beta_  *( B[axis2_][ i*nyz_pd + j*nz_d  + p1 ]-B_ext[axis2_][ i*n2p + j ] )
-                        +  Gamma_ * b2[ i*n2p+j ]
+                        +  Gamma_ * b2[ i*n2p + j ]
                         +  Zeta_  *( B[axis0_][ i*nyz_dp + (j+1)*nz_p + p0 ]-B_ext[axis0_][ i*n2 + (j+1) ] )
                         +  Eta_   *( B[axis0_][ i*nyz_dp +  j   *nz_p + p0 ]-B_ext[axis0_][ i*n2 +  j    ] )
                         +  B_ext[axis2_][ i*n2p + j ];
