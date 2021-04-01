@@ -6,12 +6,12 @@ from math import pi, cos, sin
 
 l0 = 2.0*pi        # laser wavelength
 t0 = l0                 # optical cycle
-Lsim = [40.*l0,20.*l0]  # length of the simulation
+Lsim = [32.*l0,20.*l0]  # length of the simulation
 Tsim = 50.*t0           # duration of the simulation
 resx = 28.              # nb of cells in on laser wavelength
 rest = 40.              # time of timestep in one optical cycle 
 
-ang = 0.5
+ang = pi/7.
 
 Main(
     geometry = "2Dcartesian",
@@ -21,7 +21,7 @@ Main(
     cell_length = [l0/resx,l0/resx],
     grid_length  = Lsim,
     
-    number_of_patches = [ 4, 8 ],
+    number_of_patches = [ 8, 8 ],
     
     timestep = t0/rest,
     simulation_time = Tsim,
@@ -31,30 +31,41 @@ Main(
         ['silver-muller'],
     ],
     
-    EM_boundary_conditions_k = [[1.,0.],[-1.,0.],[cos(ang), sin(ang)],[0.,-1.]],
+    EM_boundary_conditions_k = [[cos(ang), sin(ang)],[-1.,0.],[cos(ang), sin(ang)],[0.,-1.]],
     
     random_seed = smilei_mpi_rank
+)
+
+LaserGaussian2D(
+    box_side        = "xmin",
+    a0              = 1.,
+    omega           = 1.,
+    focus           = [Lsim[0]*0.8, Lsim[1]*0.6],
+    waist           = 8.,
+    incidence_angle = ang,
+    polarization_phi = 30./180.*pi,
+    time_envelope   = tgaussian(),
 )
 
 LaserGaussian2D(
     box_side        = "ymin",
     a0              = 1.,
     omega           = 1.,
-    focus           = [Lsim[0]*0.8, Lsim[1]],
+    focus           = [Lsim[0]*0.8, Lsim[1]*0.6],
     waist           = 8.,
-    incidence_angle = ang,
-    polarization_phi = 20./180.*pi,
-    time_envelope   = tgaussian()
+    incidence_angle = pi/2.-ang,
+    polarization_phi = 30./180.*pi,
+    time_envelope   = tgaussian(),
 )
 
 
-globalEvery = int(rest)
+globalEvery = int(rest*4)
 
 DiagScalar(every=globalEvery)
 
 DiagFields(
     every = globalEvery,
-    fields = ['Ex','Ey','Ez']
+    fields = ['Ex','Ey','Ez','Bz']
 )
 
 
