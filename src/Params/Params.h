@@ -181,6 +181,8 @@ public:
     //! Fridman filtering parameter [real between 0 and 1]
     double Friedman_theta;
 
+    // mark if OpenMP tasks are used or not
+    bool omptasks;
     //! Clusters width
     //unsigned int clrw;
     int clrw;

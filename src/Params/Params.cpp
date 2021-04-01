@@ -534,7 +534,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         WARNING( "CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL );
     }
 
-
+    // mark if OpenMP tasks are used or not
+    omptasks = false;
+#ifdef _OMPTASKS
+    omptasks = true;
+#endif
 
     // clrw
     PyTools::extract( "clrw", clrw, "Main"   );
@@ -788,6 +792,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
  
     // add the read or computed value of clrw to the content of smilei.py
     namelist += string( "Main.clrw= " ) + to_string( clrw ) + "\n";
+
+    // add the use (or or not) of the OpenMP tasks to the content of smilei.py
+    namelist += string( "Main.omptasks= " ) + to_string( omptasks ) + "\n";
 
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
