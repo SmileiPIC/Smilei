@@ -609,25 +609,26 @@ which parameters are controlled in the following block::
 
   :default: ``"binomial"``
 
-  The model for current filtering. ``"binomial"`` current filtering is available.
-  With ``"customFIR"`` the user can provide a self made FIR kernel.
+  The model for current filtering.
+  
+  * ``"binomial"`` for a binomial filter.
+  * ``"customFIR"`` for a custom FIR kernel.
 
 .. py:data:: passes
 
   :type: A python list of integers.
   :default: ``[0]``
 
-  The number of passes in the filter at each timestep given for all dimensions.
+  The number of passes (at each timestep) given for each dimension.
   If the list is of length 1, the same number of passes is assumed for all dimensions.
 
 .. py:data:: kernelFIR
 
   :default: ``"[0.25,0.5,0.25]"``
 
-  The FIR kernel for the ``"customFIR"`` model. Be carefull, the number of coefficients
-  of the kernel have to be less than 2 times the number of ghost-cell.
-  If you use a kernel with more than 3 coefficients, you have to increase
-  the number of ghost-cell with ``"custom_oversize"`` in ``"Main()"``
+  The FIR kernel for the ``"customFIR"`` model. The number of coefficients
+  must be less than twice the number of ghost cells
+  (adjusted using :py:data:`custom_oversize`).
 
 
 ----
