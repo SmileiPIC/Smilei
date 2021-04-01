@@ -380,26 +380,27 @@ Lastly, periodic BCs correspond to applying the fields from the opposite boundar
 Multi-pass filtering of the current densities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A multi-pass binomial filter on the current densities is available in :program:`Smilei`,
-which implementation follows that `presented by Vay et al. (2011) <https://www.sciencedirect.com/science/article/pii/S0021999111002270?via%3Dihub>`_.
-Each pass consists in a 3-points spatial averaging (in all spatial dimensions) of the current densities, 
+A multi-pass filter on the current densities is available in :program:`Smilei`. The user can choose to use a simple 3-points FIR binomial filter,
+which implementation follows that `presented by Vay et al. (2011) <https://www.sciencedirect.com/science/article/pii/S0021999111002270?via%3Dihub>`_, or a N-points kernel FIR filter.
+Each pass consists in a N-points spatial averaging (in one or all spatial dimensions) of the current densities, 
 so that the filtered current density (here defined at location i on a one-dimensional grid) is recomputed as:
 
 .. math::
 
-    J_{f,i} = \frac{1}{2}\,J_i + \frac{J_{i+1}+J_{i-1}}{4}.
+    J_{f,i} = \sum_{n=-(N-1)/2}^{+(N-1)/2} K_{(N-1)/2+n}J_{i+n}
 
+For example the binomial filter use a kernel K = [0.25,0.5,0.25]. And the results is:
+
+.. math::
+
+    J_{f,i} = \frac{1}{2} J_i + \frac{J_{i+1}+J_{i-1}}{4}
+
+If the user use a custom FIR kernel, he have provide his own FIR filter kernel of length N with an odd number of coefficient and symmetrical to avoid phase effecthttps://fiiir.com/.
+The number of ghost-cells have to be greater than (N-1)/2 accordingly. Moreover, the sum of the kernel's coefficients have to be equal to unity (normalize the output). You can use this `online tool <https://fiiir.com/>`_ in order to design your filter.
 
 Current filtering, if required by the user, is applied before solving
 Maxwell’s equation, and the number of passes is an :ref:`input parameter <CurrentFilter>`
 defined by the user.
-
-If necessary the user can provide his own FIR filter by setting his own kernel of length N. The number of ghost-cells have to be greater than (N-1)/2 accordingly.
-
-Large band low-pass filter of the current densities
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-A large band low-pass filter on the current densities is available in :program:`Smilei` too. The convolution kernel is a 21 points windowed-sinc.
 
 ----
 
