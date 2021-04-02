@@ -76,7 +76,7 @@ you might want to just install the Smilei dependencies to be able to compile Smi
      
    .. code-block:: bash
   
-     export OMPI_CXX=g++-9 
+     export OMPI_CXX=g++-10
      export HDF5_ROOT_DIR=/usr/local/opt/hdf5-parallel
      export PYTHONEXE=python3
 

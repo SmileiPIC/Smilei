@@ -32,7 +32,7 @@ Projects
 * Already available, but experimental:
 
   * Interface with the PICSAR library for AM spectral solver
-  * :doc:`Single Domain Multiple Decomposition <SDMD>`
+  * :doc:`SDMD`
   * Particle merging
   * Nuclear reactions
 

@@ -654,7 +654,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
         // Check that we are in 3D, adaptive mode not possible in 2d
         if( vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive" ) {
-            if (nDim_particle != 3) {
+            if (geometry!="3Dcartesian") {
                 ERROR("In block `Vectorization`, `adaptive` mode only available in 3D")
             }
         }

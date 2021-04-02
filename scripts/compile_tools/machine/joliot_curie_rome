@@ -1,17 +1,21 @@
 #
-# Machine file for Irene Joliot-Curie using AVX512
+# Machine file for Irene Joliot-Curie Rome partition
 # __________________________________________________________
 #
 # Load the correct modules:
 #
-# module load intel/18.0.3.222
-# module load mpi/intelmpi/2018.0.3.222
-#
-# You have to install your own hdf5:
-# export HDF5_ROOT=<path to your installation folder>
-# export HDF5_ROOT=/ccc/work/cont003/smilei/derouilj/hdf5-1.8.16-intelmpi2018.18
-# export PATH=${HDF5_ROOT}/bin:${PATH}
-# export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
+# module unload mpi 
+# module load flavor/openmpi/test mpi/openmpi/4.0.3
+# module load hdf5
+# module switch flavor/hdf5/serial flavor/hdf5/parallel
 # export HDF5_ROOT_DIR=${HDF5_ROOT}
+# export PYTHONHOME=/ccc/work/cont003/smilei/derouilj/anaconda2
+# export PATH=$PYTHONHOME/bin:$PATH
+# export LD_LIBRARY_PATH=$PYTHONHOME/lib:$LD_LIBRARY_PATH
+# export OMPI_MCA_btl_portals4_use_rdma=0
+#
+# Then compile with:
+#
+# make machine=joliot_curie_rome config=no_mpi_tm
 
-CXXFLAGS += -march=core-avx2 -ip -inline-factor=1000 -D__INTEL_SKYLAKE_8168 -qopt-zmm-usage=high -fno-alias #-ipo
+CXXFLAGS += -march=core-avx2 -ip -inline-factor=1000 -qopt-zmm-usage=high -fno-alias #-ipo
