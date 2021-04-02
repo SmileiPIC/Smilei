@@ -546,10 +546,9 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         def phase(y):
             dy = y-Y1
             return omega_*dy*(1.+ invZr3*(y-Y2)**2/(1.+invZr2*dy**2)) + atan(invZr*dy)
+        phase_zero += phase(Y2)
         if box_side[0] == "y":
-            phase_zero += phase(Y2) - Y2 / sin(incidence_angle) * omega
-        else:
-            phase_zero += phase(Y2)
+            phase_zero -= Y2 / sin(incidence_angle) * omega
     # Create Laser
     Laser(
         box_side       = box_side,
@@ -591,7 +590,7 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
 
 def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phase_zero=0.):
-    from math import cos, sin, tan, atan, sqrt, exp
+    from math import pi, cos, sin, tan, atan, sqrt, exp
     # Polarization and amplitude
     [dephasing, amplitudeZ, amplitudeY] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0 * omega
@@ -602,6 +601,7 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         amplitudeY = -amplitudeY
     elif box_side[0] == "z":
         focus = [focus[2],focus[0],focus[1]]
+        phase_zero -= pi/2.
     # Space and phase envelopes
     Zr = omega * waist**2/2.
     if incidence_angle == [0.,0.]:
@@ -633,10 +633,11 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
             Z = invZr * (-focus[0]*sycz + (y-focus[1])*sysz + (z-focus[2])*cy )
             return alpha * X*(1.+0.5*(Y**2+Z**2)/(1.+X**2)) - atan(X)
         phase_zero += phase(focus[1]-sz/cz*focus[0], focus[2]+sy/cy/cz*focus[0])
-
+        if box_side[0] in ["y","z"]:
+            phase_zero -= (focus[1]-sz/cz*focus[0]) / cysz  * omega
     # Create Laser
     Laser(
-        box_side        = box_side,
+        box_side       = box_side,
         omega          = omega,
         chirp_profile  = tconstant(),
         time_envelope  = time_envelope,
