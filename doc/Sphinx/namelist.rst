@@ -495,7 +495,7 @@ It requires :ref:`additional compilation options<vectorization_flags>` to be act
     Particles are sorted per cell.
   * ``"adaptive"``: the best operators (scalar or vectorized)
     are determined and configured dynamically and locally
-    (per patch and per species).
+    (per patch and per species). For the moment this mode is only supported in ``3Dcartesian`` geometry.
     Particles are sorted per cell.
 
   In the ``"adaptive"`` mode, :py:data:`clrw` is set to the maximum.
