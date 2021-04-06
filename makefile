@@ -1,16 +1,23 @@
-#-----------------------------------------------------
-# Variables that can be defined by the user:
 #
-# SMILEICXX     : the MPI C++ executable (for instance mpicxx, mpiicpc, etc.)
-# HDF5_ROOT_DIR : the local path to the HDF5 library
-# BUILD_DIR     : the path to the build directory (default: ./build)
-# PYTHON_CONFIG : the executable `python-config` usually shipped with python installation
+# ----------------------------
+# >>>>>>>> READ THIS <<<<<<<<<
+# ----------------------------
+#
+# Instead of modifying this file, you should set the following
+# environment variables on your system
+#
+# BUILD_DIR        : the path to the build directory (default: ./build)
+# SMILEICXX        : the MPI C++ executable (for instance mpicxx, mpiicpc, etc.)
+# PYTHONEXE        : the python executable to be used in smilei
+# HDF5_ROOT_DIR    : the local path to the HDF5 library
+# BOOST_ROOT_DIR   : the local path to the boost library
+# TABLES_BUILD_DIR : build directory for databases (default ./tools/tables/build)
 
+BUILD_DIR ?= build
 SMILEICXX ?= mpicxx
+PYTHONEXE ?= python
 HDF5_ROOT_DIR ?= $(HDF5_ROOT)
 BOOST_ROOT_DIR ?= $(BOOST_ROOT)
-BUILD_DIR ?= build
-PYTHONEXE ?= python
 TABLES_BUILD_DIR ?= tools/tables/build
 
 #-----------------------------------------------------
@@ -312,7 +319,7 @@ uninstall_happi:
 print-% :
 	$(info $* : $($*)) @true
 
-env: print-SMILEICXX print-PYTHONEXE print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
+env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-FFTW3_LIB_DIR print-SITEDIR print-PYTHONEXE print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
 
 #-----------------------------------------------------
 # Smilei tables
@@ -399,8 +406,8 @@ help:
 	@echo '  BUILD_DIR             : directory used to store build files [$(BUILD_DIR)]'
 	@echo '  OPENMP_FLAG           : openmp flag [$(OPENMP_FLAG)]'
 	@echo '  PYTHONEXE             : python executable [$(PYTHONEXE)]'
-	@echo '  FFTW3_LIB             : FFTW3 libraries directory [$(FFTW3_LIB)]'
-	@echo '  LIB PXR               : Picsar library directory [$(LIBPXR)]'
+	@echo '  FFTW3_LIB_DIR         : FFTW3 libraries directory [$(FFTW3_LIB_DIR)]'
+	@echo '  LIBPXR                : Picsar library directory [$(LIBPXR)]'
 	@echo
 	@echo 'Intel Inspector environment:'
 	@echo '  INSPECTOR_ROOT_DIR    : only needed to use the inspector API (__itt functions) [$(INSPECTOR_ROOT_DIR)]'
