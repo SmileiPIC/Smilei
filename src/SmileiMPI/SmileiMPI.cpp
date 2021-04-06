@@ -1031,16 +1031,16 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
                 // BCs at the x-border
                 ElectroMagnBC2D_SM *embc = static_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] );
 
-                if( embc->Bx_val.size() ) {
-                    isend( &embc->Bx_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[0].size() ) {
+                    isend( &embc->B_val[0], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
-                if( embc->By_val.size() ) {
-                    isend( &embc->By_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[1].size() ) {
+                    isend( &embc->B_val[1], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
-                if( embc->Bz_val.size() ) {
-                    isend( &embc->Bz_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[2].size() ) {
+                    isend( &embc->B_val[2], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
 
@@ -1048,16 +1048,16 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EM->emBoundCond[bcId] );
 
                 // BCs at the border
-                if( embc->Bx_val ) {
-                    isend( embc->Bx_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[0] ) {
+                    isend( embc->B_val[0], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
-                if( embc->By_val ) {
-                    isend( embc->By_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[1] ) {
+                    isend( embc->B_val[1], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
-                if( embc->Bz_val ) {
-                    isend( embc->Bz_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[2] ) {
+                    isend( embc->B_val[2], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
 
@@ -1164,16 +1164,16 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
                 // BCs at the x-border
                 ElectroMagnBC2D_SM *embc = static_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] );
 
-                if( embc->Bx_val.size() ) {
-                    isend( &embc->Bx_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[0].size() ) {
+                    isend( &embc->B_val[0], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
-                if( embc->By_val.size() ) {
-                    isend( &embc->By_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[1].size() ) {
+                    isend( &embc->B_val[1], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
-                if( embc->Bz_val.size() ) {
-                    isend( &embc->Bz_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[2].size() ) {
+                    isend( &embc->B_val[2], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
 
@@ -1181,16 +1181,16 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EM->emBoundCond[bcId] );
 
                 // BCs at the border
-                if( embc->Bx_val ) {
-                    isend( embc->Bx_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[0] ) {
+                    isend( embc->B_val[0], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
-                if( embc->By_val ) {
-                    isend( embc->By_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[1] ) {
+                    isend( embc->B_val[1], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
-                if( embc->Bz_val ) {
-                    isend( embc->Bz_val, to, mpi_tag+tag, requests[tag] );
+                if( embc->B_val[2] ) {
+                    isend( embc->B_val[2], to, mpi_tag+tag, requests[tag] );
                     tag++;
                 }
 
@@ -1295,16 +1295,16 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int tag )
                 // BCs at the x-border
                 ElectroMagnBC2D_SM *embc = static_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] );
 
-                if( embc->Bx_val.size() ) {
-                    recv( &embc->Bx_val, from, tag );
+                if( embc->B_val[0].size() ) {
+                    recv( &embc->B_val[0], from, tag );
                     tag++;
                 }
-                if( embc->By_val.size() ) {
-                    recv( &embc->By_val, from, tag );
+                if( embc->B_val[1].size() ) {
+                    recv( &embc->B_val[1], from, tag );
                     tag++;
                 }
-                if( embc->Bz_val.size() ) {
-                    recv( &embc->Bz_val, from, tag );
+                if( embc->B_val[2].size() ) {
+                    recv( &embc->B_val[2], from, tag );
                     tag++;
                 }
 
@@ -1312,16 +1312,16 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int tag )
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EM->emBoundCond[bcId] );
 
                 // BCs at the border
-                if( embc->Bx_val ) {
-                    recv( embc->Bx_val, from, tag );
+                if( embc->B_val[0] ) {
+                    recv( embc->B_val[0], from, tag );
                     tag++;
                 }
-                if( embc->By_val ) {
-                    recv( embc->By_val, from, tag );
+                if( embc->B_val[1] ) {
+                    recv( embc->B_val[1], from, tag );
                     tag++;
                 }
-                if( embc->Bz_val ) {
-                    recv( embc->Bz_val, from, tag );
+                if( embc->B_val[2] ) {
+                    recv( embc->B_val[2], from, tag );
                     tag++;
                 }
 
@@ -1425,16 +1425,16 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int tag, unsigned int nmodes )
                 // BCs at the x-border
                 ElectroMagnBC2D_SM *embc = static_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] );
 
-                if( embc->Bx_val.size() ) {
-                    recv( &embc->Bx_val, from, tag );
+                if( embc->B_val[0].size() ) {
+                    recv( &embc->B_val[0], from, tag );
                     tag++;
                 }
-                if( embc->By_val.size() ) {
-                    recv( &embc->By_val, from, tag );
+                if( embc->B_val[1].size() ) {
+                    recv( &embc->B_val[1], from, tag );
                     tag++;
                 }
-                if( embc->Bz_val.size() ) {
-                    recv( &embc->Bz_val, from, tag );
+                if( embc->B_val[2].size() ) {
+                    recv( &embc->B_val[2], from, tag );
                     tag++;
                 }
 
@@ -1442,16 +1442,16 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int tag, unsigned int nmodes )
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EM->emBoundCond[bcId] );
 
                 // BCs at the border
-                if( embc->Bx_val ) {
-                    recv( embc->Bx_val, from, tag );
+                if( embc->B_val[0] ) {
+                    recv( embc->B_val[0], from, tag );
                     tag++;
                 }
-                if( embc->By_val ) {
-                    recv( embc->By_val, from, tag );
+                if( embc->B_val[1] ) {
+                    recv( embc->B_val[1], from, tag );
                     tag++;
                 }
-                if( embc->Bz_val ) {
-                    recv( embc->Bz_val, from, tag );
+                if( embc->B_val[2] ) {
+                    recv( embc->B_val[2], from, tag );
                     tag++;
                 }
 

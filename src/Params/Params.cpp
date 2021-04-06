@@ -884,10 +884,20 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 ERROR( "For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer" );
             }
             
+            // Extract box_side
+            string box_side = "";
+            PyTools::extract( "box_side", box_side, "Laser", i_laser );
+            unsigned int normal_axis = 0;
+            if( box_side == "xmin" || box_side == "xmax" ) {
+                normal_axis = 0;
+            } else {
+                ERROR( "For LaserOffset #" << n_laser_offset << ": box_side must be `xmin` or `xmax`" );
+            }
+            
             if( smpi->getRank() < number_of_processes ) {
                 // Prepare propagator
                 MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
-                LaserPropagator propagateX( this, 0, fft_time_window, comm );
+                LaserPropagator propagateX( this, normal_axis, fft_time_window, comm );
                 
                 // Make the propagation happen and write out the file
                 if( ! smpi->test_mode && ! restart ) {

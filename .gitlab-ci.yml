@@ -12,6 +12,7 @@ install:
   stage: install
   only:
     - develop
+    - laser_y
     
   script:
     # Force workdir cleaning in case of retried
@@ -30,6 +31,7 @@ compile_default:
   stage: compile_default
   only:
     - develop
+    - laser_y
 
   script:
     # Move in test dir
@@ -41,6 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
+    - laser_y
     
   script:
     # Move in test dir
@@ -53,6 +56,8 @@ run2D:
   stage: run_default
   only:
     - develop
+    - laser_y
+
 
   script:
     # Move in test dir
@@ -65,6 +70,8 @@ run3D:
   stage: run_default
   only:
     - develop
+    - laser_y
+    
 
   script:
     # Move in test dir
@@ -78,7 +85,8 @@ runAM:
   stage: run_default
   only:
     - develop
-
+    - laser_y
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -89,6 +97,7 @@ runV:
   stage: run_default
   only:
     - develop
+    - laser_y
 
   script:
     # Move in test dir
@@ -101,6 +110,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
+    - laser_y
     
   script:
     # Move in test dir
@@ -112,12 +122,12 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
+    - laser_y
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k picsar -c -v
+    - python validation/validation.py -k picsar -c -v
 
 run_picsar:
   stage: run_picsar
@@ -132,31 +142,31 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
+    - laser_y
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k debug -c -v
+    - python validation/validation.py -k debug -c -v
 
 compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
+    - laser_y
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k no_mpi_tm -c -v
+    - python validation/validation.py -k no_mpi_tm -c -v
 
 compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
+    - laser_y
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k noopenmp -c -v
+    - python validation/validation.py -k noopenmp -c -v

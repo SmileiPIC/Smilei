@@ -19,7 +19,7 @@ class ElectroMagnBCAM_BM : public ElectroMagnBCAM
 {
 public:
 
-    ElectroMagnBCAM_BM( Params &params, Patch *patch, unsigned int _min_max );
+    ElectroMagnBCAM_BM( Params &params, Patch *patch, unsigned int i_boundary );
     ~ElectroMagnBCAM_BM() {};
     
     virtual void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) override;

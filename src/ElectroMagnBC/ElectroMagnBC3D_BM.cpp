@@ -14,78 +14,78 @@
 
 using namespace std;
 
-ElectroMagnBC3D_BM::ElectroMagnBC3D_BM( Params &params, Patch *patch, unsigned int _min_max )
-    : ElectroMagnBC3D( params, patch, _min_max )
+ElectroMagnBC3D_BM::ElectroMagnBC3D_BM( Params &params, Patch *patch, unsigned int i_boundary )
+    : ElectroMagnBC3D( params, patch, i_boundary )
 {
 
     std::vector<unsigned int> dims( 2, 0 );
     
     Bx_val = By_val = Bz_val = nullptr;
     
-    if( min_max==0 && patch->isXmin() ) {
+    if( i_boundary_==0 && patch->isXmin() ) {
         // BCs at the x-border min
-        dims = { ny_d, nz_d }; // Bx^(p,d,d)
+        dims = { n_d[1], n_d[2] }; // Bx^(p,d,d)
         Bx_val = new Field2D( dims );
         Bx_val->put_to( 0. );
-        dims = { ny_p, nz_d }; // By^(d,p,d)
+        dims = { n_p[1], n_d[2] }; // By^(d,p,d)
         By_val = new Field2D( dims );
         By_val->put_to( 0. );
-        dims = { ny_d, nz_p }; // Bz^(d,d,p)
+        dims = { n_d[1], n_p[2] }; // Bz^(d,d,p)
         Bz_val = new Field2D( dims );
         Bz_val->put_to( 0. );
-    } else if( min_max==1 && patch->isXmax() ) {
+    } else if( i_boundary_==1 && patch->isXmax() ) {
         // BCs at the x-border max
-        dims = { ny_d, nz_d }; // Bx^(p,d,d)
+        dims = { n_d[1], n_d[2] }; // Bx^(p,d,d)
         Bx_val = new Field2D( dims );
         Bx_val->put_to( 0. );
-        dims = { ny_p, nz_d }; // By^(d,p,d)
+        dims = { n_p[1], n_d[2] }; // By^(d,p,d)
         By_val = new Field2D( dims );
         By_val->put_to( 0. );
-        dims = { ny_d, nz_p }; // Bz^(d,d,p)
+        dims = { n_d[1], n_p[2] }; // Bz^(d,d,p)
         Bz_val = new Field2D( dims );
         Bz_val->put_to( 0. );
-    } else if( min_max==2 && patch->isYmin() ) {
+    } else if( i_boundary_==2 && patch->isYmin() ) {
         // BCs in the y-border min
-        dims = { nx_p, nz_d }; // Bx^(p,d,d)
+        dims = { n_p[0], n_d[2] }; // Bx^(p,d,d)
         Bx_val = new Field2D( dims );
         Bx_val->put_to( 0. );
-        dims = { nx_d, nz_d }; // By^(d,p,d)
+        dims = { n_d[0], n_d[2] }; // By^(d,p,d)
         By_val = new Field2D( dims );
         By_val->put_to( 0. );
-        dims = { nx_d, nz_p }; // Bz^(d,d,p)
+        dims = { n_d[0], n_p[2] }; // Bz^(d,d,p)
         Bz_val = new Field2D( dims );
         Bz_val->put_to( 0. );
-    } else if( min_max==3 && patch->isYmax() ) {
+    } else if( i_boundary_==3 && patch->isYmax() ) {
         // BCs in the y-border mix
-        dims = { nx_p, nz_d }; // Bx^(p,d,d)
+        dims = { n_p[0], n_d[2] }; // Bx^(p,d,d)
         Bx_val = new Field2D( dims );
         Bx_val->put_to( 0. );
-        dims = { nx_d, nz_d }; // By^(d,p,d)
+        dims = { n_d[0], n_d[2] }; // By^(d,p,d)
         By_val = new Field2D( dims );
         By_val->put_to( 0. );
-        dims = { nx_d, nz_p }; // Bz^(d,d,p)
+        dims = { n_d[0], n_p[2] }; // Bz^(d,d,p)
         Bz_val = new Field2D( dims );
         Bz_val->put_to( 0. );
-    } else if( min_max==4 && patch->isZmin() ) {
+    } else if( i_boundary_==4 && patch->isZmin() ) {
         // BCs in the z-border min
-        dims = { nx_p, ny_d }; // Bx^(p,d,d)
+        dims = { n_p[0], n_d[1] }; // Bx^(p,d,d)
         Bx_val = new Field2D( dims );
         Bx_val->put_to( 0. );
-        dims = { nx_d, ny_p }; // By^(d,p,d)
+        dims = { n_d[0], n_p[1] }; // By^(d,p,d)
         By_val = new Field2D( dims );
         By_val->put_to( 0. );
-        dims = { nx_d, ny_d }; // Bz^(d,d,p)
+        dims = { n_d[0], n_d[1] }; // Bz^(d,d,p)
         Bz_val = new Field2D( dims );
         Bz_val->put_to( 0. );
-    } else if( min_max==5 && patch->isZmax() ) {
+    } else if( i_boundary_==5 && patch->isZmax() ) {
         // BCs in the z-border max
-        dims = { nx_p, ny_d }; // Bx^(p,d,d)
+        dims = { n_p[0], n_d[1] }; // Bx^(p,d,d)
         Bx_val = new Field2D( dims );
         Bx_val->put_to( 0. );
-        dims = { nx_d, ny_p }; // By^(d,p,d)
+        dims = { n_d[0], n_p[1] }; // By^(d,p,d)
         By_val = new Field2D( dims );
         By_val->put_to( 0. );
-        dims = { nx_d, ny_d }; // Bz^(d,d,p)
+        dims = { n_d[0], n_d[1] }; // Bz^(d,d,p)
         Bz_val = new Field2D( dims );
         Bz_val->put_to( 0. );
     }
@@ -106,20 +106,20 @@ ElectroMagnBC3D_BM::ElectroMagnBC3D_BM( Params &params, Patch *patch, unsigned i
     }
     
     // X boundary
-    Alpha_BM_x    = ( dt_ov_dx - 1. )  / ( dt_ov_dx + 1. ) ;
-    Beta_BM_x     =  dt_ov_dy        / ( dt_ov_dx + 1. ) ;
-    Gamma_BM_x    =  dt_ov_dz        / ( dt_ov_dx + 1. ) ;
+    Alpha_BM_x    = ( dt_ov_d[0] - 1. )  / ( dt_ov_d[0] + 1. ) ;
+    Beta_BM_x     =  dt_ov_d[1]        / ( dt_ov_d[0] + 1. ) ;
+    Gamma_BM_x    =  dt_ov_d[2]        / ( dt_ov_d[0] + 1. ) ;
     
     // Y boundary
-    Alpha_BM_y    = ( dt_ov_dy - 1. )  / ( dt_ov_dy + 1. ) ;
-    Beta_BM_y     =  dt_ov_dx        / ( dt_ov_dy + 1. ) ;
-    Gamma_BM_y    =  dt_ov_dz        / ( dt_ov_dy + 1. ) ;
+    Alpha_BM_y    = ( dt_ov_d[1] - 1. )  / ( dt_ov_d[1] + 1. ) ;
+    Beta_BM_y     =  dt_ov_d[0]        / ( dt_ov_d[1] + 1. ) ;
+    Gamma_BM_y    =  dt_ov_d[2]        / ( dt_ov_d[1] + 1. ) ;
     
     
     // Zmin boundary
-    Alpha_BM_z    = ( dt_ov_dz - 1. )  / ( dt_ov_dz + 1. ) ;
-    Beta_BM_z     =  dt_ov_dy        / ( dt_ov_dz + 1. ) ;
-    Gamma_BM_z    =  dt_ov_dx        / ( dt_ov_dz + 1. ) ;
+    Alpha_BM_z    = ( dt_ov_d[2] - 1. )  / ( dt_ov_d[2] + 1. ) ;
+    Beta_BM_z     =  dt_ov_d[1]        / ( dt_ov_d[2] + 1. ) ;
+    Gamma_BM_z    =  dt_ov_d[0]        / ( dt_ov_d[2] + 1. ) ;
     
     
 }
@@ -141,7 +141,7 @@ void ElectroMagnBC3D_BM::save_fields( Field *my_field, Patch *patch )
 {
     Field3D *field3D=static_cast<Field3D *>( my_field );
     
-    if( min_max==0 && patch->isXmin() ) {
+    if( i_boundary_==0 && patch->isXmin() ) {
     
         if( field3D->name=="Bx" ) {
             field3D->extract_slice_yz( 0,      Bx_val );
@@ -150,7 +150,7 @@ void ElectroMagnBC3D_BM::save_fields( Field *my_field, Patch *patch )
         } else if( field3D->name=="Bz" ) {
             field3D->extract_slice_yz( 0,      Bz_val );
         }
-    } else if( min_max==1 && patch->isXmax() ) {
+    } else if( i_boundary_==1 && patch->isXmax() ) {
         if( field3D->name=="Bx" ) {
             field3D->extract_slice_yz( 0,      Bx_val );
         } else if( field3D->name=="By" ) {
@@ -158,7 +158,7 @@ void ElectroMagnBC3D_BM::save_fields( Field *my_field, Patch *patch )
         } else if( field3D->name=="Bz" ) {
             field3D->extract_slice_yz( 0,      Bz_val );
         }
-    } else if( min_max==2 && patch->isYmin() ) {
+    } else if( i_boundary_==2 && patch->isYmin() ) {
         if( field3D->name=="Bx" ) {
             field3D->extract_slice_xz( 0,      Bx_val );
         } else if( field3D->name=="By" ) {
@@ -166,15 +166,15 @@ void ElectroMagnBC3D_BM::save_fields( Field *my_field, Patch *patch )
         } else if( field3D->name=="Bz" ) {
             field3D->extract_slice_xz( 0,      Bz_val );
         }
-    } else if( min_max==3 && patch->isYmax() ) {
+    } else if( i_boundary_==3 && patch->isYmax() ) {
         if( field3D->name=="Bx" ) {
-            field3D->extract_slice_xz( ny_d-1, Bx_val );
+            field3D->extract_slice_xz( n_d[1]-1, Bx_val );
         } else if( field3D->name=="By" ) {
-            field3D->extract_slice_xz( ny_p-1, By_val );
+            field3D->extract_slice_xz( n_p[1]-1, By_val );
         } else if( field3D->name=="Bz" ) {
-            field3D->extract_slice_xz( ny_d-1, Bz_val );
+            field3D->extract_slice_xz( n_d[1]-1, Bz_val );
         }
-    } else if( min_max==4 && patch->isZmin() ) {
+    } else if( i_boundary_==4 && patch->isZmin() ) {
     
         if( field3D->name=="Bx" ) {
             field3D->extract_slice_xy( 0,      Bx_val );
@@ -183,14 +183,14 @@ void ElectroMagnBC3D_BM::save_fields( Field *my_field, Patch *patch )
         } else if( field3D->name=="Bz" ) {
             field3D->extract_slice_xy( 0,      Bz_val );
         }
-    } else if( min_max==5 && patch->isZmax() ) {
+    } else if( i_boundary_==5 && patch->isZmax() ) {
     
         if( field3D->name=="Bx" ) {
-            field3D->extract_slice_xy( nz_d-1, Bx_val );
+            field3D->extract_slice_xy( n_d[2]-1, Bx_val );
         } else if( field3D->name=="By" ) {
-            field3D->extract_slice_xy( nz_d-1, By_val );
+            field3D->extract_slice_xy( n_d[2]-1, By_val );
         } else if( field3D->name=="Bz" ) {
-            field3D->extract_slice_xy( nz_p-1, Bz_val );
+            field3D->extract_slice_xy( n_p[2]-1, Bz_val );
         }
     }
 }
@@ -212,7 +212,7 @@ void ElectroMagnBC3D_BM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-    if( min_max==0 && patch->isXmin() ) {
+    if( i_boundary_==0 && patch->isXmin() ) {
     
         // Static cast of the fields
         Field3D *Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
@@ -229,8 +229,8 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         
         
         // for By^(d,p,d)
-        for( unsigned int j=0 ; j<ny_p ; j++ ) {
-            for( unsigned int k=1 ; k<nz_d-1 ; k++ ) { //Undefined for extreme k
+        for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
+            for( unsigned int k=1 ; k<n_d[2]-1 ; k++ ) { //Undefined for extreme k
                 ( *By3D )( i, j, k ) = ( *By3D_old )( i+1, j, k )
                                        +                 Alpha_BM_x    * ( ( *By3D )( i+1, j, k ) - ( *By3D_old )( i, j, k ) )
                                        -                 cb[0][0]*Beta_BM_x  * ( ( *Bx3D )( i, j+1, k ) - ( *Bx3D )( i, j, k ) + ( *Bx3D_old )( i, j+1, k ) - ( *Bx3D_old )( i, j, k ) )
@@ -239,8 +239,8 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
-        for( unsigned int j=1 ; j<ny_d-1 ; j++ ) { //Undefined for extreme j
-            for( unsigned int k=0 ; k<nz_p ; k++ ) {
+        for( unsigned int j=1 ; j<n_d[1]-1 ; j++ ) { //Undefined for extreme j
+            for( unsigned int k=0 ; k<n_p[2] ; k++ ) {
                 ( *Bz3D )( i, j, k ) = ( *Bz3D_old )( i+1, j, k )
                                        +                 Alpha_BM_x    * ( ( *Bz3D )( i+1, j, k ) - ( *Bz3D_old )( i, j, k ) )
                                        -                 cb[0][0]*Gamma_BM_x * ( ( *Bx3D )( i, j, k+1 ) - ( *Bx3D )( i, j, k ) + ( *Bx3D_old )( i, j, k+1 ) - ( *Bx3D_old )( i, j, k ) )
@@ -248,7 +248,7 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                                        
             }// k  ---end compute Bz
         }//j  ---end compute Bz
-    } else if( min_max==1 && patch->isXmax() ) {
+    } else if( i_boundary_==1 && patch->isXmax() ) {
     
         // Static cast of the fields
         Field3D *Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
@@ -261,11 +261,11 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         Field3D *Bz3D = static_cast<Field3D *>( EMfields->Bz_ );
         Field3D *Bz3D_old = static_cast<Field3D *>( EMfields->Bz_m );
         
-        unsigned const int i = nx_d -2 ;
+        unsigned const int i = n_d[0] -2 ;
         
         // for By^(d,p,d)
-        for( unsigned int j=0 ; j<ny_p ; j++ ) {
-            for( unsigned int k=1 ; k<nz_d-1 ; k++ ) { //Undefined for extreme k
+        for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
+            for( unsigned int k=1 ; k<n_d[2]-1 ; k++ ) { //Undefined for extreme k
                 ( *By3D )( i+1, j, k ) = ( *By3D_old )( i, j, k )
                                          +                 Alpha_BM_x    * ( ( *By3D )( i, j, k ) - ( *By3D_old )( i+1, j, k ) )
                                          +                 cb[0][1]*Beta_BM_x  * ( ( *Bx3D )( i, j+1, k ) - ( *Bx3D )( i, j, k ) + ( *Bx3D_old )( i, j+1, k ) - ( *Bx3D_old )( i, j, k ) )
@@ -275,15 +275,15 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }//j  ---end compute By
         
         // for Bz^(d,d,p)
-        for( unsigned int j=1 ; j<ny_d-1 ; j++ ) { //Undefined for extreme j
-            for( unsigned int k=0 ; k<nz_p ; k++ ) {
+        for( unsigned int j=1 ; j<n_d[1]-1 ; j++ ) { //Undefined for extreme j
+            for( unsigned int k=0 ; k<n_p[2] ; k++ ) {
                 ( *Bz3D )( i+1, j, k ) = ( *Bz3D_old )( i, j, k )
                                          +                 Alpha_BM_x    * ( ( *Bz3D )( i, j, k ) - ( *Bz3D_old )( i+1, j, k ) )
                                          +                 cb[0][1]*Gamma_BM_x * ( ( *Bx3D )( i, j, k+1 ) - ( *Bx3D )( i, j, k ) + ( *Bx3D_old )( i, j, k+1 ) - ( *Bx3D_old )( i, j, k ) )
                                          +                 ce[0][1]*Beta_BM_x  * ( ( *Ex3D )( i, j, k )   - ( *Ex3D )( i, j-1, k ) + ( *Ex3D )( i+1, j, k ) - ( *Ex3D )( i+1, j-1, k ) ) ;
             }//k  ---end compute Bz
         }//j  ---end compute Bz
-    } else if( min_max==2 && patch->isYmin() ) {
+    } else if( i_boundary_==2 && patch->isYmin() ) {
     
         // Static cast of the fields
         //Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -299,8 +299,8 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         unsigned const int j = 0;
         
         // for Bx^(p,d,d)
-        for( unsigned int i=0 ; i<nx_p ; i++ ) {
-            for( unsigned int k=1 ; k<nz_d-1 ; k++ ) { // undefined for k=0 and k = nz_d-1 !!
+        for( unsigned int i=0 ; i<n_p[0] ; i++ ) {
+            for( unsigned int k=1 ; k<n_d[2]-1 ; k++ ) { // undefined for k=0 and k = n_d[2]-1 !!
                 ( *Bx3D )( i, j, k ) = ( *Bx3D_old )( i, j+1, k )
                                        +                 Alpha_BM_y    * ( ( *Bx3D )( i, j+1, k ) - ( *Bx3D_old )( i, j, k ) )
                                        -                 cb[1][0]*Beta_BM_y  * ( ( *By3D )( i+1, j, k ) - ( *By3D )( i, j, k )  + ( *By3D_old )( i+1, j, k ) - ( *By3D_old )( i, j, k ) )
@@ -309,8 +309,8 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }//i  ---end compute Bx
         
         // for Bz^(d,d,p)
-        for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {    // undefined for i=0 and i = nx_d-1 !!
-            for( unsigned int k=0 ; k<nz_p ; k++ ) {
+        for( unsigned int i=1 ; i<n_d[0]-1 ; i++ ) {    // undefined for i=0 and i = n_d[0]-1 !!
+            for( unsigned int k=0 ; k<n_p[2] ; k++ ) {
                 ( *Bz3D )( i, j, k ) = ( *Bz3D_old )( i, j+1, k )
                                        +                 Alpha_BM_y    * ( ( *Bz3D )( i, j+1, k ) - ( *Bz3D_old )( i, j, k ) )
                                        -                 cb[1][0]*Gamma_BM_y * ( ( *By3D )( i, j, k+1 ) - ( *By3D )( i, j, k ) + ( *By3D_old )( i, j, k+1 ) - ( *By3D_old )( i, j, k ) )
@@ -318,7 +318,7 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }// k  ---end compute Bz
         }//i  ---end compute Bz
         
-    } else if( min_max==3 && patch->isYmax() ) {
+    } else if( i_boundary_==3 && patch->isYmax() ) {
     
         // Static cast of the fields
         //Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -331,11 +331,11 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         Field3D *Bz3D = static_cast<Field3D *>( EMfields->Bz_ );
         Field3D *Bz3D_old = static_cast<Field3D *>( EMfields->Bz_m );
         
-        unsigned const int j = ny_d-2 ;
+        unsigned const int j = n_d[1]-2 ;
         
         // for Bx^(p,d,d)
-        for( unsigned int i=0 ; i<nx_p ; i++ ) {
-            for( unsigned int k=1 ; k<nz_d-1 ; k++ ) { // undefined for k=0 and k = nz_d-1 !!
+        for( unsigned int i=0 ; i<n_p[0] ; i++ ) {
+            for( unsigned int k=1 ; k<n_d[2]-1 ; k++ ) { // undefined for k=0 and k = n_d[2]-1 !!
                 ( *Bx3D )( i, j+1, k ) = ( *Bx3D_old )( i, j, k )
                                          +                 Alpha_BM_y    * ( ( *Bx3D )( i, j, k ) - ( *Bx3D_old )( i, j+1, k ) )
                                          +                 cb[1][1]*Beta_BM_y  * ( ( *By3D )( i+1, j, k ) - ( *By3D )( i, j, k ) + ( *By3D_old )( i+1, j, k ) - ( *By3D_old )( i, j, k ) )
@@ -344,8 +344,8 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }//i  ---end compute Bx
         
         // for Bz^(d,d,p)
-        for( unsigned int i=1 ; i<nx_d-1 ; i++ ) { // undefined for i=0 and i = nx_d-1 !!
-            for( unsigned int k=0 ; k<nz_p ; k++ ) {
+        for( unsigned int i=1 ; i<n_d[0]-1 ; i++ ) { // undefined for i=0 and i = n_d[0]-1 !!
+            for( unsigned int k=0 ; k<n_p[2] ; k++ ) {
                 ( *Bz3D )( i, j+1, k ) = ( *Bz3D_old )( i, j, k )
                                          +                 Alpha_BM_y    * ( ( *Bz3D )( i, j, k ) - ( *Bz3D_old )( i, j+1, k ) )
                                          +                 cb[1][1]*Gamma_BM_y * ( ( *By3D )( i, j, k+1 ) - ( *By3D )( i, j, k ) + ( *By3D_old )( i, j, k+1 ) - ( *By3D_old )( i, j, k ) )
@@ -353,7 +353,7 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }// k  ---end compute Bz
         }//i  ---end compute Bz
         
-    } else if( min_max==4 && patch->isZmin() ) {
+    } else if( i_boundary_==4 && patch->isZmin() ) {
     
         // Static cast of the fields
         //Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -369,8 +369,8 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         unsigned const int k = 0;
         
         // for By^(d,p,d)
-        for( unsigned int i=1 ; i<nx_d-1 ; i++ ) { // undefined for i=0 and i = nx_d-1 !!
-            for( unsigned int j=0 ; j<ny_p ; j++ ) {
+        for( unsigned int i=1 ; i<n_d[0]-1 ; i++ ) { // undefined for i=0 and i = n_d[0]-1 !!
+            for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
             
                 ( *By3D )( i, j, k ) = ( *By3D_old )( i, j, k+1 )
                                        +                 Alpha_BM_z    * ( ( *By3D )( i, j, k+1 ) - ( *By3D_old )( i, j, k ) )
@@ -380,8 +380,8 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }//i  ---end compute Bx
         
         // for Bx^(p,d,d)
-        for( unsigned int i=0 ; i<nx_p ; i++ ) {
-            for( unsigned int j=1 ; j<ny_d-1 ; j++ ) { // undefined for j=0 and j = ny_d-1 !!
+        for( unsigned int i=0 ; i<n_p[0] ; i++ ) {
+            for( unsigned int j=1 ; j<n_d[1]-1 ; j++ ) { // undefined for j=0 and j = n_d[1]-1 !!
             
                 ( *Bx3D )( i, j, k ) = ( *Bx3D_old )( i, j, k+1 )
                                        +                 Alpha_BM_z    * ( ( *Bx3D )( i, j, k+1 ) - ( *Bx3D_old )( i, j, k ) )
@@ -391,7 +391,7 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             }// j  ---end compute By
         }//i  ---end compute By
         
-    } else if( min_max==5 && patch->isZmax() ) {
+    } else if( i_boundary_==5 && patch->isZmax() ) {
     
         // Static cast of the fields
         //Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -404,11 +404,11 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         Field3D *Bz3D = static_cast<Field3D *>( EMfields->Bz_ );
         Field3D *Bz3D_old = static_cast<Field3D *>( EMfields->Bz_m );
         
-        unsigned const int k = nz_d-2 ;
+        unsigned const int k = n_d[2]-2 ;
         
         // for By^(d,p,d)
-        for( unsigned int i=1 ; i<nx_d-1 ; i++ ) { // undefined for i=0 and i = nx_d-1 !!
-            for( unsigned int j=0 ; j<ny_p ; j++ ) {
+        for( unsigned int i=1 ; i<n_d[0]-1 ; i++ ) { // undefined for i=0 and i = n_d[0]-1 !!
+            for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
             
                 ( *By3D )( i, j, k+1 ) = ( *By3D_old )( i, j, k )
                                          +                 Alpha_BM_z    * ( ( *By3D )( i, j, k ) - ( *By3D_old )( i, j, k+1 ) )
@@ -418,8 +418,8 @@ void ElectroMagnBC3D_BM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }//i  ---end compute Bx
         
         // for Bx^(p,d,d)
-        for( unsigned int i=0 ; i<nx_p ; i++ ) {
-            for( unsigned int j=1 ; j<ny_d-1 ; j++ ) { // undefined for j=0 and j = ny_d-1 !!
+        for( unsigned int i=0 ; i<n_p[0] ; i++ ) {
+            for( unsigned int j=1 ; j<n_d[1]-1 ; j++ ) { // undefined for j=0 and j = n_d[1]-1 !!
             
                 ( *Bx3D )( i, j, k+1 ) = ( *Bx3D_old )( i, j, k )
                                          +                 Alpha_BM_z    * ( ( *Bx3D )( i, j, k ) - ( *Bx3D_old )( i, j, k+1 ) )

@@ -16,8 +16,8 @@
 using namespace std;
 
 
-EnvelopeBC2D_refl::EnvelopeBC2D_refl( Params &params, Patch *patch, unsigned int _min_max )
-    : EnvelopeBC( params, patch, _min_max )
+EnvelopeBC2D_refl::EnvelopeBC2D_refl( Params &params, Patch *patch, unsigned int i_boundary )
+    : EnvelopeBC( params, patch, i_boundary )
 {
     // oversize
     oversize_ = params.oversize[0];
@@ -47,7 +47,7 @@ void EnvelopeBC2D_refl::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, d
     
     // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
     
-    if( min_max == 0 && patch->isXmin() ) {
+    if( i_boundary_ == 0 && patch->isXmin() ) {
     
         // FORCE CONSTANT ENVELOPE FIELD ON BORDER
         
@@ -58,7 +58,7 @@ void EnvelopeBC2D_refl::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, d
             }//j
         }//i
         
-    } else if( min_max == 1 && patch->isXmax() ) {
+    } else if( i_boundary_ == 1 && patch->isXmax() ) {
     
         // FORCE CONSTANT ENVELOPE FIELD ON BORDER
         
@@ -69,7 +69,7 @@ void EnvelopeBC2D_refl::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, d
             }//j
         }//i
         
-    } else if( min_max == 2 && patch->isYmin() ) {
+    } else if( i_boundary_ == 2 && patch->isYmin() ) {
     
         // FORCE CONSTANT ENVELOPE FIELD ON BORDER
         
@@ -80,7 +80,7 @@ void EnvelopeBC2D_refl::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, d
             }//j
         }//i
         
-    } else if( min_max == 3 && patch->isYmax() ) {
+    } else if( i_boundary_ == 3 && patch->isYmax() ) {
     
         // FORCE CONSTANT ENVELOPE FIELD ON BORDER
         
