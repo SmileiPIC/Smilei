@@ -7,22 +7,9 @@
 #include "Field1D.h"
 
 
-ElectroMagnBC1D::ElectroMagnBC1D( Params &params, Patch *patch, unsigned int _min_max )
-    : ElectroMagnBC( params, patch, _min_max )
+ElectroMagnBC1D::ElectroMagnBC1D( Params &params, Patch *patch, unsigned int i_boundary )
+    : ElectroMagnBC( params, patch, i_boundary )
 {
-    std::vector<unsigned int> n_space(params.n_space);
-    if (params.multiple_decomposition)
-        n_space = params.n_space_region;
-    
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = n_space[0]+1+2*params.oversize[0];
-    nx_d = nx_p+1;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
-    dx       = params.cell_length[0];
-    dt_ov_dx = dt/dx;
-    dx_ov_dt = 1.0/dt_ov_dx;
-    
 }
 
 ElectroMagnBC1D::~ElectroMagnBC1D()
@@ -51,7 +38,7 @@ void ElectroMagnBC1D::applyBConEdges( ElectroMagn *EMfields, Patch *patch )
 //
 //   if (patch->isXmax()){
 //
-//       unsigned int i = nx_p - 1;
+//       unsigned int i = n_p[0] - 1;
 //
 //   } //End series of Xmax edges
 //

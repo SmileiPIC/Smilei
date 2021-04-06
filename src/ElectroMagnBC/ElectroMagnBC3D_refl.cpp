@@ -14,8 +14,8 @@
 using namespace std;
 
 
-ElectroMagnBC3D_refl::ElectroMagnBC3D_refl( Params &params, Patch *patch, unsigned int _min_max )
-    : ElectroMagnBC3D( params, patch, _min_max )
+ElectroMagnBC3D_refl::ElectroMagnBC3D_refl( Params &params, Patch *patch, unsigned int i_boundary )
+    : ElectroMagnBC3D( params, patch, i_boundary )
 {
     // oversize
     if (!params.multiple_decomposition) {
@@ -36,7 +36,7 @@ ElectroMagnBC3D_refl::ElectroMagnBC3D_refl( Params &params, Patch *patch, unsign
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-    if( min_max == 0 && patch->isXmin() ) {
+    if( i_boundary_ == 0 && patch->isXmin() ) {
     
         // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
         
@@ -47,8 +47,8 @@ void ElectroMagnBC3D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         // FORCE CONSTANT MAGNETIC FIELDS
         // for By^(d,p,d)
         for( unsigned int i=oversize_x; i>0; i-- ) {
-            for( unsigned int j=0 ; j<ny_p ; j++ ) {
-                for( unsigned int k=0 ; k<nz_d ; k++ ) {
+            for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
+                for( unsigned int k=0 ; k<n_d[2] ; k++ ) {
                     ( *By3D )( i-1, j, k ) = ( *By3D )( i, j, k );
                 }
             }
@@ -56,14 +56,14 @@ void ElectroMagnBC3D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         
         // for Bz^(d,d,p)
         for( unsigned int i=oversize_x; i>0; i-- ) {
-            for( unsigned int j=0 ; j<ny_d ; j++ ) {
-                for( unsigned int k=0 ; k<nz_p ; k++ ) {
+            for( unsigned int j=0 ; j<n_d[1] ; j++ ) {
+                for( unsigned int k=0 ; k<n_p[2] ; k++ ) {
                     ( *Bz3D )( i-1, j, k ) = ( *Bz3D )( i, j, k );
                 }
             }
         }
         
-    } else if( min_max == 1 && patch->isXmax() ) {
+    } else if( i_boundary_ == 1 && patch->isXmax() ) {
     
         // Static cast of the fields
         Field3D *By3D = static_cast<Field3D *>( EMfields->By_ );
@@ -71,24 +71,24 @@ void ElectroMagnBC3D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         
         // FORCE CONSTANT MAGNETIC FIELDS
         // for By^(d,p,d)
-        for( unsigned int i=nx_d-oversize_x; i<nx_d; i++ ) {
-            for( unsigned int j=0 ; j<ny_p ; j++ ) {
-                for( unsigned int k=0 ; k<nz_d ; k++ ) {
+        for( unsigned int i=n_d[0]-oversize_x; i<n_d[0]; i++ ) {
+            for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
+                for( unsigned int k=0 ; k<n_d[2] ; k++ ) {
                     ( *By3D )( i, j, k ) = ( *By3D )( i-1, j, k );
                 }
             }
         }
         
         // for Bz^(d,d,p)
-        for( unsigned int i=nx_d-oversize_x; i<nx_d; i++ ) {
-            for( unsigned int j=0 ; j<ny_d ; j++ ) {
-                for( unsigned int k=0 ; k<nz_p ; k++ ) {
+        for( unsigned int i=n_d[0]-oversize_x; i<n_d[0]; i++ ) {
+            for( unsigned int j=0 ; j<n_d[1] ; j++ ) {
+                for( unsigned int k=0 ; k<n_p[2] ; k++ ) {
                     ( *Bz3D )( i, j, k ) = ( *Bz3D )( i-1, j, k );
                 }
             }
         }
         
-    } else if( min_max == 2 && patch->isYmin() ) {
+    } else if( i_boundary_ == 2 && patch->isYmin() ) {
     
         // Static cast of the fields
         Field3D *Bx3D = static_cast<Field3D *>( EMfields->Bx_ );
@@ -97,24 +97,24 @@ void ElectroMagnBC3D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         // FORCE CONSTANT MAGNETIC FIELDS
         
         // for Bx^(p,d,d)
-        for( unsigned int i=0; i<nx_p; i++ ) {
+        for( unsigned int i=0; i<n_p[0]; i++ ) {
             for( unsigned int j=oversize_y ; j>0 ; j-- ) {
-                for( unsigned int k=0; k<nz_d ; k++ ) {
+                for( unsigned int k=0; k<n_d[2] ; k++ ) {
                     ( *Bx3D )( i, j-1, k ) = ( *Bx3D )( i, j, k );
                 }
             }
         }
         
         // for Bz^(d,d,p)
-        for( unsigned int i=0; i<nx_d; i++ ) {
+        for( unsigned int i=0; i<n_d[0]; i++ ) {
             for( unsigned int j=oversize_y ; j>0 ; j-- ) {
-                for( unsigned int k=0; k<nz_p ; k++ ) {
+                for( unsigned int k=0; k<n_p[2] ; k++ ) {
                     ( *Bz3D )( i, j-1, k ) = ( *Bz3D )( i, j, k );
                 }
             }
         }
         
-    } else if( min_max == 3 && patch->isYmax() ) {
+    } else if( i_boundary_ == 3 && patch->isYmax() ) {
     
         // Static cast of the fields
         Field3D *Bx3D = static_cast<Field3D *>( EMfields->Bx_ );
@@ -123,24 +123,24 @@ void ElectroMagnBC3D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         // FORCE CONSTANT MAGNETIC FIELDS
         
         // for Bx^(p,d,d)
-        for( unsigned int i=0; i<nx_p; i++ ) {
-            for( unsigned int j=ny_d-oversize_y; j<ny_d ; j++ ) {
-                for( unsigned int k=0; k<nz_d ; k++ ) {
+        for( unsigned int i=0; i<n_p[0]; i++ ) {
+            for( unsigned int j=n_d[1]-oversize_y; j<n_d[1] ; j++ ) {
+                for( unsigned int k=0; k<n_d[2] ; k++ ) {
                     ( *Bx3D )( i, j, k ) = ( *Bx3D )( i, j-1, k );
                 }
             }
         }
         
         // for Bz^(d,d,p)
-        for( unsigned int i=0; i<nx_d; i++ ) {
-            for( unsigned int j=ny_d-oversize_y; j<ny_d ; j++ ) {
-                for( unsigned int k=0; k<nz_p ; k++ ) {
+        for( unsigned int i=0; i<n_d[0]; i++ ) {
+            for( unsigned int j=n_d[1]-oversize_y; j<n_d[1] ; j++ ) {
+                for( unsigned int k=0; k<n_p[2] ; k++ ) {
                     ( *Bz3D )( i, j, k ) = ( *Bz3D )( i, j-1, k );
                 }
             }
         }
         
-    } else if( min_max==4 && patch->isZmin() ) {
+    } else if( i_boundary_==4 && patch->isZmin() ) {
     
         // Static cast of the fields
         Field3D *Bx3D = static_cast<Field3D *>( EMfields->Bx_ );
@@ -149,8 +149,8 @@ void ElectroMagnBC3D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         // FORCE CONSTANT MAGNETIC FIELDS
         
         // for Bx^(p,d,d)
-        for( unsigned int i=0; i<nx_p; i++ ) {
-            for( unsigned int j=0 ; j<ny_d ; j++ ) {
+        for( unsigned int i=0; i<n_p[0]; i++ ) {
+            for( unsigned int j=0 ; j<n_d[1] ; j++ ) {
                 for( unsigned int k=oversize_z ; k>0 ; k-- ) {
                     ( *Bx3D )( i, j, k-1 ) = ( *Bx3D )( i, j, k );
                 }
@@ -158,15 +158,15 @@ void ElectroMagnBC3D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         }
         
         // for By^(d,p,d)
-        for( unsigned int i=0; i<nx_d; i++ ) {
-            for( unsigned int j=0 ; j<ny_p ; j++ ) {
+        for( unsigned int i=0; i<n_d[0]; i++ ) {
+            for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
                 for( unsigned int k=oversize_z ; k>0 ; k-- ) {
                     ( *By3D )( i, j, k-1 ) = ( *By3D )( i, j, k );
                 }
             }
         }
         
-    } else if( min_max==5 && patch->isZmax() ) {
+    } else if( i_boundary_==5 && patch->isZmax() ) {
     
         // Static cast of the fields
         Field3D *Bx3D = static_cast<Field3D *>( EMfields->Bx_ );
@@ -175,18 +175,18 @@ void ElectroMagnBC3D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         // FORCE CONSTANT MAGNETIC FIELDS
         
         // for Bx^(p,d,d)
-        for( unsigned int i=0; i<nx_p; i++ ) {
-            for( unsigned int j=0 ; j<ny_d ; j++ ) {
-                for( unsigned int k=nz_d-oversize_z; k<nz_d ; k++ ) {
+        for( unsigned int i=0; i<n_p[0]; i++ ) {
+            for( unsigned int j=0 ; j<n_d[1] ; j++ ) {
+                for( unsigned int k=n_d[2]-oversize_z; k<n_d[2] ; k++ ) {
                     ( *Bx3D )( i, j, k ) = ( *Bx3D )( i, j, k-1 );
                 }
             }
         }
         
         // for By^(d,p,d)
-        for( unsigned int i=0; i<nx_d; i++ ) {
-            for( unsigned int j=0 ; j<ny_p ; j++ ) {
-                for( unsigned int k=nz_d-oversize_z; k<nz_d ; k++ ) {
+        for( unsigned int i=0; i<n_d[0]; i++ ) {
+            for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
+                for( unsigned int k=n_d[2]-oversize_z; k<n_d[2] ; k++ ) {
                     ( *By3D )( i, j, k ) = ( *By3D )( i, j, k-1 );
                 }
             }

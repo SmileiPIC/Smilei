@@ -414,23 +414,23 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
                 H5Write b = g.group( groupName );
-                b.vect( "Bx_val", embc->Bx_val );
-                b.vect( "By_val", embc->By_val );
-                b.vect( "Bz_val", embc->Bz_val );
+                b.vect( "Bx_val", embc->B_val[0] );
+                b.vect( "By_val", embc->B_val[1] );
+                b.vect( "Bz_val", embc->B_val[2] );
             } else if( dynamic_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
                 H5Write b = g.group( groupName );
-                if( embc->Bx_val ) {
-                    dumpFieldsPerProc( b, embc->Bx_val );
+                if( embc->B_val[0] ) {
+                    dumpFieldsPerProc( b, embc->B_val[0] );
                 }
-                if( embc->By_val ) {
-                    dumpFieldsPerProc( b, embc->By_val );
+                if( embc->B_val[1] ) {
+                    dumpFieldsPerProc( b, embc->B_val[1] );
                 }
-                if( embc->Bz_val ) {
-                    dumpFieldsPerProc( b, embc->Bz_val );
+                if( embc->B_val[2] ) {
+                    dumpFieldsPerProc( b, embc->B_val[2] );
                 }
             }
         }
@@ -757,23 +757,23 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName = Tools::merge( "EM_boundary-species-", name.str() );
                 H5Read b = g.group( groupName );
-                b.vect( "Bx_val", embc->Bx_val );
-                b.vect( "By_val", embc->By_val );
-                b.vect( "Bz_val", embc->Bz_val );
+                b.vect( "Bx_val", embc->B_val[0] );
+                b.vect( "By_val", embc->B_val[1] );
+                b.vect( "Bz_val", embc->B_val[2] );
             } else if( dynamic_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName = Tools::merge( "EM_boundary-species-", name.str() );
                 H5Read b = g.group( groupName );
-                if( embc->Bx_val ) {
-                    restartFieldsPerProc( b, embc->Bx_val );
+                if( embc->B_val[0] ) {
+                    restartFieldsPerProc( b, embc->B_val[0] );
                 }
-                if( embc->By_val ) {
-                    restartFieldsPerProc( b, embc->By_val );
+                if( embc->B_val[1] ) {
+                    restartFieldsPerProc( b, embc->B_val[1] );
                 }
-                if( embc->Bz_val ) {
-                    restartFieldsPerProc( b, embc->Bz_val );
+                if( embc->B_val[2] ) {
+                    restartFieldsPerProc( b, embc->B_val[2] );
                 }
             }
         }

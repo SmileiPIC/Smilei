@@ -20,7 +20,7 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* ...
+* Lasers can be injected from all boundaries
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 

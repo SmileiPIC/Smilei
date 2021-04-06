@@ -18,7 +18,7 @@ class ElectroMagnBC2D_SM : public ElectroMagnBC2D
 {
 public:
 
-    ElectroMagnBC2D_SM( Params &params, Patch *patch, unsigned int _min_max );
+    ElectroMagnBC2D_SM( Params &params, Patch *patch, unsigned int i_boundary );
     ~ElectroMagnBC2D_SM() {};
     
     virtual void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
@@ -27,65 +27,17 @@ public:
     void disableExternalFields() override;
     
     //! Save external fields for silver muller EM Boundary condition
-    std::vector<double> Bx_val,  By_val,  Bz_val;
+    std::vector<std::vector<double> > B_val;
     
 private:
 
 
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Alpha_SM_W;
+    //! Constant used for the Silver-Mueller boundary conditions
+    double Alpha_, Beta_, Gamma_, Delta_, Epsilon_;
     
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Beta_SM_W;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Gamma_SM_W;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Delta_SM_W;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmin)
-    double Epsilon_SM_W;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Alpha_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Beta_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Gamma_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Delta_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    double Epsilon_SM_E;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Alpha_SM_S;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Beta_SM_S;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Delta_SM_S;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Epsilon_SM_S;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Alpha_SM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Beta_SM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Delta_SM_N;
-    
-    //! Constant used for the Silver-Mueller boundary conditions (Transverse)
-    double Epsilon_SM_N;
-    
+    unsigned int axis0_, axis1_;
+    int sign_;
+    std::vector<unsigned int> iB_;
 };
 
 #endif

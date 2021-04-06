@@ -19,7 +19,7 @@ class EnvelopeBC2D_refl : public EnvelopeBC
 {
 public:
 
-    EnvelopeBC2D_refl( Params &params, Patch *patch, unsigned int _min_max );
+    EnvelopeBC2D_refl( Params &params, Patch *patch, unsigned int i_boundary );
     ~EnvelopeBC2D_refl() {};
     
     void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
