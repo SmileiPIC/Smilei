@@ -19,7 +19,9 @@ The repository is composed of the following directories:
 - ``tools``: contains some additional programs for Smilei
 - ``validation``: contains the python scripts used by the validation process
 
-.. _generalImplementation:
+The general implementation is summarized in :numref:`general_implementation`
+
+.. _general_implementation:
 
 .. figure:: _static/figures/smilei_general_implementation.png
   :width: 15cm
@@ -92,10 +94,10 @@ Domain decomposition and parallelism
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The simulation domain is divided multiple times following a succession of decomposition levels.
-The whole domain is the superimposition of different grids for each electromagnetic field components
+The whole domain is the superimposition of different grids for each electromagnetic field component
 and macro-particules.
 Let us represent schematically the domain as an array of cells as in Fig. :numref:`full_domain`.
-Each cell contains a certain population of particles.
+Each cell contains a certain population of particles (that can differ from cell to cell).
 
 .. _full_domain:
 
@@ -103,6 +105,38 @@ Each cell contains a certain population of particles.
   :width: 15cm
 
   Example of a full domain with 960 cells.
+
+In :program:`smilei`, the cells are first reorganized into small group so-called patches.
+The domain becomes a collection of patches as shown in :numref:`patch_domain_decomposition`.
+
+.. _patch_domain_decomposition:
+
+.. figure:: _static/figures/patch_domain_decomposition.png
+  :width: 15cm
+
+  The domain in :program:`Smilei` is a collection of patches.
+
+A patch is an independant piece of the whole simulation domain.
+It therefore owns local electrmognatic grids and list of macro-particles.
+Electromagnetic grids have ghost cells that represent the information located in the neighboring patches (not shown in :numref:`patch_domain_decomposition`).
+All patches have the same spatial size .i.e. the same number of cells.
+The size of a patch is calculated so that all local field grids (ghost cells included) can fit in L2 cache.
+
+Patches are then distributed among MPI processes in so-called MPI patch collections.
+The distribution can be ensured in an equal cartesian way or using a load balancing strategy based on the Hilbert curve.
+
+.. _mpi_patch_collection:
+
+.. figure:: _static/figures/mpi_patch_collection.png
+  :width: 15cm
+
+  Patches are then distributed among MPI processes in so-called MPI patch collections.
+
+The patch granularity is used for:
+
+- creating more parallelism for OpenMP
+- enabling a load balancing capability through OpenMP scheduling
+- ensuring a good cache memory efficiency at L3 and L2 levels.
 
 
 Data structures
