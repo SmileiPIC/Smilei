@@ -143,6 +143,7 @@ The patch granularity is used for:
 - ensuring a good cache memory efficiency at L3 and L2 levels.
 
 The patch is not the smaller decomposition grain-size.
+The patch can be decomposed into bins as shown in :numref:`bin_decomposition`.
 
 .. _bin_decomposition:
 
@@ -150,6 +151,13 @@ The patch is not the smaller decomposition grain-size.
   :width: 10cm
 
   Bin decomposition.
+
+Contrary to patch, a bin is not an independant data structure with its own arrays.
+It represents a smaller portion of the patch grids through specific start and end indexes.
+For the macro-particles, a sorting algorithm is used to ensure that in the macro-particles
+located in the same bin are grouped and contiguous in memory.
+
+
 
 Data structures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
