@@ -30,6 +30,13 @@ Notion of data container
 Data containers are classes (or sometime just structures) used to store a specific type of data, often considered as raw data such as particles or fields.
 Some methods can be implemented in a data container for managing or accessing the data.
 
+.. _dataContainer:
+
+.. figure:: _static/figures/data_container.png
+  :width: 15cm
+
+  Data container.
+
 Notion of operators
 """"""""""""""""""""""""""""""
 
@@ -38,6 +45,15 @@ Input data can be parameters and data containers.
 Output data can be processed data from data containers or updated data containers.
 An operator is a class functor (overloadind of the `()` ).
 Sometime, operator provides additional methods called wrappers to provide differents simplified or adapted interfaces.
+An operator do not store data or temporarely.
+
+Notion of domain parts
+""""""""""""""""""""""""""""""
+
+Domain parts are classes that represents some specific levels of the domain decomposition.
+They can be seen as high-level data container or container of data container.
+They contain some methods to handle, manange and access the local data.
+for instance, patches and species are domain parts.
 
 Notion of factories
 """"""""""""""""""""""""""""""
