@@ -33,7 +33,7 @@ Some methods can be implemented in a data container for managing or accessing th
 .. _dataContainer:
 
 .. figure:: _static/figures/data_container.png
-  :width: 15cm
+  :width: 5cm
 
   Data container.
 
