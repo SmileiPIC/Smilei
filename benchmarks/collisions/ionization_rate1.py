@@ -77,14 +77,14 @@ Collisions(
 
 
 
-DiagFields(
-	every = 1
-)
+# DiagFields(
+# 	every = 1
+# )
 
 
-DiagScalar(
-	every = 1
-)
+# DiagScalar(
+# 	every = 1
+# )
 
 
 

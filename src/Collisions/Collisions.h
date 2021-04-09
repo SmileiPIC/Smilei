@@ -292,27 +292,20 @@ protected:
             s = smax;
         }
         
-        // Pick the deflection angles
-        // Technique given by Nanbu in http://dx.doi.org/10.1103/PhysRevE.55.4642
-        //   to pick randomly the deflection angle cosine, in the center-of-mass frame.
-        // Technique slightly modified in http://dx.doi.org/10.1063/1.4742167
-        if( s < 0.1 ) {
-            if( U1<0.0001 ) {
-                U1=0.0001;    // ensures cos_chi > 0
-            }
-            cosX = 1. + s*log( U1 );
-        } else if( s < 3. ) {
-            // the polynomial has been modified from the article in order to have a better form
-            double invA = 0.00569578 +( 0.95602 + ( -0.508139 + ( 0.479139 + ( -0.12789 + 0.0238957*s )*s )*s )*s )*s;
-            double A = 1./invA;
-            cosX = invA  * log( exp( -A ) + 2.*U1*sinh( A ) );
-        } else if( s < 6. ) {
-            double A = 3.*exp( -s );
-            cosX = ( 1./A ) * log( exp( -A ) + 2.*U1*sinh( A ) );
+        // Pick the deflection angles in the center-of-mass frame.
+        // Instead of Nanbu http://dx.doi.org/10.1103/PhysRevE.55.4642
+        // and Perez http://dx.doi.org/10.1063/1.4742167
+        // we made a new fit (faster and more accurate)
+        if( s < 4. ) {
+            double s2 = s*s;
+            double alpha = 0.37*s - 0.005*s2 - 0.0064*s2*s;
+            double sin2X2 = alpha * U1 / sqrt( (1.-U1) + alpha*alpha*U1 );
+            cosX = 1. - 2.*sin2X2;
+            sinX = 2.*sqrt( sin2X2 *(1.-sin2X2) );
         } else {
             cosX = 2.*U1 - 1.;
+            sinX = sqrt( 1. - cosX*cosX );
         }
-        sinX = sqrt( 1. - cosX*cosX );
         
         // Calculate combination of angles
         sinXcosPhi = sinX*cos( phi );
