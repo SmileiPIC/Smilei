@@ -139,7 +139,7 @@ public :
     void injectParticlesFromBoundaries( Params &params, Timers &timers, unsigned int itime );
                                       
     //! Computation of the total charge
-    void computeCharge();
+    void computeCharge(bool old = false);
     
     void projectionForDiags( Params &params,
                                SmileiMPI *smpi,
@@ -165,7 +165,7 @@ public :
             SmileiMPI *smpi,
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );
-    void resetRhoJ();
+    void resetRhoJ(bool old = false);
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities( Params &params, double time_dual, Timers &timers, int itime, SimWindow *simWindow, SmileiMPI *smpi );
@@ -308,6 +308,7 @@ public :
     std::vector<std::vector< Field *>> listJr_;
     std::vector<std::vector< Field *>> listJt_;
     std::vector<std::vector< Field *>> listrho_AM_;
+    std::vector<std::vector< Field *>> listrho_old_AM_;
     std::vector<std::vector< Field *>> listJls_;
     std::vector<std::vector< Field *>> listJrs_;
     std::vector<std::vector< Field *>> listJts_;
@@ -350,6 +351,7 @@ public :
         for( unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {
             uint64_t tmp( 0 );
             MPI_Reduce( &( nParticles[ispec] ), &tmp, 1, MPI_UINT64_T, MPI_SUM, 0, smpi->world() );
+            nParticles[ispec] = tmp;
         }
         return nParticles;
     }
@@ -362,7 +364,7 @@ public :
         }
     }
     
-    void checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *uncoupled );
+    void checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *region_vecpatches );
     
     void checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint );
     

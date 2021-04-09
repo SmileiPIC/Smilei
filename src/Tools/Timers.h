@@ -37,6 +37,7 @@ public:
     Timer envelope  ;
     Timer susceptibility ;
     Timer grids ;
+    Timer densitiesCorrection ;
 #ifdef __DETAILED_TIMERS
     Timer interpolator  ;
     Timer pusher  ;

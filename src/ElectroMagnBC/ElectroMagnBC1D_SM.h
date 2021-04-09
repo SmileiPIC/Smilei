@@ -10,7 +10,7 @@ class ElectroMagn;
 class ElectroMagnBC1D_SM : public ElectroMagnBC1D
 {
 public:
-    ElectroMagnBC1D_SM( Params &param, Patch *patch, unsigned int _min_max );
+    ElectroMagnBC1D_SM( Params &param, Patch *patch, unsigned int i_boundary );
     ~ElectroMagnBC1D_SM();
     
     void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
@@ -22,15 +22,12 @@ public:
     
 private:
 
-    //! \todo Create properties the laser time-profile (MG & TV)
-    //! Constant used for the Silver-Mueller boundary conditions
-    double Alpha_SM;
+    //! Constants used for the Silver-Mueller boundary conditions
+    double Alpha, Beta, Gamma;
     
-    //! Constant used for the Silver-Mueller boundary conditions
-    double Beta_SM;
-    
-    //! Constant used for the Silver-Mueller boundary conditions
-    double Gamma_SM;
+    //! Locations to apply the profile
+    unsigned int iE, iB, iB_old;
+    int sign_;
     
 };
 

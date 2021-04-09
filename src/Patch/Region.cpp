@@ -55,7 +55,7 @@ void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     vecPatch_.nrequests = vecPatches( 0 )->requests_.size();
     vecPatch_.nAntennas = vecPatch_( 0 )->EMfields->antennas.size();
     vecPatch_.initExternals( params );
-    if (!params.apply_rotational_cleaning)
+    if (!params.initial_rotational_cleaning)
         vecPatch_.applyExternalFields();
     
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
@@ -68,8 +68,9 @@ void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
 void Region::coupling( Params &params, bool global_region )
 {
     vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields, global_region );
-    if ( ( params.geometry == "AMcylindrical" ) && ( global_region ) )
+    if( params.geometry == "AMcylindrical" && global_region ) {
         vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->rotational_cleaning( vecPatch_( 0 )->EMfields );
+    }
     coupled_ = true;
 }
 
@@ -102,9 +103,6 @@ void Region::clean()
 void Region::solveMaxwell( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi )
 {
     vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers, smpi );
-    
-    // current no more used for now, reinitialized for next timestep
-    //vecPatch_.resetRhoJ();
 
 }
 

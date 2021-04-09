@@ -713,7 +713,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
         Patch * patch = ( *this )( ipatch );
         
         // Only for patch at the domain boundary
-        if (patch->isBoundary()) {
+        if (patch->isAnyBoundary()) {
             
             // Targeted species and species index
             unsigned int i_species ;
@@ -1016,16 +1016,20 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
 }
 
 //! Computation of the total charge
-void VectorPatch::computeCharge()
+void VectorPatch::computeCharge(bool old /*=false*/)
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        ( *this )( ipatch )->EMfields->restartRhoJ();
+        if (old) {
+            static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields)->restartRhoold();
+        } else {
+            ( *this )( ipatch )->EMfields->restartRhoJ();
+        }
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
-                species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ) );
+                species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ), old );
             } else {
-                species( ipatch, ispec )->Species::computeCharge( ispec, emfields( ipatch ) );
+                species( ipatch, ispec )->Species::computeCharge( ispec, emfields( ipatch ), old );
             }
         }
     }
@@ -1051,11 +1055,13 @@ void VectorPatch::computeChargeRelativisticSpecies( double time_primal )
     }
 } // END computeRho
 
-void VectorPatch::resetRhoJ()
+void VectorPatch::resetRhoJ(bool old/*=false*/)
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
+        if (old)
+            static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields)->restartRhoold();
     }
 }
 
@@ -1087,11 +1093,11 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
 
     timers.syncDens.restart();
     if( params.geometry != "AMcylindrical" ) {
-        if ( (!params.uncoupled_grids)||(itime==0) )
+        if ( (!params.multiple_decomposition)||(itime==0) )
             SyncVectorPatch::sumRhoJ( params, ( *this ), smpi, timers, itime ); // MPI
     } else {
 
-        if ( (!params.uncoupled_grids)||(itime==0) )
+        if ( (!params.multiple_decomposition)||(itime==0) )
             for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->Jl_.size() ; imode++ ) {
                 SyncVectorPatch::sumRhoJ( params, ( *this ), imode, smpi, timers, itime );
             }
@@ -1117,24 +1123,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             if (emAM->isYmin){
-                for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
-                    ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode, diag_flag );
-                }
-                //Also apply BC on axis on species diagnostics
-                if (diag_flag) {
-                    unsigned int n_species = ( *this )( 0 )->vecSpecies.size();
-                    for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
-                        for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
-                            unsigned int ifield = imode*n_species+ispec;
-                            complex<double> *Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : NULL ;
-                            complex<double> *Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : NULL ;
-                            complex<double> *Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : NULL ;
-                            complex<double> *rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : NULL ;
-                            ( *this )( ipatch )->vecSpecies[ispec]->Proj->axisBC( rho , Jl, Jr, Jt, imode, diag_flag );
-                        }
-                    }
-                }
-
+                ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( emAM, diag_flag );
             }
         }
     }
@@ -1260,11 +1249,6 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         }
     }
 
-    if ( params.is_spectral and params.geometry == "AMcylindrical"){
-        // Current correction in spectral space
-        (*this)( 0 )->EMfields->MaxwellAmpereSolver_->densities_correction( (*this)( 0 )->EMfields );
-    }
-
     #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         if( !params.is_spectral ) {
@@ -1303,7 +1287,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
     timers.syncField.update( params.printNow( itime ) );
     
     
-    if ( (params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true
+    if ( (params.multiple_decomposition) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // multiple_decomposition = true -> is_spectral = true
         timers.syncField.restart();
         if( params.is_spectral && params.geometry != "AMcylindrical" ) {
             SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
@@ -1322,7 +1306,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
             }
         }
-        if( params.is_spectral ) {
+        if( params.is_spectral && params.geometry != "AMcylindrical" ) {
             saveOldRho( params );
         }
     }
@@ -1387,7 +1371,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
-    if ( (!params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true
+    if ( (!params.multiple_decomposition) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // multiple_decomposition = true -> is_spectral = true
         if( params.geometry != "AMcylindrical" ) {
             timers.syncField.restart();
             SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
@@ -1417,18 +1401,17 @@ void VectorPatch::initExternals( Params &params )
 {
     // Init all lasers
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
-        if( ( *this )( ipatch )->isXmin() && ( *this )( ipatch )->EMfields->emBoundCond[0] != NULL ) {
-            unsigned int nlaser = ( *this )( ipatch )->EMfields->emBoundCond[0]->vecLaser.size();
-            for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
-                ( *this )( ipatch )->EMfields->emBoundCond[0]->vecLaser[ilaser]->initFields( params, ( *this )( ipatch ) );
-            }
-        }
+        Patch * patch = ( *this )( ipatch );
 
-        if( ( *this )( ipatch )->isXmax() && ( *this )( ipatch )->EMfields->emBoundCond[1] != NULL ) {
-            unsigned int nlaser = ( *this )( ipatch )->EMfields->emBoundCond[1]->vecLaser.size();
-            for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
-                ( *this )( ipatch )->EMfields->emBoundCond[1]->vecLaser[ilaser]->initFields( params, ( *this )( ipatch ) );
+        for( unsigned ib=0; ib<2*params.nDim_field; ib++ ) {
+
+            if( patch->isBoundary(ib) && patch->EMfields->emBoundCond[ib] ) {
+                unsigned int nlaser = patch->EMfields->emBoundCond[ib]->vecLaser.size();
+                for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
+                    patch->EMfields->emBoundCond[ib]->vecLaser[ilaser]->initFields( params, patch );
+                }
             }
+
         }
     }
 
@@ -3402,6 +3385,9 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
         listJr_.resize( nmodes ) ;
         listJt_.resize( nmodes ) ;
         listrho_AM_.resize( nmodes ) ;
+        if (static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->rho_old_AM_[0])
+            listrho_old_AM_.resize( nmodes ) ;
+        listrho_AM_.resize( nmodes ) ;
         listJls_.resize( nmodes ) ;
         listJrs_.resize( nmodes ) ;
         listJts_.resize( nmodes ) ;
@@ -3418,6 +3404,8 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listJr_[imode].resize( size() );
             listJt_[imode].resize( size() );
             listrho_AM_[imode].resize( size() );
+            if (static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->rho_old_AM_[imode])
+                listrho_old_AM_[imode].resize( size() );
             listEl_[imode].resize( size() );
             listEr_[imode].resize( size() );
             listEt_[imode].resize( size() );
@@ -3429,6 +3417,8 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listJr_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Jr_[imode] ;
                 listJt_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Jt_[imode] ;
                 listrho_AM_[imode][ipatch] =static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_AM_[imode];
+                if (static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_old_AM_[imode])
+                    listrho_old_AM_[imode][ipatch] =static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_old_AM_[imode];
                 listEl_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->El_[imode] ;
                 listEr_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Er_[imode] ;
                 listEt_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Et_[imode] ;
@@ -3657,6 +3647,8 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listEr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listEt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listrho_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                if (static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_old_AM_[imode])
+                    listrho_old_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
             }
         }
         if( patches_[0]->EMfields->envelope != NULL ) {
@@ -3976,7 +3968,7 @@ string combineMemoryConsumption( SmileiMPI *smpi, long int data, string name )
 }
 
 // Print information on the memory consumption
-void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *uncoupled )
+void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *region_vecpatches )
 {
     // Particles memory
     long int particlesMem( 0 );
@@ -3996,10 +3988,10 @@ void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *uncouple
     m = combineMemoryConsumption( smpi, fieldsMem, "Fields" );
     MESSAGE( m );
     
-    // Fields from uncoupled grid
-    if( ! uncoupled->patches_.empty() ) {
-        long int uncoupledMem = uncoupled->patches_[0]->EMfields->getMemFootPrint();
-        m = combineMemoryConsumption( smpi, uncoupledMem, "Uncoupled grid" );
+    // Fields from SDMD grid
+    if( ! region_vecpatches->patches_.empty() ) {
+        long int RegionMem = region_vecpatches->patches_[0]->EMfields->getMemFootPrint();
+        m = combineMemoryConsumption( smpi, RegionMem, "SDMD grid" );
         MESSAGE( m );
     }
     
@@ -4020,6 +4012,9 @@ void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *uncouple
 
 void VectorPatch::saveOldRho( Params &params )
 {
+
+    cout << "save old rho. Should not be called in this test" << endl;
+
     //Spectral methods need the old density. This function is not called in FDTD.
     int n=0;
     if( params.geometry!="AMcylindrical" ) {

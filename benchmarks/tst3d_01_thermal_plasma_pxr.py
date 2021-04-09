@@ -28,10 +28,8 @@ def n0_(x,y,z):
 Main(
     geometry = "3Dcartesian",
     interpolation_order = 2,
-    global_factor = [2,2,2],
-    norder = [2,2,2],
-    is_spectral = True,
-    is_pxr = True,
+    maxwell_solver = "spectral",
+    spectral_solver_order = [2,2,2],
     timestep = dt,
     simulation_time = Tsim,
     cell_length  = [dx,dy,dz],

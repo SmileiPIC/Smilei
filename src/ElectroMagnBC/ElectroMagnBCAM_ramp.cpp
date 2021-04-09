@@ -1,4 +1,4 @@
-#include "ElectroMagnBCAM_zero.h"
+#include "ElectroMagnBCAM_ramp.h"
 
 #include <cstdlib>
 
@@ -17,17 +17,18 @@
 
 using namespace std;
 
-ElectroMagnBCAM_zero::ElectroMagnBCAM_zero( Params &params, Patch *patch, unsigned int _min_max )
-    : ElectroMagnBCAM( params, patch, _min_max )
+ElectroMagnBCAM_ramp::ElectroMagnBCAM_ramp( Params &params, Patch *patch, unsigned int i_boundary, unsigned int ncells )
+    : ElectroMagnBCAM( params, patch, i_boundary )
 {
     //Number of modes
     Nmode = params.nmodes;
-    number_of_damping_cells.push_back(params.number_of_damping_cells[0]);  
+    number_of_cells_ = ncells;
  
-    if (params.uncoupled_grids)
+    if( params.multiple_decomposition ) {
         region_oversize_l = params.region_oversize[0];
-    else
+    } else {
         region_oversize_l = 0;
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -44,7 +45,7 @@ ElectroMagnBCAM_zero::ElectroMagnBCAM_zero( Params &params, Patch *patch, unsign
 //
 //
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
+void ElectroMagnBCAM_ramp::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
 
     // Loop on imode
@@ -57,20 +58,20 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
         cField2D *Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
         cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
         
-        if( min_max == 0 && patch->isXmin() ) {
+        if( i_boundary_ == 0 && patch->isXmin() ) {
             //x= Xmin
-            int cell_start_dump =  region_oversize_l - number_of_damping_cells[0]/2;
-            int cell_stop_dump  =  cell_start_dump - number_of_damping_cells[0]/2 ;
-            double pi_ov_ndc = M_PI / number_of_damping_cells[0];
+            int cell_start_dump =  region_oversize_l - number_of_cells_/2;
+            int cell_stop_dump  =  cell_start_dump - number_of_cells_/2 ;
+            double pi_ov_ndc = M_PI / number_of_cells_;
             double damping_phase = 0.;
 
             for (int i=cell_start_dump; i > cell_stop_dump; i--){
-                //cos^2 damping over number_of_damping_cells/2 cells.
+                //cos^2 damping over number_of_cells/2 cells.
                 damping_phase += pi_ov_ndc;
                 double damp_coeff = cos(damping_phase);
                 damp_coeff *= damp_coeff; 
             
-                for ( unsigned int j=0 ; j<nr_p ; j++ ) {
+                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
                     ( *El )( i, j ) *= damp_coeff;
                     ( *Er )( i, j ) *= damp_coeff;
                     ( *Et )( i, j ) *= damp_coeff;
@@ -81,7 +82,7 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
             }
 
             for (int i= 0; i<=cell_stop_dump; i++){
-                for ( unsigned int j=0 ; j<nr_p ; j++ ) {
+                for ( unsigned int j=0 ; j<n_p[1] ; j++ ) {
                     ( *El )( i, j ) = 0.;
                     ( *Er )( i, j ) = 0.;
                     ( *Et )( i, j ) = 0.;
@@ -91,20 +92,20 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
                 }
             }
 
-        } else if( min_max == 1 && patch->isXmax() ) {
+        } else if( i_boundary_ == 1 && patch->isXmax() ) {
 
-            int cell_start_dump = nl_p - region_oversize_l + number_of_damping_cells[0]/2;
-            int cell_stop_dump  =  cell_start_dump + number_of_damping_cells[0]/2 ;
-            double pi_ov_ndc = M_PI / number_of_damping_cells[0];
+            int cell_start_dump = n_p[0] - region_oversize_l + number_of_cells_/2;
+            int cell_stop_dump  =  cell_start_dump + number_of_cells_/2 ;
+            double pi_ov_ndc = M_PI / number_of_cells_;
             double damping_phase = 0.;
  
             for (int i=cell_start_dump; i < cell_stop_dump; i++){
-                //cos^2 damping over number_of_damping_cells/2 cells.
+                //cos^2 damping over number_of_cells/2 cells.
                 damping_phase += pi_ov_ndc;
                 double damp_coeff  = cos(damping_phase);
                 damp_coeff *= damp_coeff; 
 
-                for( unsigned int j=0. ; j<nr_p ; j++ ) {
+                for( unsigned int j=0. ; j<n_p[1] ; j++ ) {
                     ( *El )( i, j ) *= damp_coeff;
                     ( *Er )( i, j ) *= damp_coeff;
                     ( *Et )( i, j ) *= damp_coeff;
@@ -114,8 +115,8 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
                 }
             }
 
-            for (unsigned int i=cell_stop_dump; i < nl_p; i++){
-                for( unsigned int j=0. ; j<nr_p ; j++ ) {
+            for (unsigned int i=cell_stop_dump; i < n_p[0]; i++){
+                for( unsigned int j=0. ; j<n_p[1] ; j++ ) {
                     ( *El )( i, j ) = 0.;
                     ( *Er )( i, j ) = 0.;
                     ( *Et )( i, j ) = 0.;

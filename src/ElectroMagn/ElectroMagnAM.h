@@ -40,6 +40,8 @@ public:
     std::vector<cField2D *> Jt_s;
     std::vector<cField2D *> rho_AM_s;
     void restartRhoJ() override;
+    void restartRhoold() ;
+    void restartRhos() ;
     void restartRhoJs() override;
     
     // fields for Poisson solver
@@ -151,6 +153,7 @@ public:
     
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ() override;
+    void computeTotalRhoold();
     void addToGlobalRho( int ispec, unsigned int clrw );
     
     //! Method used to compute the total susceptibility by summing over all species

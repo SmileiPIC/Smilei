@@ -194,6 +194,7 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
     Jr_.resize( nmodes );
     Jt_.resize( nmodes );
     rho_AM_.resize( nmodes );
+    rho_old_AM_.resize( nmodes );
 
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         ostringstream mode_id( "" );
@@ -214,18 +215,12 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         Jr_[imode]   = FieldFactory::createComplex( dimPrim, 1, false, ( "Jr"+mode_id.str() ).c_str(), params );
         Jt_[imode]   = FieldFactory::createComplex( dimPrim, 2, false, ( "Jt"+mode_id.str() ).c_str(), params );
         rho_AM_[imode]  = new cField2D( dimPrim, ( "Rho"+mode_id.str() ).c_str() );
-    }
-
-    if(params.is_pxr == true) {
-        rho_old_AM_.resize( nmodes );
-        for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
-            ostringstream mode_id( "" );
-            mode_id << "_mode_" << imode;
+        if(params.is_pxr == true) {
             rho_old_AM_[imode]  = new cField2D( dimPrim, ( "RhoOld"+mode_id.str() ).c_str() );
+        } else {
+            rho_old_AM_[imode] = NULL;
         }
-    } 
-
-    
+    }
 
     if( params.Laser_Envelope_model ) {
         Env_A_abs_  = new Field2D( dimPrim, "Env_A_abs_mode_0" );
@@ -312,6 +307,9 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
         allFields.push_back( Jr_[imode] );
         allFields.push_back( Jt_[imode] );
         allFields.push_back( rho_AM_[imode] );
+        if (is_pxr){
+            allFields.push_back( rho_old_AM_[imode] );
+        }
         if( (imode ==0) && (Env_A_abs_ != NULL) ) {
             allFields.push_back( Env_A_abs_ );
             allFields.push_back( Env_Chi_ );
@@ -354,10 +352,11 @@ ElectroMagnAM::~ElectroMagnAM()
         delete Bl_[imode];
         delete Br_[imode];
         delete Bt_[imode];
-        if (!is_pxr) {
-            delete Bl_m[imode];
-            delete Br_m[imode];
-            delete Bt_m[imode];
+        delete Bl_m[imode];
+        delete Br_m[imode];
+        delete Bt_m[imode];
+        if (is_pxr) {
+            delete rho_old_AM_[imode];
         }
         
         delete Jl_[imode];
@@ -387,6 +386,16 @@ void ElectroMagnAM::restartRhoJ()
     }
 }
 
+void ElectroMagnAM::restartRhoold()
+{
+    for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+        rho_old_AM_[imode]->put_to( 0. );
+    }
+    for( unsigned int ifield=0 ; ifield < n_species*nmodes ; ifield++ ) {
+        rho_AM_s[ifield]->put_to( 0. );
+    }
+}
+
 void ElectroMagnAM::restartRhoJs()
 {
     for( unsigned int ispec=0 ; ispec < n_species*nmodes ; ispec++ ) {
@@ -412,6 +421,14 @@ void ElectroMagnAM::restartRhoJs()
     }
 }
 
+void ElectroMagnAM::restartRhos()
+{
+    for( unsigned int ispec=0 ; ispec < n_species*nmodes ; ispec++ ) {
+        if( rho_AM_s[ispec] ) {
+            rho_AM_s[ispec]->put_to( 0. );
+        }
+    }
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Begin of Solve Poisson methods
@@ -1535,6 +1552,23 @@ void ElectroMagnAM::binomialCurrentFilter(unsigned int ipass, std::vector<unsign
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute the total density and currents from species density and currents
 // ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagnAM::computeTotalRhoold()
+{
+    // sum all rho_AM_s which were used as temporary buffers on rho_old_AM
+    for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+        cField2D *rhoold  = rho_old_AM_[imode];
+        for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+            int ifield = imode*n_species+ispec;
+            cField2D *rho2D_s  = rho_AM_s[ifield];
+            for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                for( unsigned int j=0 ; j<nr_p ; j++ ) {
+                    ( *rhoold )( i, j ) += ( *rho2D_s )( i, j );
+                }
+            }
+        }
+    }
+    return;
+}
 void ElectroMagnAM::computeTotalRhoJ()
 {
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {

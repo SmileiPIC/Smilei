@@ -298,7 +298,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
         
     }
 
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         // Open a group
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
@@ -350,8 +350,9 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
             dump_cFieldsPerProc( g, emAM->Br_m[imode] );
             dump_cFieldsPerProc( g, emAM->Bt_m[imode] );
             
-            if(params.is_pxr == true)
+            if( params.is_pxr ) {
                 dump_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
+            }
             
         }
     }
@@ -413,23 +414,23 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
                 H5Write b = g.group( groupName );
-                b.vect( "Bx_val", embc->Bx_val );
-                b.vect( "By_val", embc->By_val );
-                b.vect( "Bz_val", embc->Bz_val );
+                b.vect( "Bx_val", embc->B_val[0] );
+                b.vect( "By_val", embc->B_val[1] );
+                b.vect( "Bz_val", embc->B_val[2] );
             } else if( dynamic_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
                 H5Write b = g.group( groupName );
-                if( embc->Bx_val ) {
-                    dumpFieldsPerProc( b, embc->Bx_val );
+                if( embc->B_val[0] ) {
+                    dumpFieldsPerProc( b, embc->B_val[0] );
                 }
-                if( embc->By_val ) {
-                    dumpFieldsPerProc( b, embc->By_val );
+                if( embc->B_val[1] ) {
+                    dumpFieldsPerProc( b, embc->B_val[1] );
                 }
-                if( embc->Bz_val ) {
-                    dumpFieldsPerProc( b, embc->Bz_val );
+                if( embc->B_val[2] ) {
+                    dumpFieldsPerProc( b, embc->B_val[2] );
                 }
             }
         }
@@ -602,7 +603,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
         
     }
 
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
         string patchName = Tools::merge( "region-", patch_name.str() );
@@ -680,8 +681,9 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
             restart_cFieldsPerProc( g, emAM->Br_m[imode] );
             restart_cFieldsPerProc( g, emAM->Bt_m[imode] );
             
-            if(params.is_pxr == true)
+            if( params.is_pxr ) {
                 restart_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
+            }
             
         }
     }
@@ -755,23 +757,23 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName = Tools::merge( "EM_boundary-species-", name.str() );
                 H5Read b = g.group( groupName );
-                b.vect( "Bx_val", embc->Bx_val );
-                b.vect( "By_val", embc->By_val );
-                b.vect( "Bz_val", embc->Bz_val );
+                b.vect( "Bx_val", embc->B_val[0] );
+                b.vect( "By_val", embc->B_val[1] );
+                b.vect( "Bz_val", embc->B_val[2] );
             } else if( dynamic_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName = Tools::merge( "EM_boundary-species-", name.str() );
                 H5Read b = g.group( groupName );
-                if( embc->Bx_val ) {
-                    restartFieldsPerProc( b, embc->Bx_val );
+                if( embc->B_val[0] ) {
+                    restartFieldsPerProc( b, embc->B_val[0] );
                 }
-                if( embc->By_val ) {
-                    restartFieldsPerProc( b, embc->By_val );
+                if( embc->B_val[1] ) {
+                    restartFieldsPerProc( b, embc->B_val[1] );
                 }
-                if( embc->Bz_val ) {
-                    restartFieldsPerProc( b, embc->Bz_val );
+                if( embc->B_val[2] ) {
+                    restartFieldsPerProc( b, embc->B_val[2] );
                 }
             }
         }

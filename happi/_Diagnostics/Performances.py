@@ -36,16 +36,16 @@ def HilbertCurveMatrix2D(m1, m2=None, oversize=0):
 			A[o:K2, (j*J+o):((j+1)*J+o)] = A[o:K2, o:K2] + (j*Npoints)
 	return A
 
-# Method to create a matrix containing the hindex of a 2D linXY curve
-def LinXYCurveMatrix2D(n, oversize=0):
+# Method to create a matrix containing the hindex of a 2D linYX curve
+def LinYXCurveMatrix2D(n, oversize=0):
 	import numpy as np
 	o = oversize
 	A = np.zeros((n[1]+2*o, n[0]+2*o), dtype="uint32")
 	A[o:-o, o:-o] = np.arange(n[0]*n[1]).reshape(n[1],n[0])
 	return A
 
-# Method to create a matrix containing the hindex of a 2D linYX curve
-def LinYXCurveMatrix2D(n, oversize=0):
+# Method to create a matrix containing the hindex of a 2D linXY curve
+def LinXYCurveMatrix2D(n, oversize=0):
 	import numpy as np
 	o = oversize
 	A = np.zeros((n[1]+2*o, n[0]+2*o), dtype="uint32")

@@ -15,10 +15,8 @@ Main(
     geometry = "2Dcartesian",
     
     interpolation_order = 4 ,
-    global_factor=[4,4], 
-    norder = [2,2],
-    is_spectral = True,
-    is_pxr = True, 
+    maxwell_solver = "spectral",
+    spectral_solver_order = [2,2],
 
     cell_length = [l0/resx,l0/resx],
     grid_length  = Lsim,

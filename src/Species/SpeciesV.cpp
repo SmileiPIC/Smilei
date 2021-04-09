@@ -402,7 +402,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 //   - increment the charge (projection)
 //   - used at initialisation for Poisson (and diags if required, not for now dynamics )
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
+void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old /*=false*/ )
 {
     // -------------------------------
     // calculate the particle charge
@@ -417,7 +417,7 @@ void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
             unsigned int Nmode = emAM->rho_AM_.size();
             for( unsigned int imode=0; imode<Nmode; imode++ ) {
-                complex<double> *b_rho = &( *emAM->rho_AM_[imode] )( 0 );
+                complex<double> *b_rho = old ? &( *emAM->rho_old_AM_[imode] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 );
                 for( unsigned int iPart=particles->first_index[0] ; ( int )iPart<particles->last_index[particles->last_index.size()-1]; iPart++ ) {
                     Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
                 }

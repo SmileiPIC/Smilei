@@ -437,7 +437,7 @@ public:
 
 
     //! Method calculating the Particle charge on the grid (projection)
-    virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields );
+    virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old=false );
 
     //! Method used to select particles which will change of patches
     virtual void extractParticles();

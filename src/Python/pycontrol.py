@@ -6,7 +6,8 @@
 
 gc.collect()
 import math
-import glob, re
+from glob import glob
+from re import search
 
 def _mkdir(role, path):
     if not os.path.exists(path):
@@ -39,7 +40,7 @@ def _smilei_check():
             "DiagTrackParticles","DiagPerformances","ExternalField","PrescribedField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
             "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler",
-            "Vectorization"]:
+            "Vectorization", "MultipleDecomposition"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")
@@ -53,13 +54,13 @@ def _smilei_check():
             pattern = Checkpoints.restart_dir + os.sep + "checkpoints" + os.sep
             if Checkpoints.file_grouping:
                 pattern += "*"+ os.sep
-            pattern += "dump-*-*.h5";
+            pattern += "dump-*-*.h5"
             # pick those file that match the mpi rank
-            files = filter(lambda a: smilei_mpi_rank==int(re.search(r'dump-[0-9]*-([0-9]*).h5$',a).groups()[-1]), glob.glob(pattern))
+            files = filter(lambda a: smilei_mpi_rank==int(search(r'dump-[0-9]*-([0-9]*).h5$',a).groups()[-1]), glob(pattern))
             
             if Checkpoints.restart_number is not None:
                 # pick those file that match the restart_number
-                files = filter(lambda a: Checkpoints.restart_number==int(re.search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]), files)
+                files = filter(lambda a: Checkpoints.restart_number==int(search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]), files)
             
             Checkpoints.restart_files = list(files)
             
@@ -145,8 +146,8 @@ def _keep_python_running():
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True
-    # Verify uncoupled grids
-    if len(LoadBalancing)>0 and Main.uncoupled_grids:
+    # Verify SDMD grids
+    if len(LoadBalancing)>0 and len(MultipleDecomposition)>0:
         return True
     # Verify the tracked species that require a particle selection
     for d in DiagTrackParticles:

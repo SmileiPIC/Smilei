@@ -115,7 +115,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``"1Dcartesian"``
   * ``"2Dcartesian"``
   * ``"3Dcartesian"``
-  * ``"AMcylindrical"``: cylindrical geometry with azimuthal Fourier decomposition. See :doc:`algorithms`.
+  * ``"AMcylindrical"``: cylindrical geometry with :doc:`azimuthal_modes_decomposition`.
 
   In the following documentation, all references to dimensions or coordinates
   depend on the ``geometry``.
@@ -214,7 +214,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Only ``"Yee"`` is available for all geometries at the moment.
   ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``.
   ``"Lehe"`` and ``"Bouchard"`` is available for ``3DCartesian``.
-  The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
+  The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_.
+  The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_
 
 .. py:data:: solve_poisson
 
@@ -259,20 +260,27 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[["periodic"]]``
 
   The boundary conditions for the electromagnetic fields. Each boundary may have one of
-  the following conditions: ``"periodic"``, ``"silver-muller"``, or ``"reflective"``.
+  the following conditions: ``"periodic"``, ``"silver-muller"``, ``"reflective"`` or ``"ramp??"``.
 
   | **Syntax 1:** ``[[bc_all]]``, identical for all boundaries.
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
-  ``"silver-muller"`` is an open boundary condition.
-  The incident wave vector :math:`k_{inc}` on each face is defined by
-  ``"EM_boundary_conditions_k"``.
-  When using ``"silver-muller"`` as an injecting boundary,
-  make sure :math:`k_{inc}` is aligned with the wave you are injecting.
-  When using ``"silver-muller"`` as an absorbing boundary,
-  the optimal wave absorption on a given face will be along :math:`k_{abs}`
-  the specular reflection of :math:`k_{inc}` on the considered face.
+  * ``"silver-muller"`` is an open boundary condition.
+    The incident wave vector :math:`k_{inc}` on each face is defined by
+    ``"EM_boundary_conditions_k"``.
+    When using ``"silver-muller"`` as an injecting boundary,
+    make sure :math:`k_{inc}` is aligned with the wave you are injecting.
+    When using ``"silver-muller"`` as an absorbing boundary,
+    the optimal wave absorption on a given face will be along :math:`k_{abs}`
+    the specular reflection of :math:`k_{inc}` on the considered face.
+
+  * ``"ramp??"`` is a basic, open boundary condition designed
+    for the spectral solver in ``AMcylindrical`` geometry.
+    The ``??`` is an integer representing a number of cells
+    (smaller than the number of ghost cells).
+    Over the first half, the fields remain untouched. 
+    Over the second half, all fields are progressively reduced down to zero.
 
 .. py:data:: EM_boundary_conditions_k
 
@@ -280,9 +288,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[[1.,0.],[-1.,0.],[0.,1.],[0.,-1.]]`` in 2D
   :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
-  The incident unit wave vector ``k`` for each face
-  (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax) is
-  defined by its coordinates in the ``xyz`` frame.
+  For ``silver-muller`` absorbing boundaries,
+  the *x,y,z* coordinates of the unit wave vector ``k`` incident on each face
+  (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax).
   The number of coordinates is equal to the dimension of the simulation.
   The number of given vectors must be equal to 1 or to the number of faces
   which is twice the dimension of the simulation. In cylindrical geometry,
@@ -290,7 +298,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
-
 
 .. py:data:: time_fields_frozen
 
@@ -334,6 +341,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: number_of_AM
 
+  :type: integer
   :default: 2
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
@@ -346,30 +354,35 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
   Note that this number must be lower or equal to the number of modes of the simulation.
 
-.. rst-class:: experimental
-
-.. py:data:: uncoupled_grids
-
-  :default: ``False``
-
-  * If ``False``, the parallelization of the simulation is done according to :doc:`parallelization`.
-  * If ``True``, the simulated domain is decomposed in dedicated shapes for particles
-    and fields operations. Benefits of this option are illustrated
-    `in this paper <https://arxiv.org/abs/1912.04064>`_.
-
 .. py:data:: custom_oversize
 
+   :type: integer
    :default: 2
 
    The number of ghost-cell for each patches. The default value is set accordingly with
    the ``interpolation_order`` value.
 
-.. py:data:: custom_region_oversize
+..
+  .. py:data:: spectral_solver_order
 
-   :default: 2
+    :type: A list of integers
+    :default: ``[0,0]`` in AM geometry.
 
-   The number of ghost-cell for each region when ``uncoupled_grids=True``.
-   The default value is set accordingly with the ``interpolation_order`` value.
+    The order of the spectral solver in each dimension. Set order to zero for infinite order.
+    In AM geometry, only infinite order is supported along the radial dimension.
+
+  .. py:data:: initial_rotational_cleaning
+
+    :default: ``False``
+
+    If ``True``, use the picsar library to do the rotational cleaning.
+
+    Rotational cleaning corrects field initialization in spectral space
+    in order to make sure that the fields at :math:`t=0` are a valid solution
+    of the Maxwell equation.
+    This operation is only supported in AM geometry and with picsar
+    spectral solver. It requires a FFT of the full domain on a single MPI
+    process so very large simulations may face problems with this procedure.
 
 ----
 
@@ -421,6 +434,38 @@ occur every 150 iterations.
 
 ----
 
+.. rst-class:: experimental
+
+Multiple decomposition of the domain
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The block ``MultipleDecomposition`` is necessary for spectral solvers and optional in all other cases. 
+When present, it activates
+the :doc:`SDMD` (SDMD) technique
+which separates the decomposition of the field grids from that of the particles.
+Fields are set on large sub-domain called *regions* (1 region per MPI process) while
+particles are kept as small *patches* as in the standard decomposition (many patches per MPI process).
+Benefits of this option are illustrated `in this paper <https://hal.archives-ouvertes.fr/hal-02973139>`_.
+
+
+.. code-block:: python
+
+  MultipleDecomposition(
+      region_ghost_cells = 2
+  )
+
+.. py:data:: region_ghost_cells
+
+   :type: integer
+   :default: 2
+
+   The number of ghost cells for each region.
+   The default value is set accordingly with the ``interpolation_order``.
+   The same number of ghost cells is used in all dimensions except for spectral solver in AM geometry for which the number of radial ghost cells is always automatically set to be the same as patches.
+
+
+----
+
 .. _Vectorization:
 
 Vectorization
@@ -450,7 +495,7 @@ It requires :ref:`additional compilation options<vectorization_flags>` to be act
     Particles are sorted per cell.
   * ``"adaptive"``: the best operators (scalar or vectorized)
     are determined and configured dynamically and locally
-    (per patch and per species).
+    (per patch and per species). For the moment this mode is only supported in ``3Dcartesian`` geometry.
     Particles are sorted per cell.
 
   In the ``"adaptive"`` mode, :py:data:`clrw` is set to the maximum.
@@ -564,25 +609,26 @@ which parameters are controlled in the following block::
 
   :default: ``"binomial"``
 
-  The model for current filtering. ``"binomial"`` current filtering is available.
-  With ``"customFIR"`` the user can provide a self made FIR kernel.
+  The model for current filtering.
+  
+  * ``"binomial"`` for a binomial filter.
+  * ``"customFIR"`` for a custom FIR kernel.
 
 .. py:data:: passes
 
   :type: A python list of integers.
   :default: ``[0]``
 
-  The number of passes in the filter at each timestep given for all dimensions.
+  The number of passes (at each timestep) given for each dimension.
   If the list is of length 1, the same number of passes is assumed for all dimensions.
 
 .. py:data:: kernelFIR
 
   :default: ``"[0.25,0.5,0.25]"``
 
-  The FIR kernel for the ``"customFIR"`` model. Be carefull, the number of coefficients
-  of the kernel have to be less than 2 times the number of ghost-cell.
-  If you use a kernel with more than 3 coefficients, you have to increase
-  the number of ghost-cell with ``"custom_oversize"`` in ``"Main()"``
+  The FIR kernel for the ``"customFIR"`` model. The number of coefficients
+  must be less than twice the number of ghost cells
+  (adjusted using :py:data:`custom_oversize`).
 
 
 ----
@@ -1206,6 +1252,13 @@ field on one of the box sides. The only boundary condition that supports lasers
 is ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
 There are several syntaxes to introduce a laser in :program:`Smilei`:
 
+.. note::
+
+  The following definitions are given for lasers incoming from the ``xmin`` or ``xmax``
+  boundaries. For lasers incoming from ``ymin`` or ``ymax``, replace the ``By``
+  profiles by ``Bx`` profiles. For lasers incoming from ``zmin`` or ``zmax``,
+  replace ``By`` and ``Bz`` profiles by ``Bx`` and ``By`` profiles, respectively.
+
 .. rubric:: 1. Defining a generic wave
 
 ..
@@ -1222,8 +1275,16 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     :default: ``"xmin"``
 
-    Side of the box from which the laser originates: at the moment, only ``"xmin"`` and
-    ``"xmax"`` are supported.
+    Side of the box from which the laser originates: ``"xmin"``, ``"xmax"``, ``"ymin"``,
+    ``"ymax"``, ``"zmin"`` or ``"zmax"``.
+    
+    In the cases of ``"ymin"`` or ``"ymax"``, replace, in the following profiles,
+    coordinates *y* by *x*, and fields :math:`B_y` by :math:`B_x`.
+    
+    In the cases of ``"zmin"`` or ``"zmax"``, replace, in the following profiles,
+    coordinates *y* by *x*, coordinates *z* by *y*, fields :math:`B_y` by :math:`B_x`
+    and fields :math:`B_z` by :math:`B_y`.
+    
 
 .. py:data:: space_time_profile
 
@@ -1237,10 +1298,10 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
 .. py:data:: space_time_profile_AM
 
-    :type: A list of maximum 2*``number_of_AM`` *python* functions.
+    :type: A list of maximum 2 x ``number_of_AM`` *python* functions.
 
-    These profiles define the first modes of ``Br`` and ``Bt`` in the order shown in the above example.
-    Undefined modes are considered zero.
+    These profiles define the first modes of :math:`B_r` and :math:`B_\theta` in the
+    order shown in the above example. Undefined modes are considered zero.
     This can be used only in ``AMcylindrical`` geometry.
 
 
@@ -1420,7 +1481,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     :default: 0.
 
-    The angle of the laser beam relative to the X axis, in radians.
+    The angle of the laser beam relative to the normal to the injection plane, in radians.
 
   .. py:data:: time_envelope
 
@@ -1448,7 +1509,9 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
   two angles, corresponding to rotations around ``y`` and ``z``, respectively.
-
+  
+  When injecting on ``"ymin"`` or ``"ymax"``, the incidence angles corresponds to
+  rotations around ``x`` and ``z``, respectively.
 
 .. rubric:: 6. Defining a gaussian wave with Azimuthal Fourier decomposition
 
@@ -1552,7 +1615,8 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 Laser envelope model
 ^^^^^^^^^^^^^^^^^^^^^^
 
-In all the available geometries, it is possible to model a laser pulse propagating in the ``x`` direction
+In all the available geometries, it is possible to model a laser pulse
+propagating in the ``x`` direction
 using an envelope model (see :doc:`laser_envelope` for the advantages
 and limits of this approximation).
 The fast oscillations of the laser are neglected and all the physical

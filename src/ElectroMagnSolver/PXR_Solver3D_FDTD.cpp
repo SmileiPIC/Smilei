@@ -29,7 +29,7 @@ void PXR_Solver3D_FDTD::coupling( Params &params, ElectroMagn *EMfields, bool fu
         n_space = params.n_space_global;
         oversize = params.region_oversize;
     }
-    else if (params.uncoupled_grids) {
+    else if (params.multiple_decomposition) {
         n_space = params.n_space_region;
         oversize = params.region_oversize;
     }
@@ -41,10 +41,6 @@ void PXR_Solver3D_FDTD::coupling( Params &params, ElectroMagn *EMfields, bool fu
     ov0=( int ) oversize[0];
     ov1=( int ) oversize[1];
     ov2=( int ) oversize[2];
-    
-    params.norderx = params.norder[0];
-    params.nordery = params.norder[1];
-    params.norderz = params.norder[2];
     
     Field3D* Ex3D_pxr = static_cast<Field3D*>( EMfields->Ex_);
     Field3D* Ey3D_pxr = static_cast<Field3D*>( EMfields->Ey_);
@@ -66,7 +62,7 @@ void PXR_Solver3D_FDTD::coupling( Params &params, ElectroMagn *EMfields, bool fu
     picsar::init_params_picsar( &n0, &n1, &n2,
                                  &pxr_dx, &pxr_dy, &pxr_dz, &params.timestep,
                                 &ov0, &ov1, &ov2,
-                                &params.norderz, &params.nordery, &params.norderx,
+                                &params.spectral_solver_order[2], &params.spectral_solver_order[1], &params.spectral_solver_order[0],
                                 &params.is_spectral,
                                 &( Ex3D_pxr->data_[0] ),
                                 &( Ey3D_pxr->data_[0] ),

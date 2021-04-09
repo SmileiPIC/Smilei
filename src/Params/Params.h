@@ -236,13 +236,12 @@ public:
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
     unsigned int custom_oversize ;
+    //! Number of region ghots cells in the simulation
     std::vector<unsigned int> region_oversize;
-    unsigned int custom_region_oversize ;
-    //! Number of damping cells
-    std::vector<unsigned int> number_of_damping_cells;
-
-    unsigned int pseudo_spectral_guardells;
-    bool apply_rotational_cleaning;
+    //! Number of region ghots cells asked by the user
+    unsigned int region_ghost_cells ;
+    
+    bool initial_rotational_cleaning;
     
     //! True if restart requested
     bool restart;
@@ -321,21 +320,17 @@ public:
     unsigned int print_every;
     
     // Double grids parameters (particles and fields)
-    std::vector<unsigned int> global_factor;
-    void uncoupled_decomposition();
-    void uncoupled_decomposition_1D();
-    void uncoupled_decomposition_2D();
-    void uncoupled_decomposition_3D();
-    void print_uncoupled_params();
-    bool uncoupled_grids;
+    void multiple_decompose();
+    void multiple_decompose_1D();
+    void multiple_decompose_2D();
+    void multiple_decompose_3D();
+    void print_multiple_decomposition_params();
+    bool multiple_decomposition;
 
     // PXR parameters
-    bool  is_spectral=false ;
-    bool  is_pxr=false ;
-    int   norderx = 2;
-    int   nordery = 2;
-    int   norderz = 2;
-    std::vector<int> norder;
+    bool  is_spectral;
+    bool  is_pxr;
+    std::vector<int> spectral_solver_order;
 
     //! Boolean for printing the expected disk usage or not
     bool print_expected_disk_usage;
