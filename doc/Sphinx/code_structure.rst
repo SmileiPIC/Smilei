@@ -8,6 +8,7 @@ Smilei is a C++ code that uses relatively simple C++ features for modularity
 and conveniency for non-advanced C++ users.
 
 The repository is composed of the following directories:
+
 - ``Licence``: contains code licence information
 - ``doc``: conatins the Sphinx doc files
 - ``src``: contains all source files
