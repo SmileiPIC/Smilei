@@ -19,6 +19,13 @@ The repository is composed of the following directories:
 - ``tools``: contains some additional programs for Smilei
 - ``validation``: contains the python scripts used by the validation process
 
+.. _generalImplementation:
+
+.. figure:: _static/figures/smilei_general_implementation.png
+  :width: 15cm
+
+  smilei general implementation.
+
 General concept and vocabulary
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -87,10 +94,15 @@ Domain decomposition and parallelism
 The simulation domain is divided multiple times following a succession of decomposition levels.
 The whole domain is the superimposition of different grids for each electromagnetic field components
 and macro-particules.
-Let us represent schematically the domain as an array of cells as in Fig. .
+Let us represent schematically the domain as an array of cells as in Fig. :numref:`full_domain`.
 Each cell contains a certain population of particles.
 
+.. _full_domain:
 
+.. figure:: _static/figures/domain.png
+  :width: 15cm
+
+  Example of a full domain with 960 cells.
 
 
 Data structures
