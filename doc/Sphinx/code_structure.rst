@@ -132,12 +132,24 @@ The distribution can be ensured in an equal cartesian way or using a load balanc
 
   Patches are then distributed among MPI processes in so-called MPI patch collections.
 
+Inside MPI patch collection, OpenMP loop directives are used to distribute the computation of the patches among the available threads.
+Since each patch have a different number of particles, this approach enables a dynamic scheduling depending on the specified OpenMP scheduler.
+As shown in :numref:`general_implementation`, a synchronization step is required to exchange grid ghost cells and particles traveling from patch to patch.
+
 The patch granularity is used for:
 
 - creating more parallelism for OpenMP
 - enabling a load balancing capability through OpenMP scheduling
 - ensuring a good cache memory efficiency at L3 and L2 levels.
 
+The patch is not the smaller decomposition grain-size.
+
+.. _bin_decomposition:
+
+.. figure:: _static/figures/bin_decomposition.png
+  :width: 10cm
+
+  Bin decomposition.
 
 Data structures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
