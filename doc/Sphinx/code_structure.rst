@@ -47,6 +47,13 @@ An operator is a class functor (overloadind of the `()` ).
 Sometime, operator provides additional methods called wrappers to provide differents simplified or adapted interfaces.
 An operator do not store data or temporarely.
 
+.. _operator:
+
+.. figure:: _static/figures/operator.png
+  :width: 10cm
+
+  Operator.
+
 Notion of domain parts
 """"""""""""""""""""""""""""""
 
