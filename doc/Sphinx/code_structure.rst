@@ -157,14 +157,32 @@ It represents a smaller portion of the patch grids through specific start and en
 For the macro-particles, a sorting algorithm is used to ensure that in the macro-particles
 located in the same bin are grouped and contiguous in memory.
 
+Finally, the decomposition levels are summarized in :numref:`decomposition_summary`.
 
+.. _decomposition_summary:
+
+.. figure:: _static/figures/decomposition_summary.png
+  :width: 10cm
+
+  Domain decomposition summary.
 
 Data structures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+VectorPatches
+""""""""""""""""""""""""""""""
+
 Patches
 """"""""""""""""""""""""""""""
 
+Species
+""""""""""""""""""""""""""""""
+
+Particles
+""""""""""""""""""""""""""""""
+
+Fields
+""""""""""""""""""""""""""""""
 
 The basic PIC loop implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
