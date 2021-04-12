@@ -166,48 +166,58 @@ Finally, the decomposition levels are summarized in :numref:`decomposition_summa
 .. _decomposition_summary:
 
 .. figure:: _static/figures/decomposition_summary.png
-  :width: 10cm
+  :width: 15cm
 
   Domain decomposition summary.
 
-Data structures and data container classes
+Data structures and main classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This section describes the main classes and the tree-like smilei data structure.
+The whole picture is shown in :numref:`data_structure`.
 
 .. _data_structure:
 
 .. figure:: _static/figures/data_structure.png
-  :width: 15cm
+  :width: 20cm
 
   General of the main tree-like data structure of Smilei.
 
-VectorPatch
+Class ``VectorPatch``
 """"""""""""""""""""""""""""""
 
-The class `vectorPatch` represents the MPI Patch collection described above and is the highest structure level.
-The class description is located in the directory  `src/patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Patch>`_.
+The class ``VectorPatch`` represents the MPI Patch collection described above and is the highest structure level.
+The class description (``vectorPatch.h`` and ``vectorPatch.cpp``) is located in the directory  `src/patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Patch>`_.
 Among the data components stored in this class, one of the most important is the list of patches.
-By definition, each MPI process has therefore only one declared `vectorPatch` object.
+By definition, each MPI process has therefore only one declared ``vectorPatch`` object.
 
-.. cpp:class:: vectorPatch
+.. cpp:class:: VectorPatch
 
-  .. cpp:member:: std::vector patch
+  .. cpp:member:: std::vector<Patch*> patches_
 
   List of patches located in this MPI patch collection.
 
-Patches
+The class ``VectorPatch`` contains the methods directly called in the PIC time loop in ``smilei.cpp``.
+
+Class ``Patch``
 """"""""""""""""""""""""""""""
 
-.. cpp:class:: patch
+.. cpp:class:: Patch
 
 Species
 """"""""""""""""""""""""""""""
 
-.. cpp:class:: species
+.. cpp:class:: Species
 
 Particles
 """"""""""""""""""""""""""""""
 
+.. cpp:class:: Particles
+
 Fields
+""""""""""""""""""""""""""""""
+
+Smilei MPI
 """"""""""""""""""""""""""""""
 
 The basic PIC loop implementation
