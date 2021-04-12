@@ -128,7 +128,7 @@ void Species::initCluster( Params &params )
     // Arrays of the min and max indices of the particle bins
     particles->first_index.resize( params.n_space[0]/clrw );
     particles->last_index.resize( params.n_space[0]/clrw );
-    Nbins = particles->first_index.size();
+    Nbins = params.n_space[0]/clrw ;
 
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
@@ -392,7 +392,7 @@ Species::~Species()
     }     
     if (geometry != "AMcylindrical"){
         if (b_Jx[0]){
-            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
                 // delete buffers
                 delete[] b_Jx[ibin];
                 delete[] b_Jy[ibin];
@@ -402,7 +402,7 @@ Species::~Species()
         }
     } else {
         if (b_Jl[0]){
-            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
                 // delete buffers
                 delete[] b_Jl[ibin];
                 delete[] b_Jr[ibin];
