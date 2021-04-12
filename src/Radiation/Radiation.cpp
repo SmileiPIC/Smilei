@@ -36,7 +36,7 @@ Radiation::Radiation( Params &params, Species *species, Random * rand )
     rand_ = rand;
 
 #ifdef _OMPTASKS
-    new_photons_per_bin_ = new Particles[species->particles->first_index.size()];
+    new_photons_per_bin_ = new Particles[species->Nbins];
 #endif
     
 }
