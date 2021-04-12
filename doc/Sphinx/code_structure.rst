@@ -85,9 +85,16 @@ Notion of factory
 Some objects such as operators or data containers have sereral variations.
 For this we use inheritance.
 A base class is used for common parameters and methods and derived classes are used for all variations.
-The factory uses user-defined input parameters to determine the right derive class to choose and initiate them.
+The factory uses user-defined input parameters to determine the right derive class to choose and initiate them as shown in :numref:`factory`.
 For instance, there are several ``push`` operators implemented all derived from a base ``push`` class.
 The ``push`` factory will determine the right one to use.
+
+.. _factory:
+
+.. figure:: _static/figures/factories.png
+  :width: 20cm
+
+  Description of the factory concept.
 
 Other
 """"""""""""""""""""""""""""""
