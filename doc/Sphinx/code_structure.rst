@@ -21,6 +21,7 @@ The repository is composed of the following directories:
 
 The source files directory is as well composed of several sub-directories to organise the `.cpp` and `.h` files by related thematics.
 The main is the file `smilei.cpp`.
+There is always only one class definition per file and the file name correcponds to the class name.
 
 The general implementation is summarized in :numref:`general_implementation`
 
@@ -170,21 +171,26 @@ Finally, the decomposition levels are summarized in :numref:`decomposition_summa
   Domain decomposition summary.
 
 Data structures and data container classes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 VectorPatch
 """"""""""""""""""""""""""""""
 
 The class `vectorPatch` represents the MPI Patch collection described above.
-The class description is located in the directory `src/patch link`_.
+The class description is located in the directory  `src/patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Patch>`_.
 
 .. _src/patch link: https://github.com/SmileiPIC/Smilei/tree/master/src/Patch
 
-.. cpp:class:: vectorPatch :
-  .. cpp:member:: std::vector MyClass::patch
+.. cpp:class:: vectorPatch
+
+  .. cpp:member:: std::vector patch
+  
+  List of patches located in this MPI patch collection.
 
 Patches
 """"""""""""""""""""""""""""""
+
+.. cpp:class:: patch
 
 Species
 """"""""""""""""""""""""""""""
