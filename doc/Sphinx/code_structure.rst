@@ -17,7 +17,7 @@ The repository is composed of the following directories:
 - ``scripts``: contains multiple tool scripts for compilation and more
 
   - ``compile_tools``: contains scripts and machine files used by the makefile for compilation
-  
+
 - ``tools``: contains some additional programs for Smilei
 - ``validation``: contains the python scripts used by the validation process
 
@@ -25,14 +25,7 @@ The source files directory is as well composed of several sub-directories to org
 The main is the file `Smilei.cpp`.
 There is always only one class definition per file and the file name correcponds to the class name.
 
-The general implementation is summarized in :numref:`general_implementation`
-
-.. _general_implementation:
-
-.. figure:: _static/figures/smilei_general_implementation.png
-  :width: 20cm
-
-  smilei general implementation.
+The general implementation is later summarized in :numref:`smilei_main_loop`
 
 General concept and vocabulary
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -223,33 +216,61 @@ From this base class can be derived several versions (marked as ``final``) depen
 - ``Patch3D``
 - ``PatchAM`` for the AM geometry
 
+The class ``Patch`` has a list of object ``Species`` called ``vecSpecies``.
+
 .. cpp:class:: Patch
 
   .. cpp:member:: std::vector<Species*> vecSpecies
-  
+
   *List of species in the patch*
-  
+
   .. cpp:member:: ElectroMagn * EMfields
-  
+
   *Electromagnetic fields and densities (E, B, J, rho) of the current Patch*
 
 class ``Species``
 """"""""""""""""""""""""""""""
 
+The class ``Species`` is an advanced data container that represents a single species.
+The base class description (``Species.h`` and ``Species.cpp``) is located in the directory  `src/patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Species>`_.
+From this base class can be derived several versions (marked as ``final``):
+
+- ``SpeciesNorm``
+- ``SpeciesNormV``
+- ``SpeciesV``
+- ``SpeciesVAdaptive``
+- ``SpeciesVAdaptiveMixedSort``
+
+The class ``Species`` owns the particles through the object ``particles`` of class ``Particles*``.
+
 .. cpp:class:: Species
 
-Particles
+  .. cpp:member:: Particles * particles
+
+  *Vector containing all Particles of the considered Speciesh*
+
+class ``Particles``
 """"""""""""""""""""""""""""""
 
 .. cpp:class:: Particles
 
-Fields
+class ``Fields``
 """"""""""""""""""""""""""""""
 
 .. cpp:class:: ElectroMagn
 
 Smilei MPI
 """"""""""""""""""""""""""""""
+
+The initialization and the main loop are explicitely done in the main file ``Smilei.cpp``.
+the time loop is schematically described in :numref:`smilei_main_loop`
+
+.. _smilei_main_loop:
+
+.. figure:: _static/figures/smilei_main_loop.png
+  :width: 20cm
+
+  smilei main loop implementation.
 
 The basic PIC loop implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
