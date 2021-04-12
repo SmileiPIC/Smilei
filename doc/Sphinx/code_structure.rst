@@ -15,12 +15,14 @@ The repository is composed of the following directories:
 - ``happi``: contains the sources of the happi Python tool for visualization
 - ``benchmarks``: contains the benchmarks used by the validation process. these becnhamrks are also examples for users.
 - ``scripts``: contains multiple tool scripts for compilation and more
+
   - ``compile_tools``: contains scripts and machine files used by the makefile for compilation
+  
 - ``tools``: contains some additional programs for Smilei
 - ``validation``: contains the python scripts used by the validation process
 
 The source files directory is as well composed of several sub-directories to organise the `.cpp` and `.h` files by related thematics.
-The main is the file `smilei.cpp`.
+The main is the file `Smilei.cpp`.
 There is always only one class definition per file and the file name correcponds to the class name.
 
 The general implementation is summarized in :numref:`general_implementation`
@@ -40,13 +42,14 @@ This section presents some implicit notions to understand the philosophy of the 
 Notion of data container
 """"""""""""""""""""""""""""""
 
-Data containers are classes (or sometime just structures) used to store a specific type of data, often considered as raw data such as particles or fields.
+Data containers are classes (or sometime just structures) used to store a specific type of data,
+often considered as raw data such as particles or fields.
 Some methods can be implemented in a data container for managing or accessing the data.
 
 .. _dataContainer:
 
 .. figure:: _static/figures/data_container.png
-  :width: 5cm
+  :width: 8cm
 
   Data container.
 
@@ -74,10 +77,10 @@ Notion of domain parts
 Domain parts are classes that represents some specific levels of the domain decomposition.
 They can be seen as high-level data container or container of data container.
 They contain some methods to handle, manange and access the local data.
-For instance, patches and ``species`` are domain parts:
+For instance, patches and ``Species`` are domain parts:
 
-- ``species`` contains the particles.
-- ``patches`` contains ``species`` and fields.
+- ``Species`` contains the particles.
+- ``Patch`` contains ``Species`` and ``Fields``.
 
 Notion of factory
 """"""""""""""""""""""""""""""
@@ -92,7 +95,7 @@ The ``push`` factory will determine the right one to use.
 .. _factory:
 
 .. figure:: _static/figures/factories.png
-  :width: 20cm
+  :width: 15cm
 
   Description of the factory concept.
 
@@ -113,7 +116,7 @@ Each cell contains a certain population of particles (that can differ from cell 
 .. _full_domain:
 
 .. figure:: _static/figures/domain.png
-  :width: 15cm
+  :width: 20cm
 
   Example of a full domain with 960 cells.
 
@@ -123,7 +126,7 @@ The domain becomes a collection of patches as shown in :numref:`patch_domain_dec
 .. _patch_domain_decomposition:
 
 .. figure:: _static/figures/patch_domain_decomposition.png
-  :width: 15cm
+  :width: 20cm
 
   The domain in :program:`Smilei` is a collection of patches.
 
@@ -139,7 +142,7 @@ The distribution can be ensured in an equal cartesian way or using a load balanc
 .. _mpi_patch_collection:
 
 .. figure:: _static/figures/mpi_patch_collection.png
-  :width: 15cm
+  :width: 20cm
 
   Patches are then distributed among MPI processes in so-called MPI patch collections.
 
@@ -159,7 +162,7 @@ The patch can be decomposed into bins as shown in :numref:`bin_decomposition`.
 .. _bin_decomposition:
 
 .. figure:: _static/figures/bin_decomposition.png
-  :width: 10cm
+  :width: 12cm
 
   Bin decomposition.
 
@@ -202,16 +205,35 @@ By definition, each MPI process has therefore only one declared ``vectorPatch`` 
 
   .. cpp:member:: std::vector<Patch*> patches_
 
-  List of patches located in this MPI patch collection.
+  *List of patches located in this MPI patch collection.*
+
+
 
 The class ``VectorPatch`` contains the methods directly called in the PIC time loop in ``smilei.cpp``.
 
 Class ``Patch``
 """"""""""""""""""""""""""""""
 
+The class ``Patch`` is an advanced data container that represents a single patch.
+The base class description (``Patch.h`` and ``Patch.cpp``) is located in the directory  `src/patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Patch>`_.
+From this base class can be derived several versions (marked as ``final``) depending on the geometry dimension:
+
+- ``Patch1D``
+- ``Patch2D``
+- ``Patch3D``
+- ``PatchAM`` for the AM geometry
+
 .. cpp:class:: Patch
 
-Species
+  .. cpp:member:: std::vector<Species*> vecSpecies
+  
+  *List of species in the patch*
+  
+  .. cpp:member:: ElectroMagn * EMfields
+  
+  *Electromagnetic fields and densities (E, B, J, rho) of the current Patch*
+
+class ``Species``
 """"""""""""""""""""""""""""""
 
 .. cpp:class:: Species
@@ -223,6 +245,8 @@ Particles
 
 Fields
 """"""""""""""""""""""""""""""
+
+.. cpp:class:: ElectroMagn
 
 Smilei MPI
 """"""""""""""""""""""""""""""
