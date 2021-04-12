@@ -173,18 +173,25 @@ Finally, the decomposition levels are summarized in :numref:`decomposition_summa
 Data structures and data container classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. _data_structure:
+
+.. figure:: _static/figures/data_structure.png
+  :width: 15cm
+
+  General of the main tree-like data structure of Smilei.
+
 VectorPatch
 """"""""""""""""""""""""""""""
 
-The class `vectorPatch` represents the MPI Patch collection described above.
+The class `vectorPatch` represents the MPI Patch collection described above and is the highest structure level.
 The class description is located in the directory  `src/patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Patch>`_.
-
-.. _src/patch link: https://github.com/SmileiPIC/Smilei/tree/master/src/Patch
+Among the data components stored in this class, one of the most important is the list of patches.
+By definition, each MPI process has therefore only one declared `vectorPatch` object.
 
 .. cpp:class:: vectorPatch
 
   .. cpp:member:: std::vector patch
-  
+
   List of patches located in this MPI patch collection.
 
 Patches
@@ -194,6 +201,8 @@ Patches
 
 Species
 """"""""""""""""""""""""""""""
+
+.. cpp:class:: species
 
 Particles
 """"""""""""""""""""""""""""""
