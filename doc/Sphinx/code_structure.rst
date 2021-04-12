@@ -19,6 +19,9 @@ The repository is composed of the following directories:
 - ``tools``: contains some additional programs for Smilei
 - ``validation``: contains the python scripts used by the validation process
 
+The source files directory is as well composed of several sub-directories to organise the `.cpp` and `.h` files by related thematics.
+The main is the file `smilei.cpp`.
+
 The general implementation is summarized in :numref:`general_implementation`
 
 .. _general_implementation:
@@ -166,11 +169,19 @@ Finally, the decomposition levels are summarized in :numref:`decomposition_summa
 
   Domain decomposition summary.
 
-Data structures
+Data structures and data container classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-VectorPatches
+VectorPatch
 """"""""""""""""""""""""""""""
+
+The class `vectorPatch` represents the MPI Patch collection described above.
+The class description is located in the directory `src/patch link`_.
+
+.. _src/patch link: https://github.com/SmileiPIC/Smilei/tree/master/src/Patch
+
+.. cpp:class:: vectorPatch :
+  .. cpp:member:: std::vector MyClass::patch
 
 Patches
 """"""""""""""""""""""""""""""
