@@ -46,7 +46,7 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
 
   
 #ifdef _OMPTASKS
-    unsigned int Nbins = species->particles->first_index.size();
+    unsigned int Nbins = species->Nbins;
         
     // initialize array per bin for energy conversion
     pair_converted_energy_per_bin = new double[Nbins];
