@@ -27,7 +27,7 @@ The general implementation is summarized in :numref:`general_implementation`
 .. _general_implementation:
 
 .. figure:: _static/figures/smilei_general_implementation.png
-  :width: 15cm
+  :width: 20cm
 
   smilei general implementation.
 
