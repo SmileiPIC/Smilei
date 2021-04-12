@@ -44,8 +44,7 @@ class Probe(Diagnostic):
 			try:
 				self._h5probe.append( self._h5py.File(file, 'r') )
 			except Exception as e:
-				self._error += ["Error opening probe #"+str(probeNumber)+" in path '"+path+"'"]
-				return
+				continue
 			# Verify that this file is compatible with the previous ones
 			try:
 				for key, val in verifications.items():
@@ -59,6 +58,9 @@ class Probe(Diagnostic):
 					npoints += 1
 				for i in range(npoints):
 					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)][()]
+		if not self._h5probe:
+			self._error += ["Error opening probe #"+str(probeNumber)]
+			return
 		
 		# Extract available fields
 		fields = self.getFields()
@@ -345,21 +347,24 @@ class Probe(Diagnostic):
 	def _getInfo(self, probeNumber):
 		out = {}
 		out["probeNumber"] = probeNumber
-		try:
-			file = self._results_path[0]+"/Probes"+str(probeNumber)+".h5"
-			probe = self._h5py.File(file, 'r')
-		except Exception as e:
-			self._error += ["\tWarning: Cannot open file "+file]
+		for path in self._results_path:
+			try:
+				file = path+"/Probes"+str(probeNumber)+".h5"
+				probe = self._h5py.File(file, 'r')
+			except Exception as e:
+				continue
+			out["dimension"] = probe.attrs["dimension"]
+			out["shape"] = self._np.array(probe["number"], dtype=int)
+			out["fields"] = probe.attrs["fields"]
+			i = 0
+			while "p"+str(i) in probe.keys():
+				out["p"+str(i)] = self._np.array(probe["p"+str(i)])
+				i += 1
+			probe.close()
 			return out
-		out["dimension"] = probe.attrs["dimension"]
-		out["shape"] = self._np.array(probe["number"], dtype=int)
-		out["fields"] = probe.attrs["fields"]
-		i = 0
-		while "p"+str(i) in probe.keys():
-			out["p"+str(i)] = self._np.array(probe["p"+str(i)])
-			i += 1
-		probe.close()
+		self._error += ["\tWarning: Cannot open file Probes"+str(probeNumber)+".h5"]
 		return out
+	
 	def _getMyInfo(self):
 		return self._getInfo(self.probeNumber)
 	

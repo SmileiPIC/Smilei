@@ -43,8 +43,7 @@ class Field(Diagnostic):
 			try:
 				f = self._h5py.File(file, 'r')
 			except Exception as e:
-				self._error += ["Diagnostic not loaded: Could not open '"+file+"'"]
-				return
+				continue
 			self._h5items.update( dict(f["data"]) )
 			# Select only the fields that are common to all simulations
 			values = f["data"].values()
@@ -54,6 +53,9 @@ class Field(Diagnostic):
 				self._fields = list(next(iter(values)).keys())
 			else:
 				self._fields = [f for f in next(iter(values)).keys() if f in self._fields]
+		if not self._h5items:
+			self._error += ["Diagnostic not loaded: Could not open any file Fields"+str(self.diagNumber)+".h5"]
+			return
 		# Remove "tmp" dataset
 		if "tmp" in self._h5items: del self._h5items["tmp"]
 		# Converted to ordered list

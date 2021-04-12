@@ -82,8 +82,7 @@ class Performances(Diagnostic):
 			try:
 				f = self._h5py.File(file, 'r')
 			except Exception as e:
-				self._error += ["Diagnostic not loaded: Could not open '"+file+"'"]
-				return
+				continue
 			self._h5items.update( dict(f) )
 			# Verify all simulations have all quantities
 			try:
@@ -98,6 +97,9 @@ class Performances(Diagnostic):
 			except Exception as e:
 				self._error += ["Diagnostic not loaded: file '"+file+"' does not seem to contain correct data"]
 				return
+		if not self._h5items:
+			self._error += ["Diagnostic not loaded: Could not open any file Performances.h5"]
+			return
 		# Converted to ordered list
 		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[1:]))
 
