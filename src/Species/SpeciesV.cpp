@@ -81,27 +81,86 @@ void SpeciesV::initCluster( Params &params )
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
+    Nbins = (params.n_space[0]/clrw); // Nbins is not equal to first_index.size() for SpeciesV
+
+    //Size in each dimension of the buffers on which each bin are projected
+    //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
+
     //Primal dimension of fields.
     f_dim0 =  params.n_space[0] + 2 * oversize[0] +1;
     f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
     f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
 
+    //Dual dimension of fields.
+    f_dim0_d =  params.n_space[0] + 2 * oversize[0] +2;
+    f_dim1_d =  params.n_space[1] + 2 * oversize[1] +2;
+    f_dim2_d =  params.n_space[2] + 2 * oversize[2] +2;
+
     b_dim.resize( params.nDim_field, 1 );
-    if( nDim_field == 1 ) {
+    if( nDim_particle == 1 ) {
         b_dim[0] = ( 1 + clrw ) + 2 * oversize[0];
+        b_dim[1] =  1;
         f_dim1 = 1;
         f_dim2 = 1;
+        f_dim1_d = 1;
+        f_dim2_d = 1;
     }
-    if( nDim_field == 2 ) {
+    if( nDim_particle == 2 ) {
         b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] =  f_dim1;
         f_dim2 = 1;
+        f_dim2_d = 1;
     }
-    if( nDim_field == 3 ) {
+    if( nDim_particle == 3 ) {
         b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] = f_dim1;
         b_dim[2] = f_dim2;
     }
+
+#ifdef _OMPTASKS
+        nrj_lost_per_bin                       = new double[Nbins];
+        nrj_radiation_per_bin                  = new double[Nbins];      
+        if (params.geometry != "AMcylindrical" ){
+            //! buffers for currents and charge
+            b_Jx.resize(Nbins);
+            b_Jy.resize(Nbins);
+            b_Jz.resize(Nbins);
+            b_rho.resize(Nbins);
+
+            size_proj_buffer_rho = b_dim[0]*b_dim[1]*f_dim2;
+            size_proj_buffer_Jx  = b_dim[0]*b_dim[1]*f_dim2;
+            size_proj_buffer_Jy  = b_dim[0]*f_dim1_d*f_dim2;
+            size_proj_buffer_Jz  = b_dim[0]*b_dim[1]*f_dim2_d;
+
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+                // allocate current-buffers, then put to zero their content
+                b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
+                b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
+                b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
+                b_rho[ibin] = new double[size_proj_buffer_rho];
+            }
+        } else { // AM geometry
+            //! buffers for currents and charge
+            size_proj_buffer_rhoAM = b_dim[0]*b_dim[1]    * params.nmodes; // used for rhoAM
+            size_proj_buffer_Jl    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jl
+            size_proj_buffer_Jr    = b_dim[0]*f_dim1_d    * params.nmodes; // used for Jr
+            size_proj_buffer_Jt    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jt
+
+            //! buffers for currents and charge
+            b_Jl.resize(Nbins);
+            b_Jr.resize(Nbins);
+            b_Jt.resize(Nbins);
+            b_rhoAM.resize(Nbins);
+
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+                // allocate current-buffers, then put to zero their content
+                b_Jl[ibin]    = new std::complex<double>[size_proj_buffer_Jl   ];
+                b_Jr[ibin]    = new std::complex<double>[size_proj_buffer_Jr   ];
+                b_Jt[ibin]    = new std::complex<double>[size_proj_buffer_Jt   ];
+                b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
+            }
+        } // end condition on geometry
+#endif
 
     //Initialize specMPI
     MPI_buffer_.allocate( nDim_field );
@@ -396,6 +455,16 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
 }//END dynamics
 
+void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
+                         ElectroMagn *EMfields, Params &params, bool diag_flag,
+                         PartWalls *partWalls,
+                         Patch *patch, SmileiMPI *smpi,
+                         RadiationTables &RadiationTables,
+                         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                         vector<Diagnostic *> &localDiags, int buffer_id )
+{
+
+} // END dynamicsTasks
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species

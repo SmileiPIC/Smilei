@@ -42,6 +42,15 @@ public:
                    MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                    std::vector<Diagnostic *> &localDiags ) override;
 
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection) with tasks
+    void dynamicsTasks( double time, unsigned int ispec,
+                   ElectroMagn *EMfields,
+                   Params &params, bool diag_flag,
+                   PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                   RadiationTables &RadiationTables,
+                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                   std::vector<Diagnostic *> &localDiags, int buffer_id );
+
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
