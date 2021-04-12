@@ -12,6 +12,7 @@
 #include "DomainDecompositionFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
+#include "SpeciesV.h"
 #include "Particles.h"
 #include "PeekAtSpecies.h"
 #include "SimWindow.h"
@@ -368,13 +369,28 @@ void VectorPatch::dynamics( Params &params,
             if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
                 // Dynamics with vectorized operators
                 if( spec->vectorized_operators || params.cell_sorting ) {
-                    spec->dynamics( time_dual, ispec,
-                                    emfields( ipatch ),
-                                    params, diag_flag, partwalls( ipatch ),
-                                    ( *this )( ipatch ), smpi,
-                                    RadiationTables,
-                                    MultiphotonBreitWheelerTables,
-                                    localDiags );
+#ifndef _OMPTASKS   
+                    spec->Species::dynamics( time_dual, ispec,
+                                             emfields( ipatch ),
+                                             params, diag_flag, partwalls( ipatch ),
+                                             ( *this )( ipatch ), smpi,
+                                             RadiationTables,
+                                             MultiphotonBreitWheelerTables,
+                                             localDiags );
+#else
+                    //#pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
+                    { // every call of dynamics for a couple ipatch-ispec is an independent task
+                        SpeciesV *spec_task = static_cast<SpeciesV *>(species( ipatch, ispec ));
+                        int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                        spec_task->SpeciesV::dynamicsTasks( time_dual, ispec,
+                                      emfields( ipatch ),
+                                      params, diag_flag, partwalls( ipatch ),
+                                      ( *this )( ipatch ), smpi,
+                                      RadiationTables,
+                                      MultiphotonBreitWheelerTables,
+                                      localDiags, buffer_id );
+                    } // end task
+#endif                    
                 }
                 // Dynamics with scalar operators
                 else {
@@ -442,7 +458,7 @@ void VectorPatch::dynamics( Params &params,
                 // DO NOT parallelize this species loop unless race condition prevention is used!
                 Species *spec_task = species( ipatch, ispec );
                 std::vector<unsigned int> b_dim = spec_task->b_dim;
-                for( unsigned int ibin = 0 ; ibin < spec_task->particles->first_index.size()  ; ibin++ ) {
+                for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
                     if (params.geometry != "AMcylindrical"){
                         double *b_Jx             = spec_task->b_Jx[ibin];
                         double *b_Jy             = spec_task->b_Jy[ibin];
@@ -485,7 +501,7 @@ void VectorPatch::dynamics( Params &params,
                     int ithread = omp_get_thread_num();
                     double timer = MPI_Wtime();
 #endif
-                    spec_task->Ionize->joinNewElectrons(species( ipatch, ispec )->particles->first_index.size());
+                    spec_task->Ionize->joinNewElectrons(species( ipatch, ispec )->Nbins);
 #ifdef  __DETAILED_TIMERS
                     ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
@@ -506,7 +522,7 @@ void VectorPatch::dynamics( Params &params,
                     int ithread = omp_get_thread_num();
                     double timer = MPI_Wtime();
 #endif
-                    spec_task->Radiate->joinNewPhotons(spec_task->particles->first_index.size());
+                    spec_task->Radiate->joinNewPhotons(spec_task->Nbins);
 #ifdef  __DETAILED_TIMERS
                     ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
@@ -526,7 +542,7 @@ void VectorPatch::dynamics( Params &params,
                     double timer = MPI_Wtime();
 #endif
                     Species *spec_task = species( ipatch, ispec );
-                    spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(spec_task->particles->first_index.size());
+                    spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(spec_task->Nbins);
 #ifdef  __DETAILED_TIMERS
                     ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
