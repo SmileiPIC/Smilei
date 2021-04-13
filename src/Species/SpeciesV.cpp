@@ -57,6 +57,28 @@ SpeciesV::SpeciesV( Params &params, Patch *patch ) :
         distance[1] = &Species::radial_distance;
     }
 
+#ifdef _OMPTASKS   
+
+    first_cell_of_bin.resize(Nbins);
+    last_cell_of_bin.resize(Nbins);
+
+    int bin_ncells_transverse = 1;
+    if ( nDim_field >= 2 ) { bin_ncells_transverse *= ( f_dim1-2*oversize[1] ) ; } 
+    if ( nDim_field == 3 ) { bin_ncells_transverse *= ( f_dim2-2*oversize[2] ) ; }
+
+    for (int ibin = 0; ibin < Nbins; ibin++){
+
+        if (ibin == 0){
+            first_cell_of_bin[ibin]     = 0;
+            last_cell_of_bin[ibin]      = (clrw+1)*bin_ncells_transverse-1;
+        } else {
+            first_cell_of_bin[ibin]     = last_cell_of_bin[ibin-1]+1;
+            last_cell_of_bin[ibin]      = first_cell_of_bin[ibin]+clrw*bin_ncells_transverse-1;
+        }
+      
+    }            
+
+#endif
 
 }//END SpeciesV creator
 
@@ -80,9 +102,9 @@ void SpeciesV::initCluster( Params &params )
 
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
-
+    
     Nbins = (params.n_space[0]/clrw); // Nbins is not equal to first_index.size() for SpeciesV
-
+    
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
@@ -118,48 +140,48 @@ void SpeciesV::initCluster( Params &params )
     }
 
 #ifdef _OMPTASKS
-        nrj_lost_per_bin                       = new double[Nbins];
-        nrj_radiation_per_bin                  = new double[Nbins];      
-        if (params.geometry != "AMcylindrical" ){
-            //! buffers for currents and charge
-            b_Jx.resize(Nbins);
-            b_Jy.resize(Nbins);
-            b_Jz.resize(Nbins);
-            b_rho.resize(Nbins);
+    nrj_lost_per_bin                       = new double[Nbins];
+    nrj_radiation_per_bin                  = new double[Nbins];      
+    if (params.geometry != "AMcylindrical" ){
+        //! buffers for currents and charge
+        b_Jx.resize(Nbins);
+        b_Jy.resize(Nbins);
+        b_Jz.resize(Nbins);
+        b_rho.resize(Nbins);
 
-            size_proj_buffer_rho = b_dim[0]*b_dim[1]*f_dim2;
-            size_proj_buffer_Jx  = b_dim[0]*b_dim[1]*f_dim2;
-            size_proj_buffer_Jy  = b_dim[0]*f_dim1_d*f_dim2;
-            size_proj_buffer_Jz  = b_dim[0]*b_dim[1]*f_dim2_d;
+        size_proj_buffer_rho = b_dim[0]*b_dim[1]*f_dim2;
+        size_proj_buffer_Jx  = b_dim[0]*b_dim[1]*f_dim2;
+        size_proj_buffer_Jy  = b_dim[0]*f_dim1_d*f_dim2;
+        size_proj_buffer_Jz  = b_dim[0]*b_dim[1]*f_dim2_d;
 
-            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-                // allocate current-buffers, then put to zero their content
-                b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
-                b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
-                b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
-                b_rho[ibin] = new double[size_proj_buffer_rho];
-            }
-        } else { // AM geometry
-            //! buffers for currents and charge
-            size_proj_buffer_rhoAM = b_dim[0]*b_dim[1]    * params.nmodes; // used for rhoAM
-            size_proj_buffer_Jl    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jl
-            size_proj_buffer_Jr    = b_dim[0]*f_dim1_d    * params.nmodes; // used for Jr
-            size_proj_buffer_Jt    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jt
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+            // allocate current-buffers, then put to zero their content
+            b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
+            b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
+            b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
+            b_rho[ibin] = new double[size_proj_buffer_rho];
+        }
+    } else { // AM geometry
+        //! buffers for currents and charge
+        size_proj_buffer_rhoAM = b_dim[0]*b_dim[1]    * params.nmodes; // used for rhoAM
+        size_proj_buffer_Jl    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jl
+        size_proj_buffer_Jr    = b_dim[0]*f_dim1_d    * params.nmodes; // used for Jr
+        size_proj_buffer_Jt    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jt
 
-            //! buffers for currents and charge
-            b_Jl.resize(Nbins);
-            b_Jr.resize(Nbins);
-            b_Jt.resize(Nbins);
-            b_rhoAM.resize(Nbins);
+        //! buffers for currents and charge
+        b_Jl.resize(Nbins);
+        b_Jr.resize(Nbins);
+        b_Jt.resize(Nbins);
+        b_rhoAM.resize(Nbins);
 
-            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-                // allocate current-buffers, then put to zero their content
-                b_Jl[ibin]    = new std::complex<double>[size_proj_buffer_Jl   ];
-                b_Jr[ibin]    = new std::complex<double>[size_proj_buffer_Jr   ];
-                b_Jt[ibin]    = new std::complex<double>[size_proj_buffer_Jt   ];
-                b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
-            }
-        } // end condition on geometry
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+            // allocate current-buffers, then put to zero their content
+            b_Jl[ibin]    = new std::complex<double>[size_proj_buffer_Jl   ];
+            b_Jr[ibin]    = new std::complex<double>[size_proj_buffer_Jr   ];
+            b_Jt[ibin]    = new std::complex<double>[size_proj_buffer_Jt   ];
+            b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
+        }
+    } // end condition on geometry
 #endif
 
     //Initialize specMPI
@@ -463,6 +485,230 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                          MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                          vector<Diagnostic *> &localDiags, int buffer_id )
 {
+  
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+    int ithread;
+#endif
+    int bin_size0 = b_dim[0];
+    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+        nrj_lost_per_bin[ibin] = 0.;
+        nrj_radiation_per_bin[ibin] = 0.;
+    }
+    // Init tags for the task dependencies of the particle operations
+    int *bin_has_interpolated                   = new int[Nbins+1]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
+    int *bin_has_ionized                        = new int[Nbins];
+    int *bin_has_radiated                       = new int[Nbins];
+    int *bin_has_done_Multiphoton_Breit_Wheeler = new int[Nbins];
+    int *bin_has_pushed                         = new int[Nbins];
+    int *bin_has_done_particles_BC              = new int[Nbins];
+    int *bin_has_projected                      = new int[Nbins];
+
+    int *bin_can_radiate = new int[Nbins];;
+    int *bin_can_push = new int[Nbins];;
+
+    if (Radiate){ // if Radiation True ... 
+        if (!Ionize) { 
+            // ... radiate only after ionization if present ...
+            bin_can_radiate = bin_has_interpolated;
+        } else { 
+            // ... radiate directly after interpolation if ionization is not present ...
+            bin_can_radiate = bin_has_ionized;
+        }
+        // ... and push only after radiation 
+        bin_can_push = bin_has_radiated;
+    } else { // if Radiation False ...
+        if (Ionize){ 
+            // ... push after ionization if present
+            bin_can_push = bin_has_ionized;
+        } else { 
+            // ... push directly after interpolation if ionization is not present
+            // A Species with mass = 0 cannot Ionize or Radiate, thus this this is the used dependency array.
+            // Remember that the element ibin = Nbins of bin_has_interpolated 
+            // is used to manage the pusher dependency on the photon cleaning
+            bin_can_push = bin_has_interpolated;       
+        }
+    }
+
+    int Ncells = ( f_dim0-2*oversize[0] );
+    if( nDim_field >= 2 ) {
+        Ncells *= ( f_dim1-2*oversize[1] );
+    }
+    if( nDim_field == 3 ) {
+        Ncells *= ( f_dim2-2*oversize[2] );
+    }
+
+    #pragma omp taskgroup
+    {
+    // -------------------------------
+    // calculate the particle dynamics
+    // -------------------------------
+    if( time_dual>time_frozen_  || Ionize ) { // if moving particle or it can be ionized
+        // resize the dynamics buffers to treat all the particles in this Patch ipatch and Species ispec
+        int nparts_in_pack = particles->last_index[Ncells-1 ];
+        smpi->dynamics_resize( buffer_id, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) 
+// #ifdef  __DETAILED_TIMERS
+//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+// #else
+//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+// #endif
+            {
+
+            if ( params.geometry != "AMcylindrical" ){
+                // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+            } else {
+                // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jl; i++)  b_Jl[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jr; i++)  b_Jr[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jt; i++)  b_Jt[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+            }
+
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+
+            // Interpolate the fields at the particle position
+            for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ){
+                Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[scell] ),
+                                       &( particles->last_index[scell] ),
+                                       buffer_id, particles->first_index[0] );
+            } // end cell loop for Interpolator
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[0*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+//             } //end task Interpolator
+
+        } // end ibin loop for Interpolator
+
+    } // end if moving particle or ionize
+
+    if( time_dual>time_frozen_ ){ // if moving particle push
+
+  
+
+    
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+// #ifdef  __DETAILED_TIMERS
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+// #else
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
+// #endif
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+            for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ){
+                // Push the particles and the photons
+                ( *Push )( *particles, smpi, particles->first_index[scell],
+                           particles->last_index[scell],
+                           buffer_id, particles->first_index[0] );
+            } // end cell loop for Push
+            
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task for Push on ibin
+        } // end ibin loop for Push
+    } // end if moving particle, radiate and push
+  
+    if( time_dual>time_frozen_){ // do not apply particles BC nor projection on frozen particles     
+            
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+// #ifdef  __DETAILED_TIMERS
+//             #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+// #else
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+// #endif
+            {
+            double ener_iPart( 0. );
+
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+            unsigned int length[3];
+            length[0]=0;
+            length[1]=params.n_space[1]+1;
+            length[2]=params.n_space[2]+1;
+
+            for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
+                // double ener_iPart( 0. );
+                // // Apply wall and boundary conditions
+                // if( mass_>0 ) {
+                //     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                //         ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
+                //         nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+                //     }
+                // 
+                //     // Boundary Condition may be physical or due to domain decomposition
+                //     // apply returns 0 if iPart is not in the local domain anymore
+                // 
+                //     partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
+                //     nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+                // 
+                //     for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                //         if ( particles->cell_keys[iPart] != -1 ) {
+                //             //Compute cell_keys of remaining particles
+                //             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                //                 particles->cell_keys[iPart] *= this->length_[i];
+                //                 particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                //             }
+                //             //First reduction of the count sort algorithm. Lost particles are not included.
+                //             count[particles->cell_keys[iPart]] ++;
+                //         }
+                //     } // end iPart loop
+                // 
+                // } else if( mass_==0 ) {
+                // 
+                //     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                //         ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
+                //         nrj_lost_per_bin[ibin] += ener_iPart;
+                //     }
+                // 
+                //     // Boundary Condition may be physical or due to domain decomposition
+                //     // apply returns 0 if iPart is not in the local domain anymore
+                // 
+                //     partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
+                //     nrj_lost_per_bin[ibin] += ener_iPart;
+                // 
+                //     for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                //         if ( particles->cell_keys[iPart] != -1 ) {
+                //             //Compute cell_keys of remaining particles
+                //             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                //                 particles->cell_keys[iPart] *= length[i];
+                //                 particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                //             }
+                //             count[particles->cell_keys[iPart]] ++;
+                //         }
+                //     } // end iPart loop
+                // } // end mass = 0
+            } // end scell loop
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task for particles BC on ibin
+        } // end ibin loop for particles BC
+
+        } // end if moving particle
+
+
+    } // end taskgroup
+
+
 
 } // END dynamicsTasks
 
