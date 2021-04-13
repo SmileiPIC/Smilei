@@ -607,7 +607,7 @@ class _multiPlotUtil(object):
 	
 	def slide(self):
 		for Diag in self.Diags:
-			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[0])
+			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[0], cax_id = Diag._cax_id)
 		self.plt.draw()
 		
 		from matplotlib.widgets import Slider
