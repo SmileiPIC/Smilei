@@ -241,6 +241,8 @@ From this base class can be derived several versions (marked as ``final``):
 - ``SpeciesVAdaptive``
 - ``SpeciesVAdaptiveMixedSort``
 
+The correct species object is initialized using the species factory implemented in the file ``speciesFactory.h``.
+
 The class ``Species`` owns the particles through the object ``particles`` of class ``Particles*``.
 
 .. cpp:class:: Species
@@ -251,6 +253,9 @@ The class ``Species`` owns the particles through the object ``particles`` of cla
 
 class ``Particles``
 """"""""""""""""""""""""""""""
+
+The class ``Particles`` is a data container that contains the particle properties.
+The base class description (``Particles.h`` and ``Particles.cpp``) is located in the directory  `src/patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Particles>`_.
 
 .. cpp:class:: Particles
 
@@ -270,7 +275,7 @@ the time loop is schematically described in :numref:`smilei_main_loop`
 .. figure:: _static/figures/smilei_main_loop.png
   :width: 20cm
 
-  smilei main loop implementation.
+  Smilei main loop implementation.
 
 The basic PIC loop implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
