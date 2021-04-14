@@ -190,7 +190,7 @@ Class ``VectorPatch``
 """"""""""""""""""""""""""""""
 
 The class ``VectorPatch`` represents the MPI Patch collection described above and is the highest structure level.
-The class description (``vectorPatch.h`` and ``vectorPatch.cpp``) is located in the directory  `src/patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Patch>`_.
+The class description (``vectorPatch.h`` and ``vectorPatch.cpp``) is located in the directory  `src/Patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Patch>`_.
 Among the data components stored in this class, one of the most important is the list of patches.
 By definition, each MPI process has therefore only one declared ``vectorPatch`` object.
 
@@ -208,7 +208,7 @@ Class ``Patch``
 """"""""""""""""""""""""""""""
 
 The class ``Patch`` is an advanced data container that represents a single patch.
-The base class description (``Patch.h`` and ``Patch.cpp``) is located in the directory  `src/patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Patch>`_.
+The base class description (``Patch.h`` and ``Patch.cpp``) is located in the directory  `src/Patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Patch>`_.
 From this base class can be derived several versions (marked as ``final``) depending on the geometry dimension:
 
 - ``Patch1D``
@@ -232,7 +232,7 @@ class ``Species``
 """"""""""""""""""""""""""""""
 
 The class ``Species`` is an advanced data container that represents a single species.
-The base class description (``Species.h`` and ``Species.cpp``) is located in the directory  `src/patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Species>`_.
+The base class description (``Species.h`` and ``Species.cpp``) is located in the directory  `src/Species <https://github.com/SmileiPIC/Smilei/tree/master/src/Species>`_.
 From this base class can be derived several versions (marked as ``final``):
 
 - ``SpeciesNorm``
@@ -255,17 +255,96 @@ class ``Particles``
 """"""""""""""""""""""""""""""
 
 The class ``Particles`` is a data container that contains the particle properties.
-The base class description (``Particles.h`` and ``Particles.cpp``) is located in the directory  `src/patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Particles>`_.
+The base class description (``Particles.h`` and ``Particles.cpp``) is located in the directory  `src/Particles <https://github.com/SmileiPIC/Smilei/tree/master/src/Particles>`_.
+It contains several arrays storing the particles properties such as the positions, momenta, weight and others.
 
 .. cpp:class:: Particles
 
-class ``Fields``
+  .. cpp:member:: std::vector< std::vector<double> > Position;
+
+  *Array containing the particle position*
+
+  .. cpp:member:: std::vector< std::vector<double> > Momentum;
+
+  *Array containing the particle moments*
+
+  .. cpp:member:: std::vector< double > Weight;
+
+  *Containing the particle weight: equivalent to a charge density*
+
+  .. cpp:member:: std::vector< double > Chi;
+
+  *containing the particle quantum parameter*
+
+  .. cpp:member:: std::vector< double > Tau;
+
+  *Incremental optical depth for the Monte-Carlo process*
+
+  .. cpp:member:: std::vector< short > Charge;
+
+  *Charge state of the particle (multiples of e>0)*
+
+  .. cpp:member:: std::vector< uint64_t > Id;
+
+  *Id of the particle*
+
+  .. cpp:member:: std::vector< int > cell_keys;
+
+  *cell_keys of the particle*
+
+Many of the methods implemented in ``Particles`` are used to access or manage the data.
+
+class ``ElectroMagn``
 """"""""""""""""""""""""""""""
+
+The class ``ElectroMagn`` is a high-level data container that contains the electromagnetic fields and currents.
+The base class description (``ElectroMagn.h`` and ``ElectroMagn.cpp``) is located in the directory  `src/ElectroMagn <https://github.com/SmileiPIC/Smilei/tree/master/src/ElectroMagn>`_.
+From this base class can be derived several versions (marked as ``final``) based on the dimension:
+
+- ``ElectroMagn1D``
+- ``ElectroMagn2D``
+- ``ElectroMagn3D``
+- ``ElectroMagnAM``
+
+The correct final class is determined using the factory ``ElectroMagnFactory.h``.
 
 .. cpp:class:: ElectroMagn
 
+  .. cpp:member:: Field * Ex_
+
+  *x-component of the electric field*
+
+class ``Field``
+""""""""""""""""""""""""""""""
+
+The class ``Field`` is a data-container that represent a field grid for a given component.
+The base class description (``Field.h`` and ``Field.cpp``) is located in the directory  `src/Field <https://github.com/SmileiPIC/Smilei/tree/master/src/Field>`_.
+It contains a linearized allocatable array to store all grid nodes whatever the dimension.
+
+.. cpp:class:: Field
+
+  .. cpp:member:: double *data_;
+
+  *pointer to the linearized field array*
+
+  From this base class can be derived several versions (marked as ``final``) based on the dimension:
+
+  - ``Field1D``
+  - ``Field2D``
+  - ``Field3D``
+
+The correct final class is determined using the factory ``FieldFactory.h``.
+
 Smilei MPI
 """"""""""""""""""""""""""""""
+
+The class ``SmileiMPI`` is a specific class that contains interfaces and advanced methods for the custom and adapted use of MPI within Smilei.
+The base class description (``SmileiMPI.h`` and ``SmileiMPI.cpp``) is located in the directory  `src/SmileiMPI <https://github.com/SmileiPIC/Smilei/tree/master/src/SmileiMPI>`_.
+
+.. cpp:class:: SmileiMPI
+
+The basic PIC loop implementation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The initialization and the main loop are explicitely done in the main file ``Smilei.cpp``.
 the time loop is schematically described in :numref:`smilei_main_loop`
@@ -276,6 +355,3 @@ the time loop is schematically described in :numref:`smilei_main_loop`
   :width: 20cm
 
   Smilei main loop implementation.
-
-The basic PIC loop implementation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
