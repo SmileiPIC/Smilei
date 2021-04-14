@@ -601,17 +601,14 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
     } // end if moving particle or ionize
 
     if( time_dual>time_frozen_ ){ // if moving particle push
-
-  
-
     
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
-// #endif
-            {
+// // #ifdef  __DETAILED_TIMERS
+// //             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+// // #else
+// //             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
+// // #endif
+//             {
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
             timer = MPI_Wtime();
@@ -626,32 +623,28 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-            } // end task for Push on ibin
+//             } // end task for Push on ibin
         } // end ibin loop for Push
     } // end if moving particle, radiate and push
   
     if( time_dual>time_frozen_){ // do not apply particles BC nor projection on frozen particles     
-            
+
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
-// #endif
-            {
+// // #ifdef  __DETAILED_TIMERS
+// //             #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+// // #else
+// //             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+// // #endif
+//             {
             double ener_iPart( 0. );
 
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
             timer = MPI_Wtime();
 #endif
-            unsigned int length[3];
-            length[0]=0;
-            length[1]=params.n_space[1]+1;
-            length[2]=params.n_space[2]+1;
 
             for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
-                double ener_iPart( 0. );
+            
                 // Apply wall and boundary conditions
                 if( mass_>0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
@@ -661,21 +654,8 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
-                
                     partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
                     nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
-                
-                    for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                            //Compute cell_keys of remaining particles
-                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                                particles->cell_keys[iPart] *= this->length_[i];
-                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                            }
-                            //First reduction of the count sort algorithm. Lost particles are not included.
-                            count[particles->cell_keys[iPart]] ++;
-                        }
-                    } // end iPart loop
                 
                 } else if( mass_==0 ) {
                 
@@ -686,30 +666,40 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
-                
                     partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
                     nrj_lost_per_bin[ibin] += ener_iPart;
                 
-                    for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                            //Compute cell_keys of remaining particles
-                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                                particles->cell_keys[iPart] *= length[i];
-                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                            }
-                            count[particles->cell_keys[iPart]] ++;
-                        }
-                    } // end iPart loop
                 } // end mass = 0
-            } // end scell loop
+              } // end scell loop
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-            } // end task for particles BC on ibin
+            // } // end task for particles BC on ibin
         } // end ibin loop for particles BC
 
-        } // end if moving particle
+
+        // Compute cell_keys and count arrays for the sorting
+        // For the moment this operation is made on all the particles of the patch to avoid data races
+        unsigned int length[3];
+        length[0]=0;
+        length[1]=params.n_space[1]+1;
+        length[2]=params.n_space[2]+1;
+        for( unsigned int scell = 0 ; scell < Ncells ; scell++ ) {
+            for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                if ( particles->cell_keys[iPart] != -1 ) {
+                    //Compute cell_keys of remaining particles
+                    for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                        particles->cell_keys[iPart] *= this->length_[i];
+                        particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                    }
+                    //First reduction of the count sort algorithm. Lost particles are not included.
+                    count[particles->cell_keys[iPart]] ++;
+                }
+            } // end iPart loop
+        } // end cells loop
+
+    } // end if moving particle
 
 
     } // end taskgroup
