@@ -107,8 +107,7 @@ protected:
         double phi
     )
     {
-        double term6, cosX, sinX, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp,
-               newpx_COM, newpy_COM, newpz_COM, vcp;
+        double cosX, sinX, newpx_COM, newpy_COM, newpz_COM;
         
         double m12 = m1 / m2;
         
@@ -132,28 +131,25 @@ protected:
         
         // Change the momentum to the COM frame (we work only on particle 1)
         // Quantities ending with "COM" are quantities of the particle expressed in the COM frame.
-        double COM_gamma, term1, term2, vcv1, vcv2, px_COM, py_COM, pz_COM, gamma1_COM, gamma2_COM;
-        if( COM_vsquare != 0. ) {
-            COM_gamma = 1./sqrt( 1.-COM_vsquare );
-            term1 = ( COM_gamma - 1. ) / COM_vsquare;
-            vcv1  = ( COM_vx*( p1->momentum( 0, i1 ) ) + COM_vy*( p1->momentum( 1, i1 ) ) + COM_vz*( p1->momentum( 2, i1 ) ) )/gamma1;
-            vcv2  = ( COM_vx*( p2->momentum( 0, i2 ) ) + COM_vy*( p2->momentum( 1, i2 ) ) + COM_vz*( p2->momentum( 2, i2 ) ) )/gamma2;
-            term2 = ( term1*vcv1 - COM_gamma ) * gamma1;
-            px_COM = ( p1->momentum( 0, i1 ) ) + term2*COM_vx;
-            py_COM = ( p1->momentum( 1, i1 ) ) + term2*COM_vy;
-            pz_COM = ( p1->momentum( 2, i1 ) ) + term2*COM_vz;
-            gamma1_COM = ( 1.-vcv1 )*COM_gamma*gamma1;
-            gamma2_COM = ( 1.-vcv2 )*COM_gamma*gamma2;
-        } else {
-            COM_gamma = 1.;
+        double COM_gamma, term1, term2, gamma1_COM, gamma2_COM;
+        if( COM_vsquare < 1e-6 ) {
+            COM_gamma = 1. + 0.5 * COM_vsquare;
+            gamma1_COM = gamma1 * COM_gamma;
+            gamma2_COM = gamma2 * COM_gamma;
             term1 = 0.5;
-            term2 = gamma1;
-            px_COM = ( p1->momentum( 0, i1 ) );
-            py_COM = ( p1->momentum( 1, i1 ) );
-            pz_COM = ( p1->momentum( 2, i1 ) );
-            gamma1_COM = gamma1;
-            gamma2_COM = gamma2;
+            term2 = -gamma1_COM;
+        } else {
+            COM_gamma = 1./sqrt( 1.-COM_vsquare );
+            double vcv1g1  = COM_vx*( p1->momentum( 0, i1 ) ) + COM_vy*( p1->momentum( 1, i1 ) ) + COM_vz*( p1->momentum( 2, i1 ) );
+            double vcv2g2  = COM_vx*( p2->momentum( 0, i2 ) ) + COM_vy*( p2->momentum( 1, i2 ) ) + COM_vz*( p2->momentum( 2, i2 ) );
+            gamma1_COM = ( gamma1-vcv1g1 )*COM_gamma;
+            gamma2_COM = ( gamma2-vcv2g2 )*COM_gamma;
+            term1 = ( COM_gamma - 1. ) / COM_vsquare;
+            term2 = term1*vcv1g1 - COM_gamma * gamma1;
         }
+        double px_COM = p1->momentum( 0, i1 ) + term2*COM_vx;
+        double py_COM = p1->momentum( 1, i1 ) + term2*COM_vy;
+        double pz_COM = p1->momentum( 2, i1 ) + term2*COM_vz;
         double p2_COM = px_COM*px_COM + py_COM*py_COM + pz_COM*pz_COM;
         double p_COM  = sqrt( p2_COM );
         
@@ -185,13 +181,13 @@ protected:
             
             // Calculate combination of angles 
             sinX = sqrt( 1. - cosX*cosX );
-            sinXcosPhi = sinX*cos( phi );
-            sinXsinPhi = sinX*sin( phi );
+            double sinXcosPhi = sinX*cos( phi );
+            double sinXsinPhi = sinX*sin( phi );
             
             // Calculate the deflection in the COM frame
-            p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
+            double p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
             if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
-                inv_p_perp = 1./p_perp;
+                double inv_p_perp = 1./p_perp;
                 newpx_COM = ( px_COM * pz_COM * sinXcosPhi - py_COM * p_COM * sinXsinPhi ) * inv_p_perp + px_COM * cosX;
                 newpy_COM = ( py_COM * pz_COM * sinXcosPhi + px_COM * p_COM * sinXsinPhi ) * inv_p_perp + py_COM * cosX;
                 newpz_COM = -p_perp * sinXcosPhi  +  pz_COM * cosX;
@@ -202,7 +198,7 @@ protected:
             }
             
             // Go back to the lab frame and store the results in the particle array
-            vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
+            double vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
             double newW1, newW2;
             if( p1->charge(i1) != 0. || p2->charge(i2) != 0. ) {
                 double weight_factor = minW / tot_charge;
@@ -214,7 +210,7 @@ protected:
             }
             if( p3 ) {
                 double momentum_ratio = p3_COM / p_COM;
-                term6 = momentum_ratio*term1*vcp + sqrt( p3_COM*p3_COM + 1. ) * COM_gamma;
+                double term6 = momentum_ratio*term1*vcp + sqrt( p3_COM*p3_COM + 1. ) * COM_gamma;
                 double newpx = momentum_ratio * newpx_COM + COM_vx * term6;
                 double newpy = momentum_ratio * newpy_COM + COM_vy * term6;
                 double newpz = momentum_ratio * newpz_COM + COM_vz * term6;
@@ -239,7 +235,7 @@ protected:
             }
             if( p4 ) {
                 double momentum_ratio = p4_COM / p_COM;
-                term6 = -momentum_ratio*term1*vcp + sqrt( p4_COM*p4_COM + 1. ) * COM_gamma;
+                double term6 = -momentum_ratio*term1*vcp + sqrt( p4_COM*p4_COM + 1. ) * COM_gamma;
                 double newpx = -momentum_ratio * newpx_COM + COM_vx * term6;
                 double newpy = -momentum_ratio * newpy_COM + COM_vy * term6;
                 double newpz = -momentum_ratio * newpz_COM + COM_vz * term6;
@@ -308,13 +304,13 @@ protected:
         }
         
         // Calculate combination of angles
-        sinXcosPhi = sinX*cos( phi );
-        sinXsinPhi = sinX*sin( phi );
+        double sinXcosPhi = sinX*cos( phi );
+        double sinXsinPhi = sinX*sin( phi );
         
         // Apply the deflection
-        p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
+        double p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
         if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
-            inv_p_perp = 1./p_perp;
+            double inv_p_perp = 1./p_perp;
             newpx_COM = ( px_COM * pz_COM * sinXcosPhi - py_COM * p_COM * sinXsinPhi ) * inv_p_perp + px_COM * cosX;
             newpy_COM = ( py_COM * pz_COM * sinXcosPhi + px_COM * p_COM * sinXsinPhi ) * inv_p_perp + py_COM * cosX;
             newpz_COM = -p_perp * sinXcosPhi  +  pz_COM * cosX;
@@ -325,15 +321,15 @@ protected:
         }
         
         // Go back to the lab frame and store the results in the particle array
-        vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
+        double vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
         if( U2 < p2->weight( i2 )/p1->weight( i1 ) ) { // deflect particle 1 only with some probability
-            term6 = term1*vcp + gamma1_COM * COM_gamma;
+            double term6 = term1*vcp + gamma1_COM * COM_gamma;
             p1->momentum( 0, i1 ) = newpx_COM + COM_vx * term6;
             p1->momentum( 1, i1 ) = newpy_COM + COM_vy * term6;
             p1->momentum( 2, i1 ) = newpz_COM + COM_vz * term6;
         }
         if( U2 < p1->weight( i1 )/p2->weight( i2 ) ) { // deflect particle 2 only with some probability
-            term6 = -m12 * term1*vcp + gamma2_COM * COM_gamma;
+            double term6 = -m12 * term1*vcp + gamma2_COM * COM_gamma;
             p2->momentum( 0, i2 ) = -m12 * newpx_COM + COM_vx * term6;
             p2->momentum( 1, i2 ) = -m12 * newpy_COM + COM_vy * term6;
             p2->momentum( 2, i2 ) = -m12 * newpz_COM + COM_vz * term6;
