@@ -2,7 +2,7 @@ Developer Zone
 ***************
 
 Introduction
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==================
 
 Smilei is a C++ code that uses relatively simple C++ features for modularity
 and conveniency for non-advanced C++ users.
@@ -28,12 +28,12 @@ There is always only one class definition per file and the file name correcponds
 The general implementation is later summarized in :numref:`smilei_main_loop`
 
 General concept and vocabulary
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===================================================
 
 This section presents some implicit notions to understand the philosophy of the code.
 
 Notion of data container
-""""""""""""""""""""""""""""""
+------------------------------------
 
 Data containers are classes (or sometime just structures) used to store a specific type of data,
 often considered as raw data such as particles or fields.
@@ -47,7 +47,7 @@ Some methods can be implemented in a data container for managing or accessing th
   Data container.
 
 Notion of operators
-""""""""""""""""""""""""""""""
+------------------------------------
 
 An operator is a class that operates on input data to provide a processed information.
 Input data can be parameters and data containers.
@@ -65,7 +65,7 @@ for instance, the particle interpolation, push and proection are operators.
   Operator.
 
 Notion of domain parts
-""""""""""""""""""""""""""""""
+------------------------------------
 
 Domain parts are classes that represents some specific levels of the domain decomposition.
 They can be seen as high-level data container or container of data container.
@@ -76,7 +76,7 @@ For instance, patches and ``Species`` are domain parts:
 - ``Patch`` contains ``Species`` and ``Fields``.
 
 Notion of factory
-""""""""""""""""""""""""""""""
+------------------------------------
 
 Some objects such as operators or data containers have sereral variations.
 For this we use inheritance.
@@ -93,12 +93,12 @@ The ``push`` factory will determine the right one to use.
   Description of the factory concept.
 
 Other
-""""""""""""""""""""""""""""""
+------------------------------------
 
 Some classes are used for specific actions in the code such as the initilization process.
 
 Domain decomposition and parallelism
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===========================================
 
 The simulation domain is divided multiple times following a succession of decomposition levels.
 The whole domain is the superimposition of different grids for each electromagnetic field component
@@ -173,8 +173,10 @@ Finally, the decomposition levels are summarized in :numref:`decomposition_summa
 
   Domain decomposition summary.
 
+--------------------------------------------------------------------------------
+
 Data structures and main classes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=======================================
 
 This section describes the main classes and the tree-like smilei data structure.
 The whole picture is shown in :numref:`data_structure`.
@@ -187,7 +189,7 @@ The whole picture is shown in :numref:`data_structure`.
   General of the main tree-like data structure of Smilei.
 
 Class ``VectorPatch``
-""""""""""""""""""""""""""""""
+------------------------------------
 
 The class ``VectorPatch`` represents the MPI Patch collection described above and is the highest structure level.
 The class description (``vectorPatch.h`` and ``vectorPatch.cpp``) is located in the directory  `src/Patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Patch>`_.
@@ -205,7 +207,7 @@ By definition, each MPI process has therefore only one declared ``vectorPatch`` 
 The class ``VectorPatch`` contains the methods directly called in the PIC time loop in ``smilei.cpp``.
 
 Class ``Patch``
-""""""""""""""""""""""""""""""
+------------------------------------
 
 The class ``Patch`` is an advanced data container that represents a single patch.
 The base class description (``Patch.h`` and ``Patch.cpp``) is located in the directory  `src/Patch <https://github.com/SmileiPIC/Smilei/tree/master/src/Patch>`_.
@@ -229,7 +231,7 @@ The class ``Patch`` has a list of object ``Species`` called ``vecSpecies``.
   *Electromagnetic fields and densities (E, B, J, rho) of the current Patch*
 
 class ``Species``
-""""""""""""""""""""""""""""""
+------------------------------------
 
 The class ``Species`` is an advanced data container that represents a single species.
 The base class description (``Species.h`` and ``Species.cpp``) is located in the directory  `src/Species <https://github.com/SmileiPIC/Smilei/tree/master/src/Species>`_.
@@ -252,7 +254,7 @@ The class ``Species`` owns the particles through the object ``particles`` of cla
   *Vector containing all Particles of the considered Speciesh*
 
 class ``Particles``
-""""""""""""""""""""""""""""""
+------------------------------------
 
 The class ``Particles`` is a data container that contains the particle properties.
 The base class description (``Particles.h`` and ``Particles.cpp``) is located in the directory  `src/Particles <https://github.com/SmileiPIC/Smilei/tree/master/src/Particles>`_.
@@ -295,7 +297,7 @@ It contains several arrays storing the particles properties such as the position
 Many of the methods implemented in ``Particles`` are used to access or manage the data.
 
 class ``ElectroMagn``
-""""""""""""""""""""""""""""""
+------------------------------------
 
 The class ``ElectroMagn`` is a high-level data container that contains the electromagnetic fields and currents.
 The base class description (``ElectroMagn.h`` and ``ElectroMagn.cpp``) is located in the directory  `src/ElectroMagn <https://github.com/SmileiPIC/Smilei/tree/master/src/ElectroMagn>`_.
@@ -315,7 +317,7 @@ The correct final class is determined using the factory ``ElectroMagnFactory.h``
   *x-component of the electric field*
 
 class ``Field``
-""""""""""""""""""""""""""""""
+------------------------------------
 
 The class ``Field`` is a data-container that represent a field grid for a given component.
 The base class description (``Field.h`` and ``Field.cpp``) is located in the directory  `src/Field <https://github.com/SmileiPIC/Smilei/tree/master/src/Field>`_.
@@ -336,26 +338,167 @@ It contains a linearized allocatable array to store all grid nodes whatever the 
 The correct final class is determined using the factory ``FieldFactory.h``.
 
 Smilei MPI
-""""""""""""""""""""""""""""""
+------------------------------------
 
 The class ``SmileiMPI`` is a specific class that contains interfaces and advanced methods for the custom and adapted use of MPI within Smilei.
 The base class description (``SmileiMPI.h`` and ``SmileiMPI.cpp``) is located in the directory  `src/SmileiMPI <https://github.com/SmileiPIC/Smilei/tree/master/src/SmileiMPI>`_.
 
 .. cpp:class:: SmileiMPI
 
+-----------------------------------------------------------------
+
 The :program:`Smilei` PIC loop implementation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==============================================================
 
 The initialization and the main loop are explicitely done in the main file ``Smilei.cpp``.
-the time loop is schematically described in :numref:`smilei_main_loop`
+The time loop is schematically described in :numref:`smilei_main_loop`.
 
 .. _smilei_main_loop:
 
 .. figure:: _static/figures/smilei_main_loop.png
   :width: 20cm
 
-  Smilei main loop implementation.
+  Smilei main loop implementation (click on the figure for more details).
 
+The time loop is explicitely written step by step in the main
+file ``Smilei.cpp`` thought calls to different ``vecPatches`` methods.
+
+* **Patch reconfiguration**: if adaptive vectorization is activated, then the patch may be
+reconfigured for scalar or vectorized mode.
+
+.. highlight:: c++
+   :linenothreshold: 5
+
+.. code-block:: c++
+    
+    vecPatches.reconfiguration( params, timers, itime );
+
+* **Collision**: particle collisions are performed before the particle dynamics part
+
+.. code-block:: c++
+    
+    vecPatches.applyCollisions( params, itime, timers );
+
+* **Relativistic poisson solver**: ...
+
+.. code-block:: c++
+    
+    vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
+
+* **Charge**: reset global charge and currents densities to zero and computes rho old before moving particles
+
+.. code-block:: c++
+    
+    vecPatches.computeCharge(true);
+
+* **Particle dynamics**: this step processes the full particle dynamics
+  including field interpolation, advanced physical operators (radiation, ionization...),
+  boundary condition pre-processing and projection
+
+.. code-block:: c++
+    
+    vecPatches.dynamics( params, &smpi, simWindow, radiation_tables_,
+                                     MultiphotonBreitWheelerTables,
+                                     time_dual, timers, itime );
+
+* **Envelop module**: ...
+
+.. code-block:: c++
+
+    vecPatches.runEnvelopeModule( params, &smpi, simWindow, time_dual, timers, itime );
+
+* **Sum of currents and densities**: current et charge reduction from different species
+  and perform the synchronization step with communication
+    
+.. code-block:: c++
+    
+    vecPatches.sumDensities( params, time_dual, timers, itime, simWindow, &smpi );
+
+* **Maganement of the antenna**: apply currents from antennas
+        
+.. code-block:: c++
+
+    vecPatches.applyAntennas( time_dual );
+
+* **Maxwell solvers**: solve Maxwell
+            
+.. code-block:: c++
+    
+    vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
+
+* **Particle communication**: finalize particle exchanges and sort particles
+                
+.. code-block:: c++
+
+    vecPatches.finalizeAndSortParticles( params, &smpi, simWindow,
+                                                 time_dual, timers, itime );
+
+* **Particle merging**: merging process for particles (still experimental)
+         
+.. code-block:: c++
+
+    vecPatches.mergeParticles(params, &smpi, time_dual,timers, itime );
+
+* **Particle injection**: injection of particles from the boundaries
+             
+.. code-block:: c++
+
+    vecPatches.injectParticlesFromBoundaries(params, timers, itime );
+
+* **Cleaning**:  Clean buffers and resize arrays
+
+.. code-block:: c++
+
+    vecPatches.cleanParticlesOverhead(params, timers, itime );
+
+* **Field synchronization**: Finalize field synchronization and exchanges
+
+.. code-block:: c++
+
+    vecPatches.finalizeSyncAndBCFields( params, &smpi, simWindow, time_dual, timers, itime );
+
+* **Diagnostics**: call the various diagnostics
+
+.. code-block:: c++
+
+    vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
+
+* **Moving window**: manage the shift of the moving window
+
+.. code-block:: c++
+
+    timers.movWindow.restart();
+    simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
+
+    if (itime == simWindow->getAdditionalShiftsIteration() ) {
+        int adjust = simWindow->isMoving(time_dual)?0:1;
+        for (unsigned int n=0;n < simWindow->getNumberOfAdditionalShifts()-adjust; n++)
+            simWindow->shift( vecPatches, &smpi, params, itime, time_dual, region );
+    }
+    timers.movWindow.update();
+
+* **Checkpointing**: manage the checkoints
+    
+.. code-block:: c++
+
+    checkpoint.dump( vecPatches, region, itime, &smpi, simWindow, params );
+
+Pusher
+---------------------------------
+
+To be done
 
 Radiation operator
-""""""""""""""""""""""""""""""
+---------------------------------
+
+Landau-Lifshift
+^^^^^^^^^^^^^^^^^^^
+
+Corrected Landau-Lifshift
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Niel
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Monte-Carlo
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
