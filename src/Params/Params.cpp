@@ -1232,7 +1232,7 @@ void Params::print_timestep( SmileiMPI *smpi, unsigned int itime, double time_du
         
         ostringstream push_time;
         if( npart * (double) print_every > 0 ) {
-            push_time << setw( 14 ) << 1e9 * (now - before) * (double) smpi->getGlobalNumCores() / ( npart * (double) print_every );
+            push_time << setw( 14 ) << (int)( 1e9 * (now - before) * (double) smpi->getGlobalNumCores() / ( npart * (double) print_every ) );
         } else {
             push_time << "  ??";
         }
