@@ -260,35 +260,35 @@ It contains several arrays storing the particles properties such as the position
 
 .. cpp:class:: Particles
 
-  .. cpp:member:: std::vector< std::vector<double> > Position;
+  .. cpp:member:: std::vector< std::vector<double> > Position
 
   *Array containing the particle position*
 
-  .. cpp:member:: std::vector< std::vector<double> > Momentum;
+  .. cpp:member:: std::vector< std::vector<double> > Momentum
 
   *Array containing the particle moments*
 
-  .. cpp:member:: std::vector< double > Weight;
+  .. cpp:member:: std::vector< double > Weight
 
   *Containing the particle weight: equivalent to a charge density*
 
-  .. cpp:member:: std::vector< double > Chi;
+  .. cpp:member:: std::vector< double > Chi
 
   *containing the particle quantum parameter*
 
-  .. cpp:member:: std::vector< double > Tau;
+  .. cpp:member:: std::vector< double > Tau
 
   *Incremental optical depth for the Monte-Carlo process*
 
-  .. cpp:member:: std::vector< short > Charge;
+  .. cpp:member:: std::vector< short > Charge
 
   *Charge state of the particle (multiples of e>0)*
 
-  .. cpp:member:: std::vector< uint64_t > Id;
+  .. cpp:member:: std::vector< uint64_t > Id
 
   *Id of the particle*
 
-  .. cpp:member:: std::vector< int > cell_keys;
+  .. cpp:member:: std::vector< int > cell_keys
 
   *cell_keys of the particle*
 
@@ -323,7 +323,7 @@ It contains a linearized allocatable array to store all grid nodes whatever the 
 
 .. cpp:class:: Field
 
-  .. cpp:member:: double *data_;
+  .. cpp:member:: double *data_
 
   *pointer to the linearized field array*
 
