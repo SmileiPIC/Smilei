@@ -545,9 +545,15 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
     // calculate the particle dynamics
     // -------------------------------
     if( time_dual>time_frozen_  || Ionize ) { // if moving particle or it can be ionized
+
+        //Prepare for sorting
+        for( unsigned int i=0; i<count.size(); i++ ) {
+            count[i] = 0;
+        }
+
         // resize the dynamics buffers to treat all the particles in this Patch ipatch and Species ispec
-        int nparts_in_pack = particles->last_index[Ncells-1 ];
-        smpi->dynamics_resize( buffer_id, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
+        int nparts = particles->last_index[Ncells-1 ];
+        smpi->dynamics_resize( buffer_id, nDim_field, nparts, params.geometry=="AMcylindrical" );
 
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) 
 // #ifdef  __DETAILED_TIMERS
@@ -645,56 +651,56 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             length[2]=params.n_space[2]+1;
 
             for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
-                // double ener_iPart( 0. );
-                // // Apply wall and boundary conditions
-                // if( mass_>0 ) {
-                //     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                //         ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
-                //         nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
-                //     }
-                // 
-                //     // Boundary Condition may be physical or due to domain decomposition
-                //     // apply returns 0 if iPart is not in the local domain anymore
-                // 
-                //     partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
-                //     nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
-                // 
-                //     for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                //         if ( particles->cell_keys[iPart] != -1 ) {
-                //             //Compute cell_keys of remaining particles
-                //             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                //                 particles->cell_keys[iPart] *= this->length_[i];
-                //                 particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                //             }
-                //             //First reduction of the count sort algorithm. Lost particles are not included.
-                //             count[particles->cell_keys[iPart]] ++;
-                //         }
-                //     } // end iPart loop
-                // 
-                // } else if( mass_==0 ) {
-                // 
-                //     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                //         ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
-                //         nrj_lost_per_bin[ibin] += ener_iPart;
-                //     }
-                // 
-                //     // Boundary Condition may be physical or due to domain decomposition
-                //     // apply returns 0 if iPart is not in the local domain anymore
-                // 
-                //     partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
-                //     nrj_lost_per_bin[ibin] += ener_iPart;
-                // 
-                //     for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                //         if ( particles->cell_keys[iPart] != -1 ) {
-                //             //Compute cell_keys of remaining particles
-                //             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                //                 particles->cell_keys[iPart] *= length[i];
-                //                 particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                //             }
-                //             count[particles->cell_keys[iPart]] ++;
-                //         }
-                //     } // end iPart loop
-                // } // end mass = 0
+                double ener_iPart( 0. );
+                // Apply wall and boundary conditions
+                if( mass_>0 ) {
+                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                        ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
+                        nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+                    }
+                
+                    // Boundary Condition may be physical or due to domain decomposition
+                    // apply returns 0 if iPart is not in the local domain anymore
+                
+                    partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
+                    nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+                
+                    for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                        if ( particles->cell_keys[iPart] != -1 ) {
+                            //Compute cell_keys of remaining particles
+                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                                particles->cell_keys[iPart] *= this->length_[i];
+                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                            }
+                            //First reduction of the count sort algorithm. Lost particles are not included.
+                            count[particles->cell_keys[iPart]] ++;
+                        }
+                    } // end iPart loop
+                
+                } else if( mass_==0 ) {
+                
+                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                        ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
+                        nrj_lost_per_bin[ibin] += ener_iPart;
+                    }
+                
+                    // Boundary Condition may be physical or due to domain decomposition
+                    // apply returns 0 if iPart is not in the local domain anymore
+                
+                    partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
+                    nrj_lost_per_bin[ibin] += ener_iPart;
+                
+                    for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                        if ( particles->cell_keys[iPart] != -1 ) {
+                            //Compute cell_keys of remaining particles
+                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                                particles->cell_keys[iPart] *= length[i];
+                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                            }
+                            count[particles->cell_keys[iPart]] ++;
+                        }
+                    } // end iPart loop
+                } // end mass = 0
             } // end scell loop
 
 #ifdef  __DETAILED_TIMERS
