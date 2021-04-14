@@ -1039,7 +1039,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                                                                 ibin*clrw, bin_size0, *particles, smpi, 
                                                                 particles->first_index[ibin], particles->last_index[ibin], 
                                                                 buffer_id, diag_flag);
-                }
+                } // end if AM
             } // end condition on test and mass
 
 #ifdef  __DETAILED_TIMERS
@@ -1061,9 +1061,9 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
            nrj_bc_lost += nrj_lost_per_bin[ibin];
         }
 
-        // sum the radiated energy
-        // The taskgroup above ensures that this is done after the radiation method
-        if( Radiate ) {
+        // sum the radiated energy / energy converted in pairs
+        // The dependencies above ensure that this is done after the Radiation and MultiPhoton Breit Wheeler methods
+        if( Radiate || Multiphoton_Breit_Wheeler_process) {
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
             ithread = omp_get_thread_num();
@@ -1075,7 +1075,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-        } // end if Radiate
+        } // end if Radiate or Multiphoton_Breit_Wheeler_process
         } // end task for lost/radiated energy reduction          
 
      } // end if moving particle
