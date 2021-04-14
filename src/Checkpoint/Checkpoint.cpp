@@ -24,7 +24,6 @@
 #include "ElectroMagnBC3D_SM.h"
 #include "Laser.h"
 #include "Species.h"
-#include "PatchesFactory.h"
 #include "DiagnosticScreen.h"
 #include "DiagnosticTrack.h"
 #include "LaserEnvelope.h"

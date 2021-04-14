@@ -6,7 +6,6 @@
 #include <iomanip>
 
 #include "DomainDecompositionFactory.h"
-#include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
 
