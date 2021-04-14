@@ -1230,7 +1230,12 @@ void Params::print_timestep( SmileiMPI *smpi, unsigned int itime, double time_du
         timer.update();
         double now = timer.getTime();
         
-        double push_time = 1e9 * (now - before) * (double) smpi->getGlobalNumCores() / ( npart * (double) print_every );
+        ostringstream push_time;
+        if( npart * (double) print_every > 0 ) {
+            push_time << setw( 14 ) << 1e9 * (now - before) * (double) smpi->getGlobalNumCores() / ( npart * (double) print_every );
+        } else {
+            push_time << "  ??";
+        }
         
         #pragma omp master
         MESSAGE(
@@ -1238,7 +1243,7 @@ void Params::print_timestep( SmileiMPI *smpi, unsigned int itime, double time_du
             << "  " << scientific << setprecision( 4 ) << setw( 12 ) << time_dual << " "
             << "  " << scientific << setprecision( 4 ) << setw( 12 ) << now << " "
             << "  " << "(" << scientific << setprecision( 4 ) << setw( 12 ) << now - before << " )"
-            << "  " << setw( 14 ) << (int) push_time << " "
+            << "  " << push_time.str() << " "
         );
         #pragma omp barrier
     }
