@@ -1,5 +1,5 @@
 Developer Zone
------------------------------
+***************
 
 Introduction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -343,7 +343,7 @@ The base class description (``SmileiMPI.h`` and ``SmileiMPI.cpp``) is located in
 
 .. cpp:class:: SmileiMPI
 
-The basic PIC loop implementation
+The :program:`Smilei` PIC loop implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The initialization and the main loop are explicitely done in the main file ``Smilei.cpp``.
@@ -355,3 +355,7 @@ the time loop is schematically described in :numref:`smilei_main_loop`
   :width: 20cm
 
   Smilei main loop implementation.
+
+
+Radiation operator
+""""""""""""""""""""""""""""""
