@@ -699,8 +699,70 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             } // end iPart loop
         } // end cells loop
 
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+// #ifdef  __DETAILED_TIMERS
+//             #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+// #else
+//             #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+// #endif
+            {
+                
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+                
+            // Project currents if not a Test species and charges as well if a diag is needed.
+            // Do not project if a photon
+            if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
+                if (params.geometry != "AMcylindrical"){
+                    for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
+                        Proj->currentsAndDensityWrapperOnBuffers(
+                            b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
+                            ibin*clrw, *particles, smpi, 
+                            particles->first_index[scell], particles->last_index[scell], 
+                            buffer_id, diag_flag, params.is_spectral, ispec );
+                    } // end scell loop
+                } else {
+                    // for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
+                    // ProjectorAM2Order *ProjAM = static_cast<ProjectorAM2Order *>(Proj);
+                    // ProjAM->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
+                    //                                             ibin*clrw, bin_size0, *particles, smpi, 
+                    //                                             particles->first_index[scell], particles->last_index[scell], 
+                    //                                             buffer_id, diag_flag);
+                    // } // end scell loop
+                } // end if AM
+            } // end condition on test and mass
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            }//end task for Proj of ibin
+        }// end ibin loop for Proj    
+
     } // end if moving particle
 
+//     {
+//     // reduction of lost energy
+//     for( unsigned int ibin=0 ; ithd<Nbins ; ibin++ ) {
+//         nrj_bc_lost += nrj_lost_per_bin[ibin];
+//     }
+//     // reduction of radiated energy
+//     if( Radiate || Multiphoton_Breit_Wheeler_process ) {
+// #ifdef  __DETAILED_TIMERS
+//                 timer = MPI_Wtime();
+//                 ithread = omp_get_thread_num();
+// #endif
+// 
+//         for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+//             nrj_radiation += nrj_radiation_per_bin[ibin];
+//         }
+// #ifdef  __DETAILED_TIMERS
+//         patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+// #endif
+//     } // end if Radiate
+//     } // end task for lost/radiated energy reduction    
 
     } // end taskgroup
 
