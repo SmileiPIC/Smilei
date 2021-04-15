@@ -671,28 +671,37 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                 
                 } // end mass = 0
               } // end scell loop
+          
+            // Compute cell_keys for the sorting
+            unsigned int length[3];
+            length[0]=0;
+            length[1]=params.n_space[1]+1;
+            length[2]=params.n_space[2]+1;
+            for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
+                for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                    if ( particles->cell_keys[iPart] != -1 ) {
+                        //Compute cell_keys of remaining particles
+                        for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                            particles->cell_keys[iPart] *= this->length_[i];
+                            particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                        }
+                    }
+                } // end iPart loop
+            } // end cells loop
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-            } // end task for particles BC on ibin
+            } // end task for particles BC and cell_keys on ibin
         } // end ibin loop for particles BC
 #pragma omp taskwait
 
-        // Compute cell_keys and count arrays for the sorting
+        // Compute count arrays for the sorting
         // For the moment this operation is made on all the particles of the patch to avoid data races
-        unsigned int length[3];
-        length[0]=0;
-        length[1]=params.n_space[1]+1;
-        length[2]=params.n_space[2]+1;
+        
         for( unsigned int scell = 0 ; scell < Ncells ; scell++ ) {
             for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
                 if ( particles->cell_keys[iPart] != -1 ) {
-                    //Compute cell_keys of remaining particles
-                    for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                        particles->cell_keys[iPart] *= this->length_[i];
-                        particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                    }
                     //First reduction of the count sort algorithm. Lost particles are not included.
                     count[particles->cell_keys[iPart]] ++;
                 }
