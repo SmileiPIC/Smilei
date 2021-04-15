@@ -642,6 +642,11 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             ithread = omp_get_thread_num();
             timer = MPI_Wtime();
 #endif
+            // Variables to compute cell_keys for the sorting
+            unsigned int length[3];
+            length[0]=0;
+            length[1]=params.n_space[1]+1;
+            length[2]=params.n_space[2]+1;
 
             for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
             
@@ -670,14 +675,8 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     nrj_lost_per_bin[ibin] += ener_iPart;
                 
                 } // end mass = 0
-              } // end scell loop
-          
-            // Compute cell_keys for the sorting
-            unsigned int length[3];
-            length[0]=0;
-            length[1]=params.n_space[1]+1;
-            length[2]=params.n_space[2]+1;
-            for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
+
+                // Compute cell_keys for sorting
                 for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
                     if ( particles->cell_keys[iPart] != -1 ) {
                         //Compute cell_keys of remaining particles
@@ -686,35 +685,21 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                             particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
                         }
                     }
-                } // end iPart loop
-            } // end cells loop
+                } // end iPart loop to compute cell_keys
+              } // end scell loop
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task for particles BC and cell_keys on ibin
         } // end ibin loop for particles BC
-#pragma omp taskwait
-
-        // Compute count arrays for the sorting
-        // For the moment this operation is made on all the particles of the patch to avoid data races
-        
-        for( unsigned int scell = 0 ; scell < Ncells ; scell++ ) {
-            for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                if ( particles->cell_keys[iPart] != -1 ) {
-                    //First reduction of the count sort algorithm. Lost particles are not included.
-                    count[particles->cell_keys[iPart]] ++;
-                }
-            } // end iPart loop
-        } // end cells loop
-
 
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
-// #endif
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+#else
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+#endif
             {
                 
 #ifdef  __DETAILED_TIMERS
@@ -749,6 +734,25 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
             }//end task for Proj of ibin
         }// end ibin loop for Proj    
+
+#pragma omp taskwait
+
+
+        // Compute count arrays for the sorting
+        // For the moment this operation is made on all the particles of the patch to avoid data races
+        // #pragma omp task depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+        {
+        for( unsigned int scell = 0 ; scell < Ncells ; scell++ ) {
+            for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                if ( particles->cell_keys[iPart] != -1 ) {
+                    //First reduction of the count sort algorithm. Lost particles are not included.
+                    count[particles->cell_keys[iPart]] ++;
+                }
+            } // end iPart loop
+        } // end cells loop
+        } // end task to compute count array 
+
+
 
     } // end if moving particle
 
