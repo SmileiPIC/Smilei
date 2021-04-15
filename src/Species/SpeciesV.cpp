@@ -740,7 +740,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 
         // Compute count arrays for the sorting
         // For the moment this operation is made on all the particles of the patch to avoid data races
-        // #pragma omp task depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+        #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
         {
         for( unsigned int scell = 0 ; scell < Ncells ; scell++ ) {
             for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
