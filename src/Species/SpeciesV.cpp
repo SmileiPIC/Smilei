@@ -555,12 +555,12 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
         int nparts = particles->last_index[Ncells-1 ];
         smpi->dynamics_resize( buffer_id, nDim_field, nparts, params.geometry=="AMcylindrical" );
 
-        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) 
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
-// #endif
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ){ 
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+#endif
             {
 
             if ( params.geometry != "AMcylindrical" ){
@@ -594,7 +594,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[0*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-//             } //end task Interpolator
+            } //end task Interpolator
 
         } // end ibin loop for Interpolator
 
@@ -603,12 +603,12 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
     if( time_dual>time_frozen_ ){ // if moving particle push
     
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-// // #ifdef  __DETAILED_TIMERS
-// //             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
-// // #else
-// //             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
-// // #endif
-//             {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
+#endif
+            {
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
             timer = MPI_Wtime();
@@ -623,19 +623,19 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-//             } // end task for Push on ibin
+            } // end task for Push on ibin
         } // end ibin loop for Push
     } // end if moving particle, radiate and push
-  
+
     if( time_dual>time_frozen_){ // do not apply particles BC nor projection on frozen particles     
 
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-// // #ifdef  __DETAILED_TIMERS
-// //             #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
-// // #else
-// //             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
-// // #endif
-//             {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#endif
+            {
             double ener_iPart( 0. );
 
 #ifdef  __DETAILED_TIMERS
@@ -675,9 +675,9 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-            // } // end task for particles BC on ibin
+            } // end task for particles BC on ibin
         } // end ibin loop for particles BC
-
+#pragma omp taskwait
 
         // Compute cell_keys and count arrays for the sorting
         // For the moment this operation is made on all the particles of the patch to avoid data races
