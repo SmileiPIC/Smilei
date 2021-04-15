@@ -735,12 +735,33 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             }//end task for Proj of ibin
         }// end ibin loop for Proj    
 
-#pragma omp taskwait
-
-
-        // Compute count arrays for the sorting
-        // For the moment this operation is made on all the particles of the patch to avoid data races
         #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+        {
+        // reduction of lost energy
+        for( unsigned int ibin=0 ; ibin<Nbins ; ibin++ ) {
+            nrj_bc_lost += nrj_lost_per_bin[ibin];
+        }
+        //     // reduction of radiated energy
+        //     if( Radiate || Multiphoton_Breit_Wheeler_process ) {
+        // #ifdef  __DETAILED_TIMERS
+        //                 timer = MPI_Wtime();
+        //                 ithread = omp_get_thread_num();
+        // #endif
+        // 
+        //         for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+        //             nrj_radiation += nrj_radiation_per_bin[ibin];
+        //         }
+        // #ifdef  __DETAILED_TIMERS
+        //         patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+        // #endif
+        //     } // end if Radiate
+        //     } 
+        } // end task for lost/radiated energy reduction    
+
+#pragma omp taskwait
+        //Compute count arrays for the sorting
+        //For the moment this operation is made on all the particles of the patch to avoid data races
+        //#pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
         {
         for( unsigned int scell = 0 ; scell < Ncells ; scell++ ) {
             for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
@@ -750,32 +771,10 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                 }
             } // end iPart loop
         } // end cells loop
-        } // end task to compute count array 
-
-
+        } // end task to compute count array     
 
     } // end if moving particle
 
-//     {
-//     // reduction of lost energy
-//     for( unsigned int ibin=0 ; ithd<Nbins ; ibin++ ) {
-//         nrj_bc_lost += nrj_lost_per_bin[ibin];
-//     }
-//     // reduction of radiated energy
-//     if( Radiate || Multiphoton_Breit_Wheeler_process ) {
-// #ifdef  __DETAILED_TIMERS
-//                 timer = MPI_Wtime();
-//                 ithread = omp_get_thread_num();
-// #endif
-// 
-//         for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-//             nrj_radiation += nrj_radiation_per_bin[ibin];
-//         }
-// #ifdef  __DETAILED_TIMERS
-//         patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
-// #endif
-//     } // end if Radiate
-//     } // end task for lost/radiated energy reduction    
 
     } // end taskgroup
 
