@@ -786,14 +786,14 @@ void Projector3D2OrderV::currentsAndDensityWrapperOnBuffers( double *b_Jx, doubl
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
-        if( !is_spectral ) {//cout<<"Entering"<<scell<<" "<<iold[0]<<" "<<istart<<" "<<iend<<" "<<bin_shift<<endl;
+        if( !is_spectral ) {
             currentsForTasks( b_Jx, b_Jy, b_Jz, bin_shift, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
         } else {
             ERROR( "TO DO with rho" );
         }
         
         // Otherwise, the projection may apply to the species-specific arrays
-    } else {//cout<<"Entering"<<scell<<" "<<iold[0]<<" "<<istart<<" "<<iend<<" "<<bin_shift<<endl;
+    } else {
         currentsAndDensityForTasks( b_Jx, b_Jy, b_Jz, b_rho, bin_shift, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
     }
 }
@@ -954,7 +954,7 @@ void Projector3D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
         
     } // END ivect
     
-    int iglobal0 = (ipom2-bin_shift)*nyz+jpom2*nprimz+kpom2; //cout<<"Inside"<<ipom2<<" "<<bin_shift<<" "<<jpom2<<" "<<kpom2<< " "<<nyz<< " " <<nprimz<< " "<<iglobal0<<endl;
+    int iglobal0 = (ipom2-bin_shift)*nyz+jpom2*nprimz+kpom2; 
     
     int iglobal  = iglobal0;
     for( unsigned int i=1 ; i<5 ; i++ ) {

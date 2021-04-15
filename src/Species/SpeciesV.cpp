@@ -70,7 +70,7 @@ SpeciesV::SpeciesV( Params &params, Patch *patch ) :
 
         if (ibin == 0){
             first_cell_of_bin[ibin]     = 0;
-            last_cell_of_bin[ibin]      = (clrw)*bin_ncells_transverse-1;
+            last_cell_of_bin[ibin]      = (clrw+1)*bin_ncells_transverse-1;
         } else {
             first_cell_of_bin[ibin]     = last_cell_of_bin[ibin-1]+1;
             last_cell_of_bin[ibin]      = first_cell_of_bin[ibin]+clrw*bin_ncells_transverse-1;
@@ -717,7 +717,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             // Do not project if a photon
             if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
                 if (params.geometry != "AMcylindrical"){
-                    for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {//cout<<"Dynamics"<<scell<<" "<<ibin<<" "<<first_cell_of_bin[ibin]<<" "<<last_cell_of_bin[ibin]<<" "<<ibin*clrw<<endl;
+                    for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
                         Proj->currentsAndDensityWrapperOnBuffers(
                             b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
                             ibin*clrw, *particles, smpi, 
