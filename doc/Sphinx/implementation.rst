@@ -497,8 +497,12 @@ The particle dynamics is the large step in the time loop that performs the parti
 * Charge and current projection
 
 This step is performed in the method ``vecPatches::dynamics``.
-We first loop on the patches and then the species of each patch ``ipatch``: ``(*this )( ipatch )->vecSpecies.size()``.
-For each species, the method ``Species::dynamics`` is called to perform the dynamic step of the respective particles.
+We first loop on the patches and then the species of
+each patch ``ipatch``: ``(*this )( ipatch )->vecSpecies.size()``.
+For each species, the method ``Species::dynamics`` is called to perform the
+dynamic step of the respective particles.
+The OpenMP parallelism is explicitely applied in ``vecPatches::dynamics`` on the patch loop as shown
+in the following pieces of code.
 
 .. code-block:: c++
 
