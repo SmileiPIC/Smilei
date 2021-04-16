@@ -50,18 +50,21 @@ class Scalar(Diagnostic):
 		self._values = []
 		times_values = {}
 		for path in self._results_path:
-			with open(path+'/scalars.txt') as f:
-				for line in f:
-					line = line.strip()
-					if line[0]!="#": break
-					prevline = line
-				scalars = prevline[1:].strip().split() # list of scalars
-				scalarindex = scalars.index(scalar) # index of the requested scalar
-				line = str(line.strip()).split()
-				times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
-				for line in f:
+			try:
+				with open(path+'/scalars.txt') as f:
+					for line in f:
+						line = line.strip()
+						if line[0]!="#": break
+						prevline = line
+					scalars = prevline[1:].strip().split() # list of scalars
+					scalarindex = scalars.index(scalar) # index of the requested scalar
 					line = str(line.strip()).split()
 					times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
+					for line in f:
+						line = str(line.strip()).split()
+						times_values[ int( self._np.round(float(line[0]) / float(self.timestep)) ) ] = float(line[scalarindex])
+			except:
+				continue
 		self._alltimesteps  = self._np.array(sorted(times_values.keys()))
 		self._values = self._np.array([times_values[k] for k in self._alltimesteps])
 		self._timesteps = self._np.copy(self._alltimesteps)
@@ -117,13 +120,13 @@ class Scalar(Diagnostic):
 	
 	# get all available scalars
 	def getScalars(self):
+		allScalars = None
 		for path in self._results_path:
 			try:
 				file = path+'/scalars.txt'
 				f = open(file, 'r')
 			except Exception as e:
-				self._error += ["Cannot open 'scalars.txt' in directory '"+path+"'"]
-				return []
+				continue
 			try:
 				# Find last commented line
 				prevline = ""
@@ -136,8 +139,13 @@ class Scalar(Diagnostic):
 			except Exception as e:
 				scalars = []
 			f.close()
-			try:    allScalars = self._np.intersect1d(allScalars, scalars)
-			except Exception as e: allScalars = scalars
+			try:
+				allScalars = self._np.intersect1d(allScalars, scalars)
+			except Exception as e:
+				allScalars = scalars
+		if allScalars is None:
+			self._error += ["Cannot open 'scalars.txt'"]
+			return []
 		return allScalars
 	
 	# get all available timesteps

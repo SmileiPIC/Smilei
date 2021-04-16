@@ -151,38 +151,41 @@ public:
     };
     
     //! check if there has been a python error
-    static void checkPyError( bool exitOnError=false, bool print=true )
+    static bool checkPyError( bool exitOnError=false, bool print=true )
     {
         if( PyErr_Occurred() ) {
-            PyObject *type, *value, *traceback;
-            PyErr_Fetch( &type, &value, &traceback );
+            if( exitOnError || print ) {
+                PyObject *type, *value, *traceback;
+                PyErr_Fetch( &type, &value, &traceback );
+                
+                std::ostringstream message( "" );
+                if( type ) {
+                    std::string str( "" );
+                    PyObject *tn = PyObject_GetAttrString( type, "__name__" );
+                    pyconvert( tn, str );
+                    Py_XDECREF( tn );
+                    message << str;
+                }
+                if( value ) {
+                    message << ": " << repr( value );
+                }
+                Py_XDECREF( type );
+                Py_XDECREF( value );
+                Py_XDECREF( traceback );
+                if( exitOnError ) {
+                    ERROR( message.str() );
+                } else if( print ) {
+                    int rk(0);
+                    MPI_Comm_rank( MPI_COMM_WORLD, &rk );
+                    std::ostringstream t("");
+                    t << "  On rank "<< rk <<" [Python] " << message.str() << std::endl;
+                    std::cout << t.str();
+                }
+            }
             PyErr_Clear();
-            
-            std::string message( "" );
-            if( type ) {
-                std::string str( "" );
-                PyObject *tn = PyObject_GetAttrString( type, "__name__" );
-                pyconvert( tn, str );
-                Py_XDECREF( tn );
-                message += str;
-            }
-            if( value ) {
-                message += ": ";
-                message += repr( value );
-            }
-            Py_XDECREF( type );
-            Py_XDECREF( value );
-            Py_XDECREF( traceback );
-            if( exitOnError ) {
-                ERROR( message );
-            } else if( print ) {
-                int rk(0);
-                MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-                std::ostringstream t("");
-                t << "  On rank "<< rk <<" [Python] " << message << std::endl;
-                std::cout << t.str();
-            }
+            return true;
         }
+        return false;
     }
     
     //! run void python function

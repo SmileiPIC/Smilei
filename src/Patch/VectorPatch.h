@@ -25,8 +25,8 @@ class Timer;
 class SimWindow;
 class DomainDecomposition;
 
-//! Class Patch : sub MPI domain
-//!     Collection of patch = MPI domain
+//! Class vectorPatch
+//! This class corresponds to the MPI Patch Collection.
 
 class VectorPatch
 {
