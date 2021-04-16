@@ -1,8 +1,8 @@
-Developer Zone
-***************
+Implementation
+******************************************
 
 Introduction
-==================
+===============================================
 
 Smilei is a C++ code that uses relatively simple C++ features for modularity
 and conveniency for non-advanced C++ users.
@@ -141,7 +141,7 @@ The distribution can be ensured in an equal cartesian way or using a load balanc
 
 Inside MPI patch collection, OpenMP loop directives are used to distribute the computation of the patches among the available threads.
 Since each patch have a different number of particles, this approach enables a dynamic scheduling depending on the specified OpenMP scheduler.
-As shown in :numref:`general_implementation`, a synchronization step is required to exchange grid ghost cells and particles traveling from patch to patch.
+As shown in :numref:`smilei_main_loop`, a synchronization step is required to exchange grid ghost cells and particles traveling from patch to patch.
 
 The patch granularity is used for:
 
@@ -364,7 +364,7 @@ The time loop is explicitely written step by step in the main
 file ``Smilei.cpp`` thought calls to different ``vecPatches`` methods.
 
 * **Patch reconfiguration**: if adaptive vectorization is activated, then the patch may be
-reconfigured for scalar or vectorized mode.
+  reconfigured for scalar or vectorized mode.
 
 .. highlight:: c++
    :linenothreshold: 5
@@ -486,19 +486,100 @@ reconfigured for scalar or vectorized mode.
 Pusher
 ---------------------------------
 
-To be done
+The pusher is the operator that moves the macro-particles using the equations of movement.
+The operator implementation is
+located in the directory  `src/Pusher <https://github.com/SmileiPIC/Smilei/tree/master/src/Pusher>`_.
+The base class is ``Pusher`` implemented in ``Pusher.h`` and ``Pusher.cpp``.
+From this base class can be derived several versions (marked as ``final``):
 
-Radiation operator
----------------------------------
+* ``PusherBoris``: pusher of Boris
+* ``PusherBorisNR``: non-relativistic Boris pusher
+* ``PusherBorisV``: vectorized Boris pusher
+* ``PusherVay``: pusher of J. L. Vay
+* ``PusherHigueraCary``: pusher of Higuera and Cary
+* ``PusherPhoton``: pusher of photons (ballistic movement)
+
+A factory called ``PusherFactory`` is used to select the requested pusher for each patch and each species.
+
+.. _radiationReactionImplementation:
+
+Nonlinear Inverse Compton radiation operator
+---------------------------------------------------------------------------------
+
+The physical details of this module are given in the page :ref:`radiationReactionPage`.
+The implementation for this operator and the related files are located in the directory
+`src/Radiation <https://github.com/SmileiPIC/Smilei/tree/master/src/Radiation>`_.
+The base class used to derive the different versions of this operator is called ``Radiation``
+and is implemented in the files ``Radiation.h`` and ``Radiation.cpp``.
+
+A factory called ``RadiationFactory`` is used to select the requested radiation model for each patch and species.
+
+The different radiation model implementation details are given in the following sections.
+
+.. _LandauLifshitzImplementation:
 
 Landau-Lifshift
 ^^^^^^^^^^^^^^^^^^^
 
+The derived class that correspponds to the Landau-Lifshift model is called ``RadiationLandauLifshitz`` and
+is implemented in the corresponding files.
+The implementation is relatively simple and is similar to what is done in the ``Pusher``
+since this radiation model is an extension of the classical particle push.
+
+.. literalinclude:: ../../src/Radiation/RadiationLandauLifshitz.cpp
+    :lines: 108-147
+    :linenos:
+
+It is composed of a vectorized loop on a group of particles using the ``istart`` and ``iend`` indexes
+given as argument parameters to perform the following steps:
+ 
+* Commputation of the particle Lorentz factor
+* Commputation of the particle quantum parameter (``particle_chi``)
+* Update of the momentum: we use the function ``getClassicalRadiatedEnergy`` implemented in the class ``RadiationTools`` to
+  get the classical radiated energy for the given particle.
+* Computation of the radiated energy: this energy is first stored
+  per particle in the local array ``rad_norm_energy``
+
+The second loop performs a vectorized reduction of the radiated energy for the current thread.
+
+.. literalinclude:: ../../src/Radiation/RadiationLandauLifshitz.cpp
+    :lines: 151-157
+    :linenos:
+
+The third vectorized loop compute again the quantum parameters based on the new momentum
+and this time the result is stored in the dedicated array ``chi[ipart]`` to be used in
+the following part of the time step.
+
+.. literalinclude:: ../../src/Radiation/RadiationLandauLifshitz.cpp
+    :lines: 162-178
+    :linenos:
+
 Corrected Landau-Lifshift
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The derived class that correspponds to the corrected Landau-Lifshift model is called ``RadiationCorrLandauLifshitz`` and
+is implemented in the corresponding files.
 
 Niel
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The derived class that correspponds to the Nield model is called ``RadiationNiel`` and
+is implemented in the corresponding files.
+
 Monte-Carlo
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The derived class that correspponds to the Monte-Carlo model is called ``RadiationMonteCarlo`` and
+is implemented in the corresponding files.
+
+Radiation Tables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The class ``RadiationTables`` is used to store and manage the different tabulated functions
+used by some of the radiation models.
+
+Radiation Tools
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The class ``RadiationTools`` contains some function tools for the radiation.
+Some methods provide function fit from tabulated values obtained numerically.
