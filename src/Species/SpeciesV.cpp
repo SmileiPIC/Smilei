@@ -605,10 +605,15 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
     if( time_dual>time_frozen_ ){ // if moving particle push
     
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+// #ifdef  __DETAILED_TIMERS
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+// #else
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
+// #endif
 #ifdef  __DETAILED_TIMERS
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
 #else
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin]) depend(out:bin_has_pushed[ibin])
 #endif
             {
 #ifdef  __DETAILED_TIMERS
