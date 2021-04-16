@@ -615,12 +615,12 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             ithread = omp_get_thread_num();
             timer = MPI_Wtime();
 #endif
-            for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ){
-                // Push the particles and the photons
-                ( *Push )( *particles, smpi, particles->first_index[scell],
-                           particles->last_index[scell],
-                           buffer_id, particles->first_index[0] );
-            } // end cell loop for Push
+            
+            // Push the particles and the photons
+            ( *Push )( *particles, smpi, particles->first_index[first_cell_of_bin[ibin]],
+                        particles->last_index[last_cell_of_bin[ibin]],
+                        buffer_id, particles->first_index[0] );
+            
             
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
