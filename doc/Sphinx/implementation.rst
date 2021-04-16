@@ -535,7 +535,7 @@ given as argument parameters to perform the following steps:
  
 * Commputation of the particle Lorentz factor
 * Commputation of the particle quantum parameter (``particle_chi``)
-* Update of the momentum: we use the function ``getClassicalRadiatedEnergy`` implemented in the class ``RadiationTools`` to
+* Update of the momentum: we use the function ``getClassicalRadiatedEnergy`` implemented in the class ``RadiationTables`` to
   get the classical radiated energy for the given particle.
 * Computation of the radiated energy: this energy is first stored
   per particle in the local array ``rad_norm_energy``
