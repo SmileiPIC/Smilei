@@ -103,6 +103,8 @@ public:
                                  SmileiMPI *smpi,
                                  std::vector<Diagnostic *> &localDiags )override;
 
+    int Ncells;
+
 private:
 
     //! Number of packs of particles that divides the total number of particles
@@ -113,6 +115,7 @@ private:
     // used for tasks 
     std::vector<int> first_cell_of_bin;
     std::vector<int> last_cell_of_bin;
+    
 
     
 

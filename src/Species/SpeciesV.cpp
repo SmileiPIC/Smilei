@@ -76,6 +76,14 @@ SpeciesV::SpeciesV( Params &params, Patch *patch ) :
             last_cell_of_bin[ibin]      = first_cell_of_bin[ibin]+clrw*bin_ncells_transverse-1;
         }
       
+    }
+
+    Ncells = ( f_dim0-2*oversize[0] );
+    if( nDim_field >= 2 ) {
+        Ncells *= ( f_dim1-2*oversize[1] );
+    }
+    if( nDim_field == 3 ) {
+        Ncells *= ( f_dim2-2*oversize[2] );
     }            
 
 #endif
@@ -531,13 +539,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
         }
     }
 
-    int Ncells = ( f_dim0-2*oversize[0] );
-    if( nDim_field >= 2 ) {
-        Ncells *= ( f_dim1-2*oversize[1] );
-    }
-    if( nDim_field == 3 ) {
-        Ncells *= ( f_dim2-2*oversize[2] );
-    }
+    
 
     #pragma omp taskgroup
     {
@@ -757,21 +759,6 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
         //     } // end if Radiate
         //     } 
         } // end task for lost/radiated energy reduction    
-
-#pragma omp taskwait
-        //Compute count arrays for the sorting
-        //For the moment this operation is made on all the particles of the patch to avoid data races
-        //#pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
-        {
-        for( unsigned int scell = 0 ; scell < Ncells ; scell++ ) {
-            for( unsigned int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                if ( particles->cell_keys[iPart] != -1 ) {
-                    //First reduction of the count sort algorithm. Lost particles are not included.
-                    count[particles->cell_keys[iPart]] ++;
-                }
-            } // end iPart loop
-        } // end cells loop
-        } // end task to compute count array     
 
     } // end if moving particle
 
