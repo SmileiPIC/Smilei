@@ -370,25 +370,25 @@ file ``Smilei.cpp`` thought calls to different ``vecPatches`` methods.
    :linenothreshold: 5
 
 .. code-block:: c++
-    
+
     vecPatches.reconfiguration( params, timers, itime );
 
 * **Collision**: particle collisions are performed before the particle dynamics part
 
 .. code-block:: c++
-    
+
     vecPatches.applyCollisions( params, itime, timers );
 
 * **Relativistic poisson solver**: ...
 
 .. code-block:: c++
-    
+
     vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
 
 * **Charge**: reset global charge and currents densities to zero and computes rho old before moving particles
 
 .. code-block:: c++
-    
+
     vecPatches.computeCharge(true);
 
 * **Particle dynamics**: this step processes the full particle dynamics
@@ -396,7 +396,7 @@ file ``Smilei.cpp`` thought calls to different ``vecPatches`` methods.
   boundary condition pre-processing and projection
 
 .. code-block:: c++
-    
+
     vecPatches.dynamics( params, &smpi, simWindow, radiation_tables_,
                                      MultiphotonBreitWheelerTables,
                                      time_dual, timers, itime );
@@ -409,38 +409,38 @@ file ``Smilei.cpp`` thought calls to different ``vecPatches`` methods.
 
 * **Sum of currents and densities**: current et charge reduction from different species
   and perform the synchronization step with communication
-    
+
 .. code-block:: c++
-    
+
     vecPatches.sumDensities( params, time_dual, timers, itime, simWindow, &smpi );
 
 * **Maganement of the antenna**: apply currents from antennas
-        
+
 .. code-block:: c++
 
     vecPatches.applyAntennas( time_dual );
 
 * **Maxwell solvers**: solve Maxwell
-            
+
 .. code-block:: c++
-    
+
     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
 
 * **Particle communication**: finalize particle exchanges and sort particles
-                
+
 .. code-block:: c++
 
     vecPatches.finalizeAndSortParticles( params, &smpi, simWindow,
                                                  time_dual, timers, itime );
 
 * **Particle merging**: merging process for particles (still experimental)
-         
+
 .. code-block:: c++
 
     vecPatches.mergeParticles(params, &smpi, time_dual,timers, itime );
 
 * **Particle injection**: injection of particles from the boundaries
-             
+
 .. code-block:: c++
 
     vecPatches.injectParticlesFromBoundaries(params, timers, itime );
@@ -478,13 +478,55 @@ file ``Smilei.cpp`` thought calls to different ``vecPatches`` methods.
     timers.movWindow.update();
 
 * **Checkpointing**: manage the checkoints
-    
+
 .. code-block:: c++
 
     checkpoint.dump( vecPatches, region, itime, &smpi, simWindow, params );
 
+Particle Dynamics
+---------------------------------------
+
+The particle dynamics is the large step in the time loop that performs the particle movement computation:
+
+* Field interpolation
+* Radiation loss
+* Ionization
+* Pair creation
+* Push
+* Detection of leaving particles at patch boundaries
+* Charge and current projection
+
+This step is performed in the method ``vecPatches::dynamics``.
+We first loop on the patches and then the species of each patch ``ipatch``: ``(*this )( ipatch )->vecSpecies.size()``.
+For each species, the method ``Species::dynamics`` is called to perform the dynamic step of the respective particles.
+
+.. code-block:: c++
+
+    #pragma omp for schedule(runtime)
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+
+        // ...
+
+        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+            Species *spec = species( ipatch, ispec );
+
+            // ....
+
+            spec->Species::dynamics( time_dual, ispec,
+                                     emfields( ipatch ),
+                                     params, diag_flag, partwalls( ipatch ),
+                                     ( *this )( ipatch ), smpi,
+                                     RadiationTables,
+                                     MultiphotonBreitWheelerTables,
+                                     localDiags );
+
+            // ...
+
+        }
+    }
+
 Pusher
----------------------------------
+---------------------------------------
 
 The pusher is the operator that moves the macro-particles using the equations of movement.
 The operator implementation is
@@ -532,7 +574,7 @@ since this radiation model is an extension of the classical particle push.
 
 It is composed of a vectorized loop on a group of particles using the ``istart`` and ``iend`` indexes
 given as argument parameters to perform the following steps:
- 
+
 * Commputation of the particle Lorentz factor
 * Commputation of the particle quantum parameter (``particle_chi``)
 * Update of the momentum: we use the function ``getClassicalRadiatedEnergy`` implemented in the class ``RadiationTables`` to
