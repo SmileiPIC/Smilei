@@ -280,7 +280,7 @@ Open a TrackParticles diagnostic
 
   * ``timesteps``, ``units``, ``export_dir``: same as before.
   * ``species``: the name of a tracked-particle species.
-     | If omitted, a list of available tracked-particle species is printed.
+    If omitted, a list of available tracked-particle species is printed.
   * ``select``: Instructions for selecting particles among those available.
     A detailed explanation is provided below
   * ``axes``: A list of axes for plotting the trajectories or obtaining particle data.
@@ -290,10 +290,20 @@ Open a TrackParticles diagnostic
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time.
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories.
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
-  * ``sort``: If ``False``, the particles are not sorted by ID. This can save significant
-    time, but prevents plotting, exporting to VTK, and the ``select`` argument. Only
-    ``getData()`` is available in this mode. Read :doc:`this <ids>` for more information
-    on particle IDs.
+  * ``sort``: may be either
+    
+    * ``False``: the particles are not sorted by ID. This can save significant
+      time, but prevents plotting, exporting to VTK, and the ``select`` argument. Only
+      ``getData`` and ``iterParticles`` are available in this mode.
+      Read :doc:`this <ids>` for more information on particle IDs.
+    * ``True``: the particles are sorted in a new file, unless this file already exists.
+      If it does, sorted particles are directly read from the sorted file.
+    * A string for selecting particles (same syntax as ``select``): only selected
+      particles are sorted in a new file. The file name must be defined
+      in the argument ``sorted_as``.
+    
+  * ``sorted_as``: a keyword that defines the new sorted file name (when ``sort`` is a
+    selection) or refers to a previously user-defined sorted file name (when ``sort`` is not given).
   * ``length``: The length of each plotted trajectory, in number of timesteps.
   * See also :ref:`otherkwargs`
 
@@ -444,11 +454,12 @@ to manipulate the plotting options:
 
 * ``figure``: The figure number that is passed to matplotlib.
 * ``vmin``, ``vmax``: data value limits.
-* ``vsym``: indicates that data is symmetric about zero. If set to a number,
-  data limits are set to ``[-vsym, vsym]``. If set to ``True``, limits autoscale
-  to the values present in the simulation, but remain symmetric. If ``vmin`` or
-  ``vmax`` are set, they are ignored.
-  Sets default colormap to ``smileiD``.
+* ``vsym``: makes data limits symmetric about 0 (``vmin`` and ``vmax`` are ignored),
+  and sets the colormap to ``smileiD``. 
+  
+  * If ``vsym = True``, autoscale symmetrically.
+  * If ``vsym`` is a number, limits are set to [-``vsym``, ``vsym``].
+  
 * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
 * ``xfactor``, ``yfactor``: factors to rescale axes.
 * ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left-

@@ -36,16 +36,16 @@ def HilbertCurveMatrix2D(m1, m2=None, oversize=0):
 			A[o:K2, (j*J+o):((j+1)*J+o)] = A[o:K2, o:K2] + (j*Npoints)
 	return A
 
-# Method to create a matrix containing the hindex of a 2D linXY curve
-def LinXYCurveMatrix2D(n, oversize=0):
+# Method to create a matrix containing the hindex of a 2D linYX curve
+def LinYXCurveMatrix2D(n, oversize=0):
 	import numpy as np
 	o = oversize
 	A = np.zeros((n[1]+2*o, n[0]+2*o), dtype="uint32")
 	A[o:-o, o:-o] = np.arange(n[0]*n[1]).reshape(n[1],n[0])
 	return A
 
-# Method to create a matrix containing the hindex of a 2D linYX curve
-def LinYXCurveMatrix2D(n, oversize=0):
+# Method to create a matrix containing the hindex of a 2D linXY curve
+def LinXYCurveMatrix2D(n, oversize=0):
 	import numpy as np
 	o = oversize
 	A = np.zeros((n[1]+2*o, n[0]+2*o), dtype="uint32")
@@ -81,9 +81,8 @@ class Performances(Diagnostic):
 			file = path+self._os.sep+'Performances.h5'
 			try:
 				f = self._h5py.File(file, 'r')
-			except:
-				self._error += ["Diagnostic not loaded: Could not open '"+file+"'"]
-				return
+			except Exception as e:
+				continue
 			self._h5items.update( dict(f) )
 			# Verify all simulations have all quantities
 			try:
@@ -95,9 +94,12 @@ class Performances(Diagnostic):
 				self._availableQuantities_double = quantities_double
 				if "patch_arrangement" in f.attrs:
 					self.patch_arrangement = f.attrs["patch_arrangement"].decode()
-			except:
+			except Exception as e:
 				self._error += ["Diagnostic not loaded: file '"+file+"' does not seem to contain correct data"]
 				return
+		if not self._h5items:
+			self._error += ["Diagnostic not loaded: Could not open any file Performances.h5"]
+			return
 		# Converted to ordered list
 		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[1:]))
 
@@ -162,7 +164,7 @@ class Performances(Diagnostic):
 				histogram_min    = float(histogram[1])
 				histogram_max    = float(histogram[2])
 				histogram_nsteps = int  (histogram[3])
-			except:
+			except Exception as e:
 				self._error += ["Diagnostic not loaded: argument `histogram` must be a list like ['quantity',min,max,nsteps]"]
 				return
 			self._mode = "hist"
@@ -209,7 +211,7 @@ class Performances(Diagnostic):
 		if timesteps is not None:
 			try:
 				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
-			except:
+			except Exception as e:
 				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
 				return
 
@@ -278,7 +280,7 @@ class Performances(Diagnostic):
 	# get all available timesteps
 	def getAvailableTimesteps(self):
 		try:    times = [float(a.name[1:]) for a in self._h5items]
-		except: times = []
+		except Exception as e: times = []
 		return self._np.double(times)
 
 	# get all available quantities

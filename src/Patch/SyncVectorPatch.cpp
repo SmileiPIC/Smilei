@@ -169,6 +169,7 @@ void SyncVectorPatch::sumEnvChi( Params &params, VectorPatch &vecPatches, Smilei
     SyncVectorPatch::sum<double,Field>( vecPatches.listEnv_Chi_, vecPatches, smpi, timers, itime );
 }
 
+//sumRhoJ for AM geometry
 void SyncVectorPatch::sumRhoJ( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi, Timers &timers, int itime )
 {
     SyncVectorPatch::sum<complex<double>,cField>( vecPatches.listJl_[imode], vecPatches, smpi, timers, itime );
@@ -176,6 +177,8 @@ void SyncVectorPatch::sumRhoJ( Params &params, VectorPatch &vecPatches, int imod
     SyncVectorPatch::sum<complex<double>,cField>( vecPatches.listJt_[imode], vecPatches, smpi, timers, itime );
     if( ( vecPatches.diag_flag ) || ( params.is_spectral ) ) {
         SyncVectorPatch::sum<complex<double>,cField>( vecPatches.listrho_AM_[imode], vecPatches, smpi, timers, itime );
+        if (params.is_spectral)
+            SyncVectorPatch::sum<complex<double>,cField>( vecPatches.listrho_old_AM_[imode], vecPatches, smpi, timers, itime );
     }
 }
 

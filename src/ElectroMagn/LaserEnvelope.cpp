@@ -33,13 +33,17 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
         try_numpy = true; // use numpy for quicker initialisation in 3D
     }
     
-    profile_ = new Profile( profile, params.nDim_field+1, "envelope", try_numpy );
+    profile_ = new Profile( profile, params.nDim_field+1, "envelope", params, try_numpy );
     // params.Laser_Envelope_model = true;
     
     ostringstream name( "" );
     name << "Laser Envelope " << endl;
     ostringstream info( "" );
     
+    // extract laser frequency
+    PyTools::extract( "omega", omega, "LaserEnvelope" );
+    info << "\t\tomega : " << omega << endl;
+
     // Read laser envelope parameters
     PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" );
 
@@ -67,7 +71,7 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
   
     // auxiliary quantities
     std::complex<double>     i1 = std::complex<double>( 0., 1 ); // imaginary unit
-    double k0 = 1.; // laser wavenumber
+    double k0 = omega; // normalized laser wavenumber
     i1_2k0_over_2dx = i1*2.*k0/2./cell_length[0];
     i1_2k0_over_2dl = i1_2k0_over_2dx;
     one_plus_ik0dt  = 1.+i1*k0*timestep;
@@ -78,7 +82,7 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     one_ov_2dx      = 1./2./cell_length[0];
 
     
-    delta = ( 1.-pow((timestep/cell_length[0]),2)) / 3. ;    
+    delta = ( 1.-pow((timestep/cell_length[0]),2)) / 3. ;
 
     info << "\t Laser Envelope parameters: "<< endl;
     // envelope solver
@@ -120,6 +124,7 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved ) :
     cell_length( envelope->cell_length ),
     timestep( envelope->timestep ),
+    omega(envelope->omega),
     polarization_phi(envelope->polarization_phi),
     ellipticity(envelope->ellipticity),
     ellipticity_factor(envelope->ellipticity_factor),
@@ -197,7 +202,7 @@ LaserEnvelope::~LaserEnvelope()
     }
     if( GradPhiy_m ) {
         delete GradPhiy_m;
-    }  
+    }
     if( GradPhiz_ ) {
         delete GradPhiz_;
     }
@@ -250,8 +255,3 @@ void LaserEnvelope::boundaryConditions( int itime, double time_dual, Patch *patc
     }
     
 } // end LaserEnvelope::boundaryConditions
-
-
-
-
-

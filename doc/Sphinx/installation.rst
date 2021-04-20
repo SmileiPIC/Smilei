@@ -211,8 +211,8 @@ There are several ways to load this module in python.
 
 ----
 
-Install the `smilei_tables` tool
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Install the ``smilei_tables`` tool
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Generation of the tables is handled by an external tools.
 A full documentation is available on :doc:`the dedicated page <tables>`.

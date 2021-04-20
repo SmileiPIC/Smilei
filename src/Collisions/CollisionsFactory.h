@@ -168,7 +168,7 @@ public:
         
         // D-D fusion
         PyObject * py_nuclear_reaction = PyTools::extract_py( "nuclear_reaction", "Collisions", n_collisions );
-        CollisionalNuclearReaction *NuclearReaction;
+        CollisionalNuclearReaction *NuclearReaction = NULL;
         // If fusion, verify parameters
         if( py_nuclear_reaction == Py_None ) {
             
@@ -275,7 +275,8 @@ public:
             MESSAGE( "!" << filename << "!");
             // Check if file exists
             if( ! file ) {
-                H5Write f( filename, true );
+                MPI_Comm comm = MPI_COMM_WORLD;
+                H5Write f( filename, &comm );
                 // write all parameters as HDF5 attributes
                 f.attr( "Version", std::string( __VERSION ) );
                 mystream.str( "" );

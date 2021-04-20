@@ -8,7 +8,7 @@ Open-source, user-friendly and designed for high performances on super-computers
 
 * [For last release](http://www.maisondelasimulation.fr/smilei)
 
-* [For current commit](https://smileipic.github.io/Smilei) [![Build Status](https://travis-ci.org/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.org/SmileiPIC/Smilei)
+* [For current commit](https://smileipic.github.io/Smilei) [![Build Status](https://travis-ci.com/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.com/SmileiPIC/Smilei)
 
 ## Feedback
 

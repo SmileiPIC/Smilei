@@ -28,7 +28,7 @@ public:
     Particles();
 
     //! Destructor for Particle
-    ~Particles();
+    virtual ~Particles();
 
     //! Create nParticles null particles of nDim size
     void initialize( unsigned int nParticles, unsigned int nDim, bool keep_position_old );
@@ -268,17 +268,14 @@ public:
     //! containing the particle quantum parameter
     std::vector<double> Chi;
 
+    //! Incremental optical depth for the Monte-Carlo process
+    std::vector<double> Tau;
+
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
 
     //! Id of the particle
     std::vector<uint64_t> Id;
-
-    // Discontinuous radiation losses
-
-    //! Incremental optical depth for
-    //! the Monte-Carlo process
-    std::vector<double> Tau;
 
     //! cell_keys of the particle
     std::vector<int> cell_keys;
@@ -438,7 +435,5 @@ public:
 private:
 
 };
-
-
 
 #endif

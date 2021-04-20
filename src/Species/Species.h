@@ -141,7 +141,7 @@ public:
 
     //! Vector containing all Particles of the considered Species
     Particles *particles;
-    //! Data structure through which passes particles which move fomr one patch to another
+    //! Data structure through which passes particles which move from one patch to another
     Particles *particles_to_move;
     Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
@@ -425,7 +425,7 @@ public:
 
 
     //! Method calculating the Particle charge on the grid (projection)
-    virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields );
+    virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old=false );
 
     //! Method used to select particles which will change of patches
     virtual void extractParticles();

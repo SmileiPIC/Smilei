@@ -42,9 +42,8 @@ class Field(Diagnostic):
 			file = path+self._os.sep+'Fields'+str(self.diagNumber)+'.h5'
 			try:
 				f = self._h5py.File(file, 'r')
-			except:
-				self._error += ["Diagnostic not loaded: Could not open '"+file+"'"]
-				return
+			except Exception as e:
+				continue
 			self._h5items.update( dict(f["data"]) )
 			# Select only the fields that are common to all simulations
 			values = f["data"].values()
@@ -54,6 +53,9 @@ class Field(Diagnostic):
 				self._fields = list(next(iter(values)).keys())
 			else:
 				self._fields = [f for f in next(iter(values)).keys() if f in self._fields]
+		if not self._h5items:
+			self._error += ["Diagnostic not loaded: Could not open any file Fields"+str(self.diagNumber)+".h5"]
+			return
 		# Remove "tmp" dataset
 		if "tmp" in self._h5items: del self._h5items["tmp"]
 		# Converted to ordered list
@@ -100,7 +102,7 @@ class Field(Diagnostic):
 					try:
 						wordmode, imode = f.split('_')
 						species_name = ""
-					except:
+					except Exception as e:
 						ff = f.split('_')
 						species_name = "_" + "_".join(ff[:-2])
 						wordmode = ff[-2]
@@ -111,7 +113,7 @@ class Field(Diagnostic):
 					if fname not in self._fields:
 						self._fields[fname] = []
 					self._fields[fname] += [int(imode)]
-				except:
+				except Exception as e:
 					print('WARNING: found unknown field '+f)
 					continue
 			if has_complex and not self._is_complex:
@@ -185,7 +187,7 @@ class Field(Diagnostic):
 			if theta is not None:
 				try:
 					self._theta = float(theta)
-				except:
+				except Exception as e:
 					self._error += ["Option `theta` must be a number"]
 					return
 				self._getDataAtTime = self._theta_getDataAtTime
@@ -193,7 +195,7 @@ class Field(Diagnostic):
 				try:
 					build3d = self._np.array(build3d)
 					if build3d.shape != (3,3): raise
-				except:
+				except Exception as e:
 					self._error += ["Option `build3d` must be a list of three lists"]
 					return
 				self._getDataAtTime = self._build3d_getDataAtTime
@@ -204,10 +206,10 @@ class Field(Diagnostic):
 			else:
 				try:
 					self._modes = [int(modes)]
-				except:
+				except Exception as e:
 					try:
 						self._modes = [int(imode) for imode in modes]
-					except:
+					except Exception as e:
 						self._error += ["Option `modes` must be a number or an iterable on numbers"]
 						return
 				for imode in self._modes:
@@ -252,7 +254,7 @@ class Field(Diagnostic):
 		if timesteps is not None:
 			try:
 				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
-			except:
+			except Exception as e:
 				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
 				return
 		
@@ -402,7 +404,7 @@ class Field(Diagnostic):
 	# get all available timesteps
 	def getAvailableTimesteps(self):
 		try:    times = [float(a.name[6:]) for a in self._h5items]
-		except: times = []
+		except Exception as e: times = []
 		return self._np.double(times)
 	
 	# get the value of x_moved for a requested timestep
@@ -415,7 +417,9 @@ class Field(Diagnostic):
 		# get h5 iteration group
 		index = self._data[t]
 		h5item = self._h5items[index]
-		return h5item.attrs["x_moved"] if "x_moved" in h5item.attrs else 0.
+		# Change units
+		factor, _ = self.units._convert("L_r", None)
+		return h5item.attrs["x_moved"]*factor if "x_moved" in h5item.attrs else 0.
 	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
@@ -441,7 +445,7 @@ class Field(Diagnostic):
 			B = self._np.empty(self._finalShape)
 			try:
 				h5item[field].read_direct(B, source_sel=self._selection) # get array
-			except:
+			except Exception as e:
 				B = self._np.squeeze(B)
 				h5item[field].read_direct(B, source_sel=self._selection) # get array
 				B = self._np.reshape(B, self._finalShape)
@@ -485,7 +489,7 @@ class Field(Diagnostic):
 					h5item[f+str(imode)].read_direct(B_real, source_sel=self._complex_selection_real)
 					if imode > 0:
 						h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
-				except:
+				except Exception as e:
 					B_real = self._np.squeeze(B_real)
 					h5item[f+str(imode)].read_direct(B_real, source_sel=self._complex_selection_real)
 					B_real = self._np.reshape(B_real, self._finalShape)
@@ -535,7 +539,7 @@ class Field(Diagnostic):
 				B = self._np.empty(self._raw_shape)
 				try:
 					h5item[f+str(imode)].read_direct(B)
-				except:
+				except Exception as e:
 					B = self._np.squeeze(B)
 					h5item[f+str(imode)].read_direct(B)
 					B = self._np.reshape(B, self._raw_shape)

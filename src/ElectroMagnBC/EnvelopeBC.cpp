@@ -12,8 +12,8 @@
 using namespace std;
 
 // Constructor for EnvelopeBC
-EnvelopeBC::EnvelopeBC( Params &params, Patch *patch, unsigned int _min_max ) :
-    min_max( _min_max )
+EnvelopeBC::EnvelopeBC( Params &params, Patch *patch, unsigned int i_boundary ) :
+    i_boundary_( i_boundary )
 {
 
     // time step

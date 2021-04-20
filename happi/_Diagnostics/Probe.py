@@ -43,27 +43,29 @@ class Probe(Diagnostic):
 			file = path+self._os.sep+"Probes"+str(self.probeNumber)+".h5"
 			try:
 				self._h5probe.append( self._h5py.File(file, 'r') )
-			except:
-				self._error += ["Error opening probe #"+str(probeNumber)+" in path '"+path+"'"]
-				return
+			except Exception as e:
+				continue
 			# Verify that this file is compatible with the previous ones
 			try:
 				for key, val in verifications.items():
 					if self._h5probe[-1][key][()] != val:
 						self._error += ["Probe #"+str(probeNumber)+" in path '"+path+"' is incompatible with the other ones"]
 						return
-			except:
+			except Exception as e:
 				verifications = {"number":self._h5probe[-1]["number"][()]}
 				npoints = self._h5probe[-1]["number"].size
 				if self._h5probe[-1]["number"][()].prod() > 1:
 					npoints += 1
 				for i in range(npoints):
 					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)][()]
-
+		if not self._h5probe:
+			self._error += ["Error opening probe #"+str(probeNumber)]
+			return
+		
 		# Extract available fields
 		fields = self.getFields()
 		if len(fields) == 0:
-			self._error += ["No fields found for probe #"+probeNumber]
+			self._error += ["No fields found for probe #"+str(probeNumber)]
 			return
 		# If no field, print available fields
 		if field is None:
@@ -77,7 +79,7 @@ class Probe(Diagnostic):
 		for file in self._h5probe:
 			for key, val in file.items():
 				try   : self._dataForTime[int(key)] = val
-				except: break
+				except Exception as e: break
 		self._alltimesteps = self._np.double(sorted(self._dataForTime.keys()))
 		if self._alltimesteps.size == 0:
 			self._error += ["No timesteps found"]
@@ -128,7 +130,7 @@ class Probe(Diagnostic):
 		if timesteps is not None:
 			try:
 				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
-			except:
+			except Exception as e:
 				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
 				return
 
@@ -345,21 +347,24 @@ class Probe(Diagnostic):
 	def _getInfo(self, probeNumber):
 		out = {}
 		out["probeNumber"] = probeNumber
-		try:
-			file = self._results_path[0]+"/Probes"+str(probeNumber)+".h5"
-			probe = self._h5py.File(file, 'r')
-		except:
-			self._error += ["\tWarning: Cannot open file "+file]
+		for path in self._results_path:
+			try:
+				file = path+"/Probes"+str(probeNumber)+".h5"
+				probe = self._h5py.File(file, 'r')
+			except Exception as e:
+				continue
+			out["dimension"] = probe.attrs["dimension"]
+			out["shape"] = self._np.array(probe["number"], dtype=int)
+			out["fields"] = probe.attrs["fields"]
+			i = 0
+			while "p"+str(i) in probe.keys():
+				out["p"+str(i)] = self._np.array(probe["p"+str(i)])
+				i += 1
+			probe.close()
 			return out
-		out["dimension"] = probe.attrs["dimension"]
-		out["shape"] = self._np.array(probe["number"], dtype=int)
-		out["fields"] = probe.attrs["fields"]
-		i = 0
-		while "p"+str(i) in probe.keys():
-			out["p"+str(i)] = self._np.array(probe["p"+str(i)])
-			i += 1
-		probe.close()
+		self._error += ["\tWarning: Cannot open file Probes"+str(probeNumber)+".h5"]
 		return out
+	
 	def _getMyInfo(self):
 		return self._getInfo(self.probeNumber)
 	
@@ -367,8 +372,10 @@ class Probe(Diagnostic):
 	def getFields(self):
 		for file in self._h5probe:
 			fields_here = bytes.decode(file.attrs["fields"]).split(",")
-			try   : fields = [f for f in fields_here if f in fields]
-			except: fields = fields_here
+			try:
+				fields = [f for f in fields_here if f in fields]
+			except Exception as e:
+				fields = fields_here
 		try   : return fields
 		except: return []
 	
@@ -381,7 +388,9 @@ class Probe(Diagnostic):
 			return []
 		# get h5 iteration group
 		h5item = self._dataForTime[t]
-		return h5item.attrs["x_moved"] if "x_moved" in h5item.attrs else 0.
+		# Change units
+		factor, _ = self.units._convert("L_r", None)
+		return h5item.attrs["x_moved"]*factor if "x_moved" in h5item.attrs else 0.
 
 	# get all available timesteps
 	def getAvailableTimesteps(self):

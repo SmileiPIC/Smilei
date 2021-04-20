@@ -1,7 +1,7 @@
 #include "H5.h"
 
 //! Open HDF5 file + location
-H5::H5( std::string file, unsigned access, bool parallel, bool _raise )
+H5::H5( std::string file, unsigned access, MPI_Comm * comm, bool _raise )
 {
     
     // Analyse file string : separate file name and tree inside hdf5 file
@@ -32,8 +32,8 @@ H5::H5( std::string file, unsigned access, bool parallel, bool _raise )
     
     // Open or create
     hid_t fapl = H5Pcreate( H5P_FILE_ACCESS );
-    if( parallel ) {
-        H5Pset_fapl_mpio( fapl, MPI_COMM_WORLD, MPI_INFO_NULL );
+    if( comm ) {
+        H5Pset_fapl_mpio( fapl, *comm, MPI_INFO_NULL );
     }
     if( access == H5F_ACC_RDWR ) {
         fid_ = H5Fcreate( filepath.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl );
@@ -56,7 +56,7 @@ H5::H5( std::string file, unsigned access, bool parallel, bool _raise )
         }
         dxpl_ = H5Pcreate( H5P_DATASET_XFER );
         dcr_ = H5Pcreate( H5P_DATASET_CREATE );
-        if( parallel ) {
+        if( comm ) {
             H5Pset_dxpl_mpio( dxpl_, H5FD_MPIO_COLLECTIVE );
             H5Pset_alloc_time( dcr_, H5D_ALLOC_TIME_EARLY );
         }

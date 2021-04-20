@@ -47,7 +47,7 @@ class ParticleBinning(Diagnostic):
 				info = self._getInfo(d)
 				if info is False: raise
 				self._myinfo.update({ d:info })
-			except:
+			except Exception as e:
 				self._error += ["%s #%d invalid or non-existent" % (self._diagName,d)]
 				return
 		# Test the operation
@@ -55,7 +55,7 @@ class ParticleBinning(Diagnostic):
 		try:
 			exec(self._re.sub('#\d+','1.',self.operation), self._include, {"t":0})
 		except ZeroDivisionError: pass
-		except:
+		except Exception as e:
 			self._error += ["Cannot understand operation '"+self.operation+"'"]
 			return
 		# Verify that all requested diags all have the same shape
@@ -70,13 +70,12 @@ class ParticleBinning(Diagnostic):
 					% (self.operation, self._diagName, d, self._naxes[d], self._diags[0], self._naxes[self._diags[0]])
 				]
 				return
-			for a in self._axes[d]:
-				if self._axes[d] != self._axes[self._diags[0]]:
-					self._error += [
-						"In operation '%s', %s #%d and #%d must have the same shape."
-						% (self.operation, self._diagName, d, self._diags[0])
-					]
-					return
+			if self._axes[d] != self._axes[self._diags[0]]:
+				self._error += [
+					"In operation '%s', %s #%d and #%d must have the same shape."
+					% (self.operation, self._diagName, d, self._diags[0])
+				]
+				return
 		
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
@@ -108,7 +107,10 @@ class ParticleBinning(Diagnostic):
 			# Gather data from all timesteps, and the list of timesteps
 			items = {}
 			for path in self._results_path:
-				f = self._h5py.File(path+self._os.sep+self._diagName+str(d)+'.h5', 'r')
+				try:
+					f = self._h5py.File(path+self._os.sep+self._diagName+str(d)+'.h5', 'r')
+				except:
+					continue
 				items.update( dict(f) )
 			items = sorted(items.items())
 			self._h5items[d] = [it[1] for it in items]
@@ -122,7 +124,7 @@ class ParticleBinning(Diagnostic):
 			if timesteps is not None:
 				try:
 					self._timesteps[d] = self._selectTimesteps(timesteps, self._timesteps[d])
-				except:
+				except Exception as e:
 					self._error += ["Argument 'timesteps' must be one or two non-negative integers"]
 					return
 			# Verify that timesteps are the same for all diagnostics
@@ -170,7 +172,8 @@ class ParticleBinning(Diagnostic):
 			axis.update({ "centers" : centers })
 			
 			# Find some quantities depending on the axis type
-			overall_min = "-inf"; overall_max = "inf"
+			overall_min = "-inf"
+			overall_max = "inf"
 			axis_units = ""
 			if   axistype in ["x","y","z","moving_x"]:
 				axis_units = "L_r"
@@ -219,7 +222,7 @@ class ParticleBinning(Diagnostic):
 				try:
 					axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
 						= self._selectRange(sum[axistype], centers, axistype, axis_units, "sum", axis["edges_included"])
-				except:
+				except Exception as e:
 					return
 				
 				if axistype in ["x","y","z","moving_x"]:
@@ -236,7 +239,7 @@ class ParticleBinning(Diagnostic):
 					try:
 						axis["subsetInfo"], self._selection[iaxis], self._finalShape[iaxis] \
 							= self._selectSubset(subset[axistype], centers, axistype, axis_units, "subset")
-					except:
+					except Exception as e:
 						return
 					# If selection is not a slice (meaning only one element) then axis removed from plot
 					if type(self._selection[iaxis]) is not slice and axistype in ["x","y","z","moving_x"]:
@@ -351,8 +354,8 @@ class ParticleBinning(Diagnostic):
 			try:
 				file = path+self._os.sep+self._diagName+str(diagNumber)+'.h5'
 				f = self._h5py.File(file, 'r')
-			except:
-				return False
+			except Exception as e:
+				continue
 			# get attributes from file
 			axes = []
 			deposited_quantity = "weight_power" # necessary for radiation spectrum
@@ -362,7 +365,7 @@ class ParticleBinning(Diagnostic):
 				if name == "deposited_quantity":
 					try:
 						deposited_quantity = bytes.decode(value)
-					except:
+					except Exception as e:
 						deposited_quantity = "user_function"
 				elif name == "time_average":
 					time_average = int(value)
@@ -391,6 +394,8 @@ class ParticleBinning(Diagnostic):
 				if deposited_quantity!=info["deposited_quantity"] or axes!=info["axes"]:
 					print(self._diagName+" #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
+		if not info:
+			return False
 		return info
 	
 	# Prints the info obtained by the function "getInfo"
@@ -440,7 +445,7 @@ class ParticleBinning(Diagnostic):
 				try:
 					file = path+self._os.sep+self._diagName+str(diagNumber)+'.h5'
 					f = self._h5py.File(file, 'r')
-				except:
+				except Exception as e:
 					print("Cannot open file "+file)
 					return self._np.array([])
 				times.update( set(f.keys()) )
@@ -457,14 +462,14 @@ class ParticleBinning(Diagnostic):
 			# find the index of the array corresponding to the requested timestep
 			try:
 				index = self._indexOfTime[d][t]
-			except:
+			except Exception as e:
 				print("Timestep "+str(t)+" not found in this diagnostic")
 				return []
 			# get data
 			B = self._np.empty(self._finalShape)
 			try:
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
-			except:
+			except Exception as e:
 				B = self._np.squeeze(B)
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 				B = self._np.reshape(B, self._finalShape)

@@ -27,7 +27,8 @@ Timers::Timers( SmileiMPI *smpi ) :
     reconfiguration( "Reconfiguration" ),   // Patch reconfiguration
     envelope( "Envelope" ),
     susceptibility( "Sync_Susceptibility" ),
-    grids("Grids")
+    grids("Grids"),
+    densitiesCorrection("Dens Correction")
 #ifdef __DETAILED_TIMERS
     // Details of Dynamic
     , interpolator( "Interpolator" ),
@@ -68,6 +69,7 @@ Timers::Timers( SmileiMPI *smpi ) :
     timers.push_back( &envelope );
     timers.push_back( &susceptibility );
     timers.push_back( &grids );
+    timers.push_back( &densitiesCorrection );
     patch_timer_id_start = timers.size()-1;
 #ifdef __DETAILED_TIMERS
     timers.push_back( &interpolator );
@@ -178,18 +180,18 @@ void Timers::profile( SmileiMPI *smpi )
 std::vector<Timer *> Timers::consolidate( SmileiMPI *smpi, bool final_profile )
 {
     std::vector<Timer *> avg_timers;
-    int sz = smpi->getSize(), rk = smpi->getRank();
+    int sz = smpi->getSize();
     
     ofstream fout;
-    if( rk==0 && ! smpi->test_mode ) {
+    if( smpi->isMaster() && ! smpi->test_mode ) {
         fout.open( "profil.txt", ofstream::out | ofstream::app );
         fout << endl << endl << "--- Timestep = " << ( timers[1]->register_timers.size()-1 ) << " x Main.print_every = " <<  " ---" << endl;
-            fout << setw(14) << scientific << setprecision(3)
-                 << "Time \t " << "Min   "
-                 << "\t\t " << "Avg  "
-                 << "\t\t " << "Max   "
-                 << "\t\t " << "SD "
-                 << endl;
+        fout << setw(14) << scientific << setprecision(3)
+                << "Time \t " << "Min   "
+                << "\t\t " << "Avg  "
+                << "\t\t " << "Max   "
+                << "\t\t " << "SD "
+                << endl;
     }
     
     // timers[0] is the global PIC loop timer, naturally synchronized
@@ -202,57 +204,58 @@ std::vector<Timer *> Timers::consolidate( SmileiMPI *smpi, bool final_profile )
         }
         double *tmp = new double[sz*nrecords];
         
-        if( timers[itimer]->register_timers.size()>0 )
+        if( timers[itimer]->register_timers.size()>0 ) {
             MPI_Gather( &( timers[itimer]->register_timers[0] ), nrecords, MPI_DOUBLE,
                         &( tmp[0] ), nrecords, MPI_DOUBLE,
                         0, MPI_COMM_WORLD );
-        else
+        } else {
             MPI_Gather( &( timers[itimer]->time_acc_ ), 1, MPI_DOUBLE,
                         &( tmp[0] ), 1, MPI_DOUBLE,
                         0, MPI_COMM_WORLD );
-                        
-                        
-        // Mean on last records
-        int idx_records=nrecords-1; // = last record
+        }
         
-        double min( tmp[idx_records] ), max( tmp[idx_records] ), avg( tmp[idx_records] );
-        double sum( tmp[idx_records] ), sig( tmp[idx_records]*tmp[idx_records]/( double )sz );
-        if( rk==0 )
+        if( smpi->isMaster() ) {
+            // min/max/sum/avg/sig on last records
+            int idx_records=nrecords-1; // = last record
+            double min( tmp[idx_records] ), max( tmp[idx_records] );
+            double sum( tmp[idx_records] ), sig( tmp[idx_records]*tmp[idx_records]/( double )sz );
             for( int i=1 ; i<sz ; i++ ) {
-                if( tmp[idx_records+i*( nrecords )] < min ) {
-                    min = tmp[idx_records+i*( nrecords )];
+                double record = tmp[idx_records+i*( nrecords )];
+                if( record < min ) {
+                    min = record;
                 }
-                if( tmp[idx_records+i*( nrecords )] > max ) {
-                    max = tmp[idx_records+i*( nrecords )];
+                if( record > max ) {
+                    max = record;
                 }
-                sum += tmp[idx_records+i*( nrecords )];
-                sig += tmp[idx_records+i*( nrecords )]*tmp[idx_records+i*( nrecords )]/( double )sz;
+                sum += record;
+                sig += record*record/( double )sz;
             }
-        avg = sum / sz;
+            double avg = sum / sz;
+            
+            if( max>0. && ! smpi->test_mode ) {
+                fout.setf( ios::fixed,  ios::floatfield );
+                if (avg/timers[0]->time_acc_>0.001) {
+                    fout << setw(14) << scientific << setprecision(3)
+                        << timers[itimer]->name_ 
+                        << "\t " << min
+                        << "\t " << avg
+                        << "\t " << max
+                        << "\t " << sqrt( sig-sum*sum/(double)(sz)/(double)(sz) )
+                        << endl;
+                }
+            }
+            if( final_profile ) {
+                Timer *newTimer = new Timer( "" );
+                newTimer->time_acc_ = avg;
+                newTimer->name_ = timers[itimer]->name_;
+                avg_timers.push_back( newTimer );
+            }
+        }
         
         delete [] tmp;
-        
-        if( ( max>0. ) && ( rk==0 ) && ! smpi->test_mode ) {
-            fout.setf( ios::fixed,  ios::floatfield );
-            if (avg/timers[0]->time_acc_>0.001) {
-                fout << setw(14) << scientific << setprecision(3)
-                     << timers[itimer]->name_ 
-                     << "\t " << min
-                     << "\t " << avg
-                     << "\t " << max
-                     << "\t " << sqrt( sig-sum*sum/(double)(sz)/(double)(sz) )
-                     << endl;
-            }
-        }
-        if( ( rk==0 ) && ( final_profile ) ) {
-            Timer *newTimer = new Timer( "" );
-            newTimer->time_acc_ = avg;
-            newTimer->name_ = timers[itimer]->name_;
-            avg_timers.push_back( newTimer );
-        }
-        
     }
-    if( rk==0 && ! smpi->test_mode ) {
+    
+    if( smpi->isMaster() && ! smpi->test_mode ) {
         fout.close();
     }
     

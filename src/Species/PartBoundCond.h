@@ -75,27 +75,23 @@ public:
     //}
     
 private:
-    //! Min value of the x coordinate of particles on the current processor
-    //! Real value, oversize is not considered (same for all)
+    //! Min x coordinate of particles on the current processor (oversize not considered)
     double x_min;
-    //! Max value of the x coordinate of particles on the current processor
+    //! Max x coordinate of particles on the current processor (oversize not considered)
     double x_max;
-    //! Min value of the y coordinate of particles on the current processor
+    //! Min y coordinate of particles on the current processor (oversize not considered)
     double y_min;
-    double y_min2;
-    //! Max value of the y coordinate of particles on the current processor
+    //! Max y coordinate of particles on the current processor (oversize not considered)
     double y_max;
-    double y_max2;
-    //! Min value of the z coordinate of particles on the current processor
+    //! Min z coordinate of particles on the current processor (oversize not considered)
     double z_min;
-    //! Max value of the z coordinate of particles on the current processor
+    //! Max z coordinate of particles on the current processor (oversize not considered)
     double z_max;
     
     //! Space dimension of a particle
     int nDim_particle;
     //! Space dimension of field
     int nDim_field;
-//<<<<<<< HEAD
     bool isAM;
 
     double dt_;

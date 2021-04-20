@@ -331,7 +331,12 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
     ostringstream mystream( "" );
     mystream << "Probes" << n_probe << ".h5";
     filename = mystream.str();
-
+    
+    // Create points initially
+    if( ! params.restart ) {
+        createPoints( smpi, vecPatches, 0. );
+    }
+    
     // Display info
     MESSAGE( 1, "Probe diagnostic #"<<n_probe<<" created" );
 
@@ -375,7 +380,7 @@ DiagnosticProbes::~DiagnosticProbes()
 
 void DiagnosticProbes::openFile( Params &params, SmileiMPI *smpi )
 {
-    file_ = new H5Write( filename, true );
+    file_ = new H5Write( filename, &smpi->world() );
     
     file_->attr( "name", diag_name_ );
     file_->attr( "Version", string( __VERSION ) );
@@ -426,7 +431,7 @@ void DiagnosticProbes::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
 }
 
 
-void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, bool createFile, double x_moved )
+void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, double x_moved )
 {
     nPart_MPI = 0;
     offset_in_MPI .resize( vecPatches.size() );
@@ -614,7 +619,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
     {
         // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
         if( !positions_written || last_iteration_points_calculated <= vecPatches.lastIterationPatchesMoved ) {
-            createPoints( smpi, vecPatches, false, x_moved );
+            createPoints( smpi, vecPatches, x_moved );
             last_iteration_points_calculated = timestep;
 
             // Store the positions of all particles, unless done already

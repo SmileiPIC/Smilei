@@ -53,13 +53,13 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     std::vector<unsigned int> n_space(params.n_space);
     if (full_domain)
         n_space = params.n_space_global;
-    else if (params.uncoupled_grids)
+    else if (params.multiple_decomposition)
         n_space = params.n_space_region;
     
     nl=( int ) (0 + n_space[0]);
     nr=( int ) (0 + n_space[1]);
     
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         ovl=( int ) params.region_oversize[0];
         ovr=( int ) params.region_oversize[1];
     }
@@ -74,7 +74,7 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     for( size_t i=0 ; i<params.nDim_field ; i++ ) {
         // Standard scheme
         dimPrim[i+1] = n_space[i]+1;
-        if (params.uncoupled_grids)
+        if (params.multiple_decomposition)
             dimPrim[i+1] += 2*params.region_oversize[i];
         else
             dimPrim[i+1] += 2*params.oversize[i];
@@ -105,7 +105,7 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     picsar::init_params_picsar_AM( &nr, &nl, &nmodes, &nmodes, 
                                 &pxr_dr, &pxr_dl, &params.timestep,
                                 &ovr, &ovl,
-                                &params.norder[1], &params.norder[0],
+                                &params.spectral_solver_order[1], &params.spectral_solver_order[0],
                                 &( Et_pxr->cdata_[0] ),
                                 &( Er_pxr->cdata_[0] ),
                                 &( El_pxr->cdata_[0] ),
@@ -155,14 +155,18 @@ void PXR_SolverAM_GPSTD::densities_correction(ElectroMagn *fields)
 //0) Transform toward spectral space
 //1) Filter + divergence cleaning (current correction)
 //2) Back to intermediate space
+
+    //duplicate_field_into_pxr( fields );
+    _2Dvectors_to_3D(fields);
 #ifdef _PICSAR
     picsar::densities_correction();
 #else
     ERROR( "Smilei not linked with picsar, use make config=picsar" );
 #endif
-//3) Communicate J, rho, rho_old and set them to zero in boundary cells
+//3) Communicate J, rho, rho_old and set them to zero in boundary cells (in vectorPatch)
 
-
+    //duplicate_field_into_smilei( fields );
+    _3D_to_2Dvectors(fields);
 
 }
 

@@ -1,6 +1,6 @@
 
-#ifndef ELECTROMAGNBCAM_zero_H
-#define ELECTROMAGNBCAM_zero_H
+#ifndef ELECTROMAGNBCAM_ramp_H
+#define ELECTROMAGNBCAM_ramp_H
 
 
 #include <vector>
@@ -15,12 +15,12 @@ class Params;
 class ElectroMagn;
 class Field;
 
-class ElectroMagnBCAM_zero : public ElectroMagnBCAM
+class ElectroMagnBCAM_ramp : public ElectroMagnBCAM
 {
 public:
 
-    ElectroMagnBCAM_zero( Params &params, Patch *patch, unsigned int _min_max );
-    ~ElectroMagnBCAM_zero() {};
+    ElectroMagnBCAM_ramp( Params &params, Patch *patch, unsigned int i_boundary, unsigned int ncells );
+    ~ElectroMagnBCAM_ramp() {};
     
     virtual void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
     
@@ -28,6 +28,9 @@ private:
 
     //! Number of modes
     unsigned int Nmode;
+    
+    // number of damping cells
+    unsigned int number_of_cells_;
     
 };
 

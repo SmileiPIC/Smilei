@@ -18,6 +18,7 @@
 #endif
 
 #include <Python.h>
+#include <typeinfo>
 #include <vector>
 #include <sstream>
 #include <complex>
@@ -53,8 +54,30 @@ private:
     static bool pyconvert( PyObject *py_val, std::string &val );
     
     //! check error and display message
-    static double get_py_result( PyObject *pyresult );
-    static std::complex<double> get_py_result_complex( PyObject *pyresult );
+    template <typename T>
+    static T get_py_result( PyObject *pyresult )
+    {
+        checkPyError();
+        T cppresult = 0;
+        if( pyresult ) {
+            if( !py2scalar( pyresult, cppresult ) ) {
+                std::string type_name;
+                double a_double;
+                std::complex<double> a_complex;
+                if( typeid(T) == typeid(a_double) ) {
+                    type_name = "float";
+                } else if( typeid(T) == typeid(a_double) ) {
+                    type_name = "complex";
+                } else {
+                    type_name = "???";
+                }
+                ERROR( "A python function does not return "<< type_name <<" but " << pyresult->ob_type->tp_name );
+            }
+        } else {
+            ERROR( "A python function raised an error" );
+        }
+        return cppresult;
+    }
     
     // DECREF for vectors of python objects
     static void DECREF( std::vector<PyObject *> pyvec );
@@ -128,38 +151,41 @@ public:
     }
     
     //! check if there has been a python error
-    static void checkPyError( bool exitOnError=false, bool print=true )
+    static bool checkPyError( bool exitOnError=false, bool print=true )
     {
         if( PyErr_Occurred() ) {
-            PyObject *type, *value, *traceback;
-            PyErr_Fetch( &type, &value, &traceback );
+            if( exitOnError || print ) {
+                PyObject *type, *value, *traceback;
+                PyErr_Fetch( &type, &value, &traceback );
+                
+                std::ostringstream message( "" );
+                if( type ) {
+                    std::string str( "" );
+                    PyObject *tn = PyObject_GetAttrString( type, "__name__" );
+                    pyconvert( tn, str );
+                    Py_XDECREF( tn );
+                    message << str;
+                }
+                if( value ) {
+                    message << ": " << repr( value );
+                }
+                Py_XDECREF( type );
+                Py_XDECREF( value );
+                Py_XDECREF( traceback );
+                if( exitOnError ) {
+                    ERROR( message.str() );
+                } else if( print ) {
+                    int rk(0);
+                    MPI_Comm_rank( MPI_COMM_WORLD, &rk );
+                    std::ostringstream t("");
+                    t << "  On rank "<< rk <<" [Python] " << message.str() << std::endl;
+                    std::cout << t.str();
+                }
+            }
             PyErr_Clear();
-            
-            std::string message( "" );
-            if( type ) {
-                std::string str( "" );
-                PyObject *tn = PyObject_GetAttrString( type, "__name__" );
-                pyconvert( tn, str );
-                Py_XDECREF( tn );
-                message += str;
-            }
-            if( value ) {
-                message += ": ";
-                message += repr( value );
-            }
-            Py_XDECREF( type );
-            Py_XDECREF( value );
-            Py_XDECREF( traceback );
-            if( exitOnError ) {
-                ERROR( message );
-            } else if( print ) {
-                int rk(0);
-                MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-                std::ostringstream t("");
-                t << "  On rank "<< rk <<" [Python] " << message << std::endl;
-                std::cout << t.str();
-            }
+            return true;
         }
+        return false;
     }
     
     //! run void python function
@@ -189,7 +215,7 @@ public:
         PyObject *myFunction = PyObject_GetAttrString( py_obj, name.c_str() );
         if( myFunction ) {
             PyObject *pyresult = PyObject_CallFunction( myFunction, const_cast<char *>( "" ) );
-            retval = ( T ) get_py_result( pyresult );
+            retval = get_py_result<T>( pyresult );
             Py_DECREF( myFunction );
             Py_XDECREF( pyresult );
         }
@@ -201,7 +227,7 @@ public:
     static T runPyFunction( PyObject *pyFunction, double x1 )
     {
         PyObject *pyresult = PyObject_CallFunction( pyFunction, const_cast<char *>( "d" ), x1 );
-        T retval = ( T ) get_py_result( pyresult );
+        T retval = get_py_result<T>( pyresult );
         Py_XDECREF( pyresult );
         return retval;
     }
@@ -211,15 +237,7 @@ public:
     static T runPyFunction( PyObject *pyFunction, double x1, double x2 )
     {
         PyObject *pyresult = PyObject_CallFunction( pyFunction, const_cast<char *>( "dd" ), x1, x2 );
-        T retval = ( T ) get_py_result( pyresult );
-        Py_XDECREF( pyresult );
-        return retval;
-    }
-    
-    static std::complex<double> runPyFunction_complex( PyObject *pyFunction, double x1, double x2 )
-    {
-        PyObject *pyresult = PyObject_CallFunction( pyFunction, const_cast<char *>( "dd" ), x1, x2 );
-        std::complex<double> retval = get_py_result_complex( pyresult );
+        T retval = get_py_result<T>( pyresult );
         Py_XDECREF( pyresult );
         return retval;
     }
@@ -229,15 +247,7 @@ public:
     static T runPyFunction( PyObject *pyFunction, double x1, double x2, double x3 )
     {
         PyObject *pyresult = PyObject_CallFunction( pyFunction, const_cast<char *>( "ddd" ), x1, x2, x3 );
-        T retval = ( T ) get_py_result( pyresult );
-        Py_XDECREF( pyresult );
-        return retval;
-    }
-    
-    static std::complex<double> runPyFunction_complex( PyObject *pyFunction, double x1, double x2, double x3 )
-    {
-        PyObject *pyresult = PyObject_CallFunction( pyFunction, const_cast<char *>( "ddd" ), x1, x2, x3 );
-        std::complex<double> retval = get_py_result_complex( pyresult );
+        T retval = get_py_result<T>( pyresult );
         Py_XDECREF( pyresult );
         return retval;
     }
@@ -247,15 +257,7 @@ public:
     static T runPyFunction( PyObject *pyFunction, double x1, double x2, double x3, double x4 )
     {
         PyObject *pyresult = PyObject_CallFunction( pyFunction, const_cast<char *>( "dddd" ), x1, x2, x3, x4 );
-        T retval = ( T ) get_py_result( pyresult );
-        Py_XDECREF( pyresult );
-        return retval;
-    }
-    
-    static std::complex<double> runPyFunction_complex( PyObject *pyFunction, double x1, double x2, double x3, double x4 )
-    {
-        PyObject *pyresult = PyObject_CallFunction( pyFunction, const_cast<char *>( "dddd" ), x1, x2, x3, x4 );
-        std::complex<double> retval = get_py_result_complex( pyresult );
+        T retval = get_py_result<T>( pyresult );
         Py_XDECREF( pyresult );
         return retval;
     }
@@ -457,7 +459,7 @@ public:
         if( ! PyCallable_Check( obj ) ) {
             return -2;
         }
-        PyObject *inspect=PyImport_ImportModule( "inspect" );
+        PyObject *inspect = PyImport_ImportModule( "inspect" );
         checkPyError();
         PyObject *tuple = PyObject_CallMethod( inspect, const_cast<char *>( "getargspec" ), const_cast<char *>( "(O)" ), obj );
         PyObject *arglist = PyTuple_GetItem( tuple, 0 ); // list of function arguments

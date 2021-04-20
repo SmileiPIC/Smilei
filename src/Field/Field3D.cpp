@@ -73,7 +73,7 @@ Field3D::Field3D( string name_in, vector<unsigned int> dims ) : Field( dims, nam
 // ---------------------------------------------------------------------------------------------------------------------
 Field3D::~Field3D()
 {
-    for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
+    for( unsigned int iside=0 ; iside<sendFields_.size() ; iside++ ) {
         if ( sendFields_[iside] != NULL ) {
             delete sendFields_[iside];
             sendFields_[iside] = NULL;
@@ -274,7 +274,7 @@ void Field3D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
     
     int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.region_oversize[0] ) ;
     int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.region_oversize[1] ) ;
-    int kout = thisPatch->Pcoordinates[2]*params.n_space[2] - ( outPatch->getCellStartingGlobalIndex(2) + params.region_oversize[2] ) ;    
+    int kout = thisPatch->Pcoordinates[2]*params.n_space[2] - ( outPatch->getCellStartingGlobalIndex(2) + params.region_oversize[2] ) ;
     
     for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
         for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
@@ -331,7 +331,7 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
 {
     std::vector<unsigned int> n_space = dims_;
     n_space[iDim] = ghost_size;
-    if ( sendFields_[iDim*2+iNeighbor] == NULL ) {
+    if( sendFields_[iDim*2+iNeighbor] == NULL ) {
         sendFields_[iDim*2+iNeighbor] = new Field3D(n_space);
         recvFields_[iDim*2+iNeighbor] = new Field3D(n_space);
 #ifdef _GPU
@@ -342,7 +342,7 @@ void Field3D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
         #pragma acc enter data copyin( dsend[0:dSize], drecv[0:dSize] ) if (fieldName)
 #endif
     }
-    else if ( ghost_size != sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
+    else if( ghost_size != (int) sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
         delete sendFields_[iDim*2+iNeighbor];
         delete recvFields_[iDim*2+iNeighbor];
 #ifdef _GPU
@@ -384,15 +384,15 @@ void Field3D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
     #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang
 #endif
-    for( unsigned int i=0; i<NX; i++ ) {
+    for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
 #ifdef _GPU
 	#pragma acc loop worker
 #endif
-        for( unsigned int j=0; j<NY; j++ ) {
+        for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
 #ifdef _GPU
 	    #pragma acc loop vector
 #endif
-            for( unsigned int k=0; k<NZ; k++ ) {
+            for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {
                 sub[i*NY*NZ+j*NZ+k] = field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ];
             }
         }
@@ -427,15 +427,15 @@ void Field3D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
     #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang
 #endif
-    for( unsigned int i=0; i<NX; i++ ) {
+    for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
 #ifdef _GPU
 	#pragma acc loop worker
 #endif
-        for( unsigned int j=0; j<NY; j++ ) {
+        for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
 #ifdef _GPU
 	    #pragma acc loop vector
 #endif
-            for( unsigned int k=0; k<NZ; k++ ) {
+            for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {
                 field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ] = sub[i*NY*NZ+j*NZ+k];
             }
         }
@@ -470,15 +470,15 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang
 #endif
-    for( unsigned int i=0; i<NX; i++ ) {
+    for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
 #ifdef _GPU
 	#pragma acc loop worker
 #endif
-        for( unsigned int j=0; j<NY; j++ ) {
+        for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
 #ifdef _GPU
 	    #pragma acc loop vector
 #endif
-            for( unsigned int k=0; k<NZ; k++ ) {
+            for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {
                 sub[i*NY*NZ+j*NZ+k] = field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ];
             }
         }
@@ -513,15 +513,15 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang
 #endif
-    for( unsigned int i=0; i<NX; i++ ) {
+    for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
 #ifdef _GPU
 	#pragma acc loop worker
 #endif
-        for( unsigned int j=0; j<NY; j++ ) {
+        for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
 #ifdef _GPU
 	    #pragma acc loop vector
 #endif
-            for( unsigned int k=0; k<NZ; k++ ) {
+            for( unsigned int k=0; k<(unsigned int)NZ; k++ ) {
                 field[ (ix+i)*dimY*dimZ+(iy+j)*dimZ+(iz+k) ] += sub[i*NY*NZ+j*NZ+k];
             }
         }

@@ -221,14 +221,14 @@ Laser polarization in the envelope model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In :program:`Smilei`, the envelope model is implemented to take into account either linear or circular polarization 
-(`ellipticity = 0` and `ellipticity = 1` in the input namelist respectively). The default polarization is linear along the `y` direction.
-The envelope of a laser pulse propagating in the positive `x` direction can be written as 
+(``ellipticity = 0`` and ``ellipticity = 1`` in the input namelist respectively). The default polarization is linear along the `y` direction.
+The envelope of a laser pulse propagating in the positive ``x`` direction can be written as 
 
 .. math::
 
   \mathbf{\tilde{A}} (\mathbf{x},t)= \tilde{A}(\mathbf{x},t) \left[ \eta\thinspace\hat{y} + i(1-\eta^2)^{1/2}\hat{z}   \right] ,
 
-where :math:`\eta=1` or :math:`\eta=0` for linear polarization along `y` or `z`, and :math:`\eta\pm1/\sqrt{2}` for circular polarization.
+where :math:`\eta=1` or :math:`\eta=0` for linear polarization along ``y`` or ``z``, and :math:`\eta\pm1/\sqrt{2}` for circular polarization.
 Although Eq. :eq:`envelope_equation` is a vector equation nonlinear, these two polarizations allow to solve only one scalar equation
 at each timestep, because once the susceptibility at a given timestep is known, the envelope equation can be considered linear.
 Thus, after calculating the susceptibility we can solve the equation:
@@ -292,7 +292,7 @@ a partial derivative along the direction perpendicular to the laser propagation 
 
   \tilde{E_x} = -\partial_{\perp}\tilde{A}(\mathbf{x},t).
 
-In the diagnostics, the absolute value of the fields :math:`\tilde{E}`, :math:`\tilde{E_x}` are available, under the names `Env_E_abs` and `Env_Ex_abs`.
+In the diagnostics, the absolute value of the fields :math:`\tilde{E}`, :math:`\tilde{E_x}` are available, under the names ``Env_E_abs`` and ``Env_Ex_abs``.
 
 
  

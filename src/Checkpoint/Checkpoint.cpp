@@ -24,7 +24,6 @@
 #include "ElectroMagnBC3D_SM.h"
 #include "Laser.h"
 #include "Species.h"
-#include "PatchesFactory.h"
 #include "DiagnosticScreen.h"
 #include "DiagnosticTrack.h"
 #include "LaserEnvelope.h"
@@ -97,7 +96,7 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             restart_file = "";
             for( unsigned int num_dump=0; num_dump<restart_files.size(); num_dump++ ) {
                 string dump_name = restart_files[num_dump];
-                H5Read f( dump_name, false, false );
+                H5Read f( dump_name, NULL, false );
                 if( f.valid() ) {
                     unsigned int dump_step = 0;
                     f.attr( "dump_step", dump_step );
@@ -122,11 +121,11 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
                 MPI_Sendrecv(
                     &dump_number, 1, MPI_UNSIGNED, (smpi->getRank()+1) % smpi->getSize(), smpi->getRank(),
                     &prev_number, 1, MPI_UNSIGNED, (smpi->getRank()+smpi->getSize()-1) % smpi->getSize(), (smpi->getRank()+smpi->getSize()-1)%smpi->getSize(),
-                    smpi->SMILEI_COMM_WORLD, &status
+                    smpi->world(), &status
                 );
                 int problem = (prev_number != dump_number);
                 int any_problem;
-                MPI_Allreduce( &problem, &any_problem, 1, MPI_INT, MPI_LOR, smpi->SMILEI_COMM_WORLD );
+                MPI_Allreduce( &problem, &any_problem, 1, MPI_INT, MPI_LOR, smpi->world() );
                 if( any_problem ) {
                     if( problem ) {
                         ostringstream t("");
@@ -190,14 +189,14 @@ void Checkpoint::dump( VectorPatch &vecPatches, Region &region, unsigned int iti
                 MESSAGE( "Reached time limit : " << elapsed_time << " minutes. Dump timestep : " << time_dump_step );
                 // master does a non-blocking send
                 for( unsigned int dest=0; dest < ( unsigned int ) smpi->getSize(); dest++ ) {
-                    MPI_Isend( &time_dump_step, 1, MPI_UNSIGNED, dest, tagUB, smpi->SMILEI_COMM_WORLD, &dump_request[dest] );
+                    MPI_Isend( &time_dump_step, 1, MPI_UNSIGNED, dest, tagUB, smpi->world(), &dump_request[dest] );
                 }
             }
         } else { // non master nodes receive the time_dump_step (non-blocking)
             int todump=0;
             MPI_Iprobe( 0, tagUB, MPI_COMM_WORLD, &todump, &dump_status_prob );
             if( todump ) {
-                MPI_Recv( &time_dump_step, 1, MPI_UNSIGNED, 0, tagUB, smpi->SMILEI_COMM_WORLD, &dump_status_recv );
+                MPI_Recv( &time_dump_step, 1, MPI_UNSIGNED, 0, tagUB, smpi->world(), &dump_status_recv );
             }
         }
         smpi->barrier();
@@ -298,7 +297,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
         
     }
 
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         // Open a group
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
@@ -350,8 +349,9 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
             dump_cFieldsPerProc( g, emAM->Br_m[imode] );
             dump_cFieldsPerProc( g, emAM->Bt_m[imode] );
             
-            if(params.is_pxr == true)
+            if( params.is_pxr ) {
                 dump_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
+            }
             
         }
     }
@@ -413,23 +413,23 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
                 H5Write b = g.group( groupName );
-                b.vect( "Bx_val", embc->Bx_val );
-                b.vect( "By_val", embc->By_val );
-                b.vect( "Bz_val", embc->Bz_val );
+                b.vect( "Bx_val", embc->B_val[0] );
+                b.vect( "By_val", embc->B_val[1] );
+                b.vect( "Bz_val", embc->B_val[2] );
             } else if( dynamic_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName=Tools::merge( "EM_boundary-species-", name.str() );
                 H5Write b = g.group( groupName );
-                if( embc->Bx_val ) {
-                    dumpFieldsPerProc( b, embc->Bx_val );
+                if( embc->B_val[0] ) {
+                    dumpFieldsPerProc( b, embc->B_val[0] );
                 }
-                if( embc->By_val ) {
-                    dumpFieldsPerProc( b, embc->By_val );
+                if( embc->B_val[1] ) {
+                    dumpFieldsPerProc( b, embc->B_val[1] );
                 }
-                if( embc->Bz_val ) {
-                    dumpFieldsPerProc( b, embc->Bz_val );
+                if( embc->B_val[2] ) {
+                    dumpFieldsPerProc( b, embc->B_val[2] );
                 }
             }
         }
@@ -602,7 +602,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
         
     }
 
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
         string patchName = Tools::merge( "region-", patch_name.str() );
@@ -636,7 +636,7 @@ void Checkpoint::readRegionDistribution( Region &region )
     hsize_t nobj;
     H5Gget_num_objs(grp, &nobj);
     char memb_name[1024];
-    for (int i = 0; i < nobj; i++) {
+    for (int i = 0; i < (int)(nobj); i++) {
         H5Gget_objname_by_idx(grp, (hsize_t)i, memb_name, (size_t)1024 );
         string test( memb_name );
         if ( test.find("region") != std::string::npos ) {
@@ -680,8 +680,9 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
             restart_cFieldsPerProc( g, emAM->Br_m[imode] );
             restart_cFieldsPerProc( g, emAM->Bt_m[imode] );
             
-            if(params.is_pxr == true)
+            if( params.is_pxr ) {
                 restart_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
+            }
             
         }
     }
@@ -755,23 +756,23 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName = Tools::merge( "EM_boundary-species-", name.str() );
                 H5Read b = g.group( groupName );
-                b.vect( "Bx_val", embc->Bx_val );
-                b.vect( "By_val", embc->By_val );
-                b.vect( "Bz_val", embc->Bz_val );
+                b.vect( "Bx_val", embc->B_val[0] );
+                b.vect( "By_val", embc->B_val[1] );
+                b.vect( "Bz_val", embc->B_val[2] );
             } else if( dynamic_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 ElectroMagnBC3D_SM *embc = static_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] );
                 ostringstream name( "" );
                 name << setfill( '0' ) << setw( 2 ) << bcId;
                 string groupName = Tools::merge( "EM_boundary-species-", name.str() );
                 H5Read b = g.group( groupName );
-                if( embc->Bx_val ) {
-                    restartFieldsPerProc( b, embc->Bx_val );
+                if( embc->B_val[0] ) {
+                    restartFieldsPerProc( b, embc->B_val[0] );
                 }
-                if( embc->By_val ) {
-                    restartFieldsPerProc( b, embc->By_val );
+                if( embc->B_val[1] ) {
+                    restartFieldsPerProc( b, embc->B_val[1] );
                 }
-                if( embc->Bz_val ) {
-                    restartFieldsPerProc( b, embc->Bz_val );
+                if( embc->B_val[2] ) {
+                    restartFieldsPerProc( b, embc->B_val[2] );
                 }
             }
         }

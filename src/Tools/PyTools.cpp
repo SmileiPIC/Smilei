@@ -85,34 +85,6 @@ bool PyTools::pyconvert( PyObject *py_val, std::string &val )
     return false;
 };
 
-//! check error and display message
-double PyTools::get_py_result( PyObject *pyresult )
-{
-    checkPyError();
-    double cppresult=0;
-    if( pyresult ) {
-        if( !py2scalar( pyresult, cppresult ) ) {
-            ERROR( "A python function does not return float but " << pyresult->ob_type->tp_name );
-        }
-    } else {
-        ERROR( "A python function raised an error" );
-    }
-    return cppresult;
-};
-std::complex<double> PyTools::get_py_result_complex( PyObject *pyresult )
-{
-    checkPyError();
-    std::complex<double> cppresult=0;
-    if( pyresult ) {
-        if( !py2scalar( pyresult, cppresult ) ) {
-            ERROR( "A python function does not return complex but " << pyresult->ob_type->tp_name );
-        }
-    } else {
-        ERROR( "A python function raised an error" );
-    }
-    return cppresult;
-};
-
 // DECREF for vectors of python objects
 void PyTools::DECREF( std::vector<PyObject *> pyvec )
 {
@@ -205,7 +177,8 @@ PyObject * PyTools::extract_py( std::string name, std::string component, int nCo
     }
     PyObject *py_obj = PyImport_AddModule( "__main__" );
     Py_INCREF( py_obj );
-    PyObject *py_return, *py_component;
+    PyObject *py_return = nullptr;
+    PyObject *py_component = nullptr;
     // If component requested
     if( ! component.empty() ) {
         // Get the selected component (e.g. "Species" or "Laser")
@@ -256,7 +229,8 @@ std::vector<PyObject *> PyTools::extract_pyVec( std::string name, std::string co
 bool PyTools::extract_pyProfile( std::string name, PyObject *&prof, std::string component, int nComponent )
 {
     PyObject *py_obj = extract_py( name, component, nComponent );
-    if( PyCallable_Check( py_obj ) ) {
+    std::string test;
+    if( PyCallable_Check( py_obj ) || py2scalar( py_obj, test ) ) {
         prof = py_obj;
         return true;
     }
@@ -380,8 +354,8 @@ bool PyTools::isSpecies( std::string name )
 {
     PyObject *py_main = PyImport_AddModule( "__main__" );
     Py_INCREF( py_main );
-    PyObject* py_species = PyObject_GetAttrString( py_main, "Species" );
-    PyObject* has_species = PyObject_CallMethod( py_species, "has", const_cast<char *>( "s" ), name.c_str() );
+    PyObject* py_species = PyObject_GetAttrString( py_main, const_cast<char *>("Species") );
+    PyObject* has_species = PyObject_CallMethod( py_species, const_cast<char *>("has"), const_cast<char *>( "s" ), name.c_str() );
     bool is_species = false;
     py2scalar( has_species, is_species );
     checkPyError();

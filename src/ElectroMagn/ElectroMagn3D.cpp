@@ -1897,52 +1897,39 @@ void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patc
     Field3D *field3D = static_cast<Field3D *>( my_field );
     
     vector<bool> dual(3, false);
-    if ( ( field3D->name.substr(0,2) == "Jx" ) || ( field3D->name.substr(0,2) == "Ex" ) )
+    string sub = field3D->name.substr(0,2);
+    if( sub == "Jx" || sub == "Ex" ) {
         dual[0] = true;
-    if ( ( field3D->name.substr(0,2) == "Jy" ) || ( field3D->name.substr(0,2) == "Ey" ) )
+    } else if( sub == "Jy" || sub == "Ey" ) {
         dual[1] = true;
-    if ( ( field3D->name.substr(0,2) == "Jz" ) || ( field3D->name.substr(0,2) == "Ez" ) )
+    } else  if( sub == "Jz" || sub == "Ez" ) {
         dual[2] = true;
-
-    if ( field3D->name.substr(0,2) == "Bx" ) {
+    } else if( sub == "Bx" ) {
         dual[1] = true;
         dual[2] = true;
-    }
-    if ( field3D->name.substr(0,2) == "By" ) {
+    } else if( sub == "By" ) {
         dual[0] = true;
         dual[2] = true;
-    }
-    if ( field3D->name.substr(0,2) == "Bz" ) {
+    } else if( sub == "Bz" ) {
         dual[0] = true;
         dual[1] = true;
     }
-
+    
     vector<double> pos( 3 );
     pos[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( dual[0]?-0.5:0. ) );
     double pos1 = dy*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( dual[1]?-0.5:0. ) );
     double pos2 = dz*( ( double )( patch->getCellStartingGlobalIndex( 2 ) )+( dual[2]?-0.5:0. ) );
-    int N0 = ( int )field3D->dims()[0];
-    int N1 = ( int )field3D->dims()[1];
-    int N2 = ( int )field3D->dims()[2];
     
-    // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
-    // Create the x,y,z maps where profiles will be evaluated
     vector<Field *> xyz( 3 );
-    vector<unsigned int> n_space_to_create( 3 );
-    n_space_to_create[0] = N0;
-    n_space_to_create[1] = N1;
-    n_space_to_create[2] = N2;
-    
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
-        xyz[idim] = new Field3D( n_space_to_create );
+        xyz[idim] = new Field3D( field3D->dims_ );
     }
     
-    for( int i=0 ; i<N0 ; i++ ) {
+    for( unsigned int i=0 ; i<field3D->dims_[0] ; i++ ) {
         pos[1] = pos1;
-        for( int j=0 ; j<N1 ; j++ ) {
+        for( unsigned int j=0 ; j<field3D->dims_[1] ; j++ ) {
             pos[2] = pos2;
-            for( int k=0 ; k<N2 ; k++ ) {
-                //(*field3D)(i,j,k) += profile->valueAt(pos);
+            for( unsigned int k=0 ; k<field3D->dims_[2] ; k++ ) {
                 for( unsigned int idim=0 ; idim<3 ; idim++ ) {
                     ( *xyz[idim] )( i, j, k ) = pos[idim];
                 }
@@ -1953,12 +1940,16 @@ void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patc
         pos[0] += dx;
     }
     
-    profile->addValuesAt( xyz, *field3D );
+    vector<double> global_origin = { 
+        dx * ( ( field3D->isDual( 0 )?-0.5:0. ) - oversize[0] ),
+        dy * ( ( field3D->isDual( 1 )?-0.5:0. ) - oversize[1] ),
+        dz * ( ( field3D->isDual( 2 )?-0.5:0. ) - oversize[2] )
+    };
+    profile->valuesAt( xyz, global_origin, *field3D, 1 );
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];
     }
-    
     
 }
 
@@ -2004,7 +1995,7 @@ void ElectroMagn3D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
         pos[0] += dx;
     }
     
-    profile->addValuesAtTime( xyz, time, *field3D );
+    profile->valuesAtTime( xyz, *field3D, 3, time );
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];

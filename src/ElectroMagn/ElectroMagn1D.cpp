@@ -820,20 +820,22 @@ void ElectroMagn1D::computePoynting()
 void ElectroMagn1D::applyExternalField( Field *my_field,  Profile *profile, Patch *patch )
 {
     Field1D *field1D=static_cast<Field1D *>( my_field );
-    if( patch->hindex==0 ) {
-        MESSAGE( my_field->name );
+    
+    double pos = dx * ( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field1D->isDual( 0 )?-0.5:0. ) );
+    
+    vector<Field *> xyz( 1 );
+    vector<unsigned int> dims = { field1D->dims_[0], 1, 1 };
+    xyz[0] = new Field3D( dims );
+    
+    for( unsigned int i=0 ; i<dims[0] ; i++ ) {
+        ( *xyz[0] )( i ) = pos;
+        pos += dx;
     }
     
-    vector<double> pos( 1 );
-    pos[0] = dx * ( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field1D->isDual( 0 )?-0.5:0. ) );
-    int N = ( int )field1D->dims()[0];
+    vector<double> global_origin = { dx * ( ( field1D->isDual( 0 )?-0.5:0. ) - oversize[0] ) };
+    profile->valuesAt( xyz, global_origin, *field1D, 1 );
     
-    // USING UNSIGNED INT CREATES PB WITH PERIODIC BCs
-    for( int i=0 ; i<N ; i++ ) {
-        ( *field1D )( i ) += profile->valueAt( pos );
-        pos[0] += dx;
-    }
-    
+    delete xyz[0];
 }
 
 void ElectroMagn1D::applyPrescribedField( Field *my_field,  Profile *profile, Patch *patch, double time )

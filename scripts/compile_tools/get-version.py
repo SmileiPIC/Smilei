@@ -1,16 +1,16 @@
-import os, sys, subprocess
+from os.path import join, dirname, realpath, isfile
+from subprocess import check_output
 
-proc1 = subprocess.Popen(["git describe --always"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-(out1, err1) = proc1.communicate()
-proc2 = subprocess.Popen(["git rev-parse --abbrev-ref HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-(out2, err2) = proc2.communicate()
-if err1 or err2:
-	f_name = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version")
-	if os.path.isfile(f_name):
-		print("v-"+open(f_name, 'r').read())
+try:
+	out1 = check_output('git describe --tags --always 2>/dev/null', shell=True).decode().strip('v\n')
+	out2 = check_output('git rev-parse --abbrev-ref HEAD  2>/dev/null', shell=True).decode().strip('v\n')
+	print(str(out1.strip())+"-"+str(out2.strip()))
+except Exception as e:
+	f_name = join( dirname( realpath(__file__) ), "version" )
+	if isfile(f_name):
+		with open(f_name, 'r') as f:
+			print("v-"+f.read())
 	else:
 		print("??-??")
-else:
-	print(str(out1.strip())+"-"+str(out2.strip()))
 
 

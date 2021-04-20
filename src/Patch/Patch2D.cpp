@@ -6,7 +6,6 @@
 #include <iomanip>
 
 #include "DomainDecompositionFactory.h"
-#include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
 
@@ -20,7 +19,7 @@ Patch2D::Patch2D( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
     : Patch( params, smpi, domain_decomposition, ipatch, n_moved )
 {
     // Test if the patch is a particle patch (Hilbert or Linearized are for VectorPatch)
-    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) ) 
+    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
         || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
         initStep2( params, domain_decomposition );
         initStep3( params, smpi, n_moved );
@@ -119,15 +118,15 @@ void Patch2D::createType2( Params &params )
         return;
     }
     
-    int nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
+    //sint nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
     int ny0 = params.n_space_region[1] + 1 + 2*oversize[1];
     //unsigned int clrw = params.clrw;
     
-    int nx, ny;
-    int nline, ncol;
+    int ny;
+    //int nline, ncol;
     
     for( int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++ ) {
-        nx = nx0 + ix_isPrim;
+        //nx = nx0 + ix_isPrim;
         for( int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++ ) {
             ny = ny0 + iy_isPrim;
             
@@ -182,7 +181,7 @@ void Patch2D::exchangeField_movewin( Field* field, int clrw )
         MPI_Bsend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
     } // END of Send
 
-    //Once the message is in the buffer we can safely shift the field in memory. 
+    //Once the message is in the buffer we can safely shift the field in memory.
     field->shift_x(clrw);
     // and then receive the complementary field from the East.
 
@@ -203,4 +202,3 @@ void Patch2D::exchangeField_movewin( Field* field, int clrw )
 
 
 } // END exchangeField_movewin
-

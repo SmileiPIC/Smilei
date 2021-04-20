@@ -19,7 +19,8 @@ public:
     void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) override final;
     
     //! Apply boundary conditions on Rho and J
-    void axisBC( std::complex<double> *rhoj, std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, int imode, bool diag_flag ) override final;
+    void axisBC( ElectroMagnAM *emAM, bool diag_flag ) override final;
+    void apply_axisBC(std::complex<double> *rho, unsigned int imode, unsigned int nonzeromode);
     
     //! Apply boundary conditions on Env_Chi
     void axisBCEnvChi( double *EnvChi ) override final;

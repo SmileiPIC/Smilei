@@ -507,8 +507,10 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
                     //        if omp, create a list per thread
-                    partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                    if(!params.is_spectral){
+                        partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
+                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                    }
 
                 } else if( mass_==0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
@@ -543,6 +545,10 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[2] += MPI_Wtime() - timer;
 #endif
+                if(params.is_spectral && mass_>0){
+                    partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
+                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                }
 
             }// ibin
         } // end if moving particle
@@ -738,33 +744,33 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
 //   - increment the charge (projection)
 //   - used at initialisation for Poisson (and diags if required, not for now dynamics )
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
+void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old /*=false*/ )
 {
     // -------------------------------
     // calculate the particle charge
     // -------------------------------
     if( ( !particles->is_test ) ) {
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-            // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
-            //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
-            if( !dynamic_cast<ElectroMagnAM *>( EMfields ) ) {
+        if( !dynamic_cast<ElectroMagnAM *>( EMfields ) ) {
+            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
                 double *b_rho = &( *EMfields->rho_ )( 0 );
 
                 for( unsigned int iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
                     Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 }
-            } else {
-                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
-                unsigned int Nmode = emAM->rho_AM_.size();
-                for( unsigned int imode=0; imode<Nmode; imode++ ) {
-                    complex<double> *b_rho = &( *emAM->rho_AM_[imode] )( 0 );
-                    for( unsigned int iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
+            }
+        } else {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            unsigned int Nmode = emAM->rho_AM_.size();
+            for( unsigned int imode=0; imode<Nmode; imode++ ) {
+                unsigned int ifield = imode*(*EMfields).n_species+ispec;
+                complex<double> *b_rho = old ? &( *emAM->rho_old_AM_[imode] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 );
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                    for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
                         Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
                     }
                 }
             }
         }
-
     }
 }//END computeCharge
 
@@ -784,6 +790,8 @@ void Species::injectParticles( Params &params )
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sortParticles( Params &params, Patch * patch )
 {
+<<<<<<< HEAD
+// GPU version
     if (params.gpu_computing) {
         // particles_to_move contains, up to here, send particles
         //   clean it to manage recv particles
@@ -802,12 +810,34 @@ void Species::sortParticles( Params &params, Patch * patch )
         particles->last_index[0] += particles->injectParticles( particles_to_move );
 
         return;
-    }
+        
+    // CPU version
+    } else {
+        injectParticles( params );
 
+        int ndim = params.nDim_field;
+        int idim;
+
+        int total_number_part_recv = 0;
+        //Merge all MPI_buffer_.partRecv in particles_to_move
+        for( int idim = 0; idim < ndim; idim++ ) {
+            for( int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
+                int n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
+                if( ( n_part_recv!=0 ) ) {
+                     // insert n_part_recv in particles_to_move from 0
+                    //MPI_buffer_.partRecv[idim][iNeighbor].copyParticles( 0, n_part_recv, *particles_to_move, 0 );
+                    total_number_part_recv += n_part_recv;
+                    //particles->last_index[particles->last_index.size()-1] += n_part_recv;
+                    //particles->cell_keys.resize(particles->cell_keys.size()+n_part_recv);
+                }
+            }
+        }
+
+    }
 
     // Sort to adapt do cell_keys usage
     std::vector<int> indexes_of_particles_to_exchange;
-    for ( int ipart=0 ; ipart<getNbrOfParticles() ; ipart++ ) {
+    for ( int ipart=0 ; ipart< (int)(getNbrOfParticles()) ; ipart++ ) {
         if ( particles->cell_keys[ipart] == -1 ) {
             indexes_of_particles_to_exchange.push_back( ipart );
         }
@@ -1275,7 +1305,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
                 
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[4] += MPI_Wtime() - timer;
-#endif            
+#endif
             }
             
             if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
@@ -1467,7 +1497,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
                     b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                     for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
                         Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                    } 
+                    }
                 } else {
                     int n_species = patch->vecSpecies.size();
                     complex<double> *b_rho=nullptr;

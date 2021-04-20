@@ -24,7 +24,6 @@ Main(
     cell_length  = [dx, dtrans],
     grid_length = [ Lx,  Ltrans],
     number_of_patches = [npatch_x, npatch_trans],
-    uncoupled_grids=True,
     clrw = 5,
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
@@ -33,6 +32,9 @@ Main(
     random_seed = smilei_mpi_rank,
     solve_poisson = False,
     print_every = 100
+)
+
+MultipleDecomposition(
 )
 
 MovingWindow(

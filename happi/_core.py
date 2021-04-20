@@ -736,12 +736,12 @@ class SmileiSimulation(object):
 			error = "Error extracting 'timestep' from the input file"
 			timestep = self._np.double(namelist.Main.timestep)
 			if not self._np.isfinite(timestep): raise
-		except:
+		except Exception as e:
 			print(error)
 			return
 		try:
 			reference_angular_frequency_SI = namelist.Main.reference_angular_frequency_SI
-		except:
+		except Exception as e:
 			reference_angular_frequency_SI = None
 		return namelist, ndim_fields, ndim_particles, cell_length, ncels, timestep, reference_angular_frequency_SI
 
@@ -764,7 +764,7 @@ class SmileiSimulation(object):
 			if len(validPaths)==0 and self._verbose:
 				print("WARNING: `"+path+"` does not point to any valid Smilei simulation path")
 			allPaths.extend( validPaths )
-		self._results_path = allPaths
+		self._results_path = sorted(allPaths)
 
 		if len(self._results_path)==0:
 			print("No valid paths to Smilei simulation results have been provided")
@@ -795,7 +795,7 @@ class SmileiSimulation(object):
 					):
 						print("The simulation in path '"+path+"' is not compatible with the other ones")
 						return
-				except:
+				except Exception as e:
 					pass
 				self._ndim_fields = ndim_fields
 				self._ndim_particles = ndim_particles
@@ -828,8 +828,7 @@ class SmileiSimulation(object):
 					name = f.attrs["name"].decode() if "name" in f.attrs else ""
 				these_diags += [(number, name)]
 			# Update diags with those of previous paths
-			if diags == []: diags = these_diags
-			else          : diags = [ d for d in diags if d in these_diags ]
+			diags = list(set(diags+these_diags)) # unique diags
 		if diags == []:
 			return [], []
 		else:

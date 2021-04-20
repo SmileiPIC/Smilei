@@ -6,52 +6,54 @@ import cmath
 from numpy import exp, sqrt, arctan, vectorize, real, zeros_like
 from math import log
 
-dx = 0.125
-dr = 1.5
-nx = 960*2
-nr = 200
-Lsim = [dx*nx,nr*dr] # length of the simulation
+dx = 0.251327
 dt = dx # spectral solver feature
+dtrans = 1.96349
+nx =  960
+ntrans = 256
+Lx = nx * dx
+Ltrans = ntrans * dtrans
+npatch_x = 64
+npatch_trans =32
+Nit = 500
 
 Main(
     geometry = "AMcylindrical",
-    number_of_AM = 2,
-    interpolation_order = 2 ,
-    solve_poisson = False,
-    cell_length = [dx, dr],
-    grid_length  = Lsim,
-    number_of_patches = [ 64, 4 ],
+    number_of_AM=2,
+    interpolation_order = 1,
+    maxwell_solver = "spectral",
+    spectral_solver_order = [32,0],
     timestep = dt,
-    simulation_time = 1*dt,
-     
+    simulation_time = dt*Nit,
+    cell_length  = [dx, dtrans],
+    grid_length = [ Lx,  Ltrans],
+    number_of_patches = [npatch_x, npatch_trans],
+    #clrw = 5,
     EM_boundary_conditions = [
-        ["zero","zero"],
-        #["periodic","periodic"],
-        #["silver-muller","silver-muller"],
+        ["ramp44","ramp44"],
         ["silver-muller","buneman"],
     ],
-    
     random_seed = smilei_mpi_rank,
-    print_every = 10,
-    is_spectral=True,
-    uncoupled_grids = True,
-    is_pxr = True,
-    norder = [32,0],
-    pseudo_spectral_guardells = 64,
-    apply_rotational_cleaning = False,
+    solve_poisson = False,
+    print_every = 100,
+    initial_rotational_cleaning = True,
 
 )
 
-#MovingWindow(
-#    time_start = 0.,
-#    velocity_x = 1.
-#)
+MultipleDecomposition(
+    region_ghost_cells=64,
+)
+
+MovingWindow(
+    time_start = 0., #Leaves 2 patches untouched, in front of the laser.
+    velocity_x = 0.996995486
+)
 
 ne = 0.0045
-begin_upramp = Main.grid_length[0]/2.  #Density is 0 before that and up ramp starts.
-Lupramp = 0.2*Main.grid_length[0]  #Length of the plateau 
-Lplateau = Lupramp  #Length of the plateau 
-Ldownramp = 0. #Length of the down ramp
+begin_upramp = Main.grid_length[0] + 10.  #Density is 0 before that and up ramp starts.
+Lupramp = 100. #Length of the upramp 
+Lplateau = 15707.  #Length of the plateau 
+Ldownramp = 2356.19 #Length of the down ramp
 xplateau = begin_upramp + Lupramp # Start of the plateau
 begin_downramp = xplateau + Lplateau # Beginning of the output ramp. 
 finish = begin_downramp + Ldownramp # End of plasma
@@ -59,19 +61,14 @@ finish = begin_downramp + Ldownramp # End of plasma
 g = polygonal(xpoints=[begin_upramp, xplateau, begin_downramp, finish], xvalues=[0, ne, ne, 0.])
 
 def my_profile(x,y):
-    if( y < 0.75*Main.grid_length[1]):
-        limiter = 1.
-    else:
-        limiter = 0.
-    return limiter*g(x,y)
+    return g(x,y)
 
 Species( 
     name = "electron",
     position_initialization = "regular",
     momentum_initialization = "cold",
     ionization_model = "none",
-    particles_per_cell = 4*4*16,
-    regular_number = [4,4,16],
+    particles_per_cell = 30,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
@@ -89,7 +86,7 @@ Species(
     position_initialization = "electron",
     momentum_initialization = "cold",
     ionization_model = "none",
-    particles_per_cell = 4*4*16,
+    particles_per_cell = 30,
     c_part_max = 1.0,
     mass = 1.0,
     charge = 1.0,
@@ -112,11 +109,11 @@ Species(
 # version AM created following also A.F.Lifschitz, Journ. Comput. Phys. 228 (2009) 1803–1814
 # (doi:10.1016/j.jcp.2008.11.017)
 
-laser_FWHM_E = 19.80*2.
-waist      = 25.
-laser_initial_position = Main.grid_length[0]/4. #2**0.5*laser_FWHM_E
+laser_FWHM_E = 41.
+waist      = 120.
+laser_initial_position = Main.grid_length[0]/2. 
 a0         = 2.
-focus      = [laser_initial_position]
+focus      = [begin_upramp]
 
 
 c_vacuum = 1.
@@ -137,26 +134,11 @@ def time_gaussian(fwhm, center, order=2):
         return exp( -(t-center)**order / sigma )
     return f
 
-def time_sin2(fwhm, center):
-    import numpy
-    import math
-    slope1=fwhm
-    slope2=fwhm
-    start=center-fwhm
-    def f(t):
-        w = zeros_like(t)
-        w[t < start+slope1+slope2] = numpy.cos(0.5*math.pi*(t[t < start+slope1+slope2]-start-slope1)/slope2)**2
-        w[t < start+slope1]        = numpy.sin(0.5*math.pi*(t[t < start+slope1]-start)/slope1)**2
-        w[t<start] = 0.
-        return w
-    return f
-
-time_envelope_t              = time_sin2(center=laser_initial_position                  , fwhm=laser_FWHM_E)
+time_envelope_t = time_gaussian(center=laser_initial_position, fwhm=laser_FWHM_E)
 
 # laser waist function
 def w(x):
         w  = sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
-        #w[x>Main.grid_length[0]/2.] = 0.
         return w
 
 def space_envelope(x,r):
@@ -181,76 +163,29 @@ def Er_mode_1(x,r):
         
 def Et_mode_1(x,r):
         return -1j*Ey(x,r)
-        
-def El_mode_1(x,r):
-        invWaist2 = (w(x)/waist)**2
-        complexEx = 2.* r * invWaist2 * space_envelope(x,r) * complex_exponential_comoving(x,0.)
-        # to obtain Ex, this Ex will be multiplied by cos(theta) in the AM reconstruction [y = r*cos(theta)]
-        Ex = real(complexEx)*time_envelope_t(x)
-        return Ex
-
-# Magnetic field
-def Bz(x,r):
-        #complexBz = 1j * space_envelope(x,r) * complex_exponential_comoving(x,dt/2.)
-        complexBz = 1j * space_envelope(x,r) * complex_exponential_comoving(x, 0.)
-        return real(complexBz)*time_envelope_t(x)
-        
-def Br_mode_1(x,r):
-        return 1j*Bz(x,r)
-        
-def Bt_mode_1(x,r):
-        return Bz(x,r)
-
-def Bl_mode_1(x,r):
-        invWaist2 = (w(x)/waist)**2
-        #complexBx = 2.* r * invWaist2 * space_envelope(x,r) * complex_exponential_comoving(x,dt/2.)
-        complexBx = 2.* r * invWaist2 * space_envelope(x,r) * complex_exponential_comoving(x,0.)
-        # to obtain Bx, this Bx will be multiplied by sin(theta) in the AM reconstruction [z = r*sin(theta)]
-        Bx = real(complexBx)*time_envelope_t(x)
-        return 1j*Bx
                 
-field_profile = {'El_mode_1': El_mode_1, 'Er_mode_1': Er_mode_1, 'Et_mode_1': Et_mode_1, 'Bl_mode_1': Bl_mode_1, 'Br_mode_1': Br_mode_1, 'Bt_mode_1': Bt_mode_1}
+field_profile = {'Er_mode_1': Er_mode_1, 'Et_mode_1': Et_mode_1}
 
-for field in ['El_mode_1', 'Er_mode_1', 'Et_mode_1', 'Bl_mode_1', 'Br_mode_1', 'Bt_mode_1']:
+for field in ['Er_mode_1', 'Et_mode_1']:
         ExternalField(
                 field = field,
                 profile = field_profile[field],
         )
 
-DiagFields(
-    every = 50,
-    fields = ["Br","Br_m","Bl_m","Bt_m","Bl","Bt","Et","El", "Jr_electron","Jt_electron","Rho_electron","Jl_electron","Er","Rho","Rho_ion","Jr_ion","Jl_ion"]
-    #fields = ["Br","Br_m","Bl_m","Bt_m","Bl","Bt","Er","Et","El"]
-    #fields = ["Br_m_mode_0", "Br_m_mode_1","Bl_m_mode_0","Bl_m_mode_1","Bt_m_mode_0","Bt_m_mode_1","Bt","Bl_mode_0","Bl_mode_1","Br_mode_0","Br_mode_1","Er_mode_0","Er_mode_1","Et_mode_0","Et_mode_1","El_mode_0","El_mode_1","Rho_mode_0", "Rho_mode_1", "Jr_mode_0","Jr_mode_1","Jt_mode_0","Jt_mode_1","Jl_mode_0","Jl_mode_1","Rho_electron_mode_0","Rho_electron_mode_1"]
+DiagProbe(
+	every = [500,500],
+	origin = [0., -Ltrans/6., Ltrans/6.],
+	corners = [
+              [Main.grid_length[0], -Ltrans/6., Ltrans/6.],
+                  ],
+	number = [nx],
+        fields = ["Ey","Jy"],
 )
 
-#DiagProbe(
-#    every = 10,
-#    origin = [1., 10., 0.],
-#    fields = []
-#)
-#DiagProbe(
-#    every = 200,
-#    fields = ["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho", "Rho_electron_mode_0","Jr_electron_mode_0","Jr_electron_mode_1","Jr_ion_mode_0","Jr_ion_mode_1"],
-#    origin = [0., -Lsim[1], 0.],
-#    corners = [[Lsim[0], -Lsim[1], 0.], [0., Lsim[1], 0.]],
-#    number=[nx, 2*nr],
-#)
-#DiagProbe(
-#    every = 10,
-#    origin = [0., -10., 0.],
-#    corners = [[Lsim[0], -10., 0.]],
-#    number=[100],
-#    fields = []
-#)
-#DiagTrackParticles(
-#    species = "ion",
-#    every = 100,
-#    attributes = ["x", "px", "py", "weight", "q"]
-#)
-#DiagTrackParticles(
-#    species = "electron",
-#    every = 100,
-#    attributes = ["x", "px", "py", "weight", "q"]
-#)
+DiagFields(
+        every = 500,
+)
 
+DiagPerformances(
+	every = 1000,
+)

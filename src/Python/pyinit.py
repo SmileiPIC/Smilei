@@ -165,7 +165,6 @@ class Main(SmileiSingleton):
     number_of_timesteps = None
     interpolation_order = 2
     custom_oversize = 2
-    custom_region_oversize = 2
     number_of_patches = None
     patch_arrangement = "hilbertian"
     clrw = -1
@@ -175,18 +174,13 @@ class Main(SmileiSingleton):
     number_of_AM_relativistic_field_initialization = 1
     timestep_over_CFL = None
     cell_sorting = False
-    gpu_computing = False
+    gpu_computing = False                      # Activate the computation on GPU
     number_of_damping_cells = [0]
 
 
     # PXR tuning
-    uncoupled_grids = False
-    global_factor = []
-    norder = []
-    pseudo_spectral_guardells = 0
-    apply_rotational_cleaning = False
-    is_spectral = False
-    is_pxr = False
+    spectral_solver_order = []
+    initial_rotational_cleaning = False
 
     # Poisson tuning
     solve_poisson = True
@@ -288,6 +282,10 @@ class LoadBalancing(SmileiSingleton):
     initial_balance      = True
     cell_load            = 1.0
     frozen_particle_load = 0.1
+
+class MultipleDecomposition(SmileiSingleton):
+    """Multiple Decomposition parameters"""
+    region_ghost_cells   = 2
 
 # Radiation reaction configuration (continuous and MC algorithms)
 class Vectorization(SmileiSingleton):

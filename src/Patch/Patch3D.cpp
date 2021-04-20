@@ -6,7 +6,6 @@
 #include <iomanip>
 
 #include "DomainDecompositionFactory.h"
-#include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
 
@@ -20,7 +19,7 @@ Patch3D::Patch3D( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
     : Patch( params, smpi, domain_decomposition, ipatch, n_moved )
 {
     // Test if the patch is a particle patch (Hilbert or Linearized are for VectorPatch)
-    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) ) 
+    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
         || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
         initStep2( params, domain_decomposition );
         initStep3( params, smpi, n_moved );
@@ -136,15 +135,15 @@ Patch3D::~Patch3D()
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch3D::createType2( Params &params )
 {
-    int nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
+    //int nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
     int ny0 = params.n_space_region[1] + 1 + 2*oversize[1];
     int nz0 = params.n_space_region[2] + 1 + 2*oversize[2];
     
-    int nx, ny, nz;
-    int nx_sum, ny_sum, nz_sum;
+    int ny, nz;
+    //int nx_sum, ny_sum, nz_sum;
     
     for( int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++ ) {
-        nx = nx0 + ix_isPrim;
+        //nx = nx0 + ix_isPrim;
         for( int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++ ) {
             ny = ny0 + iy_isPrim;
             for( int iz_isPrim=0 ; iz_isPrim<2 ; iz_isPrim++ ) {
@@ -156,7 +155,7 @@ void Patch3D::createType2( Params &params )
                     MPI_Type_contiguous(nz*ny*params.n_space[0], MPI_DOUBLE, &(ntype_[ix_isPrim][iy_isPrim][iz_isPrim]));   //clrw lines
                 else
                     MPI_Type_contiguous(nz*ny*(params.n_space[0]), MPI_DOUBLE, &(ntype_[ix_isPrim][iy_isPrim][iz_isPrim]));   //clrw lines
-                MPI_Type_commit( &(ntype_[ix_isPrim][iy_isPrim][iz_isPrim]) ); 
+                MPI_Type_commit( &(ntype_[ix_isPrim][iy_isPrim][iz_isPrim]) );
             }
         }
     }
@@ -220,7 +219,7 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
         MPI_Bsend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
     } // END of Send
 
-    //Once the message is in the buffer we can safely shift the field in memory. 
+    //Once the message is in the buffer we can safely shift the field in memory.
     field->shift_x(clrw);
     // and then receive the complementary field from the East.
 

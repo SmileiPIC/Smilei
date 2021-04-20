@@ -11,7 +11,7 @@
 #include "ElectroMagnBC3D_refl.h"
 #include "ElectroMagnBC3D_BM.h"
 #include "ElectroMagnBCAM_SM.h"
-#include "ElectroMagnBCAM_zero.h"
+#include "ElectroMagnBCAM_ramp.h"
 #include "ElectroMagnBCAM_BM.h"
 
 #include "Params.h"
@@ -171,8 +171,15 @@ public:
                 if( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBCAM_SM( params, patch, ii );
                 }
-                else if( params.EM_BCs[0][ii] == "zero" ) {
-                    emBoundCond[ii] = new ElectroMagnBCAM_zero( params, patch, ii );
+                else if( params.EM_BCs[0][ii].substr(0,4) == "ramp" ) {
+                    unsigned int ncells = 0;
+                    std::string n = params.EM_BCs[0][ii].substr(4);
+                    try {
+                        ncells = std::stoi( n );
+                    } catch(...) {
+                        ERROR( "Ramp boundary condition could not interpret number `"<<n<<"`" );
+                    }
+                    emBoundCond[ii] = new ElectroMagnBCAM_ramp( params, patch, ii, ncells );
                 }
                 else if( params.EM_BCs[0][ii] != "periodic" ) {
                     ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`" );
@@ -185,7 +192,7 @@ public:
                 ERROR( "Periodic EM Rmax-boundary condition is not supported`" );
             } else if( params.EM_BCs[1][1] == "buneman" ) {
                 emBoundCond[3] = new ElectroMagnBCAM_BM( params, patch, 3 );
-            } else if (params.is_spectral) {
+            } else if( params.is_spectral ) {
                 emBoundCond[3] = NULL ;
             } else  {
                 ERROR( "Unknown EM Rmax-boundary condition `" << params.EM_BCs[1][1] << "`" );

@@ -6,7 +6,6 @@
 #include <iomanip>
 
 #include "DomainDecompositionFactory.h"
-#include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
 
@@ -20,7 +19,7 @@ Patch1D::Patch1D( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
     : Patch( params, smpi, domain_decomposition, ipatch, n_moved )
 {
     // Test if the patch is a particle patch (Hilbert or Linearized are for VectorPatch)
-    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) ) 
+    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
         || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
         initStep2( params, domain_decomposition );
         initStep3( params, smpi, n_moved );
@@ -94,8 +93,7 @@ void Patch1D::createType2( Params &params )
     
     unsigned int clrw = params.clrw;
     
-    int ny = oversize[0];
-    int nline;
+    // int ny = oversize[0];
     
     for( int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++ ) {
     
