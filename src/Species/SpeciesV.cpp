@@ -589,11 +589,11 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             
 
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ){ 
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
-// #endif
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+#endif
             {
 
             if ( params.geometry != "AMcylindrical" ){
@@ -641,11 +641,11 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 // #else
 //             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
 // #endif
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin]) depend(out:bin_has_pushed[ibin])
-// #endif
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin]) depend(out:bin_has_pushed[ibin])
+#endif
             {
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
@@ -667,11 +667,11 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 // Particles BC and keys
 
          for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
-// #endif
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#endif
             {
             // double ener_iPart( 0. );
 
@@ -684,23 +684,22 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             length[0]=0;
             length[1]=params.n_space[1]+1;
             length[2]=params.n_space[2]+1;
-//for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {cout<< ibin<< " " <<scell<<" "<<Ncells<<endl;}
+
             for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
-            // for( unsigned int scell = first_cell_of_bin[0] ; scell < last_cell_of_bin[Nbins-1] ; scell++ ) {
             
                 double ener_iPart( 0. );
                 // Apply wall and boundary conditions
                 if( mass_>0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
-                        nrj_lost_per_bin[0] += mass_ * ener_iPart;
+                        nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
                     }
 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
 
                     partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
-                    nrj_lost_per_bin[0] += mass_ * ener_iPart;
+                    nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
 
                     for( int iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
@@ -718,14 +717,14 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
-                        nrj_lost_per_bin[0] += ener_iPart;
+                        nrj_lost_per_bin[ibin] += ener_iPart;
                     }
 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
 
                     partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
-                    nrj_lost_per_bin[0] += ener_iPart;
+                    nrj_lost_per_bin[ibin] += ener_iPart;
                     
                     for( int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
@@ -750,11 +749,11 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 
         // Project currents if not a Test species and charges as well if a diag is needed.
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
-// #endif
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+#else
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+#endif
             {
 
 #ifdef  __DETAILED_TIMERS
@@ -790,7 +789,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             }//end task for Proj of ibin
         }// end ibin loop for Proj    
 
-        // #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+        #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
         {
         // reduction of lost energy
         for( unsigned int ibin=0 ; ibin<Nbins ; ibin++ ) {

@@ -380,15 +380,15 @@ void VectorPatch::dynamics( Params &params,
 #else
                     #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
                     { // every call of dynamics for a couple ipatch-ispec is an independent task
-                        SpeciesV *spec_task = static_cast<SpeciesV *>(species( ipatch, ispec ));
-                        int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
-                        spec_task->SpeciesV::dynamicsTasks( time_dual, ispec,
-                                      emfields( ipatch ),
-                                      params, diag_flag, partwalls( ipatch ),
-                                      ( *this )( ipatch ), smpi,
-                                      RadiationTables,
-                                      MultiphotonBreitWheelerTables,
-                                      localDiags, buffer_id );
+                    SpeciesV *spec_task = static_cast<SpeciesV *>(species( ipatch, ispec ));
+                    int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                    spec_task->SpeciesV::dynamicsTasks( time_dual, ispec,
+                                                        emfields( ipatch ),
+                                                        params, diag_flag, partwalls( ipatch ),
+                                                        ( *this )( ipatch ), smpi,
+                                                        RadiationTables,
+                                                        MultiphotonBreitWheelerTables,
+                                                        localDiags, buffer_id );
                     } // end task
 #endif                    
                 }
@@ -396,15 +396,15 @@ void VectorPatch::dynamics( Params &params,
                 else {
                     if( params.vectorization_mode == "adaptive" ) {
                         spec->scalarDynamics( time_dual, ispec,
-                                               emfields( ipatch ),
-                                               params, diag_flag, partwalls( ipatch ),
-                                               ( *this )( ipatch ), smpi,
-                                               RadiationTables,
-                                               MultiphotonBreitWheelerTables,
-                                               localDiags );
+                                              emfields( ipatch ),
+                                              params, diag_flag, partwalls( ipatch ),
+                                              ( *this )( ipatch ), smpi,
+                                              RadiationTables,
+                                              MultiphotonBreitWheelerTables,
+                                              localDiags );
                     } else {
 #ifndef _OMPTASKS   
-                                    spec->Species::dynamics( time_dual, ispec,
+                        spec->Species::dynamics( time_dual, ispec,
                                                  emfields( ipatch ),
                                                  params, diag_flag, partwalls( ipatch ),
                                                  ( *this )( ipatch ), smpi,
@@ -412,18 +412,18 @@ void VectorPatch::dynamics( Params &params,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags );
 #else
-                                    //#pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
-                                    { // every call of dynamics for a couple ipatch-ispec is an independent task
-                                    Species *spec_task = species( ipatch, ispec );
-                                    int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
-                                    spec_task->Species::dynamicsTasks( time_dual, ispec,
-                                                 emfields( ipatch ),
-                                                 params, diag_flag, partwalls( ipatch ),
-                                                 ( *this )( ipatch ), smpi,
-                                                 RadiationTables,
-                                                 MultiphotonBreitWheelerTables,
-                                                 localDiags, buffer_id );
-                                    } // end task
+                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
+                        { // every call of dynamics for a couple ipatch-ispec is an independent task
+                        Species *spec_task = species( ipatch, ispec );
+                         int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                        spec_task->Species::dynamicsTasks( time_dual, ispec,
+                                                           emfields( ipatch ),
+                                                           params, diag_flag, partwalls( ipatch ),
+                                                           ( *this )( ipatch ), smpi,
+                                                           RadiationTables,
+                                                           MultiphotonBreitWheelerTables,
+                                                           localDiags, buffer_id );
+                        } // end task
 #endif
                       } // end case vectorization non adaptive
                 } // end if condition on vectorization
@@ -447,7 +447,7 @@ void VectorPatch::dynamics( Params &params,
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             
-            //#pragma omp task firstprivate(ipatch,clrw) depend(in:has_done_dynamics[ipatch][0:(Nspecies-1)])
+            #pragma omp task firstprivate(ipatch,clrw) depend(in:has_done_dynamics[ipatch][0:(Nspecies-1)])
             { // only the ipatch iterations are parallelized
 #ifdef  __DETAILED_TIMERS
             int ithread = omp_get_thread_num();
@@ -491,7 +491,7 @@ void VectorPatch::dynamics( Params &params,
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
                 if( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) {
-                    //#pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
+                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
                     {
                     SpeciesV *spec_task = static_cast<SpeciesV *>(species( ipatch, ispec ));
                     for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
