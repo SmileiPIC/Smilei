@@ -75,12 +75,16 @@ SpeciesV::SpeciesV( Params &params, Patch *patch ) :
             first_cell_of_bin[ibin]     = last_cell_of_bin[ibin-1]+1;
             last_cell_of_bin[ibin]      = first_cell_of_bin[ibin]+clrw*bin_ncells_transverse-1;
         }
-      
+        
     }
     
     length_[0]=0;
     length_[1]=params.n_space[1]+1;
     length_[2]=params.n_space[2]+1;
+
+    dx_inv_[0] = 1./cell_length[0];
+    dx_inv_[1] = 1./cell_length[1];
+    dx_inv_[2] = 1./cell_length[2];
     
     Ncells = ( f_dim0-2*oversize[0] );
     if( nDim_field >= 2 ) {
@@ -558,7 +562,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
         }
     }
 
-    unsigned int iPart;
+    //unsigned int iPart;
 
     int tid( 0 );
     std::vector<double> nrj_lost_per_thd( 1, 0. );
@@ -614,7 +618,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
 
             // Interpolate the fields at the particle position
-            for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ){
+            for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                 Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[scell] ),
                                        &( particles->last_index[scell] ),
                                        buffer_id, particles->first_index[0] );
@@ -662,7 +666,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 
 // Particles BC and keys
 
-//         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
 // #ifdef  __DETAILED_TIMERS
 //             #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
 // #else
@@ -680,9 +684,9 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             length[0]=0;
             length[1]=params.n_space[1]+1;
             length[2]=params.n_space[2]+1;
-
-            // for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
-            for( unsigned int scell = first_cell_of_bin[0] ; scell < last_cell_of_bin[Nbins-1] ; scell++ ) {
+//for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {cout<< ibin<< " " <<scell<<" "<<Ncells<<endl;}
+            for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
+            // for( unsigned int scell = first_cell_of_bin[0] ; scell < last_cell_of_bin[Nbins-1] ; scell++ ) {
             
                 double ener_iPart( 0. );
                 // Apply wall and boundary conditions
@@ -698,7 +702,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
                     nrj_lost_per_bin[0] += mass_ * ener_iPart;
 
-                    for( iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
+                    for( int iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
@@ -723,7 +727,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
                     nrj_lost_per_bin[0] += ener_iPart;
                     
-                    for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                    for( int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
@@ -741,7 +745,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
             } // end task for particles BC and cell_keys on ibin
-        // } // end ibin loop for particles BC
+        } // end ibin loop for particles BC
 
 
         // Project currents if not a Test species and charges as well if a diag is needed.
@@ -762,7 +766,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             // Do not project if a photon
             if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
                 if (params.geometry != "AMcylindrical"){
-                    for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
+                    for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
                         Proj->currentsAndDensityWrapperOnBuffers(
                             b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
                             ibin*clrw, *particles, smpi, 
