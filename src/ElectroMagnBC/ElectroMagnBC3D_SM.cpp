@@ -133,179 +133,23 @@ void ElectroMagnBC3D_SM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-<<<<<<< HEAD
-    // Static cast of the fields
-    double *Ex3D = &(EMfields->Ex_->data_[0]);
-    double *Ey3D = &(EMfields->Ey_->data_[0]);
-    double *Ez3D = &(EMfields->Ez_->data_[0]);
-    double *Bx3D = &(EMfields->Bx_->data_[0]);
-    double *By3D = &(EMfields->By_->data_[0]);
-    double *Bz3D = &(EMfields->Bz_->data_[0]);
-    int sizeofEx = EMfields->Ex_->globalDims_;
-    int sizeofEy = EMfields->Ey_->globalDims_;
-    int sizeofEz = EMfields->Ez_->globalDims_;
-    int sizeofBx = EMfields->Bx_->globalDims_;
-    int sizeofBy = EMfields->By_->globalDims_;
-    int sizeofBz = EMfields->Bz_->globalDims_;
-    int byw_size = ny_p*nz_d;
-    int bzw_size = ny_d*nz_p;
-
-    vector<double> pos( 2 );
-
-    vector<double> byW( ny_p*nz_d, 0. );
-    vector<double> byE( ny_p*nz_d, 0. );
-    vector<double> bzW( ny_d*nz_p, 0. );
-    vector<double> bzE( ny_d*nz_p, 0. );
-    double* dbyW = &(byW[0]);
-    double* dbyE = &(byE[0]);
-    double* dbzW = &(bzW[0]);
-    double* dbzE = &(bzE[0]);
-    int isymin = patch->isYmin();
-    int isymax = patch->isYmax();
-    int iszmin = patch->isZmin();
-    int iszmax = patch->isZmax();
-
-    int Bx_ext_size, By_ext_size, Bz_ext_size;
-    double* Bx_ext = NULL;
-    if (Bx_val!=nullptr) {
-        Bx_ext = &(Bx_val->data_[0]);
-        Bx_ext_size = Bx_val->globalDims_;
-    }
-    double* By_ext = NULL;
-    if (By_val!=nullptr) {
-        By_ext = &(By_val->data_[0]);
-        By_ext_size = By_val->globalDims_;
-    }
-    double* Bz_ext = NULL;
-    if (Bz_val!=nullptr) {
-        Bz_ext = &(Bz_val->data_[0]);
-        Bz_ext_size = Bz_val->globalDims_;
-    }
-#ifdef _GPU
-    if ( (Bx_ext!=NULL) && (!acc_deviceptr( Bx_ext )) ) {
-        #pragma acc enter data copyin(Bx_ext[0:Bx_ext_size])
-    }
-    if ( (By_ext!=NULL) && (!acc_deviceptr( By_ext )) ) {
-        #pragma acc enter data copyin(By_ext[0:By_ext_size])
-    }
-    if ( (Bz_ext!=NULL) && !acc_deviceptr( Bz_ext ) ) {
-        #pragma acc enter data copyin(Bz_ext[0:Bz_ext_size])
-    }
-#endif
-
-    if( min_max==0 && patch->isXmin() ) {
     
-        // for By^(d,p,d)
-        for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
-            pos[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - ( int )EMfields->oversize[1] )*dy;
-            for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
-                pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k -0.5 - ( int )EMfields->oversize[2] )*dz;
-                // Lasers
-                byW[ j*nz_d+k ] = 0.;
-                for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                    byW[ j*nz_d+k ] += vecLaser[ilaser]->getAmplitude0( pos, time_dual, j, k );
-                }
-            }
-        }
-#ifdef _GPU
-        #pragma acc parallel present(Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],By_ext[0:By_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbyW[0:byw_size])
-        #pragma acc loop gang
-#endif
-        for( unsigned int j=isymin ; j<ny_p-isymax ; j++ ) {
-#ifdef _GPU
-            #pragma acc loop worker vector
-#endif
-            for( unsigned int k=iszmin ; k<nz_d-iszmax ; k++ ) {
-                By3D[ 0*(ny_p*nz_d) + j*nz_d + k ] = Alpha_SM_W   * Ez3D[ 0*(ny_p*nz_d) + j*nz_d + k ]
-                                       +              Beta_SM_W    *( By3D[ 1*(ny_p*nz_d) + j*nz_d + k ]-By_ext[ j*nz_d + k ] )
-                                       +              Gamma_SM_W   * dbyW[ j*nz_d+k ]
-                                       +              Delta_SM_W   *( Bx3D[ 0*(ny_d*nz_d) + (j+1)*nz_d + k ]-Bx_ext[ (j+1)*nz_d + k ] )
-                                       +              Epsilon_SM_W *( Bx3D[ 0*(ny_d*nz_d) +  j   *nz_d + k ]-Bx_ext[  j   *nz_d + k ] )
-                                       + By_ext[ j*nz_d + k ];
-            }// k  ---end compute By
-        }//j  ---end compute By
-
-        // for Bz^(d,d,p)
-        for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++ ) {
-            pos[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - 0.5 - ( int )EMfields->oversize[1] )*dy;
-            for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
-                pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k - ( int )EMfields->oversize[2] )*dz;
-                // Lasers
-                bzW[ j*nz_p+k ] = 0.;
-                for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                    bzW[ j*nz_p+k ] += vecLaser[ilaser]->getAmplitude1( pos, time_dual, j, k );
-                }
-            }
-        }
-#ifdef _GPU
-        #pragma acc parallel present(Ey3D[0:sizeofEy],Bx3D[0:sizeofBx],Bz3D[0:sizeofBz],Bz_ext[0:Bz_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbzW[0:bzw_size])
-        #pragma acc loop gang
-#endif
-        for( unsigned int j=isymin ; j<ny_d-isymax ; j++ ) {
-#ifdef _GPU
-            #pragma acc loop worker vector
-#endif
-            for( unsigned int k=iszmin ; k<nz_p-iszmax ; k++ ) {
-                Bz3D[ 0*(ny_d*nz_p) + j*nz_p + k ] = - Alpha_SM_W   * Ey3D[ 0*(ny_d*nz_p) + j*nz_p + k ]
-                                       +              Beta_SM_W    *( Bz3D[ 1*(ny_d*nz_p) + j*nz_p + k ]-Bz_ext[ j*nz_p + k ] )
-                                       +              Gamma_SM_W   * dbzW[ j*nz_p+k ]
-                                       +              Zeta_SM_W    *( Bx3D[ 0*(ny_d*nz_d) + j*nz_d + k+1 ]-Bx_ext[ j*nz_d + (k+1) ] )
-                                       +              Eta_SM_W     *( Bx3D[ 0*(ny_d*nz_d) + j*nz_d + k   ]-Bx_ext[ j*nz_d +  k    ] )
-                                       + Bz_ext[ j*nz_p + k ];
-                                       
-            }// k  ---end compute Bz
-        }//j  ---end compute Bz
-    } else if( min_max==1 && patch->isXmax() ) {
-    
-        // for By^(d,p,d)
-        for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
-            pos[0] = patch->getDomainLocalMin( 1 ) + ( ( int )j - ( int )EMfields->oversize[1] )*dy;
-            for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
-                pos[1] = patch->getDomainLocalMin( 2 ) + ( ( int )k - 0.5 - ( int )EMfields->oversize[2] )*dz;
-                // Lasers
-                for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                    byE[ j*nz_d+k ] += vecLaser[ilaser]->getAmplitude0( pos, time_dual, j, k );
-                }
-            }
-        }
-#ifdef _GPU
-        #pragma acc parallel present(Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],By_ext[0:By_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbyE[0:byw_size])
-        #pragma acc loop gang
-#endif
-        for( unsigned int j=isymin ; j<ny_p-isymax ; j++ ) {
-#ifdef _GPU
-            #pragma acc loop worker vector
-#endif
-            for( unsigned int k=iszmin ; k<nz_d-iszmax ; k++ ) {
-                By3D[ (nx_d-1)*(ny_p*nz_d) + j*nz_d + k ] = Alpha_SM_E   * Ez3D[ (nx_p-1)*(ny_p*nz_d) + j*nz_d + k ]
-                                            +                   Beta_SM_E    *( By3D[ (nx_d-2)*(ny_p*nz_d) + j*nz_d + k ] -By_ext[ j*nz_d + k ] )
-                                            +                   Gamma_SM_E   * dbyE[ j*nz_d+k ]
-                                            +                   Delta_SM_E   *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + (j+1)*nz_d + k ] -Bx_ext[ (j+1)*nz_d + k ] ) // Check x-index
-                                            +                   Epsilon_SM_E *( Bx3D[ (nx_p-1)*(ny_d*nz_d) +  j   *nz_d + k ] -Bx_ext[  j   *nz_d + k ] )
-                                            + By_ext[ j*nz_d + k ];
-                                            
-            }//k  ---end compute By
-        }//j  ---end compute By
-=======
-
     if( patch->isBoundary( i_boundary_ ) ) {
         
         // Static cast of the fields
-        vector<double*> E( 3 );
-        E[0] = &( EMfields->Ex_->data_[0] );
-        E[1] = &( EMfields->Ey_->data_[0] );
-        E[2] = &( EMfields->Ez_->data_[0] );
-        vector<double*> B( 3 );
-        B[0] = &( EMfields->Bx_->data_[0] );
-        B[1] = &( EMfields->By_->data_[0] );
-        B[2] = &( EMfields->Bz_->data_[0] );
+        vector<Field*> E = { EMfields->Ex_, EMfields->Ey_, EMfields->Ez_};
+        vector<Field*> B = { EMfields->Bx_, EMfields->By_, EMfields->Bz_};
         
-        vector<double*> B_ext = { NULL, NULL, NULL };
-        if( B_val[0] ) { B_ext[0] = &(B_val[0]->data_[0]); }
-        if( B_val[1] ) { B_ext[1] = &(B_val[1]->data_[0]); }
-        if( B_val[2] ) { B_ext[2] = &(B_val[2]->data_[0]); }
+        // double *E0 = E[axis0_]->data_;
+        double *E1 = E[axis1_]->data_;
+        double *E2 = E[axis2_]->data_;
+        double *B0 = B[axis0_]->data_;
+        double *B1 = B[axis1_]->data_;
+        double *B2 = B[axis2_]->data_;
         
-        vector<double> pos( 2 );
+        double * B_ext0 = &(B_val[axis0_]->data_[0]);
+        double * B_ext1 = &(B_val[axis1_]->data_[0]);
+        double * B_ext2 = &(B_val[axis2_]->data_[0]);
         
         unsigned int nz_p = n_p[2];
         unsigned int nz_d = n_d[2];
@@ -313,74 +157,130 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         unsigned int nyz_pd = n_p[1]*n_d[2];
         unsigned int nyz_dp = n_d[1]*n_p[2];
         unsigned int nyz_dd = n_d[1]*n_d[2];
-        unsigned int n1 = n_p[axis1_];
-        unsigned int n2 = n_d[axis2_];
+        unsigned int n1p = n_p[axis1_];
+        unsigned int n1d = n_d[axis1_];
+        unsigned int n2p = n_p[axis2_];
+        unsigned int n2d = n_d[axis2_];
         unsigned int p0 = iB_[axis0_];
         unsigned int p1 = iB_[axis1_] - sign_;
+        unsigned int iB1 = iB_[axis1_];
+        
+        vector<double> b1( n1p*n2d, 0. );
+        vector<double> b2( n1d*n2p, 0. );
+        vector<double> pos( 2 );
+        
+        int isBoundary1min = patch->isBoundary(axis1_,0);
+        int isBoundary1max = patch->isBoundary(axis1_,1);
+        int isBoundary2min = patch->isBoundary(axis2_,0);
+        int isBoundary2max = patch->isBoundary(axis2_,1);
+        
+#ifdef _GPU
+        int sizeofE0 = E[axis0_]->globalDims_;
+        int sizeofE1 = E[axis1_]->globalDims_;
+        int sizeofE2 = E[axis2_]->globalDims_;
+        int sizeofB0 = B[axis0_]->globalDims_;
+        int sizeofB1 = B[axis1_]->globalDims_;
+        int sizeofB2 = B[axis2_]->globalDims_;
+        
+        int B_ext_size0 = B_val[axis0_]->globalDims_;
+        int B_ext_size1 = B_val[axis1_]->globalDims_;
+        int B_ext_size2 = B_val[axis2_]->globalDims_;
+        
+        if( !acc_deviceptr( B_ext0 ) ) {
+            #pragma acc enter data copyin(B_ext0[0:B_ext_size0])
+        }
+        if( !acc_deviceptr( B_ext1 ) ) {
+            #pragma acc enter data copyin(B_ext1[0:B_ext_size1])
+        }
+        if( !acc_deviceptr( B_ext2 ) ) {
+            #pragma acc enter data copyin(B_ext2[0:B_ext_size2])
+        }
+        
+        double* db1 = &(b1[0]);
+        double* db2 = &(b2[0]);
+        int b1_size = n1p*n2d;
+        int b2_size = n1d*n2p;
+#endif
         
         // Component along axis 1
         // Lasers
-        vector<double> b1( n1*n2, 0. );
         if( ! vecLaser.empty() ) {
-            for( unsigned int j=patch->isBoundary(axis1_,0); j<n1-patch->isBoundary(axis1_,1) ; j++ ) {
+            for( unsigned int j=isBoundary1min; j<n1p-isBoundary1max ; j++ ) {
                 pos[0] = patch->getDomainLocalMin( axis1_ ) + ( ( int )j - ( int )EMfields->oversize[axis1_] )*d[axis1_];
-                for( unsigned int k=patch->isBoundary(axis2_,0) ; k<n2-patch->isBoundary(axis2_,1) ; k++ ) {
+                for( unsigned int k=isBoundary2min; k<n2d-isBoundary2max; k++ ) {
                     pos[1] = patch->getDomainLocalMin( axis2_ ) + ( ( int )k -0.5 - ( int )EMfields->oversize[axis2_] )*d[axis2_];
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                        b1[ j*n2+k ] += vecLaser[ilaser]->getAmplitude0( pos, time_dual, j, k );
+                        b1[ j*n2d+k ] += vecLaser[ilaser]->getAmplitude0( pos, time_dual, j, k );
                     }
                 }
             }
         }
         // B1
         if( axis0_ == 0 ) {
-            for( unsigned int j=patch->isBoundary(axis1_,0); j<n1-patch->isBoundary(axis1_,1) ; j++ ) {
-                for( unsigned int k=patch->isBoundary(axis2_,0) ; k<n2-patch->isBoundary(axis2_,1) ; k++ ) {
-                    B[axis1_][ iB_[axis1_]*nyz_pd + j*nz_d + k ]
-                        = Alpha_   *  E[axis2_][ p0*nyz_pd + j*nz_d + k ]
-                        + Beta_    *( B[axis1_][ p1*nyz_pd + j*nz_d + k ]-B_ext[axis1_][ j*n2 + k ] )
-                        + Gamma_   * b1[ j*n2 + k ]
-                        + Delta_   *( B[axis0_][ p0*nyz_dd + (j+1)*nz_d + k ]-B_ext[axis0_][ (j+1)*nz_d + k ] )
-                        + Epsilon_ *( B[axis0_][ p0*nyz_dd +  j   *nz_d + k ]-B_ext[axis0_][  j   *nz_d + k ] )
-                        + B_ext[axis1_][ j*n2 + k ];
+#ifdef _GPU
+            #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0]) copyin(db1[0:b1_size])
+            #pragma acc loop gang
+#endif
+            for( unsigned int j=isBoundary1min; j<n1p-isBoundary1max ; j++ ) {
+#ifdef _GPU
+            #pragma acc loop worker vector
+#endif
+                for( unsigned int k=isBoundary2min ; k<n2d-isBoundary2max ; k++ ) {
+                    B1[ iB1*nyz_pd + j*nz_d + k ]
+                        = Alpha_   *  E2[ p0*nyz_pd + j*nz_d + k ]
+                        + Beta_    *( B1[ p1*nyz_pd + j*nz_d + k ]-B_ext1[ j*n2d + k ] )
+                        + Gamma_   * b1[ j*n2d + k ]
+                        + Delta_   *( B0[ p0*nyz_dd + (j+1)*nz_d + k ]-B_ext0[ (j+1)*nz_d + k ] )
+                        + Epsilon_ *( B0[ p0*nyz_dd +  j   *nz_d + k ]-B_ext0[  j   *nz_d + k ] )
+                        + B_ext1[ j*n2d + k ];
                 }
             }
         } else if( axis0_ == 1 ) {
-            for( unsigned int i=patch->isBoundary(axis1_,0); i<n1-patch->isBoundary(axis1_,1) ; i++ ) {
-                for( unsigned int k=patch->isBoundary(axis2_,0) ; k<n2-patch->isBoundary(axis2_,1) ; k++ ) {
-                    B[axis1_][ i*nyz_dd + iB_[axis1_]*nz_d + k ]
-                        =-Alpha_   *  E[axis2_][ i*nyz_pd + p0*nz_d + k ]
-                        + Beta_    *( B[axis1_][ i*nyz_dd + p1*nz_d + k ]-B_ext[axis1_][ i*n2 + k ] )
-                        + Gamma_   * b1[ i*n2 + k ]
-                        + Delta_   *( B[axis0_][ (i+1)*nyz_pd + p0*nz_d + k ]-B_ext[axis0_][ (i+1)*nz_d + k ] )
-                        + Epsilon_ *( B[axis0_][  i   *nyz_pd + p0*nz_d + k ]-B_ext[axis0_][  i   *nz_d + k ] )
-                        + B_ext[axis1_][ i*n2 + k ];
+#ifdef _GPU
+            #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0]) copyin(db1[0:b1_size])
+            #pragma acc loop gang
+#endif
+            for( unsigned int i=isBoundary1min; i<n1p-isBoundary1max ; i++ ) {
+#ifdef _GPU
+            #pragma acc loop worker vector
+#endif
+                for( unsigned int k=isBoundary2min ; k<n2d-isBoundary2max ; k++ ) {
+                    B1[ i*nyz_dd + iB1*nz_d + k ]
+                        =-Alpha_   *  E2[ i*nyz_pd + p0*nz_d + k ]
+                        + Beta_    *( B1[ i*nyz_dd + p1*nz_d + k ]-B_ext1[ i*n2d + k ] )
+                        + Gamma_   * b1[ i*n2d + k ]
+                        + Delta_   *( B0[ (i+1)*nyz_pd + p0*nz_d + k ]-B_ext0[ (i+1)*nz_d + k ] )
+                        + Epsilon_ *( B0[  i   *nyz_pd + p0*nz_d + k ]-B_ext0[  i   *nz_d + k ] )
+                        + B_ext1[ i*n2d + k ];
                 }
             }
         } else {
-            for( unsigned int i=patch->isBoundary(axis1_,0); i<n1-patch->isBoundary(axis1_,1) ; i++ ) {
-                for( unsigned int j=patch->isBoundary(axis2_,0) ; j<n2-patch->isBoundary(axis2_,1) ; j++ ) {
-                    B[axis1_][ i*nyz_dd + j*nz_d + iB_[axis1_] ]
-                        = Alpha_   *  E[axis2_][ i*nyz_dp + j*nz_p + p0 ]
-                        + Beta_    *( B[axis1_][ i*nyz_dd + j*nz_d + p1 ]-B_ext[axis1_][ i*n2 + j ] )
-                        + Gamma_   * b1[ i*n2 + j ]
-                        + Delta_   *( B[axis0_][ (i+1)*nyz_dp + j*nz_p + p0 ]-B_ext[axis0_][ (i+1)*n2 + j ] )
-                        + Epsilon_ *( B[axis0_][  i   *nyz_dp + j*nz_p + p0 ]-B_ext[axis0_][  i   *n2 + j ] )
-                        + B_ext[axis1_][ i*n2 + j ];
+#ifdef _GPU
+            #pragma acc parallel present(E2[0:sizeofE2],B0[0:sizeofB0],B1[0:sizeofB1],B_ext1[0:B_ext_size1],B_ext0[0:B_ext_size0]) copyin(db1[0:b1_size])
+            #pragma acc loop gang
+#endif
+            for( unsigned int i=isBoundary1min; i<n1p-isBoundary1max ; i++ ) {
+#ifdef _GPU
+            #pragma acc loop worker vector
+#endif
+                for( unsigned int j=isBoundary2min ; j<n2d-isBoundary2max ; j++ ) {
+                    B1[ i*nyz_dd + j*nz_d + iB1 ]
+                        = Alpha_   *  E2[ i*nyz_dp + j*nz_p + p0 ]
+                        + Beta_    *( B1[ i*nyz_dd + j*nz_d + p1 ]-B_ext1[ i*n2d + j ] )
+                        + Gamma_   * b1[ i*n2d + j ]
+                        + Delta_   *( B0[ (i+1)*nyz_dp + j*nz_p + p0 ]-B_ext0[ (i+1)*n2d + j ] )
+                        + Epsilon_ *( B0[  i   *nyz_dp + j*nz_p + p0 ]-B_ext0[  i   *n2d + j ] )
+                        + B_ext1[ i*n2d + j ];
                 }
             }
         }
->>>>>>> develop
         
         // Component along axis 2
         // Lasers
-        unsigned int n1d = n_d[axis1_];
-        unsigned int n2p = n_p[axis2_];
-        vector<double> b2( n1d*n2p, 0. );
         if( ! vecLaser.empty() ) {
-            for( unsigned int j=patch->isBoundary(axis1_,0); j<n1d-patch->isBoundary(axis1_,1) ; j++ ) {
+            for( unsigned int j=isBoundary1min; j<n1d-isBoundary1max; j++ ) {
                 pos[0] = patch->getDomainLocalMin( axis1_ ) + ( ( int )j - 0.5 - ( int )EMfields->oversize[axis1_] )*d[axis1_];
-                for( unsigned int k=patch->isBoundary(axis2_,0) ; k<n2p-patch->isBoundary(axis2_,1) ; k++ ) {
+                for( unsigned int k=isBoundary2min; k<n2p-isBoundary2max; k++ ) {
                     pos[1] = patch->getDomainLocalMin( axis2_ ) + ( ( int )k - ( int )EMfields->oversize[axis2_] )*d[axis2_];
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                         b2[ j*n2p+k ] += vecLaser[ilaser]->getAmplitude1( pos, time_dual, j, k );
@@ -390,167 +290,63 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         }
         // B2
         if( axis0_ == 0 ) {
-            for( unsigned int j=patch->isBoundary(axis1_,0); j<n1d-patch->isBoundary(axis1_,1) ; j++ ) {
-                for( unsigned int k=patch->isBoundary(axis2_,0) ; k<n2p-patch->isBoundary(axis2_,1) ; k++ ) {
-                    B[axis2_][ iB_[axis1_]*nyz_dp + j*nz_p + k ]
-                        = -Alpha_ *  E[axis1_][ p0*nyz_dp + j*nz_p + k ]
-                        +  Beta_  *( B[axis2_][ p1*nyz_dp + j*nz_p + k ]-B_ext[axis2_][ j*n2p + k ] )
+#ifdef _GPU
+            #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0]) copyin(db2[0:b2_size])
+            #pragma acc loop gang
+#endif
+            for( unsigned int j=isBoundary1min; j<n1d-isBoundary1max ; j++ ) {
+#ifdef _GPU
+                #pragma acc loop worker vector
+#endif
+                for( unsigned int k=isBoundary2min; k<n2p-isBoundary2max ; k++ ) {
+                    B2[ iB1*nyz_dp + j*nz_p + k ]
+                        = -Alpha_ *  E1[ p0*nyz_dp + j*nz_p + k ]
+                        +  Beta_  *( B2[ p1*nyz_dp + j*nz_p + k ]-B_ext2[ j*n2p + k ] )
                         +  Gamma_ * b2[ j*n2p + k ]
-                        +  Zeta_  *( B[axis0_][ p0*nyz_dd + j*nz_d + k+1 ]-B_ext[axis0_][ j*n2 + (k+1) ] )
-                        +  Eta_   *( B[axis0_][ p0*nyz_dd + j*nz_d + k   ]-B_ext[axis0_][ j*n2 +  k    ] )
-                        +  B_ext[axis2_][ j*n2p + k ];
+                        +  Zeta_  *( B0[ p0*nyz_dd + j*nz_d + k+1 ]-B_ext0[ j*n2d + (k+1) ] )
+                        +  Eta_   *( B0[ p0*nyz_dd + j*nz_d + k   ]-B_ext0[ j*n2d +  k    ] )
+                        +  B_ext2[ j*n2p + k ];
                 }
             }
         } else if( axis0_ == 1 ) {
-            for( unsigned int i=patch->isBoundary(axis1_,0); i<n1d-patch->isBoundary(axis1_,1) ; i++ ) {
-                for( unsigned int k=patch->isBoundary(axis2_,0) ; k<n2p-patch->isBoundary(axis2_,1) ; k++ ) {
-                    B[axis2_][ i*nyz_dp + iB_[axis1_]*nz_p + k ]
-                        =  Alpha_ *  E[axis1_][ i*nyz_pp + p0*nz_p + k ]
-                        +  Beta_  *( B[axis2_][ i*nyz_dp + p1*nz_p + k ]-B_ext[axis2_][ i*n2p + k ] )
+#ifdef _GPU
+            #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0]) copyin(db2[0:b2_size])
+            #pragma acc loop gang
+#endif
+            for( unsigned int i=isBoundary1min; i<n1d-isBoundary1max ; i++ ) {
+#ifdef _GPU
+                #pragma acc loop worker vector
+#endif
+                for( unsigned int k=isBoundary2min; k<n2p-isBoundary2max ; k++ ) {
+                    B2[ i*nyz_dp + iB1*nz_p + k ]
+                        =  Alpha_ *  E1[ i*nyz_pp + p0*nz_p + k ]
+                        +  Beta_  *( B2[ i*nyz_dp + p1*nz_p + k ]-B_ext2[ i*n2p + k ] )
                         +  Gamma_ * b2[ i*n2p + k ]
-                        +  Zeta_  *( B[axis0_][ i*nyz_pd + p0*nz_d + k+1 ]-B_ext[axis0_][ i*n2 + (k+1) ] )
-                        +  Eta_   *( B[axis0_][ i*nyz_pd + p0*nz_d + k   ]-B_ext[axis0_][ i*n2 +  k    ] )
-                        +  B_ext[axis2_][ i*n2p + k ];
+                        +  Zeta_  *( B0[ i*nyz_pd + p0*nz_d + k+1 ]-B_ext0[ i*n2d + (k+1) ] )
+                        +  Eta_   *( B0[ i*nyz_pd + p0*nz_d + k   ]-B_ext0[ i*n2d +  k    ] )
+                        +  B_ext2[ i*n2p + k ];
                 }
             }
         } else {
-            for( unsigned int i=patch->isBoundary(axis1_,0); i<n1d-patch->isBoundary(axis1_,1) ; i++ ) {
-                for( unsigned int j=patch->isBoundary(axis2_,0) ; j<n2p-patch->isBoundary(axis2_,1) ; j++ ) {
-                    B[axis2_][ i*nyz_pd + j*nz_d + iB_[axis1_] ]
-                        = -Alpha_ *  E[axis1_][ i*nyz_pp + j*nz_p + p0 ]
-                        +  Beta_  *( B[axis2_][ i*nyz_pd + j*nz_d  + p1 ]-B_ext[axis2_][ i*n2p + j ] )
+#ifdef _GPU
+            #pragma acc parallel present(E1[0:sizeofE1],B0[0:sizeofB0],B2[0:sizeofB2],B_ext2[0:B_ext_size2],B_ext0[0:B_ext_size0]) copyin(db2[0:b2_size])
+            #pragma acc loop gang
+#endif
+            for( unsigned int i=isBoundary1min; i<n1d-isBoundary1max ; i++ ) {
+#ifdef _GPU
+                #pragma acc loop worker vector
+#endif
+                for( unsigned int j=isBoundary2min; j<n2p-isBoundary2max ; j++ ) {
+                    B2[ i*nyz_pd + j*nz_d + iB1 ]
+                        = -Alpha_ *  E1[ i*nyz_pp + j*nz_p + p0 ]
+                        +  Beta_  *( B2[ i*nyz_pd + j*nz_d  + p1 ]-B_ext2[ i*n2p + j ] )
                         +  Gamma_ * b2[ i*n2p + j ]
-                        +  Zeta_  *( B[axis0_][ i*nyz_dp + (j+1)*nz_p + p0 ]-B_ext[axis0_][ i*n2 + (j+1) ] )
-                        +  Eta_   *( B[axis0_][ i*nyz_dp +  j   *nz_p + p0 ]-B_ext[axis0_][ i*n2 +  j    ] )
-                        +  B_ext[axis2_][ i*n2p + j ];
+                        +  Zeta_  *( B0[ i*nyz_dp + (j+1)*nz_p + p0 ]-B_ext0[ i*n2d + (j+1) ] )
+                        +  Eta_   *( B0[ i*nyz_dp +  j   *nz_p + p0 ]-B_ext0[ i*n2d +  j    ] )
+                        +  B_ext2[ i*n2p + j ];
                 }
             }
         }
-<<<<<<< HEAD
-#ifdef _GPU
-        #pragma acc parallel present(Ey3D[0:sizeofEy],Bx3D[0:sizeofBx],Bz3D[0:sizeofBz],Bz_ext[0:Bz_ext_size],Bx_ext[0:Bx_ext_size]) copyin(dbzE[0:bzw_size])
-        #pragma acc loop gang
-#endif
-        for( unsigned int j=isymin ; j<ny_d-isymax; j++ ) {
-#ifdef _GPU
-            #pragma acc loop worker vector
-#endif
-            for( unsigned int k=iszmin ; k<nz_p-iszmax ; k++ ) {
-                Bz3D[ (nx_d-1)*(ny_d*nz_p) + j*nz_p + k ] = -Alpha_SM_E * Ey3D[ (nx_p-1)*(ny_d*nz_p) + j*nz_p + k ]
-                                            +                    Beta_SM_E  *( Bz3D[ (nx_d-2)*(ny_d*nz_p) + j*nz_p + k ] -Bz_ext[ j*nz_p + k ] )
-                                            +                    Gamma_SM_E * dbzE[ j*nz_p+k ]
-                                            +                    Zeta_SM_E  *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + j*nz_d + k+1 ]-Bx_ext[ j*nz_d + (k+1) ] )
-                                            +                    Eta_SM_E   *( Bx3D[ (nx_p-1)*(ny_d*nz_d) + j*nz_d + k   ]-Bx_ext[ j*nz_d +  k    ] )
-                                            + Bz_ext[ j*nz_p + k ];
-            }//k  ---end compute Bz
-        }//j  ---end compute Bz
-    } else if( min_max==2 && patch->isYmin() ) {
-    
-        // for Bx^(p,d,d)
-        for( unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++ ) {
-            for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
-                Bx3D[ i*(ny_d*nz_d) + 0*nz_d + k ] = - Alpha_SM_S   * Ez3D[ i*(ny_p*nz_d) + 0*nz_d + k ]
-                                       +              Beta_SM_S     *( Bx3D[  i   *(ny_d*nz_d) + 1*nz_d + k ]-Bx_ext[  i   *nz_d + k ] )
-                                       +              Zeta_SM_S     *( By3D[ (i+1)*(ny_p*nz_d) + 0*nz_d + k ]-By_ext[ (i+1)*nz_d + k ] )
-                                       +              Eta_SM_S      *( By3D[  i   *(ny_p*nz_d) + 0*nz_d + k ]-By_ext[  i   *nz_d + k ] )
-                                       + Bx_ext[ i*nz_d + k ];
-            }// k  ---end compute Bx
-        }//i  ---end compute Bx
         
-        // for Bz^(d,d,p)
-        for( unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++ ) {
-            for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
-                Bz3D[ i*(ny_d*nz_p) + 0*nz_p + k ] = Alpha_SM_S   * Ex3D[ i*(ny_p*nz_p) + 0*nz_p + k ]
-                                       +              Beta_SM_S    *( Bz3D[ i*(ny_d*nz_p) + 1*nz_p + k   ]-Bz_ext[ i*nz_p +  k    ] )
-                                       +              Delta_SM_S   *( By3D[ i*(ny_p*nz_d) + 0*nz_d + k+1 ]-By_ext[ i*nz_d + (k+1) ] )
-                                       +              Epsilon_SM_S *( By3D[ i*(ny_p*nz_d) + 0*nz_d + k   ]-By_ext[ i*nz_d +  k    ] )
-                                       + Bz_ext[ i*nz_p + k ];
-            }// k  ---end compute Bz
-        }//i  ---end compute Bz       }
-    } else if( min_max==3 && patch->isYmax() ) {
-    
-        // for Bx^(p,d,d)
-        for( unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++ ) {
-            for( unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++ ) {
-            
-                Bx3D[ i*(ny_d*nz_d) + (ny_d-1)*nz_d + k ] = -Alpha_SM_N * Ez3D[ i*(ny_p*nz_d) + (ny_p-1)*nz_d + k ]
-                                            +                    Beta_SM_N  *( Bx3D[  i   *(ny_d*nz_d) + (ny_d-2)*nz_d + k ]-Bx_ext[  i   *nz_d + k ] )
-                                            +                    Zeta_SM_N  *( By3D[ (i+1)*(ny_p*nz_d) + (ny_p-1)*nz_d + k ]-By_ext[ (i+1)*nz_d + k ] )
-                                            +                    Eta_SM_N   *( By3D[  i   *(ny_p*nz_d) + (ny_p-1)*nz_d + k ]-By_ext[  i   *nz_d + k ] )
-                                            + Bx_ext[ i*nz_d + k ];
-                                            
-            }//k  ---end compute Bz
-        }//j  ---end compute Bz
-        
-        // for Bz^(d,d,p)
-        for( unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++ ) {
-            for( unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++ ) {
-            
-                Bz3D[ i*(ny_d*nz_p) + (ny_d-1)*nz_p + k ] = Alpha_SM_N   * Ex3D[ i*(ny_p*nz_p) + (ny_p-1)*nz_p + k ]
-                                            +                   Beta_SM_N    *( Bz3D[ i*(ny_d*nz_p) + (ny_d-2)*nz_p + k   ] -Bz_ext[ i*nz_p +  k    ] )
-                                            +                   Delta_SM_N   *( By3D[ i*(ny_p*nz_d) + (ny_p-1)*nz_d + k+1 ] -By_ext[ i*nz_d + (k+1) ] )
-                                            +                   Epsilon_SM_N *( By3D[ i*(ny_p*nz_d) + (ny_p-1)*nz_d + k   ] -By_ext[ i*nz_d +  k    ] )
-                                            + Bz_ext[ i*nz_p + k ];
-                                            
-            }//k  ---end compute Bz
-        }//j  ---end compute Bz
-    } else if( min_max==4 && patch->isZmin() ) {
-    
-        // for Bx^(p,d,d)
-        for( unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++ ) {
-            for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++ ) {
-            
-                Bx3D[ i*(ny_d*nz_d) + j*(nz_d) + 0 ] = Alpha_SM_B   * Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + 0 ]
-                                       +              Beta_SM_B    *( Bx3D[  i   *(ny_d*nz_d) + j*(nz_d) + 1 ]-Bx_ext[  i   *ny_d + j ] )
-                                       +              Delta_SM_B   *( Bz3D[ (i+1)*(ny_d*nz_p) + j*(nz_p) + 0 ]-Bz_ext[ (i+1)*ny_d + j ] )
-                                       +              Epsilon_SM_B *( Bz3D[  i   *(ny_d*nz_p) + j*(nz_p) + 0 ]-Bz_ext[  i   *ny_d + j ] )
-                                       + Bx_ext[ i*ny_d + j ];
-            }// j  ---end compute Bx
-        }//i  ---end compute Bx
-        
-        // for By^(d,p,d)
-        for( unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++ ) {
-            for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
-            
-                By3D[ i*(ny_p*nz_d)+ j*(nz_d) + 0 ] = - Alpha_SM_B   * Ex3D[ i*(ny_p*nz_p)+ j*(nz_p) + 0 ]
-                                       +              Beta_SM_B   *( By3D[ i*(ny_p*nz_d)+  j   *(nz_d) + 1 ]-By_ext[ i*ny_p +  j   ] )
-                                       +              Zeta_SM_B   *( Bz3D[ i*(ny_d*nz_p)+ (j+1)*(nz_p) + 0 ]-Bz_ext[ i*ny_d + (j+1) ] )
-                                       +              Eta_SM_B    *( Bz3D[ i*(ny_d*nz_p)+  j   *(nz_p) + 0 ]-Bz_ext[ i*ny_d +  j   ] )
-                                       + By_ext[ i*ny_p + j ];
-                                       
-            }// j  ---end compute By
-        }//i  ---end compute By
-        
-    } else if( min_max==5 && patch->isZmax() ) {
-    
-        // for Bx^(p,d,d)
-        for( unsigned int i=patch->isXmin() ; i<nx_p-patch->isXmax() ; i++ ) {
-            for( unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++ ) {
-            
-                Bx3D[ i*(ny_d*nz_d) + j*(nz_d) + (nz_d-1) ] = Alpha_SM_T   * Ey3D[ i*(ny_d*nz_p) + j*(nz_p) + (nz_p-1) ]
-                                            +                   Beta_SM_T    *( Bx3D[  i   *(ny_d*nz_d) + j*(nz_d) + (nz_d-2) ] -Bx_ext[  i   *ny_d + j ] )
-                                            +                   Delta_SM_T   *( Bz3D[ (i+1)*(ny_d*nz_p) + j*(nz_p) + (nz_p-1) ] -Bz_ext[ (i+1)*ny_d + j ] )
-                                            +                   Epsilon_SM_T *( Bz3D[  i   *(ny_d*nz_p) + j*(nz_p) + (nz_p-1) ] -Bz_ext[  i   *ny_d + j ] )
-                                            + Bx_ext[ i*ny_d + j ];
-                                            
-            }//j  ---end compute Bx
-        }//i  ---end compute Bx
-        
-        
-        // for By^(d,p,d)
-        for( unsigned int i=patch->isXmin() ; i<nx_d-patch->isXmax() ; i++ ) {
-            for( unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++ ) {
-            
-                By3D[ i*(ny_p*nz_d) + j*(nz_d) + (nz_d-1) ] = -Alpha_SM_T * Ex3D[ i*(ny_p*nz_p) + j*(nz_p) + (nz_p-1) ]
-                                            +                    Beta_SM_T  *( By3D[ i*(ny_p*nz_d) +  j   *(nz_d) + (nz_d-2) ]-By_ext[ i*ny_p +  j ] )
-                                            +                    Zeta_SM_T  *( Bz3D[ i*(ny_d*nz_p) + (j+1)*(nz_p) + (nz_p-1) ]-Bz_ext[ i*ny_d + (j+1) ] )
-                                            +                    Eta_SM_T   *( Bz3D[ i*(ny_d*nz_p) +  j   *(nz_p) + (nz_p-1) ]-Bz_ext[ i*ny_d +  j ] )
-                                            + By_ext[ i*ny_p + j ];
-                                            
-            }//j  ---end compute By
-        }//i  ---end compute By
-        
-=======
->>>>>>> develop
     }
 }

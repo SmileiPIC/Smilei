@@ -790,7 +790,6 @@ void Species::injectParticles( Params &params )
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sortParticles( Params &params, Patch * patch )
 {
-<<<<<<< HEAD
 // GPU version
     if (params.gpu_computing) {
         // particles_to_move contains, up to here, send particles
