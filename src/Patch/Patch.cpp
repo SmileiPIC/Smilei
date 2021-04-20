@@ -24,7 +24,6 @@
 
 #include "DomainDecompositionFactory.h"
 #include "Hilbert_functions.h"
-#include "PatchesFactory.h"
 #include "SpeciesFactory.h"
 #include "ParticleInjectorFactory.h"
 #include "Particles.h"

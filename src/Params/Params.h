@@ -126,7 +126,7 @@ public:
     //! k parameters for some kinds of ElectroMagnetic boundary conditions
     std::vector< std::vector<double> > EM_BCs_k;
     //! Are open boundaries used ?
-    bool open_boundaries;
+    std::vector< std::vector<bool> > open_boundaries;
     bool save_magnectic_fields_for_SM;
 
     //! Boundary conditions for Envelope Field

@@ -107,7 +107,10 @@ class ParticleBinning(Diagnostic):
 			# Gather data from all timesteps, and the list of timesteps
 			items = {}
 			for path in self._results_path:
-				f = self._h5py.File(path+self._os.sep+self._diagName+str(d)+'.h5', 'r')
+				try:
+					f = self._h5py.File(path+self._os.sep+self._diagName+str(d)+'.h5', 'r')
+				except:
+					continue
 				items.update( dict(f) )
 			items = sorted(items.items())
 			self._h5items[d] = [it[1] for it in items]
@@ -352,7 +355,7 @@ class ParticleBinning(Diagnostic):
 				file = path+self._os.sep+self._diagName+str(diagNumber)+'.h5'
 				f = self._h5py.File(file, 'r')
 			except Exception as e:
-				return False
+				continue
 			# get attributes from file
 			axes = []
 			deposited_quantity = "weight_power" # necessary for radiation spectrum
@@ -391,6 +394,8 @@ class ParticleBinning(Diagnostic):
 				if deposited_quantity!=info["deposited_quantity"] or axes!=info["axes"]:
 					print(self._diagName+" #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
+		if not info:
+			return False
 		return info
 	
 	# Prints the info obtained by the function "getInfo"

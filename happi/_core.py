@@ -764,7 +764,7 @@ class SmileiSimulation(object):
 			if len(validPaths)==0 and self._verbose:
 				print("WARNING: `"+path+"` does not point to any valid Smilei simulation path")
 			allPaths.extend( validPaths )
-		self._results_path = allPaths
+		self._results_path = sorted(allPaths)
 
 		if len(self._results_path)==0:
 			print("No valid paths to Smilei simulation results have been provided")
@@ -828,8 +828,7 @@ class SmileiSimulation(object):
 					name = f.attrs["name"].decode() if "name" in f.attrs else ""
 				these_diags += [(number, name)]
 			# Update diags with those of previous paths
-			if diags == []: diags = these_diags
-			else          : diags = [ d for d in diags if d in these_diags ]
+			diags = list(set(diags+these_diags)) # unique diags
 		if diags == []:
 			return [], []
 		else:

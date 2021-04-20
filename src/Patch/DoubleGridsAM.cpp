@@ -7,7 +7,7 @@
 #include "VectorPatch.h"
 #include "Params.h"
 #include "SmileiMPI.h"
-#include "PatchesFactory.h"
+#include "DomainDecomposition.h"
 
 using namespace std;
 

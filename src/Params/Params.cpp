@@ -398,14 +398,17 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
 
     }
-
+    
+    open_boundaries.resize( nDim_field );
     for( unsigned int iDim = 0 ; iDim < nDim_field; iDim++ ) {
-        if( EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman" ) {
-            full_B_exchange = true;
-            open_boundaries = true;
-        }
-        if( EM_BCs[iDim][0] == "silver-muller" || EM_BCs[iDim][1] == "silver-muller" ) {
-            open_boundaries = true;
+        open_boundaries[iDim].resize( 2, false );
+        for( unsigned int j = 0; j < 2; j++ ) {
+            if( EM_BCs[iDim][j] == "buneman" ) {
+                full_B_exchange = true;
+                open_boundaries[iDim][j] = true;
+            } else if( EM_BCs[iDim][j] == "silver-muller" ) {
+                open_boundaries[iDim][j] = true;
+            }
         }
     }
 
@@ -814,7 +817,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // -------------------------------------------------------
     // Handle the pre-processing of LaserOffset
     // -------------------------------------------------------
-    TITLE( "Calculate LaserOffset" );
     unsigned int n_laser = PyTools::nComponents( "Laser" );
     unsigned int n_laser_offset = 0;
     
@@ -901,6 +903,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             }
             
             if( smpi->getRank() < number_of_processes && ! restart ) {
+                if( n_laser_offset == 0 ) {
+                    TITLE( "Calculate LaserOffset" );
+                }
                 // Prepare propagator
                 MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
                 LaserPropagator propagateX( this, normal_axis, fft_time_window, comm );
@@ -985,7 +990,7 @@ void Params::compute()
         PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
         if( ! multiple_decomposition ) {
             oversize[i]  = max( interpolation_order, max( ( unsigned int )( spectral_solver_order[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
-            if ( (currentFilter_model == "customFIR") && (oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) ) {
+            if( currentFilter_model == "customFIR" && oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) {
                 ERROR( "With the `customFIR` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2" );
             }
         } else {
@@ -1001,12 +1006,16 @@ void Params::compute()
         }
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
-    } 
+    }
 
     if( multiple_decomposition ) {
         if( is_spectral ) {
             for( unsigned int i=0; i<nDim_field; i++ ){
                 region_oversize[i]  = max( interpolation_order, ( unsigned int )( spectral_solver_order[i]/2+1 ) ) + ( exchange_particles_each-1 );
+            }
+        } else {
+            for( unsigned int i=0; i<nDim_field; i++ ){
+                region_oversize[i]  = interpolation_order + ( exchange_particles_each-1 );
             }
         }
         PyTools::extract( "region_ghost_cells", region_ghost_cells, "MultipleDecomposition" );
@@ -1017,11 +1026,11 @@ void Params::compute()
             //Force ghost cells number in L when spectral
             region_oversize[0] = region_ghost_cells;
             //Force zero ghost cells in R when spectral
-            WARNING("Forcing region ghost-cell size along r from " << region_ghost_cells << " to " <<  oversize[1])
+            WARNING("Forcing region ghost-cell size along r from " << region_oversize[1] << " to " <<  oversize[1])
             region_oversize[1] = oversize[1];
         }
-    }  
-
+    }
+    
     // Set clrw if not set by the user
     if( clrw == -1 ) {
 
@@ -1130,43 +1139,72 @@ void Params::print_init()
     TITLE( "Geometry: " << geometry );
     MESSAGE( 1, "Interpolation order : " <<  interpolation_order );
     MESSAGE( 1, "Maxwell solver : " <<  maxwell_sol );
-    MESSAGE( 1, "(Time resolution, Total simulation time) : (" << res_time << ", " << simulation_time << ")" );
-    MESSAGE( 1, "(Total number of iterations,   timestep) : (" << n_time << ", " << timestep << ")" );
-    MESSAGE( 1, "           timestep  = " << timestep/dtCFL << " * CFL" );
-
+    MESSAGE( 1, "simulation duration = " << simulation_time <<",   total number of iterations = " << n_time);
+    MESSAGE( 1, "timestep = " << timestep << " = " << timestep/dtCFL << " x CFL,   time resolution = " << res_time);
+    
+    ostringstream gl;
+    gl << "Grid length: ";
     for( unsigned int i=0 ; i<grid_length.size() ; i++ ) {
-        MESSAGE( 1, "dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")" );
-        MESSAGE( 1, "            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")" );
-        MESSAGE( 1, "            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")" );
-        if( open_boundaries ) {
-            cout << setprecision( 2 );
-            cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] ;
-            for( unsigned int ii=1 ; ii<grid_length.size() ; ii++ ) {
-                cout << ", " << EM_BCs_k[2*i][ii] ;
+        gl << grid_length[i] << ( i<grid_length.size()-1 ? ", " : "" );
+    }
+    MESSAGE( 1, gl.str() );
+    
+    ostringstream cl;
+    cl << "Cell length: ";
+    for( unsigned int i=0 ; i<cell_length.size() ; i++ ) {
+        cl << cell_length[i] << ( i<cell_length.size()-1 ? ", " : "" );
+    }
+    MESSAGE( 1, cl.str() );
+    
+    ostringstream nc;
+    nc << "Number of cells: " ;
+    for( unsigned int i=0 ; i<nDim_field ; i++ ) {
+        nc << n_space_global[i] << ( i<nDim_field-1 ? ", " : "" );
+    }
+    MESSAGE( 1, nc.str() );
+    
+    ostringstream sr;
+    sr << "Spatial resolution: ";
+    for( unsigned int i=0 ; i<nDim_field ; i++ ) {
+        sr << res_space[i] << ( i<nDim_field-1 ? ", " : "" );
+    }
+    MESSAGE( 1, sr.str() );
+    
+    TITLE( "Electromagnetic boundary conditions" );
+    string xyz = geometry=="AMcylindrical" ? "xr" : "xyz";
+    for( unsigned int i=0 ; i<grid_length.size() ; i++ ) {
+        for( unsigned int j=0 ; j<2 ; j++ ) {
+            ostringstream bc( "" );
+            bc << xyz[i] << (  j==0 ? "min " : "max ") << EM_BCs[i][j];
+            if( open_boundaries[i][j] ) {
+                bc << setprecision( 2 ) << ", absorbing vector " << "[" << EM_BCs_k[2*i+j][0];
+                for( unsigned int ii=1 ; ii<grid_length.size() ; ii++ ) {
+                    bc << ", " << EM_BCs_k[2*i+j][ii] ;
+                }
+                bc << "]";
             }
-            cout << "] , [" << EM_BCs_k[2*i+1][0] ;
-            for( unsigned int ii=1 ; ii<grid_length.size() ; ii++ ) {
-                cout << ", " << EM_BCs_k[2*i+1][ii] ;
-            }
-            cout << "] )" << endl;
+            MESSAGE( 1, bc.str() );
         }
     }
-
-    if (currentFilter_passes.size() > 0){
+    
+    if( full_B_exchange ) {
+        MESSAGE( 1, "All components of B are exchanged at synchronization" );
+    }
+    
+    if( currentFilter_passes.size() > 0 ){
+        TITLE( "Current filtering" );
         if( *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) > 0 ) {
             for( unsigned int idim=0 ; idim < nDim_field ; idim++ ){
                 std::string strpass = (currentFilter_passes[idim] > 1 ? "passes" : "pass");
-                MESSAGE( 1, currentFilter_model << " current filtering : " << currentFilter_passes[idim] << " " << strpass << " along dimension " << idim );
+                MESSAGE( 1, currentFilter_model << " current filtering: " << currentFilter_passes[idim] << " " << strpass << " along dimension " << idim );
             }
         }
     }
     if( Friedman_filter ) {
+        TITLE( "Field filtering" );
         MESSAGE( 1, "Friedman field filtering : theta = " << Friedman_theta );
     }
-    if( full_B_exchange ) {
-        MESSAGE( 1, "All components of B are exchanged at synchronization" );
-    }
-
+    
     if( has_load_balancing ) {
         TITLE( "Load Balancing: " );
         if( initial_balance ) {
@@ -1198,7 +1236,12 @@ void Params::print_timestep( SmileiMPI *smpi, unsigned int itime, double time_du
         timer.update();
         double now = timer.getTime();
         
-        double push_time = 1e9 * (now - before) * (double) smpi->getGlobalNumCores() / ( npart * (double) print_every );
+        ostringstream push_time;
+        if( npart * (double) print_every > 0 ) {
+            push_time << setw( 14 ) << (int)( 1e9 * (now - before) * (double) smpi->getGlobalNumCores() / ( npart * (double) print_every ) );
+        } else {
+            push_time << "  ??";
+        }
         
         #pragma omp master
         MESSAGE(
@@ -1206,7 +1249,7 @@ void Params::print_timestep( SmileiMPI *smpi, unsigned int itime, double time_du
             << "  " << scientific << setprecision( 4 ) << setw( 12 ) << time_dual << " "
             << "  " << scientific << setprecision( 4 ) << setw( 12 ) << now << " "
             << "  " << "(" << scientific << setprecision( 4 ) << setw( 12 ) << now - before << " )"
-            << "  " << setw( 14 ) << (int) push_time << " "
+            << "  " << push_time.str() << " "
         );
         #pragma omp barrier
     }
@@ -1233,38 +1276,39 @@ void Params::print_timestep_headers( SmileiMPI *smpi )
 void Params::print_parallelism_params( SmileiMPI *smpi )
 {
     if( smpi->isMaster() ) {
+        
 #ifndef _NO_MPI_TM
         MESSAGE( 1, "MPI_THREAD_MULTIPLE enabled" );
 #else
         MESSAGE( 1, "MPI_THREAD_MULTIPLE not enabled" );
 #endif
-        MESSAGE( 1, "Number of MPI process : " << smpi->getSize() );
-        MESSAGE( 1, "Number of patches : " );
-        for( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ) {
-            MESSAGE( 2, "dimension " << iDim << " - number_of_patches : " << number_of_patches[iDim] );
+    
+        MESSAGE( 1, "Number of MPI processes: " << smpi->getSize() );
+        
+#ifdef _OPENMP
+        MESSAGE( 1, "Number of threads per MPI process : " << smpi->getOMPMaxThreads() );
+#else
+        MESSAGE( 1, "OpenMP disabled" );
+#endif
+        MESSAGE( "" );
+        
+        ostringstream np;
+        np << "Number of patches: " << number_of_patches[0];
+        for( unsigned int iDim=1 ; iDim<nDim_field ; iDim++ ) {
+            np << " x " << number_of_patches[iDim];
         }
-
-        MESSAGE( 1, "Patch size :" );
-        for( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ) {
-            MESSAGE( 2, "dimension " << iDim << " - n_space : " << n_space[iDim] << " cells." );
+        MESSAGE( 1, np.str() );
+        
+        ostringstream ps;
+        ps << "Number of cells in one patch: " << n_space[0];
+        for( unsigned int iDim=1 ; iDim<nDim_field ; iDim++ ) {
+            ps << " x " << n_space[iDim];
         }
-
+        MESSAGE( 1, ps.str() );
+        
         MESSAGE( 1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
     }
 
-    if( smpi->isMaster() ) {
-        TITLE( "OpenMP" );
-#ifdef _OPENMP
-//    int nthds(0);
-//#pragma omp parallel shared(nthds)
-//    {
-//        nthds = omp_get_num_threads();
-//    }
-        MESSAGE( 1, "Number of thread per MPI process : " << smpi->getOMPMaxThreads() );
-#else
-        MESSAGE( "Disabled" );
-#endif
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
