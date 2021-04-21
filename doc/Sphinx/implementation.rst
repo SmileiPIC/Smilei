@@ -1,7 +1,9 @@
 Implementation
 ******************************************
 
-Introduction
+-----------------------------------------------------------------
+
+I. Introduction
 ===============================================
 
 Smilei is a C++ code that uses relatively simple C++ features for modularity
@@ -27,7 +29,9 @@ There is always only one class definition per file and the file name correcponds
 
 The general implementation is later summarized in :numref:`smilei_main_loop`
 
-General concept and vocabulary
+-----------------------------------------------------------------
+
+II. General concept and vocabulary
 ===================================================
 
 This section presents some implicit notions to understand the philosophy of the code.
@@ -97,7 +101,9 @@ Other
 
 Some classes are used for specific actions in the code such as the initilization process.
 
-Domain decomposition and parallelism
+-----------------------------------------------------------------
+
+III. Domain decomposition and parallelism
 ===========================================
 
 The simulation domain is divided multiple times following a succession of decomposition levels.
@@ -175,7 +181,7 @@ Finally, the decomposition levels are summarized in :numref:`decomposition_summa
 
 --------------------------------------------------------------------------------
 
-Data structures and main classes
+IV. Data structures and main classes
 =======================================
 
 This section describes the main classes and the tree-like smilei data structure.
@@ -347,7 +353,7 @@ The base class description (``SmileiMPI.h`` and ``SmileiMPI.cpp``) is located in
 
 -----------------------------------------------------------------
 
-The :program:`Smilei` PIC loop implementation
+V. The :program:`Smilei` PIC loop implementation
 ==============================================================
 
 The initialization and the main loop are explicitely done in the main file ``Smilei.cpp``.
@@ -529,6 +535,8 @@ in the following pieces of code.
         }
     }
 
+.. _pusherImplementation:
+
 Pusher
 ---------------------------------------
 
@@ -546,6 +554,23 @@ From this base class can be derived several versions (marked as ``final``):
 * ``PusherPhoton``: pusher of photons (ballistic movement)
 
 A factory called ``PusherFactory`` is used to select the requested pusher for each patch and each species.
+
+.. note::
+
+  Whatever the mode on CPU, the pusher is always vectorized.
+
+  
+.. _pusherBorisCPUImplementation:
+
+Boris pusher for CPU
+^^^^^^^^^^^^^^^^^^^^^^
+
+The pusher implementation is one of the most simple algorithm of the PIC loop.
+It is composed of a single loop over a group of macro-particles.
+
+.. literalinclude:: ../../src/Pusher/PusherBoris.cpp
+    :lines: 61-112
+    :linenos:
 
 .. _radiationReactionImplementation:
 
