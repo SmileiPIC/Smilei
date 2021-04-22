@@ -266,18 +266,30 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
             locations[12] = i;
         } else if( fs[i]=="Env_Ex_abs" ) {
             locations[13] = i;
-        }else {
+        } else {
             // Species-related field
-            size_t i0 = fs[i].find( "_" );
-            size_t i1 = fs[i].rfind( "_" );
-            size_t l = fs[i].length();
-            if( i1 != string::npos && l-i1 < 3 ) {
-                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fs[i] );
+            
+            // Find field index
+            string f3 = fs[i].substr( 0, 3 );
+            unsigned int field_index;
+            if( fs[i].size() < 4 ) {
+                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fs[i]<<"`" );
+            } else if( f3 == "Jx_" ) {
+                field_index = 0;
+            } else if( f3 == "Jy_" ) {
+                field_index = 1;
+            } else if( f3 == "Jz_" ) {
+                field_index = 2;
+            } else if( f3 == "Rho" && fs[i][3] == '_' ) {
+                field_index = 3;
+            } else {
+                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fs[i]<<"`" );
             }
-            // Extract requested field
-            string field_name = fs[i].substr( 0, i0 );
-            // Extract requested species
-            string target_species = fs[i].substr( i1+1, l-i1-1 );
+            
+            // Find target species
+            size_t i0 = fs[i].find( "_" );
+            string target_species = fs[i].substr( i0+1 );
+            
             // Find species number
             unsigned int ispec = 0;
             while( ispec < nspec && target_species != vecPatches( 0 )->vecSpecies[ispec]->name_ ) {
@@ -286,19 +298,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
             if( ispec == nspec ) {
                 ERROR( "Probe #"<<n_probe<<": unknown field `"<<fs[i]<<"` (unknown species `"<<target_species<<"`)" );
             }
-            // Find the index of the field
-            unsigned int field_index;
-            if( field_name == "Jx" ) {
-                field_index = 0;
-            } else if( field_name == "Jy" ) {
-                field_index = 1;
-            } else if( field_name == "Jz" ) {
-                field_index = 2;
-            } else if( field_name == "Rho" ) {
-                field_index = 3;
-            } else {
-                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fs[i]<<"` for species `"<<target_species<<"`" );
-            }
+            
             // Allocate fields
             unsigned int start = vecPatches( 0 )->EMfields->species_starts[ispec];
             unsigned int stop = vecPatches( 0 )->EMfields->species_starts[ispec+1];
@@ -433,6 +433,8 @@ void DiagnosticProbes::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
 
 void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, double x_moved )
 {
+    if( smpi->test_mode ) return;
+    
     nPart_MPI = 0;
     offset_in_MPI .resize( vecPatches.size() );
     offset_in_file.resize( vecPatches.size() );

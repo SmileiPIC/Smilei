@@ -66,7 +66,7 @@ private:
                 std::complex<double> a_complex;
                 if( typeid(T) == typeid(a_double) ) {
                     type_name = "float";
-                } else if( typeid(T) == typeid(a_double) ) {
+                } else if( typeid(T) == typeid(a_complex) ) {
                     type_name = "complex";
                 } else {
                     type_name = "???";
