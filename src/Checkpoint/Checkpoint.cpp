@@ -255,19 +255,19 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
     if( smpi->isMaster() ) {
         f.attr( "Energy_time_zero",  scalars->Energy_time_zero );
         f.attr( "EnergyUsedForNorm", scalars->EnergyUsedForNorm );
-        // Poynting scalars
-        unsigned int k=0;
-        for( unsigned int j=0; j<2; j++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
-            for( unsigned int i=0; i<params.nDim_field; i++ ) { //axis 0=x, 1=y, 2=z
-                if( scalars->necessary_poy[k] ) {
-                    string poy_name = Tools::merge( "Poy", Tools::xyz[i], j==0?"min":"max" );
-                    double poy_val = 0.;
-                    for( unsigned ipatch=0; ipatch<vecPatches.size(); ipatch++ ) {
-                        poy_val += vecPatches( ipatch )->EMfields->poynting[j][i];
-                    }
-                    f.attr( poy_name, poy_val );
-                    k++;
+    }
+    // Poynting scalars
+    unsigned int k=0;
+    for( unsigned int j=0; j<2; j++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for( unsigned int i=0; i<params.nDim_field; i++ ) { //axis 0=x, 1=y, 2=z
+            if( scalars->necessary_poy[k] ) {
+                string poy_name = Tools::merge( "Poy", Tools::xyz[i], j==0?"min":"max" );
+                double poy_val = 0.;
+                for( unsigned ipatch=0; ipatch<vecPatches.size(); ipatch++ ) {
+                    poy_val += vecPatches( ipatch )->EMfields->poynting[j][i];
                 }
+                f.attr( poy_name, poy_val );
+                k++;
             }
         }
     }
@@ -577,16 +577,16 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
     if( smpi->isMaster() ) {
         f.attr( "Energy_time_zero",  scalars->Energy_time_zero );
         f.attr( "EnergyUsedForNorm", scalars->EnergyUsedForNorm );
-        // Poynting scalars
-        unsigned int k=0;
-        for( unsigned int j=0; j<2; j++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
-            for( unsigned int i=0; i<params.nDim_field; i++ ) { //axis 0=x, 1=y, 2=z
-                string poy_name = Tools::merge( "Poy", Tools::xyz[i], j==0?"min":"max" );
-                if( f.hasAttr( poy_name ) ) {
-                    f.attr( poy_name, vecPatches( 0 )->EMfields->poynting[j][i] );
-                }
-                k++;
+    }
+    // Poynting scalars
+    unsigned int k=0;
+    for( unsigned int j=0; j<2; j++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for( unsigned int i=0; i<params.nDim_field; i++ ) { //axis 0=x, 1=y, 2=z
+            string poy_name = Tools::merge( "Poy", Tools::xyz[i], j==0?"min":"max" );
+            if( f.hasAttr( poy_name ) ) {
+                f.attr( poy_name, vecPatches( 0 )->EMfields->poynting[j][i] );
             }
+            k++;
         }
     }
     
