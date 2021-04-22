@@ -29,8 +29,6 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     std::vector<double> *GradPhipart = &( smpi->dynamics_GradPHIpart[ithread] );
     std::vector<double> *dynamics_inv_gamma_ponderomotive = &( smpi->dynamics_inv_gamma_ponderomotive[ithread] );
     
-    
-    //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
     double charge_over_mass_dts2, charge_sq_over_mass_sq_dts4;
     double umx, umy, umz, upx, upy, upz;
     double alpha, inv_det_T, Tx, Ty, Tz, Tx2, Ty2, Tz2;

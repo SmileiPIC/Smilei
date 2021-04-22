@@ -5,7 +5,8 @@
   @details See article https://arxiv.org/abs/1701.05605
 
   @date 2017-03-31
- */
+*/
+
 #include "PusherHigueraCary.h"
 
 #include <iostream>
@@ -127,20 +128,20 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         
     }
     
-    if( vecto ) {
-        int *cell_keys;
-        particles.cell_keys.resize( iend-istart );
-        cell_keys = &( particles.cell_keys[0] );
-        
-        #pragma omp simd
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-        
-            for( int i = 0 ; i<nDim_ ; i++ ) {
-                cell_keys[ipart] *= nspace[i];
-                cell_keys[ipart] += round( ( position[i][ipart]-min_loc_vec[i] ) * dx_inv_[i] );
-            }
-            
-        }
-    }
+    // if( vecto ) {
+    //     int *cell_keys;
+    //     particles.cell_keys.resize( iend-istart );
+    //     cell_keys = &( particles.cell_keys[0] );
+    //
+    //     #pragma omp simd
+    //     for( int ipart=istart ; ipart<iend; ipart++ ) {
+    //
+    //         for( int i = 0 ; i<nDim_ ; i++ ) {
+    //             cell_keys[ipart] *= nspace[i];
+    //             cell_keys[ipart] += round( ( position[i][ipart]-min_loc_vec[i] ) * dx_inv_[i] );
+    //         }
+    //
+    //     }
+    // }
     
 }
