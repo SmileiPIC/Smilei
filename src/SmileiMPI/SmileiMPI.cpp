@@ -1597,10 +1597,10 @@ void SmileiMPI::computeGlobalDiags( Diagnostic *diag, int timestep )
 // ---------------------------------------------------------------------------------------------------------------------
 // MPI synchronization of scalars diags
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags( DiagnosticScalar *scalars, int timestep )
+void SmileiMPI::computeGlobalDiags( DiagnosticScalar *scalars, int itime )
 {
 
-    if( !scalars->timeSelection->theTimeIsNow( timestep ) ) {
+    if( !scalars->timeSelection->theTimeIsNow( itime ) ) {
         return;
     }
 
@@ -1641,7 +1641,7 @@ void SmileiMPI::computeGlobalDiags( DiagnosticScalar *scalars, int timestep )
         // expected total energy
         if( scalars->necessary_Uexp ) {
             // total energy at time 0
-            if( timestep==0 ) {
+            if( itime==0 ) {
                 scalars->Energy_time_zero = *scalars->Utot;
             }
             // Global kinetic energy, and BC losses/gains
@@ -1686,9 +1686,9 @@ void SmileiMPI::computeGlobalDiags( DiagnosticScalar *scalars, int timestep )
 // ---------------------------------------------------------------------------------------------------------------------
 // MPI synchronization of diags particle binning
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags( DiagnosticParticleBinning *diagParticles, int timestep )
+void SmileiMPI::computeGlobalDiags( DiagnosticParticleBinning *diagParticles, int itime )
 {
-    if( timestep - diagParticles->timeSelection->previousTime() == diagParticles->time_average-1 ) {
+    if( itime - diagParticles->timeSelection->previousTime() == diagParticles->time_average-1 ) {
         MPI_Reduce( diagParticles->filename.size()?MPI_IN_PLACE:&diagParticles->data_sum[0], &diagParticles->data_sum[0], diagParticles->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
 
         if( !isMaster() ) {
@@ -1700,9 +1700,9 @@ void SmileiMPI::computeGlobalDiags( DiagnosticParticleBinning *diagParticles, in
 // ---------------------------------------------------------------------------------------------------------------------
 // MPI synchronization of diags screen
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags( DiagnosticScreen *diagScreen, int timestep )
+void SmileiMPI::computeGlobalDiags( DiagnosticScreen *diagScreen, int itime )
 {
-    if( diagScreen->timeSelection->theTimeIsNow( timestep ) ) {
+    if( diagScreen->timeSelection->theTimeIsNow( itime ) ) {
         MPI_Reduce( diagScreen->filename.size()?MPI_IN_PLACE:&diagScreen->data_sum[0], &diagScreen->data_sum[0], diagScreen->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
 
         if( !isMaster() ) {
@@ -1714,9 +1714,9 @@ void SmileiMPI::computeGlobalDiags( DiagnosticScreen *diagScreen, int timestep )
 // ---------------------------------------------------------------------------------------------------------------------
 // MPI synchronization of diags radiation
 // ---------------------------------------------------------------------------------------------------------------------
-void SmileiMPI::computeGlobalDiags(DiagnosticRadiationSpectrum* diagRad, int timestep)
+void SmileiMPI::computeGlobalDiags(DiagnosticRadiationSpectrum* diagRad, int itime)
 {
-    if (timestep - diagRad->timeSelection->previousTime() == diagRad->time_average-1) {
+    if (itime - diagRad->timeSelection->previousTime() == diagRad->time_average-1) {
         MPI_Reduce( diagRad->filename.size()?MPI_IN_PLACE:&diagRad->data_sum[0], &diagRad->data_sum[0], diagRad->output_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
 
         if( !isMaster() ) {

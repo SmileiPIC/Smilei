@@ -299,10 +299,17 @@ class Probe(Diagnostic):
 		# Build units
 		titles = {}
 		fieldunits = {}
+		unitsForField = {"B":"B_r","E":"E_r","J":"J_r","R":"N_r","P":"V_r*K_r*N_r"}
+		self.time_integral = self._myinfo["time_integral"]
+		
 		for f in self._fieldname:
 			i = fields.index(f)
-			fieldunits.update({ i:{"B":"B_r","E":"E_r","J":"J_r","R":"N_r"}[f[0]] })
-			titles    .update({ i:f })
+			if self.time_integral:
+				fieldunits.update({ i:unitsForField[f[0]] + "*T_r" })
+				titles    .update({ i:"Time-integrated "+f })
+			else:
+				fieldunits.update({ i:unitsForField[f[0]] })
+				titles    .update({ i:f })
 		# Make total units and title
 		self._title  = self.operation
 		self._vunits = self.operation
@@ -356,6 +363,10 @@ class Probe(Diagnostic):
 			out["dimension"] = probe.attrs["dimension"]
 			out["shape"] = self._np.array(probe["number"], dtype=int)
 			out["fields"] = probe.attrs["fields"]
+			if "time_integral" in probe.attrs:
+				out["time_integral"] = probe.attrs["time_integral"]
+			else:
+				out["time_integral"] = False
 			i = 0
 			while "p"+str(i) in probe.keys():
 				out["p"+str(i)] = self._np.array(probe["p"+str(i)])

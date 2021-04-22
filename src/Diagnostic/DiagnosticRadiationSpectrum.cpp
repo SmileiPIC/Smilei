@@ -113,7 +113,7 @@ void DiagnosticRadiationSpectrum::openFile( Params& params, SmileiMPI* smpi )
 }
 
 // run one particle binning diagnostic
-void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* simWindow )
+void DiagnosticRadiationSpectrum::run( Patch* patch, int itime, SimWindow* simWindow )
 {
 
     vector<int> int_buffer;
