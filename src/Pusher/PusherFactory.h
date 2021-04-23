@@ -15,12 +15,11 @@
 #include "PusherPonderomotivePositionBoris.h"
 #include "PusherVay.h"
 #include "PusherBorisNR.h"
-#include "PusherRRLL.h"
 #include "PusherHigueraCary.h"
 #include "PusherPhoton.h"
 
 #ifdef _VECTO
-#include "PusherBorisV.h"
+// #include "PusherBorisV.h"
 #include "PusherPonderomotiveBorisV.h"
 #include "PusherPonderomotivePositionBorisV.h"
 #endif
@@ -51,14 +50,14 @@ public:
         if( species->mass_ > 0 ) {
             // assign the correct Pusher to Push
             if( species->pusher_name_ == "boris" ) {
-                if( !species->vectorized_operators && !params.cell_sorting ) {
+                // if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push = new PusherBoris( params, species );
-                }
-#ifdef _VECTO
-                else {
-                    Push = new PusherBorisV( params, species );
-                }
-#endif
+                // }
+// #ifdef _VECTO
+//                 else {
+//                     Push = new PusherBorisV( params, species );
+//                 }
+// #endif
             } else if( species->pusher_name_ == "ponderomotive_boris" ) {
             
                 int n_envlaser = params.Laser_Envelope_model;

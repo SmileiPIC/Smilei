@@ -16,7 +16,7 @@ public :
     
     void openFile( Params &params, SmileiMPI *smpi ) override;
     
-    void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
+    void run( Patch *patch, int itime, SimWindow *simWindow ) override;
     
     static std::vector<std::string> excludedAxes() {
         std::vector<std::string> excluded_axes( 0 );

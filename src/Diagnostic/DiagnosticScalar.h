@@ -117,13 +117,13 @@ public :
     
     void init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches ) override;
     
-    bool prepare( int timestep ) override;
+    bool prepare( int itime ) override;
     
-    void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
+    void run( Patch *patch, int itime, SimWindow *simWindow ) override;
     
-    void write( int timestep, SmileiMPI *smpi ) override;
+    void write( int itime, SmileiMPI *smpi ) override;
     
-    virtual bool needsRhoJs( int timestep ) override;
+    virtual bool needsRhoJs( int itime ) override;
     
     //! get a particular scalar
     double getScalar( std::string name );
@@ -135,7 +135,7 @@ public :
     double EnergyUsedForNorm;
     
     //! Compute the various scalars when requested
-    void compute( Patch *patch, int timestep );
+    void compute( Patch *patch, int itime );
     
     //! Latest timestep dumped
     int latest_timestep;

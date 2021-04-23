@@ -179,13 +179,13 @@ TimeSelection::TimeSelection( TimeSelection *timeSelection )
 
 
 // Tell whether the current timestep is within the selection
-bool TimeSelection::theTimeIsNow( int timestep )
+bool TimeSelection::theTimeIsNow( int itime )
 {
     TheTimeIsNow = false;
     // In selection if inside the start/end bounds
-    if( timestep>=round( start ) && timestep<=round( end ) ) {
+    if( itime>=round( start ) && itime<=round( end ) ) {
         // Calculate the number of timesteps since the start
-        double t = ( double )timestep - start + 0.4999;
+        double t = ( double )itime - start + 0.4999;
         // Calculate the time from the previous period
         t -= floor( t/period )*period;
         // If within group, calculate the time to the previous repeat
@@ -203,14 +203,14 @@ bool TimeSelection::theTimeIsNow( int timestep )
 
 // Tell what is the next timestep within the selection
 // Returns the same timestep if already within the selection
-int TimeSelection::nextTime( int timestep )
+int TimeSelection::nextTime( int itime )
 {
-    if( timestep<=round( start ) ) {
+    if( itime<=round( start ) ) {
         NextTime = start;
-    } else if( timestep>round( end ) ) {
+    } else if( itime>round( end ) ) {
         NextTime = std::numeric_limits<int>::max();
     } else {
-        double t = ( double )( timestep )-start + 0.4999; // number of timesteps since the start
+        double t = ( double )( itime )-start + 0.4999; // number of timesteps since the start
         double p = floor( t/period )*period; // previous period
         double T = t - p; // time to the previous period
         
@@ -218,7 +218,7 @@ int TimeSelection::nextTime( int timestep )
         if( T < groupWidth ) {
             double r = floor( T/spacing )*spacing; // previous repeat
             if( T-r < 1. ) {
-                NextTime = timestep;    // return current timestep if good
+                NextTime = itime;    // return current timestep if good
             } else {
                 NextTime = ( int ) round( start + p + r + spacing );    // otherwise, return next repeat
             }
@@ -233,14 +233,14 @@ int TimeSelection::nextTime( int timestep )
 
 // Tell what is the previous timestep within the selection
 // Returns the same timestep if already within the selection
-int TimeSelection::previousTime( int timestep )
+int TimeSelection::previousTime( int itime )
 {
-    if( timestep<round( start ) ) {
+    if( itime<round( start ) ) {
         PreviousTime = std::numeric_limits<int>::min() >> 1;
-    } else if( timestep>=round( end ) ) {
+    } else if( itime>=round( end ) ) {
         PreviousTime = end;
     } else {
-        double t = ( double )( timestep )-start + 0.4999; // number of timesteps since the start
+        double t = ( double )( itime )-start + 0.4999; // number of timesteps since the start
         double p = floor( t/period )*period; // previous period
         double T = t - p; // time to the previous period
         
@@ -257,14 +257,14 @@ int TimeSelection::previousTime( int timestep )
 
 
 // Tell how many selected timesteps have occured before the timestep requested
-int TimeSelection::howManyTimesBefore( int timestep )
+int TimeSelection::howManyTimesBefore( int itime )
 {
     int nt = 0;
-    if( timestep>=round( start ) ) {
-        if( timestep>=round( end ) ) {
-            timestep = round( end );
+    if( itime>=round( start ) ) {
+        if( itime>=round( end ) ) {
+            itime = round( end );
         }
-        double t = ( double )( timestep )-start + 0.4999; // number of timesteps since the start
+        double t = ( double )( itime )-start + 0.4999; // number of timesteps since the start
         double p = floor( t/period ); // previous period number
         nt = p * repeat; // number of occurences before this period
         double T = t - p*period; // time to the previous period

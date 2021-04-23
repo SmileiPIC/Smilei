@@ -449,6 +449,7 @@ class DiagProbe(SmileiComponent):
     vectors = []
     fields = []
     flush_every = 1
+    time_integral = False
 
 class DiagParticleBinning(SmileiComponent):
     """Particle Binning diagnostic"""

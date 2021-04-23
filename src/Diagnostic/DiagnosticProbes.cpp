@@ -201,104 +201,113 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
     axesInverse = matrixInverse( axes );
 
     // Extract the list of requested fields
-    vector<string> fs;
-    if( !PyTools::extractV( "fields", fs, "DiagProbe", n_probe ) ) {
-        fs.resize( 10 );
-        fs[0]="Ex";
-        fs[1]="Ey";
-        fs[2]="Ez";
-        fs[3]="Bx";
-        fs[4]="By";
-        fs[5]="Bz";
-        fs[6]="Jx";
-        fs[7]="Jy";
-        fs[8]="Jz";
-        fs[9]="Rho";
+    if( !PyTools::extractV( "fields", fieldname, "DiagProbe", n_probe ) ) {
+        fieldname.resize( 10 );
+        fieldname[0] = "Ex";
+        fieldname[1] = "Ey";
+        fieldname[2] = "Ez";
+        fieldname[3] = "Bx";
+        fieldname[4] = "By";
+        fieldname[5] = "Bz";
+        fieldname[6] = "Jx";
+        fieldname[7] = "Jy";
+        fieldname[8] = "Jz";
+        fieldname[9] = "Rho";
         if( params.Laser_Envelope_model ) {
-            fs.resize( 14 );
-            fs[10]="Env_A_abs";
-            fs[11]="Env_Chi", fs[12]="Env_E_abs",fs[13]="Env_Ex_abs";
+            fieldname.resize( 14 );
+            fieldname[10] = "Env_A_abs";
+            fieldname[11] = "Env_Chi";
+            fieldname[12] = "Env_E_abs";
+            fieldname[13] = "Env_Ex_abs";
         }
     }
-    vector<unsigned int> locations;
-    locations.resize( 14 );
-    for( unsigned int i=0; i<14; i++ ) {
-        locations[i] = fs.size();
-    }
+    nFields = fieldname.size();
+    nBuffers = nFields + 1; // +1 for garbage
+    fieldlocation.resize( 17, nFields );
     unsigned int nspec = vecPatches(0)->vecSpecies.size();
     species_field_index.resize( nspec );
     species_field_location.resize( nspec );
-    for( unsigned int i=0; i<fs.size(); i++ ) {
+    bool has_poynting = false;
+    for( unsigned int i=0; i<nFields; i++ ) {
         for( unsigned int j=0; j<i; j++ ) {
-            if( fs[i]==fs[j] ) {
-                ERROR( "Probe #"<<n_probe<<": field "<<fs[i]<<" appears twice" );
+            if( fieldname[i]==fieldname[j] ) {
+                ERROR( "Probe #"<<n_probe<<": field "<<fieldname[i]<<" appears twice" );
             }
         }
-        if( fs[i]=="Ex" ) {
-            locations[0] = i;
-        } else if( fs[i]=="Ey" ) {
-            locations[1] = i;
-        } else if( fs[i]=="Ez" ) {
-            locations[2] = i;
-        } else if( fs[i]=="Bx" ) {
-            locations[3] = i;
-        } else if( fs[i]=="By" ) {
-            locations[4] = i;
-        } else if( fs[i]=="Bz" ) {
-            locations[5] = i;
-        } else if( fs[i]=="Jx" ) {
-            locations[6] = i;
+        if( fieldname[i]=="Ex" ) {
+            fieldlocation[0] = i;
+        } else if( fieldname[i]=="Ey" ) {
+            fieldlocation[1] = i;
+        } else if( fieldname[i]=="Ez" ) {
+            fieldlocation[2] = i;
+        } else if( fieldname[i]=="Bx" ) {
+            fieldlocation[3] = i;
+        } else if( fieldname[i]=="By" ) {
+            fieldlocation[4] = i;
+        } else if( fieldname[i]=="Bz" ) {
+            fieldlocation[5] = i;
+        } else if( fieldname[i]=="Jx" ) {
+            fieldlocation[6] = i;
             hasRhoJs = true;
-        } else if( fs[i]=="Jy" ) {
-            locations[7] = i;
+        } else if( fieldname[i]=="Jy" ) {
+            fieldlocation[7] = i;
             hasRhoJs = true;
-        } else if( fs[i]=="Jz" ) {
-            locations[8] = i;
+        } else if( fieldname[i]=="Jz" ) {
+            fieldlocation[8] = i;
             hasRhoJs = true;
-        } else if( fs[i]=="Rho" ) {
-            locations[9] = i;
+        } else if( fieldname[i]=="Rho" ) {
+            fieldlocation[9] = i;
             hasRhoJs = true;
-        } else if( fs[i]=="Env_A_abs" ) {
-            locations[10] = i;
-        } else if( fs[i]=="Env_Chi" ) {
-            locations[11] = i;
-        } else if( fs[i]=="Env_E_abs" ) {
-            locations[12] = i;
-        } else if( fs[i]=="Env_Ex_abs" ) {
-            locations[13] = i;
-        }else {
+        } else if( fieldname[i]=="Env_A_abs" ) {
+            fieldlocation[10] = i;
+        } else if( fieldname[i]=="Env_Chi" ) {
+            fieldlocation[11] = i;
+        } else if( fieldname[i]=="Env_E_abs" ) {
+            fieldlocation[12] = i;
+        } else if( fieldname[i]=="Env_Ex_abs" ) {
+            fieldlocation[13] = i;
+        } else if( fieldname[i]=="PoyX" ) {
+            fieldlocation[14] = i;
+            has_poynting = true;
+        } else if( fieldname[i]=="PoyY" ) {
+            fieldlocation[15] = i;
+            has_poynting = true;
+        } else if( fieldname[i]=="PoyZ" ) {
+            fieldlocation[16] = i;
+            has_poynting = true;
+        } else {
             // Species-related field
-            size_t i0 = fs[i].find( "_" );
-            size_t i1 = fs[i].rfind( "_" );
-            size_t l = fs[i].length();
-            if( i1 != string::npos && l-i1 < 3 ) {
-                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fs[i] );
+            
+            // Find field index
+            string f3 = fieldname[i].substr( 0, 3 );
+            unsigned int field_index;
+            if( fieldname[i].size() < 4 ) {
+                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fieldname[i]<<"`" );
+            } else if( f3 == "Jx_" ) {
+                field_index = 0;
+            } else if( f3 == "Jy_" ) {
+                field_index = 1;
+            } else if( f3 == "Jz_" ) {
+                field_index = 2;
+            } else if( f3 == "Rho" && fieldname[i][3] == '_' ) {
+                field_index = 3;
+            } else {
+                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fieldname[i]<<"`" );
             }
-            // Extract requested field
-            string field_name = fs[i].substr( 0, i0 );
-            // Extract requested species
-            string target_species = fs[i].substr( i1+1, l-i1-1 );
+            
+            // Find target species
+            size_t i0 = fieldname[i].find( "_" );
+            string target_species = fieldname[i].substr( i0+1 );
+            
             // Find species number
             unsigned int ispec = 0;
             while( ispec < nspec && target_species != vecPatches( 0 )->vecSpecies[ispec]->name_ ) {
                 ispec++;
             }
             if( ispec == nspec ) {
-                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fs[i]<<"` (unknown species `"<<target_species<<"`)" );
+                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fieldname[i]<<"` (unknown species `"<<target_species<<"`)" );
             }
-            // Find the index of the field
-            unsigned int field_index;
-            if( field_name == "Jx" ) {
-                field_index = 0;
-            } else if( field_name == "Jy" ) {
-                field_index = 1;
-            } else if( field_name == "Jz" ) {
-                field_index = 2;
-            } else if( field_name == "Rho" ) {
-                field_index = 3;
-            } else {
-                ERROR( "Probe #"<<n_probe<<": unknown field `"<<fs[i]<<"` for species `"<<target_species<<"`" );
-            }
+            
             // Allocate fields
             unsigned int start = vecPatches( 0 )->EMfields->species_starts[ispec];
             unsigned int stop = vecPatches( 0 )->EMfields->species_starts[ispec+1];
@@ -317,10 +326,23 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
             hasRhoJs = true;
         }
     }
-    fieldlocation = locations;
-    fieldname = fs;
-    nFields = fs.size();
-
+    
+    // If Poynting requested, force temporary storage of fields
+    if( has_poynting ) {
+        for( unsigned int k=0; k<6; k++ ) {
+            if( fieldlocation[k] >= nFields ) {
+                fieldlocation[k] = nBuffers;
+                nBuffers++;
+            }
+        }
+    }
+    
+    // Extract time_integral
+    PyTools::extract( "time_integral", time_integral, "DiagProbe", n_probe );
+    if( time_integral && params.hasWindow ) {
+        ERROR( "Probe #"<<n_probe<<": `time_integral` incompatible with the moving window" );
+    }
+    
     // Pre-calculate patch size
     patch_size.resize( nDim_particle );
     for( unsigned int k=0; k<nDim_particle; k++ ) {
@@ -338,8 +360,8 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch
     }
     
     // Display info
-    MESSAGE( 1, "Probe diagnostic #"<<n_probe<<" created" );
-
+    MESSAGE( 1, "Probe diagnostic #"<<n_probe<< (time_integral?" (integrated over time)":"") );
+    
     ostringstream t( "" );
     t << vecNumber[0];
     for( unsigned int i=1; i<dimProbe; i++ ) {
@@ -385,6 +407,7 @@ void DiagnosticProbes::openFile( Params &params, SmileiMPI *smpi )
     file_->attr( "name", diag_name_ );
     file_->attr( "Version", string( __VERSION ) );
     file_->attr( "dimension", dimProbe );
+    file_->attr( "time_integral", time_integral );
     
     // Add arrays "p0", "p1", ...
     file_->vect( "p0", origin );
@@ -418,10 +441,10 @@ void DiagnosticProbes::closeFile()
 }
 
 
-bool DiagnosticProbes::prepare( int timestep )
+bool DiagnosticProbes::prepare( int itime )
 {
-    return timeSelection->theTimeIsNow( timestep );
-}
+    return time_integral || timeSelection->theTimeIsNow( itime );
+} 
 
 
 void DiagnosticProbes::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches )
@@ -433,6 +456,8 @@ void DiagnosticProbes::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
 
 void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, double x_moved )
 {
+    if( smpi->test_mode ) return;
+    
     nPart_MPI = 0;
     offset_in_MPI .resize( vecPatches.size() );
     offset_in_file.resize( vecPatches.size() );
@@ -595,7 +620,7 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, d
 
 
 
-void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timestep, SimWindow *simWindow, Timers &timers )
+void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers )
 {
     ostringstream name_t;
     
@@ -606,7 +631,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
     #pragma omp master
     {
         name_t.str( "" );
-        name_t << "/" << setfill( '0' ) << setw( 10 ) << timestep;
+        name_t << "/" << setfill( '0' ) << setw( 10 ) << itime;
         dataset_name = name_t.str();
         has_dataset = file_->has( dataset_name );
     }
@@ -620,7 +645,7 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
         // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
         if( !positions_written || last_iteration_points_calculated <= vecPatches.lastIterationPatchesMoved ) {
             createPoints( smpi, vecPatches, x_moved );
-            last_iteration_points_calculated = timestep;
+            last_iteration_points_calculated = itime;
 
             // Store the positions of all particles, unless done already
             if( !positions_written ) {
@@ -659,11 +684,11 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
                 positions_written = true;
             }
         }
-
+        
         // Make the array that will contain the data
         vector<unsigned int> probesArraySize( 2 );
         probesArraySize[1] = nPart_MPI; // number of particles
-        probesArraySize[0] = nFields + 1; // number of fields (Ex, Ey, etc) +1 for garbage
+        probesArraySize[0] = nBuffers;
         probesArray = new Field2D( probesArraySize );
     }
     #pragma omp barrier
@@ -671,20 +696,20 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
     // Loop patches to fill the array
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++ ) {
-        // Loop probe ("fake") particles of current patch
-        unsigned int iPart_MPI = offset_in_MPI[ipatch];
         Patch * patch = vecPatches( ipatch );
         unsigned int npart = patch->probes[probe_n]->particles.size();
-
+        
         LocalFields Jloc_fields;
         double Rloc_fields;
-
+        
         int ithread = 0;
 #ifdef _OPENMP
         ithread = omp_get_thread_num();
 #endif
         
-        // Interpolate all usual fields
+        // Interpolate all usual fields on probe ("fake") particles of current patch
+        unsigned int iPart_MPI = offset_in_MPI[ipatch];
+        unsigned int maxPart_MPI = offset_in_MPI[ipatch] + npart;
         smpi->dynamics_resize( ithread, nDim_particle, npart, false );
         for( unsigned int ipart=0; ipart<npart; ipart++ ) {
             int iparticle( ipart ); // Compatibility
@@ -708,7 +733,33 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
             ( *probesArray )( fieldlocation[9], iPart_MPI )=Rloc_fields;
             iPart_MPI++;
         }
-
+        
+        // Calculate Poynting flux on each point if needed
+        // PoyX
+        if( fieldlocation[14] < nFields ) {
+            for( unsigned int iPart_MPI = offset_in_MPI[ipatch]; iPart_MPI<maxPart_MPI; iPart_MPI++ ) {
+                ( *probesArray )( fieldlocation[14], iPart_MPI )
+                    = ( *probesArray )( fieldlocation[1], iPart_MPI ) * ( *probesArray )( fieldlocation[5], iPart_MPI )
+                    - ( *probesArray )( fieldlocation[2], iPart_MPI ) * ( *probesArray )( fieldlocation[4], iPart_MPI );
+            }
+        }
+        // PoyY
+        if( fieldlocation[15] < nFields ) {
+            for( unsigned int iPart_MPI = offset_in_MPI[ipatch]; iPart_MPI<maxPart_MPI; iPart_MPI++ ) {
+                ( *probesArray )( fieldlocation[15], iPart_MPI )
+                    = ( *probesArray )( fieldlocation[2], iPart_MPI ) * ( *probesArray )( fieldlocation[3], iPart_MPI )
+                    - ( *probesArray )( fieldlocation[0], iPart_MPI ) * ( *probesArray )( fieldlocation[5], iPart_MPI );
+            }
+        }
+        // PoyZ
+        if( fieldlocation[16] < nFields ) {
+            for( unsigned int iPart_MPI = offset_in_MPI[ipatch]; iPart_MPI<maxPart_MPI; iPart_MPI++ ) {
+                ( *probesArray )( fieldlocation[16], iPart_MPI )
+                    = ( *probesArray )( fieldlocation[0], iPart_MPI ) * ( *probesArray )( fieldlocation[4], iPart_MPI )
+                    - ( *probesArray )( fieldlocation[1], iPart_MPI ) * ( *probesArray )( fieldlocation[3], iPart_MPI );
+            }
+        }
+        
         // Interpolate the species-related fields
         for( unsigned int ispec=0; ispec<species_field_index.size(); ispec++ ) {
             unsigned int start = patch->EMfields->species_starts[ispec];
@@ -767,29 +818,47 @@ void DiagnosticProbes::run( SmileiMPI *smpi, VectorPatch &vecPatches, int timest
                 iPart_MPI++;
             } // END for ipart
         } // END if envelope
+        
+        // Accumulate the integral
+        if( time_integral ) {
+            patch->probes[probe_n]->integrated_data.resize( nFields );
+            double dt = patch->EMfields->timestep;
+            for( unsigned int i = 0; i < nFields; i++ ) {
+                patch->probes[probe_n]->integrated_data[i].resize( npart, 0. );
+                unsigned int iPart_MPI = offset_in_MPI[ipatch];
+                for( unsigned int ipart=0; ipart<npart; ipart++ ) {
+                    patch->probes[probe_n]->integrated_data[i][ipart] += dt * ( *probesArray )( i, iPart_MPI );
+                    ( *probesArray )( i, iPart_MPI ) =  patch->probes[probe_n]->integrated_data[i][ipart];
+                    iPart_MPI++;
+                }
+            }
+        }
+        
     } // END for ipatch
-
+    
     #pragma omp master
     {
-        // Define spaces
-        H5Space memspace( {(hsize_t)nFields, nPart_MPI}, {}, {} );
-        H5Space filespace( {(hsize_t)nFields, nPart_total_actual}, {0, offset_in_file[0]}, {(hsize_t)nFields, nPart_MPI} );
-        // Create new dataset for this timestep
-        H5Write d = file_->array( dataset_name, *(probesArray->data_), &filespace, &memspace, true );
-        // Write x_moved
-        d.attr( "x_moved", x_moved );
-        
-        delete probesArray;
-        if( flush_timeSelection->theTimeIsNow( timestep ) ) {
-            file_->flush();
+        if( timeSelection->theTimeIsNow( itime ) ) {
+            // Define spaces
+            H5Space memspace( {(hsize_t)nFields, nPart_MPI}, {}, {} );
+            H5Space filespace( {(hsize_t)nFields, nPart_total_actual}, {0, offset_in_file[0]}, {(hsize_t)nFields, nPart_MPI} );
+            // Create new dataset for this timestep
+            H5Write d = file_->array( dataset_name, *(probesArray->data_), &filespace, &memspace, true );
+            // Write x_moved
+            d.attr( "x_moved", x_moved );
+            
+            delete probesArray;
+            if( flush_timeSelection->theTimeIsNow( itime ) ) {
+                file_->flush();
+            }
         }
     }
     #pragma omp barrier
 }
 
-bool DiagnosticProbes::needsRhoJs( int timestep )
+bool DiagnosticProbes::needsRhoJs( int itime )
 {
-    return hasRhoJs && timeSelection->theTimeIsNow( timestep );
+    return hasRhoJs && timeSelection->theTimeIsNow( itime );
 }
 
 // SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI
