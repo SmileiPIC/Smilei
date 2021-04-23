@@ -22,6 +22,7 @@ Particles::Particles():
     Position.resize( 0 );
     Position_old.resize( 0 );
     Momentum.resize( 0 );
+    cell_keys.resize( 0 );
     is_test = false;
     isQuantumParameter = false;
     isMonteCarlo = false;
@@ -53,7 +54,7 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
     }
 
     resize( nParticles, nDim, keep_position_old );
-    cell_keys.resize( nParticles );
+    //cell_keys.resize( nParticles );
 
     if( double_prop.empty() ) {  // do this just once
 
@@ -148,6 +149,8 @@ void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
         Tau.reserve( n_part_max );
     }
 
+    cell_keys.reserve( n_part_max );
+
 }
 
 void Particles::initializeReserve( unsigned int npart_max, Particles &part )
@@ -195,6 +198,8 @@ void Particles::resize( unsigned int nParticles, unsigned int nDim, bool keep_po
         Tau.resize( nParticles, 0. );
     }
 
+    cell_keys.resize( nParticles, 0. );
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -214,6 +219,8 @@ void Particles::resize( unsigned int nParticles)
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         ( *uint64_prop[iprop] ).resize( nParticles, 0 );
     }
+
+    cell_keys.resize( nParticles, 0. );
 
 }
 
@@ -738,6 +745,8 @@ void Particles::createParticles( int nAdditionalParticles )
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         ( *uint64_prop[iprop] ).resize( nParticles+nAdditionalParticles, 0 );
     }
+    
+    cell_keys.resize( nParticles+nAdditionalParticles, 0);
 
 //MESSAGE("create2");
 }
@@ -772,7 +781,7 @@ void Particles::eraseParticlesWithMask( int istart, int iend, vector <int> & mas
 
     // At the end we resize particles
     resize(idest);
-    cell_keys.resize(idest);
+    //cell_keys.resize(idest);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -801,7 +810,7 @@ void Particles::eraseParticlesWithMask( int istart, int iend) {
 
     // At the end we resize particles
     resize(idest);
-    cell_keys.resize(idest);
+    //cell_keys.resize(idest);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
