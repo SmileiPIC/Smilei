@@ -298,7 +298,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, ithread, ener_iPart );
                     nrj_lost_per_thd[tid] += mass_ * ener_iPart;
 
-                    for( iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
+                    for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
@@ -323,7 +323,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, ithread, ener_iPart );
                     nrj_lost_per_thd[tid] += ener_iPart;
 
-                    for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                    for( iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {

@@ -22,7 +22,7 @@ PusherPonderomotivePositionBorisV::~PusherPonderomotivePositionBorisV()
     Lorentz Force + Ponderomotive force -- leap-frog (Boris-style) scheme, position advance
 **************************************************************************/
 
-void PusherPonderomotivePositionBorisV::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_ref )
+void PusherPonderomotivePositionBorisV::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset )
 {
 /////////// not vectorized
 
@@ -66,13 +66,13 @@ void PusherPonderomotivePositionBorisV::operator()( Particles &particles, Smilei
         charge_over_mass_sq      = ( double )( charge[ipart] )*one_over_mass_*( charge[ipart] )*one_over_mass_;
         
         // compute initial ponderomotive gamma
-        gamma0_sq = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + ( *( Phi_m+ipart-ipart_ref ) )*charge_over_mass_sq;
+        gamma0_sq = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + ( *( Phi_m+ipart-ipart_buffer_offset ) )*charge_over_mass_sq;
         gamma0    = sqrt( gamma0_sq ) ;
         
         // ponderomotive force for ponderomotive gamma advance (Grad Phi is interpolated in time, hence the division by 2)
-        pxsm = charge_sq_over_mass_dts4 * ( *( GradPhi_mx+ipart-ipart_ref ) ) / gamma0_sq ;
-        pysm = charge_sq_over_mass_dts4 * ( *( GradPhi_my+ipart-ipart_ref ) ) / gamma0_sq ;
-        pzsm = charge_sq_over_mass_dts4 * ( *( GradPhi_mz+ipart-ipart_ref ) ) / gamma0_sq ;
+        pxsm = charge_sq_over_mass_dts4 * ( *( GradPhi_mx+ipart-ipart_buffer_offset ) ) / gamma0_sq ;
+        pysm = charge_sq_over_mass_dts4 * ( *( GradPhi_my+ipart-ipart_buffer_offset ) ) / gamma0_sq ;
+        pzsm = charge_sq_over_mass_dts4 * ( *( GradPhi_mz+ipart-ipart_buffer_offset ) ) / gamma0_sq ;
         
         // update of gamma ponderomotive
         gamma_ponderomotive = gamma0 + ( pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart] ) ;

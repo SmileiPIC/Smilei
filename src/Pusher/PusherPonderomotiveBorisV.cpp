@@ -22,7 +22,7 @@ PusherPonderomotiveBorisV::~PusherPonderomotiveBorisV()
     Lorentz Force + Ponderomotive force -- leap-frog (Boris-style) scheme, momentum advance
 **************************************************************************/
 
-void PusherPonderomotiveBorisV::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_ref )
+void PusherPonderomotiveBorisV::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset )
 {
 
     std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );
@@ -56,24 +56,24 @@ void PusherPonderomotiveBorisV::operator()( Particles &particles, SmileiMPI *smp
     
     vector<double> dcharge(nparts);
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        dcharge[ipart-ipart_ref] = ( double )( charge[ipart] );
+        dcharge[ipart-ipart_buffer_offset] = ( double )( charge[ipart] );
     }
     
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         double psm[3], um[3];
         
-        charge_over_mass_dts2 = dcharge[ipart-ipart_ref]*one_over_mass_*dts2;
+        charge_over_mass_dts2 = dcharge[ipart-ipart_buffer_offset]*one_over_mass_*dts2;
         // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-        charge_sq_over_mass_sq_dts4 = ( dcharge[ipart-ipart_ref] )*( dcharge[ipart-ipart_ref] )*one_over_mass_*one_over_mass_*dts4;
+        charge_sq_over_mass_sq_dts4 = ( dcharge[ipart-ipart_buffer_offset] )*( dcharge[ipart-ipart_buffer_offset] )*one_over_mass_*one_over_mass_*dts4;
         
         // ponderomotive gamma buffered from susceptibility
         one_ov_gamma_ponderomotive = ( *( inv_gamma_ponderomotive+ipart ) );
         
         // init Half-acceleration in the electric field and ponderomotive force
-        psm[0] = charge_over_mass_dts2 * ( *( Ex+ipart-ipart_ref ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhix+ipart-ipart_ref ) ) * one_ov_gamma_ponderomotive;
-        psm[1] = charge_over_mass_dts2 * ( *( Ey+ipart-ipart_ref ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiy+ipart-ipart_ref ) ) * one_ov_gamma_ponderomotive;
-        psm[2] = charge_over_mass_dts2 * ( *( Ez+ipart-ipart_ref ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiz+ipart-ipart_ref ) ) * one_ov_gamma_ponderomotive;
+        psm[0] = charge_over_mass_dts2 * ( *( Ex+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhix+ipart-ipart_buffer_offset ) ) * one_ov_gamma_ponderomotive;
+        psm[1] = charge_over_mass_dts2 * ( *( Ey+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiy+ipart-ipart_buffer_offset ) ) * one_ov_gamma_ponderomotive;
+        psm[2] = charge_over_mass_dts2 * ( *( Ez+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiz+ipart-ipart_buffer_offset ) ) * one_ov_gamma_ponderomotive;
         
         um[0] = momentum[0][ipart] + psm[0];
         um[1] = momentum[1][ipart] + psm[1];
@@ -81,9 +81,9 @@ void PusherPonderomotiveBorisV::operator()( Particles &particles, SmileiMPI *smp
         
         // Rotation in the magnetic field, using updated gamma ponderomotive
         alpha = charge_over_mass_dts2 * one_ov_gamma_ponderomotive;
-        Tx    = alpha * ( *( Bx+ipart-ipart_ref ) );
-        Ty    = alpha * ( *( By+ipart-ipart_ref ) );
-        Tz    = alpha * ( *( Bz+ipart-ipart_ref ) );
+        Tx    = alpha * ( *( Bx+ipart-ipart_buffer_offset ) );
+        Ty    = alpha * ( *( By+ipart-ipart_buffer_offset ) );
+        Tz    = alpha * ( *( Bz+ipart-ipart_buffer_offset ) );
         Tx2   = Tx*Tx;
         Ty2   = Ty*Ty;
         Tz2   = Tz*Tz;

@@ -30,56 +30,47 @@ PusherPhoton::~PusherPhoton()
 ***********************************************************************/
 
 void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
-                               int istart, int iend, int ithread, int ipart_buffer_offset )
+                               int istart, int iend, int ithread, int ipart_ref )
 {
     // Inverse normalized energy
-    double *invgf = &( smpi->dynamics_invgf[ithread][0] );
+    std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
     
-    double* position_x = particles.getPtrPosition(0);
-    double* position_y = NULL;
-    double* position_z = NULL;
-    if (nDim_>1) {
-        position_y = particles.getPtrPosition(1);
-        if (nDim_>2) {
-            position_z = particles.getPtrPosition(2);
-        }
+    double *momentum[3];
+    for( int i = 0 ; i<3 ; i++ ) {
+        momentum[i] =  &( particles.momentum( i, 0 ) );
     }
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
-    
+    double *position[3];
+    for( int i = 0 ; i<nDim_ ; i++ ) {
+        position[i] =  &( particles.position( i, 0 ) );
+    }
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
     
-        invgf[ipart-ipart_buffer_offset] = 1. / sqrt( momentum_x[ipart]*momentum_x[ipart] +
-                                       momentum_y[ipart]*momentum_y[ipart] +
-                                       momentum_z[ipart]*momentum_z[ipart] );
+        ( *invgf )[ipart] = 1. / sqrt( momentum[0][ipart]*momentum[0][ipart] +
+                                       momentum[1][ipart]*momentum[1][ipart] +
+                                       momentum[2][ipart]*momentum[2][ipart] );
                                        
         // Move the photons
-        position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart-ipart_buffer_offset];
-        if (nDim_>1) {
-            position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart-ipart_buffer_offset];
-            if (nDim_>2) {
-                position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart-ipart_buffer_offset];
-            }
+        for( int i = 0 ; i<nDim_ ; i++ ) {
+            position[i][ipart]     += dt*momentum[i][ipart]*( *invgf )[ipart];
         }
         
     }
-    //
-    // if( vecto ) {
-    //     int *cell_keys;
-    //     particles.cell_keys.resize( iend-istart );
-    //     cell_keys = &( particles.cell_keys[0] );
-    //
-    //     #pragma omp simd
-    //     for( int ipart=istart ; ipart<iend; ipart++ ) {
-    //
-    //         for( int i = 0 ; i<nDim_ ; i++ ) {
-    //             cell_keys[ipart] *= nspace[i];
-    //             cell_keys[ipart] += round( ( position[i][ipart]-min_loc_vec[i] ) * dx_inv_[i] );
-    //         }
-    //
-    //     }
-    // }
+    
+    if( vecto ) {
+        int *cell_keys;
+        particles.cell_keys.resize( iend-istart );
+        cell_keys = &( particles.cell_keys[0] );
+        
+        #pragma omp simd
+        for( int ipart=istart ; ipart<iend; ipart++ ) {
+        
+            for( int i = 0 ; i<nDim_ ; i++ ) {
+                cell_keys[ipart] *= nspace[i];
+                cell_keys[ipart] += round( ( position[i][ipart]-min_loc_vec[i] ) * dx_inv_[i] );
+            }
+            
+        }
+    }
     
 }
