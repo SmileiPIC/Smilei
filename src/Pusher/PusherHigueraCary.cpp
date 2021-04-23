@@ -67,9 +67,9 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
     
-    #pragma omp simd
+    #pragma omp simd private(pxsm,pysm,pzsm,beta2,umx,umy,umz,gfm2,Tx,Ty,Tz,Tx2,Ty2,Tz2,local_invgf)
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass_dts2 = ( double )( charge[ipart- ipart_buffer_offset] )*one_over_mass_*dts2;
+        charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
         
         // init Half-acceleration in the electric field
         pxsm = charge_over_mass_dts2*( *( Ex+ipart- ipart_buffer_offset ) );

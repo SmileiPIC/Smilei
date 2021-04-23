@@ -66,9 +66,9 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
     
-    #pragma omp simd
+    #pragma omp simd private(s,us2,alpha,upx,upy,upz,Tx,Ty,Tz,pxsm,pysm,pzsm)
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass_dts2 = ( double )( charge[ipart-ipart_buffer_offset] )*one_over_mass_*dts2;
+        charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
         
         // ____________________________________________
         // Part I: Computation of uprime
@@ -101,7 +101,8 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
         
         // s is sigma
         s     = alpha - T2;
-        us2   = pow( upx*Tx + upy*Ty + upz*Tz, 2.0 );
+        us2   = upx*Tx + upy*Ty + upz*Tz;
+        us2   = us2*us2;
         
         // alpha becomes 1/gamma^{i+1}
         alpha = 1.0/sqrt( 0.5*( s + sqrt( s*s + 4.0*( T2 + us2 ) ) ) );
