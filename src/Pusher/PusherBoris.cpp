@@ -36,7 +36,6 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double local_invgf;
     //int IX;
     
-<<<<<<< HEAD
     double* position_x = particles.getPtrPosition(0);
     double* position_y = NULL;
     double* position_z = NULL;
@@ -53,21 +52,6 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     short *charge = particles.getPtrCharge();
 
     int nparts = particles.last_index.back();
-=======
-    //int* cell_keys;
-    
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
-    }
-    double *position[3];
-    for( int i = 0 ; i<nDim_ ; i++ ) {
-        position[i] =  &( particles.position( i, 0 ) );
-    }
-    short *charge = &( particles.charge( 0 ) );
-    
-    int nparts = Epart->size()/3;
->>>>>>> origin/develop
     double *Ex = &( ( *Epart )[0*nparts] );
     double *Ey = &( ( *Epart )[1*nparts] );
     double *Ez = &( ( *Epart )[2*nparts] );
@@ -75,18 +59,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
     
-<<<<<<< HEAD
 #ifndef _GPU
-=======
-    //particles.cell_keys.resize(nparts);
-    //cell_keys = &( particles.cell_keys[0]);
-    
-    vector<double> dcharge(nparts);
-    for( int ipart=istart ; ipart<iend; ipart++ ) {
-        dcharge[ipart-ipart_ref] = ( double )( charge[ipart] );
-    }
-    
->>>>>>> origin/develop
     #pragma omp simd
 #else
     int np = iend-istart;
