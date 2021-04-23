@@ -49,6 +49,7 @@ public:
         // Particle of matter
         if( species->mass_ > 0 ) {
             // assign the correct Pusher to Push
+            // Pusher of Boris
             if( species->pusher_name_ == "boris" ) {
                 // if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push = new PusherBoris( params, species );
@@ -77,15 +78,14 @@ public:
                     Push = new PusherPonderomotiveBorisV( params, species );
                 }
 #endif
+            // Non-relativistic Boris pusher
             } else if( species->pusher_name_ == "borisnr" ) {
                 Push = new PusherBorisNR( params, species );
             }
-            /*else if ( species->pusher_name_ == "rrll" )
-            {
-                Push = new PusherRRLL( params, species );
-            }*/
+            // Pusher of J.L. Vay
             else if( species->pusher_name_ == "vay" ) {
                 Push = new PusherVay( params, species );
+            // Pusher of Higuera Cary
             } else if( species->pusher_name_ == "higueracary" ) {
                 Push = new PusherHigueraCary( params, species );
             } else {

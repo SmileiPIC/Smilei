@@ -22,8 +22,7 @@ public:
     PusherHigueraCary( Params &params, Species *species );
     ~PusherHigueraCary();
     //! Overloading of () operator
-    virtual void operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_ref = 0 );
+    virtual void operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset = 0 );
 };
 
 #endif
-

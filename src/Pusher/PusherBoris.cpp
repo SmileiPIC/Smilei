@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <cmath>
+#ifdef _GPU
+#include <accelmath.h>
+#endif
 
 #include "Species.h"
 
@@ -22,7 +25,7 @@ PusherBoris::~PusherBoris()
     Lorentz Force -- leap-frog (Boris) scheme
 ***********************************************************************/
 
-void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_ref )
+void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset )
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
@@ -30,22 +33,26 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     
     double charge_over_mass_dts2;
     double inv_det_T, Tx, Ty, Tz;
+    double umx, umy, umz, upx, upy, upz;
+    double pxsm, pysm, pzsm;
     double local_invgf;
-    //int IX;
     
-    //int* cell_keys;
-    
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
+    double* position_x = particles.getPtrPosition(0);
+    double* position_y = NULL;
+    double* position_z = NULL;
+    if (nDim_>1) {
+        position_y = particles.getPtrPosition(1);
+        if (nDim_>2) {
+            position_z = particles.getPtrPosition(2);
+        }
     }
-    double *position[3];
-    for( int i = 0 ; i<nDim_ ; i++ ) {
-        position[i] =  &( particles.position( i, 0 ) );
-    }
-    short *charge = &( particles.charge( 0 ) );
-    
-    int nparts = Epart->size()/3;
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+
+    short *charge = particles.getPtrCharge();
+
+    int nparts = particles.last_index.back();
     double *Ex = &( ( *Epart )[0*nparts] );
     double *Ey = &( ( *Epart )[1*nparts] );
     double *Ez = &( ( *Epart )[2*nparts] );
@@ -53,66 +60,51 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
     
-    //particles.cell_keys.resize(nparts);
-    //cell_keys = &( particles.cell_keys[0]);
-    
-    vector<double> dcharge(nparts);
-    for( int ipart=istart ; ipart<iend; ipart++ ) {
-        dcharge[ipart-ipart_ref] = ( double )( charge[ipart] );
-    }
-    
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        double psm[3], um[3];
         
-        charge_over_mass_dts2 = dcharge[ipart-ipart_ref]*one_over_mass_*dts2;
+        charge_over_mass_dts2 = ( double )( charge[ipart] - ipart_buffer_offset )*one_over_mass_*dts2;
         
         // init Half-acceleration in the electric field
-        psm[0] = charge_over_mass_dts2*( *( Ex+ipart-ipart_ref ) );
-        psm[1] = charge_over_mass_dts2*( *( Ey+ipart-ipart_ref ) );
-        psm[2] = charge_over_mass_dts2*( *( Ez+ipart-ipart_ref ) );
+        pxsm = charge_over_mass_dts2*( *( Ex+ipart-ipart_buffer_offset ) );
+        pysm = charge_over_mass_dts2*( *( Ey+ipart-ipart_buffer_offset ) );
+        pzsm = charge_over_mass_dts2*( *( Ez+ipart-ipart_buffer_offset ) );
         
         //(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);
-        um[0] = momentum[0][ipart] + psm[0];
-        um[1] = momentum[1][ipart] + psm[1];
-        um[2] = momentum[2][ipart] + psm[2];
+        umx = momentum_x[ipart] + pxsm;
+        umy = momentum_y[ipart] + pysm;
+        umz = momentum_z[ipart] + pzsm;
         
         // Rotation in the magnetic field
-        local_invgf = charge_over_mass_dts2 / sqrt( 1.0 + um[0]*um[0] + um[1]*um[1] + um[2]*um[2] );
-        Tx    = local_invgf * ( *( Bx+ipart-ipart_ref ) );
-        Ty    = local_invgf * ( *( By+ipart-ipart_ref ) );
-        Tz    = local_invgf * ( *( Bz+ipart-ipart_ref ) );
+        local_invgf = charge_over_mass_dts2 / sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
+        Tx    = local_invgf * ( *( Bx+ipart-ipart_buffer_offset ) );
+        Ty    = local_invgf * ( *( By+ipart-ipart_buffer_offset ) );
+        Tz    = local_invgf * ( *( Bz+ipart-ipart_buffer_offset ) );
         inv_det_T = 1.0/( 1.0+Tx*Tx+Ty*Ty+Tz*Tz );
+
         
-        psm[0] += ( ( 1.0+Tx*Tx-Ty*Ty-Tz*Tz )* um[0]  +      2.0*( Tx*Ty+Tz )* um[1]  +      2.0*( Tz*Tx-Ty )* um[2] )*inv_det_T;
-        psm[1] += ( 2.0*( Tx*Ty-Tz )* um[0]  + ( 1.0-Tx*Tx+Ty*Ty-Tz*Tz )* um[1]  +      2.0*( Ty*Tz+Tx )* um[2] )*inv_det_T;
-        psm[2] += ( 2.0*( Tz*Tx+Ty )* um[0]  +      2.0*( Ty*Tz-Tx )* um[1]  + ( 1.0-Tx*Tx-Ty*Ty+Tz*Tz )* um[2] )*inv_det_T;
+        upx = ( ( 1.0+Tx*Tx-Ty*Ty-Tz*Tz )* umx  +      2.0*( Tx*Ty+Tz )* umy  +      2.0*( Tz*Tx-Ty )* umz )*inv_det_T;
+        upy = ( 2.0*( Tx*Ty-Tz )* umx  + ( 1.0-Tx*Tx+Ty*Ty-Tz*Tz )* umy  +      2.0*( Ty*Tz+Tx )* umz )*inv_det_T;
+        upz = ( 2.0*( Tz*Tx+Ty )* umx  +      2.0*( Ty*Tz-Tx )* umy  + ( 1.0-Tx*Tx-Ty*Ty+Tz*Tz )* umz )*inv_det_T;
         
         // finalize Half-acceleration in the electric field
-        local_invgf = 1. / sqrt( 1.0 + psm[0]*psm[0] + psm[1]*psm[1] + psm[2]*psm[2] );
-        invgf[ipart-ipart_ref] = local_invgf;
+        pxsm += upx;
+        pysm += upy;
+        pzsm += upz;
+        invgf[ipart-ipart_buffer_offset] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
         
-        momentum[0][ipart] = psm[0];
-        momentum[1][ipart] = psm[1];
-        momentum[2][ipart] = psm[2];
+        momentum_x[ipart] = pxsm;
+        momentum_y[ipart] = pysm;
+        momentum_z[ipart] = pzsm;
         
         // Move the particle
-        local_invgf *= dt;
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            position[i][ipart]     += psm[i]*local_invgf;
+
+        position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart-ipart_buffer_offset];
+        if (nDim_>1) {
+            position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart-ipart_buffer_offset];
+            if (nDim_>2) {
+                position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart-ipart_buffer_offset];
+            }
         }
-        
     }
-    
-    // This is temporarily moved to SpeciesV.cpp
-    //#pragma omp simd
-    //for (int ipart=istart ; ipart<iend; ipart++ )  {
-    //
-    //    for ( int i = 0 ; i<nDim_ ; i++ ){
-    //        cell_keys[ipart] *= nspace[i];
-    //        cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
-    //    }
-    //
-    //}
-    
 }
