@@ -311,10 +311,10 @@ void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
 
 
 
-bool DiagnosticScalar::prepare( int timestep )
+bool DiagnosticScalar::prepare( int itime )
 {
     // At the right timestep, reset the scalars
-    if( timeSelection->theTimeIsNow( timestep ) ) {
+    if( timeSelection->theTimeIsNow( itime ) ) {
         for( unsigned int iscalar=0 ; iscalar<allScalars.size() ; iscalar++ ) {
             allScalars[iscalar]->reset();
         }
@@ -325,15 +325,15 @@ bool DiagnosticScalar::prepare( int timestep )
 } // END prepare
 
 
-void DiagnosticScalar::run( Patch *patch, int timestep, SimWindow *simWindow )
+void DiagnosticScalar::run( Patch *patch, int itime, SimWindow *simWindow )
 {
 
     // Must keep track of Poynting flux even without diag
     patch->EMfields->computePoynting();
     
     // Compute all scalars when needed
-    if( timeSelection->theTimeIsNow( timestep ) && timestep>latest_timestep ) {
-        compute( patch, timestep );
+    if( timeSelection->theTimeIsNow( itime ) && itime>latest_timestep ) {
+        compute( patch, itime );
     }
     
 } // END run
@@ -397,7 +397,7 @@ void DiagnosticScalar::write( int itime, SmileiMPI *smpi )
 
 
 //! Compute the various scalars when requested
-void DiagnosticScalar::compute( Patch *patch, int timestep )
+void DiagnosticScalar::compute( Patch *patch, int itime )
 {
     ElectroMagn *EMfields = patch->EMfields;
     std::vector<Species *> &vecSpecies = patch->vecSpecies;
@@ -733,9 +733,9 @@ bool DiagnosticScalar::allowedKey( string key )
 }
 
 
-bool DiagnosticScalar::needsRhoJs( int timestep )
+bool DiagnosticScalar::needsRhoJs( int itime )
 {
-    return timeSelection->theTimeIsNow( timestep );
+    return timeSelection->theTimeIsNow( itime );
 }
 
 // SUPPOSED TO BE EXECUTED ONLY BY MASTER MPI

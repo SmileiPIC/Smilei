@@ -15,11 +15,11 @@ public :
     //! Default destructor
     ~DiagnosticScreen();
     
-    bool prepare( int timestep ) override;
+    bool prepare( int itime ) override;
     
-    void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
+    void run( Patch *patch, int itime, SimWindow *simWindow ) override;
     
-    bool writeNow( int timestep ) override;
+    bool writeNow( int itime ) override;
     
     //! Clear the array
     void clear() override;

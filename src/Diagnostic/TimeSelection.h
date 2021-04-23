@@ -35,24 +35,24 @@ public:
     ~TimeSelection() {};
     
     //! Tell whether the current timestep is within the selection
-    bool theTimeIsNow( int timestep );
-    //! Get the last answer of theTimeIsNow(int timestep)
+    bool theTimeIsNow( int itime );
+    //! Get the last answer of theTimeIsNow(int itime)
     inline bool theTimeIsNow()
     {
         return TheTimeIsNow;
     };
     
     //! Get the next timestep within the selection
-    int nextTime( int timestep );
-    //! Get the last answer of nextTime(int timestep)
+    int nextTime( int itime );
+    //! Get the last answer of nextTime(int itime)
     inline int nextTime()
     {
         return NextTime;
     };
     
     //! Get the previous timestep within the selection
-    int previousTime( int timestep );
-    //! Get the last answer of previousTime(int timestep)
+    int previousTime( int itime );
+    //! Get the last answer of previousTime(int itime)
     inline int previousTime()
     {
         return PreviousTime;
@@ -65,12 +65,12 @@ public:
     };
     
     //! Get the number of occurrences before the given timestep
-    int howManyTimesBefore( int timestep );
+    int howManyTimesBefore( int itime );
     
     //! Tell whether the timestep is between start and end
-    inline bool inProgress( int timestep )
+    inline bool inProgress( int itime )
     {
-        return timestep>=start && timestep<=end;
+        return itime>=start && itime<=end;
     };
     
     //! Tell whether this is an empty selection (no timesteps)
@@ -102,11 +102,11 @@ private:
     //! Width of each group
     double groupWidth;
     
-    //! Last answer of theTimeIsNow(int timestep)
+    //! Last answer of theTimeIsNow(int itime)
     bool TheTimeIsNow;
-    //! Last answer of nextTime(int timestep)
+    //! Last answer of nextTime(int itime)
     int NextTime;
-    //! Last answer of previousTime(int timestep)
+    //! Last answer of previousTime(int itime)
     int PreviousTime;
     
 };

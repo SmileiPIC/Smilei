@@ -29,13 +29,13 @@ public :
     
     void closeFile() override;
     
-    bool prepare( int timestep ) override;
+    bool prepare( int itime ) override;
     
-    virtual void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
+    virtual void run( Patch *patch, int itime, SimWindow *simWindow ) override;
     
-    virtual bool writeNow( int timestep );
+    virtual bool writeNow( int itime );
     
-    void write( int timestep, SmileiMPI *smpi ) override;
+    void write( int itime, SmileiMPI *smpi ) override;
     
     //! Clear the array
     virtual void clear();

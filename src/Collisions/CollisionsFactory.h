@@ -297,7 +297,7 @@ public:
         }
         
         // new Collisions object
-        if( sgroup[0].size()>1 || sgroup[1].size()>1 ) {
+        // if( sgroup[0].size()>1 || sgroup[1].size()>1 ) {
             return new Collisions(
                        params,
                        n_collisions,
@@ -309,19 +309,19 @@ public:
                        NuclearReaction,
                        filename
                    );
-        } else {
-            return new CollisionsSingle(
-                       params,
-                       n_collisions,
-                       sgroup[0],
-                       sgroup[1],
-                       clog, clog_factor, intra,
-                       debug_every,
-                       Ionization,
-                       NuclearReaction,
-                       filename
-                   );
-        }
+        // } else {
+        //     return new CollisionsSingle(
+        //                params,
+        //                n_collisions,
+        //                sgroup[0],
+        //                sgroup[1],
+        //                clog, clog_factor, intra,
+        //                debug_every,
+        //                Ionization,
+        //                NuclearReaction,
+        //                filename
+        //            );
+        // }
     }
     
     
