@@ -60,6 +60,26 @@ CollisionalNuclearReaction::~CollisionalNuclearReaction()
     product_particles_.clear();
 }
 
+
+bool CollisionalNuclearReaction::occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &ekin, double &log_ekin, double &W )
+{
+    // Interpolate the total cross-section at some value of ekin = m1(g1-1) + m2(g2-1)
+    ekin = m1 * (g1-1.) + m2 * (g2-1.);
+    log_ekin = log( ekin );
+    double cs = crossSection( log_ekin );
+    
+    // Calculate probability for fusion
+    double prob = coeff * cs * rate_multiplier_;
+    tot_probability_ += prob;
+    if( U > exp( -prob ) ) {
+        W /= rate_multiplier_;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
 // Finish the reaction
 void CollisionalNuclearReaction::finish(
     Params &params, Patch *patch, std::vector<Diagnostic *> &localDiags,
