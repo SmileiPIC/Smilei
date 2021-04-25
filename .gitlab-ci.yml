@@ -89,7 +89,7 @@ runAM:
   only:
     - develop
     - laser_y
-    - pusher_cleaning
+    #- pusher_cleaning
     
   script:
     # Move in test dir
@@ -116,7 +116,7 @@ runCollisions:
   only:
     - develop
     - laser_y
-    - pusher_cleaning
+    #- pusher_cleaning
     
   script:
     # Move in test dir
