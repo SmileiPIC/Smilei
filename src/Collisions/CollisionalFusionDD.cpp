@@ -43,11 +43,9 @@ CollisionalFusionDD::CollisionalFusionDD( CollisionalNuclearReaction *NR )
 }
 
 
-bool CollisionalFusionDD::occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &ekin, double &log_ekin, double &W )
+double CollisionalFusionDD::crossSection( double log_ekin )
 {
     // Interpolate the total cross-section at some value of ekin = m1(g1-1) + m2(g2-1)
-    ekin = m1 * (g1-1.) + m2 * (g2-1.);
-    log_ekin = log( ekin );
     double x = a2*( a1 + log_ekin );
     double cs;
     // if energy below Emin, approximate to 0.
@@ -69,16 +67,7 @@ bool CollisionalFusionDD::occurs( double U, double coeff, double m1, double m2, 
             ( DB_log_crossSection[npoints-1]-DB_log_crossSection[npoints-2] )*a + DB_log_crossSection[npoints-1]
         );
     }
-    
-    // Calculate probability for fusion
-    double prob = coeff * cs * rate_multiplier_;
-    tot_probability_ += prob;
-    if( U > exp( -prob ) ) {
-        W /= rate_multiplier_;
-        return true;
-    } else {
-        return false;
-    }
+    return cs;
 }
 
 void CollisionalFusionDD::makeProducts(

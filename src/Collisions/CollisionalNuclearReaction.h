@@ -24,8 +24,10 @@ public:
     virtual void prepare() {
         tot_probability_ = 0.;
     };
+    //! Calculates the cross-section vs energy
+    virtual double crossSection( double log_ekin ) = 0;
     //! Test the occurence of the nuclear reaction
-    virtual bool occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &etot, double &log_ekin, double &W ) = 0;
+    virtual bool occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &etot, double &log_ekin, double &W );
     //! Prepare the products of the reaction
     virtual void makeProducts( double U, double ekin, double log_ekin, double q, Particles *&p3, Particles *&p4, double &p3_COM, double &p4_COM, double &q3, double &q4, double &cosX ) = 0;
     //! Finish the nuclear reaction and put new electrons in place
@@ -61,6 +63,7 @@ public:
     ~CollisionalNoNuclearReaction() {};
     
     void prepare() override {};
+    double crossSection( double log_ekin ) override { return 0.; };
     bool occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &etot, double &log_ekin, double &W ) override {
         return false;
     };
