@@ -415,7 +415,7 @@ def run_ruche(command, dir):
             sys.exit(2)
     if VERBOSE:
         print( "Submitted job with command `"+command+"`")
-        print( " - duration: {} s".format(max_time_seconds))
+        print( " -> max duration: {} s".format(max_time_seconds))
     while ( EXIT_STATUS == "100" ) :
         sleep(5)
         exit_status_fd = open(dir+s+"exit_status_file", "r+")
@@ -511,16 +511,16 @@ def RUN_LLR(command, dir):
     if VERBOSE:
         print( "Submitted job with command `"+command+"`")
         print( " - duration: {} s".format(max_time_seconds))
-    current_time = 0
-    while ( EXIT_STATUS == "100" and current_time < max_time_seconds) :
+    # current_time = 0
+    while ( EXIT_STATUS == "100") :# and current_time < max_time_seconds) :
         sleep(5)
-        current_time += 5
+        # current_time += 5
         exit_status_fd = open(dir+s+"exit_status_file", "r+")
         EXIT_STATUS = exit_status_fd.readline()
         exit_status_fd.close()
-    if ( current_time > max_time_seconds ):
-        print(  "Max time exceeded for command `"+command+"`")
-        sys.exit(2)
+    # if ( current_time > max_time_seconds ):
+    #     print(  "Max time exceeded for command `"+command+"`")
+    #     sys.exit(2)
     if ( int(EXIT_STATUS) != 0 )  :
         if VERBOSE :
             print(  "Execution failed for command `"+command+"`")
