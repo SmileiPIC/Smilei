@@ -58,7 +58,12 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
 
     short *charge = particles.getPtrCharge();
     
-    int nparts = particles.last_index.back();
+    int nparts;
+    if (vecto) {
+        nparts = Epart->size()/3;
+    } else {
+        nparts = particles.size();
+    }
     double *Ex = &( ( *Epart )[0*nparts] );
     double *Ey = &( ( *Epart )[1*nparts] );
     double *Ez = &( ( *Epart )[2*nparts] );
@@ -81,7 +86,7 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
         // Add Electric field
         upx = momentum_x[ipart] + 2.*charge_over_mass_dts2*( *( Ex+ipart-ipart_buffer_offset ) );
         upy = momentum_y[ipart] + 2.*charge_over_mass_dts2*( *( Ey+ipart-ipart_buffer_offset ) );
-        upz = momentum_z[ipart] + 2.*charge_over_mass_dts2*( *( Ez+ipart -ipart_buffer_offset) );
+        upz = momentum_z[ipart] + 2.*charge_over_mass_dts2*( *( Ez+ipart-ipart_buffer_offset ) );
         
         // Add magnetic field
         Tx  = charge_over_mass_dts2* ( *( Bx+ipart-ipart_buffer_offset ) );

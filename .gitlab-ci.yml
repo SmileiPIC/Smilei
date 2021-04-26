@@ -13,7 +13,7 @@ install:
   only:
     - develop
     - laser_y
-#    - pusher_cleaning
+    - pusher_cleaning
     
   script:
     # Force workdir cleaning in case of retried
@@ -33,7 +33,7 @@ compile_default:
   only:
     - develop
     - laser_y
-#    - pusher_cleaning
+    - pusher_cleaning
     
   script:
     # Move in test dir
@@ -46,7 +46,7 @@ run1D:
   only:
     - develop
     - laser_y
-#    - pusher_cleaning
+    - pusher_cleaning
     
   script:
     # Move in test dir
@@ -60,7 +60,7 @@ run2D:
   only:
     - develop
     - laser_y
-#    - pusher_cleaning
+    - pusher_cleaning
 
   script:
     # Move in test dir
@@ -75,7 +75,7 @@ run3D:
   only:
     - develop
     - laser_y
-#    - pusher_cleaning
+    - pusher_cleaning
 
   script:
     # Move in test dir
@@ -103,7 +103,7 @@ runV:
   only:
     - develop
     - laser_y
-#    - pusher_cleaning
+    - pusher_cleaning
 
   script:
     # Move in test dir
