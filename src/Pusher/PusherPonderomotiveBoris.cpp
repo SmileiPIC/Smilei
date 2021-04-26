@@ -42,7 +42,13 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     
     short *charge = particles.getPtrCharge();
     
-    int nparts = particles.size();
+    int nparts;
+    if (vecto) {
+        nparts = Epart->size()/3;
+    } else {
+        nparts = particles.size();
+    }
+    
     double *Ex       = &( ( *Epart )[0*nparts] );
     double *Ey       = &( ( *Epart )[1*nparts] );
     double *Ez       = &( ( *Epart )[2*nparts] );

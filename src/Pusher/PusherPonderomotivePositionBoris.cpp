@@ -34,15 +34,21 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
     double gamma0, gamma0_sq, gamma_ponderomotive;
     double pxsm, pysm, pzsm;
     
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    
+    double* position_x = particles.getPtrPosition(0);
+    double* position_y = NULL;
+    double* position_z = NULL;
+    if (nDim_>1) {
+        position_y = particles.getPtrPosition(1);
+        if (nDim_>2) {
+            position_z = particles.getPtrPosition(2);
+        }
     }
-    double *position[3];
-    for( int i = 0 ; i<nDim_ ; i++ ) {
-        position[i] =  &( particles.position( i, 0 ) );
-    }
-    short *charge = &( particles.charge( 0 ) );
+    
+    short *charge = particles.getPtrCharge( ) ;
     
     int nparts = particles.size();
     
@@ -60,7 +66,7 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
         charge_sq_over_mass_sq      = ( double )( charge[ipart] )*one_over_mass_*( charge[ipart] )*one_over_mass_;
         
         // compute initial ponderomotive gamma
-        gamma0_sq = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + ( *( Phi_m+ipart ) )*charge_sq_over_mass_sq ;
+        gamma0_sq = 1.0 + momentum_x[ipart]*momentum_x[ipart] + momentum_y[ipart]*momentum_y[ipart] + momentum_z[ipart]*momentum_z[ipart] + ( *( Phi_m+ipart ) )*charge_sq_over_mass_sq ;
         gamma0    = sqrt( gamma0_sq ) ;
         // ponderomotive force for ponderomotive gamma advance (Grad Phi is interpolated in time, hence the division by 2)
         pxsm = charge_sq_over_mass_dts4 * ( *( GradPhi_mx+ipart ) ) / gamma0_sq ;
@@ -68,12 +74,16 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
         pzsm = charge_sq_over_mass_dts4 * ( *( GradPhi_mz+ipart ) ) / gamma0_sq ;
         
         // update of gamma ponderomotive
-        gamma_ponderomotive = gamma0 + ( pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart] ) ;
-        ( *invgf )[ipart] = 1. / gamma_ponderomotive;
+        gamma_ponderomotive = gamma0 + ( pxsm*momentum_x[ipart]+pysm*momentum_y[ipart]+pzsm*momentum_z[ipart] ) ;
+        ( *invgf )[ipart] = 1.0 / gamma_ponderomotive;
         
         // Move the particle
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            position[i][ipart]     += dt*momentum[i][ipart]/gamma_ponderomotive;
+        position_x[ipart] += dt*momentum_x[ipart]/gamma_ponderomotive;
+        if (nDim_>1) {
+            position_y[ipart] += dt*momentum_y[ipart]/gamma_ponderomotive;
+            if (nDim_>2) {
+                position_z[ipart] += dt*momentum_z[ipart]/gamma_ponderomotive;
+            }
         }
         
     } // end loop on particles
