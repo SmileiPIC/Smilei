@@ -245,6 +245,8 @@ for opt, arg in options:
         else:
             SMILEI_LOGS = INITIAL_DIRECTORY + s + arg + s
 
+max_time_seconds = np.sum(np.array(max_time.split(":"))*[3600,60,1])
+
 if GENERATE and SHOWDIFF:
     usage()
     sys.exit(4)
@@ -413,6 +415,7 @@ def run_ruche(command, dir):
             sys.exit(2)
     if VERBOSE:
         print( "Submitted job with command `"+command+"`")
+        print( " - duration: {} s".format(max_time_seconds))
     while ( EXIT_STATUS == "100" ) :
         sleep(5)
         exit_status_fd = open(dir+s+"exit_status_file", "r+")
@@ -507,11 +510,17 @@ def RUN_LLR(command, dir):
             sys.exit(2)
     if VERBOSE:
         print( "Submitted job with command `"+command+"`")
-    while ( EXIT_STATUS == "100" ) :
+        print( " - duration: {} s".format(max_time_seconds))
+    current_time = 0
+    while ( EXIT_STATUS == "100" and current_time < max_time_seconds) :
         sleep(5)
+        current_time += 5
         exit_status_fd = open(dir+s+"exit_status_file", "r+")
         EXIT_STATUS = exit_status_fd.readline()
         exit_status_fd.close()
+    if ( current_time > max_time_seconds ):
+        print(  "Max time exceeded for command `"+command+"`")
+        sys.exit(2)
     if ( int(EXIT_STATUS) != 0 )  :
         if VERBOSE :
             print(  "Execution failed for command `"+command+"`")
