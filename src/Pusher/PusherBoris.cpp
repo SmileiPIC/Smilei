@@ -54,7 +54,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double* momentum_y = particles.getPtrMomentum(1);
     double* momentum_z = particles.getPtrMomentum(2);
     
-    short *charge = &( particles.charge( 0 ) );
+    short *charge = particles.getPtrCharge();
     
     int nparts;
     if (vecto) {
