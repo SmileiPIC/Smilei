@@ -69,8 +69,8 @@ public:
                 if( !species->ponderomotive_dynamics ) {
                     ERROR( "if ponderomotive_boris pusher is chosen for a species, the flag ponderomotive_dynamics for that species must be set to true." );
                 }
-                //
-                // if( !species->vectorized_operators && !params.cell_sorting ) {
+                
+                if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push = new PusherPonderomotiveBoris( params, species );
                 }
 #ifdef _VECTO
