@@ -354,17 +354,14 @@ def run_ruche(command, dir):
         NODES=int(ceil(MPI/2.))
         PPN = 20
         exec_script_desc.write(
-            "#PBS -l nodes="+str(NODES)+":ppn="+str(PPN)+" \n"
-            +"#PBS -q default \n"
-            +"#PBS -j oe\n"
-            +"#!/bin/bash\n"
+            "#!/bin/bash\n"
             +"#SBATCH --job-name=smilei\n"
             +"#SBATCH --nodes="+str(NODES)+"\n"
             +"#SBATCH --ntasks="+str(MPI)+"\n"
             +"#SBATCH --cpus-per-task="+str(OMP)+"\n"
             +"#SBATCH --output=output\n"
             +"#SBATCH --error=error\n"
-            +"#SBATCH --time=00:20:00\n"
+            +"#SBATCH --time=00:02:00\n"
             +"#SBATCH --partition=cpu_short\n"
             +"module purge\n"
             +"module load zlib/1.2.9/gcc-9.2.0\n"
@@ -586,11 +583,11 @@ elif "ruche" in HOSTNAME:
         sys.exit(4)
     NODES=int(ceil(MPI/2.))
     NPERSOCKET = 1
-    COMPILE_COMMAND = str(MAKE)+' -j 20 ruche > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_COMMAND = str(MAKE)+' -j 20 machine=ruche > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-    RUN_COMMAND ="srun ./smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
-    RUN = RUN_RUCHE
+    RUN_COMMAND ="srun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+    RUN = run_ruche
 elif POINCARE in HOSTNAME :
     #COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
     #CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
