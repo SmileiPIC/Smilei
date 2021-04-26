@@ -245,7 +245,7 @@ for opt, arg in options:
         else:
             SMILEI_LOGS = INITIAL_DIRECTORY + s + arg + s
 
-max_time_seconds = np.sum(np.array(max_time.split(":"))*[3600,60,1])
+max_time_seconds = np.sum(np.array(max_time.split(":"),dtype=int)*np.array([3600,60,1]))
 
 if GENERATE and SHOWDIFF:
     usage()
