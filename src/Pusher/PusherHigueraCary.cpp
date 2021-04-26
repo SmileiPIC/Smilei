@@ -36,7 +36,12 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     
-    int nparts = particles.size();
+    int nparts;
+    if (vecto) {
+        nparts = Epart->size()/3;
+    } else {
+        nparts = particles.size();
+    }
     double *Ex = &( ( *Epart )[0*nparts] );
     double *Ey = &( ( *Epart )[1*nparts] );
     double *Ez = &( ( *Epart )[2*nparts] );
@@ -44,7 +49,7 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
     
-    std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
+    double *invgf = &( smpi->dynamics_invgf[ithread][0] );
     
     double charge_over_mass_dts2;
     double umx, umy, umz, upx, upy, upz, gfm2;
@@ -73,9 +78,9 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
         
         // init Half-acceleration in the electric field
-        pxsm = charge_over_mass_dts2*( *( Ex+ipart ) );
-        pysm = charge_over_mass_dts2*( *( Ey+ipart ) );
-        pzsm = charge_over_mass_dts2*( *( Ez+ipart ) );
+        pxsm = charge_over_mass_dts2*( *( Ex+ipart-ipart_buffer_offset ) );
+        pysm = charge_over_mass_dts2*( *( Ey+ipart-ipart_buffer_offset ) );
+        pzsm = charge_over_mass_dts2*( *( Ez+ipart-ipart_buffer_offset ) );
         
         //(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);
         umx = momentum_x[ipart] + pxsm;
@@ -87,9 +92,9 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         gfm2 = ( 1.0 + umx*umx + umy*umy + umz*umz );
         
         // Equivalent of betax,betay,betaz in the paper
-        Tx    = charge_over_mass_dts2 * ( *( Bx+ipart ) );
-        Ty    = charge_over_mass_dts2 * ( *( By+ipart ) );
-        Tz    = charge_over_mass_dts2 * ( *( Bz+ipart ) );
+        Tx    = charge_over_mass_dts2 * ( *( Bx+ipart-ipart_buffer_offset ) );
+        Ty    = charge_over_mass_dts2 * ( *( By+ipart-ipart_buffer_offset ) );
+        Tz    = charge_over_mass_dts2 * ( *( Bz+ipart-ipart_buffer_offset ) );
         
         // beta**2
         beta2 = Tx*Tx + Ty*Ty + Tz*Tz;
@@ -120,7 +125,7 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         pzsm += upz;
         
         // final gamma factor
-        ( *invgf )[ipart] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        invgf[ipart-ipart_buffer_offset] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
         
         momentum_x[ipart] = pxsm;
         momentum_y[ipart] = pysm;
@@ -128,11 +133,11 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         
         // Move the particle
         local_invgf *= dt;
-        position_x[ipart] += dt*momentum_x[ipart]*( *invgf )[ipart];
+        position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart-ipart_buffer_offset];
         if (nDim_>1) {
-            position_y[ipart] += dt*momentum_y[ipart]*( *invgf )[ipart];
+            position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart-ipart_buffer_offset];
             if (nDim_>2) {
-                position_z[ipart] += dt*momentum_z[ipart]*( *invgf )[ipart];
+                position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart-ipart_buffer_offset];
             }
         }
         
