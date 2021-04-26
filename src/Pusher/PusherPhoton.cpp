@@ -53,7 +53,7 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     
         invgf[ipart] = 1. / sqrt( momentum_x[ipart]*momentum_x[ipart] +
                                        momentum_y[ipart]*momentum_y[ipart] +
-                                       momentum_y[ipart]*momentum_y[ipart] );
+                                       momentum_z[ipart]*momentum_z[ipart] );
                                        
         // Move the photons
         position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart];

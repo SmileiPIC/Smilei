@@ -53,14 +53,19 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     double pxsm, pysm, pzsm;
     double local_invgf;
     
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
+    double* position_x = particles.getPtrPosition(0);
+    double* position_y = NULL;
+    double* position_z = NULL;
+    if (nDim_>1) {
+        position_y = particles.getPtrPosition(1);
+        if (nDim_>2) {
+            position_z = particles.getPtrPosition(2);
+        }
     }
-    double *position[3];
-    for( int i = 0 ; i<nDim_ ; i++ ) {
-        position[i] =  &( particles.position( i, 0 ) );
-    }
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    
     short *charge = &( particles.charge( 0 ) );
     
     #pragma omp simd
@@ -73,9 +78,9 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         pzsm = charge_over_mass_dts2*( *( Ez+ipart ) );
         
         //(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);
-        umx = momentum[0][ipart] + pxsm;
-        umy = momentum[1][ipart] + pysm;
-        umz = momentum[2][ipart] + pzsm;
+        umx = momentum_x[ipart] + pxsm;
+        umy = momentum_y[ipart] + pysm;
+        umz = momentum_z[ipart] + pzsm;
         
         // Intermediate gamma factor: only this part differs from the Boris scheme
         // Square Gamma factor from um
@@ -117,13 +122,18 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         // final gamma factor
         ( *invgf )[ipart] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
         
-        momentum[0][ipart] = pxsm;
-        momentum[1][ipart] = pysm;
-        momentum[2][ipart] = pzsm;
+        momentum_x[ipart] = pxsm;
+        momentum_y[ipart] = pysm;
+        momentum_z[ipart] = pzsm;
         
         // Move the particle
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            position[i][ipart]     += dt*momentum[i][ipart]*( *invgf )[ipart];
+        local_invgf *= dt;
+        position_x[ipart] += dt*momentum_x[ipart]*( *invgf )[ipart];
+        if (nDim_>1) {
+            position_y[ipart] += dt*momentum_y[ipart]*( *invgf )[ipart];
+            if (nDim_>2) {
+                position_z[ipart] += dt*momentum_z[ipart]*( *invgf )[ipart];
+            }
         }
         
     }
