@@ -164,8 +164,8 @@ def usage():
 try:
     options, remainder = getopt(
         sys.argv[1:],
-        'o:m:b:r:k:p:gshvcl:',
-        ['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG='])
+        'o:m:b:r:k:p:gshvcl:t:',
+        ['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG=', 'time='])
 except GetoptError as err:
     usage()
     sys.exit(4)
@@ -186,6 +186,8 @@ for opt, arg in options:
         COMPILE_ONLY=True
     elif opt in ('-k', '--COMPILE_MODE'):
         COMPILE_MODE=arg
+    elif opt in ('-t', '--time'):
+        max_time=arg
     elif opt in ('-h', '--HELP'):
         print( "-b")
         print( "     -b <bench_case>")
@@ -203,6 +205,9 @@ for opt, arg in options:
         print( "-p")
         print( "     -p <partition name>")
         print( "       <partition name>: partition name on super-computers")
+        print( "-t")
+        print( "     -t <max time>")
+        print( "       <max time>: format hh:mm:ss")
         print( "-g")
         print( "     Generates the references")
         print( "-s")

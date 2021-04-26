@@ -39,7 +39,7 @@ compile_default:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs"
+    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs" -t "00:30:00"
 
 run1D:
   stage: run_default
