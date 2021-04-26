@@ -36,10 +36,9 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     double pxsm, pysm, pzsm;
     double one_ov_gamma_ponderomotive;
     
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
-    }
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
     
     short *charge = &( particles.charge( 0 ) );
     
@@ -70,9 +69,9 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
         pysm = charge_over_mass_dts2 * ( *( Ey+ipart ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiy+ipart ) ) * one_ov_gamma_ponderomotive ;
         pzsm = charge_over_mass_dts2 * ( *( Ez+ipart ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiz+ipart ) ) * one_ov_gamma_ponderomotive ;
         
-        umx = momentum[0][ipart] + pxsm;
-        umy = momentum[1][ipart] + pysm;
-        umz = momentum[2][ipart] + pzsm;
+        umx = momentum_x[ipart] + pxsm;
+        umy = momentum_y[ipart] + pysm;
+        umz = momentum_z[ipart] + pzsm;
         
         // Rotation in the magnetic field, using updated gamma ponderomotive
         alpha = charge_over_mass_dts2 * one_ov_gamma_ponderomotive;
@@ -96,9 +95,9 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
         pysm += upy;
         pzsm += upz;
         
-        momentum[0][ipart] = pxsm;
-        momentum[1][ipart] = pysm;
-        momentum[2][ipart] = pzsm;
+        momentum_x[ipart] = pxsm;
+        momentum_y[ipart] = pysm;
+        momentum_z[ipart] = pzsm;
         
     }
 }
