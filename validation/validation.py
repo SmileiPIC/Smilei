@@ -144,6 +144,7 @@ WORKDIR = ""
 OMP = 12
 MPI = 4
 PPN = 12
+max_time = "00:05:00"
 EXECUTION = False
 VERBOSE = False
 BENCH=""
@@ -361,7 +362,7 @@ def run_ruche(command, dir):
             +"#SBATCH --cpus-per-task="+str(OMP)+"\n"
             +"#SBATCH --output=output\n"
             +"#SBATCH --error=error\n"
-            +"#SBATCH --time=00:02:00\n"
+            +"#SBATCH --time="+max_time+"\n"
             +"#SBATCH --partition=cpu_short\n"
             +"module purge\n"
             +"module load zlib/1.2.9/gcc-9.2.0\n"
@@ -447,6 +448,7 @@ def RUN_LLR(command, dir):
             "#PBS -l nodes="+str(NODES)+":ppn="+str(PPN)+" \n"
             +"#PBS -q default \n"
             +"#PBS -j oe\n"
+            +"#PBS -l walltime="+max_time+"\n"
             +"module purge\n"
             +"unset MODULEPATH;\n"
             +"module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles_el7\n"
