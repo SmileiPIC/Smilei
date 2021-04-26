@@ -40,7 +40,7 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     double* momentum_y = particles.getPtrMomentum(1);
     double* momentum_z = particles.getPtrMomentum(2);
     
-    short *charge = &( particles.charge( 0 ) );
+    short *charge = particles.getPtrCharge();
     
     int nparts = particles.size();
     double *Ex       = &( ( *Epart )[0*nparts] );
@@ -62,12 +62,12 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
         charge_sq_over_mass_sq_dts4 = ( double )( charge[ipart] )*( double )( charge[ipart] )*one_over_mass_*one_over_mass_*dts4;
         
         // ponderomotive gamma buffered from susceptibility
-        one_ov_gamma_ponderomotive = ( *( inv_gamma_ponderomotive+ipart ) );
+        one_ov_gamma_ponderomotive = ( *( inv_gamma_ponderomotive+ipart-ipart_buffer_offset ) );
         
         // init Half-acceleration in the electric field and ponderomotive force
-        pxsm = charge_over_mass_dts2 * ( *( Ex+ipart ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhix+ipart ) ) * one_ov_gamma_ponderomotive ;
-        pysm = charge_over_mass_dts2 * ( *( Ey+ipart ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiy+ipart ) ) * one_ov_gamma_ponderomotive ;
-        pzsm = charge_over_mass_dts2 * ( *( Ez+ipart ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiz+ipart ) ) * one_ov_gamma_ponderomotive ;
+        pxsm = charge_over_mass_dts2 * ( *( Ex+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhix+ipart-ipart_buffer_offset ) ) * one_ov_gamma_ponderomotive ;
+        pysm = charge_over_mass_dts2 * ( *( Ey+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiy+ipart-ipart_buffer_offset ) ) * one_ov_gamma_ponderomotive ;
+        pzsm = charge_over_mass_dts2 * ( *( Ez+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiz+ipart-ipart_buffer_offset ) ) * one_ov_gamma_ponderomotive ;
         
         umx = momentum_x[ipart] + pxsm;
         umy = momentum_y[ipart] + pysm;
@@ -75,9 +75,9 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
         
         // Rotation in the magnetic field, using updated gamma ponderomotive
         alpha = charge_over_mass_dts2 * one_ov_gamma_ponderomotive;
-        Tx    = alpha * ( *( Bx+ipart ) );
-        Ty    = alpha * ( *( By+ipart ) );
-        Tz    = alpha * ( *( Bz+ipart ) );
+        Tx    = alpha * ( *( Bx+ipart-ipart_buffer_offset ) );
+        Ty    = alpha * ( *( By+ipart-ipart_buffer_offset ) );
+        Tz    = alpha * ( *( Bz+ipart-ipart_buffer_offset ) );
         Tx2   = Tx*Tx;
         Ty2   = Ty*Ty;
         Tz2   = Tz*Tz;
