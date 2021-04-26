@@ -72,12 +72,12 @@ public:
                 //
                 // if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push = new PusherPonderomotiveBoris( params, species );
-//                 }
-// #ifdef _VECTO
-//                 else {
-//                     Push = new PusherPonderomotiveBorisV( params, species );
-//                 }
-// #endif
+                }
+#ifdef _VECTO
+                else {
+                    Push = new PusherPonderomotiveBorisV( params, species );
+                }
+#endif
             // Non-relativistic Boris pusher
             } else if( species->pusher_name_ == "borisnr" ) {
                 Push = new PusherBorisNR( params, species );
@@ -121,14 +121,14 @@ public:
         if( species->mass_ > 0 ) {
             // assign the correct Pusher to Push_ponderomotive_position
             if( species->pusher_name_ == "ponderomotive_boris" ) {
-                // if( !species->vectorized_operators && !params.cell_sorting ) {
+                if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push_ponderomotive_position = new PusherPonderomotivePositionBoris( params, species );
-//                 }
-// #ifdef _VECTO
-//                 else {
-//                     Push_ponderomotive_position = new PusherPonderomotivePositionBorisV( params, species );
-//                 }
-// #endif
+                }
+#ifdef _VECTO
+                else {
+                    Push_ponderomotive_position = new PusherPonderomotivePositionBorisV( params, species );
+                }
+#endif
             }
             
             else {
