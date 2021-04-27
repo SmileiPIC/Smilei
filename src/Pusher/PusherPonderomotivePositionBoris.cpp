@@ -83,11 +83,11 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
         invgf[ipart] = 1.0 / gamma_ponderomotive;
         
         // Move the particle
-        position_x[ipart] += dt*momentum_x[ipart]/gamma_ponderomotive;
+        position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart];
         if (nDim_>1) {
-            position_y[ipart] += dt*momentum_y[ipart]/gamma_ponderomotive;
+            position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart];
             if (nDim_>2) {
-                position_z[ipart] += dt*momentum_z[ipart]/gamma_ponderomotive;
+                position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart];
             }
         }
         

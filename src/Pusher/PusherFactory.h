@@ -18,11 +18,10 @@
 #include "PusherHigueraCary.h"
 #include "PusherPhoton.h"
 
-#ifdef _VECTO
-// #include "PusherBorisV.h"
-#include "PusherPonderomotiveBorisV.h"
-#include "PusherPonderomotivePositionBorisV.h"
-#endif
+// #ifdef _VECTO
+// #include "PusherPonderomotiveBorisV.h"
+// #include "PusherPonderomotivePositionBorisV.h"
+// #endif
 
 #include "Params.h"
 #include "Species.h"
