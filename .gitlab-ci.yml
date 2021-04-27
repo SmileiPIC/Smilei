@@ -93,7 +93,7 @@ runAM:
   only:
     - develop
     - laser_y
-#    - pusher_cleaning
+    - pusher_cleaning
     
   script:
     # Move in test dir
@@ -131,6 +131,7 @@ compile_picsar:
   only:
     - develop
     - laser_y
+    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -141,6 +142,7 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
+    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -151,6 +153,7 @@ compile_debug:
   only:
     - develop
     - laser_y
+    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -162,6 +165,7 @@ compile_no_mpi_threadmultiple:
   only:
     - develop
     - laser_y
+    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -173,6 +177,7 @@ compile_no_openmp:
   only:
     - develop
     - laser_y
+    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
