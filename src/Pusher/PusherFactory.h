@@ -70,14 +70,14 @@ public:
                     ERROR( "if ponderomotive_boris pusher is chosen for a species, the flag ponderomotive_dynamics for that species must be set to true." );
                 }
                 
-                if( !species->vectorized_operators && !params.cell_sorting ) {
+                // if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push = new PusherPonderomotiveBoris( params, species );
-                }
-#ifdef _VECTO
-                else {
-                    Push = new PusherPonderomotiveBorisV( params, species );
-                }
-#endif
+//                 }
+// #ifdef _VECTO
+//                 else {
+//                     Push = new PusherPonderomotiveBorisV( params, species );
+//                 }
+// #endif
             // Non-relativistic Boris pusher
             } else if( species->pusher_name_ == "borisnr" ) {
                 Push = new PusherBorisNR( params, species );
