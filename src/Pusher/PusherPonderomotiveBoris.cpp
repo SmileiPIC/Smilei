@@ -34,7 +34,7 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     double alpha, inv_det_T, Tx, Ty, Tz, Tx2, Ty2, Tz2;
     double TxTy, TyTz, TzTx;
     double pxsm, pysm, pzsm;
-    double one_ov_gamma_ponderomotive;
+    //double one_ov_gamma_ponderomotive;
     
     double* momentum_x = particles.getPtrMomentum(0);
     double* momentum_y = particles.getPtrMomentum(1);
@@ -68,19 +68,19 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
         charge_sq_over_mass_sq_dts4 = ( double )( charge[ipart] )*( double )( charge[ipart] )*one_over_mass_*one_over_mass_*dts4;
         
         // ponderomotive gamma buffered from susceptibility
-        one_ov_gamma_ponderomotive = dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset];
+        // one_ov_gamma_ponderomotive = dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset];
         
         // init Half-acceleration in the electric field and ponderomotive force
-        pxsm = charge_over_mass_dts2 * ( *( Ex+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhix+ipart-ipart_buffer_offset ) ) * one_ov_gamma_ponderomotive ;
-        pysm = charge_over_mass_dts2 * ( *( Ey+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiy+ipart-ipart_buffer_offset ) ) * one_ov_gamma_ponderomotive ;
-        pzsm = charge_over_mass_dts2 * ( *( Ez+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiz+ipart-ipart_buffer_offset ) ) * one_ov_gamma_ponderomotive ;
+        pxsm = charge_over_mass_dts2 * ( *( Ex+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhix+ipart-ipart_buffer_offset ) ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
+        pysm = charge_over_mass_dts2 * ( *( Ey+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiy+ipart-ipart_buffer_offset ) ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
+        pzsm = charge_over_mass_dts2 * ( *( Ez+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiz+ipart-ipart_buffer_offset ) ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
         
         umx = momentum_x[ipart] + pxsm;
         umy = momentum_y[ipart] + pysm;
         umz = momentum_z[ipart] + pzsm;
         
         // Rotation in the magnetic field, using updated gamma ponderomotive
-        alpha = charge_over_mass_dts2 * one_ov_gamma_ponderomotive;
+        alpha = charge_over_mass_dts2 * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset];
         Tx    = alpha * ( *( Bx+ipart-ipart_buffer_offset ) );
         Ty    = alpha * ( *( By+ipart-ipart_buffer_offset ) );
         Tz    = alpha * ( *( Bz+ipart-ipart_buffer_offset ) );
