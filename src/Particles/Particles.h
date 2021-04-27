@@ -48,6 +48,9 @@ public:
     //! Resize Particles vectors
     void resize( unsigned int nParticles);
 
+    //! Resize the cell_keys vector
+    void resizeCellKeys(unsigned int nParticles);
+
     //! Remove extra capacity of Particles vectors
     void shrinkToFit();
 

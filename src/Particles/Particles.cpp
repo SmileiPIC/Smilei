@@ -225,7 +225,16 @@ void Particles::resize( unsigned int nParticles)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+//! Resize the cell_keys vector
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::resizeCellKeys(unsigned int nParticles)
+{
+    cell_keys.resize( nParticles, 0. );
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Remove extra capacity of Particles vectors
+// Cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::shrinkToFit()
 {
@@ -241,11 +250,15 @@ void Particles::shrinkToFit()
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         std::vector<uint64_t>( *uint64_prop[iprop] ).swap( *uint64_prop[iprop] );
     }
+    
+    //cell_keys.swap(cell_keys);
+    
 }
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Reset of Particles vectors
+// Cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::clear()
 {
@@ -260,9 +273,13 @@ void Particles::clear()
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         uint64_prop[iprop]->clear();
     }
+    
+    //cell_keys.clear();
+    
 }
 
-
+//! copy particles ipart at the end of the particle vector
+//! cell keys not affected
 void Particles::copyParticle( unsigned int ipart )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
@@ -280,7 +297,8 @@ void Particles::copyParticle( unsigned int ipart )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Copy particle iPart at the end of dest_parts
+//! Copy particle iPart at the end of dest_parts
+//! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::copyParticle( unsigned int ipart, Particles &dest_parts )
 {
@@ -298,7 +316,8 @@ void Particles::copyParticle( unsigned int ipart, Particles &dest_parts )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Insert particle iPart at dest_id in dest_parts
+//! Insert particle iPart at dest_id in dest_parts
+//! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::copyParticle( unsigned int ipart, Particles &dest_parts, int dest_id )
 {
@@ -317,7 +336,8 @@ void Particles::copyParticle( unsigned int ipart, Particles &dest_parts, int des
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Insert nPart particles starting at ipart to dest_id in dest_parts
+//! Insert nPart particles starting at ipart to dest_id in dest_parts
+//! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::copyParticles( unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id )
 {
@@ -336,7 +356,8 @@ void Particles::copyParticles( unsigned int iPart, unsigned int nPart, Particles
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Copy particle iPart at the end of dest_parts -- safe
+//! Copy particle iPart at the end of dest_parts -- safe
+//! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::copyParticleSafe( unsigned int ipart, Particles &dest_parts )
 {
@@ -364,7 +385,8 @@ void Particles::copyParticleSafe( unsigned int ipart, Particles &dest_parts )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Suppress particle iPart
+//! Suppress particle iPart
+//! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::eraseParticle( unsigned int ipart )
 {
@@ -383,7 +405,8 @@ void Particles::eraseParticle( unsigned int ipart )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Suppress all particles from iPart to the end of particle array
+//! Suppress all particles from iPart to the end of particle array
+//! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::eraseParticleTrail( unsigned int ipart )
 {
@@ -401,7 +424,8 @@ void Particles::eraseParticleTrail( unsigned int ipart )
 
 }
 // ---------------------------------------------------------------------------------------------------------------------
-// Suppress npart particles from ipart
+//! Suppress npart particles from ipart
+//! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::eraseParticle( unsigned int ipart, unsigned int npart )
 {
