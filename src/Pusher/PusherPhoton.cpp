@@ -48,7 +48,13 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     double* momentum_y = particles.getPtrMomentum(1);
     double* momentum_z = particles.getPtrMomentum(2);
     
-    #pragma omp simd
+    #ifndef _GPU
+        #pragma omp simd
+    #else
+        int np = iend-istart;
+        #pragma acc parallel present(invgf[0:nparts]) deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z)
+        #pragma acc loop gang worker vector
+    #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
     
         invgf[ipart] = 1. / sqrt( momentum_x[ipart]*momentum_x[ipart] +
