@@ -65,7 +65,7 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
     
     for( int ipart=istart ; ipart<iend; ipart++ ) {
     
-        charge_over_mass = static_cast<double>( particles.charge( ipart ) )*one_over_mass_;
+        charge_over_mass = (double)( charge[ipart] ) )*one_over_mass_;
         alpha = charge_over_mass*dts2;
         
         // uminus = v + q/m * dt/2 * E
@@ -97,11 +97,16 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
         momentum_z[ipart] = mass_ * ( upz + alpha*( *( Ez+ipart-ipart_buffer_offset ) ) );
         
         // Move the particle
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            particles.position( i, ipart )     += dt*particles.momentum( i, ipart );
+        position_x[ipart] += dt * momentum_x[ipart];
+        if (nDim_>1) {
+            position_y[ipart] += dt * momentum_y[ipart];
+            if (nDim_>2) {
+                position_z[ipart] += dt * momentum_z[ipart];
+            }
         }
+        
     }
-    // 
+    //
     // if( vecto ) {
     //     double *position[3];
     //     for( int i = 0 ; i<nDim_ ; i++ ) {
