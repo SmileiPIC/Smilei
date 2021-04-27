@@ -707,7 +707,7 @@ void SpeciesV::computeParticleCellKeys( Params &params )
 void SpeciesV::compute_bin_cell_keys( Params &params, int istart, int iend )
 {
     // Resize of cell_keys seems necessary here
-    particles->cell_keys.resize( particles->size() );
+    particles->resizeCellKeys( particles->size() );
 
     #pragma omp simd
     for( int ip=istart; ip < iend; ip++ ) {
