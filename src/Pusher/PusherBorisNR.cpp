@@ -65,7 +65,7 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
     
     for( int ipart=istart ; ipart<iend; ipart++ ) {
     
-        charge_over_mass = (double)( charge[ipart] ) )*one_over_mass_;
+        charge_over_mass = (double)( charge[ipart] ) *one_over_mass_;
         alpha = charge_over_mass*dts2;
         
         // uminus = v + q/m * dt/2 * E
