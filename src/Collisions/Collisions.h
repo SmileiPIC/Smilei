@@ -172,15 +172,9 @@ protected:
             Particles *p3 = NULL, *p4 = NULL;
             double p3_COM, p4_COM, q3, q4;
             double tot_charge = p1->charge( i1 ) + p2->charge( i2 );
-            U2 = 2*U2 - 1.;
-            if( U2 > 0. ) {
-                NuclearReaction->makeProducts( abs(U2), E, logE, tot_charge, p3, p4, p3_COM, p4_COM, q3, q4, cosX );
-            } else {
-                NuclearReaction->makeProducts( abs(U2), E, logE, tot_charge, p4, p3, p4_COM, p3_COM, q4, q3, cosX );
-            }
+            NuclearReaction->makeProducts( U2, E, logE, tot_charge, p3, p4, p3_COM, p4_COM, q3, q4, sinX, cosX );
             
             // Calculate combination of angles 
-            sinX = sqrt( 1. - cosX*cosX );
             double sinXcosPhi = sinX*cos( phi );
             double sinXsinPhi = sinX*sin( phi );
             

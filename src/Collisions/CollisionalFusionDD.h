@@ -20,7 +20,7 @@ public:
     //! Method to apply the nuclear reaction
     double crossSection( double log_ekin );
     //! Method to prepare the products of the reaction
-    void makeProducts( double U, double etot, double log_ekin, double q, Particles *&p3, Particles *&p4, double &p3_COM, double &p4_COM, double &q3, double &q4, double &cosX ) override;
+    void makeProducts( double U, double etot, double log_ekin, double q, Particles *&p3, Particles *&p4, double &p3_COM, double &p4_COM, double &q3, double &q4, double &sinX, double &cosX ) override;
     
     std::string name() override { return "D-D fusion"; };
     

@@ -29,7 +29,7 @@ public:
     //! Test the occurence of the nuclear reaction
     virtual bool occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &etot, double &log_ekin, double &W );
     //! Prepare the products of the reaction
-    virtual void makeProducts( double U, double ekin, double log_ekin, double q, Particles *&p3, Particles *&p4, double &p3_COM, double &p4_COM, double &q3, double &q4, double &cosX ) = 0;
+    virtual void makeProducts( double U, double ekin, double log_ekin, double q, Particles *&p3, Particles *&p4, double &p3_COM, double &p4_COM, double &q3, double &q4, double &sinX, double &cosX ) = 0;
     //! Finish the nuclear reaction and put new electrons in place
     virtual void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool, std::vector<unsigned int>, std::vector<unsigned int>, double npairs, int itime );
     
@@ -67,7 +67,7 @@ public:
     bool occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &etot, double &log_ekin, double &W ) override {
         return false;
     };
-    void makeProducts( double U, double ekin, double log_ekin, double q, Particles *&p3, Particles *&p4, double &p3_COM, double &p4_COM, double &q3, double &q4, double &cosX ) override {};
+    void makeProducts( double U, double ekin, double log_ekin, double q, Particles *&p3, Particles *&p4, double &p3_COM, double &p4_COM, double &q3, double &q4, double &sinX, double &cosX ) override {};
     void finish( Params &params, Patch *patch, std::vector<Diagnostic *> &diags, bool, std::vector<unsigned int>, std::vector<unsigned int>, double npairs, int itime ) override {};
     std::string name() override { return ""; }
 };
