@@ -39,11 +39,23 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
     
+    double* position_x = particles.getPtrPosition(0);
+    double* position_y = NULL;
+    double* position_z = NULL;
+    if (nDim_>1) {
+        position_y = particles.getPtrPosition(1);
+        if (nDim_>2) {
+            position_z = particles.getPtrPosition(2);
+        }
+    }
+    
     double* momentum_x = particles.getPtrMomentum(0);
     double* momentum_y = particles.getPtrMomentum(1);
     double* momentum_z = particles.getPtrMomentum(2);
     
-    double charge_over_mass_ ;
+    short *charge = particles.getPtrCharge();
+    
+    double charge_over_mass ;
     double umx, umy, umz;
     double upx, upy, upz;
     double alpha;
@@ -53,13 +65,13 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
     
     for( int ipart=istart ; ipart<iend; ipart++ ) {
     
-        charge_over_mass_ = static_cast<double>( particles.charge( ipart ) )*one_over_mass_;
-        alpha = charge_over_mass_*dts2;
+        charge_over_mass = static_cast<double>( particles.charge( ipart ) )*one_over_mass_;
+        alpha = charge_over_mass*dts2;
         
         // uminus = v + q/m * dt/2 * E
         umx = momentum_x[ipart] * one_over_mass_ + alpha * ( *( Ex+ipart-ipart_buffer_offset ) );
-        umy = particles.momentum( 1, ipart ) * one_over_mass_ + alpha * ( *( Ey+ipart-ipart_buffer_offset ) );
-        umz = particles.momentum( 2, ipart ) * one_over_mass_ + alpha * ( *( Ez+ipart-ipart_buffer_offset ) );
+        umy = momentum_y[ipart] * one_over_mass_ + alpha * ( *( Ey+ipart-ipart_buffer_offset ) );
+        umz = momentum_z[ipart] * one_over_mass_ + alpha * ( *( Ez+ipart-ipart_buffer_offset ) );
         
         
         // Rotation in the magnetic field
@@ -80,34 +92,34 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
         upz = umz + umx*Sy - umy*Sx;
         
         
-        particles.momentum( 0, ipart ) = mass_ * ( upx + alpha*( *( Ex+ipart-ipart_buffer_offset ) ) );
-        particles.momentum( 1, ipart ) = mass_ * ( upy + alpha*( *( Ey+ipart-ipart_buffer_offset ) ) );
-        particles.momentum( 2, ipart ) = mass_ * ( upz + alpha*( *( Ez+ipart-ipart_buffer_offset ) ) );
+        momentum_x[ipart] = mass_ * ( upx + alpha*( *( Ex+ipart-ipart_buffer_offset ) ) );
+        momentum_y[ipart] = mass_ * ( upy + alpha*( *( Ey+ipart-ipart_buffer_offset ) ) );
+        momentum_z[ipart] = mass_ * ( upz + alpha*( *( Ez+ipart-ipart_buffer_offset ) ) );
         
         // Move the particle
         for( int i = 0 ; i<nDim_ ; i++ ) {
             particles.position( i, ipart )     += dt*particles.momentum( i, ipart );
         }
     }
-    
-    if( vecto ) {
-        double *position[3];
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            position[i] =  &( particles.position( i, 0 ) );
-        }
-        int *cell_keys;
-        particles.cell_keys.resize( iend-istart );
-        cell_keys = &( particles.cell_keys[0] );
-        
-        #pragma omp simd
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-        
-            for( int i = 0 ; i<nDim_ ; i++ ) {
-                cell_keys[ipart] *= nspace[i];
-                cell_keys[ipart] += round( ( position[i][ipart]-min_loc_vec[i] ) * dx_inv_[i] );
-            }
-            
-        }
-    }
+    // 
+    // if( vecto ) {
+    //     double *position[3];
+    //     for( int i = 0 ; i<nDim_ ; i++ ) {
+    //         position[i] =  &( particles.position( i, 0 ) );
+    //     }
+    //     int *cell_keys;
+    //     particles.cell_keys.resize( iend-istart );
+    //     cell_keys = &( particles.cell_keys[0] );
+    //
+    //     #pragma omp simd
+    //     for( int ipart=istart ; ipart<iend; ipart++ ) {
+    //
+    //         for( int i = 0 ; i<nDim_ ; i++ ) {
+    //             cell_keys[ipart] *= nspace[i];
+    //             cell_keys[ipart] += round( ( position[i][ipart]-min_loc_vec[i] ) * dx_inv_[i] );
+    //         }
+    //
+    //     }
+    // }
     
 }

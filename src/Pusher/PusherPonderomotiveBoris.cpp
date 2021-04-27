@@ -27,7 +27,7 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart       = &( smpi->dynamics_Bpart[ithread] );
     std::vector<double> *GradPhipart = &( smpi->dynamics_GradPHIpart[ithread] );
-    std::vector<double> *dynamics_inv_gamma_ponderomotive = &( smpi->dynamics_inv_gamma_ponderomotive[ithread] );
+    double *dynamics_inv_gamma_ponderomotive = &( smpi->dynamics_inv_gamma_ponderomotive[ithread][0] );
     
     double charge_over_mass_dts2, charge_sq_over_mass_sq_dts4;
     double umx, umy, umz, upx, upy, upz;
@@ -58,7 +58,7 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     double *GradPhix = &( ( *GradPhipart )[0*nparts] );
     double *GradPhiy = &( ( *GradPhipart )[1*nparts] );
     double *GradPhiz = &( ( *GradPhipart )[2*nparts] );
-    double *inv_gamma_ponderomotive = &( ( *dynamics_inv_gamma_ponderomotive )[0*nparts] );
+    //double *inv_gamma_ponderomotive = &( ( *dynamics_inv_gamma_ponderomotive )[0*nparts] );
     
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
@@ -68,7 +68,7 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
         charge_sq_over_mass_sq_dts4 = ( double )( charge[ipart] )*( double )( charge[ipart] )*one_over_mass_*one_over_mass_*dts4;
         
         // ponderomotive gamma buffered from susceptibility
-        one_ov_gamma_ponderomotive = ( *( inv_gamma_ponderomotive+ipart-ipart_buffer_offset ) );
+        one_ov_gamma_ponderomotive = dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset];
         
         // init Half-acceleration in the electric field and ponderomotive force
         pxsm = charge_over_mass_dts2 * ( *( Ex+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhix+ipart-ipart_buffer_offset ) ) * one_ov_gamma_ponderomotive ;
