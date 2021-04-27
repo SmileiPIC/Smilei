@@ -31,32 +31,39 @@ PusherVay::~PusherVay()
     Lorentz Force -- leap-frog (Vay) scheme
 ***********************************************************************/
 
-void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_ref )
+void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset )
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
+    double *invgf = &( smpi->dynamics_invgf[ithread][0] );
     
     double charge_over_mass_dts2;
     double upx, upy, upz, us2;
     double alpha, s, T2 ;
     double Tx, Ty, Tz;
     double pxsm, pysm, pzsm;
-    // Only useful for the second method
-    //double Tx2, Ty2, Tz2;
-    //double TxTy, TyTz, TzTx;
     
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
+    double* position_x = particles.getPtrPosition(0);
+    double* position_y = NULL;
+    double* position_z = NULL;
+    if (nDim_>1) {
+        position_y = particles.getPtrPosition(1);
+        if (nDim_>2) {
+            position_z = particles.getPtrPosition(2);
+        }
     }
-    double *position[3];
-    for( int i = 0 ; i<nDim_ ; i++ ) {
-        position[i] =  &( particles.position( i, 0 ) );
-    }
-    short *charge = &( particles.charge( 0 ) );
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+
+    short *charge = particles.getPtrCharge();
     
-    int nparts = particles.size();
+    int nparts;
+    if (vecto) {
+        nparts = Epart->size()/3;
+    } else {
+        nparts = particles.size();
+    }
     double *Ex = &( ( *Epart )[0*nparts] );
     double *Ey = &( ( *Epart )[1*nparts] );
     double *Ez = &( ( *Epart )[2*nparts] );
@@ -64,7 +71,7 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
     
-    #pragma omp simd
+    #pragma omp simd private(s,us2,alpha,upx,upy,upz,Tx,Ty,Tz,pxsm,pysm,pzsm)
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
         
@@ -72,23 +79,23 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
         // Part I: Computation of uprime
         
         // For unknown reason, this has to be computed again
-        ( *invgf )[ipart] = 1./sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
-                                     + momentum[1][ipart]*momentum[1][ipart]
-                                     + momentum[2][ipart]*momentum[2][ipart] );
+        invgf[ipart-ipart_buffer_offset] = 1./sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                                     + momentum_y[ipart]*momentum_y[ipart]
+                                     + momentum_z[ipart]*momentum_z[ipart] );
                                      
         // Add Electric field
-        upx = momentum[0][ipart] + 2.*charge_over_mass_dts2*( *( Ex+ipart ) );
-        upy = momentum[1][ipart] + 2.*charge_over_mass_dts2*( *( Ey+ipart ) );
-        upz = momentum[2][ipart] + 2.*charge_over_mass_dts2*( *( Ez+ipart ) );
+        upx = momentum_x[ipart] + 2.*charge_over_mass_dts2*( *( Ex+ipart-ipart_buffer_offset ) );
+        upy = momentum_y[ipart] + 2.*charge_over_mass_dts2*( *( Ey+ipart-ipart_buffer_offset ) );
+        upz = momentum_z[ipart] + 2.*charge_over_mass_dts2*( *( Ez+ipart-ipart_buffer_offset ) );
         
         // Add magnetic field
-        Tx  = charge_over_mass_dts2* ( *( Bx+ipart ) );
-        Ty  = charge_over_mass_dts2* ( *( By+ipart ) );
-        Tz  = charge_over_mass_dts2* ( *( Bz+ipart ) );
+        Tx  = charge_over_mass_dts2* ( *( Bx+ipart-ipart_buffer_offset ) );
+        Ty  = charge_over_mass_dts2* ( *( By+ipart-ipart_buffer_offset ) );
+        Tz  = charge_over_mass_dts2* ( *( Bz+ipart-ipart_buffer_offset ) );
         
-        upx += ( *invgf )[ipart]*( momentum[1][ipart]*Tz - momentum[2][ipart]*Ty );
-        upy += ( *invgf )[ipart]*( momentum[2][ipart]*Tx - momentum[0][ipart]*Tz );
-        upz += ( *invgf )[ipart]*( momentum[0][ipart]*Ty - momentum[1][ipart]*Tx );
+        upx += invgf [ipart-ipart_buffer_offset]*( momentum_y[ipart]*Tz - momentum_z[ipart]*Ty );
+        upy += invgf [ipart-ipart_buffer_offset]*( momentum_z[ipart]*Tx - momentum_x[ipart]*Tz );
+        upz += invgf [ipart-ipart_buffer_offset]*( momentum_x[ipart]*Ty - momentum_y[ipart]*Tx );
         
         // alpha is gamma^2
         alpha = 1.0 + upx*upx + upy*upy + upz*upz;
@@ -99,7 +106,8 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
         
         // s is sigma
         s     = alpha - T2;
-        us2   = pow( upx*Tx + upy*Ty + upz*Tz, 2.0 );
+        us2   = upx*Tx + upy*Ty + upz*Tz;
+        us2   = us2*us2;
         
         // alpha becomes 1/gamma^{i+1}
         alpha = 1.0/sqrt( 0.5*( s + sqrt( s*s + 4.0*( T2 + us2 ) ) ) );
@@ -129,15 +137,19 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
         //pzsm = ((TzTx+Ty)* upx  + (TyTz-Tx)* upy + (1.0+Tz2)* upz)*s;
         
         // Inverse Gamma factor
-        ( *invgf )[ipart] = 1.0 / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        invgf[ipart-ipart_buffer_offset] = 1.0 / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
         
-        momentum[0][ipart] = pxsm;
-        momentum[1][ipart] = pysm;
-        momentum[2][ipart] = pzsm;
+        momentum_x[ipart] = pxsm;
+        momentum_y[ipart] = pysm;
+        momentum_z[ipart] = pzsm;
         
         // Move the particle
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            position[i][ipart]     += dt*momentum[i][ipart]*( *invgf )[ipart];
+        position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart-ipart_buffer_offset];
+        if (nDim_>1) {
+            position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart-ipart_buffer_offset];
+            if (nDim_>2) {
+                position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart-ipart_buffer_offset];
+            }
         }
         
     }

@@ -1,4 +1,3 @@
-
 dx = 0.2
 dtrans = 3.
 dt = 0.19
@@ -11,7 +10,7 @@ laser_fwhm = 19.80
 
 Main(
     geometry = "3Dcartesian",
-    
+
     interpolation_order = 2,
 
     timestep = dt,
@@ -23,10 +22,10 @@ Main(
     number_of_patches = [npatch_x, 4, 4],
 
     clrw = nx/npatch_x,
-    
+
     EM_boundary_conditions = [ ["silver-muller"] ],
-    EM_boundary_conditions_k = [ [1., 0., 0.],[-1., 0., 0.],[1., 0.005, 0.],[1., -0.005, 0.],[1., 0., 0.005],[1., 0., -0.005] ],
-    
+    #EM_boundary_conditions_k = [ [1., 0., 0.],[-1., 0., 0.],[1., 0.005, 0.],[1., -0.005, 0.],[1., 0., 0.005],[1., 0., -0.005] ],
+
     solve_poisson = False,
     print_every = 100,
 
@@ -34,7 +33,9 @@ Main(
 )
 
 Vectorization(
-    mode = "on",
+    mode = "adaptive",
+    reconfigure_every = 20,
+    initial_mode = "on"
 )
 
 MovingWindow(
@@ -60,7 +61,7 @@ Species(
     charge_density = 0.000494,
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.0],
-    pusher = "higueracary",
+    pusher = "boris",
     time_frozen = 0.0,
     boundary_conditions = [
     	["remove", "remove"],
@@ -123,7 +124,7 @@ DiagProbe(
 	    [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
 	],
 	number = [nx],
-	fields = list_fields+["Jx_electron"]
+	fields = list_fields
 )
 
 DiagProbe(
@@ -148,3 +149,4 @@ DiagParticleBinning(
 		["px", -1, 2., 100]
 	]
 )
+

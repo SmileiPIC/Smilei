@@ -32,12 +32,13 @@ compile_default:
   only:
     - develop
     - laser_y
-
+    - pusher_cleaning
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs"
+    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs" -t "00:30:00"
 
 run1D:
   stage: run_default
@@ -63,6 +64,8 @@ run2D:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
     - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst2d_s_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst2d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
     - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 run3D:
@@ -77,6 +80,8 @@ run3D:
     # Run validation script
     - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
     - python validation.py -b "tst3d_s_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst3d_v_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst3d_a_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
     - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 runAM:
@@ -89,20 +94,19 @@ runAM:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -t 00:30:00 -l "/sps2/gitlab-runner/logs"
 
-runV:
-  stage: run_default
-  only:
-    - develop
-    - radiation_GPU
+#runV:
+#  stage: run_default
+#  only:
+#    - develop
+#    - laser_y
+#    - pusher_cleaning
 
-  script:
-    # Move in test dir
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run validation script
-    - python validation.py -b "tst2d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
-    - python validation.py -b "tst3d_v_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
+#  script:
+#    # Move in test dir
+#    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+#    # Run validation script
 
 runCollisions:
   stage: run_default
@@ -131,6 +135,7 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
+    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
