@@ -54,7 +54,8 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
     if (vecto) {
         nparts = GradPhi_mpart->size()/3;
     } else {
-        nparts = particles.size();
+        //nparts = particles.size();
+        nparts = particles.last_index.back();
     }
     
     double *Phi_m      = &( ( *Phi_mpart )[0*nparts] );

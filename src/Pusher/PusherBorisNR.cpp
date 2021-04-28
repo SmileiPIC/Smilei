@@ -30,7 +30,8 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
     if (vecto) {
         nparts = Epart->size()/3;
     } else {
-        nparts = particles.size();
+        //nparts = particles.size();
+        nparts = particles.last_index.back();
     }
     double *Ex = &( ( *Epart )[0*nparts] );
     double *Ey = &( ( *Epart )[1*nparts] );

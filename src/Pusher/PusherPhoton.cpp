@@ -55,7 +55,8 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     if (vecto) {
         nparts = Epart->size()/3;
     } else {
-        nparts = particles.size();
+        nparts = particles.last_index.back();
+        //nparts = particles.size();
     }
 
     #ifndef _GPU
