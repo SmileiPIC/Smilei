@@ -63,7 +63,13 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
     double *GradPhi_my = &( ( *GradPhi_mpart )[1*nparts] );
     double *GradPhi_mz = &( ( *GradPhi_mpart )[2*nparts] );
     
-    #pragma omp simd
+    #ifndef _GPU
+        #pragma omp simd
+    #else
+        int np = iend-istart;
+        #pragma acc parallel present(Phi_m[istart:np], GradPhi_mx[istart:np],GradPhi_my[istart:np],GradPhi_mz[istart:np],invgf[0:nparts]) deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z,charge)
+        #pragma acc loop gang worker vector
+    #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) { // begin loop on particles
     
         // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
