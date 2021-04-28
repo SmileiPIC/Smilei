@@ -57,8 +57,8 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     if (vecto) {
         nparts = Epart->size()/3;
     } else {
-        nparts = particles.size();
-        //nparts = particles.last_index.back();
+        //nparts = particles.size();
+        nparts = particles.last_index.back();
     }
 
     double *Ex = &( ( *Epart )[0*nparts] );
