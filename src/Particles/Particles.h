@@ -48,6 +48,9 @@ public:
     //! Resize Particles vectors
     void resize( unsigned int nParticles);
 
+    //! Resize the cell_keys vector
+    void resizeCellKeys(unsigned int nParticles);
+
     //! Remove extra capacity of Particles vectors
     void shrinkToFit();
 
@@ -268,17 +271,14 @@ public:
     //! containing the particle quantum parameter
     std::vector<double> Chi;
 
+    //! Incremental optical depth for the Monte-Carlo process
+    std::vector<double> Tau;
+
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
 
     //! Id of the particle
     std::vector<uint64_t> Id;
-
-    // Discontinuous radiation losses
-
-    //! Incremental optical depth for
-    //! the Monte-Carlo process
-    std::vector<double> Tau;
 
     //! cell_keys of the particle
     std::vector<int> cell_keys;

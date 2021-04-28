@@ -47,7 +47,7 @@ public:
     void readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin );
     void readRegionDistribution( Region &region );
     void restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD );
-    void restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Read &g );
+    void restartPatch( Patch *patch, Params &params, H5Read &g );
     
     //! restart field per proc
     void restartFieldsPerProc( H5Read &g, Field *field );
@@ -63,7 +63,7 @@ public:
     
     //! dump everything to file per processor
     void dumpAll( VectorPatch &vecPatches, Region &region, unsigned int itime,  SmileiMPI *smpi, SimWindow *simWin, Params &params );
-    void dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Write &g );
+    void dumpPatch( Patch *patch, Params &params, H5Write &g );
     
     //! incremental number of times we've done a dump
     unsigned int dump_number;

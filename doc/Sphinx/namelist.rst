@@ -2470,9 +2470,12 @@ or several points arranged in a 2-D or 3-D grid.
 
 .. note::
 
-  Probes follow the moving window.
-  To obtain the fields at fixed points in the plasma instead, create a cold,
-  chargeless species, and :ref:`track the particles <DiagTrackParticles>`.
+  * **Probes follow the moving window.**
+    To obtain the fields at fixed points in the plasma instead, create a cold,
+    chargeless species, and :ref:`track the particles <DiagTrackParticles>`.
+  * **In "AMcylindrical" geometry**, probes are defined with 3D Cartesian coordinates
+    and cannot be separated per mode. Use Field diagnostics for cylindrical coordinates and
+    information per mode.
 
 
 To add one probe diagnostic, include the block ``DiagProbe``::
@@ -2535,26 +2538,24 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 
   :default: ``[]``, which means ``["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho"]``
 
-  A list of fields among ``"Ex"``, ``"Ey"``, ``"Ez"``,
-  ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``.
-  Only listed fields will be saved although they are all calculated.
-
-  The contributions of each species to the currents and the density are also available,
-  although they are not included by default. They may be added to the list as
-  ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` or ``"Rho_abc"``, where ``abc`` is the
-  species name.
-
+  A list of fields among:
+  
+  * the electric field components ``"Ex"``, ``"Ey"``, ``"Ez"``
+  * the magnetic field components ``"Bx"``, ``"By"``, ``"Bz"``
+  * the Poynting vector components ``"PoyX"``, ``"PoyY"``, ``"PoyZ"``
+  * the current density components ``"Jx"``, ``"Jy"``, ``"Jz"`` and density ``"Rho"``
+  * the current density ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` and density ``"Rho_abc"``
+    of a given species named ``"abc"``
+  
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``, ``"Env_Ex_abs"``.
 
-  .. warning::
+.. py:data:: time_integral
 
-    In ``"AMcylindrical"``, contrary to the Field diagnostic, Probes are defined as in a
-    3D Cartesian geometry and return Cartesian fields.
-    Fields per mode are not available in Probe diagnostics. See Field diagnostics if
-    per mode information is needed.
-
-
+  :default: ``False``
+  
+  If ``True``, the output is integrated over time. As this option forces field interpolation
+  at every timestep, it is recommended to use few probe points.
 
 
 **Examples of probe diagnostics**

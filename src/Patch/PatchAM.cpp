@@ -7,7 +7,6 @@
 
 #include "DomainDecompositionFactory.h"
 #include "Hilbert_functions.h"
-#include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
 

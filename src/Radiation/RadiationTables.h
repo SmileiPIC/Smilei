@@ -99,7 +99,7 @@ public:
     inline double getRidgersCorrectedRadiatedEnergy( double particle_chi,
             double dt )
     {
-        return computeRidgersFit( particle_chi )*dt*particle_chi*particle_chi*factor_classical_radiated_power_;
+        return RadiationTools::computeRidgersFit( particle_chi )*dt*particle_chi*particle_chi*factor_classical_radiated_power_;
     };
 
     //! Get of the classical continuous radiated energy during dt
@@ -123,16 +123,6 @@ public:
     {
         return minimum_chi_continuous_;
     }
-
-    //! Computation of the function g of Erber using the Ridgers
-    //! approximation formulae
-    //! \param particle_chi particle quantum parameter
-    //#pragma omp declare simd
-    inline double computeRidgersFit( double particle_chi )
-    {
-        return std::pow( 1.0 + 4.8*( 1.0+particle_chi )*std::log( 1.0 + 1.7*particle_chi )
-                    + 2.44*particle_chi*particle_chi, -2.0/3.0 );
-    };
 
     inline std::string getNielHComputationMethod()
     {

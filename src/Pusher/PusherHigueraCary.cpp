@@ -5,7 +5,8 @@
   @details See article https://arxiv.org/abs/1701.05605
 
   @date 2017-03-31
- */
+*/
+
 #include "PusherHigueraCary.h"
 
 #include <iostream>
@@ -30,12 +31,17 @@ PusherHigueraCary::~PusherHigueraCary()
   Lorentz Force -- leap-frog (HigueraCary) scheme
  ***********************************************************************/
 
-void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_ref )
+void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset )
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     
-    int nparts = particles.size();
+    int nparts;
+    if (vecto) {
+        nparts = Epart->size()/3;
+    } else {
+        nparts = particles.size();
+    }
     double *Ex = &( ( *Epart )[0*nparts] );
     double *Ey = &( ( *Epart )[1*nparts] );
     double *Ez = &( ( *Epart )[2*nparts] );
@@ -43,7 +49,7 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
     
-    std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
+    double *invgf = &( smpi->dynamics_invgf[ithread][0] );
     
     double charge_over_mass_dts2;
     double umx, umy, umz, upx, upy, upz, gfm2;
@@ -52,38 +58,43 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     double pxsm, pysm, pzsm;
     double local_invgf;
     
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
+    double* position_x = particles.getPtrPosition(0);
+    double* position_y = NULL;
+    double* position_z = NULL;
+    if (nDim_>1) {
+        position_y = particles.getPtrPosition(1);
+        if (nDim_>2) {
+            position_z = particles.getPtrPosition(2);
+        }
     }
-    double *position[3];
-    for( int i = 0 ; i<nDim_ ; i++ ) {
-        position[i] =  &( particles.position( i, 0 ) );
-    }
-    short *charge = &( particles.charge( 0 ) );
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
+    
+    short *charge = particles.getPtrCharge();
     
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
         
         // init Half-acceleration in the electric field
-        pxsm = charge_over_mass_dts2*( *( Ex+ipart ) );
-        pysm = charge_over_mass_dts2*( *( Ey+ipart ) );
-        pzsm = charge_over_mass_dts2*( *( Ez+ipart ) );
+        pxsm = charge_over_mass_dts2*( *( Ex+ipart-ipart_buffer_offset ) );
+        pysm = charge_over_mass_dts2*( *( Ey+ipart-ipart_buffer_offset ) );
+        pzsm = charge_over_mass_dts2*( *( Ez+ipart-ipart_buffer_offset ) );
         
         //(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);
-        umx = momentum[0][ipart] + pxsm;
-        umy = momentum[1][ipart] + pysm;
-        umz = momentum[2][ipart] + pzsm;
+        umx = momentum_x[ipart] + pxsm;
+        umy = momentum_y[ipart] + pysm;
+        umz = momentum_z[ipart] + pzsm;
         
         // Intermediate gamma factor: only this part differs from the Boris scheme
         // Square Gamma factor from um
         gfm2 = ( 1.0 + umx*umx + umy*umy + umz*umz );
         
         // Equivalent of betax,betay,betaz in the paper
-        Tx    = charge_over_mass_dts2 * ( *( Bx+ipart ) );
-        Ty    = charge_over_mass_dts2 * ( *( By+ipart ) );
-        Tz    = charge_over_mass_dts2 * ( *( Bz+ipart ) );
+        Tx    = charge_over_mass_dts2 * ( *( Bx+ipart-ipart_buffer_offset ) );
+        Ty    = charge_over_mass_dts2 * ( *( By+ipart-ipart_buffer_offset ) );
+        Tz    = charge_over_mass_dts2 * ( *( Bz+ipart-ipart_buffer_offset ) );
         
         // beta**2
         beta2 = Tx*Tx + Ty*Ty + Tz*Tz;
@@ -114,33 +125,38 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         pzsm += upz;
         
         // final gamma factor
-        ( *invgf )[ipart] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        invgf[ipart-ipart_buffer_offset] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
         
-        momentum[0][ipart] = pxsm;
-        momentum[1][ipart] = pysm;
-        momentum[2][ipart] = pzsm;
+        momentum_x[ipart] = pxsm;
+        momentum_y[ipart] = pysm;
+        momentum_z[ipart] = pzsm;
         
         // Move the particle
-        for( int i = 0 ; i<nDim_ ; i++ ) {
-            position[i][ipart]     += dt*momentum[i][ipart]*( *invgf )[ipart];
+        local_invgf *= dt;
+        position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart-ipart_buffer_offset];
+        if (nDim_>1) {
+            position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart-ipart_buffer_offset];
+            if (nDim_>2) {
+                position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart-ipart_buffer_offset];
+            }
         }
         
     }
     
-    if( vecto ) {
-        int *cell_keys;
-        particles.cell_keys.resize( iend-istart );
-        cell_keys = &( particles.cell_keys[0] );
-        
-        #pragma omp simd
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-        
-            for( int i = 0 ; i<nDim_ ; i++ ) {
-                cell_keys[ipart] *= nspace[i];
-                cell_keys[ipart] += round( ( position[i][ipart]-min_loc_vec[i] ) * dx_inv_[i] );
-            }
-            
-        }
-    }
+    // if( vecto ) {
+    //     int *cell_keys;
+    //     particles.cell_keys.resize( iend-istart );
+    //     cell_keys = &( particles.cell_keys[0] );
+    //
+    //     #pragma omp simd
+    //     for( int ipart=istart ; ipart<iend; ipart++ ) {
+    //
+    //         for( int i = 0 ; i<nDim_ ; i++ ) {
+    //             cell_keys[ipart] *= nspace[i];
+    //             cell_keys[ipart] += round( ( position[i][ipart]-min_loc_vec[i] ) * dx_inv_[i] );
+    //         }
+    //
+    //     }
+    // }
     
 }

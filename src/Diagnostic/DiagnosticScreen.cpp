@@ -144,7 +144,7 @@ DiagnosticScreen::~DiagnosticScreen()
 } // END DiagnosticScreen::~DiagnosticScreen
 
 
-bool DiagnosticScreen::prepare( int timestep )
+bool DiagnosticScreen::prepare( int itime )
 {
 
     // This diag always runs, but the output is not done at every timestep
@@ -154,7 +154,7 @@ bool DiagnosticScreen::prepare( int timestep )
 
 
 // run one screen diagnostic
-void DiagnosticScreen::run( Patch *patch, int timestep, SimWindow *simWindow )
+void DiagnosticScreen::run( Patch *patch, int itime, SimWindow *simWindow )
 {
 
     vector<int> int_buffer;
@@ -266,8 +266,8 @@ void DiagnosticScreen::run( Patch *patch, int timestep, SimWindow *simWindow )
     
 } // END run
 
-bool DiagnosticScreen::writeNow( int timestep ) {
-    return timeSelection->theTimeIsNow( timestep );
+bool DiagnosticScreen::writeNow( int itime ) {
+    return timeSelection->theTimeIsNow( itime );
 }
 
 //! Zero the array

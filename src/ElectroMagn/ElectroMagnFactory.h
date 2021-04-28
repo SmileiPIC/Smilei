@@ -9,6 +9,7 @@
 #include "ElectroMagnAM.h"
 #include "ElectroMagnBC.h"
 #include "EnvelopeFactory.h"
+#include "RegionDomainDecomposition.h"
 
 #include "Patch.h"
 #include "Params.h"
@@ -41,16 +42,17 @@ public:
             EMfields->envelope = EnvelopeFactory::create( params, patch, EMfields );
         }
         
+        bool first_creation = patch->isMaster() && ! dynamic_cast<RegionDomainDecomposition*>( domain_decomposition );
         
         // -----------------
         // Lasers properties
         // -----------------
         int nlaser = PyTools::nComponents( "Laser" );
-        if( patch->isMaster() && nlaser > 0 ) {
+        if( first_creation && nlaser > 0 ) {
             TITLE( "Initializing laser parameters" );
         }
         for( int ilaser = 0; ilaser < nlaser; ilaser++ ) {
-            Laser *laser = new Laser( params, ilaser, patch, true );
+            Laser *laser = new Laser( params, ilaser, patch, first_creation );
             if( EMfields->emBoundCond[laser->i_boundary_] ) {
                 if( patch->isBoundary( laser->i_boundary_ ) ) {
                     laser->createFields( params, patch );
@@ -65,7 +67,7 @@ public:
         // ExtFields properties
         // -----------------
         unsigned int numExtFields=PyTools::nComponents( "ExternalField" );
-        if( patch->isMaster() && numExtFields > 0) {
+        if( first_creation && numExtFields > 0) {
             TITLE("Initializing External fields" );
         }
         for( unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++ ) {
@@ -92,7 +94,9 @@ public:
                 ERROR( "ExternalField #"<<n_extfield<<": field "<<extField.field<<" not found" );
             }
             
-            MESSAGE( 1, "External field " << extField.field << ": " << extField.profile->getInfo() );
+            if( first_creation ) {
+                MESSAGE( 1, "External field " << extField.field << ": " << extField.profile->getInfo() );
+            }
             EMfields->extFields.push_back( extField );
         }
 
@@ -100,7 +104,7 @@ public:
         // PrescribedFields properties
         // -----------------
         unsigned int prescribed_field_number = PyTools::nComponents( "PrescribedField" );
-        if( patch->isMaster() && prescribed_field_number > 0) {
+        if( first_creation && prescribed_field_number > 0) {
             TITLE("Initializing Prescribed Fields" );
         }
         for( unsigned int n_extfield = 0; n_extfield < PyTools::nComponents( "PrescribedField" ); n_extfield++ ) {
@@ -138,7 +142,9 @@ public:
                 ERROR( "PrescribedField #"<<n_extfield<<": field "<<fieldName<<" not found" );
             }
             
-            MESSAGE(1, "Prescribed field " << fieldName << ": " << extField.profile->getInfo());
+            if( first_creation ) {
+                MESSAGE(1, "Prescribed field " << fieldName << ": " << extField.profile->getInfo());
+            }
             EMfields->prescribedFields.push_back( extField );
         }
         
@@ -147,7 +153,7 @@ public:
         // Antenna properties
         // -----------------
         unsigned int antenna_number=PyTools::nComponents( "Antenna" );
-        if( patch->isMaster() && antenna_number > 0) {
+        if( first_creation && antenna_number > 0) {
             TITLE("Initializing Antenna" );
         }
         for( unsigned int n_antenna = 0; n_antenna < antenna_number; n_antenna++ ) {

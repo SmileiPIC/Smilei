@@ -15,7 +15,7 @@ const int    CollisionalFusionDD::npoints = 50;
 const double CollisionalFusionDD::npointsm1 = ( double )( npoints-1 );
 const double CollisionalFusionDD::a1 = log(511./(2.*2.013553)); // = ln(me*c^2 / Emin / n_nucleons)
 const double CollisionalFusionDD::a2 = 3.669039; // = (npoints-1) / ln( Emax/Emin )
-const double CollisionalFusionDD::a3 = log(511000./(2.*2.013553));; // = ln(me*c^2 / eV / n_nucleons)
+const double CollisionalFusionDD::a3 = log(511./0.7/(2.*2.013553));; // = ln(me*c^2 / Eref / n_nucleons)
 // Log of cross-section in units of 4 pi re^2
 const double CollisionalFusionDD::DB_log_crossSection[50] = {
     -27.307, -23.595, -20.383, -17.607, -15.216, -13.167, -11.418, -9.930, -8.666, -7.593,
@@ -43,11 +43,9 @@ CollisionalFusionDD::CollisionalFusionDD( CollisionalNuclearReaction *NR )
 }
 
 
-bool CollisionalFusionDD::occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &ekin, double &log_ekin, double &W )
+double CollisionalFusionDD::crossSection( double log_ekin )
 {
     // Interpolate the total cross-section at some value of ekin = m1(g1-1) + m2(g2-1)
-    ekin = m1 * (g1-1.) + m2 * (g2-1.);
-    log_ekin = log( ekin );
     double x = a2*( a1 + log_ekin );
     double cs;
     // if energy below Emin, approximate to 0.
@@ -69,16 +67,7 @@ bool CollisionalFusionDD::occurs( double U, double coeff, double m1, double m2, 
             ( DB_log_crossSection[npoints-1]-DB_log_crossSection[npoints-2] )*a + DB_log_crossSection[npoints-1]
         );
     }
-    
-    // Calculate probability for fusion
-    double prob = coeff * cs * rate_multiplier_;
-    tot_probability_ += prob;
-    if( U > exp( -prob ) ) {
-        W /= rate_multiplier_;
-        return true;
-    } else {
-        return false;
-    }
+    return cs;
 }
 
 void CollisionalFusionDD::makeProducts(
@@ -86,25 +75,34 @@ void CollisionalFusionDD::makeProducts(
     Particles *&p3, Particles *&p4,
     double &p3_COM, double &p4_COM,
     double &q3, double &q4,
-    double &cosX
+    double &sinX, double &cosX
 ) {
-    // Sample the products angle from empirical fits
-    double A = 0.083 * (a3 + log_ekin);
-    A *= A*A; // ^3
-    A *= A; // ^6
-    A = 1. / min(10., 1. + A);
-    double B = 0.06 * (a3 + log_ekin);
-    B = 2. + B*B;
-    cosX = 1. - A*U - (1.-A)*pow(U, B);
+    U = 2*U - 1.;
+    double U1 = abs( U );
+    bool up = U > 0.;
     
-    // Calculate the resulting momenta
+    // Sample the products angle from empirical fits
+    double lnE = a3 + log_ekin;
+    double alpha = lnE < 0. ? 1. : exp(-0.024*lnE*lnE);
+    double one_m_cosX = alpha*U1 / sqrt( (1.-U1) + alpha*alpha*U1 );
+    cosX = 1. - one_m_cosX;
+    sinX = sqrt( one_m_cosX * (1.+cosX) );
+    
+    // Calculate the resulting momenta from energy / momentum conservation
     const double Q = 6.397; // Qvalue
     const double m_n = 1838.7;
     const double m_He = 5497.9;
-    p3_COM = sqrt( (ekin+Q) * (ekin+Q+2.*m_n) * (ekin+Q+2.*m_He) * (ekin+Q+2.*m_n+2.*m_He) )
+    double p_COM = sqrt( (ekin+Q) * (ekin+Q+2.*m_n) * (ekin+Q+2.*m_He) * (ekin+Q+2.*m_n+2.*m_He) )
         / ( ( ekin+Q+m_n+m_He ) * (2.*m_He) );
     
-    // Other properties
-    q3 = q;
-    p3 = product_particles_[0]; // helium3
+    // Set particle properties
+    if( up ) {
+        p3_COM = p_COM;
+        q3 = q;
+        p3 = product_particles_[0]; // helium3
+    } else {
+        p4_COM = p_COM;
+        q4 = q;
+        p4 = product_particles_[0]; // helium3
+    }
 }

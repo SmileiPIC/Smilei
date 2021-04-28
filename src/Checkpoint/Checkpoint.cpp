@@ -24,7 +24,7 @@
 #include "ElectroMagnBC3D_SM.h"
 #include "Laser.h"
 #include "Species.h"
-#include "PatchesFactory.h"
+#include "DiagnosticProbes.h"
 #include "DiagnosticScreen.h"
 #include "DiagnosticTrack.h"
 #include "LaserEnvelope.h"
@@ -255,26 +255,29 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
     if( smpi->isMaster() ) {
         f.attr( "Energy_time_zero",  scalars->Energy_time_zero );
         f.attr( "EnergyUsedForNorm", scalars->EnergyUsedForNorm );
-        // Poynting scalars
-        unsigned int k=0;
-        for( unsigned int j=0; j<2; j++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
-            for( unsigned int i=0; i<params.nDim_field; i++ ) { //axis 0=x, 1=y, 2=z
-                if( scalars->necessary_poy[k] ) {
-                    string poy_name = Tools::merge( "Poy", Tools::xyz[i], j==0?"min":"max" );
-                    f.attr( poy_name, ( double )*( scalars->poy[k] ) );
-                    k++;
+    }
+    // Poynting scalars
+    unsigned int k=0;
+    for( unsigned int j=0; j<2; j++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for( unsigned int i=0; i<params.nDim_field; i++ ) { //axis 0=x, 1=y, 2=z
+            if( scalars->necessary_poy[k] ) {
+                string poy_name = Tools::merge( "Poy", Tools::xyz[i], j==0?"min":"max" );
+                double poy_val = 0.;
+                for( unsigned ipatch=0; ipatch<vecPatches.size(); ipatch++ ) {
+                    poy_val += vecPatches( ipatch )->EMfields->poynting[j][i];
                 }
+                f.attr( poy_name, poy_val );
+                k++;
             }
         }
     }
     
     // Write the diags screen data
-    ostringstream diagName( "" );
     if( smpi->isMaster() ) {
         unsigned int iscreen = 0;
         for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ ) {
             if( DiagnosticScreen *screen = dynamic_cast<DiagnosticScreen *>( vecPatches.globalDiags[idiag] ) ) {
-                diagName.str( "" );
+                ostringstream diagName( "" );
                 diagName << "DiagScreen" << iscreen;
                 f.vect( diagName.str(), *(screen->getData()) );
                 iscreen++;
@@ -291,7 +294,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
         string patchName=Tools::merge( "patch-", patch_name.str() );
         H5Write g = f.group( patchName.c_str() );
         
-        dumpPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, g );
+        dumpPatch( vecPatches( ipatch ), params, g );
         
         // Random number generator state
         g.attr( "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
@@ -304,7 +307,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
         patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
         string patchName=Tools::merge( "region-", patch_name.str() );
         H5Write g = f.group( patchName.c_str() );
-        dumpPatch( region.patch_->EMfields, region.patch_->vecSpecies, region.patch_->vecCollisions, params, g );
+        dumpPatch( region.patch_, params, g );
     }
 
     // Write the latest Id that the MPI processes have given to each species
@@ -324,8 +327,10 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
 }
 
 
-void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Write &g )
+void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
 {
+    ElectroMagn * EMfields = patch->EMfields;
+    
     if (  params.geometry != "AMcylindrical" ) {
         dumpFieldsPerProc( g, EMfields->Ex_ );
         dumpFieldsPerProc( g, EMfields->Ey_ );
@@ -395,6 +400,21 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
         }
     }
     
+    // Fields required for DiagProbes with time integral
+    for( unsigned int iprobe=0; iprobe<patch->probes.size(); iprobe++ ) {
+        unsigned int nFields = patch->probes[iprobe]->integrated_data.size();
+        if( nFields > 0 ) {
+            ostringstream group_name( "" );
+            group_name << "DataForProbes" << iprobe;
+            H5Write diag = g.group( group_name.str() );
+            for( unsigned int ifield=0; ifield<nFields; ifield++ ) {
+                ostringstream field( "" );
+                field << "field" << ifield;
+                diag.vect( field.str(), patch->probes[iprobe]->integrated_data[ifield] );
+            }
+        }
+    }
+    
     if( ( EMfields->extFields.size()>0 ) && ( params.save_magnectic_fields_for_SM ) ) {
         for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if( ! EMfields->emBoundCond[bcId] ) {
@@ -437,50 +457,52 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
     }
     
     g.flush();
-    g.attr( "species", vecSpecies.size() );
+    g.attr( "species", patch->vecSpecies.size() );
     
-    for( unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++ ) {
+    for( unsigned int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++ ) {
+        Species *spec = patch->vecSpecies[ispec];
+        
         ostringstream name( "" );
         name << setfill( '0' ) << setw( 2 ) << ispec;
-        string groupName=Tools::merge( "species-", name.str(), "-", vecSpecies[ispec]->name_ );
+        string groupName=Tools::merge( "species-", name.str(), "-", spec->name_ );
         H5Write s = g.group( groupName );
         
-        s.attr( "partCapacity", vecSpecies[ispec]->particles->capacity() );
-        s.attr( "partSize", vecSpecies[ispec]->particles->size() );
-        s.attr( "nrj_radiation", vecSpecies[ispec]->getNrjRadiation() );
+        s.attr( "partCapacity", spec->particles->capacity() );
+        s.attr( "partSize", spec->particles->size() );
+        s.attr( "nrj_radiation", spec->getNrjRadiation() );
         
-        if( vecSpecies[ispec]->particles->size()>0 ) {
+        if( spec->particles->size()>0 ) {
         
-            for( unsigned int i=0; i<vecSpecies[ispec]->particles->Position.size(); i++ ) {
+            for( unsigned int i=0; i<spec->particles->Position.size(); i++ ) {
                 ostringstream my_name( "" );
                 my_name << "Position-" << i;
-                s.vect( my_name.str(), vecSpecies[ispec]->particles->Position[i] );//, dump_deflate );
+                s.vect( my_name.str(), spec->particles->Position[i] );//, dump_deflate );
             }
             
-            for( unsigned int i=0; i<vecSpecies[ispec]->particles->Momentum.size(); i++ ) {
+            for( unsigned int i=0; i<spec->particles->Momentum.size(); i++ ) {
                 ostringstream my_name( "" );
                 my_name << "Momentum-" << i;
-                s.vect( my_name.str(), vecSpecies[ispec]->particles->Momentum[i] );//, dump_deflate );
+                s.vect( my_name.str(),spec->particles->Momentum[i] );//, dump_deflate );
             }
             
-            s.vect( "Weight", vecSpecies[ispec]->particles->Weight );//, dump_deflate );
-            s.vect( "Charge", vecSpecies[ispec]->particles->Charge );//, dump_deflate );
+            s.vect( "Weight", spec->particles->Weight );//, dump_deflate );
+            s.vect( "Charge", spec->particles->Charge );//, dump_deflate );
             
-            if( vecSpecies[ispec]->particles->tracked ) {
-                s.vect( "Id", vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64 );//, dump_deflate );
+            if( spec->particles->tracked ) {
+                s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );//, dump_deflate );
             }
             
-            s.vect( "first_index", vecSpecies[ispec]->particles->first_index );
-            s.vect( "last_index", vecSpecies[ispec]->particles->last_index );
+            s.vect( "first_index", spec->particles->first_index );
+            s.vect( "last_index", spec->particles->last_index );
             
         } // End if partSize
         
     } // End for ispec
     
     // Manage some collisions parameters
-    std::vector<double> rate_multiplier( vecCollisions.size() );
-    for( unsigned int icoll = 0; icoll<vecCollisions.size(); icoll++ ) {
-        rate_multiplier[icoll] = vecCollisions[icoll]->NuclearReaction->rate_multiplier_;
+    std::vector<double> rate_multiplier(  patch->vecCollisions.size() );
+    for( unsigned int icoll = 0; icoll< patch->vecCollisions.size(); icoll++ ) {
+        rate_multiplier[icoll] =  patch->vecCollisions[icoll]->NuclearReaction->rate_multiplier_;
     }
     g.vect( "collisions_rate_multiplier", rate_multiplier );
     
@@ -555,26 +577,25 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
     if( smpi->isMaster() ) {
         f.attr( "Energy_time_zero",  scalars->Energy_time_zero );
         f.attr( "EnergyUsedForNorm", scalars->EnergyUsedForNorm );
-        // Poynting scalars
-        unsigned int k=0;
-        for( unsigned int j=0; j<2; j++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
-            for( unsigned int i=0; i<params.nDim_field; i++ ) { //axis 0=x, 1=y, 2=z
-                string poy_name = Tools::merge( "Poy", Tools::xyz[i], j==0?"min":"max" );
-                if( f.hasAttr( poy_name ) ) {
-                    f.attr( poy_name, vecPatches( 0 )->EMfields->poynting[j][i] );
-                }
-                k++;
+    }
+    // Poynting scalars
+    unsigned int k=0;
+    for( unsigned int j=0; j<2; j++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for( unsigned int i=0; i<params.nDim_field; i++ ) { //axis 0=x, 1=y, 2=z
+            string poy_name = Tools::merge( "Poy", Tools::xyz[i], j==0?"min":"max" );
+            if( f.hasAttr( poy_name ) ) {
+                f.attr( poy_name, vecPatches( 0 )->EMfields->poynting[j][i] );
             }
+            k++;
         }
     }
     
     // Read the diags screen data
-    ostringstream diagName( "" );
     if( smpi->isMaster() ) {
         unsigned int iscreen = 0;
         for( unsigned int idiag=0; idiag<vecPatches.globalDiags.size(); idiag++ ) {
             if( DiagnosticScreen *screen = dynamic_cast<DiagnosticScreen *>( vecPatches.globalDiags[idiag] ) ) {
-                diagName.str( "" );
+                ostringstream diagName( "" );
                 diagName << "DiagScreen" << iscreen;
                 int target_size = screen->getData()->size();
                 int vect_size = f.vectSize( diagName.str() );
@@ -596,7 +617,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
         string patchName = Tools::merge( "patch-", patch_name.str() );
         H5Read g = f.group( patchName );
         
-        restartPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, g );
+        restartPatch( vecPatches( ipatch ), params, g );
         
         // Random number generator state
         g.attr( "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
@@ -608,7 +629,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
         patch_name << setfill( '0' ) << setw( 6 ) << region.patch_->Hindex();
         string patchName = Tools::merge( "region-", patch_name.str() );
         H5Read g = f.group( patchName );
-        restartPatch( region.patch_->EMfields, region.patch_->vecSpecies, region.patch_->vecCollisions, params, g );
+        restartPatch( region.patch_, params, g );
     }
     
     // Read the latest Id that the MPI processes have given to each species
@@ -655,8 +676,10 @@ void Checkpoint::readRegionDistribution( Region &region )
 }
 
 
-void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, H5Read &g )
+void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
 {
+    ElectroMagn * EMfields = patch->EMfields;
+    
     if ( params.geometry != "AMcylindrical" ) {
         restartFieldsPerProc( g, EMfields->Ex_ );
         restartFieldsPerProc( g, EMfields->Ey_ );
@@ -738,6 +761,24 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
         }
     }
     
+    // Fields required for DiagProbes with time integral
+    for( unsigned int iprobe=0; iprobe<patch->probes.size(); iprobe++ ) {
+        ostringstream group_name( "" );
+        group_name << "DataForProbes" << iprobe;
+        if(  g.has( group_name.str() ) ) {
+            H5Read diag = g.group( group_name.str() );
+            for( unsigned int ifield = 0; true; ifield++ ) {
+                ostringstream field( "" );
+                field << "field" << ifield;
+                if( ! diag.has( field.str() ) ) {
+                    break;
+                }
+                patch->probes[iprobe]->integrated_data.resize(ifield+1);
+                diag.vect( field.str(), patch->probes[iprobe]->integrated_data[ifield], true );
+            }
+        }
+    }
+    
     if( ( EMfields->extFields.size()>0 ) && ( params.save_magnectic_fields_for_SM ) ) {
         for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if( ! EMfields->emBoundCond[bcId] ) {
@@ -782,55 +823,57 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
     unsigned int vecSpeciesSize=0;
     g.attr( "species", vecSpeciesSize );
     
-    if( vecSpeciesSize != vecSpecies.size() ) {
-        ERROR( "Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<vecSpecies.size()<<")" );
+    if( vecSpeciesSize != patch->vecSpecies.size() ) {
+        ERROR( "Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<patch->vecSpecies.size()<<")" );
     }
     
     
-    for( unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++ ) {
+    for( unsigned int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++ ) {
+        Species * spec = patch->vecSpecies[ispec];
+        
         ostringstream name( "" );
         name << setfill( '0' ) << setw( 2 ) << ispec;
-        string groupName = Tools::merge( "species-", name.str(), "-", vecSpecies[ispec]->name_ );
+        string groupName = Tools::merge( "species-", name.str(), "-", spec->name_ );
         H5Read s = g.group( groupName );
         
         unsigned int partCapacity=0;
         s.attr( "partCapacity", partCapacity );
-        vecSpecies[ispec]->particles->reserve( partCapacity, nDim_particle );
+        spec->particles->reserve( partCapacity, nDim_particle );
         
         unsigned int partSize=0;
         s.attr( "partSize", partSize );
-        vecSpecies[ispec]->particles->initialize( partSize, nDim_particle, params.keep_position_old );
+        spec->particles->initialize( partSize, nDim_particle, params.keep_position_old );
         
         double nrj_radiation;
         if( s.hasAttr( "nrj_radiation" ) ) {
             s.attr( "nrj_radiation", nrj_radiation );
-            vecSpecies[ispec]->setNrjRadiation( nrj_radiation );
+            spec->setNrjRadiation( nrj_radiation );
         }
         
         if( partSize>0 ) {
-            for( unsigned int i=0; i<vecSpecies[ispec]->particles->Position.size(); i++ ) {
+            for( unsigned int i=0; i<spec->particles->Position.size(); i++ ) {
                 ostringstream namePos( "" );
                 namePos << "Position-" << i;
-                s.vect( namePos.str(), vecSpecies[ispec]->particles->Position[i] );
+                s.vect( namePos.str(), spec->particles->Position[i] );
             }
             
-            for( unsigned int i=0; i<vecSpecies[ispec]->particles->Momentum.size(); i++ ) {
+            for( unsigned int i=0; i<spec->particles->Momentum.size(); i++ ) {
                 ostringstream namePos( "" );
                 namePos << "Momentum-" << i;
-                s.vect( namePos.str(), vecSpecies[ispec]->particles->Momentum[i] );
+                s.vect( namePos.str(), spec->particles->Momentum[i] );
             }
             
-            s.vect( "Weight", vecSpecies[ispec]->particles->Weight );
+            s.vect( "Weight", spec->particles->Weight );
             
-            s.vect( "Charge", vecSpecies[ispec]->particles->Charge );
+            s.vect( "Charge", spec->particles->Charge );
             
-            if( vecSpecies[ispec]->particles->tracked ) {
-                s.vect( "Id", vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64 );
+            if( spec->particles->tracked ) {
+                s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );
             }
             
             if( params.vectorization_mode == "off" || params.vectorization_mode == "on" || params.cell_sorting ) {
-                s.vect( "first_index", vecSpecies[ispec]->particles->first_index, true );
-                s.vect( "last_index", vecSpecies[ispec]->particles->last_index, true );
+                s.vect( "first_index", spec->particles->first_index, true );
+                s.vect( "last_index", spec->particles->last_index, true );
             }
             // In the adaptive vectorization case, the bins will be recomputed
             // latter in the patch reconfiguration
@@ -843,7 +886,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
         std::vector<double> rate_multiplier;
         g.vect( "collisions_rate_multiplier", rate_multiplier, true );
         for( unsigned int icoll = 0; icoll<rate_multiplier.size(); icoll++ ) {
-            vecCollisions[icoll]->NuclearReaction->rate_multiplier_ = rate_multiplier[icoll];
+            patch->vecCollisions[icoll]->NuclearReaction->rate_multiplier_ = rate_multiplier[icoll];
         }
     }
     

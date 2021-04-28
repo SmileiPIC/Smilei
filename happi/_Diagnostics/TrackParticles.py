@@ -437,12 +437,13 @@ class TrackParticles(Diagnostic):
 
 	# get all available tracked species
 	def getTrackSpecies(self):
+		species = []
 		for path in self._results_path:
 			files = self._glob(path+self._os.sep+"TrackParticles*.h5")
-			species_here = [self._re.search("_(.+).h5",self._os.path.basename(file)).groups()[0] for file in files]
-			try   : species = [ s for s in species if s in species_here ]
-			except: species = species_here
-		return species
+			for file in files:
+				s = self._re.search("^TrackParticlesDisordered_(.+).h5",self._os.path.basename(file))
+				if s: species += [ s.groups()[0] ]
+		return list(set(species)) # unique species
 
 	# get all available timesteps
 	def getAvailableTimesteps(self):
@@ -453,10 +454,11 @@ class TrackParticles(Diagnostic):
 		disorderedfiles = []
 		for path in self._results_path:
 			file = path+self._os.sep+"TrackParticlesDisordered_"+self.species+".h5"
-			if not self._os.path.isfile(file):
-				self._error += ["Missing TrackParticles file in directory "+path]
-				return []
-			disorderedfiles += [file]
+			if self._os.path.isfile(file):
+				disorderedfiles += [file]
+		if not disorderedfiles:
+			self._error += ["No TrackParticles files"]
+			return []
 		return disorderedfiles
 
 	# Make the particles ordered by Id in the file, in case they are not

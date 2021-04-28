@@ -1,0 +1,7 @@
+#
+# Machine file for Ruche (Cascadelake processors)
+# Compilation with the Intel compiler
+# __________________________________________________________
+
+CXXFLAGS += -xCOMMON-AVX512 -ip -inline-factor=1000 -D__INTEL_CASCADELAKE_6248 -qopt-zmm-usage=high -fno-alias #-ipo
+LDFLAGS += -lz

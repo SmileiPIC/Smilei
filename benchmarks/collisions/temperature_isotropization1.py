@@ -51,7 +51,8 @@ Species(
 Collisions(
 	species1 = ["electron1"],
 	species2 = ["electron1"],
-	coulomb_log = 2
+	coulomb_log = 2,
+	debug_every=5
 )
 
 

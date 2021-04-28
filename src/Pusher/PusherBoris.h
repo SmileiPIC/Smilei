@@ -1,6 +1,6 @@
-/*! @file PusherBoris.h
+/*! @file Pusher.h
 
- @brief PusherBoris.h  generic class for the particle pusher of Boris.
+ @brief Pusher.h  generic class for the particle pusher
 
  @date 2013-02-15
  */
@@ -11,7 +11,7 @@
 #include "Pusher.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class PusherBoris
+//! Class PusherBorisV
 //  --------------------------------------------------------------------------------------------------------------------
 class PusherBoris : public Pusher
 {
@@ -20,9 +20,8 @@ public:
     PusherBoris( Params &params, Species *species );
     ~PusherBoris();
     //! Overloading of () operator
-    virtual void operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_ref = 0 );
+    virtual void operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset = 0 );
     
 };
 
 #endif
-

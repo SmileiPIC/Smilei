@@ -44,8 +44,7 @@ class Probe(Diagnostic):
 			try:
 				self._h5probe.append( self._h5py.File(file, 'r') )
 			except Exception as e:
-				self._error += ["Error opening probe #"+str(probeNumber)+" in path '"+path+"'"]
-				return
+				continue
 			# Verify that this file is compatible with the previous ones
 			try:
 				for key, val in verifications.items():
@@ -59,6 +58,9 @@ class Probe(Diagnostic):
 					npoints += 1
 				for i in range(npoints):
 					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)][()]
+		if not self._h5probe:
+			self._error += ["Error opening probe #"+str(probeNumber)]
+			return
 		
 		# Extract available fields
 		fields = self.getFields()
@@ -297,10 +299,17 @@ class Probe(Diagnostic):
 		# Build units
 		titles = {}
 		fieldunits = {}
+		unitsForField = {"B":"B_r","E":"E_r","J":"J_r","R":"N_r","P":"V_r*K_r*N_r"}
+		self.time_integral = self._myinfo["time_integral"]
+		
 		for f in self._fieldname:
 			i = fields.index(f)
-			fieldunits.update({ i:{"B":"B_r","E":"E_r","J":"J_r","R":"N_r"}[f[0]] })
-			titles    .update({ i:f })
+			if self.time_integral:
+				fieldunits.update({ i:unitsForField[f[0]] + "*T_r" })
+				titles    .update({ i:"Time-integrated "+f })
+			else:
+				fieldunits.update({ i:unitsForField[f[0]] })
+				titles    .update({ i:f })
 		# Make total units and title
 		self._title  = self.operation
 		self._vunits = self.operation
@@ -345,21 +354,28 @@ class Probe(Diagnostic):
 	def _getInfo(self, probeNumber):
 		out = {}
 		out["probeNumber"] = probeNumber
-		try:
-			file = self._results_path[0]+"/Probes"+str(probeNumber)+".h5"
-			probe = self._h5py.File(file, 'r')
-		except Exception as e:
-			self._error += ["\tWarning: Cannot open file "+file]
+		for path in self._results_path:
+			try:
+				file = path+"/Probes"+str(probeNumber)+".h5"
+				probe = self._h5py.File(file, 'r')
+			except Exception as e:
+				continue
+			out["dimension"] = probe.attrs["dimension"]
+			out["shape"] = self._np.array(probe["number"], dtype=int)
+			out["fields"] = probe.attrs["fields"]
+			if "time_integral" in probe.attrs:
+				out["time_integral"] = probe.attrs["time_integral"]
+			else:
+				out["time_integral"] = False
+			i = 0
+			while "p"+str(i) in probe.keys():
+				out["p"+str(i)] = self._np.array(probe["p"+str(i)])
+				i += 1
+			probe.close()
 			return out
-		out["dimension"] = probe.attrs["dimension"]
-		out["shape"] = self._np.array(probe["number"], dtype=int)
-		out["fields"] = probe.attrs["fields"]
-		i = 0
-		while "p"+str(i) in probe.keys():
-			out["p"+str(i)] = self._np.array(probe["p"+str(i)])
-			i += 1
-		probe.close()
+		self._error += ["\tWarning: Cannot open file Probes"+str(probeNumber)+".h5"]
 		return out
+	
 	def _getMyInfo(self):
 		return self._getInfo(self.probeNumber)
 	
