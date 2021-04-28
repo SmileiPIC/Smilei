@@ -32,6 +32,9 @@ PusherPhoton::~PusherPhoton()
 void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
                                int istart, int iend, int ithread, int ipart_ref )
 {
+
+    std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+
     // Inverse normalized energy
     double *invgf = &( smpi->dynamics_invgf[ithread][0] );
     
@@ -47,7 +50,14 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     double* momentum_x = particles.getPtrMomentum(0);
     double* momentum_y = particles.getPtrMomentum(1);
     double* momentum_z = particles.getPtrMomentum(2);
-    
+   
+    int nparts;
+    if (vecto) {
+        nparts = Epart->size()/3;
+    } else {
+        nparts = particles.size();
+    }
+
     #ifndef _GPU
         #pragma omp simd
     #else

@@ -65,8 +65,8 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     #else
         int np = iend-istart;
         #pragma acc parallel \
-        present(Ex[istart:np],Ey[istart:np],Ez[istart:np],Bx[istart:np],By[istart:np],Bz[istart:np],invgf[0:nparts],GradPhix[istart:np],GradPhiy[istart:np],GradPhiz[istart:np]) \
-        deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z,charge)
+        present(Ex[istart:np],Ey[istart:np],Ez[istart:np],Bx[istart:np],By[istart:np],Bz[istart:np],dynamics_inv_gamma_ponderomotive[0:nparts],GradPhix[istart:np],GradPhiy[istart:np],GradPhiz[istart:np]) \
+        deviceptr(momentum_x,momentum_y,momentum_z,charge)
         #pragma acc loop gang worker vector
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
