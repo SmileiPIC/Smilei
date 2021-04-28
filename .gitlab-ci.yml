@@ -33,6 +33,7 @@ compile_default:
     - develop
     - laser_y
     - pusher_cleaning
+    - radiation_GPU
     
   script:
     # Move in test dir
