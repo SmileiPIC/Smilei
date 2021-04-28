@@ -566,11 +566,18 @@ Boris pusher for CPU
 ^^^^^^^^^^^^^^^^^^^^^^
 
 The pusher implementation is one of the most simple algorithm of the PIC loop.
-It is composed of a single loop over a group of macro-particles.
+In the initialization part of the functor, we use pointers to simplify the access to the different arrays.
+The core of the pusher is then composed of a single veectorized loop (``omp simd``) over a group of macro-particles.
 
 .. literalinclude:: ../../src/Pusher/PusherBoris.cpp
-    :lines: 61-112
+    :lines: 71-122
     :linenos:
+
+Boris pusher for GPU
+^^^^^^^^^^^^^^^^^^^^^^^
+
+On GPU, the ``omp simd`` directives is simply changed for the ``#pragma acc loop gang worker vector``.
+The macro-particles are distributed on the GPU threads (``vector`` level).
 
 .. _radiationReactionImplementation:
 
