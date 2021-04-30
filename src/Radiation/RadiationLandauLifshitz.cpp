@@ -100,6 +100,9 @@ void RadiationLandauLifshitz::operator()(
 
     // Local vector to store the radiated energy
     double * rad_norm_energy = new double [iend-istart];
+    for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
+        rad_norm_energy[ipart] = 0;
+    }
 
     // _______________________________________________________________
     // Computation
@@ -168,7 +171,7 @@ void RadiationLandauLifshitz::operator()(
                       + momentum_z[ipart]*momentum_z[ipart] );
                       
         // Computation of the Lorentz invariant quantum parameter
-        chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
+        chi[ipart] = computeParticleChi( charge_over_mass_square,
                      momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                      gamma,
                      ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
@@ -179,6 +182,6 @@ void RadiationLandauLifshitz::operator()(
     // _______________________________________________________________
     // Cleaning
     
-    delete rad_norm_energy;
+    delete [] rad_norm_energy;
     
 }
