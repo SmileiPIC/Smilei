@@ -125,30 +125,27 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
     int nparts = gpu_nparts_;
 
     // Iterator of the main data structure
+    ZipIterParts iter;
     if (isQuantumParameter) {
-        thrust::tuple particles_tuple(thrust::make_tuple(nvidiaPosition[0].begin(),
+       iter = thrust::make_zip_iterator(thrust::make_tuple(nvidiaPosition[0].begin(),
                                              nvidiaPosition[1].begin(),
                                              nvidiaPosition[2].begin(),
                                              nvidiaMomentum[0].begin(),
                                              nvidiaMomentum[1].begin(),
                                              nvidiaMomentum[2].begin(),
                                              nvidiaWeight.begin(),
-                                             nvidiaCharge.begin(),
-                                             nvidiaChi.begin() ));
+                                             nvidiaCharge.begin()));
     } else {
-        thrust::tuple particles_tuple(thrust::make_tuple(nvidiaPosition[0].begin(),
+        iter = thrust::make_zip_iterator(thrust::make_tuple(nvidiaPosition[0].begin(),
                                              nvidiaPosition[1].begin(),
                                              nvidiaPosition[2].begin(),
                                              nvidiaMomentum[0].begin(),
                                              nvidiaMomentum[1].begin(),
                                              nvidiaMomentum[2].begin(),
                                              nvidiaWeight.begin(),
-                                             nvidiaCharge.begin() ));
+                                             nvidiaCharge.begin()));
+
     }
-
-    ZipIterParts iter(particles_tuple);
-
-    // Count particles to send
     nparts_to_move_ = thrust::count(thrust::device, nvidia_cell_keys.begin(), nvidia_cell_keys.begin()+nparts, -1);
 
     // Manage the send data structure
