@@ -33,6 +33,7 @@ public:
     std::vector< thrust::device_vector<double> > nvidiaMomentum;
     thrust::device_vector<double> nvidiaWeight;
     thrust::device_vector<short>  nvidiaCharge;
+    thrust::device_vector<short>  nvidiaChi;
 
     //! cell_keys of the particle
     thrust::device_vector<int> nvidia_cell_keys;
@@ -48,6 +49,9 @@ public:
     };
     short * getPtrCharge() override {
         return thrust::raw_pointer_cast( nvidiaCharge.data() );
+    };
+    short * getPtrChi() override {
+        return thrust::raw_pointer_cast( nvidiaChi.data() );
     };
     int * getPtrCellKeys() override {
         return thrust::raw_pointer_cast( nvidia_cell_keys.data() );
