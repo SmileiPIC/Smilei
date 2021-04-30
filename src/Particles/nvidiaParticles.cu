@@ -125,27 +125,15 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
     int nparts = gpu_nparts_;
 
     // Iterator of the main data structure
-    ZipIterParts iter;
-    if (isQuantumParameter) {
-       iter = thrust::make_zip_iterator(thrust::make_tuple(nvidiaPosition[0].begin(),
-                                             nvidiaPosition[1].begin(),
-                                             nvidiaPosition[2].begin(),
-                                             nvidiaMomentum[0].begin(),
-                                             nvidiaMomentum[1].begin(),
-                                             nvidiaMomentum[2].begin(),
-                                             nvidiaWeight.begin(),
-                                             nvidiaCharge.begin()));
-    } else {
-        iter = thrust::make_zip_iterator(thrust::make_tuple(nvidiaPosition[0].begin(),
-                                             nvidiaPosition[1].begin(),
-                                             nvidiaPosition[2].begin(),
-                                             nvidiaMomentum[0].begin(),
-                                             nvidiaMomentum[1].begin(),
-                                             nvidiaMomentum[2].begin(),
-                                             nvidiaWeight.begin(),
-                                             nvidiaCharge.begin()));
+    ZipIterParts iter(thrust::make_tuple(nvidiaPosition[0].begin(),
+                                         nvidiaPosition[1].begin(),
+                                         nvidiaPosition[2].begin(),
+                                         nvidiaMomentum[0].begin(),
+                                         nvidiaMomentum[1].begin(),
+                                         nvidiaMomentum[2].begin(),
+                                         nvidiaWeight.begin(),
+                                         nvidiaCharge.begin()));
 
-    }
     nparts_to_move_ = thrust::count(thrust::device, nvidia_cell_keys.begin(), nvidia_cell_keys.begin()+nparts, -1);
 
     // Manage the send data structure
@@ -180,6 +168,11 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
 
     // Copy send particles in dedicated data structure if nvidia_cell_keys=0 (currently = 1 if keeped, new PartBoundCond::apply(...))
     thrust::copy_if(thrust::device, iter, iter+nparts, nvidia_cell_keys.begin(), iter_copy, count_if_out());
+    // Special treatment for chi if radiation emission
+    if (isQuantumParameter) {
+        thrust::copy_if(thrust::device, nvidiaChi.begin(), nvidiaChi.begin()+nparts, nvidia_cell_keys.begin(), cp_parts->nvidiaChi.begin(), count_if_out())
+    }
+    
     cp_parts->gpu_nparts_ = nparts_to_move_;
 
     particles_to_move->syncCPU();
