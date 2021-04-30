@@ -124,12 +124,10 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
 {
     int nparts = gpu_nparts_;
 
-    thrust::tuple particles_tuple = thrust::make_tuple(nvidiaPosition[0].begin(), nvidiaPosition[1].begin(), nvidiaPosition[2].begin(),
-                                         nvidiaMomentum[0].begin(), nvidiaMomentum[1].begin(), nvidiaMomentum[2].begin(),
-                                         nvidiaWeight.begin(), nvidiaCharge.begin() ) ;
-
     // Iterator of the main data structure
-    ZipIterParts iter(particles_tuple);
+    ZipIterParts iter(thrust::make_tuple(nvidiaPosition[0].begin(), nvidiaPosition[1].begin(), nvidiaPosition[2].begin(),
+                                         nvidiaMomentum[0].begin(), nvidiaMomentum[1].begin(), nvidiaMomentum[2].begin(),
+                                         nvidiaWeight.begin(), nvidiaCharge.begin() ));
 
     // Count particles to send
     nparts_to_move_ = thrust::count(thrust::device, nvidia_cell_keys.begin(), nvidia_cell_keys.begin()+nparts, -1);
