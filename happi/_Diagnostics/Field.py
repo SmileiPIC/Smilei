@@ -153,7 +153,7 @@ class Field(Diagnostic):
 		self._fieldname = []
 		for f in sortedfields:
 			if self._re.search(r"\b"+f+r"\b",self._operation):
-				self._operation = self._re.sub(r"\b"+f+r"\b","C['"+f+"']",self._operation)
+				self._operation = self._re.sub(r"(?<!')"+f+r"\b","C['"+f+"']",self._operation)
 				self._fieldname.append(f)
 		if not self._fieldname:
 			self._error += ["String "+self.operation+" does not seem to include any field"]
