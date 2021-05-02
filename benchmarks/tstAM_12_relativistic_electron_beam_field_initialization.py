@@ -110,11 +110,8 @@ Species(
 
 
 
-list_fields = ['Ex','Ey','Ez','Bx','By','Bz','Rho','Jx','Jy']
-
 DiagFields(
     every = 200,
-#        fields = list_fields
 )
 
 
