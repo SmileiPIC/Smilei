@@ -212,7 +212,7 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
                                                                    )
                                                 ),
                       nvidia_cell_keys.begin(),
-                      count_if_out(),
+                      count_if_out()
                       );
                       
     if (isQuantumParameter) {
@@ -220,7 +220,7 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
                           nvidia_chi_.begin(),
                           nvidia_chi_.begin()+nparts,
                           nvidia_cell_keys.begin(),
-                          count_if_out(),
+                          count_if_out()
         );
     }
     
