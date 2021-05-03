@@ -3,6 +3,8 @@
 
 #include <nvidiaParticles.h>
 
+//! Structure with specific function count_if_out for thrust::tuple operator
+//! Return True if the entry is -1 as in the cell keys vector for instance
 struct count_if_out
 {
     __host__ __device__
@@ -12,6 +14,7 @@ struct count_if_out
   }
 };
 
+//! Structure with specific function thrust::tuple operator
 struct remove_if_out
 {
     typedef thrust::tuple<double,double,double,double,double,double,double,short,int> Tuple;
@@ -185,30 +188,60 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
     // Remove particles which leaves current patch
     thrust::remove_if(thrust::device,
                       thrust::make_zip_iterator(thrust::make_tuple(
-                                                                   nvidiaPosition[0].begin(), nvidiaPosition[1].begin(), nvidiaPosition[2].begin(),
-                                                                   nvidiaMomentum[0].begin(), nvidiaMomentum[1].begin(), nvidiaMomentum[2].begin(),
-                                                                   nvidiaWeight.begin(), nvidiaCharge.begin(), nvidia_cell_keys.begin()
+                                                                   nvidiaPosition[0].begin(),
+                                                                   nvidiaPosition[1].begin(),
+                                                                   nvidiaPosition[2].begin(),
+                                                                   nvidiaMomentum[0].begin(),
+                                                                   nvidiaMomentum[1].begin(),
+                                                                   nvidiaMomentum[2].begin(),
+                                                                   nvidiaWeight.begin(),
+                                                                   nvidiaCharge.begin()
+                                                                  // , nvidia_cell_keys.begin()
                                                                    )
                                                 ),
                       thrust::make_zip_iterator(thrust::make_tuple(
-                                                                   nvidiaPosition[0].begin()+nparts, nvidiaPosition[1].begin()+nparts, nvidiaPosition[2].begin()+nparts,
-                                                                   nvidiaMomentum[0].begin()+nparts, nvidiaMomentum[1].begin()+nparts, nvidiaMomentum[2].begin()+nparts,
-                                                                   nvidiaWeight.begin()+nparts, nvidiaCharge.begin()+nparts, nvidia_cell_keys.begin()+nparts
+                                                                   nvidiaPosition[0].begin()+nparts,
+                                                                   nvidiaPosition[1].begin()+nparts,
+                                                                   nvidiaPosition[2].begin()+nparts,
+                                                                   nvidiaMomentum[0].begin()+nparts,
+                                                                   nvidiaMomentum[1].begin()+nparts,
+                                                                   nvidiaMomentum[2].begin()+nparts,
+                                                                   nvidiaWeight.begin()+nparts,
+                                                                   nvidiaCharge.begin()+nparts
+                                                                //,   nvidia_cell_keys.begin()+nparts
                                                                    )
                                                 ),
-                      remove_if_out()
+                      nvidia_cell_keys.begin(),
+                      count_if_out(),
                       );
-    // Update current nmuber of particles
+                      
+    if (isQuantumParameter) {
+        thrust::remove_if(thrust::device,
+                          nvidia_chi_.begin(),
+                          nvidia_chi_.begin()+nparts,
+                          nvidia_cell_keys.begin(),
+                          count_if_out(),
+        );
+    }
+    
+    // Update current number of particles
     gpu_nparts_ -= nparts_to_move_;
     nparts = gpu_nparts_;
 
+    // Just resize cell keys, no need to remove
+    // nvidia_cell_keys_.resize(gpu_nparts_);
 
     // Manage the recv data structure
     nvidiaParticles* cp_parts = static_cast<nvidiaParticles*>( particles_to_move );
 
-    ZipIterParts iter_copy(thrust::make_tuple(cp_parts->nvidiaPosition[0].begin(), cp_parts->nvidiaPosition[1].begin(), cp_parts->nvidiaPosition[2].begin(),
-                                              cp_parts->nvidiaMomentum[0].begin(), cp_parts->nvidiaMomentum[1].begin(), cp_parts->nvidiaMomentum[2].begin(),
-                                              cp_parts->nvidiaWeight.begin(), cp_parts->nvidiaCharge.begin() ) );
+    ZipIterParts iter_copy(thrust::make_tuple(cp_parts->nvidiaPosition[0].begin(),
+                                              cp_parts->nvidiaPosition[1].begin(),
+                                              cp_parts->nvidiaPosition[2].begin(),
+                                              cp_parts->nvidiaMomentum[0].begin(),
+                                              cp_parts->nvidiaMomentum[1].begin(),
+                                              cp_parts->nvidiaMomentum[2].begin(),
+                                              cp_parts->nvidiaWeight.begin(),
+                                              cp_parts->nvidiaCharge.begin() ) );
     int nparts_add = cp_parts->gpu_nparts_;
     int tot_parts = nparts + nparts_add;
  
@@ -223,15 +256,31 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
         nvidiaWeight.resize( tot_parts, 0. );
         nvidiaCharge.resize( tot_parts, 0 );
         nvidia_cell_keys.resize( tot_parts, 0 );
+        if (isQuantumParameter) {
+            nvidia_chi_.resize(  tot_parts, 0 );
+        }
     }
     // Iterator of the main data structure (once it has been resized)
-    ZipIterParts iter(thrust::make_tuple(nvidiaPosition[0].begin(), nvidiaPosition[1].begin(), nvidiaPosition[2].begin(),
-                                         nvidiaMomentum[0].begin(), nvidiaMomentum[1].begin(), nvidiaMomentum[2].begin(),
-                                         nvidiaWeight.begin(), nvidiaCharge.begin() ) );
+    ZipIterParts iter(thrust::make_tuple(nvidiaPosition[0].begin(),
+                                         nvidiaPosition[1].begin(),
+                                         nvidiaPosition[2].begin(),
+                                         nvidiaMomentum[0].begin(),
+                                         nvidiaMomentum[1].begin(),
+                                         nvidiaMomentum[2].begin(),
+                                         nvidiaWeight.begin(),
+                                         nvidiaCharge.begin() ) );
  
  
     // Copy recv particles in main data structure
     thrust::copy_n(thrust::device, iter_copy, nparts_add, iter+nparts);
+    
+    if (isQuantumParameter) {
+        thrust::copy_n(thrust::device,
+                       cp_parts->nvidia_chi_.begin(),
+                       nparts_add,
+                       nvidia_chi_.begin()+nparts);
+    }
+    
     gpu_nparts_ += nparts_add;
 
     // Resize below useless : nvidia_cell_keys resized if necessary above, cell_keys not used on cpu
