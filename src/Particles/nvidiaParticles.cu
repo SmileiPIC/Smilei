@@ -54,8 +54,8 @@ void nvidiaParticles::initGPU()
     nvidiaCharge.resize( Charge.size() );
 
     if( isQuantumParameter ) {
-        nvidiaChi.reserve( res_fac*Chi.size() );
-        nvidiaChi.resize( Chi.size() );
+        nvidia_chi_.reserve( res_fac*Chi.size() );
+        nvidia_chi_.resize( Chi.size() );
     }
 
     nvidia_cell_keys.reserve( res_fac*Charge.size() );
@@ -72,7 +72,7 @@ void nvidiaParticles::initGPU()
         nvidiaWeight.reserve( 100 );
         nvidiaCharge.reserve( 100 );
         if( isQuantumParameter ) {
-            nvidiaChi.reserve( 100 );
+            nvidia_chi_.reserve( 100 );
         }
         nvidia_cell_keys.reserve( 100 );
     }
@@ -95,7 +95,7 @@ void nvidiaParticles::syncCPU()
     thrust::copy((nvidiaCharge).begin(), (nvidiaCharge).begin()+gpu_nparts_, (Charge).begin());
     if (isQuantumParameter) {
         Chi.resize( gpu_nparts_ );
-        thrust::copy((nvidiaChi).begin(), (nvidiaChi).begin()+gpu_nparts_, (Chi).begin());
+        thrust::copy((nvidia_chi_).begin(), (nvidia_chi_).begin()+gpu_nparts_, (Chi).begin());
     }
 }
 
@@ -114,8 +114,8 @@ void nvidiaParticles::syncGPU()
     nvidiaCharge.resize( Charge.size() );
     thrust::copy((Charge).begin(), (Charge).end(), (nvidiaCharge).begin());
     if (isQuantumParameter) {
-        nvidiaChi.resize( Chi.size() );
-        thrust::copy((Chi).begin(), (Chi).end(), (nvidiaChi).begin());
+        nvidia_chi_.resize( Chi.size() );
+        thrust::copy((Chi).begin(), (Chi).end(), (nvidia_chi_).begin());
     }
     gpu_nparts_ = Charge.size();
 }
@@ -149,7 +149,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
         cp_parts->nvidiaWeight.resize( nparts_to_move_ );
         cp_parts->nvidiaCharge.resize( nparts_to_move_ );
         if (isQuantumParameter) {
-            cp_parts->nvidiaChi.resize( nparts_to_move_ );
+            cp_parts->nvidia_chi_.resize( nparts_to_move_ );
         }
         cp_parts->nvidia_cell_keys.resize( nparts_to_move_ );
     }
@@ -170,7 +170,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
     thrust::copy_if(thrust::device, iter, iter+nparts, nvidia_cell_keys.begin(), iter_copy, count_if_out());
     // Special treatment for chi if radiation emission
     if (isQuantumParameter) {
-        thrust::copy_if(thrust::device, nvidiaChi.begin(), nvidiaChi.begin()+nparts, nvidia_cell_keys.begin(), cp_parts->nvidiaChi.begin(), count_if_out())
+        thrust::copy_if(thrust::device, nvidia_chi_.begin(), nvidia_chi_.begin()+nparts, nvidia_cell_keys.begin(), cp_parts->nvidia_chi_.begin(), count_if_out());
     }
     
     cp_parts->gpu_nparts_ = nparts_to_move_;

@@ -31,12 +31,18 @@ public:
 
     std::vector< thrust::device_vector<double> > nvidiaPosition;
     std::vector< thrust::device_vector<double> > nvidiaMomentum;
+
+    //! Weight
     thrust::device_vector<double> nvidiaWeight;
+
+    //! Charge on GPU
     thrust::device_vector<short>  nvidiaCharge;
-    thrust::device_vector<double>  nvidiaChi;
 
     //! cell_keys of the particle
     thrust::device_vector<int> nvidia_cell_keys;
+
+    //! Quantum parameter
+    thrust::device_vector<double> nvidia_chi_;
 
     double* getPtrPosition( int idim ) override {
         return thrust::raw_pointer_cast( nvidiaPosition[idim].data() );
@@ -51,7 +57,7 @@ public:
         return thrust::raw_pointer_cast( nvidiaCharge.data() );
     };
     double * getPtrChi() override {
-        return thrust::raw_pointer_cast( nvidiaChi.data() );
+        return thrust::raw_pointer_cast( nvidia_chi_.data() );
     };
     int * getPtrCellKeys() override {
         return thrust::raw_pointer_cast( nvidia_cell_keys.data() );
