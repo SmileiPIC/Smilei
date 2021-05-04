@@ -189,13 +189,13 @@ void DiagnosticParticleBinningBase::closeFile()
 } // END closeFile
 
 
-bool DiagnosticParticleBinningBase::prepare( int timestep )
+bool DiagnosticParticleBinningBase::prepare( int itime )
 {
     // Get the previous timestep of the time selection
-    int previousTime = timeSelection->previousTime( timestep );
+    int previousTime = timeSelection->previousTime( itime );
     
     // Leave if the timestep is not the good one
-    if( timestep - previousTime >= time_average ) {
+    if( itime - previousTime >= time_average ) {
         return false;
     }
     
@@ -203,7 +203,7 @@ bool DiagnosticParticleBinningBase::prepare( int timestep )
     data_sum.resize( output_size );
     
     // if first time, erase output array
-    if( timestep == previousTime ) {
+    if( itime == previousTime ) {
         fill( data_sum.begin(), data_sum.end(), 0. );
     }
     
@@ -213,7 +213,7 @@ bool DiagnosticParticleBinningBase::prepare( int timestep )
 
 
 // run one particle binning diagnostic
-void DiagnosticParticleBinningBase::run( Patch *patch, int timestep, SimWindow *simWindow )
+void DiagnosticParticleBinningBase::run( Patch *patch, int itime, SimWindow *simWindow )
 {
 
     vector<int> int_buffer;
@@ -254,15 +254,15 @@ void DiagnosticParticleBinningBase::run( Patch *patch, int timestep, SimWindow *
     
 } // END run
 
-bool DiagnosticParticleBinningBase::writeNow( int timestep ) {
-    return timestep - timeSelection->previousTime() == time_average-1;
+bool DiagnosticParticleBinningBase::writeNow( int itime ) {
+    return itime - timeSelection->previousTime() == time_average-1;
 }
 
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
-void DiagnosticParticleBinningBase::write( int timestep, SmileiMPI *smpi )
+void DiagnosticParticleBinningBase::write( int itime, SmileiMPI *smpi )
 {
-    if( !smpi->isMaster() || !writeNow( timestep ) ) {
+    if( !smpi->isMaster() || !writeNow( itime ) ) {
         return;
     }
     
@@ -277,7 +277,7 @@ void DiagnosticParticleBinningBase::write( int timestep, SmileiMPI *smpi )
     // make name of the array
     ostringstream mystream( "" );
     mystream.str( "" );
-    mystream << "timestep" << setw( 8 ) << setfill( '0' ) << timestep;
+    mystream << "timestep" << setw( 8 ) << setfill( '0' ) << itime;
     
     // write the array if it does not exist already
     if( ! file_->has( mystream.str() ) ) {
@@ -285,7 +285,7 @@ void DiagnosticParticleBinningBase::write( int timestep, SmileiMPI *smpi )
         file_->array( mystream.str(), data_sum[0], &d, &d );
     }
     
-    if( flush_timeSelection->theTimeIsNow( timestep ) ) {
+    if( flush_timeSelection->theTimeIsNow( itime ) ) {
         file_->flush();
     }
     

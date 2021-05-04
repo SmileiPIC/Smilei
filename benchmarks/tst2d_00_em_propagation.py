@@ -99,6 +99,18 @@ DiagProbe(
     fields = []
 )
 
+DiagProbe(
+    every = 100,
+    number = [10, 1000],
+    origin = [0., 0.],
+    corners = [
+        [Lsim[0], 0.],
+        [0., Lsim[1]],
+    ],
+    fields = ["PoyX", "PoyY", "PoyZ"],
+    time_integral = True
+)
+
 
 DiagTrackParticles(
     species = "eon",

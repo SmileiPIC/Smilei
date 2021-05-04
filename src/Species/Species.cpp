@@ -1533,7 +1533,8 @@ void Species::sortParticles( Params &params, Patch * patch )
         particles->first_index[bin] = particles->last_index[bin-1];
     }
 
-    particles->cell_keys.resize( particles->size() );
+    //particles->cell_keys.resize( particles->size() );
+    particles->resizeCellKeys(particles->size());
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1681,7 +1682,8 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
             istop = npart;
 
     } // End cell loop
-    particles->cell_keys.resize( particles->size() );
+    //particles->cell_keys.resize( particles->size() );
+    particles->resizeCellKeys( particles->size() );
 
     source_particles.clear();
 }

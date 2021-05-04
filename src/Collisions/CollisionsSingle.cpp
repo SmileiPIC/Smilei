@@ -140,11 +140,8 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
             }
             
             logL = coulomb_log_;
-            double U1  = patch->rand_->uniform();
-            double U2  = patch->rand_->uniform();
-            double phi = patch->rand_->uniform_2pi();
             
-            s = one_collision( p1, i1, s1->mass_, p2, i2, s2->mass_, coeff1_, coeff3*weight_correction, coeff4*weight_correction, n123, n223, debye2, logL, U1, U2, phi );
+            s = one_collision( p1, i1, s1->mass_, p2, i2, s2->mass_, coeff1_, coeff3*weight_correction, coeff4*weight_correction, n123, n223, debye2, logL, patch->rand_ );
             
             // Handle ionization
             Ionization->apply( patch, p1, i1, p2, i2, dt_corr*weight_correction );

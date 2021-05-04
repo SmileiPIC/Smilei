@@ -67,11 +67,11 @@ public:
     //! \param By y component of the particle magnetic field
     //! \param Bz z component of the particle magnetic field
     //#pragma omp declare simd
-    double inline computeParticleChi( double &charge_over_mass2,
-                                      double &px, double &py, double &pz,
-                                      double &gamma,
-                                      double &Ex, double &Ey, double &Ez,
-                                      double &Bx, double &By, double &Bz )
+    double inline computeParticleChi( double charge_over_mass2,
+                                      double px, double py, double pz,
+                                      double gamma,
+                                      double Ex, double Ey, double Ez,
+                                      double Bx, double By, double Bz )
     {
     
         return fabs( charge_over_mass2 )*inv_norm_E_Schwinger_

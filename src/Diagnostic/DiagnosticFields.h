@@ -27,8 +27,6 @@ public :
     
     virtual bool needsRhoJs( int itime ) override;
     
-    bool hasField( std::string field_name, std::vector<std::string> fieldsToDump );
-    
     void findSubgridIntersection( unsigned int subgrid_start,
                                   unsigned int subgrid_stop,
                                   unsigned int subgrid_step,

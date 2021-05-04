@@ -320,4 +320,6 @@ rst_prolog = """
    :class: green
 .. role:: orange
    :class: orange
+.. role:: grey
+   :class: grey
 """

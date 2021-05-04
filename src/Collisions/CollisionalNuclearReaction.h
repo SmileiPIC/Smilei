@@ -6,6 +6,7 @@
 #include "Tools.h"
 #include "Species.h"
 #include "Params.h"
+#include "Random.h"
 
 class Patch;
 
@@ -24,10 +25,12 @@ public:
     virtual void prepare() {
         tot_probability_ = 0.;
     };
+    //! Calculates the cross-section vs energy
+    virtual double crossSection( double log_ekin ) = 0;
     //! Test the occurence of the nuclear reaction
-    virtual bool occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &etot, double &log_ekin, double &W ) = 0;
+    virtual bool occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &etot, double &log_ekin, double &W );
     //! Prepare the products of the reaction
-    virtual void makeProducts( double U, double ekin, double log_ekin, double q, Particles *&p3, Particles *&p4, double &p3_COM, double &p4_COM, double &q3, double &q4, double &cosX ) = 0;
+    virtual void makeProducts( Random* random, double ekin, double log_ekin, double tot_charge, std::vector<Particles *> &particles, std::vector<double> &p_COM, std::vector<short> &q, std::vector<double> &sinX, std::vector<double> &cosX ) = 0;
     //! Finish the nuclear reaction and put new electrons in place
     virtual void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool, std::vector<unsigned int>, std::vector<unsigned int>, double npairs, int itime );
     
@@ -61,10 +64,11 @@ public:
     ~CollisionalNoNuclearReaction() {};
     
     void prepare() override {};
+    double crossSection( double log_ekin ) override { return 0.; };
     bool occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &etot, double &log_ekin, double &W ) override {
         return false;
     };
-    void makeProducts( double U, double ekin, double log_ekin, double q, Particles *&p3, Particles *&p4, double &p3_COM, double &p4_COM, double &q3, double &q4, double &cosX ) override {};
+    void makeProducts( Random* random, double ekin, double log_ekin, double tot_charge, std::vector<Particles *> &particles, std::vector<double> &p_COM, std::vector<short> &q, std::vector<double> &sinX, std::vector<double> &cosX ) override {};
     void finish( Params &params, Patch *patch, std::vector<Diagnostic *> &diags, bool, std::vector<unsigned int>, std::vector<unsigned int>, double npairs, int itime ) override {};
     std::string name() override { return ""; }
 };

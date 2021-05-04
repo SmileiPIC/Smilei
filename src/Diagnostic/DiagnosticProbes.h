@@ -9,6 +9,7 @@
 class DiagnosticProbes : public Diagnostic
 {
     friend class SmileiMPI;
+    friend class Checkpoint;
     
 public :
 
@@ -21,13 +22,13 @@ public :
     
     void closeFile() override;
     
-    bool prepare( int timestep ) override;
+    bool prepare( int itime ) override;
     
-    void run( SmileiMPI *smpi, VectorPatch &vecPatches, int timestep, SimWindow *simWindow, Timers &timers ) override;
+    void run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers ) override;
     
     void init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches ) override;
     
-    virtual bool needsRhoJs( int timestep ) override;
+    virtual bool needsRhoJs( int itime ) override;
     
     //! Creates the probe's particles (or "points")
     void createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, double x_moved );
@@ -46,8 +47,14 @@ public :
     //! Get disk footprint of current diagnostic
     uint64_t getDiskFootPrint( int istart, int istop, Patch *patch ) override;
     
-private :
-
+protected:
+    //! True if the data will be integrated over time
+    bool time_integral;
+    
+    //! Array to accumulate the data for the time_integral
+    Field2D *probesArrayIntegral;
+    
+private:
     //! Index of the probe diagnostic
     int probe_n;
     
@@ -87,7 +94,10 @@ private :
     unsigned int nPart_MPI;
     
     //! Number of fields to save
-    int nFields;
+    unsigned int nFields;
+    
+    //! Number of buffers (generally nFields + 1)
+    unsigned int nBuffers;
     
     //! List of fields to save
     std::vector<std::string> fieldname;
@@ -140,6 +150,7 @@ public :
     
     Particles particles;
     int offset_in_file;
+    std::vector<std::vector<double> > integrated_data;
 };
 
 

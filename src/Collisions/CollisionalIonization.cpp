@@ -255,26 +255,17 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         // Ionize the atom and create electron
         if( U2 < We/Wi ) {
             pi->charge( ii )++; // increase ion charge
-            pe->copyParticleSafe( ie, new_electrons ); // new electron
-            // New electron has ion position
-            for( unsigned int idim=0; idim<new_electrons.Position.size(); idim++ ) {
-                new_electrons.Position[idim].back() = pi->position( idim, ii );
-            }
-            // New electron has ion weight
-            new_electrons.Weight.back() = Wi;
-            // Calculate the new electron momentum
-            double pr = sqrt( w*( w+2. )/p2 );
-            new_electrons.Momentum[0].back() *= pr;
-            new_electrons.Momentum[1].back() *= pr;
-            new_electrons.Momentum[2].back() *= pr;
-            // Correction for moving back to the lab frame
-            pr = w+1. - pr*gamma_s;
-            new_electrons.Momentum[0].back() += pr * pi->momentum( 0, ii );
-            new_electrons.Momentum[1].back() += pr * pi->momentum( 1, ii );
-            new_electrons.Momentum[2].back() += pr * pi->momentum( 2, ii );
+            // Calculate the new electron momentum with correction for moving back to lab frame
+            double pr1 = sqrt( w*( w+2. )/p2 );
+            double pr2 = w+1. - pr1*gamma_s;
+            double newpx = pe->momentum( 0, ie ) * pr1 + pi->momentum( 0, ii ) * pr2;
+            double newpy = pe->momentum( 1, ie ) * pr1 + pi->momentum( 1, ii ) * pr2;
+            double newpz = pe->momentum( 2, ie ) * pr1 + pi->momentum( 2, ii ) * pr2;
+             // New electron has ion position
+            new_electrons.makeParticleAt( *pi, ii, Wi, pe->charge( ie ), newpx, newpy, newpz );
             // If quantum parameter exists for new electron, then calculate it
             if( new_electrons.isQuantumParameter ) {
-                new_electrons.Chi.back() *= (w+1.) / gammae;
+                new_electrons.Chi.back() = pe->chi( ie ) * (w+1.) / gammae;
             }
         }
         // Lose incident electron energy

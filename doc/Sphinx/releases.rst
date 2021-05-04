@@ -21,6 +21,11 @@ Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Lasers can be injected from all boundaries
+* Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
+* Probes can be time-integrated
+* Bugfixes:
+
+  * Poynting scalars with checkpoints
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 

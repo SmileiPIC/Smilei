@@ -86,22 +86,24 @@ void RadiationLandauLifshitz::operator()(
     double temp;
 
     // Momentum shortcut
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
-    }
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
 
     // Charge shortcut
-    short *charge = &( particles.charge( 0 ) );
+    short *charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double *weight = &( particles.weight( 0 ) );
+    double *weight = particles.getPtrWeight();
 
     // Optical depth for the Monte-Carlo process
-    double* chi = &( particles.chi(0));
+    double* chi = particles.getPtrChi();
 
     // Local vector to store the radiated energy
-    std::vector <double> rad_norm_energy( iend-istart, 0 );
+    double * rad_norm_energy = new double [iend-istart];
+    for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
+        rad_norm_energy[ipart] = 0;
+    }
 
     // _______________________________________________________________
     // Computation
@@ -111,13 +113,13 @@ void RadiationLandauLifshitz::operator()(
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
-        gamma = sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
-                      + momentum[1][ipart]*momentum[1][ipart]
-                      + momentum[2][ipart]*momentum[2][ipart] );
+        gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                      + momentum_y[ipart]*momentum_y[ipart]
+                      + momentum_z[ipart]*momentum_z[ipart] );
 
         // Computation of the Lorentz invariant quantum parameter
         particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
-                       momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
+                       momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                        gamma,
                        ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                        ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
@@ -134,15 +136,15 @@ void RadiationLandauLifshitz::operator()(
             temp *= gamma/( gamma*gamma-1. );
 
             // Update of the momentum
-            momentum[0][ipart] -= temp*momentum[0][ipart];
-            momentum[1][ipart] -= temp*momentum[1][ipart];
-            momentum[2][ipart] -= temp*momentum[2][ipart];
+            momentum_x[ipart] -= temp*momentum_x[ipart];
+            momentum_y[ipart] -= temp*momentum_y[ipart];
+            momentum_z[ipart] -= temp*momentum_z[ipart];
 
             // Exact energy loss due to the radiation
             rad_norm_energy[ipart - istart] = gamma - sqrt( 1.0
-                                              + momentum[0][ipart]*momentum[0][ipart]
-                                              + momentum[1][ipart]*momentum[1][ipart]
-                                              + momentum[2][ipart]*momentum[2][ipart] );
+                                              + momentum_x[ipart]*momentum_x[ipart]
+                                              + momentum_y[ipart]*momentum_y[ipart]
+                                              + momentum_z[ipart]*momentum_z[ipart] );
         }
     }
 
@@ -165,17 +167,22 @@ void RadiationLandauLifshitz::operator()(
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
         
         // Gamma
-        gamma = sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
-                      + momentum[1][ipart]*momentum[1][ipart]
-                      + momentum[2][ipart]*momentum[2][ipart] );
+        gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                      + momentum_y[ipart]*momentum_y[ipart]
+                      + momentum_z[ipart]*momentum_z[ipart] );
                       
         // Computation of the Lorentz invariant quantum parameter
-        chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
-                     momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
+        chi[ipart] = computeParticleChi( charge_over_mass_square,
+                     momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                      gamma,
                      ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                      ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
                      
     }
+    
+    // _______________________________________________________________
+    // Cleaning
+    
+    delete [] rad_norm_energy;
     
 }

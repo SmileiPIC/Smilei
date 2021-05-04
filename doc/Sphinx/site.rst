@@ -18,7 +18,7 @@ Unreferenced pages
 
 .. toctree::
   :maxdepth: 1
-  
+
   ids
   install_PICSAR
   install_linux
@@ -30,4 +30,4 @@ Unreferenced pages
   profiles
   syntax_changes
   tables
-  
+  implementation

@@ -64,7 +64,6 @@ public:
             vecDiagnostics.push_back( new DiagnosticRadiationSpectrum(params, smpi, vecPatches(0), radiation_tables_ , n_diag_rad_spectrum) );
         }
         
-//MESSAGE ("Glob diag");
         return vecDiagnostics;
         
     } // END createGlobalDiagnostics
@@ -93,7 +92,6 @@ public:
             vecDiagnostics.push_back( new DiagnosticPerformances( params, smpi ) );
         }
         
-//MESSAGE("local diag");
         return vecDiagnostics;
         
     } // END createLocalDiagnostics

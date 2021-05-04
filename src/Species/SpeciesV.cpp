@@ -395,7 +395,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, ithread, ener_iPart );
                     nrj_lost_per_thd[tid] += mass_ * ener_iPart;
 
-                    for( iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
+                    for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
@@ -420,7 +420,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, ithread, ener_iPart );
                     nrj_lost_per_thd[tid] += ener_iPart;
 
-                    for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                    for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
@@ -899,7 +899,10 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
     // Resize the particle vector
     if( ( unsigned int )particles->last_index.back() > npart ) {
         particles->resize( particles->last_index.back(), nDim_particle, params.keep_position_old );
-        particles->cell_keys.resize( particles->last_index.back(), -1 ); // Merge this in particles.resize(..) ?
+        for (int ip = npart ; ip < particles->last_index.back() ; ip ++) {
+            particles->cell_keys[ip] = -1;
+        }
+        //particles->cell_keys.resize( particles->last_index.back(), -1 ); // Merge this in particles.resize(..) ?
     }
 
     //Copy all particles from MPI buffers back to the writable particles via cycle sort pass.
@@ -1040,7 +1043,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
     // Resize the particle vector
     if( ( unsigned int )particles->last_index.back() < npart ) {
         particles->resize( particles->last_index.back(), nDim_particle, params.keep_position_old );
-        particles->cell_keys.resize( particles->last_index.back() ); // Merge this in particles.resize(..) ?
+        //particles->cell_keys.resize( particles->last_index.back() ); // Merge this in particles.resize(..) ?
     }
 
 
@@ -1112,7 +1115,7 @@ void SpeciesV::computeParticleCellKeys( Params &params )
 void SpeciesV::compute_bin_cell_keys( Params &params, int istart, int iend )
 {
     // Resize of cell_keys seems necessary here
-    particles->cell_keys.resize( particles->size() );
+    particles->resizeCellKeys( particles->size() );
 
     #pragma omp simd
     for( int ip=istart; ip < iend; ip++ ) {
