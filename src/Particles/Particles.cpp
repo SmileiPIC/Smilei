@@ -354,32 +354,39 @@ void Particles::copyParticles( unsigned int iPart, unsigned int nPart, Particles
     }
 }
 
-
 // ---------------------------------------------------------------------------------------------------------------------
-//! Copy particle iPart at the end of dest_parts -- safe
+//! Make a new particle at the position of another
 //! cell keys not affected
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::copyParticleSafe( unsigned int ipart, Particles &dest_parts )
+void Particles::makeParticleAt( Particles &source_particles, unsigned int ipart, double w, short q, double px, double py, double pz )
 {
-    unsigned int ndouble = double_prop.size();
-    if( dest_parts.double_prop.size() < ndouble ) {
-        ndouble = dest_parts.double_prop.size();
-    }
-    unsigned int nuint = uint64_prop.size();
-    if( dest_parts.uint64_prop.size() < nuint ) {
-        nuint = dest_parts.uint64_prop.size();
+    for( unsigned int i=0 ; i<Position.size() ; i++ ) {
+        Position[i].push_back( source_particles.Position[i][ipart] );
     }
     
-    for( unsigned int iprop=0 ; iprop<ndouble ; iprop++ ) {
-        dest_parts.double_prop[iprop]->push_back( ( *double_prop[iprop] )[ipart] );
+    if( Position_old.size() > 0. ) {
+        for( unsigned int i=0 ; i<Position_old.size() ; i++ ) {
+            Position_old[i].push_back( source_particles.Position_old[i][ipart] );
+        }
     }
     
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        dest_parts.short_prop[iprop]->push_back( ( *short_prop[iprop] )[ipart] );
+    Momentum[0].push_back( px );
+    Momentum[1].push_back( py );
+    Momentum[2].push_back( pz );
+    
+    Weight.push_back( w );
+    Charge.push_back( q );
+    
+    if( tracked ) {
+        Id.push_back( 0 );
     }
     
-    for( unsigned int iprop=0 ; iprop<nuint ; iprop++ ) {
-        dest_parts.uint64_prop[iprop]->push_back( ( *uint64_prop[iprop] )[ipart] );
+    if( isQuantumParameter ) {
+        Chi.push_back( 0. );
+    }
+    
+    if( isMonteCarlo ) {
+        Tau.push_back( 0. );
     }
 }
 

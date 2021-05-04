@@ -9,6 +9,7 @@
 #include "CollisionalIonization.h"
 #include "CollisionalNuclearReaction.h"
 #include "CollisionalFusionDD.h"
+#include "Random.h"
 
 class Patch;
 class Params;
@@ -102,13 +103,9 @@ protected:
         double n223,
         double debye2,
         double &logL,
-        double U1,
-        double U2,
-        double phi
+        Random* random
     )
     {
-        double cosX, sinX, newpx_COM, newpy_COM, newpz_COM;
-        
         double m12 = m1 / m2;
         
         // If one weight is zero, then skip. Can happen after nuclear reaction
@@ -162,43 +159,37 @@ protected:
         // We first try to do a nuclear reaction
         // If succesful, then no need to do a collision
         double E, logE;
-        if( NuclearReaction->occurs( U1, vrel*coeff3, m1, m2, gamma1_COM, gamma2_COM, E, logE, minW ) ) {
+        if( NuclearReaction->occurs( random->uniform(), vrel*coeff3, m1, m2, gamma1_COM, gamma2_COM, E, logE, minW ) ) {
             // Reduce the weight of both reactants
             // If becomes zero, then the particle will be discarded later
             p1->weight(i1) -= minW;
             p2->weight(i2) -= minW;
             
             // Get the magnitude and the angle of the outgoing products in the COM frame
-            Particles *p3 = NULL, *p4 = NULL;
-            double p3_COM, p4_COM, q3, q4;
+            std::vector<Particles*> particles;
+            std::vector<double> new_p_COM, sinX, cosX;
+            std::vector<short> q;
             double tot_charge = p1->charge( i1 ) + p2->charge( i2 );
-            U2 = 2*U2 - 1.;
-            if( U2 > 0. ) {
-                NuclearReaction->makeProducts( abs(U2), E, logE, tot_charge, p3, p4, p3_COM, p4_COM, q3, q4, cosX );
-            } else {
-                NuclearReaction->makeProducts( abs(U2), E, logE, tot_charge, p4, p3, p4_COM, p3_COM, q4, q3, cosX );
-            }
+            NuclearReaction->makeProducts( random, E, logE, tot_charge, particles, new_p_COM, q, sinX, cosX );
             
-            // Calculate combination of angles 
-            sinX = sqrt( 1. - cosX*cosX );
-            double sinXcosPhi = sinX*cos( phi );
-            double sinXsinPhi = sinX*sin( phi );
-            
-            // Calculate the deflection in the COM frame
+            // Calculate some quantities for rotating vectors
+            double phi = random->uniform_2pi();
+            double cosPhi = cos( phi );
+            double sinPhi = sin( phi );
             double p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
+            // Prepare the deflection in the COM frame
+            double newpx_COM_0, newpy_COM_0, newpz_COM_0;
             if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
                 double inv_p_perp = 1./p_perp;
-                newpx_COM = ( px_COM * pz_COM * sinXcosPhi - py_COM * p_COM * sinXsinPhi ) * inv_p_perp + px_COM * cosX;
-                newpy_COM = ( py_COM * pz_COM * sinXcosPhi + px_COM * p_COM * sinXsinPhi ) * inv_p_perp + py_COM * cosX;
-                newpz_COM = -p_perp * sinXcosPhi  +  pz_COM * cosX;
+                newpx_COM_0 = ( px_COM * pz_COM * cosPhi - py_COM * p_COM * sinPhi ) * inv_p_perp;
+                newpy_COM_0 = ( py_COM * pz_COM * cosPhi + px_COM * p_COM * sinPhi ) * inv_p_perp;
+                newpz_COM_0 = -p_perp * cosPhi;
             } else { // if p_perp is too small, we use the limit px->0, py=0
-                newpx_COM = p_COM * sinXcosPhi;
-                newpy_COM = p_COM * sinXsinPhi;
-                newpz_COM = p_COM * cosX;
+                newpx_COM_0 = p_COM * cosPhi;
+                newpy_COM_0 = p_COM * sinPhi;
+                newpz_COM_0 = 0.;
             }
-            
-            // Go back to the lab frame and store the results in the particle array
-            double vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
+            // Calculate new weights
             double newW1, newW2;
             if( p1->charge(i1) != 0. || p2->charge(i2) != 0. ) {
                 double weight_factor = minW / tot_charge;
@@ -208,54 +199,28 @@ protected:
                 newW1 = minW;
                 newW2 = 0.;
             }
-            if( p3 ) {
-                double momentum_ratio = p3_COM / p_COM;
-                double term6 = momentum_ratio*term1*vcp + sqrt( p3_COM*p3_COM + 1. ) * COM_gamma;
+            
+            // For each product
+            for( unsigned int iproduct=0; iproduct<particles.size(); iproduct++ ){
+                // Calculate the deflection in the COM frame
+                double newpx_COM = newpx_COM_0 * sinX[iproduct] + px_COM *cosX[iproduct];
+                double newpy_COM = newpy_COM_0 * sinX[iproduct] + py_COM *cosX[iproduct];
+                double newpz_COM = newpz_COM_0 * sinX[iproduct] + pz_COM *cosX[iproduct];
+                
+                // Go back to the lab frame and store the results in the particle array
+                double vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
+                double momentum_ratio = new_p_COM[iproduct] / p_COM;
+                double term6 = momentum_ratio*term1*vcp + sqrt( new_p_COM[iproduct]*new_p_COM[iproduct] + 1. ) * COM_gamma;
                 double newpx = momentum_ratio * newpx_COM + COM_vx * term6;
                 double newpy = momentum_ratio * newpy_COM + COM_vy * term6;
                 double newpz = momentum_ratio * newpz_COM + COM_vz * term6;
                 // Make new particle at position of particle 1
                 if( newW1 > 0. ) {
-                    p1->copyParticleSafe( i1, *p3 );
-                    p3->Weight.back() = newW1;
-                    p3->Charge.back() = q3;
-                    p3->Momentum[0].back() = newpx;
-                    p3->Momentum[1].back() = newpy;
-                    p3->Momentum[2].back() = newpz;
+                    particles[iproduct]->makeParticleAt( *p1, i1, newW1, q[iproduct], newpx, newpy, newpz );
                 }
                 // Make new particle at position of particle 2
                 if( newW2 > 0. ) {
-                    p2->copyParticleSafe( i2, *p3 );
-                    p3->Weight.back() = newW2;
-                    p3->Charge.back() = q3;
-                    p3->Momentum[0].back() = newpx;
-                    p3->Momentum[1].back() = newpy;
-                    p3->Momentum[2].back() = newpz;
-                }
-            }
-            if( p4 ) {
-                double momentum_ratio = p4_COM / p_COM;
-                double term6 = -momentum_ratio*term1*vcp + sqrt( p4_COM*p4_COM + 1. ) * COM_gamma;
-                double newpx = -momentum_ratio * newpx_COM + COM_vx * term6;
-                double newpy = -momentum_ratio * newpy_COM + COM_vy * term6;
-                double newpz = -momentum_ratio * newpz_COM + COM_vz * term6;
-                // Make new particle at position of particle 1
-                if( newW1 > 0. ) {
-                    p1->copyParticleSafe( i1, *p4 );
-                    p4->Weight.back() = newW1;
-                    p4->Charge.back() = q4;
-                    p4->Momentum[0].back() = newpx;
-                    p4->Momentum[1].back() = newpy;
-                    p4->Momentum[2].back() = newpz;
-                }
-                // Make new particle at position of particle 2
-                if( newW2 > 0. ) {
-                    p2->copyParticleSafe( i2, *p4 );
-                    p4->Weight.back() = newW2;
-                    p4->Charge.back() = q4;
-                    p4->Momentum[0].back() = newpx;
-                    p4->Momentum[1].back() = newpy;
-                    p4->Momentum[2].back() = newpz;
+                    particles[iproduct]->makeParticleAt( *p2, i2, newW2, q[iproduct], newpx, newpy, newpz );
                 }
             }
             
@@ -292,6 +257,8 @@ protected:
         // Instead of Nanbu http://dx.doi.org/10.1103/PhysRevE.55.4642
         // and Perez http://dx.doi.org/10.1063/1.4742167
         // we made a new fit (faster and more accurate)
+        double cosX, sinX;
+        double U1 = random->uniform();
         if( s < 4. ) {
             double s2 = s*s;
             double alpha = 0.37*s - 0.005*s2 - 0.0064*s2*s;
@@ -304,11 +271,13 @@ protected:
         }
         
         // Calculate combination of angles
+        double phi = random->uniform_2pi();
         double sinXcosPhi = sinX*cos( phi );
         double sinXsinPhi = sinX*sin( phi );
         
         // Apply the deflection
         double p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
+        double newpx_COM, newpy_COM, newpz_COM;
         if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
             double inv_p_perp = 1./p_perp;
             newpx_COM = ( px_COM * pz_COM * sinXcosPhi - py_COM * p_COM * sinXsinPhi ) * inv_p_perp + px_COM * cosX;
@@ -322,6 +291,7 @@ protected:
         
         // Go back to the lab frame and store the results in the particle array
         double vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
+        double U2 = random->uniform();
         if( U2 < p2->weight( i2 )/p1->weight( i1 ) ) { // deflect particle 1 only with some probability
             double term6 = term1*vcp + gamma1_COM * COM_gamma;
             p1->momentum( 0, i1 ) = newpx_COM + COM_vx * term6;

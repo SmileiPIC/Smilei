@@ -15,7 +15,7 @@ const int    CollisionalFusionDD::npoints = 50;
 const double CollisionalFusionDD::npointsm1 = ( double )( npoints-1 );
 const double CollisionalFusionDD::a1 = log(511./(2.*2.013553)); // = ln(me*c^2 / Emin / n_nucleons)
 const double CollisionalFusionDD::a2 = 3.669039; // = (npoints-1) / ln( Emax/Emin )
-const double CollisionalFusionDD::a3 = log(511000./(2.*2.013553));; // = ln(me*c^2 / eV / n_nucleons)
+const double CollisionalFusionDD::a3 = log(511./0.7/(2.*2.013553));; // = ln(me*c^2 / Eref / n_nucleons)
 // Log of cross-section in units of 4 pi re^2
 const double CollisionalFusionDD::DB_log_crossSection[50] = {
     -27.307, -23.595, -20.383, -17.607, -15.216, -13.167, -11.418, -9.930, -8.666, -7.593,
@@ -71,29 +71,41 @@ double CollisionalFusionDD::crossSection( double log_ekin )
 }
 
 void CollisionalFusionDD::makeProducts(
-    double U, double ekin, double log_ekin, double q, 
-    Particles *&p3, Particles *&p4,
-    double &p3_COM, double &p4_COM,
-    double &q3, double &q4,
-    double &cosX
+    Random* random, // Access to random numbers
+    double ekin, double log_ekin, // total kinetic energy and its natural log
+    double tot_charge, //  total charge
+    std::vector<Particles*> &particles, // List of Particles objects to store the reaction products
+    std::vector<double> &new_p_COM, // List of gamma*v of reaction products in COM frame
+    std::vector<short> &q, // List of charges of reaction products
+    std::vector<double> &sinX, // List of sin of outgoing angle of reaction products
+    std::vector<double> &cosX // List of cos of outgoing angle of reaction products
 ) {
-    // Sample the products angle from empirical fits
-    double A = 0.083 * (a3 + log_ekin);
-    A *= A*A; // ^3
-    A *= A; // ^6
-    A = 1. / min(10., 1. + A);
-    double B = 0.06 * (a3 + log_ekin);
-    B = 2. + B*B;
-    cosX = 1. - A*U - (1.-A)*pow(U, B);
+    double U = random->uniform2(); // random number ]-1,1]
+    double U1 = abs( U );
+    bool up = U > 0.;
     
-    // Calculate the resulting momenta
+    // Sample the products angle from empirical fits
+    double lnE = a3 + log_ekin;
+    double alpha = lnE < 0. ? 1. : exp(-0.024*lnE*lnE);
+    double one_m_cosX = alpha*U1 / sqrt( (1.-U1) + alpha*alpha*U1 );
+    cosX = { 1. - one_m_cosX };
+    sinX = { sqrt( one_m_cosX * (1.+cosX[0]) ) };
+    
+    // Calculate the resulting momenta from energy / momentum conservation
     const double Q = 6.397; // Qvalue
     const double m_n = 1838.7;
     const double m_He = 5497.9;
-    p3_COM = sqrt( (ekin+Q) * (ekin+Q+2.*m_n) * (ekin+Q+2.*m_He) * (ekin+Q+2.*m_n+2.*m_He) )
-        / ( ( ekin+Q+m_n+m_He ) * (2.*m_He) );
+    double p_COM = { sqrt(
+        (ekin+Q) * (ekin+Q+2.*m_n) * (ekin+Q+2.*m_He) * (ekin+Q+2.*m_n+2.*m_He) )
+        / ( ( ekin+Q+m_n+m_He ) * (2.*m_He)
+    ) };
     
-    // Other properties
-    q3 = q;
-    p3 = product_particles_[0]; // helium3
+    // Set particle properties
+    q = { (short) tot_charge };
+    particles = { product_particles_[0] }; // helium3
+    if( up ) {
+        new_p_COM = { p_COM };
+    } else {
+        new_p_COM = { -p_COM };
+    }
 }
