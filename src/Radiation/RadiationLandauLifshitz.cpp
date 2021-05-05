@@ -100,15 +100,29 @@ void RadiationLandauLifshitz::operator()(
 
     // Local vector to store the radiated energy
     double * rad_norm_energy = new double [iend-istart];
-    for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
-        rad_norm_energy[ipart] = 0;
-    }
+    // for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
+    //     rad_norm_energy[ipart] = 0;
+    // }
 
     // _______________________________________________________________
     // Computation
 
-    #pragma omp simd
+    #ifndef _GPU
+        #pragma omp simd
+    #else
+        int np = iend-istart;
+        #pragma acc parallel \
+            create(rad_norm_energy[0:np]) \
+            present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
+            Bx[istart:np],By[istart:np],Bz[istart:np],invgf[0:nparts]) \
+            deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,chi)
+    {
+        #pragma acc loop gang worker vector
+    #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
+        
+        rad_norm_energy[ipart-istart] = 0;
+        
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
@@ -152,7 +166,11 @@ void RadiationLandauLifshitz::operator()(
 
     double radiated_energy_loc = 0;
 
-    #pragma omp simd reduction(+:radiated_energy_loc)
+    #ifndef _GPU
+        #pragma omp simd reduction(+:radiated_energy_loc)
+    #else
+        #pragma acc loop reduction(+:radiated_energy_loc) gang worker vector
+    #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart - istart] ;
     }
@@ -161,7 +179,11 @@ void RadiationLandauLifshitz::operator()(
     // _______________________________________________________________
     // Update of the quantum parameter
     
-    #pragma omp simd
+    #ifndef _GPU
+        #pragma omp simd
+    #else
+        #pragma acc loop gang worker vector
+    #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
         
@@ -178,6 +200,10 @@ void RadiationLandauLifshitz::operator()(
                      ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
                      
     }
+    
+    #ifdef _GPU
+    } // end acc parallel
+    #endif
     
     // _______________________________________________________________
     // Cleaning
