@@ -33,7 +33,7 @@ nvidiaParticles::nvidiaParticles() : Particles()
 
 }
 
-void nvidiaParticles::initGPU()
+void nvidiaParticles::initializeDataOnDevice()
 {
     if (!Position.size()) {
         std::cout << "Set CPU first" << std::endl;
@@ -41,43 +41,43 @@ void nvidiaParticles::initGPU()
     }
 
     double res_fac = 1.;
-    nvidiaPosition.resize( Position.size() );
+    nvidia_position_.resize( Position.size() );
     for (int idim=0;idim<Position.size();idim++) {
-        nvidiaPosition[idim].reserve( res_fac*Position[idim].size() );
-        nvidiaPosition[idim].resize( Position[idim].size() );
+        nvidia_position_[idim].reserve( res_fac*Position[idim].size() );
+        nvidia_position_[idim].resize( Position[idim].size() );
     }
-    nvidiaMomentum.resize( Momentum.size() );
+    nvidia_momentum_.resize( Momentum.size() );
     for (int idim=0;idim<Momentum.size();idim++) {
-        nvidiaMomentum[idim].reserve( res_fac*Momentum[idim].size() );
-        nvidiaMomentum[idim].resize( Momentum[idim].size() );
+        nvidia_momentum_[idim].reserve( res_fac*Momentum[idim].size() );
+        nvidia_momentum_[idim].resize( Momentum[idim].size() );
     }
-    nvidiaWeight.reserve( res_fac*Weight.size() );
-    nvidiaWeight.resize( Weight.size() );
-    nvidiaCharge.reserve( res_fac*Charge.size() );
-    nvidiaCharge.resize( Charge.size() );
+    nvidia_weight_.reserve( res_fac*Weight.size() );
+    nvidia_weight_.resize( Weight.size() );
+    nvidia_charge_.reserve( res_fac*Charge.size() );
+    nvidia_charge_.resize( Charge.size() );
 
     if( isQuantumParameter ) {
         nvidia_chi_.reserve( res_fac*Chi.size() );
         nvidia_chi_.resize( Chi.size() );
     }
 
-    nvidia_cell_keys.reserve( res_fac*Charge.size() );
-    nvidia_cell_keys.resize( Charge.size() );
+    nvidia_cell_keys_.reserve( res_fac*Charge.size() );
+    nvidia_cell_keys_.resize( Charge.size() );
     gpu_nparts_ = Charge.size();
 
     if (gpu_nparts_!=0)
         syncGPU();
     else {
         for (int idim=0;idim<Position.size();idim++)
-            nvidiaPosition[idim].reserve( 100 );
+            nvidia_position_[idim].reserve( 100 );
         for (int idim=0;idim<Momentum.size();idim++)
-            nvidiaMomentum[idim].reserve( 100 );
-        nvidiaWeight.reserve( 100 );
-        nvidiaCharge.reserve( 100 );
+            nvidia_momentum_[idim].reserve( 100 );
+        nvidia_weight_.reserve( 100 );
+        nvidia_charge_.reserve( 100 );
         if( isQuantumParameter ) {
             nvidia_chi_.reserve( 100 );
         }
-        nvidia_cell_keys.reserve( 100 );
+        nvidia_cell_keys_.reserve( 100 );
     }
 
 }
@@ -86,16 +86,16 @@ void nvidiaParticles::syncCPU()
 {
     for (int idim=0;idim<Position.size();idim++) {
         Position[idim].resize( gpu_nparts_ );
-        thrust::copy((nvidiaPosition[idim]).begin(), (nvidiaPosition[idim]).begin()+gpu_nparts_, (Position[idim]).begin());
+        thrust::copy((nvidia_position_[idim]).begin(), (nvidia_position_[idim]).begin()+gpu_nparts_, (Position[idim]).begin());
     }
     for (int idim=0;idim<Momentum.size();idim++) {
         Momentum[idim].resize( gpu_nparts_ );
-        thrust::copy((nvidiaMomentum[idim]).begin(), (nvidiaMomentum[idim]).begin()+gpu_nparts_, (Momentum[idim]).begin());
+        thrust::copy((nvidia_momentum_[idim]).begin(), (nvidia_momentum_[idim]).begin()+gpu_nparts_, (Momentum[idim]).begin());
     }
     Weight.resize( gpu_nparts_ );
-    thrust::copy((nvidiaWeight).begin(), (nvidiaWeight).begin()+gpu_nparts_, (Weight).begin());
+    thrust::copy((nvidia_weight_).begin(), (nvidia_weight_).begin()+gpu_nparts_, (Weight).begin());
     Charge.resize( gpu_nparts_ );
-    thrust::copy((nvidiaCharge).begin(), (nvidiaCharge).begin()+gpu_nparts_, (Charge).begin());
+    thrust::copy((nvidia_charge_).begin(), (nvidia_charge_).begin()+gpu_nparts_, (Charge).begin());
     if (isQuantumParameter) {
         Chi.resize( gpu_nparts_ );
         thrust::copy((nvidia_chi_).begin(), (nvidia_chi_).begin()+gpu_nparts_, (Chi).begin());
@@ -105,17 +105,17 @@ void nvidiaParticles::syncCPU()
 void nvidiaParticles::syncGPU()
 {
     for (int idim=0;idim<Position.size();idim++) {
-        nvidiaPosition[idim].resize( Position[idim].size() );
-        thrust::copy((Position[idim]).begin(), (Position[idim]).end(), (nvidiaPosition[idim]).begin());
+        nvidia_position_[idim].resize( Position[idim].size() );
+        thrust::copy((Position[idim]).begin(), (Position[idim]).end(), (nvidia_position_[idim]).begin());
     }
     for (int idim=0;idim<Momentum.size();idim++) {
-        nvidiaMomentum[idim].resize( Momentum[idim].size() );
-        thrust::copy((Momentum[idim]).begin(), (Momentum[idim]).end(), (nvidiaMomentum[idim]).begin());
+        nvidia_momentum_[idim].resize( Momentum[idim].size() );
+        thrust::copy((Momentum[idim]).begin(), (Momentum[idim]).end(), (nvidia_momentum_[idim]).begin());
     }
-    nvidiaWeight.resize( Weight.size() );
-    thrust::copy((Weight).begin(), (Weight).end(), (nvidiaWeight).begin());
-    nvidiaCharge.resize( Charge.size() );
-    thrust::copy((Charge).begin(), (Charge).end(), (nvidiaCharge).begin());
+    nvidia_weight_.resize( Weight.size() );
+    thrust::copy((Weight).begin(), (Weight).end(), (nvidia_weight_).begin());
+    nvidia_charge_.resize( Charge.size() );
+    thrust::copy((Charge).begin(), (Charge).end(), (nvidia_charge_).begin());
     if (isQuantumParameter) {
         nvidia_chi_.resize( Chi.size() );
         thrust::copy((Chi).begin(), (Chi).end(), (nvidia_chi_).begin());
@@ -128,52 +128,52 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
     int nparts = gpu_nparts_;
 
     // Iterator of the main data structure
-    ZipIterParts iter(thrust::make_tuple(nvidiaPosition[0].begin(),
-                                         nvidiaPosition[1].begin(),
-                                         nvidiaPosition[2].begin(),
-                                         nvidiaMomentum[0].begin(),
-                                         nvidiaMomentum[1].begin(),
-                                         nvidiaMomentum[2].begin(),
-                                         nvidiaWeight.begin(),
-                                         nvidiaCharge.begin()));
+    ZipIterParts iter(thrust::make_tuple(nvidia_position_[0].begin(),
+                                         nvidia_position_[1].begin(),
+                                         nvidia_position_[2].begin(),
+                                         nvidia_momentum_[0].begin(),
+                                         nvidia_momentum_[1].begin(),
+                                         nvidia_momentum_[2].begin(),
+                                         nvidia_weight_.begin(),
+                                         nvidia_charge_.begin()));
 
-    nparts_to_move_ = thrust::count(thrust::device, nvidia_cell_keys.begin(), nvidia_cell_keys.begin()+nparts, -1);
+    nparts_to_move_ = thrust::count(thrust::device, nvidia_cell_keys_.begin(), nvidia_cell_keys_.begin()+nparts, -1);
 
     // Manage the send data structure
     nvidiaParticles* cp_parts = static_cast<nvidiaParticles*>( particles_to_move );
     // Resize it, if too small (copy_if do not resize)
-    if ( nparts_to_move_ > cp_parts->nvidiaWeight.size() ) {
-        cp_parts->nvidiaPosition[0].resize( nparts_to_move_ );
-        cp_parts->nvidiaPosition[1].resize( nparts_to_move_ );
-        cp_parts->nvidiaPosition[2].resize( nparts_to_move_ );
-        cp_parts->nvidiaMomentum[0].resize( nparts_to_move_ );
-        cp_parts->nvidiaMomentum[1].resize( nparts_to_move_ );
-        cp_parts->nvidiaMomentum[2].resize( nparts_to_move_ );
-        cp_parts->nvidiaWeight.resize( nparts_to_move_ );
-        cp_parts->nvidiaCharge.resize( nparts_to_move_ );
+    if ( nparts_to_move_ > cp_parts->nvidia_weight_.size() ) {
+        cp_parts->nvidia_position_[0].resize( nparts_to_move_ );
+        cp_parts->nvidia_position_[1].resize( nparts_to_move_ );
+        cp_parts->nvidia_position_[2].resize( nparts_to_move_ );
+        cp_parts->nvidia_momentum_[0].resize( nparts_to_move_ );
+        cp_parts->nvidia_momentum_[1].resize( nparts_to_move_ );
+        cp_parts->nvidia_momentum_[2].resize( nparts_to_move_ );
+        cp_parts->nvidia_weight_.resize( nparts_to_move_ );
+        cp_parts->nvidia_charge_.resize( nparts_to_move_ );
         if (isQuantumParameter) {
             cp_parts->nvidia_chi_.resize( nparts_to_move_ );
         }
-        cp_parts->nvidia_cell_keys.resize( nparts_to_move_ );
+        cp_parts->nvidia_cell_keys_.resize( nparts_to_move_ );
     }
     
     
     
     // Iterator of the send data structure (once it has been resized)
-    ZipIterParts iter_copy(thrust::make_tuple(cp_parts->nvidiaPosition[0].begin(),
-                                              cp_parts->nvidiaPosition[1].begin(),
-                                              cp_parts->nvidiaPosition[2].begin(),
-                                              cp_parts->nvidiaMomentum[0].begin(),
-                                              cp_parts->nvidiaMomentum[1].begin(),
-                                              cp_parts->nvidiaMomentum[2].begin(),
-                                              cp_parts->nvidiaWeight.begin(),
-                                              cp_parts->nvidiaCharge.begin() ) );
+    ZipIterParts iter_copy(thrust::make_tuple(cp_parts->nvidia_position_[0].begin(),
+                                              cp_parts->nvidia_position_[1].begin(),
+                                              cp_parts->nvidia_position_[2].begin(),
+                                              cp_parts->nvidia_momentum_[0].begin(),
+                                              cp_parts->nvidia_momentum_[1].begin(),
+                                              cp_parts->nvidia_momentum_[2].begin(),
+                                              cp_parts->nvidia_weight_.begin(),
+                                              cp_parts->nvidia_charge_.begin() ) );
 
-    // Copy send particles in dedicated data structure if nvidia_cell_keys=0 (currently = 1 if keeped, new PartBoundCond::apply(...))
-    thrust::copy_if(thrust::device, iter, iter+nparts, nvidia_cell_keys.begin(), iter_copy, count_if_out());
+    // Copy send particles in dedicated data structure if nvidia_cell_keys_=0 (currently = 1 if keeped, new PartBoundCond::apply(...))
+    thrust::copy_if(thrust::device, iter, iter+nparts, nvidia_cell_keys_.begin(), iter_copy, count_if_out());
     // Special treatment for chi if radiation emission
     if (isQuantumParameter) {
-        thrust::copy_if(thrust::device, nvidia_chi_.begin(), nvidia_chi_.begin()+nparts, nvidia_cell_keys.begin(), cp_parts->nvidia_chi_.begin(), count_if_out());
+        thrust::copy_if(thrust::device, nvidia_chi_.begin(), nvidia_chi_.begin()+nparts, nvidia_cell_keys_.begin(), cp_parts->nvidia_chi_.begin(), count_if_out());
     }
     
     cp_parts->gpu_nparts_ = nparts_to_move_;
@@ -188,30 +188,30 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
     // Remove particles which leaves current patch
     thrust::remove_if(thrust::device,
                       thrust::make_zip_iterator(thrust::make_tuple(
-                                                                   nvidiaPosition[0].begin(),
-                                                                   nvidiaPosition[1].begin(),
-                                                                   nvidiaPosition[2].begin(),
-                                                                   nvidiaMomentum[0].begin(),
-                                                                   nvidiaMomentum[1].begin(),
-                                                                   nvidiaMomentum[2].begin(),
-                                                                   nvidiaWeight.begin(),
-                                                                   nvidiaCharge.begin()
-                                                                  // , nvidia_cell_keys.begin()
+                                                                   nvidia_position_[0].begin(),
+                                                                   nvidia_position_[1].begin(),
+                                                                   nvidia_position_[2].begin(),
+                                                                   nvidia_momentum_[0].begin(),
+                                                                   nvidia_momentum_[1].begin(),
+                                                                   nvidia_momentum_[2].begin(),
+                                                                   nvidia_weight_.begin(),
+                                                                   nvidia_charge_.begin()
+                                                                  // , nvidia_cell_keys_.begin()
                                                                    )
                                                 ),
                       thrust::make_zip_iterator(thrust::make_tuple(
-                                                                   nvidiaPosition[0].begin()+nparts,
-                                                                   nvidiaPosition[1].begin()+nparts,
-                                                                   nvidiaPosition[2].begin()+nparts,
-                                                                   nvidiaMomentum[0].begin()+nparts,
-                                                                   nvidiaMomentum[1].begin()+nparts,
-                                                                   nvidiaMomentum[2].begin()+nparts,
-                                                                   nvidiaWeight.begin()+nparts,
-                                                                   nvidiaCharge.begin()+nparts
-                                                                //,   nvidia_cell_keys.begin()+nparts
+                                                                   nvidia_position_[0].begin()+nparts,
+                                                                   nvidia_position_[1].begin()+nparts,
+                                                                   nvidia_position_[2].begin()+nparts,
+                                                                   nvidia_momentum_[0].begin()+nparts,
+                                                                   nvidia_momentum_[1].begin()+nparts,
+                                                                   nvidia_momentum_[2].begin()+nparts,
+                                                                   nvidia_weight_.begin()+nparts,
+                                                                   nvidia_charge_.begin()+nparts
+                                                                //,   nvidia_cell_keys_.begin()+nparts
                                                                    )
                                                 ),
-                      nvidia_cell_keys.begin(),
+                      nvidia_cell_keys_.begin(),
                       count_if_out()
                       );
                       
@@ -219,7 +219,7 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
         thrust::remove_if(thrust::device,
                           nvidia_chi_.begin(),
                           nvidia_chi_.begin()+nparts,
-                          nvidia_cell_keys.begin(),
+                          nvidia_cell_keys_.begin(),
                           count_if_out()
         );
     }
@@ -234,41 +234,41 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
     // Manage the recv data structure
     nvidiaParticles* cp_parts = static_cast<nvidiaParticles*>( particles_to_move );
 
-    ZipIterParts iter_copy(thrust::make_tuple(cp_parts->nvidiaPosition[0].begin(),
-                                              cp_parts->nvidiaPosition[1].begin(),
-                                              cp_parts->nvidiaPosition[2].begin(),
-                                              cp_parts->nvidiaMomentum[0].begin(),
-                                              cp_parts->nvidiaMomentum[1].begin(),
-                                              cp_parts->nvidiaMomentum[2].begin(),
-                                              cp_parts->nvidiaWeight.begin(),
-                                              cp_parts->nvidiaCharge.begin() ) );
+    ZipIterParts iter_copy(thrust::make_tuple(cp_parts->nvidia_position_[0].begin(),
+                                              cp_parts->nvidia_position_[1].begin(),
+                                              cp_parts->nvidia_position_[2].begin(),
+                                              cp_parts->nvidia_momentum_[0].begin(),
+                                              cp_parts->nvidia_momentum_[1].begin(),
+                                              cp_parts->nvidia_momentum_[2].begin(),
+                                              cp_parts->nvidia_weight_.begin(),
+                                              cp_parts->nvidia_charge_.begin() ) );
     int nparts_add = cp_parts->gpu_nparts_;
     int tot_parts = nparts + nparts_add;
  
     // Resize main data structure, if too small (copy_n do not resize)
-    if ( tot_parts > nvidiaWeight.size() ) {
-        nvidiaPosition[0].resize( tot_parts, 0. );
-        nvidiaPosition[1].resize( tot_parts, 0. );
-        nvidiaPosition[2].resize( tot_parts, 0. );
-        nvidiaMomentum[0].resize( tot_parts, 0. );
-        nvidiaMomentum[1].resize( tot_parts, 0. );
-        nvidiaMomentum[2].resize( tot_parts, 0. );
-        nvidiaWeight.resize( tot_parts, 0. );
-        nvidiaCharge.resize( tot_parts, 0 );
-        nvidia_cell_keys.resize( tot_parts, 0 );
+    if ( tot_parts > nvidia_weight_.size() ) {
+        nvidia_position_[0].resize( tot_parts, 0. );
+        nvidia_position_[1].resize( tot_parts, 0. );
+        nvidia_position_[2].resize( tot_parts, 0. );
+        nvidia_momentum_[0].resize( tot_parts, 0. );
+        nvidia_momentum_[1].resize( tot_parts, 0. );
+        nvidia_momentum_[2].resize( tot_parts, 0. );
+        nvidia_weight_.resize( tot_parts, 0. );
+        nvidia_charge_.resize( tot_parts, 0 );
+        nvidia_cell_keys_.resize( tot_parts, 0 );
         if (isQuantumParameter) {
             nvidia_chi_.resize(  tot_parts, 0 );
         }
     }
     // Iterator of the main data structure (once it has been resized)
-    ZipIterParts iter(thrust::make_tuple(nvidiaPosition[0].begin(),
-                                         nvidiaPosition[1].begin(),
-                                         nvidiaPosition[2].begin(),
-                                         nvidiaMomentum[0].begin(),
-                                         nvidiaMomentum[1].begin(),
-                                         nvidiaMomentum[2].begin(),
-                                         nvidiaWeight.begin(),
-                                         nvidiaCharge.begin() ) );
+    ZipIterParts iter(thrust::make_tuple(nvidia_position_[0].begin(),
+                                         nvidia_position_[1].begin(),
+                                         nvidia_position_[2].begin(),
+                                         nvidia_momentum_[0].begin(),
+                                         nvidia_momentum_[1].begin(),
+                                         nvidia_momentum_[2].begin(),
+                                         nvidia_weight_.begin(),
+                                         nvidia_charge_.begin() ) );
  
  
     // Copy recv particles in main data structure
@@ -283,8 +283,8 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
     
     gpu_nparts_ += nparts_add;
 
-    // Resize below useless : nvidia_cell_keys resized if necessary above, cell_keys not used on cpu
-    //nvidia_cell_keys.resize( gpu_nparts_ );
+    // Resize below useless : nvidia_cell_keys_ resized if necessary above, cell_keys not used on cpu
+    //nvidia_cell_keys_.resize( gpu_nparts_ );
     //cell_keys.resize       ( gpu_nparts_ );
  
     cp_parts->gpu_nparts_ = 0;

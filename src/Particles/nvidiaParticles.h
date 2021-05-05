@@ -25,42 +25,42 @@ public:
     //! Destructor for Particle
     virtual ~nvidiaParticles() {};
 
-    void initGPU() override;
+    void initializeDataOnDevice() override;
     void syncGPU() override;
     void syncCPU() override;
 
-    std::vector< thrust::device_vector<double> > nvidiaPosition;
-    std::vector< thrust::device_vector<double> > nvidiaMomentum;
+    std::vector< thrust::device_vector<double> > nvidia_position_;
+    std::vector< thrust::device_vector<double> > nvidia_momentum_;
 
     //! Weight
-    thrust::device_vector<double> nvidiaWeight;
+    thrust::device_vector<double> nvidia_weight_;
 
     //! Charge on GPU
-    thrust::device_vector<short>  nvidiaCharge;
+    thrust::device_vector<short>  nvidia_charge_;
 
     //! cell_keys of the particle
-    thrust::device_vector<int> nvidia_cell_keys;
+    thrust::device_vector<int> nvidia_cell_keys_;
 
     //! Quantum parameter
     thrust::device_vector<double> nvidia_chi_;
 
     double* getPtrPosition( int idim ) override {
-        return thrust::raw_pointer_cast( nvidiaPosition[idim].data() );
+        return thrust::raw_pointer_cast( nvidia_position_[idim].data() );
     };
     double* getPtrMomentum( int idim ) override {
-        return thrust::raw_pointer_cast( nvidiaMomentum[idim].data() );
+        return thrust::raw_pointer_cast( nvidia_momentum_[idim].data() );
     };
     double* getPtrWeight() override {
-        return thrust::raw_pointer_cast( nvidiaWeight.data() );
+        return thrust::raw_pointer_cast( nvidia_weight_.data() );
     };
     short * getPtrCharge() override {
-        return thrust::raw_pointer_cast( nvidiaCharge.data() );
+        return thrust::raw_pointer_cast( nvidia_charge_.data() );
     };
     double * getPtrChi() override {
         return thrust::raw_pointer_cast( nvidia_chi_.data() );
     };
     int * getPtrCellKeys() override {
-        return thrust::raw_pointer_cast( nvidia_cell_keys.data() );
+        return thrust::raw_pointer_cast( nvidia_cell_keys_.data() );
     };
 
     //! Get number of particules

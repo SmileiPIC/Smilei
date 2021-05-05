@@ -406,8 +406,16 @@ public :
         return ( *this )( ipatch )->partWalls;
     }
 
-    void initGPU( SmileiMPI *smpi );
+    //! Create and copy the data on device (GPU) from host (CPU)
+    void initializeDataOnDevice( SmileiMPI *smpi );
+    
+    //! Field Synchronization from the GPU (Device) to the host (CPU)
+    //! This function updates the data on the host from the data located on the device
+    void syncFieldToDevice();
+    
+    //! Data synchronization from device (GPU) to host (CPU)
     void getDataBackFromGPU();
+    
 private :
 
     //  Internal balancing members

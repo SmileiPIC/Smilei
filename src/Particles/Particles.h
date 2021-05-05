@@ -401,7 +401,7 @@ public:
     //! Indices of first and last particles in each bin/cell
     std::vector<int> first_index, last_index;
 
-    virtual void initGPU() { std::cout << "Should not came here" << std::endl; };
+    virtual void initializeDataOnDevice() { std::cout << "Should not came here" << std::endl; };
     virtual void syncGPU() { std::cout << "Should not came here" << std::endl; };
     virtual void syncCPU() { std::cout << "Should not came here" << std::endl; };
     virtual double* getPtrPosition( int idim ) {

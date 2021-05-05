@@ -4060,7 +4060,7 @@ void VectorPatch::initNewEnvelope( Params &params )
     }
 } // END initNewEnvelope
 
-void VectorPatch::initGPU( SmileiMPI *smpi )
+void VectorPatch::initializeDataOnDevice( SmileiMPI *smpi )
 {
 #ifdef _GPU
     int npatches = this->size();
@@ -4080,10 +4080,11 @@ void VectorPatch::initGPU( SmileiMPI *smpi )
         // Initialize  particles data structures on GPU, and synchronize it
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             Species *spec = species( ipatch, ispec );
-            spec->particles->initGPU();
-            spec->particles_to_move->initGPU();
+            spec->particles->initializeDataOnDevice();
+            spec->particles_to_move->initializeDataOnDevice();
         }
 
+        // Initialize field data strucures on GPU and synchronize it
         double* Jx = &(patches_[ipatch]->EMfields->Jx_->data_[0]);
         double* Jy = &(patches_[ipatch]->EMfields->Jy_->data_[0]);
         double* Jz = &(patches_[ipatch]->EMfields->Jz_->data_[0]);
@@ -4107,6 +4108,40 @@ void VectorPatch::initGPU( SmileiMPI *smpi )
 
     }
 #endif
+}
+
+//! Field Synchronization from the GPU (Device) to the CPU
+//! This function updates the data on the host from the data located on the device
+void VectorPatch::syncFieldToDevice()
+{
+    #ifdef _GPU
+        int npatches = this->size();
+        int nspecies =  patches_[0]->vecSpecies.size();
+
+        int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
+        int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
+        int sizeofEz = patches_[0]->EMfields->Ez_->globalDims_;
+        int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
+        int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
+        int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
+
+        for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+
+            double* Ex = &(patches_[ipatch]->EMfields->Ex_->data_[0]);
+            double* Ey = &(patches_[ipatch]->EMfields->Ey_->data_[0]);
+            double* Ez = &(patches_[ipatch]->EMfields->Ez_->data_[0]);
+            double* Bx = &(patches_[ipatch]->EMfields->Bx_->data_[0]);
+            double* By = &(patches_[ipatch]->EMfields->By_->data_[0]);
+            double* Bz = &(patches_[ipatch]->EMfields->Bz_->data_[0]);
+            double* Bmx = &(patches_[ipatch]->EMfields->Bx_m->data_[0]);
+            double* Bmy = &(patches_[ipatch]->EMfields->By_m->data_[0]);
+            double* Bmz = &(patches_[ipatch]->EMfields->Bz_m->data_[0]);
+
+            #pragma acc update device(Ex[0:sizeofEx],Ey[0:sizeofEy],Ez[0:sizeofEz],\
+                                      Bmx[0:sizeofBx],Bmy[0:sizeofBy],Bmz[0:sizeofBz], \
+                                      Bx[0:sizeofBx],By[0:sizeofBy],Bz[0:sizeofBz],)
+        }
+    #endif
 }
 
 void VectorPatch::getDataBackFromGPU()

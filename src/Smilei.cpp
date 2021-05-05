@@ -215,8 +215,8 @@ int main( int argc, char *argv[] )
 
 
         if (params.gpu_computing) {
-            TITLE( "Init GPU" );
-            vecPatches.initGPU( &smpi );
+            TITLE( "Initialize GPU data" );
+            vecPatches.initializeDataOnDevice( &smpi );
         }
 
         // Initialize the electromagnetic fields
@@ -270,6 +270,9 @@ int main( int argc, char *argv[] )
         MESSAGE( 1, "Applying external fields at time t = 0" );
         vecPatches.applyExternalFields();
         vecPatches.saveExternalFields( params );
+        if (params.gpu_computing) {
+            vecPatches.syncFieldToDevice();
+        }
         
         MESSAGE( 1, "Applying prescribed fields at time t = 0" );
         vecPatches.applyPrescribedFields( time_prim );
