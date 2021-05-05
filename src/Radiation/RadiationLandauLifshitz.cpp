@@ -114,7 +114,7 @@ void RadiationLandauLifshitz::operator()(
         #pragma acc parallel \
             create(rad_norm_energy[0:np]) \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
-            Bx[istart:np],By[istart:np],Bz[istart:np],invgf[0:nparts]) \
+            Bx[istart:np],By[istart:np],Bz[istart:np]) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,chi)
     {
         #pragma acc loop gang worker vector
