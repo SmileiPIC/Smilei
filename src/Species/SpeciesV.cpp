@@ -675,6 +675,50 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 
      if( time_dual>time_frozen_ ) {
 
+         // Radiation losses
+         if( Radiate ) {
+             for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                 #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_radiate[ibin]) depend(out:bin_has_radiated[ibin]) private(ithread,timer)
+#else
+                 #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_radiate[ibin]) depend(out:bin_has_radiated[ibin])
+#endif
+                 {
+                    
+
+#ifdef  __DETAILED_TIMERS
+                 ithread = omp_get_thread_num();
+                 timer = MPI_Wtime();
+#endif
+
+                 for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                     // Radiation process
+                     ( *Radiate )( *particles, photon_species_, smpi,
+                                   RadiationTables,
+                                   nrj_radiation_per_bin[ibin],
+                                   particles->first_index[scell],
+                                   particles->last_index[scell], buffer_id, ibin );
+                 }
+
+                 // Update scalar variable for diagnostics
+                 // nrj_radiation += Radiate->getRadiatedEnergy();
+
+                 // Update the quantum parameter chi
+                 // Radiate->computeParticlesChi( *particles,
+                 //                               smpi,
+                 //                               first_index[ibin],
+                 //                               last_index[ibin],
+                 //                               ithread );
+
+#ifdef  __DETAILED_TIMERS
+                 patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+
+                    
+                 } // end task Radiate bin
+             } // end ibin loop for Radiate
+        } // end if Radiate
+
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
 // #ifdef  __DETAILED_TIMERS
 //             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
@@ -829,13 +873,37 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             }//end task for Proj of ibin
         }// end ibin loop for Proj    
 
+        // reduction of the lost energy in each ibin 
+        // the taskgroup before ensures that it is done after the particles BC
+#ifdef  __DETAILED_TIMERS
+        #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+#else
         #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+#endif
         {
-        // reduction of lost energy
-        for( unsigned int ibin=0 ; ibin<Nbins ; ibin++ ) {
-            nrj_bc_lost += nrj_lost_per_bin[ibin];
+        // reduce the energy lost with BC per bin
+        for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+           nrj_bc_lost += nrj_lost_per_bin[ibin];
         }
-        } // end task on energy reduction
+
+        // sum the radiated energy / energy converted in pairs
+        // The dependencies above ensure that this is done after the Radiation and MultiPhoton Breit Wheeler methods
+        if( Radiate || Multiphoton_Breit_Wheeler_process) {
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+            ithread = omp_get_thread_num();
+#endif
+
+            for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+               nrj_radiation += nrj_radiation_per_bin[ibin];
+            }
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+        } // end if Radiate or Multiphoton_Breit_Wheeler_process
+        } // end task for lost/radiated energy reduction
+
+
 
     } //End if moving particles
 
