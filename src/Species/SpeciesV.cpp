@@ -660,7 +660,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                 vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
                 
                 // Loop over scell is not performed since ionization operator is not vectorized
-                // Instead, it is applied to all particles in the bin cells
+                // Instead, it is applied to all particles in the cells pertaining to ibin
                 // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                 //     Ionize->ionizationTunnelWithTasks( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj, ibin, ibin*clrw, bJx, bJy, bJz );
                 // } // end cell loop for Interpolator
@@ -694,14 +694,23 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                  timer = MPI_Wtime();
 #endif
 
-                 for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
-                     // Radiation process
-                     ( *Radiate )( *particles, photon_species_, smpi,
-                                   RadiationTables,
-                                   nrj_radiation_per_bin[ibin],
-                                   particles->first_index[scell],
-                                   particles->last_index[scell], buffer_id, ibin );
-                 }
+                 // Loop over scell is not performed since radiation operator is not completely vectorized
+                 // Instead, it is applied to all particles in the cells pertaining to ibin
+                 // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                 //     // Radiation process
+                 //     ( *Radiate )( *particles, photon_species_, smpi,
+                 //                   RadiationTables,
+                 //                   nrj_radiation_per_bin[ibin],
+                 //                   particles->first_index[scell],
+                 //                   particles->last_index[scell], buffer_id, ibin );
+                 // }
+
+                 // Radiation process
+                 ( *Radiate )( *particles, photon_species_, smpi,
+                               RadiationTables,
+                               nrj_radiation_per_bin[ibin],
+                               particles->first_index[first_cell_of_bin[ibin]],
+                               particles->last_index[last_cell_of_bin[ibin]], buffer_id, ibin );
 
                  // Update scalar variable for diagnostics
                  // nrj_radiation += Radiate->getRadiatedEnergy();
