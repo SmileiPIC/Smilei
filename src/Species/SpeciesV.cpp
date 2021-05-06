@@ -719,16 +719,81 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
              } // end ibin loop for Radiate
         } // end if Radiate
 
-        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
-// #endif
+        if( Multiphoton_Breit_Wheeler_process ) {
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_done_Multiphoton_Breit_Wheeler[ibin]) private(ithread,timer)
 #else
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin]) depend(out:bin_has_pushed[ibin])
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_done_Multiphoton_Breit_Wheeler[ibin])
+#endif
+                {
+
+#ifdef  __DETAILED_TIMERS
+                ithread = omp_get_thread_num();
+                timer = MPI_Wtime();
+#endif
+                // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                // Pair generation process
+                ( *Multiphoton_Breit_Wheeler_process )( *particles,
+                                                        smpi,
+                                                        MultiphotonBreitWheelerTables,
+                                                        particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], 
+                                                        buffer_id, ibin );
+
+                
+                // // Update scalar variable for diagnostics
+                // // We reuse nrj_radiation for the pairs
+                nrj_radiation_per_bin[ibin] += Multiphoton_Breit_Wheeler_process->getPairEnergyOfBin(ibin);
+
+                // Update the photon quantum parameter chi of all photons
+                Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
+                                                                         smpi,
+                                                                         particles->first_index[first_cell_of_bin[ibin]],
+                                                                         particles->last_index[last_cell_of_bin[ibin]],
+                                                                         buffer_id );
+
+                // } // end scell    
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                } // end Multiphoton Breit Wheeler on ibin
+            } // end ibin task for Multiphoton Breit Wheeler
+            #pragma omp taskwait
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) depend(in:bin_has_done_Multiphoton_Breit_Wheeler[0:(Nbins-1)]) private(ithread,timer) depend(out:bin_has_interpolated[Nbins]) 
+#else
+            #pragma omp task default(shared) depend(in:bin_has_done_Multiphoton_Breit_Wheeler[0:(Nbins-1)]) depend(out:bin_has_interpolated[Nbins]) 
+#endif
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+            // clean decayed photons from arrays 
+            // this loop must not be parallelized unless race conditions are prevented
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+                Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
+                    *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id );              
+            } // end ibin loop to clean decayed photons
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task for photon cleaning for all bins
+        } else {
+            // empty task for the pusher dependency
+            #pragma omp task default(shared) depend(out:bin_has_interpolated[Nbins])
+            {
+            // Remember that bin_has_interpolated[Nbins] 
+            // is used to manage the pusher dependency on the photon cleaning 
+            } 
+        }// end if Multiphoton_Breit_Wheeler_process
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
 #endif
             {
 #ifdef  __DETAILED_TIMERS
@@ -747,10 +812,9 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
             } // end task for Push on ibin
         } // end ibin loop for Push
-
-// Particles BC and keys
-
-         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+  
+        // Particles BC and keys
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
             #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
 #else
