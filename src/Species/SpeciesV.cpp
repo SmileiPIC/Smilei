@@ -784,10 +784,12 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
             // clean decayed photons from arrays 
             // this loop must not be parallelized unless race conditions are prevented
-            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+            for( unsigned int scell = first_cell_of_bin[0] ; scell <= last_cell_of_bin[Nbins-1] ; scell++ ){
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
-                    *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id );              
-            } // end ibin loop to clean decayed photons
+                    *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id );
+            } // end scell              
+            
+
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
