@@ -298,6 +298,499 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 
 }//END scalarDynamics
 
+void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec,
+        ElectroMagn *EMfields, Params &params, bool diag_flag,
+        PartWalls *partWalls,
+        Patch *patch, SmileiMPI *smpi,
+        RadiationTables &RadiationTables,
+        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+        vector<Diagnostic *> &localDiags, int buffer_id )
+{  
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+    int ithread;
+#endif
+    int bin_size0 = b_dim[0];
+    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+        nrj_lost_per_bin[ibin] = 0.;
+        nrj_radiation_per_bin[ibin] = 0.;
+    }
+    // Init tags for the task dependencies of the particle operations
+    int *bin_has_interpolated                   = new int[Nbins+1]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
+    int *bin_has_ionized                        = new int[Nbins];
+    int *bin_has_radiated                       = new int[Nbins];
+    int *bin_has_done_Multiphoton_Breit_Wheeler = new int[Nbins];
+    int *bin_has_pushed                         = new int[Nbins];
+    int *bin_has_done_particles_BC              = new int[Nbins];
+    int *bin_has_projected                      = new int[Nbins];
+
+    int *bin_can_radiate = new int[Nbins];;
+    int *bin_can_push = new int[Nbins];;
+
+    if (Radiate){ // if Radiation True ... 
+        if (!Ionize) { 
+            // ... radiate only after ionization if present ...
+            bin_can_radiate = bin_has_interpolated;
+        } else { 
+            // ... radiate directly after interpolation if ionization is not present ...
+            bin_can_radiate = bin_has_ionized;
+        }
+        // ... and push only after radiation 
+        bin_can_push = bin_has_radiated;
+    } else { // if Radiation False ...
+        if (Ionize){ 
+            // ... push after ionization if present
+            bin_can_push = bin_has_ionized;
+        } else { 
+            // ... push directly after interpolation if ionization is not present
+            // A Species with mass = 0 cannot Ionize or Radiate, thus this this is the used dependency array.
+            // Remember that the element ibin = Nbins of bin_has_interpolated 
+            // is used to manage the pusher dependency on the photon cleaning
+            bin_can_push = bin_has_interpolated;       
+        }
+    }
+
+
+    if( npack_==0 ) {
+        npack_    = 1;
+        packsize_ = ( f_dim1-2*oversize[1] );
+
+        //if ( ( (long int)particles->last_index.back() < (long int)60000 ) || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
+        packsize_ *= ( f_dim0-2*oversize[0] );
+        //else
+        //    npack_ *= (f_dim0-2*oversize[0]);
+
+        if( nDim_field == 3 ) {
+            packsize_ *= ( f_dim2-2*oversize[2] );
+        }
+    }
+
+    //unsigned int iPart;
+
+    int tid( 0 );
+    std::vector<double> nrj_lost_per_thd( 1, 0. );
+    int ipack = 0;
+    // -------------------------------
+    // calculate the particle dynamics
+    // -------------------------------
+    
+    // why was this used if the array is resized later? 
+    smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+
+    //Prepare for sorting
+    for( unsigned int i=0; i<count.size(); i++ ) {
+        count[i] = 0;
+    }
+
+    int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
+    smpi->dynamics_resize( buffer_id, nDim_field, nparts_in_pack );
+
+    #pragma omp taskgroup
+    {
+    if( time_dual>time_frozen_ || Ionize ) { // moving particle
+
+            
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ){ 
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+#endif
+            {
+
+            if ( params.geometry != "AMcylindrical" ){
+                // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+            } else {
+                // Reset densities sub-buffers - each of these buffers stores a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jl; i++)  b_Jl[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jr; i++)  b_Jr[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jt; i++)  b_Jt[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+            }
+
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+
+            // Interpolate the fields at the particle position
+            
+            Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[first_cell_of_bin[ibin]] ),
+                                   &( particles->last_index[last_cell_of_bin[ibin]] ),
+                                   buffer_id, particles->first_index[0] );
+            
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[0*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } //end task Interpolator
+
+        } // end ibin loop for Interpolator
+
+        // Ionization
+        if( Ionize ) {        
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin]) private(ithread,timer)
+#else
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin])
+#endif
+                {
+    
+#ifdef  __DETAILED_TIMERS
+                ithread = omp_get_thread_num();
+                timer = MPI_Wtime();
+#endif
+
+                double *bJx, *bJy, *bJz;
+                if (params.geometry != "AMcylindrical"){
+                    bJx         = b_Jx[ibin];
+                    bJy         = b_Jy[ibin];
+                    bJz         = b_Jz[ibin];
+                } else {
+                    bJx         = NULL;
+                    bJy         = NULL;
+                    bJz         = NULL;
+                }
+
+                vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
+                
+                // Loop over scell is not performed since ionization operator is not vectorized
+                // Instead, it is applied to all particles in the cells pertaining to ibin
+                // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                //     Ionize->ionizationTunnelWithTasks( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj, ibin, ibin*clrw, bJx, bJy, bJz );
+                // } // end cell loop for Interpolator
+                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, patch, Proj, ibin, ibin*clrw, bJx, bJy, bJz );
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            
+                } // end task Ionize bin
+            } // end ibin loop for Ionize
+        } // end Ionize   
+
+     } // end if moving particle or Ionization
+
+     if( time_dual>time_frozen_ ) {
+
+         // Radiation losses
+         if( Radiate ) {
+             for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                 #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_radiate[ibin]) depend(out:bin_has_radiated[ibin]) private(ithread,timer)
+#else
+                 #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_radiate[ibin]) depend(out:bin_has_radiated[ibin])
+#endif
+                 {
+                    
+
+#ifdef  __DETAILED_TIMERS
+                 ithread = omp_get_thread_num();
+                 timer = MPI_Wtime();
+#endif
+
+                 // Loop over scell is not performed since radiation operator is not completely vectorized
+                 // Instead, it is applied to all particles in the cells pertaining to ibin
+                 // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                 //     // Radiation process
+                 //     ( *Radiate )( *particles, photon_species_, smpi,
+                 //                   RadiationTables,
+                 //                   nrj_radiation_per_bin[ibin],
+                 //                   particles->first_index[scell],
+                 //                   particles->last_index[scell], buffer_id, ibin );
+                 // }
+
+                 // Radiation process
+                 ( *Radiate )( *particles, photon_species_, smpi,
+                               RadiationTables,
+                               nrj_radiation_per_bin[ibin],
+                               particles->first_index[first_cell_of_bin[ibin]],
+                               particles->last_index[last_cell_of_bin[ibin]], buffer_id, ibin );
+
+                 // Update scalar variable for diagnostics
+                 // nrj_radiation += Radiate->getRadiatedEnergy();
+
+                 // Update the quantum parameter chi
+                 // Radiate->computeParticlesChi( *particles,
+                 //                               smpi,
+                 //                               first_index[ibin],
+                 //                               last_index[ibin],
+                 //                               ithread );
+
+#ifdef  __DETAILED_TIMERS
+                 patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+
+                    
+                 } // end task Radiate bin
+             } // end ibin loop for Radiate
+        } // end if Radiate
+
+        if( Multiphoton_Breit_Wheeler_process ) {
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_done_Multiphoton_Breit_Wheeler[ibin]) private(ithread,timer)
+#else
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_done_Multiphoton_Breit_Wheeler[ibin])
+#endif
+                {
+
+#ifdef  __DETAILED_TIMERS
+                ithread = omp_get_thread_num();
+                timer = MPI_Wtime();
+#endif
+                // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+                // Pair generation process
+                ( *Multiphoton_Breit_Wheeler_process )( *particles,
+                                                        smpi,
+                                                        MultiphotonBreitWheelerTables,
+                                                        particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], 
+                                                        buffer_id, ibin );
+
+                
+                // // Update scalar variable for diagnostics
+                // // We reuse nrj_radiation for the pairs
+                nrj_radiation_per_bin[ibin] += Multiphoton_Breit_Wheeler_process->getPairEnergyOfBin(ibin);
+
+                // Update the photon quantum parameter chi of all photons
+                Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
+                                                                         smpi,
+                                                                         particles->first_index[first_cell_of_bin[ibin]],
+                                                                         particles->last_index[last_cell_of_bin[ibin]],
+                                                                         buffer_id );
+
+                // } // end scell    
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                } // end Multiphoton Breit Wheeler on ibin
+            } // end ibin task for Multiphoton Breit Wheeler
+            #pragma omp taskwait
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) depend(in:bin_has_done_Multiphoton_Breit_Wheeler[0:(Nbins-1)]) private(ithread,timer) depend(out:bin_has_interpolated[Nbins]) 
+#else
+            #pragma omp task default(shared) depend(in:bin_has_done_Multiphoton_Breit_Wheeler[0:(Nbins-1)]) depend(out:bin_has_interpolated[Nbins]) 
+#endif
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+            // clean decayed photons from arrays 
+            // this loop must not be parallelized unless race conditions are prevented
+            for( unsigned int scell = first_cell_of_bin[0] ; scell <= last_cell_of_bin[Nbins-1] ; scell++ ){
+                Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
+                    *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id );
+            } // end scell              
+            
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[6*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task for photon cleaning for all bins
+        } else {
+            // empty task for the pusher dependency
+            #pragma omp task default(shared) depend(out:bin_has_interpolated[Nbins])
+            {
+            // Remember that bin_has_interpolated[Nbins] 
+            // is used to manage the pusher dependency on the photon cleaning 
+            } 
+        }// end if Multiphoton_Breit_Wheeler_process
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
+#endif
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+
+            // Push the particles and the photons
+            ( *Push )( *particles, smpi, particles->first_index[first_cell_of_bin[ibin]],
+                        particles->last_index[last_cell_of_bin[ibin]],
+                        buffer_id, particles->first_index[0] );
+
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task for Push on ibin
+        } // end ibin loop for Push
+  
+        // Particles BC and keys
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#endif
+            {
+            // double ener_iPart( 0. );
+
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+            // Variables to compute cell_keys for the sorting
+            unsigned int length[3];
+            length[0]=0;
+            length[1]=params.n_space[1]+1;
+            length[2]=params.n_space[2]+1;
+
+            for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
+            
+                double ener_iPart( 0. );
+                // Apply wall and boundary conditions
+                if( mass_>0 ) {
+                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                        ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
+                        nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+                    }
+
+                    // Boundary Condition may be physical or due to domain decomposition
+                    // apply returns 0 if iPart is not in the local domain anymore
+
+                    partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
+                    nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+
+                    for( int iPart=particles->first_index[ipack*packsize_+scell] ; ( int )iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
+                        if ( particles->cell_keys[iPart] != -1 ) {
+                            //Compute cell_keys of remaining particles
+                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                                particles->cell_keys[iPart] *= this->length_[i];
+                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                            }
+                            //First reduction of the count sort algorithm. Lost particles are not included.
+                            // count[particles->cell_keys[iPart]] ++;
+                        }
+                    }
+
+                } else if( mass_==0 ) {
+
+                    for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                        ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
+                        nrj_lost_per_bin[ibin] += ener_iPart;
+                    }
+
+                    // Boundary Condition may be physical or due to domain decomposition
+                    // apply returns 0 if iPart is not in the local domain anymore
+
+                    partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
+                    nrj_lost_per_bin[ibin] += ener_iPart;
+                    
+                    for( int iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                        if ( particles->cell_keys[iPart] != -1 ) {
+                            //Compute cell_keys of remaining particles
+                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                                particles->cell_keys[iPart] *= length[i];
+                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                            }
+                            // count[particles->cell_keys[iPart]] ++;
+                        }
+                    }
+                } // end if condition on mass                
+                
+            } // end scell loop
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task for particles BC and cell_keys on ibin
+        } // end ibin loop for particles BC
+
+
+        // Project currents if not a Test species and charges as well if a diag is needed.
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+#else
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+#endif
+            {
+
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+
+            // Project currents if not a Test species and charges as well if a diag is needed.
+            // Do not project if a photon
+            if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
+                if (params.geometry != "AMcylindrical"){
+                    Proj->currentsAndDensityWrapperOnBuffers(
+                          b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
+                          ibin*clrw, *particles, smpi, 
+                          particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], 
+                          buffer_id, diag_flag, params.is_spectral, ispec, 0 );
+                } else {
+                    // for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
+                    // ProjectorAM2Order *ProjAM = static_cast<ProjectorAM2Order *>(Proj);
+                    // ProjAM->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
+                    //                                             ibin*clrw, bin_size0, *particles, smpi, 
+                    //                                             particles->first_index[scell], particles->last_index[scell], 
+                    //                                             buffer_id, diag_flag);
+                    // } // end scell loop
+                } // end if AM
+            } // end condition on test and mass
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            }//end task for Proj of ibin
+        }// end ibin loop for Proj    
+
+        // reduction of the lost energy in each ibin 
+        // the taskgroup before ensures that it is done after the particles BC
+#ifdef  __DETAILED_TIMERS
+        #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+#else
+        #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+#endif
+        {
+        // reduce the energy lost with BC per bin
+        for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+           nrj_bc_lost += nrj_lost_per_bin[ibin];
+        }
+
+        // sum the radiated energy / energy converted in pairs
+        // The dependencies above ensure that this is done after the Radiation and MultiPhoton Breit Wheeler methods
+        if( Radiate || Multiphoton_Breit_Wheeler_process) {
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+            ithread = omp_get_thread_num();
+#endif
+
+            for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+               nrj_radiation += nrj_radiation_per_bin[ibin];
+            }
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+        } // end if Radiate or Multiphoton_Breit_Wheeler_process
+        } // end task for lost/radiated energy reduction
+
+
+
+    } //End if moving particles
+
+    } // end taskgroup
+
+} // end scalarDynamicsTasks
+
 
 // -----------------------------------------------------------------------------
 //! Compute part_cell_keys at patch creation.

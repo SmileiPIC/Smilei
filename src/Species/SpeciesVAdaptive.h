@@ -35,6 +35,16 @@ public:
                           RadiationTables &RadiationTables,
                           MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic *> &localDiags ) override;
+
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
+    //! without vectorized operators but with the cell sorting algorithm
+    void scalarDynamicsTasks( double time, unsigned int ispec,
+                               ElectroMagn *EMfields,
+                               Params &params, bool diag_flag,
+                               PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                               RadiationTables &RadiationTables,
+                               MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                               std::vector<Diagnostic *> &localDiags, int buffer_id );
                           
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell

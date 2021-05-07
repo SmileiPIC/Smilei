@@ -105,6 +105,10 @@ public:
 
     int Ncells;
 
+    // used for tasks 
+    std::vector<int> first_cell_of_bin;
+    std::vector<int> last_cell_of_bin;
+
 private:
 
     //! Number of packs of particles that divides the total number of particles
@@ -112,9 +116,7 @@ private:
     //! Size of the pack in number of particles
     unsigned int packsize_;
 
-    // used for tasks 
-    std::vector<int> first_cell_of_bin;
-    std::vector<int> last_cell_of_bin;
+    
     
 
     

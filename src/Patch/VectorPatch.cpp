@@ -395,6 +395,7 @@ void VectorPatch::dynamics( Params &params,
                 // Dynamics with scalar operators
                 else {
                     if( params.vectorization_mode == "adaptive" ) {
+#ifndef _OMPTASKS
                         spec->scalarDynamics( time_dual, ispec,
                                               emfields( ipatch ),
                                               params, diag_flag, partwalls( ipatch ),
@@ -402,6 +403,20 @@ void VectorPatch::dynamics( Params &params,
                                               RadiationTables,
                                               MultiphotonBreitWheelerTables,
                                               localDiags );
+#else
+                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
+                        {
+                        SpeciesVAdaptive *spec_task = static_cast<SpeciesVAdaptive *>(species( ipatch, ispec ));
+                        int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                        spec_task->SpeciesVAdaptive::scalarDynamicsTasks( time_dual, ispec,
+                                                                          emfields( ipatch ),
+                                                                          params, diag_flag, partwalls( ipatch ),
+                                                                          ( *this )( ipatch ), smpi,
+                                                                          RadiationTables,
+                                                                          MultiphotonBreitWheelerTables,
+                                                                          localDiags, buffer_id );
+                        } // end task
+#endif
                     } else {
 #ifndef _OMPTASKS   
                         spec->Species::dynamics( time_dual, ispec,
@@ -503,7 +518,22 @@ void VectorPatch::dynamics( Params &params,
                         } // end iPart loop
                     } // end cells loop
                     } // end task on array count
-                } // end if on vectorized operators
+                } else {
+                    if (params.vectorization_mode == "adaptive"){
+                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
+                        {
+                        SpeciesVAdaptive *spec_task = static_cast<SpeciesVAdaptive *>(species( ipatch, ispec ));
+                        for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+                            for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+                                if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                                    //First reduction of the count sort algorithm. Lost particles are not included.
+                                    spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+                                }
+                            } // end iPart loop
+                        } // end cells loop
+                        } // end task on array count
+                    } // end if vectorization is adaptive
+                }// end if on vectorized operators
             } // end ispec
         } // end ipatch 
 
