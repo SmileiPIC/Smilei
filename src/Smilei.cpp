@@ -271,7 +271,7 @@ int main( int argc, char *argv[] )
         vecPatches.applyExternalFields();
         vecPatches.saveExternalFields( params );
         if (params.gpu_computing) {
-            vecPatches.syncFieldToDevice();
+            vecPatches.syncFieldFromHostToDevice();
         }
         
         MESSAGE( 1, "Applying prescribed fields at time t = 0" );

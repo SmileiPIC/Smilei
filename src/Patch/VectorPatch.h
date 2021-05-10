@@ -411,10 +411,10 @@ public :
     
     //! Field Synchronization from the GPU (Device) to the host (CPU)
     //! This function updates the data on the host from the data located on the device
-    void syncFieldToDevice();
+    void syncFieldFromHostToDevice();
     
     //! Data synchronization from device (GPU) to host (CPU)
-    void getDataBackFromGPU();
+    void syncDataFromDeviceToHost();
     
 private :
 

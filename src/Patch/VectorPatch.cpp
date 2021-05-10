@@ -1309,7 +1309,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         diag_timers[idiag]->restart();
 
         if ( (params.gpu_computing) && ( globalDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) && (!data_on_cpu_updated) && (itime>0) ) {
-            getDataBackFromGPU();
+            syncDataFromDeviceToHost();
             data_on_cpu_updated = true;
         }
 
@@ -1338,7 +1338,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         diag_timers[globalDiags.size()+idiag]->restart();
 
         if ( (params.gpu_computing) && ( localDiags[idiag]->timeSelection->theTimeIsNow( itime ) ) && (!data_on_cpu_updated) && (itime>0) ) {
-            getDataBackFromGPU();
+            syncDataFromDeviceToHost();
             data_on_cpu_updated = true;
         }
 
@@ -4082,6 +4082,7 @@ void VectorPatch::initializeDataOnDevice( SmileiMPI *smpi )
             Species *spec = species( ipatch, ispec );
             spec->particles->initializeDataOnDevice();
             spec->particles_to_move->initializeDataOnDevice();
+            #pragma acc enter data copyin(spec->nrj_radiation)
         }
 
         // Initialize field data strucures on GPU and synchronize it
@@ -4112,7 +4113,7 @@ void VectorPatch::initializeDataOnDevice( SmileiMPI *smpi )
 
 //! Field Synchronization from the GPU (Device) to the CPU
 //! This function updates the data on the host from the data located on the device
-void VectorPatch::syncFieldToDevice()
+void VectorPatch::syncFieldFromHostToDevice()
 {
     #ifdef _GPU
         int npatches = this->size();
@@ -4144,7 +4145,8 @@ void VectorPatch::syncFieldToDevice()
     #endif
 }
 
-void VectorPatch::getDataBackFromGPU()
+//! Sync all data (fields and particles) from device to host
+void VectorPatch::syncDataFromDeviceToHost()
 {
 #ifdef _GPU
     int npatches = this->size();
