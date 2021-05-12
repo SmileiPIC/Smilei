@@ -754,7 +754,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
         }// end ibin loop for Proj    
 
         // reduction of the lost energy in each ibin 
-        // the taskgroup before ensures that it is done after the particles BC
+        // the dependency ensures that it is done after the particles BC
 #ifdef  __DETAILED_TIMERS
         #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
 #else

@@ -1073,7 +1073,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
          }// end ibin loop for Proj
 
         // reduction of the lost energy in each ibin 
-        // the taskgroup before ensures that it is done after the particles BC
+        // the dependency ensures that it is done after the particles BC
 #ifdef  __DETAILED_TIMERS
         #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
 #else
@@ -1896,10 +1896,9 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
         smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
 // #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin]) private(ithread,timer)
+//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
 // #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin])
-// #endif
+//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) 
             {
             if ( params.geometry != "AMcylindrical" ){
                 // Reset susceptibility sub-buffer - this buffer stores a grid susceptibility on the ibin physical space
@@ -1988,7 +1987,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
             timer = MPI_Wtime();
 #endif
             // Push only the particle momenta
-            //( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread );
+            ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id);
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[9*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
@@ -1999,62 +1998,8 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
     } //END if time vs. time_frozen_
 
     } // end taskgroup
+ 
 
-
-//         smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
-// 
-//         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
-// 
-// #ifdef  __DETAILED_TIMERS
-//             timer = MPI_Wtime();
-// #endif
-//             Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
-// #ifdef  __DETAILED_TIMERS
-//             patch->patch_timers_[7] += MPI_Wtime() - timer;
-// #endif
-// 
-//             // Ionization
-//             if( Ionize ) {
-// 
-// #ifdef  __DETAILED_TIMERS
-//                 timer = MPI_Wtime();
-// #endif
-//                 vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
-//                 vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
-//                 vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
-//                 vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
-//                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
-//                 Ionize->envelopeIonization( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
-// 
-// #ifdef  __DETAILED_TIMERS
-//                 patch->patch_timers_[4] += MPI_Wtime() - timer;
-// #endif
-//             }
-// 
-//             if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
-// 
-//             // Project susceptibility, the source term of envelope equation
-// #ifdef  __DETAILED_TIMERS
-//             timer = MPI_Wtime();
-// #endif
-//             Proj->susceptibility( EMfields, *particles, mass_, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread );
-// #ifdef  __DETAILED_TIMERS
-//             patch->patch_timers_[8] += MPI_Wtime() - timer;
-// #endif
-// 
-// 
-// #ifdef  __DETAILED_TIMERS
-//             timer = MPI_Wtime();
-// #endif
-//             // Push only the particle momenta
-//             ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread );
-// #ifdef  __DETAILED_TIMERS
-//             patch->patch_timers_[9] += MPI_Wtime() - timer;
-// #endif
-// 
-//         } // end loop on ibin
-//     } else { // immobile particle
-//     } //END if time vs. time_frozen_
 } // ponderomotiveUpdateSusceptibilityAndMomentumTasks
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -2249,121 +2194,155 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
         Patch *patch, SmileiMPI *smpi,
         vector<Diagnostic *> &localDiags, int buffer_id )
 {
-// 
-//     int ithread;
-// #ifdef _OPENMP
-//     ithread = omp_get_thread_num();
+#ifdef  __DETAILED_TIMERS
+    double timer;
+    int ithread;
+#endif
+    int bin_size0 = b_dim[0];
+    std::vector<double> nrj_lost_per_thd( 1, 0. );
+
+    for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+        nrj_lost_per_bin[ibin] = 0.;
+        // nrj_radiation_per_bin[ibin] = 0.;
+    }
+    // Init tags for the task dependencies of the particle operations
+    int *bin_has_interpolated               = new int[Nbins]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
+    int *bin_has_pushed                     = new int[Nbins];
+    int *bin_has_done_particles_BC          = new int[Nbins];
+    int *bin_has_projected                  = new int[Nbins];
+
+    #pragma omp taskgroup
+    {
+
+    // -------------------------------
+    // calculate the particle updated momentum
+    // -------------------------------
+    if( time_dual>time_frozen_ ) {
+
+        smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
+
+        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
+// #ifdef  __DETAILED_TIMERS
+//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
 // #else
-//     ithread = 0;
+//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) 
 // #endif
-// 
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+            // Interp->timeCenteredEnvelopeTasks( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[10*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task interpolate
+        } // end ibin
+
+        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 // #ifdef  __DETAILED_TIMERS
-//     double timer;
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+// #else
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin])
 // #endif
-// 
-//     unsigned int iPart;
-// 
-//     int tid( 0 );
-//     std::vector<double> nrj_lost_per_thd( 1, 0. );
-// 
-//     // -------------------------------
-//     // calculate the particle updated position
-//     // -------------------------------
-//     if( time_dual>time_frozen_ ) { // moving particle
-// 
-//         smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
-// 
-//         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-//             double ener_iPart( 0. );
-// 
-//             // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+            // Push only the particle position
+            ( *Push_ponderomotive_position )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], buffer_id );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[11*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task
+        } // end ibin
+
+        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 // #ifdef  __DETAILED_TIMERS
-//             timer = MPI_Wtime();
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin]) private(ithread,timer)
+// #else
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
 // #endif
-//             Interp->timeCenteredEnvelope( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+            // Apply wall and boundary conditions
+            if( mass_>0 ) {
+                double ener_iPart;
+                for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                    (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, buffer_id, ener_iPart );
+                    nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+                }
+            
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, buffer_id, ener_iPart );
+                nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+            
+            } else if( mass_==0 ) {
+                ERROR( "Particles with zero mass cannot interact with envelope" );
+            
+            } // end mass_ = 0? condition
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task
+        } // end ibin
+
+        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 // #ifdef  __DETAILED_TIMERS
-//             patch->patch_timers_[10] += MPI_Wtime() - timer;
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) private(ithread,timer)
+// #else
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin])
 // #endif
-// 
-// #ifdef  __DETAILED_TIMERS
-//             timer = MPI_Wtime();
-// #endif
-//             // Push only the particle position
-//             ( *Push_ponderomotive_position )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread );
-// #ifdef  __DETAILED_TIMERS
-//             patch->patch_timers_[11] += MPI_Wtime() - timer;
-// #endif
-// 
-//             // Apply wall and boundary conditions
-//             if( mass_>0 ) {
-//                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-//                     (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-//                     nrj_lost_per_thd[tid] += mass_ * ener_iPart;
-//                 }
-// 
-//                 // Boundary Condition may be physical or due to domain decomposition
-//                 // apply returns 0 if iPart is not in the local domain anymore
-//                 //        if omp, create a list per thread
-//                 partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-//                 nrj_lost_per_thd[tid] += mass_ * ener_iPart;
-// 
-//             } else if( mass_==0 ) {
-//                 ERROR( "Particles with zero mass cannot interact with envelope" );
-// 
-//             } // end mass_ = 0? condition
-// 
-//             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
-// 
-//             // Project currents if not a Test species and charges as well if a diag is needed.
-//             // Do not project if a photon
-// #ifdef  __DETAILED_TIMERS
-//             timer = MPI_Wtime();
-// #endif
-//             if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
-//                 Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
-//             }
-// #ifdef  __DETAILED_TIMERS
-//             patch->patch_timers_[12] += MPI_Wtime() - timer;
-// #endif
-// 
-//         } // end ibin loop
-// 
-//         for( unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++ ) {
-//             nrj_bc_lost += nrj_lost_per_thd[tid];
-//         }
-// 
-//     } // end case of moving particle
-//     else { // immobile particle
-// 
-//         if( diag_flag &&( !particles->is_test ) ) {
-//             double *b_rho=nullptr;
-//             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-// 
-//                 if( params.geometry != "AMcylindrical" ) {
-//                     b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-//                     for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-//                         Proj->basic( b_rho, ( *particles ), iPart, 0 );
-//                     }
-//                 } else {
-//                     int n_species = patch->vecSpecies.size();
-//                     complex<double> *b_rho=nullptr;
-//                     ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
-// 
-//                     for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
-//                         int ifield = imode*n_species+ispec;
-//                         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-//                             b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
-//                             for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-//                                 Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
-//                             } // end loop on particles
-//                         } //end loop for projection on buffer_proj
-// 
-//                     } // end loop on modes
-//                 } // end if on geometry
-// 
-//             }//End loop on bins
-//         } // end condition on diag and not particle test
-//     }//END if time vs. time_frozen_
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+            // Project currents if not a Test species and charges as well if a diag is needed.
+            // Do not project if a photon
+            if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
+                if (params.geometry != "AMcylindrical"){
+                    Proj->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
+                                                              ibin*clrw, *particles, smpi, 
+                                                              particles->first_index[ibin], particles->last_index[ibin], 
+                                                              buffer_id, diag_flag, params.is_spectral, ispec );
+                  } else {
+                    ProjectorAM2Order *ProjAM = static_cast<ProjectorAM2Order *>(Proj);
+                    ProjAM->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
+                                                                            ibin*clrw, bin_size0, *particles, smpi, 
+                                                                            particles->first_index[ibin], particles->last_index[ibin], 
+                                                                            buffer_id, diag_flag);
+                  } // end if AM
+            } // end condition on test and mass
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task
+        } // end ibin
+
+    } else { // immobile particle
+
+    } // end moving particle
+
+    // reduction of the lost energy in each ibin 
+    // the dependency ensures that it is done after the particles BC
+    // #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+    {
+    // reduce the energy lost with BC per bin
+    for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+        nrj_bc_lost += nrj_lost_per_bin[ibin];
+    } // end ibin
+    } // end task for lost/radiated energy reduction 
+
+    } // end taskgroup
+
 } // End ponderomotiveUpdatePositionAndCurrentsTasks
 
 void Species::check( Patch *patch, std::string title )
