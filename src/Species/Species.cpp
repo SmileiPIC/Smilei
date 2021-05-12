@@ -2228,6 +2228,21 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
 //             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) 
 // #endif
             {
+            if ( params.geometry != "AMcylindrical" ){
+                // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+            } else {
+                // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                // This must be done before Projection and before Ionization (because of the ionization currents)
+                for (unsigned int i = 0; i < size_proj_buffer_Jl; i++)  b_Jl[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jr; i++)  b_Jr[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jt; i++)  b_Jt[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+            }
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
             timer = MPI_Wtime();

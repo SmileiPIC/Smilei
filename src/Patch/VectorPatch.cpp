@@ -4457,13 +4457,6 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     }
 #endif
 
-#ifdef _OMPTASKS  
-    #pragma omp for schedule(static)
-    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        if(diag_flag) {( *this )( ipatch )->EMfields->restartEnvChis();}
-    } // end ipatch
-#endif
-
 #ifdef _OMPTASKS   
     #pragma omp single
 #else 
