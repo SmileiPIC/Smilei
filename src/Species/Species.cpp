@@ -2232,7 +2232,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
             ithread = omp_get_thread_num();
             timer = MPI_Wtime();
 #endif
-            // Interp->timeCenteredEnvelopeTasks( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
+            Interp->timeCenteredEnvelopeForTasks( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[10*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
