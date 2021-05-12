@@ -19,7 +19,7 @@ Ionization::Ionization( Params &params, Species *species )
     au_to_w0   = 4.134137172e+16 / reference_angular_frequency_SI; // alpha^2 me c^2 / (hbar omega)
     
 #ifdef _OMPTASKS
-        new_electrons_per_bin = new Particles[species->Nbins];
+    new_electrons_per_bin = new Particles[species->Nbins];
 #endif
 }
 

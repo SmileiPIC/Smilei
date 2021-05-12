@@ -783,6 +783,50 @@ void InterpolatorAM2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
     
 } // END InterpolatorAM2Order
 
+void InterpolatorAM2Order::envelopeFieldForIonizationTasks( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+{
+    // Static cast of the envelope fields
+    Field2D *EnvEabs  = static_cast<Field2D*>( EMfields->Env_E_abs_ );
+    Field2D *EnvExabs = static_cast<Field2D*>( EMfields->Env_Ex_abs_ );
+    
+    std::vector<double> *EnvEabs_part  = &( smpi->dynamics_EnvEabs_part[ithread] );
+    std::vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
+ 
+    double xpn,rpn,r;
+   
+    //Loop on bin particles
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+
+        // Normalized particle position
+        xpn = particles.position( 0, ipart ) * dl_inv_;
+        r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+        rpn = r * dr_inv_;
+        
+        int idx_p[2], idx_d[2];
+        double delta_p[2];
+        double coeffxp[3], coeffyp[3];
+        double coeffxd[3], coeffyd[3];
+
+        // Compute coefficients
+        coeffs( xpn, rpn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );                             
+    
+        // only mode 0 is used
+    
+        // ---------------------------------
+        // Interpolation of Env_E_abs^(p,p)
+        // ---------------------------------
+        ( *EnvEabs_part )[ipart] = compute( &coeffxp[1], &coeffyp[1], EnvEabs, idx_p[0], idx_p[1] );
+  
+        // ---------------------------------
+        // Interpolation of Env_Ex_abs^(p,p)
+        // ---------------------------------
+        ( *EnvExabs_part )[ipart] = compute( &coeffxp[1], &coeffyp[1], EnvExabs, idx_p[0], idx_p[1] );
+    
+    }
+    
+    
+} // END InterpolatorAM2Order
+
 
 
 

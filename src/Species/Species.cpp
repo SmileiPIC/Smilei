@@ -1924,23 +1924,33 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
             } // end task interp
         } // end ibin
 
-//             // Ionization
-//             if( Ionize ) {
-// 
-// #ifdef  __DETAILED_TIMERS
-//                 timer = MPI_Wtime();
-// #endif
-//                 vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
-//                 vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[buffer_id] );
-//                 vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[buffer_id] );
-//                 vector<double> *Phipart = &( smpi->dynamics_PHIpart[buffer_id] );
-//                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
-//                 Ionize->envelopeIonization( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
-// 
-// #ifdef  __DETAILED_TIMERS
-//                 patch->patch_timers_[4] += MPI_Wtime() - timer;
-// #endif
-//             }        
+        // Ionization
+        if( Ionize ) {
+            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
+#ifdef  __DETAILED_TIMERS
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin]) private(ithread,timer)
+#else
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_ionized[ibin]) 
+#endif
+                {
+
+#ifdef  __DETAILED_TIMERS
+                ithread = omp_get_thread_num();
+                timer = MPI_Wtime();
+#endif
+                vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
+                vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[buffer_id] );
+                vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[buffer_id] );
+                vector<double> *Phipart = &( smpi->dynamics_PHIpart[buffer_id] );
+                Interp->envelopeFieldForIonizationTasks( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
+                Ionize->envelopeIonization( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj, ibin, 0 );
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers_[4*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                } // end task ionize
+            } // end ibin
+        }  // end Ionize      
       
         if( time_dual>time_frozen_) {
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
