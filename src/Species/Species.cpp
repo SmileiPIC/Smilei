@@ -1881,7 +1881,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
         bin_can_project_chi = bin_has_ionized;
     } else { 
         // ... project chi directly after interpolation if ionization is not present
-      bin_can_project_chi = bin_has_interpolated;       
+        bin_can_project_chi = bin_has_interpolated;       
     }
 
 
@@ -1895,10 +1895,11 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
 
         smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) 
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) 
+#endif
             {
             if ( params.geometry != "AMcylindrical" ){
                 // Reset susceptibility sub-buffer - this buffer stores a grid susceptibility on the ibin physical space
@@ -1943,11 +1944,11 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
       
         if( time_dual>time_frozen_) {
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
-// #ifdef  __DETAILED_TIMERS
-//                 #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_project_chi[ibin]) depend(out:bin_has_projected_chi[ibin]) private(ithread,timer)
-// #else
-//                 #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_project_chi[ibin]) depend(out:bin_has_projected_chi[ibin])
-// #endif
+#ifdef  __DETAILED_TIMERS
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_project_chi[ibin]) depend(out:bin_has_projected_chi[ibin]) private(ithread,timer)
+#else
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_project_chi[ibin]) depend(out:bin_has_projected_chi[ibin])
+#endif
                 {
                 // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
@@ -1976,11 +1977,11 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
         }
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) private(ithread,timer)
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) 
-// #endif
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) 
+#endif
             {
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
@@ -2222,11 +2223,11 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
         smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) 
-// #endif
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) 
+#endif
             {
             if ( params.geometry != "AMcylindrical" ){
                 // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
@@ -2255,11 +2256,11 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
         } // end ibin
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin])
-// #endif
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin])
+#endif
             {
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
@@ -2274,11 +2275,11 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
         } // end ibin
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin]) private(ithread,timer)
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
-// #endif
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_pushed[ibin]) depend(out:bin_has_done_particles_BC[ibin])
+#endif
             {
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
@@ -2309,11 +2310,11 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
         } // end ibin
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-// #ifdef  __DETAILED_TIMERS
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) private(ithread,timer)
-// #else
-//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin])
-// #endif
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) private(ithread,timer)
+#else
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin])
+#endif
             {
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
