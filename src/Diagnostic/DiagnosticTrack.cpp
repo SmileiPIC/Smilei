@@ -251,11 +251,15 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
                     // Loop the return value and store the particle IDs
                     bool *arr = ( bool * ) PyArray_GETPTR1( ret, 0 );
                     for( unsigned int i=0; i<npart; i++ ) {
+                        // If particle does not try to be tracked before (particle created with ID==0), then set its ID 2^56
+                        //if( p->id( i ) == 0 ) {
+                        //    p->id( i ) = 72057594037927936; // 2^56
+                        //}
                         if( arr[i] ) {
                             patch_selection[ipatch].push_back( i );
-                            // If particle not tracked before (ID==0), then set its ID
-                            if( p->id( i ) == 0 ) {
-                                p->id( i ) = ++latest_Id;
+                            // If particle not tracked before (ID==2^56), then set its ID
+                            if( p->id( i ) == 72057594037927936 ) {
+                                p->id( i ) += ++latest_Id;
                             }
                         }
                     }
