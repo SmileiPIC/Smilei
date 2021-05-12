@@ -4334,7 +4334,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
 #else
-                            //#pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_ponderomotive_update_susceptibility_and_momentum[ipatch][ispec])
+                            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_ponderomotive_update_susceptibility_and_momentum[ipatch][ispec])
                             { // every call of dynamics for a couple ipatch-ispec is an independent task
                             Species *spec_task = species( ipatch, ispec );
                             int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
@@ -4361,7 +4361,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             
-            // #pragma omp task firstprivate(ipatch,clrw) depend(in:has_done_ponderomotive_update_susceptibility_and_momentum[ipatch][0:(Nspecies-1)])
+            #pragma omp task firstprivate(ipatch,clrw) depend(in:has_done_ponderomotive_update_susceptibility_and_momentum[ipatch][0:(Nspecies-1)])
             { // only the ipatch iterations are parallelized
 #ifdef  __DETAILED_TIMERS
             int ithread = omp_get_thread_num();
@@ -4375,7 +4375,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
                 for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
                     if (params.geometry != "AMcylindrical"){
                         double *b_Chi            = spec_task->b_Chi[ibin];
-                        //(( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                        // (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
                     } else { // AM geometry
                         double *b_ChiAM = spec_task->b_ChiAM[ibin];
                         ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
@@ -4488,7 +4488,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
 #else
-                            //#pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
+                            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
                             { // every call of dynamics for a couple ipatch-ispec is an independent task
                             Species *spec_task = species( ipatch, ispec );
                             int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
@@ -4515,7 +4515,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             
-            // #pragma omp task firstprivate(ipatch,clrw) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][0:(Nspecies-1)])
+            #pragma omp task firstprivate(ipatch,clrw) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][0:(Nspecies-1)])
             { // only the ipatch iterations are parallelized
 #ifdef  __DETAILED_TIMERS
             int ithread = omp_get_thread_num();
