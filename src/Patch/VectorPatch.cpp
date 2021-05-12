@@ -4283,7 +4283,31 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 
     timers.particles.restart();
 
+    unsigned int Npatches = this->size();
+    unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
+   
+    int has_done_dynamics[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
+
+#ifdef _OMPTASKS  
+    #pragma omp single
+    {
+        int n_buffers = (( *this ).size()) * (( *this )( 0 )->vecSpecies.size());
+        smpi->resize_buffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
+    }
+#endif
+
+#ifdef _OMPTASKS  
+    #pragma omp for schedule(static)
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        if(diag_flag) {( *this )( ipatch )->EMfields->restartEnvChis();}
+    } // end ipatch
+#endif
+
+#ifdef _OMPTASKS   
+    #pragma omp single
+#else 
     #pragma omp for schedule(runtime)
+#endif
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartEnvChi();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
@@ -4303,11 +4327,24 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
                         } else {
+#ifndef _OMPTASKS  
                             species( ipatch, ispec )->Species::ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag,
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
+#else
+                            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
+                            { // every call of dynamics for a couple ipatch-ispec is an independent task
+                            Species *spec_task = species( ipatch, ispec );
+                            int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                            spec_task->Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( time_dual, ispec,
+                                                                                              emfields( ipatch ),
+                                                                                              params, diag_flag,
+                                                                                              ( *this )( ipatch ), smpi,
+                                                                                              localDiags, buffer_id );
+                        } // end task
+#endif
                         }
                     }
 
