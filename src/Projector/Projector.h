@@ -54,6 +54,12 @@ public:
     {
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
+
+    virtual void susceptibilityOnAMBuffer( ElectroMagn *EMfields, std::complex<double> *b_ChiAM, int bin_shift, int bdim0, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 )
+    {
+        ERROR( "Envelope not implemented with this geometry and this order" );
+    };
+    
     
 protected:
     double inv_cell_volume;

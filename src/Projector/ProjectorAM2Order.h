@@ -43,7 +43,11 @@ public:
     void currentsAndDensityWrapperOnAMBuffers( ElectroMagn *EMfields, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, int bin_shift, int bdim0, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, int ipart_ref = 0 );
 
     void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 ) override final;
+
+    void susceptibilityOnAMBuffer( ElectroMagn *EMfields, std::complex<double> *b_ChiAM, int bin_shift, int bdim0, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 ) override final;
+
     
+
 private:
     double dt, dts2, dts4;
 };
