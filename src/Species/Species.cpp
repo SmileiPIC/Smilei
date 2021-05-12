@@ -205,7 +205,7 @@ void Species::initCluster( Params &params )
             b_Jt.resize(Nbins);
             b_rhoAM.resize(Nbins);
             if (params.Laser_Envelope_model){
-                b_ChiAM.resize(Nbins)
+                b_ChiAM.resize(Nbins);
             }
 
             for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
@@ -428,7 +428,7 @@ Species::~Species()
                 delete[] b_rhoAM[ibin];
             }
         }
-        if (b_Chi[0]){
+        if (b_ChiAM[0]){
             for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
                 // delete buffer
                 delete[] b_ChiAM[ibin];
@@ -1944,11 +1944,11 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
       
         if( time_dual>time_frozen_) {
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
-#ifdef  __DETAILED_TIMERS
-                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_project_chi[ibin]) depend(out:bin_has_projected_chi[ibin]) private(ithread,timer)
-#else
-                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_project_chi[ibin]) depend(out:bin_has_projected_chi[ibin])
-#endif
+// #ifdef  __DETAILED_TIMERS
+//                 #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_project_chi[ibin]) depend(out:bin_has_projected_chi[ibin]) private(ithread,timer)
+// #else
+//                 #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_project_chi[ibin]) depend(out:bin_has_projected_chi[ibin])
+// #endif
                 {
                 // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
@@ -1975,6 +1975,25 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
                 } // end task susceptibility
             } // end ibin
         }
+
+        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
+// #ifdef  __DETAILED_TIMERS
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) private(ithread,timer)
+// #else
+//             #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) 
+// #endif
+            {
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+            // Push only the particle momenta
+            //( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[9*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task susceptibility
+        } // end ibin
     
     } else { // immobile particle
     } //END if time vs. time_frozen_

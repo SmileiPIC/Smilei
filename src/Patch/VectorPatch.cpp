@@ -4395,48 +4395,14 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
     
 #ifdef _OMPTASKS
     #pragma omp single
-    {   // Compute count array for sorting  
-        // for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        //     for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-        //         if( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) {
-        //             #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
-        //             {
-        //             SpeciesV *spec_task = static_cast<SpeciesV *>(species( ipatch, ispec ));
-        //             for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
-        //                 for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-        //                     if ( spec_task->particles->cell_keys[iPart] != -1 ) {
-        //                         //First reduction of the count sort algorithm. Lost particles are not included.
-        //                         spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
-        //                     }
-        //                 } // end iPart loop
-        //             } // end cells loop
-        //             } // end task on array count
-        //         } else {
-        //             if (params.vectorization_mode == "adaptive"){
-        //                 #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
-        //                 {
-        //                 SpeciesVAdaptive *spec_task = static_cast<SpeciesVAdaptive *>(species( ipatch, ispec ));
-        //                 for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
-        //                     for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-        //                         if ( spec_task->particles->cell_keys[iPart] != -1 ) {
-        //                             //First reduction of the count sort algorithm. Lost particles are not included.
-        //                             spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
-        //                         }
-        //                     } // end iPart loop
-        //                 } // end cells loop
-        //                 } // end task on array count
-        //             } // end if vectorization is adaptive
-        //         }// end if on vectorized operators
-        //     } // end ispec
-        // } // end ipatch 
-
+    { 
         // Reduction of the new particles created through ionization, for each species
 
         // Ionization
         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
             if( species( 0, ispec )->Ionize ) {
                 for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                    #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
+                    // #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_susceptibility_and_momentum[ipatch][ispec])
                     {
                     Species *spec_task = species( ipatch, ispec );
                     
