@@ -173,6 +173,9 @@ void Species::initCluster( Params &params )
             b_Jy.resize(Nbins);
             b_Jz.resize(Nbins);
             b_rho.resize(Nbins);
+            if (params.Laser_Envelope_model){ 
+                b_Chi.resize(Nbins);
+            }
 
             size_proj_buffer_rho = b_dim[0]*b_dim[1]*f_dim2;
             size_proj_buffer_Jx  = b_dim[0]*b_dim[1]*f_dim2;
@@ -185,6 +188,9 @@ void Species::initCluster( Params &params )
                 b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
                 b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
                 b_rho[ibin] = new double[size_proj_buffer_rho];
+                if (params.Laser_Envelope_model){ // Chi has the same size of rho
+                    b_Chi[ibin] = new double[size_proj_buffer_rho];
+                }
             }
         } else { // AM geometry
             //! buffers for currents and charge
@@ -198,6 +204,9 @@ void Species::initCluster( Params &params )
             b_Jr.resize(Nbins);
             b_Jt.resize(Nbins);
             b_rhoAM.resize(Nbins);
+            if (params.Laser_Envelope_model){
+                b_ChiAM.resize(Nbins)
+            }
 
             for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
                 // allocate current-buffers, then put to zero their content
@@ -205,6 +214,9 @@ void Species::initCluster( Params &params )
                 b_Jr[ibin]    = new std::complex<double>[size_proj_buffer_Jr   ];
                 b_Jt[ibin]    = new std::complex<double>[size_proj_buffer_Jt   ];
                 b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
+                if (params.Laser_Envelope_model){ // Chi has the same size of rho
+                    b_ChiAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
+                }
             }
         } // end condition on geometry
 #endif

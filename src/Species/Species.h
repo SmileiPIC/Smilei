@@ -615,12 +615,14 @@ public:
     std::vector<double *> b_Jy;
     std::vector<double *> b_Jz;
     std::vector<double *> b_rho;
+    std::vector<double *> b_Chi;
 
     // buffers for bin projection when tasks are used
     std::vector< std::complex<double> *> b_Jl;
     std::vector< std::complex<double> *> b_Jr;
     std::vector< std::complex<double> *> b_Jt;
     std::vector< std::complex<double> *> b_rhoAM;
+    std::vector< std::complex<double> *> b_ChiAM;
 
     //! Size of the projection buffer
     unsigned int size_proj_buffer_Jx,size_proj_buffer_Jy,size_proj_buffer_Jz,size_proj_buffer_rho;
