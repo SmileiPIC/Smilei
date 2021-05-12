@@ -1916,7 +1916,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
 #endif
 
             // Interpolate the fields and envelope at the particle position
-            Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
+            Interp->fieldsAndEnvelopeForTasks( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), buffer_id );
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[7*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
