@@ -977,7 +977,7 @@ void ProjectorAM2Order::susceptibilityOnAMBuffer( ElectroMagn *EMfields, double 
     // Variable declaration & initialization
     // -------------------------------------
 
-    double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 );
+    // double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 );
     
     std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Phipart     = &( smpi->dynamics_PHIpart[ithread] );
@@ -1067,7 +1067,7 @@ void ProjectorAM2Order::susceptibilityOnAMBuffer( ElectroMagn *EMfields, double 
         for( unsigned int i=1 ; i<4 ; i++ ) {
             iloc = ( i+ip )*nr+jp;
             for( unsigned int j=1 ; j<4 ; j++ ) {
-                    Chi_envelope [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
+                    b_ChiAM [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
             }
         }//i
     
