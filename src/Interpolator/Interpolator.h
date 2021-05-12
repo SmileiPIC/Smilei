@@ -28,6 +28,11 @@ public:
     {
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
+
+    virtual void fieldsAndEnvelopeForTasks( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 )
+    {
+        ERROR( "Envelope with tasks not implemented with this geometry and this order" );
+    };
     
     virtual void timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 )
     {

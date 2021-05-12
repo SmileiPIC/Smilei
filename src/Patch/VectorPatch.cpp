@@ -4334,7 +4334,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
 #else
-                            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
+                            //#pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
                             { // every call of dynamics for a couple ipatch-ispec is an independent task
                             Species *spec_task = species( ipatch, ispec );
                             int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
