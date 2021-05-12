@@ -1922,3 +1922,36 @@ void ElectroMagnAM::copyInLocalAMDensities(int ispec, int ibin,
     
 } // end ElectroMagnAM::copyInLocalAMDensities
 
+void ElectroMagnAM::copyInLocalAMSusceptibility(int ispec, int ibin, 
+                          double *b_ChiAM,
+                          std::vector<unsigned int> b_dim, bool diag_flag)
+{
+    Field2D *ChiAM;
+
+    unsigned int n_species = Jl_s.size() / nmodes;
+    //cout << "In";
+    int iloc;
+    // Introduced to avoid indirection in data access b_rho[i*b_dim[1]+j]
+    int b_dim0 = b_dim[0];
+    int b_dim1 = b_dim[1];
+
+    unsigned int imode = 0;
+    if ( (Env_Chi_s [ispec] != NULL) & diag_flag){
+        ChiAM  = static_cast<Field2D *>(Env_Chi_s[ispec]) ;
+    } else {
+        ChiAM  = static_cast<Field2D *>(Env_Chi_);
+    }
+
+    // copy the densities from the bin buffers to the global/species densities
+    int mode_shift_Chi = imode*b_dim0*b_dim1 ; // for Chi
+        
+    // Env_Chi (p,p)
+    for (int i = 0; i < b_dim0 ; i++) {
+        iloc = ibin + i ;
+        for (int j = 0; j < b_dim1 ; j++) {
+    	      (*ChiAM)(iloc,j) +=  b_ChiAM[ mode_shift_Chi + i*b_dim1+j];   // primal along y
+        }
+    }
+  
+} // end ElectroMagnAM::copyInLocalAMSusceptibility
+

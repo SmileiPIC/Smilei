@@ -215,7 +215,7 @@ void Species::initCluster( Params &params )
                 b_Jt[ibin]    = new std::complex<double>[size_proj_buffer_Jt   ];
                 b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
                 if (params.Laser_Envelope_model){ // Chi has the same size of rho
-                    b_ChiAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
+                    b_ChiAM[ibin] = new double[size_proj_buffer_rhoAM];
                 }
             }
         } // end condition on geometry
@@ -412,14 +412,26 @@ Species::~Species()
                 delete[] b_rho[ibin];
             }
         }
+        if (b_Chi[0]){
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+                // delete buffers
+                delete[] b_Chi[ibin];
+            }
+        }
     } else {
         if (b_Jl[0]){
             for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-                // delete buffers
+                // delete buffer
                 delete[] b_Jl[ibin];
                 delete[] b_Jr[ibin];
                 delete[] b_Jt[ibin];
                 delete[] b_rhoAM[ibin];
+            }
+        }
+        if (b_Chi[0]){
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+                // delete buffer
+                delete[] b_ChiAM[ibin];
             }
         }
     }

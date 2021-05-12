@@ -638,7 +638,7 @@ public:
     std::vector< std::complex<double> *> b_Jr;
     std::vector< std::complex<double> *> b_Jt;
     std::vector< std::complex<double> *> b_rhoAM;
-    std::vector< std::complex<double> *> b_ChiAM;
+    std::vector<double *> b_ChiAM;
 
     //! Size of the projection buffer
     unsigned int size_proj_buffer_Jx,size_proj_buffer_Jy,size_proj_buffer_Jz,size_proj_buffer_rho;
