@@ -4445,8 +4445,30 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     diag_flag = needsRhoJsNow( itime );
 
     timers.particles.restart();
+    unsigned int Npatches = this->size();
+    unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
+    int has_done_ponderomotive_update_position_and_currents[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
 
+#ifdef _OMPTASKS  
+    #pragma omp single
+    {
+        int n_buffers = (( *this ).size()) * (( *this )( 0 )->vecSpecies.size());
+        smpi->resize_buffers(n_buffers,params.geometry=="AMcylindrical"); // there will be Npatches*Nspecies buffers for dynamics with tasks
+    }
+#endif
+
+#ifdef _OMPTASKS  
+    #pragma omp for schedule(static)
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        if(diag_flag) {( *this )( ipatch )->EMfields->restartEnvChis();}
+    } // end ipatch
+#endif
+
+#ifdef _OMPTASKS   
+    #pragma omp single
+#else 
     #pragma omp for schedule(runtime)
+#endif
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
@@ -4465,12 +4487,25 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
                                     params, diag_flag, partwalls( ipatch ),
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
-                        } else {
+                        } else {                
+#ifndef _OMPTASKS  
                             species( ipatch, ispec )->Species::ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag, partwalls( ipatch ),
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
+#else
+                            //#pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
+                            { // every call of dynamics for a couple ipatch-ispec is an independent task
+                            Species *spec_task = species( ipatch, ispec );
+                            int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                            spec_task->Species::ponderomotiveUpdatePositionAndCurrentsTasks( time_dual, ispec,
+                                                                                             emfields( ipatch ),
+                                                                                             params, diag_flag, partwalls( ipatch ),
+                                                                                             ( *this )( ipatch ), smpi,
+                                                                                             localDiags, buffer_id );
+                        } // end task
+#endif
                         }
                     }
 
@@ -4478,6 +4513,55 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
             } // end diagnostic or projection if condition on species
         } // end loop on species
     } // end loop on patches
+
+#ifdef _OMPTASKS
+    #pragma omp single
+    {   // Copy/Reduce the bin species buffers for the densities to patch grid densities
+
+        int clrw = params.clrw;
+
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            
+            // #pragma omp task firstprivate(ipatch,clrw) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][0:(Nspecies-1)])
+            { // only the ipatch iterations are parallelized
+#ifdef  __DETAILED_TIMERS
+            int ithread = omp_get_thread_num();
+            double timer = MPI_Wtime();
+#endif
+            
+            for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
+                // DO NOT parallelize this species loop unless race condition prevention is used!
+                Species *spec_task = species( ipatch, ispec );
+                std::vector<unsigned int> b_dim = spec_task->b_dim;
+                for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
+                    if (params.geometry != "AMcylindrical"){
+                        double *b_Jx             = spec_task->b_Jx[ibin];
+                        double *b_Jy             = spec_task->b_Jy[ibin];
+                        double *b_Jz             = spec_task->b_Jz[ibin];
+                        double *b_rho            = spec_task->b_rho[ibin];
+                        (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                    } else { // AM geometry
+                        complex<double> *b_Jl    = spec_task->b_Jl[ibin];
+                        complex<double> *b_Jr    = spec_task->b_Jr[ibin];
+                        complex<double> *b_Jt    = spec_task->b_Jt[ibin];
+                        complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
+                        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                        emAM->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
+                    }
+                } // ibin
+            } // end species loop
+
+#ifdef  __DETAILED_TIMERS
+            ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task on reduction of patch densities
+        } // end patch loop
+    } // end omp single
+#endif
+
+#ifdef _OMPTASKS
+    #pragma omp taskwait
+#endif
 
     timers.particles.update( params.printNow( itime ) );
 #ifdef __DETAILED_TIMERS
