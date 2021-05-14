@@ -2210,7 +2210,6 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
     int ithread;
 #endif
     int bin_size0 = b_dim[0];
-    std::vector<double> nrj_lost_per_thd( 1, 0. );
 
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         nrj_lost_per_bin[ibin] = 0.;
@@ -2353,19 +2352,70 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
             } // end task
         } // end ibin
 
+        // reduction of the lost energy in each ibin 
+        // the dependency ensures that it is done after the particles BC
+        // #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+        // {
+        // reduce the energy lost with BC per bin
+        // for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+        //     nrj_bc_lost += nrj_lost_per_bin[ibin];
+        // } // end ibin
+        // } // end task for lost/radiated energy reduction 
+
     } else { // immobile particle
+        if( diag_flag &&( !particles->is_test ) ) {
+            if( params.geometry != "AMcylindrical" ) {
+// 
+//                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+// #ifdef  __DETAILED_TIMERS
+//                     #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer)
+// #else
+//                     #pragma omp task default(shared) firstprivate(ibin)
+// #endif
+//                     {
+// #ifdef  __DETAILED_TIMERS
+//                     ithread = omp_get_thread_num();
+//                     timer = MPI_Wtime();
+// #endif
+//                     for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+//                     for( int iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
+//                         // Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+//                     }
+// #ifdef  __DETAILED_TIMERS
+//                     patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+// #endif
+//                     } // end task projection for frozen or test
+//                 } // end ibin
+            } else { // AM geometry
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+#ifdef  __DETAILED_TIMERS
+                    #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer)
+#else
+                    #pragma omp task default(shared) firstprivate(ibin) 
+#endif
+                    {
+#ifdef  __DETAILED_TIMERS
+                    ithread = omp_get_thread_num();
+                    timer = MPI_Wtime();
+#endif
+                    for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+                    int imode = 0; // only mode 0 is used with envelope
+                    for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+                        Proj->basicForComplex( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, ibin*clrw );
+                    } // end loop on particles
+#ifdef  __DETAILED_TIMERS
+                    patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                    } // end task projection for frozen or test
+                } //end ibin
+            } // end if on geometry
+        } // end condition on diag and not particle test
 
     } // end moving particle
 
-    // reduction of the lost energy in each ibin 
-    // the dependency ensures that it is done after the particles BC
-    // #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
-    {
-    // reduce the energy lost with BC per bin
-    for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-        nrj_bc_lost += nrj_lost_per_bin[ibin];
-    } // end ibin
-    } // end task for lost/radiated energy reduction 
+
 
     } // end taskgroup
 

@@ -18,7 +18,7 @@ public:
     inline void currentsForTasks( ElectroMagnAM *emAM, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, int bin_shift, int bdim0, bool diag_flag );
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
-    void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) override final;
+    void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode, int bin_shift = 0 ) override final;
 
     //! Apply boundary conditions on Rho and J
     void axisBC( ElectroMagnAM *emAM, bool diag_flag ) override final;

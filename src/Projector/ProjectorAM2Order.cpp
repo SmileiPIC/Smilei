@@ -256,7 +256,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project for diags and frozen species -
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
+void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode, int bin_shift )
 {
     //Warning : this function is not charge conserving.
     // This function also assumes that particles position is evaluated at the same time as currents which is usually not true (half time-step difference).
@@ -322,7 +322,7 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + 2;
+    ip -= i_domain_begin + 2 + bin_shift;
     jp -= j_domain_begin + 2;
     
     if( type != 2 ) {

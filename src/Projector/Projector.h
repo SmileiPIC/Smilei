@@ -30,7 +30,7 @@ public:
     
     //! Project global current charge (EMfields->rho_ , J), for initialization and diags
     virtual void basic( double               *rhoj, Particles &particles, unsigned int ipart, unsigned int type ) {};
-    virtual void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) {};
+    virtual void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode, int bin_shift = 0 ) {};
 
     //! Apply boundary conditions on axis for Rho and J in AM geometry
     virtual void axisBC(ElectroMagnAM *emAM, bool diag_flag) {};
@@ -59,7 +59,7 @@ public:
     {
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
-    
+
     
 protected:
     double inv_cell_volume;
