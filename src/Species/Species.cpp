@@ -1470,31 +1470,28 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
 
         if( diag_flag &&( !particles->is_test ) ) {
             double *b_rho=nullptr;
-            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-
-                if( params.geometry != "AMcylindrical" ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                    for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
+            if( params.geometry != "AMcylindrical" ) {
+                b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                    for( unsigned int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
                         Proj->basic( b_rho, ( *particles ), iPart, 0 );
                     }
-                } else {
-                    int n_species = patch->vecSpecies.size();
-                    complex<double> *b_rho=nullptr;
-                    ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+                }//End loop on bins
+            } else {
+                int n_species = patch->vecSpecies.size();
+                complex<double> *b_rho=nullptr;
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
 
-                    for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
-                        int ifield = imode*n_species+ispec;
-                        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                            b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
-                            for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-                                Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
-                            } // end loop on particles
-                        } //end loop for projection on buffer_proj
-
-                    } // end loop on modes
-                } // end if on geometry
-
-            }//End loop on bins
+                for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                    int ifield = imode*n_species+ispec;
+                    for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                        b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                        for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+                            Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                        } // end loop on particles
+                    }//End loop on bins
+                } // end loop on modes
+            } // end if on geometry
         } // end condition on diag and not particle test
     }//END if time vs. time_frozen_
 } // End ponderomotive_position_update
