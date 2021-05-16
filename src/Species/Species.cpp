@@ -1967,10 +1967,10 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
 #endif
                 
                 if (params.geometry != "AMcylindrical"){
-                    // Proj->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
-                    //                                           ibin*clrw, *particles, smpi, 
-                    //                                           particles->first_index[ibin], particles->last_index[ibin], 
-                    //                                           buffer_id, diag_flag, params.is_spectral, ispec );
+                    Proj->susceptibilityOnBuffer( EMfields, b_ChiAM[ibin], 
+                                                      ibin*clrw, *particles, mass_, smpi, 
+                                                      particles->first_index[ibin], particles->last_index[ibin], 
+                                                      buffer_id );
                 } else {
                     ProjectorAM2Order *ProjAM = static_cast<ProjectorAM2Order *>(Proj);
                     ProjAM->susceptibilityOnAMBuffer( EMfields, b_ChiAM[ibin], 
@@ -2365,27 +2365,27 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
     } else { // immobile particle
         if( diag_flag &&( !particles->is_test ) ) {
             if( params.geometry != "AMcylindrical" ) {
-// 
-//                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-// #ifdef  __DETAILED_TIMERS
-//                     #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer)
-// #else
-//                     #pragma omp task default(shared) firstprivate(ibin)
-// #endif
-//                     {
-// #ifdef  __DETAILED_TIMERS
-//                     ithread = omp_get_thread_num();
-//                     timer = MPI_Wtime();
-// #endif
-//                     for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
-//                     for( int iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-//                         // Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
-//                     }
-// #ifdef  __DETAILED_TIMERS
-//                     patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
-// #endif
-//                     } // end task projection for frozen or test
-//                 } // end ibin
+
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+#ifdef  __DETAILED_TIMERS
+                    #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer)
+#else
+                    #pragma omp task default(shared) firstprivate(ibin)
+#endif
+                    {
+#ifdef  __DETAILED_TIMERS
+                    ithread = omp_get_thread_num();
+                    timer = MPI_Wtime();
+#endif
+                    for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+                    for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+                        // Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                    }
+#ifdef  __DETAILED_TIMERS
+                    patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                    } // end task projection for frozen or test
+                } // end ibin
             } else { // AM geometry
                 ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
 
