@@ -1967,7 +1967,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
 #endif
                 
                 if (params.geometry != "AMcylindrical"){
-                    Proj->susceptibilityOnBuffer( EMfields, b_ChiAM[ibin], 
+                    Proj->susceptibilityOnBuffer( EMfields, b_Chi[ibin], 
                                                       ibin*clrw, *particles, mass_, smpi, 
                                                       particles->first_index[ibin], particles->last_index[ibin], 
                                                       buffer_id );
@@ -2379,7 +2379,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
 #endif
                     for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
                     for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-                        // Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
                     }
 #ifdef  __DETAILED_TIMERS
                     patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;

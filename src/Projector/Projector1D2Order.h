@@ -20,7 +20,7 @@ public:
     inline void currentsAndDensityForTasks( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift );  
   
     //! Project global current charge (EMfields->rho_ , J), for initialization and diags
-    void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type ) override final;
+    void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift = 0 ) override final;
     
     //! Project global current densities if Ionization in Species::dynamics,
     void ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion ) override final;

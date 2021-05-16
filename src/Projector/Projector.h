@@ -29,7 +29,7 @@ public:
     virtual void setMvWinLimits( unsigned int shift ) = 0;
     
     //! Project global current charge (EMfields->rho_ , J), for initialization and diags
-    virtual void basic( double               *rhoj, Particles &particles, unsigned int ipart, unsigned int type ) {};
+    virtual void basic( double               *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift = 0 ) {};
     virtual void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode, int bin_shift = 0 ) {};
 
     //! Apply boundary conditions on axis for Rho and J in AM geometry

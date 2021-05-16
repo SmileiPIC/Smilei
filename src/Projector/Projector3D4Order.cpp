@@ -439,7 +439,7 @@ void Projector3D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local densities only (Frozen species)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4Order::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector3D4Order::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift )
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0
