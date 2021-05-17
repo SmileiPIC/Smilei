@@ -1102,40 +1102,63 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
         } // end if Radiate or Multiphoton_Breit_Wheeler_process
         } // end task for lost/radiated energy reduction          
 
-     } // end if moving particle
+     } else { // immobile particle
+         if( diag_flag &&( !particles->is_test ) ) {
+             if( params.geometry != "AMcylindrical" ) {
+
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+#ifdef  __DETAILED_TIMERS
+                    #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer)
+#else
+                    #pragma omp task default(shared) firstprivate(ibin)
+#endif
+                    {
+#ifdef  __DETAILED_TIMERS
+                    ithread = omp_get_thread_num();
+                    timer = MPI_Wtime();
+#endif
+                    for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
+                    for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                    }
+#ifdef  __DETAILED_TIMERS
+                    patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                    } // end task projection for frozen or test
+                } // end ibin
+            } else { // AM geometry
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+#ifdef  __DETAILED_TIMERS
+                    #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer)
+#else
+                    #pragma omp task default(shared) firstprivate(ibin) 
+#endif
+                    {
+#ifdef  __DETAILED_TIMERS
+                    ithread = omp_get_thread_num();
+                    timer = MPI_Wtime();
+#endif
+                    for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+                    int imode = 0; // only mode 0 is used with envelope
+                    for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+                        Proj->basicForComplex( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, ibin*clrw );
+                    } // end loop on particles
+#ifdef  __DETAILED_TIMERS
+                    patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+                    } // end task projection for frozen or test
+                } //end ibin
+            } // end if on geometry
+        } // end condition on diag and not particle test
+
+     } // end moving particle
+     
 
      }// end taskgroup for all the Interp, Push, Particles BC and Projector tasks
   
-//      // reduction of the lost energy in each ibin 
-//      // the taskgroup before ensures that it is done after the particles BC
-// #ifdef  __DETAILED_TIMERS
-//      #pragma omp task default(shared) private(ithread,timer) 
-// #else
-//      #pragma omp task default(shared)
-// #endif
-//      {
-//      // reduce the energy lost with BC per bin
-//      for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-//         nrj_bc_lost += nrj_lost_per_bin[ibin];
-//      }
-// 
-//      // sum the radiated energy
-//      // The taskgroup above ensures that this is done after the radiation method
-//      if( Radiate ) {
-// #ifdef  __DETAILED_TIMERS
-//          timer = MPI_Wtime();
-//          ithread = omp_get_thread_num();
-// #endif
-// 
-//          for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-//             nrj_radiation += nrj_radiation_per_bin[ibin];
-//          }
-// #ifdef  __DETAILED_TIMERS
-//          patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
-// #endif
-//      } // end if Radiate
-//      } // end task for lost/radiated energy reduction
-// 
+
 //      // smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
 
 } // end dynamicsTasks
@@ -2413,7 +2436,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
             } // end if on geometry
         } // end condition on diag and not particle test
 
-    } // end moving particle
+    } // end if moving particle
 
 
 
