@@ -889,6 +889,182 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
     
 }
 
+void Projector3D2OrderV::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+{
+    
+    int iold[3];
+    
+    iold[0] = icell/( nscelly*nscellz )+oversize[0];
+    iold[1] = ( ( icell%( nscelly*nscellz ) ) / nscellz )+oversize[1];
+    iold[2] = ( ( icell%( nscelly*nscellz ) ) % nscellz )+oversize[2];
+    
+    
+    std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );
+    std::vector<double> *Phipart     = &( smpi->dynamics_PHIpart[ithread] );
+    std::vector<double> *GradPhipart = &( smpi->dynamics_GradPHIpart[ithread] );
+    std::vector<double> *inv_gamma_ponderomotive = &( smpi->dynamics_inv_gamma_ponderomotive[ithread] );
+    
+    int nparts = smpi->dynamics_invgf[ithread].size();
+    double *Ex       = &( ( *Epart )[0*nparts] );
+    double *Ey       = &( ( *Epart )[1*nparts] );
+    double *Ez       = &( ( *Epart )[2*nparts] );
+    double *Phi      = &( ( *Phipart )[0*nparts] );
+    double *GradPhix = &( ( *GradPhipart )[0*nparts] );
+    double *GradPhiy = &( ( *GradPhipart )[1*nparts] );
+    double *GradPhiz = &( ( *GradPhipart )[2*nparts] );
+    
+    int vecSize = 8;
+    unsigned int bsize = 3*3*3*vecSize; // primal grid, particles did not yet move (3x3x3 enough)
+    double bChi[bsize] __attribute__( ( aligned( 64 ) ) );
+    
+    double Sx1[24] __attribute__( ( aligned( 64 ) ) );
+    double Sy1[24] __attribute__( ( aligned( 64 ) ) );
+    double Sz1[24] __attribute__( ( aligned( 64 ) ) );
+    double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
+    
+    // Closest multiple of 8 higher or equal than npart = iend-istart.
+    int cell_nparts( ( int )iend-( int )istart );
+    int nbVec = ( iend-istart+( cell_nparts-1 )-( ( iend-istart-1 )&( cell_nparts-1 ) ) ) / vecSize;
+    if( nbVec*vecSize != cell_nparts ) {
+        nbVec++;
+    }
+    double one_over_mass=1./species_mass;
+    
+    #pragma omp simd
+    for( unsigned int j=0; j<bsize; j++ ) {
+        bChi[j] = 0.;
+    }
+    
+    for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
+    
+        int np_computed( min( cell_nparts-ivect, vecSize ) );
+        int istart0 = ( int )istart + ivect;
+        
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+        
+            double momentum[3];
+            
+            double gamma_ponderomotive, gamma0, gamma0_sq;
+            double charge_over_mass_dts2, charge_sq_over_mass_sq_dts4, charge_sq_over_mass_sq;
+            double pxsm, pysm, pzsm;
+            
+            double c = particles.charge( istart0+ipart );
+            
+            charge_over_mass_dts2       = c *dts2*one_over_mass;
+            // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
+            charge_sq_over_mass_sq_dts4 = c*c*dts4*one_over_mass*one_over_mass;
+            // (charge over mass)^2
+            charge_sq_over_mass_sq      = c*c*one_over_mass*one_over_mass;
+            
+            for( int i = 0 ; i<3 ; i++ ) {
+                momentum[i] = particles.momentum( i, istart0+ipart );
+            }
+            
+            // compute initial ponderomotive gamma
+            gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *( Phi+istart0-ipart_ref+ipart )*charge_sq_over_mass_sq ;
+            gamma0    = sqrt( gamma0_sq ) ;
+            
+            // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
+            pxsm = ( gamma0 * charge_over_mass_dts2*( *( Ex+istart-ipart_ref+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhix+istart-ipart_ref+ipart ) ) ) * momentum[0] / gamma0_sq;
+            pysm = ( gamma0 * charge_over_mass_dts2*( *( Ey+istart-ipart_ref+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhiy+istart-ipart_ref+ipart ) ) ) * momentum[1] / gamma0_sq;
+            pzsm = ( gamma0 * charge_over_mass_dts2*( *( Ez+istart-ipart_ref+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhiz+istart-ipart_ref+ipart ) ) ) * momentum[2] / gamma0_sq;
+            
+            // update of gamma ponderomotive
+            gamma_ponderomotive = gamma0 + ( pxsm+pysm+pzsm )*0.5 ;
+            // buffer inverse of ponderomotive gamma to use it in ponderomotive momentum pusher
+            ( *inv_gamma_ponderomotive )[ipart-ipart_ref] = 1./gamma_ponderomotive;
+            
+            // susceptibility for the macro-particle
+            charge_weight[ipart] = c*c*inv_cell_volume * particles.weight( istart0+ipart )*one_over_mass/gamma_ponderomotive ;
+            
+            // variable declaration
+            double xpn, ypn, zpn;
+            double delta, delta2;
+            
+            // Initialize all current-related arrays to zero
+            for( unsigned int i=0; i<3; i++ ) {
+                Sx1[i*vecSize+ipart] = 0.;
+                Sy1[i*vecSize+ipart] = 0.;
+                Sz1[i*vecSize+ipart] = 0.;
+            }
+            
+            // --------------------------------------------------------
+            // Locate particles & Calculate Esirkepov coef. S, DS and W
+            // --------------------------------------------------------
+            
+            // locate the particle on the primal grid at current time-step & calculate coeff. S1
+            xpn = particles.position( 0, istart0+ipart ) * dx_inv_;
+            int ip = round( xpn );
+            delta  = xpn - ( double )ip;
+            delta2 = delta*delta;
+            Sx1[0*vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
+            Sx1[1*vecSize+ipart] = 0.75-delta2;
+            Sx1[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+            
+            ypn = particles.position( 1, istart0+ipart ) * dy_inv_;
+            int jp = round( ypn );
+            delta  = ypn - ( double )jp;
+            delta2 = delta*delta;
+            Sy1[0*vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
+            Sy1[1*vecSize+ipart] = 0.75-delta2;
+            Sy1[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+            
+            zpn = particles.position( 2, istart0+ipart ) * dz_inv_;
+            int kp = round( zpn );
+            delta  = zpn - ( double )kp;
+            delta2 = delta*delta;
+            Sz1[0*vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
+            Sz1[1*vecSize+ipart] = 0.75-delta2;
+            Sz1[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+            
+        } // end ipart loop
+        
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+            for( unsigned int i=0 ; i<3 ; i++ ) {
+                for( unsigned int j=0 ; j<3 ; j++ ) {
+                    int index( ( i*9 + j*3 )*vecSize+ipart );
+                    for( unsigned int k=0 ; k<3 ; k++ ) {
+                        bChi [ index+k*vecSize ] +=  charge_weight[ipart] * Sx1[i*vecSize+ipart]*Sy1[j*vecSize+ipart]*Sz1[k*vecSize+ipart];
+                    }
+                }
+            }//i
+            
+        } // end ipart loop
+        
+    } // end ivect
+    
+    // ---------------------------
+    // Calculate the total charge
+    // ---------------------------
+    int ipo = iold[0];
+    int jpo = iold[1];
+    int kpo = iold[2];
+    int nyz = nprimy*nprimz;
+    
+    int iglobal = ( ipo-1-bin_shift)*nyz+( jpo-1 )*nprimz+kpo-1;
+    
+    for( unsigned int i=0 ; i<3 ; i++ ) {
+        for( unsigned int j=0 ; j<3 ; j++ ) {
+            #pragma omp simd
+            for( unsigned int k=0 ; k<3 ; k++ ) {
+                double tmpChi = 0.;
+                int ilocal = ( i*9+j*3+k )*vecSize;
+#pragma unroll(8)
+                for( int ipart=0 ; ipart<8; ipart++ ) {
+                    tmpChi +=  bChi[ilocal+ipart];
+                }
+                b_Chi [iglobal + j*nprimz + k] +=  tmpChi;
+            }
+        }
+        iglobal += nyz;
+    }
+    
+    
+    
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection for Tasks
 // ---------------------------------------------------------------------------------------------------------------------
