@@ -414,7 +414,7 @@ void Projector2D4Order::basic( double *rhoj, Particles &particles, unsigned int 
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ip -= i_domain_begin + 3;
+    ip -= i_domain_begin + 3 + bin_shift;
     jp -= j_domain_begin + 3;
     
     for( unsigned int i=0 ; i<7 ; i++ ) {

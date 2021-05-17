@@ -254,7 +254,7 @@ void Projector1D4Order::basic( double *rhoj, Particles &particles, unsigned int 
     S1[4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  - dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
     S1[5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 + dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
     
-    ip -= index_domain_begin + 3 ;
+    ip -= index_domain_begin + 3 + bin_shift ;
     
     // 4th order projection for the charge density
     // At the 4th order, oversize = 3.

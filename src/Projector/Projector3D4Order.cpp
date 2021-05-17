@@ -529,7 +529,7 @@ void Projector3D4Order::basic( double *rhoj, Particles &particles, unsigned int 
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + 3;
+    ip -= i_domain_begin + 3 + bin_shift;
     jp -= j_domain_begin + 3;
     kp -= k_domain_begin + 3;
     

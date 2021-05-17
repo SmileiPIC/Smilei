@@ -519,7 +519,7 @@ void Projector3D2OrderGPU::basic( double *rhoj, Particles &particles, unsigned i
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + 2;
+    ip -= i_domain_begin + 2 + bin_shift;
     jp -= j_domain_begin + 2;
     kp -= k_domain_begin + 2;
     
