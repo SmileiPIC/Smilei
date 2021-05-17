@@ -484,12 +484,33 @@ void Interpolator2D2Order::timeCenteredEnvelopeForTasks( ElectroMagn *EMfields, 
         
         // Calculate coeffs
 
-        int idx_p[2], idx_d[2];
+        int idx_p[2];
         double delta_p[2];
         double coeffxp[3], coeffyp[3];
-        double coeffxd[3], coeffyd[3];
 
-        coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
+        // Indexes of the central nodes
+        idx_p[0] = round( xpn );
+        idx_p[1] = round( ypn );
+
+        // Declaration and calculation of the coefficient for interpolation
+        double delta2;
+
+        delta_p[0] = xpn - ( double )idx_p[0];
+        delta2     = delta_p[0]*delta_p[0];
+        coeffxp[0] = 0.5 * ( delta2-delta_p[0]+0.25 );
+        coeffxp[1] = 0.75 - delta2;
+        coeffxp[2] = 0.5 * ( delta2+delta_p[0]+0.25 );
+
+        delta_p[1] = ypn - ( double )idx_p[1];
+        delta2     = delta_p[1]*delta_p[1];
+        coeffyp[0] = 0.5 * ( delta2-delta_p[1]+0.25 );
+        coeffyp[1] = 0.75 - delta2;
+        coeffyp[2] = 0.5 * ( delta2+delta_p[1]+0.25 );
+
+        //!\todo CHECK if this is correct for both primal & dual grids !!!
+        // First index for summation
+        idx_p[0]   = idx_p[0] - i_domain_begin;
+        idx_p[1]   = idx_p[1] - j_domain_begin;
         
         // -------------------------
         // Interpolation of Phiold^(p,p)
@@ -657,17 +678,37 @@ void Interpolator2D2Order::envelopeFieldForIonizationTasks( ElectroMagn *EMfield
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         // Calculate coeffs
-
-        int idx_p[2], idx_d[2];
+        int idx_p[2];
         double delta_p[2];
         double coeffxp[3], coeffyp[3];
-        double coeffxd[3], coeffyd[3];
 
         // Normalized particle position
         double xpn = particles.position( 0, ipart )*dx_inv_;
         double ypn = particles.position( 1, ipart )*dy_inv_;
 
-        coeffs( xpn, ypn, idx_p, idx_d, coeffxp, coeffyp, coeffxd, coeffyd, delta_p );
+        // Indexes of the central nodes
+        idx_p[0] = round( xpn );
+        idx_p[1] = round( ypn );
+
+        // Declaration and calculation of the coefficient for interpolation
+        double delta2;
+
+        delta_p[0] = xpn - ( double )idx_p[0];
+        delta2     = delta_p[0]*delta_p[0];
+        coeffxp[0] = 0.5 * ( delta2-delta_p[0]+0.25 );
+        coeffxp[1] = 0.75 - delta2;
+        coeffxp[2] = 0.5 * ( delta2+delta_p[0]+0.25 );
+
+        delta_p[1] = ypn - ( double )idx_p[1];
+        delta2     = delta_p[1]*delta_p[1];
+        coeffyp[0] = 0.5 * ( delta2-delta_p[1]+0.25 );
+        coeffyp[1] = 0.75 - delta2;
+        coeffyp[2] = 0.5 * ( delta2+delta_p[1]+0.25 );
+
+        //!\todo CHECK if this is correct for both primal & dual grids !!!
+        // First index for summation
+        idx_p[0]   = idx_p[0] - i_domain_begin;
+        idx_p[1]   = idx_p[1] - j_domain_begin;
     
         // ---------------------------------
         // Interpolation of Env_E_abs^(p,p)

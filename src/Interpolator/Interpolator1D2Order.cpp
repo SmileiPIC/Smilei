@@ -331,7 +331,7 @@ void Interpolator1D2Order::fieldsAndEnvelopeForTasks( ElectroMagn *EMfields, Par
         // -------------------------
         ( *GradPHIpart )[ipart+2*nparts] = compute( &coeffxp[1], GradPhiz1D, idx_d[0] );
         
-        //Buffering of iol and delta
+        // //Buffering of iol and delta
         ( *iold )[ipart+0*nparts]  = idx_p[0];
         ( *delta )[ipart+0*nparts] = delta_p[0];
         
@@ -571,15 +571,26 @@ void Interpolator1D2Order::envelopeFieldForIonizationTasks( ElectroMagn *EMfield
     //Loop on bin particles
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
-        int idx_p[1], idx_d[1];
+        int idx_p[1];
         double delta_p[1];
         double coeffxp[3];
-        double coeffxd[3];
 
         // Normalized particle position
         double xpn = particles.position( 0, ipart )*dx_inv_;
 
-        coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
+        double delta2;
+        
+        // Primal
+        idx_p[0]    = round( xpn );                 // index of the central point
+        delta_p[0]  = xpn -( double )idx_p[0];      // normalized distance to the central node
+        delta2      = pow( delta_p[0], 2 );         // square of the normalized distance to the central node
+        
+        // 2nd order interpolation on 3 nodes
+        coeffxp[0]   = 0.5 * ( delta2-delta_p[0]+0.25 );
+        coeffxp[1]   = ( 0.75-delta2 );
+        coeffxp[2]   = 0.5 * ( delta2+delta_p[0]+0.25 );
+        
+        idx_p[0]   -= index_domain_begin;
     
         // ---------------------------------
         // Interpolation of Env_E_abs^(p)
