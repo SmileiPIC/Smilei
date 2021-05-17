@@ -494,7 +494,7 @@ void Interpolator2D2Order::timeCenteredEnvelopeForTasks( ElectroMagn *EMfields, 
         // -------------------------
         // Interpolation of Phiold^(p,p)
         // -------------------------
-        ( *PHI_mpart )[ipart] = compute( &coeffxp[1], &coeffyp[1], Phi_m2D, ip_, jp_ );
+        ( *PHI_mpart )[ipart] = compute( &coeffxp[1], &coeffyp[1], Phi_m2D, idx_p[0], idx_p[1] );
         
         // -------------------------
         // Interpolation of GradPhixold^(p,p)
