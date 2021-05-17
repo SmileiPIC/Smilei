@@ -603,7 +603,7 @@ void Projector3D2Order::basic( double *rhoj, Particles &particles, unsigned int 
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + 2;
+    ip -= i_domain_begin + 2 + bin_shift;
     jp -= j_domain_begin + 2;
     kp -= k_domain_begin + 2;
     
@@ -881,6 +881,126 @@ void Projector3D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
                 jloc = ( jp+j )*nprimz;
                 for( unsigned int k=0 ; k<5 ; k++ ) { // k loop
                     Chi_envelope[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
+                } // end k loop
+            } // end j loop
+        } // end i loop
+        
+    }
+    
+} // end sumSusceptibility
+
+// Projector for susceptibility used as source term in envelope equation, with tasks
+void Projector3D2Order::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+{
+    
+    std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );
+    std::vector<double> *Phipart     = &( smpi->dynamics_PHIpart[ithread] );
+    std::vector<double> *GradPhipart = &( smpi->dynamics_GradPHIpart[ithread] );
+    std::vector<double> *inv_gamma_ponderomotive = &( smpi->dynamics_inv_gamma_ponderomotive[ithread] );
+    
+    
+    int iloc, jloc;
+    
+    double momentum[3];
+    
+    double gamma_ponderomotive, gamma0, gamma0_sq;
+    double charge_over_mass_dts2, charge_sq_over_mass_sq_dts4, charge_sq_over_mass_sq;
+    double pxsm, pysm, pzsm;
+    double one_over_mass=1./species_mass;
+    
+    int nparts = particles.size();
+    double *Ex       = &( ( *Epart )[0*nparts] );
+    double *Ey       = &( ( *Epart )[1*nparts] );
+    double *Ez       = &( ( *Epart )[2*nparts] );
+    double *Phi      = &( ( *Phipart )[0*nparts] );
+    double *GradPhix = &( ( *GradPhipart )[0*nparts] );
+    double *GradPhiy = &( ( *GradPhipart )[1*nparts] );
+    double *GradPhiz = &( ( *GradPhipart )[2*nparts] );
+    
+    for( int ipart=istart ; ipart<iend; ipart++ ) {//Loop on bin particles
+    
+    
+        charge_over_mass_dts2       = ( double )( particles.charge( ipart ) )*dts2*one_over_mass;
+        // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
+        charge_sq_over_mass_sq_dts4 = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*dts4*one_over_mass*one_over_mass;
+        // (charge over mass)^2
+        charge_sq_over_mass_sq      = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*one_over_mass*one_over_mass;
+        
+        for( int i = 0 ; i<3 ; i++ ) {
+            momentum[i] = particles.momentum( i, ipart );
+        }
+        
+        // compute initial ponderomotive gamma
+        gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *( Phi+ipart )*charge_sq_over_mass_sq ;
+        gamma0    = sqrt( gamma0_sq ) ;
+        
+        // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
+        pxsm = ( gamma0 * charge_over_mass_dts2*( *( Ex+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhix+ipart ) ) ) * momentum[0] / gamma0_sq;
+        pysm = ( gamma0 * charge_over_mass_dts2*( *( Ey+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhiy+ipart ) ) ) * momentum[1] / gamma0_sq;
+        pzsm = ( gamma0 * charge_over_mass_dts2*( *( Ez+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhiz+ipart ) ) ) * momentum[2] / gamma0_sq;
+        
+        // update of gamma ponderomotive
+        gamma_ponderomotive = gamma0 + ( pxsm+pysm+pzsm )*0.5 ;
+        // buffer inverse of ponderomotive gamma to use it in ponderomotive momentum pusher
+        ( *inv_gamma_ponderomotive )[ipart] = 1./gamma_ponderomotive;
+        
+        // susceptibility for the macro-particle
+        double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*particles.weight( ipart )*one_over_mass/gamma_ponderomotive;
+        
+        // variable declaration
+        double xpn, ypn, zpn;
+        double delta, delta2;
+        double Sx1[5], Sy1[5], Sz1[5]; // arrays used for the Esirkepov projection method
+        
+        // Initialize all current-related arrays to zero
+        for( unsigned int i=0; i<5; i++ ) {
+            Sx1[i] = 0.;
+            Sy1[i] = 0.;
+            Sz1[i] = 0.;
+        }
+        
+        // --------------------------------------------------------
+        // Locate particles & Calculate Esirkepov coef. S, DS and W
+        // --------------------------------------------------------
+        
+        // locate the particle on the primal grid at current time-step & calculate coeff. S1
+        xpn = particles.position( 0, ipart ) * dx_inv_;
+        int ip = round( xpn );
+        delta  = xpn - ( double )ip;
+        delta2 = delta*delta;
+        Sx1[1] = 0.5 * ( delta2-delta+0.25 );
+        Sx1[2] = 0.75-delta2;
+        Sx1[3] = 0.5 * ( delta2+delta+0.25 );
+        
+        ypn = particles.position( 1, ipart ) * dy_inv_;
+        int jp = round( ypn );
+        delta  = ypn - ( double )jp;
+        delta2 = delta*delta;
+        Sy1[1] = 0.5 * ( delta2-delta+0.25 );
+        Sy1[2] = 0.75-delta2;
+        Sy1[3] = 0.5 * ( delta2+delta+0.25 );
+        
+        zpn = particles.position( 2, ipart ) * dz_inv_;
+        int kp = round( zpn );
+        delta  = zpn - ( double )kp;
+        delta2 = delta*delta;
+        Sz1[1] = 0.5 * ( delta2-delta+0.25 );
+        Sz1[2] = 0.75-delta2;
+        Sz1[3] = 0.5 * ( delta2+delta+0.25 );
+        
+        // ---------------------------
+        // Calculate the total susceptibility
+        // ---------------------------
+        ip -= i_domain_begin + 2 + bin_shift;
+        jp -= j_domain_begin + 2;
+        kp -= k_domain_begin + 2;
+        
+        for( unsigned int i=0 ; i<5 ; i++ ) { // i loop
+            iloc = ( i+ip )*nprimz*nprimy;
+            for( unsigned int j=0 ; j<5 ; j++ ) { // j loop
+                jloc = ( jp+j )*nprimz;
+                for( unsigned int k=0 ; k<5 ; k++ ) { // k loop
+                    b_Chi[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
                 } // end k loop
             } // end j loop
         } // end i loop
