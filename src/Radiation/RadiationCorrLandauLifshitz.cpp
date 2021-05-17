@@ -81,103 +81,138 @@ void RadiationCorrLandauLifshitz::operator()(
     // Temporary quantum parameter
     double particle_chi;
 
-    // Temporary Lorentz factor
+    // Temporary Lorentz facto    double radiated_energy_loc = 0;r
     double gamma;
 
     // Temporary double parameter
     double temp;
 
     // Momentum shortcut
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
-    }
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
 
     // Charge shortcut
-    short *charge = &( particles.charge( 0 ) );
+    short *charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double *weight = &( particles.weight( 0 ) );
+    double *weight = particles.getPtrWeight();
 
     // Optical depth for the Monte-Carlo process
-    double* chi = &( particles.chi(0));
+    double* chi = particles.getPtrChi();
 
     // Local vector to store the radiated energy
-    std::vector <double> rad_norm_energy( iend-istart, 0 );
-
+    double * rad_norm_energy = new double [iend-istart];
+    // for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
+    //     rad_norm_energy[ipart] = 0;
+    // }
+    double radiated_energy_loc = 0;
     // _______________________________________________________________
     // Computation
 
-    #pragma omp simd
+    #ifndef _GPU
+        #pragma omp simd
+    #else
+        int np = iend-istart;
+        #pragma acc parallel \
+            create(rad_norm_energy[0:np]) \
+            present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
+            Bx[istart:np],By[istart:np],Bz[istart:np],radiated_energy) \
+            deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,chi) \
+	    reduction(+:radiated_energy_loc)
+    {
+        #pragma acc loop gang worker vector
+    #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
+        
+        rad_norm_energy[ipart-istart] = 0;
+        
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
-        gamma = sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
-                      + momentum[1][ipart]*momentum[1][ipart]
-                      + momentum[2][ipart]*momentum[2][ipart] );
+        gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                      + momentum_y[ipart]*momentum_y[ipart]
+                      + momentum_z[ipart]*momentum_z[ipart] );
 
         // Computation of the Lorentz invariant quantum parameter
         particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
-                       momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
+                       momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                        gamma,
                        ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                        ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
 
         // Effect on the momentum
-        // (Should be vectorized with masked instructions)
         if( (gamma>1.) && (particle_chi >= RadiationTables.getMinimumChiContinuous()) ) {
 
             // Radiated energy during the time step
             temp =
-                RadiationTables.getRidgersCorrectedRadiatedEnergy( particle_chi, dt_ );
-
+               RadiationTables.getRidgersCorrectedRadiatedEnergy( particle_chi, dt_ );             
+  
+            // Effect on the momentum
             // Temporary factor
-            temp *= gamma/( gamma*gamma - 1 );
+            temp *= gamma/( gamma*gamma-1. );
 
             // Update of the momentum
-            momentum[0][ipart] -= temp*momentum[0][ipart];
-            momentum[1][ipart] -= temp*momentum[1][ipart];
-            momentum[2][ipart] -= temp*momentum[2][ipart];
+            momentum_x[ipart] -= temp*momentum_x[ipart];
+            momentum_y[ipart] -= temp*momentum_y[ipart];
+            momentum_z[ipart] -= temp*momentum_z[ipart];
 
             // Exact energy loss due to the radiation
             rad_norm_energy[ipart - istart] = gamma - sqrt( 1.0
-                                              + momentum[0][ipart]*momentum[0][ipart]
-                                              + momentum[1][ipart]*momentum[1][ipart]
-                                              + momentum[2][ipart]*momentum[2][ipart] );
-
+                                              + momentum_x[ipart]*momentum_x[ipart]
+                                              + momentum_y[ipart]*momentum_y[ipart]
+                                              + momentum_z[ipart]*momentum_z[ipart] );
         }
     }
 
     // _______________________________________________________________
     // Computation of the thread radiated energy
 
-    double radiated_energy_loc = 0;
 
-    #pragma omp simd reduction(+:radiated_energy_loc)
-    for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
-        radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart] ;
+    #ifndef _GPU
+        #pragma omp simd reduction(+:radiated_energy_loc)
+    #else
+        #pragma acc loop reduction(+:radiated_energy_loc) gang worker vector
+    #endif
+    for( int ipart=istart ; ipart<iend; ipart++ ) {
+        radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart - istart] ;
     }
-    radiated_energy += radiated_energy_loc;
     
     // _______________________________________________________________
     // Update of the quantum parameter
     
-    #pragma omp simd private(gamma)
+    #ifndef _GPU
+        #pragma omp simd
+    #else
+        #pragma acc loop gang worker vector
+    #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
-
+        
         // Gamma
-        gamma = sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
-                      + momentum[1][ipart]*momentum[1][ipart]
-                      + momentum[2][ipart]*momentum[2][ipart] );
-
+        gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                      + momentum_y[ipart]*momentum_y[ipart]
+                      + momentum_z[ipart]*momentum_z[ipart] );
+                      
         // Computation of the Lorentz invariant quantum parameter
-        chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
-                       momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
-                       gamma,
-                       ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                       ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
-                       
+        chi[ipart] = computeParticleChi( charge_over_mass_square,
+                     momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
+                     gamma,
+                     ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
+                     ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+                     
     }
+    
+    #ifdef _GPU
+    } // end acc parallel
+    //#pragma acc update self(radiated_energy)
+    #endif
+    
+    radiated_energy += radiated_energy_loc;
+
+    // _______________________________________________________________
+    // Cleaning
+    
+    delete [] rad_norm_energy;
+    
 }
