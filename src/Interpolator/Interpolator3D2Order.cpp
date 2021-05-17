@@ -427,6 +427,47 @@ void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
     
     //Loop on bin particles
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+
+        // Normalized particle position
+        double xpn = particles.position( 0, ipart )*dx_inv_;
+        double ypn = particles.position( 1, ipart )*dy_inv_;
+        double zpn = particles.position( 2, ipart )*dz_inv_;
+        
+        
+        // Indexes of the central nodes
+        ip_ = round( xpn );
+        jp_ = round( ypn );
+        kp_ = round( zpn );
+        
+        
+        // Declaration and calculation of the coefficient for interpolation
+        double delta2;
+        
+        
+        deltax   = xpn - ( double )ip_;
+        delta2  = deltax*deltax;
+        coeffxp_[0] = 0.5 * ( delta2-deltax+0.25 );
+        coeffxp_[1] = 0.75 - delta2;
+        coeffxp_[2] = 0.5 * ( delta2+deltax+0.25 );
+        
+        deltay   = ypn - ( double )jp_;
+        delta2  = deltay*deltay;
+        coeffyp_[0] = 0.5 * ( delta2-deltay+0.25 );
+        coeffyp_[1] = 0.75 - delta2;
+        coeffyp_[2] = 0.5 * ( delta2+deltay+0.25 );
+        
+        deltaz   = zpn - ( double )kp_;
+        delta2  = deltaz*deltaz;
+        coeffzp_[0] = 0.5 * ( delta2-deltaz+0.25 );
+        coeffzp_[1] = 0.75 - delta2;
+        coeffzp_[2] = 0.5 * ( delta2+deltaz+0.25 );
+        
+        
+        //!\todo CHECK if this is correct for both primal & dual grids !!!
+        // First index for summation
+        ip_ = ip_ - i_domain_begin;
+        jp_ = jp_ - j_domain_begin;
+        kp_ = kp_ - k_domain_begin;
         
         // ---------------------------------
         // Interpolation of Env_E_abs^(p,p,p)
