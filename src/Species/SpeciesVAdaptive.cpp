@@ -787,6 +787,30 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
 
     } //End if moving particles
 
+    if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+
+        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin ++ ) { //Loop for projection on buffer_proj
+#ifdef  __DETAILED_TIMERS
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) 
+#else
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) 
+#endif
+            {
+
+#ifdef  __DETAILED_TIMERS
+            ithread = omp_get_thread_num();
+            timer = MPI_Wtime();
+#endif
+            for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+                Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+            }
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+            } // end task
+        }
+    } // end frozen and not test particle
+
     } // end taskgroup
 
 } // end scalarDynamicsTasks
