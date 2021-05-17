@@ -293,43 +293,43 @@ void Interpolator1D2Order::fieldsAndEnvelopeForTasks( ElectroMagn *EMfields, Par
         coeffs( xpn, idx_p, idx_d, coeffxp, coeffxd, delta_p );
 
         // Interpolation of Ex^(d)
-        ( *Epart )[ipart+0*nparts] = compute( &coeffxd[1], Ex1D, idx_d[0] );
+        ( *Epart )[ipart+0*nparts] = compute( coeffxd, Ex1D, idx_d[0] );
 
         // Interpolation of Ey^(p)
-        ( *Epart )[ipart+1*nparts] = compute( &coeffxp[1], Ey1D, idx_p[0] );
+        ( *Epart )[ipart+1*nparts] = compute( coeffxp, Ey1D, idx_p[0] );
 
         // Interpolation of Ez^(p)
-        ( *Epart )[ipart+2*nparts] = compute( &coeffxp[1], Ez1D, idx_p[0] );
+        ( *Epart )[ipart+2*nparts] = compute( coeffxp, Ez1D, idx_p[0] );
 
         // Interpolation of Bx^(p)
-        ( *Bpart )[ipart+0*nparts] = compute( &coeffxp[1], Bx1D, idx_p[0] );
+        ( *Bpart )[ipart+0*nparts] = compute( coeffxp, Bx1D, idx_p[0] );
 
         // Interpolation of By^(d)
-        ( *Bpart )[ipart+1*nparts] = compute( &coeffxd[1], By1D, idx_d[0] );
+        ( *Bpart )[ipart+1*nparts] = compute( coeffxd, By1D, idx_d[0] );
 
         // Interpolation of Bz^(d)
-        ( *Bpart )[ipart+2*nparts] = compute( &coeffxd[1], Bz1D, idx_d[0] );
+        ( *Bpart )[ipart+2*nparts] = compute( coeffxd, Bz1D, idx_d[0] );
         
         
         // -------------------------
         // Interpolation of Phi^(p)
         // -------------------------
-        ( *PHIpart )[ipart] = compute( &coeffxp[1], Phi1D, idx_d[0] );
+        ( *PHIpart )[ipart] = compute( coeffxp, Phi1D, idx_d[0] );
         
         // -------------------------
         // Interpolation of GradPhix^(p)
         // -------------------------
-        ( *GradPHIpart )[ipart+0*nparts] = compute( &coeffxp[1], GradPhix1D, idx_d[0] );
+        ( *GradPHIpart )[ipart+0*nparts] = compute( coeffxp, GradPhix1D, idx_d[0] );
         
         // -------------------------
         // Interpolation of GradPhiy^(p)
         // -------------------------
-        ( *GradPHIpart )[ipart+1*nparts] = compute( &coeffxp[1], GradPhiy1D, idx_d[0] );
+        ( *GradPHIpart )[ipart+1*nparts] = compute( coeffxp, GradPhiy1D, idx_d[0] );
         
         // -------------------------
         // Interpolation of GradPhiz^(p)
         // -------------------------
-        ( *GradPHIpart )[ipart+2*nparts] = compute( &coeffxp[1], GradPhiz1D, idx_d[0] );
+        ( *GradPHIpart )[ipart+2*nparts] = compute( coeffxp, GradPhiz1D, idx_d[0] );
         
         // //Buffering of iol and delta
         ( *iold )[ipart+0*nparts]  = idx_p[0];
@@ -442,22 +442,22 @@ void Interpolator1D2Order::timeCenteredEnvelopeForTasks( ElectroMagn *EMfields, 
         // -------------------------
         // Interpolation of Phiold^(p)
         // -------------------------
-        ( *PHI_mpart )[ipart] = compute( &coeffxp[1], Phi_m1D, idx_p[0] );
+        ( *PHI_mpart )[ipart] = compute( coeffxp, Phi_m1D, idx_p[0] );
         
         // -------------------------
         // Interpolation of GradPhix_m^(p)
         // -------------------------
-        ( *GradPHI_mpart )[ipart+0*nparts] = compute( &coeffxp[1], GradPhix_m1D, idx_p[0] );
+        ( *GradPHI_mpart )[ipart+0*nparts] = compute( coeffxp, GradPhix_m1D, idx_p[0] );
         
         // -------------------------
         // Interpolation of GradPhiyold^(p)
         // -------------------------
-        ( *GradPHI_mpart )[ipart+1*nparts] = compute( &coeffxp[1], GradPhiy_m1D, idx_p[0] );
+        ( *GradPHI_mpart )[ipart+1*nparts] = compute( coeffxp, GradPhiy_m1D, idx_p[0] );
         
         // -------------------------
         // Interpolation of GradPhizold^(p)
         // -------------------------
-        ( *GradPHI_mpart )[ipart+2*nparts] = compute( &coeffxp[1], GradPhiz_m1D, idx_p[0] );
+        ( *GradPHI_mpart )[ipart+2*nparts] = compute( coeffxp, GradPhiz_m1D, idx_p[0] );
         
         //Buffering of iol and delta
         ( *iold )[ipart+0*nparts]  = idx_p[0];
@@ -595,7 +595,7 @@ void Interpolator1D2Order::envelopeFieldForIonizationTasks( ElectroMagn *EMfield
         // ---------------------------------
         // Interpolation of Env_E_abs^(p)
         // ---------------------------------
-        ( *Env_Eabs_part )[ipart] = compute( &coeffxp[1], Env_Eabs, idx_p[0] );
+        ( *Env_Eabs_part )[ipart] = compute( coeffxp, Env_Eabs, idx_p[0] );
 
         // In 1D the Env_Ex_abs field is always zero 
         
