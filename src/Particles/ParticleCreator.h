@@ -97,6 +97,9 @@ public:
     //! Flag if initialized in particles of a species
     bool initialized_in_species_;
     
+    //! Flag to disable the position initialization (handle outside the creator for instance)
+    bool disable_position_initialization_;
+    
     //! Position initialization type
     std::string position_initialization_;
     

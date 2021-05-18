@@ -18,7 +18,7 @@ public:
     ~CollisionalFusionDD() {};
     
     //! Method to apply the nuclear reaction
-    double crossSection( double log_ekin );
+    double crossSection( double log_ekin ) override;
     //! Method to prepare the products of the reaction
     void makeProducts( Random* random, double ekin, double log_ekin, double tot_charge, std::vector<Particles *> &particles, std::vector<double> &p_COM, std::vector<short> &q, std::vector<double> &sinX, std::vector<double> &cosX ) override;
     
