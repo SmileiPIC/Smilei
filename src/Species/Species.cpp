@@ -2343,9 +2343,9 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) private(ithread,timer)
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin]) private(ithread,timer)
 #else
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin])
+            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
 #endif
             {
 #ifdef  __DETAILED_TIMERS
@@ -2377,13 +2377,15 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
 
         // reduction of the lost energy in each ibin 
         // the dependency ensures that it is done after the particles BC
-        // #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
-        // {
+        //#pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+        // using depend out on particles BC a segfault is caused - check why this happens
+        #pragma omp task default(shared) depend(in:bin_has_projected[0:(Nbins-1)])
+        {
         // reduce the energy lost with BC per bin
-        // for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-        //     nrj_bc_lost += nrj_lost_per_bin[ibin];
-        // } // end ibin
-        // } // end task for lost/radiated energy reduction 
+        for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+            nrj_bc_lost += nrj_lost_per_bin[ibin];
+        } // end ibin
+        } // end task for lost/radiated energy reduction 
 
     } else { // immobile particle
         if( diag_flag &&( !particles->is_test ) ) {
