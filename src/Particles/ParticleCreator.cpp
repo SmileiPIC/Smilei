@@ -81,7 +81,7 @@ void ParticleCreator::associate( ParticleInjector * particle_injector, Particles
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! \brief Associate this particle creator object to the specified particle injector
+//! \brief Associate this particle creator object to the specified species
 //! \param species :species to associate with
 // ---------------------------------------------------------------------------------------------------------------------
 void ParticleCreator::associate( Species * species)
@@ -91,8 +91,8 @@ void ParticleCreator::associate( Species * species)
     particles_ = species->particles;
     
     position_initialization_ = species->position_initialization_;
-    position_initialization_on_species_ = false;
-    disable_position_initialization_ = species->position_initialization_on_species_;
+    position_initialization_on_species_ = species->position_initialization_on_species_;
+    disable_position_initialization_    = species->position_initialization_on_species_;
     momentum_initialization_ = species->momentum_initialization_;
     velocity_profile_.resize(species->velocity_profile_.size());
     for (unsigned int i = 0 ; i < velocity_profile_.size() ; i++) {
@@ -277,9 +277,6 @@ int ParticleCreator::create( struct SubSpace sub_space,
         // If requested, copy positions from other species
         if( position_initialization_on_species_ ) {
             unsigned int ispec = species_->position_initialization_on_species_index;
-            std::cerr << species_->name_
-                      << " " << ispec
-                      << " " << species_->position_initialization_on_species_index << std::endl;
             if( species_->getNbrOfParticles() != patch->vecSpecies[ispec]->getNbrOfParticles() ) {
                 ERROR( "Copying particles: species '"<<species_->name_<<"' and '"<<patch->vecSpecies[ispec]->name_<<"' should have the same number of particles");
             }
@@ -326,7 +323,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                         temp[1] = temperature[1]( i, j, k );
                         temp[2] = temperature[2]( i, j, k );
                         
-                        if( ! position_initialization_on_species_ || disable_position_initialization_ ) {
+                        if( (! position_initialization_on_species_) && (! disable_position_initialization_) ) {
                             ParticleCreator::createPosition( position_initialization_, regular_number_array_,  particles_, species_, nPart, iPart, indexes, params );
                         }
                         ParticleCreator::createMomentum( momentum_initialization_, particles_, species_,  nPart, iPart, &temp[0], &vel[0] );

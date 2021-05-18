@@ -744,7 +744,7 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
             unsigned int Nmode = emAM->rho_AM_.size();
             for( unsigned int imode=0; imode<Nmode; imode++ ) {
-                unsigned int ifield = imode*(*EMfields).n_species+ispec;
+                //unsigned int ifield = imode*(*EMfields).n_species+ispec;
                 complex<double> *b_rho = old ? &( *emAM->rho_old_AM_[imode] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 );
                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
                     for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
@@ -1394,7 +1394,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
     double timer;
 #endif
 
-    unsigned int iPart;
+    //unsigned int iPart;
 
     int tid( 0 );
     std::vector<double> nrj_lost_per_thd( 1, 0. );
