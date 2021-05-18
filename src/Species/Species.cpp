@@ -412,10 +412,12 @@ Species::~Species()
                 delete[] b_rho[ibin];
             }
         }
-        if (b_Chi[0]){
-            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-                // delete buffers
-                delete[] b_Chi[ibin];
+        if (Push_ponderomotive_position){
+            if (b_Chi[0]){
+                for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+                    // delete buffers
+                    delete[] b_Chi[ibin];
+                }
             }
         }
     } else {
@@ -428,10 +430,12 @@ Species::~Species()
                 delete[] b_rhoAM[ibin];
             }
         }
-        if (b_ChiAM[0]){
-            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-                // delete buffer
-                delete[] b_ChiAM[ibin];
+        if (Push_ponderomotive_position){
+            if (b_ChiAM[0]){
+                for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+                    // delete buffer
+                    delete[] b_ChiAM[ibin];
+                }
             }
         }
     }
@@ -656,36 +660,6 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         for( unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++ ) {
             nrj_bc_lost += nrj_lost_per_thd[tid];
         }
-
-//        // Add the ionized electrons to the electron species
-//        if (Ionize)
-//            electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
-//
-//        // Radiation losses
-//        if (Radiate)
-//        {
-//            // If creation of macro-photon, we add them to photon_species
-//            if (photon_species)
-//            {
-//                photon_species->importParticles(params,
-//                                                patch,
-//                                                Radiate->new_photons_,
-//                                                localDiags);
-//            }
-//        }
-//
-//        // Multiphoton Breit-Wheeler
-//        if (Multiphoton_Breit_Wheeler_process)
-//        {
-//
-//            // Addition of the electron-positron particles
-//            for (int k=0; k<2; k++) {
-//                mBW_pair_species[k]->importParticles(params,
-//                                             patch,
-//                                             Multiphoton_Breit_Wheeler_process->new_pair[k],
-//                                             localDiags);
-//            }
-//        }
 
     } //End if moving or ionized particles
 
