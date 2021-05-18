@@ -330,6 +330,26 @@ void Interpolator1D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
     
     //Loop on bin particles
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+
+        // Normalized particle position
+        double xpn = particles.position( 0, ipart )*dx_inv_;
+        
+        // Indexes of the central nodes
+        ip_ = round( xpn );
+        
+        // Declaration and calculation of the coefficient for interpolation
+        double deltax, delta2;        
+        
+        deltax   = xpn - ( double )ip_;
+        delta2  = deltax*deltax;
+        coeffp_[0] = 0.5 * ( delta2-deltax+0.25 );
+        coeffp_[1] = 0.75 - delta2;
+        coeffp_[2] = 0.5 * ( delta2+deltax+0.25 );
+        
+        
+        //!\todo CHECK if this is correct for both primal & dual grids !!!
+        // First index for summation
+        ip_ = ip_ - index_domain_begin;
     
         // ---------------------------------
         // Interpolation of Env_E_abs^(p)

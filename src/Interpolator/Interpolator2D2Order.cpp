@@ -377,17 +377,53 @@ void Interpolator2D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
 void Interpolator2D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
     // Static cast of the envelope fields
-    Field2D *EnvEabs = static_cast<Field2D *>( EMfields->Env_E_abs_ );
+    Field2D *EnvEabs  = static_cast<Field2D *>( EMfields->Env_E_abs_ );
+    Field2D *EnvExabs = static_cast<Field2D *>( EMfields->Env_Ex_abs_ );
     
-    std::vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
+    std::vector<double> *EnvEabs_part  = &( smpi->dynamics_EnvEabs_part[ithread] );
+    std::vector<double> *EnvExabs_part = &( smpi->dynamics_EnvExabs_part[ithread] );
     
     //Loop on bin particles
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+
+        // Normalized particle position
+        double xpn = particles.position( 0, ipart )*dx_inv_;
+        double ypn = particles.position( 1, ipart )*dy_inv_;
+        
+        // Indexes of the central nodes
+        ip_ = round( xpn );
+        jp_ = round( ypn );
+          
+        // Declaration and calculation of the coefficient for interpolation
+        double delta2;
+            
+        deltax   = xpn - ( double )ip_;
+        delta2  = deltax*deltax;
+        coeffxp_[0] = 0.5 * ( delta2-deltax+0.25 );
+        coeffxp_[1] = 0.75 - delta2;
+        coeffxp_[2] = 0.5 * ( delta2+deltax+0.25 );
+        
+        deltay   = ypn - ( double )jp_;
+        delta2  = deltay*deltay;
+        coeffyp_[0] = 0.5 * ( delta2-deltay+0.25 );
+        coeffyp_[1] = 0.75 - delta2;
+        coeffyp_[2] = 0.5 * ( delta2+deltay+0.25 );
+              
+        //!\todo CHECK if this is correct for both primal & dual grids !!!
+        // First index for summation
+        ip_ = ip_ - i_domain_begin;
+        jp_ = jp_ - j_domain_begin;
     
         // ---------------------------------
         // Interpolation of Env_E_abs^(p,p)
         // ---------------------------------
         ( *EnvEabs_part )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], EnvEabs, ip_, jp_ );
+
+        // ---------------------------------
+        // Interpolation of Env_Ex_abs^(p,p)
+        // ---------------------------------
+        ( *EnvExabs_part )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], EnvExabs, ip_, jp_ );
+
         
     }
     
