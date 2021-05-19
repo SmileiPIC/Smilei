@@ -115,10 +115,10 @@ public:
         int *bmin, int *bmax, int ithread );
 
     //! Return the pair converted energy
-    double inline getPairEnergy( void )
-    {
-        return pair_converted_energy_;
-    }
+    // double inline getPairEnergy( void )
+    // {
+    //     return pair_converted_energy_;
+    // }
 
     // Local array of new pairs of electron-positron
     Particles new_pair[2];
