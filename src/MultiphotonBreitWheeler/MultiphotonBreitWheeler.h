@@ -96,7 +96,7 @@ public:
     //! \param MultiphotonBreitWheelerTables    Cross-section data tables
     //!                       and useful functions
     //!                       for the multiphoton Breit-Wheeler process
-    void pair_emission( int ipart,
+    double pair_emission( int ipart,
                         Particles &particles,
                         double &gammaph,
                         double remaining_dt,
