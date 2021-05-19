@@ -420,7 +420,7 @@ void ProjectorAM2Order::basicForComplexOnBuffer( complex<double> *rhoj, Particle
     for( unsigned int i=1 ; i<4 ; i++ ) {
         iloc = ( i+ip )*nr+jp;
         for( unsigned int j=1 ; j<4 ; j++ ) {
-            rhoj [imode*(bdim0*nr )+iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invRd[j+jp];
+            rhoj [imode*(bdim0*nr )+iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
         }
     }//i
 } // END Project for diags local current densities
@@ -897,18 +897,16 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
             crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*r_bar;
         }
    
-        Jl = &(b_Jl[ imode*(bdim0*nprimr    ) ] );
-        Jr = &(b_Jr[ imode*(bdim0*(nprimr+1)) ] );
-        Jt = &(b_Jt[ imode*(bdim0*nprimr    ) ] );
+        int mode_shift_JlJtRho = imode*(bdim0*nprimr    );
+        int mode_shift_Jr      = imode*(bdim0*(nprimr+1));
         // Add contribution J_p to global array
         if (diag_flag){
-            rho = &(b_rhoAM[ imode*(bdim0*nprimr ) ] );
             for( unsigned int i=0 ; i<5 ; i++ ) {
                 iloc = ( i+ipo )*nprimr;
                 for( unsigned int j=0 ; j<5 ; j++ ) {
                     jloc = j+jpo;
                     linindex = iloc+jloc;
-                    rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j];
+                    b_rhoAM [mode_shift_JlJtRho+linindex] += C_m*charge_weight* Sl1[i]*Sr1[j];
                 }
             }//i
         }
@@ -918,7 +916,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
             iloc = ( i+ipo )*nprimr+jpo;
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 linindex = iloc+j;
-                Jl [linindex] += C_m * Jl_p[i][j] ;
+                b_Jl [mode_shift_JlJtRho+linindex] += C_m * Jl_p[i][j] ;
             }
         }//i
    
@@ -927,7 +925,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
             iloc = ( i+ipo )*( nprimr+1 )+jpo+1;
             for( unsigned int j=0 ; j<4 ; j++ ) {
                 linindex = iloc+j;
-                Jr [linindex] += C_m * Jr_p[i][j] ;
+                b_Jr [mode_shift_Jr+linindex] += C_m * Jr_p[i][j] ;
             }
         }//i
    
@@ -936,7 +934,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
             iloc = ( i+ipo )*nprimr + jpo;
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 linindex = iloc+j;
-                Jt [linindex] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0[j]*Sl0[i]*( e_delta-1. )); 
+                b_Jt [mode_shift_JlJtRho+linindex] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0[j]*Sl0[i]*( e_delta-1. )); 
             }
         }
    

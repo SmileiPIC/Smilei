@@ -2441,7 +2441,6 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
                     } // end task projection for frozen or test
                 } // end ibin
             } else { // AM geometry
-                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
 
                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
 #ifdef  __DETAILED_TIMERS
