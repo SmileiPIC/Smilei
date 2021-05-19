@@ -14,7 +14,7 @@ install:
     - develop
     - laser_y
     - pusher_cleaning
-    
+
   script:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
@@ -34,7 +34,7 @@ compile_default:
     - develop
     - laser_y
     - pusher_cleaning
-    
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -47,7 +47,7 @@ run1D:
     - develop
     - laser_y
     - pusher_cleaning
-    
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -60,7 +60,7 @@ run2D:
   only:
     - develop
     - laser_y
-    - pusher_cleaning
+#    - pusher_cleaning
 
   script:
     # Move in test dir
@@ -76,7 +76,7 @@ run3D:
   only:
     - develop
     - laser_y
-    - pusher_cleaning
+#    - pusher_cleaning
 
   script:
     # Move in test dir
@@ -93,8 +93,8 @@ runAM:
   only:
     - develop
     - laser_y
-    - pusher_cleaning
-    
+#    - pusher_cleaning
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -118,8 +118,8 @@ runCollisions:
   only:
     - develop
     - laser_y
-    - pusher_cleaning
-    
+#    - pusher_cleaning
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -131,7 +131,7 @@ compile_picsar:
   only:
     - develop
     - laser_y
-    - pusher_cleaning
+#    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -142,7 +142,7 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-    - pusher_cleaning
+#    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -153,7 +153,7 @@ compile_debug:
   only:
     - develop
     - laser_y
-    - pusher_cleaning
+#    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -165,7 +165,7 @@ compile_no_mpi_threadmultiple:
   only:
     - develop
     - laser_y
-    - pusher_cleaning
+#    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -177,7 +177,7 @@ compile_no_openmp:
   only:
     - develop
     - laser_y
-    - pusher_cleaning
+#    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

@@ -48,6 +48,7 @@ ntot_photon = np.array(S.Scalar("Ntot_photon").get()["data"])
 print( ' Final electron energy / total energy: ',ukin_electron[-1] / utot[0] )
 print( ' Final positron energy / total energy: ',ukin_positron[-1] / utot[0] )
 print( ' Final photon energy / total energy: ',ukin_photon[-1] / utot[0] )
+print( ' Final pair energy / total energy: ',UmBWpairs[-1] / utot[0] )
 print( ' Maximal relative error total energy: ', max(abs(utot[:] - utot[0]))/utot[0] )
 
 print( ' Final number of electrons:',ntot_electron[-1] )
@@ -72,12 +73,12 @@ integrated_gamma_spectrum = {}
 max_gamma_spectrum = {}
 
 for ispecies,species in enumerate(species_list):
-    
+
     integrated_gamma_spectrum[species] = np.zeros(8)
     max_gamma_spectrum[species] = np.zeros(8)
-    
+
     for diag_it in range(8):
-    
+
         PartDiag = S.ParticleBinning(diagNumber=ispecies,timesteps = diag_it*50)
         gamma = np.array(PartDiag.get()["gamma"])
         density = np.array(PartDiag.get()["data"][0])
@@ -85,7 +86,7 @@ for ispecies,species in enumerate(species_list):
         log10_gamma = np.log10(gamma)
         delta = log10_gamma[1] - log10_gamma[0]
         bins =  np.power(10.,log10_gamma + 0.5*delta) - np.power(10.,log10_gamma - 0.5*delta)
-        
+
         integrated_gamma_spectrum[species][diag_it] = np.sum(bins*density)
         imax = np.argmax(density)
         max_gamma_spectrum[species][diag_it] = gamma[imax]

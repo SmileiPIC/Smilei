@@ -110,7 +110,7 @@ void SpeciesV::initCluster( Params &params )
     nrj_bc_lost = 0.;
     nrj_mw_lost = 0.;
     new_particles_energy_ = 0.;
-    nrj_radiation = 0.;
+    radiated_energy_ = 0.;
 
 }//END initCluster
 
@@ -157,7 +157,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
     // calculate the particle dynamics
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize ) { // moving particle
-    
+
         smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         //Point to local thread dedicated buffers
@@ -200,7 +200,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
             }
-            
+
             if ( time_dual <= time_frozen_ ) continue;
 
             // Radiation losses
@@ -212,11 +212,11 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
 
                     ( *Radiate )( *particles, this->photon_species_, smpi,
-                                  RadiationTables, nrj_radiation,
+                                  RadiationTables, radiated_energy_,
                                   particles->first_index[scell], particles->last_index[scell], ithread );
 
                     // // Update scalar variable for diagnostics
-                    // nrj_radiation += Radiate->getRadiatedEnergy();
+                    // radiated_energy_ += Radiate->getRadiatedEnergy();
                     //
                     // // Update the quantum parameter chi
                     // Radiate->computeParticlesChi( *particles,
@@ -238,14 +238,12 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
 
                     // Pair generation process
+                    // We reuse radiated_energy_ for the pairs
                     ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                             smpi,
                                                             MultiphotonBreitWheelerTables,
+                                                            radiated_energy_,
                                                             particles->first_index[scell], particles->last_index[scell], ithread );
-
-                    // Update scalar variable for diagnostics
-                    // We reuse nrj_radiation for the pairs
-                    nrj_radiation += Multiphoton_Breit_Wheeler_process->getPairEnergy();
 
                     // Update the photon quantum parameter chi of all photons
                     Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
@@ -257,7 +255,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     // Suppression of the decayed photons into pairs
                     Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                         *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
-                        
+
                 }
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
@@ -530,7 +528,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
 
     // -------------------------------------------------------------------------------------
     // Checkpoint for debugging
-    
+
     // for( unsigned int scell = 0 ; scell < particles->first_index.size(); scell++ ) {
     //     for (unsigned int ip = particles->first_index[scell] ; ip  < particles->last_index[scell] ; ip ++) {
     //
@@ -578,7 +576,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
     //Copy valid particles siting over particles->last_index.back() back into the real particles array (happens when more particles are lost than received)
     for( unsigned int ip=( unsigned int )particles->last_index.back(); ip < npart; ip++ ) {
         cell_target = particles->cell_keys[ip];
-        
+
         // double xmin = patch->getDomainLocalMin(0);
         // double xmax = patch->getDomainLocalMax(0);
         // double ymin = patch->getDomainLocalMin(1);
@@ -609,13 +607,13 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
         // << setprecision(10)
         // << ", v: " << v
         // << std::endl;
-        
+
         if( cell_target == -1 ) {
             continue;
         }
         cycle.resize( 0 );
         cycle.push_back( ip );
-        
+
         //As long as the particle is not erased, we can build up the cycle.
         while( cell_target != -1 ) {
 
@@ -837,10 +835,10 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 
         // For each cell, we apply independently the merging process
         for( scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
-            
+
             ( *Merge )( mass_, *particles, mask, smpi, particles->first_index[scell],
                         particles->last_index[scell], count[scell]);
-                        
+
         }
 
         // We remove empty space in an optimized manner
@@ -853,12 +851,12 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
             particles->first_index[scell] = particles->last_index[scell-1];
             particles->last_index[scell] = particles->first_index[scell] + count[scell];
         }
-        
+
         //particles->cell_keys.resize(particles->last_index.back());
-        
+
         // -------------------------------------------------------------------------------------
         // Checkpoint for debugging
-        
+
         // for (unsigned int ip = 0; ip < (unsigned int)(particles->last_index.back()) ; ip++) {
         //         weight_after += particles->weight(ip);
         //         energy_after += sqrt(1 + pow(particles->momentum(0,ip),2)
@@ -875,10 +873,10 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         //     << std::endl;
         // }
         // -------------------------------------------------------------------------------------
-        
+
         // -------------------------------------------------------------------------------------
         // Checkpoint for debugging
-        
+
         // for( scell = 0 ; scell < particles->first_index.size(); scell++ ) {
         //     for (unsigned int ip = particles->first_index[scell] ; ip  < particles->last_index[scell] ; ip ++) {
         //
@@ -923,9 +921,9 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         //         }
         //     }
         // }
-        
+
         // -------------------------------------------------------------------------------------
-        
+
     }
 }
 
@@ -996,7 +994,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
 
             // Ionization
             if( Ionize ) {
-            
+
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
