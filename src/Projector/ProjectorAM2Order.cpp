@@ -417,10 +417,11 @@ void ProjectorAM2Order::basicForComplexOnBuffer( complex<double> *rhoj, Particle
 
     // complex<double> *rho = &(rhoj[ imode*(bdim0*nr ) ] ) ;
     
+    int mode_shift = imode*(bdim0*nr );
     for( unsigned int i=1 ; i<4 ; i++ ) {
         iloc = ( i+ip )*nr+jp;
         for( unsigned int j=1 ; j<4 ; j++ ) {
-            rhoj [imode*(bdim0*nr )+iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
+            rhoj [mode_shift+iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
         }
     }//i
 } // END Project for diags local current densities

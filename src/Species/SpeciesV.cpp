@@ -987,43 +987,87 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 
     if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
 
-        if( params.geometry != "AMcylindrical" ) {
-            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+        if (Ionize){ // a task dependency is needed to project after ionization
+
+            if( params.geometry != "AMcylindrical" ) {
+                for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
-                #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+                    #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_ionized[ibin]) 
 #else
-                #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
+                    #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_ionized[ibin]) 
 #endif
-                {
+                    {
 
 #ifdef  __DETAILED_TIMERS
-                ithread = omp_get_thread_num();
-                timer = MPI_Wtime();
+                    ithread = omp_get_thread_num();
+                    timer = MPI_Wtime();
 #endif
-                // basic projector is not vectorized, no need to make a loop on scell
-                for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; ( int )iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
-                    Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
-                } //End loop on particles
+                    // basic projector is not vectorized, no need to make a loop on scell
+                    for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; ( int )iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                    } //End loop on particles
 
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                    patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif          
 
-                } // end task ibin
-            } // end ibin
+                    } // end task ibin
+                } // end ibin
 
-        } else { // AM case, not yet vectorized
-            // ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
-            // int n_species = patch->vecSpecies.size();
-            // for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
-            //     int ifield = imode*n_species+ispec;
-            //     for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
-            //         for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
-            //             Proj->basicForComplex( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, ibin*clrw );
-            //         }
-            //     }
-            // }
-        }
+            } else { // AM case, not yet vectorized
+                // ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+                // int n_species = patch->vecSpecies.size();
+                // for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                //     int ifield = imode*n_species+ispec;
+                //     for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                //         for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
+                //             Proj->basicForComplex( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, ibin*clrw );
+                //         }
+                //     }
+                // }
+            } // end if condition on geometry
+
+        } else { // without ionization no dependency is needed to project
+
+            if( params.geometry != "AMcylindrical" ) {
+                for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
+#ifdef  __DETAILED_TIMERS
+                    #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer)
+#else
+                    #pragma omp task default(shared) firstprivate(ibin,bin_size0) 
+#endif
+                    {
+
+#ifdef  __DETAILED_TIMERS
+                    ithread = omp_get_thread_num();
+                    timer = MPI_Wtime();
+#endif
+                    // basic projector is not vectorized, no need to make a loop on scell
+                    for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; ( int )iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                    } //End loop on particles
+
+#ifdef  __DETAILED_TIMERS
+                    patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif          
+
+                    } // end task ibin
+                } // end ibin
+
+            } else { // AM case, not yet vectorized
+                // ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+                // int n_species = patch->vecSpecies.size();
+                // for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                //     int ifield = imode*n_species+ispec;
+                //     for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                //         for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
+                //             Proj->basicForComplex( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, ibin*clrw );
+                //         }
+                //     }
+                // }
+            } // end if condition on geometry
+
+        } // end if Ionize
 
 
     } // End projection for frozen particles    

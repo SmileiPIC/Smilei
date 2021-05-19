@@ -2468,8 +2468,6 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
 
     } // end if moving particle
 
-
-
     } // end taskgroup
 
 } // End ponderomotiveUpdatePositionAndCurrentsTasks
