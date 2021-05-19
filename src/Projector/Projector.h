@@ -30,7 +30,9 @@ public:
     
     //! Project global current charge (EMfields->rho_ , J), for initialization and diags
     virtual void basic( double               *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift = 0 ) {};
-    virtual void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode, int bin_shift = 0 ) {};
+    virtual void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) {};
+    // basic rho projector for tasks
+    virtual void basicForComplexOnBuffer( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode, int bdim0, int bin_shift ) {};
 
     //! Apply boundary conditions on axis for Rho and J in AM geometry
     virtual void axisBC(ElectroMagnAM *emAM, bool diag_flag) {};

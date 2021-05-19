@@ -54,7 +54,7 @@ ProjectorAM1Order::~ProjectorAM1Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Non charge conserving projector for diags at t=0, frozen species or compute charge 
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode, int ibin )
+void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
 {
     // -------------------------------------
     // Variable declaration & initialization

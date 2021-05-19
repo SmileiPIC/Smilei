@@ -256,7 +256,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project for diags and frozen species -
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode, int bin_shift )
+void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
 {
     //Warning : this function is not charge conserving.
     // This function also assumes that particles position is evaluated at the same time as currents which is usually not true (half time-step difference).
@@ -322,7 +322,7 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + 2 + bin_shift;
+    ip -= i_domain_begin + 2;
     jp -= j_domain_begin + 2;
     
     if( type != 2 ) {
@@ -340,6 +340,89 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
             }
         }//i
     }
+} // END Project for diags local current densities
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project for diags and frozen species -
+// ---------------------------------------------------------------------------------------------------------------------
+void ProjectorAM2Order::basicForComplexOnBuffer( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode, int bdim0, int bin_shift )
+{
+    //Warning : this function is not charge conserving.
+    // This function also assumes that particles position is evaluated at the same time as currents which is usually not true (half time-step difference).
+    // It will therefore fail to evaluate the current accurately at t=0 if a plasma is already in the box.
+   
+
+ 
+    // -------------------------------------
+    // Variable declaration & initialization
+    // -------------------------------------
+    
+    int iloc, nr( nprimr );
+    double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
+    double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
+    
+    if( type > 0 ) { //if current density
+        ERROR("This projector can be used only for charge density at the moment.");
+        // charge_weight *= 1./sqrt( 1.0 + particles.momentum( 0, ipart )*particles.momentum( 0, ipart )
+        //                           + particles.momentum( 1, ipart )*particles.momentum( 1, ipart )
+        //                           + particles.momentum( 2, ipart )*particles.momentum( 2, ipart ) );
+        // if( type == 1 ) { //if Jl
+        //     charge_weight *= particles.momentum( 0, ipart );
+        // } else if( type == 2 ) { //if Jr
+        //     charge_weight *= ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) )/ r ;
+        //     nr++;
+        // } else { //if Jt
+        //     charge_weight *= ( -particles.momentum( 1, ipart )*particles.position( 2, ipart ) + particles.momentum( 2, ipart )*particles.position( 1, ipart ) ) / r ;
+        // }
+    }
+    
+    complex<double> e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/r;
+    complex<double> C_m = 1.;
+    if( imode > 0 ) {
+        C_m = 2.;
+    }
+    for( unsigned int i=0; i<( unsigned int )imode; i++ ) {
+        C_m *= e_theta;
+    }
+    
+    double xpn, ypn;
+    double delta, delta2;
+    double Sl1[5], Sr1[5];
+    
+    // --------------------------------------------------------
+    // Locate particles & Calculate Esirkepov coef. S, DS and W
+    // --------------------------------------------------------
+    
+    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    xpn = particles.position( 0, ipart ) * dl_inv_;
+    int ip = round( xpn + 0.5 * ( type==1 ) );
+    delta  = xpn - ( double )ip;
+    delta2 = delta*delta;
+    Sl1[1] = 0.5 * ( delta2-delta+0.25 );
+    Sl1[2] = 0.75-delta2;
+    Sl1[3] = 0.5 * ( delta2+delta+0.25 );
+    ypn = r * dr_inv_ ;
+    int jp = round( ypn + 0.5*( type==2 ) );
+    delta  = ypn - ( double )jp;
+    delta2 = delta*delta;
+    Sr1[1] = 0.5 * ( delta2-delta+0.25 );
+    Sr1[2] = 0.75-delta2;
+    Sr1[3] = 0.5 * ( delta2+delta+0.25 );
+    
+    // ---------------------------
+    // Calculate the total charge
+    // ---------------------------
+    ip -= i_domain_begin + 2 + bin_shift;
+    jp -= j_domain_begin + 2;
+
+    // complex<double> *rho = &(rhoj[ imode*(bdim0*nr ) ] ) ;
+    
+    for( unsigned int i=1 ; i<4 ; i++ ) {
+        iloc = ( i+ip )*nr+jp;
+        for( unsigned int j=1 ; j<4 ; j++ ) {
+            rhoj [imode*(bdim0*nr )+iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invRd[j+jp];
+        }
+    }//i
 } // END Project for diags local current densities
 
 // Apply boundary conditions on axis for currents and densities
