@@ -175,7 +175,11 @@ void SpeciesV::initCluster( Params &params )
             b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
             b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
             b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
-            b_rho[ibin] = new double[size_proj_buffer_rho];
+            b_rho[ibin] = new double[size_proj_buffer_rho];  
+            for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;              
         }
     } else { // AM geometry
         //! buffers for currents and charge
@@ -196,6 +200,10 @@ void SpeciesV::initCluster( Params &params )
             b_Jr[ibin]    = new std::complex<double>[size_proj_buffer_Jr   ];
             b_Jt[ibin]    = new std::complex<double>[size_proj_buffer_Jt   ];
             b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
+            for (unsigned int i = 0; i < size_proj_buffer_Jl; i++)  b_Jl[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_Jr; i++)  b_Jr[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_Jt; i++)  b_Jt[ibin][i]    = 0.0;
+            for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
         }
     } // end condition on geometry
 #endif
@@ -571,22 +579,21 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
     // calculate the particle dynamics
     // -------------------------------
     
-    // why was this used if the array is resized later? 
-    smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
-    //Prepare for sorting
-    for( unsigned int i=0; i<count.size(); i++ ) {
-        count[i] = 0;
-    }
-
-    int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-    smpi->dynamics_resize( buffer_id, nDim_field, nparts_in_pack );
 
     #pragma omp taskgroup
     {
     if( time_dual>time_frozen_ || Ionize ) { // moving particle
+        // why was this used if the array is resized later? 
+        smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
-            
+        //Prepare for sorting
+        for( unsigned int i=0; i<count.size(); i++ ) {
+            count[i] = 0;
+        }
+
+        int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
+        smpi->dynamics_resize( buffer_id, nDim_field, nparts_in_pack );            
 
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ){ 
 #ifdef  __DETAILED_TIMERS
@@ -997,6 +1004,9 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_ionized[ibin]) 
 #endif
                     {
+                    // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                    // This must be done before Projection 
+                    for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
 
 #ifdef  __DETAILED_TIMERS
                     ithread = omp_get_thread_num();
@@ -1015,6 +1025,9 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                 } // end ibin
 
             } else { // AM case, not yet vectorized
+                // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                // This must be done before Projection 
+                // for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
                 // ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
                 // int n_species = patch->vecSpecies.size();
                 // for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
@@ -1037,6 +1050,9 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     #pragma omp task default(shared) firstprivate(ibin,bin_size0) 
 #endif
                     {
+                    // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                    // This must be done before Projection 
+                    for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
 
 #ifdef  __DETAILED_TIMERS
                     ithread = omp_get_thread_num();
@@ -1055,6 +1071,9 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                 } // end ibin
 
             } else { // AM case, not yet vectorized
+                // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
+                // This must be done before Projection 
+                // for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
                 // ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
                 // int n_species = patch->vecSpecies.size();
                 // for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {

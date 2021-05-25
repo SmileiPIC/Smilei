@@ -470,6 +470,7 @@ void VectorPatch::dynamics( Params &params,
 #endif
             
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
+                if( species(ipatch,ispec)->isProj( time_dual, simWindow ) || diag_flag ) {
                 if (!(species( ipatch, ispec )->ponderomotive_dynamics)){  
                     // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
                     // DO NOT parallelize this species loop unless race condition prevention is used!
@@ -491,7 +492,8 @@ void VectorPatch::dynamics( Params &params,
                             emAM->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
                         }
                     } // ibin
-                }
+                } // end if ponderomotive dynamics
+                } // end if isProj or diag_flag
             } // end species loop
 
 #ifdef  __DETAILED_TIMERS
@@ -508,7 +510,7 @@ void VectorPatch::dynamics( Params &params,
     {   // Compute count array for sorting  
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-                if( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) {
+                if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
                     #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
                     {
                     SpeciesV *spec_task = static_cast<SpeciesV *>(species( ipatch, ispec ));
@@ -522,7 +524,7 @@ void VectorPatch::dynamics( Params &params,
                     } // end cells loop
                     } // end task on array count
                 } else {
-                    if (params.vectorization_mode == "adaptive"){
+                    if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
                         #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
                         {
                         SpeciesVAdaptive *spec_task = static_cast<SpeciesVAdaptive *>(species( ipatch, ispec ));
