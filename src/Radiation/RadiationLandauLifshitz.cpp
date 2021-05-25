@@ -103,9 +103,11 @@ void RadiationLandauLifshitz::operator()(
     // for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
     //     rad_norm_energy[ipart] = 0;
     // }
-    double radiated_energy_loc = 0;
+
     // _______________________________________________________________
     // Computation
+
+    double radiated_energy_loc = 0;
 
     #ifndef _GPU
         #pragma omp simd
