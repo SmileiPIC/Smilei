@@ -58,6 +58,12 @@ public:
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) override;
 
+    // void ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dual, unsigned int ispec,
+    //         ElectroMagn *EMfields,
+    //         Params &params, bool diag_flag,
+    //         Patch *patch, SmileiMPI *smpi,
+    //         std::vector<Diagnostic *> &localDiags, int buffer_id ) override;
+
     //! Method projecting susceptibility, only particles interacting with envelope
     void ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
@@ -73,6 +79,12 @@ public:
             Params &params, bool diag_flag, PartWalls *partWalls,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) override;
+
+    // void ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, unsigned int ispec,
+    //         ElectroMagn *EMfields,
+    //         Params &params, bool diag_flag, PartWalls *partWalls,
+    //         Patch *patch, SmileiMPI *smpi,
+    //         std::vector<Diagnostic *> &localDiags, int buffer_id ) override;
 
     //! Method calculating the Particle charge on the grid (projection)
     void computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old=false ) override;
