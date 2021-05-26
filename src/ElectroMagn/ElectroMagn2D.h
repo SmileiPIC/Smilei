@@ -177,6 +177,10 @@ public:
                               double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, 
                               std::vector<unsigned int> b_dim, bool diag_flag) override final;
 
+    // copy susceptibility projected on sub-buffers to global susceptibility
+    void copyInLocalSusceptibility(int ispec, int ibin, 
+                                   double* b_Chi, std::vector<unsigned int> b_dim, bool diag_flag) override final;
+
 private:
 
 

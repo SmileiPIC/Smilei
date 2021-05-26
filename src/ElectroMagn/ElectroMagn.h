@@ -84,6 +84,10 @@ public:
     virtual void copyInLocalDensities(int ispec, int ibin, 
                                       double* b_Jx, double* b_Jy, double* b_Jz, double* b_rho, 
                                       std::vector<unsigned int> b_dim, bool diag_flag) = 0;
+
+    // copy susceptibility projected on sub-buffers to global susceptibility
+    virtual void copyInLocalSusceptibility(int ispec, int ibin, 
+                                           double* b_Chi, std::vector<unsigned int> b_dim, bool diag_flag) = 0;
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();

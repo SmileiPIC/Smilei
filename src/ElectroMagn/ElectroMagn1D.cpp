@@ -930,3 +930,28 @@ void ElectroMagn1D::copyInLocalDensities(int ispec, int ibin, double* b_Jx, doub
 
 } // end ElectroMagn1D::copyInLocalDensities
 
+void ElectroMagn1D::copyInLocalSusceptibility(int ispec, int ibin, 
+                          double *b_Chi, std::vector<unsigned int> b_dim, bool diag_flag)
+{
+    Field1D *Chi1D;
+
+    //cout << "In";
+    int iloc;
+    // Introduced to avoid indirection in data access b_rho[i*b_dim[1]+j]
+    int b_dim0 = b_dim[0];
+
+    if ( (Env_Chi_s [ispec] != NULL) & diag_flag){
+        Chi1D  = static_cast<Field1D *>(Env_Chi_s[ispec]) ;
+    } else {
+        Chi1D  = static_cast<Field1D *>(Env_Chi_);
+    }
+
+    // Env_Chi (p,p,p)
+    for (int i = 0; i < b_dim0 ; i++) {
+	      iloc = ibin + i ;
+      
+        (*Chi1D)(iloc) +=  b_Chi[i];     
+    }
+  
+} // end ElectroMagn2D::copyInLocalSusceptibility
+

@@ -2067,3 +2067,33 @@ void ElectroMagn3D::copyInLocalDensities(int ispec, int ibin, double* b_Jx, doub
     }
 
 } // end ElectroMagn3D::copyInLocalDensities
+
+void ElectroMagn3D::copyInLocalSusceptibility(int ispec, int ibin, 
+                          double *b_Chi, std::vector<unsigned int> b_dim, bool diag_flag)
+{
+    Field3D *Chi3D;
+
+    //cout << "In";
+    int iloc;
+    // Introduced to avoid indirection in data access b_rho[i*b_dim[1]+j]
+    int b_dim0 = b_dim[0];
+    int b_dim1 = b_dim[1];
+    int b_dim2 = b_dim[2];
+
+    if ( (Env_Chi_s [ispec] != NULL) & diag_flag){
+        Chi3D  = static_cast<Field3D *>(Env_Chi_s[ispec]) ;
+    } else {
+        Chi3D  = static_cast<Field3D *>(Env_Chi_);
+    }
+
+    // Env_Chi (p,p,p)
+    for (int i = 0; i < b_dim0 ; i++) {
+	      iloc = ibin + i ;
+        for (int j = 0; j < b_dim1 ; j++) {
+            for (int k = 0; k < b_dim2 ; k++) {        
+	              (*Chi3D)(iloc,j,k) +=  b_Chi[(i*b_dim1+j)*b_dim2+k];   
+            }
+        }
+    }
+  
+} // end ElectroMagn3D::copyInLocalSusceptibility
