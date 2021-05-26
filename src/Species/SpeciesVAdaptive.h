@@ -44,7 +44,7 @@ public:
                                PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
                                RadiationTables &RadiationTables,
                                MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                               std::vector<Diagnostic *> &localDiags, int buffer_id );
+                               std::vector<Diagnostic *> &localDiags, int buffer_id ) override;
                           
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell

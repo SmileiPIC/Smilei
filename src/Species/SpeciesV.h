@@ -49,7 +49,7 @@ public:
                    PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
                    RadiationTables &RadiationTables,
                    MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                   std::vector<Diagnostic *> &localDiags, int buffer_id );
+                   std::vector<Diagnostic *> &localDiags, int buffer_id ) override;
 
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,

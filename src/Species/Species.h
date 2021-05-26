@@ -367,7 +367,7 @@ public:
                            std::vector<Diagnostic *> &localDiags );
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection, ...) with tasks
-    void dynamicsTasks(     double time, unsigned int ispec,
+    virtual void dynamicsTasks(     double time, unsigned int ispec,
                             ElectroMagn *EMfields,
                             Params &params, bool diag_flag,
                             PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
@@ -419,6 +419,15 @@ public:
                                   RadiationTables &RadiationTables,
                                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                                   std::vector<Diagnostic *> &localDiags );
+
+    //! Method calculating the Particle dynamics with scalar operators (interpolation, pusher, projection) with tasks
+    virtual void scalarDynamicsTasks( double time, unsigned int ispec,
+                                  ElectroMagn *EMfields,
+                                  Params &params, bool diag_flag,
+                                  PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
+                                  RadiationTables &RadiationTables,
+                                  MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                                  std::vector<Diagnostic *> &localDiags, int buffer_id ) {};
 
     virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
