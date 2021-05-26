@@ -771,7 +771,6 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
     complex<double>  Jl_p[5][5], Jr_p[5][5];
     complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m = 1.; //, C_m_old;
-    complex<double> *Jl, *Jr, *Jt, *rho;
    
     for( unsigned int i=0; i<5; i++ ) {
         Sl1[i] = 0.;
