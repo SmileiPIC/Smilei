@@ -636,7 +636,6 @@ void Projector2D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
 void Projector2D2Order::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 
 {
-    double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 );
     
     std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Phipart     = &( smpi->dynamics_PHIpart[ithread] );
