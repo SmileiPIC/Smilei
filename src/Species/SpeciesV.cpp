@@ -66,7 +66,7 @@ SpeciesV::SpeciesV( Params &params, Patch *patch ) :
     if ( nDim_field >= 2 ) { bin_ncells_transverse *= ( f_dim1-2*oversize[1] ) ; } 
     if ( nDim_field == 3 ) { bin_ncells_transverse *= ( f_dim2-2*oversize[2] ) ; }
 
-    for (int ibin = 0; ibin < Nbins; ibin++){
+    for (unsigned int ibin = 0; ibin < Nbins; ibin++){
 
         if (ibin == 0){
             first_cell_of_bin[ibin]     = 0;
@@ -175,13 +175,14 @@ void SpeciesV::initCluster( Params &params )
             b_Jx[ibin]  = new double[size_proj_buffer_Jx ];
             b_Jy[ibin]  = new double[size_proj_buffer_Jy ];
             b_Jz[ibin]  = new double[size_proj_buffer_Jz ];
-            b_rho[ibin] = new double[size_proj_buffer_rho];  
+            b_rho[ibin] = new double[size_proj_buffer_rho];
+            // Put to zero the grid sub-buffers  
             for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]    = 0.0;
             for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]    = 0.0;
             for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]    = 0.0;
             for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;              
         }
-    } else { // AM geometry
+    } else { // AM geometry, not yet vectorized
         //! buffers for currents and charge
         size_proj_buffer_rhoAM = b_dim[0]*b_dim[1]    * params.nmodes; // used for rhoAM
         size_proj_buffer_Jl    = b_dim[0]*b_dim[1]    * params.nmodes; // used for Jl
@@ -200,6 +201,7 @@ void SpeciesV::initCluster( Params &params )
             b_Jr[ibin]    = new std::complex<double>[size_proj_buffer_Jr   ];
             b_Jt[ibin]    = new std::complex<double>[size_proj_buffer_Jt   ];
             b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
+            // Put to zero the grid sub-buffers
             for (unsigned int i = 0; i < size_proj_buffer_Jl; i++)  b_Jl[ibin][i]    = 0.0;
             for (unsigned int i = 0; i < size_proj_buffer_Jr; i++)  b_Jr[ibin][i]    = 0.0;
             for (unsigned int i = 0; i < size_proj_buffer_Jt; i++)  b_Jt[ibin][i]    = 0.0;
@@ -515,7 +517,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
     double timer;
     int ithread;
 #endif
-    int bin_size0 = b_dim[0];
+    int bin_size0 = b_dim[0]; // used for AM
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         nrj_lost_per_bin[ibin] = 0.;
         nrj_radiation_per_bin[ibin] = 0.;
@@ -572,7 +574,6 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 
     //unsigned int iPart;
 
-    int tid( 0 );
     std::vector<double> nrj_lost_per_thd( 1, 0. );
     int ipack = 0;
     // -------------------------------
@@ -625,7 +626,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
 
             // Interpolate the fields at the particle position
-            for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
+            for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                 Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[scell] ),
                                        &( particles->last_index[scell] ),
                                        buffer_id, particles->first_index[0] );
@@ -791,7 +792,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
             // clean decayed photons from arrays 
             // this loop must not be parallelized unless race conditions are prevented
-            for( unsigned int scell = first_cell_of_bin[0] ; scell <= last_cell_of_bin[Nbins-1] ; scell++ ){
+            for( int scell = first_cell_of_bin[0] ; scell <= last_cell_of_bin[Nbins-1] ; scell++ ){
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                     *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id );
             } // end scell              
@@ -854,7 +855,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             length[1]=params.n_space[1]+1;
             length[2]=params.n_space[2]+1;
 
-            for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
+            for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
             
                 double ener_iPart( 0. );
                 // Apply wall and boundary conditions
@@ -934,7 +935,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             // Do not project if a photon
             if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
                 if (params.geometry != "AMcylindrical"){
-                    for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
+                    for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
                         Proj->currentsAndDensityWrapperOnBuffers(
                             b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
                             ibin*clrw, *particles, smpi, 

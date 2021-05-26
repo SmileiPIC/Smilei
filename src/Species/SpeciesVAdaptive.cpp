@@ -311,11 +311,12 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
     double timer;
     int ithread;
 #endif
-    int bin_size0 = b_dim[0];
+    
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         nrj_lost_per_bin[ibin] = 0.;
         nrj_radiation_per_bin[ibin] = 0.;
     }
+    int bin_size0 = b_dim[0]; // used for AM
     // Init tags for the task dependencies of the particle operations
     int *bin_has_interpolated                   = new int[Nbins+1]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
     int *bin_has_ionized                        = new int[Nbins];
@@ -368,7 +369,6 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
 
     //unsigned int iPart;
 
-    int tid( 0 );
     std::vector<double> nrj_lost_per_thd( 1, 0. );
     int ipack = 0;
     // -------------------------------
@@ -588,7 +588,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
 #endif
             // clean decayed photons from arrays 
             // this loop must not be parallelized unless race conditions are prevented
-            for( unsigned int scell = first_cell_of_bin[0] ; scell <= last_cell_of_bin[Nbins-1] ; scell++ ){
+            for( int scell = first_cell_of_bin[0] ; scell <= last_cell_of_bin[Nbins-1] ; scell++ ){
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                     *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id );
             } // end scell              
@@ -651,7 +651,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
             length[1]=params.n_space[1]+1;
             length[2]=params.n_space[2]+1;
 
-            for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
+            for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
             
                 double ener_iPart( 0. );
                 // Apply wall and boundary conditions
@@ -797,6 +797,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_ionized[ibin]) 
 #endif
                 {
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
 
 #ifdef  __DETAILED_TIMERS
                 ithread = omp_get_thread_num();
@@ -819,7 +820,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 #pragma omp task default(shared) firstprivate(ibin,bin_size0) 
 #endif
                 {
-
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
 #ifdef  __DETAILED_TIMERS
                 ithread = omp_get_thread_num();
                 timer = MPI_Wtime();

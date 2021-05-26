@@ -191,6 +191,14 @@ void Species::initCluster( Params &params )
                 if (params.Laser_Envelope_model){ // Chi has the same size of rho
                     b_Chi[ibin] = new double[size_proj_buffer_rho];
                 }
+                // Put to zero the grid sub-buffers
+                for (unsigned int i = 0; i < size_proj_buffer_Jx; i++)  b_Jx[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jy; i++)  b_Jy[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jz; i++)  b_Jz[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0; 
+                if (params.Laser_Envelope_model){
+                    for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_Chi[ibin][i]   = 0.0; 
+                }
             }
         } else { // AM geometry
             //! buffers for currents and charge
@@ -216,6 +224,14 @@ void Species::initCluster( Params &params )
                 b_rhoAM[ibin] = new std::complex<double>[size_proj_buffer_rhoAM];
                 if (params.Laser_Envelope_model){ // Chi has the same size of rho
                     b_ChiAM[ibin] = new double[size_proj_buffer_rhoAM];
+                }
+                // Put to zero the grid sub-buffers
+                for (unsigned int i = 0; i < size_proj_buffer_Jl; i++)  b_Jl[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jr; i++)  b_Jr[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_Jt; i++)  b_Jt[ibin][i]    = 0.0;
+                for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
+                if (params.Laser_Envelope_model){
+                    for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_ChiAM[ibin][i] = 0.0;
                 }
             }
         } // end condition on geometry
@@ -1139,6 +1155,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         #pragma omp task default(shared) firstprivate(ibin)
 #endif
                         {
+                        for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
 #ifdef  __DETAILED_TIMERS
                         ithread = omp_get_thread_num();
                         timer = MPI_Wtime();
@@ -1161,6 +1178,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         #pragma omp task default(shared) firstprivate(ibin,bin_size0)
 #endif
                         {
+                        for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i]   = 0.0;
 #ifdef  __DETAILED_TIMERS
                         ithread = omp_get_thread_num();
                         timer = MPI_Wtime();

@@ -470,9 +470,9 @@ void VectorPatch::dynamics( Params &params,
 #endif
             
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
-                if( species(ipatch,ispec)->isProj( time_dual, simWindow ) || diag_flag ) {
-                if (!(species( ipatch, ispec )->ponderomotive_dynamics)){  
+                if(( species(ipatch,ispec)->isProj( time_dual, simWindow ) || diag_flag ) && (!(species( ipatch, ispec )->ponderomotive_dynamics)) ) {  
                     // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
+                    // Frozen Species are reduced only if diag_flag
                     // DO NOT parallelize this species loop unless race condition prevention is used!
                     Species *spec_task = species( ipatch, ispec );
                     std::vector<unsigned int> b_dim = spec_task->b_dim;
@@ -492,8 +492,7 @@ void VectorPatch::dynamics( Params &params,
                             emAM->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
                         }
                     } // ibin
-                } // end if ponderomotive dynamics
-                } // end if isProj or diag_flag
+                } // end if (isProj or diag_flag) & (!ponderomotive dynamics)
             } // end species loop
 
 #ifdef  __DETAILED_TIMERS
@@ -4375,18 +4374,20 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
             
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
                 // DO NOT parallelize this species loop unless race condition prevention is used!
-                Species *spec_task = species( ipatch, ispec );
-                std::vector<unsigned int> b_dim = spec_task->b_dim;
-                for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
-                    if (params.geometry != "AMcylindrical"){
-                        double *b_Chi            = spec_task->b_Chi[ibin];
-                        // (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
-                    } else { // AM geometry
-                        double *b_ChiAM = spec_task->b_ChiAM[ibin];
-                        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-                        emAM->copyInLocalAMSusceptibility(ispec, ibin*clrw, b_ChiAM, b_dim, diag_flag);
+                if (( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag){
+                    Species *spec_task = species( ipatch, ispec );
+                    std::vector<unsigned int> b_dim = spec_task->b_dim;
+                    for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
+                        if (params.geometry != "AMcylindrical"){
+                            double *b_Chi   = spec_task->b_Chi[ibin];
+                            (( *this )( ipatch )->EMfields)->copyInLocalSusceptibility(ispec, ibin*clrw, b_Chi, b_dim, diag_flag);
+                        } else { // AM geometry
+                            double *b_ChiAM = spec_task->b_ChiAM[ibin];
+                            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                            emAM->copyInLocalAMSusceptibility(ispec, ibin*clrw, b_ChiAM, b_dim, diag_flag);
                     }
                 } // ibin
+                }
             } // end species loop
 
 #ifdef  __DETAILED_TIMERS
@@ -4528,8 +4529,9 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 #endif
             
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
-                if ((species( ipatch, ispec )->ponderomotive_dynamics)){  
+                if( (species( ipatch, ispec )->isProj( time_dual, simWindow ) || diag_flag )){
                     // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
+                    // Frozen species are projected only if diag_flag
                     // DO NOT parallelize this species loop unless race condition prevention is used!
                     Species *spec_task = species( ipatch, ispec );
                     std::vector<unsigned int> b_dim = spec_task->b_dim;
@@ -4549,7 +4551,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
                             emAM->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
                         }
                     } // ibin
-                }
+                } // end if (isProj or diag_flag)
             } // end species loop
 
 #ifdef  __DETAILED_TIMERS
