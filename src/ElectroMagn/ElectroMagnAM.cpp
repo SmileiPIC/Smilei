@@ -1928,7 +1928,6 @@ void ElectroMagnAM::copyInLocalAMSusceptibility(int ispec, int ibin,
 {
     Field2D *ChiAM;
 
-    unsigned int n_species = Jl_s.size() / nmodes;
     //cout << "In";
     int iloc;
     // Introduced to avoid indirection in data access b_rho[i*b_dim[1]+j]
