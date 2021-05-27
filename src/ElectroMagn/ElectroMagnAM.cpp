@@ -1922,7 +1922,7 @@ void ElectroMagnAM::copyInLocalAMDensities(int ispec, int ibin,
     
 } // end ElectroMagnAM::copyInLocalAMDensities
 
-void ElectroMagnAM::copyInLocalAMSusceptibility(int ispec, int ibin, 
+void ElectroMagnAM::copyInLocalSusceptibility(int ispec, int ibin, 
                           double *b_ChiAM,
                           std::vector<unsigned int> b_dim, bool diag_flag)
 {
@@ -1952,5 +1952,5 @@ void ElectroMagnAM::copyInLocalAMSusceptibility(int ispec, int ibin,
         }
     }
   
-} // end ElectroMagnAM::copyInLocalAMSusceptibility
+} // end ElectroMagnAM::copyInLocalSusceptibility
 

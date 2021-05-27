@@ -488,8 +488,7 @@ void VectorPatch::dynamics( Params &params,
                             complex<double> *b_Jr    = spec_task->b_Jr[ibin];
                             complex<double> *b_Jt    = spec_task->b_Jt[ibin];
                             complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
-                            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-                            emAM->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
+                            (( *this )( ipatch )->EMfields)->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
                         }
                     } // ibin
                 } // end if (isProj or diag_flag) & (!ponderomotive dynamics)
@@ -4383,8 +4382,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
                             (( *this )( ipatch )->EMfields)->copyInLocalSusceptibility(ispec, ibin*clrw, b_Chi, b_dim, diag_flag);
                         } else { // AM geometry
                             double *b_ChiAM = spec_task->b_ChiAM[ibin];
-                            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-                            emAM->copyInLocalAMSusceptibility(ispec, ibin*clrw, b_ChiAM, b_dim, diag_flag);
+                            (( *this )( ipatch )->EMfields)->copyInLocalSusceptibility(ispec, ibin*clrw, b_ChiAM, b_dim, diag_flag);
                     }
                 } // ibin
                 }
@@ -4547,8 +4545,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
                             complex<double> *b_Jr    = spec_task->b_Jr[ibin];
                             complex<double> *b_Jt    = spec_task->b_Jt[ibin];
                             complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
-                            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-                            emAM->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
+                            (( *this )( ipatch )->EMfields)->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
                         }
                     } // ibin
                 } // end if (isProj or diag_flag)

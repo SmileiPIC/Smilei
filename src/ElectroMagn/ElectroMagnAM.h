@@ -243,16 +243,12 @@ public:
     void copyInLocalAMDensities(int ispec, int ibin, 
                               std::complex<double> *b_Jl, std::complex<double> *b_Jr, 
                               std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, 
-                              std::vector<unsigned int> b_dim, bool diag_flag);  
+                              std::vector<unsigned int> b_dim, bool diag_flag) override final;  
 
     // copy susceptibility projected on sub-buffers to global susceptibility
     void copyInLocalSusceptibility(int ispec, int ibin, 
-                                   double* b_Chi, std::vector<unsigned int> b_dim, bool diag_flag) override final {};
+                                   double* b_Chi, std::vector<unsigned int> b_dim, bool diag_flag) override final;
 
-    // copy susceptibility projected on sub-buffers to global susceptibility
-    void copyInLocalAMSusceptibility(int ispec, int ibin, 
-                              double *b_ChiAM,
-                              std::vector<unsigned int> b_dim, bool diag_flag);  
 };
 
 #endif
