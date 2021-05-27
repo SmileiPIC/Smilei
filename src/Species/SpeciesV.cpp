@@ -944,8 +944,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     } // end scell loop
                 } else {
                     // for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
-                    // ProjectorAM2Order *ProjAM = static_cast<ProjectorAM2Order *>(Proj);
-                    // ProjAM->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
+                    // Proj->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
                     //                                             ibin*clrw, bin_size0, *particles, smpi, 
                     //                                             particles->first_index[scell], particles->last_index[scell], 
                     //                                             buffer_id, diag_flag);

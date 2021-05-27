@@ -889,7 +889,7 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
     
 }
 
-void Projector3D2OrderV::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void Projector3D2OrderV::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, int bdim0, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 {
     
     int iold[3];

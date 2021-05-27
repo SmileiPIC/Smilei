@@ -1048,8 +1048,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                                                               particles->first_index[ibin], particles->last_index[ibin], 
                                                               buffer_id, diag_flag, params.is_spectral, ispec );
                 } else {
-                    ProjectorAM2Order *ProjAM = static_cast<ProjectorAM2Order *>(Proj);
-                    ProjAM->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
+                    Proj->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
                                                                 ibin*clrw, bin_size0, *particles, smpi, 
                                                                 particles->first_index[ibin], particles->last_index[ibin], 
                                                                 buffer_id, diag_flag);
@@ -2038,16 +2037,16 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
                 
                 if (params.geometry != "AMcylindrical"){
                     Proj->susceptibilityOnBuffer( EMfields, b_Chi[ibin], 
-                                                      ibin*clrw, *particles, mass_, smpi, 
-                                                      particles->first_index[ibin], particles->last_index[ibin], 
-                                                      buffer_id );
+                                                  ibin*clrw, bin_size0, 
+                                                  *particles, mass_, smpi, 
+                                                  particles->first_index[ibin], particles->last_index[ibin], 
+                                                  buffer_id );
                 } else {
-                    ProjectorAM2Order *ProjAM = static_cast<ProjectorAM2Order *>(Proj);
-                    ProjAM->susceptibilityOnAMBuffer( EMfields, b_ChiAM[ibin], 
-                                                      ibin*clrw, bin_size0,
-                                                      *particles, mass_, smpi, 
-                                                      particles->first_index[ibin], particles->last_index[ibin], 
-                                                      buffer_id );
+                    Proj->susceptibilityOnBuffer( EMfields, b_ChiAM[ibin], 
+                                                  ibin*clrw, bin_size0,
+                                                  *particles, mass_, smpi, 
+                                                  particles->first_index[ibin], particles->last_index[ibin], 
+                                                  buffer_id );
                 } // end if geometry
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[8*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -2408,11 +2407,10 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
                                                               particles->first_index[ibin], particles->last_index[ibin], 
                                                               buffer_id, diag_flag, params.is_spectral, ispec );
                   } else {
-                    ProjectorAM2Order *ProjAM = static_cast<ProjectorAM2Order *>(Proj);
-                    ProjAM->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
-                                                                            ibin*clrw, bin_size0, *particles, smpi, 
-                                                                            particles->first_index[ibin], particles->last_index[ibin], 
-                                                                            buffer_id, diag_flag);
+                    Proj->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
+                                                                ibin*clrw, bin_size0, *particles, smpi, 
+                                                                particles->first_index[ibin], particles->last_index[ibin], 
+                                                                buffer_id, diag_flag);
                   } // end if AM
             } // end condition on test and mass
 

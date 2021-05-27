@@ -890,7 +890,7 @@ void Projector3D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
 } // end sumSusceptibility
 
 // Projector for susceptibility used as source term in envelope equation, with tasks
-void Projector3D2Order::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void Projector3D2Order::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, int bdim0, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 {
     
     std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );

@@ -51,18 +51,16 @@ public:
 
     //!Wrapper for tasks
     virtual void currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_width, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell = 0, int ipart_ref = 0 ) = 0;
+
+    //!Wrapper for projection on AM buffers
+    virtual void currentsAndDensityWrapperOnAMBuffers( ElectroMagn *EMfields, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, int bin_shift, int bdim0, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, int ipart_ref = 0 ) {};
     
     virtual void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 )
     {
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
 
-    virtual void susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_ChiAM, int bin_shift, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 )
-    {
-        ERROR( "Envelope with tasks not implemented with this geometry and this order" );
-    };
-
-    virtual void susceptibilityOnAMBuffer( ElectroMagn *EMfields, double *b_ChiAM, int bin_shift, int bdim0, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 )
+    virtual void susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, int bdim0, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 )
     {
         ERROR( "Envelope with tasks not implemented with this geometry and this order" );
     };

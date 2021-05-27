@@ -633,7 +633,7 @@ void Projector2D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
 }
 
 // Projector for susceptibility used as source term in envelope equation for tasks
-void Projector2D2Order::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void Projector2D2Order::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b_Chi, int bin_shift, int bdim0, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 
 {
     
