@@ -948,8 +948,7 @@ void ElectroMagn1D::copyInLocalSusceptibility(int ispec, int ibin,
 
     // Env_Chi (p,p,p)
     for (int i = 0; i < b_dim0 ; i++) {
-	      iloc = ibin + i ;
-      
+        iloc = ibin + i ;
         (*Chi1D)(iloc) +=  b_Chi[i];     
     }
   
