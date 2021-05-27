@@ -115,8 +115,6 @@ public:
                                  SmileiMPI *smpi,
                                  std::vector<Diagnostic *> &localDiags )override;
 
-    int Ncells;
-
     // used for tasks 
     std::vector<int> first_cell_of_bin;
     std::vector<int> last_cell_of_bin;

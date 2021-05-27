@@ -511,7 +511,7 @@ void VectorPatch::dynamics( Params &params,
                 if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
                     #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
                     {
-                    SpeciesV *spec_task = static_cast<SpeciesV *>(species( ipatch, ispec ));
+                    Species *spec_task = species( ipatch, ispec );
                     for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                         for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
                             if ( spec_task->particles->cell_keys[iPart] != -1 ) {
@@ -525,7 +525,7 @@ void VectorPatch::dynamics( Params &params,
                     if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
                         #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
                         {
-                        SpeciesVAdaptive *spec_task = static_cast<SpeciesVAdaptive *>(species( ipatch, ispec ));
+                        Species *spec_task = species( ipatch, ispec );
                         for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                             for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
                                 if ( spec_task->particles->cell_keys[iPart] != -1 ) {

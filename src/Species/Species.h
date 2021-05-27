@@ -647,6 +647,9 @@ public:
     // Number of bins for the use of tasks
     unsigned int Nbins;
 
+    // Number of cells used fot tasks + vectorization
+    int Ncells;
+
     // buffers for bin projection when tasks are used
     std::vector<double *> b_Jx;
     std::vector<double *> b_Jy;
