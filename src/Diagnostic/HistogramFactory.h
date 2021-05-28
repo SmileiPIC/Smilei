@@ -95,11 +95,17 @@ public:
         }
         
         // Loop axes and extract their format
+        unsigned int i_user_function = 0;
         for( unsigned int iaxis=0; iaxis<pyAxes.size(); iaxis++ ) {
             std::ostringstream t( "" );
             t << errorPrefix << ", axis " << iaxis << ": ";
             
             HistogramAxis *axis = createAxis( pyAxes[iaxis], params, species, patch, excluded_axes, t.str() );
+            
+            if( axis->type == "user_function" ) {
+                axis->type += std::to_string( i_user_function );
+                i_user_function++;
+            }
             
             histogram->axes.push_back( axis );
         }
@@ -160,9 +166,7 @@ public:
                 std::ostringstream typePrefix( "" );
                 typePrefix << errorPrefix << ": type";
                 ParticleData test( params.nDim_particle, type_object, typePrefix.str(), dummy );
-                std::ostringstream t( "" );
-                t << "user_function";
-                type = t.str();
+                type ="user_function";
 #else
                 ERROR( errorPrefix << ": First item must be a string (axis type)" );
 #endif
@@ -278,7 +282,7 @@ public:
                 axis = new HistogramAxis_chi();
             }
 #ifdef SMILEI_USE_NUMPY
-            else if( type.substr( 0, 13 ) == "user_function" ) {
+            else if( type == "user_function" ) {
                 axis = new HistogramAxis_user_function( type_object );
             }
 #endif
