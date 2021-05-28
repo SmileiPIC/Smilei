@@ -62,7 +62,7 @@ DiagnosticParticleBinningBase::DiagnosticParticleBinningBase(
         ERROR( errorPrefix << ": parameter `species` required" );
     }
     // verify that the species exist, remove duplicates and sort by number
-    species = params.FindSpecies( patch->vecSpecies, species_names );
+    species_indices = params.FindSpecies( patch->vecSpecies, species_names );
     
 //    // Temporarily set the spatial min and max to the simulation box size
 //    spatial_min.resize( params.nDim_particle, 0. );
@@ -74,7 +74,7 @@ DiagnosticParticleBinningBase::DiagnosticParticleBinningBase(
     vector<PyObject *> pyAxes=PyTools::extract_pyVec( "axes", pyDiag, idiag );
     
     // Create the Histogram object based on the extracted parameters above
-    histogram = HistogramFactory::create( params, deposited_quantity, pyAxes, species, patch, excluded_axes, errorPrefix );
+    histogram = HistogramFactory::create( params, deposited_quantity, pyAxes, species_indices, patch, excluded_axes, errorPrefix );
     total_axes = histogram->axes.size();
     dims.resize( total_axes );
     for( int iaxis=0; iaxis<total_axes; iaxis++ ) {
@@ -154,8 +154,8 @@ void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi )
     // write all species
     ostringstream mystream( "" );
     mystream.str( "" ); // clear
-    for( unsigned int i=0 ; i < species.size() ; i++ ) {
-        mystream << species[i] << " ";
+    for( unsigned int i=0 ; i < species_indices.size() ; i++ ) {
+        mystream << species_indices[i] << " ";
     }
     file_->attr( "species", mystream.str() );
     // write each axis
@@ -216,9 +216,6 @@ bool DiagnosticParticleBinningBase::prepare( int itime )
 void DiagnosticParticleBinningBase::run( Patch *patch, int itime, SimWindow *simWindow )
 {
 
-    vector<int> int_buffer;
-    vector<double> double_buffer;
-    unsigned int npart;
     
 //    // Update spatial_min and spatial_max if needed
 //    if( simWindow ) {
@@ -236,21 +233,20 @@ void DiagnosticParticleBinningBase::run( Patch *patch, int itime, SimWindow *sim
 //        }
 //    }
     
-    // loop species
-    for( unsigned int ispec=0 ; ispec < species.size() ; ispec++ ) {
-    
-        Species *s = patch->vecSpecies[species[ispec]];
-        npart = s->particles->size();
-        int_buffer   .resize( npart );
-        double_buffer.resize( npart );
-        
-        fill( int_buffer.begin(), int_buffer.end(), 0 );
-        
-        histogram->digitize( s, double_buffer, int_buffer, simWindow );
-        histogram->valuate( s, double_buffer, int_buffer );
-        histogram->distribute( double_buffer, int_buffer, data_sum );
-        
+    // Calculate the total number of particles in this patch and resize buffers
+    unsigned int npart = 0;
+    vector<Species *> species;
+    for( unsigned int ispec=0 ; ispec < species_indices.size() ; ispec++ ) {
+        Species *s = patch->vecSpecies[species_indices[ispec]];
+        species.push_back( s );
+        npart += s->getNbrOfParticles();
     }
+    vector<int> int_buffer( npart, 0 );
+    vector<double> double_buffer( npart );
+    
+    histogram->digitize( species, double_buffer, int_buffer, simWindow );
+    histogram->valuate( species, double_buffer, int_buffer );
+    histogram->distribute( double_buffer, int_buffer, data_sum );
     
 } // END run
 

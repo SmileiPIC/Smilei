@@ -7,23 +7,27 @@
 using namespace std;
 
 // Loop on the different axes requested and compute the output index of each particle
-void Histogram::digitize( Species *s,
-                          std::vector<double> &double_buffer,
-                          std::vector<int>    &int_buffer,
+void Histogram::digitize( vector<Species *> species,
+                          vector<double> &double_buffer,
+                          vector<int>    &int_buffer,
                           SimWindow *simWindow )
 {
-    unsigned int ipart, npart=s->particles->size();
-    int ind;
+    unsigned int npart = double_buffer.size();
     
     for( unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++ ) {
     
         // first loop on particles to store the indexing (axis) quantity
-        axes[iaxis]->digitize( s, double_buffer, int_buffer, npart, simWindow );
+        unsigned int istart = 0;
+        for( unsigned int ispec=0; ispec < species.size(); ispec++ ) {
+            unsigned int npart = species[ispec]->getNbrOfParticles();
+            axes[iaxis]->calculate_locations( species[ispec], &double_buffer[istart], &int_buffer[istart], npart, simWindow );
+            istart += npart;
+        }
         // Now, double_buffer has the location of each particle along the axis
         
         // if log scale, loop again and convert to log
         if( axes[iaxis]->logscale ) {
-            for( ipart = 0 ; ipart < npart ; ipart++ ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( int_buffer[ipart] < 0 ) {
                     continue;
                 }
@@ -35,7 +39,7 @@ void Histogram::digitize( Species *s,
         // For instance, in 3d, the index has the form  i = i3 + n3*( i2 + n2*i1 )
         // Here we do the multiplication by n3 or n2 (etc.)
         if( iaxis>0 ) {
-            for( ipart = 0 ; ipart < npart ; ipart++ ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 int_buffer[ipart] *= axes[iaxis]->nbins;
             }
         }
@@ -44,13 +48,13 @@ void Histogram::digitize( Species *s,
         // This is separated in two cases: edge_inclusive and edge_exclusive
         if( !axes[iaxis]->edge_inclusive ) { // if the particles out of the "box" must be excluded
         
-            for( ipart = 0 ; ipart < npart ; ipart++ ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 // skip already discarded particles
                 if( int_buffer[ipart] < 0 ) {
                     continue;
                 }
                 // calculate index
-                ind = floor( ( double_buffer[ipart]-axes[iaxis]->actual_min ) * axes[iaxis]->coeff );
+                int ind = floor( ( double_buffer[ipart]-axes[iaxis]->actual_min ) * axes[iaxis]->coeff );
                 // index valid only if in the "box"
                 if( ind >= 0  &&  ind < axes[iaxis]->nbins ) {
                     int_buffer[ipart] += ind;
@@ -61,13 +65,13 @@ void Histogram::digitize( Species *s,
             
         } else { // if the particles out of the "box" must be included
         
-            for( ipart = 0 ; ipart < npart ; ipart++ ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 // skip already discarded particles
                 if( int_buffer[ipart] < 0 ) {
                     continue;
                 }
                 // calculate index
-                ind = floor( ( double_buffer[ipart]-axes[iaxis]->actual_min ) * axes[iaxis]->coeff );
+                int ind = floor( ( double_buffer[ipart]-axes[iaxis]->actual_min ) * axes[iaxis]->coeff );
                 // move out-of-range indexes back into range
                 if( ind < 0 ) {
                     ind = 0;
