@@ -508,21 +508,8 @@ void VectorPatch::dynamics( Params &params,
     {   // Compute count array for sorting  
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-                if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
-                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
-                    {
-                    Species *spec_task = species( ipatch, ispec );
-                    for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
-                        for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-                            if ( spec_task->particles->cell_keys[iPart] != -1 ) {
-                                //First reduction of the count sort algorithm. Lost particles are not included.
-                                spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
-                            }
-                        } // end iPart loop
-                    } // end cells loop
-                    } // end task on array count
-                } else {
-                    if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
+                if (!species( ipatch, ispec )->ponderomotive_dynamics){
+                    if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
                         #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
                         {
                         Species *spec_task = species( ipatch, ispec );
@@ -535,8 +522,23 @@ void VectorPatch::dynamics( Params &params,
                             } // end iPart loop
                         } // end cells loop
                         } // end task on array count
-                    } // end if vectorization is adaptive
-                }// end if on vectorized operators
+                    } else {
+                        if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
+                            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
+                            {
+                            Species *spec_task = species( ipatch, ispec );
+                            for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+                                for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+                                    if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                                        //First reduction of the count sort algorithm. Lost particles are not included.
+                                        spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+                                    }
+                                } // end iPart loop
+                            } // end cells loop
+                            } // end task on array count
+                        } // end if vectorization is adaptive
+                    }// end if on vectorized operators
+                } // end if ponderomotive_dynamics
             } // end ispec
         } // end ipatch 
 
@@ -4316,19 +4318,45 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
                 if( species( ipatch, ispec )->ponderomotive_dynamics ) {
-                    if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting )
+                    if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting ){
+#ifndef _OMPTASKS
                         species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag,
                                 ( *this )( ipatch ), smpi,
                                 localDiags );
-                    else {
+#else
+                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_ponderomotive_update_susceptibility_and_momentum[ipatch][ispec])
+                        { // every call of dynamics for a couple ipatch-ispec is an independent task
+                        Species *spec_task = species( ipatch, ispec );
+                        int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                        spec_task->ponderomotiveUpdateSusceptibilityAndMomentumTasks( time_dual, ispec,
+                                   emfields( ipatch ),
+                                   params, diag_flag,
+                                   ( *this )( ipatch ), smpi,
+                                   localDiags, buffer_id );
+                        }
+#endif
+                    } else {
                         if( params.vectorization_mode == "adaptive" ) {
+#ifndef _OMPTASKS
                             species( ipatch, ispec )->scalarPonderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag,
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
+#else
+                            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_ponderomotive_update_susceptibility_and_momentum[ipatch][ispec])
+                            { // every call of dynamics for a couple ipatch-ispec is an independent task
+                            Species *spec_task = species( ipatch, ispec );
+                            int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                            spec_task->scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( time_dual, ispec,
+                                    emfields( ipatch ),
+                                    params, diag_flag,
+                                    ( *this )( ipatch ), smpi,
+                                    localDiags, buffer_id );
+                            } // end task
+#endif
                         } else {
 #ifndef _OMPTASKS  
                             species( ipatch, ispec )->Species::ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
@@ -4470,20 +4498,46 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
                 if( species( ipatch, ispec )->ponderomotive_dynamics ) {
-                    if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting )
+                    if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting ){
+#ifndef _OMPTASKS
                         species( ipatch, ispec )->ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag, partwalls( ipatch ),
                                 ( *this )( ipatch ), smpi,
                                 localDiags );
-                    else {
+#else
+                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
+                        { // every call of dynamics for a couple ipatch-ispec is an independent task
+                        Species *spec_task = species( ipatch, ispec );
+                        int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                        spec_task->ponderomotiveUpdatePositionAndCurrentsTasks( time_dual, ispec,
+                                                                                emfields( ipatch ),
+                                                                                params, diag_flag, partwalls( ipatch ),
+                                                                                ( *this )( ipatch ), smpi,
+                                                                                localDiags, buffer_id );
+                        } // end task
+#endif
+                    } else {
 
                         if( params.vectorization_mode == "adaptive" ) {
+#ifndef _OMPTASKS
                             species( ipatch, ispec )->scalarPonderomotiveUpdatePositionAndCurrents( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag, partwalls( ipatch ),
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
+#else
+                            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
+                            { // every call of dynamics for a couple ipatch-ispec is an independent task
+                            Species *spec_task = species( ipatch, ispec );
+                            int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
+                            spec_task->scalarPonderomotiveUpdatePositionAndCurrentsTasks( time_dual, ispec,
+                                                                                         emfields( ipatch ),
+                                                                                         params, diag_flag, partwalls( ipatch ),
+                                                                                         ( *this )( ipatch ), smpi,
+                                                                                         localDiags, buffer_id );
+                            } // end task
+#endif
                         } else {                
 #ifndef _OMPTASKS  
                             species( ipatch, ispec )->Species::ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
@@ -4501,7 +4555,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
                                                                                              params, diag_flag, partwalls( ipatch ),
                                                                                              ( *this )( ipatch ), smpi,
                                                                                              localDiags, buffer_id );
-                        } // end task
+                            } // end task
 #endif
                         }
                     }
@@ -4513,7 +4567,46 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 
 #ifdef _OMPTASKS
     #pragma omp single
-    {   // Copy/Reduce the bin species buffers for the densities to patch grid densities
+    {   // Compute count array for sorting  
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+                if (species( ipatch, ispec )->ponderomotive_dynamics){
+                    if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
+                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
+                        {
+                        Species *spec_task = species( ipatch, ispec );
+                        for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+                            for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+                                if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                                    //First reduction of the count sort algorithm. Lost particles are not included.
+                                    spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+                                }
+                            } // end iPart loop
+                        } // end cells loop
+                        } // end task on array count
+                    } else {
+                        if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
+                            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
+                            {
+                            Species *spec_task = species( ipatch, ispec );
+                            for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+                                for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+                                    if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                                        //First reduction of the count sort algorithm. Lost particles are not included.
+                                        spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+                                    }
+                                } // end iPart loop
+                            } // end cells loop
+                            } // end task on array count
+                        } // end if vectorization is adaptive
+                    }// end if on vectorized operators
+                } // end if ponderomotive_dynamics
+            } // end ispec
+        } // end ipatch    
+
+
+
+        // Copy/Reduce the bin species buffers for the densities to patch grid densities
 
         int clrw = params.clrw;
 
@@ -4527,28 +4620,30 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 #endif
             
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
-                if( (species( ipatch, ispec )->isProj( time_dual, simWindow ) || diag_flag )){
-                    // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
-                    // Frozen species are projected only if diag_flag
-                    // DO NOT parallelize this species loop unless race condition prevention is used!
-                    Species *spec_task = species( ipatch, ispec );
-                    std::vector<unsigned int> b_dim = spec_task->b_dim;
-                    for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
-                        if (params.geometry != "AMcylindrical"){
-                            double *b_Jx             = spec_task->b_Jx[ibin];
-                            double *b_Jy             = spec_task->b_Jy[ibin];
-                            double *b_Jz             = spec_task->b_Jz[ibin];
-                            double *b_rho            = spec_task->b_rho[ibin];
-                            (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
-                        } else { // AM geometry
-                            complex<double> *b_Jl    = spec_task->b_Jl[ibin];
-                            complex<double> *b_Jr    = spec_task->b_Jr[ibin];
-                            complex<double> *b_Jt    = spec_task->b_Jt[ibin];
-                            complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
-                            (( *this )( ipatch )->EMfields)->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
-                        }
-                    } // ibin
-                } // end if (isProj or diag_flag)
+                if (species( ipatch, ispec )->ponderomotive_dynamics){
+                    if( (species( ipatch, ispec )->isProj( time_dual, simWindow ) || diag_flag )){
+                        // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
+                        // Frozen species are projected only if diag_flag
+                        // DO NOT parallelize this species loop unless race condition prevention is used!
+                        Species *spec_task = species( ipatch, ispec );
+                        std::vector<unsigned int> b_dim = spec_task->b_dim;
+                        for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
+                            if (params.geometry != "AMcylindrical"){
+                                double *b_Jx             = spec_task->b_Jx[ibin];
+                                double *b_Jy             = spec_task->b_Jy[ibin];
+                                double *b_Jz             = spec_task->b_Jz[ibin];
+                                double *b_rho            = spec_task->b_rho[ibin];
+                                (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                            } else { // AM geometry
+                                complex<double> *b_Jl    = spec_task->b_Jl[ibin];
+                                complex<double> *b_Jr    = spec_task->b_Jr[ibin];
+                                complex<double> *b_Jt    = spec_task->b_Jt[ibin];
+                                complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
+                                (( *this )( ipatch )->EMfields)->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
+                            } // end condition on geometry
+                        } // ibin
+                    } // end if (isProj or diag_flag)
+                } // end if ponderomotive_dynamics
             } // end species loop
 
 #ifdef  __DETAILED_TIMERS
