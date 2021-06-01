@@ -662,7 +662,7 @@ void Interpolator2D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
         
     }
     
-    
+
 } // END Interpolator2D2Order
 
 void Interpolator2D2Order::envelopeFieldForIonizationTasks( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )

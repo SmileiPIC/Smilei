@@ -61,7 +61,7 @@ protected:
     int time_average;
     
     //! list of the species that will be accounted for
-    std::vector<unsigned int> species;
+    std::vector<unsigned int> species_indices;
     
     //! vector for saving the output array for time-averaging
     std::vector<double> data_sum;
