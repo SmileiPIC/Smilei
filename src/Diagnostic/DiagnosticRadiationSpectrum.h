@@ -35,6 +35,9 @@ private :
     //! Extra axis for photon energies
     HistogramAxis *photon_axis;
     
+    //! Energy boundaries
+    double emin, emax;
+    
     //! Minimum photon energy for radiation spectrum
     double minimum_chi_continuous_;
     

@@ -180,8 +180,11 @@ class Diagnostic(object):
 		"""
 		if not self._validate(): return []
 		return self.units.tcoeff * self.timestep * self._np.array(self._timesteps)
-
-	def getAxis(self, axis):
+	
+	def _getCenters(self, axis_index, timestep):
+		return  self._np.array(self._centers[axis_index])
+	
+	def getAxis(self, axis, timestep=0):
 		"""
 		Obtains the list of positions of the diagnostic data along the requested axis.
 		By default, axis positions are in the code's units, but are converted to
@@ -191,6 +194,9 @@ class Diagnostic(object):
 		-----------
 		axis: str
 			The name of the requested axis.
+		timestep: int
+			The timestep at which the axis is obtained. Only matters in ParticleBinning,
+			Screen and RadiationSpectrum when `auto` axis limits are requested.
 
 		Returns:
 		--------
@@ -208,7 +214,8 @@ class Diagnostic(object):
 			factor = (self.options.yfactor or 1.) * self.units.ycoeff
 		else:
 			factor, _ = self.units._convert(self._units[axis_index], None)
-		return factor * self._np.array(self._centers[axis_index])
+		axis = self._getCenters(axis_index, timestep)
+		return factor * axis
 
 	# Method to obtain the data and the axes
 	def get(self, timestep=None):

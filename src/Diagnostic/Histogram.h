@@ -26,7 +26,10 @@ public:
         if( title.empty() ) {
             title = type;
         }
-        mystream << "Axis " << title << " from " << min << " to " << max << " in " << nbins << " steps";
+        mystream << "Axis " << title
+            << " from " << (std::isnan(min) ? "auto" : std::to_string(min))
+            << " to " << (std::isnan(max) ? "auto" : std::to_string(max))
+            << " in " << nbins << " steps";
         if( logscale ) {
             mystream << " [LOGSCALE] ";
         }
@@ -41,8 +44,8 @@ public:
     
     //! starting/ending point for the axis binning
     double min, max;
-    //! starting/ending point for the axis binning, accounting for logscale
-    double actual_min, actual_max;
+    //! starting/ending point for the axis binning, for all MPIs
+    double global_min, global_max;
     //! number of bins for the axis binning
     int nbins;
     
@@ -51,8 +54,6 @@ public:
     
     //! determines whether particles beyond min and max are counted in the first and last bin
     bool edge_inclusive;
-    
-    double coeff;
     
     //! List of coefficients for some axes types
     std::vector<double> coefficients;

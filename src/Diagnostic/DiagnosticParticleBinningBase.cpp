@@ -160,15 +160,22 @@ void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi )
     file_->attr( "species", mystream.str() );
     // write each axis
     for( unsigned int iaxis=0 ; iaxis < histogram->axes.size() ; iaxis++ ) {
+        HistogramAxis * ax = histogram->axes[iaxis];
         mystream.str( "" ); // clear
         mystream << "axis" << iaxis;
         string str1 = mystream.str();
         mystream.str( "" ); // clear
-        mystream << histogram->axes[iaxis]->type << " " << histogram->axes[iaxis]->min << " " << histogram->axes[iaxis]->max << " "
-                 << histogram->axes[iaxis]->nbins << " " << histogram->axes[iaxis]->logscale << " " << histogram->axes[iaxis]->edge_inclusive << " [";
-        for( unsigned int idim=0; idim<histogram->axes[iaxis]->coefficients.size(); idim++ ) {
-            mystream << histogram->axes[iaxis]->coefficients[idim];
-            if( idim<histogram->axes[iaxis]->coefficients.size()-1 ) {
+        mystream
+            << ax->type << " "
+            << (isnan(ax->min) ? "auto" : to_string(ax->min) ) << " "
+            << (isnan(ax->max) ? "auto" : to_string(ax->max) ) << " "
+            << ax->nbins << " "
+            << ax->logscale << " "
+            << ax->edge_inclusive
+            << " [";
+        for( unsigned int idim=0; idim<ax->coefficients.size(); idim++ ) {
+            mystream << ax->coefficients[idim];
+            if( idim < ax->coefficients.size()-1 ) {
                 mystream << ",";
             }
         }
@@ -211,6 +218,38 @@ bool DiagnosticParticleBinningBase::prepare( int itime )
     
 } // END prepare
 
+void DiagnosticParticleBinningBase::calculate_auto_limits( Patch *patch, SimWindow *simWindow, unsigned int ipatch )
+{
+    patches_mins[ipatch].resize( 0 );
+    patches_maxs[ipatch].resize( 0 );
+    for( unsigned int iaxis=0; iaxis<histogram->axes.size(); iaxis++ ) {
+        HistogramAxis * axis = histogram->axes[iaxis];
+        if( !isnan( axis->min ) && !isnan( axis->max ) ) {
+            continue;
+        }
+        double axis_min = numeric_limits<double>::max();
+        double axis_max = numeric_limits<double>::lowest();
+        for( unsigned int i_s=0; i_s<species_indices.size(); i_s++ ) {
+            Species *s = patch->vecSpecies[species_indices[i_s]];
+            unsigned int n = s->getNbrOfParticles();
+            std::vector<double> double_buffer( n );
+            std::vector<int> int_buffer( n, 0 );
+            axis->calculate_locations( s, &double_buffer[0], &int_buffer[0], n, simWindow );
+            if( isnan( axis->min ) ) {
+                axis_min = min( axis_min, *min_element( double_buffer.begin(), double_buffer.end() ) );
+            }
+            if( isnan( axis->max ) ) {
+                axis_max = max( axis_max, *max_element( double_buffer.begin(), double_buffer.end() ) );
+            }
+        }
+        if( isnan( axis->min ) ) {
+            patches_mins[ipatch].push_back( axis_min );
+        }
+        if( isnan( axis->max ) ) {
+            patches_maxs[ipatch].push_back( axis_max );
+        }
+    }
+}
 
 // run one particle binning diagnostic
 void DiagnosticParticleBinningBase::run( Patch *patch, int itime, SimWindow *simWindow )
@@ -274,11 +313,23 @@ void DiagnosticParticleBinningBase::write( int itime, SmileiMPI *smpi )
     ostringstream mystream( "" );
     mystream.str( "" );
     mystream << "timestep" << setw( 8 ) << setfill( '0' ) << itime;
+    string dataname = mystream.str();
     
     // write the array if it does not exist already
-    if( ! file_->has( mystream.str() ) ) {
+    if( ! file_->has( dataname ) ) {
         H5Space d( dims );
-        file_->array( mystream.str(), data_sum[0], &d, &d );
+        H5Write dataset = file_->array( dataname, data_sum[0], &d, &d );
+        
+        // When auto limits, write the limits
+        for( unsigned int iaxis=0 ; iaxis < histogram->axes.size() ; iaxis++ ) {
+            HistogramAxis * ax = histogram->axes[iaxis];
+            if( isnan(ax->min) ) {
+                dataset.attr( "min"+to_string(iaxis), ax->global_min );
+            }
+            if( isnan(ax->max) ) {
+                dataset.attr( "max"+to_string(iaxis), ax->global_max );
+            }
+        }
     }
     
     if( flush_timeSelection->theTimeIsNow( itime ) ) {
