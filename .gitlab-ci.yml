@@ -12,8 +12,7 @@ install:
   stage: install
   only:
     - develop
-    - laser_y
-    - pusher_cleaning
+    - flag_particles_in_track
     
   script:
     # Force workdir cleaning in case of retried
@@ -32,8 +31,7 @@ compile_default:
   stage: compile_default
   only:
     - develop
-    - laser_y
-    - pusher_cleaning
+    - flag_particles_in_track
     
   script:
     # Move in test dir
@@ -45,8 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
-    - laser_y
-    - pusher_cleaning
+    - flag_particles_in_track
     
   script:
     # Move in test dir
@@ -59,8 +56,7 @@ run2D:
   stage: run_default
   only:
     - develop
-    - laser_y
-    - pusher_cleaning
+    - flag_particles_in_track
 
   script:
     # Move in test dir
@@ -75,8 +71,7 @@ run3D:
   stage: run_default
   only:
     - develop
-    - laser_y
-    - pusher_cleaning
+    - flag_particles_in_track
 
   script:
     # Move in test dir
@@ -92,8 +87,7 @@ runAM:
   stage: run_default
   only:
     - develop
-    - laser_y
-    - pusher_cleaning
+    - flag_particles_in_track
     
   script:
     # Move in test dir
@@ -105,7 +99,7 @@ runAM:
 #  stage: run_default
 #  only:
 #    - develop
-#    - laser_y
+#    - flag_particles_in_track
 #    - pusher_cleaning
 
 #  script:
@@ -117,8 +111,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - laser_y
-    - pusher_cleaning
+    - flag_particles_in_track
     
   script:
     # Move in test dir
@@ -130,8 +123,7 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-    - laser_y
-    - pusher_cleaning
+    - flag_particles_in_track
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -142,7 +134,7 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-    - pusher_cleaning
+    - flag_particles_in_track
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -152,8 +144,7 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-    - laser_y
-    - pusher_cleaning
+    - flag_particles_in_track
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -164,8 +155,7 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-    - laser_y
-    - pusher_cleaning
+    - flag_particles_in_track
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -176,8 +166,7 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-    - laser_y
-    - pusher_cleaning
+    - flag_particles_in_track
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

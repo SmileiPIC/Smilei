@@ -493,7 +493,7 @@ public:
             } else if(    this_species->position_initialization_=="regular"
                        || this_species->position_initialization_=="random"
                        || this_species->position_initialization_=="centered" ) {
-                ;
+            //    ;
             // Copy positions of other species
             } else if( PyTools::isSpecies( this_species->position_initialization_ ) ) {
                 // Find the linked species
@@ -505,6 +505,8 @@ public:
                         break;
                     }
                 }
+                // std::cerr << this_species->position_initialization_on_species_index
+                //           << std::endl;
                 // The link species must already exist
                 if( ok == false ) {
                     ERROR( "For species '" << species_name << "' cannot initialize positions on a species ('"<<this_species->position_initialization_<<"') defined afterwards");
