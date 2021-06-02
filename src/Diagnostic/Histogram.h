@@ -26,10 +26,18 @@ public:
         if( title.empty() ) {
             title = type;
         }
-        mystream << "Axis " << title
-            << " from " << (std::isnan(min) ? "auto" : std::to_string(min))
-            << " to " << (std::isnan(max) ? "auto" : std::to_string(max))
-            << " in " << nbins << " steps";
+        mystream << "Axis " << title;
+        if( std::isnan(min) ) {
+            mystream << " from auto";
+        } else {
+            mystream << " from " << min;
+        }
+        if( std::isnan(max) ) {
+            mystream << " to auto";
+        } else {
+            mystream << " to " << max;
+        }
+        mystream << " in " << nbins << " steps";
         if( logscale ) {
             mystream << " [LOGSCALE] ";
         }

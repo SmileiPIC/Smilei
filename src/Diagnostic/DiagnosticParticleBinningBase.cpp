@@ -165,14 +165,18 @@ void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi )
         mystream << "axis" << iaxis;
         string str1 = mystream.str();
         mystream.str( "" ); // clear
-        mystream
-            << ax->type << " "
-            << (std::isnan(ax->min) ? "auto" : to_string(ax->min) ) << " "
-            << (std::isnan(ax->max) ? "auto" : to_string(ax->max) ) << " "
-            << ax->nbins << " "
-            << ax->logscale << " "
-            << ax->edge_inclusive
-            << " [";
+        mystream << ax->type << " ";
+        if( std::isnan(ax->min) ) {
+            mystream << "auto ";
+        } else {
+            mystream << ax->min << " ";
+        }
+        if( std::isnan(ax->max) ) {
+            mystream << "auto ";
+        } else {
+            mystream << ax->max << " ";
+        }
+        mystream << ax->nbins << " " << ax->logscale << " " << ax->edge_inclusive << " [";
         for( unsigned int idim=0; idim<ax->coefficients.size(); idim++ ) {
             mystream << ax->coefficients[idim];
             if( idim < ax->coefficients.size()-1 ) {
