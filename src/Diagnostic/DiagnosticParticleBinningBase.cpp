@@ -167,8 +167,8 @@ void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi )
         mystream.str( "" ); // clear
         mystream
             << ax->type << " "
-            << (isnan(ax->min) ? "auto" : to_string(ax->min) ) << " "
-            << (isnan(ax->max) ? "auto" : to_string(ax->max) ) << " "
+            << (std::isnan(ax->min) ? "auto" : to_string(ax->min) ) << " "
+            << (std::isnan(ax->max) ? "auto" : to_string(ax->max) ) << " "
             << ax->nbins << " "
             << ax->logscale << " "
             << ax->edge_inclusive
@@ -224,7 +224,7 @@ void DiagnosticParticleBinningBase::calculate_auto_limits( Patch *patch, SimWind
     patches_maxs[ipatch].resize( 0 );
     for( unsigned int iaxis=0; iaxis<histogram->axes.size(); iaxis++ ) {
         HistogramAxis * axis = histogram->axes[iaxis];
-        if( !isnan( axis->min ) && !isnan( axis->max ) ) {
+        if( !std::isnan( axis->min ) && !std::isnan( axis->max ) ) {
             continue;
         }
         double axis_min = numeric_limits<double>::max();
@@ -235,17 +235,17 @@ void DiagnosticParticleBinningBase::calculate_auto_limits( Patch *patch, SimWind
             std::vector<double> double_buffer( n );
             std::vector<int> int_buffer( n, 0 );
             axis->calculate_locations( s, &double_buffer[0], &int_buffer[0], n, simWindow );
-            if( isnan( axis->min ) ) {
+            if( std::isnan( axis->min ) ) {
                 axis_min = min( axis_min, *min_element( double_buffer.begin(), double_buffer.end() ) );
             }
-            if( isnan( axis->max ) ) {
+            if( std::isnan( axis->max ) ) {
                 axis_max = max( axis_max, *max_element( double_buffer.begin(), double_buffer.end() ) );
             }
         }
-        if( isnan( axis->min ) ) {
+        if( std::isnan( axis->min ) ) {
             patches_mins[ipatch].push_back( axis_min );
         }
-        if( isnan( axis->max ) ) {
+        if( std::isnan( axis->max ) ) {
             patches_maxs[ipatch].push_back( axis_max );
         }
     }
@@ -323,10 +323,10 @@ void DiagnosticParticleBinningBase::write( int itime, SmileiMPI *smpi )
         // When auto limits, write the limits
         for( unsigned int iaxis=0 ; iaxis < histogram->axes.size() ; iaxis++ ) {
             HistogramAxis * ax = histogram->axes[iaxis];
-            if( isnan(ax->min) ) {
+            if( std::isnan(ax->min) ) {
                 dataset.attr( "min"+to_string(iaxis), ax->global_min );
             }
-            if( isnan(ax->max) ) {
+            if( std::isnan(ax->max) ) {
                 dataset.attr( "max"+to_string(iaxis), ax->global_max );
             }
         }

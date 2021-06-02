@@ -54,7 +54,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum(
     total_axes++;
     dims.push_back( photon_axis->nbins );
     
-    if( isnan( photon_axis->min ) || isnan( photon_axis->max ) ) {
+    if( std::isnan( photon_axis->min ) || std::isnan( photon_axis->max ) ) {
         ERROR( errorPrefix << "photon_energy_axis cannot have `auto` limits" );
     }
     

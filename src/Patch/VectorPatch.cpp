@@ -1355,10 +1355,10 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
             if( globalDiags[idiag]->theTimeIsNow && binning ) {
                 for( unsigned int iaxis=0; iaxis<binning->histogram->axes.size(); iaxis++ ) {
                     HistogramAxis * axis = binning->histogram->axes[iaxis];
-                    if( isnan( axis->min ) ) {
+                    if( std::isnan( axis->min ) ) {
                         axis->global_min = global_mins[imin++];
                     }
-                    if( isnan( axis->max ) ) {
+                    if( std::isnan( axis->max ) ) {
                         axis->global_max = global_maxs[imax++];
                     }
                 }
