@@ -179,7 +179,7 @@ void RadiationNiel::operator()(
     //double t1 = MPI_Wtime();
 
     // Non-vectorized computation of the random number
-    for (ipart=0 ; ipart < nbparticles; ipart++ )
+    /*for (ipart=0 ; ipart < nbparticles; ipart++ )
     {
 
         // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
@@ -190,7 +190,7 @@ void RadiationNiel::operator()(
           // deviation sqrt(dt_) (variance dt_)
           random_numbers[ipart] = Rand::normal(sqrtdt);
         }
-    }
+    }*/
 
     // Vectorized computation of the random number in a uniform distribution
     // #pragma omp simd
