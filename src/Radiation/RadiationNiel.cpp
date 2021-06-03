@@ -107,13 +107,13 @@ void RadiationNiel::operator()(
     double* momentum_z = particles.getPtrMomentum(2);
 
     // Charge shortcut
-    short *charge = &( particles.charge( istart ) );
+    short *charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double *weight = &( particles.weight( istart ) );
+    double *weight = particles.getPtrWeight();
 
     // Quantum parameter
-    double *particle_chi = &( particles.chi( istart ) );
+    double* particle_chi = particles.getPtrChi();
 
     const double minimum_chi_continuous_ = RadiationTables.getMinimumChiContinuous();
     const double factor_classical_radiated_power_      = RadiationTables.getFactorClassicalRadiatedPower();
@@ -121,19 +121,19 @@ void RadiationNiel::operator()(
     int niel_computation_index;
 
     //Convert to number
-    if( niel_computation_method == "table" ) 
+    if( niel_computation_method == "table" )
     {
         niel_computation_index = 0;
     }
-    else if( niel_computation_method == "fit5" ) 
-    {        
+    else if( niel_computation_method == "fit5" )
+    {
         niel_computation_index = 1;
     }
-    else if( niel_computation_method == "fit10" ) 
+    else if( niel_computation_method == "fit10" )
     {
         niel_computation_index = 2;
     }
-    else if( niel_computation_method == "ridgers" ) 
+    else if( niel_computation_method == "ridgers" )
     {
         niel_computation_index = 3;
     }
@@ -148,13 +148,12 @@ void RadiationNiel::operator()(
         #pragma omp simd
     #else
         int np = iend-istart;
-    
+
         #pragma acc parallel \
-            create(gamma[0:np],particle_chi[0:np], random_numbers[0:np], diffusion[0:np]) \
+            create(gamma[0:np], random_numbers[0:np], diffusion[0:np]) \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np],radiated_energy) \
-            copyin(minimum_chi_continuous_, factor_classical_radiated_power_) \
-        deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,chi) private(state)
+            deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi) private(state)
         {
             #pragma acc loop gang worker vector
     #endif
@@ -200,7 +199,7 @@ void RadiationNiel::operator()(
                 random_numbers[ipart] = 2.*rand_->uniform() -1.;
             }
         }
-        
+
         #pragma omp simd private(p,temp)
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
         // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
@@ -258,7 +257,7 @@ void RadiationNiel::operator()(
                 random_numbers[ipart] = curand_normal(&state);
                 //b[i] = curand_normal(&state);
             }
-        }        
+        }
     #endif
 
     // Vectorized computation of the random number in a normal distribution
@@ -286,7 +285,7 @@ void RadiationNiel::operator()(
         }
     }
     // Using the fit at order 5 (vectorized)
-    if( niel_computation_index == 1 ) {        
+    if( niel_computation_index == 1 ) {
         #ifndef _GPU
             #pragma omp simd private(temp)
         #else
@@ -375,7 +374,7 @@ void RadiationNiel::operator()(
     // ____________________________________________________
     // Vectorized computation of the thread radiated energy
     // and update of the quantum parameter
-    
+
     double radiated_energy_loc = 0;
     double new_gamma = 0;
 
@@ -385,21 +384,20 @@ void RadiationNiel::operator()(
         #pragma acc loop gang worker vector private(new_gamma) reduction(+:radiated_energy_loc)
     #endif
     for( int ipart=0 ; ipart<nbparticles; ipart++ ) {
-        
-        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
-        new_gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
-                      + momentum_y[ipart]*momentum_y[ipart]
-                      + momentum_z[ipart]*momentum_z[ipart] );
-        
+        new_gamma = sqrt( 1.0
+                       + momentum_x[ipart]*momentum_x[ipart]
+                       + momentum_y[ipart]*momentum_y[ipart]
+                       + momentum_z[ipart]*momentum_z[ipart] );
+
         radiated_energy_loc += weight[ipart]*( gamma[ipart] - new_gamma );
-        
+
         particle_chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
                      momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                      new_gamma,
                      ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                      ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
-                     
+
     }
     radiated_energy += radiated_energy_loc;
 

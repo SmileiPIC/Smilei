@@ -157,7 +157,7 @@ void Species::initCluster( Params &params )
     nrj_bc_lost = 0.;
     nrj_mw_lost = 0.;
     new_particles_energy_ = 0.;
-    nrj_radiation = 0.;
+    radiated_energy_ = 0.;
 
 }//END initCluster
 
@@ -200,15 +200,15 @@ void Species::resizeCluster( Params &params )
 void Species::initParticles( Params &params, Patch *patch, bool with_particles, Particles * like_particles )
 {
     if( params.restart || !with_particles ) {
-        
+
         if( like_particles ) {
             particles->initialize( 0, *like_particles );
         } else {
             particles->initialize( 0, params.nDim_particle, params.keep_position_old );
         }
-        
+
     } else {
-        
+
         // Area for particle creation
         struct SubSpace init_space;
         init_space.cell_index_[0] = 0;
@@ -217,14 +217,14 @@ void Species::initParticles( Params &params, Patch *patch, bool with_particles, 
         init_space.box_size_[0]   = params.n_space[0];
         init_space.box_size_[1]   = params.n_space[1];
         init_space.box_size_[2]   = params.n_space[2];
-        
+
         // Creation of the particle creator and association to the new species
         ParticleCreator particle_creator;
         particle_creator.associate(this);
         particle_creator.create( init_space, params, patch, 0 );
-        
+
     }
-    
+
 }
 
 // Initialize the operators (Push, Ionize, PartBoundCond)
@@ -235,7 +235,7 @@ void Species::initOperators( Params &params, Patch *patch )
 
     // interpolation operator (virtual)
     Interp = InterpolatorFactory::create( params, patch, this->vectorized_operators && !params.cell_sorting ); // + patchId -> idx_domain_begin (now = ref smpi)
-    
+
     // assign the correct Pusher to Push
     Push = PusherFactory::create( params, this );
     if( this->ponderomotive_dynamics ) {
@@ -244,7 +244,7 @@ void Species::initOperators( Params &params, Patch *patch )
 
     // projection operator (virtual)
     Proj = ProjectorFactory::create( params, patch, this->vectorized_operators && !params.cell_sorting );  // + patchId -> idx_domain_begin (now = ref smpi)
-    
+
     // Assign the Ionization model (if needed) to Ionize
     //  Needs to be placed after ParticleCreator() because requires the knowledge of max_charge_
     // \todo pay attention to restart
@@ -365,7 +365,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     // calculate the particle dynamics
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize) { // moving particle
-    
+
         smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
         //Point to local thread dedicated buffers
         //Still needed for ionization
@@ -421,12 +421,12 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 // Radiation process
                 ( *Radiate )( *particles, photon_species_, smpi,
                               RadiationTables,
-                              nrj_radiation,
+                              radiated_energy_,
                               particles->first_index[ibin],
                               particles->last_index[ibin], ithread );
 
                 // Update scalar variable for diagnostics
-                // nrj_radiation += Radiate->getRadiatedEnergy();
+                // radiated_energy_ += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
                 // Radiate->computeParticlesChi( *particles,
@@ -450,14 +450,13 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                 // Pair generation process
+                // We reuse radiated_energy_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
                                                         MultiphotonBreitWheelerTables,
-                                                        particles->first_index[ibin], particles->last_index[ibin], ithread );
-
-                // Update scalar variable for diagnostics
-                // We reuse nrj_radiation for the pairs
-                nrj_radiation += Multiphoton_Breit_Wheeler_process->getPairEnergy();
+                                                        radiated_energy_,
+                                                        particles->first_index[ibin],
+                                                        particles->last_index[ibin], ithread );
 
                 // Update the photon quantum parameter chi of all photons
                 Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
@@ -465,11 +464,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                         particles->first_index[ibin],
                         particles->last_index[ibin],
                         ithread );
-                
+
                 // Suppression of the decayed photons into pairs
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                     *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
-                    
+
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
 #endif
@@ -489,7 +488,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
         } //ibin
-        
+
         if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
                 double ener_iPart( 0. );
@@ -688,7 +687,7 @@ void Species::projectionForDiags( double time_dual, unsigned int ispec,
                 }//End loop on bins
             } //End loop on modes
         }
-        
+
     }
 }
 
@@ -762,7 +761,7 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
             unsigned int Nmode = emAM->rho_AM_.size();
             for( unsigned int imode=0; imode<Nmode; imode++ ) {
-                unsigned int ifield = imode*(*EMfields).n_species+ispec;
+                //unsigned int ifield = imode*(*EMfields).n_species+ispec;
                 complex<double> *b_rho = old ? &( *emAM->rho_old_AM_[imode] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 );
                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
                     for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
@@ -1108,7 +1107,7 @@ void Species::countSortParticles( Params &params )
         indices[ixy] = tot;
         tot += oc;
     }
-    
+
     // last loop puts the particles and update the count array
     for( ip=0; ip < npart; ip++ ) {
         x = particles->position( 0, ip )-min_loc;
@@ -1293,7 +1292,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 
             // Ionization
             if( Ionize ) {
-            
+
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
@@ -1303,12 +1302,12 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
                 vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
                 Ionize->envelopeIonization( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
-                
+
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
             }
-            
+
             if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
 
             // Project susceptibility, the source term of envelope equation
@@ -1416,7 +1415,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
     double timer;
 #endif
 
-    unsigned int iPart;
+    //unsigned int iPart;
 
     int tid( 0 );
     std::vector<double> nrj_lost_per_thd( 1, 0. );
@@ -1492,31 +1491,28 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
 
         if( diag_flag &&( !particles->is_test ) ) {
             double *b_rho=nullptr;
-            for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-
-                if( params.geometry != "AMcylindrical" ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                    for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
+            if( params.geometry != "AMcylindrical" ) {
+                b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                    for( unsigned int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
                         Proj->basic( b_rho, ( *particles ), iPart, 0 );
                     }
-                } else {
-                    int n_species = patch->vecSpecies.size();
-                    complex<double> *b_rho=nullptr;
-                    ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+                }//End loop on bins
+            } else {
+                int n_species = patch->vecSpecies.size();
+                complex<double> *b_rho=nullptr;
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
 
-                    for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
-                        int ifield = imode*n_species+ispec;
-                        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                            b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
-                            for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-                                Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
-                            } // end loop on particles
-                        } //end loop for projection on buffer_proj
-
-                    } // end loop on modes
-                } // end if on geometry
-
-            }//End loop on bins
+                for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                    int ifield = imode*n_species+ispec;
+                    for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                        b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                        for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+                            Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                        } // end loop on particles
+                    }//End loop on bins
+                } // end loop on modes
+            } // end if on geometry
         } // end condition on diag and not particle test
     }//END if time vs. time_frozen_
 } // End ponderomotive_position_update
@@ -1563,7 +1559,7 @@ void Species::eraseWeightlessParticles()
 {
     unsigned int nbins = particles->first_index.size();
     unsigned int i = 0, available_i = 0;
-    
+
     // Loop all particles, bin per bin
     // Overwrite over earlier particles to erase them
     for( unsigned int ibin = 0; ibin < nbins; ibin++ ) {
@@ -1579,7 +1575,7 @@ void Species::eraseWeightlessParticles()
         }
         particles->last_index[ibin] = available_i;
     }
-    
+
     // Remove trailing particles
     particles->eraseParticleTrail( available_i );
 }

@@ -293,6 +293,13 @@ DiagRadiationSpectrum(
     axes = []
 )
 
+DiagRadiationSpectrum(
+    every = 1,
+    species = ["electron_noRR", "electron_LL", "electron_cLL", "electron_FP"],
+    photon_energy_axis = [photon_energy_max/1.e6,photon_energy_max, 400, 'logscale'],
+    axes = []
+)
+
 def depose(particles):
     return particles.weight*np.sqrt(particles.px**2+particles.py**2+particles.pz**2)
 

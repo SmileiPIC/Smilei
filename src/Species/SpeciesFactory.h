@@ -12,14 +12,11 @@
 #define SPECIESFACTORY_H
 
 #include "Species.h"
-#include "SpeciesNorm.h"
 
 #ifdef _VECTO
-#include "SpeciesNormV.h"
 #include "SpeciesV.h"
 #include "SpeciesVAdaptiveMixedSort.h"
 #include "SpeciesVAdaptive.h"
-#include "SpeciesNormV.h"
 #endif
 
 #include "PusherFactory.h"
@@ -108,12 +105,12 @@ public:
                 // Species with J.L. Vay pusher if == "vay"
                 // Species with Higuary Cary pusher if == "higueracary"
                 if( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
-                    this_species = new SpeciesNorm( params, patch );
+                    this_species = new Species( params, patch );
                 }
 
 #ifdef _VECTO
                 else if( ( params.vectorization_mode == "on" ) || params.cell_sorting ) {
-                    this_species = new SpeciesNormV( params, patch );
+                    this_species = new SpeciesV( params, patch );
                 } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
                     this_species = new SpeciesVAdaptiveMixedSort( params, patch );
                 } else if( params.vectorization_mode == "adaptive" ) {
@@ -186,11 +183,11 @@ public:
         // Photon species
         else if( mass == 0 ) {
             if( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
-                this_species = new SpeciesNorm( params, patch );
+                this_species = new Species( params, patch );
             }
 #ifdef _VECTO
             else if( ( params.vectorization_mode == "on" ) || params.cell_sorting ) {
-                this_species = new SpeciesNormV( params, patch );
+                this_species = new SpeciesV( params, patch );
             } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
                 this_species = new SpeciesVAdaptiveMixedSort( params, patch );
             } else if( params.vectorization_mode == "adaptive" ) {
@@ -493,7 +490,7 @@ public:
             } else if(    this_species->position_initialization_=="regular"
                        || this_species->position_initialization_=="random"
                        || this_species->position_initialization_=="centered" ) {
-                ;
+            //    ;
             // Copy positions of other species
             } else if( PyTools::isSpecies( this_species->position_initialization_ ) ) {
                 // Find the linked species
@@ -505,6 +502,8 @@ public:
                         break;
                     }
                 }
+                // std::cerr << this_species->position_initialization_on_species_index
+                //           << std::endl;
                 // The link species must already exist
                 if( ok == false ) {
                     ERROR( "For species '" << species_name << "' cannot initialize positions on a species ('"<<this_species->position_initialization_<<"') defined afterwards");
@@ -948,11 +947,11 @@ public:
 
         // Boris, Vay or Higuera-Cary
         if ( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
-            new_species = new SpeciesNorm( params, patch );
+            new_species = new Species( params, patch );
         }
 #ifdef _VECTO
         else if( ( params.vectorization_mode == "on" ) || params.cell_sorting  ) {
-            new_species = new SpeciesNormV( params, patch );
+            new_species = new SpeciesV( params, patch );
         } else if( params.vectorization_mode == "adaptive" ) {
             new_species = new SpeciesVAdaptive( params, patch );
         } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
