@@ -243,9 +243,9 @@ void RadiationMonteCarlo::operator()(
 
                 // Effect on the momentum
                 temp = cont_rad_energy*gamma/( gamma*gamma-1. );
-                for( int i = 0 ; i<3 ; i++ ) {
-                    momentum[i][ipart] -= temp*momentum[i][ipart];
-                }
+                momentum_x[ipart] -= temp*momentum_x[ipart];
+                momentum_y[ipart] -= temp*momentum_y[ipart];
+                momentum_z[ipart] -= temp*momentum_z[ipart];
 
                 // Incrementation of the radiated energy cumulative parameter
                 radiated_energy += weight[ipart]*( gamma - sqrt( 1.0
