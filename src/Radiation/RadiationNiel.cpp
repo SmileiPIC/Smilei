@@ -102,24 +102,23 @@ void RadiationNiel::operator()(
     double random_numbers[nbparticles];
 
     // Momentum shortcut
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, istart ) );
-    }
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
 
     // Charge shortcut
-    short *charge = &( particles.charge( istart ) );
+    short *charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double *weight = &( particles.weight( istart ) );
+    double *weight = particles.getPtrWeight();
 
     // Quantum parameter
-    double *particle_chi = &( particles.chi( istart ) );
+    double* chi = particles.getPtrChi();
 
     const double minimum_chi_continuous_ = RadiationTables.getMinimumChiContinuous();
     const double factor_classical_radiated_power_      = RadiationTables.getFactorClassicalRadiatedPower();
     const std::string niel_computation_method = RadiationTables.getNielHComputationMethod();
-    
+
     // _______________________________________________________________
     // Computation
 
@@ -132,13 +131,13 @@ void RadiationNiel::operator()(
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
-        gamma[ipart] = sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
-                             + momentum[1][ipart]*momentum[1][ipart]
-                             + momentum[2][ipart]*momentum[2][ipart] );
+        gamma[ipart] = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                             + momentum_y[ipart]*momentum_y[ipart]
+                             + momentum_z[ipart]*momentum_z[ipart] );
 
         // Computation of the Lorentz invariant quantum parameter
         particle_chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
-                              momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
+                              momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                               gamma[ipart],
                               ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                               ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
@@ -265,7 +264,7 @@ void RadiationNiel::operator()(
     }
     // Using Ridgers
     else if( niel_computation_method == "ridgers" ) {
-    
+
         #pragma omp simd private(temp)
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
@@ -296,9 +295,9 @@ void RadiationNiel::operator()(
                    * gamma[ipart]/( gamma[ipart]*gamma[ipart]-1. );
 
             // Update of the momentum
-            momentum[0][ipart] -= temp*momentum[0][ipart];
-            momentum[1][ipart] -= temp*momentum[1][ipart];
-            momentum[2][ipart] -= temp*momentum[2][ipart];
+            momentum_x[ipart] -= temp*momentum_x[ipart];
+            momentum_y[ipart] -= temp*momentum_y[ipart];
+            momentum_z[ipart] -= temp*momentum_z[ipart];
 
         }
     }
@@ -308,26 +307,26 @@ void RadiationNiel::operator()(
     // ____________________________________________________
     // Vectorized computation of the thread radiated energy
     // and update of the quantum parameter
-    
+
     double radiated_energy_loc = 0;
     double new_gamma = 0;
 
     #pragma omp simd private(new_gamma) reduction(+:radiated_energy_loc)
     for( int ipart=0 ; ipart<nbparticles; ipart++ ) {
-        
+
         new_gamma = sqrt( 1.0
-                       + momentum[0][ipart]*momentum[0][ipart]
-                       + momentum[1][ipart]*momentum[1][ipart]
-                       + momentum[2][ipart]*momentum[2][ipart] );
-        
+                       + momentum_x[ipart]*momentum_x[ipart]
+                       + momentum_y[ipart]*momentum_y[ipart]
+                       + momentum_z[ipart]*momentum_z[ipart] );
+
         radiated_energy_loc += weight[ipart]*( gamma[ipart] - new_gamma );
-        
+
         particle_chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
-                     momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
+                     momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                      new_gamma,
                      ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                      ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
-                     
+
     }
     radiated_energy += radiated_energy_loc;
 
