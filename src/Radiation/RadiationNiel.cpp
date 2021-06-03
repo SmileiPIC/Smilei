@@ -153,7 +153,7 @@ void RadiationNiel::operator()(
             create(gamma[0:np], random_numbers[0:np], diffusion[0:np]) \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np],radiated_energy) \
-            deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi) private(state)
+            deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi)
         {
             #pragma acc loop gang worker vector
     #endif
@@ -199,6 +199,9 @@ void RadiationNiel::operator()(
                 random_numbers[ipart] = 2.*rand_->uniform() -1.;
             }
         }
+
+        // Vectorized computation of the random number in a normal distribution
+        double p;
 
         #pragma omp simd private(p,temp)
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
@@ -260,13 +263,11 @@ void RadiationNiel::operator()(
         }
     #endif
 
-    // Vectorized computation of the random number in a normal distribution
-    double p;
 
 
     //double t2 = MPI_Wtime();
 
-    // Computation of the diffusion coefficients
+/*    // Computation of the diffusion coefficients
     // Using the table (non-vectorized)
     if( niel_computation_index == 0 ) {
         // #pragma omp simd
@@ -283,7 +284,7 @@ void RadiationNiel::operator()(
                 diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipart]*temp )*random_numbers[ipart];
             }
         }
-    }
+    }*/
     // Using the fit at order 5 (vectorized)
     if( niel_computation_index == 1 ) {
         #ifndef _GPU

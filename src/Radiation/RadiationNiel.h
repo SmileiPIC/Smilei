@@ -22,6 +22,11 @@
 #include "RadiationTools.h"
 #include "userFunctions.h"
 
+#ifdef _GPU
+#include <curand.h>
+#include <curand_kernel.h>
+#endif
+
 #include <cstring>
 #include <fstream>
 #include <cmath>

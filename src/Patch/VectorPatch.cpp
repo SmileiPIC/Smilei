@@ -4177,7 +4177,7 @@ void VectorPatch::initializeDataOnDevice( SmileiMPI *smpi )
             Species *spec = species( ipatch, ispec );
             spec->particles->initializeDataOnDevice();
             spec->particles_to_move->initializeDataOnDevice();
-            #pragma acc enter data copyin(spec->nrj_radiation)
+            //#pragma acc enter data copyin(spec->nrj_radiation)
         }
 
         // Initialize field data strucures on GPU and synchronize it
