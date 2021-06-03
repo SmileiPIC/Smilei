@@ -63,7 +63,7 @@ void RadiationMonteCarlo::operator()(
 
     // _______________________________________________________________
     // Parameters
-    
+
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
@@ -103,19 +103,23 @@ void RadiationMonteCarlo::operator()(
     int mc_it_nb;
 
     // Momentum shortcut
-    double *momentum[3];
-    for( int i = 0 ; i<3 ; i++ ) {
-        momentum[i] =  &( particles.momentum( i, 0 ) );
-    }
+    double* momentum_x = particles.getPtrMomentum(0);
+    double* momentum_y = particles.getPtrMomentum(1);
+    double* momentum_z = particles.getPtrMomentum(2);
 
     // Position shortcut
-    double *position[3];
-    for( int i = 0 ; i<n_dimensions_ ; i++ ) {
-        position[i] =  &( particles.position( i, 0 ) );
+    double* position_x = particles.getPtrPosition(0);
+    double* position_y = NULL;
+    double* position_z = NULL;
+    if (nDim_>1) {
+        position_y = particles.getPtrPosition(1);
+        if (nDim_>2) {
+            position_z = particles.getPtrPosition(2);
+        }
     }
 
     // Charge shortcut
-    short *charge = &( particles.charge( 0 ) );
+    short *charge = particles.getPtrCharge();
 
     // Weight shortcut
     double *weight = &( particles.weight( 0 ) );
@@ -142,9 +146,9 @@ void RadiationMonteCarlo::operator()(
                 &&( mc_it_nb < max_monte_carlo_iterations_ ) ) {
 
             // Gamma
-            gamma = sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
-                          + momentum[1][ipart]*momentum[1][ipart]
-                          + momentum[2][ipart]*momentum[2][ipart] );
+            gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                          + momentum_y[ipart]*momentum_y[ipart]
+                          + momentum_z[ipart]*momentum_z[ipart] );
 
             if( gamma==1. ){ // does not apply the MC routine for particles with 0 kinetic energy
                 break;
@@ -152,7 +156,7 @@ void RadiationMonteCarlo::operator()(
 
             // Computation of the Lorentz invariant quantum parameter
             particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
-                           momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
+                           momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                            gamma,
                            ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                            ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
@@ -196,8 +200,12 @@ void RadiationMonteCarlo::operator()(
                     // Radiated energy is incremented only if the macro-photon is not created
                     radiated_energy += RadiationMonteCarlo::photonEmission( ipart,
                                                          particle_chi, gamma,
-                                                         position,
-                                                         momentum,
+                                                         position_x,
+                                                         position_y,
+                                                         position_z,
+                                                         momentum_x,
+                                                         momentum_y,
+                                                         momentum_z,
                                                          weight,
                                                          photon_species,
                                                          RadiationTables );
@@ -227,23 +235,23 @@ void RadiationMonteCarlo::operator()(
 
                 // Remaining time of the iteration
                 emission_time = dt_ - local_it_time;
-                
+
                 // Radiated energy during emission_time
                 cont_rad_energy =
                     RadiationTables.getRidgersCorrectedRadiatedEnergy( particle_chi,
                             emission_time );
-                
+
                 // Effect on the momentum
                 temp = cont_rad_energy*gamma/( gamma*gamma-1. );
                 for( int i = 0 ; i<3 ; i++ ) {
                     momentum[i][ipart] -= temp*momentum[i][ipart];
                 }
-                
+
                 // Incrementation of the radiated energy cumulative parameter
                 radiated_energy += weight[ipart]*( gamma - sqrt( 1.0
-                                                    + momentum[0][ipart]*momentum[0][ipart]
-                                                    + momentum[1][ipart]*momentum[1][ipart]
-                                                    + momentum[2][ipart]*momentum[2][ipart] ) );
+                                                    + momentum_x[ipart]*momentum_x[ipart]
+                                                    + momentum_y[ipart]*momentum_y[ipart]
+                                                    + momentum_z[ipart]*momentum_z[ipart] ) );
 
                 // End for this particle
                 local_it_time = dt_;
@@ -256,28 +264,28 @@ void RadiationMonteCarlo::operator()(
         }
 
     }
-    
+
     // ____________________________________________________
     // Update of the quantum parameter chi
-    
+
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
-        
+
         // Gamma
-        gamma = sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
-                      + momentum[1][ipart]*momentum[1][ipart]
-                      + momentum[2][ipart]*momentum[2][ipart] );
-                      
+        gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                      + momentum_y[ipart]*momentum_y[ipart]
+                      + momentum_z[ipart]*momentum_z[ipart] );
+
         // Computation of the Lorentz invariant quantum parameter
         chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
-                     momentum[0][ipart], momentum[1][ipart], momentum[2][ipart],
+                     momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                      gamma,
                      ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                      ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
-                     
+
     }
-    
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -294,8 +302,12 @@ void RadiationMonteCarlo::operator()(
 double RadiationMonteCarlo::photonEmission( int ipart,
         double &particle_chi,
         double &particle_gamma,
-        double *position[3],
-        double *momentum[3],
+        double * position_x,
+        double * position_y,
+        double * position_z,
+        double * momentum_x,
+        double * momentum_y,
+        double * momentum_z,
         double *weight,
         Species *photon_species,
         RadiationTables &RadiationTables)
@@ -322,11 +334,11 @@ double RadiationMonteCarlo::photonEmission( int ipart,
     // Update of the particle properties
     // direction d'emission // direction de l'electron (1/gamma << 1)
     // With momentum conservation
-    
+
     inv_old_norm_p = gammaph/std::sqrt( particle_gamma*particle_gamma - 1.0 );
-    momentum[0][ipart] -= momentum[0][ipart]*inv_old_norm_p;
-    momentum[1][ipart] -= momentum[1][ipart]*inv_old_norm_p;
-    momentum[2][ipart] -= momentum[2][ipart]*inv_old_norm_p;
+    momentum_x[ipart] -= momentum_x[ipart]*inv_old_norm_p;
+    momentum_y[ipart] -= momentum_y[ipart]*inv_old_norm_p;
+    momentum_z[ipart] -= momentum_z[ipart]*inv_old_norm_p;
 
     // With energy conservation
     /*inv_old_norm_p = 1./sqrt(particle_gamma*particle_gamma - 1.0);
@@ -352,9 +364,9 @@ double RadiationMonteCarlo::photonEmission( int ipart,
             new_photons_.position(i,idNew)=position[i][ipart];
         }
 
-        inv_old_norm_p = 1./sqrt(momentum[0][ipart]*momentum[0][ipart]
-                                + momentum[1][ipart]*momentum[1][ipart]
-                                + momentum[2][ipart]*momentum[2][ipart]);
+        inv_old_norm_p = 1./sqrt(momentum_x[ipart]*momentum_x[ipart]
+                                + momentum_y[ipart]*momentum_y[ipart]
+                                + momentum_z[ipart]*momentum_z[ipart]);
 
         for (unsigned int i=0; i<3; i++) {
             new_photons_.momentum(i,idNew) =
@@ -375,20 +387,29 @@ double RadiationMonteCarlo::photonEmission( int ipart,
         int npart = new_photons_.size();
 
         // Inverse of the momentum norm
-        inv_old_norm_p = 1./sqrt( momentum[0][ipart]*momentum[0][ipart]
-                                  + momentum[1][ipart]*momentum[1][ipart]
-                                  + momentum[2][ipart]*momentum[2][ipart] );
+        inv_old_norm_p = 1./sqrt( momentum_x[ipart]*momentum_x[ipart]
+                                  + momentum_y[ipart]*momentum_y[ipart]
+                                  + momentum_z[ipart]*momentum_z[ipart] );
 
         // For all new photons...
         for( int idNew=npart-radiation_photon_sampling_; idNew<npart; idNew++ ) {
-            for( int i=0; i<n_dimensions_; i++ ) {
-                new_photons_.position( i, idNew )=position[i][ipart];
+
+
+            new_photons_.position( 0, idNew )=position_x[ipart];
+            if (nDim_>1) {
+                new_photons_.position( 1, idNew )=position_y[ipart];
+                if (nDim_>2) {
+                    new_photons_.position( 2, idNew )=position_z[ipart];
+                }
             }
 
-            for( int i=0; i<3; i++ ) {
-                new_photons_.momentum( i, idNew ) =
-                    gammaph*momentum[i][ipart]*inv_old_norm_p;
-            }
+            new_photons_.momentum( 0, idNew ) =
+                gammaph*momentum_x[ipart]*inv_old_norm_p;
+            new_photons_.momentum( 1, idNew ) =
+                gammaph*momentum_y[ipart]*inv_old_norm_p;
+            new_photons_.momentum( 2, idNew ) =
+                gammaph*momentum_z[ipart]*inv_old_norm_p;
+
 
             new_photons_.weight( idNew )=weight[ipart]*inv_radiation_photon_sampling_;
             new_photons_.charge( idNew )=0;
@@ -407,11 +428,11 @@ double RadiationMonteCarlo::photonEmission( int ipart,
     // Addition of the emitted energy in the cumulating parameter
     // for the scalar diagnostics
     else {
-        gammaph = particle_gamma - sqrt( 1.0 + momentum[0][ipart]*momentum[0][ipart]
-                                         + momentum[1][ipart]*momentum[1][ipart]
-                                         + momentum[2][ipart]*momentum[2][ipart] );
+        gammaph = particle_gamma - sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                                         + momentum_y[ipart]*momentum_y[ipart]
+                                         + momentum_z[ipart]*momentum_z[ipart] );
         radiated_energy += weight[ipart]*gammaph;
     }
-    
+
     return radiated_energy;
 }
