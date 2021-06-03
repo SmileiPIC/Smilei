@@ -113,7 +113,7 @@ void RadiationNiel::operator()(
     double *weight = particles.getPtrWeight();
 
     // Quantum parameter
-    double* chi = particles.getPtrChi();
+    double* particle_chi = particles.getPtrChi();
 
     const double minimum_chi_continuous_ = RadiationTables.getMinimumChiContinuous();
     const double factor_classical_radiated_power_      = RadiationTables.getFactorClassicalRadiatedPower();
