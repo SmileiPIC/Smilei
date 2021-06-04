@@ -267,9 +267,7 @@ void RadiationNiel::operator()(
 
     #endif
 
-    #ifndef _GPU
-        #pragma omp simd
-    #else
+    #ifdef _GPU
         int np = iend-istart;
 
         #pragma acc parallel \
