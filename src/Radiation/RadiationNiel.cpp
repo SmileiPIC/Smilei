@@ -124,8 +124,20 @@ void RadiationNiel::operator()(
 
     //double t0 = MPI_Wtime();
 
-    // Vectorized computation of gamma and the particle quantum parameter
-    #pragma omp simd
+    // 1) Vectorized computation of gamma and the particle quantum parameter
+    #ifndef _GPU
+        #pragma omp simd
+    #else
+        int np = iend-istart;
+
+        #pragma acc parallel \
+            create(random_numbers[0:np], diffusion[0:np]) \
+            present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
+            Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np],radiated_energy) \
+            deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi)
+        {
+            #pragma acc loop gang worker vector
+    #endif
     for( ipart=0 ; ipart< nbparticles; ipart++ ) {
 
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
@@ -142,7 +154,9 @@ void RadiationNiel::operator()(
                               ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                               ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
     }
-
+    #ifdef _GPU
+    }
+    #endif
     //double t1 = MPI_Wtime();
 
     // Non-vectorized computation of the random number
@@ -219,7 +233,7 @@ void RadiationNiel::operator()(
 
     // Computation of the diffusion coefficients
     // Using the table (non-vectorized)
-    if( niel_computation_method_index == 0 ) {
+    if( niel_computation_method == 0 ) {
         // #pragma omp simd
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
