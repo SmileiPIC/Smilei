@@ -141,9 +141,43 @@ void RadiationNiel::operator()(
     // _______________________________________________________________
     // Computation
 
-    //double t0 = MPI_Wtime();
+    // 1) Vectorized computation of gamma and the particle quantum parameter
+    #ifndef _GPU
+        #pragma omp simd
+    #else
+        int np = iend-istart;
 
-    // Computation of the random number in a uniform distribution
+        #pragma acc parallel \
+            create(random_numbers[0:np], diffusion[0:np]) \
+            present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
+            Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np],radiated_energy) \
+            deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi)
+        {
+            #pragma acc loop gang worker vector
+    #endif
+
+    for( ipart=0 ; ipart< nbparticles; ipart++ ) {
+
+        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+
+        // Gamma
+        gamma[ipart] = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                             + momentum_y[ipart]*momentum_y[ipart]
+                             + momentum_z[ipart]*momentum_z[ipart] );
+
+        // Computation of the Lorentz invariant quantum parameter              charge_over_mass_square
+        particle_chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
+                              momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
+                              gamma[ipart],
+                              ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
+                              ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+    }
+
+    #ifdef _GPU
+    } // end acc parallel
+    #endif
+
+    // 2) Computation of the random number in a uniform distribution
     // CPU version
     #ifndef _GPU
 
@@ -216,24 +250,23 @@ void RadiationNiel::operator()(
         curandState_t state;
         #pragma acc parallel num_gangs(1) copy(random_numbers[0:nbparticles]) private(state)
         {
-          seed = 12345ULL;
-          seq = 0ULL;
-          offset = 0ULL;
-          curand_init(seed, seq, offset, &state);
-          #pragma acc loop seq
-          for( ipart=0 ; ipart < nbparticles; ipart++ ) {
-              if( particle_chi[ipart] > minimum_chi_continuous_ ) {
-                  //random_numbers[ipart] = 2.*rand_->uniform() -1.;
-                  //random_numbers[ipart] = 0;
-                  random_numbers[ipart] = curand_normal(&state);
-                  //b[i] = curand_normal(&state);
-              }
-          }
+            seed = 12345ULL;
+            seq = 0ULL;
+            offset = 0ULL;
+            curand_init(seed, seq, offset, &state);
+            #pragma acc loop seq
+            for( ipart=0 ; ipart < nbparticles; ipart++ ) {
+                if( particle_chi[ipart] > minimum_chi_continuous_ ) {
+                    //random_numbers[ipart] = 2.*rand_->uniform() -1.;
+                    //random_numbers[ipart] = 0;
+                    random_numbers[ipart] = curand_normal(&state);
+                    //b[i] = curand_normal(&state);
+                 }
+             }
         }
 
     #endif
 
-    // Vectorized computation of gamma and the particle quantum parameter
     #ifndef _GPU
         #pragma omp simd
     #else
@@ -245,34 +278,12 @@ void RadiationNiel::operator()(
             Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np],radiated_energy) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi)
         {
-            #pragma acc loop gang worker vector
+
     #endif
-
-    for( ipart=0 ; ipart< nbparticles; ipart++ ) {
-
-        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
-
-        // Gamma
-        gamma[ipart] = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
-                             + momentum_y[ipart]*momentum_y[ipart]
-                             + momentum_z[ipart]*momentum_z[ipart] );
-
-        // Computation of the Lorentz invariant quantum parameter              charge_over_mass_square
-        particle_chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
-                              momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
-                              gamma[ipart],
-                              ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                              ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
-    }
-
-    //double t1 = MPI_Wtime();
-
-
-    //double t2 = MPI_Wtime();
 
     // Computation of the diffusion coefficients
     // Using the table (non-vectorized)
-    if( niel_computation_index == 0 ) {
+    if (niel_computation_index == 0 ) {
         // #pragma omp simd
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
