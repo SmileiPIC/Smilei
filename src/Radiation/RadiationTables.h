@@ -50,7 +50,7 @@ public:
     // ---------------------------------------------------------------------
     // PHYSICAL COMPUTATION
     // ---------------------------------------------------------------------
-    
+
     //! Computation of the photon production yield dNph/dt which is
     //! also the cross-section for the Monte-Carlo
     double computePhotonProductionYield( double particle_chi, double particle_gamma );
@@ -66,7 +66,7 @@ public:
     //! ramdomly and using the tables xi and chiphmin
     //! \param particle_chi particle quantum parameter
     double computeRandomPhotonChiWithInterpolation( double particle_chi, Random * rand);
-    
+
     //! Return the value of the function h(particle_chi) of Niel et al.
     //! Use an integration of Gauss-Legendre
     //
@@ -129,6 +129,11 @@ public:
         return this->niel_.computation_method_;
     }
 
+    inline int getNielHComputationMethodIndex()
+    {
+        return this->niel_.computation_method_index_;
+    }
+
     // -----------------------------------------------------------------------------
     //! Return the classical power factor factor_classical_radiated_power_.
     // -----------------------------------------------------------------------------
@@ -177,36 +182,39 @@ public:
     // Table h for the
     // stochastic diffusive operator of Niel et al.
     // ---------------------------------------------
-    
+
     struct Niel {
-        
+
         //! Array containing tabulated values of the function h for the
         //! stochastic diffusive operator of Niel et al.
         std::vector<double > table_;
-        
+
         //! Minimum boundary of the table h
         double min_particle_chi_;
-        
+
         //! Maximum boundary of the table h
         double max_particle_chi_;
-        
+
         //! Inverse delta chi for the table h
         double inv_particle_chi_delta_;
-        
+
         //! Delta chi for the table h
         double particle_chi_delta_;
-        
+
         //! Log10 of the minimum boundary of the table h
         double log10_min_particle_chi_;
-        
+
         //! Method to be used to get the h values (table, fit5, fit10)
         std::string computation_method_;
-        
+
+        //! Index for the computational method
+        int computational_method_index_
+
         //! Dimension of the array h
         int size_particle_chi_;
-        
+
     };
-    
+
     struct Niel niel_;
 
     // ---------------------------------------------
@@ -214,23 +222,23 @@ public:
     // ---------------------------------------------
 
     struct IntegrationFoverChi {
-        
+
         //! Array containing tabulated values for the computation
         //! of the photon production rate dN_{\gamma}/dt
         //! (which is also the optical depth for the Monte-Carlo process).
         //! This table is the integration of the Synchrotron emissivity
         //! refers to as F over the quantum parameter Chi.
         std::vector<double > table_;
-        
+
         //! Minimum boundary of the table integfochi_table
         double min_particle_chi_;
-        
+
         //! Maximum boundary of the table integfochi_table
         double max_particle_chi_;
-        
+
         //! Minimum boundary of the table integfochi_table
         int size_particle_chi_;
-        
+
         //! Log10 of the minimum boundary of the table integfochi_table
         double log10_min_particle_chi_;
 
@@ -239,9 +247,9 @@ public:
 
         //! Inverse delta chi for the table integfochi_table
         double inv_particle_chi_delta_;
-        
+
     };
-    
+
     struct IntegrationFoverChi integfochi_;
 
     // ---------------------------------------------
@@ -249,39 +257,39 @@ public:
     // ---------------------------------------------
 
     struct Xi {
-        
+
         //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
         //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
         std::vector<double> table_ ;
-        
+
         //! Table containing the photon_chi min values
         //! Under this value, photon energy is
         //! considered negligible
         std::vector<double > min_photon_chi_table_;
-        
+
         //! Logarithm of the minimum boundary for particle_chi in the table xip
         //! and xip_chiphmin
         double log10_min_particle_chi_;
-        
+
         //! Maximum boundary for particle_chi in the table xip and xip_chiphmin
         double max_particle_chi_;
-        
+
         //! Minimum boundary for particle_chi in the table xip and xip_chiphmin
         double min_particle_chi_;
-        
+
         //! Delta for the particle_chi discretization  in the table xip and xip_chiphmin
         double particle_chi_delta_;
-        
+
         //! Inverse of the delta for the particle_chi discretization
         //! in the table xip and xip_chiphmin
         double inv_particle_chi_delta_;
-        
+
         //! Dimension of the discretized parameter particle_chi
         int size_particle_chi_;
-        
+
         //! Dimension of the discretized parameter photon_chi
         int size_photon_chi_;
-        
+
         //! 1/(xi_.size_photon_chi_ - 1)
         double inv_size_photon_chi_minus_one_;
 
@@ -290,9 +298,9 @@ public:
 
         //! xip threshold
         // double threshold_;
-        
+
     };
-    
+
     struct Xi xi_;
 private:
 
