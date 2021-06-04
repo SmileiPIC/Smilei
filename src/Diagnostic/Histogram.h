@@ -18,7 +18,7 @@ public:
     void init( std::string, double, double, int, bool, bool, std::vector<double> );
     
     //! Function that goes through the particles and find where they should go in the axis
-    virtual void digitize( Species *, std::vector<double> &, std::vector<int> &, unsigned int, SimWindow * ) {};
+    virtual void calculate_locations( Species *, double *, int *, unsigned int, SimWindow * ) {};
     
     //! Print some info about the axis
     std::string info( std::string title = "" ) {
@@ -26,7 +26,18 @@ public:
         if( title.empty() ) {
             title = type;
         }
-        mystream << "Axis " << title << " from " << min << " to " << max << " in " << nbins << " steps";
+        mystream << "Axis " << title;
+        if( std::isnan(min) ) {
+            mystream << " from auto";
+        } else {
+            mystream << " from " << min;
+        }
+        if( std::isnan(max) ) {
+            mystream << " to auto";
+        } else {
+            mystream << " to " << max;
+        }
+        mystream << " in " << nbins << " steps";
         if( logscale ) {
             mystream << " [LOGSCALE] ";
         }
@@ -41,8 +52,8 @@ public:
     
     //! starting/ending point for the axis binning
     double min, max;
-    //! starting/ending point for the axis binning, accounting for logscale
-    double actual_min, actual_max;
+    //! starting/ending point for the axis binning, for all MPIs
+    double global_min, global_max;
     //! number of bins for the axis binning
     int nbins;
     
@@ -51,8 +62,6 @@ public:
     
     //! determines whether particles beyond min and max are counted in the first and last bin
     bool edge_inclusive;
-    
-    double coeff;
     
     //! List of coefficients for some axes types
     std::vector<double> coefficients;
@@ -71,10 +80,18 @@ public:
     };
     
     //! Compute the index of each particle in the final histogram
-    void digitize( Species *, std::vector<double> &, std::vector<int> &, SimWindow * );
+    void digitize( std::vector<Species *>, std::vector<double> &, std::vector<int> &, SimWindow * );
     //! Calculate the quantity of each particle to be summed in the histogram
-    virtual void valuate( Species *, std::vector<double> &, std::vector<int> & ) {
+    virtual void valuate( Species *, double *, int * ) {
         ERROR( "`deposited_quantity` should not be empty" );
+    };
+    //! Same as `valuate` for all species
+    void valuate( std::vector<Species *> species, std::vector<double> &double_buffer, std::vector<int> &int_buffer ) {
+        unsigned int istart = 0;
+        for( unsigned int ispec=0; ispec < species.size(); ispec++ ) {
+            valuate( species[ispec], &double_buffer[istart], &int_buffer[istart] );
+            istart += species[ispec]->getNbrOfParticles();
+        }
     };
     //! Add the contribution of each particle in the histogram
     void distribute( std::vector<double> &, std::vector<int> &, std::vector<double> & );
@@ -89,7 +106,7 @@ public:
 class HistogramAxis_x : public HistogramAxis
 {
     ~HistogramAxis_x() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -102,7 +119,7 @@ class HistogramAxis_x : public HistogramAxis
 class HistogramAxis_moving_x : public HistogramAxis
 {
     ~HistogramAxis_moving_x() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         double x_moved = simWindow->getXmoved();
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -116,7 +133,7 @@ class HistogramAxis_moving_x : public HistogramAxis
 class HistogramAxis_y : public HistogramAxis
 {
     ~HistogramAxis_y() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -129,7 +146,7 @@ class HistogramAxis_y : public HistogramAxis
 class HistogramAxis_z : public HistogramAxis
 {
     ~HistogramAxis_z() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -142,7 +159,7 @@ class HistogramAxis_z : public HistogramAxis
 class HistogramAxis_vector : public HistogramAxis
 {
     ~HistogramAxis_vector() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         unsigned int idim, ndim = coefficients.size()/2;
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -159,7 +176,7 @@ class HistogramAxis_vector : public HistogramAxis
 class HistogramAxis_theta2D : public HistogramAxis
 {
     ~HistogramAxis_theta2D() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         double X, Y;
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -175,7 +192,7 @@ class HistogramAxis_theta2D : public HistogramAxis
 class HistogramAxis_theta3D : public HistogramAxis
 {
     ~HistogramAxis_theta3D() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -197,7 +214,7 @@ class HistogramAxis_theta3D : public HistogramAxis
 class HistogramAxis_phi : public HistogramAxis
 {
     ~HistogramAxis_phi() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         unsigned int idim;
         double a, b;
@@ -218,7 +235,7 @@ class HistogramAxis_phi : public HistogramAxis
 class HistogramAxis_px : public HistogramAxis
 {
     ~HistogramAxis_px() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -243,7 +260,7 @@ class HistogramAxis_px : public HistogramAxis
 class HistogramAxis_py : public HistogramAxis
 {
     ~HistogramAxis_py() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -268,7 +285,7 @@ class HistogramAxis_py : public HistogramAxis
 class HistogramAxis_pz : public HistogramAxis
 {
     ~HistogramAxis_pz() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -293,7 +310,7 @@ class HistogramAxis_pz : public HistogramAxis
 class HistogramAxis_p : public HistogramAxis
 {
     ~HistogramAxis_p() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -322,7 +339,7 @@ class HistogramAxis_p : public HistogramAxis
 class HistogramAxis_gamma : public HistogramAxis
 {
     ~HistogramAxis_gamma() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -351,7 +368,7 @@ class HistogramAxis_gamma : public HistogramAxis
 class HistogramAxis_ekin : public HistogramAxis
 {
     ~HistogramAxis_ekin() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -380,7 +397,7 @@ class HistogramAxis_ekin : public HistogramAxis
 class HistogramAxis_vx : public HistogramAxis
 {
     ~HistogramAxis_vx() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -411,7 +428,7 @@ class HistogramAxis_vx : public HistogramAxis
 class HistogramAxis_vy : public HistogramAxis
 {
     ~HistogramAxis_vy() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -442,7 +459,7 @@ class HistogramAxis_vy : public HistogramAxis
 class HistogramAxis_vz : public HistogramAxis
 {
     ~HistogramAxis_vz() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -473,7 +490,7 @@ class HistogramAxis_vz : public HistogramAxis
 class HistogramAxis_v : public HistogramAxis
 {
     ~HistogramAxis_v() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -488,7 +505,7 @@ class HistogramAxis_v : public HistogramAxis
 class HistogramAxis_vperp2 : public HistogramAxis
 {
     ~HistogramAxis_vperp2() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
         if( s->mass_ > 0 ) {
@@ -521,7 +538,7 @@ class HistogramAxis_vperp2 : public HistogramAxis
 class HistogramAxis_charge : public HistogramAxis
 {
     ~HistogramAxis_charge() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -534,7 +551,7 @@ class HistogramAxis_charge : public HistogramAxis
 class HistogramAxis_chi : public HistogramAxis
 {
     ~HistogramAxis_chi() {};
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
@@ -559,7 +576,7 @@ public:
         Py_DECREF( function );
     };
 private:
-    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    void calculate_locations( Species *s, double *array, int *index, unsigned int npart, SimWindow *simWindow )
     {
         #pragma omp critical
         {
@@ -591,9 +608,9 @@ private:
 class Histogram_number : public Histogram
 {
     ~Histogram_number() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
                 continue;
@@ -605,9 +622,9 @@ class Histogram_number : public Histogram
 class Histogram_charge : public Histogram
 {
     ~Histogram_charge() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
                 continue;
@@ -619,9 +636,9 @@ class Histogram_charge : public Histogram
 class Histogram_jx : public Histogram
 {
     ~Histogram_jx() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -653,9 +670,9 @@ class Histogram_jx : public Histogram
 class Histogram_jy : public Histogram
 {
     ~Histogram_jy() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -687,9 +704,9 @@ class Histogram_jy : public Histogram
 class Histogram_jz : public Histogram
 {
     ~Histogram_jz() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -721,9 +738,9 @@ class Histogram_jz : public Histogram
 class Histogram_ekin : public Histogram
 {
     ~Histogram_ekin() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -766,9 +783,9 @@ public:
             }
     };
 private:
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
             if( index[ipart]<0 ) {
                 continue;
@@ -781,9 +798,9 @@ private:
 class Histogram_p : public Histogram
 {
     ~Histogram_p() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -813,9 +830,9 @@ class Histogram_p : public Histogram
 class Histogram_px : public Histogram
 {
     ~Histogram_px() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -839,9 +856,9 @@ class Histogram_px : public Histogram
 class Histogram_py : public Histogram
 {
     ~Histogram_py() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -865,9 +882,9 @@ class Histogram_py : public Histogram
 class Histogram_pz : public Histogram
 {
     ~Histogram_pz() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -891,9 +908,9 @@ class Histogram_pz : public Histogram
 class Histogram_pressure_xx : public Histogram
 {
     ~Histogram_pressure_xx() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -925,9 +942,9 @@ class Histogram_pressure_xx : public Histogram
 class Histogram_pressure_yy : public Histogram
 {
     ~Histogram_pressure_yy() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -959,9 +976,9 @@ class Histogram_pressure_yy : public Histogram
 class Histogram_pressure_zz : public Histogram
 {
     ~Histogram_pressure_zz() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -993,9 +1010,9 @@ class Histogram_pressure_zz : public Histogram
 class Histogram_pressure_xy : public Histogram
 {
     ~Histogram_pressure_xy() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -1029,9 +1046,9 @@ class Histogram_pressure_xy : public Histogram
 class Histogram_pressure_xz : public Histogram
 {
     ~Histogram_pressure_xz() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -1065,9 +1082,9 @@ class Histogram_pressure_xz : public Histogram
 class Histogram_pressure_yz : public Histogram
 {
     ~Histogram_pressure_yz() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -1101,9 +1118,9 @@ class Histogram_pressure_yz : public Histogram
 class Histogram_ekin_vx : public Histogram
 {
     ~Histogram_ekin_vx() {};
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         // Matter Particles
         if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
@@ -1147,9 +1164,9 @@ public:
         Py_DECREF( function );
     };
 private:
-    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    void valuate( Species *s, double *array, int *index )
     {
-        unsigned int npart = array.size();
+        unsigned int npart = s->getNbrOfParticles();
         #pragma omp critical
         {
             // Expose particle data as numpy arrays
