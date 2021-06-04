@@ -165,13 +165,13 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
         // Convert computational methods in index for GPUs
         if( niel_.computation_method_ == "table") {
-            niel_.computational_method_index_ = 0
+            niel_.computation_method_index_ = 0;
         } else if (niel_.computation_method_ == "fit5") {
-            niel_.computational_method_index_ = 1
+            niel_.computation_method_index_ = 1;
         } else if (niel_.computation_method_ == "fit10") {
-            niel_.computational_method_index_ = 2
+            niel_.computation_method_index_ = 2;
         } else if (niel_.computation_method_ == "ridgers") {
-            niel_.computational_method_index_ = 3
+            niel_.computation_method_index_ = 3;
         }
 
     }

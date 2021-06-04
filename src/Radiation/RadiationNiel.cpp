@@ -219,7 +219,7 @@ void RadiationNiel::operator()(
 
     // Computation of the diffusion coefficients
     // Using the table (non-vectorized)
-    if( niel_computation_method_index == 0 ) {
+    if( niel_computation_method == 0 ) {
         // #pragma omp simd
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
