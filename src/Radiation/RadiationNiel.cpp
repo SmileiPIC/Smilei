@@ -131,9 +131,8 @@ void RadiationNiel::operator()(
         int np = iend-istart;
 
         #pragma acc parallel \
-            create(random_numbers[0:np], diffusion[0:np]) \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
-            Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np],radiated_energy) \
+            Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np]) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi)
         {
             #pragma acc loop gang worker vector
@@ -172,6 +171,31 @@ void RadiationNiel::operator()(
           random_numbers[ipart] = Rand::normal(sqrtdt);
         }
     }*/
+
+    #ifdef _GPU
+
+    unsigned long long seed;
+    unsigned long long seq;
+    unsigned long long offset;
+    curandState_t state;
+    #pragma acc parallel num_gangs(1) create(random_numbers[0:nbparticles]) private(state)
+    {
+        seed = 12345ULL;
+        seq = 0ULL;
+        offset = 0ULL;
+        curand_init(seed, seq, offset, &state);
+        #pragma acc loop seq
+        for( ipart=0 ; ipart < nbparticles; ipart++ ) {
+            if( particle_chi[ipart] > minimum_chi_continuous_ ) {
+                //random_numbers[ipart] = 2.*rand_->uniform() -1.;
+                //random_numbers[ipart] = 0;
+                random_numbers[ipart] = curand_normal(&state);
+                //b[i] = curand_normal(&state);
+             }
+         }
+    }
+
+    #else
 
     // Vectorized computation of the random number in a uniform distribution
     // #pragma omp simd
@@ -228,6 +252,7 @@ void RadiationNiel::operator()(
             //random_numbers[ipart] = userFunctions::erfinv2(random_numbers[ipart])*sqrtdt*sqrt(2.);
         }
     }
+    #endif
 
     //double t2 = MPI_Wtime();
 
