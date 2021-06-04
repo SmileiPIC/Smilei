@@ -208,7 +208,7 @@ public:
         std::string computation_method_;
 
         //! Index for the computational method
-        int computational_method_index_
+        int computation_method_index_
 
         //! Dimension of the array h
         int size_particle_chi_;
