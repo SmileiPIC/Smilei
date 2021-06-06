@@ -119,6 +119,15 @@ void RadiationNiel::operator()(
     const double factor_classical_radiated_power_      = RadiationTables.getFactorClassicalRadiatedPower();
     const int niel_computation_method = RadiationTables.getNielHComputationMethodIndex();
 
+    #ifdef _GPU
+    // Management of the data on GPU though this data region
+    #pragma acc data create(random_numbers[0:nbparticles], diffusion[0:nbparticles]) \
+            present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
+            Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np]) \
+            deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi)
+    {
+    #endif
+
     // _______________________________________________________________
     // Computation
 
@@ -137,26 +146,28 @@ void RadiationNiel::operator()(
         {
             #pragma acc loop gang worker vector
     #endif
-    for( ipart=0 ; ipart< nbparticles; ipart++ ) {
+        for( ipart=0 ; ipart< nbparticles; ipart++ ) {
 
-        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+            charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
-        // Gamma
-        gamma[ipart] = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
-                             + momentum_y[ipart]*momentum_y[ipart]
-                             + momentum_z[ipart]*momentum_z[ipart] );
+            // Gamma
+            gamma[ipart] = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+                                 + momentum_y[ipart]*momentum_y[ipart]
+                                 + momentum_z[ipart]*momentum_z[ipart] );
 
-        // Computation of the Lorentz invariant quantum parameter
-        particle_chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
-                              momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
-                              gamma[ipart],
-                              ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                              ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
-    }
+            // Computation of the Lorentz invariant quantum parameter
+            particle_chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
+                                  momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
+                                  gamma[ipart],
+                                  ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
+                                  ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+        }
     #ifdef _GPU
     }
     #endif
     //double t1 = MPI_Wtime();
+
+    // 2) Computation of the random number
 
     // Non-vectorized computation of the random number
     /*for (ipart=0 ; ipart < nbparticles; ipart++ )
@@ -178,7 +189,7 @@ void RadiationNiel::operator()(
     unsigned long long seq;
     unsigned long long offset;
     curandState_t state;
-    #pragma acc parallel num_gangs(1) create(random_numbers[0:nbparticles]) private(state)
+    #pragma acc parallel num_gangs(1) present(random_numbers[0:nbparticles]) private(state)
     {
         seed = 12345ULL;
         seq = 0ULL;
@@ -275,17 +286,35 @@ void RadiationNiel::operator()(
     }
     // Using the fit at order 5 (vectorized)
     else if( niel_computation_method == 1 ) {
-        #pragma omp simd private(temp)
-        for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
-            // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
-            if( particle_chi[ipart] > minimum_chi_continuous_ ) {
+        #ifndef _GPU
+            #pragma omp simd private(temp)
+        #else
+            int np = iend-istart;
 
-                temp = RadiationTools::getHNielFitOrder5( particle_chi[ipart] );
+            #pragma acc parallel \
+                present(gamma[istart:np], random_numbers[0:nbparticles]) \
+                deviceptr(particle_chi) \
+                private(temp)
+            {
+                #pragma acc loop gang worker vector
+        #endif
 
-                diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipart]*temp )*random_numbers[ipart];
+            for( ipart=0 ; ipart < nbparticles; ipart++ ) {
+
+                // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
+                if( particle_chi[ipart] > minimum_chi_continuous_ ) {
+
+                    temp = RadiationTools::getHNielFitOrder5( particle_chi[ipart] );
+
+                    diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipart]*temp )*random_numbers[ipart];
+                }
             }
+
+        #ifdef _GPU
         }
+        #endif
+
     }
     // Using the fit at order 10 (vectorized)
     else if( niel_computation_method == 2 ) {
@@ -378,4 +407,9 @@ void RadiationNiel::operator()(
     //std::cerr << "Computation of the diffusion: " << t3 - t2 << std::endl;
     //std::cerr << "Computation of the momentum: " << t4 - t3 << std::endl;
     //std::cerr << "Computation of the radiated energy: " << t5 - t4 << std::endl;
+
+    #ifdef _GPU
+    }   // end acc data
+    #endif
+
 }
