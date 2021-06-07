@@ -23,13 +23,17 @@
 #include "userFunctions.h"
 
 #ifdef _GPU
+#include <cuda.h>
 #include <curand.h>
 #include <curand_kernel.h>
+#include <openacc.h>
+#include <openacc_curand.h>
 #endif
 
 #include <cstring>
 #include <fstream>
 #include <cmath>
+#include "stdlib.h"
 
 //------------------------------------------------------------------------------
 //! RadiationLL class: holds parameters and functions to apply the

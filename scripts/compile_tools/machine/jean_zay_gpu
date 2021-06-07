@@ -28,8 +28,9 @@
 #export SMILEICXX.DEPS = mpiicpc
 
 #ACCFLAGS += -ta=tesla:cc70
-ACCFLAGS += -ta=tesla:nollvm -Mcudalib=curand
+ACCFLAGS += -ta=tesla:nollvm,cc70 -Mcudalib=curand --c++14 -I/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/cuda/10.1/include
 #LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/pgi/19.10/linux86-64-llvm/2019/cuda/10.1/lib64 -lcudart
-LDFLAGS += -ta=tesla:nollvm -Mcudalib=curand -L/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/cuda/10.1/lib64 -lcudart -lcurand
+LDFLAGS += -ta=tesla:nollvm,cc70 --c++14 -Mcudalib=curand -L/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/cuda/10.1/lib64 -lcudart -lcurand -L/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/lib -lacccuda
 
-CUFLAGS  += -arch=sm_70
+CUFLAGS  += -arch=sm_70 -I/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/cuda/10.1/include
+
