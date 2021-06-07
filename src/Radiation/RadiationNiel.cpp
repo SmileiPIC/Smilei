@@ -121,6 +121,7 @@ void RadiationNiel::operator()(
 
     #ifdef _GPU
     // Management of the data on GPU though this data region
+    int np = iend-istart;
     #pragma acc data create(random_numbers[0:nbparticles], diffusion[0:nbparticles]) \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np]) \
@@ -137,8 +138,6 @@ void RadiationNiel::operator()(
     #ifndef _GPU
         #pragma omp simd
     #else
-        int np = iend-istart;
-
         #pragma acc parallel \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np]) \
@@ -267,7 +266,7 @@ void RadiationNiel::operator()(
 
     //double t2 = MPI_Wtime();
 
-    // Computation of the diffusion coefficients
+    // 3) Computation of the diffusion coefficients
     // Using the table (non-vectorized)
     if( niel_computation_method == 0 ) {
         // #pragma omp simd
@@ -318,17 +317,34 @@ void RadiationNiel::operator()(
     }
     // Using the fit at order 10 (vectorized)
     else if( niel_computation_method == 2 ) {
-        #pragma omp simd private(temp)
-        for( ipart=0 ; ipart < nbparticles; ipart++ ) {
+        #ifndef _GPU
+            #pragma omp simd private(temp)
+        #else
+            int np = iend-istart;
 
-            // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
-            if( particle_chi[ipart] > minimum_chi_continuous_ ) {
+            #pragma acc parallel \
+                present(gamma[istart:np], random_numbers[0:nbparticles]) \
+                deviceptr(particle_chi) \
+                private(temp)
+            {
+                #pragma acc loop gang worker vector
+        #endif
 
-                temp = RadiationTools::getHNielFitOrder10( particle_chi[ipart] );
+            for( ipart=0 ; ipart < nbparticles; ipart++ ) {
 
-                diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipart]*temp )*random_numbers[ipart];
+                // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
+                if( particle_chi[ipart] > minimum_chi_continuous_ ) {
+
+                    temp = RadiationTools::getHNielFitOrder10( particle_chi[ipart] );
+
+                    diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipart]*temp )*random_numbers[ipart];
+                }
             }
+
+        #ifdef _GPU
         }
+        #endif
+
     }
     // Using Ridgers
     else if( niel_computation_method == 3) {
@@ -347,7 +363,7 @@ void RadiationNiel::operator()(
     }
     //double t3 = MPI_Wtime();
 
-    // Vectorized update of the momentum
+    // 4) Vectorized update of the momentum
     #pragma omp simd private(temp,rad_energy)
     for( ipart=0 ; ipart<nbparticles; ipart++ ) {
         // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
