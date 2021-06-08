@@ -169,6 +169,9 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         vector<double> b2( n1d*n2p, 0. );
         vector<double> pos( 2 );
         
+        double* db1 = &(b1[0]);
+        double* db2 = &(b2[0]);
+
         int isBoundary1min = patch->isBoundary(axis1_,0);
         int isBoundary1max = patch->isBoundary(axis1_,1);
         int isBoundary2min = patch->isBoundary(axis2_,0);
@@ -196,8 +199,6 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma acc enter data copyin(B_ext2[0:B_ext_size2])
         }
         
-        double* db1 = &(b1[0]);
-        double* db2 = &(b2[0]);
         int b1_size = n1p*n2d;
         int b2_size = n1d*n2p;
 #endif
