@@ -5,32 +5,20 @@
 # Documentation:
 # http://www.idris.fr/jean-zay
 #
-# Load the correct modules:
-#
-#module purge
-#module load anaconda-py2/2019.03
-#export PYTHONHOME=/gpfslocalsup/pub/anaconda-py2/2019.03
-#export LD_LIBRARY_PATH=$PYTHONHOME/lib:$LD_LIBRARY_PATH 
-#
-#module purge
-#
-#
-#module load cuda/10.1.1
-#module load pgi/19.10
-#module load intel-compilers/19.0.5 intel-mpi/19.0.5
-# No HDF5 available for now, this will crash at runtime
-#module load hdf5/1.10.5-mpi
-#
-#export HDF5_ROOT_DIR=/gpfslocalsup/spack_soft/hdf5/1.10.5/intel-19.0.4-lnysdcbocfokaq4yxc72wiplpfknw7e6
-#export I_MPI_CXX=pgc++
-#
-#export SMILEICXX=mpiicpc
-#export SMILEICXX.DEPS = mpiicpc
 
+#ACCFLAGS += -ta=tesla:nollvm,cc70 -std=c++14 -Mcuda=nollvm -lcurand #-Minfo=all #-I/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/cuda/10.1/include
+#LDFLAGS += -ta=tesla:nollvm,cc70  -Mcudalib=curand -Mcuda=nollvm -lcudart -lcurand -lacccuda
+#CUFLAGS  += -arch=sm_70 -std=c++14 #-I/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/cuda/10.1/include
+
+# Configuration by J. Derouillat
 #ACCFLAGS += -ta=tesla:cc70
-ACCFLAGS += -ta=tesla:nollvm,cc70 -Mcudalib=curand --c++14 -I/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/cuda/10.1/include
-#LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/pgi/19.10/linux86-64-llvm/2019/cuda/10.1/lib64 -lcudart
-LDFLAGS += -ta=tesla:nollvm,cc70 --c++14 -Mcudalib=curand -L/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/cuda/10.1/lib64 -lcudart -lcurand -L/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/lib -lacccuda
+#LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/cuda/10.2/lib64/ -lcudart 
+#CUFLAGS  += -arch=sm_70  
 
-CUFLAGS  += -arch=sm_70 -I/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/cuda/10.1/include
+# IDRIS config for curand
+ACCFLAGS += -ta=tesla:nollvm,cc70 -std=c++14 -Mcuda=nollvm -lcurand -Minfo=all
+LDFLAGS += -ta=tesla:nollvm,cc70 -std=c++14 -Mcudalib=curand -Mcuda=nollvm -lcudart -lcurand -lacccuda
+CUFLAGS  += -arch=sm_70
+
+
 

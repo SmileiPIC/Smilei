@@ -78,7 +78,7 @@ TABLES_SRCS := $(shell find tools/tables/* -name \*.cpp)
 # Smilei version
 CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
 # C++ version
-CXXFLAGS += -std=c++11 -Wall #-Wshadow
+CXXFLAGS += -std=c++14 -Wall #-Wshadow
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
 CXXFLAGS += -I$(HDF5_ROOT_DIR)/include
@@ -140,7 +140,7 @@ else ifneq (,$(call parse_config,opt-report))
 
 # Default configuration
 else
-    CXXFLAGS += -O3 -g #-xHost -no-prec-div -ipo
+    CXXFLAGS += -O3 # -g -xHost -no-prec-div -ipo
 endif
 
 # Manage options in the "config" parameter
@@ -184,7 +184,7 @@ ifneq (,$(call parse_config,gpu))
     CUSRCS := $(shell find src/* -name \*.cu)
     CUOBJS := $(addprefix $(BUILD_DIR)/, $(CUSRCS:.cu=.o))
     THRUSTCXX = nvcc
-    CUFLAGS += -O3 --std c++11 $(DIRS:%=-I%)
+    CUFLAGS += -O3 --std c++14 $(DIRS:%=-I%)
     CUFLAGS += $(shell $(PYTHONCONFIG) --includes)
 
     OBJS += $(CUOBJS)
@@ -251,10 +251,14 @@ $(BUILD_DIR)/src/Radiation/RadiationTablesDefault.o : src/Radiation/RadiationTab
 	@echo "SPECIAL COMPILATION FOR $<"
 	$(Q) $(SMILEICXX) $(CXXFLAGS0) -c $< -o $@
 
+#$(BUILD_DIR)src/Radiation/RadiationNiel.o: src/Radiation/RadiationNiel.cpp
+#	@echo "SPECIAL COMPILATION FOR $<"
+#	$(Q) $(SMILEICXX) $(CXXFLAGS) -c $< -o $@
+
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
 	@echo "Compiling $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCFLAGS) -c $< -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS)  $(ACCFLAGS) -c $< -o $@
 
 # Compile cus
 $(BUILD_DIR)/%.o : %.cu

@@ -229,7 +229,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     B1[ iB1*nyz_pd + j*nz_d + k ]
                         = Alpha_   *  E2[ p0*nyz_pd + j*nz_d + k ]
                         + Beta_    *( B1[ p1*nyz_pd + j*nz_d + k ]-B_ext1[ j*n2d + k ] )
-                        + Gamma_   * b1[ j*n2d + k ]
+                        + Gamma_   * db1[ j*n2d + k ]
                         + Delta_   *( B0[ p0*nyz_dd + (j+1)*nz_d + k ]-B_ext0[ (j+1)*nz_d + k ] )
                         + Epsilon_ *( B0[ p0*nyz_dd +  j   *nz_d + k ]-B_ext0[  j   *nz_d + k ] )
                         + B_ext1[ j*n2d + k ];
@@ -248,7 +248,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     B1[ i*nyz_dd + iB1*nz_d + k ]
                         =-Alpha_   *  E2[ i*nyz_pd + p0*nz_d + k ]
                         + Beta_    *( B1[ i*nyz_dd + p1*nz_d + k ]-B_ext1[ i*n2d + k ] )
-                        + Gamma_   * b1[ i*n2d + k ]
+                        + Gamma_   * db1[ i*n2d + k ]
                         + Delta_   *( B0[ (i+1)*nyz_pd + p0*nz_d + k ]-B_ext0[ (i+1)*nz_d + k ] )
                         + Epsilon_ *( B0[  i   *nyz_pd + p0*nz_d + k ]-B_ext0[  i   *nz_d + k ] )
                         + B_ext1[ i*n2d + k ];
@@ -267,7 +267,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     B1[ i*nyz_dd + j*nz_d + iB1 ]
                         = Alpha_   *  E2[ i*nyz_dp + j*nz_p + p0 ]
                         + Beta_    *( B1[ i*nyz_dd + j*nz_d + p1 ]-B_ext1[ i*n2d + j ] )
-                        + Gamma_   * b1[ i*n2d + j ]
+                        + Gamma_   * db1[ i*n2d + j ]
                         + Delta_   *( B0[ (i+1)*nyz_dp + j*nz_p + p0 ]-B_ext0[ (i+1)*n2d + j ] )
                         + Epsilon_ *( B0[  i   *nyz_dp + j*nz_p + p0 ]-B_ext0[  i   *n2d + j ] )
                         + B_ext1[ i*n2d + j ];
@@ -302,7 +302,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     B2[ iB1*nyz_dp + j*nz_p + k ]
                         = -Alpha_ *  E1[ p0*nyz_dp + j*nz_p + k ]
                         +  Beta_  *( B2[ p1*nyz_dp + j*nz_p + k ]-B_ext2[ j*n2p + k ] )
-                        +  Gamma_ * b2[ j*n2p + k ]
+                        +  Gamma_ * db2[ j*n2p + k ]
                         +  Zeta_  *( B0[ p0*nyz_dd + j*nz_d + k+1 ]-B_ext0[ j*n2d + (k+1) ] )
                         +  Eta_   *( B0[ p0*nyz_dd + j*nz_d + k   ]-B_ext0[ j*n2d +  k    ] )
                         +  B_ext2[ j*n2p + k ];
@@ -321,7 +321,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     B2[ i*nyz_dp + iB1*nz_p + k ]
                         =  Alpha_ *  E1[ i*nyz_pp + p0*nz_p + k ]
                         +  Beta_  *( B2[ i*nyz_dp + p1*nz_p + k ]-B_ext2[ i*n2p + k ] )
-                        +  Gamma_ * b2[ i*n2p + k ]
+                        +  Gamma_ * db2[ i*n2p + k ]
                         +  Zeta_  *( B0[ i*nyz_pd + p0*nz_d + k+1 ]-B_ext0[ i*n2d + (k+1) ] )
                         +  Eta_   *( B0[ i*nyz_pd + p0*nz_d + k   ]-B_ext0[ i*n2d +  k    ] )
                         +  B_ext2[ i*n2p + k ];
@@ -340,7 +340,7 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     B2[ i*nyz_pd + j*nz_d + iB1 ]
                         = -Alpha_ *  E1[ i*nyz_pp + j*nz_p + p0 ]
                         +  Beta_  *( B2[ i*nyz_pd + j*nz_d  + p1 ]-B_ext2[ i*n2p + j ] )
-                        +  Gamma_ * b2[ i*n2p + j ]
+                        +  Gamma_ * db2[ i*n2p + j ]
                         +  Zeta_  *( B0[ i*nyz_dp + (j+1)*nz_p + p0 ]-B_ext0[ i*n2d + (j+1) ] )
                         +  Eta_   *( B0[ i*nyz_dp +  j   *nz_p + p0 ]-B_ext0[ i*n2d +  j    ] )
                         +  B_ext2[ i*n2p + j ];

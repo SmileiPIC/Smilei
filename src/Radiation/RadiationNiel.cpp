@@ -208,6 +208,7 @@ void RadiationNiel::operator()(
          }
     }
 
+
     #else
 
     // Vectorized computation of the random number in a uniform distribution
