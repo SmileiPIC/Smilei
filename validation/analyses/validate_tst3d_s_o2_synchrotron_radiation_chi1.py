@@ -54,7 +54,7 @@ print(" iteration | LL         | CLL        | Niel       | MC         |")
 print(" --------------------------------------------------------------|")
 
 for it,time in enumerate(times[::5]):
-    print(" {0:5d}     | {1:.4e} | {1:.4e} | {2:.4e} | {3:.4e} | ".format(it*500,ukin["LL"][it*5],ukin["CLL"][it*5],ukin["Niel"][it*5],ukin["MC"][it*5]))
+    print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | {4:.4e} | ".format(it*500,ukin["LL"][it*5],ukin["CLL"][it*5],ukin["Niel"][it*5],ukin["MC"][it*5]))
 
 print("")
 
@@ -89,7 +89,7 @@ print("")
 # ______________________________________________________________________________
 # Comparison Corrected Landau-Lifshitz and the Monte-Carlo method
 
-for k,model in enumerate(radiation_list[1:]):
+for k,model in enumerate(radiation_list[2:]):
 
     urad_rel_err = abs(urad[model] - urad["CLL"]) / urad["CLL"].max()
     ukin_rel_err = abs(ukin[model] - ukin["CLL"]) / ukin["CLL"][0]

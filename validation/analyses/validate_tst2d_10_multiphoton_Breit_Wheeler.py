@@ -45,6 +45,8 @@ ntot_electron = np.array(S.Scalar("Ntot_electron").get()["data"])
 ntot_positron = np.array(S.Scalar("Ntot_positron").get()["data"])
 ntot_photon = np.array(S.Scalar("Ntot_photon").get()["data"])
 
+UmBWpairs = np.array(S.Scalar("UmBWpairs").get()["data"])
+
 print( ' Final electron energy / total energy: ',ukin_electron[-1] / utot[0] )
 print( ' Final positron energy / total energy: ',ukin_positron[-1] / utot[0] )
 print( ' Final photon energy / total energy: ',ukin_photon[-1] / utot[0] )
