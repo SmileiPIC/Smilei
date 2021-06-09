@@ -57,8 +57,18 @@ for it,time in enumerate(times[::5]):
 
 print("")
 
+print(" -------------------------------------------------|")
+print(" Diag scalars (Radiated energy)                    |")
+print(" iteration | CLL        | Niel       | MC         |")
+print(" -------------------------------------------------|")
+
+for it,time in enumerate(times[::5]):
+    print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | ".format(it*500,urad["CLL"][it*5],urad["Niel"][it*5],urad["MC"][it*5]))
+
+print("")
+
 for radiation in radiation_list:
-    
+
     print(' Final kinetic energy for {}: {}'.format(radiation,ukin[radiation][-1]))
     print(' Final radiated energy for {}: {}'.format(radiation,urad[radiation][-1]))
 
@@ -126,15 +136,15 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
 
     # Loop over the species/radiation models
     for i,radiation in enumerate(radiation_list):
-        
+
         # Weight
         weight_diag = S.ParticleBinning(diagNumber=i,timesteps=timestep).get()
         weight = np.array(weight_diag["data"][0])
-        
+
         # Weight x chi
         weight_chi_diag = S.ParticleBinning(diagNumber=i+len(radiation_list),timesteps=timestep).get()
         weight_chi = np.array(weight_chi_diag["data"][0])
-        
+
         # Chi distribution
         chi_dist = S.ParticleBinning(diagNumber=i+2*len(radiation_list),timesteps=timestep).get()
         chi_distr_axis = np.array(chi_dist["chi"])
@@ -142,7 +152,7 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
         log10_chi_distr_axis = np.log10(chi_distr_axis)
         delta = log10_chi_distr_axis[1] - log10_chi_distr_axis[0]
         bin_size =  np.power(10.,log10_chi_distr_axis + 0.5*delta) - np.power(10.,log10_chi_distr_axis - 0.5*delta)
-        
+
         # Energy distribution
         ekin_dist = S.ParticleBinning(diagNumber=i+3*len(radiation_list),timesteps=timestep).get()
         ekin_distr_axis = np.array(ekin_dist["ekin"])
@@ -150,20 +160,20 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
         log10_ekin_distr_axis = np.log10(ekin_distr_axis)
         delta = log10_ekin_distr_axis[1] - log10_ekin_distr_axis[0]
         bin_size =  np.power(10.,log10_ekin_distr_axis + 0.5*delta) - np.power(10.,log10_ekin_distr_axis - 0.5*delta)
-        
+
         # Local average chi
         chi = weight_chi[weight>0] / weight[weight>0]
-        
+
         # Maximal and average chi value from spatial distribution
         chi_max[itimestep,i] = chi.max()
         chi_ave[itimestep,i] = np.sum(chi)/sum(list(np.shape(chi)))
-        
+
         # Maximal and average chi value from chi distribution
         if (itimestep > 0):
             chi_ave_from_dists[itimestep,i] = np.sum(chi_distr_axis * chi_distr_data * bin_size) / np.sum(chi_distr_data * bin_size)
         imax = np.argmax(chi_distr_data)
         chi_max_from_dists[itimestep,i] = chi_distr_axis[imax]
-        
+
         # Average kinetic energy from energy distribution
         ekin_from_dists[itimestep,i] = dx*dy*np.sum(ekin_distr_axis * ekin_distr_data * bin_size)
         if (itimestep > 0):

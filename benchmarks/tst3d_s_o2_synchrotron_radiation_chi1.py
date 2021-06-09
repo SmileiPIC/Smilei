@@ -158,7 +158,8 @@ for i,radiation in enumerate(radiation_list):
 # ----------------------------------------------------------------------------------------
 # Global parameters for the radiation reaction models
 RadiationReaction(
-    minimum_chi_discontinuous = 1e-3
+    minimum_chi_discontinuous = 1e-3,
+    Niel_computation_method = "fit10",
 )
 
 # ----------------------------------------------------------------------------------------
