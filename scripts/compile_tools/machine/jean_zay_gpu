@@ -6,19 +6,12 @@
 # http://www.idris.fr/jean-zay
 #
 
-#ACCFLAGS += -ta=tesla:nollvm,cc70 -std=c++14 -Mcuda=nollvm -lcurand #-Minfo=all #-I/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/cuda/10.1/include
-#LDFLAGS += -ta=tesla:nollvm,cc70  -Mcudalib=curand -Mcuda=nollvm -lcudart -lcurand -lacccuda
-#CUFLAGS  += -arch=sm_70 -std=c++14 #-I/gpfslocalsys/pgi/20.4/linux86-64-llvm/2020/cuda/10.1/include
-
-# Configuration by J. Derouillat
-#ACCFLAGS += -ta=tesla:cc70
-#LDFLAGS += -ta=tesla:cc70 -L/gpfslocalsys/cuda/10.2/lib64/ -lcudart 
-#CUFLAGS  += -arch=sm_70  
 
 # IDRIS config for curand
-ACCFLAGS += -ta=tesla:nollvm,cc70 -std=c++14 -Mcuda=nollvm -lcurand -Minfo=all
-LDFLAGS += -ta=tesla:nollvm,cc70 -std=c++14 -Mcudalib=curand -Mcuda=nollvm -lcudart -lcurand -lacccuda
+ACCFLAGS += -ta=tesla:cc70 -std=c++14  -lcurand -Minfo=all
+LDFLAGS += -ta=tesla:cc70 -std=c++14 -Mcudalib=curand -lcudart -lcurand -lacccuda
 CUFLAGS  += -arch=sm_70
+CXXFLAGS +=  -D__GCC_ATOMIC_TEST_AND_SET_TRUEVAL=1
 
 
 
