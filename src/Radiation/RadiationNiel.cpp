@@ -131,7 +131,7 @@ void RadiationNiel::operator()(
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
-        gamma[ipart-ipart_ref] = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+        gamma[ipart-ipart_ref] = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                              + momentum_y[ipart]*momentum_y[ipart]
                              + momentum_z[ipart]*momentum_z[ipart] );
 
@@ -230,7 +230,7 @@ void RadiationNiel::operator()(
                 //h = RadiationTables.getHNielFitOrder5(particle_chi[ipart]);
                 temp = RadiationTables.getHNielFromTable( particle_chi[ipart+istart] );
 
-                diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipart+istart-ipart_ref]*temp )*random_numbers[ipart];
+                diffusion[ipart] = std::sqrt( factor_classical_radiated_power_*gamma[ipart+istart-ipart_ref]*temp )*random_numbers[ipart];
             }
         }
     }

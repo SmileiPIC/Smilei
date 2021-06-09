@@ -103,9 +103,12 @@ void RadiationCorrLandauLifshitz::operator()(
 
     // Local vector to store the radiated energy
     double * rad_norm_energy = new double [iend-istart];
+    #pragma omp simd
     for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
         rad_norm_energy[ipart] = 0;
     }
+
+    double radiated_energy_loc = 0;
 
     // _______________________________________________________________
     // Computation
@@ -153,8 +156,6 @@ void RadiationCorrLandauLifshitz::operator()(
 
     // _______________________________________________________________
     // Computation of the thread radiated energy
-
-    double radiated_energy_loc = 0;
 
     #pragma omp simd reduction(+:radiated_energy_loc)
     for( int ipart=0 ; ipart<iend-istart; ipart++ ) {

@@ -73,7 +73,7 @@ void RadiationLandauLifshitz::operator()(
     double charge_over_mass_square;
 
     // 1/mass^2
-    const double one_over_mass_square = pow( one_over_mass_, 2. );
+    const double one_over_mass_square = one_over_mass_*one_over_mass_;
 
     // Temporary quantum parameter
     double particle_chi;
@@ -100,6 +100,7 @@ void RadiationLandauLifshitz::operator()(
 
     // Local vector to store the radiated energy
     double * rad_norm_energy = new double [iend-istart];
+    #pragma omp simd
     for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
         rad_norm_energy[ipart] = 0;
     }
