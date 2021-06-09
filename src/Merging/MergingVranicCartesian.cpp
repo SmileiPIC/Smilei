@@ -583,9 +583,9 @@ void MergingVranicCartesian::operator() (
                                 // double my2 = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
                                 // total_momentum_z = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
                                 // double mz2 = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
-                                // if (isnan(total_momentum_x)
-                                //     || isnan(total_momentum_y)
-                                //     || isnan(total_momentum_z)
+                                // if (std::isnan(total_momentum_x)
+                                //     || std::isnan(total_momentum_y)
+                                //     || std::isnan(total_momentum_z)
                                 //     // || mx1 < momentum_min[0] + mx_i*momentum_delta[0]
                                 //     // || total_momentum_y < momentum_min[1] + my_i*momentum_delta[1]
                                 //     // || total_momentum_z < momentum_min[2] + mz_i*momentum_delta[2]

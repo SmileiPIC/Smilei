@@ -21,6 +21,9 @@ Validate("Initial electron momentum distribution", px, 0.1 )
 px = S.ParticleBinning.Diag0(sum={"x":"all"}, timesteps=2000).getData()[0]
 Validate("Final electron momentum distribution", px, 0.1)
 
+max_screen_error = np.abs(S.Screen("#0+#1-#2").getData()).max()
+Validate("Max error on screen multiple species", max_screen_error, 1e-7)
+
 Validate("List of fields in Probe", S.Probe(0).getFields() )
 
 Validate("Species probe", S.Probe(0, 'Rho_eon1', timesteps=2000).getData()[0], 1e-4 )

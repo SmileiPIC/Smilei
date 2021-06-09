@@ -3,27 +3,34 @@
 #include "Patch.h"
 #include "ParticleData.h"
 
+#include <algorithm>
 
 using namespace std;
 
 // Loop on the different axes requested and compute the output index of each particle
-void Histogram::digitize( Species *s,
-                          std::vector<double> &double_buffer,
-                          std::vector<int>    &int_buffer,
+void Histogram::digitize( vector<Species *> species,
+                          vector<double> &double_buffer,
+                          vector<int>    &int_buffer,
                           SimWindow *simWindow )
 {
-    unsigned int ipart, npart=s->particles->size();
-    int ind;
+    unsigned int npart = double_buffer.size();
     
     for( unsigned int iaxis=0 ; iaxis < axes.size() ; iaxis++ ) {
-    
+        
+        HistogramAxis * axis = axes[iaxis];
+        
         // first loop on particles to store the indexing (axis) quantity
-        axes[iaxis]->digitize( s, double_buffer, int_buffer, npart, simWindow );
+        unsigned int istart = 0;
+        for( unsigned int ispec=0; ispec < species.size(); ispec++ ) {
+            unsigned int npart = species[ispec]->getNbrOfParticles();
+            axis->calculate_locations( species[ispec], &double_buffer[istart], &int_buffer[istart], npart, simWindow );
+            istart += npart;
+        }
         // Now, double_buffer has the location of each particle along the axis
         
         // if log scale, loop again and convert to log
-        if( axes[iaxis]->logscale ) {
-            for( ipart = 0 ; ipart < npart ; ipart++ ) {
+        if( axis->logscale ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( int_buffer[ipart] < 0 ) {
                     continue;
                 }
@@ -31,28 +38,32 @@ void Histogram::digitize( Species *s,
             }
         }
         
+        double actual_min = axis->logscale ? log10( axis->global_min ) : axis->global_min;
+        double actual_max = axis->logscale ? log10( axis->global_max ) : axis->global_max;
+        double coeff = ( ( double ) axis->nbins )/( actual_max - actual_min );
+        
         // The indexes are "reshaped" in one dimension.
         // For instance, in 3d, the index has the form  i = i3 + n3*( i2 + n2*i1 )
         // Here we do the multiplication by n3 or n2 (etc.)
         if( iaxis>0 ) {
-            for( ipart = 0 ; ipart < npart ; ipart++ ) {
-                int_buffer[ipart] *= axes[iaxis]->nbins;
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                int_buffer[ipart] *= axis->nbins;
             }
         }
         
         // loop again on the particles and calculate the index
         // This is separated in two cases: edge_inclusive and edge_exclusive
-        if( !axes[iaxis]->edge_inclusive ) { // if the particles out of the "box" must be excluded
+        if( !axis->edge_inclusive ) { // if the particles out of the "box" must be excluded
         
-            for( ipart = 0 ; ipart < npart ; ipart++ ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 // skip already discarded particles
                 if( int_buffer[ipart] < 0 ) {
                     continue;
                 }
                 // calculate index
-                ind = floor( ( double_buffer[ipart]-axes[iaxis]->actual_min ) * axes[iaxis]->coeff );
+                int ind = floor( ( double_buffer[ipart]-actual_min ) * coeff );
                 // index valid only if in the "box"
-                if( ind >= 0  &&  ind < axes[iaxis]->nbins ) {
+                if( ind >= 0  &&  ind < axis->nbins ) {
                     int_buffer[ipart] += ind;
                 } else {
                     int_buffer[ipart] = -1;    // discard particle
@@ -61,19 +72,19 @@ void Histogram::digitize( Species *s,
             
         } else { // if the particles out of the "box" must be included
         
-            for( ipart = 0 ; ipart < npart ; ipart++ ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 // skip already discarded particles
                 if( int_buffer[ipart] < 0 ) {
                     continue;
                 }
                 // calculate index
-                ind = floor( ( double_buffer[ipart]-axes[iaxis]->actual_min ) * axes[iaxis]->coeff );
+                int ind = floor( ( double_buffer[ipart]-actual_min ) * coeff );
                 // move out-of-range indexes back into range
                 if( ind < 0 ) {
                     ind = 0;
                 }
-                if( ind >= axes[iaxis]->nbins ) {
-                    ind = axes[iaxis]->nbins-1;
+                if( ind >= axis->nbins ) {
+                    ind = axis->nbins-1;
                 }
                 int_buffer[ipart] += ind;
             }
@@ -116,14 +127,6 @@ void HistogramAxis::init( string type_, double min_, double max_, int nbins_, bo
     logscale       = logscale_      ;
     edge_inclusive = edge_inclusive_;
     coefficients   = coefficients_  ;
-    
-    if( logscale ) {
-        actual_min = log10( min );
-        actual_max = log10( max );
-    } else {
-        actual_min = min;
-        actual_max = max;
-    }
-    
-    coeff = ( ( double )nbins )/( actual_max-actual_min );
+    global_min     = min;
+    global_max     = max;
 }

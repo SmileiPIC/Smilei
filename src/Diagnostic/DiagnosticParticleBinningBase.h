@@ -8,6 +8,7 @@
 class DiagnosticParticleBinningBase : public Diagnostic
 {
     friend class SmileiMPI;
+    friend class VectorPatch;
     
 public :
 
@@ -31,6 +32,8 @@ public :
     
     bool prepare( int itime ) override;
     
+    void calculate_auto_limits( Patch *patch, SimWindow *simWindow, unsigned int ipatch );
+    
     virtual void run( Patch *patch, int itime, SimWindow *simWindow ) override;
     
     virtual bool writeNow( int itime );
@@ -52,6 +55,8 @@ public :
     //! Get disk footprint of current diagnostic
     uint64_t getDiskFootPrint( int istart, int istop, Patch *patch ) override;
     
+    std::vector<std::vector<double> > patches_mins, patches_maxs;
+    
 protected:
     
     //! True for Screen only
@@ -61,7 +66,7 @@ protected:
     int time_average;
     
     //! list of the species that will be accounted for
-    std::vector<unsigned int> species;
+    std::vector<unsigned int> species_indices;
     
     //! vector for saving the output array for time-averaging
     std::vector<double> data_sum;

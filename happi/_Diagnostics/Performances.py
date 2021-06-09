@@ -86,14 +86,14 @@ class Performances(Diagnostic):
 			self._h5items.update( dict(f) )
 			# Verify all simulations have all quantities
 			try:
-				quantities_uint   = [bytes.decode(a) for a in f.attrs["quantities_uint"  ]]
-				quantities_double = [bytes.decode(a) for a in f.attrs["quantities_double"]]
+				quantities_uint   = [_decode(a) for a in f.attrs["quantities_uint"  ]]
+				quantities_double = [_decode(a) for a in f.attrs["quantities_double"]]
 				if self._availableQuantities_uint   and self._availableQuantities_uint  !=quantities_uint  : raise
 				if self._availableQuantities_double and self._availableQuantities_double!=quantities_double: raise
 				self._availableQuantities_uint   = quantities_uint
 				self._availableQuantities_double = quantities_double
 				if "patch_arrangement" in f.attrs:
-					self.patch_arrangement = f.attrs["patch_arrangement"].decode()
+					self.patch_arrangement = _decode(f.attrs["patch_arrangement"])
 			except Exception as e:
 				self._error += ["Diagnostic not loaded: file '"+file+"' does not seem to contain correct data"]
 				return

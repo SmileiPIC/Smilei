@@ -253,9 +253,9 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
                     for( unsigned int i=0; i<npart; i++ ) {
                         if( arr[i] ) {
                             patch_selection[ipatch].push_back( i );
-                            // If particle not tracked before (ID==0), then set its ID
-                            if( p->id( i ) == 0 ) {
-                                p->id( i ) = ++latest_Id;
+                            // If particle not tracked before ( the 7 first bytes (ID<2^56) == 0 ), then set its ID
+                            if( (p->id( i ) & 72057594037927935) == 0 ) {
+                                p->id( i ) += ++latest_Id;
                             }
                         }
                     }

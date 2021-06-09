@@ -2726,6 +2726,8 @@ for instance::
       its location in the histogram binning.
 
   * The axis is discretized for ``type`` from ``min`` to ``max`` in ``nsteps`` bins.
+  * The ``min`` and ``max`` may be set to ``"auto"`` so that they are automatically
+    computed from all the particles in the simulation. This option can be bad for performances.
   * The optional keyword ``logscale`` sets the axis scale to logarithmic instead of linear.
   * The optional keyword ``edge_inclusive`` includes the particles outside the range
     [``min``, ``max``] into the extrema bins.

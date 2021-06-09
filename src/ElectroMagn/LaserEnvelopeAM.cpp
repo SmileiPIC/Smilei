@@ -391,7 +391,7 @@ void LaserEnvelopeAM::computePhiEnvAEnvE( ElectroMagn *EMfields )
     if (isYmin){ // axis BC
         for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
             unsigned int j = 2;  // j_p=2 corresponds to r=0    
-            ( *Phi2Dcyl )      ( i, j )   = std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;  
+            ( *Phi2Dcyl )      ( i, j )   = ellipticity_factor*std::abs( ( *A2Dcyl )( i, j ) ) * std::abs( ( *A2Dcyl )( i, j ) ) * 0.5;  
             ( *Env_Aabs2Dcyl ) ( i, j )   = std::abs( ( *A2Dcyl )( i, j ) );
             ( *Env_Eabs2Dcyl ) ( i, j )   = std::abs( ( ( *A2Dcyl )( i, j )-( *A02Dcyl )( i, j ) )/timestep - i1*omega*( *A2Dcyl )( i, j ) );
             ( *Env_Exabs2Dcyl )( i, j )   = 0.;
