@@ -56,7 +56,7 @@ run2D:
   stage: run_default
   only:
     - develop
-#    - radiation_GPU
+    - radiation_GPU
 
   script:
     # Move in test dir
@@ -71,7 +71,7 @@ run3D:
   stage: run_default
   only:
     - develop
-#    - radiation_GPU
+    - radiation_GPU
 
   script:
     # Move in test dir
@@ -87,7 +87,7 @@ runAM:
   stage: run_default
   only:
     - develop
-#    - radiation_GPU
+    - radiation_GPU
 
   script:
     # Move in test dir
@@ -111,7 +111,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-#    - radiation_GPU
+    - radiation_GPU
 
   script:
     # Move in test dir
@@ -135,6 +135,7 @@ run_picsar:
   only:
     - develop
     - pusher_cleaning
+    - radiation_GPU
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -144,7 +145,7 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-#    - radiation_GPU
+    - radiation_GPU
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -155,7 +156,7 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-#    - radiation_GPU
+    - radiation_GPU
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -166,7 +167,7 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-#    - radiation_GPU
+    - radiation_GPU
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
