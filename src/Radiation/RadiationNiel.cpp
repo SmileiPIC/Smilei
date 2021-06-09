@@ -209,7 +209,7 @@ void RadiationNiel::operator()(
                 p = +2.832976820000 + p*temp;
             }
 
-            random_numbers[ipart] *= p*sqrtdt*sqrt( 2. );
+            random_numbers[ipart] *= p*sqrtdt*std::sqrt( 2. );
 
             //random_numbers[ipart] = userFunctions::erfinv2(random_numbers[ipart])*sqrtdt*sqrt(2.);
         }

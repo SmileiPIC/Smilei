@@ -156,32 +156,34 @@ void RadiationLandauLifshitz::operator()(
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart - istart] ;
     }
-    radiated_energy += radiated_energy_loc;
-    
+
     // _______________________________________________________________
     // Update of the quantum parameter
-    
+
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
-        
+
         // Gamma
         gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                       + momentum_y[ipart]*momentum_y[ipart]
                       + momentum_z[ipart]*momentum_z[ipart] );
-                      
+
         // Computation of the Lorentz invariant quantum parameter
         chi[ipart] = computeParticleChi( charge_over_mass_square,
                      momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                      gamma,
                      ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                      ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
-                     
+
     }
-    
+
+    // Add the local energy to the patch one
+    radiated_energy += radiated_energy_loc;
+
     // _______________________________________________________________
     // Cleaning
-    
+
     delete [] rad_norm_energy;
-    
+
 }
