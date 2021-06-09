@@ -85,7 +85,7 @@ random_seed = datetime.microsecond
 
 # Density profile for inital location of the particles
 def n0_(x,y,z):
-        if ((x-0.75*Lx)**2 + (y-0.5*Ly)**2 + (z-0.5*Lz)**2 <= dx):
+        if ((x-0.75*Lx)**2 + (y-0.5*Ly)**2 + (z-0.5*Lz)**2 <= 0.5*dx):
                 return n0
         else:
                 return 0.
@@ -143,7 +143,7 @@ for i,radiation in enumerate(radiation_list):
         name = "electron_" + species_name_list[i],
         position_initialization = "random",
         momentum_initialization = "cold",
-        particles_per_cell = 32,
+        particles_per_cell = 16,
         c_part_max = 1.0,
         mass = 1.0,
         charge = -1.0,
