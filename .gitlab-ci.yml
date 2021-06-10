@@ -123,7 +123,7 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-#    - radiation_GPU
+    - radiation_GPU
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -134,7 +134,6 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-    - pusher_cleaning
     - radiation_GPU
 
   script:

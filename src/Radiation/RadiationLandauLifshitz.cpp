@@ -100,14 +100,15 @@ void RadiationLandauLifshitz::operator()(
 
     // Local vector to store the radiated energy
     double * rad_norm_energy = new double [iend-istart];
-    // for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
-    //     rad_norm_energy[ipart] = 0;
-    // }
+    #pragma omp simd
+    for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
+        rad_norm_energy[ipart] = 0;
+    }
+
+    double radiated_energy_loc = 0;
 
     // _______________________________________________________________
     // Computation
-
-    double radiated_energy_loc = 0;
 
     #ifndef _GPU
         #pragma omp simd
@@ -118,7 +119,7 @@ void RadiationLandauLifshitz::operator()(
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np],radiated_energy) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,chi) \
-	    reduction(+:radiated_energy_loc)
+            reduction(+:radiated_energy_loc)
     {
         #pragma acc loop gang worker vector
     #endif
