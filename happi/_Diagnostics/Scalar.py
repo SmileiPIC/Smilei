@@ -139,10 +139,10 @@ class Scalar(Diagnostic):
 			except Exception as e:
 				scalars = []
 			f.close()
-			try:
-				allScalars = self._np.intersect1d(allScalars, scalars)
-			except Exception as e:
+			if allScalars is None:
 				allScalars = scalars
+			else:
+				allScalars = self._np.intersect1d(allScalars, scalars)
 		if allScalars is None:
 			self._error += ["Cannot open 'scalars.txt'"]
 			return []

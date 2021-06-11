@@ -1,4 +1,5 @@
 __all__ = [
+	"_decode",
 	"setMatplotLibBackend",
 	"updateMatplotLibColormaps",
 	"ChunkedRange",
@@ -12,6 +13,12 @@ __all__ = [
 	"VTKfile"
 ]
 
+def _decode(s):
+	"Decode a str or bytes object (python 2 & 3)"
+	if type(s) is str:
+		return s
+	else:
+		return s.decode()
 
 def setMatplotLibBackend(show=True):
 	import matplotlib, sys

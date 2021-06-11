@@ -23,6 +23,8 @@ Changes made in the repository (not released)
 * Lasers can be injected from all boundaries
 * Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
 * Probes can be time-integrated
+* ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
+* Particles can be flagged within a filter function in the TrackParticles diagnostic when we change the last byte of their IDs
 * Bugfixes:
 
   * Poynting scalars with checkpoints
