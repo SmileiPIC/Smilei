@@ -154,7 +154,8 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-
+    - pusher_cleaning
+    
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
