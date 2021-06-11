@@ -73,10 +73,13 @@ class Performances(Diagnostic):
 
 	def _init(self, raw=None, map=None, histogram=None, timesteps=None, data_log=False, data_transform=None, species=None, **kwargs):
 
+		info = self.simulation.performanceInfo()
+		self._availableQuantities_uint   = info["quantities_uint"]
+		self._availableQuantities_double = info["quantities_double"]
+		self.patch_arrangement = info["patch_arrangement"]
+		
 		# Open the file(s) and load the data
 		self._h5items = {}
-		self._availableQuantities_uint   = []
-		self._availableQuantities_double = []
 		for path in self._results_path:
 			file = path+self._os.sep+'Performances.h5'
 			try:
@@ -84,89 +87,67 @@ class Performances(Diagnostic):
 			except Exception as e:
 				continue
 			self._h5items.update( dict(f) )
-			# Verify all simulations have all quantities
-			try:
-				quantities_uint   = [_decode(a) for a in f.attrs["quantities_uint"  ]]
-				quantities_double = [_decode(a) for a in f.attrs["quantities_double"]]
-				if self._availableQuantities_uint   and self._availableQuantities_uint  !=quantities_uint  : raise
-				if self._availableQuantities_double and self._availableQuantities_double!=quantities_double: raise
-				self._availableQuantities_uint   = quantities_uint
-				self._availableQuantities_double = quantities_double
-				if "patch_arrangement" in f.attrs:
-					self.patch_arrangement = _decode(f.attrs["patch_arrangement"])
-			except Exception as e:
-				self._error += ["Diagnostic not loaded: file '"+file+"' does not seem to contain correct data"]
-				return
 		if not self._h5items:
-			self._error += ["Diagnostic not loaded: Could not open any file Performances.h5"]
-			return
+			raise Exception("Could not open any file Performances.h5")
 		# Converted to ordered list
 		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[1:]))
 
 		nargs = (raw is not None) + (map is not None) + (histogram is not None)
 
 		if nargs>1:
-			self._error += ["Diagnostic not loaded: choose only one of `raw`, `map` or `histogram`"]
-			return
+			raise Exception("Choose only one of `raw`, `map` or `histogram`")
 
 		if nargs == 0:
-			self._error += ["Diagnostic not loaded: must define raw='quantity', map='quantity' or histogram=['quantity',min,max,nsteps]"]
-			self._error += ["Available quantities: "+", ".join([str(q) for q in self.getAvailableQuantities()])]
-			return
-
+			raise Exception(
+				"Must define raw='quantity', map='quantity' or histogram=['quantity',min,max,nsteps]\n"\
+				+"Available quantities: "+", ".join([str(q) for q in self.getAvailableQuantities()])
+			)
+		
 		# Get available times
 		self._timesteps = self.getAvailableTimesteps()
 		if self._timesteps.size == 0:
-			self._error += ["Diagnostic not loaded: No fields found"]
-			return
-
+			raise Exception("No timesteps found")
+		
 		# Get the number of procs of the data
 		self._nprocs = self._h5items[0]["quantities_uint"].shape[1]
 		for item in self._h5items:
 			if item["quantities_uint"].shape[1] != self._nprocs:
-				self._error += ["Diagnostic not loaded: incompatible simulations"]
-				return
-
+				raise Exception("Incompatible simulations")
+		
 		# Get the shape of patches
 		self._number_of_patches = self.simulation.namelist.Main.number_of_patches
 		self._tot_number_of_patches = self._np.prod( self._number_of_patches )
-
+		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Parse the `map` or `histogram` arguments
 		if raw is not None:
 			if type(raw) is not str:
-				self._error += ["Diagnostic not loaded: argument `raw` must be a string"]
-				return
+				raise Exception("Argument `raw` must be a string")
 			self.operation = raw
 			self._mode = "raw"
 
 		elif map is not None:
 			if type(map) is not str:
-				self._error += ["Diagnostic not loaded: argument `map` must be a string"]
-				return
+				raise Exception("Argument `map` must be a string")
 			if self._ndim_fields > 2:
-				self._error += ["Diagnostic not loaded: argument `map` not available in "+str(self._ndim_fields)+"D"]
-				return
+				raise Exception("Argument `map` not available in "+str(self._ndim_fields)+"D")
 			self.operation = map
 			self._mode = "map"
 			self._m = [int(self._np.log2(n)) for n in self._number_of_patches]
 
 		elif histogram is not None:
 			if type(histogram) is not list or len(histogram) != 4:
-				self._error += ["Diagnostic not loaded: argument `histogram` must be a list with 4 elements"]
-				return
+				raise Exception("Argument `histogram` must be a list with 4 elements")
 			if type(histogram[0]) is not str:
-				self._error += ["Diagnostic not loaded: argument `histogram` must be a list with first element being a string"]
-				return
+				raise Exception("Argument `histogram` must be a list with first element being a string")
 			self.operation = histogram[0]
 			try:
 				histogram_min    = float(histogram[1])
 				histogram_max    = float(histogram[2])
 				histogram_nsteps = int  (histogram[3])
 			except Exception as e:
-				self._error += ["Diagnostic not loaded: argument `histogram` must be a list like ['quantity',min,max,nsteps]"]
-				return
+				raise Exception("Diagnostic not loaded: argument `histogram` must be a list like ['quantity',min,max,nsteps]")
 			self._mode = "hist"
 
 		# Parse the operation
@@ -192,15 +173,15 @@ class Performances(Diagnostic):
 				self._quantities_double.append(index_in_file)
 				used_quantities.append( q )
 				index_in_output += 1
-
+		
 		# Put data_log as object's variable
 		self._data_log = data_log
 		self._data_transform = data_transform
-
+		
 		# In case of "vecto" quantity, get the species
 		if species is not None:
 			self._species = str(species)
-
+		
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# fill the "data" dictionary with indices to the data arrays
@@ -212,15 +193,12 @@ class Performances(Diagnostic):
 			try:
 				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
 			except Exception as e:
-				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
-				return
-
+				raise Exception("Argument `timesteps` must be one or two non-negative integers")
+		
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error += ["Timesteps not found"]
-			return
-
-
+			raise Exception("Timesteps not found")
+		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		if raw is not None:

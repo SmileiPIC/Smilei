@@ -4,21 +4,22 @@ from .._Utils import *
 class ParticleBinning(Diagnostic):
 	"""Class for loading a particle binning diagnostic"""
 	
-	_diagName = "ParticleBinning"
+	_diagType = "ParticleBinning"
 	hasComposite = False
 	
 	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, data_transform=None, include={}, **kwargs):
 		
 		# Search available diags
-		diag_numbers, diag_names = self.simulation.getDiags(self._diagName)
+		diag_numbers, diag_names = self.simulation.getDiags(self._diagType)
 		
 		if diagNumber is None:
-			error = ["Printing available %s:" % self._diagName]
+			error = ["`diagNumber` is not defined"]
+			error += ["Printing available %s:" % self._diagType]
 			error += ["------------------------------------------------"]
 			for diagNumber in diag_numbers:
-				error += [self._printInfo(self._getInfo(diagNumber))]
+				error += [self._printInfo(self._getInfo(self.simulation, self._diagType, diagNumber))]
 			if len(diag_numbers)==0:
-				error += ["      No %s found" % self._diagName]
+				error += ["      No %s found" % self._diagType]
 			raise Exception("\n".join(error))
 		
 		# 1 - verifications, initialization
@@ -26,8 +27,7 @@ class ParticleBinning(Diagnostic):
 		# Check the requested diags are ok
 		if type(diagNumber) is int:
 			if diagNumber<0:
-				self._error += ["Argument 'diagNumber' cannot be a negative integer."]
-				return
+				raise Exception("Argument 'diagNumber' cannot be a negative integer.")
 			self.operation = '#' + str(diagNumber)
 		elif type(diagNumber) is str:
 			if diagNumber in diag_names:
@@ -36,28 +36,26 @@ class ParticleBinning(Diagnostic):
 			else:
 				self.operation = diagNumber
 		else:
-			self._error += ["Argument 'diagNumber' must be and integer or a string."]
-			return
+			raise Exception("Argument 'diagNumber' must be and integer or a string.")
 		
 		# Get list of requested diags
 		self._myinfo = {}
 		self._diags = sorted(set([ int(d[1:]) for d in self._re.findall('#\d+',self.operation) ]))
 		for d in self._diags:
 			try:
-				info = self._getInfo(d)
+				info = self._getInfo(self.simulation, self._diagType, d)
 				if info is False: raise
 				self._myinfo.update({ d:info })
 			except Exception as e:
-				self._error += ["%s #%d invalid or non-existent" % (self._diagName,d)]
-				return
+				raise Exception("%s #%d invalid or non-existent" % (self._diagType,d))
 		# Test the operation
 		self._include = include
 		try:
 			exec(self._re.sub('#\d+','1.',self.operation), self._include, {"t":0})
-		except ZeroDivisionError: pass
+		except ZeroDivisionError:
+			pass
 		except Exception as e:
-			self._error += ["Cannot understand operation '"+self.operation+"'"]
-			return
+			raise Exception("Cannot understand operation '"+self.operation+"'")
 		# Verify that all requested diags all have the same shape
 		self._axes = {}
 		self._naxes = {}
@@ -65,32 +63,30 @@ class ParticleBinning(Diagnostic):
 			self._axes .update ({ d:self._myinfo[d]["axes"] })
 			self._naxes.update ({ d:len(self._axes[d]) })
 			if self._naxes[d] != self._naxes[self._diags[0]]:
-				self._error += [
+				raise Exception(
 					"All diagnostics in operation '%s' must have as many axes. %s #%d has %d axes and #%d has %d axes"
-					% (self.operation, self._diagName, d, self._naxes[d], self._diags[0], self._naxes[self._diags[0]])
-				]
-				return
+					% (self.operation, self._diagType, d, self._naxes[d], self._diags[0], self._naxes[self._diags[0]])
+				)
 			if self._axes[d] != self._axes[self._diags[0]]:
-				self._error += [
+				raise Exception(
 					"In operation '%s', %s #%d and #%d must have the same shape."
-					% (self.operation, self._diagName, d, self._diags[0])
-				]
-				return
+					% (self.operation, self._diagType, d, self._diags[0])
+				)
 		
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
 		
 		# Check subset
-		if subset is None: subset = {}
+		if subset is None:
+			subset = {}
 		elif type(subset) is not dict:
-			self._error += ["Argument `subset` must be a dictionary"]
-			return
+			raise Exception("Argument `subset` must be a dictionary")
 		
 		# Check sum
-		if sum is None: sum = {}
+		if sum is None:
+			sum = {}
 		elif type(sum) is not dict:
-			self._error += ["Argument 'sum' must be a dictionary"]
-			return
+			raise Exception("Argument `sum` must be a dictionary")
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -108,7 +104,7 @@ class ParticleBinning(Diagnostic):
 			items = {}
 			for path in self._results_path:
 				try:
-					f = self._h5py.File(path+self._os.sep+self._diagName+str(d)+'.h5', 'r')
+					f = self._h5py.File(path+self._os.sep+self._diagType+str(d)+'.h5', 'r')
 				except:
 					continue
 				items.update( dict(f) )
@@ -125,23 +121,20 @@ class ParticleBinning(Diagnostic):
 				try:
 					self._timesteps[d] = self._selectTimesteps(timesteps, self._timesteps[d])
 				except Exception as e:
-					self._error += ["Argument 'timesteps' must be one or two non-negative integers"]
-					return
+					raise Exception("Argument 'timesteps' must be one or two non-negative integers")
 			# Verify that timesteps are the same for all diagnostics
 			if (self._timesteps[d] != self._timesteps[self._diags[0]]).any() :
-				self._error += [
+				raise Exception(
 					"All diagnostics in operation '%s' must have the same timesteps. Diagnotic #%d has %d timesteps and #%d has %d timesteps"
 					% (self.operation, d, len(self._timesteps[d]), self._diags[0], len(self._timesteps[self._diags[0]]))
-				]
-				return
+				)
 		# Now we need to keep only one array of timesteps because they should be all the same
 		self._timesteps  = self._timesteps [self._diags[0]]
 		self._alltimesteps = self._alltimesteps[self._diags[0]]
 		
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error += ["Timesteps not found"]
-			return
+			raise Exception("Timesteps not found")
 		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
@@ -192,8 +185,7 @@ class ParticleBinning(Diagnostic):
 			# Store sum/subset info
 			if axis["type"] in sum:
 				if axis["type"] in subset:
-					self._error += ["`subset` not possible on the same axes as `sum`"]
-					return
+					raise Exception("`subset` not possible on the same axes as `sum`")
 				axis["sum"] = sum[axis["type"]]
 			elif axis["type"] in subset:
 				axis["subset"] = subset[axis["type"]]
@@ -207,8 +199,7 @@ class ParticleBinning(Diagnostic):
 				self.auto_axes =  True
 		
 		# Set all axes sum/subset
-		if not self._updateAxes(self._timesteps[0]):
-			return
+		self._updateAxes(self._timesteps[0])
 		
 		# Build units
 		titles = {}
@@ -228,7 +219,7 @@ class ParticleBinning(Diagnostic):
 		self._vunits = self.units._getUnits(self._vunits)
 		
 		# Set the directory in case of exporting
-		self._exportPrefix = self._diagName+"_"+"-".join([str(d) for d in self._diags])
+		self._exportPrefix = self._diagType+"_"+"-".join([str(d) for d in self._diags])
 		self._exportDir = self._setExportDir(self._exportPrefix)
 		
 		# Finish constructor
@@ -267,13 +258,14 @@ class ParticleBinning(Diagnostic):
 		return title, units
 	
 	# Gets info about diagnostic number "diagNumber"
-	def _getInfo(self,diagNumber):
+	@staticmethod
+	def _getInfo(simulation, diagType, diagNumber):
 		info = {}
-		for path in self._results_path:
+		for path in simulation._results_path:
 			# Open file
 			try:
-				file = path+self._os.sep+self._diagName+str(diagNumber)+'.h5'
-				f = self._h5py.File(file, 'r')
+				file = path+simulation._os.sep+diagType+str(diagNumber)+'.h5'
+				f = simulation._h5py.File(file, 'r')
 			except Exception as e:
 				continue
 			# get attributes from file
@@ -312,7 +304,7 @@ class ParticleBinning(Diagnostic):
 				info = {"#":diagNumber, "deposited_quantity":deposited_quantity, "tavg":time_average, "species":species, "axes":axes}
 			else:
 				if deposited_quantity!=info["deposited_quantity"] or axes!=info["axes"]:
-					print(self._diagName+" #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
+					print(diagType+" #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
 		if not info:
 			return False
@@ -386,11 +378,8 @@ class ParticleBinning(Diagnostic):
 			
 			# if this axis has to be summed, then select the bounds
 			if "sum" in axis:
-				try:
-					axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
-						= self._selectRange(axis["sum"], centers, axis["type"], axis["units"], "sum", axis["edges_included"])
-				except Exception as e:
-					return False
+				axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
+					= self._selectRange(axis["sum"], centers, axis["type"], axis["units"], "sum", axis["edges_included"])
 				
 				if axis["type"] in ["x","y","z","moving_x"]:
 					first_edge = edges[self._selection[iaxis].start or 0]
@@ -403,11 +392,9 @@ class ParticleBinning(Diagnostic):
 			else:
 				# If taking a subset of this axis
 				if "subset" in axis:
-					try:
-						axis["subsetInfo"], self._selection[iaxis], self._finalShape[iaxis] \
-							= self._selectSubset(axis["subset"], centers, axis["type"], axis["units"], "subset")
-					except Exception as e:
-						return False
+					axis["subsetInfo"], self._selection[iaxis], self._finalShape[iaxis] \
+						= self._selectSubset(axis["subset"], centers, axis["type"], axis["units"], "subset")
+					
 					# If selection is not a slice (meaning only one element) then axis removed from plot
 					if type(self._selection[iaxis]) is not slice and axis["type"] in ["x","y","z","moving_x"]:
 						first_edge = edges[self._selection[iaxis]]
@@ -458,8 +445,6 @@ class ParticleBinning(Diagnostic):
 		if not self.hasComposite:
 			self._bsize *= coeff
 		
-		return True
-		
 	def _getCenters(self, axis_index, timestep):
 		if self.auto_axes:
 			self._updateAxes(timestep)
@@ -475,7 +460,7 @@ class ParticleBinning(Diagnostic):
 			times = set()
 			for path in self._results_path:
 				try:
-					file = path+self._os.sep+self._diagName+str(diagNumber)+'.h5'
+					file = path+self._os.sep+self._diagType+str(diagNumber)+'.h5'
 					f = self._h5py.File(file, 'r')
 				except Exception as e:
 					print("Cannot open file "+file)

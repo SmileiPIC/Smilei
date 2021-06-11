@@ -214,6 +214,16 @@ class SmileiSimulation(object):
 			files = "\n\t".join(files)
 			return "Smilei simulation with input file(s) located at:\n\t"+files
 	
+	def getTrackSpecies(self):
+		""" List the available tracked species """
+		species = []
+		for path in self._results_path:
+			files = self._glob(path+self._os.sep+"TrackParticles*.h5")
+			for file in files:
+				s = self._re.search("^TrackParticlesDisordered_(.+).h5",self._os.path.basename(file))
+				if s: species += [ s.groups()[0] ]
+		return list(set(species)) # unique species
+	
 	def fieldInfo(self, diag=None):
 		""" Information on a specific Field diagnostic
 		
@@ -268,3 +278,114 @@ class SmileiSimulation(object):
 			fields = list(raw_fields)
 			
 		return dict( diagNumber=diagNumber, diagName=diagName, fields=fields )
+	
+	def probeInfo(self, diag=None):
+		""" Information on a specific Probe diagnostic
+		
+		Parameters:
+		-----------
+		diag: the number or name of a Probe diagnostic
+		
+		Returns:
+		--------
+		A dictionnary containing:
+		* "probeNumber": the diagnostic number
+		* "probeName": the diagnostic name
+		* "fields": list of the available fields in this diagnostic
+		"""
+		diag_numbers, diag_names = self.getDiags("Probes")
+		
+		if type(diag) is str:
+			if diag not in diag_names:
+				raise Exception("No probe diagnostic `"+diag+"` found")
+			i = diag_names.index( diag )
+		else:
+			if diag not in diag_numbers:
+				raise Exception("No probe diagnostic #"+str(diag)+" found")
+			i = diag_numbers.index( diag )
+		probeNumber = diag_numbers[i]
+		probeName = diag_names[i]
+		
+		raw_fields = set()
+		for path in self._results_path:
+			file = path+self._os.sep+'Fields'+str(probeNumber)+'.h5'
+			try:
+				f = self._h5py.File(file, 'r')
+			except Exception as e:
+				continue
+			values = f["data"].values()
+			if len(values)==0:
+				continue
+			these_fields =  set(next(iter(values)).keys())
+			raw_fields = (raw_fields & these_fields) or these_fields
+			f.close()
+		
+		fields = []
+		for path in self._results_path:
+			file = path+self._os.sep+"Probes"+str(probeNumber)+".h5"
+			try:
+				f = self._h5py.File(file, 'r')
+			except Exception as e:
+				continue
+			# Verify that this file is compatible with the previous ones
+			try:
+				for key, val in verifications.items():
+					if f[key][()] != val:
+						raise Exception("Probe #"+str(probeNumber)+" in path '"+path+"' is incompatible with the other ones")
+			except Exception as e:
+				verifications = {"number":f["number"][()]}
+				npoints = f["number"].size
+				if f["number"][()].prod() > 1:
+					npoints += 1
+				for i in range(npoints):
+					verifications["p"+str(i)] = f["p"+str(i)][()]
+			# Get list of fields
+			fields_here = _decode(f.attrs["fields"]).split(",")
+			if fields and fields != fields_here:
+				raise Exception("Probe #"+str(probeNumber)+" in path '"+path+"' is incompatible with the other ones")
+			fields = fields_here
+			
+			f.close()
+		
+		if not verifications:
+			raise Exception("Error opening probe #"+str(probeNumber))
+		if not fields:
+			raise Exception("No fields found for probe #"+str(probeNumber))
+		
+		return dict( probeNumber=probeNumber, probeName=probeName, fields=list(fields) )
+	
+	def performanceInfo(self):
+		""" Information on the available quantities in the performance diagnostic
+		
+		Returns:
+		--------
+		A dictionnary containing:
+		* "quantities_uint": a list of the available integer quantities
+		* "quantities_double": a list of the available float quantities
+		* "patch_arrangement": the type of patch arrangement
+		"""
+		
+		available_uint   = []
+		available_double = []
+		patch_arrangement = "?"
+		for path in self._results_path:
+			file = path+self._os.sep+'Performances.h5'
+			try:
+				f = self._h5py.File(file, 'r')
+			except Exception as e:
+				continue
+			# Verify all simulations have all quantities
+			try:
+				quantities_uint   = [_decode(a) for a in f.attrs["quantities_uint"  ]]
+				quantities_double = [_decode(a) for a in f.attrs["quantities_double"]]
+				if available_uint   and available_uint   != quantities_uint  : raise
+				if available_double and available_double != quantities_double: raise
+				available_uint   = quantities_uint
+				available_double = quantities_double
+				if "patch_arrangement" in f.attrs:
+					patch_arrangement = _decode(f.attrs["patch_arrangement"])
+				f.close()
+			except Exception as e:
+				raise Exception("File '"+file+"' does not seem to contain correct data")
+			
+		return dict(quantities_uint=available_uint, quantities_double=available_double, patch_arrangement=patch_arrangement)

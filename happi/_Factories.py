@@ -1,5 +1,11 @@
-from ._Diagnostics import Scalar, Field, Probe, ParticleBinning, RadiationSpectrum, Performances, Screen, TrackParticles
-
+from ._Diagnostics.Scalar import Scalar
+from ._Diagnostics.Field import Field
+from ._Diagnostics.Probe import Probe
+from ._Diagnostics.ParticleBinning import ParticleBinning
+from ._Diagnostics.Screen import Screen
+from ._Diagnostics.RadiationSpectrum import RadiationSpectrum
+from ._Diagnostics.TrackParticles import TrackParticles
+from ._Diagnostics.Performances import Performances
 
 class ScalarFactory(object):
 	"""Import and analyze a scalar diagnostic from a Smilei simulation
@@ -33,7 +39,7 @@ class ScalarFactory(object):
 		if scalar is None:
 			if simulation._verbose: print("Scanning for Scalar diagnostics")
 			# Create a temporary, empty scalar diagnostic
-			tmpDiag = Scalar.Scalar(simulation)
+			tmpDiag = Scalar(simulation)
 			# Get a list of scalars
 			scalars = tmpDiag.getScalars()
 			# Create scalars shortcuts
@@ -45,7 +51,7 @@ class ScalarFactory(object):
 			self._additionalArgs += (scalar, )
 
 	def __call__(self, *args, **kwargs):
-		return Scalar.Scalar(self._simulation, *(self._additionalArgs+args), **kwargs)
+		return Scalar(self._simulation, *(self._additionalArgs+args), **kwargs)
 
 
 class FieldFactory(object):
@@ -117,7 +123,7 @@ class FieldFactory(object):
 				self._additionalArgs += (field, )
 	
 	def __call__(self, *args, **kwargs):
-		return Field.Field(self._simulation, *(self._additionalArgs+args), **kwargs)
+		return Field(self._simulation, *(self._additionalArgs+args), **kwargs)
 	
 	def __repr__(self):
 		msg = object.__repr__(self)
@@ -193,15 +199,8 @@ class ProbeFactory(object):
 
 			# If not a specific field, build a list of field shortcuts
 			if field is None:
-				# Create a temporary, empty probe diagnostic
-				tmpDiag = Probe.Probe(simulation, probeNumber)
 				# Get a list of fields
-				fields = tmpDiag.getFields()
-#				# Get a list of timesteps
-#				timesteps = tmpDiag.getAvailableTimesteps()
-#				# Create fields shortcuts
-#				for field in fields:
-#					setattr(self, field, ProbeFactory(simulation, probeNumber, field, availableTimesteps=timesteps))
+				fields = self._simulation.probeInfo(probeNumber)["fields"]
 				# Create fields shortcuts
 				for field in fields:
 					setattr(self, field, ProbeFactory(simulation, probeNumber, field))
@@ -209,19 +208,27 @@ class ProbeFactory(object):
 			else:
 				# the field is saved for generating the object in __call__
 				self._additionalArgs += (field, )
-
-#				# If not a specific timestep, build a list of timesteps shortcuts
-#				if timestep is None:
-#					for timestep in availableTimesteps:
-#						setattr(self, 't%0.10i'%timestep, ProbeFactory(simulation, probeNumber, field, timestep))
-#
-#				else:
-#					# the timestep is saved for generating the object in __call__
-#					self._additionalArgs += (timestep, )
-
+	
 	def __call__(self, *args, **kwargs):
-		return Probe.Probe(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return Probe(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalArgs) == 0 and self._simulation._scan:
+			diag_numbers = self._simulation._diag_numbers["Probes"]
+			diag_names = self._simulation._diag_names["Probes"]
+			if diag_numbers:
+				msg += "\nAvailable Probe diagnostics:"
+				for n, name in zip(diag_numbers, diag_names):
+					msg += "\n\t#%d"%n + (" ('%s')"%name if name else "")
+					fields = sorted(self._simulation.probeInfo(n)["fields"])
+					if fields:
+						msg += ", with fields: " + ", ".join(fields)
+					else:
+						msg += ", no fields"
+			else:
+				msg += "\nNo Probe diagnostics available"
+		return msg
 
 
 class ParticleBinningFactory(object):
@@ -263,35 +270,33 @@ class ParticleBinningFactory(object):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		if not simulation._scan: return
-
+		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
 			if simulation._verbose: print("Scanning for ParticleBinning diagnostics")
 			# Create diags shortcuts
 			for diag in simulation._diag_numbers["ParticleBinning"]:
 				setattr(self, 'Diag'+str(diag), ParticleBinningFactory(simulation, diag))
-
+		
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-
-			## If not a specific timestep, build a list of timesteps shortcuts
-			#if timestep is None:
-			#	# Create a temporary, empty particle binning diagnostic
-			#	tmpDiag = ParticleBinning.ParticleBinning(simulation, diagNumber)
-			#	# Get a list of timesteps
-			#	timesteps = tmpDiag.getAvailableTimesteps()
-			#	# Create timesteps shortcuts
-			#	for timestep in timesteps:
-			#		setattr(self, 't%0.10i'%timestep, ParticleBinningFactory(simulation, diagNumber, timestep))
-			#
-			#else:
-			#	# the timestep is saved for generating the object in __call__
-			#	self._additionalArgs += (timestep, )
-
+	
 	def __call__(self, *args, **kwargs):
-		return ParticleBinning.ParticleBinning(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return ParticleBinning(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalArgs) == 0 and self._simulation._scan:
+			diag_numbers = self._simulation._diag_numbers["ParticleBinning"]
+			diag_names = self._simulation._diag_names["ParticleBinning"]
+			if diag_numbers:
+				msg += "\nAvailable ParticleBinning diagnostics:\n"
+				for n, name in zip(diag_numbers, diag_names):
+					msg += "\n" + ParticleBinning._printInfo(ParticleBinning._getInfo(self._simulation, "ParticleBinning", n))
+			else:
+				msg += "\nNo ParticleBinning diagnostics available"
+		return msg
 
 class RadiationSpectrumFactory(object):
 	"""Import and analyze a RadiationSpectrum diagnostic from a Smilei simulation
@@ -338,28 +343,26 @@ class RadiationSpectrumFactory(object):
 			# Create diags shortcuts
 			for diag in simulation._diag_numbers["RadiationSpectrum"]:
 				setattr(self, 'Diag'+str(diag), RadiationSpectrumFactory(simulation, diag))
-
+		
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-
-			## If not a specific timestep, build a list of timesteps shortcuts
-			#if timestep is None:
-			#	# Create a temporary, empty radiation spectrum diagnostic
-			#	tmpDiag = RadiationSpectrum.RadiationSpectrum(simulation, diagNumber)
-			#	# Get a list of timesteps
-			#	timesteps = tmpDiag.getAvailableTimesteps()
-			#	# Create timesteps shortcuts
-			#	for timestep in timesteps:
-			#		setattr(self, 't%0.10i'%timestep, RadiationSpectrumFactory(simulation, diagNumber, timestep))
-			#
-			#else:
-			#	# the timestep is saved for generating the object in __call__
-			#	self._additionalArgs += (timestep, )
-
+		
 	def __call__(self, *args, **kwargs):
-		return RadiationSpectrum.RadiationSpectrum(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return RadiationSpectrum(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalArgs) == 0 and self._simulation._scan:
+			diag_numbers = self._simulation._diag_numbers["RadiationSpectrum"]
+			diag_names = self._simulation._diag_names["RadiationSpectrum"]
+			if diag_numbers:
+				msg += "\nAvailable RadiationSpectrum diagnostics:\n"
+				for n, name in zip(diag_numbers, diag_names):
+					msg += "\n" + RadiationSpectrum._printInfo(RadiationSpectrum._getInfo(self._simulation, "RadiationSpectrum", n))
+			else:
+				msg += "\nNo RadiationSpectrum diagnostics available"
+		return msg
 
 
 class PerformancesFactory(object):
@@ -421,8 +424,13 @@ class PerformancesFactory(object):
 		if simulation._verbose: print("Scanning for Performance diagnostics")
 	
 	def __call__(self, *args, **kwargs):
-		return Performances.Performances(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return Performances(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		info = self._simulation.performanceInfo()
+		msg += "\nAvailable quantities:\n"+", ".join([str(q) for q in info["quantities_uint"]+info["quantities_double"]])
+		return msg
 
 
 class ScreenFactory(object):
@@ -464,35 +472,33 @@ class ScreenFactory(object):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		if not simulation._scan: return
-
+		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
 			if simulation._verbose: print("Scanning for Screen diagnostics")
 			# Create diags shortcuts
 			for diag in simulation._diag_numbers["Screen"]:
 				setattr(self, 'Screen'+str(diag), ScreenFactory(simulation, diag))
-
+		
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-
-			## If not a specific timestep, build a list of timesteps shortcuts
-			#if timestep is None:
-			#	# Create a temporary, empty Screen diagnostic
-			#	tmpDiag = Screen.Screen(simulation, diagNumber)
-			#	# Get a list of timesteps
-			#	timesteps = tmpDiag.getAvailableTimesteps()
-			#	# Create timesteps shortcuts
-			#	for timestep in timesteps:
-			#		setattr(self, 't%0.10i'%timestep, ScreenFactory(simulation, diagNumber, timestep))
-			#
-			#else:
-			#	# the timestep is saved for generating the object in __call__
-			#	self._additionalArgs += (timestep, )
-
+	
 	def __call__(self, *args, **kwargs):
-		return Screen.Screen(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return Screen(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalArgs) == 0 and self._simulation._scan:
+			diag_numbers = self._simulation._diag_numbers["Screen"]
+			diag_names = self._simulation._diag_names["Screen"]
+			if diag_numbers:
+				msg += "\nAvailable Screen diagnostics:\n"
+				for n, name in zip(diag_numbers, diag_names):
+					msg += "\n" + Screen._printInfo(Screen._getInfo(self._simulation, "Screen", n))
+			else:
+				msg += "\nNo Screen diagnostics available"
+		return msg
 
 
 class TrackParticlesFactory(object):
@@ -547,10 +553,8 @@ class TrackParticlesFactory(object):
 		# If not a specific species (root level), build a list of species shortcuts
 		if species is None:
 			if simulation._verbose: print("Scanning for Tracked particle diagnostics")
-			# Create a temporary, empty tracked-particle diagnostic
-			tmpDiag = TrackParticles.TrackParticles(simulation)
 			# Get a list of species
-			specs = tmpDiag.getTrackSpecies()
+			specs = self._simulation.getTrackSpecies()
 			# Create species shortcuts
 			for spec in specs:
 				child = TrackParticlesFactory(simulation, spec)
@@ -560,26 +564,17 @@ class TrackParticlesFactory(object):
 		else:
 			# the species is saved for generating the object in __call__
 			self._additionalKwargs.update( {"species":species} )
-
-			# For now, the following block is de-activated
-			# It is not possible to have pre-loaded timesteps because the file ordering
-			# would take place, and it takes a long time
-
-			## If not a specific timestep, build a list of timesteps shortcuts
-			#if timestep is None:
-			#	# Create a temporary, empty tracked-particle diagnostic
-			#	tmpDiag = TrackParticles.TrackParticles(simulation, species)
-			#	# Get a list of timesteps
-			#	timesteps = tmpDiag.getAvailableTimesteps()
-			#	# Create timesteps shortcuts
-			#	for timestep in timesteps:
-			#		setattr(self, 't%0.10i'%timestep, TrackParticlesFactory(simulation, species, timestep))
-			#
-			#else:
-			#	# the timestep is saved for generating the object in __call__
-			#	self._additionalKwargs.update( {"timesteps":timestep} )
-
+	
 	def __call__(self, *args, **kwargs):
 		kwargs.update(self._additionalKwargs)
-		return TrackParticles.TrackParticles(self._simulation, *args, **kwargs)
-
+		return TrackParticles(self._simulation, *args, **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalKwargs) == 0 and self._simulation._scan:
+			specs = self._simulation.getTrackSpecies()
+			if specs:
+				msg += "\nAvailable TrackParticles diagnostics:\n" + ", ".join(specs)
+			else:
+				msg += "\nNo TrackParticles diagnostics available"
+		return msg

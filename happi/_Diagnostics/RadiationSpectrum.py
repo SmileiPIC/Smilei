@@ -5,5 +5,5 @@ from .._Utils import *
 class RadiationSpectrum(ParticleBinning):
 	"""Class for loading a radiation spectrum diagnostic"""
 	
-	_diagName = "RadiationSpectrum"
+	_diagType = "RadiationSpectrum"
 	
