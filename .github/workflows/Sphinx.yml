@@ -1,6 +1,12 @@
-- name: SphinxBuild
-  uses: ammaraskar/sphinx-action@0.4
-  with:
-    docs-folder: "doc/Sphinx"
-    build-command: make html
-    pre-build-command: # optional
+name: "Doc"
+on: 
+- pull_request
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: ammaraskar/sphinx-action@master
+      with:
+        docs-folder: "doc/Sphinx/"
