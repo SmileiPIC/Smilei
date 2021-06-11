@@ -375,7 +375,8 @@ and only one mode between those three.
   * ``timer_syncDens``             : time spent synchronzing densities by each proc
   * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
-  * ``memory_total``               : the total memory used by the process (resident set size) in GB
+  * ``memory_total``               : the total memory (RSS) used by the process in GB
+  * ``memory_peak``               : the peak memory (peak RSS) used by the process in GB
 
   **WARNING**: The timers ``loadBal`` and ``diags`` include *global* communications.
   This means they might contain time doing nothing, waiting for other processes.
