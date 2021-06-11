@@ -13,13 +13,13 @@ class ParticleBinning(Diagnostic):
 		diag_numbers, diag_names = self.simulation.getDiags(self._diagName)
 		
 		if diagNumber is None:
-			self._error += ["Printing available %s:" % self._diagName]
-			self._error += ["------------------------------------------------"]
+			error = ["Printing available %s:" % self._diagName]
+			error += ["------------------------------------------------"]
 			for diagNumber in diag_numbers:
-				self._error += [self._printInfo(self._getInfo(diagNumber))]
+				error += [self._printInfo(self._getInfo(diagNumber))]
 			if len(diag_numbers)==0:
-				self._error += ["      No %s found" % self._diagName]
-			return
+				error += ["      No %s found" % self._diagName]
+			raise Exception("\n".join(error))
 		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------

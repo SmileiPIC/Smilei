@@ -8,36 +8,27 @@ class Field(Diagnostic):
 		
 		self.moving = moving
 		self._subsetinfo = {}
-		self.cylindrical = self.namelist.Main.geometry == "AMcylindrical"
 		
 		# Search available diags
 		diag_numbers, diag_names = self.simulation.getDiags("Fields")
 		
 		# Return directly if no diag number provided
 		if diagNumber is None:
-			self._error += ["Diagnostic not loaded: diagNumber is not defined"]
+			error = ["`diagNumber` is not defined"]
 			if len(diag_numbers)>0:
-				self._error += ["Please choose among: "+", ".join([str(d) for d in diag_numbers])]
-				self._error += ["(names: "+", ".join([d for d in diag_names if d])+" )"]
+				error += ["Please choose among: "+", ".join([str(d) for d in diag_numbers])]
+				error += ["(names: "+", ".join([d for d in diag_names if d])+" )"]
 			else:
-				self._error += ["(No Field diagnostics existing anyways)"]
-			return
-		elif type(diagNumber) is str:
-			if diagNumber not in diag_names:
-				self._error += ["Diagnostic not loaded: no field diagnostic #"+str(diagNumber)+" found"]
-				return
-			i = diag_names.index( diagNumber )
-		else:
-			if diagNumber not in diag_numbers:
-				self._error += ["Diagnostic not loaded: no field diagnostic #"+str(diagNumber)+" found"]
-				return
-			i = diag_numbers.index( diagNumber )
-		self.diagNumber = diag_numbers[i]
-		self.diagName = diag_names[i]
+				error += ["(No Field diagnostics existing anyways)"]
+			raise Exception("\n".join(error))
+		
+		info = self.simulation.fieldInfo(diagNumber)
+		self.diagNumber = info["diagNumber"]
+		self.diagName = info["diagName"]
+		self._fields = info["fields"]
 		
 		# Open the file(s) and load the data
 		self._h5items = {}
-		self._fields = []
 		for path in self._results_path:
 			file = path+self._os.sep+'Fields'+str(self.diagNumber)+'.h5'
 			try:
@@ -45,104 +36,42 @@ class Field(Diagnostic):
 			except Exception as e:
 				continue
 			self._h5items.update( dict(f["data"]) )
-			# Select only the fields that are common to all simulations
-			values = f["data"].values()
-			if len(values)==0:
-				self._fields = []
-			elif len(self._fields)==0:
-				self._fields = list(next(iter(values)).keys())
-			else:
-				self._fields = [f for f in next(iter(values)).keys() if f in self._fields]
 		if not self._h5items:
-			self._error += ["Diagnostic not loaded: Could not open any file Fields"+str(self.diagNumber)+".h5"]
-			return
+			raise Exception("Diagnostic not loaded: Could not open any file Fields%d.h5"%self.diagNumber)
 		# Remove "tmp" dataset
 		if "tmp" in self._h5items: del self._h5items["tmp"]
 		# Converted to ordered list
 		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[6:]))
 		
 		# Case of a cylindrical geometry
-		# Build the list of fields that can be reconstructed
-		if self.cylindrical:
-			all_fields = list(self._fields)
-			self._fields = {}
-			self._is_complex = True
-			has_complex = False
-			for f in all_fields:
-				try:
-					if f[:5] in ["Bl_m_","Br_m_","Bt_m_"]:
-						fname = f[:4]
-						f = f[5:]
-						has_complex = True
-					elif f[:4] in ["Rho_"]:
-						fname = f[:3]
-						f = f[4:]
-						has_complex = True
-					elif f[:3] in ["El_","Er_","Et_","Bl_","Br_","Bt_","Jl_","Jr_","Jt_"]:
-						fname = f[:2]
-						f = f[3:]
-						has_complex = True
-					elif f[:10] in ["Env_A_abs_","Env_E_abs_"]:
-						fname = f[:9]
-						f = f[10:]
-						self._is_complex = False
-						build3d = None
-					elif f[:11] in ["Env_Ex_abs_"]:
-						fname = f[:10]
-						f = f[11:]
-						self._is_complex = False
-						build3d = None
-					elif f[:8] in ["Env_Chi_"]:
-						fname = f[:7]
-						f = f[8:]
-						self._is_complex = False
-						build3d = None
-					else:
-						raise
-					try:
-						wordmode, imode = f.split('_')
-						species_name = ""
-					except Exception as e:
-						ff = f.split('_')
-						species_name = "_" + "_".join(ff[:-2])
-						wordmode = ff[-2]
-						imode = ff[-1]
-					if wordmode != "mode":
-						raise
-					fname += species_name
-					if fname not in self._fields:
-						self._fields[fname] = []
-					self._fields[fname] += [int(imode)]
-				except Exception as e:
-					print('WARNING: found unknown field '+f)
-					continue
-			if has_complex and not self._is_complex:
-				self._error += ["Cannot use both envelope and normal fields"]
-				return
+		if self.simulation.cylindrical:
+			envelope = [f[:3]=="Env" for f in self._fields]
+			if any(envelope) and not all(envelope):
+				raise Exception("Cannot use both envelope and normal fields")
+			self._is_complex = not any(envelope)
 		
 		# If no field selected, print available fields and leave
 		if field is None:
 			if len(self._fields)>0:
-				self._error += ["Error: no field chosen"]
-				self._error += ["Printing available fields:"]
-				self._error += ["--------------------------"]
+				error = ["No `field` chosen!"]
+				error += ["Printing available fields:"]
+				error += ["--------------------------"]
 				l = int(len(self._fields)/3) * 3
 				maxlength = str(self._np.max([len(f) for f in self._fields])+4)
 				fields = [('%'+maxlength+'s')%f for f in self._fields]
 				if l>0:
-					self._error += ['\n'.join([''.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])]
-				self._error += ['\n'+''.join(list(fields[l:]))]
+					error += ['\n'.join([''.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])]
+				error += ['\n'+''.join(list(fields[l:]))]
 			else:
-				self._error += ["No fields found"]
-			return
+				error += ["No fields found"]
+			raise Exception("\n".join(error))
 		
 		# Get available times
 		self._timesteps = self.getAvailableTimesteps()
 		if self._timesteps.size == 0:
-			self._error += ["Diagnostic not loaded: No fields found"]
-			return
+			raise Exception("Diagnostic not loaded: No fields found")
 		
-		# Get available fields
+		# Sort fields
 		sortedfields = reversed(sorted(self._fields, key = len))
 		
 		# 1 - verifications, initialization
@@ -156,20 +85,19 @@ class Field(Diagnostic):
 				self._operation = self._re.sub(r"(?<!')"+f+r"\b","C['"+f+"']",self._operation)
 				self._fieldname.append(f)
 		if not self._fieldname:
-			self._error += ["String "+self.operation+" does not seem to include any field"]
-			return
+			raise Exception("String "+self.operation+" does not seem to include any field")
 		
 		# Check subset
-		if subset is None: subset = {}
+		if subset is None:
+			subset = {}
 		elif type(subset) is not dict:
-			self._error += ["Argument `subset` must be a dictionary"]
-			return
+			raise Exception("Argument `subset` must be a dictionary")
 		
 		# Check average
-		if average is None: average = {}
+		if average is None:
+			average = {}
 		elif type(average) is not dict:
-			self._error += ["Argument `average` must be a dictionary"]
-			return
+			raise Exception("Argument `average` must be a dictionary")
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -177,27 +105,24 @@ class Field(Diagnostic):
 
 		# Case of a cylindrical geometry
 		# Check whether "theta" or "build3d" option is chosen
-		if self.cylindrical :
+		if self.simulation.cylindrical :
 			theta   = kwargs.pop("theta"  , None)
 			build3d = kwargs.pop("build3d", None)
 			modes   = kwargs.pop("modes"  , None)
 			if (theta is None) == (build3d is None):
-				self._error += ["In cylindrical geometry, one (and only one) option `theta` or `build3d` is required"]
-				return
+				raise Exception("In cylindrical geometry, one (and only one) option `theta` or `build3d` is required")
 			if theta is not None:
 				try:
 					self._theta = float(theta)
 				except Exception as e:
-					self._error += ["Option `theta` must be a number"]
-					return
+					raise Exception("Option `theta` must be a number")
 				self._getDataAtTime = self._theta_getDataAtTime
 			else:
 				try:
 					build3d = self._np.array(build3d)
 					if build3d.shape != (3,3): raise
 				except Exception as e:
-					self._error += ["Option `build3d` must be a list of three lists"]
-					return
+					raise Exception("Option `build3d` must be a list of three lists")
 				self._getDataAtTime = self._build3d_getDataAtTime
 			# Test whether "modes" is an int or an iterable on ints
 			max_nmode = max([max(self._fields[f]) for f in self._fieldname])+1
@@ -210,12 +135,10 @@ class Field(Diagnostic):
 					try:
 						self._modes = [int(imode) for imode in modes]
 					except Exception as e:
-						self._error += ["Option `modes` must be a number or an iterable on numbers"]
-						return
+						raise Exception("Option `modes` must be a number or an iterable on numbers")
 				for imode in self._modes:
 					if imode >= max_nmode:
-						self._error += ["Option `modes` cannot contain modes larger than "+str(max_nmode-1)]
-						return
+						raise Exception("Option `modes` cannot contain modes larger than "+str(max_nmode-1))
 			# Warning if some modes are not available
 			for f in self._fieldname:
 				unavailable_modes = [str(i) for i in set(self._modes) - set(self._fields[f])]
@@ -233,7 +156,7 @@ class Field(Diagnostic):
 		axis_start = self._offset
 		axis_stop  = self._offset + (self._initialShape-0.5)*self._spacing
 		axis_step  = self._spacing
-		if self.cylindrical :
+		if self.simulation.cylindrical :
 			if build3d is not None:
 				self._initialShape = [int(self._np.ceil( (s[1]-s[0])/float(s[2]) )) for s in build3d]
 				axis_start = build3d[:,0]
@@ -255,13 +178,11 @@ class Field(Diagnostic):
 			try:
 				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
 			except Exception as e:
-				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
-				return
+				raise Exception("Argument `timesteps` must be one or two non-negative integers")
 		
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error += ["Timesteps not found"]
-			return
+			raise Exception("Timesteps not found")
 		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
@@ -271,7 +192,7 @@ class Field(Diagnostic):
 		self._selection = [self._np.s_[:]]*self._naxes
 		self._offset  = fields[0].attrs['gridGlobalOffset']
 		self._spacing = fields[0].attrs['gridSpacing']
-		axis_name = "xyz" if not self.cylindrical or not self._is_complex or build3d is not None else "xr"
+		axis_name = "xyz" if not self.simulation.cylindrical or not self._is_complex or build3d is not None else "xr"
 		for iaxis in range(self._naxes):
 			centers = self._np.arange(axis_start[iaxis], axis_stop[iaxis], axis_step[iaxis])
 			label = axis_name[iaxis]
@@ -280,31 +201,18 @@ class Field(Diagnostic):
 			# If averaging over this axis
 			if label in average:
 				if label in subset:
-					self._error += ["`subset` not possible on the same axes as `average`"]
-					return
-				
+					raise Exception("`subset` not possible on the same axes as `average`")
 				self._averages[iaxis] = True
-				
-				try:
-					self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+				self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
 						= self._selectRange(average[label], centers, label, axisunits, "average")
-				except Exception as e:
-					if not self._error:
-						self._error += ["Error handling average:"]
-						self._error += [str(e)]
-					return
+				
 			# Otherwise
 			else:
 				# If taking a subset of this axis
 				if label in subset:
-					try:
-						self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
-							= self._selectSubset(subset[label], centers, label, axisunits, "subset")
-					except Exception as e:
-						if not self._error:
-							self._error += ["Error handling subset:"]
-							self._error += [str(e)]
-						return
+					self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+						= self._selectSubset(subset[label], centers, label, axisunits, "subset")
+				
 				# If subset has more than 1 point (or no subset), use this axis in the plot
 				if type(self._selection[iaxis]) is slice:
 					self._type     .append(label)
@@ -317,7 +225,7 @@ class Field(Diagnostic):
 		self._selection = tuple(self._selection)
 		
 		# Special selection in cylindrical geometry due to complex numbers
-		if self.cylindrical:
+		if self.simulation.cylindrical:
 			self._complex_selection_real = list(self._selection)
 			self._complex_selection_imag = list(self._selection)
 			complex_factor = 2 #cylindrical default is complex
@@ -352,8 +260,7 @@ class Field(Diagnostic):
 				y = self._np.arange(*build3d[1])
 				z = self._np.arange(*build3d[2])
 				if len(x)==0 or len(y)==0 or len(z)==0:
-					self._error += ["Error: The array shape to be constructed seems to be empty"]
-					return
+					raise Exception("Error: The array shape to be constructed seems to be empty")
 				y2, z2 = self._np.meshgrid(y,z)
 				r2 = self._np.sqrt(y2**2 + z2**2)
 				self._theta = self._np.arctan2(z2, y2)
@@ -562,3 +469,42 @@ class Field(Diagnostic):
 		A = self._np.squeeze(A)
 		if callable(self._data_transform): A = self._data_transform(A)
 		return A
+	
+	@staticmethod
+	def _cylindricalMode(field):
+		envelope = False
+		if field[:5] in ["Bl_m_","Br_m_","Bt_m_"]:
+			fname = field[:4]
+			f = field[5:]
+		elif field[:4] in ["Rho_"]:
+			fname = field[:3]
+			f = field[4:]
+		elif field[:3] in ["El_","Er_","Et_","Bl_","Br_","Bt_","Jl_","Jr_","Jt_"]:
+			fname = field[:2]
+			f = field[3:]
+		elif field[:10] in ["Env_A_abs_","Env_E_abs_"]:
+			fname = field[:9]
+			f = field[10:]
+			envelope = True
+		elif field[:11] in ["Env_Ex_abs_"]:
+			fname = field[:10]
+			f = field[11:]
+			envelope = True
+		elif field[:8] in ["Env_Chi_"]:
+			fname = field[:7]
+			f = field[8:]
+			envelope = True
+		else:
+			Exception("Unknown field %s"%field)
+		try:
+			wordmode, imode = f.split('_')
+			species_name = ""
+		except Exception as e:
+			ff = f.split('_')
+			species_name = "_" + "_".join(ff[:-2])
+			wordmode = ff[-2]
+			imode = ff[-1]
+		if wordmode != "mode":
+			raise Exception("Field %s not understood"%field)
+		fname += species_name
+		return fname, imode, envelope
