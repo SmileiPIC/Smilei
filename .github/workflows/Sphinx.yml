@@ -1,0 +1,6 @@
+- name: Sphinx Build
+  uses: ammaraskar/sphinx-action@0.4
+  with:
+    docs-folder: "doc/Sphinx"
+    build-command: make html
+    pre-build-command: # optional
