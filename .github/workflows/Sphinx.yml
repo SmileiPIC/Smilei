@@ -1,4 +1,4 @@
-- name: Sphinx Build
+- name: SphinxBuild
   uses: ammaraskar/sphinx-action@0.4
   with:
     docs-folder: "doc/Sphinx"
