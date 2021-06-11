@@ -10,4 +10,4 @@ Use
    run
    post-processing
    contribute
-   troubleshooting
+   troubleshoot

@@ -1,4 +1,4 @@
-Troubleshooting
+Troubleshoot
 ---------------------
 
 If you encounter issues running your simulation, you can ask for help in the chat room on Element or publish an ``Issue`` on `GitHub <https://github.com/SmileiPIC/Smilei/issues>`_.
@@ -7,8 +7,8 @@ Also, performing these simple tests helps us while finding an answer to your ``I
 
 ----
 
-Simulation not starting
-^^^^^^^^^^^^^^^^^^^^^^^^
+Simulation not starting / Error running a simulation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Your simulation does not start or has an error while running.
 
@@ -73,6 +73,6 @@ The simulation is very slow / the performances are not as expected.
 * Change the number of MPI process and OpenMP threads.
 * Change the number of patches and/or their distribution in each direction. See also :doc:`parallelization`.
 * Check that ``LoadBalancing`` is activated in the :doc:`namelist` (if the physical set-up is suitable for its use). See also :doc:`parallelization`.
-* If using :doc:`vectorization`, checking that the compilation flags for vectorization were correctly used. See also :doc:`installation`.
+* If using :doc:`vectorization`, check that the compilation flags for vectorization were correctly used. See also :doc:`installation`.
 
 
