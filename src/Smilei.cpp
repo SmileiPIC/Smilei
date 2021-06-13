@@ -216,7 +216,7 @@ int main( int argc, char *argv[] )
 
         if (params.gpu_computing) {
             TITLE( "Initialize GPU data" );
-            vecPatches.initializeDataOnDevice( &smpi );
+            vecPatches.initializeDataOnDevice( params, &smpi, &radiation_tables_ );
         }
 
         // Initialize the electromagnetic fields

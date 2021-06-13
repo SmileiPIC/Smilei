@@ -534,7 +534,8 @@ double RadiationTables::computePhotonProductionYield( double particle_chi, doubl
 //! from the computed table niel_.table
 //! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
-double RadiationTables::getHNielFromTable( double particle_chi )
+#pragma acc routine seq
+double RadiationTables::getHNielFromTable( double particle_chi, double * tableNiel )
 {
     int ichipa;
     double d;
@@ -547,7 +548,10 @@ double RadiationTables::getHNielFromTable( double particle_chi )
     d = d - floor( d );
 
     // Linear interpolation
-    return niel_.table_[ichipa]*( 1.-d ) + niel_.table_[ichipa+1]*( d );
+    //return niel_.table_[ichipa]*( 1.-d ) + niel_.table_[ichipa+1]*( d );
+    //return niel_.table_[0]*( 1.-d ) + niel_.table_[0]*( d );
+    return tableNiel[ichipa]*( 1.-d ) + tableNiel[ichipa+1]*( d );
+    //return 1.-d;
 }
 
 // -----------------------------------------------------------------------------
@@ -1038,5 +1042,7 @@ void RadiationTables::bcastTableXi( SmileiMPI *smpi )
     //         smpi->barrier();
     //     }
     // }
-    // -----------------------------------------------------------------------
+    // --------------------------------------------------------------------
+
 }
+

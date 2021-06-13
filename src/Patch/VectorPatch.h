@@ -407,7 +407,7 @@ public :
     }
 
     //! Create and copy the data on device (GPU) from host (CPU)
-    void initializeDataOnDevice( SmileiMPI *smpi );
+    void initializeDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables * radiation_tables_ );
     
     //! Field Synchronization from the GPU (Device) to the host (CPU)
     //! This function updates the data on the host from the data located on the device

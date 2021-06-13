@@ -4155,7 +4155,7 @@ void VectorPatch::initNewEnvelope( Params &params )
     }
 } // END initNewEnvelope
 
-void VectorPatch::initializeDataOnDevice( SmileiMPI *smpi )
+void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables * radiation_tables_ )
 {
 #ifdef _GPU
     int npatches = this->size();
@@ -4169,6 +4169,7 @@ void VectorPatch::initializeDataOnDevice( SmileiMPI *smpi )
     int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
     int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
     int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
+    int sizeofTableNiel = radiation_tables_->niel_.size_particle_chi_;
 
     for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
 
@@ -4201,6 +4202,13 @@ void VectorPatch::initializeDataOnDevice( SmileiMPI *smpi )
         double* Bz = &(patches_[ipatch]->EMfields->Bz_->data_[0]);
 
         #pragma acc enter data copyin(Bx[0:sizeofBx],By[0:sizeofBy],Bz[0:sizeofBz])
+
+        if (params.hasNielRadiation && radiation_tables_->niel_.computation_method_ == "table"  ) {
+        
+            double * table = &(radiation_tables_->niel_.table_[0]);
+            #pragma acc enter data copyin(table[0:sizeofTableNiel])
+        
+        }
 
     }
 #endif

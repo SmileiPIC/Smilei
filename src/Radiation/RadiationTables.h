@@ -78,7 +78,9 @@ public:
     //! Return the value of the function h(particle_chi) of Niel et al.
     //! from the computed table niel_.table
     //! \param particle_chi particle quantum parameter
-    double getHNielFromTable( double particle_chi );
+    
+    #pragma acc routine seq
+    double getHNielFromTable( double particle_chi, double * tableNiel);
 
     //! Return the stochastic diffusive component of the pusher
     //! of Niel et al.
@@ -177,6 +179,9 @@ public:
     //! Bcast of the external table xip_chiphmin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
     void bcastTableXi( SmileiMPI *smpi );
+
+
+    void needNielTables();
 
     // ---------------------------------------------
     // Table h for the
