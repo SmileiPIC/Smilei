@@ -716,8 +716,8 @@ Each species has to be defined in a ``Species`` block::
       merge_every = 5,
       merge_min_particles_per_cell = 16,
       merge_max_packet_size = 4,
-      merge_min_packet_size = 2,
-      merge_momentum_cell_size = [32,16,16],
+      merge_min_packet_size = 4,
+      merge_momentum_cell_size = [16,16,16],
   )
 
 .. py:data:: name
@@ -1148,6 +1148,7 @@ Particle Merging
 
 The macro-particle merging method is documented in
 the :doc:`corresponding page <particle_merging>`.
+Note that for merging to be able to operate either vectorization or cell sorting must be activated.
 It is optionnally specified in the ``Species`` block::
 
   Species(
@@ -1158,8 +1159,8 @@ It is optionnally specified in the ``Species`` block::
       merge_every = 5,
       merge_min_particles_per_cell = 16,
       merge_max_packet_size = 4,
-      merge_min_packet_size = 2,
-      merge_momentum_cell_size = [32,16,16],
+      merge_min_packet_size = 4,
+      merge_momentum_cell_size = [16,16,16],
       merge_discretization_scale = "linear",
       # Extra parameters for experts:
       merge_min_momentum_cell_length = [1e-10, 1e-10, 1e-10],
@@ -1193,7 +1194,7 @@ It is optionnally specified in the ``Species`` block::
 
   :default: ``4``
 
-  The minimum number of particles per packet to merge.
+  The minimum number of particles per packet to merge. Must be greater or equal to 4.
 
 .. py:data:: merge_max_packet_size
 
