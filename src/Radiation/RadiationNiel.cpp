@@ -116,12 +116,12 @@ void RadiationNiel::operator()(
     double* particle_chi = particles.getPtrChi();
 
     // Niel table
-    double * table = &(RadiationTables.niel_.table_[0]);
+    double* table = &(RadiationTables.niel_.table_[0]);
 
     const double minimum_chi_continuous_ = RadiationTables.getMinimumChiContinuous();
     const double factor_classical_radiated_power_      = RadiationTables.getFactorClassicalRadiatedPower();
     const int niel_computation_method = RadiationTables.getNielHComputationMethodIndex();
-    const int sizeofTableNiel = RadiationTables.niel_.size_particle_chi_;
+    const int size_of_table_Niel = RadiationTables.niel_.size_particle_chi_;
 
     // Parameter to store the local radiated energy
     double radiated_energy_loc = 0;
@@ -131,7 +131,7 @@ void RadiationNiel::operator()(
     int np = iend-istart;
     #pragma acc data create(random_numbers[0:nbparticles], diffusion[0:nbparticles]) \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
-            Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np], table[0:sizeofTableNiel]) \
+            Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np], table[0:size_of_table_Niel]) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi)
     {
     #endif
@@ -195,8 +195,10 @@ void RadiationNiel::operator()(
     unsigned long long seq;
     unsigned long long offset;
     curandState_t state;
-    #pragma acc parallel num_gangs(1) present(random_numbers[0:nbparticles]) private(state)
+    #pragma acc parallel num_gangs(1) present(random_numbers[0:nbparticles]) private(state, p,temp)
     {
+        double p;
+
         seed = 12345ULL;
         seq = 0ULL;
         offset = 0ULL;
@@ -206,12 +208,41 @@ void RadiationNiel::operator()(
             if( particle_chi[ipart] > minimum_chi_continuous_ ) {
                 //random_numbers[ipart] = 2.*rand_->uniform() -1.;
                 //random_numbers[ipart] = 0;
-                random_numbers[ipart] = curand_normal(&state);
+                random_numbers[ipart] = 2.*curand_uniform(&state) - 1;
                 //b[i] = curand_normal(&state);
+             
+                temp = -std::log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
+
+            if( temp < 5.000000 ) {
+                temp = temp - 2.500000;
+                p = +2.81022636000e-08      ;
+                p = +3.43273939000e-07 + p*temp;
+                p = -3.52338770000e-06 + p*temp;
+                p = -4.39150654000e-06 + p*temp;
+                p = +0.00021858087e+00 + p*temp;
+                p = -0.00125372503e+00 + p*temp;
+                p = -0.00417768164e+00 + p*temp;
+                p = +0.24664072700e+00 + p*temp;
+                p = +1.50140941000e+00 + p*temp;
+            } else {
+                temp = std::sqrt( temp ) - 3.000000;
+                p = -0.000200214257      ;
+                p = +0.000100950558 + p*temp;
+                p = +0.001349343220 + p*temp;
+                p = -0.003673428440 + p*temp;
+                p = +0.005739507730 + p*temp;
+                p = -0.007622461300 + p*temp;
+                p = +0.009438870470 + p*temp;
+                p = +1.001674060000 + p*temp;
+                p = +2.832976820000 + p*temp;
+            }
+
+            random_numbers[ipart] *= p*sqrtdt*std::sqrt( 2. );
+            
              }
          }
+    
     }
-
 
     #else
 
@@ -283,7 +314,7 @@ void RadiationNiel::operator()(
         //#else
 
             #pragma acc parallel num_gangs(1) \
-                present(gamma[istart:np], random_numbers[0:nbparticles], table[0:sizeofTableNiel]) \
+                present(gamma[istart:np], random_numbers[0:nbparticles], table[0:size_of_table_Niel]) \
                 deviceptr(particle_chi) \
                 private(temp) //private(temp, ichipa, d)
             {
@@ -300,21 +331,6 @@ void RadiationNiel::operator()(
                     //h = RadiationTables.getHNielFitOrder5(particle_chi[ipart]);
                     //temp = 0;
                     temp = RadiationTables.getHNielFromTable( particle_chi[ipart+istart], table );
-                    //temp = RadiationTools::getHNielFromTableGPU( particle_chi[ipart] );
-
-                    /*int ichipa;
-                    double d;
-
-                    // Position in the niel_.table
-                    d = ( std::log10( particle_chi[ipart+istart] )-RadiationTables.niel_.log10_min_particle_chi_ )
-                    *RadiationTables.niel_.inv_particle_chi_delta_;
-                    ichipa = int( floor( d ) );
-
-                    // distance for interpolation
-                    d = d - floor( d );
-
-                    // Linear interpolation
-                    temp = table[ichipa]*( 1.-d ) + table[ichipa+1]*( d );*/
 
                     diffusion[ipart] = sqrt( factor_classical_radiated_power_*gamma[ipart+istart-ipart_ref]*temp )*random_numbers[ipart];
                 }
@@ -334,7 +350,7 @@ void RadiationNiel::operator()(
             #pragma acc parallel \
                 present(gamma[istart:np], random_numbers[0:nbparticles]) \
                 deviceptr(particle_chi) \
-                private(temp)
+                private(temp,ipartp)
             {
                 #pragma acc loop gang worker vector
         #endif
@@ -444,12 +460,11 @@ void RadiationNiel::operator()(
 
 
                 // Radiated energy during the time step
-                rad_energy =
-                    RadiationTables.getRidgersCorrectedRadiatedEnergy( particle_chi[ipart], dt_ );
+                rad_energy = RadiationTables.getRidgersCorrectedRadiatedEnergy( particle_chi[ipart], dt_ );
 
                 // Effect on the momentum
                 // Temporary factor
-                temp = ( rad_energy - diffusion[ipart-istart] )
+                temp = ( rad_energy - diffusion[ipart])
                        * gamma[ipart-ipart_ref]/( gamma[ipart-ipart_ref]*gamma[ipart-ipart_ref]-1. );
 
                 // Update of the momentum

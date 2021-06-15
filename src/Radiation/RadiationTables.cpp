@@ -550,7 +550,14 @@ double RadiationTables::getHNielFromTable( double particle_chi, double * tableNi
     // Linear interpolation
     //return niel_.table_[ichipa]*( 1.-d ) + niel_.table_[ichipa+1]*( d );
     //return niel_.table_[0]*( 1.-d ) + niel_.table_[0]*( d );
-    return tableNiel[ichipa]*( 1.-d ) + tableNiel[ichipa+1]*( d );
+    //if (niel_.size_particle_chi_ - 1 < ichipa)
+    //{
+    //    return tableNiel[niel_.size_particle_chi_]*( d );
+    //}
+    //else 
+    //{
+        return tableNiel[ichipa]*( 1.-d ) + tableNiel[ichipa+1]*( d );
+    //}
     //return 1.-d;
 }
 

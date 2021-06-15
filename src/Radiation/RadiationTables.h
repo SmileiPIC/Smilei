@@ -98,6 +98,7 @@ public:
     //! \param particle_chi particle quantum parameter
     //! \param dt time step
     //#pragma omp declare simd
+    #pragma acc routine seq
     inline double getRidgersCorrectedRadiatedEnergy( double particle_chi,
             double dt )
     {
