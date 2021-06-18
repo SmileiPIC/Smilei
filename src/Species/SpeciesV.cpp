@@ -158,8 +158,6 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize ) { // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
-
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
@@ -172,7 +170,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
         for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack );
+            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1169,7 +1167,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 
             //int nparts_in_pack = particles->last_index[ (ipack+1) * packsize_-1 ] - particles->first_index [ ipack * packsize_ ];
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack );
+            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
