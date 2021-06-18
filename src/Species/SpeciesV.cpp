@@ -966,35 +966,35 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             }//end task for Proj of ibin
         }// end ibin loop for Proj    
 
-        // reduction of the lost energy in each ibin 
-        // the dependency ensures that it is done after the particles BC
-#ifdef  __DETAILED_TIMERS
-        #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
-#else
-        #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
-#endif
-        {
-        // reduce the energy lost with BC per bin
-        for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-           nrj_bc_lost += nrj_lost_per_bin[ibin];
-        }
-
-        // sum the radiated energy / energy converted in pairs
-        // The dependencies above ensure that this is done after the Radiation and MultiPhoton Breit Wheeler methods
-        if( Radiate || Multiphoton_Breit_Wheeler_process) {
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-            ithread = omp_get_thread_num();
-#endif
-
-            for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-               nrj_radiation += nrj_radiation_per_bin[ibin];
-            }
-#ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
-#endif
-        } // end if Radiate or Multiphoton_Breit_Wheeler_process
-        } // end task for lost/radiated energy reduction
+//         // reduction of the lost energy in each ibin 
+//         // the dependency ensures that it is done after the particles BC
+// #ifdef  __DETAILED_TIMERS
+//         #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+// #else
+//         #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+// #endif
+//         {
+//         // reduce the energy lost with BC per bin
+//         for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+//            nrj_bc_lost += nrj_lost_per_bin[ibin];
+//         }
+// 
+//         // sum the radiated energy / energy converted in pairs
+//         // The dependencies above ensure that this is done after the Radiation and MultiPhoton Breit Wheeler methods
+//         if( Radiate || Multiphoton_Breit_Wheeler_process) {
+// #ifdef  __DETAILED_TIMERS
+//             timer = MPI_Wtime();
+//             ithread = omp_get_thread_num();
+// #endif
+// 
+//             for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+//                nrj_radiation += nrj_radiation_per_bin[ibin];
+//             }
+// #ifdef  __DETAILED_TIMERS
+//             patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+// #endif
+//         } // end if Radiate or Multiphoton_Breit_Wheeler_process
+//         } // end task for lost/radiated energy reduction
 
 
 
@@ -1101,7 +1101,43 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 
     } // end taskgroup
 
+    if (time_dual>time_frozen_){
 
+        // reduction of the lost energy in each ibin 
+        // the dependency ensures that it is done after the particles BC
+// #ifdef  __DETAILED_TIMERS
+//         #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+// #else
+//         #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+// #endif
+#ifdef  __DETAILED_TIMERS
+        #pragma omp task default(shared) private(ithread,timer) 
+#else
+        #pragma omp task default(shared) 
+#endif
+        {
+        // reduce the energy lost with BC per bin
+        for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+           nrj_bc_lost += nrj_lost_per_bin[ibin];
+        }
+
+        // sum the radiated energy / energy converted in pairs
+        // The dependencies above ensure that this is done after the Radiation and MultiPhoton Breit Wheeler methods
+        if( Radiate || Multiphoton_Breit_Wheeler_process) {
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+            ithread = omp_get_thread_num();
+#endif
+
+            for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+               nrj_radiation += nrj_radiation_per_bin[ibin];
+            }
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+#endif
+        } // end if Radiate or Multiphoton_Breit_Wheeler_process
+        } // end task for lost/radiated energy reduction
+    } // end if moving particle
 
 } // END dynamicsTasks
 
@@ -2319,17 +2355,17 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
             } // end task
         } // end ibin
 
-        // reduction of the lost energy in each ibin 
-        // the dependency ensures that it is done after the particles BC
-        //#pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
-        // using depend out on particles BC a segfault is caused - check why this happens
-        #pragma omp task default(shared) depend(in:bin_has_projected[0:(Nbins-1)])
-        {
-        // reduce the energy lost with BC per bin
-        for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-            nrj_bc_lost += nrj_lost_per_bin[ibin];
-        } // end ibin
-        } // end task for lost/radiated energy reduction 
+        // // reduction of the lost energy in each ibin 
+        // // the dependency ensures that it is done after the particles BC
+        // //#pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+        // // using depend out on particles BC a segfault is caused - check why this happens
+        // #pragma omp task default(shared) depend(in:bin_has_projected[0:(Nbins-1)])
+        // {
+        // // reduce the energy lost with BC per bin
+        // for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+        //     nrj_bc_lost += nrj_lost_per_bin[ibin];
+        // } // end ibin
+        // } // end task for lost/radiated energy reduction 
 
     } else { // immobile particle
         if( diag_flag &&( !particles->is_test ) ) {
@@ -2385,5 +2421,21 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
 
     } // end taskgroup
 
+    if (time_dual>time_frozen_){
+
+        // reduction of the lost energy in each ibin 
+        // the dependency ensures that it is done after the particles BC
+        //#pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+        // using depend out on particles BC a segfault is caused - check why this happens
+        // #pragma omp task default(shared) depend(in:bin_has_projected[0:(Nbins-1)])
+        #pragma omp task default(shared)
+        {
+        // reduce the energy lost with BC per bin
+        for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+            nrj_bc_lost += nrj_lost_per_bin[ibin];
+        } // end ibin
+        } // end task for lost/radiated energy reduction
+
+    } // end if moving particle
 
 } // end ponderomotiveUpdatePositionAndCurrentsTasks
