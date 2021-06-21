@@ -53,7 +53,10 @@ public:
 
     //! Computation of the photon production yield dNph/dt which is
     //! also the cross-section for the Monte-Carlo
-    double computePhotonProductionYield( double particle_chi, double particle_gamma );
+    //#pragma acc routine seq
+    #pragma acc routine seq
+    double computePhotonProductionYield( double particle_chi, double particle_gamma, 
+                                         double * integfochi_table );
 
     //! Determine randomly a photon quantum parameter photon_chi
     //! for an emission process
@@ -65,7 +68,9 @@ public:
     //! Computation of the photon quantum parameter photon_chi for emission
     //! ramdomly and using the tables xi and chiphmin
     //! \param particle_chi particle quantum parameter
-    double computeRandomPhotonChiWithInterpolation( double particle_chi, Random * rand);
+    #pragma acc routine seq
+    double computeRandomPhotonChiWithInterpolation( double particle_chi, double xi,
+                                 double * table_min_photon_chi, double * table_xi);
 
     //! Return the value of the function h(particle_chi) of Niel et al.
     //! Use an integration of Gauss-Legendre
@@ -115,6 +120,8 @@ public:
 
     //! Return the minimum_chi_discontinuous_ value
     //! Under this value, no discontinuous radiation reaction
+    //#pragma acc routine seq
+    #pragma acc routine seq
     inline double getMinimumChiDiscontinuous()
     {
         return minimum_chi_discontinuous_;
@@ -122,6 +129,7 @@ public:
 
     //! Return the minimum_chi_continuous_ value
     //! Under this value, no continuous radiation reaction
+    #pragma acc routine seq
     inline double getMinimumChiContinuous()
     {
         return minimum_chi_continuous_;

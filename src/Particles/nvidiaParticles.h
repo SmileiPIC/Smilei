@@ -44,6 +44,9 @@ public:
     //! Quantum parameter
     thrust::device_vector<double> nvidia_chi_;
 
+    //! Monte-Carlo parameter
+    thrust::device_vector<double> nvidia_tau_;
+
     double* getPtrPosition( int idim ) override {
         return thrust::raw_pointer_cast( nvidia_position_[idim].data() );
     };
@@ -58,6 +61,9 @@ public:
     };
     double * getPtrChi() override {
         return thrust::raw_pointer_cast( nvidia_chi_.data() );
+    };
+    double * getPtrTau() override {
+        return thrust::raw_pointer_cast( nvidia_tau_.data() );
     };
     int * getPtrCellKeys() override {
         return thrust::raw_pointer_cast( nvidia_cell_keys_.data() );

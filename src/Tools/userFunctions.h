@@ -1,3 +1,8 @@
+
+#ifdef _GPU
+#include <openacc.h>
+#endif
+
 #ifndef USERFUNCTIONS_H
 #define USERFUNCTIONS_H
 
@@ -31,6 +36,7 @@ public:
     //! \param array array in which to find the value
     //! \param elem element to be found
     //! \param nb_elem number of elements
+    #pragma acc routine seq
     static int searchValuesInMonotonicArray( double *array,
                                      double elem,
                                      int nb_elems );

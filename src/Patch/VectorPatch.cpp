@@ -4169,8 +4169,13 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
     int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
     int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
     int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
-    int sizeofTableNiel = radiation_tables_->niel_.size_particle_chi_;
 
+    int size_of_Table_Niel = radiation_tables_->niel_.size_particle_chi_;
+    int size_of_Table_integfochi = radiation_tables_->integfochi_.size_particle_chi_;
+    int size_of_Table_xi = (radiation_tables_->xi_.size_particle_chi_)*
+                            (radiation_tables_->xi_.size_photon_chi_);
+    int size_of_Table_min_photon_chi = radiation_tables_->xi_.size_particle_chi_;
+    
     for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
 
         // Initialize  particles data structures on GPU, and synchronize it
@@ -4206,7 +4211,19 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
         if (params.hasNielRadiation && radiation_tables_->niel_.computation_method_ == "table"  ) {
         
             double * table = &(radiation_tables_->niel_.table_[0]);
-            #pragma acc enter data copyin(table[0:sizeofTableNiel])
+            #pragma acc enter data copyin(table[0:size_of_Table_Niel])
+        
+        }
+        if (params.hasMCRadiation ) {
+            
+            double * table_integfochi = &(radiation_tables_->integfochi_.table_[0]);
+            #pragma acc enter data copyin(table_integfochi[0:size_of_Table_integfochi])
+
+            double * table_min_photon_chi = &(radiation_tables_->xi_.min_photon_chi_table_[0]);
+            #pragma acc enter data copyin(table_min_photon_chi[0:size_of_Table_min_photon_chi])
+
+            double * table_xi = &(radiation_tables_->xi_.table_[0]);
+            #pragma acc enter data copyin(table_xi[0:size_of_Table_xi])
         
         }
 

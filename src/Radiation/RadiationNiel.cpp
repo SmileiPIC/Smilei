@@ -208,10 +208,11 @@ void RadiationNiel::operator()(
             if( particle_chi[ipart] > minimum_chi_continuous_ ) {
                 //random_numbers[ipart] = 2.*rand_->uniform() -1.;
                 //random_numbers[ipart] = 0;
-                random_numbers[ipart] = 2.*curand_uniform(&state) - 1;
-                //b[i] = curand_normal(&state);
+                //random_numbers[ipart] = 2.*curand_uniform(&state) - 1;
+                random_numbers[ipart] = std::sqrt( 2. )*sqrtdt*curand_normal(&state);
+                //random_numbers[ipart] = curand_normal(&state);
              
-                temp = -std::log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
+                /*temp = -std::log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
 
             if( temp < 5.000000 ) {
                 temp = temp - 2.500000;
@@ -237,7 +238,8 @@ void RadiationNiel::operator()(
                 p = +2.832976820000 + p*temp;
             }
 
-            random_numbers[ipart] *= p*sqrtdt*std::sqrt( 2. );
+            //random_numbers[ipart] *= p*sqrtdt*std::sqrt( 2. );
+            random_numbers[ipart] *= sqrtdt*std::sqrt( 2. );*/
             
              }
          }

@@ -61,6 +61,11 @@ void nvidiaParticles::initializeDataOnDevice()
         nvidia_chi_.resize( Chi.size() );
     }
 
+    if( isMonteCarlo ) {
+        nvidia_tau_.reserve( res_fac*Tau.size() );
+        nvidia_tau_.resize( Tau.size() );
+    }
+
     nvidia_cell_keys_.reserve( res_fac*Charge.size() );
     nvidia_cell_keys_.resize( Charge.size() );
     gpu_nparts_ = Charge.size();
@@ -76,6 +81,9 @@ void nvidiaParticles::initializeDataOnDevice()
         nvidia_charge_.reserve( 100 );
         if( isQuantumParameter ) {
             nvidia_chi_.reserve( 100 );
+        }
+        if( isMonteCarlo ) {
+            nvidia_tau_.reserve( 100 );
         }
         nvidia_cell_keys_.reserve( 100 );
     }
@@ -100,6 +108,11 @@ void nvidiaParticles::syncCPU()
         Chi.resize( gpu_nparts_ );
         thrust::copy((nvidia_chi_).begin(), (nvidia_chi_).begin()+gpu_nparts_, (Chi).begin());
     }
+    if (isMonteCarlo) {
+        Tau.resize( gpu_nparts_ );
+        thrust::copy((nvidia_tau_).begin(), (nvidia_tau_).begin()+gpu_nparts_, (Tau).begin());
+    }
+
 }
 
 void nvidiaParticles::syncGPU()
@@ -119,6 +132,10 @@ void nvidiaParticles::syncGPU()
     if (isQuantumParameter) {
         nvidia_chi_.resize( Chi.size() );
         thrust::copy((Chi).begin(), (Chi).end(), (nvidia_chi_).begin());
+    }
+    if (isMonteCarlo) {
+        nvidia_tau_.resize( Tau.size() );
+        thrust::copy((Tau).begin(), (Tau).end(), (nvidia_tau_).begin());
     }
     gpu_nparts_ = Charge.size();
 }
@@ -154,6 +171,10 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
         if (isQuantumParameter) {
             cp_parts->nvidia_chi_.resize( nparts_to_move_ );
         }
+        if (isMonteCarlo) {
+            cp_parts->nvidia_tau_.resize( nparts_to_move_ );
+        }
+
         cp_parts->nvidia_cell_keys_.resize( nparts_to_move_ );
     }
     
@@ -174,6 +195,9 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
     // Special treatment for chi if radiation emission
     if (isQuantumParameter) {
         thrust::copy_if(thrust::device, nvidia_chi_.begin(), nvidia_chi_.begin()+nparts, nvidia_cell_keys_.begin(), cp_parts->nvidia_chi_.begin(), count_if_out());
+    }
+    if (isMonteCarlo) {
+        thrust::copy_if(thrust::device, nvidia_tau_.begin(), nvidia_tau_.begin()+nparts, nvidia_cell_keys_.begin(), cp_parts->nvidia_tau_.begin(), count_if_out());
     }
     
     cp_parts->gpu_nparts_ = nparts_to_move_;
@@ -223,6 +247,14 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
                           count_if_out()
         );
     }
+    if (isMonteCarlo) {
+        thrust::remove_if(thrust::device,
+                          nvidia_tau_.begin(),
+                          nvidia_tau_.begin()+nparts,
+                          nvidia_cell_keys_.begin(),
+                          count_if_out()
+        );
+    }
     
     // Update current number of particles
     gpu_nparts_ -= nparts_to_move_;
@@ -259,6 +291,9 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
         if (isQuantumParameter) {
             nvidia_chi_.resize(  tot_parts, 0 );
         }
+        if (isMonteCarlo) {
+            nvidia_tau_.resize(  tot_parts, 0 );
+        }
     }
     // Iterator of the main data structure (once it has been resized)
     ZipIterParts iter(thrust::make_tuple(nvidia_position_[0].begin(),
@@ -280,7 +315,14 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
                        nparts_add,
                        nvidia_chi_.begin()+nparts);
     }
-    
+
+    if (isMonteCarlo) {
+        thrust::copy_n(thrust::device,
+                       cp_parts->nvidia_tau_.begin(),
+                       nparts_add,
+                       nvidia_tau_.begin()+nparts);
+    }
+
     gpu_nparts_ += nparts_add;
 
     // Resize below useless : nvidia_cell_keys_ resized if necessary above, cell_keys not used on cpu

@@ -66,7 +66,7 @@ public:
     //! \param By y component of the particle magnetic field
     //! \param Bz z component of the particle magnetic field
     //#pragma omp declare simd
-    #pragma acc routine seq
+    //#pragma acc routine seq
     double inline computeParticleChi( double charge_over_mass2,
                                       double px, double py, double pz,
                                       double gamma,
@@ -88,7 +88,7 @@ public:
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
     //! \param ithread     Thread index
-    #pragma acc routine seq
+    //#pragma acc routine seq
     void computeParticlesChi( Particles &particles,
                               SmileiMPI *smpi,
                               int istart,

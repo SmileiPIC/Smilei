@@ -23,9 +23,6 @@
 #include "userFunctions.h"
 
 #ifdef _GPU
-//#include <cuda.h>
-//#include <curand.h>
-//#include <curand_kernel.h>
 #include <openacc.h>
 #include <openacc_curand.h>
 #endif

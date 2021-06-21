@@ -126,7 +126,6 @@ void RadiationCorrLandauLifshitz::operator()(
     {
         #pragma acc loop gang worker vector
     #endif
-
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 

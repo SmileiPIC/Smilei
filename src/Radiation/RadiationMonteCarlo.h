@@ -16,6 +16,11 @@
 #include "Radiation.h"
 #include "userFunctions.h"
 
+#ifdef _GPU
+#include <openacc.h>
+#include <openacc_curand.h>
+#endif
+
 //----------------------------------------------------------------------------------------------------------------------
 //! RadiationMonteCarlo class: holds parameters and functions to apply the
 //! nonlinear inverse Compton scattering on Particles.
@@ -68,6 +73,7 @@ public:
     //! \param RadiationTables    Cross-section data tables and useful functions
     //                        for nonlinear inverse Compton scattering
     // ---------------------------------------------------------------------
+    //#pragma acc routine seq
     double photonEmission( int ipart,
                          double &particle_chi,
                          double &particle_gamma,
@@ -78,8 +84,11 @@ public:
                          double *momentum_y,
                          double *momentum_z,
                          double *weight,
+                         double random_number,
+                         double * table_min_photon_chi,
+                         double * table_xi,
                          Species *photon_species,
-                         RadiationTables &RadiationTables );
+                         RadiationTables &RadiationTables);
 
 protected:
 
