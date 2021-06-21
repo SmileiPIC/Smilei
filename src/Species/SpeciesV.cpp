@@ -977,7 +977,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
             // ipack end   @ particles->last_index [ ipack * packsize_ + packsize_ - 1 ]
             //int nparts_in_pack = particles->last_index[ (ipack+1) * packsize_-1 ] - particles->first_index [ ipack * packsize_ ];
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack );
+            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1008,9 +1008,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
                 patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
             }
-
-
-
+            
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1089,7 +1087,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
             // ipack end   @ particles->last_index [ ipack * packsize_ + packsize_ - 1 ]
             //int nparts_in_pack = particles->last_index[ (ipack+1) * packsize_-1 ] - particles->first_index [ ipack * packsize_ ];
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack );
+            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1249,22 +1247,29 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 
     } else { // immobile particle (at the moment only project density)
         if( diag_flag &&( !particles->is_test ) ) {
-            double *b_rho=nullptr;
-            for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) {
+            if( params.geometry != "AMcylindrical" ) {
+                double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                    for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                        Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                    } //End loop on particles
+                }//End loop on scells
 
-                if( nDim_field==2 ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+            } else { // AM case
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+                int n_species = patch->vecSpecies.size();
+                for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                    int ifield = imode*n_species+ispec;
+                    complex<double> *b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                    for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                        for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
+                            Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                        }
+                    }
                 }
-                if( nDim_field==3 ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                } else if( nDim_field==1 ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                }
-                for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                } //End loop on particles
             }
         }
+
     }//END if time vs. time_frozen_
 
 } // end ponderomotiveUpdatePositionAndCurrents
