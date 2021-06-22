@@ -224,7 +224,7 @@ class SmileiSimulation(object):
 				if s: species += [ s.groups()[0] ]
 		return list(set(species)) # unique species
 	
-	def fieldInfo(self, diag=None):
+	def fieldInfo(self, diag):
 		""" Information on a specific Field diagnostic
 		
 		Parameters:
@@ -268,6 +268,7 @@ class SmileiSimulation(object):
 		
 		# Case of a cylindrical geometry
 		if self.cylindrical:
+			from ._Diagnostics.Field import Field
 			fields = {}
 			for f in raw_fields:
 				fname, imode, envelope = Field._cylindricalMode(f)
@@ -275,11 +276,11 @@ class SmileiSimulation(object):
 					fields[fname] = []
 				fields[fname] += [int(imode)]
 		else:
-			fields = list(raw_fields)
+			fields = sorted(list(raw_fields))
 			
 		return dict( diagNumber=diagNumber, diagName=diagName, fields=fields )
 	
-	def probeInfo(self, diag=None):
+	def probeInfo(self, diag):
 		""" Information on a specific Probe diagnostic
 		
 		Parameters:
@@ -352,7 +353,7 @@ class SmileiSimulation(object):
 		if not fields:
 			raise Exception("No fields found for probe #"+str(probeNumber))
 		
-		return dict( probeNumber=probeNumber, probeName=probeName, fields=list(fields) )
+		return dict( probeNumber=probeNumber, probeName=probeName, fields=sorted(list(fields)) )
 	
 	def performanceInfo(self):
 		""" Information on the available quantities in the performance diagnostic
