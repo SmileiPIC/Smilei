@@ -274,7 +274,6 @@ void RadiationMonteCarlo::operator()(
                                                          table_xi,
                                                          photon_species,
                                                          RadiationTables);                  
-
                     // Optical depth becomes negative meaning
                     // that a new drawing is possible
                     // at the next Monte-Carlo iteration
@@ -419,10 +418,9 @@ double RadiationMonteCarlo::photonEmission( int ipart,
     //photon_chi = 0;
     photon_chi = RadiationTables.computeRandomPhotonChiWithInterpolation( particle_chi, random_number, 
                                                             table_min_photon_chi, table_xi);
-
+    //std::cerr << " " << photon_chi <<std::endl;
     // compute the photon gamma factor
     gammaph = photon_chi/particle_chi*( particle_gamma-1.0 );
-
     // ____________________________________________________
     // Creation of the new photon
 
