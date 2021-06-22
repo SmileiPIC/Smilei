@@ -475,11 +475,12 @@ double RadiationMonteCarlo::photonEmission( int ipart,
         // Second method: emission of several photons for statistics following
         // the parameter radiation_photon_sampling_
 
+        #ifndef _GPU
         // Creation of new photons in the temporary array new_photons_
-        //new_photons_.createParticles( radiation_photon_sampling_ );
+        new_photons_.createParticles( radiation_photon_sampling_ );
 
         // Final size
-        /*int npart = new_photons_.size();
+        int npart = new_photons_.size();
 
         // Inverse of the momentum norm
         inv_old_norm_p = 1./sqrt( momentum_x[ipart]*momentum_x[ipart]
@@ -517,7 +518,8 @@ double RadiationMonteCarlo::photonEmission( int ipart,
                 new_photons_.tau( idNew ) = -1.;
             }
 
-        }*/
+        }
+        #endif
 
     }
     // Addition of the emitted energy in the cumulating parameter
