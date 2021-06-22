@@ -279,7 +279,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
     for the spectral solver in ``AMcylindrical`` geometry.
     The ``??`` is an integer representing a number of cells
     (smaller than the number of ghost cells).
-    Over the first half, the fields remain untouched. 
+    Over the first half, the fields remain untouched.
     Over the second half, all fields are progressively reduced down to zero.
 
 .. py:data:: EM_boundary_conditions_k
@@ -439,7 +439,7 @@ occur every 150 iterations.
 Multiple decomposition of the domain
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The block ``MultipleDecomposition`` is necessary for spectral solvers and optional in all other cases. 
+The block ``MultipleDecomposition`` is necessary for spectral solvers and optional in all other cases.
 When present, it activates
 the :doc:`SDMD` (SDMD) technique
 which separates the decomposition of the field grids from that of the particles.
@@ -610,7 +610,7 @@ which parameters are controlled in the following block::
   :default: ``"binomial"``
 
   The model for current filtering.
-  
+
   * ``"binomial"`` for a binomial filter.
   * ``"customFIR"`` for a custom FIR kernel.
 
@@ -716,8 +716,8 @@ Each species has to be defined in a ``Species`` block::
       merge_every = 5,
       merge_min_particles_per_cell = 16,
       merge_max_packet_size = 4,
-      merge_min_packet_size = 2,
-      merge_momentum_cell_size = [32,16,16],
+      merge_min_packet_size = 4,
+      merge_momentum_cell_size = [16,16,16],
   )
 
 .. py:data:: name
@@ -742,7 +742,7 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: regular_number
 
    :type: A list of as many integers as the simulation dimension
-   
+
    When ``position_initialization = "regular"``, this sets the number of evenly-spaced
    particles per cell in each direction: ``[Nx, Ny, Nz]`` in cartesian geometries and
    ``[Nx, Nr, Ntheta]`` in ``AMcylindrical`` in which case we recommend
@@ -1148,6 +1148,7 @@ Particle Merging
 
 The macro-particle merging method is documented in
 the :doc:`corresponding page <particle_merging>`.
+Note that for merging to be able to operate either vectorization or cell sorting must be activated.
 It is optionnally specified in the ``Species`` block::
 
   Species(
@@ -1158,8 +1159,8 @@ It is optionnally specified in the ``Species`` block::
       merge_every = 5,
       merge_min_particles_per_cell = 16,
       merge_max_packet_size = 4,
-      merge_min_packet_size = 2,
-      merge_momentum_cell_size = [32,16,16],
+      merge_min_packet_size = 4,
+      merge_momentum_cell_size = [16,16,16],
       merge_discretization_scale = "linear",
       # Extra parameters for experts:
       merge_min_momentum_cell_length = [1e-10, 1e-10, 1e-10],
@@ -1193,7 +1194,7 @@ It is optionnally specified in the ``Species`` block::
 
   :default: ``4``
 
-  The minimum number of particles per packet to merge.
+  The minimum number of particles per packet to merge. Must be greater or equal to 4.
 
 .. py:data:: merge_max_packet_size
 
@@ -1277,14 +1278,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     Side of the box from which the laser originates: ``"xmin"``, ``"xmax"``, ``"ymin"``,
     ``"ymax"``, ``"zmin"`` or ``"zmax"``.
-    
+
     In the cases of ``"ymin"`` or ``"ymax"``, replace, in the following profiles,
     coordinates *y* by *x*, and fields :math:`B_y` by :math:`B_x`.
-    
+
     In the cases of ``"zmin"`` or ``"zmax"``, replace, in the following profiles,
     coordinates *y* by *x*, coordinates *z* by *y*, fields :math:`B_y` by :math:`B_x`
     and fields :math:`B_z` by :math:`B_y`.
-    
+
 
 .. py:data:: space_time_profile
 
@@ -1509,7 +1510,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
   two angles, corresponding to rotations around ``y`` and ``z``, respectively.
-  
+
   When injecting on ``"ymin"`` or ``"ymax"``, the incidence angles corresponds to
   rotations around ``x`` and ``z``, respectively.
 
@@ -2250,6 +2251,8 @@ The full list of available scalars is given in the table below.
 | +--------------+-------------------------------------------------------------------------+ |
 | | Urad         | Total radiated                                                          | |
 | +--------------+-------------------------------------------------------------------------+ |
+| | UmBWpairs    | Total energy converted into electron-position pairs                     | |
+| +--------------+-------------------------------------------------------------------------+ |
 | +--------------+-------------------------------------------------------------------------+ |
 +--------------------------------------------------------------------------------------------+
 | **Space- & time-integrated Energies lost/gained at boundaries**                            |
@@ -2539,21 +2542,21 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   :default: ``[]``, which means ``["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho"]``
 
   A list of fields among:
-  
+
   * the electric field components ``"Ex"``, ``"Ey"``, ``"Ez"``
   * the magnetic field components ``"Bx"``, ``"By"``, ``"Bz"``
   * the Poynting vector components ``"PoyX"``, ``"PoyY"``, ``"PoyZ"``
   * the current density components ``"Jx"``, ``"Jy"``, ``"Jz"`` and density ``"Rho"``
   * the current density ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` and density ``"Rho_abc"``
     of a given species named ``"abc"``
-  
+
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``, ``"Env_Ex_abs"``.
 
 .. py:data:: time_integral
 
   :default: ``False``
-  
+
   If ``True``, the output is integrated over time. As this option forces field interpolation
   at every timestep, it is recommended to use few probe points.
 
@@ -2726,6 +2729,8 @@ for instance::
       its location in the histogram binning.
 
   * The axis is discretized for ``type`` from ``min`` to ``max`` in ``nsteps`` bins.
+  * The ``min`` and ``max`` may be set to ``"auto"`` so that they are automatically
+    computed from all the particles in the simulation. This option can be bad for performances.
   * The optional keyword ``logscale`` sets the axis scale to logarithmic instead of linear.
   * The optional keyword ``edge_inclusive`` includes the particles outside the range
     [``min``, ``max``] into the extrema bins.

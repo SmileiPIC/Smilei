@@ -904,6 +904,34 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     //particle_index[i_injector] = previous_particle_number_per_species[i_species];
                     // Creation of the particles in local_particles_vector
                     particle_creator.create( init_space, params, patch, itime );
+                    
+                    
+                    // suppress all particles in the thermalized region
+                    //int * mask = new int[injector_species->particles->size()];
+                    // std::vector<int> mask(injector_species->particles->size());
+                    // for( int icell = 0 ; icell < injector_species->particles->first_index.size(); icell++ ) {
+                    //     for ( int ip = injector_species->particles->first_index[icell] ; ip < injector_species->particles->last_index[icell] ; ip-- ){
+                    //         if ( ( patch->isXmin() && (injector_species->particles->Position[0][ip] < (init_space.cell_index_[0] + init_space.box_size_[0])*params.cell_length[0]) ) ||
+                    //             (  patch->isXmax() && ( injector_species->particles->Position[0][ip] > (init_space.cell_index_[0]*params.cell_length[0]) ) ) ) {
+                    //             mask[ip] = -1;
+                    //             injector_species->count[icell] --;
+                    //         } else {
+                    //             mask[ip] = 1;
+                    //         }
+                    //     }
+                    // }
+                    //
+                    // injector_species->particles->eraseParticlesWithMask(0, injector_species->particles->size(), mask );
+                    //
+                    // // Update of first and last cell indexes
+                    // injector_species->particles->first_index[0] = 0;
+                    // injector_species->particles->last_index[0] = injector_species->particles->size();
+                    // for( int scell = 1 ; scell < particles->first_index.size(); scell++ ) {
+                    //     injector_species->particles->first_index[scell] = particles->last_index[scell-1];
+                    //     injector_species->particles->last_index[scell] = particles->first_index[scell] + injector_species->count[scell];
+                    // }
+                    //delete [] mask;
+                    
                 }
             }
 
@@ -934,7 +962,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     position_shift[2] = 0;
                 }
             }
-            
             
             // Update positions from momentum
             for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
@@ -1495,7 +1522,8 @@ void VectorPatch::initExternals( Params &params )
 
 void VectorPatch::initAllDiags( Params &params, SmileiMPI *smpi )
 {
-    // Global diags: scalars + particles
+
+    // Global diags: scalars + binnings
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         globalDiags[idiag]->init( params, smpi, *this );
         // MPI master creates the file
@@ -1534,14 +1562,80 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
-    // Global diags: scalars + particles
     timers.diags.restart();
+    
+    // Pre-process for binning diags with auto limits
+    vector<double> MPI_mins, MPI_maxs;
+    for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
+        diag_timers[idiag]->restart();
+        
+        #pragma omp single
+        globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
+        
+        // Get the mins and maxs from this diag, for the current MPI
+        DiagnosticParticleBinningBase* binning = dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag] );
+        if( globalDiags[idiag]->theTimeIsNow && binning ) {
+            #pragma omp master
+            {
+                binning->patches_mins.resize( size() );
+                binning->patches_maxs.resize( size() );
+            }
+            #pragma omp barrier
+            // Calculate mins and maxs for each patch
+            #pragma omp for schedule(runtime)
+            for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
+                binning->calculate_auto_limits( patches_[ipatch], simWindow, ipatch );
+            }
+            // reduction of mins and maxs for all patches in this MPI
+            #pragma omp master
+            {
+                vector<double> mins = binning->patches_mins[0];
+                vector<double> maxs = binning->patches_maxs[0];
+                for( unsigned int i=0; i<mins.size(); i++ ) {
+                    for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
+                        mins[i] = min( mins[i], binning->patches_mins[ipatch][i] );
+                        maxs[i] = max( maxs[i], binning->patches_maxs[ipatch][i] );
+                    }
+                }
+                MPI_mins.insert( MPI_mins.end(), mins.begin(), mins.end() );
+                MPI_maxs.insert( MPI_maxs.end(), maxs.begin(), maxs.end() );
+            }
+        }
+        diag_timers[idiag]->update();
+    }
+    #pragma omp master
+    {
+        vector<double> global_mins( MPI_mins.size() ), global_maxs( MPI_maxs.size() );
+        // Now reduce all the mins and max from all MPIs
+        if( MPI_mins.size() > 0 ) {
+            MPI_Allreduce( &MPI_mins[0], &global_mins[0], (int) MPI_mins.size(), MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
+        }
+        if( MPI_maxs.size() > 0 ) {
+            MPI_Allreduce( &MPI_maxs[0], &global_maxs[0], (int) MPI_maxs.size(), MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+        }
+        // Set the auto limits in the diags
+        unsigned int imin = 0, imax = 0;
+        for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
+            DiagnosticParticleBinningBase* binning = dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag] );
+            if( globalDiags[idiag]->theTimeIsNow && binning ) {
+                for( unsigned int iaxis=0; iaxis<binning->histogram->axes.size(); iaxis++ ) {
+                    HistogramAxis * axis = binning->histogram->axes[iaxis];
+                    if( std::isnan( axis->min ) ) {
+                        axis->global_min = global_mins[imin++];
+                    }
+                    if( std::isnan( axis->max ) ) {
+                        axis->global_max = global_maxs[imax++];
+                    }
+                }
+            }
+        }
+    }
+    #pragma omp barrier
+    
+    // Global diags: scalars + binnings
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers[idiag]->restart();
 
-        #pragma omp single
-        globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
-        #pragma omp barrier
         if( globalDiags[idiag]->theTimeIsNow ) {
             // All patches run
             #pragma omp for schedule(runtime)
@@ -1565,7 +1659,6 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
 
         #pragma omp single
         localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
-        #pragma omp barrier
         // All MPI run their stuff and write out
         if( localDiags[idiag]->theTimeIsNow ) {
             localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
@@ -1586,9 +1679,10 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     }
     timers.diags.update();
 
-    if (itime==0) {
-        for( unsigned int idiag = 0 ; idiag < diag_timers.size() ; idiag++ )
+    if( itime==0 ) {
+        for( unsigned int idiag = 0 ; idiag < diag_timers.size() ; idiag++ ) {
             diag_timers[idiag]->reboot();
+        }
     }
 
 } // END runAllDiags

@@ -139,11 +139,11 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #endif
                 // Radiation process
                 ( *Radiate )( *particles, this->photon_species_, smpi,
-                              RadiationTables, nrj_radiation,
+                              RadiationTables, radiated_energy_,
                               particles->first_index[scell], particles->last_index[scell], ithread );
 
                 // // Update scalar variable for diagnostics
-                // nrj_radiation += Radiate->getRadiatedEnergy();
+                // radiated_energy_ += Radiate->getRadiatedEnergy();
                 //
                 // // Update the quantum parameter chi
                 // Radiate->computeParticlesChi( *particles,
@@ -162,14 +162,12 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
                 // Pair generation process
+                // We reuse radiated_energy_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
                                                         MultiphotonBreitWheelerTables,
+                                                        radiated_energy_,
                                                         particles->first_index[scell], particles->last_index[scell], ithread );
-
-                // Update scalar variable for diagnostics
-                // We reuse nrj_radiation for the pairs
-                nrj_radiation += Multiphoton_Breit_Wheeler_process->getPairEnergy();
 
                 // Update the photon quantum parameter chi of all photons
                 Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
@@ -314,7 +312,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
     
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         nrj_lost_per_bin[ibin] = 0.;
-        nrj_radiation_per_bin[ibin] = 0.;
+        radiated_energy_per_bin[ibin] = 0.;
     }
     int bin_size0 = b_dim[0]; // used for AM
     // Init tags for the task dependencies of the particle operations
@@ -504,7 +502,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                  //     // Radiation process
                  //     ( *Radiate )( *particles, photon_species_, smpi,
                  //                   RadiationTables,
-                 //                   nrj_radiation_per_bin[ibin],
+                 //                   radiated_energy_per_bin[ibin],
                  //                   particles->first_index[scell],
                  //                   particles->last_index[scell], buffer_id, ibin );
                  // }
@@ -512,12 +510,12 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                  // Radiation process
                  ( *Radiate )( *particles, photon_species_, smpi,
                                RadiationTables,
-                               nrj_radiation_per_bin[ibin],
+                               radiated_energy_per_bin[ibin],
                                particles->first_index[first_cell_of_bin[ibin]],
                                particles->last_index[last_cell_of_bin[ibin]], buffer_id, ibin );
 
                  // Update scalar variable for diagnostics
-                 // nrj_radiation += Radiate->getRadiatedEnergy();
+                 // radiated_energy += Radiate->getRadiatedEnergy();
 
                  // Update the quantum parameter chi
                  // Radiate->computeParticlesChi( *particles,
@@ -550,16 +548,14 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
 #endif
                 // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                 // Pair generation process
+                double radiated_energy_bin = 0;
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
                                                         MultiphotonBreitWheelerTables,
+                                                        radiated_energy_bin,
                                                         particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], 
                                                         buffer_id, ibin );
-
-                
-                // // Update scalar variable for diagnostics
-                // // We reuse nrj_radiation for the pairs
-                nrj_radiation_per_bin[ibin] += Multiphoton_Breit_Wheeler_process->getPairEnergyOfBin(ibin);
+                radiated_energy_per_bin[ibin] = radiated_energy_bin;
 
                 // Update the photon quantum parameter chi of all photons
                 Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
@@ -774,7 +770,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
 // #endif
 // 
 //             for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-//                nrj_radiation += nrj_radiation_per_bin[ibin];
+//                radiated_energy += radiated_energy_per_bin[ibin];
 //             }
 // #ifdef  __DETAILED_TIMERS
 //             patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -864,7 +860,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
 #endif
 
             for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-               nrj_radiation += nrj_radiation_per_bin[ibin];
+               radiated_energy_ += radiated_energy_per_bin[ibin];
             }
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -935,7 +931,7 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
     // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
     //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(count,8);
-    
+
     // Test metrics, if necessary we reasign operators
     //if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
     //  || (ratio_number_of_vecto_cells < 0.5 && this->vectorized_operators == true))
@@ -943,7 +939,7 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
     //    reasign_operators = true;
     //}
     // --------------------------------------------------------------------
-    
+
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
     SpeciesMetrics::get_computation_time( count,
@@ -955,10 +951,10 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
         reasign_operators = true;
     }
     // --------------------------------------------------------------------
-    
+
     // Operator reasignment if required by the metrics
     if( reasign_operators ) {
-    
+
         // The type of operator is changed
         this->vectorized_operators = !this->vectorized_operators;
 
@@ -1037,7 +1033,7 @@ void SpeciesVAdaptive::reconfigure_operators( Params &params, Patch *patch )
     delete Interp;
     //delete Push;
     delete Proj;
-    
+
     // Reassign the correct Interpolator
     Interp = InterpolatorFactory::create( params, patch, this->vectorized_operators );
     // Reassign the correct Pusher to Push
@@ -1132,7 +1128,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( 
     int bin_size0 = b_dim[0];
     // for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
     //     nrj_lost_per_bin[ibin] = 0.;
-    //     nrj_radiation_per_bin[ibin] = 0.;
+    //     radiated_energy_per_bin[ibin] = 0.;
     // }
     // Init tags for the task dependencies of the particle operations
     int *bin_has_interpolated                   = new int[Nbins]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
@@ -1455,7 +1451,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrentsTasks( double
 
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         nrj_lost_per_bin[ibin] = 0.;
-        // nrj_radiation_per_bin[ibin] = 0.;
+        // radiated_energy_per_bin[ibin] = 0.;
     }
     // Init tags for the task dependencies of the particle operations
     int *bin_has_interpolated               = new int[Nbins]; // the last element is used to manage the Multiphoton Breit Wheeler dependency

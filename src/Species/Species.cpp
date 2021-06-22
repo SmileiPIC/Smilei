@@ -166,7 +166,7 @@ void Species::initCluster( Params &params )
 
 #ifdef _OMPTASKS
         nrj_lost_per_bin                       = new double[Nbins];
-        nrj_radiation_per_bin                  = new double[Nbins];      
+        radiated_energy_per_bin                = new double[Nbins];      
         if (params.geometry != "AMcylindrical" ){
             //! buffers for currents and charge
             b_Jx.resize(Nbins);
@@ -244,7 +244,7 @@ void Species::initCluster( Params &params )
     nrj_bc_lost = 0.;
     nrj_mw_lost = 0.;
     new_particles_energy_ = 0.;
-    nrj_radiation = 0.;
+    radiated_energy_ = 0.;
 
 }//END initCluster
 
@@ -287,15 +287,15 @@ void Species::resizeCluster( Params &params )
 void Species::initParticles( Params &params, Patch *patch, bool with_particles, Particles * like_particles )
 {
     if( params.restart || !with_particles ) {
-        
+
         if( like_particles ) {
             particles->initialize( 0, *like_particles );
         } else {
             particles->initialize( 0, params.nDim_particle, params.keep_position_old );
         }
-        
+
     } else {
-        
+
         // Area for particle creation
         struct SubSpace init_space;
         init_space.cell_index_[0] = 0;
@@ -304,14 +304,14 @@ void Species::initParticles( Params &params, Patch *patch, bool with_particles, 
         init_space.box_size_[0]   = params.n_space[0];
         init_space.box_size_[1]   = params.n_space[1];
         init_space.box_size_[2]   = params.n_space[2];
-        
+
         // Creation of the particle creator and association to the new species
         ParticleCreator particle_creator;
         particle_creator.associate(this);
         particle_creator.create( init_space, params, patch, 0 );
-        
+
     }
-    
+
 }
 
 // Initialize the operators (Push, Ionize, PartBoundCond)
@@ -322,7 +322,7 @@ void Species::initOperators( Params &params, Patch *patch )
 
     // interpolation operator (virtual)
     Interp = InterpolatorFactory::create( params, patch, this->vectorized_operators && !params.cell_sorting ); // + patchId -> idx_domain_begin (now = ref smpi)
-    
+
     // assign the correct Pusher to Push
     Push = PusherFactory::create( params, this );
     if( this->ponderomotive_dynamics ) {
@@ -331,7 +331,7 @@ void Species::initOperators( Params &params, Patch *patch )
 
     // projection operator (virtual)
     Proj = ProjectorFactory::create( params, patch, this->vectorized_operators && !params.cell_sorting );  // + patchId -> idx_domain_begin (now = ref smpi)
-    
+
     // Assign the Ionization model (if needed) to Ionize
     //  Needs to be placed after ParticleCreator() because requires the knowledge of max_charge_
     // \todo pay attention to restart
@@ -415,8 +415,8 @@ Species::~Species()
     if (nrj_lost_per_bin != NULL){
         delete nrj_lost_per_bin;
     }
-    if (nrj_radiation_per_bin != NULL){
-        delete nrj_radiation_per_bin;
+    if (radiated_energy_per_bin != NULL){
+        delete radiated_energy_per_bin;
     }     
     if (geometry != "AMcylindrical"){
         if (b_Jx[0]){
@@ -496,7 +496,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     // calculate the particle dynamics
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize) { // moving particle
-    
+
         smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
         //Point to local thread dedicated buffers
         //Still needed for ionization
@@ -541,12 +541,12 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 // Radiation process
                 ( *Radiate )( *particles, photon_species_, smpi,
                               RadiationTables,
-                              nrj_radiation,
+                              radiated_energy_,
                               particles->first_index[ibin],
                               particles->last_index[ibin], ithread );
 
                 // Update scalar variable for diagnostics
-                // nrj_radiation += Radiate->getRadiatedEnergy();
+                // radiated_energy_ += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
                 // Radiate->computeParticlesChi( *particles,
@@ -570,14 +570,13 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                 // Pair generation process
+                // We reuse radiated_energy_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
                                                         MultiphotonBreitWheelerTables,
-                                                        particles->first_index[ibin], particles->last_index[ibin], ithread );
-
-                // Update scalar variable for diagnostics
-                // We reuse nrj_radiation for the pairs
-                nrj_radiation += Multiphoton_Breit_Wheeler_process->getPairEnergy();
+                                                        radiated_energy_,
+                                                        particles->first_index[ibin],
+                                                        particles->last_index[ibin], ithread );
 
                 // Update the photon quantum parameter chi of all photons
                 Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
@@ -585,11 +584,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                         particles->first_index[ibin],
                         particles->last_index[ibin],
                         ithread );
-                
+
                 // Suppression of the decayed photons into pairs
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                     *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
-                    
+
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[6] += MPI_Wtime() - timer;
 #endif
@@ -609,7 +608,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
         } //ibin
-        
+
         if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
                 double ener_iPart( 0. );
@@ -722,7 +721,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
     int bin_size0 = b_dim[0];
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         nrj_lost_per_bin[ibin] = 0.;
-        nrj_radiation_per_bin[ibin] = 0.;
+        radiated_energy_per_bin[ibin] = 0.;
     }
     // Init tags for the task dependencies of the particle operations
     int *bin_has_interpolated                   = new int[Nbins+1]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
@@ -864,12 +863,12 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         // Radiation process
                         ( *Radiate )( *particles, photon_species_, smpi,
                                       RadiationTables,
-                                      nrj_radiation_per_bin[ibin],
+                                      radiated_energy_per_bin[ibin],
                                       particles->first_index[ibin],
                                       particles->last_index[ibin], buffer_id, ibin );
 
                         // Update scalar variable for diagnostics
-                        // nrj_radiation += Radiate->getRadiatedEnergy();
+                        // radiated_energy += Radiate->getRadiatedEnergy();
 
                         // Update the quantum parameter chi
                         // Radiate->computeParticlesChi( *particles,
@@ -900,16 +899,15 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         ithread = omp_get_thread_num();
                         timer = MPI_Wtime();
 #endif
+                        double radiated_energy_bin = 0;
                         // Pair generation process
                         ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
                                                         MultiphotonBreitWheelerTables,
+                                                        radiated_energy_bin,
                                                         particles->first_index[ibin], particles->last_index[ibin], 
                                                         buffer_id, ibin );
-
-                        // // Update scalar variable for diagnostics
-                        // // We reuse nrj_radiation for the pairs
-                        nrj_radiation_per_bin[ibin] += Multiphoton_Breit_Wheeler_process->getPairEnergyOfBin(ibin);
+                        radiated_energy_per_bin[ibin] = radiated_energy_bin;
 
                         // Update the photon quantum parameter chi of all photons
                         Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
@@ -1083,7 +1081,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 // #endif
 // 
 //             for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-//                nrj_radiation += nrj_radiation_per_bin[ibin];
+//                radiated_energy += radiated_energy_per_bin[ibin];
 //             }
 // #ifdef  __DETAILED_TIMERS
 //             patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -1231,7 +1229,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
 
             for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-               nrj_radiation += nrj_radiation_per_bin[ibin];
+               radiated_energy_ += radiated_energy_per_bin[ibin];
             }
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -1315,7 +1313,7 @@ void Species::projectionForDiags( double time_dual, unsigned int ispec,
                 }//End loop on bins
             } //End loop on modes
         }
-        
+
     }
 }
 
@@ -1731,7 +1729,7 @@ void Species::countSortParticles( Params &params )
         indices[ixy] = tot;
         tot += oc;
     }
-    
+
     // last loop puts the particles and update the count array
     for( ip=0; ip < npart; ip++ ) {
         x = particles->position( 0, ip )-min_loc;
@@ -1916,7 +1914,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 
             // Ionization
             if( Ionize ) {
-            
+
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
@@ -1926,12 +1924,12 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
                 vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
                 Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
                 Ionize->envelopeIonization( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, EnvEabs_part, EnvExabs_part, Phipart, patch, Proj );
-                
+
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[4] += MPI_Wtime() - timer;
 #endif
             }
-            
+
             if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
 
             // Project susceptibility, the source term of envelope equation
@@ -1971,7 +1969,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
     int bin_size0 = b_dim[0];
     // for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
     //     nrj_lost_per_bin[ibin] = 0.;
-    //     nrj_radiation_per_bin[ibin] = 0.;
+    //     radiated_energy_per_bin[ibin] = 0.;
     // }
     // Init tags for the task dependencies of the particle operations
     int *bin_has_interpolated                   = new int[Nbins]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
@@ -2315,7 +2313,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
 
     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
         nrj_lost_per_bin[ibin] = 0.;
-        // nrj_radiation_per_bin[ibin] = 0.;
+        // radiated_energy_per_bin[ibin] = 0.;
     }
     // Init tags for the task dependencies of the particle operations
     int *bin_has_interpolated               = new int[Nbins]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
@@ -2579,7 +2577,7 @@ void Species::eraseWeightlessParticles()
 {
     unsigned int nbins = particles->first_index.size();
     unsigned int i = 0, available_i = 0;
-    
+
     // Loop all particles, bin per bin
     // Overwrite over earlier particles to erase them
     for( unsigned int ibin = 0; ibin < nbins; ibin++ ) {
@@ -2595,7 +2593,7 @@ void Species::eraseWeightlessParticles()
         }
         particles->last_index[ibin] = available_i;
     }
-    
+
     // Remove trailing particles
     particles->eraseParticleTrail( available_i );
 }

@@ -40,16 +40,13 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
 
     // Threshold under which pair creation is not considered
     chiph_threshold_ = 1E-2;
-    
+
     // Local random generator
     rand_ = rand;
 
   
 #ifdef _OMPTASKS
     unsigned int Nbins = species->Nbins;
-        
-    // initialize array per bin for energy conversion
-    pair_converted_energy_per_bin = new double[Nbins];
       
     //! vector of electron-positron pairs per bin
     new_pair_per_bin.resize(Nbins);
@@ -135,7 +132,8 @@ void MultiphotonBreitWheeler::compute_thread_chiph( Particles &particles,
 //! \param particles   particle object containing the particle properties
 //! \param smpi        MPI properties
 //! \param MultiphotonBreitWheelerTables Cross-section data tables and useful
-//                     functions for multiphoton Breit-Wheeler
+//!                     functions for multiphoton Breit-Wheeler
+//! \param pair_energy energy converted into pairs
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
@@ -143,6 +141,7 @@ void MultiphotonBreitWheeler::compute_thread_chiph( Particles &particles,
 void MultiphotonBreitWheeler::operator()( Particles &particles,
         SmileiMPI *smpi,
         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+        double & pair_energy,
         int istart,
         int iend,
         int ithread, int ibin, int ipart_ref )
@@ -194,15 +193,6 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
     // Photon id
     // uint64_t * id = &( particles.id(0));
 
-    // Total energy converted into pairs for this species during this timestep
-#ifndef _OMPTASKS
-    // without tasks
-    this->pair_converted_energy_ = 0;
-#else
-    // with tasks
-    this->pair_converted_energy_per_bin[ibin] = 0;
-#endif
-
     // _______________________________________________________________
     // Computation
 
@@ -250,7 +240,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
             else if( tau[ipart] > epsilon_tau_ ) {
                 // from the cross section
                 temp = MultiphotonBreitWheelerTables.computeBreitWheelerPairProductionRate( photon_chi[ipart], ( *gamma )[ipart] );
-                
+
                 // Time to decay
                 // If this time is above the remaining iteration time,
                 // There is a synchronization at the end of the pic iteration
@@ -274,22 +264,21 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 //                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
 //                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
 
-                    
 #ifndef _OMPTASKS
-                    // Generation of the pairs without tasks
-                    MultiphotonBreitWheeler::pair_emission( ipart,
+                    // Generation of the pairs
+                    pair_energy += MultiphotonBreitWheeler::pair_emission( ipart,
                                                             particles,
                                                             ( *gamma )[ipart],
                                                             dt_ - event_time,
                                                             MultiphotonBreitWheelerTables );
 #else
                     // Generation of the pairs with tasks
-                    MultiphotonBreitWheeler::PairEmissionForTasks( ipart,
-                                                                   particles,
-                                                                   ( *gamma )[ipart],
-                                                                    dt_ - event_time,
-                                                                    MultiphotonBreitWheelerTables,
-                                                                    ibin );
+                    pair_energy += MultiphotonBreitWheeler::PairEmissionForTasks( ipart,
+                                                            particles,
+                                                            ( *gamma )[ipart],
+                                                            dt_ - event_time,
+                                                            MultiphotonBreitWheelerTables,
+                                                            ibin );
 #endif
 
 
@@ -315,7 +304,7 @@ void MultiphotonBreitWheeler::operator()( Particles &particles,
 //!                       and useful functions
 //!                       for the multiphoton Breit-Wheeler process
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheeler::pair_emission( int ipart,
+double MultiphotonBreitWheeler::pair_emission( int ipart,
         Particles &particles,
         double &gammaph,
         double remaining_dt,
@@ -340,7 +329,7 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
 
     // Get the pair quantum parameters to compute the energy
     chi = MultiphotonBreitWheelerTables.computePairQuantumParameter( particles.chi( ipart ), rand_ );
-    
+
     // pair propagation direction // direction of the photon
     for( k = 0 ; k<3 ; k++ ) {
         u[k] = particles.momentum( k, ipart )/gammaph;
@@ -353,7 +342,7 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
 
         // Creation of new electrons in the temporary array new_pair[0]
         new_pair[k].createParticles( mBW_pair_creation_sampling_[k] );
-        
+
         // Final size
         nparticles = new_pair[k].size();
 
@@ -397,14 +386,16 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
     }
 
     // Total energy converted into pairs during the current timestep
-    pair_converted_energy_ += particles.weight( ipart )*gammaph;
+    double pair_converted_energy = particles.weight( ipart )*gammaph;
 
     // The photon with negtive weight will be deleted latter
     particles.weight( ipart ) = -1;
 
+    return pair_converted_energy;
+
 }
 
-void MultiphotonBreitWheeler::PairEmissionForTasks( int ipart,
+double MultiphotonBreitWheeler::PairEmissionForTasks( int ipart,
         Particles &particles,
         double &gammaph,
         double remaining_dt,
@@ -487,10 +478,12 @@ void MultiphotonBreitWheeler::PairEmissionForTasks( int ipart,
     }
 
     // Total energy converted into pairs during the current timestep
-    pair_converted_energy_per_bin[ibin] += particles.weight( ipart )*gammaph;
+    double pair_converted_energy = particles.weight( ipart )*gammaph;
 
     // The photon with negtive weight will be deleted latter
     particles.weight( ipart ) = -1;
+
+    return pair_converted_energy;
 
 }
 

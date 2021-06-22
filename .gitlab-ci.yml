@@ -12,9 +12,8 @@ install:
   stage: install
   only:
     - develop
-    - laser_y
     - pusher_cleaning
-    
+
   script:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
@@ -32,9 +31,8 @@ compile_default:
   stage: compile_default
   only:
     - develop
-    - laser_y
     - pusher_cleaning
-    
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -45,9 +43,8 @@ run1D:
   stage: run_default
   only:
     - develop
-    - laser_y
     - pusher_cleaning
-    
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -59,7 +56,6 @@ run2D:
   stage: run_default
   only:
     - develop
-    - laser_y
     - pusher_cleaning
 
   script:
@@ -75,7 +71,6 @@ run3D:
   stage: run_default
   only:
     - develop
-    - laser_y
     - pusher_cleaning
 
   script:
@@ -92,9 +87,8 @@ runAM:
   stage: run_default
   only:
     - develop
-    - laser_y
     - pusher_cleaning
-    
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -105,7 +99,6 @@ runAM:
 #  stage: run_default
 #  only:
 #    - develop
-#    - laser_y
 #    - pusher_cleaning
 
 #  script:
@@ -117,9 +110,8 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - laser_y
     - pusher_cleaning
-    
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -130,7 +122,6 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-    - laser_y
     - pusher_cleaning
 
   script:
@@ -152,7 +143,6 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-    - laser_y
     - pusher_cleaning
 
   script:
@@ -164,9 +154,8 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-    - laser_y
     - pusher_cleaning
-
+    
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
@@ -176,7 +165,6 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-    - laser_y
     - pusher_cleaning
 
   script:

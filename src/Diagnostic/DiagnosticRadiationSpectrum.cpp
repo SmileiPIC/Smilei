@@ -54,11 +54,15 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum(
     total_axes++;
     dims.push_back( photon_axis->nbins );
     
+    if( std::isnan( photon_axis->min ) || std::isnan( photon_axis->max ) ) {
+        ERROR( errorPrefix << "photon_energy_axis cannot have `auto` limits" );
+    }
+    
     // construct the list of photon_energies
     photon_energies.resize( photon_axis->nbins );
     delta_energies.resize( photon_axis->nbins );
-    double emin = photon_axis->actual_min;
-    double emax = photon_axis->actual_max;
+    emin = photon_axis->logscale ? log10( photon_axis->min ) : photon_axis->min;
+    emax = photon_axis->logscale ? log10( photon_axis->max ) : photon_axis->max;
     double spacing = (emax-emin) / photon_axis->nbins;
     for( int i=0; i<photon_axis->nbins; i++ ) {
         photon_energies[i] = emin + (i+0.5)*spacing;
@@ -74,7 +78,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum(
     // Calculate the size of the output array
     uint64_t total_size = (uint64_t)output_size * photon_axis->nbins;
     if( total_size > 2147483648 ) { // 2^31
-        ERROR( errorPrefix << ": too many points (" << total_size << " > 2^312)" );
+        ERROR( errorPrefix << ": too many points (" << total_size << " > 2^31)" );
     }
     output_size = ( unsigned int ) total_size;
     
@@ -140,6 +144,7 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int itime, SimWindow* simWi
         double gamma_inv, gamma, chi, xi, zeta, nu, cst;
         double two_third_ov_chi, increment0, increment;
         int iphoton_energy_max;
+        double coeff = ( ( double ) photon_axis->nbins )/( emax - emin );
         
         Species *s = patch->vecSpecies[species_indices[ispec]];
         unsigned int npart = s->getNbrOfParticles();
@@ -167,7 +172,7 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int itime, SimWindow* simWi
             if( photon_axis->logscale ) {
                 gamma = log10( gamma );
             }
-            iphoton_energy_max = int( (gamma - photon_axis->actual_min) * photon_axis->coeff );
+            iphoton_energy_max = int( (gamma - emin) * coeff );
             //iphoton_energy_max can not be greater than photon_energy_nbins
             iphoton_energy_max = min( iphoton_energy_max, photon_axis->nbins );
             
