@@ -353,7 +353,7 @@ class SmileiSimulation(object):
 		if not fields:
 			raise Exception("No fields found for probe #"+str(probeNumber))
 		
-		return dict( probeNumber=probeNumber, probeName=probeName, fields=sorted(list(fields)) )
+		return dict( probeNumber=probeNumber, probeName=probeName, fields=list(fields) )
 	
 	def performanceInfo(self):
 		""" Information on the available quantities in the performance diagnostic
