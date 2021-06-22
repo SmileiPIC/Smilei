@@ -30,7 +30,7 @@ public:
     //! Creator for Radiation
     Radiation( Params &params, Species *species, Random * rand );
     virtual ~Radiation();
-    
+
     //! Overloading of () operator
     //! \param particles   particle object containing the particle
     //!                    properties of the current species
@@ -51,7 +51,7 @@ public:
         int             iend,
         int             ithread,
         int             ipart_ref = 0) = 0;
-        
+
     //! Computation of the Lorentz invariant quantum parameter
     //! for the given particle properties
     //! \param charge_over_mass2 charge divided by the square of the mass
@@ -72,14 +72,14 @@ public:
                                       double Ex, double Ey, double Ez,
                                       double Bx, double By, double Bz )
     {
-    
+
         return fabs( charge_over_mass2 )*inv_norm_E_Schwinger_
                * sqrt( fabs( pow( Ex*px + Ey*py + Ez*pz, 2 )
                              - pow( gamma*Ex - By*pz + Bz*py, 2 )
                              - pow( gamma*Ey - Bz*px + Bx*pz, 2 )
                              - pow( gamma*Ez - Bx*py + By*px, 2 ) ) );
     };
-    
+
     //! Computation of the quantum parameter for the given
     //! thread of particles
     //! \param Particles class containg the particle property arrays
@@ -93,35 +93,38 @@ public:
                               int iend,
                               int ithread,
                               int ipart_ref = 0 );
-                              
+
     // Local array of new photons
     Particles new_photons_;
-    
+
 protected:
 
     // ________________________________________
     // General parameters
-    
+
     //! Dimension of position
     int n_dimensions_;
-    
+
     //! Inversed species mass
     double one_over_mass_;
-    
+
     //! Time step
     double dt_;
-    
+
     Random * rand_;
-    
+
     // _________________________________________
     // Factors
-    
+
     //! Normalized Schwinger Electric field
     double norm_E_Schwinger_;
-    
+
     //! Inversed Normalized Schwinger Electric field
     double inv_norm_E_Schwinger_;
-    
+
+    //! Particle dimension
+    int nDim_;
+
 private:
 
 };//END class

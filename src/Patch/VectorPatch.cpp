@@ -666,6 +666,34 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     //particle_index[i_injector] = previous_particle_number_per_species[i_species];
                     // Creation of the particles in local_particles_vector
                     particle_creator.create( init_space, params, patch, itime );
+                    
+                    
+                    // suppress all particles in the thermalized region
+                    //int * mask = new int[injector_species->particles->size()];
+                    // std::vector<int> mask(injector_species->particles->size());
+                    // for( int icell = 0 ; icell < injector_species->particles->first_index.size(); icell++ ) {
+                    //     for ( int ip = injector_species->particles->first_index[icell] ; ip < injector_species->particles->last_index[icell] ; ip-- ){
+                    //         if ( ( patch->isXmin() && (injector_species->particles->Position[0][ip] < (init_space.cell_index_[0] + init_space.box_size_[0])*params.cell_length[0]) ) ||
+                    //             (  patch->isXmax() && ( injector_species->particles->Position[0][ip] > (init_space.cell_index_[0]*params.cell_length[0]) ) ) ) {
+                    //             mask[ip] = -1;
+                    //             injector_species->count[icell] --;
+                    //         } else {
+                    //             mask[ip] = 1;
+                    //         }
+                    //     }
+                    // }
+                    //
+                    // injector_species->particles->eraseParticlesWithMask(0, injector_species->particles->size(), mask );
+                    //
+                    // // Update of first and last cell indexes
+                    // injector_species->particles->first_index[0] = 0;
+                    // injector_species->particles->last_index[0] = injector_species->particles->size();
+                    // for( int scell = 1 ; scell < particles->first_index.size(); scell++ ) {
+                    //     injector_species->particles->first_index[scell] = particles->last_index[scell-1];
+                    //     injector_species->particles->last_index[scell] = particles->first_index[scell] + injector_species->count[scell];
+                    // }
+                    //delete [] mask;
+                    
                 }
             }
 
@@ -696,7 +724,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     position_shift[2] = 0;
                 }
             }
-            
             
             // Update positions from momentum
             for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {

@@ -27,10 +27,10 @@ public:
 
     //! Constructor for RadiationMonteCarlo
     RadiationMonteCarlo( Params &params, Species *species, Random * rand  );
-    
+
     //! Destructor for RadiationMonteCarlo
     ~RadiationMonteCarlo();
-    
+
     // ---------------------------------------------------------------------
     //! Overloading of () operator: perform the Discontinuous radiation
     //! reaction induced by the nonlinear inverse Compton scattering
@@ -56,7 +56,7 @@ public:
         int             ithread,
         int             ipart_ref = 0
        );
-        
+
     // ---------------------------------------------------------------------
     //! Perform the phoon emission (creation of a super-photon
     //! and slow down of the emitting particle)
@@ -71,34 +71,38 @@ public:
     double photonEmission( int ipart,
                          double &particle_chi,
                          double &particle_gamma,
-                         double *position[3],
-                         double *momentum[3],
+                         double *position_x,
+                         double *position_y,
+                         double *position_z,
+                         double *momentum_x,
+                         double *momentum_y,
+                         double *momentum_z,
                          double *weight,
                          Species *photon_species,
                          RadiationTables &RadiationTables );
-                         
+
 protected:
 
     // ________________________________________
     // General parameters
-    
+
     //! Number of photons emitted per event for statisctics purposes
     int radiation_photon_sampling_;
-    
+
     //! Threshold on the photon Lorentz factor under which the macro-photon
     //! is not generated but directly added to the energy scalar diags
     //! This enable to limit emission of useless low-energy photons
     double radiation_photon_gamma_threshold_;
-    
+
     //! Inverse number of photons emitted per event for statisctics purposes
     double inv_radiation_photon_sampling_;
-    
+
     //! Max number of Monte-Carlo iteration
     const int max_monte_carlo_iterations_ = 100;
-    
+
     //! Espilon to check when tau is near 0
     const double epsilon_tau_ = 1e-100;
-    
+
 private:
 
 };
