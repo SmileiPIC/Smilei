@@ -443,10 +443,9 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
 
     // Computation of the final photon_chi by interpolation
     if( (table_xi[ixip_1] < 1.0) && (table_xi[ixip_1+1] - table_xi[ixip_1] > 1e-15) ) {
-        /*log10_chiphm = ichiph_1*chiph_xip_delta_1
-                       + table_min_photon_chi[ichipa];*/
 
-        log10_chiphm = ichiph_1*chiph_xip_delta_1;  
+        log10_chiphm = ichiph_1*chiph_xip_delta_1
+                       + table_min_photon_chi[ichipa];
 
         log10_chiphp = log10_chiphm + chiph_xip_delta_1;
 
