@@ -695,27 +695,6 @@ void SpeciesV::computeParticleCellKeys( Params &params )
 
 }
 
-// -----------------------------------------------------------------------------
-//! Compute cell_keys for the specified bin boundaries.
-//! params object that contains the global parameters
-//! istart first bin index
-//! iend last bin index
-// -----------------------------------------------------------------------------
-void SpeciesV::compute_bin_cell_keys( Params &params, int istart, int iend )
-{
-    // Resize of cell_keys seems necessary here
-    particles->resizeCellKeys( particles->size() );
-
-    #pragma omp simd
-    for( int ip=istart; ip < iend; ip++ ) {
-        // Counts the # of particles in each cell (or sub_cell) and store it in sparticles->last_index.
-        for( unsigned int ipos=0; ipos < nDim_field ; ipos++ ) {
-            particles->cell_keys[ip] *= this->length_[ipos];
-            particles->cell_keys[ip] += round( ((this)->*(distance[ipos]))(particles, ipos, ip) * dx_inv_[ipos] );
-        }
-    }
-}
-
 void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
 
