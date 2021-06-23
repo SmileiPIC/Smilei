@@ -476,7 +476,7 @@ class Field(Diagnostic):
 		if field[:5] in ["Bl_m_","Br_m_","Bt_m_"]:
 			fname = field[:4]
 			f = field[5:]
-		elif field[:4] in ["Rho_"]:
+		elif field[:4] in ["Rho_","RhoOld_"]:
 			fname = field[:3]
 			f = field[4:]
 		elif field[:3] in ["El_","Er_","Et_","Bl_","Br_","Bt_","Jl_","Jr_","Jt_"]:
@@ -495,7 +495,7 @@ class Field(Diagnostic):
 			f = field[8:]
 			envelope = True
 		else:
-			Exception("Unknown field %s"%field)
+			raise Exception("Unknown field %s"%field)
 		try:
 			wordmode, imode = f.split('_')
 			species_name = ""
