@@ -3013,7 +3013,16 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
     }
 
 #ifdef _VECTO
-    if( params.vectorization_mode == "adaptive_mixed_sort" ) {
+    if( params.vectorization_mode == "on" || ( params.cell_sorting ) ) {
+        // vectorization or cell sorting
+        // Recompute the cell keys and sort  frozen particles
+        for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
+            for( unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++ ) {
+                    dynamic_cast<SpeciesV *>( recv_patches_[ipatch]->vecSpecies[ispec] )->computeParticleCellKeys( params );
+                    dynamic_cast<SpeciesV *>( recv_patches_[ipatch]->vecSpecies[ispec] )->sortParticles( params, recv_patches_[ipatch] );
+            }
+        }
+    } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
         // adaptive vectorization -- mixed sort
         // Recompute the cell keys before the next step and configure operators
         for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {

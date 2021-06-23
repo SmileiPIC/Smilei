@@ -476,6 +476,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
         particles->last_index[ic-1]= particles->first_index[ic];
     }
 
+
     //New total number of particles is stored as last element of particles->last_index
     particles->last_index[ncell-1] = particles->last_index[ncell-2] + count.back() ;
 
@@ -491,7 +492,6 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
         for (int ip = npart ; ip < particles->last_index.back() ; ip ++) {
             particles->cell_keys[ip] = -1;
         }
-        //particles->cell_keys.resize( particles->last_index.back(), -1 ); // Merge this in particles.resize(..) ?
     }
 
     //Copy all particles from MPI buffers back to the writable particles via cycle sort pass.
@@ -525,87 +525,9 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
         }
     }
 
-    // -------------------------------------------------------------------------------------
-    // Checkpoint for debugging
-
-    // for( unsigned int scell = 0 ; scell < particles->first_index.size(); scell++ ) {
-    //     for (unsigned int ip = particles->first_index[scell] ; ip  < particles->last_index[scell] ; ip ++) {
-    //
-    //         double xmin = patch->getDomainLocalMin(0);
-    //         double xmax = patch->getDomainLocalMax(0);
-    //         double ymin = patch->getDomainLocalMin(1);
-    //         double ymax = patch->getDomainLocalMax(1);
-    //
-    //         double x = particles->position(0,ip);
-    //         double y = particles->position(1,ip);
-    //         double mx = particles->momentum(0,ip);
-    //         double my = particles->momentum(1,ip);
-    //         double mz = particles->momentum(2,ip);
-    //         double v = sqrt(mx*mx+my*my+mz*mz)/sqrt(1+mx*mx+my*my+mz*mz);
-    //         //if (particles->cell_keys[ip] < 0) {
-    //         std::cerr
-    //         << " Np: " << particles->last_index[scell] - particles->first_index[scell]
-    //         << " Cell keys size: " << particles->cell_keys.size()
-    //         << " ip: "<< ip
-    //         << " cell_keys: " << particles->cell_keys[ip]
-    //         << ", x: " << xmin
-    //         << " < " << x
-    //         << " < " << xmax
-    //         << ", y: " << ymin
-    //         << " < " << y
-    //         << " < " << ymax
-    //         << ", mx: " << mx
-    //         << ", my: " << my
-    //         << ", mz: " << mz
-    //         << setprecision(10)
-    //         << ", v: " << v
-    //         << std::endl;
-    //
-    //         if (x <= xmin
-    //             || x >= xmax
-    //             || y <= ymin
-    //             || y >= ymax
-    //             || v >= 1) {
-    //             ERROR("error")
-    //         }
-    //         //}
-    //     }
-    // }
-
     //Copy valid particles siting over particles->last_index.back() back into the real particles array (happens when more particles are lost than received)
     for( unsigned int ip=( unsigned int )particles->last_index.back(); ip < npart; ip++ ) {
         cell_target = particles->cell_keys[ip];
-
-        // double xmin = patch->getDomainLocalMin(0);
-        // double xmax = patch->getDomainLocalMax(0);
-        // double ymin = patch->getDomainLocalMin(1);
-        // double ymax = patch->getDomainLocalMax(1);
-        // //
-        // double x = particles->position(0,ip);
-        // double y = particles->position(1,ip);
-        // double w = particles->weight(ip);
-        // double mx = particles->momentum(0,ip);
-        // double my = particles->momentum(1,ip);
-        // double mz = particles->momentum(2,ip);
-        // double v = sqrt(mx*mx+my*my+mz*mz)/sqrt(1+mx*mx+my*my+mz*mz);
-        // //if (particles->cell_keys[ip] < 0) {
-        // std::cerr << cell_target << " " << particles->first_index[cell_target] <<  std::endl;
-        // std::cerr
-        // << " Cell keys size: " << particles->cell_keys.size()
-        // << " ip: "<< ip
-        // << " cell_keys: " << particles->cell_keys[ip]
-        // << ", x: " << xmin
-        // << " < " << x
-        // << " < " << xmax
-        // << ", y: " << ymin
-        // << " < " << y
-        // << " < " << ymax
-        // << ", mx: " << mx
-        // << ", my: " << my
-        // << ", mz: " << mz
-        // << setprecision(10)
-        // << ", v: " << v
-        // << std::endl;
 
         if( cell_target == -1 ) {
             continue;
@@ -634,7 +556,6 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
         particles->resize( particles->last_index.back(), nDim_particle, params.keep_position_old );
         //particles->cell_keys.resize( particles->last_index.back() ); // Merge this in particles.resize(..) ?
     }
-
 
     //Loop over all cells
     for( int icell = 0 ; icell < ( int )ncell; icell++ ) {
