@@ -472,38 +472,28 @@ class Field(Diagnostic):
 	
 	@staticmethod
 	def _cylindricalMode(field):
-		envelope = False
-		if field[:5] in ["Bl_m_","Br_m_","Bt_m_"]:
-			fname = field[:4]
-			f = field[5:]
-		elif field[:4] in ["Rho_","RhoOld_"]:
-			fname = field[:3]
-			f = field[4:]
-		elif field[:3] in ["El_","Er_","Et_","Bl_","Br_","Bt_","Jl_","Jr_","Jt_"]:
-			fname = field[:2]
-			f = field[3:]
-		elif field[:10] in ["Env_A_abs_","Env_E_abs_"]:
-			fname = field[:9]
-			f = field[10:]
-			envelope = True
-		elif field[:11] in ["Env_Ex_abs_"]:
-			fname = field[:10]
-			f = field[11:]
-			envelope = True
-		elif field[:8] in ["Env_Chi_"]:
-			fname = field[:7]
-			f = field[8:]
-			envelope = True
+		# Separate field name from mode or species
+		for prefix in [
+			"Bl_m_","Br_m_","Bt_m_","Bl_","Br_","Bt_","El_","Er_","Et_",
+			"Rho_","RhoOld_","Jl_","Jr_","Jt_",
+			"Env_A_abs_","Env_E_abs_","Env_Ex_abs_","Env_Chi_"
+		]:
+			if field.startswith(prefix):
+				fname = prefix[:-1]
+				remainder = field[len(prefix):]
+				envelope = field.startswith("Env")
+				break
 		else:
 			raise Exception("Unknown field %s"%field)
+		# Obtain mode and species info
 		try:
-			wordmode, imode = f.split('_')
+			wordmode, imode = remainder.split('_')
 			species_name = ""
 		except Exception as e:
-			ff = f.split('_')
-			species_name = "_" + "_".join(ff[:-2])
-			wordmode = ff[-2]
-			imode = ff[-1]
+			remainder = remainder.split('_')
+			species_name = "_" + "_".join(remainder[:-2])
+			wordmode = remainder[-2]
+			imode = remainder[-1]
 		if wordmode != "mode":
 			raise Exception("Field %s not understood"%field)
 		fname += species_name
