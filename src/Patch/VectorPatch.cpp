@@ -349,7 +349,8 @@ void VectorPatch::dynamics( Params &params,
     } // end ipatch
     
 #ifdef _OMPTASKS   
-    #pragma omp single
+    #pragma omp for schedule(runtime) 
+    //#pragma omp single // one thread generates dynamics tasks. Use omp for to make multiple thread generate dynamics tasks
 #else 
     #pragma omp for schedule(runtime)
 #endif
@@ -4403,7 +4404,8 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 #endif
 
 #ifdef _OMPTASKS   
-    #pragma omp single
+    #pragma omp for schedule(runtime) 
+    //#pragma omp single // one thread generates dynamics tasks. Use omp for to make multiple thread generate dynamics tasks
 #else 
     #pragma omp for schedule(runtime)
 #endif
@@ -4584,7 +4586,8 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 #endif
 
 #ifdef _OMPTASKS   
-    #pragma omp single
+    #pragma omp for schedule(runtime) 
+    //#pragma omp single // one thread generates dynamics tasks. Use omp for to make multiple thread generate dynamics tasks
 #else 
     #pragma omp for schedule(runtime)
 #endif
