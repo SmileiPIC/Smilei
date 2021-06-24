@@ -26,21 +26,20 @@ class TrackParticles(Diagnostic):
 
 		# If argument 'species' not provided, then print available species and leave
 		if species is None:
-			species = self.getTrackSpecies()
+			species = self.simulation.getTrackSpecies()
+			error = ["Argument `species` not provided"]
 			if len(species)>0:
-				self._error += ["Printing available tracked species:"]
-				self._error += ["-----------------------------------"]
-				self._error += ["\n".join(species)]
+				error += ["Printing available tracked species:"]
+				error += ["-----------------------------------"]
+				error += ["\n".join(species)]
 			else:
-				self._error += ["No tracked particles files found"]
-			return
+				error += ["No tracked particles files found"]
+			raise Exception("\n".join(error))
 		
 		if type(sort) not in [bool, str]:
-			self._error += ["Argument `sort` must be `True` or `False` or a string"]
-			return
+			raise Exception("Argument `sort` must be `True` or `False` or a string")
 		if not sort and select!="":
-			self._error += ["Cannot select particles if not sorted"]
-			return
+			raise Exception("Cannot select particles if not sorted")
 		self._sort = sort
 		
 		
@@ -49,7 +48,6 @@ class TrackParticles(Diagnostic):
 		self.species  = species
 		self._h5items = {}
 		disorderedfiles = self._findDisorderedFiles()
-		if not disorderedfiles: return
 		self._short_properties_from_raw = {
 			"id":"Id", "position/x":"x", "position/y":"y", "position/z":"z",
 			"momentum/x":"px", "momentum/y":"py", "momentum/z":"pz",
@@ -63,11 +61,9 @@ class TrackParticles(Diagnostic):
 			if type(sort) is str:
 				# The sorted file gets a name from `sorted_as`
 				if type(sorted_as) is not str or self._re.search(r"[^a-zA-Z0-9_]","_"+sorted_as):
-					self._error += ["Argument `sorted_as` must be a keyword composed of letters and numbers"]
-					return
+					raise Exception("Argument `sorted_as` must be a keyword composed of letters and numbers")
 				if not sorted_as:
-					self._error += ["Argument `sorted_as` is required when `sort` is a selection"]
-					return
+					raise Exception("Argument `sorted_as` is required when `sort` is a selection")
 			if sorted_as:
 				sorted_as = "_"+sorted_as
 			orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+sorted_as+".h5"
@@ -101,7 +97,7 @@ class TrackParticles(Diagnostic):
 			if needsOrdering:
 				self._orderFiles(orderedfile, chunksize, sort)
 				if self._needsOrdering(orderedfile):
-					return
+					raise Exception("Ordering not succesful")
 			# Create arrays to store h5 items
 			self._lastfile = self._h5py.File(orderedfile, "r")
 			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w", "chi",
@@ -128,8 +124,7 @@ class TrackParticles(Diagnostic):
 		
 		# Get available times in the hdf5 file
 		if self._timesteps.size == 0:
-			self._error += ["No tracked particles found"]
-			return
+			raise Exception("No tracked particles found")
 		# If specific timesteps requested, narrow the selection
 		if timesteps is not None:
 			try:
@@ -143,20 +138,17 @@ class TrackParticles(Diagnostic):
 				else:
 					raise
 			except:
-				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
-				return
+				raise Exception("Argument `timesteps` must be one or two non-negative integers")
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error += ["Timesteps not found"]
-			return
+			raise Exception("Timesteps not found")
 		
 		# Select particles
 		# -------------------------------------------------------------------
 		if sort:
 			self.selectedParticles = self._selectParticles( select, True, chunksize )
 			if self.selectedParticles is None:
-				self._error += ["Error: argument 'select' must be a string or a list of particle IDs"]
-				return
+				raise Exception("Error: argument 'select' must be a string or a list of particle IDs")
 			
 			# Remove particles that are not actually tracked during the requested timesteps
 			if self._verbose: print("Removing dead particles ...")
@@ -173,23 +165,22 @@ class TrackParticles(Diagnostic):
 			else:
 				self.nselectedParticles = len(self.selectedParticles)
 			if self.nselectedParticles == 0:
-				self._error += ["No particles found"]
-				return
+				raise Exception("No particles found")
 			if self._verbose: print("Kept "+str(self.nselectedParticles)+" particles")
 
 		# Manage axes
 		# -------------------------------------------------------------------
 		if type(axes) is not list:
-			self._error += ["Error: Argument 'axes' must be a list"]
-			return
+			raise Exception("Error: Argument 'axes' must be a list")
 		# if axes provided, verify them
 		if len(axes)>0:
 			self.axes = axes
 			for axis in axes:
 				if axis not in self.available_properties:
-					self._error += ["Error: Argument 'axes' has item '"+str(axis)+"' unknown."]
-					self._error += ["       Available axes are: "+(", ".join(sorted(self.available_properties)))]
-					return
+					raise Exception(
+						"Error: Argument 'axes' has item '"+str(axis)+"' unknown.\n"
+						+ "       Available axes are: "+(", ".join(sorted(self.available_properties)))
+					)
 		# otherwise use default
 		else:
 			self.axes = self.available_properties
@@ -412,7 +403,8 @@ class TrackParticles(Diagnostic):
 		if self._sort:
 			info += " containing "+str(self.nParticles)+" particles"
 			if self.nselectedParticles != self.nParticles:
-				info += "\n                with selection of "+str(self.nselectedParticles)+" particles"
+				info += "\n\twith selection of "+str(self.nselectedParticles)+" particles"
+		info += "\n\tAxes: " + ", ".join(self.axes)
 		return info
 
 	# Read hdf5 dataset faster with unstrusctured list of indices
@@ -435,16 +427,6 @@ class TrackParticles(Diagnostic):
 				result[:,chunkstart:chunkstop] = dataset[first_time:last_time, indices[chunkstart:chunkstop]]
 			return result
 
-	# get all available tracked species
-	def getTrackSpecies(self):
-		species = []
-		for path in self._results_path:
-			files = self._glob(path+self._os.sep+"TrackParticles*.h5")
-			for file in files:
-				s = self._re.search("^TrackParticlesDisordered_(.+).h5",self._os.path.basename(file))
-				if s: species += [ s.groups()[0] ]
-		return list(set(species)) # unique species
-
 	# get all available timesteps
 	def getAvailableTimesteps(self):
 		return self._alltimesteps
@@ -457,8 +439,7 @@ class TrackParticles(Diagnostic):
 			if self._os.path.isfile(file):
 				disorderedfiles += [file]
 		if not disorderedfiles:
-			self._error += ["No TrackParticles files"]
-			return []
+			raise Exception("No TrackParticles files")
 		return disorderedfiles
 
 	# Make the particles ordered by Id in the file, in case they are not
@@ -715,7 +696,8 @@ class TrackParticles(Diagnostic):
 			print("ERROR: timestep "+str(timestep)+" not available")
 			return
 
-		properties = self._raw_properties_from_short + {"moving_x":"x"}
+		properties = {"moving_x":"x"}
+		properties.update( self._raw_properties_from_short )
 
 		disorderedfiles = self._findDisorderedFiles()
 		for file in disorderedfiles:
