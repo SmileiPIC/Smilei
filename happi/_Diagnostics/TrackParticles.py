@@ -696,7 +696,8 @@ class TrackParticles(Diagnostic):
 			print("ERROR: timestep "+str(timestep)+" not available")
 			return
 
-		properties = self._raw_properties_from_short + {"moving_x":"x"}
+		properties = {"moving_x":"x"}
+		properties.update( self._raw_properties_from_short )
 
 		disorderedfiles = self._findDisorderedFiles()
 		for file in disorderedfiles:
