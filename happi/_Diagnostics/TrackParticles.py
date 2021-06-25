@@ -82,13 +82,18 @@ class TrackParticles(Diagnostic):
 			self._timesteps = self._np.array(sorted(self._locationForTime))
 			self._alltimesteps = self._np.copy(self._timesteps)
 			
+			if not self._locationForTime:
+				raise Exception("No data found for this diagnostic")
+			
 			# List available properties
 			try: # python 2
 				self._raw_properties_from_short = {v:k for k,v in self._short_properties_from_raw.iteritems()}
-				T0 = next(self._lastfile["data"].itervalues())["particles/"+self.species]
+				f, _ = next(self._locationForTime.itervalues())
+				T0 = next(f["data"].itervalues())["particles/"+self.species]
 			except: # python 3
 				self._raw_properties_from_short = {v:k for k,v in self._short_properties_from_raw.items()}
-				T0 = next(iter(self._lastfile["data"].values()))["particles/"+self.species]
+				f, _ = next(iter(self._locationForTime.values()))
+				T0 = next(iter(f["data"].values()))["particles/"+self.species]
 			self.available_properties = [v for k,v in self._short_properties_from_raw.items() if k in T0]
 		
 		# If sorting allowed, then do the sorting
