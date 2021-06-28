@@ -158,21 +158,15 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     if( time_dual>time_frozen_ || Ionize ) { // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
-
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
-        //Prepare for sorting
-        for( unsigned int i=0; i<count.size(); i++ ) {
-            count[i] = 0;
-        }
 
         for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack );
+            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -202,6 +196,11 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             }
 
             if ( time_dual <= time_frozen_ ) continue;
+
+            //Prepare for sorting
+            for( unsigned int i=0; i<count.size(); i++ ) {
+                count[i] = 0;
+            }
 
             // Radiation losses
             if( Radiate ) {
@@ -477,6 +476,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
         particles->last_index[ic-1]= particles->first_index[ic];
     }
 
+
     //New total number of particles is stored as last element of particles->last_index
     particles->last_index[ncell-1] = particles->last_index[ncell-2] + count.back() ;
 
@@ -492,7 +492,6 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
         for (int ip = npart ; ip < particles->last_index.back() ; ip ++) {
             particles->cell_keys[ip] = -1;
         }
-        //particles->cell_keys.resize( particles->last_index.back(), -1 ); // Merge this in particles.resize(..) ?
     }
 
     //Copy all particles from MPI buffers back to the writable particles via cycle sort pass.
@@ -526,87 +525,9 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
         }
     }
 
-    // -------------------------------------------------------------------------------------
-    // Checkpoint for debugging
-
-    // for( unsigned int scell = 0 ; scell < particles->first_index.size(); scell++ ) {
-    //     for (unsigned int ip = particles->first_index[scell] ; ip  < particles->last_index[scell] ; ip ++) {
-    //
-    //         double xmin = patch->getDomainLocalMin(0);
-    //         double xmax = patch->getDomainLocalMax(0);
-    //         double ymin = patch->getDomainLocalMin(1);
-    //         double ymax = patch->getDomainLocalMax(1);
-    //
-    //         double x = particles->position(0,ip);
-    //         double y = particles->position(1,ip);
-    //         double mx = particles->momentum(0,ip);
-    //         double my = particles->momentum(1,ip);
-    //         double mz = particles->momentum(2,ip);
-    //         double v = sqrt(mx*mx+my*my+mz*mz)/sqrt(1+mx*mx+my*my+mz*mz);
-    //         //if (particles->cell_keys[ip] < 0) {
-    //         std::cerr
-    //         << " Np: " << particles->last_index[scell] - particles->first_index[scell]
-    //         << " Cell keys size: " << particles->cell_keys.size()
-    //         << " ip: "<< ip
-    //         << " cell_keys: " << particles->cell_keys[ip]
-    //         << ", x: " << xmin
-    //         << " < " << x
-    //         << " < " << xmax
-    //         << ", y: " << ymin
-    //         << " < " << y
-    //         << " < " << ymax
-    //         << ", mx: " << mx
-    //         << ", my: " << my
-    //         << ", mz: " << mz
-    //         << setprecision(10)
-    //         << ", v: " << v
-    //         << std::endl;
-    //
-    //         if (x <= xmin
-    //             || x >= xmax
-    //             || y <= ymin
-    //             || y >= ymax
-    //             || v >= 1) {
-    //             ERROR("error")
-    //         }
-    //         //}
-    //     }
-    // }
-
     //Copy valid particles siting over particles->last_index.back() back into the real particles array (happens when more particles are lost than received)
     for( unsigned int ip=( unsigned int )particles->last_index.back(); ip < npart; ip++ ) {
         cell_target = particles->cell_keys[ip];
-
-        // double xmin = patch->getDomainLocalMin(0);
-        // double xmax = patch->getDomainLocalMax(0);
-        // double ymin = patch->getDomainLocalMin(1);
-        // double ymax = patch->getDomainLocalMax(1);
-        // //
-        // double x = particles->position(0,ip);
-        // double y = particles->position(1,ip);
-        // double w = particles->weight(ip);
-        // double mx = particles->momentum(0,ip);
-        // double my = particles->momentum(1,ip);
-        // double mz = particles->momentum(2,ip);
-        // double v = sqrt(mx*mx+my*my+mz*mz)/sqrt(1+mx*mx+my*my+mz*mz);
-        // //if (particles->cell_keys[ip] < 0) {
-        // std::cerr << cell_target << " " << particles->first_index[cell_target] <<  std::endl;
-        // std::cerr
-        // << " Cell keys size: " << particles->cell_keys.size()
-        // << " ip: "<< ip
-        // << " cell_keys: " << particles->cell_keys[ip]
-        // << ", x: " << xmin
-        // << " < " << x
-        // << " < " << xmax
-        // << ", y: " << ymin
-        // << " < " << y
-        // << " < " << ymax
-        // << ", mx: " << mx
-        // << ", my: " << my
-        // << ", mz: " << mz
-        // << setprecision(10)
-        // << ", v: " << v
-        // << std::endl;
 
         if( cell_target == -1 ) {
             continue;
@@ -635,7 +556,6 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
         particles->resize( particles->last_index.back(), nDim_particle, params.keep_position_old );
         //particles->cell_keys.resize( particles->last_index.back() ); // Merge this in particles.resize(..) ?
     }
-
 
     //Loop over all cells
     for( int icell = 0 ; icell < ( int )ncell; icell++ ) {
@@ -694,27 +614,6 @@ void SpeciesV::computeParticleCellKeys( Params &params )
         count[particles->cell_keys[ip]] ++ ;
     }
 
-}
-
-// -----------------------------------------------------------------------------
-//! Compute cell_keys for the specified bin boundaries.
-//! params object that contains the global parameters
-//! istart first bin index
-//! iend last bin index
-// -----------------------------------------------------------------------------
-void SpeciesV::compute_bin_cell_keys( Params &params, int istart, int iend )
-{
-    // Resize of cell_keys seems necessary here
-    particles->resizeCellKeys( particles->size() );
-
-    #pragma omp simd
-    for( int ip=istart; ip < iend; ip++ ) {
-        // Counts the # of particles in each cell (or sub_cell) and store it in sparticles->last_index.
-        for( unsigned int ipos=0; ipos < nDim_field ; ipos++ ) {
-            particles->cell_keys[ip] *= this->length_[ipos];
-            particles->cell_keys[ip] += round( ((this)->*(distance[ipos]))(particles, ipos, ip) * dx_inv_[ipos] );
-        }
-    }
 }
 
 void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
@@ -979,7 +878,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
             // ipack end   @ particles->last_index [ ipack * packsize_ + packsize_ - 1 ]
             //int nparts_in_pack = particles->last_index[ (ipack+1) * packsize_-1 ] - particles->first_index [ ipack * packsize_ ];
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack );
+            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1010,9 +909,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
                 patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
             }
-
-
-
+            
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1091,7 +988,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
             // ipack end   @ particles->last_index [ ipack * packsize_ + packsize_ - 1 ]
             //int nparts_in_pack = particles->last_index[ (ipack+1) * packsize_-1 ] - particles->first_index [ ipack * packsize_ ];
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack );
+            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1169,7 +1066,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 
             //int nparts_in_pack = particles->last_index[ (ipack+1) * packsize_-1 ] - particles->first_index [ ipack * packsize_ ];
             int nparts_in_pack = particles->last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack );
+            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack, params.geometry=="AMcylindrical" );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1251,22 +1148,29 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 
     } else { // immobile particle (at the moment only project density)
         if( diag_flag &&( !particles->is_test ) ) {
-            double *b_rho=nullptr;
-            for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) {
+            if( params.geometry != "AMcylindrical" ) {
+                double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                    for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                        Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                    } //End loop on particles
+                }//End loop on scells
 
-                if( nDim_field==2 ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+            } else { // AM case
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+                int n_species = patch->vecSpecies.size();
+                for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                    int ifield = imode*n_species+ispec;
+                    complex<double> *b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                    for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                        for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
+                            Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                        }
+                    }
                 }
-                if( nDim_field==3 ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                } else if( nDim_field==1 ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                }
-                for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                } //End loop on particles
             }
         }
+
     }//END if time vs. time_frozen_
 
 } // end ponderomotiveUpdatePositionAndCurrents
