@@ -120,7 +120,7 @@ void RadiationCorrLandauLifshitz::operator()(
         #pragma acc parallel \
             create(rad_norm_energy[0:np]) \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
-            Bx[istart:np],By[istart:np],Bz[istart:np],radiated_energy) \
+            Bx[istart:np],By[istart:np],Bz[istart:np]) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,chi) \
             reduction(+:radiated_energy_loc)
     {
