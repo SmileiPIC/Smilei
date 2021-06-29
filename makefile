@@ -77,7 +77,16 @@ TABLES_SRCS := $(shell find tools/tables/* -name \*.cpp)
 # Smilei version
 CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
 # C++ version
-CXXFLAGS += -std=c++11 -Wall #-Wshadow
+ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
+    CXXFLAGS += -std=c++11 -Wall
+else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
+    CXXFLAGS += -std=c++11 -Wall
+else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
+    CXXFLAGS += -std=c++11
+else
+    CXXFLAGS += -std=c++11 -Wall
+endif
+
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
 CXXFLAGS += -I$(HDF5_ROOT_DIR)/include
@@ -330,7 +339,7 @@ env:  print-VERSION print-SMILEICXX print-OPENMP_FLAG print-HDF5_ROOT_DIR print-
 TABLES_EXEC = smilei_tables
 
 tables: tables_folder $(TABLES_EXEC)
-	
+
 tables_folder:
 	@echo "Installing smilei_tables tool"
 	@mkdir -p $(TABLES_BUILD_DIR)

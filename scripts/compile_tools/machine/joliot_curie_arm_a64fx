@@ -1,0 +1,28 @@
+#
+# Machine file for Irene Joliot-Curie A64FX using ARM compiler
+# __________________________________________________________
+#
+# Load the correct modules:
+# module purge
+# module load module load arm-compiler/21.0.0 mpi/openmpi
+# module load python3/3.8.10
+#
+# You have to install your own hdf5:
+# export HDF5_ROOT=<path to your installation folder>
+# export PATH=${HDF5_ROOT}/bin:${PATH}
+# export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
+# export HDF5_ROOT_DIR=${HDF5_ROOT}
+#
+# List of ARM flags for optimization on A64FX
+# -ffast-math : Allow aggressive, lossy floating-point optimizations.
+# -ffinite-math-only : Enable optimizations that ignore the possibility of NaN and +/-Inf.
+# -ffp-contract={fast|on|off} : Controls when the compiler is permitted to form fused floating-point
+# operations (e.g. FMAs).
+# -fsimdmath : Enable use of vectorized libm library (libsimdmath) to aid vectorization of loops containing
+# calls to libm.
+# -fopenmp : Enable OpenMP and link in the OpenMP library, libomp.
+# -march=armv8.2-a+sve : Select which CPU architecture to optimize for. -mcpu=native causes the
+# compiler to auto-detect the CPU architecture from the build computer.
+
+CXXFLAGS += -march=armv8.2-a+sve
+LDFLAGS +=
