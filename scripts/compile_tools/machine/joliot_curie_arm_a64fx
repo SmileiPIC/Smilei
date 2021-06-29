@@ -25,4 +25,6 @@
 # compiler to auto-detect the CPU architecture from the build computer.
 
 CXXFLAGS += -march=armv8.2-a+sve
-LDFLAGS +=
+LDFLAGS += -march=armv8.2-a+sve
+
+LDFLAGS += -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/python/3.8.10/s2azw3pgbfzhfcf44tvnh652pju2vtyj/lib  -lcrypt -lpthread -ldl -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/gettext/0.21/i4aacmkl6pqxumiqfa36455yfhoojidl/lib -lintl -lutil -lm
