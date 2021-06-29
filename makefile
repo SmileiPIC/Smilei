@@ -148,7 +148,13 @@ else ifneq (,$(call parse_config,opt-report))
 
 # Default configuration
 else
-    CXXFLAGS += -O3 -g #-xHost -no-prec-div -ipo
+    ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
+    	CXXFLAGS += -Ofast -g
+    else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
+        CXXFLAGS += -Ofast -g
+    else
+        CXXFLAGS += -O3 -g
+    endif
 endif
 
 # Manage options in the "config" parameter
