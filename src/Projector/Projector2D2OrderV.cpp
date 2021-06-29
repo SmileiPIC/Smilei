@@ -156,11 +156,11 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             double tmpRho = 0.;
             int ilocal = ( ( i )*5+j )*vecSize;
             #ifdef __clang__
-            #pragma unroll(8)
+                #pragma clang loop unroll_count(8)
             #elif __GNUC__
-            #pragma GCC unroll 8
+                #pragma GCC unroll 8
             #else
-            #pragma unroll(8)
+                #pragma unroll(8)
             #endif
             for( int ipart=0 ; ipart<8; ipart++ ) {
                 tmpRho +=  bJx[ilocal+ipart];

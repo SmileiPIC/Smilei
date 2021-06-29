@@ -138,7 +138,7 @@ void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 double tmpRho = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else
@@ -438,7 +438,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 double tmpJx = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else
@@ -486,7 +486,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 double tmpJy = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else
@@ -535,7 +535,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 double tmpJz = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else
@@ -770,7 +770,7 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
                 double tmpChi = 0.;
                 int ilocal = ( i*9+j*3+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else

@@ -280,7 +280,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 double tmpJx = 0.;
                 int ilocal = ( ( i )*49+j*7+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else
@@ -481,7 +481,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 double tmpJy = 0.;
                 int ilocal = ( ( i )*49+j*7+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else
@@ -681,7 +681,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 double tmpJz = 0.;
                 int ilocal = ( ( i )*49+j*7+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else
@@ -811,7 +811,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 double tmpRho = 0.;
                 int ilocal = ( ( i )*49+j*7+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else
@@ -1302,7 +1302,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 double tmpJx = 0.;
                 int ilocal = ( ( i )*49+j*7+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else
@@ -1508,7 +1508,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 double tmpJy = 0.;
                 int ilocal = ( ( i )*49+j*7+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else
@@ -1706,7 +1706,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 double tmpJz = 0.;
                 int ilocal = ( ( i )*49+j*7+k )*vecSize;
 #ifdef __clang__
-#pragma unroll(8)
+#pragma clang loop unroll_count(8)
 #elif __GNUC__
 #pragma GCC unroll 8
 #else
