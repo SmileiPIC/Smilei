@@ -24,7 +24,7 @@
 # -march=armv8.2-a+sve : Select which CPU architecture to optimize for. -mcpu=native causes the
 # compiler to auto-detect the CPU architecture from the build computer.
 
-CXXFLAGS += -march=armv8.2-a+sve -Rpass-analysis=loop-vectorize -ffinite-math-only -fsimdmath -fopenmp-simd -armpl=sve 
+CXXFLAGS += -march=armv8.2-a+sve -Rpass-analysis=loop-vectorize -ffinite-math-only -fsimdmath -fopenmp-simd -ffp-contract=fast -ffast-math
 LDFLAGS += -march=armv8.2-a+sve -Rpass-analysis=loop-vectorize
 
 LDFLAGS += -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/python/3.8.10/s2azw3pgbfzhfcf44tvnh652pju2vtyj/lib  -lcrypt -lpthread -ldl -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/gettext/0.21/i4aacmkl6pqxumiqfa36455yfhoojidl/lib -lintl -lutil -lm

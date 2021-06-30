@@ -144,7 +144,11 @@ else ifneq (,$(call parse_config,inspector))
 
 # Optimization report
 else ifneq (,$(call parse_config,opt-report))
-    CXXFLAGS += -O3 -qopt-report5
+    ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
+        CXXFLAGS += -Ofast -fsave-optimization-record
+    else
+        CXXFLAGS += -O3 -qopt-report5
+    endif
 
 # Default configuration
 else
