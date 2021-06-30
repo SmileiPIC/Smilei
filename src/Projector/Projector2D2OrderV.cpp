@@ -407,7 +407,13 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
             Sx0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-#pragma unroll
+            #ifdef __clang__
+                #pragma clang loop unroll_count(5)
+            #elif __GNUC__
+                #pragma GCC unroll 5
+            #else
+                #pragma unroll(5)
+            #endif
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
             }
@@ -438,7 +444,13 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sy0_buff_vect[4*vecSize+ipart] = 0;
 
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-#pragma unroll
+            #ifdef __clang__
+                #pragma clang loop unroll_count(5)
+            #elif __GNUC__
+                #pragma GCC unroll 5
+            #else
+                #pragma unroll(5)
+            #endif
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
             }
@@ -478,7 +490,13 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         for( unsigned int j=0 ; j<5 ; j++ ) {
             double tmpJx( 0. );
             int ilocal = ( i*5+j )*vecSize;
-#pragma unroll
+            #ifdef __clang__
+                #pragma clang loop unroll_count(8)
+            #elif __GNUC__
+                #pragma GCC unroll 8
+            #else
+                #pragma unroll(8)
+            #endif
             for( int ipart=0 ; ipart<8; ipart++ ) {
                 tmpJx += bJx [ilocal+ipart];
             }
@@ -526,7 +544,13 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
             Sx0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-#pragma unroll
+            #ifdef __clang__
+                #pragma clang loop unroll_count(5)
+            #elif __GNUC__
+                #pragma GCC unroll 5
+            #else
+                #pragma unroll(5)
+            #endif
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
             }
@@ -557,7 +581,13 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sy0_buff_vect[4*vecSize+ipart] = 0;
 
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-#pragma unroll
+            #ifdef __clang__
+                #pragma clang loop unroll_count(5)
+            #elif __GNUC__
+                #pragma GCC unroll 5
+            #else
+                #pragma unroll(5)
+            #endif
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
             }
@@ -595,7 +625,13 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         for( unsigned int j=1 ; j<5 ; j++ ) {
             double tmpJy( 0. );
             int ilocal = ( i*5+j )*vecSize;
-#pragma unroll
+            #ifdef __clang__
+                #pragma clang loop unroll_count(8)
+            #elif __GNUC__
+                #pragma GCC unroll 8
+            #else
+                #pragma unroll(8)
+            #endif
             for( int ipart=0 ; ipart<8; ipart++ ) {
                 tmpJy += bJx [ilocal+ipart];
             }
@@ -644,7 +680,13 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
             Sx0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-#pragma unroll
+            #ifdef __clang__
+                #pragma clang loop unroll_count(5)
+            #elif __GNUC__
+                #pragma GCC unroll 5
+            #else
+                #pragma unroll(5)
+            #endif
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
             }
@@ -675,7 +717,13 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sy0_buff_vect[4*vecSize+ipart] = 0;
 
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-#pragma unroll
+            #ifdef __clang__
+                #pragma clang loop unroll_count(5)
+            #elif __GNUC__
+                #pragma GCC unroll 5
+            #else
+                #pragma unroll(5)
+            #endif
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
             }
@@ -713,7 +761,13 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         for( unsigned int j=0 ; j<5 ; j++ ) {
             double tmpJz( 0. );
             int ilocal = ( i*5+j )*vecSize;
-#pragma unroll
+            #ifdef __clang__
+                #pragma clang loop unroll_count(8)
+            #elif __GNUC__
+                #pragma GCC unroll 8
+            #else
+                #pragma unroll(8)
+            #endif
             for( int ipart=0 ; ipart<8; ipart++ ) {
                 tmpJz  +=  bJx [ilocal+ipart];
             }
