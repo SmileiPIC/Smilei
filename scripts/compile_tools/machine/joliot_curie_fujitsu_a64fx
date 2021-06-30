@@ -19,7 +19,7 @@
 # -SSL2 : link with math library
 # -Kopenmp : use OpenMP (use OMP_PROC_BIND=true)
 
-CXXFLAGS += -march=armv8.2-a+sve -SSL2
-LDFLAGS +=
+CXXFLAGS += -march=armv8.2-a+sve -SSL2 -D__AARCH64EL__="1" -Kopenmp_simd -Ksimd=2
+LDFLAGS += -march=armv8.2-a+sve -SSL2 -D__AARCH64EL__="1" -Kopenmp_simd
 
-#LDFLAGS += -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/python/3.8.10/s2azw3pgbfzhfcf44tvnh652pju2vtyj/lib  -lcrypt -lpthread -ldl -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/gettext/0.21/i4aacmkl6pqxumiqfa36455yfhoojidl/lib -lintl -lutil -lm
+LDFLAGS += -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/python/3.8.10/s2azw3pgbfzhfcf44tvnh652pju2vtyj/lib  -lcrypt -lpthread -ldl -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/gettext/0.21/i4aacmkl6pqxumiqfa36455yfhoojidl/lib -lintl -lutil -lm
