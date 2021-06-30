@@ -167,8 +167,13 @@ ifneq (,$(call parse_config,detailed_timers))
 endif
 
 #activate openmp unless noopenmp flag
+# For Fujitsu compiler: -Kopenmp
 ifeq (,$(call parse_config,noopenmp))
-    OPENMP_FLAG ?= -fopenmp
+    ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
+        OPENMP_FLAG ?= -Kopenmp
+    else
+    	OPENMP_FLAG ?= -fopenmp
+    endif
     LDFLAGS += -lm
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
