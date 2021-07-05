@@ -22,7 +22,7 @@ Interpolator3D2OrderV::Interpolator3D2OrderV( Params &params, Patch *patch ) : I
     D_inv[0] = 1.0/params.cell_length[0];
     D_inv[1] = 1.0/params.cell_length[1];
     D_inv[2] = 1.0/params.cell_length[2];
-    
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -32,12 +32,18 @@ void Interpolator3D2OrderV::fields( ElectroMagn *EMfields, Particles &particles,
 {
 }
 
-void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
+                                           Particles &particles,
+                                           SmileiMPI * __restrict__ smpi,
+                                           int * __restrict__ istart,
+                                           int * __restrict__ iend,
+                                           int ithread,
+                                           int ipart_ref )
 {
     if( istart[0] == iend[0] ) {
         return;    //Don't treat empty cells.
     }
-    
+
     int idxO[3];
     double idx[3];
     //Primal indices are the same for all particles
@@ -47,33 +53,33 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     idxO[1] = ( int )idx[1] - j_domain_begin ;
     idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
     idxO[2] = ( int )idx[2] - k_domain_begin ;
-    
-    Field3D *Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
-    Field3D *Ey3D = static_cast<Field3D *>( EMfields->Ey_ );
-    Field3D *Ez3D = static_cast<Field3D *>( EMfields->Ez_ );
-    Field3D *Bx3D = static_cast<Field3D *>( EMfields->Bx_m );
-    Field3D *By3D = static_cast<Field3D *>( EMfields->By_m );
-    Field3D *Bz3D = static_cast<Field3D *>( EMfields->Bz_m );
-    
+
+    Field3D * __restrict__ Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
+    Field3D * __restrict__ Ey3D = static_cast<Field3D *>( EMfields->Ey_ );
+    Field3D * __restrict__ Ez3D = static_cast<Field3D *>( EMfields->Ez_ );
+    Field3D * __restrict__ Bx3D = static_cast<Field3D *>( EMfields->Bx_m );
+    Field3D * __restrict__ By3D = static_cast<Field3D *>( EMfields->By_m );
+    Field3D * __restrict__ Bz3D = static_cast<Field3D *>( EMfields->Bz_m );
+
     int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
-    
-    double *Epart[3], *Bpart[3];
-    
+
+    double * __restrict__ Epart[3], *Bpart[3];
+
     double coeff[3][2][3][32];
     int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0, delta_primal < 0) or if it is +1 (dual=1, delta_primal>=0).
-    
+
     int vecSize = 32;
-    
+
     int cell_nparts( ( int )iend[0]-( int )istart[0] );
     int nbVec = ( iend[0]-istart[0]+( cell_nparts-1 )-( ( iend[0]-istart[0]-1 )&( cell_nparts-1 ) ) ) / vecSize;
-    
+
     if( nbVec*vecSize != cell_nparts ) {
         nbVec++;
     }
-    
+
     for( int iivect=0 ; iivect<nbVec; iivect++ ) {
         int ivect = vecSize*iivect;
-        
+
         int np_computed( 0 );
         if( cell_nparts > vecSize ) {
             np_computed = vecSize;
@@ -81,22 +87,22 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         } else {
             np_computed = cell_nparts;
         }
-        
-        double *deltaO[3]; //Delta is the distance of the particle from its primal node in cell size. Delta is in [-0.5, +0.5[
+
+        double * __restrict__ deltaO[3]; //Delta is the distance of the particle from its primal node in cell size. Delta is in [-0.5, +0.5[
         deltaO[0] = &( smpi->dynamics_deltaold[ithread][0        + ivect + istart[0] - ipart_ref] );
         deltaO[1] = &( smpi->dynamics_deltaold[ithread][nparts   + ivect + istart[0] - ipart_ref] );
         deltaO[2] = &( smpi->dynamics_deltaold[ithread][2*nparts + ivect + istart[0] - ipart_ref] );
-        
+
         for( unsigned int k=0; k<3; k++ ) {
             Epart[k]= &( smpi->dynamics_Epart[ithread][k*nparts-ipart_ref+ivect+istart[0]] );
             Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts-ipart_ref+ivect+istart[0]] );
         }
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-        
+
             double delta2, delta;
-            
+
             for( int i=0; i<3; i++ ) { // for X/Y
                 //delta primal = distance to primal node
                 delta   = particles.position( i, ipart+ivect+istart[0] )*D_inv[i] - idx[i];
@@ -108,27 +114,27 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 //deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
                 deltaO[i][ipart] = delta;
                 dual [i][ipart] = ( delta >= 0. );
-                
+
                 //delta dual = distance to dual node
                 delta   = delta - dual[i][ipart] + 0.5 ;
                 delta2  = delta*delta;
-                
+
                 coeff[i][1][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
                 coeff[i][1][1][ipart]    = ( 0.75 - delta2 );
                 coeff[i][1][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
             }
         }
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-        
+
             double *coeffyp = &( coeff[1][0][1][ipart] );
             double *coeffyd = &( coeff[1][1][1][ipart] );
             double *coeffxd = &( coeff[0][1][1][ipart] );
             double *coeffxp = &( coeff[0][0][1][ipart] );
             double *coeffzp = &( coeff[2][0][1][ipart] );
             double *coeffzd = &( coeff[2][1][1][ipart] );
-            
+
             //Ex(dual, primal, primal)
             double interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -140,7 +146,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 }
             }
             Epart[0][ipart] = interp_res;
-            
+
             //Ey(primal, dual, primal)
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -152,8 +158,8 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 }
             }
             Epart[1][ipart] = interp_res;
-            
-            
+
+
             //Ez(primal, primal, dual)
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -165,8 +171,8 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 }
             }
             Epart[2][ipart] = interp_res;
-            
-            
+
+
             //Bx(primal, dual , dual )
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -179,7 +185,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 }
             }
             Bpart[0][ipart] = interp_res;
-            
+
             //By(dual, primal, dual )
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -192,7 +198,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 }
             }
             Bpart[1][ipart] = interp_res;
-            
+
             //Bz(dual, dual, prim )
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -210,21 +216,27 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 } // END Interpolator3D2OrderV
 
 
-void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn * __restrict__ EMfields,
+                                               Particles &particles,
+                                               SmileiMPI * __restrict__ smpi,
+                                               int * __restrict__ istart,
+                                               int * __restrict__ iend, int ithread,
+                                               LocalFields * __restrict__ JLoc,
+                                               double * __restrict__ RhoLoc )
 {
     // iend not used for now
     // probes are interpolated one by one for now
-    
+
     int ipart = *istart;
     int nparts( particles.size() );
-    
-    
-    double *Epart[3], *Bpart[3];
+
+
+    double * __restrict__ Epart[3], * __restrict__ Bpart[3];
     for( unsigned int k=0; k<3; k++ ) {
         Epart[k]= &( smpi->dynamics_Epart[ithread][k*nparts] );
         Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts] );
     }
-    
+
     int idxO[3];
     double idx[3];
     //Primal indices are the same for all particles
@@ -234,23 +246,23 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
     idxO[1] = ( int )idx[1] - j_domain_begin ;
     idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
     idxO[2] = ( int )idx[2] - k_domain_begin ;
-    
-    Field3D *Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
-    Field3D *Ey3D = static_cast<Field3D *>( EMfields->Ey_ );
-    Field3D *Ez3D = static_cast<Field3D *>( EMfields->Ez_ );
-    Field3D *Bx3D = static_cast<Field3D *>( EMfields->Bx_ );
-    Field3D *By3D = static_cast<Field3D *>( EMfields->By_ );
-    Field3D *Bz3D = static_cast<Field3D *>( EMfields->Bz_ );
-    Field3D *Jx3D = static_cast<Field3D *>( EMfields->Jx_ );
-    Field3D *Jy3D = static_cast<Field3D *>( EMfields->Jy_ );
-    Field3D *Jz3D = static_cast<Field3D *>( EMfields->Jz_ );
-    Field3D *rho3D = static_cast<Field3D *>( EMfields->rho_ );
-    
+
+    Field3D * __restrict__ Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
+    Field3D * __restrict__ Ey3D = static_cast<Field3D *>( EMfields->Ey_ );
+    Field3D * __restrict__ Ez3D = static_cast<Field3D *>( EMfields->Ez_ );
+    Field3D * __restrict__ Bx3D = static_cast<Field3D *>( EMfields->Bx_ );
+    Field3D * __restrict__ By3D = static_cast<Field3D *>( EMfields->By_ );
+    Field3D * __restrict__ Bz3D = static_cast<Field3D *>( EMfields->Bz_ );
+    Field3D * __restrict__ Jx3D = static_cast<Field3D *>( EMfields->Jx_ );
+    Field3D * __restrict__ Jy3D = static_cast<Field3D *>( EMfields->Jy_ );
+    Field3D * __restrict__ Jz3D = static_cast<Field3D *>( EMfields->Jz_ );
+    Field3D * __restrict__ rho3D = static_cast<Field3D *>( EMfields->rho_ );
+
     double coeff[3][2][3];
     int dual[3]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0, delta_primal < 0) or if it is +1 (dual=1, delta_primal>=0).
-    
+
     double delta2, delta;
-    
+
     for( int i=0; i<3; i++ ) { // for X/Y
         //delta primal = distance to primal node
         delta   = particles.position( i, ipart )*D_inv[i] - idx[i];
@@ -259,23 +271,23 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         coeff[i][0][1]    = ( 0.75 - delta2 );
         coeff[i][0][2]    =  0.5 * ( delta2+delta+0.25 );
         dual [i] = ( delta >= 0. );
-        
+
         //delta dual = distance to dual node
         delta   = delta - dual[i] + 0.5 ;
         delta2  = delta*delta;
-        
+
         coeff[i][1][0]    =  0.5 * ( delta2-delta+0.25 );
         coeff[i][1][1]    = ( 0.75 - delta2 );
         coeff[i][1][2]    =  0.5 * ( delta2+delta+0.25 );
     }
-    
-    double *coeffyp = &( coeff[1][0][1] );
-    double *coeffyd = &( coeff[1][1][1] );
-    double *coeffxd = &( coeff[0][1][1] );
-    double *coeffxp = &( coeff[0][0][1] );
-    double *coeffzp = &( coeff[2][0][1] );
-    double *coeffzd = &( coeff[2][1][1] );
-    
+
+    double * __restrict__ coeffyp = &( coeff[1][0][1] );
+    double * __restrict__ coeffyd = &( coeff[1][1][1] );
+    double * __restrict__ coeffxd = &( coeff[0][1][1] );
+    double * __restrict__ coeffxp = &( coeff[0][0][1] );
+    double * __restrict__ coeffzp = &( coeff[2][0][1] );
+    double * __restrict__ coeffzd = &( coeff[2][1][1] );
+
     //Ex(dual, primal, primal)
     double interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -287,8 +299,8 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Epart[0][ipart] = interp_res;
-    
-    
+
+
     //Ey(primal, dual, primal)
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -300,8 +312,8 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Epart[1][ipart] = interp_res;
-    
-    
+
+
     //Ez(primal, primal, dual)
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -313,8 +325,8 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Epart[2][ipart] = interp_res;
-    
-    
+
+
     //Bx(primal, dual , dual )
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -327,7 +339,7 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Bpart[0][ipart] = interp_res;
-    
+
     //By(dual, primal, dual )
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -340,7 +352,7 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Bpart[1][ipart] = interp_res;
-    
+
     //Bz(dual, dual, prim )
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -353,8 +365,8 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Bpart[2][ipart] = interp_res;
-    
-    
+
+
     //Jx(dual, primal, primal)
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -366,8 +378,8 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     JLoc->x = interp_res;
-    
-    
+
+
     //Jy(primal, dual, primal)
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -379,8 +391,8 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     JLoc->y = interp_res;
-    
-    
+
+
     //Jz(primal, primal, dual)
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -392,7 +404,7 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     JLoc->z = interp_res;
-    
+
     //Rho(primal, primal, primal)
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -403,7 +415,7 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     ( *RhoLoc ) = interp_res;
-    
+
 }
 
 
@@ -414,27 +426,27 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
     if( istart[0] == iend[0] ) {
         return;    //Don't treat empty cells.
     }
-    
+
     int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
-    
+
     double *Epart[3], *Bpart[3], *Phipart[1], *GradPhipart[3];
-    
+
     double *deltaO[3];
     deltaO[0] = &( smpi->dynamics_deltaold[ithread][0] );
     deltaO[1] = &( smpi->dynamics_deltaold[ithread][nparts] );
     deltaO[2] = &( smpi->dynamics_deltaold[ithread][2*nparts] );
-    
+
     for( unsigned int k=0; k<3; k++ ) {
-    
+
         if( k==0 ) {   // scalar field, only one component
             Phipart[k]     = &( smpi->dynamics_PHIpart[ithread][k*nparts] );
         }
-        
+
         Epart[k]       = &( smpi->dynamics_Epart[ithread][k*nparts] );
         Bpart[k]       = &( smpi->dynamics_Bpart[ithread][k*nparts] );
         GradPhipart[k] = &( smpi->dynamics_GradPHIpart[ithread][k*nparts] );
     }
-    
+
     int idx[3], idxO[3];
     //Primal indices are constant over the all cell
     idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
@@ -443,7 +455,7 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
     idxO[1] = idx[1] - j_domain_begin -1 ;
     idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
     idxO[2] = idx[2] - k_domain_begin -1 ;
-    
+
     Field3D *Ex3D       = static_cast<Field3D *>( EMfields->Ex_ );
     Field3D *Ey3D       = static_cast<Field3D *>( EMfields->Ey_ );
     Field3D *Ez3D       = static_cast<Field3D *>( EMfields->Ez_ );
@@ -454,24 +466,24 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
     Field3D *GradPhix3D = static_cast<Field3D *>( EMfields->envelope->GradPhix_ );
     Field3D *GradPhiy3D = static_cast<Field3D *>( EMfields->envelope->GradPhiy_ );
     Field3D *GradPhiz3D = static_cast<Field3D *>( EMfields->envelope->GradPhiz_ );
-    
-    
-    
+
+
+
     double coeff[3][2][3][32];
     int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
-    
+
     int vecSize = 32;
-    
+
     int cell_nparts( ( int )iend[0]-( int )istart[0] );
     int nbVec = ( iend[0]-istart[0]+( cell_nparts-1 )-( ( iend[0]-istart[0]-1 )&( cell_nparts-1 ) ) ) / vecSize;
-    
+
     if( nbVec*vecSize != cell_nparts ) {
         nbVec++;
     }
-    
+
     for( int iivect=0 ; iivect<nbVec; iivect++ ) {
         int ivect = vecSize*iivect;
-        
+
         int np_computed( 0 );
         if( cell_nparts > vecSize ) {
             np_computed = vecSize;
@@ -479,44 +491,44 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
         } else {
             np_computed = cell_nparts;
         }
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-        
+
             double delta0, delta;
             double delta2;
-            
-            
+
+
             for( int i=0; i<3; i++ ) { // for X/Y
                 delta0 = particles.position( i, ipart+ivect+istart[0] )*D_inv[i];
                 dual [i][ipart] = ( delta0 - ( double )idx[i] >=0. );
-                
+
                 for( int j=0; j<2; j++ ) { // for dual
-                
+
                     delta   = delta0 - ( double )idx[i] + ( double )j*( 0.5-dual[i][ipart] );
                     delta2  = delta*delta;
-                    
+
                     coeff[i][j][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
                     coeff[i][j][1][ipart]    = ( 0.75 - delta2 );
                     coeff[i][j][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
-                    
+
                     if( j==0 ) {
                         deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
                     }
                 }
             }
         }
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-        
+
             double *coeffyp = &( coeff[1][0][1][ipart] );
             double *coeffyd = &( coeff[1][1][1][ipart] );
             double *coeffxd = &( coeff[0][1][1][ipart] );
             double *coeffxp = &( coeff[0][0][1][ipart] );
             double *coeffzp = &( coeff[2][0][1][ipart] );
             double *coeffzd = &( coeff[2][1][1][ipart] );
-            
+
             //Ex(dual, primal, primal)
             double interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -528,8 +540,8 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
                 }
             }
             Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
-            
+
+
             //Ey(primal, dual, primal)
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -541,8 +553,8 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
                 }
             }
             Epart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
-            
+
+
             //Ez(primal, primal, dual)
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -555,8 +567,8 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
                 }
             }
             Epart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
-            
+
+
             //Bx(primal, dual , dual )
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -570,7 +582,7 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
                 }
             }
             Bpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
+
             //By(dual, primal, dual )
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -584,7 +596,7 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
                 }
             }
             Bpart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
+
             //Bz(dual, dual, prim )
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -597,7 +609,7 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
                 }
             }
             Bpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
+
             // Interpolation of Phi^(p,p,p)
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -608,7 +620,7 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
                 }
             }
             Phipart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
+
             // Interpolation of GradPhiX^(p,p,p)
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -619,7 +631,7 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
                 }
             }
             GradPhipart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
+
             // Interpolation of GradPhiY^(p,p,p)
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -630,7 +642,7 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
                 }
             }
             GradPhipart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
+
             // Interpolation of GradPhiZ^(p,p,p)
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -641,12 +653,12 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
                 }
             }
             GradPhipart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
+
         }
     }
     //}
-    
-    
+
+
 }
 
 
@@ -655,25 +667,25 @@ void Interpolator3D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
     if( istart[0] == iend[0] ) {
         return;    //Don't treat empty cells.
     }
-    
+
     int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
-    
+
     double *Phi_mpart[1], *GradPhi_mpart[3];
-    
+
     double *deltaO[3];
     deltaO[0] = &( smpi->dynamics_deltaold[ithread][0] );
     deltaO[1] = &( smpi->dynamics_deltaold[ithread][nparts] );
     deltaO[2] = &( smpi->dynamics_deltaold[ithread][2*nparts] );
-    
+
     for( unsigned int k=0; k<3; k++ ) {
-    
+
         if( k==0 ) {   // scalar field, only one component
             Phi_mpart[k]     = &( smpi->dynamics_PHI_mpart[ithread][k*nparts] );
         }
-        
+
         GradPhi_mpart[k] = &( smpi->dynamics_GradPHI_mpart[ithread][k*nparts] );
     }
-    
+
     int idx[3], idxO[3];
     //Primal indices are constant over the all cell
     idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
@@ -682,26 +694,26 @@ void Interpolator3D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
     idxO[1] = idx[1] - j_domain_begin -1 ;
     idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
     idxO[2] = idx[2] - k_domain_begin -1 ;
-    
+
     Field3D *Phi_m3D      = static_cast<Field3D *>( EMfields->envelope->Phi_m );
     Field3D *GradPhi_mx3D = static_cast<Field3D *>( EMfields->envelope->GradPhix_m );
     Field3D *GradPhi_my3D = static_cast<Field3D *>( EMfields->envelope->GradPhiy_m );
     Field3D *GradPhi_mz3D = static_cast<Field3D *>( EMfields->envelope->GradPhiz_m );
-    
-    
+
+
     double coeff[3][2][3][32];
     int vecSize = 32;
-    
+
     int cell_nparts( ( int )iend[0]-( int )istart[0] );
     int nbVec = ( iend[0]-istart[0]+( cell_nparts-1 )-( ( iend[0]-istart[0]-1 )&( cell_nparts-1 ) ) ) / vecSize;
-    
+
     if( nbVec*vecSize != cell_nparts ) {
         nbVec++;
     }
-    
+
     for( int iivect=0 ; iivect<nbVec; iivect++ ) {
         int ivect = vecSize*iivect;
-        
+
         int np_computed( 0 );
         if( cell_nparts > vecSize ) {
             np_computed = vecSize;
@@ -709,39 +721,39 @@ void Interpolator3D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
         } else {
             np_computed = cell_nparts;
         }
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-        
+
             double delta0, delta;
             double delta2;
-            
-            
+
+
             for( int i=0; i<3; i++ ) { // for X/Y
                 delta0 = particles.position( i, ipart+ivect+istart[0] )*D_inv[i];
                 delta   = delta0 - ( double )idx[i] ;
                 delta2  = delta*delta;
-                
+
                 coeff[i][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
                 coeff[i][0][1][ipart]    = ( 0.75 - delta2 );
                 coeff[i][0][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
-                
+
                 deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
             }
         }
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-        
+
             double *coeffyp = &( coeff[1][0][1][ipart] );
             double *coeffxp = &( coeff[0][0][1][ipart] );
             double *coeffzp = &( coeff[2][0][1][ipart] );
-            
+
             // ----------------------------------
             // ----  PHI_m  and Grad Phi_m   ----
             // ----------------------------------
             // Interpolation of Phi_m^(p,p,p)
-            
+
             double interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
@@ -751,7 +763,7 @@ void Interpolator3D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
                 }
             }
             Phi_mpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
+
             // Interpolation of GradPhi_mX^(p,p,p)
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -762,7 +774,7 @@ void Interpolator3D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
                 }
             }
             GradPhi_mpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
+
             // Interpolation of GradPhi_mY^(p,p,p)
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -773,7 +785,7 @@ void Interpolator3D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
                 }
             }
             GradPhi_mpart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
+
             // Interpolation of GradPhi_mZ^(p,p,p)
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -784,19 +796,19 @@ void Interpolator3D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
                 }
             }
             GradPhi_mpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
+
         }
     }
     //}
-    
-    
+
+
 }
 
 // probes like diagnostic !
 void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc )
 {
     // probes are interpolated one by one for now
-    
+
     int idx[3], idxO[3];
     //Primal indices are constant over the all cell
     idx[0]  = round( particles.position( 0, ipart ) * D_inv[0] );
@@ -805,34 +817,34 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
     idxO[1] = idx[1] - j_domain_begin -1 ;
     idx[2]  = round( particles.position( 2, ipart ) * D_inv[2] );
     idxO[2] = idx[2] - k_domain_begin -1 ;
-    
+
     Field3D *Env_A_abs_3D  = static_cast<Field3D *>( EMfields->Env_A_abs_ );
     Field3D *Env_Chi_3D    = static_cast<Field3D *>( EMfields->Env_Chi_ );
     Field3D *Env_E_abs_3D  = static_cast<Field3D *>( EMfields->Env_E_abs_ );
     Field3D *Env_Ex_abs_3D = static_cast<Field3D *>( EMfields->Env_Ex_abs_ );
-    
+
     double coeff[3][2][3];
-    
+
     double delta0, delta;
     double delta2;
-    
-    
+
+
     for( int i=0; i<3; i++ ) { // for X/Y
         delta0 = particles.position( i, ipart )*D_inv[i];
-        
+
         delta   = delta0 - ( double )idx[i] ;
         delta2  = delta*delta;
-        
+
         coeff[i][0][0]    =  0.5 * ( delta2-delta+0.25 );
         coeff[i][0][1]    = ( 0.75 - delta2 );
         coeff[i][0][2]    =  0.5 * ( delta2+delta+0.25 );
     }
-    
-    
+
+
     double *coeffyp = &( coeff[1][0][1] );
     double *coeffxp = &( coeff[0][0][1] );
     double *coeffzp = &( coeff[2][0][1] );
-    
+
     // Interpolation of Env_A_abs^(p,p,p) (absolute value of envelope A)
     double interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -843,7 +855,7 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
         }
     }
     *Env_A_abs_Loc= interp_res;
-    
+
     // Interpolation of Env_Chi^(p,p,p)
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -854,7 +866,7 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
         }
     }
     *Env_Chi_Loc= interp_res;
-    
+
     // Interpolation of Env_E_abs^(p,p,p) (absolute value of envelope E transverse)
     interp_res = 0.;
     for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -876,7 +888,7 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
         }
     }
     *Env_Ex_abs_Loc= interp_res;
-    
+
 }
 
 
