@@ -156,6 +156,8 @@ else
     	CXXFLAGS += -Ofast -g
     else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
         CXXFLAGS += -Ofast -g
+    else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
+        CXXFLAGS += -Kfast -g
     else
         CXXFLAGS += -O3 -g
     endif
@@ -170,7 +172,7 @@ endif
 # For Fujitsu compiler: -Kopenmp
 ifeq (,$(call parse_config,noopenmp))
     ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
-        OPENMP_FLAG ?= -Kopenmp
+        OPENMP_FLAG ?= -Kopenmp -Kopenmp_simd
     else
     	OPENMP_FLAG ?= -fopenmp
     endif
