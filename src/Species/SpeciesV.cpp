@@ -870,7 +870,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen_ ) { // advance particle momentum
+    if( time_dual>time_frozen_ || Ionize ) { // advance particle momentum
 
         for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
@@ -910,6 +910,8 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
 #endif
             }
             
+            if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
+
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
