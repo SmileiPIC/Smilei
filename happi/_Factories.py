@@ -1,6 +1,11 @@
-from ._Utils import *
-from ._Diagnostics import Scalar, Field, Probe, ParticleBinning, RadiationSpectrum, Performances, Screen, TrackParticles
-
+from ._Diagnostics.Scalar import Scalar
+from ._Diagnostics.Field import Field
+from ._Diagnostics.Probe import Probe
+from ._Diagnostics.ParticleBinning import ParticleBinning
+from ._Diagnostics.Screen import Screen
+from ._Diagnostics.RadiationSpectrum import RadiationSpectrum
+from ._Diagnostics.TrackParticles import TrackParticles
+from ._Diagnostics.Performances import Performances
 
 class ScalarFactory(object):
 	"""Import and analyze a scalar diagnostic from a Smilei simulation
@@ -34,7 +39,7 @@ class ScalarFactory(object):
 		if scalar is None:
 			if simulation._verbose: print("Scanning for Scalar diagnostics")
 			# Create a temporary, empty scalar diagnostic
-			tmpDiag = Scalar.Scalar(simulation)
+			tmpDiag = Scalar(simulation)
 			# Get a list of scalars
 			scalars = tmpDiag.getScalars()
 			# Create scalars shortcuts
@@ -46,7 +51,7 @@ class ScalarFactory(object):
 			self._additionalArgs += (scalar, )
 
 	def __call__(self, *args, **kwargs):
-		return Scalar.Scalar(self._simulation, *(self._additionalArgs+args), **kwargs)
+		return Scalar(self._simulation, *(self._additionalArgs+args), **kwargs)
 
 
 class FieldFactory(object):
@@ -106,37 +111,37 @@ class FieldFactory(object):
 			
 			# If not a specific field, build a list of field shortcuts
 			if field is None:
-				# Create a temporary, empty field diagnostic
-				tmpDiag = Field.Field(simulation, diagNumber)
 				# Get a list of fields
-				fields = tmpDiag.getFields()
-#				# Get a list of timesteps
-#				timesteps = tmpDiag.getAvailableTimesteps()
-#				# Create fields shortcuts
-#				for field in fields:
-#					child = FieldFactory(simulation, diagNumber, field, availableTimesteps=timesteps)
-#					setattr(self, field, child)
+				fields = simulation.fieldInfo(diagNumber)["fields"]
 				# Create fields shortcuts
 				for field in fields:
 					child = FieldFactory(simulation, diagNumber, field)
 					setattr(self, field, child)
-
+			
 			else:
 				# the field is saved for generating the object in __call__
 				self._additionalArgs += (field, )
-
-#				# If not a specific timestep, build a list of timesteps shortcuts
-#				if timestep is None:
-#					for timestep in availableTimesteps:
-#						setattr(self, 't%0.10i'%timestep, FieldFactory(simulation, diagNumber, field, timestep))
-#
-#				else:
-#					# the timestep is saved for generating the object in __call__
-#					self._additionalArgs += (timestep, )
-
+	
 	def __call__(self, *args, **kwargs):
-		return Field.Field(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return Field(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalArgs) == 0 and self._simulation._scan:
+			diag_numbers = self._simulation._diag_numbers["Fields"]
+			diag_names = self._simulation._diag_names["Fields"]
+			if diag_numbers:
+				msg += "\nAvailable Field diagnostics:"
+				for n, name in zip(diag_numbers, diag_names):
+					msg += "\n\t#%d"%n + (" ('%s')"%name if name else "")
+					fields = sorted(self._simulation.fieldInfo(n)["fields"])
+					if fields:
+						msg += ", with fields: " + ", ".join(fields)
+					else:
+						msg += ", no fields"
+			else:
+				msg += "\nNo Field diagnostics available"
+		return msg
 
 class ProbeFactory(object):
 	"""Import and analyze a probe diagnostic from a Smilei simulation
@@ -194,15 +199,8 @@ class ProbeFactory(object):
 
 			# If not a specific field, build a list of field shortcuts
 			if field is None:
-				# Create a temporary, empty probe diagnostic
-				tmpDiag = Probe.Probe(simulation, probeNumber)
 				# Get a list of fields
-				fields = tmpDiag.getFields()
-#				# Get a list of timesteps
-#				timesteps = tmpDiag.getAvailableTimesteps()
-#				# Create fields shortcuts
-#				for field in fields:
-#					setattr(self, field, ProbeFactory(simulation, probeNumber, field, availableTimesteps=timesteps))
+				fields = self._simulation.probeInfo(probeNumber)["fields"]
 				# Create fields shortcuts
 				for field in fields:
 					setattr(self, field, ProbeFactory(simulation, probeNumber, field))
@@ -210,19 +208,27 @@ class ProbeFactory(object):
 			else:
 				# the field is saved for generating the object in __call__
 				self._additionalArgs += (field, )
-
-#				# If not a specific timestep, build a list of timesteps shortcuts
-#				if timestep is None:
-#					for timestep in availableTimesteps:
-#						setattr(self, 't%0.10i'%timestep, ProbeFactory(simulation, probeNumber, field, timestep))
-#
-#				else:
-#					# the timestep is saved for generating the object in __call__
-#					self._additionalArgs += (timestep, )
-
+	
 	def __call__(self, *args, **kwargs):
-		return Probe.Probe(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return Probe(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalArgs) == 0 and self._simulation._scan:
+			diag_numbers = self._simulation._diag_numbers["Probes"]
+			diag_names = self._simulation._diag_names["Probes"]
+			if diag_numbers:
+				msg += "\nAvailable Probe diagnostics:"
+				for n, name in zip(diag_numbers, diag_names):
+					msg += "\n\t#%d"%n + (" ('%s')"%name if name else "")
+					fields = sorted(self._simulation.probeInfo(n)["fields"])
+					if fields:
+						msg += ", with fields: " + ", ".join(fields)
+					else:
+						msg += ", no fields"
+			else:
+				msg += "\nNo Probe diagnostics available"
+		return msg
 
 
 class ParticleBinningFactory(object):
@@ -264,35 +270,33 @@ class ParticleBinningFactory(object):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		if not simulation._scan: return
-
+		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
 			if simulation._verbose: print("Scanning for ParticleBinning diagnostics")
 			# Create diags shortcuts
 			for diag in simulation._diag_numbers["ParticleBinning"]:
 				setattr(self, 'Diag'+str(diag), ParticleBinningFactory(simulation, diag))
-
+		
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-
-			## If not a specific timestep, build a list of timesteps shortcuts
-			#if timestep is None:
-			#	# Create a temporary, empty particle binning diagnostic
-			#	tmpDiag = ParticleBinning.ParticleBinning(simulation, diagNumber)
-			#	# Get a list of timesteps
-			#	timesteps = tmpDiag.getAvailableTimesteps()
-			#	# Create timesteps shortcuts
-			#	for timestep in timesteps:
-			#		setattr(self, 't%0.10i'%timestep, ParticleBinningFactory(simulation, diagNumber, timestep))
-			#
-			#else:
-			#	# the timestep is saved for generating the object in __call__
-			#	self._additionalArgs += (timestep, )
-
+	
 	def __call__(self, *args, **kwargs):
-		return ParticleBinning.ParticleBinning(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return ParticleBinning(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalArgs) == 0 and self._simulation._scan:
+			diag_numbers = self._simulation._diag_numbers["ParticleBinning"]
+			diag_names = self._simulation._diag_names["ParticleBinning"]
+			if diag_numbers:
+				msg += "\nAvailable ParticleBinning diagnostics:\n"
+				for n, name in zip(diag_numbers, diag_names):
+					msg += "\n" + ParticleBinning._printInfo(ParticleBinning._getInfo(self._simulation, "ParticleBinning", n))
+			else:
+				msg += "\nNo ParticleBinning diagnostics available"
+		return msg
 
 class RadiationSpectrumFactory(object):
 	"""Import and analyze a RadiationSpectrum diagnostic from a Smilei simulation
@@ -339,28 +343,26 @@ class RadiationSpectrumFactory(object):
 			# Create diags shortcuts
 			for diag in simulation._diag_numbers["RadiationSpectrum"]:
 				setattr(self, 'Diag'+str(diag), RadiationSpectrumFactory(simulation, diag))
-
+		
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-
-			## If not a specific timestep, build a list of timesteps shortcuts
-			#if timestep is None:
-			#	# Create a temporary, empty radiation spectrum diagnostic
-			#	tmpDiag = RadiationSpectrum.RadiationSpectrum(simulation, diagNumber)
-			#	# Get a list of timesteps
-			#	timesteps = tmpDiag.getAvailableTimesteps()
-			#	# Create timesteps shortcuts
-			#	for timestep in timesteps:
-			#		setattr(self, 't%0.10i'%timestep, RadiationSpectrumFactory(simulation, diagNumber, timestep))
-			#
-			#else:
-			#	# the timestep is saved for generating the object in __call__
-			#	self._additionalArgs += (timestep, )
-
+		
 	def __call__(self, *args, **kwargs):
-		return RadiationSpectrum.RadiationSpectrum(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return RadiationSpectrum(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalArgs) == 0 and self._simulation._scan:
+			diag_numbers = self._simulation._diag_numbers["RadiationSpectrum"]
+			diag_names = self._simulation._diag_names["RadiationSpectrum"]
+			if diag_numbers:
+				msg += "\nAvailable RadiationSpectrum diagnostics:\n"
+				for n, name in zip(diag_numbers, diag_names):
+					msg += "\n" + RadiationSpectrum._printInfo(RadiationSpectrum._getInfo(self._simulation, "RadiationSpectrum", n))
+			else:
+				msg += "\nNo RadiationSpectrum diagnostics available"
+		return msg
 
 
 class PerformancesFactory(object):
@@ -422,8 +424,13 @@ class PerformancesFactory(object):
 		if simulation._verbose: print("Scanning for Performance diagnostics")
 	
 	def __call__(self, *args, **kwargs):
-		return Performances.Performances(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return Performances(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		info = self._simulation.performanceInfo()
+		msg += "\nAvailable quantities:\n"+", ".join([str(q) for q in info["quantities_uint"]+info["quantities_double"]])
+		return msg
 
 
 class ScreenFactory(object):
@@ -465,35 +472,33 @@ class ScreenFactory(object):
 		self._simulation = simulation
 		self._additionalArgs = tuple()
 		if not simulation._scan: return
-
+		
 		# If not a specific diag (root level), build a list of diag shortcuts
 		if diagNumber is None:
 			if simulation._verbose: print("Scanning for Screen diagnostics")
 			# Create diags shortcuts
 			for diag in simulation._diag_numbers["Screen"]:
 				setattr(self, 'Screen'+str(diag), ScreenFactory(simulation, diag))
-
+		
 		else:
 			# the diag is saved for generating the object in __call__
 			self._additionalArgs += (diagNumber, )
-
-			## If not a specific timestep, build a list of timesteps shortcuts
-			#if timestep is None:
-			#	# Create a temporary, empty Screen diagnostic
-			#	tmpDiag = Screen.Screen(simulation, diagNumber)
-			#	# Get a list of timesteps
-			#	timesteps = tmpDiag.getAvailableTimesteps()
-			#	# Create timesteps shortcuts
-			#	for timestep in timesteps:
-			#		setattr(self, 't%0.10i'%timestep, ScreenFactory(simulation, diagNumber, timestep))
-			#
-			#else:
-			#	# the timestep is saved for generating the object in __call__
-			#	self._additionalArgs += (timestep, )
-
+	
 	def __call__(self, *args, **kwargs):
-		return Screen.Screen(self._simulation, *(self._additionalArgs+args), **kwargs)
-
+		return Screen(self._simulation, *(self._additionalArgs+args), **kwargs)
+	
+	def __repr__(self):
+		msg = object.__repr__(self)
+		if len(self._additionalArgs) == 0 and self._simulation._scan:
+			diag_numbers = self._simulation._diag_numbers["Screen"]
+			diag_names = self._simulation._diag_names["Screen"]
+			if diag_numbers:
+				msg += "\nAvailable Screen diagnostics:\n"
+				for n, name in zip(diag_numbers, diag_names):
+					msg += "\n" + Screen._printInfo(Screen._getInfo(self._simulation, "Screen", n))
+			else:
+				msg += "\nNo Screen diagnostics available"
+		return msg
 
 
 class TrackParticlesFactory(object):
@@ -548,10 +553,8 @@ class TrackParticlesFactory(object):
 		# If not a specific species (root level), build a list of species shortcuts
 		if species is None:
 			if simulation._verbose: print("Scanning for Tracked particle diagnostics")
-			# Create a temporary, empty tracked-particle diagnostic
-			tmpDiag = TrackParticles.TrackParticles(simulation)
 			# Get a list of species
-			specs = tmpDiag.getTrackSpecies()
+			specs = self._simulation.getTrackSpecies()
 			# Create species shortcuts
 			for spec in specs:
 				child = TrackParticlesFactory(simulation, spec)
@@ -561,283 +564,17 @@ class TrackParticlesFactory(object):
 		else:
 			# the species is saved for generating the object in __call__
 			self._additionalKwargs.update( {"species":species} )
-
-			# For now, the following block is de-activated
-			# It is not possible to have pre-loaded timesteps because the file ordering
-			# would take place, and it takes a long time
-
-			## If not a specific timestep, build a list of timesteps shortcuts
-			#if timestep is None:
-			#	# Create a temporary, empty tracked-particle diagnostic
-			#	tmpDiag = TrackParticles.TrackParticles(simulation, species)
-			#	# Get a list of timesteps
-			#	timesteps = tmpDiag.getAvailableTimesteps()
-			#	# Create timesteps shortcuts
-			#	for timestep in timesteps:
-			#		setattr(self, 't%0.10i'%timestep, TrackParticlesFactory(simulation, species, timestep))
-			#
-			#else:
-			#	# the timestep is saved for generating the object in __call__
-			#	self._additionalKwargs.update( {"timesteps":timestep} )
-
+	
 	def __call__(self, *args, **kwargs):
 		kwargs.update(self._additionalKwargs)
-		return TrackParticles.TrackParticles(self._simulation, *args, **kwargs)
-
-
-
-
-def Open(*args, **kwargs):
-	""" Import a Smilei simulation
-
-	Parameters:
-	-----------
-	results_path : string or list of strings (default '.').
-		Directory containing simulation results, or list of directories.
-		Omit this argument if you are already in the results directory.
-
-	reference_angular_frequency_SI : float (default None)
-		Sets or change the value of reference_angular_frequency_SI, which may
-		be defined in the block Main() of any Smilei namelist.
-
-	show : bool (default True)
-		Can be set to False to prevent figures to actually appear on screen.
-
-	verbose : bool (default True)
-		If False, no warnings or information are printed.
-
-	scan : bool (default True)
-		If False, the HDF5 output files are not initially scanned.
-
-	Returns:
-	--------
-	A SmileiSimulation object, i.e. a container that holds information about a simulation.
-
-	Attributes of the returned object:
-	----------------------------------
-	namelist :
-		An object that holds the information of the original user namelist.
-	Scalar :
-		A method to access the `DiagScalar` diagnostic.
-	Field :
-		A method to access the `DiagField` diagnostic.
-	Probe :
-		A method to access the `DiagProbe` diagnostic.
-	ParticleBinning :
-		A method to access the `DiagParticleBinning` diagnostic.
-	TrackParticles :
-		A method to access the tracked particles diagnostic.
-	Performances :
-		A method to access the `Performances` diagnostic.
-
-	"""
-	return SmileiSimulation(*args, **kwargs)
-
-
-class SmileiSimulation(object):
-	"""Object for handling the outputs of a Smilei simulation
-
-	Attributes:
-	-----------
-	namelist :
-		An object that holds the information of the original user namelist.
-	Scalar :
-		A method to access the `DiagScalar` diagnostic.
-	Field :
-		A method to access the `DiagField` diagnostic.
-	Probe :
-		A method to access the `DiagProbe` diagnostic.
-	ParticleBinning :
-		A method to access the `DiagParticleBinning` diagnostic.
-	TrackParticles :
-		A method to access the tracked particles diagnostic.
-	Performances :
-		A method to access the `Performances` diagnostic.
-
-	"""
-
-	def __init__(self, results_path=".", reference_angular_frequency_SI=None, show=True, verbose=True, scan=True):
-		self.valid = False
-		# Import packages
-		import h5py
-		import numpy as np
-		import os, glob, re
-		setMatplotLibBackend(show=show)
-		updateMatplotLibColormaps()
-		import matplotlib.pyplot
-		import matplotlib.pylab as pylab
-		pylab.ion()
-		# Transfer packages to local attributes
-		self._results_path = results_path
-		self._h5py = h5py
-		self._np = np
-		self._os = os
-		self._glob = glob.glob
-		self._re = re
-		self._plt = matplotlib.pyplot
-		self._mtime = 0
-		self._verbose = verbose
-		self._reference_angular_frequency_SI = reference_angular_frequency_SI
-		self._scan = scan
-
-		# Load the simulation (verify the path, get the namelist)
-		self.reload()
-
-		# Load diagnostics factories
-		if self.valid:
-			self._diag_numbers = {}
-			self._diag_names = {}
-			for diagType in ["Fields", "Probes", "ParticleBinning", "Screen", "RadiationSpectrum"]:
-				self._diag_numbers[diagType], self._diag_names[diagType] = None, None
-				if self._scan:
-					self.getDiags(diagType)
-			
-			self.Scalar = ScalarFactory(self)
-			self.Field = FieldFactory(self)
-			self.Probe = ProbeFactory(self)
-			self.ParticleBinning = ParticleBinningFactory(self)
-			self.RadiationSpectrum = RadiationSpectrumFactory(self)
-			self.Performances = PerformancesFactory(self)
-			self.Screen = ScreenFactory(self)
-			self.TrackParticles = TrackParticlesFactory(self)
-
-
-	def _openNamelist(self, path):
-		# Fetch the python namelist
-		namespace={}
-		exec(open(path+self._os.sep+'smilei.py').read(), namespace) # execute the namelist into an empty namespace
-		class Namelist: pass # empty class to store the namelist variables
-		namelist = Namelist() # create new empty object
-		for key, value in namespace.items(): # transfer all variables to this object
-			if key[0]=="_": continue # skip builtins
-			setattr(namelist, key, value)
-
-		# Get some info on the simulation
-		try:
-			# get number of dimensions
-			error = "Error extracting 'geometry' from the input file"
-			ndim_fields, ndim_particles = {
-				"1Dcartesian"   : (1,1),
-				"2Dcartesian"   : (2,2),
-				"3Dcartesian"   : (3,3),
-				"AMcylindrical" : (2,3),
-			} [namelist.Main.geometry]
-			# get box size
-			error = "Error extracting 'grid_length' from the input file"
-			grid_length = self._np.atleast_1d(self._np.double(namelist.Main.grid_length))
-			if grid_length.size != ndim_fields: raise
-			# get cell size
-			error = "Error extracting 'cell_length' from the input file"
-			cell_length = self._np.atleast_1d(self._np.double(namelist.Main.cell_length))
-			if cell_length.size != ndim_fields: raise
-			# calculate number of cells in each dimension
-			ncels = grid_length/cell_length
-			# extract time-step
-			error = "Error extracting 'timestep' from the input file"
-			timestep = self._np.double(namelist.Main.timestep)
-			if not self._np.isfinite(timestep): raise
-		except Exception as e:
-			print(error)
-			return
-		try:
-			reference_angular_frequency_SI = namelist.Main.reference_angular_frequency_SI
-		except Exception as e:
-			reference_angular_frequency_SI = None
-		return namelist, ndim_fields, ndim_particles, cell_length, ncels, timestep, reference_angular_frequency_SI
-
-	def reload(self):
-		"""Reloads the simulation, if it has been updated"""
-		self.valid = False
-
-		# Obtain the path(s) to the simulation(s) results
-		if type(self._results_path) is not list:
-			self._results_path = [self._results_path]
-		allPaths = []
-		for path in self._results_path:
-			if type(path) is not str:
-				print("The `results_path` parameter must be a string or a list of strings")
-				return
-			validPaths = []
-			for match in self._glob(path):
-				if self._os.path.isdir(match) and self._os.path.isfile(match+self._os.sep+"smilei.py"):
-					validPaths.append(match)
-			if len(validPaths)==0 and self._verbose:
-				print("WARNING: `"+path+"` does not point to any valid Smilei simulation path")
-			allPaths.extend( validPaths )
-		self._results_path = sorted(allPaths)
-
-		if len(self._results_path)==0:
-			print("No valid paths to Smilei simulation results have been provided")
-			return
-
-		# Check the last modification date and get paths which are newer
-		lastmodif = 0
-		newPaths = []
-		for path in self._results_path:
-			thismtime = self._os.path.getmtime(path+self._os.sep+"/smilei.py")
-			if thismtime > self._mtime: newPaths.append(path)
-			lastmodif = max(lastmodif, thismtime)
-
-		# Reload if necessary
-		if lastmodif > self._mtime:
-			W_r = None
-			# Loop paths and verify the namelist is compatible
-			for path in newPaths:
-				self.namelist, ndim_fields, ndim_particles, cell_length, ncels, timestep, reference_angular_frequency_SI = self._openNamelist(path)
-				try:
-					if (
-						ndim_fields != self._ndim_fields or
-						ndim_particles != self._ndim_particles or
-						(cell_length != self._cell_length).any() or
-						(ncels != self._ncels).any() or
-						timestep != self._timestep or
-						reference_angular_frequency_SI != W_r
-					):
-						print("The simulation in path '"+path+"' is not compatible with the other ones")
-						return
-				except Exception as e:
-					pass
-				self._ndim_fields = ndim_fields
-				self._ndim_particles = ndim_particles
-				self._cell_length = cell_length
-				self._ncels = ncels
-				self._timestep = timestep
-				W_r = reference_angular_frequency_SI
-				if self._verbose: print("Loaded simulation '"+path+"'")
-			if self._reference_angular_frequency_SI is None:
-				self._reference_angular_frequency_SI = W_r
-		
-		self._mtime = lastmodif
-		self.valid = True
-	
-	def getDiags(self, diagType):
-		if self._diag_numbers[diagType] is None:
-			self._diag_numbers[diagType], self._diag_names[diagType] = self.scanDiags(diagType)
-		return self._diag_numbers[diagType], self._diag_names[diagType]
-	
-	def scanDiags(self, diagType):
-		diags = []
-		for path in self._results_path:
-			files = self._glob(path+self._os.sep+diagType+'*.h5')
-			these_diags = []
-			for file in files:
-				# get number
-				number = int(self._re.findall(diagType+"([0-9]+).h5$",file)[0])
-				# get name
-				with self._h5py.File(file, 'r') as f:
-					name = f.attrs["name"].decode() if "name" in f.attrs else ""
-				these_diags += [(number, name)]
-			# Update diags with those of previous paths
-			diags = list(set(diags+these_diags)) # unique diags
-		if diags == []:
-			return [], []
-		else:
-			return zip( *sorted( diags, key=lambda x:x[0] ) )
+		return TrackParticles(self._simulation, *args, **kwargs)
 	
 	def __repr__(self):
-		if not self.valid:
-			return "Invalid Smilei simulation"
-		else:
-			files = [self._glob(path+self._os.sep+"smilei.py")[0] for path in self._results_path]
-			files = "\n\t".join(files)
-			return "Smilei simulation with input file(s) located at:\n\t"+files
+		msg = object.__repr__(self)
+		if len(self._additionalKwargs) == 0 and self._simulation._scan:
+			specs = self._simulation.getTrackSpecies()
+			if specs:
+				msg += "\nAvailable TrackParticles diagnostics:\n" + ", ".join(specs)
+			else:
+				msg += "\nNo TrackParticles diagnostics available"
+		return msg

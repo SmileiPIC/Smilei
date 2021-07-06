@@ -52,31 +52,31 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
 {
 
     if( PyTools::nComponents( "Checkpoints" ) > 0 ) {
-    
+
         PyTools::extract( "dump_step", dump_step, "Checkpoints"  );
         if( dump_step > 0 ) {
             MESSAGE( 1, "Code will dump after " << dump_step << " steps" );
         }
-        
+
         PyTools::extract( "dump_minutes", dump_minutes, "Checkpoints"  );
         if( dump_minutes > 0 ) {
             MESSAGE( 1, "Code will stop after " << dump_minutes << " minutes" );
         }
-        
+
         PyTools::extract( "keep_n_dumps", keep_n_dumps, "Checkpoints"  );
         if( keep_n_dumps<1 ) {
             keep_n_dumps=1;
         }
-        
+
         if( keep_n_dumps > keep_n_dumps_max ) {
             WARNING( "Smilei supports a maximum of keep_n_dumps of "<< keep_n_dumps_max );
             keep_n_dumps = keep_n_dumps_max;
         }
-        
+
         PyTools::extract( "exit_after_dump", exit_after_dump, "Checkpoints"  );
-        
+
         PyTools::extract( "dump_deflate", dump_deflate, "Checkpoints"  );
-        
+
         PyTools::extract( "file_grouping", file_grouping, "Checkpoints"  );
         if( file_grouping > 0 ) {
             if( file_grouping > ( unsigned int )( smpi->getSize() ) ) {
@@ -84,15 +84,15 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             }
             MESSAGE( 1, "Code will group checkpoint files by "<< file_grouping );
         }
-        
+
         smpi->barrier();
-        
+
         if( params.restart ) {
             std::vector<std::string> restart_files;
             if( ! PyTools::extractV( "restart_files", restart_files, "Checkpoints" ) ) {
                 ERROR( "Internal parameter `restart_files` not understood. This should not happen" );
             }
-            
+
             // This will open all dumps and pick the last one
             restart_file = "";
             for( unsigned int num_dump=0; num_dump<restart_files.size(); num_dump++ ) {
@@ -109,11 +109,11 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
                     }
                 }
             }
-            
+
             if( restart_file == "" ) {
                 ERROR( "Cannot find a valid restart file for rank "<<smpi->getRank() );
             }
-            
+
             // Make sure all ranks have the same dump number
             // Different numbers can be due to corrupted restart files
             if( ! smpi->test_mode ) {
@@ -137,17 +137,17 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
                     exit(EXIT_FAILURE);
                 }
             }
-            
+
 #ifdef  __DEBUG
             MESSAGEALL( 2, " : Restarting fields and particles, dump_number = " << dump_number << " step=" << this_run_start_step << "\n\t\t" << restart_file );
 #else
             MESSAGE( 2, "Restarting fields and particles at step: " << this_run_start_step );
             MESSAGE( 2, "                            master file: " << restart_file );
 #endif
-            
+
         }
     }
-    
+
     if( dump_step>0 || dump_minutes>0. ) {
         if( exit_after_dump ) {
             MESSAGE( 1, "Code will exit after dump" );
@@ -164,7 +164,7 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
             MESSAGE( 1, message.str() );
         }
     }
-    
+
     // registering signal handler
     if( SIG_ERR == signal( SIGUSR1, Checkpoint::signal_callback_handler ) ) {
         WARNING( "Cannot catch signal SIGUSR1" );
@@ -172,7 +172,7 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
     if( SIG_ERR == signal( SIGUSR2, Checkpoint::signal_callback_handler ) ) {
         WARNING( "Cannot catch signal SIGUSR2" );
     }
-    
+
     nDim_particle=params.nDim_particle;
 }
 
@@ -202,7 +202,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, Region &region, unsigned int iti
         }
         smpi->barrier();
     }
-    
+
     if( signal_received!=0 ||
             ( dump_step != 0 && ( ( itime-this_run_start_step ) % dump_step == 0 ) ) ||
             ( time_dump_step!=0 && itime==time_dump_step ) ) {
@@ -219,35 +219,35 @@ void Checkpoint::dump( VectorPatch &vecPatches, Region &region, unsigned int iti
 void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int itime,  SmileiMPI *smpi, SimWindow *simWin,  Params &params )
 {
     unsigned int num_dump=dump_number % keep_n_dumps;
-    
+
     ostringstream nameDumpTmp( "" );
     nameDumpTmp << "checkpoints" << PATH_SEPARATOR;
     if( file_grouping>0 ) {
         nameDumpTmp << setfill( '0' ) << setw( int( 1+log10( smpi->getSize()/file_grouping+1 ) ) ) << smpi->getRank()/file_grouping << PATH_SEPARATOR;
     }
-    
+
     nameDumpTmp << "dump-" << setfill( '0' ) << setw( 5 ) << num_dump << "-" << setfill( '0' ) << setw( 10 ) << smpi->getRank() << ".h5" ;
     std::string dumpName=nameDumpTmp.str();
-    
-    
+
+
     H5Write f( dumpName );
     dump_number++;
-    
+
 #ifdef  __DEBUG
     MESSAGEALL( "Step " << itime << " : DUMP fields and particles " << dumpName );
 #else
     MESSAGE( "Step " << itime << " : DUMP fields and particles " << num_dump );
 #endif
-    
-    
+
+
     // Write basic attributes
     f.attr( "Version", string( __VERSION ) );
-    
+
     f.attr( "dump_step", itime );
     f.attr( "dump_number", dump_number );
-    
+
     f.vect( "patch_count", smpi->patch_count );
-    
+
     // Write diags scalar data
     DiagnosticScalar *scalars = static_cast<DiagnosticScalar *>( vecPatches.globalDiags[0] );
     f.attr( "latest_timestep",   scalars->latest_timestep );
@@ -271,7 +271,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
             }
         }
     }
-    
+
     // Write the diags screen data
     if( smpi->isMaster() ) {
         unsigned int iscreen = 0;
@@ -284,21 +284,21 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
             }
         }
     }
-    
+
     // Write all the patch data
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++ ) {
-        
+
         // Open a group
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << vecPatches( ipatch )->Hindex();
         string patchName=Tools::merge( "patch-", patch_name.str() );
         H5Write g = f.group( patchName.c_str() );
-        
+
         dumpPatch( vecPatches( ipatch ), params, g );
-        
+
         // Random number generator state
         g.attr( "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
-        
+
     }
 
     if (params.multiple_decomposition) {
@@ -318,19 +318,19 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, Region &region, unsigned int 
             f.attr( n.str(), track->latest_Id, H5T_NATIVE_UINT64 );
         }
     }
-    
+
     // Write the moving window status
     if( simWin!=NULL ) {
         dumpMovingWindow( f, simWin );
     }
-    
+
 }
 
 
 void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
 {
     ElectroMagn * EMfields = patch->EMfields;
-    
+
     if (  params.geometry != "AMcylindrical" ) {
         dumpFieldsPerProc( g, EMfields->Ex_ );
         dumpFieldsPerProc( g, EMfields->Ey_ );
@@ -354,20 +354,20 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
             dump_cFieldsPerProc( g, emAM->Bl_m[imode] );
             dump_cFieldsPerProc( g, emAM->Br_m[imode] );
             dump_cFieldsPerProc( g, emAM->Bt_m[imode] );
-            
+
             if( params.is_pxr ) {
                 dump_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
             }
-            
+
         }
     }
-    
+
     if( EMfields->envelope!=NULL ) {
         dump_cFieldsPerProc( g, EMfields->envelope->A_ );
         dump_cFieldsPerProc( g, EMfields->envelope->A0_ );
         dumpFieldsPerProc( g, EMfields->Env_Chi_ );
     }
-    
+
     // filtered Electric fields
     for( unsigned int i=0; i<EMfields->Exfilter.size(); i++ ) {
         dumpFieldsPerProc( g, EMfields->Exfilter[i] );
@@ -388,18 +388,18 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
     for( unsigned int i=0; i<EMfields->Bzfilter.size(); i++ ) {
         dumpFieldsPerProc( g, EMfields->Bzfilter[i] );
     }
-    
+
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name( "" );
         group_name << "FieldsForDiag" << idiag;
         H5Write diag = g.group( group_name.str() );
-        
+
         for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ ) {
             dumpFieldsPerProc( diag, EMfields->allFields_avg[idiag][ifield] );
         }
     }
-    
+
     // Fields required for DiagProbes with time integral
     for( unsigned int iprobe=0; iprobe<patch->probes.size(); iprobe++ ) {
         unsigned int nFields = patch->probes[iprobe]->integrated_data.size();
@@ -414,7 +414,7 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
             }
         }
     }
-    
+
     if( ( EMfields->extFields.size()>0 ) && ( params.save_magnectic_fields_for_SM ) ) {
         for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if( ! EMfields->emBoundCond[bcId] ) {
@@ -455,57 +455,57 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
             }
         }
     }
-    
+
     g.flush();
     g.attr( "species", patch->vecSpecies.size() );
-    
+
     for( unsigned int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++ ) {
         Species *spec = patch->vecSpecies[ispec];
-        
+
         ostringstream name( "" );
         name << setfill( '0' ) << setw( 2 ) << ispec;
         string groupName=Tools::merge( "species-", name.str(), "-", spec->name_ );
         H5Write s = g.group( groupName );
-        
+
         s.attr( "partCapacity", spec->particles->capacity() );
         s.attr( "partSize", spec->particles->size() );
-        s.attr( "nrj_radiation", spec->getNrjRadiation() );
-        
+        s.attr( "radiatedEnergy", spec->getNrjRadiation() );
+
         if( spec->particles->size()>0 ) {
-        
+
             for( unsigned int i=0; i<spec->particles->Position.size(); i++ ) {
                 ostringstream my_name( "" );
                 my_name << "Position-" << i;
                 s.vect( my_name.str(), spec->particles->Position[i] );//, dump_deflate );
             }
-            
+
             for( unsigned int i=0; i<spec->particles->Momentum.size(); i++ ) {
                 ostringstream my_name( "" );
                 my_name << "Momentum-" << i;
                 s.vect( my_name.str(),spec->particles->Momentum[i] );//, dump_deflate );
             }
-            
+
             s.vect( "Weight", spec->particles->Weight );//, dump_deflate );
             s.vect( "Charge", spec->particles->Charge );//, dump_deflate );
-            
+
             if( spec->particles->tracked ) {
                 s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );//, dump_deflate );
             }
-            
+
             s.vect( "first_index", spec->particles->first_index );
             s.vect( "last_index", spec->particles->last_index );
-            
+
         } // End if partSize
-        
+
     } // End for ispec
-    
+
     // Manage some collisions parameters
     std::vector<double> rate_multiplier(  patch->vecCollisions.size() );
     for( unsigned int icoll = 0; icoll< patch->vecCollisions.size(); icoll++ ) {
         rate_multiplier[icoll] =  patch->vecCollisions[icoll]->NuclearReaction->rate_multiplier_;
     }
     g.vect( "collisions_rate_multiplier", rate_multiplier );
-    
+
     // Save data for LaserProfileFile (i.e. LaserOffset)
     for( unsigned int ii = 0; ii < 2; ii++ ) {
         if( ! EMfields->emBoundCond[ii] ) continue;
@@ -539,26 +539,26 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
 void Checkpoint::readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin )
 {
     H5Read f( restart_file );
-    
+
     // Read basic attributes
     string dump_version;
     f.attr( "Version", dump_version );
-    
+
     if( dump_version != string( __VERSION ) ) {
         WARNING( "The code version that dumped the file is " << dump_version );
         WARNING( "                while running version is " << string( __VERSION ) );
     }
-    
+
     vector<int> patch_count( smpi->getSize() );
     f.vect( "patch_count", patch_count );
     smpi->patch_count = patch_count;
-    
+
     smpi->patch_refHindexes.resize( smpi->patch_count.size(), 0 );
     smpi->patch_refHindexes[0] = 0;
     for( int rk=1 ; rk<smpi->smilei_sz ; rk++ ) {
         smpi->patch_refHindexes[rk] = smpi->patch_refHindexes[rk-1] + smpi->patch_count[rk-1];
     }
-    
+
     // load window status : required to know the patch movement
     restartMovingWindow( f, simWin );
 }
@@ -567,9 +567,9 @@ void Checkpoint::readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin )
 void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD )
 {
     MESSAGE( 1, "READING fields and particles for restart" );
-    
+
     H5Read f( restart_file );
-    
+
     // Write diags scalar data
     DiagnosticScalar *scalars = static_cast<DiagnosticScalar *>( vecPatches.globalDiags[0] );
     f.attr( "latest_timestep", scalars->latest_timestep );
@@ -589,7 +589,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
             k++;
         }
     }
-    
+
     // Read the diags screen data
     if( smpi->isMaster() ) {
         unsigned int iscreen = 0;
@@ -608,20 +608,20 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
             }
         }
     }
-    
+
     // Read all the patch data
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++ ) {
-    
+
         ostringstream patch_name( "" );
         patch_name << setfill( '0' ) << setw( 6 ) << vecPatches( ipatch )->Hindex();
         string patchName = Tools::merge( "patch-", patch_name.str() );
         H5Read g = f.group( patchName );
-        
+
         restartPatch( vecPatches( ipatch ), params, g );
-        
+
         // Random number generator state
         g.attr( "xorshift32_state", vecPatches( ipatch )->rand_->xorshift32_state );
-        
+
     }
 
     if (params.multiple_decomposition) {
@@ -631,7 +631,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
         H5Read g = f.group( patchName );
         restartPatch( region.patch_, params, g );
     }
-    
+
     // Read the latest Id that the MPI processes have given to each species
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack *track = dynamic_cast<DiagnosticTrack *>( vecPatches.localDiags[idiag] ) ) {
@@ -644,7 +644,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches, Region &region, SmileiMPI 
             }
         }
     }
-    
+
 }
 
 
@@ -679,7 +679,7 @@ void Checkpoint::readRegionDistribution( Region &region )
 void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
 {
     ElectroMagn * EMfields = patch->EMfields;
-    
+
     if ( params.geometry != "AMcylindrical" ) {
         restartFieldsPerProc( g, EMfields->Ex_ );
         restartFieldsPerProc( g, EMfields->Ey_ );
@@ -703,14 +703,14 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
             restart_cFieldsPerProc( g, emAM->Bl_m[imode] );
             restart_cFieldsPerProc( g, emAM->Br_m[imode] );
             restart_cFieldsPerProc( g, emAM->Bt_m[imode] );
-            
+
             if( params.is_pxr ) {
                 restart_cFieldsPerProc( g, emAM->rho_old_AM_[imode] );
             }
-            
+
         }
     }
-    
+
 
     if( EMfields->envelope!=NULL ) {
         DEBUG( "restarting envelope" );
@@ -720,8 +720,8 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
     } else {
         DEBUG( "envelope is null" );
     }
-    
-    
+
+
     // filtered Electric fields
     for( unsigned int i=0; i<EMfields->Exfilter.size(); i++ ) {
         restartFieldsPerProc( g, EMfields->Exfilter[i] );
@@ -742,25 +742,25 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
     for( unsigned int i=0; i<EMfields->Bzfilter.size(); i++ ) {
         restartFieldsPerProc( g, EMfields->Bzfilter[i] );
     }
-    
+
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name( "" );
         group_name << "FieldsForDiag" << idiag;
         if( g.has( group_name.str() ) ) {
-            
+
             H5Read d = g.group( group_name.str() );
             for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ ) {
                 restartFieldsPerProc( d, EMfields->allFields_avg[idiag][ifield] );
             }
-            
+
         } else if( EMfields->allFields_avg[idiag].size() > 0 ) {
             // When the restart occurs in the middle of an average, and the field diag is new,
             // there is missing data that will cause wrong results on the first output after restart
             WARNING( "New average Field diag "<<idiag<<" may produce wrong first output after restart" );
         }
     }
-    
+
     // Fields required for DiagProbes with time integral
     for( unsigned int iprobe=0; iprobe<patch->probes.size(); iprobe++ ) {
         ostringstream group_name( "" );
@@ -778,7 +778,7 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
             }
         }
     }
-    
+
     if( ( EMfields->extFields.size()>0 ) && ( params.save_magnectic_fields_for_SM ) ) {
         for( unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if( ! EMfields->emBoundCond[bcId] ) {
@@ -819,68 +819,68 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
             }
         }
     }
-    
+
     unsigned int vecSpeciesSize=0;
     g.attr( "species", vecSpeciesSize );
-    
+
     if( vecSpeciesSize != patch->vecSpecies.size() ) {
         ERROR( "Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<patch->vecSpecies.size()<<")" );
     }
-    
-    
+
+
     for( unsigned int ispec=0 ; ispec<patch->vecSpecies.size() ; ispec++ ) {
         Species * spec = patch->vecSpecies[ispec];
-        
+
         ostringstream name( "" );
         name << setfill( '0' ) << setw( 2 ) << ispec;
         string groupName = Tools::merge( "species-", name.str(), "-", spec->name_ );
         H5Read s = g.group( groupName );
-        
+
         unsigned int partCapacity=0;
         s.attr( "partCapacity", partCapacity );
         spec->particles->reserve( partCapacity, nDim_particle );
-        
+
         unsigned int partSize=0;
         s.attr( "partSize", partSize );
         spec->particles->initialize( partSize, nDim_particle, params.keep_position_old );
-        
-        double nrj_radiation;
-        if( s.hasAttr( "nrj_radiation" ) ) {
-            s.attr( "nrj_radiation", nrj_radiation );
-            spec->setNrjRadiation( nrj_radiation );
+
+        double radiated_energy;
+        if( s.hasAttr( "radiatedEnergy" ) ) {
+            s.attr( "radiatedEnergy", radiated_energy );
+            spec->setNrjRadiation( radiated_energy );
         }
-        
+
         if( partSize>0 ) {
             for( unsigned int i=0; i<spec->particles->Position.size(); i++ ) {
                 ostringstream namePos( "" );
                 namePos << "Position-" << i;
                 s.vect( namePos.str(), spec->particles->Position[i] );
             }
-            
+
             for( unsigned int i=0; i<spec->particles->Momentum.size(); i++ ) {
                 ostringstream namePos( "" );
                 namePos << "Momentum-" << i;
                 s.vect( namePos.str(), spec->particles->Momentum[i] );
             }
-            
+
             s.vect( "Weight", spec->particles->Weight );
-            
+
             s.vect( "Charge", spec->particles->Charge );
-            
+
             if( spec->particles->tracked ) {
                 s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );
             }
-            
+
             if( params.vectorization_mode == "off" || params.vectorization_mode == "on" || params.cell_sorting ) {
                 s.vect( "first_index", spec->particles->first_index, true );
                 s.vect( "last_index", spec->particles->last_index, true );
             }
             // In the adaptive vectorization case, the bins will be recomputed
             // latter in the patch reconfiguration
-            
+
         }
     }
-    
+
     // Manage some collisions parameters
     if( g.vectSize( "collisions_rate_multiplier" ) > 0 ) {
         std::vector<double> rate_multiplier;
@@ -889,7 +889,7 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
             patch->vecCollisions[icoll]->NuclearReaction->rate_multiplier_ = rate_multiplier[icoll];
         }
     }
-    
+
     // Load data for LaserProfileFile (i.e. LaserOffset)
     for( unsigned int ii = 0; ii < 2; ii++ ) {
         if( ! EMfields->emBoundCond[ii] ) continue;
@@ -951,13 +951,13 @@ void Checkpoint::dumpMovingWindow( H5Write &f, SimWindow *simWin )
 }
 void Checkpoint::restartMovingWindow( H5Read &f, SimWindow *simWin )
 {
-    
+
     double x_moved=0.;
     f.attr( "x_moved", x_moved );
     simWin->setXmoved( x_moved );
-    
+
     unsigned int n_moved=0;
     f.attr( "n_moved", n_moved );
     simWin->setNmoved( n_moved );
-    
+
 }

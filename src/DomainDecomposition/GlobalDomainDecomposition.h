@@ -18,7 +18,7 @@ protected:
 };
 
 
-class GlobalDomainDecomposition1D : public GlobalDomainDecomposition
+class GlobalDomainDecomposition1D final : public GlobalDomainDecomposition
 {
 public:
     GlobalDomainDecomposition1D( Params &params );
@@ -29,7 +29,7 @@ public:
 };
 
 
-class GlobalDomainDecomposition2D : public GlobalDomainDecomposition
+class GlobalDomainDecomposition2D final : public GlobalDomainDecomposition
 {
 public:
     GlobalDomainDecomposition2D( Params &params );
@@ -40,7 +40,7 @@ public:
 };
 
 
-class GlobalDomainDecomposition3D : public GlobalDomainDecomposition
+class GlobalDomainDecomposition3D final : public GlobalDomainDecomposition
 {
 public:
     GlobalDomainDecomposition3D( Params &params );

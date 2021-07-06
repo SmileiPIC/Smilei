@@ -50,14 +50,7 @@ public:
             // assign the correct Pusher to Push
             // Pusher of Boris
             if( species->pusher_name_ == "boris" ) {
-                // if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push = new PusherBoris( params, species );
-                // }
-// #ifdef _VECTO
-//                 else {
-//                     Push = new PusherBorisV( params, species );
-//                 }
-// #endif
             } else if( species->pusher_name_ == "ponderomotive_boris" ) {
             
                 int n_envlaser = params.Laser_Envelope_model;
@@ -69,14 +62,7 @@ public:
                     ERROR( "if ponderomotive_boris pusher is chosen for a species, the flag ponderomotive_dynamics for that species must be set to true." );
                 }
                 
-                // if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push = new PusherPonderomotiveBoris( params, species );
-//                 }
-// #ifdef _VECTO
-//                 else {
-//                     Push = new PusherPonderomotiveBorisV( params, species );
-//                 }
-// #endif
             // Non-relativistic Boris pusher
             } else if( species->pusher_name_ == "borisnr" ) {
                 Push = new PusherBorisNR( params, species );
@@ -120,14 +106,7 @@ public:
         if( species->mass_ > 0 ) {
             // assign the correct Pusher to Push_ponderomotive_position
             if( species->pusher_name_ == "ponderomotive_boris" ) {
-                // if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push_ponderomotive_position = new PusherPonderomotivePositionBoris( params, species );
-//                 }
-// #ifdef _VECTO
-//                 else {
-//                     Push_ponderomotive_position = new PusherPonderomotivePositionBorisV( params, species );
-//                 }
-// #endif
             }
             
             else {

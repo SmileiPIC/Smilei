@@ -409,6 +409,8 @@ void Particles::eraseParticle( unsigned int ipart )
         ( *uint64_prop[iprop] ).erase( ( *uint64_prop[iprop] ).begin()+ipart );
     }
 
+    //cell_keys.erase(cell_keys.begin() + ipart);
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

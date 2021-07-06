@@ -236,6 +236,9 @@ void DiagnosticParticleBinningBase::calculate_auto_limits( Patch *patch, SimWind
         for( unsigned int i_s=0; i_s<species_indices.size(); i_s++ ) {
             Species *s = patch->vecSpecies[species_indices[i_s]];
             unsigned int n = s->getNbrOfParticles();
+            if( n <= 0 ) {
+                continue;
+            }
             std::vector<double> double_buffer( n );
             std::vector<int> int_buffer( n, 0 );
             axis->calculate_locations( s, &double_buffer[0], &int_buffer[0], n, simWindow );
@@ -244,6 +247,20 @@ void DiagnosticParticleBinningBase::calculate_auto_limits( Patch *patch, SimWind
             }
             if( std::isnan( axis->max ) ) {
                 axis_max = max( axis_max, *max_element( double_buffer.begin(), double_buffer.end() ) );
+            }
+        }
+        if( axis_min > axis_max ) {
+            axis_min = -1.;
+            axis_max = 1.;
+        }
+        if( axis_min == axis_max ) {
+            if( axis_min == 0. ) {
+                axis_min = -1.;
+                axis_max = 1.;
+            } else {
+                double m = axis_min * 0.5;
+                axis_min -= m;
+                axis_max += m;
             }
         }
         if( std::isnan( axis->min ) ) {
