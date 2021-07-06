@@ -56,7 +56,7 @@ run2D:
   stage: run_default
   only:
     - develop
-#    - develop-mat
+    - develop-mat
 
   script:
     # Move in test dir
@@ -71,7 +71,7 @@ run3D:
   stage: run_default
   only:
     - develop
-#    - develop-mat
+    - develop-mat
 
   script:
     # Move in test dir

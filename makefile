@@ -141,25 +141,33 @@ else ifneq (,$(call parse_config,advisor))
 else ifneq (,$(call parse_config,inspector))
     CXXFLAGS += -g -O0 -I$(INSPECTOR_ROOT_DIR)/include/
     LDFLAGS += $(INSPECTOR_ROOT_DIR)/lib64/libittnotify.a
-
-# Optimization report
-else ifneq (,$(call parse_config,opt-report))
-    ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
-        CXXFLAGS += -Ofast -fsave-optimization-record
-    else
-        CXXFLAGS += -O3 -qopt-report5
-    endif
-
 # Default configuration
 else
     ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    	CXXFLAGS += -Ofast -g
+    	CXXFLAGS += -Ofast -g -ffast-math -fno-math-errno
     else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
-        CXXFLAGS += -Ofast -g
+        CXXFLAGS += -Ofast -g -ffast-math
     else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
         CXXFLAGS += -Kfast -g
     else
         CXXFLAGS += -O3 -g
+    endif
+endif
+
+# Optimization report
+ifneq (,$(call parse_config,opt-report))
+    # Clang compiler
+    ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
+        CXXFLAGS += -fsave-optimization-record -Rpass-analysis=loop-vectorize
+    else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
+        CXXFLAGS += -fsave-optimization-record -Rpass-analysis=loop-vectorize
+    else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
+        CXXFLAGS += -Koptmsg=2 -Nlst=t
+    else ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
+        CXXFLAGS += -fopt-info
+    # Intel compiler
+    else ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
+        CXXFLAGS += -qopt-report5
     endif
 endif
 

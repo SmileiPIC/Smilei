@@ -103,6 +103,13 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
             double delta2, delta;
 
+            #if defined(__clang__)
+                #pragma clang loop unroll(full)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd 3
+            #elif defined(__GNUC__)
+                #pragma GCC unroll 3
+            #endif
             for( int i=0; i<3; i++ ) { // for X/Y
                 //delta primal = distance to primal node
                 delta   = particles.position( i, ipart+ivect+istart[0] )*D_inv[i] - idx[i];
@@ -128,20 +135,42 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-            double *coeffyp = &( coeff[1][0][1][ipart] );
-            double *coeffyd = &( coeff[1][1][1][ipart] );
-            double *coeffxd = &( coeff[0][1][1][ipart] );
-            double *coeffxp = &( coeff[0][0][1][ipart] );
-            double *coeffzp = &( coeff[2][0][1][ipart] );
-            double *coeffzd = &( coeff[2][1][1][ipart] );
+            double * __restrict__ coeffyp = &( coeff[1][0][1][ipart] );
+            double * __restrict__ coeffyd = &( coeff[1][1][1][ipart] );
+            double * __restrict__ coeffxd = &( coeff[0][1][1][ipart] );
+            double * __restrict__ coeffxp = &( coeff[0][0][1][ipart] );
+            double * __restrict__ coeffzp = &( coeff[2][0][1][ipart] );
+            double * __restrict__ coeffzd = &( coeff[2][1][1][ipart] );
 
             //Ex(dual, primal, primal)
             double interp_res = 0.;
+            #if defined(__clang__)
+                #pragma clang loop unroll(full)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd 3
+            #elif defined(__GNUC__)
+                #pragma GCC unroll 3
+            #endif
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                #if defined(__clang__)
+                    #pragma clang loop unroll(full)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd 3
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll 3
+                #endif
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                    #if defined(__clang__)
+                        #pragma clang loop unroll(full)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd 3
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll 3
+                    #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
                         interp_res += *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) * *( coeffzp+kloc*32 ) *
-                                      ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+iloc, idxO[1]+jloc, idxO[2]+kloc ) );
+                                      ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) +
+                                      dual[0][ipart]*( *Ex3D )( idxO[0]+1+iloc, idxO[1]+jloc, idxO[2]+kloc ) );
                     }
                 }
             }
@@ -149,8 +178,29 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
             //Ey(primal, dual, primal)
             interp_res = 0.;
+            #if defined(__clang__)
+                #pragma clang loop unroll(full)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd 3
+            #elif defined(__GNUC__)
+                #pragma GCC unroll 3
+            #endif
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                #if defined(__clang__)
+                    #pragma clang loop unroll(full)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd 3
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll 3
+                #endif
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                    #if defined(__clang__)
+                        #pragma clang loop unroll(full)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd 3
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll 3
+                    #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
                         interp_res += *( coeffxp+iloc*32 ) * *( coeffyd+jloc*32 ) * *( coeffzp+kloc*32 ) *
                                       ( ( 1-dual[1][ipart] )*( *Ey3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[1][ipart]*( *Ey3D )( idxO[0]+iloc, idxO[1]+1+jloc, idxO[2]+kloc ) );
@@ -162,8 +212,29 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
             //Ez(primal, primal, dual)
             interp_res = 0.;
+            #if defined(__clang__)
+                #pragma clang loop unroll(full)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd 3
+            #elif defined(__GNUC__)
+                #pragma GCC unroll 3
+            #endif
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                #if defined(__clang__)
+                    #pragma clang loop unroll(full)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd 3
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll 3
+                #endif
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                    #if defined(__clang__)
+                        #pragma clang loop unroll(full)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd 3
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll 3
+                    #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
                         interp_res += *( coeffxp+iloc*32 ) * *( coeffyp+jloc*32 ) * *( coeffzd+kloc*32 ) *
                                       ( ( 1-dual[2][ipart] )*( *Ez3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[2][ipart]*( *Ez3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+1+kloc ) );
@@ -175,8 +246,29 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
             //Bx(primal, dual , dual )
             interp_res = 0.;
+            #if defined(__clang__)
+                #pragma clang loop unroll(full)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd 3
+            #elif defined(__GNUC__)
+                #pragma GCC unroll 3
+            #endif
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                #if defined(__clang__)
+                    #pragma clang loop unroll(full)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd 3
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll 3
+                #endif
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                    #if defined(__clang__)
+                        #pragma clang loop unroll(full)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd 3
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll 3
+                    #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
                         interp_res += *( coeffxp+iloc*32 ) * *( coeffyd+jloc*32 ) * *( coeffzd+kloc*32 ) *
                                       ( ( 1-dual[2][ipart] ) * ( ( 1-dual[1][ipart] )*( *Bx3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[1][ipart]*( *Bx3D )( idxO[0]+iloc, idxO[1]+1+jloc, idxO[2]+kloc ) )
@@ -188,8 +280,29 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
             //By(dual, primal, dual )
             interp_res = 0.;
+            #if defined(__clang__)
+                #pragma clang loop unroll(full)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd 3
+            #elif defined(__GNUC__)
+                #pragma GCC unroll 3
+            #endif
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                #if defined(__clang__)
+                    #pragma clang loop unroll(full)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd 3
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll 3
+                #endif
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                    #if defined(__clang__)
+                        #pragma clang loop unroll(full)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd 3
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll 3
+                    #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
                         interp_res += *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) * *( coeffzd+kloc*32 ) *
                                       ( ( 1-dual[2][ipart] ) * ( ( 1-dual[0][ipart] )*( *By3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[0][ipart]*( *By3D )( idxO[0]+1+iloc, idxO[1]+jloc, idxO[2]+kloc ) )
@@ -201,8 +314,29 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
             //Bz(dual, dual, prim )
             interp_res = 0.;
+            #if defined(__clang__)
+                #pragma clang loop unroll(full)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd 3
+            #elif defined(__GNUC__)
+                #pragma GCC unroll 3
+            #endif
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                #if defined(__clang__)
+                    #pragma clang loop unroll(full)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd 3
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll 3
+                #endif
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                    #if defined(__clang__)
+                        #pragma clang loop unroll(full)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd 3
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll 3
+                    #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
                         interp_res += *( coeffxd+iloc*32 ) * *( coeffyd+jloc*32 ) * *( coeffzp+kloc*32 ) *
                                       ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*( *Bz3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[0][ipart]*( *Bz3D )( idxO[0]+1+iloc, idxO[1]+jloc, idxO[2]+kloc ) )

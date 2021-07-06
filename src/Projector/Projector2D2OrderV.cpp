@@ -155,9 +155,11 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
         for( unsigned int j=0 ; j<5 ; j++ ) {
             double tmpRho = 0.;
             int ilocal = ( ( i )*5+j )*vecSize;
-            #ifdef __clang__
+            #if defined(__clang__)
                 #pragma clang loop unroll_count(8)
-            #elif __GNUC__
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
                 #pragma GCC unroll 8
             #else
                 #pragma unroll(8)
@@ -407,9 +409,11 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
             Sx0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #ifdef __clang__
+            #if defined(__clang__)
                 #pragma clang loop unroll_count(5)
-            #elif __GNUC__
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
                 #pragma GCC unroll 5
             #else
                 #pragma unroll(5)
@@ -444,9 +448,11 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sy0_buff_vect[4*vecSize+ipart] = 0;
 
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #ifdef __clang__
+            #if defined(__clang__)
                 #pragma clang loop unroll_count(5)
-            #elif __GNUC__
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
                 #pragma GCC unroll 5
             #else
                 #pragma unroll(5)
@@ -490,9 +496,11 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         for( unsigned int j=0 ; j<5 ; j++ ) {
             double tmpJx( 0. );
             int ilocal = ( i*5+j )*vecSize;
-            #ifdef __clang__
+            #if defined(__clang__)
                 #pragma clang loop unroll_count(8)
-            #elif __GNUC__
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
                 #pragma GCC unroll 8
             #else
                 #pragma unroll(8)
@@ -544,9 +552,11 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
             Sx0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #ifdef __clang__
+            #if defined(__clang__)
                 #pragma clang loop unroll_count(5)
-            #elif __GNUC__
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
                 #pragma GCC unroll 5
             #else
                 #pragma unroll(5)
@@ -581,9 +591,11 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sy0_buff_vect[4*vecSize+ipart] = 0;
 
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #ifdef __clang__
+            #if defined(__clang__)
                 #pragma clang loop unroll_count(5)
-            #elif __GNUC__
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
                 #pragma GCC unroll 5
             #else
                 #pragma unroll(5)
@@ -625,9 +637,11 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         for( unsigned int j=1 ; j<5 ; j++ ) {
             double tmpJy( 0. );
             int ilocal = ( i*5+j )*vecSize;
-            #ifdef __clang__
+            #if defined(__clang__)
                 #pragma clang loop unroll_count(8)
-            #elif __GNUC__
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
                 #pragma GCC unroll 8
             #else
                 #pragma unroll(8)
@@ -680,9 +694,11 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
             Sx0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #ifdef __clang__
+            #if defined(__clang__)
                 #pragma clang loop unroll_count(5)
-            #elif __GNUC__
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
                 #pragma GCC unroll 5
             #else
                 #pragma unroll(5)
@@ -717,9 +733,11 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sy0_buff_vect[4*vecSize+ipart] = 0;
 
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #ifdef __clang__
+            #if defined(__clang__)
                 #pragma clang loop unroll_count(5)
-            #elif __GNUC__
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
                 #pragma GCC unroll 5
             #else
                 #pragma unroll(5)
@@ -761,9 +779,11 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         for( unsigned int j=0 ; j<5 ; j++ ) {
             double tmpJz( 0. );
             int ilocal = ( i*5+j )*vecSize;
-            #ifdef __clang__
+            #if defined(__clang__)
                 #pragma clang loop unroll_count(8)
-            #elif __GNUC__
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
                 #pragma GCC unroll 8
             #else
                 #pragma unroll(8)

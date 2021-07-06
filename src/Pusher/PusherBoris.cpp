@@ -54,7 +54,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double * __restrict__ momentum_y = particles.getPtrMomentum(1);
     double * __restrict__ momentum_z = particles.getPtrMomentum(2);
 
-    short * charge = particles.getPtrCharge();
+    short * __restrict__ charge = particles.getPtrCharge();
 
     int nparts;
     if (vecto) {
@@ -110,12 +110,33 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         // Move the particle
         local_invgf *= dt;
         position_x[ipart] += pxsm*local_invgf;
-        if (nDim_>1) {
-            position_y[ipart] += pysm*local_invgf;
-            if (nDim_>2) {
-                position_z[ipart] += pzsm*local_invgf;
-            }
+        // if (nDim_>1) {
+        //     position_y[ipart] += pysm*local_invgf;
+        //     if (nDim_>2) {
+        //         position_z[ipart] += pzsm*local_invgf;
+        //     }
+        // }
+    }
+
+    if (nDim_>1) {
+        #ifdef __clang__
+            #pragma clang loop vectorize(assume_safety)
+        #else
+            #pragma omp simd
+        #endif
+        for( int ipart=istart ; ipart<iend; ipart++ ) {
+            position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
         }
     }
 
+    if (nDim_>2) {
+        #ifdef __clang__
+            #pragma clang loop vectorize(assume_safety)
+        #else
+            #pragma omp simd
+        #endif
+        for( int ipart=istart ; ipart<iend; ipart++ ) {
+            position_z[ipart] += momentum_z[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
+        }
+    }
 }
