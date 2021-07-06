@@ -145,11 +145,11 @@ public:
     Particles *particles_to_move;
     Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
-    
+
     //! If initialization from file, this contains the number of particles. Otherwise 0
     unsigned int file_position_npart_;
     unsigned int file_momentum_npart_;
-    
+
     //! Pointer toward position array
     double *position_initialization_array_;
     //! Pointer toward regular number of particles array
@@ -241,7 +241,7 @@ public:
     //! Accumulate energy added with new particles
     double new_particles_energy_;
     //! Accumulate energy lost by the particle with the radiation
-    double nrj_radiation;
+    double radiated_energy_;
 
     //! whether to choose vectorized operators with respective sorting methods
     int vectorized_operators;
@@ -278,7 +278,7 @@ public:
 
     //! Discretization scale
     bool merge_log_scale_;
-    
+
     //! Minimum momentum value in log scale
     double merge_min_momentum_log_scale_;
 
@@ -465,7 +465,7 @@ public:
     {
         nrj_bc_lost = value;
     }
-    
+
     //! Get the energy lost in the boundary conditions
     double getLostNrjBC() const
     {
@@ -481,19 +481,19 @@ public:
     //! Get the energy radiated away by the particles
     double getNrjRadiation() const
     {
-        return nrj_radiation;
+        return radiated_energy_;
     }
 
     //! Set the energy radiated away by the particles
     void setNrjRadiation( double value )
     {
-        nrj_radiation = value;
+        radiated_energy_ = value;
     }
 
     //! Add the energy radiated away by the particles
     void addNrjRadiation( double value )
     {
-        nrj_radiation += value;
+        radiated_energy_ += value;
     }
 
     //! Set gained via new particles
@@ -501,7 +501,7 @@ public:
     {
         new_particles_energy_ = value;
     }
-    
+
     //! Get energy gained via new particles
     double getNewParticlesNRJ() const
     {
@@ -514,7 +514,7 @@ public:
         //nrj_bc_lost = 0;
         nrj_mw_lost = 0;
         //new_particles_energy_ = 0;
-        //nrj_radiation = 0;
+        //radiated_energy_ = 0;
     }
 
     inline void storeNRJlost( double nrj )
@@ -589,7 +589,7 @@ public:
                     + part->position(idim+1, ipart) * part->position(idim+1, ipart))
                - min_loc_vec[idim];
     }
-    
+
     //! Erase all particles with zero weight
     void eraseWeightlessParticles();
 

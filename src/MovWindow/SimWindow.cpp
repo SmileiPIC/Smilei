@@ -98,7 +98,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     if( ! isMoving( time_dual ) && itime != additional_shifts_iteration ) {
         return;
     }
-    
+ 
     unsigned int h0;
     //double energy_field_lost( 0. );
     //std::vector<double> energy_part_lost( vecPatches( 0 )->vecSpecies.size(), 0. );
@@ -429,12 +429,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
                     
                     // If new particles are required
-                    if( patch_particle_created[ithread][j] ) {
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             mypatch->vecSpecies[ispec]->computeParticleCellKeys( params );
                             mypatch->vecSpecies[ispec]->sortParticles( params , mypatch);
                         }
-                    } // end test patch_particle_created[ithread][j]
                 } // end j loop
             } // End ithread loop
             //}
