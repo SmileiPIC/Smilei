@@ -738,14 +738,14 @@ try:
     
     _N_LaserOffset = 0
     
-    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., fft_time_window=None, extra_envelope=lambda *a:1., keep_n_strongest_modes=100, angle=0., number_of_processes=None):
+    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., fft_time_window=None, extra_envelope=lambda *a:1., keep_n_strongest_modes=100, angle=0., number_of_processes=None, file=None):
         global _N_LaserOffset
         
-        file = 'LaserOffset'+str(_N_LaserOffset)+'.h5'
+        file_ = file or ('LaserOffset'+str(_N_LaserOffset)+'.h5')
         
         L = Laser(
             box_side = "xmin",
-            file = file,
+            file = file_,
         )
         
         L._offset = offset
@@ -755,17 +755,22 @@ try:
         L._keep_n_strongest_modes = keep_n_strongest_modes
         L._angle = angle
         L._number_of_processes = number_of_processes
-        L._propagate = True
+        if file:
+            if not os.path.exists(file):
+                raise Exception("File not found or not accessible: "+file)
+            L._propagate = False
+        else:
+            L._propagate = True
         
         _N_LaserOffset += 1
 
 except:
     
-    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., time_envelope=1.):
+    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., fft_time_window=None, extra_envelope=lambda *a:1., keep_n_strongest_modes=100, angle=0., number_of_processes=None, file=None):
         L = Laser(
             box_side = "xmin",
             file = "none",
-            time_envelope = time_envelope
+            time_envelope = extra_envelope
         )
         print("WARNING: LaserOffset unavailable because numpy was not found")
 

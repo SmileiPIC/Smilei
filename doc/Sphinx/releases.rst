@@ -25,6 +25,7 @@ Changes made in the repository (not released)
 * Probes can be time-integrated
 * ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
 * Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
+* ``LaserOffset`` may be re-used from a previous simulation
 * Bugfixes:
 
   * Poynting scalars behaviour with several patches, or with checkpoints
