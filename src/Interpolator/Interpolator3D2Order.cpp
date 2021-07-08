@@ -27,7 +27,7 @@ Interpolator3D2Order::Interpolator3D2Order( Params &params, Patch *patch ) : Int
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
 void Interpolator3D2Order::fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc )
-{   // This interpolator is already task-safe
+{
 
     // Static cast of the electromagnetic fields
     Field3D *Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
