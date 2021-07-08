@@ -1135,7 +1135,7 @@ void VectorPatch::computeCharge(bool old /*=false*/)
 
 } // END computeRho
 
-void VectorPatch::computeChargeRelativisticSpecies( double time_primal )
+void VectorPatch::computeChargeRelativisticSpecies( double time_primal , Params &params )
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -1143,7 +1143,7 @@ void VectorPatch::computeChargeRelativisticSpecies( double time_primal )
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             // project only if species needs relativistic initialization and it is the right time to initialize its fields
             if( ( species( ipatch, ispec )->relativistic_field_initialization_ ) &&
-                    ( time_primal == species( ipatch, ispec )->time_relativistic_initialization_ ) ) {
+                    ( int(time_primal/params.timestep) == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
                     species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ) );
                 } else {
@@ -2332,7 +2332,7 @@ void VectorPatch::runNonRelativisticPoissonModule( Params &params, SmileiMPI* sm
 void VectorPatch::runRelativisticModule( double time_prim, Params &params, SmileiMPI* smpi,  Timers &timers )
 {
     // Compute rho only for species needing relativistic field Initialization
-    computeChargeRelativisticSpecies( time_prim );
+    computeChargeRelativisticSpecies( time_prim, params );
 
     if (params.geometry != "AMcylindrical"){
         SyncVectorPatch::sum<double,Field>( listrho_, (*this), smpi, timers, 0 );
@@ -2389,7 +2389,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
         if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization_ ) {
+                if( int(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
@@ -2816,7 +2816,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
         if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization_ ) {
+                if( int(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
@@ -3378,7 +3378,16 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
     }
 
 #ifdef _VECTO
-    if( params.vectorization_mode == "adaptive_mixed_sort" ) {
+    if( params.vectorization_mode == "on" || ( params.cell_sorting ) ) {
+        // vectorization or cell sorting
+        // Recompute the cell keys and sort  frozen particles
+        for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
+            for( unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++ ) {
+                    dynamic_cast<SpeciesV *>( recv_patches_[ipatch]->vecSpecies[ispec] )->computeParticleCellKeys( params );
+                    dynamic_cast<SpeciesV *>( recv_patches_[ipatch]->vecSpecies[ispec] )->sortParticles( params, recv_patches_[ipatch] );
+            }
+        }
+    } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
         // adaptive vectorization -- mixed sort
         // Recompute the cell keys before the next step and configure operators
         for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {

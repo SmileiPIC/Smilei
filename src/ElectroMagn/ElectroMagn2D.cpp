@@ -1356,7 +1356,7 @@ void ElectroMagn2D::computePoynting()
         unsigned int jBy=istart[1][By2D_m->isDual( 1 )];
         
         poynting_inst[0][0] = 0.;
-        for( unsigned int j=0; j<=bufsize[1][Ez2D->isDual( 1 )]; j++ ) {
+        for( unsigned int j=0; j<bufsize[1][Ez2D->isDual( 1 )]; j++ ) {
         
             double Ey__ = 0.5*( ( *Ey2D )( iEy, jEy+j ) + ( *Ey2D )( iEy, jEy+j+1 ) );
             double Bz__ = 0.25*( ( *Bz2D_m )( iBz, jBz+j )+( *Bz2D_m )( iBz+1, jBz+j )+( *Bz2D_m )( iBz, jBz+j+1 )+( *Bz2D_m )( iBz+1, jBz+j+1 ) );
@@ -1383,7 +1383,7 @@ void ElectroMagn2D::computePoynting()
         unsigned int jBy=istart[1][By2D_m->isDual( 1 )];
         
         poynting_inst[1][0] = 0.;
-        for( unsigned int j=0; j<=bufsize[1][Ez2D->isDual( 1 )]; j++ ) {
+        for( unsigned int j=0; j<bufsize[1][Ez2D->isDual( 1 )]; j++ ) {
         
             double Ey__ = 0.5*( ( *Ey2D )( iEy, jEy+j ) + ( *Ey2D )( iEy, jEy+j+1 ) );
             double Bz__ = 0.25*( ( *Bz2D_m )( iBz, jBz+j )+( *Bz2D_m )( iBz+1, jBz+j )+( *Bz2D_m )( iBz, jBz+j+1 )+( *Bz2D_m )( iBz+1, jBz+j+1 ) );
@@ -1409,7 +1409,7 @@ void ElectroMagn2D::computePoynting()
         unsigned int jBz=istart[1][Bz_m->isDual( 1 )];
         
         poynting_inst[0][1] = 0.;
-        for( unsigned int i=0; i<=bufsize[0][Ez2D->isDual( 0 )]; i++ ) {
+        for( unsigned int i=0; i<bufsize[0][Ez2D->isDual( 0 )]; i++ ) {
             double Ez__ = ( *Ez2D )( iEz+i, jEz );
             double Bx__ = 0.5*( ( *Bx2D_m )( iBx+i, jBx ) + ( *Bx2D_m )( iBx+i, jBx+1 ) );
             double Ex__ = 0.5*( ( *Ex2D )( iEx+i, jEx ) + ( *Ex2D )( iEx+i+1, jEx ) );
@@ -1435,7 +1435,7 @@ void ElectroMagn2D::computePoynting()
         unsigned int jBz=istart[1][Bz2D_m->isDual( 1 )] + offset;
         
         poynting_inst[1][1] = 0.;
-        for( unsigned int i=0; i<=bufsize[0][Ez_->isDual( 0 )]; i++ ) {
+        for( unsigned int i=0; i<bufsize[0][Ez_->isDual( 0 )]; i++ ) {
             double Ez__ = ( *Ez2D )( iEz+i, jEz );
             double Bx__ = 0.5*( ( *Bx2D_m )( iBx+i, jBx ) + ( *Bx2D_m )( iBx+i, jBx+1 ) );
             double Ex__ = 0.5*( ( *Ex2D )( iEx+i, jEx ) + ( *Ex2D )( iEx+i+1, jEx ) );

@@ -24,10 +24,11 @@ Changes made in the repository (not released)
 * Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
 * Probes can be time-integrated
 * ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
-* Particles can be flagged within a filter function in the TrackParticles diagnostic when we change the last byte of their IDs
+* Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
+* ``LaserOffset`` may be re-used from a previous simulation
 * Bugfixes:
 
-  * Poynting scalars with checkpoints
+  * Poynting scalars behaviour with several patches, or with checkpoints
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 

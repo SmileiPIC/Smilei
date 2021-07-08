@@ -111,9 +111,6 @@ public:
     //! Compute cell_keys for all particles of the current species
     void computeParticleCellKeys( Params &params ) override;
 
-    //! Compute cell_keys for the specified bin boundaries.
-    void compute_bin_cell_keys( Params &params, int istart, int iend );
-
     //! Create a new entry for a particle
     void addSpaceForOneParticle() override
     {

@@ -197,9 +197,6 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             timer = MPI_Wtime();
 #endif
 
-            // Computation of the particle cell keys for all particles
-            // this->compute_bin_cell_keys(params,0, particles->last_index.back());
-
             for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
                 double ener_iPart( 0. );
                 // Apply wall and boundary conditions

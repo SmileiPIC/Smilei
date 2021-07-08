@@ -60,7 +60,7 @@ Species::Species( Params &params, Patch *patch ) :
     time_frozen_( 0 ),
     radiating_( false ),
     relativistic_field_initialization_( false ),
-    time_relativistic_initialization_( 0 ),
+    iter_relativistic_initialization_( 0 ),
     multiphoton_Breit_Wheeler_( 2, "" ),
     ionization_model( "none" ),
     density_profile_type_( "none" ),

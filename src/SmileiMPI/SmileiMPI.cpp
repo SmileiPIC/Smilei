@@ -48,8 +48,10 @@ SmileiMPI::SmileiMPI( int *argc, char ***argv )
     int mpi_provided;
 
 #ifdef _OPENMP
+#ifdef _NO_MPI_TM
+    MPI_Init_thread( argc, argv, MPI_THREAD_SERIALIZED, &mpi_provided );
+#else
     MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
-#ifndef _NO_MPI_TM
     if( mpi_provided != MPI_THREAD_MULTIPLE ) {
         ERROR( "MPI_THREAD_MULTIPLE not supported. Compile your MPI library with THREAD_MULTIPLE support." );
     }
@@ -61,11 +63,11 @@ SmileiMPI::SmileiMPI( int *argc, char ***argv )
     smilei_omp_max_threads = 1;
     number_of_cores = 1;
 #endif
-    
+
     world_ = MPI_COMM_WORLD;
     MPI_Comm_size( world_, &smilei_sz );
     MPI_Comm_rank( world_, &smilei_rk );
-    
+
     MPI_Allreduce( &number_of_cores, &global_number_of_cores, 1, MPI_INT, MPI_SUM, world_ );
 } // END SmileiMPI::SmileiMPI
 
@@ -200,7 +202,7 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
             MESSAGE( 1, "applied topology for periodic BCs in "<<"xyz"[i]<<"-direction" );
         }
     }
-    
+
     // Estimate the maximum tag requires by Smilei regarding the current patch distribution
     auto it = max_element(std::begin(patch_count), std::end(patch_count));
     // the maximum tag use the maximum local patch id, iDim=1, iNeghibor=1, 8 for Jx
@@ -212,7 +214,7 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
         if (!smilei_rk) {
             ERROR( "The MPI library you are using authorizes as upper bound for a tag : " << tagUB << endl <<
                    "Regarding the number of patches you are using and the number of MPI process, Smilei will at least generate as larger tag : " << tagmax << endl <<
-                   "You should use " << ratio << " more MPI process, or " << ratio << " less patches or change of MPI library." << endl << 
+                   "You should use " << ratio << " more MPI process, or " << ratio << " less patches or change of MPI library." << endl <<
                    "This is a trough estimation, which depends of the plasma load imbalance." );
         }
     }
@@ -668,9 +670,9 @@ void SmileiMPI::isend( Patch *patch, int to, int tag, Params &params )
 
     // Count number max of comms :
     int maxtag = 0;
-    
+
     isend_species( patch, to, maxtag, tag, params );
-    
+
     // Send fields
     if( params.geometry != "AMcylindrical" ) {
         isend( patch->EMfields, to, maxtag, patch->requests_, tag );
@@ -782,7 +784,7 @@ void SmileiMPI::recv( Patch *patch, int from, int tag, Params &params )
 {
     // Receive species
     recv_species( patch, from, tag, params );
-    
+
     // Receive EM fields
     patch->EMfields->initAntennas( patch, params );
     if( params.geometry != "AMcylindrical" ) {
@@ -798,10 +800,10 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
 {
     MPI_Datatype recvParts;
     int nbrOfPartsRecv;
-    
+
     // number of species
     unsigned int nspec = patch->vecSpecies.size();
-    
+
     // Adaptive vectorization:
     // In the case of the adaptive mixed sort Vectorization,
     // we communicate the operator state (vectorized_operators variable)
@@ -843,9 +845,9 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
                   << " particles->last_index: " <<  patch->vecSpecies[ispec]->particles->last_index[0]
                   << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
     }
-    
+
     tag += 2*nspec;
-    
+
     // Receive some scalars
     if( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation ) {
         patch->buffer_scalars.resize( 3*nspec );
@@ -873,7 +875,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
             i++;
         }
     }
-    
+
 }
 
 void SmileiMPI::recv_fields( Patch *patch, int from, int tag, Params &params )
@@ -1479,7 +1481,7 @@ void SmileiMPI::sendComplex( Field *field, int to, int hindex )
 {
     cField *cf = static_cast<cField *>( field );
     MPI_Send( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD );
-    
+
 } // End isendComplex ( Field )
 
 
@@ -1509,7 +1511,7 @@ void SmileiMPI::irecvComplex( Field *field, int from, int hindex, MPI_Request &r
 {
     cField *cf = static_cast<cField *>( field );
     MPI_Irecv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
-    
+
 } // End recv ( Field )
 
 void SmileiMPI::irecv(Field* field, int from, int hindex, MPI_Request& request)

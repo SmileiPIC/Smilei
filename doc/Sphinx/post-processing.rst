@@ -84,6 +84,59 @@ In the case of the species, you can also obtain a given species by its name::
 
 ----
 
+Obtain diagnostic information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. rubric:: Print available diagnostics
+
+Commands ``S.Scalar``, ``S.Field``, ``S.Probe`` (etc.) will display general information
+about the corresponding diagnostics in the simulation.
+
+.. rubric:: List available diagnostics
+
+.. py:method:: getDiags(diagType)
+
+  Returns a list of available diagnostics of the given type
+  
+  * ``diagType``: The diagnostic type (``"Field"``, ``"Probe"``, etc.)
+
+.. py:method:: getTrackSpecies()
+
+  Returns a list of available tracked species.
+  
+.. rubric:: Information on specific diagnostics
+
+.. py:method:: fieldInfo(diag)
+
+  * ``diag``: the number or name of a Field diagnostic
+  
+  Returns a dictionnary containing:
+  
+  * ``"diagNumber"``: the diagnostic number
+  * ``"diagName"``: the diagnostic name
+  * ``"fields"``: list of the available fields in this diagnostic. In the case of
+    ``AMcylindrical`` geometry, this is a dictionnary with a list of modes for each field.
+
+.. py:method:: probeInfo(diag)
+
+  * ``diag``: the number or name of a Probe diagnostic
+  
+  Returns a dictionnary containing:
+  
+  * ``"probeNumber"``: the diagnostic number
+  * ``"probeName"``: the diagnostic name
+  * ``"fields"``: list of the available fields in this diagnostic
+  
+.. py:method:: performanceInfo()
+ 
+  Returns a dictionnary containing:
+  
+  * ``"quantities_uint"``: a list of the available integer quantities
+  * ``"quantities_double"``: a list of the available float quantities
+  * ``"patch_arrangement"``: the type of patch arrangement
+
+----
+
 Open a Scalar diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
