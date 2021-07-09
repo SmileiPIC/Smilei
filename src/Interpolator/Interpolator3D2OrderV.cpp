@@ -98,7 +98,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts-ipart_ref+ivect+istart[0]] );
         }
 
-        #pragma omp simd
+        //#pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
             double delta2, delta;
@@ -132,7 +132,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             }
         }
 
-        #pragma omp simd
+        //#pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
             double * __restrict__ coeffyp = &( coeff[1][0][1][ipart] );
