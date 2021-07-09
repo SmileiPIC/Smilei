@@ -69,11 +69,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double * By = &( ( *Bpart )[1*nparts] );
     double * Bz = &( ( *Bpart )[2*nparts] );
 
-    #ifdef __clang__
-        #pragma clang loop vectorize(assume_safety)
-    #else
-        #pragma omp simd
-    #endif
+    #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
         charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
@@ -119,22 +115,14 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     }
 
     if (nDim_>1) {
-        #ifdef __clang__
-            #pragma clang loop vectorize(assume_safety)
-        #else
-            #pragma omp simd
-        #endif
+        #pragma omp simd
         for( int ipart=istart ; ipart<iend; ipart++ ) {
             position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
         }
     }
 
     if (nDim_>2) {
-        #ifdef __clang__
-            #pragma clang loop vectorize(assume_safety)
-        #else
-            #pragma omp simd
-        #endif
+        #pragma omp simd
         for( int ipart=istart ; ipart<iend; ipart++ ) {
             position_z[ipart] += momentum_z[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
         }
