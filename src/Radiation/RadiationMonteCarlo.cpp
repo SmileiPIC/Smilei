@@ -154,7 +154,6 @@ void RadiationMonteCarlo::operator()(
     unsigned long long seed;
     unsigned long long seq;
     unsigned long long offset;
-    curandState_t state;
     #endif
     // _______________________________________________________________
     // Computation
@@ -181,6 +180,11 @@ void RadiationMonteCarlo::operator()(
         private(emission_time, local_it_time, mc_it_nb, particle_chi, gamma, state, random_number) \
         reduction(+:radiated_energy_loc)
         {
+            curandState_t state;
+            seed = 12345ULL;
+            seq = 0ULL;
+            offset = 0ULL;
+            curand_init(seed, seq, offset, &state);
             #pragma acc loop gang worker vector
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
