@@ -98,38 +98,102 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts-ipart_ref+ivect+istart[0]] );
         }
 
-        //#pragma omp simd
+        #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
             double delta2, delta;
 
-            #if defined(__clang__)
-                #pragma clang loop unroll(full)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd 3
-            #elif defined(__GNUC__)
-                #pragma GCC unroll 3
-            #endif
-            for( int i=0; i<3; i++ ) { // for X/Y
-                //delta primal = distance to primal node
-                delta   = particles.position( i, ipart+ivect+istart[0] )*D_inv[i] - idx[i];
-                delta2  = delta*delta;
-                coeff[i][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
-                coeff[i][0][1][ipart]    = ( 0.75 - delta2 );
-                coeff[i][0][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
-                //store delta primal in global array
-                //deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
-                deltaO[i][ipart] = delta;
-                dual [i][ipart] = ( delta >= 0. );
+            // #if defined(__clang__)
+            //     #pragma clang loop unroll(full)
+            // #elif defined (__FUJITSU)
+            //     #pragma loop fullunroll_pre_simd 3
+            // #elif defined(__GNUC__)
+            //     #pragma GCC unroll 3
+            // #endif
+            // for( int i=0; i<3; i++ ) { // for X/Y/Z
+            //     //delta primal = distance to primal node
+            //     delta   = particles.position( i, ipart+ivect+istart[0] )*D_inv[i] - idx[i];
+            //     delta2  = delta*delta;
+            //     coeff[i][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            //     coeff[i][0][1][ipart]    = ( 0.75 - delta2 );
+            //     coeff[i][0][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+            //     //store delta primal in global array
+            //     //deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
+            //     deltaO[i][ipart] = delta;
+            //     dual [i][ipart] = ( delta >= 0. );
+            //
+            //     //delta dual = distance to dual node
+            //     delta   = delta - dual[i][ipart] + 0.5 ;
+            //     delta2  = delta*delta;
+            //
+            //     coeff[i][1][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            //     coeff[i][1][1][ipart]    = ( 0.75 - delta2 );
+            //     coeff[i][1][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+            // }
 
-                //delta dual = distance to dual node
-                delta   = delta - dual[i][ipart] + 0.5 ;
-                delta2  = delta*delta;
+            // X direction
 
-                coeff[i][1][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
-                coeff[i][1][1][ipart]    = ( 0.75 - delta2 );
-                coeff[i][1][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
-            }
+            //delta primal = distance to primal node
+            delta   = particles.position( 0, ipart+ivect+istart[0] )*D_inv[0] - idx[0];
+            delta2  = delta*delta;
+            coeff[0][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            coeff[0][0][1][ipart]    = ( 0.75 - delta2 );
+            coeff[0][0][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+            //store delta primal in global array
+            //deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
+            deltaO[0][ipart] = delta;
+            dual [0][ipart] = ( delta >= 0. );
+
+            //delta dual = distance to dual node
+            delta   = delta - dual[0][ipart] + 0.5 ;
+            delta2  = delta*delta;
+
+            coeff[0][1][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            coeff[0][1][1][ipart]    = ( 0.75 - delta2 );
+            coeff[0][1][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+
+            // Y direction
+
+            //delta primal = distance to primal node
+            delta   = particles.position( 1, ipart+ivect+istart[0] )*D_inv[1] - idx[1];
+            delta2  = delta*delta;
+            coeff[1][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            coeff[1][0][1][ipart]    = ( 0.75 - delta2 );
+            coeff[1][0][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+            //store delta primal in global array
+            //deltaO[1][ipart-ipart_ref+ivect+istart[0]] = delta;
+            deltaO[1][ipart] = delta;
+            dual [1][ipart] = ( delta >= 0. );
+
+            //delta dual = distance to dual node
+            delta   = delta - dual[1][ipart] + 0.5 ;
+            delta2  = delta*delta;
+
+            coeff[1][1][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            coeff[1][1][1][ipart]    = ( 0.75 - delta2 );
+            coeff[1][1][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+
+            // Z direction
+
+            //delta primal = distance to primal node
+            delta   = particles.position( 2, ipart+ivect+istart[0] )*D_inv[2] - idx[2];
+            delta2  = delta*delta;
+            coeff[2][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            coeff[2][0][1][ipart]    = ( 0.75 - delta2 );
+            coeff[2][0][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+            //store delta primal in global array
+            //deltaO[2][ipart-ipart_ref+ivect+istart[0]] = delta;
+            deltaO[2][ipart] = delta;
+            dual [2][ipart] = ( delta >= 0. );
+
+            //delta dual = distance to dual node
+            delta   = delta - dual[2][ipart] + 0.5 ;
+            delta2  = delta*delta;
+
+            coeff[2][1][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            coeff[2][1][1][ipart]    = ( 0.75 - delta2 );
+            coeff[2][1][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+
         }
 
         //#pragma omp simd
