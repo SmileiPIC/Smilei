@@ -1609,6 +1609,15 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     be very costly in communication. In addition, using too few may not allow
     the arrays to fit in memory.
 
+  .. py:data:: file
+  
+    :default: ``None``
+    
+    The path to a ``LaserOffset*.h5`` file generated from a previous simulation. This option
+    can help reduce the computation time by re-using the ``LaserOffset`` computation
+    from a previous simulation.
+
+
 ----
 
 .. _laser_envelope:
