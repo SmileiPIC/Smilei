@@ -664,8 +664,7 @@ public:
             }
         }
         // time when the relativistic field initialization is applied, if enabled
-        int n_timesteps_relativistic_initialization   = ( int )( this_species->time_frozen_/params.timestep );
-        this_species->iter_relativistic_initialization_ = ( double )( n_timesteps_relativistic_initialization ) * params.timestep;
+        this_species->iter_relativistic_initialization_ = ( int )( this_species->time_frozen_/params.timestep );
 
         if( !PyTools::extractVV( "boundary_conditions", this_species->boundary_conditions, "Species", ispec ) ) {
             ERROR( "For species '" << species_name << "', boundary_conditions not defined" );
