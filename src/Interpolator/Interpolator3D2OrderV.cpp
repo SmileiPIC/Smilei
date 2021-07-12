@@ -98,10 +98,15 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts-ipart_ref+ivect+istart[0]] );
         }
 
-        #pragma omp simd
+        double delta2, delta;
+        
+        double * __restrict__ position_x = particles.getPtrPosition(0);
+        double * __restrict__ position_y = particles.getPtrPosition(1);
+        double * __restrict__ position_z = particles.getPtrPosition(2);
+
+        #pragma omp simd private(delta2, delta)
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-            double delta2, delta;
 
             // #if defined(__clang__)
             //     #pragma clang loop unroll(full)
@@ -133,8 +138,11 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
             // X direction
 
+
+            int ipart2 = ipart+ivect+istart[0];
+
             //delta primal = distance to primal node
-            delta   = particles.position( 0, ipart+ivect+istart[0] )*D_inv[0] - idx[0];
+            delta   = position_x[ipart2]*D_inv[0] - idx[0];
             delta2  = delta*delta;
             coeff[0][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
             coeff[0][0][1][ipart]    = ( 0.75 - delta2 );
@@ -155,7 +163,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             // Y direction
 
             //delta primal = distance to primal node
-            delta   = particles.position( 1, ipart+ivect+istart[0] )*D_inv[1] - idx[1];
+            delta   = position_y[ipart2]*D_inv[1] - idx[1];
             delta2  = delta*delta;
             coeff[1][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
             coeff[1][0][1][ipart]    = ( 0.75 - delta2 );
@@ -176,7 +184,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             // Z direction
 
             //delta primal = distance to primal node
-            delta   = particles.position( 2, ipart+ivect+istart[0] )*D_inv[2] - idx[2];
+            delta   = position_z[ipart2]*D_inv[2] - idx[2];
             delta2  = delta*delta;
             coeff[2][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
             coeff[2][0][1][ipart]    = ( 0.75 - delta2 );
@@ -196,7 +204,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
         }
 
-        //#pragma omp simd
+        #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
             double * __restrict__ coeffyp = &( coeff[1][0][1][ipart] );
