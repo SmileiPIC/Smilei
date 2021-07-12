@@ -904,7 +904,7 @@ void VectorPatch::computeChargeRelativisticSpecies( double time_primal )
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             // project only if species needs relativistic initialization and it is the right time to initialize its fields
             if( ( species( ipatch, ispec )->relativistic_field_initialization_ ) &&
-                    ( time_primal == species( ipatch, ispec )->time_relativistic_initialization_ ) ) {
+                    ( time_primal == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
                     species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ) );
                 } else {
@@ -2024,7 +2024,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
         if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization_ ) {
+                if( time_primal==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
@@ -2451,7 +2451,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
         if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization_ ) {
+                if( time_primal==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }

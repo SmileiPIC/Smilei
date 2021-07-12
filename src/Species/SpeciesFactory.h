@@ -665,7 +665,7 @@ public:
         }
         // time when the relativistic field initialization is applied, if enabled
         int n_timesteps_relativistic_initialization   = ( int )( this_species->time_frozen_/params.timestep );
-        this_species->time_relativistic_initialization_ = ( double )( n_timesteps_relativistic_initialization ) * params.timestep;
+        this_species->iter_relativistic_initialization_ = ( double )( n_timesteps_relativistic_initialization ) * params.timestep;
 
         if( !PyTools::extractVV( "boundary_conditions", this_species->boundary_conditions, "Species", ispec ) ) {
             ERROR( "For species '" << species_name << "', boundary_conditions not defined" );
@@ -983,7 +983,7 @@ public:
         new_species->time_frozen_                              = species->time_frozen_;
         new_species->radiating_                                = species->radiating_;
         new_species->relativistic_field_initialization_        = species->relativistic_field_initialization_;
-        new_species->time_relativistic_initialization_         = species->time_relativistic_initialization_;
+        new_species->iter_relativistic_initialization_         = species->iter_relativistic_initialization_;
         new_species->boundary_conditions                      = species->boundary_conditions;
         new_species->thermal_boundary_temperature_             = species->thermal_boundary_temperature_;
         new_species->thermal_boundary_velocity_                = species->thermal_boundary_velocity_;
