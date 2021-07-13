@@ -98,7 +98,7 @@ public:
     //!\todo{Comment what are these stuffs (MG for JD)}
     //double *data_3D;
     //! this will present the data as a 3d matrix
-    double ***data_3D;
+    double * __restrict__ * __restrict__ * __restrict__ data_3D;
 
     void create_sub_fields  ( int iDim, int iNeighbor, int ghost_size ) override;
     void extract_fields_exch( int iDim, int iNeighbor, int ghost_size ) override;

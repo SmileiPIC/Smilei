@@ -63,7 +63,8 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
     int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
 
-    double * __restrict__ Epart[3], *Bpart[3];
+    double * __restrict__ Epart[3];
+    double * __restrict__ Bpart[3];
 
     double coeff[3][2][3][32];
     int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0, delta_primal < 0) or if it is +1 (dual=1, delta_primal>=0).
@@ -206,113 +207,58 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
         double interp_res;
 
+            double * __restrict__ coeffyp = &( coeff[1][0][1][0] );
+            double * __restrict__ coeffyd = &( coeff[1][1][1][0] );
+            double * __restrict__ coeffxd = &( coeff[0][1][1][0] );
+            double * __restrict__ coeffxp = &( coeff[0][0][1][0] );
+            double * __restrict__ coeffzp = &( coeff[2][0][1][0] );
+            double * __restrict__ coeffzd = &( coeff[2][1][1][0] );
+
+        double Ex[4][3][3];
+        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+                for( int kloc=-1 ; kloc<3 ; kloc++ ) {
+                    Ex[iloc+1][jloc+1][kloc+1] = Ex3D->data_3D[idxO[0]+iloc][idxO[1]+jloc][idxO[2]+kloc];
+                }
+            }
+        }
+
         #pragma omp simd private(interp_res)
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-            double * __restrict__ coeffyp = &( coeff[1][0][1][ipart] );
-            double * __restrict__ coeffyd = &( coeff[1][1][1][ipart] );
-            double * __restrict__ coeffxd = &( coeff[0][1][1][ipart] );
-            double * __restrict__ coeffxp = &( coeff[0][0][1][ipart] );
-            double * __restrict__ coeffzp = &( coeff[2][0][1][ipart] );
-            double * __restrict__ coeffzd = &( coeff[2][1][1][ipart] );
 
             //Ex(dual, primal, primal)
             interp_res = 0.;
-            // #if defined(__clang__)
-            //     #pragma clang loop unroll(full)
-            // #elif defined (__FUJITSU)
-            //     #pragma loop fullunroll_pre_simd 3
-            // #elif defined(__GNUC__)
-            //     #pragma GCC unroll 3
-            // #endif
-            // for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-            //     #if defined(__clang__)
-            //         #pragma clang loop unroll(full)
-            //     #elif defined (__FUJITSU)
-            //         #pragma loop fullunroll_pre_simd 3
-            //     #elif defined(__GNUC__)
-            //         #pragma GCC unroll 3
-            //     #endif
-            //     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-            //         #if defined(__clang__)
-            //             #pragma clang loop unroll(full)
-            //         #elif defined (__FUJITSU)
-            //             #pragma loop fullunroll_pre_simd 3
-            //         #elif defined(__GNUC__)
-            //             #pragma GCC unroll 3
-            //         #endif
-            //         for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-            //             interp_res += *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) * *( coeffzp+kloc*32 ) *
-            //                           ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) +
-            //                           dual[0][ipart]*( *Ex3D )( idxO[0]+1+iloc, idxO[1]+jloc, idxO[2]+kloc ) );
-            //         }
-            //     }
-            // }
-
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+-1, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+-1, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+-1, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+-1, idxO[2]+0 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+-1, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+-1, idxO[2]+1 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+-1, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+-1, idxO[2]+2 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+0*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+0, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+0, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+0*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+0, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+0, idxO[2]+0 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+0*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+0, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+0, idxO[2]+1 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+0*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+0, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+0, idxO[2]+2 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+1*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+1, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+1, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+1*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+1, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+1, idxO[2]+0 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+1*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+1, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+1, idxO[2]+1 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+1*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+1, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+1, idxO[2]+2 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+2*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+2, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+2, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+2*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+2, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+2, idxO[2]+0 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+2*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+2, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+2, idxO[2]+1 ) );
-            interp_res += *( coeffxd+-1*32 ) * *( coeffyp+2*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+-1, idxO[1]+2, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+-1, idxO[1]+2, idxO[2]+2 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+-1, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+-1, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+-1, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+-1, idxO[2]+0 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+-1, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+-1, idxO[2]+1 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+-1, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+-1, idxO[2]+2 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+0*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+0, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+0, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+0*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+0, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+0, idxO[2]+0 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+0*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+0, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+0, idxO[2]+1 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+0*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+0, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+0, idxO[2]+2 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+1*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+1, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+1, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+1*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+1, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+1, idxO[2]+0 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+1*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+1, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+1, idxO[2]+1 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+1*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+1, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+1, idxO[2]+2 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+2*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+2, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+2, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+2*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+2, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+2, idxO[2]+0 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+2*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+2, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+2, idxO[2]+1 ) );
-            interp_res += *( coeffxd+0*32 ) * *( coeffyp+2*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+0, idxO[1]+2, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+0, idxO[1]+2, idxO[2]+2 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+-1, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+-1, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+-1, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+-1, idxO[2]+0 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+-1, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+-1, idxO[2]+1 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+-1, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+-1, idxO[2]+2 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+0*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+0, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+0, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+0*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+0, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+0, idxO[2]+0 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+0*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+0, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+0, idxO[2]+1 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+0*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+0, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+0, idxO[2]+2 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+1*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+1, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+1, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+1*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+1, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+1, idxO[2]+0 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+1*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+1, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+1, idxO[2]+1 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+1*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+1, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+1, idxO[2]+2 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+2*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+2, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+2, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+2*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+2, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+2, idxO[2]+0 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+2*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+2, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+2, idxO[2]+1 ) );
-            interp_res += *( coeffxd+1*32 ) * *( coeffyp+2*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+1, idxO[1]+2, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+1, idxO[1]+2, idxO[2]+2 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+-1, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+-1, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+-1, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+-1, idxO[2]+0 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+-1, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+-1, idxO[2]+1 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+-1*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+-1, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+-1, idxO[2]+2 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+0*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+0, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+0, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+0*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+0, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+0, idxO[2]+0 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+0*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+0, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+0, idxO[2]+1 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+0*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+0, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+0, idxO[2]+2 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+1*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+1, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+1, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+1*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+1, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+1, idxO[2]+0 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+1*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+1, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+1, idxO[2]+1 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+1*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+1, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+1, idxO[2]+2 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+2*32 ) * *( coeffzp+-1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+2, idxO[2]+-1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+2, idxO[2]+-1 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+2*32 ) * *( coeffzp+0*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+2, idxO[2]+0 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+2, idxO[2]+0 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+2*32 ) * *( coeffzp+1*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+2, idxO[2]+1 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+2, idxO[2]+1 ) );
-            interp_res += *( coeffxd+2*32 ) * *( coeffyp+2*32 ) * *( coeffzp+2*32 ) * ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+2, idxO[1]+2, idxO[2]+2 ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+2, idxO[1]+2, idxO[2]+2 ) );
+            #if defined(__clang__)
+                 #pragma clang loop unroll(full)
+             #elif defined (__FUJITSU)
+                 #pragma loop fullunroll_pre_simd 3
+             #elif defined(__GNUC__)
+                 #pragma GCC unroll 3
+             #endif
+             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                 #if defined(__clang__)
+                     #pragma clang loop unroll(full)
+                 #elif defined (__FUJITSU)
+                     #pragma loop fullunroll_pre_simd 3
+                 #elif defined(__GNUC__)
+                     #pragma GCC unroll 3
+                 #endif
+                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                     #if defined(__clang__)
+                         #pragma clang loop unroll(full)
+                     #elif defined (__FUJITSU)
+                         #pragma loop fullunroll_pre_simd 3
+                     #elif defined(__GNUC__)
+                         #pragma GCC unroll 3
+                     #endif
+                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
+                         interp_res += *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) * *( coeffzp+kloc*32 ) *
+                                       ( ( 1-dual[0][ipart] )*Ex[idxO[0]+iloc+1][idxO[1]+jloc+1][idxO[2]+kloc+1] +
+                                       dual[0][ipart]*Ex[idxO[0]+iloc+2][idxO[1]+jloc+1][idxO[2]+kloc+1] );
+                     }
+                 }
+             }
 
             Epart[0][ipart] = interp_res;
         }
