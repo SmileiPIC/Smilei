@@ -362,20 +362,23 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             Epart[2][ipart] = interp_res;
         }
 
-        #pragma omp simd
+        //Bx(primal, dual , dual )
+
+        // Field buffers for vectorization (required on A64FX)
+        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+                for( int kloc=-1 ; kloc<3 ; kloc++ ) {
+                    field_buffer[iloc+1][jloc+1][kloc+1] = Bx3D->data_3D[idxO[0]+iloc][idxO[1]+jloc][idxO[2]+kloc];
+                }
+            }
+        }
+
+        #pragma omp simd private(interp_res)
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-            double * __restrict__ coeffyp = &( coeff[1][0][1][ipart] );
-            double * __restrict__ coeffyd = &( coeff[1][1][1][ipart] );
-            double * __restrict__ coeffxd = &( coeff[0][1][1][ipart] );
-            double * __restrict__ coeffxp = &( coeff[0][0][1][ipart] );
-            double * __restrict__ coeffzp = &( coeff[2][0][1][ipart] );
-            double * __restrict__ coeffzd = &( coeff[2][1][1][ipart] );
-
-            //Bx(primal, dual , dual )
             interp_res = 0.;
             #if defined(__clang__)
-                #pragma clang loop unroll(full)
+                 #pragma clang loop unroll(full)
             #elif defined (__FUJITSU)
                 #pragma loop fullunroll_pre_simd 3
             #elif defined(__GNUC__)
@@ -398,18 +401,33 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                         #pragma GCC unroll 3
                     #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                        interp_res += *( coeffxp+iloc*32 ) * *( coeffyd+jloc*32 ) * *( coeffzd+kloc*32 ) *
-                                      ( ( 1-dual[2][ipart] ) * ( ( 1-dual[1][ipart] )*( *Bx3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[1][ipart]*( *Bx3D )( idxO[0]+iloc, idxO[1]+1+jloc, idxO[2]+kloc ) )
-                                        +    dual[2][ipart]  * ( ( 1-dual[1][ipart] )*( *Bx3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+1+kloc ) + dual[1][ipart]*( *Bx3D )( idxO[0]+iloc, idxO[1]+1+jloc, idxO[2]+1+kloc ) ) );
+                        interp_res += coeffxp2[ipart+iloc*32] * coeffyd2[ipart+jloc*32] * coeffzd2[ipart+kloc*32] *
+                                    ( ( 1-dual[2][ipart] )* ( (1-dual[1][ipart])*field_buffer[iloc+1][jloc+1][kloc+1] + dual[1][ipart]*field_buffer[iloc+1][jloc+2][kloc+1] )  +
+                                    dual[2][ipart]        * ( (1-dual[1][ipart])*field_buffer[iloc+1][jloc+1][kloc+2]  + dual[1][ipart]*field_buffer[iloc+1][jloc+2][kloc+2] )  );
                     }
                 }
             }
+
             Bpart[0][ipart] = interp_res;
+        }
 
-            //By(dual, primal, dual )
+        //By(dual, primal, dual )
+
+        // Field buffers for vectorization (required on A64FX)
+        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                for( int kloc=-1 ; kloc<3 ; kloc++ ) {
+                    field_buffer[iloc+1][jloc+1][kloc+1] = By3D->data_3D[idxO[0]+iloc][idxO[1]+jloc][idxO[2]+kloc];
+                }
+            }
+        }
+
+        #pragma omp simd private(interp_res)
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
             interp_res = 0.;
             #if defined(__clang__)
-                #pragma clang loop unroll(full)
+                 #pragma clang loop unroll(full)
             #elif defined (__FUJITSU)
                 #pragma loop fullunroll_pre_simd 3
             #elif defined(__GNUC__)
@@ -432,18 +450,34 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                         #pragma GCC unroll 3
                     #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                        interp_res += *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) * *( coeffzd+kloc*32 ) *
-                                      ( ( 1-dual[2][ipart] ) * ( ( 1-dual[0][ipart] )*( *By3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[0][ipart]*( *By3D )( idxO[0]+1+iloc, idxO[1]+jloc, idxO[2]+kloc ) )
-                                        +    dual[2][ipart]  * ( ( 1-dual[0][ipart] )*( *By3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+1+kloc ) + dual[0][ipart]*( *By3D )( idxO[0]+1+iloc, idxO[1]+jloc, idxO[2]+1+kloc ) ) );
+                        interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzd2[ipart+kloc*32] *
+                                    ( ( 1-dual[2][ipart] )*( (1-dual[0][ipart])*field_buffer[iloc+1][jloc+1][kloc+1] + dual[0][ipart]*field_buffer[iloc+2][jloc+1][kloc+1] )  +
+                                    dual[2][ipart]        *( (1-dual[0][ipart])*field_buffer[iloc+1][jloc+1][kloc+2] + dual[0][ipart]*field_buffer[iloc+2][jloc+1][kloc+2] )  );
+
                     }
                 }
             }
+
             Bpart[1][ipart] = interp_res;
+        }
 
-            //Bz(dual, dual, prim )
+        //Bz(dual, dual, prim )
+
+        // Field buffers for vectorization (required on A64FX)
+        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+                for( int kloc=-1 ; kloc<2 ; kloc++ ) {
+                    field_buffer[iloc+1][jloc+1][kloc+1] = Bz3D->data_3D[idxO[0]+iloc][idxO[1]+jloc][idxO[2]+kloc];
+                }
+            }
+        }
+
+        #pragma omp simd private(interp_res)
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
             interp_res = 0.;
             #if defined(__clang__)
-                #pragma clang loop unroll(full)
+                 #pragma clang loop unroll(full)
             #elif defined (__FUJITSU)
                 #pragma loop fullunroll_pre_simd 3
             #elif defined(__GNUC__)
@@ -466,12 +500,14 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                         #pragma GCC unroll 3
                     #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                        interp_res += *( coeffxd+iloc*32 ) * *( coeffyd+jloc*32 ) * *( coeffzp+kloc*32 ) *
-                                      ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*( *Bz3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[0][ipart]*( *Bz3D )( idxO[0]+1+iloc, idxO[1]+jloc, idxO[2]+kloc ) )
-                                        +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*( *Bz3D )( idxO[0]+iloc, idxO[1]+1+jloc, idxO[2]+kloc ) + dual[0][ipart]*( *Bz3D )( idxO[0]+1+iloc, idxO[1]+1+jloc, idxO[2]+kloc ) ) );
+                        interp_res += coeffxd2[ipart+iloc*32] * coeffyd2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
+                                    ( ( 1-dual[1][ipart] )*( (1-dual[0][ipart])*field_buffer[iloc+1][jloc+1][kloc+1] + dual[0][ipart]*field_buffer[iloc+2][jloc+1][kloc+1] )  +
+                                    dual[1][ipart]        *( (1-dual[0][ipart])*field_buffer[iloc+1][jloc+2][kloc+1] + dual[0][ipart]*field_buffer[iloc+2][jloc+2][kloc+1] )  );
+
                     }
                 }
             }
+
             Bpart[2][ipart] = interp_res;
         }
     }
