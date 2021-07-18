@@ -481,8 +481,10 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
+            compute_distances(  position_x, position_y, position_z,
+                                npart_total, ipart, istart0, ipart_ref, deltaold, iold,
+                                Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
         }
 
         #pragma omp simd

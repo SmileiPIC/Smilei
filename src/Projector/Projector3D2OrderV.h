@@ -29,7 +29,7 @@ public:
 private:
     double dt, dts2, dts4;
 
-    inline void compute_distances( Particles &particles, int npart_total, int ipart, int istart, int ipart_ref, double *delta0, int *iold, double *Sx0, double *Sy0, double *Sz0, double *DSx, double *DSy, double *DSz )
+    inline void __attribute__((always_inline)) compute_distances( Particles &particles, int npart_total, int ipart, int istart, int ipart_ref, double *delta0, int *iold, double *Sx0, double *Sy0, double *Sz0, double *DSx, double *DSy, double *DSz )
     {
 
         int ipo = iold[0];
@@ -120,7 +120,7 @@ private:
 
     };
 
-    inline void compute_distances(  double * __restrict__ position_x,
+    inline void __attribute__((always_inline)) compute_distances(  double * __restrict__ position_x,
                                     double * __restrict__ position_y,
                                     double * __restrict__ position_z,
                                     int npart_total, int ipart, int istart, int ipart_ref,
@@ -217,7 +217,7 @@ private:
     };
 
 
-    inline void compute_distances( Particles &particles, int npart_total, int ipart, int istart, int ipart_ref, double *delta0, int *iold, double *Sx1, double *Sy1, double *Sz1 )
+    inline void __attribute__((always_inline)) compute_distances( Particles &particles, int npart_total, int ipart, int istart, int ipart_ref, double *delta0, int *iold, double *Sx1, double *Sy1, double *Sz1 )
     {
 
         int ipo = iold[0];
@@ -281,7 +281,7 @@ private:
 
     };
 
-    inline void compute_distances(  double * __restrict__ position_x,
+    inline void __attribute__((always_inline)) compute_distances(  double * __restrict__ position_x,
                                     double * __restrict__ position_y,
                                     double * __restrict__ position_z,
                                     int npart_total,
@@ -350,7 +350,10 @@ private:
 
     };
 
-    inline void computeJ( int ipart, double *charge_weight, double *DSx, double *DSy, double *DSz, double *Sy0, double *Sz0, double *bJx, double dxovdt, int nx, int ny, int nz )
+    inline void __attribute__((always_inline)) computeJ( int ipart, double *charge_weight,
+                                                        double *DSx, double *DSy, double *DSz,
+                                                        double *Sy0, double *Sz0, double *bJx,
+                                                        double dxovdt, int nx, int ny, int nz )
     {
         //optrpt complains about the following loop but not unrolling it actually seems to give better result.
         double crx_p = charge_weight[ipart]*dxovdt;
@@ -359,23 +362,46 @@ private:
 
         double sum[5];
         sum[0] = 0.;
+        #if defined(__clang__)
+            #pragma clang loop unroll_count(4)
+        #elif defined (__FUJITSU)
+            #pragma loop fullunroll_pre_simd
+        #endif
         for( unsigned int k=1 ; k<5 ; k++ ) {
             sum[k] = sum[k-1]-DSx[( k-1 )*vecSize+ipart];
         }
 
         double tmp( crx_p * ( one_third*DSy[ipart]*DSz[ipart] ) );
+        #if defined(__clang__)
+            #pragma clang loop unroll_count(4)
+        #elif defined (__FUJITSU)
+            #pragma loop fullunroll_pre_simd
+        #endif
         for( unsigned int i=1 ; i<5 ; i++ ) {
             bJx [( ( i )*nx )*vecSize+ipart] += sum[i]*tmp;
         }
 
+        #if defined(__clang__)
+            #pragma clang loop unroll_count(4)
+        #elif defined (__FUJITSU)
+            #pragma loop fullunroll_pre_simd
+        #endif
         for( unsigned int k=1 ; k<5 ; k++ ) {
             tmp = crx_p * ( 0.5*DSy[ipart]*Sz0[( k-1 )*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] );
             int index( ( k*nz )*vecSize+ipart );
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(4)
+            #endif
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJx [ index+nx*( i )*vecSize ] += sum[i]*tmp;
             }
 
         }
+        #if defined(__clang__)
+            #pragma clang loop unroll_count(4)
+        #elif defined (__FUJITSU)
+            #pragma loop fullunroll_pre_simd
+        #endif
         for( unsigned int j=1 ; j<5 ; j++ ) {
             tmp = crx_p * ( 0.5*DSz[ipart]*Sy0[( j-1 )*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] );
             int index( ( j*ny )*vecSize+ipart );
@@ -383,13 +409,28 @@ private:
                 bJx [ index+nx*( i )*vecSize ] += sum[i]*tmp;
             }
         }//i
+        #if defined(__clang__)
+            #pragma clang loop unroll_count(4)
+        #elif defined (__FUJITSU)
+            #pragma loop fullunroll_pre_simd
+        #endif
         for( int j=1 ; j<5 ; j++ ) {
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(4)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #endif
             for( int k=1 ; k<5 ; k++ ) {
                 tmp = crx_p * ( Sy0[( j-1 )*vecSize+ipart]*Sz0[( k-1 )*vecSize+ipart]
                                 + 0.5*DSy[j*vecSize+ipart]*Sz0[( k-1 )*vecSize+ipart]
                                 + 0.5*DSz[k*vecSize+ipart]*Sy0[( j-1 )*vecSize+ipart]
                                 + one_third*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart] );
                 int index( ( j*ny + k*nz )*vecSize+ipart );
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(4)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #endif
                 for( int i=1 ; i<5 ; i++ ) {
                     bJx [ index+nx*( i )*vecSize ] += sum[i]*tmp;
                 }
