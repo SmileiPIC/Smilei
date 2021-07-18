@@ -1,0 +1,12 @@
+#
+# Machine file for Irene Joliot-Curie A64FX using the Fujitsu compiler
+# __________________________________________________________
+#
+# Load the correct modules:
+
+#
+# List of Fujitsu flags for optimization on A64FX
+
+
+#CXXFLAGS += 
+#LDFLAGS +=

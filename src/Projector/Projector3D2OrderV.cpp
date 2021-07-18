@@ -398,6 +398,13 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
     double DSz[40] __attribute__( ( aligned( 64 ) ) );
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
 
+    // Pointer for GPU and vectorization on ARM processors
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ position_z = particles.getPtrPosition(2);
+    double * __restrict__ weight     = particles.getPtrWeight();
+    short  * __restrict__ charge     = particles.getPtrCharge();
+
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
     int nbVec = ( iend-istart+( cell_nparts-1 )-( ( iend-istart-1 )&( cell_nparts-1 ) ) ) / vecSize;
@@ -418,8 +425,10 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
+            compute_distances( position_x, position_y, position_z,
+                               npart_total, ipart, istart0, ipart_ref, deltaold, iold,
+                               Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
         }
 
         #pragma omp simd
