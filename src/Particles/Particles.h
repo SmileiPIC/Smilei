@@ -38,7 +38,7 @@ public:
 
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, unsigned int nDim );
-    
+
     //! Initialize like another particle, but only reserve space
     void initializeReserve( unsigned int n_part_max, Particles &part );
 
@@ -84,7 +84,7 @@ public:
 
     //! Insert nPart particles starting at ipart to dest_id in dest_parts
     void copyParticles( unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id );
-    
+
     //! Make a new particle at the position of another
     void makeParticleAt( Particles &source_particles, unsigned int ipart, double w, short q=0., double px=0., double py=0., double pz=0. );
 
@@ -131,7 +131,7 @@ public:
 
     //! Create nParticles new particles
     void createParticles( int nAdditionalParticles );
-    
+
     //! Create nParticles new particles at position pstart in the particles data structure
     void createParticles( int nAdditionalParticles, int pstart );
 
@@ -237,7 +237,7 @@ public:
 
 
     //! Method used to get the Particle Lorentz factor
-    inline double LorentzFactor( unsigned int ipart )
+    inline  double LorentzFactor( unsigned int ipart )
     {
         return sqrt( 1.+pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
     }
@@ -245,7 +245,7 @@ public:
     //! Method used to get the inverse Particle Lorentz factor
     inline double inverseLorentzFactor( unsigned int ipart )
     {
-        return 1./sqrt( 1.+pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
+        return 1./sqrt( 1.+ momentum( 0, ipart )*momentum( 0, ipart ) + momentum( 1, ipart )*momentum( 1, ipart ) + momentum( 2, ipart )*momentum( 2, ipart ) );
     }
 
     //! Method used to get the momentum norm which is also the normalized photon energy
@@ -356,12 +356,22 @@ public:
     {
         return Tau;
     }
-    
+
+    //! Method to keep the positions for the next timesteps
     void savePositions();
-    
+
     std::vector< std::vector<double  >*> double_prop;
     std::vector< std::vector<short   >*> short_prop;
     std::vector< std::vector<uint64_t>*> uint64_prop;
+
+    //! Specific pointers
+    double * __restrict__ position_x;
+    double * __restrict__ position_y;
+    double * __restrict__ position_z;
+
+    double * __restrict__ momentum_x;
+    double * __restrict__ momentum_y;
+    double * __restrict__ momentum_z;
 
 #ifdef __DEBUG
     bool testMove( int iPartStart, int iPartEnd, Params &params );
