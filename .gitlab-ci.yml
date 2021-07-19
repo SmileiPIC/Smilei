@@ -13,7 +13,6 @@ install:
   only:
     - develop
     - cell_sorting_flag
-    - pusher_cleaning
 
   script:
     # Force workdir cleaning in case of retried
@@ -32,7 +31,6 @@ compile_default:
   stage: compile_default
   only:
     - develop
-    - pusher_cleaning
     - cell_sorting_flag
 
   script:
@@ -45,7 +43,6 @@ run1D:
   stage: run_default
   only:
     - develop
-    - pusher_cleaning
     - cell_sorting_flag
 
   script:
@@ -59,7 +56,6 @@ run2D:
   stage: run_default
   only:
     - develop
-    - pusher_cleaning
     - cell_sorting_flag
 
   script:
@@ -75,7 +71,6 @@ run3D:
   stage: run_default
   only:
     - develop
-    - pusher_cleaning
     - cell_sorting_flag
 
   script:
@@ -92,7 +87,6 @@ runAM:
   stage: run_default
   only:
     - develop
-    - pusher_cleaning
     - cell_sorting_flag
 
   script:
@@ -116,7 +110,6 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - pusher_cleaning
     - cell_sorting_flag
 
   script:
@@ -129,7 +122,6 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-    - pusher_cleaning
     - cell_sorting_flag
 
   script:
@@ -141,7 +133,6 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-    - pusher_cleaning
     - cell_sorting_flag
 
   script:
@@ -152,7 +143,6 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-    - pusher_cleaning
     - cell_sorting_flag
 
   script:
@@ -165,7 +155,6 @@ compile_no_mpi_threadmultiple:
   only:
     - develop
     - cell_sorting_flag
-    - pusher_cleaning
     
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -177,7 +166,6 @@ compile_no_openmp:
   only:
     - develop
     - cell_sorting_flag
-    - pusher_cleaning
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
