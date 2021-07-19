@@ -495,7 +495,7 @@ void VectorPatch::dynamics( Params &params,
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
                 std::string start_event = std::to_string(MPI_Wtime()-reference_time)                     // write time
-                                          +" Start Density Reduction patch "+std::to_string(ipatch)+"\n";  // write task and patch
+                                          +" Start DensityReduction patch "+std::to_string(ipatch)+"\n";  // write task and patch
                                           
                 smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
             }
@@ -533,7 +533,7 @@ void VectorPatch::dynamics( Params &params,
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
                 std::string start_event = std::to_string(MPI_Wtime()-reference_time)                   // write time
-                                          +" End Density Reduction patch "+std::to_string(ipatch)+"\n";  // write task and patch
+                                          +" End DensityReduction patch "+std::to_string(ipatch)+"\n";  // write task and patch
                                           
                 smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
             }
