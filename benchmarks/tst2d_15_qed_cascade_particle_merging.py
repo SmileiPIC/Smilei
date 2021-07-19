@@ -93,7 +93,6 @@ Main(
     print_every = 100,
     random_seed = 0,
     clrw = 1,
-    cell_sorting = True,
     patch_arrangement = 'linearized_XY',
     reference_angular_frequency_SI = angular_frequency,
 

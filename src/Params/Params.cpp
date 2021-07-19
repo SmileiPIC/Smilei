@@ -686,28 +686,21 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     PyTools::extract( "cell_sorting", cell_sorting, "Main"  );
-    //MESSAGE("Sorting per cell : " << cell_sorting );
-    //if (cell_sorting)
-    //    vectorization_mode = "on";
     
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
 
+        // collisions need sorting per cell
+        cell_sorting = true;
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
                 && geometry!="3Dcartesian" ) {
             ERROR( "Collisions only valid for cartesian geometries for the moment" )
         }
         
-        // collisions need sorting per cell
         if( vectorization_mode == "adaptive_mixed_sort" ) {
             ERROR( "Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'." )
         }
-        
-        if( vectorization_mode == "off" ) {
-            cell_sorting = true;
-        }
-            
     }
 
     // Read the "print_every" parameter
@@ -731,6 +724,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     unsigned int tot_species_number = PyTools::nComponents( "Species" );
 
     double mass, mass2=0;
+    std::string merging_method;
 
     for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
         PyTools::extract( "mass", mass, "Species", ispec );
@@ -742,6 +736,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 }
             }
         }
+	//Use cell sorting if merge is used.
+        PyTools::extract( "merging_method", merging_method, "Species", ispec );
+	if (merging_method != "none") cell_sorting = true;
     }
 
     // -------------------------------------------------------
