@@ -115,9 +115,27 @@ void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(5)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #endif
             for( unsigned int i=0 ; i<5 ; i++ ) {
+
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(5)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #endif
                 for( unsigned int j=0 ; j<5 ; j++ ) {
                     int index( ( i*25 + j*5 )*vecSize+ipart );
+
+                    #if defined(__clang__)
+                        #pragma clang loop unroll_count(5)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd
+                    #endif
                     for( unsigned int k=0 ; k<5 ; k++ ) {
                         bJx [ index+k*vecSize ] +=  charge_weight[ipart] * DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart];
                     }
@@ -533,8 +551,10 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
+            compute_distances(  position_x, position_y, position_z,
+                                npart_total, ipart, istart0, ipart_ref, deltaold, iold,
+                                Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
         }
 
         #pragma omp simd
