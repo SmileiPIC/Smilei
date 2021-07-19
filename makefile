@@ -181,6 +181,11 @@ ifneq (,$(call parse_config,omptasks))
     CXXFLAGS += -D_OMPTASKS
 endif
 
+ifneq (,$(call parse_config,tasktracing))
+    CXXFLAGS += -D_OMPTASKS
+    CXXFLAGS += -D_TASKTRACING
+endif
+
 CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
 
 #-----------------------------------------------------
@@ -218,6 +223,7 @@ header:
 	@if [ $(call parse_config,detailed_timers) ]; then echo "- Detailed timers option requested"; fi;
 	@if [ $(call parse_config,no_mpi_tm) ]; then echo "- Compiled without MPI_THREAD_MULTIPLE"; fi;
 	@if [ $(call parse_config,omptasks) ]; then echo "- Compiled with OpenMP tasks"; fi;
+	@if [ $(call parse_config,tasktracing) ]; then echo "- Compiled with OpenMP tasks and Task Tracing"; fi;
 	@echo " _____________________________________"
 	@echo ""
 
@@ -400,6 +406,7 @@ help:
 	@echo '    vtune                : to compile for Intel Vtune analysis'
 	@echo '    inspector            : to compile for Intel Inspector analysis'
 	@echo '    omptasks             : to compile with OpenMP tasks'
+	@echo '    tasktracing          : to compile with OpenMP tasks and task tracing'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'

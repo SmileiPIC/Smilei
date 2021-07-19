@@ -304,6 +304,10 @@ public:
 
     bool test_mode;
 
+    //std::vector<std::string> *task_tracing_;
+    std::vector<std::vector<std::string>> task_tracing_;
+    int iter_frequency_task_tracing_;
+
 protected:
     //! Global MPI Communicator
     MPI_Comm world_;

@@ -331,7 +331,7 @@ void VectorPatch::dynamics( Params &params,
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
    
     int has_done_dynamics[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
-
+    double reference_time;
 #ifdef _OMPTASKS  
     #pragma omp single
     {
@@ -345,6 +345,11 @@ void VectorPatch::dynamics( Params &params,
         ( *this )( ipatch )->EMfields->restartRhoJ();
 #ifdef _OMPTASKS  
         if(diag_flag) {( *this )( ipatch )->EMfields->restartRhoJs();}
+        #  ifdef _TASKTRACING
+        if (int(time_dual/params.timestep)%(smpi->iter_frequency_task_tracing_)){
+            reference_time = MPI_Wtime();
+        }
+        #  endif
 #endif
     } // end ipatch
     
@@ -429,7 +434,16 @@ void VectorPatch::dynamics( Params &params,
                                                  localDiags );
 #else
                         #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
-                        { // every call of dynamics for a couple ipatch-ispec is an independent task
+                        {
+                        #  ifdef _TASKTRACING
+                        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+                            std::string start_event = std::to_string(MPI_Wtime()-reference_time)                      // write time
+                                                      +" Start Dynamics patch "+std::to_string(ipatch)  // write task and patch
+                                                      +" species "+std::to_string(ispec)+"\n";         // write species
+                            smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+                        }
+                        #  endif 
+                        // every call of dynamics for a couple ipatch-ispec is an independent task
                         Species *spec_task = species( ipatch, ispec );
                         int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
                         spec_task->Species::dynamicsTasks( time_dual, ispec,
@@ -439,6 +453,14 @@ void VectorPatch::dynamics( Params &params,
                                                            RadiationTables,
                                                            MultiphotonBreitWheelerTables,
                                                            localDiags, buffer_id );
+                        #  ifdef _TASKTRACING
+                        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+                            std::string end_event = std::to_string(MPI_Wtime()-reference_time)       // write time 
+                                                      +" End Dynamics patch "+std::to_string(ipatch)  // write task and patch
+                                                      +" species "+std::to_string(ispec)+"\n";       // write species
+                            smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+                        }
+                        #  endif 
                         } // end task
 #endif
                       } // end case vectorization non adaptive
@@ -469,6 +491,15 @@ void VectorPatch::dynamics( Params &params,
             int ithread = omp_get_thread_num();
             double timer = MPI_Wtime();
 #endif
+
+            #  ifdef _TASKTRACING
+            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+                std::string start_event = std::to_string(MPI_Wtime()-reference_time)                     // write time
+                                          +" Start Density Reduction patch "+std::to_string(ipatch)+"\n";  // write task and patch
+                                          
+                smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+            }
+            #  endif
             
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
                 if(( species(ipatch,ispec)->isProj( time_dual, simWindow ) || diag_flag ) && (!(species( ipatch, ispec )->ponderomotive_dynamics)) ) {  
@@ -498,6 +529,15 @@ void VectorPatch::dynamics( Params &params,
 #ifdef  __DETAILED_TIMERS
             ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
+
+            #  ifdef _TASKTRACING
+            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+                std::string start_event = std::to_string(MPI_Wtime()-reference_time)                   // write time
+                                          +" End Density Reduction patch "+std::to_string(ipatch)+"\n";  // write task and patch
+                                          
+                smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+            }
+            #  endif
             } // end task on reduction of patch densities
         } // end patch loop
     } // end omp single
@@ -613,6 +653,26 @@ void VectorPatch::dynamics( Params &params,
 
 #ifdef _OMPTASKS
     #pragma omp taskwait
+    #  ifdef _TASKTRACING
+    #pragma omp single
+    {
+    if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+        int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
+        int rank(0);
+        MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+        for (int ithread=0; ithread<omp_get_max_threads(); ithread++){ // write a file for eacht thread
+            std::ofstream outfile;
+            std::string namefile = "task_tracing_rank_"+std::to_string(rank)+"_thread_"+std::to_string(ithread)+".txt";
+            outfile.open(namefile, std::ios_base::app); // append to file
+            outfile << "Iteration "<<std::to_string(iteration)<<"\n";
+            for (int event = 0; event<smpi->task_tracing_[ithread].size();event++){
+                outfile<<(smpi->task_tracing_[ithread][event]);
+            }
+            smpi->task_tracing_[ithread].clear();
+        }
+    }
+    }
+    #  endif
 #endif
 
     timers.particles.update( params.printNow( itime ) );
