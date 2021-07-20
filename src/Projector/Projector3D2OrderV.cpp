@@ -160,7 +160,7 @@ void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif
@@ -471,7 +471,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif
@@ -523,7 +523,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif
@@ -576,7 +576,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif
@@ -813,7 +813,7 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif

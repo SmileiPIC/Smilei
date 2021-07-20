@@ -284,7 +284,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif
@@ -487,7 +487,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif
@@ -689,7 +689,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif
@@ -821,7 +821,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif
@@ -1314,7 +1314,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif
@@ -1522,7 +1522,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif
@@ -1722,7 +1722,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
                 #elif defined(__GNUC__)
-                    #pragma GCC unroll 8
+                    #pragma GCC unroll (8)
                 #else
                     #pragma unroll(8)
                 #endif

@@ -114,7 +114,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             // #elif defined (__FUJITSU)
             //     #pragma loop fullunroll_pre_simd 3
             // #elif defined(__GNUC__)
-            //     #pragma GCC unroll 3
+            //     #pragma GCC unroll (3)
             // #endif
             // for( int i=0; i<3; i++ ) { // for X/Y/Z
             //     //delta primal = distance to primal node
