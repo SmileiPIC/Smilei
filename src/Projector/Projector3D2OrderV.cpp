@@ -662,13 +662,13 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
     std::vector<double> *inv_gamma_ponderomotive = &( smpi->dynamics_inv_gamma_ponderomotive[ithread] );
 
     int nparts = smpi->dynamics_invgf[ithread].size();
-    double *Ex       = &( ( *Epart )[0*nparts] );
-    double *Ey       = &( ( *Epart )[1*nparts] );
-    double *Ez       = &( ( *Epart )[2*nparts] );
-    double *Phi      = &( ( *Phipart )[0*nparts] );
-    double *GradPhix = &( ( *GradPhipart )[0*nparts] );
-    double *GradPhiy = &( ( *GradPhipart )[1*nparts] );
-    double *GradPhiz = &( ( *GradPhipart )[2*nparts] );
+    double * __restrict__ Ex       = &( ( *Epart )[0*nparts] );
+    double * __restrict__ Ey       = &( ( *Epart )[1*nparts] );
+    double * __restrict__ Ez       = &( ( *Epart )[2*nparts] );
+    double * __restrict__ Phi      = &( ( *Phipart )[0*nparts] );
+    double * __restrict__ GradPhix = &( ( *GradPhipart )[0*nparts] );
+    double * __restrict__ GradPhiy = &( ( *GradPhipart )[1*nparts] );
+    double * __restrict__ GradPhiz = &( ( *GradPhipart )[2*nparts] );
 
     int vecSize = 8;
     unsigned int bsize = 3*3*3*vecSize; // primal grid, particles did not yet move (3x3x3 enough)
@@ -678,6 +678,15 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
     double Sy1[24] __attribute__( ( aligned( 64 ) ) );
     double Sz1[24] __attribute__( ( aligned( 64 ) ) );
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
+
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ position_z = particles.getPtrPosition(2);
+    double * __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double * __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double * __restrict__ momentum_z = particles.getPtrMomentum(2);
+    double * __restrict__ weight     = particles.getPtrWeight();
+    short  * __restrict__ charge     = particles.getPtrCharge();
 
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
@@ -706,7 +715,7 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
             double charge_over_mass_dts2, charge_sq_over_mass_sq_dts4, charge_sq_over_mass_sq;
             double pxsm, pysm, pzsm;
 
-            double c = particles.charge( istart0+ipart );
+            double c = charge[istart0+ipart];
 
             charge_over_mass_dts2       = c *dts2*one_over_mass;
             // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
@@ -714,9 +723,9 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
             // (charge over mass)^2
             charge_sq_over_mass_sq      = c*c*one_over_mass*one_over_mass;
 
-            for( int i = 0 ; i<3 ; i++ ) {
-                momentum[i] = particles.momentum( i, istart0+ipart );
-            }
+            momentum[0] = momentum_x[istart0+ipart];
+            momentum[1] = momentum_y[istart0+ipart];
+            momentum[2] = momentum_z[istart0+ipart];
 
             // compute initial ponderomotive gamma
             gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *( Phi+istart0-ipart_ref+ipart )*charge_sq_over_mass_sq ;
@@ -733,13 +742,22 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
             ( *inv_gamma_ponderomotive )[ipart-ipart_ref] = 1./gamma_ponderomotive;
 
             // susceptibility for the macro-particle
-            charge_weight[ipart] = c*c*inv_cell_volume * particles.weight( istart0+ipart )*one_over_mass/gamma_ponderomotive ;
+            charge_weight[ipart] = c*c*inv_cell_volume * weight[istart0+ipart]*one_over_mass/gamma_ponderomotive ;
 
             // variable declaration
             double xpn, ypn, zpn;
             double delta, delta2;
 
             // Initialize all current-related arrays to zero
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(3)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (3)
+            #else
+                #pragma unroll(3)
+            #endif
             for( unsigned int i=0; i<3; i++ ) {
                 Sx1[i*vecSize+ipart] = 0.;
                 Sy1[i*vecSize+ipart] = 0.;
@@ -751,7 +769,7 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
             // --------------------------------------------------------
 
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
-            xpn = particles.position( 0, istart0+ipart ) * dx_inv_;
+            xpn = position_x[istart0+ipart] * dx_inv_;
             int ip = round( xpn );
             delta  = xpn - ( double )ip;
             delta2 = delta*delta;
@@ -759,7 +777,7 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
             Sx1[1*vecSize+ipart] = 0.75-delta2;
             Sx1[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
 
-            ypn = particles.position( 1, istart0+ipart ) * dy_inv_;
+            ypn = position_y[istart0+ipart] * dy_inv_;
             int jp = round( ypn );
             delta  = ypn - ( double )jp;
             delta2 = delta*delta;
@@ -767,7 +785,7 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
             Sy1[1*vecSize+ipart] = 0.75-delta2;
             Sy1[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
 
-            zpn = particles.position( 2, istart0+ipart ) * dz_inv_;
+            zpn = position_z[istart0+ipart] * dz_inv_;
             int kp = round( zpn );
             delta  = zpn - ( double )kp;
             delta2 = delta*delta;
@@ -779,9 +797,36 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(3)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (3)
+            #else
+                #pragma unroll(3)
+            #endif
             for( unsigned int i=0 ; i<3 ; i++ ) {
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(3)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (3)
+                #else
+                    #pragma unroll(3)
+                #endif
                 for( unsigned int j=0 ; j<3 ; j++ ) {
                     int index( ( i*9 + j*3 )*vecSize+ipart );
+                    #if defined(__clang__)
+                        #pragma clang loop unroll_count(3)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll (3)
+                    #else
+                        #pragma unroll(3)
+                    #endif
                     for( unsigned int k=0 ; k<3 ; k++ ) {
                         bChi [ index+k*vecSize ] +=  charge_weight[ipart] * Sx1[i*vecSize+ipart]*Sy1[j*vecSize+ipart]*Sz1[k*vecSize+ipart];
                     }
