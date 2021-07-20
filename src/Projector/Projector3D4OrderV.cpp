@@ -55,7 +55,9 @@ Projector3D4OrderV::~Projector3D4OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
+void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles,
+                                            unsigned int istart, unsigned int iend, std::vector<double> *invgf,
+                                            int *iold, double *deltaold, int ipart_ref )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -81,6 +83,12 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
     double DSy[56] __attribute__( ( aligned( 64 ) ) );
     double DSz[56] __attribute__( ( aligned( 64 ) ) );
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
+
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ position_z = particles.getPtrPosition(2);
+    double * __restrict__ weight     = particles.getPtrWeight();
+    short  * __restrict__ charge     = particles.getPtrCharge();
 
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
@@ -144,7 +152,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin;
             delta  = pos - ( double )cell;
@@ -167,7 +175,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             DSx [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sx0_buff_vect[4*vecSize+ipart] ;
             DSx [6*vecSize+ipart] =                                        p1 * S4                                  ;
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin;
             delta  = pos - ( double )cell;
@@ -190,7 +198,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             DSy [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sy0_buff_vect[4*vecSize+ipart] ;
             DSy [6*vecSize+ipart] =                                        p1 * S4                                  ;
             //                            Z                                 //
-            pos = particles.position( 2, ivect+ipart+istart ) * dz_inv_;
+            pos = position_z[ivect+ipart+istart] * dz_inv_;
             cell = round( pos );
             cell_shift = cell-kpo-k_domain_begin;
             delta  = pos - ( double )cell;
@@ -213,7 +221,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sz0_buff_vect[4*vecSize+ipart] ;
             DSz [6*vecSize+ipart] =                                        p1 * S4                                  ;
 
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )*weight[ivect+istart+ipart];
         }
 
         // Jx^(d,p,p)
@@ -225,37 +233,124 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 
             double sum[7];
             sum[0] = 0.;
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #else
+                #pragma unroll(6)
+            #endif
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 sum[k] = sum[k-1]-DSx[( k-1 )*vecSize+ipart];
             }
 
             double tmp( crx_p * ( one_third*DSy[ipart]*DSz[ipart] ) );
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #else
+                #pragma unroll(6)
+            #endif
             for( unsigned int i=1 ; i<7 ; i++ ) {
-                bJx [( ( i )*49 )*vecSize+ipart] += sum[i]*tmp;
+                bJx [( i *49 )*vecSize+ipart] += sum[i]*tmp;
             }
 
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #else
+                #pragma unroll(6)
+            #endif
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 tmp = crx_p * ( 0.5*DSy[ipart]*Sz0_buff_vect[( k-1 )*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] );
                 int index( ( k )*vecSize+ipart );
+
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #else
+                    #pragma unroll(6)
+                #endif
                 for( unsigned int i=1 ; i<7 ; i++ ) {
                     bJx [ index+49*( i )*vecSize ] += sum[i]*tmp;
                 }
 
             }
+
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #else
+                #pragma unroll(6)
+            #endif
             for( unsigned int j=1 ; j<7 ; j++ ) {
                 tmp = crx_p * ( 0.5*DSz[ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] );
                 int index( ( j*7 )*vecSize+ipart );
+
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #else
+                    #pragma unroll(6)
+                #endif
                 for( unsigned int i=1 ; i<7 ; i++ ) {
                     bJx [ index+49*( i )*vecSize ] += sum[i]*tmp;
                 }
             }//i
+
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #else
+                #pragma unroll(6)
+            #endif
             for( int j=1 ; j<7 ; j++ ) {
+
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #else
+                    #pragma unroll(6)
+                #endif
                 for( int k=1 ; k<7 ; k++ ) {
                     tmp = crx_p * ( Sy0_buff_vect[( j-1 )*vecSize+ipart]*Sz0_buff_vect[( k-1 )*vecSize+ipart]
                                     + 0.5*DSy[j*vecSize+ipart]*Sz0_buff_vect[( k-1 )*vecSize+ipart]
                                     + 0.5*DSz[k*vecSize+ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart]
                                     + one_third*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart] );
                     int index( ( j*7 + k )*vecSize+ipart );
+
+                    #if defined(__clang__)
+                        #pragma clang loop unroll_count(6)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll (6)
+                    #else
+                        #pragma unroll(6)
+                    #endif
                     for( int i=1 ; i<7 ; i++ ) {
                         bJx [ index+49*( i )*vecSize ] += sum[i]*tmp;
                     }
