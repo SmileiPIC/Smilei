@@ -527,6 +527,87 @@ def run_irene_skylake(command, dir):
                 sys.exit(2)
         sys.exit(2)
 
+def compile_irene_skylake(command, dir):
+    """
+    Compile using the command `command` on the Irene Skylake system.
+
+    Inputs:
+    - command: command to run
+    - dir: working directory
+    """
+    EXIT_STATUS="100"
+    exit_status_fd = open(dir+s+"exit_status_file", "w")
+    exit_status_fd.write(str(EXIT_STATUS))
+    exit_status_fd.close()
+    # Create script
+    with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+        exec_script_desc.write(
+            "#!/bin/bash\n"
+            +"#MSUB --job-name=smilei\n"
+            +"#MSUB --nodes=1\n"
+            +"#MSUB --ntasks=48\n"
+            +"#MSUB --output=output\n"
+            +"#MSUB --error=error\n"
+            +"#MSUB -q skylake\n"
+            +"#MSUB --time="+max_time+"\n"
+            +"#MSUB -A {}\n".format(account)
+            +"#MSUB -m work,scratch\n"
+            +"module purge\n"
+            +"module load intel/20.0.4\n"
+            +"module load mpi/intelmpi/20.0.4\n"
+            +"module load flavor/hdf5/parallel hdf5/1.8.20\n"
+            +"module load python3/3.7.5\n"
+            +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
+            +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
+            +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
+            +"set -x\n"
+            +"ulimit -s unlimited \n"
+            +"cd ${BRIDGE_MSUB_PWD} \n"
+            +"cd "+dir+" \n"
+            +"module list 2> module.log\n"
+            +command+" \n"
+            +"echo $? > exit_status_file \n"
+        )
+    # Run command
+    COMMAND = "ccc_msub  "+EXEC_SCRIPT
+    try:
+        check_call(COMMAND, shell=True)
+    except CalledProcessError:
+        # if command qsub fails, exit with exit status 2
+        #Retry once in case the server was rebooting
+        if VERBOSE :
+            print(  "sbatch command failed once: `"+COMMAND+"`")
+            print(  "Wait and retry")
+        sleep(10)
+        try:
+            check_call(COMMAND, shell=True)
+        except CalledProcessError:
+            if dir==WORKDIR:
+                os.chdir(WORKDIR_BASE)
+                rmtree(WORKDIR)
+            if VERBOSE :
+                print(  "sbatch command failed twice: `"+COMMAND+"`")
+                print(  "Exit")
+            sys.exit(2)
+    if VERBOSE:
+        print( "Submitted job with command `"+command+"`")
+        print( " -> max duration: {} s".format(max_time_seconds))
+    while ( EXIT_STATUS == "100" ) :
+        sleep(5)
+        exit_status_fd = open(dir+s+"exit_status_file", "r+")
+        EXIT_STATUS = exit_status_fd.readline()
+        exit_status_fd.close()
+    if ( int(EXIT_STATUS) != 0 )  :
+        if VERBOSE :
+            print(  "Execution failed for command `"+command+"`")
+            COMMAND = "cat "+SMILEI_EXE_OUT
+            try :
+                check_call(COMMAND, shell=True)
+            except CalledProcessError:
+                print(  "cat command failed")
+                sys.exit(2)
+        sys.exit(2)
+
 def RUN_LLR(command, dir):
     """
     Run the command `command` on the LLR system.
@@ -687,6 +768,7 @@ if LLR in HOSTNAME :
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(OMP) + " -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = RUN_LLR
+    run_compilation = RUN
 elif "ruche" in HOSTNAME:
     PPN = 20
     if PPN < OMP :
@@ -699,6 +781,7 @@ elif "ruche" in HOSTNAME:
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND ="srun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = run_ruche
+    run_compilation = RUN
 elif "irene_skylake" in partition:
     PPN = 24
     if PPN < OMP :
@@ -706,11 +789,12 @@ elif "irene_skylake" in partition:
         sys.exit(4)
     NODES=int(ceil(MPI/2.))
     NPERSOCKET = 1
-    COMPILE_COMMAND = str(MAKE)+' -j 24 machine="joliot_curie_skl" > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_COMMAND = str(MAKE)+' -j 48 machine="joliot_curie_skl" > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND ="ccc_mprun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = run_irene_skylake
+    run_compilation = compile_irene_skylake
 elif POINCARE in HOSTNAME :
     #COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
     #CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
@@ -719,6 +803,7 @@ elif POINCARE in HOSTNAME :
     CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
     RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
     RUN = RUN_POINCARE
+    run_compilation = RUN
 # Local computers
 else:
     # Determine the correct MPI command
@@ -751,7 +836,7 @@ try :
     if path.exists(WORKDIR_BASE+s+COMPILE_ERRORS) :
         os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
     # Compile
-    RUN( COMPILE_COMMAND, SMILEI_ROOT )
+    run_compilation( COMPILE_COMMAND, SMILEI_ROOT )
     #RUN( COMPILE_TOOLS_COMMAND, SMILEI_ROOT )
     os.rename(COMPILE_OUT_TMP, COMPILE_OUT)
     if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R): # or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
