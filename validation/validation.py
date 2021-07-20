@@ -134,7 +134,7 @@ import happi
 # OTHER VARIABLES
 POINCARE = "poincare"
 LLR = "llrlsi-gw"
-PARTITION = "jollyjumper"
+partition = "jollyjumper"
 HOSTNAME = gethostname()
 
 # DIR VARIABLES
@@ -182,7 +182,7 @@ for opt, arg in options:
     elif opt in ('-b', '--BENCH'):
         BENCH = arg
     elif opt in ('-p', '--PARTITION'):
-        PARTITION = arg
+        partition = arg
     elif opt in ('-c', '--COMPILE_ONLY'):
         COMPILE_ONLY=True
     elif opt in ('-k', '--COMPILE_MODE'):
@@ -454,7 +454,7 @@ def run_irene_skylake(command, dir):
     with open(EXEC_SCRIPT, 'w') as exec_script_desc:
         #NODES=((int(MPI)*int(OMP)-1)/24)+1
         NODES=int(ceil(MPI/2.))
-        PPN = 20
+        PPN = 24
         exec_script_desc.write(
             "#!/bin/bash\n"
             +"#MSUB --job-name=smilei\n"
@@ -463,13 +463,18 @@ def run_irene_skylake(command, dir):
             +"#MSUB --cpus-per-task="+str(OMP)+"\n"
             +"#MSUB --output=output\n"
             +"#MSUB --error=error\n"
+            +"#MSUB -q skylake\n"
             +"#MSUB --time="+max_time+"\n"
             +"#MSUB -A {}\n".format(account)
             +"#MSUB -m work,scratch\n"
             +"module purge\n"
-            +"module load intel/20.0.4 mpi/intelmpi/20.0.4\n"
+            +"module load intel/20.0.4\n"
+            +"module load mpi/intelmpi/20.0.4\n"
             +"module load flavor/hdf5/parallel hdf5/1.8.20\n"
-            +"module load python3/3.7.5\n"
+            +"module load python3\n"
+            +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
+            +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
+            +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
             +"export OMP_NUM_THREADS="+str(OMP)+" \n"
             +"export OMP_SCHEDULE=DYNAMIC \n"
             +"export OMP_PLACES=cores \n"
@@ -538,9 +543,9 @@ def RUN_LLR(command, dir):
     with open(EXEC_SCRIPT, 'w') as exec_script_desc:
         #NODES=((int(MPI)*int(OMP)-1)/24)+1
         NODES=int(ceil(MPI/2.))
-        if (PARTITION == "jollyjumper"):
+        if (partition == "jollyjumper"):
             PPN = 24
-        elif (PARTITION == "tornado"):
+        elif (partition == "tornado"):
             PPN = 36
         exec_script_desc.write(
             "#PBS -l nodes="+str(NODES)+":ppn="+str(PPN)+" \n"
@@ -575,9 +580,9 @@ def RUN_LLR(command, dir):
             +"echo $? > exit_status_file \n"
         )
     # Run command
-    if (PARTITION=="jollyjumper"):
+    if (partition=="jollyjumper"):
         COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
-    elif (PARTITION=="tornado"):
+    elif (partition=="tornado"):
         COMMAND = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+EXEC_SCRIPT
     try:
         check_call(COMMAND, shell=True)
@@ -668,12 +673,12 @@ if COMPILE_MODE:
 
 # Find commands according to the host
 if LLR in HOSTNAME :
-    if (PARTITION=="jollyjumper"):
+    if (partition=="jollyjumper"):
         PPN = 12
-    elif (PARTITION=="tornado"):
+    elif (partition=="tornado"):
         PPN = 18
     if PPN % OMP != 0:
-        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
+        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+partition)
         sys.exit(4)
     NODES=int(ceil(MPI/2.))
     NPERSOCKET = 1
@@ -685,7 +690,7 @@ if LLR in HOSTNAME :
 elif "ruche" in HOSTNAME:
     PPN = 20
     if PPN < OMP :
-        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
+        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+partition)
         sys.exit(4)
     NODES=int(ceil(MPI/2.))
     NPERSOCKET = 1
@@ -697,15 +702,15 @@ elif "ruche" in HOSTNAME:
 elif "irene_skylake" in partition:
     PPN = 24
     if PPN < OMP :
-        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
+        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+partition)
         sys.exit(4)
     NODES=int(ceil(MPI/2.))
     NPERSOCKET = 1
-    COMPILE_COMMAND = str(MAKE)+' -j 24 machine="joliot_curie_skl" '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_COMMAND = str(MAKE)+' -j 24 machine="joliot_curie_skl" > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND ="ccc_mprun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
-    RUN = run_ruche
+    RUN = run_irene_skylake
 elif POINCARE in HOSTNAME :
     #COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
     #CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
