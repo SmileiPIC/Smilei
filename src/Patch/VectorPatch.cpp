@@ -836,11 +836,31 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     // Pointer to simplify the code
                     particles = &local_particles_vector[i_injector];
 
-                    for (unsigned int i=0; i< params.nDim_field; i++) {
+                    if (params.nDim_field == 3) {
                         #pragma omp simd
                         for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
-                            particles->Position[i][ip] =
-                            local_particles_vector[i_injector_2].Position[i][ip];
+                            particles->position_x[ip] =
+                            local_particles_vector[i_injector_2].position_x[ip];
+                            particles->position_y[ip] =
+                            local_particles_vector[i_injector_2].position_y[ip];
+                            particles->position_z[ip] =
+                            local_particles_vector[i_injector_2].position_z[ip];
+                        }
+                    }
+                    if (params.nDim_field == 2) {
+                        #pragma omp simd
+                        for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
+                            particles->position_x[ip] =
+                            local_particles_vector[i_injector_2].position_x[ip];
+                            particles->position_y[ip] =
+                            local_particles_vector[i_injector_2].position_y[ip];
+                        }
+                    }
+                    if (params.nDim_field == 1) {
+                        #pragma omp simd
+                        for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
+                            particles->position_x[ip] =
+                            local_particles_vector[i_injector_2].position_x[ip];
                         }
                     }
                 }
