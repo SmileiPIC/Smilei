@@ -186,6 +186,10 @@ ifneq (,$(call parse_config,tasktracing))
     CXXFLAGS += -D_TASKTRACING
 endif
 
+ifneq (,$(call parse_config,developtracing))
+    CXXFLAGS += -D_DEVELOPTRACING
+endif
+
 CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
 
 #-----------------------------------------------------
@@ -224,6 +228,7 @@ header:
 	@if [ $(call parse_config,no_mpi_tm) ]; then echo "- Compiled without MPI_THREAD_MULTIPLE"; fi;
 	@if [ $(call parse_config,omptasks) ]; then echo "- Compiled with OpenMP tasks"; fi;
 	@if [ $(call parse_config,tasktracing) ]; then echo "- Compiled with OpenMP tasks and Task Tracing"; fi;
+	@if [ $(call parse_config,developtracing) ]; then echo "- Compiled with 'Task' Tracing without tasks"; fi;
 	@echo " _____________________________________"
 	@echo ""
 
@@ -407,6 +412,7 @@ help:
 	@echo '    inspector            : to compile for Intel Inspector analysis'
 	@echo '    omptasks             : to compile with OpenMP tasks'
 	@echo '    tasktracing          : to compile with OpenMP tasks and task tracing'
+	@echo '    developtracing       : to compile with "task" tracing without tasks'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'

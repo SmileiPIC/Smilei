@@ -424,7 +424,15 @@ void VectorPatch::dynamics( Params &params,
                         } // end task
 #endif
                     } else {
-#ifndef _OMPTASKS   
+#ifndef _OMPTASKS
+                        // #  ifdef _DEVELOPTRACING
+                        // if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+                        //     std::string start_event = std::to_string(MPI_Wtime())                      // write time
+                        //                               +" Start Dynamics patch "+std::to_string(ipatch)  // write task and patch
+                        //                               +" species "+std::to_string(ispec)+"\n";         // write species
+                        //     smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+                        // }  
+                        // #  endif 
                         spec->Species::dynamics( time_dual, ispec,
                                                  emfields( ipatch ),
                                                  params, diag_flag, partwalls( ipatch ),
@@ -432,6 +440,14 @@ void VectorPatch::dynamics( Params &params,
                                                  RadiationTables,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags );
+                        // #  ifdef _DEVELOPTRACING
+                        // if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+                        //     std::string end_event = std::to_string(MPI_Wtime())       // write time 
+                        //                               +" End Dynamics patch "+std::to_string(ipatch)  // write task and patch
+                        //                               +" species "+std::to_string(ispec)+"\n";       // write species
+                        //     smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+                        // }
+                        // #  endif
 #else
                         #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
                         {
@@ -675,6 +691,28 @@ void VectorPatch::dynamics( Params &params,
     }
     #  endif
 #endif
+
+    #  ifdef _DEVELOPTRACING
+    #pragma omp single
+    {
+    if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+        int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
+        int rank(0);
+        MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+        for (int ithread=0; ithread<omp_get_max_threads(); ithread++){ // write a file for eacht thread
+            std::ofstream outfile;
+            std::string namefile = "task_tracing_rank_"+std::to_string(rank)+"_thread_"+std::to_string(ithread)+".txt";
+            outfile.open(namefile, std::ios_base::app); // append to file
+            outfile << "Start Iteration "<<std::to_string(iteration)<<"\n";
+            for (int event = 0; event<smpi->task_tracing_[ithread].size();event++){
+                outfile<<(smpi->task_tracing_[ithread][event]);
+            }
+            outfile << "End Iteration "<<std::to_string(iteration)<<"\n";
+            smpi->task_tracing_[ithread].clear();
+        }
+    }
+    }
+    #  endif
 
     timers.particles.update( params.printNow( itime ) );
 #ifdef __DETAILED_TIMERS
