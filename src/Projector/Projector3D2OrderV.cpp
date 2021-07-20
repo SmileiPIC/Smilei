@@ -647,7 +647,7 @@ void Projector3D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields,
 void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int scell, int ipart_ref )
 {
 
-    double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 ) ;
+    double * __restrict__ Chi_envelope = &( *EMfields->Env_Chi_ )( 0 ) ;
 
     int iold[3];
 
@@ -659,7 +659,7 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
     std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Phipart     = &( smpi->dynamics_PHIpart[ithread] );
     std::vector<double> *GradPhipart = &( smpi->dynamics_GradPHIpart[ithread] );
-    std::vector<double> *inv_gamma_ponderomotive = &( smpi->dynamics_inv_gamma_ponderomotive[ithread] );
+    double * __restrict__ inv_gamma_ponderomotive = &( smpi->dynamics_inv_gamma_ponderomotive[ithread][0] );
 
     int nparts = smpi->dynamics_invgf[ithread].size();
     double * __restrict__ Ex       = &( ( *Epart )[0*nparts] );
@@ -715,6 +715,8 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
             double charge_over_mass_dts2, charge_sq_over_mass_sq_dts4, charge_sq_over_mass_sq;
             double pxsm, pysm, pzsm;
 
+            int ipart2 = istart-ipart_ref+ipart;
+
             double c = charge[istart0+ipart];
 
             charge_over_mass_dts2       = c *dts2*one_over_mass;
@@ -728,41 +730,40 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
             momentum[2] = momentum_z[istart0+ipart];
 
             // compute initial ponderomotive gamma
-            gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *( Phi+istart0-ipart_ref+ipart )*charge_sq_over_mass_sq ;
+            gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + Phi[istart0-ipart_ref+ipart]*charge_sq_over_mass_sq ;
             gamma0    = sqrt( gamma0_sq ) ;
+            gamma0_sq = 1./gamma0_sq;
 
             // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
-            pxsm = ( gamma0 * charge_over_mass_dts2*( *( Ex+istart-ipart_ref+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhix+istart-ipart_ref+ipart ) ) ) * momentum[0] / gamma0_sq;
-            pysm = ( gamma0 * charge_over_mass_dts2*( *( Ey+istart-ipart_ref+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhiy+istart-ipart_ref+ipart ) ) ) * momentum[1] / gamma0_sq;
-            pzsm = ( gamma0 * charge_over_mass_dts2*( *( Ez+istart-ipart_ref+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhiz+istart-ipart_ref+ipart ) ) ) * momentum[2] / gamma0_sq;
+            pxsm = ( gamma0 * charge_over_mass_dts2*( Ex[ipart2] ) - charge_sq_over_mass_sq_dts4*(  GradPhix[ipart2] ) ) * momentum[0] * gamma0_sq;
+            pysm = ( gamma0 * charge_over_mass_dts2*( Ey[ipart2] ) - charge_sq_over_mass_sq_dts4*(  GradPhiy[ipart2] ) ) * momentum[1] * gamma0_sq;
+            pzsm = ( gamma0 * charge_over_mass_dts2*( Ez[ipart2] ) - charge_sq_over_mass_sq_dts4*(  GradPhiz[ipart2] ) ) * momentum[2] * gamma0_sq;
 
             // update of gamma ponderomotive
             gamma_ponderomotive = gamma0 + ( pxsm+pysm+pzsm )*0.5 ;
             // buffer inverse of ponderomotive gamma to use it in ponderomotive momentum pusher
-            ( *inv_gamma_ponderomotive )[ipart-ipart_ref] = 1./gamma_ponderomotive;
+            inv_gamma_ponderomotive[ipart-ipart_ref] = 1./gamma_ponderomotive;
 
             // susceptibility for the macro-particle
-            charge_weight[ipart] = c*c*inv_cell_volume * weight[istart0+ipart]*one_over_mass/gamma_ponderomotive ;
+            charge_weight[ipart] = c*c*inv_cell_volume * weight[istart0+ipart]*one_over_mass*inv_gamma_ponderomotive[ipart-ipart_ref] ;
 
             // variable declaration
             double xpn, ypn, zpn;
             double delta, delta2;
 
             // Initialize all current-related arrays to zero
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(3)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (3)
-            #else
-                #pragma unroll(3)
-            #endif
-            for( unsigned int i=0; i<3; i++ ) {
-                Sx1[i*vecSize+ipart] = 0.;
-                Sy1[i*vecSize+ipart] = 0.;
-                Sz1[i*vecSize+ipart] = 0.;
-            }
+
+            Sx1[ipart] = 0.;
+            Sy1[ipart] = 0.;
+            Sz1[ipart] = 0.;
+
+            Sx1[vecSize+ipart] = 0.;
+            Sy1[vecSize+ipart] = 0.;
+            Sz1[vecSize+ipart] = 0.;
+
+            Sx1[2*vecSize+ipart] = 0.;
+            Sy1[2*vecSize+ipart] = 0.;
+            Sz1[2*vecSize+ipart] = 0.;
 
             // --------------------------------------------------------
             // Locate particles & Calculate Esirkepov coef. S, DS and W
