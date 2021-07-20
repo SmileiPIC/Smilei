@@ -823,6 +823,7 @@ else:
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+MPIRUN+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
     RUN = RUN_OTHER
+    run_compilation = RUN
 
 # CLEAN
 # If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output

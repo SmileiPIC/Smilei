@@ -853,6 +853,11 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     particles = &local_particles_vector[i_injector];
 
                     if (params.nDim_field == 3) {
+
+                        position_x = particles->position_x;
+                        position_y = particles->position_y;
+                        position_z = particles->position_z;
+
                         #pragma omp simd
                         for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
                             particles->position_x[ip] =
@@ -864,6 +869,10 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         }
                     }
                     if (params.nDim_field == 2) {
+
+                        position_x = particles->position_x;
+                        position_y = particles->position_y;
+
                         #pragma omp simd
                         for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
                             particles->position_x[ip] =
@@ -873,6 +882,9 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         }
                     }
                     if (params.nDim_field == 1) {
+
+                        position_x = particles->position_x;
+
                         #pragma omp simd
                         for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
                             particles->position_x[ip] =

@@ -110,8 +110,8 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             double m1 = ( cell_shift == -1 );
             double c0 = ( cell_shift ==  0 );
             double p1 = ( cell_shift ==  1 );
-            Sx1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sx1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
+            Sx1_buff_vect[          ipart] = m1 * deltam;
+            Sx1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2;
             Sx1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
             Sx1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
             Sx1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
@@ -127,8 +127,8 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             m1 = ( cell_shift == -1 );
             c0 = ( cell_shift ==  0 );
             p1 = ( cell_shift ==  1 );
-            Sy1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sy1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
+            Sy1_buff_vect[          ipart] = m1 * deltam;
+            Sy1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2;
             Sy1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
             Sy1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
             Sy1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
