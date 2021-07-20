@@ -154,6 +154,7 @@ SHOWDIFF = False
 nb_restarts = 0
 COMPILE_MODE=""
 LOG = False
+account = ""                       # Account for some super-computers
 
 # TO PRINT USAGE
 def usage():
@@ -164,8 +165,8 @@ def usage():
 try:
     options, remainder = getopt(
         sys.argv[1:],
-        'o:m:b:r:k:p:gshvcl:t:',
-        ['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG=', 'time='])
+        'o:m:b:r:k:p:gshvcl:t:a:',
+        ['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG=', 'time=', 'account='])
 except GetoptError as err:
     usage()
     sys.exit(4)
@@ -188,6 +189,8 @@ for opt, arg in options:
         COMPILE_MODE=arg
     elif opt in ('-t', '--time'):
         max_time=arg
+    elif opt in ('-a', '--account'):
+        account=arg
     elif opt in ('-h', '--HELP'):
         print( "-b")
         print( "     -b <bench_case>")
@@ -208,6 +211,9 @@ for opt, arg in options:
         print( "-t")
         print( "     -t <max time>")
         print( "       <max time>: format hh:mm:ss")
+        print( "-a")
+        print( "     -a --account <account id>")
+        print( "       <account id>: account/project id given by some super-computer facilities")
         print( "-g")
         print( "     Generates the references")
         print( "-s")
@@ -431,7 +437,91 @@ def run_ruche(command, dir):
                 print(  "cat command failed")
                 sys.exit(2)
         sys.exit(2)
-        
+
+def run_irene_skylake(command, dir):
+    """
+    Run the command `command` on the Irene Skylake system.
+
+    Inputs:
+    - command: command to run
+    - dir: working directory
+    """
+    EXIT_STATUS="100"
+    exit_status_fd = open(dir+s+"exit_status_file", "w")
+    exit_status_fd.write(str(EXIT_STATUS))
+    exit_status_fd.close()
+    # Create script
+    with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+        #NODES=((int(MPI)*int(OMP)-1)/24)+1
+        NODES=int(ceil(MPI/2.))
+        PPN = 20
+        exec_script_desc.write(
+            "#!/bin/bash\n"
+            +"#MSUB --job-name=smilei\n"
+            +"#MSUB --nodes="+str(NODES)+"\n"
+            +"#MSUB --ntasks="+str(MPI)+"\n"
+            +"#MSUB --cpus-per-task="+str(OMP)+"\n"
+            +"#MSUB --output=output\n"
+            +"#MSUB --error=error\n"
+            +"#MSUB --time="+max_time+"\n"
+            +"#MSUB -A {}\n".format(account)
+            +"#MSUB -m work,scratch\n"
+            +"module purge\n"
+            +"module load intel/20.0.4 mpi/intelmpi/20.0.4\n"
+            +"module load flavor/hdf5/parallel hdf5/1.8.20\n"
+            +"module load python3/3.7.5\n"
+            +"export OMP_NUM_THREADS="+str(OMP)+" \n"
+            +"export OMP_SCHEDULE=DYNAMIC \n"
+            +"export OMP_PLACES=cores \n"
+            +"export KMP_AFFINITY=verbose \n"
+            +"set -x\n"
+            +"ulimit -s unlimited \n"
+            +"cd ${BRIDGE_MSUB_PWD} \n"
+            +"cd "+dir+" \n"
+            +"module list 2> module.log\n"
+            +command+" \n"
+            +"echo $? > exit_status_file \n"
+        )
+    # Run command
+    COMMAND = "ccc_msub  "+EXEC_SCRIPT
+    try:
+        check_call(COMMAND, shell=True)
+    except CalledProcessError:
+        # if command qsub fails, exit with exit status 2
+        #Retry once in case the server was rebooting
+        if VERBOSE :
+            print(  "sbatch command failed once: `"+COMMAND+"`")
+            print(  "Wait and retry")
+        sleep(10)
+        try:
+            check_call(COMMAND, shell=True)
+        except CalledProcessError:
+            if dir==WORKDIR:
+                os.chdir(WORKDIR_BASE)
+                rmtree(WORKDIR)
+            if VERBOSE :
+                print(  "sbatch command failed twice: `"+COMMAND+"`")
+                print(  "Exit")
+            sys.exit(2)
+    if VERBOSE:
+        print( "Submitted job with command `"+command+"`")
+        print( " -> max duration: {} s".format(max_time_seconds))
+    while ( EXIT_STATUS == "100" ) :
+        sleep(5)
+        exit_status_fd = open(dir+s+"exit_status_file", "r+")
+        EXIT_STATUS = exit_status_fd.readline()
+        exit_status_fd.close()
+    if ( int(EXIT_STATUS) != 0 )  :
+        if VERBOSE :
+            print(  "Execution failed for command `"+command+"`")
+            COMMAND = "cat "+SMILEI_EXE_OUT
+            try :
+                check_call(COMMAND, shell=True)
+            except CalledProcessError:
+                print(  "cat command failed")
+                sys.exit(2)
+        sys.exit(2)
+
 def RUN_LLR(command, dir):
     """
     Run the command `command` on the LLR system.
@@ -604,6 +694,18 @@ elif "ruche" in HOSTNAME:
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND ="srun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = run_ruche
+elif "irene_skylake" in partition:
+    PPN = 24
+    if PPN < OMP :
+        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
+        sys.exit(4)
+    NODES=int(ceil(MPI/2.))
+    NPERSOCKET = 1
+    COMPILE_COMMAND = str(MAKE)+' -j 24 machine="joliot_curie_skl" '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
+    RUN_COMMAND ="ccc_mprun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+    RUN = run_ruche
 elif POINCARE in HOSTNAME :
     #COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
     #CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
@@ -738,7 +840,7 @@ class CreateReference(object):
 class CompareToReference(object):
     def __init__(self, bench_name):
         self.data = findReference(bench_name)
-    
+
     def __call__(self, data_name, data, precision=None):
         # verify the name is in the reference
         if data_name not in self.data.keys():
@@ -753,12 +855,12 @@ class CompareToReference(object):
             print( "" )
             global _dataNotMatching
             _dataNotMatching = True
-            
+
 # DEFINE A CLASS TO VIEW DIFFERENCES BETWEEN A SIMULATION AND A REFERENCE
 class ShowDiffWithReference(object):
     def __init__(self, bench_name):
         self.data = findReference(bench_name)
-    
+
     def __call__(self, data_name, data, precision=None):
         import matplotlib.pyplot as plt
         plt.ion()
@@ -855,12 +957,12 @@ class Log:
     pattern2 = re.compile(""
         +"[\t\s]+([\w ]+):?\s+([.0-9]+)\s+([<.0-9]+)\%"
     )
-    
+
     def __init__(self, log_file):
         mkdir(SMILEI_LOGS)
         self.log_file = log_file
         self.data = {}
-    
+
     def scan(self, output):
         # Open file and find the pattern
         with open(output, 'r') as f:
@@ -880,7 +982,7 @@ class Log:
                 self.data[key] += value
             else:
                 self.data[key] = value
-    
+
     def append(self):
         if self.data:
             # Append commit and date to current data
@@ -902,7 +1004,7 @@ class Log:
             # Overwrite the file
             with open(self.log_file, 'w+') as f:
                 json.dump(db, f)
-    
+
 
 # RUN THE BENCHMARKS
 _dataNotMatching = False
@@ -958,7 +1060,7 @@ for BENCH in SMILEI_BENCH_LIST :
     # Prepare logging
     if LOG:
         log = Log(SMILEI_LOGS + BENCH + ".log")
-    
+
     # Loop restarts
     for irestart in range(nb_restarts+1):
 
@@ -1027,11 +1129,11 @@ for BENCH in SMILEI_BENCH_LIST :
         # Scan some info for logging
         if LOG:
             log.scan(SMILEI_EXE_OUT)
-    
+
     # Append info in log file
     if LOG:
         log.append()
-    
+
     os.chdir(WORKDIR)
 
     # FIND THE VALIDATION SCRIPT FOR THIS BENCH
@@ -1040,7 +1142,7 @@ for BENCH in SMILEI_BENCH_LIST :
     if not path.exists(validation_script):
         print( "Unable to find the validation script "+validation_script)
         sys.exit(1)
-    
+
     # IF REQUIRED, GENERATE THE REFERENCES
     if GENERATE:
         if VERBOSE:
@@ -1061,7 +1163,7 @@ for BENCH in SMILEI_BENCH_LIST :
         execfile(validation_script)
         if _dataNotMatching:
             print("Benchmark "+BENCH+" did NOT pass")
-    
+
     # OTHERWISE, COMPARE TO THE EXISTING REFERENCES
     else:
         if VERBOSE:
@@ -1073,7 +1175,7 @@ for BENCH in SMILEI_BENCH_LIST :
         if _dataNotMatching:
             sys.exit(1)
         # DATA DID NOT MATCH REFERENCES
-    
+
     # CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
     os.chdir(WORKDIR_BASE)
     rmtree( WORKDIR_BASE+s+'wd_'+path.basename(path.splitext(BENCH)[0]), True )
