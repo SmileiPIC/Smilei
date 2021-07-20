@@ -101,25 +101,32 @@ try:
 except:
     raw_input = input
 
-# SMILEI PATH VARIABLES
-if "SMILEI_ROOT" in os.environ :
-    SMILEI_ROOT=os.environ["SMILEI_ROOT"]+s
-else :
-    SMILEI_ROOT = path.dirname(path.abspath(stack()[0][1]))+s+".."+s
-    #SMILEI_ROOT = os.getcwd()+s+".."+s
-SMILEI_ROOT = path.abspath(SMILEI_ROOT)+s
-SMILEI_SCRIPTS = SMILEI_ROOT+"scripts"+s
-SMILEI_VALIDATION = SMILEI_ROOT+"validation"+s
-SMILEI_REFERENCES = SMILEI_VALIDATION+"references"+s
-SMILEI_BENCHS = SMILEI_ROOT+"benchmarks"+s
+# Dictionnary containing all parameters
+parameters = {}
 
-# SCRIPTS VARIABLES
+
+# SMILEI path variables
+# -----------------------------
+if "SMILEI_ROOT" in os.environ :
+    parameters['smilei_root']=os.environ["SMILEI_ROOT"]+s
+else :
+    parameters['smilei_root'] = path.dirname(path.abspath(stack()[0][1]))+s+".."+s
+    #parameters['smilei_root'] = os.getcwd()+s+".."+s
+parameters['smilei_root'] = path.abspath(parameters['smilei_root'])+s
+parameters['smilei_script_path'] = parameters['smilei_root']+"scripts"+s
+parameters['smilei_validation_path'] = parameters['smilei_root']+"validation"+s
+parameters['smilei_reference_path'] = parameters['smilei_validation_path']+"references"+s
+parameters['smilei_benchmark_path'] = parameters['smilei_root']+"benchmarks"+s
+
+
+# Script variables
+# -----------------------------
 EXEC_SCRIPT = 'exec_script.sh'
 EXEC_SCRIPT_OUT = 'exec_script.out'
 SMILEI_EXE_OUT = 'smilei_exe.out'
 
 # Get the current version of Smilei
-os.chdir(SMILEI_ROOT)
+os.chdir(parameters['smilei_root'])
 gitversion = check_output( "echo `git log -n 1 --format=%h`-", shell=True ).decode()[:-1]
 if 'CI_COMMIT_BRANCH' in os.environ:
     gitversion += os.environ['CI_COMMIT_BRANCH']
@@ -128,7 +135,7 @@ else:
 os.chdir(INITIAL_DIRECTORY)
 
 # Load the happi module
-sys.path.insert(0, SMILEI_ROOT)
+sys.path.insert(0, parameters['smilei_root'])
 import happi
 
 # OTHER VARIABLES
@@ -171,7 +178,8 @@ except GetoptError as err:
     usage()
     sys.exit(4)
 
-# PROCESS THE OPTIONS
+# ----------------------------------
+# Reading of the command line options
 for opt, arg in options:
     if opt in ('-o', '--OMP'):
         EXECUTION = True
@@ -258,14 +266,14 @@ if GENERATE and SHOWDIFF:
     sys.exit(4)
 
 # Build the list of the requested input files
-list_bench = [path.basename(b) for b in glob(SMILEI_BENCHS+"tst*py")]
-list_validation = [path.basename(b) for b in glob(SMILEI_VALIDATION+"analyses"+s+"validate_tst*py")]
+list_bench = [path.basename(b) for b in glob(parameters['smilei_benchmark_path']+"tst*py")]
+list_validation = [path.basename(b) for b in glob(parameters['smilei_validation_path']+"analyses"+s+"validate_tst*py")]
 list_bench = [b for b in list_bench if "validate_"+b in list_validation]
 if BENCH == "":
     SMILEI_BENCH_LIST = list_bench
 elif BENCH == "?":
     VERBOSE = True
-    os.chdir(SMILEI_SCRIPTS)
+    os.chdir(parameters['smilei_script_path'])
     #- Propose the list of all the input files
     print( '\n'.join(list_bench))
     #- Choose an input file name in the list
@@ -278,17 +286,17 @@ elif BENCH == "?":
         SMILEI_BENCH_LIST = [ BENCH ]
 elif BENCH in list_bench:
     SMILEI_BENCH_LIST = [ BENCH ]
-elif glob( SMILEI_BENCHS+BENCH ):
-    BENCH = glob( SMILEI_BENCHS+BENCH )
-    list_all = glob(SMILEI_BENCHS+"tst*py")
+elif glob( parameters['smilei_benchmark_path']+BENCH ):
+    BENCH = glob( parameters['smilei_benchmark_path']+BENCH )
+    list_all = glob(parameters['smilei_benchmark_path']+"tst*py")
     SMILEI_BENCH_LIST= []
     for b in BENCH:
         if b not in list_all:
             if VERBOSE:
                 print( "Input file "+b+" invalid.")
             sys.exit(4)
-        if b.replace(SMILEI_BENCHS,'') in list_bench:
-            SMILEI_BENCH_LIST.append( b.replace(SMILEI_BENCHS,'') )
+        if b.replace(parameters['smilei_benchmark_path'],'') in list_bench:
+            SMILEI_BENCH_LIST.append( b.replace(parameters['smilei_benchmark_path'],'') )
     BENCH = SMILEI_BENCH_LIST
 else:
     if VERBOSE:
@@ -316,7 +324,7 @@ def workdir_archiv(BIN_NAME) :
         mkdir(WORKDIR_BASE)
 
 # PLATFORM-DEPENDENT INSTRUCTIONS FOR RUNNING PARALLEL COMMAND
-def RUN_POINCARE(command, dir):
+def RUN_POINCARE(command, dir, mode):
     # Create script
     with open(EXEC_SCRIPT, 'w') as exec_script_desc:
         print( "ON POINCARE NOW")
@@ -350,7 +358,7 @@ def RUN_POINCARE(command, dir):
             rmtree(WORKDIR)
         sys.exit(2)
 
-def run_ruche(command, dir):
+def run_ruche(command, dir, mode):
     """
     Run the command `command` on the RUCHE system.
 
@@ -438,7 +446,7 @@ def run_ruche(command, dir):
                 sys.exit(2)
         sys.exit(2)
 
-def run_irene_skylake(command, dir):
+def run_irene_skylake(command, dir, mode):
     """
     Run the command `command` on the Irene Skylake system.
 
@@ -450,43 +458,77 @@ def run_irene_skylake(command, dir):
     exit_status_fd = open(dir+s+"exit_status_file", "w")
     exit_status_fd.write(str(EXIT_STATUS))
     exit_status_fd.close()
-    # Create script
-    with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-        #NODES=((int(MPI)*int(OMP)-1)/24)+1
-        NODES=int(ceil(MPI/2.))
-        PPN = 24
-        exec_script_desc.write(
-            "#!/bin/bash\n"
-            +"#MSUB --job-name=smilei\n"
-            +"#MSUB --nodes="+str(NODES)+"\n"
-            +"#MSUB --ntasks="+str(MPI)+"\n"
-            +"#MSUB --cpus-per-task="+str(OMP)+"\n"
-            +"#MSUB --output=output\n"
-            +"#MSUB --error=error\n"
-            +"#MSUB -q skylake\n"
-            +"#MSUB --time="+max_time+"\n"
-            +"#MSUB -A {}\n".format(account)
-            +"#MSUB -m work,scratch\n"
-            +"module purge\n"
-            +"module load intel/20.0.4\n"
-            +"module load mpi/intelmpi/20.0.4\n"
-            +"module load flavor/hdf5/parallel hdf5/1.8.20\n"
-            +"module load python3\n"
-            +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
-            +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
-            +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
-            +"export OMP_NUM_THREADS="+str(OMP)+" \n"
-            +"export OMP_SCHEDULE=DYNAMIC \n"
-            +"export OMP_PROC_BIND=true \n"
-            +"export KMP_AFFINITY=verbose \n"
-            +"set -x\n"
-            +"ulimit -s unlimited \n"
-            +"cd ${BRIDGE_MSUB_PWD} \n"
-            +"cd "+dir+" \n"
-            +"module list 2> module.log\n"
-            +command+" \n"
-            +"echo $? > exit_status_file \n"
-        )
+
+    if (mode == "compilation"):
+
+        # Create script
+        with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+            exec_script_desc.write(
+                "#!/bin/bash\n"
+                +"#MSUB --job-name=smilei\n"
+                +"#MSUB --nodes=1\n"
+                +"#MSUB --ntasks=48\n"
+                +"#MSUB --output=output\n"
+                +"#MSUB --error=error\n"
+                +"#MSUB -q skylake\n"
+                +"#MSUB --time="+max_time+"\n"
+                +"#MSUB -A {}\n".format(account)
+                +"#MSUB -m work,scratch\n"
+                +"module purge\n"
+                +"module load intel/20.0.4\n"
+                +"module load mpi/intelmpi/20.0.4\n"
+                +"module load flavor/hdf5/parallel hdf5/1.8.20\n"
+                +"module load python3\n"
+                +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
+                +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
+                +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
+                +"set -x\n"
+                +"cd "+dir+" \n"
+                +"cd ${BRIDGE_MSUB_PWD} \n"
+                +"module list 2> module.log\n"
+                +command+" \n"
+                +"echo $? > exit_status_file \n"
+            )
+
+    else:
+
+        # Create script
+        with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+            #NODES=((int(MPI)*int(OMP)-1)/24)+1
+            NODES=int(ceil(MPI/2.))
+            PPN = 24
+            exec_script_desc.write(
+                "#!/bin/bash\n"
+                +"#MSUB --job-name=smilei\n"
+                +"#MSUB --nodes="+str(NODES)+"\n"
+                +"#MSUB --ntasks="+str(MPI)+"\n"
+                +"#MSUB --cpus-per-task="+str(OMP)+"\n"
+                +"#MSUB --output=output\n"
+                +"#MSUB --error=error\n"
+                +"#MSUB -q skylake\n"
+                +"#MSUB --time="+max_time+"\n"
+                +"#MSUB -A {}\n".format(account)
+                +"#MSUB -m work,scratch\n"
+                +"module purge\n"
+                +"module load intel/20.0.4\n"
+                +"module load mpi/intelmpi/20.0.4\n"
+                +"module load flavor/hdf5/parallel hdf5/1.8.20\n"
+                +"module load python3\n"
+                +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
+                +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
+                +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
+                +"export OMP_NUM_THREADS="+str(OMP)+" \n"
+                +"export OMP_SCHEDULE=DYNAMIC \n"
+                +"export OMP_PROC_BIND=true \n"
+                +"export KMP_AFFINITY=verbose \n"
+                +"set -x\n"
+                +"ulimit -s unlimited \n"
+                +"cd ${BRIDGE_MSUB_PWD} \n"
+                +"cd "+dir+" \n"
+                +"module list 2> module.log\n"
+                +command+" \n"
+                +"echo $? > exit_status_file \n"
+            )
     # Run command
     COMMAND = "ccc_msub  "+EXEC_SCRIPT
     try:
@@ -527,9 +569,9 @@ def run_irene_skylake(command, dir):
                 sys.exit(2)
         sys.exit(2)
 
-def compile_irene_skylake(command, dir):
+def run_irene_a64fx(command, dir, mode):
     """
-    Compile using the command `command` on the Irene Skylake system.
+    Run the command `command` on the Irene A64FX system.
 
     Inputs:
     - command: command to run
@@ -539,35 +581,77 @@ def compile_irene_skylake(command, dir):
     exit_status_fd = open(dir+s+"exit_status_file", "w")
     exit_status_fd.write(str(EXIT_STATUS))
     exit_status_fd.close()
-    # Create script
-    with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-        exec_script_desc.write(
-            "#!/bin/bash\n"
-            +"#MSUB --job-name=smilei\n"
-            +"#MSUB --nodes=1\n"
-            +"#MSUB --ntasks=48\n"
-            +"#MSUB --output=output\n"
-            +"#MSUB --error=error\n"
-            +"#MSUB -q skylake\n"
-            +"#MSUB --time="+max_time+"\n"
-            +"#MSUB -A {}\n".format(account)
-            +"#MSUB -m work,scratch\n"
-            +"module purge\n"
-            +"module load intel/20.0.4\n"
-            +"module load mpi/intelmpi/20.0.4\n"
-            +"module load flavor/hdf5/parallel hdf5/1.8.20\n"
-            +"module load python3\n"
-            +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
-            +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
-            +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
-            +"set -x\n"
-            +"ulimit -s unlimited \n"
-            +"cd ${BRIDGE_MSUB_PWD} \n"
-            +"cd "+dir+" \n"
-            +"module list 2> module.log\n"
-            +command+" \n"
-            +"echo $? > exit_status_file \n"
-        )
+
+    if (mode == "compilation"):
+
+        # Create script
+        with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+            #NODES=((int(MPI)*int(OMP)-1)/24)+1
+            NODES=int(ceil(MPI/4.))
+            PPN = 48
+            exec_script_desc.write(
+                "#!/bin/bash\n"
+                +"#MSUB --job-name=smilei\n"
+                +"#MSUB --nodes=1\n"
+                +"#MSUB --ntasks=48\n"
+                +"#MSUB --output=output\n"
+                +"#MSUB --error=error\n"
+                +"#MSUB -q a64fx\n"
+                +"#MSUB --time="+max_time+"\n"
+                +"#MSUB -A {}\n".format(account)
+                +"#MSUB -m work,scratch\n"
+                +"module purge\n"
+                +"module load fujitsu mpi\n"
+                +"module load python3/3.8.10\n"
+                +"export HDF5_ROOT=/ccc/work/cont003/mds/lobetmat/Libraries/hdf5-1.12_fujitsu_a64fx/install/\n"
+                +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
+                +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
+                +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
+                +"set -x\n"
+                +"cd "+dir+" \n"
+                +"cd ${BRIDGE_MSUB_PWD} \n"
+                +"module list 2> module.log\n"
+                +command+" \n"
+                +"echo $? > exit_status_file \n"
+            )
+
+    else:
+
+        # Create script
+        with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+            #NODES=((int(MPI)*int(OMP)-1)/24)+1
+            NODES=int(ceil(MPI/4.))
+            PPN = 48
+            exec_script_desc.write(
+                "#!/bin/bash\n"
+                +"#MSUB --job-name=smilei\n"
+                +"#MSUB --nodes="+str(NODES)+"\n"
+                +"#MSUB --ntasks="+str(MPI)+"\n"
+                +"#MSUB --cpus-per-task="+str(OMP)+"\n"
+                +"#MSUB --output=output\n"
+                +"#MSUB --error=error\n"
+                +"#MSUB -q a64fx\n"
+                +"#MSUB --time="+max_time+"\n"
+                +"#MSUB -A {}\n".format(account)
+                +"#MSUB -m work,scratch\n"
+                +"module purge\n"
+                +"module load fujitsu mpi\n"
+                +"module load python3/3.8.10\n"
+                +"export HDF5_ROOT=/ccc/work/cont003/mds/lobetmat/Libraries/hdf5-1.12_fujitsu_a64fx/install/\n"
+                +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
+                +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
+                +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
+                +"export OMP_NUM_THREADS="+str(OMP)+" \n"
+                +"export OMP_SCHEDULE=DYNAMIC \n"
+                +"export OMP_PROC_BIND=true \n"
+                +"set -x\n"
+                +"cd "+dir+" \n"
+                +"cd ${BRIDGE_MSUB_PWD} \n"
+                +"module list 2> module.log\n"
+                +command+" \n"
+                +"echo $? > exit_status_file \n"
+            )
+
     # Run command
     COMMAND = "ccc_msub  "+EXEC_SCRIPT
     try:
@@ -608,7 +692,7 @@ def compile_irene_skylake(command, dir):
                 sys.exit(2)
         sys.exit(2)
 
-def RUN_LLR(command, dir):
+def RUN_LLR(command, dir, mode):
     """
     Run the command `command` on the LLR system.
 
@@ -708,7 +792,7 @@ def RUN_LLR(command, dir):
                 sys.exit(2)
         sys.exit(2)
 
-def RUN_OTHER(command, dir):
+def RUN_OTHER(command, dir, mode):
     """
     Run the command `command` on an arbitrary system.
 
@@ -730,16 +814,16 @@ def RUN_OTHER(command, dir):
 if VERBOSE :
   print( "Compiling Smilei")
 
-os.chdir(SMILEI_ROOT)
-WORKDIR_BASE = SMILEI_ROOT+"validation"+s+"workdirs"
+os.chdir(parameters['smilei_root'])
+WORKDIR_BASE = parameters['smilei_root']+"validation"+s+"workdirs"
 SMILEI_W = WORKDIR_BASE+s+"smilei"
-SMILEI_R = SMILEI_ROOT+s+"smilei"
+SMILEI_R = parameters['smilei_root']+s+"smilei"
 if path.exists(SMILEI_R):
     STAT_SMILEI_R_OLD = os.stat(SMILEI_R)
 else :
     STAT_SMILEI_R_OLD = ' '
 SMILEI_TOOLS_W = WORKDIR_BASE+s+"smilei_tables"
-SMILEI_TOOLS_R = SMILEI_ROOT+s+"smilei_tables"
+SMILEI_TOOLS_R = parameters['smilei_root']+s+"smilei_tables"
 if path.exists(SMILEI_TOOLS_R):
     STAT_SMILEI_TOOLS_R_OLD = os.stat(SMILEI_TOOLS_R)
 else :
@@ -768,7 +852,6 @@ if LLR in HOSTNAME :
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(OMP) + " -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = RUN_LLR
-    run_compilation = RUN
 elif "ruche" in HOSTNAME:
     PPN = 20
     if PPN < OMP :
@@ -781,7 +864,6 @@ elif "ruche" in HOSTNAME:
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND ="srun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = run_ruche
-    run_compilation = RUN
 elif "irene_skylake" in partition:
     PPN = 24
     if PPN < OMP :
@@ -794,7 +876,6 @@ elif "irene_skylake" in partition:
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND ="ccc_mprun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = run_irene_skylake
-    run_compilation = compile_irene_skylake
 elif POINCARE in HOSTNAME :
     #COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
     #CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
@@ -803,7 +884,6 @@ elif POINCARE in HOSTNAME :
     CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
     RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
     RUN = RUN_POINCARE
-    run_compilation = RUN
 # Local computers
 else:
     # Determine the correct MPI command
@@ -823,7 +903,6 @@ else:
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+MPIRUN+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
     RUN = RUN_OTHER
-    run_compilation = RUN
 
 # CLEAN
 # If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
@@ -837,8 +916,8 @@ try :
     if path.exists(WORKDIR_BASE+s+COMPILE_ERRORS) :
         os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
     # Compile
-    run_compilation( COMPILE_COMMAND, SMILEI_ROOT )
-    #RUN( COMPILE_TOOLS_COMMAND, SMILEI_ROOT )
+    RUN( COMPILE_COMMAND, parameters['smilei_root'], "compilation" )
+    #RUN( COMPILE_TOOLS_COMMAND, parameters['smilei_root'] )
     os.rename(COMPILE_OUT_TMP, COMPILE_OUT)
     if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R): # or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
         # if new bin, archive the workdir (if it contains a smilei bin)
@@ -871,10 +950,10 @@ if VERBOSE: print( "")
 def findReference(bench_name):
     try:
         try:
-            with open(SMILEI_REFERENCES+s+bench_name+".txt", 'rb') as f:
+            with open(parameters['smilei_reference_path']+s+bench_name+".txt", 'rb') as f:
                 return pickle.load(f, fix_imports=True, encoding='latin1')
         except:
-            with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
+            with open(parameters['smilei_reference_path']+s+bench_name+".txt", 'r') as f:
                 return pickle.load(f)
     except:
         print( "Unable to find the reference data for "+bench_name)
@@ -910,7 +989,7 @@ def matchesWithReference(data, expected_data, data_name, precision):
 # DEFINE A CLASS TO CREATE A REFERENCE
 class CreateReference(object):
     def __init__(self, bench_name):
-        self.reference_file = SMILEI_REFERENCES+s+bench_name+".txt"
+        self.reference_file = parameters['smilei_reference_path']+s+bench_name+".txt"
         self.data = {}
 
     def __call__(self, data_name, data, precision=None):
@@ -1101,7 +1180,7 @@ class Log:
 _dataNotMatching = False
 for BENCH in SMILEI_BENCH_LIST :
 
-    SMILEI_BENCH = SMILEI_BENCHS + BENCH
+    SMILEI_BENCH = parameters['smilei_benchmark_path'] + BENCH
 
     # CREATE THE WORKDIR CORRESPONDING TO THE INPUT FILE
     WORKDIR = WORKDIR_BASE+s+'wd_'+path.basename(path.splitext(BENCH)[0])
@@ -1199,7 +1278,7 @@ for BENCH in SMILEI_BENCH_LIST :
         if EXECUTION :
             if VERBOSE:
                 print( 'Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else ""))
-            RUN( RUN_COMMAND % SMILEI_NAMELISTS, RESTART_WORKDIR)
+            RUN( RUN_COMMAND % SMILEI_NAMELISTS, RESTART_WORKDIR, "execution")
 
         # CHECK THE OUTPUT FOR ERRORS
         errors = []
@@ -1228,7 +1307,7 @@ for BENCH in SMILEI_BENCH_LIST :
     os.chdir(WORKDIR)
 
     # FIND THE VALIDATION SCRIPT FOR THIS BENCH
-    validation_script = SMILEI_VALIDATION + "analyses" + s + "validate_"+BENCH
+    validation_script = parameters['smilei_validation_path'] + "analyses" + s + "validate_"+BENCH
     if VERBOSE: print( "")
     if not path.exists(validation_script):
         print( "Unable to find the validation script "+validation_script)
