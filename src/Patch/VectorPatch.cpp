@@ -726,6 +726,14 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 }
             }
 
+            double * __restrict__ position_x ;
+            double * __restrict__ position_y ;
+            double * __restrict__ position_z ;
+
+            double * __restrict__ momentum_x ;
+            double * __restrict__ momentum_y ;
+            double * __restrict__ momentum_z ;;
+
             // Update positions from momentum
             if (params.nDim_field == 3) {
 
@@ -742,18 +750,26 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
 
                         unsigned int number_of_particles = particles->size();
 
-                            #pragma omp simd
-                            for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
-                                double inverse_gamma = params.timestep/sqrt(1. + particles->momentum_x[ip]*particles->momentum_x[ip]
-                                    + particles->momentum_y[ip]*particles->momentum_y[ip] + particles->momentum_z[ip]*particles->momentum_z[ip]);
+                        position_x = particles->position_x;
+                        position_y = particles->position_y;
+                        position_z = particles->position_z;
 
-                                particles->position_x[ip] += ( particles->momentum_x[ip]
-                                                            * inverse_gamma + position_shift[0]);
-                                particles->position_y[ip] += ( particles->momentum_y[ip]
-                                                            * inverse_gamma + position_shift[1]);
-                                particles->position_z[ip] += ( particles->momentum_z[ip]
-                                                            * inverse_gamma + position_shift[2]);
-                            }
+                        momentum_x = particles->momentum_x;
+                        momentum_y = particles->momentum_y;
+                        momentum_z = particles->momentum_z;
+
+                        #pragma omp simd
+                        for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
+                            double inverse_gamma = params.timestep/sqrt(1. + momentum_x[ip]*momentum_x[ip]
+                                + momentum_y[ip]*momentum_y[ip] + momentum_z[ip]*momentum_z[ip]);
+
+                            position_x[ip] += ( momentum_x[ip]
+                                                        * inverse_gamma + position_shift[0]);
+                            position_y[ip] += ( momentum_y[ip]
+                                                        * inverse_gamma + position_shift[1]);
+                            position_z[ip] += ( momentum_z[ip]
+                                                        * inverse_gamma + position_shift[2]);
+                        }
                     }
                 } // end loop injector
             } else if (params.nDim_field == 2) {
