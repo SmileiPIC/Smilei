@@ -437,7 +437,7 @@ void VectorPatch::dynamics( Params &params,
                         {
                         #  ifdef _TASKTRACING
                         if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                            std::string start_event = std::to_string(MPI_Wtime()-reference_time)                      // write time
+                            std::string start_event = std::to_string(MPI_Wtime())                      // write time
                                                       +" Start Dynamics patch "+std::to_string(ipatch)  // write task and patch
                                                       +" species "+std::to_string(ispec)+"\n";         // write species
                             smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
@@ -455,7 +455,7 @@ void VectorPatch::dynamics( Params &params,
                                                            localDiags, buffer_id );
                         #  ifdef _TASKTRACING
                         if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                            std::string end_event = std::to_string(MPI_Wtime()-reference_time)       // write time 
+                            std::string end_event = std::to_string(MPI_Wtime())       // write time 
                                                       +" End Dynamics patch "+std::to_string(ipatch)  // write task and patch
                                                       +" species "+std::to_string(ispec)+"\n";       // write species
                             smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
@@ -494,7 +494,7 @@ void VectorPatch::dynamics( Params &params,
 
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                std::string start_event = std::to_string(MPI_Wtime()-reference_time)                     // write time
+                std::string start_event = std::to_string(MPI_Wtime())                     // write time
                                           +" Start DensityReduction patch "+std::to_string(ipatch)+"\n";  // write task and patch
                                           
                 smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
@@ -532,7 +532,7 @@ void VectorPatch::dynamics( Params &params,
 
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                std::string start_event = std::to_string(MPI_Wtime()-reference_time)                   // write time
+                std::string start_event = std::to_string(MPI_Wtime())                   // write time
                                           +" End DensityReduction patch "+std::to_string(ipatch)+"\n";  // write task and patch
                                           
                 smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
@@ -664,10 +664,11 @@ void VectorPatch::dynamics( Params &params,
             std::ofstream outfile;
             std::string namefile = "task_tracing_rank_"+std::to_string(rank)+"_thread_"+std::to_string(ithread)+".txt";
             outfile.open(namefile, std::ios_base::app); // append to file
-            outfile << "Iteration "<<std::to_string(iteration)<<"\n";
+            outfile << "Start Iteration "<<std::to_string(iteration)<<"\n";
             for (int event = 0; event<smpi->task_tracing_[ithread].size();event++){
                 outfile<<(smpi->task_tracing_[ithread][event]);
             }
+            outfile << "End Iteration "<<std::to_string(iteration)<<"\n";
             smpi->task_tracing_[ithread].clear();
         }
     }

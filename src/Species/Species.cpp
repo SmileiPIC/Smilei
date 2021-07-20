@@ -774,7 +774,14 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
             #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
 #endif
             {
-
+#  ifdef _TASKTRACING
+if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+    std::string start_event = std::to_string(MPI_Wtime())                     // write time
+                              +" Start Interp patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+                              
+    smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+}
+#  endif
             if ( params.geometry != "AMcylindrical" ){
                 // Reset densities sub-buffers - each of these buffers store a grid density on the ibin physical space
                 // This must be done before Projection and before Ionization (because of the ionization currents)
@@ -802,6 +809,14 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[0*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
+#  ifdef _TASKTRACING
+if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+    std::string end_event = std::to_string(MPI_Wtime())                     // write time
+                              +" End Interp patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+                              
+    smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+}
+#  endif
             } //end task Interpolator
         } // end ibin loop for Interpolator
 
@@ -958,6 +973,14 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                     #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_can_push[ibin],bin_can_push[Nbins]) depend(out:bin_has_pushed[ibin])
 #endif
                     {
+#  ifdef _TASKTRACING
+if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+    std::string start_event = std::to_string(MPI_Wtime())                     // write time
+                              +" Start Push patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+                              
+    smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+}
+#  endif
 #ifdef  __DETAILED_TIMERS
                     ithread = omp_get_thread_num();
                     timer = MPI_Wtime();
@@ -970,6 +993,14 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                     patch->patch_timers_[1*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
+#  ifdef _TASKTRACING
+if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+    std::string end_event = std::to_string(MPI_Wtime())                     // write time
+                              +" Start Push patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+                              
+    smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+}
+#  endif
                     } // end task for Push on ibin
                 } // end ibin loop for Push
         } // end if moving particle, radiate and push
@@ -985,6 +1016,14 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
 
             {
+#  ifdef _TASKTRACING
+if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+    std::string start_event = std::to_string(MPI_Wtime())                     // write time
+                              +" Start BC patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+                              
+    smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+}
+#  endif
             double ener_iPart( 0. );
 
 #ifdef  __DETAILED_TIMERS
@@ -1021,6 +1060,15 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
+
+#  ifdef _TASKTRACING
+if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+    std::string end_event = std::to_string(MPI_Wtime())                     // write time
+                              +" End BC patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+                              
+    smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+}
+#  endif
             } // end task for particles BC on ibin
         } // end ibin loop for particles BC
 
@@ -1031,6 +1079,14 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
             #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
 #endif
             {
+#  ifdef _TASKTRACING
+if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+    std::string start_event = std::to_string(MPI_Wtime())                     // write time
+                              +" Start Proj patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+                              
+    smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+}
+#  endif
                 
 #ifdef  __DETAILED_TIMERS
             ithread = omp_get_thread_num();
@@ -1056,6 +1112,14 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[2*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
+#  ifdef _TASKTRACING
+if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
+    std::string end_event = std::to_string(MPI_Wtime())                     // write time
+                              +" End Proj patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+                              
+    smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+}
+#  endif
             }//end task for Proj of ibin
          }// end ibin loop for Proj
 
@@ -1202,40 +1266,40 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 
      if(time_dual>time_frozen_){
 
-        // reduction of the lost energy in each ibin
-        // the dependency ensures that it is done after the particles BC
+//         // reduction of the lost energy in each ibin
+//         // the dependency ensures that it is done after the particles BC
+// // #ifdef  __DETAILED_TIMERS
+// //         #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+// // #else
+// //         #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+// // #endif
 // #ifdef  __DETAILED_TIMERS
-//         #pragma omp task default(shared) private(ithread,timer) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+//         #pragma omp task default(shared) private(ithread,timer)
 // #else
-//         #pragma omp task default(shared) depend(in:bin_has_done_particles_BC[0:(Nbins-1)])
+//         #pragma omp task default(shared)
 // #endif
-#ifdef  __DETAILED_TIMERS
-        #pragma omp task default(shared) private(ithread,timer)
-#else
-        #pragma omp task default(shared)
-#endif
-        {
-        // reduce the energy lost with BC per bin
-        for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-           nrj_bc_lost += nrj_lost_per_bin[ibin];
-        }
-
-        // sum the radiated energy / energy converted in pairs
-        // The dependencies above ensure that this is done after the Radiation and MultiPhoton Breit Wheeler methods
-        if( Radiate || Multiphoton_Breit_Wheeler_process) {
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-            ithread = omp_get_thread_num();
-#endif
-
-            for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-               radiated_energy_ += radiated_energy_per_bin[ibin];
-            }
-#ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
-#endif
-        } // end if Radiate or Multiphoton_Breit_Wheeler_process
-        } // end task for lost/radiated energy reduction
+//         {
+//         // reduce the energy lost with BC per bin
+//         for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+//            nrj_bc_lost += nrj_lost_per_bin[ibin];
+//         }
+// 
+//         // sum the radiated energy / energy converted in pairs
+//         // The dependencies above ensure that this is done after the Radiation and MultiPhoton Breit Wheeler methods
+//         if( Radiate || Multiphoton_Breit_Wheeler_process) {
+// #ifdef  __DETAILED_TIMERS
+//             timer = MPI_Wtime();
+//             ithread = omp_get_thread_num();
+// #endif
+// 
+//             for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
+//                radiated_energy_ += radiated_energy_per_bin[ibin];
+//             }
+// #ifdef  __DETAILED_TIMERS
+//             patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+// #endif
+//         } // end if Radiate or Multiphoton_Breit_Wheeler_process
+//         } // end task for lost/radiated energy reduction
      }// end if moving particle
   
 
