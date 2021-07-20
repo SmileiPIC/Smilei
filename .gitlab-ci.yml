@@ -43,7 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
-#    - develop-mat
+    - develop-mat
 
   script:
     # Move in test dir
