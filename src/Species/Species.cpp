@@ -505,8 +505,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
         #  ifdef _DEVELOPTRACING
         if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-            std::string start_event = std::to_string(MPI_Wtime())                     // write time
-                                      +" Start Interp patch "+std::to_string(ibin)+"\n";  // write task and patch
+            std::string start_event = std::to_string(MPI_Wtime())    // write time
+                                      +" Start Interp \n";           // write task 
                                       
             smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
         }
@@ -519,8 +519,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
         #  ifdef _DEVELOPTRACING
         if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-            std::string end_event = std::to_string(MPI_Wtime())                     // write time
-                                      +" End Interp patch "+std::to_string(ibin)+"\n";  // write task and patch
+            std::string end_event = std::to_string(MPI_Wtime()) // write time
+                                      +" End Interp \n";        // write task 
                                       
             smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
         }
@@ -614,8 +614,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
             #  ifdef _DEVELOPTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                std::string start_event = std::to_string(MPI_Wtime())                     // write time
-                                          +" Start Push patch "+std::to_string(ibin)+"\n";  // write task and patch
+                std::string start_event = std::to_string(MPI_Wtime())    // write time
+                                          +" Start Push \n";             // write task 
                                           
                 smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
             }
@@ -625,8 +625,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
             #  ifdef _DEVELOPTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                std::string end_event = std::to_string(MPI_Wtime())                     // write time
-                                          +" End Push patch "+std::to_string(ibin)+"\n";  // write task and patch
+                std::string end_event = std::to_string(MPI_Wtime())   // write time
+                                          +" End Push \n";            // write task
                                           
                 smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
             }
@@ -646,8 +646,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    std::string start_event = std::to_string(MPI_Wtime())                     // write time
-                                              +" Start BC patch "+std::to_string(ibin)+"\n";  // write task and patch
+                    std::string start_event = std::to_string(MPI_Wtime())   // write time
+                                              +" Start BC \n";              // write task 
                                               
                     smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
                 }
@@ -681,8 +681,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 }
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    std::string end_event = std::to_string(MPI_Wtime())                     // write time
-                                              +" End BC patch "+std::to_string(ibin)+"\n";  // write task and patch
+                    std::string end_event = std::to_string(MPI_Wtime())     // write time
+                                              +" End BC \n";                // write task 
                                               
                     smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
                 }
@@ -699,8 +699,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    std::string start_event = std::to_string(MPI_Wtime())                     // write time
-                                              +" Start Proj patch "+std::to_string(ibin)+"\n";  // write task and patch
+                    std::string start_event = std::to_string(MPI_Wtime())   // write time
+                                              +" Start Proj \n";            // write task
                                               
                     smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
                 }
@@ -712,8 +712,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 }
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    std::string end_event = std::to_string(MPI_Wtime())                     // write time
-                                              +" End Proj patch "+std::to_string(ibin)+"\n";  // write task and patch
+                    std::string end_event = std::to_string(MPI_Wtime())     // write time
+                                              +" End Proj patch \n";        // write task
                                               
                     smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
                 }
@@ -834,8 +834,8 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
             {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string start_event = std::to_string(MPI_Wtime())                     // write time
-                              +" Start Interp patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+    std::string start_event = std::to_string(MPI_Wtime())  // write time
+                              +" Start Interp \n";         // write task 
                               
     smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
 }
@@ -869,8 +869,8 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 #endif
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string end_event = std::to_string(MPI_Wtime())                     // write time
-                              +" End Interp patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+    std::string end_event = std::to_string(MPI_Wtime())    // write time
+                              +" End Interp \n";           // write task 
                               
     smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
 }
@@ -1033,8 +1033,8 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
                     {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string start_event = std::to_string(MPI_Wtime())                     // write time
-                              +" Start Push patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+    std::string start_event = std::to_string(MPI_Wtime())    // write time
+                              +" Start Push \n";             // write task
                               
     smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
 }
@@ -1053,8 +1053,8 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 #endif
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string end_event = std::to_string(MPI_Wtime())                     // write time
-                              +" Start Push patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+    std::string end_event = std::to_string(MPI_Wtime())    // write time
+                              +" Start Push \n";           // write task 
                               
     smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
 }
@@ -1076,8 +1076,8 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
             {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string start_event = std::to_string(MPI_Wtime())                     // write time
-                              +" Start BC patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+    std::string start_event = std::to_string(MPI_Wtime())        // write time
+                              +" Start BC patch \n";             // write task 
                               
     smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
 }
@@ -1121,8 +1121,8 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string end_event = std::to_string(MPI_Wtime())                     // write time
-                              +" End BC patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+    std::string end_event = std::to_string(MPI_Wtime())     // write time
+                              +" End BC patch \n";          // write task 
                               
     smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
 }
@@ -1139,8 +1139,8 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
             {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string start_event = std::to_string(MPI_Wtime())                     // write time
-                              +" Start Proj patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+    std::string start_event = std::to_string(MPI_Wtime()) // write time
+                              +" Start Proj \n";          // write task
                               
     smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
 }
@@ -1172,8 +1172,8 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 #endif
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string end_event = std::to_string(MPI_Wtime())                     // write time
-                              +" End Proj patch "+std::to_string(buffer_id)+"\n";  // write task and patch
+    std::string end_event = std::to_string(MPI_Wtime())    // write time
+                              +" End Proj \n";             // write task 
                               
     smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
 }

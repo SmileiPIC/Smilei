@@ -425,14 +425,6 @@ void VectorPatch::dynamics( Params &params,
 #endif
                     } else {
 #ifndef _OMPTASKS
-                        // #  ifdef _DEVELOPTRACING
-                        // if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                        //     std::string start_event = std::to_string(MPI_Wtime())                      // write time
-                        //                               +" Start Dynamics patch "+std::to_string(ipatch)  // write task and patch
-                        //                               +" species "+std::to_string(ispec)+"\n";         // write species
-                        //     smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
-                        // }  
-                        // #  endif 
                         spec->Species::dynamics( time_dual, ispec,
                                                  emfields( ipatch ),
                                                  params, diag_flag, partwalls( ipatch ),
@@ -440,25 +432,9 @@ void VectorPatch::dynamics( Params &params,
                                                  RadiationTables,
                                                  MultiphotonBreitWheelerTables,
                                                  localDiags );
-                        // #  ifdef _DEVELOPTRACING
-                        // if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                        //     std::string end_event = std::to_string(MPI_Wtime())       // write time 
-                        //                               +" End Dynamics patch "+std::to_string(ipatch)  // write task and patch
-                        //                               +" species "+std::to_string(ispec)+"\n";       // write species
-                        //     smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
-                        // }
-                        // #  endif
 #else
                         #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
                         {
-                        //#  ifdef _TASKTRACING
-                        //if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                        //    std::string start_event = std::to_string(MPI_Wtime())                      // write time
-                        //                              +" Start Dynamics patch "+std::to_string(ipatch)  // write task and patch
-                        //                              +" species "+std::to_string(ispec)+"\n";         // write species
-                        //    smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
-                        //}
-                        //#  endif 
                         // every call of dynamics for a couple ipatch-ispec is an independent task
                         Species *spec_task = species( ipatch, ispec );
                         int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
@@ -469,14 +445,6 @@ void VectorPatch::dynamics( Params &params,
                                                            RadiationTables,
                                                            MultiphotonBreitWheelerTables,
                                                            localDiags, buffer_id );
-                        //#  ifdef _TASKTRACING
-                        //if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                        //    std::string end_event = std::to_string(MPI_Wtime())       // write time 
-                        //                              +" End Dynamics patch "+std::to_string(ipatch)  // write task and patch
-                        //                              +" species "+std::to_string(ispec)+"\n";       // write species
-                        //    smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
-                        //}
-                        //#  endif 
                         } // end task
 #endif
                       } // end case vectorization non adaptive
@@ -511,7 +479,7 @@ void VectorPatch::dynamics( Params &params,
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
                 std::string start_event = std::to_string(MPI_Wtime())                     // write time
-                                          +" Start DensityReduction patch "+std::to_string(ipatch)+"\n";  // write task and patch
+                                          +" Start DensityReduction \n";  // write task and patch
                                           
                 smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
             }
@@ -548,10 +516,10 @@ void VectorPatch::dynamics( Params &params,
 
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                std::string start_event = std::to_string(MPI_Wtime())                   // write time
-                                          +" End DensityReduction patch "+std::to_string(ipatch)+"\n";  // write task and patch
+                std::string end_event = std::to_string(MPI_Wtime())  // write time
+                                          +" End DensityReduction \n";  // write task 
                                           
-                smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+                smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
             }
             #  endif
             } // end task on reduction of patch densities
