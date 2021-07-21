@@ -241,6 +241,62 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             // }
         }
 
+        double * __restrict__ coeffyp2 = &( coeff[1][0][2][0] );
+        double * __restrict__ coeffyd2 = &( coeff[1][1][2][0] );
+        double * __restrict__ coeffxd2 = &( coeff[0][1][2][0] );
+        double * __restrict__ coeffxp2 = &( coeff[0][0][2][0] );
+        double * __restrict__ coeffzp2 = &( coeff[2][0][2][0] );
+        double * __restrict__ coeffzd2 = &( coeff[2][1][2][0] );
+
+        double field_buffer[6][6][6];
+        double interp_res = 0;
+
+        // Field buffers for vectorization (required on A64FX)
+        for( int iloc=-2 ; iloc<4 ; iloc++ ) {
+            for( int jloc=-2 ; jloc<3 ; jloc++ ) {
+                for( int kloc=-2 ; kloc<3 ; kloc++ ) {
+                    field_buffer[iloc+2][jloc+2][kloc+2] = Ex3D->data_3D[idxO[0]+iloc][idxO[1]+jloc][idxO[2]+kloc];
+                }
+            }
+        }
+
+        //Ex(dual, primal, primal)
+
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
+            #if defined(__clang__)
+                 #pragma clang loop unroll(full)
+             #elif defined (__FUJITSU)
+                 #pragma loop fullunroll_pre_simd 5
+             #elif defined(__GNUC__)
+                 #pragma GCC unroll (5)
+             #endif
+            for( int iloc=-2 ; iloc<3 ; iloc++ ) {
+                #if defined(__clang__)
+                     #pragma clang loop unroll(full)
+                 #elif defined (__FUJITSU)
+                     #pragma loop fullunroll_pre_simd 5
+                 #elif defined(__GNUC__)
+                     #pragma GCC unroll (5)
+                 #endif
+                for( int jloc=-2 ; jloc<3 ; jloc++ ) {
+                    #if defined(__clang__)
+                         #pragma clang loop unroll(full)
+                     #elif defined (__FUJITSU)
+                         #pragma loop fullunroll_pre_simd 5
+                     #elif defined(__GNUC__)
+                         #pragma GCC unroll (5)
+                     #endif
+                    for( int kloc=-2 ; kloc<3 ; kloc++ ) {
+                        interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
+                            ( ( 1-dual[0][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2] + dual[0][ipart]*field_buffer[3+iloc][jloc+2][kloc+2] );
+                    }
+                }
+            }
+            Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+        }
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
@@ -250,18 +306,6 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             double *coeffxp = &( coeff[0][0][2][ipart] );
             double *coeffzp = &( coeff[2][0][2][ipart] );
             double *coeffzd = &( coeff[2][1][2][ipart] );
-
-            //Ex(dual, primal, primal)
-            double interp_res = 0.;
-            for( int iloc=-2 ; iloc<3 ; iloc++ ) {
-                for( int jloc=-2 ; jloc<3 ; jloc++ ) {
-                    for( int kloc=-2 ; kloc<3 ; kloc++ ) {
-                        interp_res += *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) * *( coeffzp+kloc*32 ) *
-                                      ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+iloc, idxO[1]+jloc, idxO[2]+kloc ) );
-                    }
-                }
-            }
-            Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
 
             //Ey(primal, dual, primal)

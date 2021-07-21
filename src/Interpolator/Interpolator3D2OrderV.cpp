@@ -205,7 +205,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
         }
 
-        double interp_res;
+        double interp_res = 0.;
 
         // Coefficient pointer on primal and dual nodes
         double * __restrict__ coeffxd = &( coeff[0][1][1][0] );
