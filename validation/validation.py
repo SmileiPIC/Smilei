@@ -121,7 +121,7 @@ parameters['smilei_benchmark_path'] = parameters['smilei_root']+"benchmarks"+s
 
 # Script variables
 # -----------------------------
-EXEC_SCRIPT = 'exec_script.sh'
+parameters['exec_script'] = 'exec_script.sh'
 EXEC_SCRIPT_OUT = 'exec_script.out'
 SMILEI_EXE_OUT = 'smilei_exe.out'
 
@@ -147,9 +147,13 @@ HOSTNAME = gethostname()
 # DIR VARIABLES
 WORKDIR = ""
 
-# DEFAULT VALUES FOR OPTIONS
-OMP = 12
-MPI = 4
+# ----------------------------------------------------------
+# Options and command line arguments
+
+options = {}
+
+options['omp'] = 12           # Number of omp threads per options['mpi']
+options['mpi'] = 4
 PPN = 12
 max_time = "00:10:00"
 EXECUTION = False
@@ -170,7 +174,7 @@ def usage():
 
 # GET COMMAND-LINE OPTIONS
 try:
-    options, remainder = getopt(
+    external_options, remainder = getopt(
         sys.argv[1:],
         'o:m:b:r:k:p:gshvcl:t:a:',
         ['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG=', 'time=', 'account='])
@@ -180,13 +184,13 @@ except GetoptError as err:
 
 # ----------------------------------
 # Reading of the command line options
-for opt, arg in options:
+for opt, arg in external_options:
     if opt in ('-o', '--OMP'):
         EXECUTION = True
-        OMP = int(arg)
+        options['omp'] = int(arg)
     elif opt in ('-m', '--MPI'):
         EXECUTION = True
-        MPI = int(arg)
+        options['mpi'] = int(arg)
     elif opt in ('-b', '--BENCH'):
         BENCH = arg
     elif opt in ('-p', '--PARTITION'):
@@ -216,6 +220,7 @@ for opt, arg in options:
         print( "-p")
         print( "     -p <partition name>")
         print( "       <partition name>: partition name on super-computers")
+        print( "                         - ruche")
         print( "-t")
         print( "     -t <max time>")
         print( "       <max time>: format hh:mm:ss")
@@ -324,9 +329,9 @@ def workdir_archiv(BIN_NAME) :
         mkdir(WORKDIR_BASE)
 
 # PLATFORM-DEPENDENT INSTRUCTIONS FOR RUNNING PARALLEL COMMAND
-def RUN_POINCARE(command, dir, mode):
+def RUN_POINCARE(command, dir, mode, options):
     # Create script
-    with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+    with open(parameters['exec_script'], 'w') as exec_script_desc:
         print( "ON POINCARE NOW")
         exec_script_desc.write(
             "# environnement \n"
@@ -335,12 +340,12 @@ def RUN_POINCARE(command, dir, mode):
             +"export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0\n"
             +"# \n"
             +"# execution \n"
-            +"export OMP_NUM_THREADS="+str(OMP)+"\n"
+            +"export OMP_NUM_THREADS="+str(options['omp'])+"\n"
             +command+" \n"
             +"exit $?  "
         )
     # Run command
-    COMMAND = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
+    COMMAND = "/bin/bash "+parameters['exec_script']+" > "+EXEC_SCRIPT_OUT+" 2>&1"
     try:
         check_call(COMMAND, shell=True)
     except CalledProcessError:
@@ -358,7 +363,7 @@ def RUN_POINCARE(command, dir, mode):
             rmtree(WORKDIR)
         sys.exit(2)
 
-def run_ruche(command, dir, mode):
+def run_ruche(command, dir, mode, options):
     """
     Run the command `command` on the RUCHE system.
 
@@ -371,16 +376,16 @@ def run_ruche(command, dir, mode):
     exit_status_fd.write(str(EXIT_STATUS))
     exit_status_fd.close()
     # Create script
-    with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-        #NODES=((int(MPI)*int(OMP)-1)/24)+1
-        NODES=int(ceil(MPI/2.))
+    with open(parameters['exec_script'], 'w') as exec_script_desc:
+        #NODES=((int(options['mpi'])*int(options['omp'])-1)/24)+1
+        NODES=int(ceil(options['mpi']/2.))
         PPN = 20
         exec_script_desc.write(
             "#!/bin/bash\n"
             +"#SBATCH --job-name=smilei\n"
             +"#SBATCH --nodes="+str(NODES)+"\n"
-            +"#SBATCH --ntasks="+str(MPI)+"\n"
-            +"#SBATCH --cpus-per-task="+str(OMP)+"\n"
+            +"#SBATCH --ntasks="+str(options['mpi'])+"\n"
+            +"#SBATCH --cpus-per-task="+str(options['omp'])+"\n"
             +"#SBATCH --output=output\n"
             +"#SBATCH --error=error\n"
             +"#SBATCH --time="+max_time+"\n"
@@ -391,7 +396,7 @@ def run_ruche(command, dir, mode):
             +"module load intel/19.0.3/gcc-4.8.5\n"
             +"module load intel-mpi/2019.3.199/intel-19.0.3.199\n"
             +"module load hdf5/1.10.6/intel-19.0.3.199-intel-mpi\n"
-            +"export OMP_NUM_THREADS="+str(OMP)+" \n"
+            +"export OMP_NUM_THREADS="+str(options['omp'])+" \n"
             +"export OMP_SCHEDULE=DYNAMIC \n"
             +"export OMP_PLACES=cores \n"
             +"export KMP_AFFINITY=verbose \n"
@@ -407,7 +412,7 @@ def run_ruche(command, dir, mode):
             +"echo $? > exit_status_file \n"
         )
     # Run command
-    COMMAND = "sbatch  "+EXEC_SCRIPT
+    COMMAND = "sbatch  "+parameters['exec_script']
     try:
         check_call(COMMAND, shell=True)
     except CalledProcessError:
@@ -446,7 +451,7 @@ def run_ruche(command, dir, mode):
                 sys.exit(2)
         sys.exit(2)
 
-def run_irene_skylake(command, dir, mode):
+def run_irene_skylake(command, dir, mode, options):
     """
     Run the command `command` on the Irene Skylake system.
 
@@ -462,7 +467,7 @@ def run_irene_skylake(command, dir, mode):
     if (mode == "compilation"):
 
         # Create script
-        with open(EXEC_SCRIPT, 'w') as exec_script_desc:
+        with open(parameters['exec_script'], 'w') as exec_script_desc:
             exec_script_desc.write(
                 "#!/bin/bash\n"
                 +"#MSUB --job-name=smilei\n"
@@ -493,16 +498,16 @@ def run_irene_skylake(command, dir, mode):
     else:
 
         # Create script
-        with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-            #NODES=((int(MPI)*int(OMP)-1)/24)+1
-            NODES=int(ceil(MPI/2.))
+        with open(parameters['exec_script'], 'w') as exec_script_desc:
+            #NODES=((int(options['mpi'])*int(options['omp'])-1)/24)+1
+            NODES=int(ceil(options['mpi']/2.))
             PPN = 24
             exec_script_desc.write(
                 "#!/bin/bash\n"
                 +"#MSUB --job-name=smilei\n"
                 +"#MSUB --nodes="+str(NODES)+"\n"
-                +"#MSUB --ntasks="+str(MPI)+"\n"
-                +"#MSUB --cpus-per-task="+str(OMP)+"\n"
+                +"#MSUB --ntasks="+str(options['mpi'])+"\n"
+                +"#MSUB --cpus-per-task="+str(options['omp'])+"\n"
                 +"#MSUB --output=output\n"
                 +"#MSUB --error=error\n"
                 +"#MSUB -q skylake\n"
@@ -517,7 +522,7 @@ def run_irene_skylake(command, dir, mode):
                 +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
                 +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
                 +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
-                +"export OMP_NUM_THREADS="+str(OMP)+" \n"
+                +"export OMP_NUM_THREADS="+str(options['omp'])+" \n"
                 +"export OMP_SCHEDULE=DYNAMIC \n"
                 +"export OMP_PROC_BIND=true \n"
                 +"export KMP_AFFINITY=verbose \n"
@@ -530,7 +535,7 @@ def run_irene_skylake(command, dir, mode):
                 +"echo $? > exit_status_file \n"
             )
     # Run command
-    COMMAND = "ccc_msub  "+EXEC_SCRIPT
+    COMMAND = "ccc_msub  "+parameters['exec_script']
     try:
         check_call(COMMAND, shell=True)
     except CalledProcessError:
@@ -569,7 +574,7 @@ def run_irene_skylake(command, dir, mode):
                 sys.exit(2)
         sys.exit(2)
 
-def run_irene_a64fx(command, dir, mode):
+def run_irene_a64fx(command, dir, mode, options):
     """
     Run the command `command` on the Irene A64FX system.
 
@@ -585,9 +590,9 @@ def run_irene_a64fx(command, dir, mode):
     if (mode == "compilation"):
 
         # Create script
-        with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-            #NODES=((int(MPI)*int(OMP)-1)/24)+1
-            NODES=int(ceil(MPI/4.))
+        with open(parameters['exec_script'], 'w') as exec_script_desc:
+            #NODES=((int(options['mpi'])*int(options['omp'])-1)/24)+1
+            NODES=int(ceil(options['mpi']/4.))
             PPN = 48
             exec_script_desc.write(
                 "#!/bin/bash\n"
@@ -618,16 +623,16 @@ def run_irene_a64fx(command, dir, mode):
     else:
 
         # Create script
-        with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-            #NODES=((int(MPI)*int(OMP)-1)/24)+1
-            NODES=int(ceil(MPI/4.))
+        with open(parameters['exec_script'], 'w') as exec_script_desc:
+            #NODES=((int(options['mpi'])*int(options['omp'])-1)/24)+1
+            NODES=int(ceil(options['mpi']/4.))
             PPN = 48
             exec_script_desc.write(
                 "#!/bin/bash\n"
                 +"#MSUB --job-name=smilei\n"
                 +"#MSUB --nodes="+str(NODES)+"\n"
-                +"#MSUB --ntasks="+str(MPI)+"\n"
-                +"#MSUB --cpus-per-task="+str(OMP)+"\n"
+                +"#MSUB --ntasks="+str(options['mpi'])+"\n"
+                +"#MSUB --cpus-per-task="+str(options['omp'])+"\n"
                 +"#MSUB --output=output\n"
                 +"#MSUB --error=error\n"
                 +"#MSUB -q a64fx\n"
@@ -641,7 +646,7 @@ def run_irene_a64fx(command, dir, mode):
                 +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
                 +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
                 +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
-                +"export OMP_NUM_THREADS="+str(OMP)+" \n"
+                +"export OMP_NUM_THREADS="+str(options['omp'])+" \n"
                 +"export OMP_SCHEDULE=DYNAMIC \n"
                 +"export OMP_PROC_BIND=true \n"
                 +"set -x\n"
@@ -653,7 +658,7 @@ def run_irene_a64fx(command, dir, mode):
             )
 
     # Run command
-    COMMAND = "ccc_msub  "+EXEC_SCRIPT
+    COMMAND = "ccc_msub  "+parameters['exec_script']
     try:
         check_call(COMMAND, shell=True)
     except CalledProcessError:
@@ -692,7 +697,7 @@ def run_irene_a64fx(command, dir, mode):
                 sys.exit(2)
         sys.exit(2)
 
-def RUN_LLR(command, dir, mode):
+def RUN_LLR(command, dir, mode, options):
     """
     Run the command `command` on the LLR system.
 
@@ -705,9 +710,9 @@ def RUN_LLR(command, dir, mode):
     exit_status_fd.write(str(EXIT_STATUS))
     exit_status_fd.close()
     # Create script
-    with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-        #NODES=((int(MPI)*int(OMP)-1)/24)+1
-        NODES=int(ceil(MPI/2.))
+    with open(parameters['exec_script'], 'w') as exec_script_desc:
+        #NODES=((int(options['mpi'])*int(options['omp'])-1)/24)+1
+        NODES=int(ceil(options['mpi']/2.))
         if (partition == "jollyjumper"):
             PPN = 24
         elif (partition == "tornado"):
@@ -727,7 +732,7 @@ def RUN_LLR(command, dir, mode):
             +"module load h5py/hdf5_1.8.19-icc-omp2.1.6-py3.7.0\n"
             +"module load mpi4py/omp2.1.6-ib-icc_py3.7.0\n"
             +"module load compilers/gcc/4.9.2\n"
-            +"export OMP_NUM_THREADS="+str(OMP)+" \n"
+            +"export OMP_NUM_THREADS="+str(options['omp'])+" \n"
             +"export OMP_SCHEDULE=DYNAMIC \n"
             +"export KMP_AFFINITY=verbose \n"
             +"export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n"
@@ -746,9 +751,9 @@ def RUN_LLR(command, dir, mode):
         )
     # Run command
     if (partition=="jollyjumper"):
-        COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
+        COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+parameters['exec_script']
     elif (partition=="tornado"):
-        COMMAND = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+EXEC_SCRIPT
+        COMMAND = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+parameters['exec_script']
     try:
         check_call(COMMAND, shell=True)
     except CalledProcessError:
@@ -792,7 +797,7 @@ def RUN_LLR(command, dir, mode):
                 sys.exit(2)
         sys.exit(2)
 
-def RUN_OTHER(command, dir, mode):
+def RUN_OTHER(command, dir, mode, options):
     """
     Run the command `command` on an arbitrary system.
 
@@ -842,22 +847,22 @@ if LLR in HOSTNAME :
         PPN = 12
     elif (partition=="tornado"):
         PPN = 18
-    if PPN % OMP != 0:
-        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+partition)
+    if PPN % options['omp'] != 0:
+        print(  "Smilei cannot be run with "+str(options['omp'])+" threads on "+HOSTNAME+" and partition "+partition)
         sys.exit(4)
-    NODES=int(ceil(MPI/2.))
+    NODES=int(ceil(options['mpi']/2.))
     NPERSOCKET = 1
     COMPILE_COMMAND = str(MAKE)+' -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-    RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(OMP) + " -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+    RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(options['omp']) + " -n "+str(options['mpi'])+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = RUN_LLR
 elif "ruche" in HOSTNAME:
     PPN = 20
-    if PPN < OMP :
-        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+partition)
+    if PPN < options['omp'] :
+        print(  "Smilei cannot be run with "+str(options['omp'])+" threads on "+HOSTNAME+" and partition "+partition)
         sys.exit(4)
-    NODES=int(ceil(MPI/2.))
+    NODES=int(ceil(options['mpi']/2.))
     NPERSOCKET = 1
     COMPILE_COMMAND = str(MAKE)+' -j 20 machine=ruche > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
@@ -866,10 +871,10 @@ elif "ruche" in HOSTNAME:
     RUN = run_ruche
 elif "irene_skylake" in partition:
     PPN = 24
-    if PPN < OMP :
-        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+partition)
+    if PPN < options['omp'] :
+        print(  "Smilei cannot be run with "+str(options['omp'])+" threads on "+HOSTNAME+" and partition "+partition)
         sys.exit(4)
-    NODES=int(ceil(MPI/2.))
+    NODES=int(ceil(options['mpi']/2.))
     NPERSOCKET = 1
     COMPILE_COMMAND = str(MAKE)+' -j 48 machine="joliot_curie_skl" > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
@@ -882,7 +887,7 @@ elif POINCARE in HOSTNAME :
     COMPILE_COMMAND = str(MAKE)+' -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
-    RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+    RUN_COMMAND = "mpirun -np "+str(options['mpi'])+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
     RUN = RUN_POINCARE
 # Local computers
 else:
@@ -901,7 +906,7 @@ else:
     COMPILE_COMMAND = str(MAKE)+' -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+MPIRUN+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
+    RUN_COMMAND = "export OMP_NUM_THREADS="+str(options['omp'])+"; "+MPIRUN+str(options['mpi'])+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
     RUN = RUN_OTHER
 
 # CLEAN
@@ -916,7 +921,7 @@ try :
     if path.exists(WORKDIR_BASE+s+COMPILE_ERRORS) :
         os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
     # Compile
-    RUN( COMPILE_COMMAND, parameters['smilei_root'], "compilation" )
+    RUN( COMPILE_COMMAND, parameters['smilei_root'], "compilation", options )
     #RUN( COMPILE_TOOLS_COMMAND, parameters['smilei_root'] )
     os.rename(COMPILE_OUT_TMP, COMPILE_OUT)
     if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R): # or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
@@ -1186,10 +1191,10 @@ for BENCH in SMILEI_BENCH_LIST :
     WORKDIR = WORKDIR_BASE+s+'wd_'+path.basename(path.splitext(BENCH)[0])
     mkdir(WORKDIR)
 
-    WORKDIR += s+str(MPI)
+    WORKDIR += s+str(options['mpi'])
     mkdir(WORKDIR)
 
-    WORKDIR += s+str(OMP)
+    WORKDIR += s+str(options['omp'])
     mkdir(WORKDIR)
 
     # If there are restarts, prepare a Checkpoints block to the namelist
@@ -1277,8 +1282,8 @@ for BENCH in SMILEI_BENCH_LIST :
         # RUN smilei IF EXECUTION IS TRUE
         if EXECUTION :
             if VERBOSE:
-                print( 'Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else ""))
-            RUN( RUN_COMMAND % SMILEI_NAMELISTS, RESTART_WORKDIR, "execution")
+                print( 'Running '+BENCH+' on '+HOSTNAME+' with '+str(options['omp'])+'x'+str(options['mpi'])+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else ""))
+            RUN( RUN_COMMAND % SMILEI_NAMELISTS, RESTART_WORKDIR, "execution", options)
 
         # CHECK THE OUTPUT FOR ERRORS
         errors = []

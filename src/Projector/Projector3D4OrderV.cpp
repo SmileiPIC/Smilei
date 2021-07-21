@@ -835,6 +835,13 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
                 }
             }
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int i=1 ; i<7 ; i++ ) {
                 tmp = crz_p * ( 0.5*DSy[ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart] + one_third*DSx[i*vecSize+ipart]*DSy[ipart] );
                 int index( ( i*49 )*vecSize+ipart );
@@ -842,13 +849,34 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
                 }
             }//i
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int i=1 ; i<7 ; i++ ) {
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #endif
                 for( unsigned int j=1 ; j<7 ; j++ ) {
                     tmp = crz_p * ( Sx0_buff_vect[( i-1 )*vecSize+ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart]
                                     + 0.5*DSx[i*vecSize+ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart]
                                     + 0.5*DSy[j*vecSize+ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart]
                                     + one_third*DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart] );
                     int index( ( i*49 + j*7 )*vecSize+ipart );
+                    #if defined(__clang__)
+                        #pragma clang loop unroll_count(6)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll (6)
+                    #endif
                     for( unsigned int k=1 ; k<7 ; k++ ) {
                         bJx [ index+k*vecSize ] += sum[k]*tmp;
                     }
@@ -902,7 +930,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin;
             double delta  = pos - ( double )cell;
@@ -925,7 +953,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             DSx [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 ;
             DSx [6*vecSize+ipart] =                                        p1 * S4 ;
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin;
             delta  = pos - ( double )cell;
@@ -948,7 +976,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             DSy [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 ;
             DSy [6*vecSize+ipart] =                                        p1 * S4 ;
             //                            Z
-            pos = particles.position( 2, ivect+ipart+istart ) * dz_inv_;
+            pos = position_z[ivect+ipart+istart] * dz_inv_;
             cell = round( pos );
             cell_shift = cell-kpo-k_domain_begin;
             delta  = pos - ( double )cell;
@@ -971,22 +999,41 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 ;
             DSz [6*vecSize+ipart] =                                        p1 * S4 ;
 
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )*weight[ivect+istart+ipart];
         }
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int i=0 ; i<7 ; i++ ) {
                 iloc += nprimy*nprimz;
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #endif
                 for( unsigned int j=0 ; j<7 ; j++ ) {
                     int index( ( i*49 + j*7 )*vecSize+ipart );
+                    #if defined(__clang__)
+                        #pragma clang loop unroll_count(6)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll (6)
+                    #endif
                     for( unsigned int k=0 ; k<7 ; k++ ) {
                         bJx [ index+k*vecSize ] +=  charge_weight[ipart] * DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart];
                     }
                 }
             }//i
-
-
         } // END ipart (compute coeffs)
 
     }
@@ -1268,7 +1315,13 @@ void Projector3D4OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
+void Projector3D4OrderV::currents( double * __restrict__ Jx,
+                                   double * __restrict__ Jy,
+                                   double * __restrict__ Jz,
+                                   Particles &particles,
+                                   unsigned int istart, unsigned int iend,
+                                   std::vector<double> *invgf,
+                                   int *iold, double *deltaold, int ipart_ref )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -1295,6 +1348,12 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
     double DSy[56] __attribute__( ( aligned( 64 ) ) );
     double DSz[56] __attribute__( ( aligned( 64 ) ) );
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
+
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ position_z = particles.getPtrPosition(2);
+    double * __restrict__ weight     = particles.getPtrWeight();
+    short  * __restrict__ charge     = particles.getPtrCharge();
 
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
@@ -1358,7 +1417,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin;
             delta  = pos - ( double )cell;
@@ -1381,7 +1440,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSx [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sx0_buff_vect[4*vecSize+ipart] ;
             DSx [6*vecSize+ipart] =                                        p1 * S4                                  ;
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin;
             delta  = pos - ( double )cell;
@@ -1404,7 +1463,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSy [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sy0_buff_vect[4*vecSize+ipart] ;
             DSy [6*vecSize+ipart] =                                        p1 * S4                                  ;
             //                            Z                                 //
-            pos = particles.position( 2, ivect+ipart+istart ) * dz_inv_;
+            pos = position_z[ivect+ipart+istart] * dz_inv_;
             cell = round( pos );
             cell_shift = cell-kpo-k_domain_begin;
             delta  = pos - ( double )cell;
@@ -1427,7 +1486,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sz0_buff_vect[4*vecSize+ipart] ;
             DSz [6*vecSize+ipart] =                                        p1 * S4                                  ;
 
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )*weight[ivect+istart+ipart];
         }
 
         // Jx^(d,p,p)
@@ -1439,37 +1498,104 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
             double sum[7];
             sum[0] = 0.;
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 sum[k] = sum[k-1]-DSx[( k-1 )*vecSize+ipart];
             }
 
             double tmp( crx_p * ( one_third*DSy[ipart]*DSz[ipart] ) );
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int i=1 ; i<7 ; i++ ) {
                 bJx [( ( i )*49 )*vecSize+ipart] += sum[i]*tmp;
             }
 
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 tmp = crx_p * ( 0.5*DSy[ipart]*Sz0_buff_vect[( k-1 )*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] );
                 int index( ( k )*vecSize+ipart );
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #endif
                 for( unsigned int i=1 ; i<7 ; i++ ) {
                     bJx [ index+49*( i )*vecSize ] += sum[i]*tmp;
                 }
 
             }
+
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int j=1 ; j<7 ; j++ ) {
                 tmp = crx_p * ( 0.5*DSz[ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] );
                 int index( ( j*7 )*vecSize+ipart );
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #endif
                 for( unsigned int i=1 ; i<7 ; i++ ) {
                     bJx [ index+49*( i )*vecSize ] += sum[i]*tmp;
                 }
             }//i
+
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( int j=1 ; j<7 ; j++ ) {
+
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #endif
                 for( int k=1 ; k<7 ; k++ ) {
                     tmp = crx_p * ( Sy0_buff_vect[( j-1 )*vecSize+ipart]*Sz0_buff_vect[( k-1 )*vecSize+ipart]
                                     + 0.5*DSy[j*vecSize+ipart]*Sz0_buff_vect[( k-1 )*vecSize+ipart]
                                     + 0.5*DSz[k*vecSize+ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart]
                                     + one_third*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart] );
                     int index( ( j*7 + k )*vecSize+ipart );
+
+                    #if defined(__clang__)
+                        #pragma clang loop unroll_count(6)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll (6)
+                    #endif
                     for( int i=1 ; i<7 ; i++ ) {
                         bJx [ index+49*( i )*vecSize ] += sum[i]*tmp;
                     }
@@ -1574,7 +1700,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin;
             delta  = pos - ( double )cell;
@@ -1597,7 +1723,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSx [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sx0_buff_vect[4*vecSize+ipart] ;
             DSx [6*vecSize+ipart] =                                        p1 * S4                                  ;
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin;
             delta  = pos - ( double )cell;
@@ -1620,7 +1746,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSy [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sy0_buff_vect[4*vecSize+ipart] ;
             DSy [6*vecSize+ipart] =                                        p1 * S4                                  ;
             //                            Z                                 //
-            pos = particles.position( 2, ivect+ipart+istart ) * dz_inv_;
+            pos = position_z[ivect+ipart+istart] * dz_inv_;
             cell = round( pos );
             cell_shift = cell-kpo-k_domain_begin;
             delta  = pos - ( double )cell;
@@ -1643,7 +1769,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sz0_buff_vect[4*vecSize+ipart] ;
             DSz [6*vecSize+ipart] =                                        p1 * S4                                  ;
 
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )*weight[ivect+istart+ipart];
         }
 
         #pragma omp simd
@@ -1653,35 +1779,102 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
             double sum[7];
             sum[0] = 0.;
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 sum[k] = sum[k-1]-DSy[( k-1 )*vecSize+ipart];
             }
 
             double tmp( cry_p *one_third*DSz[ipart]*DSx[ipart] );
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int j=1 ; j<7 ; j++ ) {
                 bJx [( ( j )*7 )*vecSize+ipart] += sum[j]*tmp;
             }
+
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 tmp = cry_p * ( 0.5*DSx[0]*Sz0_buff_vect[( k-1 )*vecSize+ipart] + one_third*DSz[k*vecSize+ipart]*DSx[ipart] );
                 int index( ( k )*vecSize+ipart );
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #endif
                 for( unsigned int j=1 ; j<7 ; j++ ) {
                     bJx [ index+7*j*vecSize ] += sum[j]*tmp;
                 }
             }
+
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int i=1 ; i<7 ; i++ ) {
                 tmp = cry_p * ( 0.5*DSz[ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart] + one_third*DSz[0]*DSx[i*vecSize+ipart] );
                 int index( ( i*49 )*vecSize+ipart );
+
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #endif
                 for( unsigned int j=1 ; j<7 ; j++ ) {
                     bJx [ index+7*j*vecSize ] += sum[j]*tmp;
                 }
             }//i
+
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int i=1 ; i<7 ; i++ ) {
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #endif
                 for( unsigned int k=1 ; k<7 ; k++ ) {
                     tmp = cry_p * ( Sz0_buff_vect[( k-1 )*vecSize+ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart]
                                     + 0.5*DSz[k*vecSize+ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart]
                                     + 0.5*DSx[i*vecSize+ipart]*Sz0_buff_vect[( k-1 )*vecSize+ipart]
                                     + one_third*DSz[k*vecSize+ipart]*DSx[i*vecSize+ipart] );
                     int index( ( i*49 + k )*vecSize+ipart );
+                    #if defined(__clang__)
+                        #pragma clang loop unroll_count(6)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll (6)
+                    #endif
                     for( unsigned int j=1 ; j<7 ; j++ ) {
                         bJx [ index+7*j*vecSize ] += sum[j]*tmp;
                     }
@@ -1774,7 +1967,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin;
             delta  = pos - ( double )cell;
@@ -1797,7 +1990,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSx [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sx0_buff_vect[4*vecSize+ipart] ;
             DSx [6*vecSize+ipart] =                                        p1 * S4                                  ;
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin;
             delta  = pos - ( double )cell;
@@ -1820,7 +2013,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSy [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sy0_buff_vect[4*vecSize+ipart] ;
             DSy [6*vecSize+ipart] =                                        p1 * S4                                  ;
             //                            Z                                 //
-            pos = particles.position( 2, ivect+ipart+istart ) * dz_inv_;
+            pos = position_z[ivect+ipart+istart] * dz_inv_;
             cell = round( pos );
             cell_shift = cell-kpo-k_domain_begin;
             delta  = pos - ( double )cell;
@@ -1843,7 +2036,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sz0_buff_vect[4*vecSize+ipart] ;
             DSz [6*vecSize+ipart] =                                        p1 * S4                                  ;
 
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )*weight[ivect+istart+ipart];
         }
 
         #pragma omp simd
@@ -1853,35 +2046,100 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
             double sum[7];
             sum[0] = 0.;
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 sum[k] = sum[k-1]-DSz[( k-1 )*vecSize+ipart];
             }
 
             double tmp( crz_p *one_third*DSx[ipart]*DSy[ipart] );
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 bJx[( k )*vecSize+ipart] += sum[k]*tmp;
             }
+
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int j=1 ; j<7 ; j++ ) {
                 tmp = crz_p * ( 0.5*DSx[ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart] + one_third*DSx[ipart]*DSy[j*vecSize+ipart] );
                 int index( ( j*7 )*vecSize+ipart );
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #endif
                 for( unsigned int k=1 ; k<7 ; k++ ) {
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
                 }
             }
+
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int i=1 ; i<7 ; i++ ) {
                 tmp = crz_p * ( 0.5*DSy[ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart] + one_third*DSx[i*vecSize+ipart]*DSy[ipart] );
                 int index( ( i*49 )*vecSize+ipart );
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #endif
                 for( unsigned int k=1 ; k<7 ; k++ ) {
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
                 }
             }//i
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(6)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (6)
+            #endif
             for( unsigned int i=1 ; i<7 ; i++ ) {
+                #if defined(__clang__)
+                    #pragma clang loop unroll_count(6)
+                #elif defined (__FUJITSU)
+                    #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (6)
+                #endif
                 for( unsigned int j=1 ; j<7 ; j++ ) {
                     tmp = crz_p * ( Sx0_buff_vect[( i-1 )*vecSize+ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart]
                                     + 0.5*DSx[i*vecSize+ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart]
                                     + 0.5*DSy[j*vecSize+ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart]
                                     + one_third*DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart] );
                     int index( ( i*49 + j*7 )*vecSize+ipart );
+                    #if defined(__clang__)
+                        #pragma clang loop unroll_count(6)
+                    #elif defined (__FUJITSU)
+                        #pragma loop fullunroll_pre_simd
+                    #elif defined(__GNUC__)
+                        #pragma GCC unroll (6)
+                    #endif
                     for( unsigned int k=1 ; k<7 ; k++ ) {
                         bJx [ index+k*vecSize ] += sum[k]*tmp;
                     }

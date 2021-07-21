@@ -81,7 +81,7 @@ run3D:
     #- python validation.py -b "tst3d_s_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
     - python validation.py -b "tst3d_v_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
     - python validation.py -b "tst3d_a_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
-    #- python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 runAM:
   stage: run_default
