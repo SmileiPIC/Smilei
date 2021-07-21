@@ -154,7 +154,7 @@ options = {}
 
 options['omp'] = 12           # Number of omp threads per options['mpi']
 options['mpi'] = 4
-PPN = 12
+options['ppn'] = 12
 max_time = "00:10:00"
 EXECUTION = False
 VERBOSE = False
@@ -221,6 +221,10 @@ for opt, arg in external_options:
         print( "     -p <partition name>")
         print( "       <partition name>: partition name on super-computers")
         print( "                         - ruche")
+        print( "                         - tornado")
+        print( "                         - jollyjumper")
+        print( "                         - irene_skylake")
+        print( "                         - irene_a64fx")
         print( "-t")
         print( "     -t <max time>")
         print( "       <max time>: format hh:mm:ss")
@@ -379,7 +383,7 @@ def run_ruche(command, dir, mode, options):
     with open(parameters['exec_script'], 'w') as exec_script_desc:
         #NODES=((int(options['mpi'])*int(options['omp'])-1)/24)+1
         NODES=int(ceil(options['mpi']/2.))
-        PPN = 20
+        options['ppn'] = 20
         exec_script_desc.write(
             "#!/bin/bash\n"
             +"#SBATCH --job-name=smilei\n"
@@ -501,7 +505,7 @@ def run_irene_skylake(command, dir, mode, options):
         with open(parameters['exec_script'], 'w') as exec_script_desc:
             #NODES=((int(options['mpi'])*int(options['omp'])-1)/24)+1
             NODES=int(ceil(options['mpi']/2.))
-            PPN = 24
+            options['ppn'] = 24
             exec_script_desc.write(
                 "#!/bin/bash\n"
                 +"#MSUB --job-name=smilei\n"
@@ -593,7 +597,7 @@ def run_irene_a64fx(command, dir, mode, options):
         with open(parameters['exec_script'], 'w') as exec_script_desc:
             #NODES=((int(options['mpi'])*int(options['omp'])-1)/24)+1
             NODES=int(ceil(options['mpi']/4.))
-            PPN = 48
+            options['ppn'] = 48
             exec_script_desc.write(
                 "#!/bin/bash\n"
                 +"#MSUB --job-name=smilei\n"
@@ -626,7 +630,7 @@ def run_irene_a64fx(command, dir, mode, options):
         with open(parameters['exec_script'], 'w') as exec_script_desc:
             #NODES=((int(options['mpi'])*int(options['omp'])-1)/24)+1
             NODES=int(ceil(options['mpi']/4.))
-            PPN = 48
+            options['ppn'] = 48
             exec_script_desc.write(
                 "#!/bin/bash\n"
                 +"#MSUB --job-name=smilei\n"
@@ -714,11 +718,11 @@ def RUN_LLR(command, dir, mode, options):
         #NODES=((int(options['mpi'])*int(options['omp'])-1)/24)+1
         NODES=int(ceil(options['mpi']/2.))
         if (partition == "jollyjumper"):
-            PPN = 24
+            options['ppn'] = 24
         elif (partition == "tornado"):
-            PPN = 36
+            options['ppn'] = 36
         exec_script_desc.write(
-            "#PBS -l nodes="+str(NODES)+":ppn="+str(PPN)+" \n"
+            "#PBS -l nodes="+str(NODES)+":ppn="+str(options['ppn'])+" \n"
             +"#PBS -q default \n"
             +"#PBS -j oe\n"
             +"#PBS -l walltime="+max_time+"\n"
@@ -844,22 +848,22 @@ if COMPILE_MODE:
 # Find commands according to the host
 if LLR in HOSTNAME :
     if (partition=="jollyjumper"):
-        PPN = 12
+        options['ppn'] = 12
     elif (partition=="tornado"):
-        PPN = 18
-    if PPN % options['omp'] != 0:
+        options['ppn'] = 18
+    if options['ppn'] % options['omp'] != 0:
         print(  "Smilei cannot be run with "+str(options['omp'])+" threads on "+HOSTNAME+" and partition "+partition)
         sys.exit(4)
     NODES=int(ceil(options['mpi']/2.))
     NPERSOCKET = 1
-    COMPILE_COMMAND = str(MAKE)+' -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_COMMAND = str(MAKE)+' -j '+str(options['ppn'])+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-    RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(options['omp']) + " -n "+str(options['mpi'])+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+    RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(options['ppn']) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(options['omp']) + " -n "+str(options['mpi'])+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = RUN_LLR
 elif "ruche" in HOSTNAME:
-    PPN = 20
-    if PPN < options['omp'] :
+    options['ppn'] = 20
+    if options['ppn'] < options['omp'] :
         print(  "Smilei cannot be run with "+str(options['omp'])+" threads on "+HOSTNAME+" and partition "+partition)
         sys.exit(4)
     NODES=int(ceil(options['mpi']/2.))
@@ -870,8 +874,8 @@ elif "ruche" in HOSTNAME:
     RUN_COMMAND ="srun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = run_ruche
 elif "irene_skylake" in partition:
-    PPN = 24
-    if PPN < options['omp'] :
+    options['ppn'] = 24
+    if options['ppn'] < options['omp'] :
         print(  "Smilei cannot be run with "+str(options['omp'])+" threads on "+HOSTNAME+" and partition "+partition)
         sys.exit(4)
     NODES=int(ceil(options['mpi']/2.))
@@ -881,6 +885,18 @@ elif "irene_skylake" in partition:
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND ="ccc_mprun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = run_irene_skylake
+elif "irene_a64fx" in partition:
+    options['ppn'] = 48
+    if options['ppn'] < options['omp'] :
+        print(  "Smilei cannot be run with "+str(options['omp'])+" threads on "+HOSTNAME+" and partition "+partition)
+        sys.exit(4)
+    NODES=int(ceil(options['mpi']/4.))
+    NPERSOCKET = 1
+    COMPILE_COMMAND = str(MAKE)+' -j 48 machine="joliot_curie_skl" > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
+    RUN_COMMAND ="ccc_mprun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+    RUN = run_irene_a64fx
 elif POINCARE in HOSTNAME :
     #COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
     #CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
