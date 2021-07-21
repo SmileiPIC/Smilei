@@ -616,6 +616,8 @@ def run_irene_a64fx(command, dir, mode, options):
                 +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
                 +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
                 +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
+                +"export LD_LIBRARY_PATH=/ccc/products/ucx-1.10.1/system/default/lib:$LD_LIBRARY_PATH\n"
+                +"export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/python/3.8.10/s2azw3pgbfzhfcf44tvnh652pju2vtyj/lib:/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/gettext/0.21/i4aacmkl6pqxumiqfa36455yfhoojidl/lib\n"
                 +"set -x\n"
                 +"cd "+dir+" \n"
                 +"cd ${BRIDGE_MSUB_PWD} \n"
@@ -650,6 +652,8 @@ def run_irene_a64fx(command, dir, mode, options):
                 +"export PATH=${HDF5_ROOT}/bin:${PATH}\n"
                 +"export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}\n"
                 +"export HDF5_ROOT_DIR=${HDF5_ROOT}\n"
+                +"export LD_LIBRARY_PATH=/ccc/products/ucx-1.10.1/system/default/lib:$LD_LIBRARY_PATH\n"
+                +"export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/python/3.8.10/s2azw3pgbfzhfcf44tvnh652pju2vtyj/lib:/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/gettext/0.21/i4aacmkl6pqxumiqfa36455yfhoojidl/lib\n"
                 +"export OMP_NUM_THREADS="+str(options['omp'])+" \n"
                 +"export OMP_SCHEDULE=DYNAMIC \n"
                 +"export OMP_PROC_BIND=true \n"
@@ -892,7 +896,7 @@ elif "irene_a64fx" in partition:
         sys.exit(4)
     NODES=int(ceil(options['mpi']/4.))
     NPERSOCKET = 1
-    COMPILE_COMMAND = str(MAKE)+' -j 48 machine="joliot_curie_skl" > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_COMMAND = str(MAKE)+' -j 48 machine="joliot_curie_fujitsu_a64fx" > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND ="ccc_mprun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"

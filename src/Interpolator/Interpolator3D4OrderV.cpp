@@ -22,7 +22,7 @@ Interpolator3D4OrderV::Interpolator3D4OrderV( Params &params, Patch *patch ) : I
     D_inv[0] = 1.0/params.cell_length[0];
     D_inv[1] = 1.0/params.cell_length[1];
     D_inv[2] = 1.0/params.cell_length[2];
-    
+
     //double defined for use in coefficients
     dble_1_ov_384 = 1.0/384.0;
     dble_1_ov_48 = 1.0/48.0;
@@ -35,7 +35,7 @@ Interpolator3D4OrderV::Interpolator3D4OrderV( Params &params, Patch *patch ) : I
     dble_1_ov_6 = 1.0/6.0;
     dble_115_ov_192 = 115.0/192.0;
     dble_5_ov_8 = 5.0/8.0;
-    
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -50,21 +50,22 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     if( istart[0] == iend[0] ) {
         return;    //Don't treat empty cells.
     }
-    
+
     int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
-    
-    double *Epart[3], *Bpart[3];
-    
+
+    double * __restrict__ Epart[3];
+    double * __restrict__ Bpart[3];
+
     double *deltaO[3];
     deltaO[0] = &( smpi->dynamics_deltaold[ithread][0] );
     deltaO[1] = &( smpi->dynamics_deltaold[ithread][nparts] );
     deltaO[2] = &( smpi->dynamics_deltaold[ithread][2*nparts] );
-    
+
     for( unsigned int k=0; k<3; k++ ) {
         Epart[k]= &( smpi->dynamics_Epart[ithread][k*nparts] );
         Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts] );
     }
-    
+
     int idx[3], idxO[3];
     //Primal indices are constant over the all cell
     idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
@@ -73,29 +74,33 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     idxO[1] = idx[1] - j_domain_begin  ;
     idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
     idxO[2] = idx[2] - k_domain_begin  ;
-    
+
     Field3D *Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
     Field3D *Ey3D = static_cast<Field3D *>( EMfields->Ey_ );
     Field3D *Ez3D = static_cast<Field3D *>( EMfields->Ez_ );
     Field3D *Bx3D = static_cast<Field3D *>( EMfields->Bx_m );
     Field3D *By3D = static_cast<Field3D *>( EMfields->By_m );
     Field3D *Bz3D = static_cast<Field3D *>( EMfields->Bz_m );
-    
+
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ position_z = particles.getPtrPosition(2);
+
     double coeff[3][2][5][32];
     int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
-    
+
     int vecSize = 32;
-    
+
     int cell_nparts( ( int )iend[0]-( int )istart[0] );
     int nbVec = ( iend[0]-istart[0]+( cell_nparts-1 )-( ( iend[0]-istart[0]-1 )&( cell_nparts-1 ) ) ) / vecSize;
-    
+
     if( nbVec*vecSize != cell_nparts ) {
         nbVec++;
     }
-    
+
     for( int iivect=0 ; iivect<nbVec; iivect++ ) {
         int ivect = vecSize*iivect;
-        
+
         int np_computed( 0 );
         if( cell_nparts > vecSize ) {
             np_computed = vecSize;
@@ -103,48 +108,149 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         } else {
             np_computed = cell_nparts;
         }
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-        
+
             double delta0, delta;
             double delta2, delta3, delta4;
-            
-            
-            for( int i=0; i<3; i++ ) { // for X/Y
-                delta0 = particles.position( i, ipart+ivect+istart[0] )*D_inv[i];
-                dual [i][ipart] = ( delta0 - ( double )idx[i] >=0. );
-                
-                for( int j=0; j<2; j++ ) { // for dual
-                
-                    delta   = delta0 - ( double )idx[i] + ( double )j*( 0.5-dual[i][ipart] );
-                    delta2  = delta*delta;
-                    delta3  = delta2*delta;
-                    delta4  = delta3*delta;
-                    
-                    coeff[i][j][0][ipart] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-                    coeff[i][j][1][ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-                    coeff[i][j][2][ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-                    coeff[i][j][3][ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-                    coeff[i][j][4][ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-                    
-                    if( j==0 ) {
-                        deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
-                    }
-                }
-            }
+
+            // i = 0
+
+            delta0 = position_x[ipart+ivect+istart[0]] *D_inv[0];
+            dual [0][ipart] = ( delta0 - ( double )idx[0] >=0. );
+
+            // j = 0
+
+            delta   = delta0 - ( double )idx[0] + 0*( 0.5-dual[0][ipart] );
+            delta2  = delta*delta;
+            delta3  = delta2*delta;
+            delta4  = delta3*delta;
+
+            coeff[0][0][0][ipart] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+            coeff[0][0][1][ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[0][0][2][ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+            coeff[0][0][3][ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[0][0][4][ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+
+            deltaO[0][ipart-ipart_ref+ivect+istart[0]] = delta;
+
+            // j = 1
+
+            delta   = delta0 - ( double )idx[0] + 1*( 0.5-dual[0][ipart] );
+            delta2  = delta*delta;
+            delta3  = delta2*delta;
+            delta4  = delta3*delta;
+
+            coeff[0][1][0][ipart] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+            coeff[0][1][1][ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[0][1][2][ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+            coeff[0][1][3][ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[0][1][4][ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+
+            // i = 1
+
+            delta0 = position_y[ipart+ivect+istart[0]] *D_inv[1];
+            dual [1][ipart] = ( delta0 - ( double )idx[1] >=0. );
+
+            // j = 0
+
+            delta   = delta0 - ( double )idx[1] + 0*( 0.5-dual[1][ipart] );
+            delta2  = delta*delta;
+            delta3  = delta2*delta;
+            delta4  = delta3*delta;
+
+            coeff[1][0][0][ipart] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+            coeff[1][0][1][ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[1][0][2][ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+            coeff[1][0][3][ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[1][0][4][ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+
+            deltaO[1][ipart-ipart_ref+ivect+istart[0]] = delta;
+
+            // j = 1
+
+            delta   = delta0 - ( double )idx[1] + 1*( 0.5-dual[1][ipart] );
+            delta2  = delta*delta;
+            delta3  = delta2*delta;
+            delta4  = delta3*delta;
+
+            coeff[1][1][0][ipart] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+            coeff[1][1][1][ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[1][1][2][ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+            coeff[1][1][3][ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[1][1][4][ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+
+            // i = 2
+
+            delta0 = position_z[ipart+ivect+istart[0]] *D_inv[2];
+            dual [2][ipart] = ( delta0 - ( double )idx[2] >=0. );
+
+            // j = 0
+
+            delta   = delta0 - ( double )idx[2] + 0*( 0.5-dual[2][ipart] );
+            delta2  = delta*delta;
+            delta3  = delta2*delta;
+            delta4  = delta3*delta;
+
+            coeff[2][0][0][ipart] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+            coeff[2][0][1][ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[2][0][2][ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+            coeff[2][0][3][ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[2][0][4][ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+
+            deltaO[2][ipart-ipart_ref+ivect+istart[0]] = delta;
+
+            // j = 1
+
+            delta   = delta0 - ( double )idx[2] + 1*( 0.5-dual[2][ipart] );
+            delta2  = delta*delta;
+            delta3  = delta2*delta;
+            delta4  = delta3*delta;
+
+            coeff[2][1][0][ipart] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+            coeff[2][1][1][ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[2][1][2][ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+            coeff[2][1][3][ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            coeff[2][1][4][ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+
+            // --------------------------------------
+            // The code above is the hand-unrollling of this loop
+            //
+            // for( int i=0; i<3; i++ ) { // for X/Y
+            //     delta0 = particles.position( i, ipart+ivect+istart[0] )*D_inv[i];
+            //     dual [i][ipart] = ( delta0 - ( double )idx[i] >=0. );
+            //
+            //     for( int j=0; j<2; j++ ) { // for dual
+            //
+            //         delta   = delta0 - ( double )idx[i] + ( double )j*( 0.5-dual[i][ipart] );
+            //         delta2  = delta*delta;
+            //         delta3  = delta2*delta;
+            //         delta4  = delta3*delta;
+            //
+            //         coeff[i][j][0][ipart] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+            //         coeff[i][j][1][ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            //         coeff[i][j][2][ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
+            //         coeff[i][j][3][ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
+            //         coeff[i][j][4][ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+            //
+            //         if( j==0 ) {
+            //             deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
+            //         }
+            //     }
+            // }
         }
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-        
+
             double *coeffyp = &( coeff[1][0][2][ipart] );
             double *coeffyd = &( coeff[1][1][2][ipart] );
             double *coeffxd = &( coeff[0][1][2][ipart] );
             double *coeffxp = &( coeff[0][0][2][ipart] );
             double *coeffzp = &( coeff[2][0][2][ipart] );
             double *coeffzd = &( coeff[2][1][2][ipart] );
-            
+
             //Ex(dual, primal, primal)
             double interp_res = 0.;
             for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -156,8 +262,8 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 }
             }
             Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
-            
+
+
             //Ey(primal, dual, primal)
             interp_res = 0.;
             for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -169,8 +275,8 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 }
             }
             Epart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
-            
+
+
             //Ez(primal, primal, dual)
             interp_res = 0.;
             for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -188,7 +294,7 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         interp_Bx( idxO, np_computed, &(coeff[0][0][2][0]), &(coeff[1][1][2][0]), &(coeff[2][1][2][0]), &(dual[1][0]), &(dual[2][0]), Bx3D, &(Bpart[0][ivect+istart[0]-ipart_ref]) );
         interp_By( idxO, np_computed, &(coeff[0][1][2][0]), &(coeff[1][0][2][0]), &(coeff[2][1][2][0]), &(dual[0][0]), &(dual[2][0]), By3D, &(Bpart[1][ivect+istart[0]-ipart_ref]) );
         interp_Bz( idxO, np_computed, &(coeff[0][1][2][0]), &(coeff[1][1][2][0]), &(coeff[2][0][2][0]), &(dual[0][0]), &(dual[1][0]), Bz3D, &(Bpart[2][ivect+istart[0]-ipart_ref]) );
-        
+
     }
 } // END Interpolator3D4OrderV
 
@@ -197,17 +303,17 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
 {
     // iend not used for now
     // probes are interpolated one by one for now
-    
+
     int ipart = *istart;
     int nparts( particles.size() );
-    
-    
+
+
     double *Epart[3], *Bpart[3];
     for( unsigned int k=0; k<3; k++ ) {
         Epart[k]= &( smpi->dynamics_Epart[ithread][k*nparts] );
         Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts] );
     }
-    
+
     int idx[3], idxO[3];
     //Primal indices are constant over the all cell
     idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
@@ -216,7 +322,7 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
     idxO[1] = idx[1] - j_domain_begin  ;
     idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
     idxO[2] = idx[2] - k_domain_begin  ;
-    
+
     Field3D *Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
     Field3D *Ey3D = static_cast<Field3D *>( EMfields->Ey_ );
     Field3D *Ez3D = static_cast<Field3D *>( EMfields->Ez_ );
@@ -227,40 +333,40 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
     Field3D *Jy3D = static_cast<Field3D *>( EMfields->Jy_ );
     Field3D *Jz3D = static_cast<Field3D *>( EMfields->Jz_ );
     Field3D *rho3D = static_cast<Field3D *>( EMfields->rho_ );
-    
+
     double coeff[3][2][5];
     int dual[3]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
-    
+
     double delta0, delta;
     double delta2, delta3, delta4;
-    
+
     for( int i=0; i<3; i++ ) { // for X/Y
         delta0 = particles.position( i, ipart )*D_inv[i];
         dual [i] = ( delta0 - ( double )idx[i] >=0. );
-        
+
         for( int j=0; j<2; j++ ) { // for dual
-        
+
             delta   = delta0 - ( double )idx[i] + ( double )j*( 0.5-dual[i] );
             delta2  = delta*delta;
             delta3  = delta2*delta;
             delta4  = delta3*delta;
-            
+
             coeff[i][j][0] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
             coeff[i][j][1] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
             coeff[i][j][2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
             coeff[i][j][3] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
             coeff[i][j][4] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            
+
         }
     }
-    
+
     double *coeffyp = &( coeff[1][0][2] );
     double *coeffyd = &( coeff[1][1][2] );
     double *coeffxd = &( coeff[0][1][2] );
     double *coeffxp = &( coeff[0][0][2] );
     double *coeffzp = &( coeff[2][0][2] );
     double *coeffzd = &( coeff[2][1][2] );
-    
+
     //Ex(dual, primal, primal)
     double interp_res = 0.;
     for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -272,8 +378,8 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Epart[0][ipart] = interp_res;
-    
-    
+
+
     //Ey(primal, dual, primal)
     interp_res = 0.;
     for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -285,7 +391,7 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Epart[1][ipart] = interp_res;
-    
+
     //Ez(primal, primal, dual)
     interp_res = 0.;
     for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -297,8 +403,8 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Epart[2][ipart] = interp_res;
-    
-    
+
+
     //Bx(primal, dual , dual )
     interp_res = 0.;
     for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -311,7 +417,7 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Bpart[0][ipart] = interp_res;
-    
+
     //By(dual, primal, dual )
     interp_res = 0.;
     for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -324,7 +430,7 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Bpart[1][ipart] = interp_res;
-    
+
     //Bz(dual, dual, prim )
     interp_res = 0.;
     for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -337,8 +443,8 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     Bpart[2][ipart] = interp_res;
-    
-    
+
+
     //Jx(dual, primal, primal)
     interp_res = 0.;
     for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -350,8 +456,8 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     JLoc->x = interp_res;
-    
-    
+
+
     //Jy(primal, dual, primal)
     interp_res = 0.;
     for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -363,8 +469,8 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     JLoc->y = interp_res;
-    
-    
+
+
     //Jz(primal, primal, dual)
     interp_res = 0.;
     for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -376,7 +482,7 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     JLoc->z = interp_res;
-    
+
     //Rho(primal, primal, primal)
     interp_res = 0.;
     for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -387,7 +493,7 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
         }
     }
     ( *RhoLoc ) = interp_res;
-    
+
 }
 
 
