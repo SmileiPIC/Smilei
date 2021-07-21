@@ -347,7 +347,7 @@ void VectorPatch::dynamics( Params &params,
         if(diag_flag) {( *this )( ipatch )->EMfields->restartRhoJs();}
         #  ifdef _TASKTRACING
         if (int(time_dual/params.timestep)%(smpi->iter_frequency_task_tracing_)){
-            reference_time = MPI_Wtime();
+            smpi->reference_time = MPI_Wtime();
         }
         #  endif
 #endif
@@ -478,7 +478,7 @@ void VectorPatch::dynamics( Params &params,
 
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
                 smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
                 smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(4);           // write Event Name
             }
@@ -515,7 +515,7 @@ void VectorPatch::dynamics( Params &params,
 
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
                 smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
                 smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(4);           // write Event Name
             }

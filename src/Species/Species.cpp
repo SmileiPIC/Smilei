@@ -505,7 +505,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
         #  ifdef _DEVELOPTRACING
         if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-            smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+            smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
             smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
             smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(0);           // write Event Name
         }
@@ -518,7 +518,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
         #  ifdef _DEVELOPTRACING
         if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-            smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+            smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
             smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
             smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(0);           // write Event Name
         }
@@ -612,7 +612,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
             #  ifdef _DEVELOPTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
                 smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
                 smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(1);           // write Event Name
             }
@@ -622,7 +622,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
             #  ifdef _DEVELOPTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
                 smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
                 smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(1);           // write Event Name
             }
@@ -642,7 +642,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
                     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
                     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(2);           // write Event Name
                 }
@@ -676,7 +676,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 }
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
                     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
                     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(2);           // write Event Name
                 }
@@ -693,7 +693,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
                     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
                     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(3);           // write Event Name
                 }
@@ -705,7 +705,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 }
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
                     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
                     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(3);           // write Event Name
                 }
@@ -826,7 +826,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
             {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(0);           // write Event Name
 }
@@ -860,7 +860,7 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 #endif
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(0);           // write Event Name
 }
@@ -1023,7 +1023,7 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
                     {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(1);           // write Event Name
 }
@@ -1042,7 +1042,7 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 #endif
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(1);           // write Event Name
 }
@@ -1064,7 +1064,7 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
             {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(2);           // write Event Name
 }
@@ -1108,7 +1108,7 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(2);           // write Event Name
 }
@@ -1125,7 +1125,7 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
             {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(3);           // write Event Name
 }
@@ -1157,7 +1157,7 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 #endif
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
     smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
     smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(3);           // write Event Name
 }

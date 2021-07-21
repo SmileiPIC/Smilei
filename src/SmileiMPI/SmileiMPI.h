@@ -309,6 +309,7 @@ public:
     std::vector<std::vector<unsigned int>> task_tracing_start_or_end_;
     std::vector<std::vector<int>> task_tracing_event_name_;
     int iter_frequency_task_tracing_;
+    double reference_time;
 
 protected:
     //! Global MPI Communicator
