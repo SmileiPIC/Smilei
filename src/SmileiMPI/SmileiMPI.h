@@ -304,8 +304,10 @@ public:
 
     bool test_mode;
 
-    //std::vector<std::string> *task_tracing_;
-    std::vector<std::vector<std::string>> task_tracing_;
+    // Task tracing diag
+    std::vector<std::vector<double>> task_tracing_event_time_;
+    std::vector<std::vector<unsigned int>> task_tracing_start_or_end_;
+    std::vector<std::vector<int>> task_tracing_event_name_;
     int iter_frequency_task_tracing_;
 
 protected:

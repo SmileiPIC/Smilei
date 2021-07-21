@@ -504,11 +504,10 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
         #  ifdef _DEVELOPTRACING
-        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-            std::string start_event = std::to_string(MPI_Wtime())    // write time
-                                      +" Start Interp \n";           // write task 
-                                      
-            smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
+            smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+            smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
+            smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(0);           // write Event Name
         }
         #  endif
 #ifdef  __DETAILED_TIMERS
@@ -519,10 +518,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
         #  ifdef _DEVELOPTRACING
         if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-            std::string end_event = std::to_string(MPI_Wtime()) // write time
-                                      +" End Interp \n";        // write task 
-                                      
-            smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+            smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+            smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
+            smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(0);           // write Event Name
         }
         #  endif 
 #ifdef  __DETAILED_TIMERS
@@ -614,10 +612,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
             #  ifdef _DEVELOPTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                std::string start_event = std::to_string(MPI_Wtime())    // write time
-                                          +" Start Push \n";             // write task 
-                                          
-                smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
+                smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(1);           // write Event Name
             }
             #  endif
             // Push the particles and the photons
@@ -625,10 +622,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
             #  ifdef _DEVELOPTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                std::string end_event = std::to_string(MPI_Wtime())   // write time
-                                          +" End Push \n";            // write task
-                                          
-                smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
+                smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(1);           // write Event Name
             }
             #  endif
 #ifdef  __DETAILED_TIMERS
@@ -646,10 +642,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    std::string start_event = std::to_string(MPI_Wtime())   // write time
-                                              +" Start BC \n";              // write task 
-                                              
-                    smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
+                    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(2);           // write Event Name
                 }
                 #  endif
                 // Apply wall and boundary conditions
@@ -681,10 +676,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 }
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    std::string end_event = std::to_string(MPI_Wtime())     // write time
-                                              +" End BC \n";                // write task 
-                                              
-                    smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
+                    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(2);           // write Event Name
                 }
                 #  endif
 
@@ -699,10 +693,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    std::string start_event = std::to_string(MPI_Wtime())   // write time
-                                              +" Start Proj \n";            // write task
-                                              
-                    smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
+                    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(3);           // write Event Name
                 }
                 #  endif
                 // Project currents if not a Test species and charges as well if a diag is needed.
@@ -712,10 +705,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 }
                 #  ifdef _DEVELOPTRACING
                 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    std::string end_event = std::to_string(MPI_Wtime())     // write time
-                                              +" End Proj patch \n";        // write task
-                                              
-                    smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+                    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+                    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
+                    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(3);           // write Event Name
                 }
                 #  endif
 
@@ -834,10 +826,9 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
             {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string start_event = std::to_string(MPI_Wtime())  // write time
-                              +" Start Interp \n";         // write task 
-                              
-    smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
+    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(0);           // write Event Name
 }
 #  endif
             if ( params.geometry != "AMcylindrical" ){
@@ -869,10 +860,9 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 #endif
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string end_event = std::to_string(MPI_Wtime())    // write time
-                              +" End Interp \n";           // write task 
-                              
-    smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
+    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(0);           // write Event Name
 }
 #  endif
             } //end task Interpolator
@@ -1033,10 +1023,9 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
                     {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string start_event = std::to_string(MPI_Wtime())    // write time
-                              +" Start Push \n";             // write task
-                              
-    smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
+    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(1);           // write Event Name
 }
 #  endif
 #ifdef  __DETAILED_TIMERS
@@ -1053,10 +1042,9 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 #endif
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string end_event = std::to_string(MPI_Wtime())    // write time
-                              +" Start Push \n";           // write task 
-                              
-    smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
+    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(1);           // write Event Name
 }
 #  endif
                     } // end task for Push on ibin
@@ -1076,10 +1064,9 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
             {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string start_event = std::to_string(MPI_Wtime())        // write time
-                              +" Start BC patch \n";             // write task 
-                              
-    smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
+    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(2);           // write Event Name
 }
 #  endif
             double ener_iPart( 0. );
@@ -1121,10 +1108,9 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string end_event = std::to_string(MPI_Wtime())     // write time
-                              +" End BC patch \n";          // write task 
-                              
-    smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
+    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(2);           // write Event Name
 }
 #  endif
             } // end task for particles BC on ibin
@@ -1139,10 +1125,9 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
             {
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string start_event = std::to_string(MPI_Wtime()) // write time
-                              +" Start Proj \n";          // write task
-                              
-    smpi->task_tracing_[omp_get_thread_num()].push_back(start_event);
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
+    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(3);           // write Event Name
 }
 #  endif
                 
@@ -1172,10 +1157,9 @@ if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_t
 #endif
 #  ifdef _TASKTRACING
 if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-    std::string end_event = std::to_string(MPI_Wtime())    // write time
-                              +" End Proj \n";             // write task 
-                              
-    smpi->task_tracing_[omp_get_thread_num()].push_back(end_event);
+    smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()); // write time
+    smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
+    smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(3);           // write Event Name
 }
 #  endif
             }//end task for Proj of ibin
