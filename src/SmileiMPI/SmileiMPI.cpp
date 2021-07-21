@@ -242,9 +242,13 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
     iter_frequency_task_tracing_ = 10;
     int nthreads = omp_get_max_threads();
     //task_tracing_ = new std::string[nthreads];
-    task_tracing_.resize(nthreads);
+    task_tracing_event_time_.resize(nthreads);
+    task_tracing_start_or_end_.resize(nthreads);
+    task_tracing_event_name_.resize(nthreads);
     for (unsigned int ithread = 0; ithread<nthreads; ithread++){
-        task_tracing_[ithread].resize(0);
+        task_tracing_event_time_[ithread].resize(0);
+        task_tracing_start_or_end_[ithread].resize(0);
+        task_tracing_event_name_[ithread].resize(0);
     }
 #endif
 } // END init
