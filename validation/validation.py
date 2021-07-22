@@ -849,11 +849,11 @@ class ShowDiffWithReference(object):
 # DEFINE A CLASS FOR LOGGING DATA
 class Log:
     pattern1 = re.compile(""
-        +"[\n\t\s]+(Time[ _]in[ _]time[ _]loop)\s+([.0-9]+)\s+([<.0-9]+)\% coverage"
-        +"([\n\t\s]+([\w ]+)\s+([.0-9]+)\s+([<.0-9]+)\%){2,15}"
+        +"[\n\t\s]+(Time[ _]in[ _]time[ _]loop)\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\% coverage"
+        +"([\n\t\s]+([\w ]+)\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\%){2,15}"
     )
     pattern2 = re.compile(""
-        +"[\t\s]+([\w ]+):?\s+([.0-9]+)\s+([<.0-9]+)\%"
+        +"[\t\s]+([\w ]+):?\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\%"
     )
     
     def __init__(self, log_file):
