@@ -1872,7 +1872,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
 
     // For each mode, repeat the initialization procedure
     // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
-    for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+    for( unsigned int imode=0 ; imode<params.nmodes_classical_Poisson_field_init ; imode++ ) {
 
         // init Phi, r, p values
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -2045,7 +2045,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
     }
 
     // // Exchange the fields after the addition of the relativistic species fields
-    for( unsigned int imode = 0 ; imode < params.nmodes_rel_field_init ; imode++ ) {
+    for( unsigned int imode = 0 ; imode < params.nmodes_classical_Poisson_field_init ; imode++ ) {
         SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
         SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
     }

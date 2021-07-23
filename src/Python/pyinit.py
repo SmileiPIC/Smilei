@@ -172,6 +172,7 @@ class Main(SmileiSingleton):
     timestep = None
     number_of_AM = 2
     number_of_AM_relativistic_field_initialization = 1
+    number_of_AM_classical_Poisson_solver = 1
     timestep_over_CFL = None
     cell_sorting = False
 
