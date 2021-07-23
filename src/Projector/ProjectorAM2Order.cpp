@@ -886,7 +886,10 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
         Sr0[j] *= invR_local[j];
         Sr1[j] *= invR_local[j];
     }
-   
+    
+    int factor_shift_JlJtRho = (bdim0*nprimr    );
+    int factor_shift_Jr      = (bdim0*(nprimr+1));
+
     for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
    
         if (imode > 0){
@@ -897,8 +900,8 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
             crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*r_bar;
         }
    
-        int mode_shift_JlJtRho = imode*(bdim0*nprimr    );
-        int mode_shift_Jr      = imode*(bdim0*(nprimr+1));
+        int mode_shift_JlJtRho = imode*factor_shift_JlJtRho;
+        int mode_shift_Jr      = imode*factor_shift_Jr;
         // Add contribution J_p to global array
         if (diag_flag){
             for( unsigned int i=0 ; i<5 ; i++ ) {
