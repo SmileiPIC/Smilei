@@ -241,9 +241,14 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             // }
         }
 
-        double * __restrict__ coeffyp2 = &( coeff[1][0][2][0] );
+        double * __restrict__ coeffxp2 = &( coeff[0][0][2][0] );
         double * __restrict__ coeffxd2 = &( coeff[0][1][2][0] );
+
+        double * __restrict__ coeffyp2 = &( coeff[1][0][2][0] );
+        double * __restrict__ coeffyd2 = &( coeff[1][1][2][0] );
+
         double * __restrict__ coeffzp2 = &( coeff[2][0][2][0] );
+        double * __restrict__ coeffzd2 = &( coeff[2][1][2][0] );
 
         double field_buffer[6][6][6];
         double interp_res = 0;
@@ -287,7 +292,7 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                      #endif
                     for( int kloc=-2 ; kloc<3 ; kloc++ ) {
                         interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
-                            ( ( 1-dual[0][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2] + dual[0][ipart]*field_buffer[3+iloc][jloc+2][kloc+2] );
+                            ( ( 1-dual[0][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2] + dual[0][ipart]*field_buffer[iloc+3][jloc+2][kloc+2] );
                     }
                 }
             }
@@ -334,7 +339,7 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                          #pragma GCC unroll (5)
                      #endif
                     for( int kloc=-2 ; kloc<3 ; kloc++ ) {
-                        interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
+                        interp_res += coeffxp2[ipart+iloc*32] * coeffyd2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
                             ( ( 1-dual[1][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2] + dual[0][ipart]*field_buffer[2+iloc][jloc+3][kloc+2] );
                     }
                 }
@@ -382,8 +387,8 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                          #pragma GCC unroll (5)
                      #endif
                     for( int kloc=-2 ; kloc<3 ; kloc++ ) {
-                        interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
-                            ( ( 1-dual[1][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2] + dual[0][ipart]*field_buffer[2+iloc][jloc+2][kloc+3] );
+                        interp_res += coeffxp2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzd2[ipart+kloc*32] *
+                            ( ( 1-dual[2][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2] + dual[0][ipart]*field_buffer[2+iloc][jloc+2][kloc+3] );
                     }
                 }
             }
