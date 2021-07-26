@@ -39,7 +39,7 @@ Interpolator3D4OrderV::Interpolator3D4OrderV( Params &params, Patch *patch ) : I
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// 2nd OrderV Interpolation of the fields at a the particle position (3 nodes are used)
+// 4th OrderV Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
 void Interpolator3D4OrderV::fields( ElectroMagn *EMfields, Particles &particles, int ipart, double *ELoc, double *BLoc )
 {
@@ -266,6 +266,8 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
+            interp_res = 0.;
 
             #if defined(__clang__)
                  #pragma clang loop unroll(full)
