@@ -210,10 +210,10 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
         // Coefficient pointer on primal and dual nodes
         double * __restrict__ coeffxd = &( coeff[0][1][1][0] );
         double * __restrict__ coeffxp = &( coeff[0][0][1][0] );
-        double * __restrict__ coeffyp2 = &( coeff[1][0][1][0] );
-        double * __restrict__ coeffyd2 = &( coeff[1][1][1][0] );
-        double * __restrict__ coeffzp2 = &( coeff[2][0][1][0] );
-        double * __restrict__ coeffzd2 = &( coeff[2][1][1][0] );
+        double * __restrict__ coeffyp = &( coeff[1][0][1][0] );
+        double * __restrict__ coeffyd = &( coeff[1][1][1][0] );
+        double * __restrict__ coeffzp = &( coeff[2][0][1][0] );
+        double * __restrict__ coeffzd = &( coeff[2][1][1][0] );
 
         // Field buffers for vectorization (required on A64FX)
         double field_buffer[4][4][4];
@@ -254,7 +254,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                          #pragma GCC unroll (3)
                      #endif
                      for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                         interp_res += coeffxd[ipart+iloc*32] * coeffyp2[ipart+jloc*32]  * coeffzp2[ipart+kloc*32] *
+                         interp_res += coeffxd[ipart+iloc*32] * coeffyp[ipart+jloc*32]  * coeffzp[ipart+kloc*32] *
                                        ( ( 1-dual[0][ipart] )*field_buffer[iloc+1][jloc+1][kloc+1] +
                                        dual[0][ipart]*field_buffer[iloc+2][jloc+1][kloc+1] );
 
@@ -303,7 +303,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                         #pragma GCC unroll (3)
                     #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                        interp_res += coeffxp[ipart+iloc*32] * coeffyd2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
+                        interp_res += coeffxp[ipart+iloc*32] * coeffyd[ipart+jloc*32] * coeffzp[ipart+kloc*32] *
                                     ( ( 1-dual[1][ipart] )*field_buffer[iloc+1][jloc+1][kloc+1] +
                                     dual[1][ipart]*field_buffer[iloc+1][jloc+2][kloc+1] );
                     }
@@ -351,9 +351,9 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                         #pragma GCC unroll (3)
                     #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                        interp_res += coeffxp[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzd2[ipart+kloc*32] *
-                                    ( ( 1-dual[1][ipart] )*field_buffer[iloc+1][jloc+1][kloc+1] +
-                                    dual[1][ipart]*field_buffer[iloc+1][jloc+1][kloc+2] );
+                        interp_res += coeffxp[ipart+iloc*32] * coeffyp[ipart+jloc*32] * coeffzd[ipart+kloc*32] *
+                                    ( ( 1-dual[2][ipart] )*field_buffer[iloc+1][jloc+1][kloc+1] +
+                                    dual[2][ipart]*field_buffer[iloc+1][jloc+1][kloc+2] );
 
                     }
                 }
@@ -401,7 +401,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                         #pragma GCC unroll (3)
                     #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                        interp_res += coeffxp[ipart+iloc*32] * coeffyd2[ipart+jloc*32] * coeffzd2[ipart+kloc*32] *
+                        interp_res += coeffxp[ipart+iloc*32] * coeffyd[ipart+jloc*32] * coeffzd[ipart+kloc*32] *
                                     ( ( 1-dual[2][ipart] )* ( (1-dual[1][ipart])*field_buffer[iloc+1][jloc+1][kloc+1] + dual[1][ipart]*field_buffer[iloc+1][jloc+2][kloc+1] )  +
                                     dual[2][ipart]        * ( (1-dual[1][ipart])*field_buffer[iloc+1][jloc+1][kloc+2]  + dual[1][ipart]*field_buffer[iloc+1][jloc+2][kloc+2] )  );
                     }
@@ -450,7 +450,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                         #pragma GCC unroll (3)
                     #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                        interp_res += coeffxd[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzd2[ipart+kloc*32] *
+                        interp_res += coeffxd[ipart+iloc*32] * coeffyp[ipart+jloc*32] * coeffzd[ipart+kloc*32] *
                                     ( ( 1-dual[2][ipart] )*( (1-dual[0][ipart])*field_buffer[iloc+1][jloc+1][kloc+1] + dual[0][ipart]*field_buffer[iloc+2][jloc+1][kloc+1] )  +
                                     dual[2][ipart]        *( (1-dual[0][ipart])*field_buffer[iloc+1][jloc+1][kloc+2] + dual[0][ipart]*field_buffer[iloc+2][jloc+1][kloc+2] )  );
 
@@ -500,7 +500,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                         #pragma GCC unroll (3)
                     #endif
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                        interp_res += coeffxd[ipart+iloc*32] * coeffyd2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
+                        interp_res += coeffxd[ipart+iloc*32] * coeffyd[ipart+jloc*32] * coeffzp[ipart+kloc*32] *
                                     ( ( 1-dual[1][ipart] )*( (1-dual[0][ipart])*field_buffer[iloc+1][jloc+1][kloc+1] + dual[0][ipart]*field_buffer[iloc+2][jloc+1][kloc+1] )  +
                                     dual[1][ipart]        *( (1-dual[0][ipart])*field_buffer[iloc+1][jloc+2][kloc+1] + dual[0][ipart]*field_buffer[iloc+2][jloc+2][kloc+1] )  );
 

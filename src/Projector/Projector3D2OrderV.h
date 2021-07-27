@@ -391,6 +391,8 @@ private:
             int index( ( k*nz )*vecSize+ipart );
             #if defined(__clang__)
                 #pragma clang loop unroll_count(4)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
             #endif
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJx [ index+nx*( i )*vecSize ] += sum[i]*tmp;
@@ -405,6 +407,11 @@ private:
         for( unsigned int j=1 ; j<5 ; j++ ) {
             tmp = crx_p * ( 0.5*DSz[ipart]*Sy0[( j-1 )*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] );
             int index( ( j*ny )*vecSize+ipart );
+            #if defined(__clang__)
+                #pragma clang loop unroll_count(4)
+            #elif defined (__FUJITSU)
+                #pragma loop fullunroll_pre_simd
+            #endif
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJx [ index+nx*( i )*vecSize ] += sum[i]*tmp;
             }
