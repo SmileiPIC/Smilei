@@ -376,6 +376,8 @@ private:
             #pragma clang loop unroll_count(4)
         #elif defined (__FUJITSU)
             #pragma loop fullunroll_pre_simd
+        #elif defined(__GNUC__)
+            #pragma GCC unroll (4)
         #endif
         for( unsigned int i=1 ; i<5 ; i++ ) {
             bJx [( ( i )*nx )*vecSize+ipart] += sum[i]*tmp;
@@ -385,6 +387,8 @@ private:
             #pragma clang loop unroll_count(4)
         #elif defined (__FUJITSU)
             #pragma loop fullunroll_pre_simd
+        #elif defined(__GNUC__)
+            #pragma GCC unroll (4)
         #endif
         for( unsigned int k=1 ; k<5 ; k++ ) {
             tmp = crx_p * ( 0.5*DSy[ipart]*Sz0[( k-1 )*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] );
@@ -393,6 +397,8 @@ private:
                 #pragma clang loop unroll_count(4)
             #elif defined (__FUJITSU)
                 #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (4)
             #endif
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJx [ index+nx*( i )*vecSize ] += sum[i]*tmp;
@@ -403,6 +409,8 @@ private:
             #pragma clang loop unroll_count(4)
         #elif defined (__FUJITSU)
             #pragma loop fullunroll_pre_simd
+        #elif defined(__GNUC__)
+            #pragma GCC unroll (4)
         #endif
         for( unsigned int j=1 ; j<5 ; j++ ) {
             tmp = crx_p * ( 0.5*DSz[ipart]*Sy0[( j-1 )*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] );
@@ -411,6 +419,8 @@ private:
                 #pragma clang loop unroll_count(4)
             #elif defined (__FUJITSU)
                 #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (4)
             #endif
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJx [ index+nx*( i )*vecSize ] += sum[i]*tmp;
@@ -420,12 +430,16 @@ private:
             #pragma clang loop unroll_count(4)
         #elif defined (__FUJITSU)
             #pragma loop fullunroll_pre_simd
+        #elif defined(__GNUC__)
+            #pragma GCC unroll (4)
         #endif
         for( int j=1 ; j<5 ; j++ ) {
             #if defined(__clang__)
                 #pragma clang loop unroll_count(4)
             #elif defined (__FUJITSU)
                 #pragma loop fullunroll_pre_simd
+            #elif defined(__GNUC__)
+                #pragma GCC unroll (4)
             #endif
             for( int k=1 ; k<5 ; k++ ) {
                 tmp = crx_p * ( Sy0[( j-1 )*vecSize+ipart]*Sz0[( k-1 )*vecSize+ipart]
@@ -437,6 +451,8 @@ private:
                     #pragma clang loop unroll_count(4)
                 #elif defined (__FUJITSU)
                     #pragma loop fullunroll_pre_simd
+                #elif defined(__GNUC__)
+                    #pragma GCC unroll (4)
                 #endif
                 for( int i=1 ; i<5 ; i++ ) {
                     bJx [ index+nx*( i )*vecSize ] += sum[i]*tmp;
