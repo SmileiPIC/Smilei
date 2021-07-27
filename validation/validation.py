@@ -276,16 +276,12 @@ if GENERATE and SHOWDIFF:
 list_validation = [path.basename(b) for b in glob(SMILEI_ANALYSES+"validate_tst*py")]
 if BENCH == "":
     SMILEI_BENCH_LIST = [path.basename(b) for b in glob(SMILEI_BENCHS+"tst*py")]
-    SMILEI_BENCH_LIST = [b for b in SMILEI_BENCH_LIST if "validate_"+b in list_validation]
 else:
     SMILEI_BENCH_LIST = glob( SMILEI_BENCHS + BENCH )
-    if SMILEI_BENCH_LIST:
-        SMILEI_BENCH_LIST = [b.replace(SMILEI_BENCHS,'') for b in SMILEI_BENCH_LIST]
-        for b in SMILEI_BENCH_LIST:
-            if "validate_"+b not in list_validation:
-                raise Exception( "ERROR: Input file "+b+" has no validation file")
-    else:
-        raise Exception( "Input file(s) "+BENCH+" not found")
+    SMILEI_BENCH_LIST = [b.replace(SMILEI_BENCHS,'') for b in SMILEI_BENCH_LIST]
+SMILEI_BENCH_LIST = [b for b in SMILEI_BENCH_LIST if "validate_"+b in list_validation]
+if not SMILEI_BENCH_LIST:
+    raise Exception("Input file(s) "+BENCH+" not found, or without validation file")
 
 if VERBOSE:
     print( "")
