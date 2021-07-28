@@ -72,7 +72,7 @@ void RadiationLandauLifshitz::operator()(
     // Charge divided by the square of the mass
     double charge_over_mass_square;
 
-    // 1/mass^2
+// 1/mass^2
     const double one_over_mass_square = pow( one_over_mass_, 2. );
 
     // Temporary quantum parameter
@@ -99,11 +99,7 @@ void RadiationLandauLifshitz::operator()(
     double* chi = particles.getPtrChi();
 
     // Local vector to store the radiated energy
-    double * rad_norm_energy = new double [iend-istart];
-    #pragma omp simd
-    for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
-        rad_norm_energy[ipart] = 0;
-    }
+    double rad_norm_energy = 0;
 
     double radiated_energy_loc = 0;
 
@@ -111,21 +107,18 @@ void RadiationLandauLifshitz::operator()(
     // Computation
 
     #ifndef _GPU
-        #pragma omp simd
+        #pragma omp simd reduction(+:radiated_energy_loc) private(rad_norm_energy)
     #else
         int np = iend-istart;
         #pragma acc parallel \
-            create(rad_norm_energy[0:np]) \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np]) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,chi) \
             reduction(+:radiated_energy_loc)
     {
-        #pragma acc loop gang worker vector
+        #pragma acc loop reduction(+:radiated_energy_loc) gang worker vector private(rad_norm_energy)
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-
-        rad_norm_energy[ipart-istart] = 0;
 
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
@@ -158,35 +151,18 @@ void RadiationLandauLifshitz::operator()(
             momentum_z[ipart] -= temp*momentum_z[ipart];
 
             // Exact energy loss due to the radiation
-            rad_norm_energy[ipart - istart] = gamma - sqrt( 1.0
+            rad_norm_energy = gamma - sqrt( 1.0
                                               + momentum_x[ipart]*momentum_x[ipart]
                                               + momentum_y[ipart]*momentum_y[ipart]
                                               + momentum_z[ipart]*momentum_z[ipart] );
-        }
-    }
-
     // _______________________________________________________________
     // Computation of the thread radiated energy
 
-
-    #ifndef _GPU
-        #pragma omp simd reduction(+:radiated_energy_loc)
-    #else
-        #pragma acc loop reduction(+:radiated_energy_loc) gang worker vector
-    #endif
-    for( int ipart=istart ; ipart<iend; ipart++ ) {
-        radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart - istart] ;
-    }
+            radiated_energy_loc += weight[ipart]*rad_norm_energy;
 
     // _______________________________________________________________
     // Update of the quantum parameter
 
-    #ifndef _GPU
-        #pragma omp simd
-    #else
-        #pragma acc loop gang worker vector
-    #endif
-    for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
@@ -201,18 +177,14 @@ void RadiationLandauLifshitz::operator()(
                      ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                      ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
 
+        }
     }
 
     #ifdef _GPU
     } // end acc parallel
-    //#pragma acc update self(radiated_energy)
     #endif
 
     radiated_energy += radiated_energy_loc;
 
-    // _______________________________________________________________
-    // Cleaning
-
-    delete [] rad_norm_energy;
-
 }
+            
