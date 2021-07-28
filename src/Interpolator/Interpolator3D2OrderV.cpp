@@ -239,7 +239,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             //  #elif defined(__GNUC__)
             //      #pragma GCC unroll (3)
             //  #endif
-            UNROLL(3)
+            UNROLL_S(3)
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                 // #if defined(__clang__)
                 //     #pragma clang loop unroll(full)
@@ -248,7 +248,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                 // #elif defined(__GNUC__)
                 //      #pragma GCC unroll (3)
                 // #endif
-                UNROLL(3)
+                UNROLL_S(3)
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                     // #if defined(__clang__)
                     //     #pragma clang loop unroll(full)
@@ -257,7 +257,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                     // #elif defined(__GNUC__)
                     //     #pragma GCC unroll (3)
                     // #endif
-                    UNROLL(3)
+                    UNROLL_S(3)
                     for( int kloc=-1 ; kloc<2 ; kloc++ ) {
                          interp_res += coeffxd[ipart+iloc*32] * coeffyp[ipart+jloc*32]  * coeffzp[ipart+kloc*32] *
                                        ( ( 1-dual[0][ipart] )*field_buffer[iloc+1][jloc+1][kloc+1] +
