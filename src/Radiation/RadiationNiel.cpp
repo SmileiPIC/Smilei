@@ -160,7 +160,7 @@ void RadiationNiel::operator()(
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi) private(state, p,temp)
         {
             #pragma acc loop gang worker vector
- 
+
     #endif
         for( ipart=istart ; ipart< iend; ipart++ ) {
 
@@ -193,11 +193,11 @@ void RadiationNiel::operator()(
         for( ipart=0 ; ipart < nbparticles; ipart++ ) {
             if( particle_chi[ipart] > minimum_chi_continuous_ ) {
                 //random_numbers[ipart] = 2.*rand_->uniform() -1.;
-                //random_numbers[ipart] = 0;
-                random_numbers[ipart] = 2.*curand_uniform(&state) - 1;
+                random_numbers[ipart] = sqrtdt*std::sqrt( 2. )*curand_normal(&state);
+                //random_numbers[ipart] = 2.*curand_uniform(&state) - 1;
                 //b[i] = curand_normal(&state);
-             
-                temp = -std::log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
+
+               /* temp = -std::log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
 
             if( temp < 5.000000 ) {
                 temp = temp - 2.500000;
@@ -221,13 +221,13 @@ void RadiationNiel::operator()(
                 p = +0.009438870470 + p*temp;
                 p = +1.001674060000 + p*temp;
                 p = +2.832976820000 + p*temp;
-            }
+            }*/
 
-            random_numbers[ipart] *= p*sqrtdt*std::sqrt( 2. );
-            
+            //random_numbers[ipart] *= p*sqrtdt*std::sqrt( 2. );
+
              }
          }
-    
+
     }
 
     #else
@@ -302,7 +302,7 @@ void RadiationNiel::operator()(
         {
             #pragma acc loop gang worker vector
             for( ipart=istart ; ipart<iend; ipart++ ) {
-                if( particle_chi[ipart] > minimum_chi_continuous_ ) { 
+                if( particle_chi[ipart] > minimum_chi_continuous_ ) {
     #endif
 
     if( niel_computation_method == 0 ) {
@@ -345,13 +345,14 @@ void RadiationNiel::operator()(
     }
     // Using the fit at order 10 (vectorized)
     else if( niel_computation_method == 2 ) {
-        
+
         #ifndef _GPU
         for( ipart=istart ; ipart<iend; ipart++ ) {
                 // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
             if( particle_chi[ipart] > minimum_chi_continuous_ ) {
         #endif
                     temp = RadiationTools::getHNielFitOrder10( particle_chi[ipart] );
+
 
                     diffusion[ipart-istart] = sqrt( factor_classical_radiated_power_*gamma[ipart-ipart_ref]*temp )*random_numbers[ipart-istart];
 
@@ -472,4 +473,4 @@ void RadiationNiel::operator()(
     //std::cerr << "Computation of the momentum: " << t4 - t3 << std::endl;
     //std::cerr << "Computation of the radiated energy: " << t5 - t4 << std::endl;
 
-}
+}                                                                      
