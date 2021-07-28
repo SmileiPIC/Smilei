@@ -253,6 +253,8 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         double field_buffer[6][6][6];
         double interp_res = 0;
 
+        //Ex(dual, primal, primal)
+
         // Field buffers for vectorization (required on A64FX)
         for( int iloc=-2 ; iloc<4 ; iloc++ ) {
             for( int jloc=-2 ; jloc<3 ; jloc++ ) {
@@ -261,8 +263,6 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 }
             }
         }
-
-        //Ex(dual, primal, primal)
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
@@ -294,12 +294,15 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                      #endif
                     for( int kloc=-2 ; kloc<3 ; kloc++ ) {
                         interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
-                            ( ( 1-dual[0][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2] + dual[0][ipart]*field_buffer[iloc+3][jloc+2][kloc+2] );
+                            ( ( 1-dual[0][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2]
+                            + dual[0][ipart]*field_buffer[iloc+3][jloc+2][kloc+2] );
                     }
                 }
             }
             Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
         }
+
+        //Ey(primal, dual, primal)
 
         // Field buffers for vectorization (required on A64FX)
         for( int iloc=-2 ; iloc<3 ; iloc++ ) {
@@ -309,8 +312,6 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 }
             }
         }
-
-        //Ey(primal, dual, primal)
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
@@ -342,7 +343,8 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                      #endif
                     for( int kloc=-2 ; kloc<3 ; kloc++ ) {
                         interp_res += coeffxp2[ipart+iloc*32] * coeffyd2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
-                            ( ( 1-dual[1][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2] + dual[0][ipart]*field_buffer[2+iloc][jloc+3][kloc+2] );
+                            ( ( 1-dual[1][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2]
+                            + dual[1][ipart]*field_buffer[2+iloc][jloc+3][kloc+2] );
                     }
                 }
             }
@@ -390,7 +392,8 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                      #endif
                     for( int kloc=-2 ; kloc<3 ; kloc++ ) {
                         interp_res += coeffxp2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzd2[ipart+kloc*32] *
-                            ( ( 1-dual[2][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2] + dual[0][ipart]*field_buffer[2+iloc][jloc+2][kloc+3] );
+                            ( ( 1-dual[2][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2] +
+                            dual[2][ipart]*field_buffer[2+iloc][jloc+2][kloc+3] );
                     }
                 }
             }
