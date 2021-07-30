@@ -7,8 +7,6 @@
 #include "Field3D.h"
 #include "Particles.h"
 
-#include "Pragma.h"
-
 using namespace std;
 
 
@@ -302,29 +300,11 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             interp_res = 0.;
 
-            #if defined(__clang__)
-                 #pragma clang loop unroll(full)
-             #elif defined (__FUJITSU)
-                 #pragma loop fullunroll_pre_simd 5
-             #elif defined(__GNUC__)
-                 #pragma GCC unroll (5)
-             #endif
+            UNROLL_S(5)
             for( int iloc=-2 ; iloc<3 ; iloc++ ) {
-                #if defined(__clang__)
-                     #pragma clang loop unroll(full)
-                 #elif defined (__FUJITSU)
-                     #pragma loop fullunroll_pre_simd 5
-                 #elif defined(__GNUC__)
-                     #pragma GCC unroll (5)
-                 #endif
+                UNROLL_S(5)
                 for( int jloc=-2 ; jloc<3 ; jloc++ ) {
-                    #if defined(__clang__)
-                         #pragma clang loop unroll(full)
-                     #elif defined (__FUJITSU)
-                         #pragma loop fullunroll_pre_simd 5
-                     #elif defined(__GNUC__)
-                         #pragma GCC unroll (5)
-                     #endif
+                    UNROLL_S(5)
                     for( int kloc=-2 ; kloc<3 ; kloc++ ) {
                         interp_res += coeffxp2[ipart+iloc*32] * coeffyd2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
                             ( ( 1-dual[1][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2]
@@ -351,29 +331,11 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             interp_res = 0.;
 
-            #if defined(__clang__)
-                 #pragma clang loop unroll(full)
-             #elif defined (__FUJITSU)
-                 #pragma loop fullunroll_pre_simd 5
-             #elif defined(__GNUC__)
-                 #pragma GCC unroll (5)
-             #endif
+            UNROLL_S(5)
             for( int iloc=-2 ; iloc<3 ; iloc++ ) {
-                #if defined(__clang__)
-                     #pragma clang loop unroll(full)
-                 #elif defined (__FUJITSU)
-                     #pragma loop fullunroll_pre_simd 5
-                 #elif defined(__GNUC__)
-                     #pragma GCC unroll (5)
-                 #endif
+                UNROLL_S(5)
                 for( int jloc=-2 ; jloc<3 ; jloc++ ) {
-                    #if defined(__clang__)
-                         #pragma clang loop unroll(full)
-                     #elif defined (__FUJITSU)
-                         #pragma loop fullunroll_pre_simd 5
-                     #elif defined(__GNUC__)
-                         #pragma GCC unroll (5)
-                     #endif
+                    UNROLL_S(5)
                     for( int kloc=-2 ; kloc<3 ; kloc++ ) {
                         interp_res += coeffxp2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzd2[ipart+kloc*32] *
                             ( ( 1-dual[2][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2] +
@@ -643,29 +605,11 @@ void Interpolator3D4OrderV::interp_Bx( int * __restrict__ idxO, int np_computed,
     for( int ipart=0 ; ipart<np_computed; ipart++ ) {
         //Bx(primal, dual , dual )
         double interp_res = 0.;
-        #if defined(__clang__)
-            #pragma clang loop unroll(full)
-        #elif defined (__FUJITSU)
-            #pragma loop fullunroll_pre_simd 5
-        #elif defined(__GNUC__)
-            #pragma GCC unroll (5)
-        #endif
+        UNROLL_S(5)
         for( int iloc=-2 ; iloc<3 ; iloc++ ) {
-            #if defined(__clang__)
-                #pragma clang loop unroll(full)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd 5
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (5)
-            #endif
+            UNROLL_S(5)
             for( int jloc=-2 ; jloc<3 ; jloc++ ) {
-                #if defined(__clang__)
-                    #pragma clang loop unroll(full)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd 5
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (5)
-                #endif
+                UNROLL_S(5)
                 for( int kloc=-2 ; kloc<3 ; kloc++ ) {
                     interp_res += coeffxp[ipart+iloc*32] * coeffyd[ipart+jloc*32] * coeffzd[ipart+kloc*32] *
                         ( ( 1-dualz[ipart] ) * ( ( 1-dualy[ipart] )*field_buffer[2+iloc][2+jloc][2+kloc] + dualy[ipart]*field_buffer[2+iloc][3+jloc][2+kloc] )
@@ -703,29 +647,11 @@ void Interpolator3D4OrderV::interp_By( int * __restrict__  idxO,
     for( int ipart=0 ; ipart<np_computed; ipart++ ) {
         //By(dual, primal, dual )
         double interp_res = 0.;
-        #if defined(__clang__)
-            #pragma clang loop unroll(full)
-        #elif defined (__FUJITSU)
-            #pragma loop fullunroll_pre_simd 5
-        #elif defined(__GNUC__)
-            #pragma GCC unroll (5)
-        #endif
+        UNROLL_S(5)
         for( int iloc=-2 ; iloc<3 ; iloc++ ) {
-            #if defined(__clang__)
-                #pragma clang loop unroll(full)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd 5
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (5)
-            #endif
+            UNROLL_S(5)
             for( int jloc=-2 ; jloc<3 ; jloc++ ) {
-                #if defined(__clang__)
-                    #pragma clang loop unroll(full)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd 5
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (5)
-                #endif
+                UNROLL_S(5)
                 for( int kloc=-2 ; kloc<3 ; kloc++ ) {
                     interp_res += coeffxd[ipart+iloc*32] * coeffyp[ipart+jloc*32] * coeffzd[ipart+kloc*32] *
                         ( ( 1-dualz[ipart] ) * ( ( 1-dualx[ipart] )*field_buffer[2+iloc][2+jloc][2+kloc] + dualx[ipart]*field_buffer[3+iloc][2+jloc][2+kloc] )
@@ -764,29 +690,11 @@ void Interpolator3D4OrderV::interp_Bz( int * __restrict__ idxO,
 
         //Bz(dual, dual, prim )
         double interp_res = 0.;
-        #if defined(__clang__)
-            #pragma clang loop unroll(full)
-        #elif defined (__FUJITSU)
-            #pragma loop fullunroll_pre_simd 5
-        #elif defined(__GNUC__)
-            #pragma GCC unroll (5)
-        #endif
+        UNROLL_S(5)
         for( int iloc=-2 ; iloc<3 ; iloc++ ) {
-            #if defined(__clang__)
-                #pragma clang loop unroll(full)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd 5
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (5)
-            #endif
+            UNROLL_S(5)
             for( int jloc=-2 ; jloc<3 ; jloc++ ) {
-                #if defined(__clang__)
-                    #pragma clang loop unroll(full)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd 5
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (5)
-                #endif
+                UNROLL_S(5)
                 for( int kloc=-2 ; kloc<3 ; kloc++ ) {
                     interp_res += coeffxd[ipart+iloc*32] * coeffyd[ipart+jloc*32] * coeffzp[ipart+kloc*32] *
                         ( ( 1-dualy[ipart] ) * ( ( 1-dualx[ipart] )*field_buffer[2+iloc][2+jloc][2+kloc] + dualx[ipart]*field_buffer[3+iloc][2+jloc][2+kloc] )

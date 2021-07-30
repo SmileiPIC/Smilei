@@ -4,7 +4,7 @@
 
 #include "Interpolator3D.h"
 #include "Field3D.h"
-
+#include "Pragma.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class for 2nd order interpolator for 1d3v simulations
@@ -15,13 +15,13 @@ class Interpolator3D2OrderV final : public Interpolator3D
 public:
     Interpolator3D2OrderV( Params &, Patch * );
     ~Interpolator3D2OrderV() override final {};
-    
+
     inline void fields( ElectroMagn *EMfields, Particles &particles, int ipart, double *ELoc, double *BLoc );
     void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override final ;
     void fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
     void fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> *selection ) override final {};
     void oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1=NULL, double *l2=NULL, double *l3=NULL ) override final;
-    
+
     inline double compute( double *coeffx, double *coeffy, double *coeffz, Field3D *f, int idx, int idy, int idz )
     {
         double interp_res( 0. );
@@ -35,11 +35,11 @@ public:
         }
         return interp_res;
     };
-    
+
     void fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
     void timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
     void envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc ) override final;
-    
+
     inline double computeV( int ipart, double *coeffx, double *coeffy, double *coeffz, Field3D *f, int *idx, int *dual, int idual )
     {
         double interp_res = 0.;
@@ -58,7 +58,7 @@ public:
         }
         return interp_res;
     }
-    
+
     inline double computeV( int ipart, double *coeffx, double *coeffy, double *coeffz, Field3D *f, int *idx, int *dual, int idual0, int idual1 )
     {
         double interp_res = 0.;
@@ -83,7 +83,7 @@ public:
         }
         return interp_res;
     }
-    
+
 private:
 
 

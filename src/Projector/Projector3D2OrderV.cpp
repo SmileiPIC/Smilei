@@ -155,15 +155,7 @@ void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             for( unsigned int k=0 ; k<5 ; k++ ) {
                 double tmpRho = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(8)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (8)
-                #else
-                    #pragma unroll(8)
-                #endif
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpRho +=  bJx[ilocal+ipart];
                 }
@@ -466,15 +458,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             for( unsigned int k=0 ; k<5 ; k++ ) {
                 double tmpJx = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(8)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (8)
-                #else
-                    #pragma unroll(8)
-                #endif
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpJx += bJx [ilocal+ipart];
                 }
@@ -518,15 +502,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             for( unsigned int k=0 ; k<5 ; k++ ) {
                 double tmpJy = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(8)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (8)
-                #else
-                    #pragma unroll(8)
-                #endif
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpJy += bJx [ilocal+ipart];
                 }
@@ -571,15 +547,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             for( unsigned int k=1 ; k<5 ; k++ ) {
                 double tmpJz = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(8)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (8)
-                #else
-                    #pragma unroll(8)
-                #endif
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpJz +=  bJx[ilocal+ipart];
                 }
@@ -798,36 +766,12 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(3)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (3)
-            #else
-                #pragma unroll(3)
-            #endif
+            UNROLL(3)
             for( unsigned int i=0 ; i<3 ; i++ ) {
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(3)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (3)
-                #else
-                    #pragma unroll(3)
-                #endif
+                UNROLL(3)
                 for( unsigned int j=0 ; j<3 ; j++ ) {
                     int index( ( i*9 + j*3 )*vecSize+ipart );
-                    #if defined(__clang__)
-                        #pragma clang loop unroll_count(3)
-                    #elif defined (__FUJITSU)
-                        #pragma loop fullunroll_pre_simd
-                    #elif defined(__GNUC__)
-                        #pragma GCC unroll (3)
-                    #else
-                        #pragma unroll(3)
-                    #endif
+                    UNROLL(3)
                     for( unsigned int k=0 ; k<3 ; k++ ) {
                         bChi [ index+k*vecSize ] +=  charge_weight[ipart] * Sx1[i*vecSize+ipart]*Sy1[j*vecSize+ipart]*Sz1[k*vecSize+ipart];
                     }
@@ -854,15 +798,7 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
             for( unsigned int k=0 ; k<3 ; k++ ) {
                 double tmpChi = 0.;
                 int ilocal = ( i*9+j*3+k )*vecSize;
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(8)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (8)
-                #else
-                    #pragma unroll(8)
-                #endif
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpChi +=  bChi[ilocal+ipart];
                 }

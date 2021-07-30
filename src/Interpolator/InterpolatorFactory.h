@@ -13,6 +13,7 @@
 #include "InterpolatorAM2Order.h"
 
 #ifdef _VECTO
+#include "Interpolator1D2OrderV.h"
 #include "Interpolator2D2OrderV.h"
 #include "Interpolator3D2OrderV.h"
 #include "Interpolator3D4OrderV.h"
@@ -33,7 +34,14 @@ public:
         // 1Dcartesian simulation
         // ---------------
         if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-            Interp = new Interpolator1D2Order( params, patch );
+            if( !vectorization ) {
+                Interp = new Interpolator1D2Order( params, patch );
+            }
+#ifdef _VECTO
+            else {
+                Interp = new Interpolator1D2OrderV( params, patch );
+            }
+#endif
         } else if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
             Interp = new Interpolator1D4Order( params, patch );
         }
@@ -83,15 +91,15 @@ public:
             } else {
                 Interp = new InterpolatorAM1Order( params, patch );
             }
-        } 
+        }
         else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
         }
-        
+
         return Interp;
     } // end InterpolatorFactory::create
-    
-    
+
+
 };
 
 #endif

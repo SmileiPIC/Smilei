@@ -9,6 +9,8 @@
 #include "Tools.h"
 #include "Patch.h"
 
+#include "Pragma.h"
+
 using namespace std;
 
 
@@ -70,13 +72,18 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
     double Sy1_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
 
+    // Pointer for GPU and vectorization on ARM processors
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ weight     = particles.getPtrWeight();
+    short  * __restrict__ charge     = particles.getPtrCharge();
+
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
     int nbVec = ( iend-istart+( cell_nparts-1 )-( ( iend-istart-1 )&( cell_nparts-1 ) ) ) / vecSize;
     if( nbVec*vecSize != cell_nparts ) {
         nbVec++;
     }
-
 
     // Jx, Jy, Jz
     currents( Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, ipart_ref );
@@ -99,7 +106,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin;
             double delta  = pos - ( double )cell;
@@ -116,7 +123,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             Sx1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
             Sx1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin;
             delta  = pos - ( double )cell;
@@ -133,12 +140,15 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             Sy1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
             Sy1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
 
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )
+                                                   * weight[ivect+istart+ipart];
         }
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+            UNROLL_S(5)
             for( unsigned int i=0 ; i<5 ; i++ ) {
+                UNROLL_S(5)
                 for( unsigned int j=0 ; j<5 ; j++ ) {
                     int index( ( i*5 + j )*vecSize+ipart );
                     bJx [ index ] +=  charge_weight[ipart] * Sx1_buff_vect[i*vecSize+ipart]*Sy1_buff_vect[j*vecSize+ipart];
@@ -155,15 +165,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
         for( unsigned int j=0 ; j<5 ; j++ ) {
             double tmpRho = 0.;
             int ilocal = ( ( i )*5+j )*vecSize;
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(8)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (8)
-            #else
-                #pragma unroll(8)
-            #endif
+            UNROLL(8)
             for( int ipart=0 ; ipart<8; ipart++ ) {
                 tmpRho +=  bJx[ilocal+ipart];
             }
@@ -366,6 +368,12 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
     double crz_p[8] __attribute__( ( aligned( 64 ) ) );
 
+    // Pointer for GPU and vectorization on ARM processors
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ weight     = particles.getPtrWeight();
+    short  * __restrict__ charge     = particles.getPtrCharge();
+
     #pragma omp simd
     for( unsigned int j=0; j<200; j++ ) {
         bJx[j] = 0.;
@@ -383,7 +391,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin;
             double delta  = pos - ( double )cell;
@@ -409,20 +417,12 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
             Sx0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(5)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (5)
-            #else
-                #pragma unroll(5)
-            #endif
+            UNROLL(5)
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
             }
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin;
             delta  = pos - ( double )cell;
@@ -448,19 +448,12 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sy0_buff_vect[4*vecSize+ipart] = 0;
 
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(5)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (5)
-            #else
-                #pragma unroll(5)
-            #endif
+            UNROLL(5)
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
             }
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )
+                                                   * weight[ivect+istart+ipart];
         }
 
         #pragma omp simd
@@ -469,17 +462,21 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
             double sum[5];
             sum[0] = 0.;
+            UNROLL_S(4)
             for( unsigned int k=1 ; k<5 ; k++ ) {
                 sum[k] = sum[k-1]-DSx[( k-1 )*vecSize+ipart];
             }
 
             double tmp( crx_p * ( 0.5*DSy[ipart] ) );
+            UNROLL_S(4)
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJx [( i*5 )*vecSize+ipart] += sum[i] * tmp;
             }
 
+            UNROLL_S(4)
             for( unsigned int j=1; j<5 ; j++ ) {
                 tmp =  crx_p * ( Sy0_buff_vect[j*vecSize+ipart] + 0.5*DSy[j*vecSize+ipart] );
+                UNROLL_S(4)
                 for( unsigned int i=1 ; i<5 ; i++ ) {
                     bJx [( i*5+j )*vecSize+ipart] += sum[i] * tmp;
                 }
@@ -496,15 +493,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         for( unsigned int j=0 ; j<5 ; j++ ) {
             double tmpJx( 0. );
             int ilocal = ( i*5+j )*vecSize;
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(8)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (8)
-            #else
-                #pragma unroll(8)
-            #endif
+            UNROLL(8)
             for( int ipart=0 ; ipart<8; ipart++ ) {
                 tmpJx += bJx [ilocal+ipart];
             }
@@ -526,7 +515,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin;
             double delta  = pos - ( double )cell;
@@ -552,20 +541,12 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
             Sx0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(5)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (5)
-            #else
-                #pragma unroll(5)
-            #endif
+            UNROLL(5)
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
             }
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin;
             delta  = pos - ( double )cell;
@@ -591,19 +572,12 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sy0_buff_vect[4*vecSize+ipart] = 0;
 
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(5)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (5)
-            #else
-                #pragma unroll(5)
-            #endif
+            UNROLL_S(5)
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
             }
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )
+                                                   * weight[ivect+istart+ipart];
         }
 
         #pragma omp simd
@@ -612,17 +586,21 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
             double sum[5];
             sum[0] = 0.;
+            UNROLL_S(4)
             for( unsigned int k=1 ; k<5 ; k++ ) {
                 sum[k] = sum[k-1]-DSy[( k-1 )*vecSize+ipart];
             }
 
             double tmp( cry_p * ( 0.5*DSx[ipart] ) );
+            UNROLL_S(4)
             for( unsigned int j=1 ; j<5 ; j++ ) {
                 bJx [j*vecSize+ipart] += sum[j] * tmp;
             }
 
+            UNROLL_S(4)
             for( unsigned int i=1; i<5 ; i++ ) {
                 tmp = cry_p * ( Sx0_buff_vect[i*vecSize+ipart] + 0.5*DSx[i*vecSize+ipart] );
+                UNROLL_S(4)
                 for( unsigned int j=1 ; j<5 ; j++ ) {
                     bJx [( i*5+j )*vecSize+ipart] += sum[j] * tmp;
                 }
@@ -637,15 +615,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         for( unsigned int j=1 ; j<5 ; j++ ) {
             double tmpJy( 0. );
             int ilocal = ( i*5+j )*vecSize;
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(8)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (8)
-            #else
-                #pragma unroll(8)
-            #endif
+            UNROLL(8)
             for( int ipart=0 ; ipart<8; ipart++ ) {
                 tmpJy += bJx [ilocal+ipart];
             }
@@ -668,7 +638,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = position_x[ivect+ipart+istart] * dx_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin;
             double delta  = pos - ( double )cell;
@@ -694,20 +664,12 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
             Sx0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(5)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (5)
-            #else
-                #pragma unroll(5)
-            #endif
+            UNROLL(5)
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
             }
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin;
             delta  = pos - ( double )cell;
@@ -733,15 +695,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             Sy0_buff_vect[4*vecSize+ipart] = 0;
 
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(5)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (5)
-            #else
-                #pragma unroll(5)
-            #endif
+            UNROLL(5)
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
             }
@@ -753,18 +707,22 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             bJx [ipart] += crz_p[ipart] * Sx1_buff_vect[ipart] * Sy1_buff_vect[ipart];
             double tmp( crz_p[ipart] * Sy1_buff_vect[ipart] );
+            UNROLL(4)
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJx [( ( i )*5 )*vecSize+ipart] += tmp * ( 0.5*Sx0_buff_vect[i*vecSize+ipart] + Sx1_buff_vect[i*vecSize+ipart] );
             }
 
             tmp = crz_p[ipart] * Sx1_buff_vect[ipart];
+            UNROLL(4)
             for( unsigned int j=1; j<5 ; j++ ) {
                 bJx [j*vecSize+ipart] +=  tmp * ( 0.5*Sy0_buff_vect[j*vecSize+ipart]* + Sy1_buff_vect[j*vecSize+ipart] );
             }
 
+            UNROLL(4)
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 double tmp0( crz_p[ipart] * ( 0.5*Sx0_buff_vect[i*vecSize+ipart] + Sx1_buff_vect[i*vecSize+ipart] ) );
                 double tmp1( crz_p[ipart] * ( 0.5*Sx1_buff_vect[i*vecSize+ipart] + Sx0_buff_vect[i*vecSize+ipart] ) );
+                UNROLL(4)
                 for( unsigned int j=1; j<5 ; j++ ) {
                     bJx [( ( i )*5+j )*vecSize+ipart] += ( Sy0_buff_vect[j*vecSize+ipart]* tmp1 + Sy1_buff_vect[j*vecSize+ipart]* tmp0 );
                 }
@@ -779,15 +737,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         for( unsigned int j=0 ; j<5 ; j++ ) {
             double tmpJz( 0. );
             int ilocal = ( i*5+j )*vecSize;
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(8)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (8)
-            #else
-                #pragma unroll(8)
-            #endif
+            UNROLL(8)
             for( int ipart=0 ; ipart<8; ipart++ ) {
                 tmpJz  +=  bJx [ilocal+ipart];
             }

@@ -8,8 +8,6 @@
 #include "Particles.h"
 #include "LaserEnvelope.h"
 
-#include "Pragma.h"
-
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -68,6 +66,10 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
     double * __restrict__ Epart[3];
     double * __restrict__ Bpart[3];
 
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ position_z = particles.getPtrPosition(2);
+
     double coeff[3][2][3][32];
     int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0, delta_primal < 0) or if it is +1 (dual=1, delta_primal>=0).
 
@@ -102,10 +104,6 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
         }
 
         double delta2, delta;
-
-        double * __restrict__ position_x = particles.getPtrPosition(0);
-        double * __restrict__ position_y = particles.getPtrPosition(1);
-        double * __restrict__ position_z = particles.getPtrPosition(2);
 
         #pragma omp simd private(delta2, delta)
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {

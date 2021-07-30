@@ -2,7 +2,7 @@
 #define PROJECTOR3D2ORDERV_H
 
 #include "Projector3D.h"
-
+#include "Pragma.h"
 
 class Projector3D2OrderV : public Projector3D
 {
@@ -372,95 +372,46 @@ private:
         }
 
         double tmp( crx_p * ( one_third*DSy[ipart]*DSz[ipart] ) );
-        #if defined(__clang__)
-            #pragma clang loop unroll_count(4)
-        #elif defined (__FUJITSU)
-            #pragma loop fullunroll_pre_simd
-        #elif defined(__GNUC__)
-            #pragma GCC unroll (4)
-        #endif
+        UNROLL_S(4)
         for( unsigned int i=1 ; i<5 ; i++ ) {
             bJx [( ( i )*nx )*vecSize+ipart] += sum[i]*tmp;
         }
 
-        #if defined(__clang__)
-            #pragma clang loop unroll_count(4)
-        #elif defined (__FUJITSU)
-            #pragma loop fullunroll_pre_simd
-        #elif defined(__GNUC__)
-            #pragma GCC unroll (4)
-        #endif
+        UNROLL_S(4)
         for( unsigned int k=1 ; k<5 ; k++ ) {
             tmp = crx_p * ( 0.5*DSy[ipart]*Sz0[( k-1 )*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] );
             int index( ( k*nz )*vecSize+ipart );
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(4)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (4)
-            #endif
+            UNROLL_S(4)
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJx [ index+nx*( i )*vecSize ] += sum[i]*tmp;
             }
 
         }
-        #if defined(__clang__)
-            #pragma clang loop unroll_count(4)
-        #elif defined (__FUJITSU)
-            #pragma loop fullunroll_pre_simd
-        #elif defined(__GNUC__)
-            #pragma GCC unroll (4)
-        #endif
+        UNROLL_S(4)
         for( unsigned int j=1 ; j<5 ; j++ ) {
             tmp = crx_p * ( 0.5*DSz[ipart]*Sy0[( j-1 )*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] );
             int index( ( j*ny )*vecSize+ipart );
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(4)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (4)
-            #endif
+            UNROLL_S(4)
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJx [ index+nx*( i )*vecSize ] += sum[i]*tmp;
             }
         }//i
-        #if defined(__clang__)
-            #pragma clang loop unroll_count(4)
-        #elif defined (__FUJITSU)
-            #pragma loop fullunroll_pre_simd
-        #elif defined(__GNUC__)
-            #pragma GCC unroll (4)
-        #endif
+        UNROLL_S(4)
         for( int j=1 ; j<5 ; j++ ) {
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(4)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (4)
-            #endif
+            UNROLL_S(4)
             for( int k=1 ; k<5 ; k++ ) {
                 tmp = crx_p * ( Sy0[( j-1 )*vecSize+ipart]*Sz0[( k-1 )*vecSize+ipart]
                                 + 0.5*DSy[j*vecSize+ipart]*Sz0[( k-1 )*vecSize+ipart]
                                 + 0.5*DSz[k*vecSize+ipart]*Sy0[( j-1 )*vecSize+ipart]
                                 + one_third*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart] );
                 int index( ( j*ny + k*nz )*vecSize+ipart );
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(4)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (4)
-                #endif
+                UNROLL_S(4)
                 for( int i=1 ; i<5 ; i++ ) {
                     bJx [ index+nx*( i )*vecSize ] += sum[i]*tmp;
                 }
             }
         }//i
     }
-
 
 };
 
