@@ -7,6 +7,8 @@
 #include "Field3D.h"
 #include "Particles.h"
 
+#include "Pragma.h"
+
 using namespace std;
 
 
@@ -269,29 +271,11 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             interp_res = 0.;
 
-            #if defined(__clang__)
-                 #pragma clang loop unroll(full)
-             #elif defined (__FUJITSU)
-                 #pragma loop fullunroll_pre_simd 5
-             #elif defined(__GNUC__)
-                 #pragma GCC unroll (5)
-             #endif
+            UNROLL_S(5)
             for( int iloc=-2 ; iloc<3 ; iloc++ ) {
-                #if defined(__clang__)
-                     #pragma clang loop unroll(full)
-                 #elif defined (__FUJITSU)
-                     #pragma loop fullunroll_pre_simd 5
-                 #elif defined(__GNUC__)
-                     #pragma GCC unroll (5)
-                 #endif
+                UNROLL_S(5)
                 for( int jloc=-2 ; jloc<3 ; jloc++ ) {
-                    #if defined(__clang__)
-                         #pragma clang loop unroll(full)
-                     #elif defined (__FUJITSU)
-                         #pragma loop fullunroll_pre_simd 5
-                     #elif defined(__GNUC__)
-                         #pragma GCC unroll (5)
-                     #endif
+                    UNROLL_S(5)
                     for( int kloc=-2 ; kloc<3 ; kloc++ ) {
                         interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
                             ( ( 1-dual[0][ipart] )* field_buffer[iloc+2][jloc+2][kloc+2]
