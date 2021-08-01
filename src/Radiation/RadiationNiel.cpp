@@ -91,6 +91,7 @@ void RadiationNiel::operator()(
 
     // Particle id
     int ipart;
+    double p;
 
     // Radiated energy
     double rad_energy;
@@ -130,19 +131,17 @@ void RadiationNiel::operator()(
     #ifdef _GPU
     // Management of the data on GPU though this data region
     int np = iend-istart;
+
+    //initialize initial seed in GPU
+    double initial_seed = rand_->uniform();
+    curandState_t state;
+
     #pragma acc data create(random_numbers[0:nbparticles], diffusion[0:nbparticles]) \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np], table[0:size_of_table_Niel]) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi)
     {
-            unsigned long long seed;
-            unsigned long long seq;
-            unsigned long long offset;
-            curandState_t state;
 
-            seed = 12345ULL;
-            seq = 0ULL;
-            offset = 0ULL;
     #endif
 
     // _______________________________________________________________
@@ -154,13 +153,15 @@ void RadiationNiel::operator()(
         #ifndef _GPU
             #pragma omp simd
         #else
-            #pragma acc parallel \
-            present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
-            Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np], random_numbers[0:nbparticles]) \
-            deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi) private(state, p,temp)
+	    #pragma acc parallel \
+           	present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
+            	Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np], \
+		table[0:size_of_table_Niel], diffusion[0:nbparticles]) \
+            	deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi) \
+	        private(temp,rad_energy,new_gamma,stat,p,temp) reduction(+:radiated_energy_loc) 
         {
             #pragma acc loop gang worker vector
-
+ 
     #endif
         for( ipart=istart ; ipart< iend; ipart++ ) {
 
@@ -177,27 +178,24 @@ void RadiationNiel::operator()(
                                   gamma[ipart],
                                   ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                                   ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
-        }
-    #ifdef _GPU
+	//}     
+    #ifndef _GPU
     } // end acc parallel
     #endif
     //double t1 = MPI_Wtime();
 
     #ifdef _GPU
-    #pragma acc parallel present(random_numbers[0:nbparticles]) private(state, p,temp)
+    /*#pragma acc parallel present(random_numbers[0:nbparticles])
     {
-        double p;
-
-        curand_init(seed, seq, offset, &state);
-        #pragma acc loop seq
-        for( ipart=0 ; ipart < nbparticles; ipart++ ) {
+        #pragma acc loop gang worker vector private(state)
+        for( ipart=0 ; ipart < nbparticles; ipart++ ) {*/
             if( particle_chi[ipart] > minimum_chi_continuous_ ) {
-                //random_numbers[ipart] = 2.*rand_->uniform() -1.;
-                random_numbers[ipart] = sqrtdt*std::sqrt( 2. )*curand_normal(&state);
-                //random_numbers[ipart] = 2.*curand_uniform(&state) - 1;
-                //b[i] = curand_normal(&state);
+                
+		curand_init(ipart*initial_seed, 0, 0, &state);    
+		random_numbers[ipart-istart] = sqrtdt*std::sqrt( 2. )*curand_normal(&state);
+                /*random_numbers[ipart-istart] = 2*curand_uniform(&state)-1;
 
-               /* temp = -std::log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
+	    temp = -std::log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
 
             if( temp < 5.000000 ) {
                 temp = temp - 2.500000;
@@ -221,14 +219,13 @@ void RadiationNiel::operator()(
                 p = +0.009438870470 + p*temp;
                 p = +1.001674060000 + p*temp;
                 p = +2.832976820000 + p*temp;
-            }*/
+            }
 
-            //random_numbers[ipart] *= p*sqrtdt*std::sqrt( 2. );
-
-             }
-         }
-
-    }
+            random_numbers[ipart] *= p*sqrtdt*std::sqrt( 2. );*/
+             //}
+        // }
+    
+    //}
 
     #else
 
@@ -251,7 +248,7 @@ void RadiationNiel::operator()(
     }
 
     // Vectorized computation of the random number in a normal distribution
-    double p;
+    //double p;
     #pragma omp simd private(p,temp)
     for( ipart=0 ; ipart < nbparticles; ipart++ ) {
         // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
@@ -294,7 +291,7 @@ void RadiationNiel::operator()(
     // 3) Computation of the diffusion coefficients
     // Using the table (non-vectorized)
 
-    #ifdef _GPU
+    /*#ifdef _GPU
         #pragma acc parallel present(gamma[istart:np], random_numbers[0:nbparticles], \
             table[0:size_of_table_Niel], diffusion[0:nbparticles]) \
             deviceptr(particle_chi,momentum_x,momentum_y,momentum_z,weight) \
@@ -302,10 +299,10 @@ void RadiationNiel::operator()(
         {
             #pragma acc loop gang worker vector
             for( ipart=istart ; ipart<iend; ipart++ ) {
-                if( particle_chi[ipart] > minimum_chi_continuous_ ) {
-    #endif
+                if( particle_chi[ipart] > minimum_chi_continuous_ ) { 
+    #endif*/
 
-    if( niel_computation_method == 0 ) {
+    if( niel_computation_method == 1 ) {
 
         #ifndef _GPU
         for( ipart=istart ; ipart<iend; ipart++ ) {
@@ -325,7 +322,7 @@ void RadiationNiel::operator()(
         #endif
     }
     // Using the fit at order 5 (vectorized)
-    else if( niel_computation_method == 1 ) {
+    else if( niel_computation_method == 0 ) {
 
         #ifndef _GPU
         for( ipart=istart ; ipart<iend; ipart++ ) {
@@ -345,14 +342,13 @@ void RadiationNiel::operator()(
     }
     // Using the fit at order 10 (vectorized)
     else if( niel_computation_method == 2 ) {
-
+        
         #ifndef _GPU
         for( ipart=istart ; ipart<iend; ipart++ ) {
                 // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
             if( particle_chi[ipart] > minimum_chi_continuous_ ) {
         #endif
                     temp = RadiationTools::getHNielFitOrder10( particle_chi[ipart] );
-
 
                     diffusion[ipart-istart] = sqrt( factor_classical_radiated_power_*gamma[ipart-ipart_ref]*temp )*random_numbers[ipart-istart];
 
@@ -473,4 +469,5 @@ void RadiationNiel::operator()(
     //std::cerr << "Computation of the momentum: " << t4 - t3 << std::endl;
     //std::cerr << "Computation of the radiated energy: " << t5 - t4 << std::endl;
 
-}                                                                      
+}
+
