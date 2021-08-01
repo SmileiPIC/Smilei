@@ -34,14 +34,14 @@ public:
         // 1Dcartesian simulation
         // ---------------
         if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-            if( !vectorization ) {
-                Interp = new Interpolator1D2Order( params, patch );
-            }
-#ifdef _VECTO
-            else {
+//             if( !vectorization ) {
+//                 Interp = new Interpolator1D2Order( params, patch );
+//             }
+// #ifdef _VECTO
+//             else {
                 Interp = new Interpolator1D2OrderV( params, patch );
-            }
-#endif
+            // }
+// #endif
         } else if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
             Interp = new Interpolator1D4Order( params, patch );
         }

@@ -114,7 +114,8 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     int *iold = &( smpi->dynamics_iold[ithread][0] );
     double *delta = &( smpi->dynamics_deltaold[ithread][0] );
 
-    int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
+    //int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
+    int nparts = particles.size();
 
     double * __restrict__ position_x = particles.getPtrPosition(0);
 
@@ -134,6 +135,14 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     Bpart_y= &( smpi->dynamics_Bpart[ithread][1*nparts] );
     Bpart_z= &( smpi->dynamics_Bpart[ithread][2*nparts] );
 
+    // Static cast of the electromagnetic fields
+    // Field1D *Ex1D     = static_cast<Field1D *>( EMfields->Ex_ );
+    // Field1D *Ey1D     = static_cast<Field1D *>( EMfields->Ey_ );
+    // Field1D *Ez1D     = static_cast<Field1D *>( EMfields->Ez_ );
+    // Field1D *Bx1D_m   = static_cast<Field1D *>( EMfields->Bx_m );
+    // Field1D *By1D_m   = static_cast<Field1D *>( EMfields->By_m );
+    // Field1D *Bz1D_m   = static_cast<Field1D *>( EMfields->Bz_m );
+
     double * __restrict__ Ex = EMfields->Ex_->data();
     double * __restrict__ Ey = EMfields->Ey_->data();
     double * __restrict__ Ez = EMfields->Ez_->data();
@@ -141,15 +150,12 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     double * __restrict__ By = EMfields->By_m->data();
     double * __restrict__ Bz = EMfields->Bz_m->data();
 
-    //Loop on bin particles
-    int npart_tot = particles.size();
-
     int idx;  //dual index computed
     int ipx;  //prim index computed
     double xjn;
     double xjmxi2;
 
-    //#pragma omp simd
+    #pragma omp simd
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
 
@@ -158,7 +164,7 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
         // Dual
         idx      = round( xjn+0.5 );      // index of the central point
-        xjmxi  = xjn - ( double )id_ +0.5; // normalized distance to the central node
+        xjmxi  = xjn - ( double )idx +0.5; // normalized distance to the central node
         xjmxi2 = xjmxi*xjmxi;            // square of the normalized distance to the central node
 
         // 2nd order interpolation on 3 nodes
@@ -170,7 +176,7 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
         // Primal
         ipx      = round( xjn );    // index of the central point
-        xjmxi  = xjn -( double )ip_; // normalized distance to the central node
+        xjmxi  = xjn -( double )ipx; // normalized distance to the central node
         xjmxi2 = xjmxi*xjmxi;   // square of the normalized distance to the central node
 
         // 2nd order interpolation on 3 nodes
@@ -180,7 +186,7 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
         ipx -= index_domain_begin;
 
-        // Interpolate the fields from the Dual grid : Ex, By, Bz
+        // // Interpolate the fields from the Dual grid : Ex, By, Bz
         Epart_x[ipart] = coeffd_[0] * Ex[idx-1]   + coeffd_[1] * Ex[idx]   + coeffd_[2] * Ex[idx+1];
         Bpart_y[ipart] = coeffd_[0] * By[idx-1]   + coeffd_[1] * By[idx]   + coeffd_[2] * By[idx+1];
         Bpart_z[ipart] = coeffd_[0] * Bz[idx-1]   + coeffd_[1] * Bz[idx]   + coeffd_[2] * Bz[idx+1];
@@ -191,7 +197,7 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         Bpart_x[ipart] = coeffp_[0] * Bx[ipx-1]   + coeffp_[1] * Bx[ipx]   + coeffp_[2] * Bx[ipx+1];
 
         //Buffering of iol and delta
-        iold [ipart] = ip_;
+        iold [ipart] = ipx;
         delta[ipart] = xjmxi;
     }
 
