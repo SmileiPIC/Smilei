@@ -350,12 +350,12 @@ void VectorPatch::dynamics( Params &params,
             smpi->reference_time = MPI_Wtime();
         }
         #endif
-        #  ifdef _DEVELOPTRACING
-        if (int(time_dual/params.timestep)%(smpi->iter_frequency_task_tracing_)){
-            smpi->reference_time = MPI_Wtime();
-        }
-        #  endif
 #endif
+    #  ifdef _DEVELOPTRACING
+    if (int(time_dual/params.timestep)%(smpi->iter_frequency_task_tracing_)){
+        smpi->reference_time = MPI_Wtime();
+    }
+    #  endif
     } // end ipatch
 
 #ifndef _OMPTASKS
