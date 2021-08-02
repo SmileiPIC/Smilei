@@ -128,19 +128,26 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     double * __restrict__ Bpart_z= &( smpi->dynamics_Bpart[ithread][2*nparts] );
 
     // Static cast of the electromagnetic fields
-    Field1D *Ex1D     = static_cast<Field1D *>( EMfields->Ex_ );
-    Field1D *Ey1D     = static_cast<Field1D *>( EMfields->Ey_ );
-    Field1D *Ez1D     = static_cast<Field1D *>( EMfields->Ez_ );
-    Field1D *Bx1D_m   = static_cast<Field1D *>( EMfields->Bx_m );
-    Field1D *By1D_m   = static_cast<Field1D *>( EMfields->By_m );
-    Field1D *Bz1D_m   = static_cast<Field1D *>( EMfields->Bz_m );
+    // Field1D *Ex1D     = static_cast<Field1D *>( EMfields->Ex_ );
+    // Field1D *Ey1D     = static_cast<Field1D *>( EMfields->Ey_ );
+    // Field1D *Ez1D     = static_cast<Field1D *>( EMfields->Ez_ );
+    // Field1D *Bx1D_m   = static_cast<Field1D *>( EMfields->Bx_m );
+    // Field1D *By1D_m   = static_cast<Field1D *>( EMfields->By_m );
+    // Field1D *Bz1D_m   = static_cast<Field1D *>( EMfields->Bz_m );
 
-    double * __restrict__ Ex = &Ex1D->data_[0]; //EMfields->Ex_->data();
-    double * __restrict__ Ey = &Ey1D->data_[0]; // EMfields->Ey_->data();
-    double * __restrict__ Ez = &Ez1D->data_[0]; //EMfields->Ez_->data();
-    double * __restrict__ Bx = &Bx1D_m->data_[0]; //EMfields->Bx_m->data();
-    double * __restrict__ By = &By1D_m->data_[0]; //EMfields->By_m->data();
-    double * __restrict__ Bz = &Bz1D_m->data_[0]; //EMfields->Bz_m->data();
+    // double * __restrict__ Ex = &Ex1D->data_[0]; //EMfields->Ex_->data();
+    // double * __restrict__ Ey = &Ey1D->data_[0]; // EMfields->Ey_->data();
+    // double * __restrict__ Ez = &Ez1D->data_[0]; //EMfields->Ez_->data();
+    // double * __restrict__ Bx = &Bx1D_m->data_[0]; //EMfields->Bx_m->data();
+    // double * __restrict__ By = &By1D_m->data_[0]; //EMfields->By_m->data();
+    // double * __restrict__ Bz = &Bz1D_m->data_[0]; //EMfields->Bz_m->data();
+
+    double * __restrict__ Ex = EMfields->Ex_->data();
+    double * __restrict__ Ey = EMfields->Ey_->data();
+    double * __restrict__ Ez = EMfields->Ez_->data();
+    double * __restrict__ Bx = EMfields->Bx_m->data();
+    double * __restrict__ By = EMfields->By_m->data();
+    double * __restrict__ Bz = EMfields->Bz_m->data();
 
     int idx;  //dual index computed
     int ipx;  //prim index computed
