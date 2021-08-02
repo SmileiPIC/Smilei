@@ -904,7 +904,7 @@ void VectorPatch::computeChargeRelativisticSpecies( double time_primal , Params 
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             // project only if species needs relativistic initialization and it is the right time to initialize its fields
             if( ( species( ipatch, ispec )->relativistic_field_initialization_ ) &&
-                    ( int(time_primal/params.timestep) == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) {
+                    ( (int)(time_primal/params.timestep) == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
                     species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ) );
                 } else {
@@ -1761,7 +1761,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
     
     // For each mode, repeat the initialization procedure
     // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
-    for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+    for( unsigned int imode=0 ; imode<params.nmodes_classical_Poisson_field_init ; imode++ ) {
         
         // init Phi, r, p values
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -1934,7 +1934,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
     }
 
     // // Exchange the fields after the addition of the relativistic species fields
-    for( unsigned int imode = 0 ; imode < params.nmodes_rel_field_init ; imode++ ) {
+    for( unsigned int imode = 0 ; imode < params.nmodes_classical_Poisson_field_init ; imode++ ) {
         SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
         SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
     }
@@ -2024,7 +2024,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
         if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( int(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
+                if( (int)(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
@@ -2451,7 +2451,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
         if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( int(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
+                if( (int)(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }

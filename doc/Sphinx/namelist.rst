@@ -347,6 +347,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
   The modes range from mode 0 to mode ``"number_of_AM-1"``.
 
+.. py:data:: number_of_AM_classical_Poisson_solver
+
+  :default: 1
+
+  The number of azimuthal modes used for the field initialization with non relativistic Poisson solver in ``"AMcylindrical"`` geometry.
+  Note that this number must be lower or equal to the number of modes of the simulation.
+
 .. py:data:: number_of_AM_relativistic_field_initialization
 
   :default: 1

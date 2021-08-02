@@ -102,7 +102,7 @@ public:
     bool relativistic_field_initialization_;
 
     //! Time for which the species field is initialized in case of relativistic initialization
-    double iter_relativistic_initialization_;
+    int iter_relativistic_initialization_;
 
     //! electron and positron Species for the multiphoton Breit-Wheeler
     std::vector<std::string> multiphoton_Breit_Wheeler_;
