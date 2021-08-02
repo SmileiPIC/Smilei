@@ -111,8 +111,8 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
-    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
+    int *iold = &( smpi->dynamics_iold[ithread][0] );
+    double *delta = &( smpi->dynamics_deltaold[ithread][0] );
 
     //int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
     int nparts = particles.size();
@@ -147,32 +147,35 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     double xjn;
     double xjmxi2;
 
-    //#pragma omp simd
+    double coeffd[3];
+    double coeffp[3];
+
+    #pragma omp simd private(xjn, xjmxi2, coeffd, coeffp_, idx, ipx)
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
 
-        double *ELoc = &( smpi->dynamics_Epart[ithread][ipart] );
-        double *BLoc = &( smpi->dynamics_Bpart[ithread][ipart] );
+        //double *ELoc = &( smpi->dynamics_Epart[ithread][ipart] );
+        //double *BLoc = &( smpi->dynamics_Bpart[ithread][ipart] );
 
         // Particle position (in units of the spatial-step)
-        //xjn = position_x[ipart]*dx_inv_;
-        xjn = particles.position( 0, ipart )*dx_inv_;
+        xjn = position_x[ipart]*dx_inv_;
+        //xjn = particles.position( 0, ipart )*dx_inv_;
 
         // Dual
-        id_      = round( xjn+0.5 );      // index of the central point
-        xjmxi  = xjn - ( double )id_ +0.5; // normalized distance to the central node
+        idx      = round( xjn+0.5 );      // index of the central point
+        xjmxi  = xjn - ( double )idx +0.5; // normalized distance to the central node
         xjmxi2 = xjmxi*xjmxi;            // square of the normalized distance to the central node
 
         // 2nd order interpolation on 3 nodes
-        coeffd_[0] = 0.5 * ( xjmxi2-xjmxi+0.25 );
-        coeffd_[1] = ( 0.75-xjmxi2 );
-        coeffd_[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
+        coeffd[0] = 0.5 * ( xjmxi2-xjmxi+0.25 );
+        coeffd[1] = ( 0.75-xjmxi2 );
+        coeffd[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
 
-        id_ -= index_domain_begin;
+        idx -= index_domain_begin;
 
         // Primal
-        ip_      = round( xjn );    // index of the central point
-        xjmxi  = xjn -( double )ip_; // normalized distance to the central node
+        ipx      = round( xjn );    // index of the central point
+        xjmxi  = xjn -( double )ipx; // normalized distance to the central node
         xjmxi2 = xjmxi*xjmxi;   // square of the normalized distance to the central node
 
         // 2nd order interpolation on 3 nodes
@@ -180,12 +183,12 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         coeffp_[1] = ( 0.75-xjmxi2 );
         coeffp_[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
 
-        ip_ -= index_domain_begin;
+        ipx -= index_domain_begin;
 
         // // Interpolate the fields from the Dual grid : Ex, By, Bz
-        Epart_x[ipart] = coeffd_[0] * Ex[id_-1]   + coeffd_[1] * Ex[id_]   + coeffd_[2] * Ex[id_+1];
-        Bpart_y[ipart] = coeffd_[0] * By[id_-1]   + coeffd_[1] * By[id_]   + coeffd_[2] * By[id_+1];
-        Bpart_z[ipart] = coeffd_[0] * Bz[id_-1]   + coeffd_[1] * Bz[id_]   + coeffd_[2] * Bz[id_+1];
+        Epart_x[ipart] = coeffd[0] * Ex[id_-1]   + coeffd[1] * Ex[id_]   + coeffd[2] * Ex[id_+1];
+        Bpart_y[ipart] = coeffd[0] * By[id_-1]   + coeffd[1] * By[id_]   + coeffd[2] * By[id_+1];
+        Bpart_z[ipart] = coeffd[0] * Bz[id_-1]   + coeffd[1] * Bz[id_]   + coeffd[2] * Bz[id_+1];
 
         // Interpolate the fields from the Primal grid : Ey, Ez, Bx
         Epart_y[ipart] = coeffp_[0] * Ey[ip_-1]   + coeffp_[1] * Ey[ip_]   + coeffp_[2] * Ey[ip_+1];
@@ -203,8 +206,8 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         // *( BLoc+0*nparts ) = compute( coeffp_, Bx1D_m, ip_ );
 
         //Buffering of iol and delta
-        ( *iold )[ipart] = ip_;
-        ( *delta )[ipart] = xjmxi;
+        iold[ipart] = ipx;
+        delta[ipart] = xjmxi;
     }
 
 }
