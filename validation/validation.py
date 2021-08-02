@@ -8,70 +8,65 @@ This script can do three things:
 
 Usage
 #######
-python validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>]
+Type this command for details: 'python validation.py -h'
 
-For help on options, try 'python validation.py -h'
+Files used in the validation process:
+#####################################
+The `validation` directory which contains:
+  - the `references` directory with one file for each benchmark
+  - the `analyses` directory with one validation file for each benchmark
+  - a `workdirs` directory, created during the validation process
+  - archived `workdirs` for previous versions of smilei
 
-
-Here are listed the files used in the validation process:
-#########################################################
-The "validation" directory which contains:
-  - the "references" directory with one file for each benchmark
-  - the "analyses" directory with one validation file for each benchmark
-  - a "workdirs" directory, created during the validation process
-  - archived "workdirs" for previous versions of smilei
-
-A "workdirs" contains:
- - the smilei binary : "smilei"
- - the compilation output : "compilation_output"
- - a directory wd_<input_file>/<o>/<m> directory, containing the output files
+A `workdirs` contains:
+ - the smilei binary : `smilei`
+ - the compilation output : `compilation_out`
+ - a directory `wd_<input_file>/<o>/<m>`, containing the output files
  or
- - the compilation errors file : "compilation_errors"
+ - the compilation errors file : `compilation_errors`
 
-The different steps of the script are the folllowing :
-######################################################
-Compilation step :
-+++++++++++++++
-If the "workdirs" directory lacks a smilei binary, or it is too old),
-then the "workdirs" is backed up, and a new compilation occurs.
-If compiling errors occur, "compilation_errors" is created and the script exits with status 3.
+Steps of the script:
+####################
+1 - Compilation:
+----------------
+If the `workdirs` directory lacks a smilei binary (or it is too old),
+then the `workdirs` is backed up, and a new compilation occurs.
+If compiling errors occur, `compilation_errors` is created and the script exits with status 3.
 
-Execution step :
-+++++++++++++++
-If wd_<input_file>/<o>/<m> does not exist then:
+2 - Execution:
+--------------
+If `wd_<input_file>/<o>/<m>` does not exist then:
 - it is created
 - smilei is executed in that directory for the requested benchmark
 - if execution fails, the script exits with status 2
 
-Validation step :
-+++++++++++++++
+3 - Validation:
+---------------
 Loops through all requested benchmarks
-    Runs the benchmark in the workdir
+    Runs the benchmark in the `workdir`
     If requested to generate references:
-        Executes the "validate_*" script and stores the result as reference data
+        Executes the `validate_*` script and stores the result as reference data
     If requested to compare to previous references
-        Executes the "validate_*" script and compares the result to the reference data
+        Executes the `validate_*` script and compares the result to the reference data
     If requested to show differences to previous references
-        Executes the "validate_*" script and plots the result vs. the reference data
+        Executes the `validate_*` script and plots the result vs. the reference data
 
-Exit status of the script
-+++++++++++++++++++++++++
+Exit status:
+============
 0  validated
 1  validation fails
 2  execution fails
 3  compilation fails
 4  bad option
 
-Remark
-+++++++
-This script may run anywhere: you can define a SMILEI_ROOT environment variable
+Remark:
+=======
+You may define the SMILEI_ROOT environment variable to use a different installation folder
 """
 
 
 # IMPORTS
-import sys, os, re, json
-import pickle
-import numpy as np
+import sys, os, re, json, pickle, numpy as np
 from os import path
 from time import sleep, ctime, strftime
 from math import ceil
@@ -82,43 +77,77 @@ from inspect import stack
 from socket import gethostname
 from subprocess import call, check_call, check_output, CalledProcessError
 s = os.sep
-INITIAL_DIRECTORY = os.getcwd()
 
+# --------------------
+# Function definitions
+# --------------------
 def mkdir(dir):
     if not path.exists(dir):
         os.mkdir(dir)
 
-# DEFINE THE execfile function for python3
 try:
     execfile
-except:
+except: # python3
     def execfile(file):
         exec(compile(open(file).read(), file, 'exec'), globals())
 
-# DEFINE THE raw_input function for python3
 try:
     raw_input
-except:
+except: # python3
     raw_input = input
 
-# SMILEI PATH VARIABLES
+def usage():
+    print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>] [-k <compile_mode>] [-p <partition name>] [-l <logs_folder>]' )
+    print( '    Try `validation.py -h` for more details' )
+
+def date(BIN_NAME):
+    statbin = os.stat(BIN_NAME)
+    return statbin.st_ctime
+def date_string(BIN_NAME):
+    date_integer = date(BIN_NAME)
+    date_time = ctime(date_integer)
+    return date_time.replace(" ","-")
+def workdir_archiv(BIN_NAME) :
+    if path.exists(SMILEI_W):
+        ARCH_WORKDIR = WORKDIR_BASE+'_'+date_string(SMILEI_W)
+        os.rename(WORKDIR_BASE, ARCH_WORKDIR)
+        mkdir(WORKDIR_BASE)
+
+# --------------------
+# Paths & variables
+# --------------------
 if "SMILEI_ROOT" in os.environ :
-    SMILEI_ROOT=os.environ["SMILEI_ROOT"]+s
-else :
+    SMILEI_ROOT = os.environ["SMILEI_ROOT"]+s
+else:
     SMILEI_ROOT = path.dirname(path.abspath(stack()[0][1]))+s+".."+s
-    #SMILEI_ROOT = os.getcwd()+s+".."+s
 SMILEI_ROOT = path.abspath(SMILEI_ROOT)+s
+SMILEI_BENCHS = SMILEI_ROOT+"benchmarks"+s
 SMILEI_SCRIPTS = SMILEI_ROOT+"scripts"+s
 SMILEI_VALIDATION = SMILEI_ROOT+"validation"+s
 SMILEI_REFERENCES = SMILEI_VALIDATION+"references"+s
-SMILEI_BENCHS = SMILEI_ROOT+"benchmarks"+s
+SMILEI_ANALYSES = SMILEI_VALIDATION+"analyses"+s
 
-# SCRIPTS VARIABLES
 EXEC_SCRIPT = 'exec_script.sh'
 EXEC_SCRIPT_OUT = 'exec_script.out'
 SMILEI_EXE_OUT = 'smilei_exe.out'
 
+WORKDIR_BASE = SMILEI_ROOT+"validation"+s+"workdirs"
+SMILEI_W = WORKDIR_BASE+s+"smilei"
+SMILEI_R = SMILEI_ROOT+s+"smilei"
+
+SMILEI_TOOLS_W = WORKDIR_BASE+s+"smilei_tables"
+SMILEI_TOOLS_R = SMILEI_ROOT+s+"smilei_tables"
+
+COMPILE_ERRORS = WORKDIR_BASE+s+'compilation_errors'
+COMPILE_OUT = WORKDIR_BASE+s+'compilation_out'
+COMPILE_OUT_TMP = WORKDIR_BASE+s+'compilation_out_temp'
+
+POINCARE = "poincare"
+LLR = "llrlsi-gw"
+HOSTNAME = gethostname()
+
 # Get the current version of Smilei
+INITIAL_DIRECTORY = os.getcwd()
 os.chdir(SMILEI_ROOT)
 gitversion = check_output( "echo `git log -n 1 --format=%h`-", shell=True ).decode()[:-1]
 if 'CI_COMMIT_BRANCH' in os.environ:
@@ -131,16 +160,10 @@ os.chdir(INITIAL_DIRECTORY)
 sys.path.insert(0, SMILEI_ROOT)
 import happi
 
-# OTHER VARIABLES
-POINCARE = "poincare"
-LLR = "llrlsi-gw"
-PARTITION = "jollyjumper"
-HOSTNAME = gethostname()
-
-# DIR VARIABLES
-WORKDIR = ""
-
-# DEFAULT VALUES FOR OPTIONS
+# ------------------------
+# Get command-line options
+# ------------------------
+# Default values
 OMP = 12
 MPI = 4
 PPN = 12
@@ -154,23 +177,19 @@ SHOWDIFF = False
 nb_restarts = 0
 COMPILE_MODE=""
 LOG = False
+PARTITION = "jollyjumper"
 
-# TO PRINT USAGE
-def usage():
-    print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>] [-k <compile_mode>] [-p <partition name>] [-l <logs_folder>]' )
-    print( '    Try `validation.py -h` for more details' )
-
-# GET COMMAND-LINE OPTIONS
 try:
     options, remainder = getopt(
         sys.argv[1:],
         'o:m:b:r:k:p:gshvcl:t:',
-        ['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG=', 'time='])
+        ['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG=', 'time=']
+    )
 except GetoptError as err:
     usage()
     sys.exit(4)
 
-# PROCESS THE OPTIONS
+# Process options
 for opt, arg in options:
     if opt in ('-o', '--OMP'):
         EXECUTION = True
@@ -192,7 +211,6 @@ for opt, arg in options:
         print( "-b")
         print( "     -b <bench_case>")
         print( "       <bench_case> : benchmark(s) to validate. Accepts wildcards.")
-        print( "       <bench_case>=? : ask input for a benchmark")
         print( "     DEFAULT : All benchmarks are validated.")
         print( "-o")
         print( "     -o <nb_OMPThreads>")
@@ -245,6 +263,9 @@ for opt, arg in options:
         else:
             SMILEI_LOGS = INITIAL_DIRECTORY + s + arg + s
 
+# Manage some stuff according to options
+MAKE = "make" + (" config=%s"%COMPILE_MODE if COMPILE_MODE else "")
+
 max_time_seconds = np.sum(np.array(max_time.split(":"),dtype=int)*np.array([3600,60,1]))
 
 if GENERATE and SHOWDIFF:
@@ -252,68 +273,80 @@ if GENERATE and SHOWDIFF:
     sys.exit(4)
 
 # Build the list of the requested input files
-list_bench = [path.basename(b) for b in glob(SMILEI_BENCHS+"tst*py")]
-list_validation = [path.basename(b) for b in glob(SMILEI_VALIDATION+"analyses"+s+"validate_tst*py")]
-list_bench = [b for b in list_bench if "validate_"+b in list_validation]
+list_validation = [path.basename(b) for b in glob(SMILEI_ANALYSES+"validate_tst*py")]
 if BENCH == "":
-    SMILEI_BENCH_LIST = list_bench
-elif BENCH == "?":
-    VERBOSE = True
-    os.chdir(SMILEI_SCRIPTS)
-    #- Propose the list of all the input files
-    print( '\n'.join(list_bench))
-    #- Choose an input file name in the list
-    print( 'Enter an input file from the list above:')
-    BENCH = raw_input()
-    SMILEI_BENCH_LIST = [ BENCH ]
-    while BENCH not in list_bench:
-        print( "Input file "+BENCH+" invalid. Try again.")
-        BENCH = raw_input()
-        SMILEI_BENCH_LIST = [ BENCH ]
-elif BENCH in list_bench:
-    SMILEI_BENCH_LIST = [ BENCH ]
-elif glob( SMILEI_BENCHS+BENCH ):
-    BENCH = glob( SMILEI_BENCHS+BENCH )
-    list_all = glob(SMILEI_BENCHS+"tst*py")
-    SMILEI_BENCH_LIST= []
-    for b in BENCH:
-        if b not in list_all:
-            if VERBOSE:
-                print( "Input file "+b+" invalid.")
-            sys.exit(4)
-        if b.replace(SMILEI_BENCHS,'') in list_bench:
-            SMILEI_BENCH_LIST.append( b.replace(SMILEI_BENCHS,'') )
-    BENCH = SMILEI_BENCH_LIST
+    SMILEI_BENCH_LIST = [path.basename(b) for b in glob(SMILEI_BENCHS+"tst*py")]
 else:
-    if VERBOSE:
-        print( "Input file "+BENCH+" invalid.")
-    sys.exit(4)
+    SMILEI_BENCH_LIST = glob( SMILEI_BENCHS + BENCH )
+    SMILEI_BENCH_LIST = [b.replace(SMILEI_BENCHS,'') for b in SMILEI_BENCH_LIST]
+SMILEI_BENCH_LIST = [b for b in SMILEI_BENCH_LIST if "validate_"+b in list_validation]
+if not SMILEI_BENCH_LIST:
+    raise Exception("Input file(s) "+BENCH+" not found, or without validation file")
 
-if VERBOSE :
+if VERBOSE:
     print( "")
     print( "The list of input files to be validated is:\n\t"+"\n\t".join(SMILEI_BENCH_LIST))
     print( "")
 
-# GENERIC FUNCTION FOR WORKDIR ORGANIZATION
+# -----------------------------------
+# Commands for running parallel jobs
+# -----------------------------------
+# - command: command to run
+# - dir: working directory
 
-def date(BIN_NAME):
-    statbin = os.stat(BIN_NAME)
-    return statbin.st_ctime
-def date_string(BIN_NAME):
-    date_integer = date(BIN_NAME)
-    date_time = ctime(date_integer)
-    return date_time.replace(" ","-")
-def workdir_archiv(BIN_NAME) :
-    if path.exists(SMILEI_W):
-        ARCH_WORKDIR = WORKDIR_BASE+'_'+date_string(SMILEI_W)
-        os.rename(WORKDIR_BASE, ARCH_WORKDIR)
-        mkdir(WORKDIR_BASE)
+def launch_job(base_command, job_command, dir, repeat=1):
+    # Make a file containing temporary exit status
+    EXIT_STATUS = "100"
+    with open(dir+s+"exit_status_file", "w") as f:
+        f.write(str(EXIT_STATUS))
+    # Run the job several times if requested
+    for n in range(repeat):
+        try:
+            check_call(job_command, shell=True)
+            break
+        except CalledProcessError:
+            if VERBOSE:
+                print()
+                print("Command failed #%d: `%s`"%(n, job_command))
+                if n < repeat:
+                    print("Wait and retry")
+            sleep(10)
+    # Exit if unsuccesful
+    else:
+        if VERBOSE:
+            print("Exit")
+        sys.exit(2)
+    # Otherwise job is running
+    if VERBOSE:
+        print()
+        print("Submitted job with command `"+base_command+"`")
+        print("\tmax duration: %d s"%max_time_seconds)
+    # Wait for the exit status to be set
+    # current_time = 0
+    while EXIT_STATUS == "100":# and current_time < max_time_seconds):
+        sleep(5)
+        # current_time += 5
+        with open(dir+s+"exit_status_file", "r+") as f:
+            EXIT_STATUS = f.readline()
+        # if current_time > max_time_seconds:
+        #     print("Max time exceeded for command `"+command+"`")
+        #     sys.exit(2)
+    # Check that the run succeeded
+    if int(EXIT_STATUS) != 0:
+        if VERBOSE:
+            print()
+            print("Execution failed for command `"+base_command+"`")
+            COMMAND = "/bin/bash cat "+SMILEI_EXE_OUT
+            try:
+                check_call(COMMAND, shell=True)
+            except CalledProcessError:
+                print()
+                print("Failed to print file `%s`"%SMILEI_EXE_OUT)
+        sys.exit(2)
 
-# PLATFORM-DEPENDENT INSTRUCTIONS FOR RUNNING PARALLEL COMMAND
 def RUN_POINCARE(command, dir):
     # Create script
     with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-        print( "ON POINCARE NOW")
         exec_script_desc.write(
             "# environnement \n"
             +"module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu 2>&1 > /dev/null\n"
@@ -323,44 +356,16 @@ def RUN_POINCARE(command, dir):
             +"# execution \n"
             +"export OMP_NUM_THREADS="+str(OMP)+"\n"
             +command+" \n"
-            +"exit $?  "
+            +"echo $? > exit_status_file \n"
+            +"exit $? "
         )
-    # Run command
-    COMMAND = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
-    try:
-        check_call(COMMAND, shell=True)
-    except CalledProcessError:
-        # if execution fails, exit with exit status 2
-        if VERBOSE :
-            print(  "Execution failed for command `"+command+"`")
-            COMMAND = "/bin/bash cat "+SMILEI_EXE_OUT
-            try :
-                check_call(COMMAND, shell=True)
-            except CalledProcessError:
-                print(  "cat command failed")
-                sys.exit(2)
-        if dir==WORKDIR:
-            os.chdir(WORKDIR_BASE)
-            rmtree(WORKDIR)
-        sys.exit(2)
+    JOB = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
+    launch_job(command, JOB, dir, repeat=2)
 
 def run_ruche(command, dir):
-    """
-    Run the command `command` on the RUCHE system.
-
-    Inputs:
-    - command: command to run
-    - dir: working directory
-    """
-    EXIT_STATUS="100"
-    exit_status_fd = open(dir+s+"exit_status_file", "w")
-    exit_status_fd.write(str(EXIT_STATUS))
-    exit_status_fd.close()
     # Create script
     with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-        #NODES=((int(MPI)*int(OMP)-1)/24)+1
         NODES=int(ceil(MPI/2.))
-        PPN = 20
         exec_script_desc.write(
             "#!/bin/bash\n"
             +"#SBATCH --job-name=smilei\n"
@@ -392,66 +397,14 @@ def run_ruche(command, dir):
             +command+" \n"
             +"echo $? > exit_status_file \n"
         )
-    # Run command
-    COMMAND = "sbatch  "+EXEC_SCRIPT
-    try:
-        check_call(COMMAND, shell=True)
-    except CalledProcessError:
-        # if command qsub fails, exit with exit status 2
-        #Retry once in case the server was rebooting
-        if VERBOSE :
-            print(  "sbatch command failed once: `"+COMMAND+"`")
-            print(  "Wait and retry")
-        sleep(10)
-        try:
-            check_call(COMMAND, shell=True)
-        except CalledProcessError:
-            if dir==WORKDIR:
-                os.chdir(WORKDIR_BASE)
-                rmtree(WORKDIR)
-            if VERBOSE :
-                print(  "sbatch command failed twice: `"+COMMAND+"`")
-                print(  "Exit")
-            sys.exit(2)
-    if VERBOSE:
-        print( "Submitted job with command `"+command+"`")
-        print( " -> max duration: {} s".format(max_time_seconds))
-    while ( EXIT_STATUS == "100" ) :
-        sleep(5)
-        exit_status_fd = open(dir+s+"exit_status_file", "r+")
-        EXIT_STATUS = exit_status_fd.readline()
-        exit_status_fd.close()
-    if ( int(EXIT_STATUS) != 0 )  :
-        if VERBOSE :
-            print(  "Execution failed for command `"+command+"`")
-            COMMAND = "cat "+SMILEI_EXE_OUT
-            try :
-                check_call(COMMAND, shell=True)
-            except CalledProcessError:
-                print(  "cat command failed")
-                sys.exit(2)
-        sys.exit(2)
+    JOB = "sbatch  "+EXEC_SCRIPT
+    launch_job(command, JOB, dir, repeat=2)
         
 def RUN_LLR(command, dir):
-    """
-    Run the command `command` on the LLR system.
-
-    Inputs:
-    - command: command to run
-    - dir: working directory
-    """
-    EXIT_STATUS="100"
-    exit_status_fd = open(dir+s+"exit_status_file", "w")
-    exit_status_fd.write(str(EXIT_STATUS))
-    exit_status_fd.close()
     # Create script
     with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-        #NODES=((int(MPI)*int(OMP)-1)/24)+1
         NODES=int(ceil(MPI/2.))
-        if (PARTITION == "jollyjumper"):
-            PPN = 24
-        elif (PARTITION == "tornado"):
-            PPN = 36
+        PPN = {"jollyjumper":24, "tornado":36}[PARTITION]
         exec_script_desc.write(
             "#PBS -l nodes="+str(NODES)+":ppn="+str(PPN)+" \n"
             +"#PBS -q default \n"
@@ -484,108 +437,31 @@ def RUN_LLR(command, dir):
             +command+" \n"
             +"echo $? > exit_status_file \n"
         )
-    # Run command
-    if (PARTITION=="jollyjumper"):
-        COMMAND = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
-    elif (PARTITION=="tornado"):
-        COMMAND = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+EXEC_SCRIPT
-    try:
-        check_call(COMMAND, shell=True)
-    except CalledProcessError:
-        # if command qsub fails, exit with exit status 2
-        #Retry once in case the server was rebooting
-        if VERBOSE :
-            print(  "qsub command failed once: `"+COMMAND+"`")
-            print(  "Wait and retry")
-        sleep(10)
-        try:
-            check_call(COMMAND, shell=True)
-        except CalledProcessError:
-            if dir==WORKDIR:
-                os.chdir(WORKDIR_BASE)
-                rmtree(WORKDIR)
-            if VERBOSE :
-                print(  "qsub command failed twice: `"+COMMAND+"`")
-                print(  "Exit")
-            sys.exit(2)
-    if VERBOSE:
-        print( "Submitted job with command `"+command+"`")
-        print( " - duration: {} s".format(max_time_seconds))
-    # current_time = 0
-    while ( EXIT_STATUS == "100") :# and current_time < max_time_seconds) :
-        sleep(5)
-        # current_time += 5
-        exit_status_fd = open(dir+s+"exit_status_file", "r+")
-        EXIT_STATUS = exit_status_fd.readline()
-        exit_status_fd.close()
-    # if ( current_time > max_time_seconds ):
-    #     print(  "Max time exceeded for command `"+command+"`")
-    #     sys.exit(2)
-    if ( int(EXIT_STATUS) != 0 )  :
-        if VERBOSE :
-            print(  "Execution failed for command `"+command+"`")
-            COMMAND = "cat "+SMILEI_EXE_OUT
-            try :
-                check_call(COMMAND, shell=True)
-            except CalledProcessError:
-                print(  "cat command failed")
-                sys.exit(2)
-        sys.exit(2)
+    if PARTITION == "jollyjumper":
+        JOB = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
+    elif PARTITION == "tornado":
+        JOB = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+EXEC_SCRIPT
+    launch_job(command, JOB, dir, repeat=2)
 
 def RUN_OTHER(command, dir):
-    """
-    Run the command `command` on an arbitrary system.
-
-    Inputs:
-    - command: command to run
-    - dir: working directory
-    """
-    try :
+    try:
         if VERBOSE:
-            print( "Trying command `"+command+"`")
+            print()
+            print("Trying command `"+command+"`")
         check_call(command, shell=True)
     except CalledProcessError:
-        if VERBOSE :
-            print(  "Execution failed for command `"+command+"`")
+        if VERBOSE:
+            print()
+            print("Execution failed for command `"+command+"`")
         sys.exit(2)
 
-
-# SET DIRECTORIES
-if VERBOSE :
-  print( "Compiling Smilei")
-
-os.chdir(SMILEI_ROOT)
-WORKDIR_BASE = SMILEI_ROOT+"validation"+s+"workdirs"
-SMILEI_W = WORKDIR_BASE+s+"smilei"
-SMILEI_R = SMILEI_ROOT+s+"smilei"
-if path.exists(SMILEI_R):
-    STAT_SMILEI_R_OLD = os.stat(SMILEI_R)
-else :
-    STAT_SMILEI_R_OLD = ' '
-SMILEI_TOOLS_W = WORKDIR_BASE+s+"smilei_tables"
-SMILEI_TOOLS_R = SMILEI_ROOT+s+"smilei_tables"
-if path.exists(SMILEI_TOOLS_R):
-    STAT_SMILEI_TOOLS_R_OLD = os.stat(SMILEI_TOOLS_R)
-else :
-    STAT_SMILEI_TOOLS_R_OLD = ' '
-COMPILE_ERRORS=WORKDIR_BASE+s+'compilation_errors'
-COMPILE_OUT=WORKDIR_BASE+s+'compilation_out'
-COMPILE_OUT_TMP=WORKDIR_BASE+s+'compilation_out_temp'
-
-MAKE='make'
-if COMPILE_MODE:
-    MAKE += " config="+COMPILE_MODE
-
-# Find commands according to the host
-if LLR in HOSTNAME :
-    if (PARTITION=="jollyjumper"):
-        PPN = 12
-    elif (PARTITION=="tornado"):
-        PPN = 18
+# Define commands according to the host
+if LLR in HOSTNAME:
+    PPN = {"jollyjumper":12, "tornado":18}[PARTITION]
     if PPN % OMP != 0:
-        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
+        print("Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
         sys.exit(4)
-    NODES=int(ceil(MPI/2.))
+    NODES = int(ceil(MPI/2.))
     NPERSOCKET = 1
     COMPILE_COMMAND = str(MAKE)+' -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
@@ -595,7 +471,7 @@ if LLR in HOSTNAME :
 elif "ruche" in HOSTNAME:
     PPN = 20
     if PPN < OMP :
-        print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
+        print("Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
         sys.exit(4)
     NODES=int(ceil(MPI/2.))
     NPERSOCKET = 1
@@ -604,16 +480,13 @@ elif "ruche" in HOSTNAME:
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND ="srun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
     RUN = run_ruche
-elif POINCARE in HOSTNAME :
-    #COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
-    #CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
+elif POINCARE in HOSTNAME:
     COMPILE_COMMAND = str(MAKE)+' -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
     RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
     RUN = RUN_POINCARE
-# Local computers
-else:
+else: # Local computers
     # Determine the correct MPI command
     mpi_version = str(check_output("mpirun --version", shell=True))
     if re.search("Open MPI", mpi_version, re.I):
@@ -632,20 +505,31 @@ else:
     RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+MPIRUN+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
     RUN = RUN_OTHER
 
+# ---------------
+# Compilation
+# ---------------
+
+if VERBOSE:
+    print("---------------------------")
+    print("Compiling Smilei")
+    print("---------------------------")
+
+# Get state of smilei bin in root folder
+os.chdir(SMILEI_ROOT)
+STAT_SMILEI_R_OLD = os.stat(SMILEI_R) if path.exists(SMILEI_R) else ' '
+
 # CLEAN
-# If the workdir does not contains a smilei bin, or it contains one older than the the smilei bin in directory smilei, force the compilation in order to generate the compilation_output
+# If no smilei bin in the workdir, or it is older than the one in smilei directory, clean to force compilation
 mkdir(WORKDIR_BASE)
 if path.exists(SMILEI_R) and (not path.exists(SMILEI_W) or date(SMILEI_W)<date(SMILEI_R)):
     call(CLEAN_COMMAND , shell=True)
 
-# COMPILE
-try :
+try:
     # Remove the compiling errors files
     if path.exists(WORKDIR_BASE+s+COMPILE_ERRORS) :
         os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
     # Compile
     RUN( COMPILE_COMMAND, SMILEI_ROOT )
-    #RUN( COMPILE_TOOLS_COMMAND, SMILEI_ROOT )
     os.rename(COMPILE_OUT_TMP, COMPILE_OUT)
     if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R): # or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
         # if new bin, archive the workdir (if it contains a smilei bin)
@@ -656,12 +540,12 @@ try :
         #copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
         if COMPILE_ONLY:
             if VERBOSE:
-                print( "Smilei validation succeed.")
+                print("Smilei validation succeed.")
             exit(0)
     else:
         if COMPILE_ONLY :
             if VERBOSE:
-                print(  "Smilei validation not needed.")
+                print("Smilei validation not needed.")
             exit(0)
 
 except CalledProcessError as e:
@@ -670,12 +554,17 @@ except CalledProcessError as e:
     workdir_archiv(SMILEI_W)
     os.rename(COMPILE_ERRORS,WORKDIR_BASE+s+COMPILE_ERRORS)
     if VERBOSE:
-        print( "Smilei validation cannot be done : compilation failed. " + str(e.returncode))
+        print("Smilei validation cannot be done : compilation failed. " + str(e.returncode))
     sys.exit(3)
-if VERBOSE: print( "")
 
+if VERBOSE:
+    print()
 
-def findReference(bench_name):
+# -------------------------------------------
+# Define functions and classes for validation
+# -------------------------------------------
+
+def loadReference(bench_name):
     try:
         try:
             with open(SMILEI_REFERENCES+s+bench_name+".txt", 'rb') as f:
@@ -684,7 +573,7 @@ def findReference(bench_name):
             with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
                 return pickle.load(f)
     except:
-        print( "Unable to find the reference data for "+bench_name)
+        print("Unable to find the reference data for "+bench_name)
         sys.exit(1)
 
 def matchesWithReference(data, expected_data, data_name, precision):
@@ -692,7 +581,8 @@ def matchesWithReference(data, expected_data, data_name, precision):
     try:
         if expected_data == data:
             return True
-    except: pass
+    except:
+        pass
     # If numbers:
     try:
         double_data = np.array(np.double(data), ndmin=1)
@@ -702,14 +592,14 @@ def matchesWithReference(data, expected_data, data_name, precision):
             max_error = error[max_error_location]
             if max_error < precision:
                 return True
-            print( "Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)+")")
-            print( "Max error = "+str(max_error)+" at index "+str(max_error_location))
+            print("Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)+")")
+            print("Max error = "+str(max_error)+" at index "+str(max_error_location))
         else:
             if np.all(double_data == np.double(expected_data)):
                 return True
-            print( "Reference quantity '"+data_name+"' does not match the data")
+            print("Reference quantity '"+data_name+"' does not match the data")
     except Exception as e:
-        print( "Reference quantity '"+data_name+"': unable to compare to data")
+        print("Reference quantity '"+data_name+"': unable to compare to data")
         print( e )
     return False
 
@@ -728,45 +618,45 @@ class CreateReference(object):
             pickle.dump(self.data, f, protocol=2)
         size = path.getsize(self.reference_file)
         if size > 1000000:
-            print( "Reference file is too large ("+str(size)+"B) - suppressing ...")
+            print("Reference file is too large ("+str(size)+"B) - suppressing ...")
             os.remove(self.reference_file)
             sys.exit(2)
         if VERBOSE:
-            print( "Created reference file "+self.reference_file)
+            print("Created reference file "+self.reference_file)
 
 # DEFINE A CLASS TO COMPARE A SIMULATION TO A REFERENCE
 class CompareToReference(object):
     def __init__(self, bench_name):
-        self.data = findReference(bench_name)
+        self.data = loadReference(bench_name)
     
     def __call__(self, data_name, data, precision=None):
         # verify the name is in the reference
         if data_name not in self.data.keys():
-            print( "Reference quantity '"+data_name+"' not found")
+            print("Reference quantity '"+data_name+"' not found")
             sys.exit(1)
         expected_data = self.data[data_name]
         if not matchesWithReference(data, expected_data, data_name, precision):
-            print( "Reference data:")
-            print( expected_data)
-            print( "New data:")
-            print( data)
-            print( "" )
+            print("Reference data:")
+            print(expected_data)
+            print("New data:")
+            print(data)
+            print()
             global _dataNotMatching
             _dataNotMatching = True
             
 # DEFINE A CLASS TO VIEW DIFFERENCES BETWEEN A SIMULATION AND A REFERENCE
 class ShowDiffWithReference(object):
     def __init__(self, bench_name):
-        self.data = findReference(bench_name)
+        self.data = loadReference(bench_name)
     
     def __call__(self, data_name, data, precision=None):
         import matplotlib.pyplot as plt
         plt.ion()
-        print( "Showing differences about '"+data_name+"'")
-        print( "--------------------------")
+        print("Showing differences about '"+data_name+"'")
+        print("--------------------------")
         # verify the name is in the reference
         if data_name not in self.data.keys():
-            print( "\tReference quantity not found")
+            print("\tReference quantity not found")
             expected_data = None
         else:
             expected_data = self.data[data_name]
@@ -781,18 +671,18 @@ class ShowDiffWithReference(object):
             expected_data_float = np.array(expected_data, dtype=float)
         # Otherwise, simply print the result
         except:
-            print( "\tQuantity cannot be plotted")
+            print("\tQuantity cannot be plotted")
             print_data = True
             data_float = None
         # Manage array plotting
         if data_float is not None:
             if expected_data is not None and data_float.shape != expected_data_float.shape:
-                print( "\tReference and new data do not have the same shape: "+str(expected_data_float.shape)+" vs. "+str(data_float.shape))
+                print("\tReference and new data do not have the same shape: "+str(expected_data_float.shape)+" vs. "+str(data_float.shape))
             if expected_data is not None and data_float.ndim != expected_data_float.ndim:
-                print( "\tReference and new data do not have the same dimension: "+str(expected_data_float.ndim)+" vs. "+str(data_float.ndim))
+                print("\tReference and new data do not have the same dimension: "+str(expected_data_float.ndim)+" vs. "+str(data_float.ndim))
                 print_data = True
             elif data_float.size == 0:
-                print( "\t0D quantity cannot be plotted")
+                print("\t0D quantity cannot be plotted")
                 print_data = True
             elif data_float.ndim == 1:
                 nplots = 2
@@ -800,7 +690,7 @@ class ShowDiffWithReference(object):
                     nplots = 1
                 fig = plt.figure()
                 fig.suptitle(data_name)
-                print( "\tPlotting in figure "+str(fig.number))
+                print("\tPlotting in figure "+str(fig.number))
                 ax1 = fig.add_subplot(nplots,1,1)
                 ax1.plot( data_float, label="new data" )
                 ax1.plot( expected_data_float, label="reference data" )
@@ -817,7 +707,7 @@ class ShowDiffWithReference(object):
                     nplots = 2
                 fig = plt.figure()
                 fig.suptitle(data_name)
-                print( "\tPlotting in figure "+str(fig.number))
+                print("\tPlotting in figure "+str(fig.number))
                 ax1 = fig.add_subplot(1,nplots,1)
                 im = ax1.imshow( data_float )
                 ax1.set_title("new data")
@@ -835,25 +725,25 @@ class ShowDiffWithReference(object):
                 plt.draw()
                 plt.show()
             else:
-                print( "\t"+str(data_float.ndim)+"D quantity cannot be plotted")
+                print("\t"+str(data_float.ndim)+"D quantity cannot be plotted")
                 print_data = True
         # Print data if necessary
         if print_data:
             if expected_data is not None:
-                print( "\tReference data:")
-                print( expected_data)
-            print( "\tNew data:")
-            print( data)
+                print("\tReference data:")
+                print(expected_data)
+            print("\tNew data:")
+            print(data)
 
 
 # DEFINE A CLASS FOR LOGGING DATA
 class Log:
     pattern1 = re.compile(""
-        +"[\n\t\s]+(Time[ _]in[ _]time[ _]loop)\s+([.0-9]+)\s+([<.0-9]+)\% coverage"
-        +"([\n\t\s]+([\w ]+)\s+([.0-9]+)\s+([<.0-9]+)\%){2,15}"
+        +"[\n\t\s]+(Time[ _]in[ _]time[ _]loop)\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\% coverage"
+        +"([\n\t\s]+([\w ]+)\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\%){2,15}"
     )
     pattern2 = re.compile(""
-        +"[\t\s]+([\w ]+):?\s+([.0-9]+)\s+([<.0-9]+)\%"
+        +"[\t\s]+([\w ]+):?\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\%"
     )
     
     def __init__(self, log_file):
@@ -867,7 +757,7 @@ class Log:
             text = f.read()
         found = re.search(self.pattern1, text)
         if not found:
-            print( "WARNING: Unable to log data from "+output)
+            print("WARNING: Unable to log data from "+output)
             return
         lines = found.string[found.start():found.end()].split("\n")[1:]
         matches = [re.search(self.pattern2, l).groups() for l in lines]
@@ -902,25 +792,25 @@ class Log:
             # Overwrite the file
             with open(self.log_file, 'w+') as f:
                 json.dump(db, f)
-    
 
-# RUN THE BENCHMARKS
+# ---------------
+# Run benchmarks
+# ---------------
+
 _dataNotMatching = False
 for BENCH in SMILEI_BENCH_LIST :
-
+    
     SMILEI_BENCH = SMILEI_BENCHS + BENCH
-
-    # CREATE THE WORKDIR CORRESPONDING TO THE INPUT FILE
+    
+    # Create the workdir path
     WORKDIR = WORKDIR_BASE+s+'wd_'+path.basename(path.splitext(BENCH)[0])
     mkdir(WORKDIR)
-
     WORKDIR += s+str(MPI)
     mkdir(WORKDIR)
-
     WORKDIR += s+str(OMP)
     mkdir(WORKDIR)
-
-    # If there are restarts, prepare a Checkpoints block to the namelist
+    
+    # If there are restarts, prepare a Checkpoints block in the namelist
     RESTART_INFO = ""
     if nb_restarts > 0:
         # Load the namelist
@@ -954,24 +844,24 @@ for BENCH in SMILEI_BENCH_LIST :
                 + ")\""
             )
         del namelist
-
+    
     # Prepare logging
     if LOG:
         log = Log(SMILEI_LOGS + BENCH + ".log")
     
     # Loop restarts
     for irestart in range(nb_restarts+1):
-
+        
         RESTART_WORKDIR = WORKDIR + s + "restart%03d"%irestart
-
+        
         EXECUTION = True
         if not path.exists(RESTART_WORKDIR):
             os.mkdir(RESTART_WORKDIR)
         elif GENERATE:
             EXECUTION = False
-
+        
         os.chdir(RESTART_WORKDIR)
-
+        
         # Copy of the databases
         # For the cases that need a database
         # if BENCH in [
@@ -992,38 +882,36 @@ for BENCH in SMILEI_BENCH_LIST :
         #         if VERBOSE :
         #             print(  "Execution failed to copy databases in ",RESTART_WORKDIR)
         #         sys.exit(2)
-
+        
         # If there are restarts, adds the Checkpoints block
-        SMILEI_NAMELISTS = SMILEI_BENCH
+        arguments = SMILEI_BENCH
         if nb_restarts > 0:
             if irestart == 0:
                 RESTART_DIR = "None"
             else:
                 RESTART_DIR = "'"+WORKDIR+s+("restart%03d"%(irestart-1))+s+"'"
-            SMILEI_NAMELISTS += RESTART_INFO % RESTART_DIR
-
-        # RUN smilei IF EXECUTION IS TRUE
-        if EXECUTION :
+            arguments += RESTART_INFO % RESTART_DIR
+        
+        # Run smilei
+        if EXECUTION:
             if VERBOSE:
-                print( 'Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else ""))
-            RUN( RUN_COMMAND % SMILEI_NAMELISTS, RESTART_WORKDIR)
-
-        # CHECK THE OUTPUT FOR ERRORS
+                print('Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else ""))
+            RUN( RUN_COMMAND % arguments, RESTART_WORKDIR )
+        
+        # Check the output for errors
         errors = []
         search_error = re.compile('error', re.IGNORECASE)
         with open(SMILEI_EXE_OUT,"r") as fout:
-            for line in fout:
-                if search_error.search(line):
-                    errors += [line]
+            errors = [line for line in fout if search_error.search(line)]
         if errors:
-            if VERBOSE :
-                print( "")
+            if VERBOSE:
+                print("")
                 print("Errors appeared while running the simulation:")
                 print("---------------------------------------------")
                 for error in errors:
                     print(error)
             sys.exit(2)
-
+        
         # Scan some info for logging
         if LOG:
             log.scan(SMILEI_EXE_OUT)
@@ -1033,15 +921,15 @@ for BENCH in SMILEI_BENCH_LIST :
         log.append()
     
     os.chdir(WORKDIR)
-
-    # FIND THE VALIDATION SCRIPT FOR THIS BENCH
-    validation_script = SMILEI_VALIDATION + "analyses" + s + "validate_"+BENCH
-    if VERBOSE: print( "")
+    
+    # Find the validation script for this bench
+    validation_script = SMILEI_ANALYSES + "validate_" + BENCH
+    if VERBOSE: print("")
     if not path.exists(validation_script):
-        print( "Unable to find the validation script "+validation_script)
+        print("Unable to find the validation script "+validation_script)
         sys.exit(1)
     
-    # IF REQUIRED, GENERATE THE REFERENCES
+    # If required, generate the references
     if GENERATE:
         if VERBOSE:
             print( '----------------------------------------------------')
@@ -1050,8 +938,8 @@ for BENCH in SMILEI_BENCH_LIST :
         Validate = CreateReference(BENCH)
         execfile(validation_script)
         Validate.write()
-
-    # OR PLOT DIFFERENCES WITH RESPECT TO EXISTING REFERENCES
+    
+    # Or plot differences with respect to existing references
     elif SHOWDIFF:
         if VERBOSE:
             print( '----------------------------------------------------')
@@ -1062,7 +950,7 @@ for BENCH in SMILEI_BENCH_LIST :
         if _dataNotMatching:
             print("Benchmark "+BENCH+" did NOT pass")
     
-    # OTHERWISE, COMPARE TO THE EXISTING REFERENCES
+    # Otherwise, compare to the existing references
     else:
         if VERBOSE:
             print( '----------------------------------------------------')
@@ -1072,12 +960,11 @@ for BENCH in SMILEI_BENCH_LIST :
         execfile(validation_script)
         if _dataNotMatching:
             sys.exit(1)
-        # DATA DID NOT MATCH REFERENCES
     
-    # CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
+    # Clean workdirs, goes here only if succeeded
     os.chdir(WORKDIR_BASE)
     rmtree( WORKDIR_BASE+s+'wd_'+path.basename(path.splitext(BENCH)[0]), True )
-
+    
     if VERBOSE: print( "")
 
 if _dataNotMatching:
