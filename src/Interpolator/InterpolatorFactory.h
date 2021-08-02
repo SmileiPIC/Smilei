@@ -35,11 +35,11 @@ public:
         // ---------------
         if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
 //             if( !vectorization ) {
-//                 Interp = new Interpolator1D2Order( params, patch );
+                Interp = new Interpolator1D2Order( params, patch );
 //             }
 // #ifdef _VECTO
 //             else {
-                Interp = new Interpolator1D2OrderV( params, patch );
+                // Interp = new Interpolator1D2OrderV( params, patch );
             // }
 // #endif
         } else if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == 4 ) ) {

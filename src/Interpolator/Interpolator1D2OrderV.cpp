@@ -111,60 +111,56 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    int *iold = &( smpi->dynamics_iold[ithread][0] );
-    double *delta = &( smpi->dynamics_deltaold[ithread][0] );
+    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
+    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
 
     //int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
     int nparts = particles.size();
 
     double * __restrict__ position_x = particles.getPtrPosition(0);
 
-    double * __restrict__ Epart_x;
-    double * __restrict__ Epart_y;
-    double * __restrict__ Epart_z;
+    double * __restrict__ Epart_x= &( smpi->dynamics_Epart[ithread][0*nparts] );
+    double * __restrict__ Epart_y= &( smpi->dynamics_Epart[ithread][1*nparts] );
+    double * __restrict__ Epart_z= &( smpi->dynamics_Epart[ithread][2*nparts] );
 
-    double * __restrict__ Bpart_x;
-    double * __restrict__ Bpart_y;
-    double * __restrict__ Bpart_z;
-
-    Epart_x= &( smpi->dynamics_Epart[ithread][0*nparts] );
-    Epart_y= &( smpi->dynamics_Epart[ithread][1*nparts] );
-    Epart_z= &( smpi->dynamics_Epart[ithread][2*nparts] );
-
-    Bpart_x= &( smpi->dynamics_Bpart[ithread][0*nparts] );
-    Bpart_y= &( smpi->dynamics_Bpart[ithread][1*nparts] );
-    Bpart_z= &( smpi->dynamics_Bpart[ithread][2*nparts] );
+    double * __restrict__ Bpart_x= &( smpi->dynamics_Bpart[ithread][0*nparts] );
+    double * __restrict__ Bpart_y= &( smpi->dynamics_Bpart[ithread][1*nparts] );
+    double * __restrict__ Bpart_z= &( smpi->dynamics_Bpart[ithread][2*nparts] );
 
     // Static cast of the electromagnetic fields
-    // Field1D *Ex1D     = static_cast<Field1D *>( EMfields->Ex_ );
-    // Field1D *Ey1D     = static_cast<Field1D *>( EMfields->Ey_ );
-    // Field1D *Ez1D     = static_cast<Field1D *>( EMfields->Ez_ );
-    // Field1D *Bx1D_m   = static_cast<Field1D *>( EMfields->Bx_m );
-    // Field1D *By1D_m   = static_cast<Field1D *>( EMfields->By_m );
-    // Field1D *Bz1D_m   = static_cast<Field1D *>( EMfields->Bz_m );
+    Field1D *Ex1D     = static_cast<Field1D *>( EMfields->Ex_ );
+    Field1D *Ey1D     = static_cast<Field1D *>( EMfields->Ey_ );
+    Field1D *Ez1D     = static_cast<Field1D *>( EMfields->Ez_ );
+    Field1D *Bx1D_m   = static_cast<Field1D *>( EMfields->Bx_m );
+    Field1D *By1D_m   = static_cast<Field1D *>( EMfields->By_m );
+    Field1D *Bz1D_m   = static_cast<Field1D *>( EMfields->Bz_m );
 
-    double * __restrict__ Ex = EMfields->Ex_->data();
-    double * __restrict__ Ey = EMfields->Ey_->data();
-    double * __restrict__ Ez = EMfields->Ez_->data();
-    double * __restrict__ Bx = EMfields->Bx_m->data();
-    double * __restrict__ By = EMfields->By_m->data();
-    double * __restrict__ Bz = EMfields->Bz_m->data();
+    double * __restrict__ Ex = &Ex1D->data_[0]; //EMfields->Ex_->data();
+    double * __restrict__ Ey = &Ey1D->data_[0]; // EMfields->Ey_->data();
+    double * __restrict__ Ez = &Ez1D->data_[0]; //EMfields->Ez_->data();
+    double * __restrict__ Bx = &Bx1D_m->data_[0]; //EMfields->Bx_m->data();
+    double * __restrict__ By = &By1D_m->data_[0]; //EMfields->By_m->data();
+    double * __restrict__ Bz = &Bz1D_m->data_[0]; //EMfields->Bz_m->data();
 
     int idx;  //dual index computed
     int ipx;  //prim index computed
     double xjn;
     double xjmxi2;
 
-    #pragma omp simd
+    //#pragma omp simd
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
 
+        double *ELoc = &( smpi->dynamics_Epart[ithread][ipart] );
+        double *BLoc = &( smpi->dynamics_Bpart[ithread][ipart] );
+
         // Particle position (in units of the spatial-step)
-        xjn = position_x[ipart]*dx_inv_;
+        //xjn = position_x[ipart]*dx_inv_;
+        xjn = particles.position( 0, ipart )*dx_inv_;
 
         // Dual
-        idx      = round( xjn+0.5 );      // index of the central point
-        xjmxi  = xjn - ( double )idx +0.5; // normalized distance to the central node
+        id_      = round( xjn+0.5 );      // index of the central point
+        xjmxi  = xjn - ( double )id_ +0.5; // normalized distance to the central node
         xjmxi2 = xjmxi*xjmxi;            // square of the normalized distance to the central node
 
         // 2nd order interpolation on 3 nodes
@@ -172,11 +168,11 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         coeffd_[1] = ( 0.75-xjmxi2 );
         coeffd_[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
 
-        idx -= index_domain_begin;
+        id_ -= index_domain_begin;
 
         // Primal
-        ipx      = round( xjn );    // index of the central point
-        xjmxi  = xjn -( double )ipx; // normalized distance to the central node
+        ip_      = round( xjn );    // index of the central point
+        xjmxi  = xjn -( double )ip_; // normalized distance to the central node
         xjmxi2 = xjmxi*xjmxi;   // square of the normalized distance to the central node
 
         // 2nd order interpolation on 3 nodes
@@ -184,21 +180,31 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         coeffp_[1] = ( 0.75-xjmxi2 );
         coeffp_[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
 
-        ipx -= index_domain_begin;
+        ip_ -= index_domain_begin;
 
         // // Interpolate the fields from the Dual grid : Ex, By, Bz
-        Epart_x[ipart] = coeffd_[0] * Ex[idx-1]   + coeffd_[1] * Ex[idx]   + coeffd_[2] * Ex[idx+1];
-        Bpart_y[ipart] = coeffd_[0] * By[idx-1]   + coeffd_[1] * By[idx]   + coeffd_[2] * By[idx+1];
-        Bpart_z[ipart] = coeffd_[0] * Bz[idx-1]   + coeffd_[1] * Bz[idx]   + coeffd_[2] * Bz[idx+1];
+        Epart_x[ipart] = coeffd_[0] * Ex[id_-1]   + coeffd_[1] * Ex[id_]   + coeffd_[2] * Ex[id_+1];
+        Bpart_y[ipart] = coeffd_[0] * By[id_-1]   + coeffd_[1] * By[id_]   + coeffd_[2] * By[id_+1];
+        Bpart_z[ipart] = coeffd_[0] * Bz[id_-1]   + coeffd_[1] * Bz[id_]   + coeffd_[2] * Bz[id_+1];
 
         // Interpolate the fields from the Primal grid : Ey, Ez, Bx
-        Epart_y[ipart] = coeffp_[0] * Ey[ipx-1]   + coeffp_[1] * Ey[ipx]   + coeffp_[2] * Ey[ipx+1];
-        Epart_z[ipart] = coeffp_[0] * Ez[ipx-1]   + coeffp_[1] * Ez[ipx]   + coeffp_[2] * Ez[ipx+1];
-        Bpart_x[ipart] = coeffp_[0] * Bx[ipx-1]   + coeffp_[1] * Bx[ipx]   + coeffp_[2] * Bx[ipx+1];
+        Epart_y[ipart] = coeffp_[0] * Ey[ip_-1]   + coeffp_[1] * Ey[ip_]   + coeffp_[2] * Ey[ip_+1];
+        Epart_z[ipart] = coeffp_[0] * Ez[ip_-1]   + coeffp_[1] * Ez[ip_]   + coeffp_[2] * Ez[ip_+1];
+        Bpart_x[ipart] = coeffp_[0] * Bx[ip_-1]   + coeffp_[1] * Bx[ip_]   + coeffp_[2] * Bx[ip_+1];
+
+        // Interpolate the fields from the Dual grid : Ex, By, Bz
+        // *( ELoc+0*nparts ) = compute( coeffd_, Ex1D,   id_ );
+        // *( BLoc+1*nparts ) = compute( coeffd_, By1D_m, id_ );
+        // *( BLoc+2*nparts ) = compute( coeffd_, Bz1D_m, id_ );
+
+        // Interpolate the fields from the Primal grid : Ey, Ez, Bx
+        // *( ELoc+1*nparts ) = compute( coeffp_, Ey1D,   ip_ );
+        // *( ELoc+2*nparts ) = compute( coeffp_, Ez1D,   ip_ );
+        // *( BLoc+0*nparts ) = compute( coeffp_, Bx1D_m, ip_ );
 
         //Buffering of iol and delta
-        iold [ipart] = ipx;
-        delta[ipart] = xjmxi;
+        ( *iold )[ipart] = ip_;
+        ( *delta )[ipart] = xjmxi;
     }
 
 }
