@@ -311,6 +311,13 @@ public:
     int iter_frequency_task_tracing_;
     double reference_time;
 
+    void trace_event(int thread, double event_time,unsigned int event_start_or_end, int event_name)
+    {
+        task_tracing_event_time_[thread].push_back(event_time);           // write time
+        task_tracing_start_or_end_[thread].push_back(event_start_or_end); // write Start/End
+        task_tracing_event_name_[thread].push_back(event_name);           // write Event Name
+    };
+
 protected:
     //! Global MPI Communicator
     MPI_Comm world_;

@@ -489,9 +489,7 @@ void VectorPatch::dynamics( Params &params,
 #endif
         #  ifdef _TASKTRACING
         if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-            smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
-            smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
-            smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(4);           // write Event Name
+            smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
         }
         #  endif
             
@@ -521,9 +519,7 @@ void VectorPatch::dynamics( Params &params,
         } // end species loop
         #  ifdef _TASKTRACING
         if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-            smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
-            smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
-            smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(4);           // write Event Name
+            smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
         }
         #  endif
 #ifdef  __DETAILED_TIMERS
@@ -544,9 +540,7 @@ void VectorPatch::dynamics( Params &params,
     #endif
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
-                smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
-                smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(8);           // write Event Name
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,8);
             }
             #  endif
 
@@ -555,9 +549,7 @@ void VectorPatch::dynamics( Params &params,
 
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
-                smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
-                smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(8);           // write Event Name
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,8);
             }
             #  endif
 
@@ -578,9 +570,7 @@ void VectorPatch::dynamics( Params &params,
 #endif
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
-                smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
-                smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(9);           // write Event Name
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,9);
             }
             #  endif
 
@@ -589,9 +579,7 @@ void VectorPatch::dynamics( Params &params,
 
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
-                smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
-                smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(9);           // write Event Name
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,9);
             }
             #  endif
 #ifdef  __DETAILED_TIMERS
@@ -610,18 +598,14 @@ void VectorPatch::dynamics( Params &params,
 #endif
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
-                smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(0);         // write Start/End
-                smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(10);           // write Event Name
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,10);
             }
             #  endif
             Species *spec_task = species( ipatch, ispec );
             spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(spec_task->Nbins);
             #  ifdef _TASKTRACING
             if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->task_tracing_event_time_[omp_get_thread_num()].push_back(MPI_Wtime()-smpi->reference_time); // write time
-                smpi->task_tracing_start_or_end_[omp_get_thread_num()].push_back(1);         // write Start/End
-                smpi->task_tracing_event_name_[omp_get_thread_num()].push_back(10);           // write Event Name
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,10);
             }
             #  endif
 #ifdef  __DETAILED_TIMERS

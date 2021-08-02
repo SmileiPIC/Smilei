@@ -235,6 +235,12 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
         // -  2: Particle BC
         // -  3: Proj
         // -  4: Density Reduction (tasks subgrids)
+        // -  5: Ionization
+        // -  6: Radiation
+        // -  7: Multiphoton Breit Wheeler
+        // -  8: Ionization Reduction of new electrons
+        // -  9: Radiation Reduction of new photons
+        // - 10: Multiphoton Breit Wheeler Reduction of new electron-positron couples
     }
 #endif
 
