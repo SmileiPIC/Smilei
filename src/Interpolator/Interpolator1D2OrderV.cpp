@@ -150,7 +150,7 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     double coeffd[3];
     double coeffp[3];
 
-    #pragma omp simd private(xjn, xjmxi2, coeffd, coeffp_, idx, ipx)
+    #pragma omp simd private(xjn, xjmxi2, coeffd, coeffp, idx, ipx)
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
 
@@ -179,21 +179,21 @@ void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         xjmxi2 = xjmxi*xjmxi;   // square of the normalized distance to the central node
 
         // 2nd order interpolation on 3 nodes
-        coeffp_[0] = 0.5 * ( xjmxi2-xjmxi+0.25 );
-        coeffp_[1] = ( 0.75-xjmxi2 );
-        coeffp_[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
+        coeffp[0] = 0.5 * ( xjmxi2-xjmxi+0.25 );
+        coeffp[1] = ( 0.75-xjmxi2 );
+        coeffp[2] = 0.5 * ( xjmxi2+xjmxi+0.25 );
 
         ipx -= index_domain_begin;
 
         // // Interpolate the fields from the Dual grid : Ex, By, Bz
-        Epart_x[ipart] = coeffd[0] * Ex[id_-1]   + coeffd[1] * Ex[id_]   + coeffd[2] * Ex[id_+1];
-        Bpart_y[ipart] = coeffd[0] * By[id_-1]   + coeffd[1] * By[id_]   + coeffd[2] * By[id_+1];
-        Bpart_z[ipart] = coeffd[0] * Bz[id_-1]   + coeffd[1] * Bz[id_]   + coeffd[2] * Bz[id_+1];
+        Epart_x[ipart] = coeffd[0] * Ex[idx-1]   + coeffd[1] * Ex[idx]   + coeffd[2] * Ex[idx+1];
+        Bpart_y[ipart] = coeffd[0] * By[idx-1]   + coeffd[1] * By[idx]   + coeffd[2] * By[idx+1];
+        Bpart_z[ipart] = coeffd[0] * Bz[idx-1]   + coeffd[1] * Bz[idx]   + coeffd[2] * Bz[idx+1];
 
         // Interpolate the fields from the Primal grid : Ey, Ez, Bx
-        Epart_y[ipart] = coeffp_[0] * Ey[ip_-1]   + coeffp_[1] * Ey[ip_]   + coeffp_[2] * Ey[ip_+1];
-        Epart_z[ipart] = coeffp_[0] * Ez[ip_-1]   + coeffp_[1] * Ez[ip_]   + coeffp_[2] * Ez[ip_+1];
-        Bpart_x[ipart] = coeffp_[0] * Bx[ip_-1]   + coeffp_[1] * Bx[ip_]   + coeffp_[2] * Bx[ip_+1];
+        Epart_y[ipart] = coeffp[0] * Ey[ipx-1]   + coeffp[1] * Ey[ipx]   + coeffp[2] * Ey[ipx+1];
+        Epart_z[ipart] = coeffp[0] * Ez[ipx-1]   + coeffp[1] * Ez[ipx]   + coeffp[2] * Ez[ipx+1];
+        Bpart_x[ipart] = coeffp[0] * Bx[ipx-1]   + coeffp[1] * Bx[ipx]   + coeffp[2] * Bx[ipx+1];
 
         // Interpolate the fields from the Dual grid : Ex, By, Bz
         // *( ELoc+0*nparts ) = compute( coeffd_, Ex1D,   id_ );
