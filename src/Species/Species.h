@@ -102,7 +102,7 @@ public:
     bool relativistic_field_initialization_;
 
     //! Time for which the species field is initialized in case of relativistic initialization
-    double iter_relativistic_initialization_;
+    int iter_relativistic_initialization_;
 
     //! electron and positron Species for the multiphoton Breit-Wheeler
     std::vector<std::string> multiphoton_Breit_Wheeler_;
@@ -162,8 +162,6 @@ public:
     bool position_initialization_on_species_;
     //! Index of the species where position initialization is made
     int position_initialization_on_species_index;
-    //! Boolean to know if species follows ponderomotive loop (laser modeled with envelope)
-    bool ponderomotive_dynamics;
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
     //! Index of the species where field-ionized electrons go

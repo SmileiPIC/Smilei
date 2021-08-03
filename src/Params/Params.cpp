@@ -304,13 +304,22 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // Number of modes in AMcylindrical geometry
     PyTools::extract( "number_of_AM", nmodes, "Main"   );
 
-    nmodes_rel_field_init = 1;
+    nmodes_rel_field_init = 1; // default value
 
     // Number of modes in AMcylindrical geometry for relativistic field initialization
-    // if not specified, it will be equal to the number of modes of the simulation
+    // if not specified, it will be equal to 1
     PyTools::extract( "number_of_AM_relativistic_field_initialization", nmodes_rel_field_init, "Main"   );
     if (nmodes_rel_field_init>nmodes){
         ERROR( "The number of AM modes computed in relativistic field initialization must be lower or equal than the number of modes of the simulation" );
+    }
+
+    nmodes_classical_Poisson_field_init = 1; // default value
+
+    // Number of modes in AMcylindrical geometry for non relativistic field initialization with Poisson solver
+    // if not specified, it will be equal to 1
+    PyTools::extract( "number_of_AM_classical_Poisson_solver", nmodes_classical_Poisson_field_init, "Main"   );
+    if (nmodes_classical_Poisson_field_init>nmodes){
+        ERROR( "The number of AM modes computed in classical Poisson solver must be lower or equal than the number of modes of the simulation" );
     }
 
     

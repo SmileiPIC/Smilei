@@ -325,7 +325,7 @@ void Species::initOperators( Params &params, Patch *patch )
 
     // assign the correct Pusher to Push
     Push = PusherFactory::create( params, this );
-    if( this->ponderomotive_dynamics ) {
+    if( params.Laser_Envelope_model ) {
         Push_ponderomotive_position = PusherFactory::create_ponderomotive_position_updater( params, this );
     }
 

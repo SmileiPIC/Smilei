@@ -370,7 +370,7 @@ void VectorPatch::dynamics( Params &params,
                 spec->particles->savePositions();
             }
             
-            if( spec->ponderomotive_dynamics ) {
+            if( params.Laser_Envelope_model ) {
                 continue;
             }
             
@@ -410,7 +410,9 @@ void VectorPatch::dynamics( Params &params,
     } // end loop on patches
 // end if tasks are not activated
 #else
-// if tasks are activated
+// if tasks are activated 
+    if (!params.Laser_Envelope_model)
+    {
     #pragma omp single
     {
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -423,10 +425,6 @@ void VectorPatch::dynamics( Params &params,
             
             if( params.keep_position_old ) {
                 spec->particles->savePositions();
-            }
-            
-            if( spec->ponderomotive_dynamics ) {
-                continue;
             }
             
             if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
@@ -494,7 +492,7 @@ void VectorPatch::dynamics( Params &params,
         #  endif
             
         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
-            if(( species(ipatch,ispec)->isProj( time_dual, simWindow ) || diag_flag ) && (!(species( ipatch, ispec )->ponderomotive_dynamics)) ) {  
+            if(( species(ipatch,ispec)->isProj( time_dual, simWindow ) || diag_flag ) ) {  
                 // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
                 // Frozen Species are reduced only if diag_flag
                 // DO NOT parallelize this species loop unless race condition prevention is used!
@@ -681,6 +679,7 @@ void VectorPatch::dynamics( Params &params,
 //     } // end species loop
 
     } // end omp single
+    } // end if Laser Envelope model
 // end if tasks are activated
 #endif
 
@@ -693,14 +692,28 @@ void VectorPatch::dynamics( Params &params,
         
     
 #ifdef _OMPTASKS
+    if (!params.Laser_Envelope_model){
     #pragma omp single
     {   // Compute count array for sorting  
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-                if (!species( ipatch, ispec )->ponderomotive_dynamics){
-                    if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
-                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
-                        {
+                if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
+                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+                    {
+                    Species *spec_task = species( ipatch, ispec );
+                    for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+                        for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+                            if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                                //First reduction of the count sort algorithm. Lost particles are not included.
+                                spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+                            }
+                            } // end iPart loop
+                        } // end cells loop
+                    } // end task on array count
+                } else {
+                if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
+                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+                    {
                         Species *spec_task = species( ipatch, ispec );
                         for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                             for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
@@ -710,33 +723,20 @@ void VectorPatch::dynamics( Params &params,
                                 }
                             } // end iPart loop
                         } // end cells loop
-                        } // end task on array count
-                    } else {
-                        if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
-                            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
-                            {
-                            Species *spec_task = species( ipatch, ispec );
-                            for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
-                                for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-                                    if ( spec_task->particles->cell_keys[iPart] != -1 ) {
-                                        //First reduction of the count sort algorithm. Lost particles are not included.
-                                        spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
-                                    }
-                                } // end iPart loop
-                            } // end cells loop
-                            } // end task on array count
-                        } // end if vectorization is adaptive
-                    }// end if on vectorized operators
-                } // end if ponderomotive_dynamics
+                    } // end task on array count
+                    } // end if vectorization is adaptive
+                }// end if on vectorized operators
             } // end ispec
         } // end ipatch 
 
     } // end omp single
+    } // end if Laser Envelope model
 #endif
 
 #ifdef _OMPTASKS
     #pragma omp taskwait
     #  ifdef _TASKTRACING
+    if (!params.Laser_Envelope_model){
     #pragma omp single
     {
     if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
@@ -760,11 +760,13 @@ void VectorPatch::dynamics( Params &params,
             smpi->task_tracing_event_name_[ithread].clear();
         }
     }
-    }
+    } // end single
+    } // end if Laser envelope model
     #  endif
 #endif
 
     #  ifdef _DEVELOPTRACING
+    if (!params.Laser_Envelope_model){
     #pragma omp single
     {
     if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
@@ -788,7 +790,8 @@ void VectorPatch::dynamics( Params &params,
             smpi->task_tracing_event_name_[ithread].clear();
         }
     }
-    }
+    } // end single
+    } // end if Laser envelope model
     #  endif
 
     timers.particles.update( params.printNow( itime ) );
@@ -802,12 +805,12 @@ void VectorPatch::dynamics( Params &params,
     timers.multiphoton_Breit_Wheeler_timer.update_threaded( *this, params.printNow( itime ) );
 #endif
 
-    timers.syncPart.restart();
+    timers.syncPart.restart();  
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
         Species *spec = species( 0, ispec );
-        if( !spec->ponderomotive_dynamics && spec->isProj( time_dual, simWindow ) ) {
+        if ( (!params.Laser_Envelope_model) && (spec->isProj( time_dual, simWindow )) ){
             SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sortParticles
-        } // end condition on species
+        } // end condition on Species and on envelope model
     } // end loop on species
     //MESSAGE("exchange particles");
     timers.syncPart.update( params.printNow( itime ) );
@@ -850,13 +853,11 @@ void VectorPatch::projectionForDiags( Params &params,
             ( *this )( ipatch )->EMfields->restartEnvChi();
             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                    if( species( ipatch, ispec )->ponderomotive_dynamics ) {
-                        species( ipatch, ispec )->ponderomotiveProjectSusceptibility( time_dual, ispec,
-                                emfields( ipatch ),
-                                params, diag_flag,
-                                ( *this )( ipatch ), smpi,
-                                localDiags );
-                    } // end condition on ponderomotive dynamics
+                    species( ipatch, ispec )->ponderomotiveProjectSusceptibility( time_dual, ispec,
+                             emfields( ipatch ),
+                             params, diag_flag,
+                             ( *this )( ipatch ), smpi,
+                             localDiags );
                 } // end diagnostic or projection if condition on species
             } // end loop on species
         } // end loop on patches
@@ -1319,7 +1320,7 @@ void VectorPatch::computeChargeRelativisticSpecies( double time_primal , Params 
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             // project only if species needs relativistic initialization and it is the right time to initialize its fields
             if( ( species( ipatch, ispec )->relativistic_field_initialization_ ) &&
-                    ( int(time_primal/params.timestep) == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) {
+                    ( (int)(time_primal/params.timestep) == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
                     species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ) );
                 } else {
@@ -1433,10 +1434,8 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
     if( diag_flag ) {
         for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
             if( !( *this )( 0 )->vecSpecies[ispec]->particles->is_test ) {
-                if( species( 0, ispec )->ponderomotive_dynamics ) {
-                    updateFieldList( ispec, smpi );
-                    SyncVectorPatch::sumEnvChis( params, ( *this ), ispec, smpi, timers, itime );
-                } // MPI
+                updateFieldList( ispec, smpi );
+                SyncVectorPatch::sumEnvChis( params, ( *this ), ispec, smpi, timers, itime );
             }
         }
     }
@@ -2302,7 +2301,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
     
     // For each mode, repeat the initialization procedure
     // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
-    for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+    for( unsigned int imode=0 ; imode<params.nmodes_classical_Poisson_field_init ; imode++ ) {
         
         // init Phi, r, p values
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -2475,7 +2474,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
     }
 
     // // Exchange the fields after the addition of the relativistic species fields
-    for( unsigned int imode = 0 ; imode < params.nmodes_rel_field_init ; imode++ ) {
+    for( unsigned int imode = 0 ; imode < params.nmodes_classical_Poisson_field_init ; imode++ ) {
         SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
         SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
     }
@@ -2565,7 +2564,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
         if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( int(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
+                if( (int)(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
@@ -2992,7 +2991,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
         if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( int(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
+                if( (int)(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
@@ -4598,7 +4597,6 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
         ( *this )( ipatch )->EMfields->restartEnvChi();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                if( species( ipatch, ispec )->ponderomotive_dynamics ) {
                     if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting ){
 #ifndef _OMPTASKS
                         species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
@@ -4655,12 +4653,10 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
                                                                                               params, diag_flag,
                                                                                               ( *this )( ipatch ), smpi,
                                                                                               localDiags, buffer_id );
-                        } // end task
+                            } // end task
 #endif
-                        }
-                    }
-
-                } // end condition on ponderomotive dynamics
+                        } // end condition on adaptive vectorization
+                   } // end condition on vectorization   
             } // end diagnostic or projection if condition on species
         } // end loop on species
     } // end loop on patches
@@ -4779,7 +4775,6 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                if( species( ipatch, ispec )->ponderomotive_dynamics ) {
                     if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting ){
 #ifndef _OMPTASKS
                         species( ipatch, ispec )->ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
@@ -4840,9 +4835,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
                             } // end task
 #endif
                         }
-                    }
-
-                } // end condition on ponderomotive dynamics
+                    } // condition on vectorized operators
             } // end diagnostic or projection if condition on species
         } // end loop on species
     } // end loop on patches
@@ -4852,20 +4845,19 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     {   // Compute count array for sorting  
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-                if (species( ipatch, ispec )->ponderomotive_dynamics){
-                    if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
-                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
-                        {
-                        Species *spec_task = species( ipatch, ispec );
-                        for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
-                            for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-                                if ( spec_task->particles->cell_keys[iPart] != -1 ) {
-                                    //First reduction of the count sort algorithm. Lost particles are not included.
-                                    spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
-                                }
-                            } // end iPart loop
-                        } // end cells loop
-                        } // end task on array count
+                if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
+                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
+                    {
+                    Species *spec_task = species( ipatch, ispec );
+                    for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+                        for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+                            if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                                //First reduction of the count sort algorithm. Lost particles are not included.
+                                spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+                            }
+                        } // end iPart loop
+                    } // end cells loop
+                    } // end task on array count
                     } else {
                         if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
                             #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
@@ -4879,10 +4871,9 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
                                     }
                                 } // end iPart loop
                             } // end cells loop
-                            } // end task on array count
-                        } // end if vectorization is adaptive
-                    }// end if on vectorized operators
-                } // end if ponderomotive_dynamics
+                        } // end task on array count
+                    } // end if vectorization is adaptive
+                }// end if on vectorized operators
             } // end ispec
         } // end ipatch    
 
@@ -4902,30 +4893,28 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 #endif
             
             for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
-                if (species( ipatch, ispec )->ponderomotive_dynamics){
-                    if( (species( ipatch, ispec )->isProj( time_dual, simWindow ) || diag_flag )){
-                        // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
-                        // Frozen species are projected only if diag_flag
-                        // DO NOT parallelize this species loop unless race condition prevention is used!
-                        Species *spec_task = species( ipatch, ispec );
-                        std::vector<unsigned int> b_dim = spec_task->b_dim;
-                        for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
-                            if (params.geometry != "AMcylindrical"){
-                                double *b_Jx             = spec_task->b_Jx[ibin];
-                                double *b_Jy             = spec_task->b_Jy[ibin];
-                                double *b_Jz             = spec_task->b_Jz[ibin];
-                                double *b_rho            = spec_task->b_rho[ibin];
-                                (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
-                            } else { // AM geometry
-                                complex<double> *b_Jl    = spec_task->b_Jl[ibin];
-                                complex<double> *b_Jr    = spec_task->b_Jr[ibin];
-                                complex<double> *b_Jt    = spec_task->b_Jt[ibin];
-                                complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
-                                (( *this )( ipatch )->EMfields)->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
-                            } // end condition on geometry
-                        } // ibin
-                    } // end if (isProj or diag_flag)
-                } // end if ponderomotive_dynamics
+                if( (species( ipatch, ispec )->isProj( time_dual, simWindow ) || diag_flag )){
+                    // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
+                    // Frozen species are projected only if diag_flag
+                    // DO NOT parallelize this species loop unless race condition prevention is used!
+                    Species *spec_task = species( ipatch, ispec );
+                    std::vector<unsigned int> b_dim = spec_task->b_dim;
+                    for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
+                        if (params.geometry != "AMcylindrical"){
+                            double *b_Jx             = spec_task->b_Jx[ibin];
+                            double *b_Jy             = spec_task->b_Jy[ibin];
+                            double *b_Jz             = spec_task->b_Jz[ibin];
+                            double *b_rho            = spec_task->b_rho[ibin];
+                            (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                        } else { // AM geometry
+                            complex<double> *b_Jl    = spec_task->b_Jl[ibin];
+                            complex<double> *b_Jr    = spec_task->b_Jr[ibin];
+                            complex<double> *b_Jt    = spec_task->b_Jt[ibin];
+                            complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
+                            (( *this )( ipatch )->EMfields)->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
+                        } // end condition on geometry
+                    } // ibin
+                } // end if (isProj or diag_flag)
             } // end species loop
 
 #ifdef  __DETAILED_TIMERS
@@ -4950,11 +4939,9 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 
     timers.syncPart.restart();
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
-        if( ( *this )( 0 )->vecSpecies[ispec]->ponderomotive_dynamics ) {
-            if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
-                SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sortParticles
-            } // end condition on species
-        } // end condition on envelope dynamics
+        if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
+            SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sortParticles
+        } // end condition on species
     } // end loop on species
     timers.syncPart.update( params.printNow( itime ) );
 

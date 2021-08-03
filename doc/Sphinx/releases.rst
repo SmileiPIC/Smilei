@@ -20,6 +20,7 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present 
 * Lasers can be injected from all boundaries
 * Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
 * Probes can be time-integrated

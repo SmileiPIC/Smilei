@@ -58,11 +58,7 @@ public:
                     ERROR( "No Laser Envelope present. The pusher ponderomotive_boris can be used only in presence of a Laser Envelope." );
                 }
                 
-                if( !species->ponderomotive_dynamics ) {
-                    ERROR( "if ponderomotive_boris pusher is chosen for a species, the flag ponderomotive_dynamics for that species must be set to true." );
-                }
-                
-                    Push = new PusherPonderomotiveBoris( params, species );
+                Push = new PusherPonderomotiveBoris( params, species );
             // Non-relativistic Boris pusher
             } else if( species->pusher_name_ == "borisnr" ) {
                 Push = new PusherBorisNR( params, species );
@@ -90,9 +86,9 @@ public:
             }
         }
         
-        if( species->ponderomotive_dynamics ) {
+        if( params.Laser_Envelope_model ) {
             if( species->pusher_name_ != "ponderomotive_boris" ) {
-                ERROR( "For species " << species->name_ << " the flag ponderomotive_dynamics is True - the only pusher available to interact with the envelope is ponderomotive_boris" );
+                ERROR( "For species " << species->name_ << " the only pusher available to interact with the envelope is ponderomotive_boris" );
             }
         }
         return Push;
