@@ -38,7 +38,7 @@ public:
         // Assign the correct Radiation model to Radiate
         if( !species->multiphoton_Breit_Wheeler_[0].empty() ) {
             Multiphoton_Breit_Wheeler_process = new MultiphotonBreitWheeler( params, species, rand );
-            if( params.Laser_Envelope_model & species->ponderomotive_dynamics ) {
+            if( params.Laser_Envelope_model ) {
                 ERROR( "Multiphoton Breit-Wheeler model is not yet implemented for species interacting with Laser Envelope model." );
             }
         }

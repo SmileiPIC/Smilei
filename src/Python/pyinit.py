@@ -379,7 +379,6 @@ class Species(SmileiComponent):
     maximum_charge_state = 0
     is_test = False
     relativistic_field_initialization = False
-    ponderomotive_dynamics = False
 
 class ParticleInjector(SmileiComponent):
     """Parameters for particle injection at boundaries"""

@@ -587,13 +587,6 @@ public:
              }
         }
 
-        PyTools::extract( "ponderomotive_dynamics", this_species->ponderomotive_dynamics, "Species", ispec );
-
-        if( this_species->ponderomotive_dynamics && ! params.Laser_Envelope_model ) {
-            MESSAGE( "No Laser Envelope is specified - Standard PIC dynamics will be used for all species" );
-            this_species->ponderomotive_dynamics = false;
-        }
-
         // Momentum initialisation types
         PyObject *py_mom_init = PyTools::extract_py( "momentum_initialization", "Species", ispec );
         if( PyTools::py2scalar( py_mom_init, this_species->momentum_initialization_ ) ) {
@@ -785,11 +778,10 @@ public:
                     if (params.Laser_Envelope_model){
                         ERROR("An envelope is present, so tunnel_envelope or tunnel_envelope_averaged ionization model should be selected for species "<<species_name);
                     }
-                }else if ( (model == "tunnel_envelope") or (model == "tunnel_envelope_averaged") ){
+                }else if ( model == "tunnel_envelope_averaged" ){
 
                     if (!params.Laser_Envelope_model) ERROR("An envelope ionization model has been selected but no envelope is present");
 
-                    if (!this_species->ponderomotive_dynamics) ERROR("An envelope ionization model has been selected, but species" <<species_name<<" has ponderomotive_dynamics = False ");
                 }else if( model == "from_rate" ) {
 
                     if( this_species->maximum_charge_state_ == 0 ) {
@@ -1048,7 +1040,6 @@ public:
         }
         new_species->max_charge_                               = species->max_charge_;
         new_species->tracking_diagnostic                      = species->tracking_diagnostic;
-        new_species->ponderomotive_dynamics                   = species->ponderomotive_dynamics;
 
         if( new_species->mass_==0 ) {
             new_species->multiphoton_Breit_Wheeler_[0]         = species->multiphoton_Breit_Wheeler_[0];

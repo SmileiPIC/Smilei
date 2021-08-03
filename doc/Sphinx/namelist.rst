@@ -702,7 +702,6 @@ Each species has to be defined in a ``Species`` block::
       # ionization_electrons = None,
       # ionization_rate = None,
       is_test = False,
-      # ponderomotive_dynamics = False,
       pusher = "boris",
 
       # Radiation reaction, for particles only:
@@ -873,7 +872,7 @@ Each species has to be defined in a ``Species`` block::
   The model for ionization:
 
   * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
-  * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>` (requires species with an :py:data:`atomic_number` and :py:data:`ponderomotive_dynamics=True`)
+  * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>`
   * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
 
 .. py:data:: ionization_rate
@@ -914,15 +913,6 @@ Each species has to be defined in a ``Species`` block::
   Flag for test particles. If ``True``, this species will contain only test particles
   which do not participate in the charge and currents.
 
-.. py:data:: ponderomotive_dynamics
-
-  :default: ``False``
-
-  Flag for particles interacting with an envelope model for the laser, if present.
-  If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
-  See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
-.. note:: Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
-
 
 .. .. py:data:: c_part_max
 ..
@@ -940,7 +930,7 @@ Each species has to be defined in a ``Species`` block::
   * ``"vay"``: The relativistic pusher of J. L. Vay
   * ``"higueracary"``: The relativistic pusher of A. V. Higuera and J. R. Cary
   * ``"norm"``:  For photon species only (rectilinear propagation)
-  * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species whose flag ``"ponderomotive_dynamics"`` is ``True``. Valid only if the species has non-zero mass
+  * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species interacting with the laser envelope model. Valid only if the species has non-zero mass
 
 .. py:data:: radiation_model
 
