@@ -1,5 +1,6 @@
 from launch_job import *
 from math import ceil
+s = os.sep
 
 def run_llr(command, dir, mode, options, parameters):
     # Create script

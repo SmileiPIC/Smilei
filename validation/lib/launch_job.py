@@ -8,6 +8,7 @@ def launch_job(base_command, job_command, dir, max_time, output, repeat=1):
     """
     Submit/launch a job based on the given options
     """
+
     # Make a file containing temporary exit status
     EXIT_STATUS = "100"
     with open(dir+s+"exit_status_file", "w") as f:

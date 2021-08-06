@@ -1,5 +1,6 @@
 from launch_job import *
 from math import ceil
+s = os.sep
 
 def run_ruche(command, dir, mode, options):
     """
