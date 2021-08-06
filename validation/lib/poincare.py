@@ -1,4 +1,5 @@
 from launch_job import *
+from math import ceil
 
 def run_poincare(command, dir, mode, options, parameters):
     # Create script
