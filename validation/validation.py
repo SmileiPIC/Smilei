@@ -67,7 +67,6 @@ You may define the SMILEI_ROOT environment variable to use a different installat
 
 # IMPORTS
 import sys, os, re, json, pickle, numpy as np
-from os import path
 from time import sleep, ctime, strftime
 from math import ceil
 from glob import glob
@@ -76,6 +75,7 @@ from getopt import getopt, GetoptError
 from inspect import stack
 from socket import gethostname
 from subprocess import call, check_call, check_output, CalledProcessError
+from os import path
 s = os.sep
 
 # --------------------

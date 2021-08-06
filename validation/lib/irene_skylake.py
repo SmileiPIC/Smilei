@@ -1,5 +1,6 @@
 from launch_job import *
 from math import ceil
+from os import path
 s = os.sep
 
 def run_irene_skylake(command, dir, mode, options, parameters):

@@ -1,5 +1,6 @@
 from launch_job import *
 from math import ceil
+from os import path
 s = os.sep
 
 def run_poincare(command, dir, mode, options, parameters):
