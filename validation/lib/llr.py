@@ -1,7 +1,5 @@
 from launch_job import *
 from math import ceil
-from os import path
-s = os.sep
 
 def run_llr(command, dir, mode, options, parameters):
     # Create script
@@ -44,4 +42,4 @@ def run_llr(command, dir, mode, options, parameters):
         JOB = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+parameters['exec_script']
     elif options['partition'] == "tornado":
         JOB = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+parameters['exec_script']
-    launch_job(command, JOB, dir, options['max_time_seconds'], parameters['output_file'], repeat=2)
+    launch_job(command, JOB, dir, options['max_time_seconds'], parameters['output_file'], repeat=2, verbose=options['verbose'])

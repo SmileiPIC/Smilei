@@ -1,6 +1,6 @@
 from launch_job import *
 from math import ceil
-from os import path
+import os
 s = os.sep
 
 def run_poincare(command, dir, mode, options, parameters):
@@ -19,4 +19,4 @@ def run_poincare(command, dir, mode, options, parameters):
             +"exit $? "
         )
     JOB = "/bin/bash "+parameters['exec_script']+" > "+EXEC_SCRIPT_OUT+" 2>&1"
-    launch_job(command, JOB, dir, options['max_time_seconds'], parameters['output_file'], repeat=2)
+    launch_job(command, JOB, dir, options['max_time_seconds'], parameters['output_file'], repeat=2, verbose=options['verbose'])

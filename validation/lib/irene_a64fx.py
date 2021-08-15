@@ -1,6 +1,7 @@
 from launch_job import *
 from math import ceil
-from os import path
+import os
+
 s = os.sep
 
 def run_irene_a64fx(command, dir, mode, options, parameters):
@@ -83,4 +84,4 @@ def run_irene_a64fx(command, dir, mode, options, parameters):
 
     # Run command
     JOB = "ccc_msub  "+parameters['exec_script']
-    launch_job(command, JOB, dir, options['max_time_seconds'], parameters['output_file'], repeat=2)
+    launch_job(command, JOB, dir, options['max_time_seconds'], parameters['output_file'], repeat=2, verbose=options['verbose'])

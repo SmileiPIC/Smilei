@@ -318,6 +318,7 @@ if options['verbose']:
     print( "")
 
 
+print(HOSTNAME)
 
 # Define commands according to the host
 if LLR in HOSTNAME:
