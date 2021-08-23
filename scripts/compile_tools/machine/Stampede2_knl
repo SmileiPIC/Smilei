@@ -1,0 +1,26 @@
+# Machine file for KNL processors on XSEDE/TACC Stampede2 machine
+# Compilation with the Intel compiler
+#  module load phdf5
+#  module load boost
+#  module load python3
+#
+# For compiling with mvapich2 use:
+# module load mvapich2
+#
+# Note that -D_NO_MPI_TM is not necessary
+#
+# For processing using happi use the following modules
+#
+# module load python3
+# module load phdf5/1.8.16 # if you wish to use h5py within smilei compile with this module
+#
+# the mkl libraries that the helpdesk will insist on you trying can impair performance slightly
+#
+# other modules should load automatically
+# __________________________________________________________
+
+PYTHONHOME=${TACC_PYTHON3_DIR}
+PYTHONEXE=python3
+HDF5_ROOT_DIR=${TACC_HDF5_DIR}
+BOOST_ROOT_DIR=${TACC_BOOST_DIR}
+CXXFLAGS += -D__INTEL_KNL_7250 -xMIC-AVX512 -ip -inline-factor=1000 -qopt-zmm-usage=high -fno-alias -ipo
