@@ -797,7 +797,7 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
             // update of gamma ponderomotive
             gamma_ponderomotive = gamma0 + ( pxsm+pysm+pzsm )*0.5 ;
             // buffer inverse of ponderomotive gamma to use it in ponderomotive momentum pusher
-            ( *inv_gamma_ponderomotive )[ipart-ipart_ref] = 1./gamma_ponderomotive;
+            ( *inv_gamma_ponderomotive )[istart0 + ipart - ipart_ref] = 1./gamma_ponderomotive;
             
             // susceptibility for the macro-particle
             charge_weight[ipart] = c*c*inv_cell_volume * particles.weight( istart0+ipart )*one_over_mass/gamma_ponderomotive ;
