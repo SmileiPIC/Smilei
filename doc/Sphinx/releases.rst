@@ -30,6 +30,7 @@ Changes made in the repository (not released)
 * Bugfixes:
 
   * Poynting scalars behaviour with several patches, or with checkpoints
+  * Densities too low are put to 0 to avoid underflow
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
