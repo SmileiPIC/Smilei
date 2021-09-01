@@ -236,8 +236,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                     }
                     
                     // No particles if density too low
-                    density( i, j, k ) = abs( density( i, j, k ) );
-                    if( density( i, j, k ) < 1e-200 ) {
+                    if( abs( density( i, j, k ) ) < 1e-200 ) {
                         density( i, j, k ) = 0.;
                     }
                     
@@ -255,6 +254,8 @@ int ParticleCreator::create( struct SubSpace sub_space,
                         }
                         density( i, j, k ) /= charge( i, j, k );
                     }
+                    
+                    density( i, j, k ) = abs( density( i, j, k ) );
                     
                     // Time amplitude (for injector)
                     density( i, j, k ) *= time_amplitude;
