@@ -242,6 +242,7 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
         // -  9: Radiation Reduction of new photons
         // - 10: Multiphoton Breit Wheeler Reduction of new electron-positron couples
         // - 11: Computation of keys and count for vectorization
+    }
 #endif
 
 #ifdef _DEVELOPTRACING
