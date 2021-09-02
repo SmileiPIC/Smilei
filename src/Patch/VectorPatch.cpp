@@ -611,8 +611,53 @@ void VectorPatch::dynamics( Params &params,
 #endif
             } // end task on reduction of new photons from Multiphoton Breit Wheeler
         } // end if Multiphoton Breit Wheeler
-      
-        }
+
+        if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
+            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+            {
+            #  ifdef _TASKTRACING
+            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
+            }
+            #  endif
+            Species *spec_task = species( ipatch, ispec );
+            for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+                for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+                    if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                        //First reduction of the count sort algorithm. Lost particles are not included.
+                        spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+                    }
+                    } // end iPart loop
+                } // end cells loop
+            #  ifdef _TASKTRACING
+            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
+            }
+            #  endif
+            } // end task on array count
+        } else {
+        if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
+            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+            {
+            Species *spec_task = species( ipatch, ispec );
+            for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+                for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+                    if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+                        //First reduction of the count sort algorithm. Lost particles are not included.
+                        spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+                    }
+                } // end iPart loop
+            } // end cells loop
+            } // end task on array count
+            #  ifdef _TASKTRACING
+            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
+            }
+            #  endif
+            } // end if vectorization is adaptive
+        }// end if on vectorized operators
+        
+        } // end loop on species
     } // end loop on patches 
     
     // Reduction of the new particles created through ionization and radiation, for each species
@@ -691,47 +736,47 @@ void VectorPatch::dynamics( Params &params,
 // #endif
         
     
-#ifdef _OMPTASKS
-    if (!params.Laser_Envelope_model){
-    #pragma omp single
-    {   // Compute count array for sorting  
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-            for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-                if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
-                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
-                    {
-                    Species *spec_task = species( ipatch, ispec );
-                    for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
-                        for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-                            if ( spec_task->particles->cell_keys[iPart] != -1 ) {
-                                //First reduction of the count sort algorithm. Lost particles are not included.
-                                spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
-                            }
-                            } // end iPart loop
-                        } // end cells loop
-                    } // end task on array count
-                } else {
-                if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
-                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
-                    {
-                        Species *spec_task = species( ipatch, ispec );
-                        for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
-                            for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-                                if ( spec_task->particles->cell_keys[iPart] != -1 ) {
-                                    //First reduction of the count sort algorithm. Lost particles are not included.
-                                    spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
-                                }
-                            } // end iPart loop
-                        } // end cells loop
-                    } // end task on array count
-                    } // end if vectorization is adaptive
-                }// end if on vectorized operators
-            } // end ispec
-        } // end ipatch 
-
-    } // end omp single
-    } // end if Laser Envelope model
-#endif
+// #ifdef _OMPTASKS
+//     if (!params.Laser_Envelope_model){
+//     #pragma omp single
+//     {   // Compute count array for sorting  
+//         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+//             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
+//                 if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
+//                     #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+//                     {
+//                     Species *spec_task = species( ipatch, ispec );
+//                     for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+//                         for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+//                             if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+//                                 //First reduction of the count sort algorithm. Lost particles are not included.
+//                                 spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+//                             }
+//                             } // end iPart loop
+//                         } // end cells loop
+//                     } // end task on array count
+//                 } else {
+//                 if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
+//                     #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+//                     {
+//                         Species *spec_task = species( ipatch, ispec );
+//                         for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+//                             for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+//                                 if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+//                                     //First reduction of the count sort algorithm. Lost particles are not included.
+//                                     spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+//                                 }
+//                             } // end iPart loop
+//                         } // end cells loop
+//                     } // end task on array count
+//                     } // end if vectorization is adaptive
+//                 }// end if on vectorized operators
+//             } // end ispec
+//         } // end ipatch 
+// 
+//     } // end omp single
+//     } // end if Laser Envelope model
+// #endif
 
 #ifdef _OMPTASKS
     #pragma omp taskwait
