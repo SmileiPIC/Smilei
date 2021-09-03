@@ -123,18 +123,19 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
         patch->patch_timers_[0] += MPI_Wtime() - timer;
 #endif
 
-        // Interpolate the fields at the particle position
-        //for (unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++)
-        //    (*Interp)(EMfields, *particles, smpi, &(particles->first_index[scell]), &(particles->last_index[scell]), ithread );
-        #  ifdef _DEVELOPTRACING
-        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-            smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,5);
-        }
-        #  endif
-        for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+        // Ionization
+        if( Ionize ) {
+            // Interpolate the fields at the particle position
+            //for (unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++)
+            //    (*Interp)(EMfields, *particles, smpi, &(particles->first_index[scell]), &(particles->last_index[scell]), ithread );
+            #  ifdef _DEVELOPTRACING
+            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,5);
+            }
+            #  endif
+            for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
 
-            // Ionization
-            if( Ionize ) {
+            
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
@@ -142,62 +143,66 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[4] += MPI_Wtime() - timer;
 #endif
+            
             }
+            #  ifdef _DEVELOPTRACING
+            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,5);
+            }
+            #  endif
         }
-        #  ifdef _DEVELOPTRACING
-        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-            smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,5);
-        }
-        #  endif
-
             // if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
 
     if( time_dual>time_frozen_ ) { // do not radiate, compute multiphoton MBW, push, nor apply particles BC, nor project frozen particles
-        #  ifdef _DEVELOPTRACING
-        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-            smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,6);
-        }
-        #  endif
-        for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+        
             // Radiation losses
             if( Radiate ) {
+                #  ifdef _DEVELOPTRACING
+                if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
+                    smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,6);
+                }
+                #  endif
+                for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+            
 #ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
+                    timer = MPI_Wtime();
 #endif
-                // Radiation process
-                ( *Radiate )( *particles, this->photon_species_, smpi,
-                              RadiationTables, radiated_energy_,
-                              particles->first_index[scell], particles->last_index[scell], ithread );
+                    // Radiation process
+                    ( *Radiate )( *particles, this->photon_species_, smpi,
+                                  RadiationTables, radiated_energy_,
+                                  particles->first_index[scell], particles->last_index[scell], ithread );
 
-                // // Update scalar variable for diagnostics
-                // radiated_energy_ += Radiate->getRadiatedEnergy();
-                //
-                // // Update the quantum parameter chi
-                // Radiate->computeParticlesChi( *particles,
-                //                               smpi,
-                //                               first_index[scell],
-                //                               last_index[scell],
-                //                               ithread );
+                    // // Update scalar variable for diagnostics
+                    // radiated_energy_ += Radiate->getRadiatedEnergy();
+                    //
+                    // // Update the quantum parameter chi
+                    // Radiate->computeParticlesChi( *particles,
+                    //                               smpi,
+                    //                               first_index[scell],
+                    //                               last_index[scell],
+                    //                               ithread );
 #ifdef  __DETAILED_TIMERS
-                patch->patch_timers_[5] += MPI_Wtime() - timer;
+                    patch->patch_timers_[5] += MPI_Wtime() - timer;
 #endif
+            
             }
-        }
-        #  ifdef _DEVELOPTRACING
-        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-            smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,6);
-        }
-        #  endif
+            #  ifdef _DEVELOPTRACING
+            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,6);
+            }
+            #  endif
+        } // end if Radiate
 
-        #  ifdef _DEVELOPTRACING
-        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-            smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,7);
-        }
-        #  endif
-        for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
+        // Multiphoton Breit-Wheeler
+        if( Multiphoton_Breit_Wheeler_process ) {
+            #  ifdef _DEVELOPTRACING
+            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,7);
+            }
+            #  endif
+            for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
 
-            // Multiphoton Breit-Wheeler
-            if( Multiphoton_Breit_Wheeler_process ) {
+            
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
@@ -223,12 +228,13 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 patch->patch_timers_[6] += MPI_Wtime() - timer;
 #endif
             }
-        }
-        #  ifdef _DEVELOPTRACING
-        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-            smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,7);
-        }
-        #  endif
+        
+            #  ifdef _DEVELOPTRACING
+            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
+                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,7);
+            }
+            #  endif
+        } // end if Multiphoton Breit Wheeler
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
