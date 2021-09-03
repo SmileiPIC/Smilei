@@ -8,7 +8,7 @@ from subprocess import check_call
 from time import sleep, ctime, strftime
 
 def mkdir(dir):
-    if not path.exists(dir):
+    if not os.path.exists(dir):
         os.mkdir(dir)
 
 def date(BIN_NAME):
@@ -20,11 +20,12 @@ def date_string(BIN_NAME):
     date_time = ctime(date_integer)
     return date_time.replace(" ","-")
 
-def workdir_archiv(BIN_NAME) :
-    if os.path.exists(SMILEI_W):
-        ARCH_WORKDIR = WORKDIR_BASE+'_'+date_string(SMILEI_W)
-        os.rename(WORKDIR_BASE, ARCH_WORKDIR)
-        mkdir(WORKDIR_BASE)
+def workdir_archiv(workdir_base, BIN_NAME) :
+    exe_path = workdir_base+os.sep+smilei)
+    if os.path.exists(exe_path):
+        ARCH_WORKDIR = workdir_base+'_'+date_string(exe_path)
+        os.rename(workdir_base, ARCH_WORKDIR)
+        mkdir(workdir_base)
 
 def launch_job(base_command, job_command, dir, max_time, output, repeat=1, verbose=True):
     """
