@@ -268,7 +268,7 @@ for opt, arg in external_options:
             sys.exit(4)
     elif opt in ('-l', '--LOG'):
         options['log'] = True
-        if path.isabs(arg):
+        if os.path.isabs(arg):
             SMILEI_LOGS = arg + s
         else:
             SMILEI_LOGS = INITIAL_DIRECTORY + s + arg + s
