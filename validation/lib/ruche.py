@@ -1,4 +1,9 @@
-from launch_job import *
+#
+# Run function for the super-computer Ruche
+#
+# ______________________________________________________________________________
+
+from tools import *
 from math import ceil
 from os import path
 s = os.sep
@@ -51,42 +56,7 @@ def run_ruche(command, dir, mode, options):
             +command+" \n"
             +"echo $? > exit_status_file \n"
         )
+
     # Run command
-    COMMAND = "sbatch  "+parameters['exec_script']
-    try:
-        check_call(COMMAND, shell=True)
-    except CalledProcessError:
-        # if command qsub fails, exit with exit status 2
-        #Retry once in case the server was rebooting
-        if VERBOSE :
-            print(  "sbatch command failed once: `"+COMMAND+"`")
-            print(  "Wait and retry")
-        sleep(10)
-        try:
-            check_call(COMMAND, shell=True)
-        except CalledProcessError:
-            if dir==WORKDIR:
-                os.chdir(WORKDIR_BASE)
-                rmtree(WORKDIR)
-            if VERBOSE :
-                print(  "sbatch command failed twice: `"+COMMAND+"`")
-                print(  "Exit")
-            sys.exit(2)
-    if VERBOSE:
-        print( "Submitted job with command `"+command+"`")
-        print( " -> max duration: {} s".format(max_time_seconds))
-    while ( EXIT_STATUS == "100" ) :
-        sleep(5)
-        exit_status_fd = open(dir+s+"exit_status_file", "r+")
-        EXIT_STATUS = exit_status_fd.readline()
-        exit_status_fd.close()
-    if ( int(EXIT_STATUS) != 0 )  :
-        if VERBOSE :
-            print(  "Execution failed for command `"+command+"`")
-            COMMAND = "cat "+SMILEI_EXE_OUT
-            try :
-                check_call(COMMAND, shell=True)
-            except CalledProcessError:
-                print(  "cat command failed")
-                sys.exit(2)
-        sys.exit(2)
+    JOB = "sbatch  "+parameters['exec_script']
+    launch_job(command, JOB, dir, options['max_time_seconds'], parameters['output_file'], repeat=2)

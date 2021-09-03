@@ -1,4 +1,5 @@
 import re
+import os
 
 # DEFINE A CLASS FOR LOGGING DATA
 class Log:

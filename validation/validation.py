@@ -78,13 +78,6 @@ from subprocess import call, check_call, check_output, CalledProcessError
 from os import path
 s = os.sep
 
-# --------------------
-# Function definitions
-# --------------------
-def mkdir(dir):
-    if not path.exists(dir):
-        os.mkdir(dir)
-
 try:
     execfile
 except: # python3
@@ -96,22 +89,10 @@ try:
 except: # python3
     raw_input = input
 
+
 def usage():
     print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>] [-k <compile_mode>] [-p <partition name>] [-l <logs_folder>]' )
     print( '    Try `validation.py -h` for more details' )
-
-def date(BIN_NAME):
-    statbin = os.stat(BIN_NAME)
-    return statbin.st_ctime
-def date_string(BIN_NAME):
-    date_integer = date(BIN_NAME)
-    date_time = ctime(date_integer)
-    return date_time.replace(" ","-")
-def workdir_archiv(BIN_NAME) :
-    if path.exists(SMILEI_W):
-        ARCH_WORKDIR = WORKDIR_BASE+'_'+date_string(SMILEI_W)
-        os.rename(WORKDIR_BASE, ARCH_WORKDIR)
-        mkdir(WORKDIR_BASE)
 
 # --------------------
 # Paths & variables
