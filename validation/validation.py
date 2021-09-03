@@ -120,7 +120,7 @@ parameters['workdir_base'] = parameters['smilei_root']+"validation"+s+"workdirs"
 SMILEI_W = parameters['workdir_base']+s+"smilei"
 SMILEI_R = parameters['smilei_root']+s+"smilei"
 
-SMILEI_TOOLS_W = WORKDIR_BASE+s+"smilei_tables"
+SMILEI_TOOLS_W = parameters['workdir_base']+s+"smilei_tables"
 SMILEI_TOOLS_R = parameters['smilei_root']+s+"smilei_tables"
 
 COMPILE_ERRORS = parameters['workdir_base']+s+'compilation_errors'
