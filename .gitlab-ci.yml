@@ -12,7 +12,7 @@ install:
   stage: install
   only:
     - develop
-#    - validation_update
+    - validation_update
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,7 +31,7 @@ compile_default:
   stage: compile_default
   only:
     - develop
-#    - validation_update
+    - validation_update
 
   script:
     # Move in test dir
@@ -43,7 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
-#    - validation_update
+    - validation_update
 
   script:
     # Move in test dir
