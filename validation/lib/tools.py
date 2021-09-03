@@ -6,6 +6,7 @@
 import os
 from subprocess import check_call
 from time import sleep, ctime, strftime
+from subprocess import call, check_call, check_output, CalledProcessError
 
 def mkdir(dir):
     if not os.path.exists(dir):
