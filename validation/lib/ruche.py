@@ -54,12 +54,5 @@ def run_ruche(command, dir, mode, options, parameters):
             +command+" \n"
             +"echo $? > exit_status_file \n"
         )
-<<<<<<< HEAD
-
-    # Run command
-    JOB = "sbatch  "+parameters['exec_script']
-    launch_job(command, JOB, dir, options['max_time_seconds'], parameters['output_file'], repeat=2)
-=======
     JOB = "sbatch "+parameters['exec_script']
     launch_job(command, JOB, dir, options['max_time_seconds'], parameters['output_file'], repeat=2, verbose=options['verbose'])
->>>>>>> ebdd9d05d1acecd675cb9189753f9096ff9fbc51
