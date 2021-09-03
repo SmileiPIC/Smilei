@@ -76,7 +76,6 @@ from inspect import stack
 from socket import gethostname
 from subprocess import call, check_call, check_output, CalledProcessError
 from os import path
-from tools import *
 
 s = os.sep
 
