@@ -116,16 +116,16 @@ parameters['exec_script'] = 'exec_script.sh'
 parameters['exec_script_output'] = 'exec_script.out'
 parameters['output_file'] = 'smilei_exe.out'
 
-WORKDIR_BASE = parameters['smilei_root']+"validation"+s+"workdirs"
-SMILEI_W = WORKDIR_BASE+s+"smilei"
+parameters['workdir_base'] = parameters['smilei_root']+"validation"+s+"workdirs"
+SMILEI_W = parameters['workdir_base']+s+"smilei"
 SMILEI_R = parameters['smilei_root']+s+"smilei"
 
 SMILEI_TOOLS_W = WORKDIR_BASE+s+"smilei_tables"
 SMILEI_TOOLS_R = parameters['smilei_root']+s+"smilei_tables"
 
-COMPILE_ERRORS = WORKDIR_BASE+s+'compilation_errors'
-COMPILE_OUT = WORKDIR_BASE+s+'compilation_out'
-COMPILE_OUT_TMP = WORKDIR_BASE+s+'compilation_out_temp'
+COMPILE_ERRORS = parameters['workdir_base']+s+'compilation_errors'
+COMPILE_OUT = parameters['workdir_base']+s+'compilation_out'
+COMPILE_OUT_TMP = parameters['workdir_base']+s+'compilation_out_temp'
 
 POINCARE = "poincare"
 LLR = "llrlsi-gw"
@@ -298,9 +298,6 @@ if options['verbose']:
     print( "The list of input files to be validated is:\n\t"+"\n\t".join(parameters['benchmarks']))
     print( "")
 
-
-print(HOSTNAME)
-
 # Define commands according to the host
 if LLR in HOSTNAME:
     options['ppn'] = {"jollyjumper":12, "tornado":18}[options['partition']]
@@ -312,7 +309,7 @@ if LLR in HOSTNAME:
     COMPILE_COMMAND = str(MAKE)+' -j '+str(options['ppn'])+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-    RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(options['ppn']) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(options['omp']) + " -n "+str(options['mpi'])+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+parameters['output_file']+" 2>&1"
+    RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(options['ppn']) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(options['omp']) + " -n "+str(options['mpi'])+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']+" 2>&1"
     RUN = run_llr
 elif "ruche" in HOSTNAME:
     options['ppn'] = 20
@@ -324,13 +321,13 @@ elif "ruche" in HOSTNAME:
     COMPILE_COMMAND = str(MAKE)+' -j 20 machine=ruche > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-    RUN_COMMAND ="srun "+WORKDIR_BASE+s+"smilei %s >"+parameters['output_file']+" 2>&1"
+    RUN_COMMAND ="srun "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']+" 2>&1"
     RUN = run_ruche
 elif POINCARE in HOSTNAME:
     COMPILE_COMMAND = str(MAKE)+' -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
-    RUN_COMMAND = "mpirun -np "+str(options['mpi'])+" "+WORKDIR_BASE+s+"smilei %s >"+parameters['output_file']
+    RUN_COMMAND = "mpirun -np "+str(options['mpi'])+" "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']
     RUN = run_poincare
 else: # Local computers
     # Determine the correct MPI command
@@ -348,7 +345,7 @@ else: # Local computers
     COMPILE_COMMAND = str(MAKE)+' -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-    RUN_COMMAND = "export OMP_NUM_THREADS="+str(options['omp'])+"; "+MPIRUN+str(options['mpi'])+" "+WORKDIR_BASE+s+"smilei %s >"+parameters['output_file']
+    RUN_COMMAND = "export OMP_NUM_THREADS="+str(options['omp'])+"; "+MPIRUN+str(options['mpi'])+" "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']
     RUN = run_other
 
 # ---------------
@@ -366,14 +363,14 @@ STAT_SMILEI_R_OLD = os.stat(SMILEI_R) if path.exists(SMILEI_R) else ' '
 
 # CLEAN
 # If no smilei bin in the workdir, or it is older than the one in smilei directory, clean to force compilation
-mkdir(WORKDIR_BASE)
+mkdir(parameters['workdir_base'])
 if path.exists(SMILEI_R) and (not path.exists(SMILEI_W) or date(SMILEI_W)<date(SMILEI_R)):
     call(CLEAN_COMMAND , shell=True)
 
 try:
     # Remove the compiling errors files
-    if path.exists(WORKDIR_BASE+s+COMPILE_ERRORS) :
-        os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
+    if path.exists(parameters['workdir_base']+s+COMPILE_ERRORS) :
+        os.remove(parameters['workdir_base']+s+COMPILE_ERRORS)
     # Compile
     RUN( COMPILE_COMMAND, parameters['smilei_root'], 'compilation', options, parameters )
     os.rename(COMPILE_OUT_TMP, COMPILE_OUT)
@@ -381,7 +378,7 @@ try:
         # if new bin, archive the workdir (if it contains a smilei bin)
         # and create a new one with new smilei and compilation_out inside
         if path.exists(SMILEI_W): # and path.exists(SMILEI_TOOLS_W):
-            workdir_archiv(SMILEI_W)
+            workdir_archiv(parameters['workdir_base'])
         copy2(SMILEI_R,SMILEI_W)
         #copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
         if options['compile_only']:
@@ -397,8 +394,8 @@ try:
 except CalledProcessError as e:
     # if compiling errors, archive the workdir (if it contains a smilei bin),
     # create a new one with compilation_errors inside and exit with error code
-    workdir_archiv(SMILEI_W)
-    os.rename(COMPILE_ERRORS,WORKDIR_BASE+s+COMPILE_ERRORS)
+    workdir_archiv(parameters['workdir_base'])
+    os.rename(COMPILE_ERRORS,parameters['workdir_base']+s+COMPILE_ERRORS)
     if options['verbose']:
         print("Smilei validation cannot be done : compilation failed. " + str(e.returncode))
     sys.exit(3)
@@ -592,7 +589,7 @@ for BENCH in parameters['benchmarks'] :
     SMILEI_BENCH = parameters['smilei_benchmark_path'] + BENCH
 
     # Create the workdir path
-    WORKDIR = WORKDIR_BASE+s+'wd_'+path.basename(path.splitext(BENCH)[0])
+    WORKDIR = parameters['workdir_base']+s+'wd_'+path.basename(path.splitext(BENCH)[0])
     mkdir(WORKDIR)
     WORKDIR += s+str(options['mpi'])
     mkdir(WORKDIR)
@@ -751,8 +748,8 @@ for BENCH in parameters['benchmarks'] :
             sys.exit(1)
 
     # Clean workdirs, goes here only if succeeded
-    os.chdir(WORKDIR_BASE)
-    rmtree( WORKDIR_BASE+s+'wd_'+path.basename(path.splitext(BENCH)[0]), True )
+    os.chdir(parameters['workdir_base'])
+    rmtree( parameters['workdir_base']+s+'wd_'+path.basename(path.splitext(BENCH)[0]), True )
 
     if options['verbose']: print( "")
 

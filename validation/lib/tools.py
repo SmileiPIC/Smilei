@@ -20,7 +20,10 @@ def date_string(BIN_NAME):
     date_time = ctime(date_integer)
     return date_time.replace(" ","-")
 
-def workdir_archiv(workdir_base, BIN_NAME) :
+def workdir_archiv(workdir_base) :
+    """
+    This function creates an archives of the workdir directory
+    """
     exe_path = workdir_base+os.sep+smilei)
     if os.path.exists(exe_path):
         ARCH_WORKDIR = workdir_base+'_'+date_string(exe_path)
