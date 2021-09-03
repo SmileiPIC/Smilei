@@ -66,7 +66,7 @@ You may define the SMILEI_ROOT environment variable to use a different installat
 
 
 # IMPORTS
-import sys, os, re, json, pickle, numpy as np
+import sys, os, re, pickle, numpy as np
 from time import sleep, ctime, strftime
 from math import ceil
 from glob import glob
