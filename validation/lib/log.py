@@ -37,10 +37,10 @@ class Log:
             else:
                 self.data[key] = value
 
-    def append(self):
+    def append(self, git_version):
         if self.data:
             # Append commit and date to current data
-            self.data["commit"] = gitversion
+            self.data["commit"] = git_version
             self.data["date"] = strftime("%Y_%m_%d_%H:%M:%S")
             # Open previous database
             try:

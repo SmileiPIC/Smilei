@@ -135,11 +135,11 @@ HOSTNAME = gethostname()
 # Get the current version of Smilei
 INITIAL_DIRECTORY = os.getcwd()
 os.chdir(parameters['smilei_root'])
-gitversion = check_output( "echo `git log -n 1 --format=%h`-", shell=True ).decode()[:-1]
+parameters['git_version'] = check_output( "echo `git log -n 1 --format=%h`-", shell=True ).decode()[:-1]
 if 'CI_COMMIT_BRANCH' in os.environ:
-    gitversion += os.environ['CI_COMMIT_BRANCH']
+    parameters['git_version'] += os.environ['CI_COMMIT_BRANCH']
 else:
-    gitversion += check_output("echo `git rev-parse --abbrev-ref HEAD`", shell=True ).decode()[:-1]
+    parameters['git_version'] += check_output("echo `git rev-parse --abbrev-ref HEAD`", shell=True ).decode()[:-1]
 os.chdir(INITIAL_DIRECTORY)
 
 # Load the happi module
@@ -705,7 +705,7 @@ for BENCH in parameters['benchmarks'] :
 
     # Append info in log file
     if options['log']:
-        log.append()
+        log.append(parameters['git_version'])
 
     os.chdir(WORKDIR)
 
