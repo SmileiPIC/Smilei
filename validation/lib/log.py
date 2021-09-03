@@ -12,8 +12,8 @@ class Log:
         +"[\t\s]+([\w ]+):?\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\%"
     )
 
-    def __init__(self, log_file):
-        mkdir(SMILEI_LOGS)
+    def __init__(self, log_path, log_file):
+        mkdir(log_path)
         self.log_file = log_file
         self.data = {}
 

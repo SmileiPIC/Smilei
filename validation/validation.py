@@ -270,9 +270,9 @@ for opt, arg in external_options:
     elif opt in ('-l', '--LOG'):
         options['log'] = True
         if os.path.isabs(arg):
-            SMILEI_LOGS = arg + s
+            options['smilei_logs'] = arg + s
         else:
-            SMILEI_LOGS = INITIAL_DIRECTORY + s + arg + s
+            options['smilei_logs'] = INITIAL_DIRECTORY + s + arg + s
 
 # Manage some stuff according to options
 MAKE = "make" + (" config=%s"%options['compile_mode'] if options['compile_mode'] else "")
@@ -634,7 +634,7 @@ for BENCH in parameters['benchmarks'] :
 
     # Prepare logging
     if options['log']:
-        log = Log(SMILEI_LOGS + BENCH + ".log")
+        log = Log(options['smilei_logs'], options['smilei_logs'] + BENCH + ".log")
 
     # Loop restarts
     for irestart in range(options['nb_restarts']+1):
