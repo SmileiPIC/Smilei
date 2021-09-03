@@ -5,10 +5,8 @@
 
 from tools import *
 from math import ceil
-from os import path
-s = os.sep
 
-def run_ruche(command, dir, mode, options):
+def run_ruche(command, dir, mode, options, parameters):
     """
     Run the command `command` on the RUCHE system.
 
@@ -17,7 +15,7 @@ def run_ruche(command, dir, mode, options):
     - dir: working directory
     """
     EXIT_STATUS="100"
-    exit_status_fd = open(dir+s+"exit_status_file", "w")
+    exit_status_fd = open(dir+os.sep+"exit_status_file", "w")
     exit_status_fd.write(str(EXIT_STATUS))
     exit_status_fd.close()
     # Create script
@@ -56,7 +54,12 @@ def run_ruche(command, dir, mode, options):
             +command+" \n"
             +"echo $? > exit_status_file \n"
         )
+<<<<<<< HEAD
 
     # Run command
     JOB = "sbatch  "+parameters['exec_script']
     launch_job(command, JOB, dir, options['max_time_seconds'], parameters['output_file'], repeat=2)
+=======
+    JOB = "sbatch "+parameters['exec_script']
+    launch_job(command, JOB, dir, options['max_time_seconds'], parameters['output_file'], repeat=2, verbose=options['verbose'])
+>>>>>>> ebdd9d05d1acecd675cb9189753f9096ff9fbc51

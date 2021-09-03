@@ -1,3 +1,4 @@
+
 # --------------------------------------------
 # Different tools for the validation process
 # --------------------------------------------
@@ -25,14 +26,14 @@ def workdir_archiv(BIN_NAME) :
         os.rename(WORKDIR_BASE, ARCH_WORKDIR)
         mkdir(WORKDIR_BASE)
 
-def launch_job(base_command, job_command, dir, max_time, output, repeat=1):
+def launch_job(base_command, job_command, dir, max_time, output, repeat=1, verbose=True):
     """
     Submit/launch a job based on the given options
     """
 
     # Make a file containing temporary exit status
     EXIT_STATUS = "100"
-    with open(dir+s+"exit_status_file", "w") as f:
+    with open(dir+os.sep+"exit_status_file", "w") as f:
         f.write(str(EXIT_STATUS))
     # Run the job several times if requested
     for n in range(repeat):
@@ -52,7 +53,7 @@ def launch_job(base_command, job_command, dir, max_time, output, repeat=1):
             print("Exit")
         sys.exit(2)
     # Otherwise job is running
-    if options['verbose']:
+    if verbose:
         print()
         print("Submitted job with command `"+base_command+"`")
         print("\tmax duration: %d s"%max_time)
@@ -61,7 +62,7 @@ def launch_job(base_command, job_command, dir, max_time, output, repeat=1):
     while EXIT_STATUS == "100":# and current_time < options['max_time_seconds']):
         sleep(5)
         # current_time += 5
-        with open(dir+s+"exit_status_file", "r+") as f:
+        with open(dir+os.sep+"exit_status_file", "r+") as f:
             EXIT_STATUS = f.readline()
         # if current_time > options['max_time_seconds']:
         #     print("Max time exceeded for command `"+command+"`")
