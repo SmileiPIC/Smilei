@@ -718,7 +718,8 @@ void RadiationTables::readTables( Params &params, SmileiMPI *smpi )
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
     // And if the h values are not computed from a numerical fit
-    if( params.hasNielRadiation && this->niel_.computation_method_ == "table" ) {
+    if( ( params.hasNielRadiation && this->niel_.computation_method_ == "table")
+       || ( params.hasNielRadiation && params.gpu_computing) ) {
         RadiationTables::readHTable( smpi );
     }
     if( params.hasMCRadiation ) {
