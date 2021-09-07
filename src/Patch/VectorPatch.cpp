@@ -4208,7 +4208,7 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
 
         #pragma acc enter data copyin(Bx[0:sizeofBx],By[0:sizeofBy],Bz[0:sizeofBz])
 
-        if (params.hasNielRadiation && radiation_tables_->niel_.computation_method_ == "table"  ) {
+        if ( params.hasNielRadiation ) {
         
             double * table = &(radiation_tables_->niel_.table_[0]);
             #pragma acc enter data copyin(table[0:size_of_Table_Niel])
