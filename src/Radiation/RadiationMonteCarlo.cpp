@@ -60,7 +60,6 @@ void RadiationMonteCarlo::operator()(
     int             ithread,
     int             ipart_ref)
 {
-
     // _______________________________________________________________
     // Parameters
 
@@ -151,15 +150,35 @@ void RadiationMonteCarlo::operator()(
     double random_number; 
 
     #ifdef _GPU
-    unsigned long long seed;
+    unsigned long long seed; // Parameters for CUDA generator
     unsigned long long seq;
     unsigned long long offset;
+    curandState_t state_1;
+    curandState_t state_2;
+    
+    seed = 12345ULL;
+    seq = 0ULL;
+    offset = 0ULL;
     #endif
     // _______________________________________________________________
     // Computation
     #ifdef _GPU
     // Management of the data on GPU though this data region
     int np = iend-istart;
+    
+    // Initialize initial seed for linear generator
+    double initial_seed_1 = rand_->uniform();
+    double initial_seed_2 = rand_->uniform();
+
+    // Parameters for linear alleatory number generator
+    const int a = 1664525;
+    const int c = 1013904223;
+    const int m = pow(2,32);
+
+    // Variable to save seed for CUDA generators
+    int seed_curand_1;
+    int seed_curand_2;
+    
     #pragma acc data present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np], \
             table_integfochi[0:size_of_Table_integfochi], table_xi[0:size_of_Table_xi], \
@@ -176,16 +195,10 @@ void RadiationMonteCarlo::operator()(
         Bx[istart:np],By[istart:np],Bz[istart:np], \
         table_integfochi[0:size_of_Table_integfochi], table_xi[0:size_of_Table_xi], \
         table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
-        deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi,tau) \
-        private(emission_time, local_it_time, mc_it_nb, particle_chi, gamma, state, random_number) \
-        reduction(+:radiated_energy_loc)
+        deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi,tau) 
         {
-            curandState_t state;
-            seed = 12345ULL;
-            seq = 0ULL;
-            offset = 0ULL;
-            curand_init(seed, seq, offset, &state);
-            #pragma acc loop gang worker vector
+            #pragma acc loop gang worker vector private(emission_time, local_it_time, mc_it_nb, particle_chi, gamma, state_1, state_2, random_number, seed_curand_1, seed_curand_2) \
+        reduction(+:radiated_energy_loc) 
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
@@ -230,7 +243,15 @@ void RadiationMonteCarlo::operator()(
                     #ifndef _GPU
                         tau[ipart] = -log( 1.-rand_->uniform() );
                     #else
-                        tau[ipart] = -log( 1.-curand_uniform(&state) );
+			            seed_curand_1 = (int) (ipart+1)*(initial_seed_1+1); //Seed for linear generator
+                	    seed_curand_1 = (a * seed_curand_1 + c) % m; //Linear generator
+               		
+			            curand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
+			
+			            random_number = curand_uniform(&state_1); //Generating number
+                        
+			            tau[ipart] = -log( 1.- random_number );
+			            initial_seed_1 = random_number;
                     #endif
                 }
 
@@ -259,7 +280,12 @@ void RadiationMonteCarlo::operator()(
                     #ifndef _GPU
                         random_number = rand_->uniform();
                     #else
-                        random_number = curand_uniform(&state);
+			            seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
+              		    seed_curand_2 = (a * seed_curand_2 + c) % m; //Linear generator
+
+        	            curand_init(seed_curand_2, seq, offset, &state_2); //Cuda generator initialization
+	
+                        random_number = curand_uniform(&state_2); //Generating number
                     #endif
 
                     // Emission of a photon
@@ -537,3 +563,4 @@ double RadiationMonteCarlo::photonEmission( int ipart,
 
     return radiated_energy;
 }
+
