@@ -1,0 +1,6 @@
+#
+# Machine file for Ruche (Cascadelake processors)
+# Compilation with the Gnu compiler
+# __________________________________________________________
+
+LDFLAGS += -lz
