@@ -91,7 +91,6 @@ void RadiationNiel::operator()(
 
     // Particle id
     int ipart;
-    double p;
 
     // Radiated energy
     double rad_energy;
@@ -131,17 +130,28 @@ void RadiationNiel::operator()(
     #ifdef _GPU
     // Management of the data on GPU though this data region
     int np = iend-istart;
-
-    //initialize initial seed in GPU
+    
+    // Initialize initial seed for linear generator
     double initial_seed = rand_->uniform();
-    curandState_t state;
+
+    // Parameters for linear alleatory number generator
+    const int a = 1664525;
+    const int c = 1013904223;
+    const int m = pow(2,32);
 
     #pragma acc data create(random_numbers[0:nbparticles], diffusion[0:nbparticles]) \
             present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
             Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np], table[0:size_of_table_Niel]) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi)
     {
+            unsigned long long seed; // Parameters for CUDA generator
+            unsigned long long seq;
+            unsigned long long offset;
+            curandState_t state;
 
+            seed = 12345ULL;
+            seq = 0ULL;
+            offset = 0ULL;
     #endif
 
     // _______________________________________________________________
@@ -153,12 +163,10 @@ void RadiationNiel::operator()(
         #ifndef _GPU
             #pragma omp simd
         #else
-	    #pragma acc parallel \
-           	present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
-            	Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np], \
-		table[0:size_of_table_Niel], diffusion[0:nbparticles]) \
-            	deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi) \
-	        private(temp,rad_energy,new_gamma,stat,p,temp) reduction(+:radiated_energy_loc) 
+            #pragma acc parallel \
+            present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
+            Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np], random_numbers[0:nbparticles]) \
+            deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi) private(state, p,temp)
         {
             #pragma acc loop gang worker vector
  
@@ -178,54 +186,62 @@ void RadiationNiel::operator()(
                                   gamma[ipart],
                                   ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
                                   ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
-	//}     
-    #ifndef _GPU
+        }
+    #ifdef _GPU
     } // end acc parallel
     #endif
     //double t1 = MPI_Wtime();
 
     #ifdef _GPU
-    /*#pragma acc parallel present(random_numbers[0:nbparticles])
+    #pragma acc parallel present(random_numbers[0:nbparticles]) 
     {
-        #pragma acc loop gang worker vector private(state)
-        for( ipart=0 ; ipart < nbparticles; ipart++ ) {*/
+        double p;
+	int seed_curand;
+
+        //curand_init(ipart*initial_seed, seq, offset, &state);
+        #pragma acc loop gang worker vector private(state, p,temp,seed_curand )
+        for( ipart=0 ; ipart < nbparticles; ipart++ ) {
             if( particle_chi[ipart] > minimum_chi_continuous_ ) {
-                
-		curand_init(ipart*initial_seed, 0, 0, &state);    
-		random_numbers[ipart-istart] = sqrtdt*std::sqrt( 2. )*curand_normal(&state);
-                /*random_numbers[ipart-istart] = 2*curand_uniform(&state)-1;
+               
+		        seed_curand = (int) (ipart+1)*(initial_seed+1); //Seed for linear generator
+		        seed_curand = (a * seed_curand + c) % m; //Linear generator
+		        
+                curand_init(seed_curand, seq, offset, &state); //Cuda generator initialization     
+		        
+                random_numbers[ipart] = 2*curand_uniform(&state) - 1; //Generating number
+             
+                temp = -std::log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
 
-	    temp = -std::log( ( 1.0-random_numbers[ipart] )*( 1.0+random_numbers[ipart] ) );
+                if( temp < 5.000000 ) {
+                    temp = temp - 2.500000;
+                    p = +2.81022636000e-08      ;
+                    p = +3.43273939000e-07 + p*temp;
+                    p = -3.52338770000e-06 + p*temp;
+                    p = -4.39150654000e-06 + p*temp;
+                    p = +0.00021858087e+00 + p*temp;
+                    p = -0.00125372503e+00 + p*temp;
+                    p = -0.00417768164e+00 + p*temp;
+                    p = +0.24664072700e+00 + p*temp;
+                    p = +1.50140941000e+00 + p*temp;
+                } else {
+                    temp = std::sqrt( temp ) - 3.000000;
+                    p = -0.000200214257      ;
+                    p = +0.000100950558 + p*temp;
+                    p = +0.001349343220 + p*temp;
+                    p = -0.003673428440 + p*temp;
+                    p = +0.005739507730 + p*temp;
+                    p = -0.007622461300 + p*temp;
+                    p = +0.009438870470 + p*temp;
+                    p = +1.001674060000 + p*temp;
+                    p = +2.832976820000 + p*temp;
+                }
 
-            if( temp < 5.000000 ) {
-                temp = temp - 2.500000;
-                p = +2.81022636000e-08      ;
-                p = +3.43273939000e-07 + p*temp;
-                p = -3.52338770000e-06 + p*temp;
-                p = -4.39150654000e-06 + p*temp;
-                p = +0.00021858087e+00 + p*temp;
-                p = -0.00125372503e+00 + p*temp;
-                p = -0.00417768164e+00 + p*temp;
-                p = +0.24664072700e+00 + p*temp;
-                p = +1.50140941000e+00 + p*temp;
-            } else {
-                temp = std::sqrt( temp ) - 3.000000;
-                p = -0.000200214257      ;
-                p = +0.000100950558 + p*temp;
-                p = +0.001349343220 + p*temp;
-                p = -0.003673428440 + p*temp;
-                p = +0.005739507730 + p*temp;
-                p = -0.007622461300 + p*temp;
-                p = +0.009438870470 + p*temp;
-                p = +1.001674060000 + p*temp;
-                p = +2.832976820000 + p*temp;
-            }
-
-            random_numbers[ipart] *= p*sqrtdt*std::sqrt( 2. );*/
-             //}
-        // }
+                random_numbers[ipart] *= p*sqrtdt*std::sqrt( 2. );
+            
+             }
+         }
     
-    //}
+    }
 
     #else
 
@@ -248,7 +264,7 @@ void RadiationNiel::operator()(
     }
 
     // Vectorized computation of the random number in a normal distribution
-    //double p;
+    double p;
     #pragma omp simd private(p,temp)
     for( ipart=0 ; ipart < nbparticles; ipart++ ) {
         // Below particle_chi = minimum_chi_continuous_, radiation losses are negligible
@@ -291,16 +307,16 @@ void RadiationNiel::operator()(
     // 3) Computation of the diffusion coefficients
     // Using the table (non-vectorized)
 
-    /*#ifdef _GPU
+    #ifdef _GPU
         #pragma acc parallel present(gamma[istart:np], random_numbers[0:nbparticles], \
-            table[0:size_of_table_Niel], diffusion[0:nbparticles]) \
+            table[0:size_of_table_Niel], diffusion[0:nbparticles], niel_computation_method_ ) \
             deviceptr(particle_chi,momentum_x,momentum_y,momentum_z,weight) \
             private(temp,rad_energy,new_gamma) reduction(+:radiated_energy_loc)
         {
             #pragma acc loop gang worker vector
             for( ipart=istart ; ipart<iend; ipart++ ) {
                 if( particle_chi[ipart] > minimum_chi_continuous_ ) { 
-    #endif*/
+    #endif
 
     if( niel_computation_method == 1 ) {
 
@@ -322,7 +338,7 @@ void RadiationNiel::operator()(
         #endif
     }
     // Using the fit at order 5 (vectorized)
-    else if( niel_computation_method == 0 ) {
+    else if( niel_computation_method == 1 ) {
 
         #ifndef _GPU
         for( ipart=istart ; ipart<iend; ipart++ ) {
@@ -359,7 +375,7 @@ void RadiationNiel::operator()(
 
     }
     // Using Ridgers
-    else if( niel_computation_method == 3) {
+    else if( niel_computation_method == 0) {
 
         #ifndef _GPU
         for( ipart=istart ; ipart<iend; ipart++ ) {
