@@ -318,7 +318,7 @@ void RadiationNiel::operator()(
                 if( particle_chi[ipart] > minimum_chi_continuous_ ) { 
     #endif
 
-    if( niel_computation_method == 1 ) {
+    if( niel_computation_method == 0 ) {
 
         #ifndef _GPU
         for( ipart=istart ; ipart<iend; ipart++ ) {
@@ -375,7 +375,7 @@ void RadiationNiel::operator()(
 
     }
     // Using Ridgers
-    else if( niel_computation_method == 0) {
+    else if( niel_computation_method == 3) {
 
         #ifndef _GPU
         for( ipart=istart ; ipart<iend; ipart++ ) {
