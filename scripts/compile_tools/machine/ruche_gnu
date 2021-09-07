@@ -3,4 +3,4 @@
 # Compilation with the Gnu compiler
 # __________________________________________________________
 
-LDFLAGS += -lz
+LDFLAGS += -lz -fno-lto
