@@ -186,7 +186,9 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             //Ex(dual, primal)
             interp_res = 0.;
+            UNROLL_S(3)
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                UNROLL_S(3)
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                     interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] *
                                   ( ( 1-dual[0][ipart] )*field_buffer[1+iloc][1+jloc]
@@ -206,7 +208,9 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             //Ey(primal, dual)
             interp_res = 0.;
+            UNROLL_S(3)
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                UNROLL_S(3)
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                     interp_res += *( coeffxp+iloc*32 ) * *( coeffyd+jloc*32 ) *
                                   ( ( 1-dual[1][ipart] )*( *Ey2D )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[1][ipart]*( *Ey2D )( idxO[0]+1+iloc, idxO[1]+2+jloc ) );
