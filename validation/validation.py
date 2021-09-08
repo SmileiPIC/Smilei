@@ -66,8 +66,7 @@ You may define the SMILEI_ROOT environment variable to use a different installat
 
 
 # IMPORTS
-import sys, os, re, json, pickle, numpy as np
-from os import path
+import sys, os, re, pickle, numpy as np
 from time import sleep, ctime, strftime
 from math import ceil
 from glob import glob
@@ -76,14 +75,9 @@ from getopt import getopt, GetoptError
 from inspect import stack
 from socket import gethostname
 from subprocess import call, check_call, check_output, CalledProcessError
-s = os.sep
+from os import path
 
-# --------------------
-# Function definitions
-# --------------------
-def mkdir(dir):
-    if not path.exists(dir):
-        os.mkdir(dir)
+s = os.sep
 
 try:
     execfile
@@ -96,51 +90,43 @@ try:
 except: # python3
     raw_input = input
 
+
 def usage():
     print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>] [-k <compile_mode>] [-p <partition name>] [-l <logs_folder>]' )
     print( '    Try `validation.py -h` for more details' )
 
-def date(BIN_NAME):
-    statbin = os.stat(BIN_NAME)
-    return statbin.st_ctime
-def date_string(BIN_NAME):
-    date_integer = date(BIN_NAME)
-    date_time = ctime(date_integer)
-    return date_time.replace(" ","-")
-def workdir_archiv(BIN_NAME) :
-    if path.exists(SMILEI_W):
-        ARCH_WORKDIR = WORKDIR_BASE+'_'+date_string(SMILEI_W)
-        os.rename(WORKDIR_BASE, ARCH_WORKDIR)
-        mkdir(WORKDIR_BASE)
-
 # --------------------
 # Paths & variables
 # --------------------
+
+# Dictionnary containing all parameters
+parameters = {}
+
 if "SMILEI_ROOT" in os.environ :
-    SMILEI_ROOT = os.environ["SMILEI_ROOT"]+s
+    parameters['smilei_root'] = os.environ["SMILEI_ROOT"]+s
 else:
-    SMILEI_ROOT = path.dirname(path.abspath(stack()[0][1]))+s+".."+s
-SMILEI_ROOT = path.abspath(SMILEI_ROOT)+s
-SMILEI_BENCHS = SMILEI_ROOT+"benchmarks"+s
-SMILEI_SCRIPTS = SMILEI_ROOT+"scripts"+s
-SMILEI_VALIDATION = SMILEI_ROOT+"validation"+s
-SMILEI_REFERENCES = SMILEI_VALIDATION+"references"+s
-SMILEI_ANALYSES = SMILEI_VALIDATION+"analyses"+s
+    parameters['smilei_root'] = path.dirname(path.abspath(stack()[0][1]))+s+".."+s
+parameters['smilei_root'] = path.abspath(parameters['smilei_root'])+s
+parameters['smilei_benchmark_path'] = parameters['smilei_root']+"benchmarks"+s
+parameters['smilei_script_path'] = parameters['smilei_root']+"scripts"+s
+parameters['smilei_validation_path'] = parameters['smilei_root']+"validation"+s
+parameters['smilei_reference_path'] = parameters['smilei_validation_path']+"references"+s
+parameters['smilei_analyse_path'] = parameters['smilei_validation_path']+"analyses"+s
 
-EXEC_SCRIPT = 'exec_script.sh'
-EXEC_SCRIPT_OUT = 'exec_script.out'
-SMILEI_EXE_OUT = 'smilei_exe.out'
+parameters['exec_script'] = 'exec_script.sh'
+parameters['exec_script_output'] = 'exec_script.out'
+parameters['output_file'] = 'smilei_exe.out'
 
-WORKDIR_BASE = SMILEI_ROOT+"validation"+s+"workdirs"
-SMILEI_W = WORKDIR_BASE+s+"smilei"
-SMILEI_R = SMILEI_ROOT+s+"smilei"
+parameters['workdir_base'] = parameters['smilei_root']+"validation"+s+"workdirs"
+SMILEI_W = parameters['workdir_base']+s+"smilei"
+SMILEI_R = parameters['smilei_root']+s+"smilei"
 
-SMILEI_TOOLS_W = WORKDIR_BASE+s+"smilei_tables"
-SMILEI_TOOLS_R = SMILEI_ROOT+s+"smilei_tables"
+SMILEI_TOOLS_W = parameters['workdir_base']+s+"smilei_tables"
+SMILEI_TOOLS_R = parameters['smilei_root']+s+"smilei_tables"
 
-COMPILE_ERRORS = WORKDIR_BASE+s+'compilation_errors'
-COMPILE_OUT = WORKDIR_BASE+s+'compilation_out'
-COMPILE_OUT_TMP = WORKDIR_BASE+s+'compilation_out_temp'
+COMPILE_ERRORS = parameters['workdir_base']+s+'compilation_errors'
+COMPILE_OUT = parameters['workdir_base']+s+'compilation_out'
+COMPILE_OUT_TMP = parameters['workdir_base']+s+'compilation_out_temp'
 
 POINCARE = "poincare"
 LLR = "llrlsi-gw"
@@ -148,65 +134,82 @@ HOSTNAME = gethostname()
 
 # Get the current version of Smilei
 INITIAL_DIRECTORY = os.getcwd()
-os.chdir(SMILEI_ROOT)
-gitversion = check_output( "echo `git log -n 1 --format=%h`-", shell=True ).decode()[:-1]
+os.chdir(parameters['smilei_root'])
+parameters['git_version'] = check_output( "echo `git log -n 1 --format=%h`-", shell=True ).decode()[:-1]
 if 'CI_COMMIT_BRANCH' in os.environ:
-    gitversion += os.environ['CI_COMMIT_BRANCH']
+    parameters['git_version'] += os.environ['CI_COMMIT_BRANCH']
 else:
-    gitversion += check_output("echo `git rev-parse --abbrev-ref HEAD`", shell=True ).decode()[:-1]
+    parameters['git_version'] += check_output("echo `git rev-parse --abbrev-ref HEAD`", shell=True ).decode()[:-1]
 os.chdir(INITIAL_DIRECTORY)
 
 # Load the happi module
-sys.path.insert(0, SMILEI_ROOT)
+sys.path.insert(0, parameters['smilei_root'])
 import happi
+# import tools
+sys.path.append(parameters['smilei_validation_path'] + '/lib/')
+from log import *
+# import specific machine modules
+from ruche import *
+from llr import *
+from other import *
+from poincare import *
+from irene_a64fx import *
+from irene_skylake import *
 
 # ------------------------
 # Get command-line options
 # ------------------------
+
+# General options
+options = {}
+
 # Default values
-OMP = 12
-MPI = 4
-PPN = 12
-max_time = "00:10:00"
-EXECUTION = False
-VERBOSE = False
-BENCH=""
-COMPILE_ONLY = False
-GENERATE = False
-SHOWDIFF = False
-nb_restarts = 0
-COMPILE_MODE=""
-LOG = False
-PARTITION = "jollyjumper"
+options['omp'] = 12
+options['mpi'] = 4
+options['ppn'] = 12
+options['max_time'] = "00:10:00"
+options['execution'] = False
+options['verbose'] = False
+options['bench']=""
+options['compile_only'] = False
+options['generate'] = False
+options['showdiff'] = False
+options['nb_restarts'] = 0
+options['compile_mode']=""
+options['log'] = False
+options['partition'] = "jollyjumper"
+options['accout'] = "" # Account for some super-computers
 
 try:
-    options, remainder = getopt(
+    external_options, remainder = getopt(
         sys.argv[1:],
-        'o:m:b:r:k:p:gshvcl:t:',
-        ['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG=', 'time=']
+        'o:m:b:r:k:p:gshvcl:t:a:',
+        ['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG=', 'time=', 'account=']
     )
 except GetoptError as err:
     usage()
     sys.exit(4)
 
 # Process options
-for opt, arg in options:
+for opt, arg in external_options:
     if opt in ('-o', '--OMP'):
-        EXECUTION = True
-        OMP = int(arg)
+        options['execution'] = True
+        options['omp'] = int(arg)
     elif opt in ('-m', '--MPI'):
-        EXECUTION = True
-        MPI = int(arg)
+        options['execution'] = True
+        options['mpi'] = int(arg)
     elif opt in ('-b', '--BENCH'):
-        BENCH = arg
+        options['bench'] = arg
     elif opt in ('-p', '--PARTITION'):
-        PARTITION = arg
+        options['partition'] = arg
     elif opt in ('-c', '--COMPILE_ONLY'):
-        COMPILE_ONLY=True
+        options['compile_only']=True
     elif opt in ('-k', '--COMPILE_MODE'):
-        COMPILE_MODE=arg
+        options['compile_mode']=arg
     elif opt in ('-t', '--time'):
-        max_time=arg
+        options['max_time']=arg
+    elif opt in ('-a', '--account'):
+        options['accout']=arg
     elif opt in ('-h', '--HELP'):
         print( "-b")
         print( "     -b <bench_case>")
@@ -223,9 +226,17 @@ for opt, arg in options:
         print( "-p")
         print( "     -p <partition name>")
         print( "       <partition name>: partition name on super-computers")
+        print( "                         - ruche")
+        print( "                         - tornado")
+        print( "                         - jollyjumper")
+        print( "                         - irene_skylake")
+        print( "                         - irene_a64fx")
         print( "-t")
         print( "     -t <max time>")
         print( "       <max time>: format hh:mm:ss")
+        print( "-a")
+        print( "     -a --account <account id>")
+        print( "       <account id>: account/project id given by some super-computer facilities")
         print( "-g")
         print( "     Generates the references")
         print( "-s")
@@ -244,248 +255,81 @@ for opt, arg in options:
         print( "     Log some performance info in the directory `logs`")
         sys.exit(0)
     elif opt in ('-g', '--GENERATE'):
-        GENERATE = True
+        options['generate'] = True
     elif opt in ('-s', '--SHOW'):
-        SHOWDIFF = True
+        options['showdiff'] = True
     elif opt in ('-v', '--VERBOSE'):
-        VERBOSE = True
+        options['verbose'] = True
     elif opt in ('-r', '--RESTARTS'):
         try:
-            nb_restarts = int(arg)
-            if nb_restarts < 0: raise
+            options['nb_restarts'] = int(arg)
+            if options['nb_restarts'] < 0: raise
         except:
             print("Error: the number of restarts (option -r) must be a positive integer")
             sys.exit(4)
     elif opt in ('-l', '--LOG'):
-        LOG = True
-        if path.isabs(arg):
-            SMILEI_LOGS = arg + s
+        options['log'] = True
+        if os.path.isabs(arg):
+            options['smilei_logs'] = arg + s
         else:
-            SMILEI_LOGS = INITIAL_DIRECTORY + s + arg + s
+            options['smilei_logs'] = INITIAL_DIRECTORY + s + arg + s
 
 # Manage some stuff according to options
-MAKE = "make" + (" config=%s"%COMPILE_MODE if COMPILE_MODE else "")
+MAKE = "make" + (" config=%s"%options['compile_mode'] if options['compile_mode'] else "")
 
-max_time_seconds = np.sum(np.array(max_time.split(":"),dtype=int)*np.array([3600,60,1]))
+options['max_time_seconds'] = np.sum(np.array(options['max_time'].split(":"),dtype=int)*np.array([3600,60,1]))
 
-if GENERATE and SHOWDIFF:
+if options['generate'] and options['showdiff']:
     usage()
     sys.exit(4)
 
 # Build the list of the requested input files
-list_validation = [path.basename(b) for b in glob(SMILEI_ANALYSES+"validate_tst*py")]
-if BENCH == "":
-    SMILEI_BENCH_LIST = [path.basename(b) for b in glob(SMILEI_BENCHS+"tst*py")]
+list_validation = [path.basename(b) for b in glob(parameters['smilei_analyse_path']+"validate_tst*py")]
+if options['bench'] == "":
+    parameters['benchmarks'] = [path.basename(b) for b in glob(parameters['smilei_benchmark_path']+"tst*py")]
 else:
-    SMILEI_BENCH_LIST = glob( SMILEI_BENCHS + BENCH )
-    SMILEI_BENCH_LIST = [b.replace(SMILEI_BENCHS,'') for b in SMILEI_BENCH_LIST]
-SMILEI_BENCH_LIST = [b for b in SMILEI_BENCH_LIST if "validate_"+b in list_validation]
-if not SMILEI_BENCH_LIST:
-    raise Exception("Input file(s) "+BENCH+" not found, or without validation file")
+    parameters['benchmarks'] = glob( parameters['smilei_benchmark_path'] + options['bench'] )
+    parameters['benchmarks'] = [b.replace(parameters['smilei_benchmark_path'],'') for b in parameters['benchmarks']]
+parameters['benchmarks'] = [b for b in parameters['benchmarks'] if "validate_"+b in list_validation]
+if not parameters['benchmarks']:
+    raise Exception("Input file(s) "+options['bench']+" not found, or without validation file")
 
-if VERBOSE:
+if options['verbose']:
     print( "")
-    print( "The list of input files to be validated is:\n\t"+"\n\t".join(SMILEI_BENCH_LIST))
+    print( "The list of input files to be validated is:\n\t"+"\n\t".join(parameters['benchmarks']))
     print( "")
-
-# -----------------------------------
-# Commands for running parallel jobs
-# -----------------------------------
-# - command: command to run
-# - dir: working directory
-
-def launch_job(base_command, job_command, dir, repeat=1):
-    # Make a file containing temporary exit status
-    EXIT_STATUS = "100"
-    with open(dir+s+"exit_status_file", "w") as f:
-        f.write(str(EXIT_STATUS))
-    # Run the job several times if requested
-    for n in range(repeat):
-        try:
-            check_call(job_command, shell=True)
-            break
-        except CalledProcessError:
-            if VERBOSE:
-                print()
-                print("Command failed #%d: `%s`"%(n, job_command))
-                if n < repeat:
-                    print("Wait and retry")
-            sleep(10)
-    # Exit if unsuccesful
-    else:
-        if VERBOSE:
-            print("Exit")
-        sys.exit(2)
-    # Otherwise job is running
-    if VERBOSE:
-        print()
-        print("Submitted job with command `"+base_command+"`")
-        print("\tmax duration: %d s"%max_time_seconds)
-    # Wait for the exit status to be set
-    # current_time = 0
-    while EXIT_STATUS == "100":# and current_time < max_time_seconds):
-        sleep(5)
-        # current_time += 5
-        with open(dir+s+"exit_status_file", "r+") as f:
-            EXIT_STATUS = f.readline()
-        # if current_time > max_time_seconds:
-        #     print("Max time exceeded for command `"+command+"`")
-        #     sys.exit(2)
-    # Check that the run succeeded
-    if int(EXIT_STATUS) != 0:
-        if VERBOSE:
-            print()
-            print("Execution failed for command `"+base_command+"`")
-            COMMAND = "/bin/bash cat "+SMILEI_EXE_OUT
-            try:
-                check_call(COMMAND, shell=True)
-            except CalledProcessError:
-                print()
-                print("Failed to print file `%s`"%SMILEI_EXE_OUT)
-        sys.exit(2)
-
-def RUN_POINCARE(command, dir):
-    # Create script
-    with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-        exec_script_desc.write(
-            "# environnement \n"
-            +"module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu 2>&1 > /dev/null\n"
-            +"unset LD_PRELOAD\n"
-            +"export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0\n"
-            +"# \n"
-            +"# execution \n"
-            +"export OMP_NUM_THREADS="+str(OMP)+"\n"
-            +command+" \n"
-            +"echo $? > exit_status_file \n"
-            +"exit $? "
-        )
-    JOB = "/bin/bash "+EXEC_SCRIPT+" > "+EXEC_SCRIPT_OUT+" 2>&1"
-    launch_job(command, JOB, dir, repeat=2)
-
-def run_ruche(command, dir):
-    # Create script
-    with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-        NODES=int(ceil(MPI/2.))
-        exec_script_desc.write(
-            "#!/bin/bash\n"
-            +"#SBATCH --job-name=smilei\n"
-            +"#SBATCH --nodes="+str(NODES)+"\n"
-            +"#SBATCH --ntasks="+str(MPI)+"\n"
-            +"#SBATCH --cpus-per-task="+str(OMP)+"\n"
-            +"#SBATCH --output=output\n"
-            +"#SBATCH --error=error\n"
-            +"#SBATCH --time="+max_time+"\n"
-            +"#SBATCH --partition=cpu_short\n"
-            +"module purge\n"
-            +"module load zlib/1.2.9/gcc-9.2.0\n"
-            +"module load anaconda3/2020.02/gcc-9.2.0\n"
-            +"module load intel/19.0.3/gcc-4.8.5\n"
-            +"module load intel-mpi/2019.3.199/intel-19.0.3.199\n"
-            +"module load hdf5/1.10.6/intel-19.0.3.199-intel-mpi\n"
-            +"export OMP_NUM_THREADS="+str(OMP)+" \n"
-            +"export OMP_SCHEDULE=DYNAMIC \n"
-            +"export OMP_PLACES=cores \n"
-            +"export KMP_AFFINITY=verbose \n"
-            +"export I_MPI_CXX=icpc \n"
-            +"export HDF5_ROOT_DIR=/gpfs/softs/spack/opt/spack/linux-centos7-cascadelake/intel-19.0.3.199/hdf5-1.10.6-na3ilncuwbx2pdim2xaqwf23sgqza6qo \n"
-            +"ulimit -s unlimited \n"
-            +"cd ${SLURM_SUBMIT_DIR} \n"
-            +"#Specify the number of sockets per node in -mca orte_num_sockets \n"
-            +"#Specify the number of cores per sockets in -mca orte_num_cores \n"
-            +"cd "+dir+" \n"
-            +"module list 2> module.log\n"
-            +command+" \n"
-            +"echo $? > exit_status_file \n"
-        )
-    JOB = "sbatch  "+EXEC_SCRIPT
-    launch_job(command, JOB, dir, repeat=2)
-        
-def RUN_LLR(command, dir):
-    # Create script
-    with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-        NODES=int(ceil(MPI/2.))
-        PPN = {"jollyjumper":24, "tornado":36}[PARTITION]
-        exec_script_desc.write(
-            "#PBS -l nodes="+str(NODES)+":ppn="+str(PPN)+" \n"
-            +"#PBS -q default \n"
-            +"#PBS -j oe\n"
-            +"#PBS -l walltime="+max_time+"\n"
-            +"module purge\n"
-            +"unset MODULEPATH;\n"
-            +"module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles_el7\n"
-            +"module load compilers/icc/17.4.196\n"
-            +"module load mpi/openmpi/2.1.6-ib-icc\n"
-            +"module load hdf5/1.8.19-icc-omp2.1.6\n"
-            +"module load python/3.7.0\n"
-            +"module load h5py/hdf5_1.8.19-icc-omp2.1.6-py3.7.0\n"
-            +"module load mpi4py/omp2.1.6-ib-icc_py3.7.0\n"
-            +"module load compilers/gcc/4.9.2\n"
-            +"export OMP_NUM_THREADS="+str(OMP)+" \n"
-            +"export OMP_SCHEDULE=DYNAMIC \n"
-            +"export KMP_AFFINITY=verbose \n"
-            +"export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck \n"
-            +"module load fftw/3.3.8-omp-2.1.6-icc-17 \n"
-            +"export LIBPXR=/home/llr/galop/derouil/applications.ompi216.Py3/picsar/lib \n"
-            +"export LD_LIBRARY_PATH=$LIBPXR:$LD_LIBRARY_PATH \n"
-            +"export FFTW3_LIB=/opt/exp_soft/vo.llr.in2p3.fr/fftw/3.3.8/opm-2.1.6-intel-17-el7/lib\n"
-            +"export FFTW3_INC=/opt/exp_soft/vo.llr.in2p3.fr/fftw/3.3.8/opm-2.1.6-intel-17-el7/include\n"
-            +"ulimit -s unlimited \n"
-            +"#Specify the number of sockets per node in -mca orte_num_sockets \n"
-            +"#Specify the number of cores per sockets in -mca orte_num_cores \n"
-            +"cd "+dir+" \n"
-            +"module list 2> module.log\n"
-            +command+" \n"
-            +"echo $? > exit_status_file \n"
-        )
-    if PARTITION == "jollyjumper":
-        JOB = "PBS_DEFAULT=llrlsi-jj.in2p3.fr qsub  "+EXEC_SCRIPT
-    elif PARTITION == "tornado":
-        JOB = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+EXEC_SCRIPT
-    launch_job(command, JOB, dir, repeat=2)
-
-def RUN_OTHER(command, dir):
-    try:
-        if VERBOSE:
-            print()
-            print("Trying command `"+command+"`")
-        check_call(command, shell=True)
-    except CalledProcessError:
-        if VERBOSE:
-            print()
-            print("Execution failed for command `"+command+"`")
-        sys.exit(2)
 
 # Define commands according to the host
 if LLR in HOSTNAME:
-    PPN = {"jollyjumper":12, "tornado":18}[PARTITION]
-    if PPN % OMP != 0:
-        print("Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
+    options['ppn'] = {"jollyjumper":12, "tornado":18}[options['partition']]
+    if options['ppn'] % options['omp'] != 0:
+        print("Smilei cannot be run with "+str(options['omp'])+" threads on "+HOSTNAME+" and partition "+options['partition'])
         sys.exit(4)
-    NODES = int(ceil(MPI/2.))
+    NODES = int(ceil(options['mpi']/2.))
     NPERSOCKET = 1
-    COMPILE_COMMAND = str(MAKE)+' -j '+str(PPN)+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_COMMAND = str(MAKE)+' -j '+str(options['ppn'])+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-    RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(PPN) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(OMP) + " -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
-    RUN = RUN_LLR
+    RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(options['ppn']) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(options['omp']) + " -n "+str(options['mpi'])+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']+" 2>&1"
+    RUN = run_llr
 elif "ruche" in HOSTNAME:
-    PPN = 20
-    if PPN < OMP :
-        print("Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME+" and partition "+PARTITION)
+    options['ppn'] = 20
+    if options['ppn'] < options['omp'] :
+        print("Smilei cannot be run with "+str(options['omp'])+" threads on "+HOSTNAME+" and partition "+options['partition'])
         sys.exit(4)
-    NODES=int(ceil(MPI/2.))
+    NODES=int(ceil(options['mpi']/2.))
     NPERSOCKET = 1
     COMPILE_COMMAND = str(MAKE)+' -j 20 machine=ruche > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-    RUN_COMMAND ="srun "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
+    RUN_COMMAND ="srun "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']+" 2>&1"
     RUN = run_ruche
 elif POINCARE in HOSTNAME:
     COMPILE_COMMAND = str(MAKE)+' -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
-    RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
-    RUN = RUN_POINCARE
+    RUN_COMMAND = "mpirun -np "+str(options['mpi'])+" "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']
+    RUN = run_poincare
 else: # Local computers
     # Determine the correct MPI command
     mpi_version = str(check_output("mpirun --version", shell=True))
@@ -502,62 +346,62 @@ else: # Local computers
     COMPILE_COMMAND = str(MAKE)+' -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-    RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+MPIRUN+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
-    RUN = RUN_OTHER
+    RUN_COMMAND = "export OMP_NUM_THREADS="+str(options['omp'])+"; "+MPIRUN+str(options['mpi'])+" "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']
+    RUN = run_other
 
 # ---------------
 # Compilation
 # ---------------
 
-if VERBOSE:
+if options['verbose']:
     print("---------------------------")
     print("Compiling Smilei")
     print("---------------------------")
 
 # Get state of smilei bin in root folder
-os.chdir(SMILEI_ROOT)
+os.chdir(parameters['smilei_root'])
 STAT_SMILEI_R_OLD = os.stat(SMILEI_R) if path.exists(SMILEI_R) else ' '
 
 # CLEAN
 # If no smilei bin in the workdir, or it is older than the one in smilei directory, clean to force compilation
-mkdir(WORKDIR_BASE)
+mkdir(parameters['workdir_base'])
 if path.exists(SMILEI_R) and (not path.exists(SMILEI_W) or date(SMILEI_W)<date(SMILEI_R)):
     call(CLEAN_COMMAND , shell=True)
 
 try:
     # Remove the compiling errors files
-    if path.exists(WORKDIR_BASE+s+COMPILE_ERRORS) :
-        os.remove(WORKDIR_BASE+s+COMPILE_ERRORS)
+    if path.exists(parameters['workdir_base']+s+COMPILE_ERRORS) :
+        os.remove(parameters['workdir_base']+s+COMPILE_ERRORS)
     # Compile
-    RUN( COMPILE_COMMAND, SMILEI_ROOT )
+    RUN( COMPILE_COMMAND, parameters['smilei_root'], 'compilation', options, parameters )
     os.rename(COMPILE_OUT_TMP, COMPILE_OUT)
     if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R): # or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
         # if new bin, archive the workdir (if it contains a smilei bin)
         # and create a new one with new smilei and compilation_out inside
         if path.exists(SMILEI_W): # and path.exists(SMILEI_TOOLS_W):
-            workdir_archiv(SMILEI_W)
+            workdir_archiv(parameters['workdir_base'])
         copy2(SMILEI_R,SMILEI_W)
         #copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
-        if COMPILE_ONLY:
-            if VERBOSE:
+        if options['compile_only']:
+            if options['verbose']:
                 print("Smilei validation succeed.")
             exit(0)
     else:
-        if COMPILE_ONLY :
-            if VERBOSE:
+        if options['compile_only'] :
+            if options['verbose']:
                 print("Smilei validation not needed.")
             exit(0)
 
 except CalledProcessError as e:
     # if compiling errors, archive the workdir (if it contains a smilei bin),
     # create a new one with compilation_errors inside and exit with error code
-    workdir_archiv(SMILEI_W)
-    os.rename(COMPILE_ERRORS,WORKDIR_BASE+s+COMPILE_ERRORS)
-    if VERBOSE:
+    workdir_archiv(parameters['workdir_base'])
+    os.rename(COMPILE_ERRORS,parameters['workdir_base']+s+COMPILE_ERRORS)
+    if options['verbose']:
         print("Smilei validation cannot be done : compilation failed. " + str(e.returncode))
     sys.exit(3)
 
-if VERBOSE:
+if options['verbose']:
     print()
 
 # -------------------------------------------
@@ -567,10 +411,10 @@ if VERBOSE:
 def loadReference(bench_name):
     try:
         try:
-            with open(SMILEI_REFERENCES+s+bench_name+".txt", 'rb') as f:
+            with open(parameters['smilei_reference_path']+s+bench_name+".txt", 'rb') as f:
                 return pickle.load(f, fix_imports=True, encoding='latin1')
         except:
-            with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
+            with open(parameters['smilei_reference_path']+s+bench_name+".txt", 'r') as f:
                 return pickle.load(f)
     except:
         print("Unable to find the reference data for "+bench_name)
@@ -607,7 +451,7 @@ def matchesWithReference(data, expected_data, data_name, precision):
 # DEFINE A CLASS TO CREATE A REFERENCE
 class CreateReference(object):
     def __init__(self, bench_name):
-        self.reference_file = SMILEI_REFERENCES+s+bench_name+".txt"
+        self.reference_file = parameters['smilei_reference_path']+s+bench_name+".txt"
         self.data = {}
 
     def __call__(self, data_name, data, precision=None):
@@ -621,14 +465,14 @@ class CreateReference(object):
             print("Reference file is too large ("+str(size)+"B) - suppressing ...")
             os.remove(self.reference_file)
             sys.exit(2)
-        if VERBOSE:
+        if options['verbose']:
             print("Created reference file "+self.reference_file)
 
 # DEFINE A CLASS TO COMPARE A SIMULATION TO A REFERENCE
 class CompareToReference(object):
     def __init__(self, bench_name):
         self.data = loadReference(bench_name)
-    
+
     def __call__(self, data_name, data, precision=None):
         # verify the name is in the reference
         if data_name not in self.data.keys():
@@ -643,12 +487,12 @@ class CompareToReference(object):
             print()
             global _dataNotMatching
             _dataNotMatching = True
-            
+
 # DEFINE A CLASS TO VIEW DIFFERENCES BETWEEN A SIMULATION AND A REFERENCE
 class ShowDiffWithReference(object):
     def __init__(self, bench_name):
         self.data = loadReference(bench_name)
-    
+
     def __call__(self, data_name, data, precision=None):
         import matplotlib.pyplot as plt
         plt.ion()
@@ -736,98 +580,41 @@ class ShowDiffWithReference(object):
             print(data)
 
 
-# DEFINE A CLASS FOR LOGGING DATA
-class Log:
-    pattern1 = re.compile(""
-        +"[\n\t\s]+(Time[ _]in[ _]time[ _]loop)\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\% coverage"
-        +"([\n\t\s]+([\w ]+)\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\%){2,15}"
-    )
-    pattern2 = re.compile(""
-        +"[\t\s]+([\w ]+):?\s+([e+\-.0-9]+)\s+([e+\-<.0-9]+)\%"
-    )
-    
-    def __init__(self, log_file):
-        mkdir(SMILEI_LOGS)
-        self.log_file = log_file
-        self.data = {}
-    
-    def scan(self, output):
-        # Open file and find the pattern
-        with open(output, 'r') as f:
-            text = f.read()
-        found = re.search(self.pattern1, text)
-        if not found:
-            print("WARNING: Unable to log data from "+output)
-            return
-        lines = found.string[found.start():found.end()].split("\n")[1:]
-        matches = [re.search(self.pattern2, l).groups() for l in lines]
-        # Get timers values and add to current timers
-        for m in matches:
-            key = m[0].replace(" ", "")
-            if key == "Time_in_time_loop": key = "Timeintimeloop"
-            value = float(m[1])
-            if key in self.data:
-                self.data[key] += value
-            else:
-                self.data[key] = value
-    
-    def append(self):
-        if self.data:
-            # Append commit and date to current data
-            self.data["commit"] = gitversion
-            self.data["date"] = strftime("%Y_%m_%d_%H:%M:%S")
-            # Open previous database
-            try:
-                with open(self.log_file, 'r') as f:
-                    db = json.load(f)
-            except:
-                db = {}
-            maxlen = max([len(v) for v in db.values()] or [0])
-            # Update the database
-            for k,v in self.data.items():
-                if k in db:
-                    db[k] += [None]*(maxlen-len(db[k])) + [v]
-                else:
-                    db[k] = maxlen*[None] + [v]
-            # Overwrite the file
-            with open(self.log_file, 'w+') as f:
-                json.dump(db, f)
-
 # ---------------
 # Run benchmarks
 # ---------------
 
 _dataNotMatching = False
-for BENCH in SMILEI_BENCH_LIST :
-    
-    SMILEI_BENCH = SMILEI_BENCHS + BENCH
-    
+for BENCH in parameters['benchmarks'] :
+
+    SMILEI_BENCH = parameters['smilei_benchmark_path'] + BENCH
+
     # Create the workdir path
-    WORKDIR = WORKDIR_BASE+s+'wd_'+path.basename(path.splitext(BENCH)[0])
+    WORKDIR = parameters['workdir_base']+s+'wd_'+path.basename(path.splitext(BENCH)[0])
     mkdir(WORKDIR)
-    WORKDIR += s+str(MPI)
+    WORKDIR += s+str(options['mpi'])
     mkdir(WORKDIR)
-    WORKDIR += s+str(OMP)
+    WORKDIR += s+str(options['omp'])
     mkdir(WORKDIR)
-    
+
     # If there are restarts, prepare a Checkpoints block in the namelist
     RESTART_INFO = ""
-    if nb_restarts > 0:
+    if options['nb_restarts'] > 0:
         # Load the namelist
         namelist = happi.openNamelist(SMILEI_BENCH)
         niter = namelist.Main.simulation_time / namelist.Main.timestep
         # If the simulation does not have enough timesteps, change the number of restarts
-        if nb_restarts > niter - 4:
-            nb_restarts = max(0, niter - 4)
-            if VERBOSE :
-                print("Not enough timesteps for restarts. Changed to "+str(nb_restarts)+" restarts")
-    if nb_restarts > 0:
+        if options['nb_restarts'] > niter - 4:
+            options['nb_restarts'] = max(0, niter - 4)
+            if options['verbose'] :
+                print("Not enough timesteps for restarts. Changed to "+str(options['nb_restarts'])+" restarts")
+    if options['nb_restarts'] > 0:
         # Find out the optimal dump_step
-        dump_step = int( (niter+3.) / (nb_restarts+1) )
+        dump_step = int( (niter+3.) / (options['nb_restarts']+1) )
         # Prepare block
         if len(namelist.Checkpoints) > 0:
             RESTART_INFO = (" \""
-                + "Checkpoints.keep_n_dumps="+str(nb_restarts)+";"
+                + "Checkpoints.keep_n_dumps="+str(options['nb_restarts'])+";"
                 + "Checkpoints.dump_minutes=0.;"
                 + "Checkpoints.dump_step="+str(dump_step)+";"
                 + "Checkpoints.exit_after_dump=True;"
@@ -836,7 +623,7 @@ for BENCH in SMILEI_BENCH_LIST :
             )
         else:
             RESTART_INFO = (" \"Checkpoints("
-                + "keep_n_dumps="+str(nb_restarts)+","
+                + "keep_n_dumps="+str(options['nb_restarts'])+","
                 + "dump_minutes=0.,"
                 + "dump_step="+str(dump_step)+","
                 + "exit_after_dump=True,"
@@ -844,24 +631,24 @@ for BENCH in SMILEI_BENCH_LIST :
                 + ")\""
             )
         del namelist
-    
+
     # Prepare logging
-    if LOG:
-        log = Log(SMILEI_LOGS + BENCH + ".log")
-    
+    if options['log']:
+        log = Log(options['smilei_logs'], options['smilei_logs'] + BENCH + ".log")
+
     # Loop restarts
-    for irestart in range(nb_restarts+1):
-        
+    for irestart in range(options['nb_restarts']+1):
+
         RESTART_WORKDIR = WORKDIR + s + "restart%03d"%irestart
-        
-        EXECUTION = True
+
+        options['execution'] = True
         if not path.exists(RESTART_WORKDIR):
             os.mkdir(RESTART_WORKDIR)
-        elif GENERATE:
-            EXECUTION = False
-        
+        elif options['generate']:
+            options['execution'] = False
+
         os.chdir(RESTART_WORKDIR)
-        
+
         # Copy of the databases
         # For the cases that need a database
         # if BENCH in [
@@ -879,69 +666,69 @@ for BENCH in SMILEI_BENCH_LIST :
         #         # Copy the database
         #         check_call(['cp '+SMILEI_DATABASE+'/*.h5 '+RESTART_WORKDIR], shell=True)
         #     except CalledProcessError:
-        #         if VERBOSE :
+        #         if options['verbose'] :
         #             print(  "Execution failed to copy databases in ",RESTART_WORKDIR)
         #         sys.exit(2)
-        
+
         # If there are restarts, adds the Checkpoints block
         arguments = SMILEI_BENCH
-        if nb_restarts > 0:
+        if options['nb_restarts'] > 0:
             if irestart == 0:
                 RESTART_DIR = "None"
             else:
                 RESTART_DIR = "'"+WORKDIR+s+("restart%03d"%(irestart-1))+s+"'"
             arguments += RESTART_INFO % RESTART_DIR
-        
+
         # Run smilei
-        if EXECUTION:
-            if VERBOSE:
-                print('Running '+BENCH+' on '+HOSTNAME+' with '+str(OMP)+'x'+str(MPI)+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else ""))
-            RUN( RUN_COMMAND % arguments, RESTART_WORKDIR )
-        
+        if options['execution']:
+            if options['verbose']:
+                print('Running '+BENCH+' on '+HOSTNAME+' with '+str(options['omp'])+'x'+str(options['mpi'])+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else ""))
+            RUN( RUN_COMMAND % arguments, RESTART_WORKDIR, 'execution', options, parameters )
+
         # Check the output for errors
         errors = []
         search_error = re.compile('error', re.IGNORECASE)
-        with open(SMILEI_EXE_OUT,"r") as fout:
+        with open(parameters['output_file'],"r") as fout:
             errors = [line for line in fout if search_error.search(line)]
         if errors:
-            if VERBOSE:
+            if options['verbose']:
                 print("")
                 print("Errors appeared while running the simulation:")
                 print("---------------------------------------------")
                 for error in errors:
                     print(error)
             sys.exit(2)
-        
+
         # Scan some info for logging
-        if LOG:
-            log.scan(SMILEI_EXE_OUT)
-    
+        if options['log']:
+            log.scan(parameters['output_file'])
+
     # Append info in log file
-    if LOG:
-        log.append()
-    
+    if options['log']:
+        log.append(parameters['git_version'])
+
     os.chdir(WORKDIR)
-    
+
     # Find the validation script for this bench
-    validation_script = SMILEI_ANALYSES + "validate_" + BENCH
-    if VERBOSE: print("")
+    validation_script = parameters['smilei_analyse_path'] + "validate_" + BENCH
+    if options['verbose']: print("")
     if not path.exists(validation_script):
         print("Unable to find the validation script "+validation_script)
         sys.exit(1)
-    
-    # If required, generate the references
-    if GENERATE:
-        if VERBOSE:
+
+    # If required, options['generate'] the references
+    if options['generate']:
+        if options['verbose']:
             print( '----------------------------------------------------')
             print( 'Generating reference for '+BENCH)
             print( '----------------------------------------------------')
         Validate = CreateReference(BENCH)
         execfile(validation_script)
         Validate.write()
-    
+
     # Or plot differences with respect to existing references
-    elif SHOWDIFF:
-        if VERBOSE:
+    elif options['showdiff']:
+        if options['verbose']:
             print( '----------------------------------------------------')
             print( 'Viewing differences for '+BENCH)
             print( '----------------------------------------------------')
@@ -949,10 +736,10 @@ for BENCH in SMILEI_BENCH_LIST :
         execfile(validation_script)
         if _dataNotMatching:
             print("Benchmark "+BENCH+" did NOT pass")
-    
+
     # Otherwise, compare to the existing references
     else:
-        if VERBOSE:
+        if options['verbose']:
             print( '----------------------------------------------------')
             print( 'Validating '+BENCH)
             print( '----------------------------------------------------')
@@ -960,12 +747,12 @@ for BENCH in SMILEI_BENCH_LIST :
         execfile(validation_script)
         if _dataNotMatching:
             sys.exit(1)
-    
+
     # Clean workdirs, goes here only if succeeded
-    os.chdir(WORKDIR_BASE)
-    rmtree( WORKDIR_BASE+s+'wd_'+path.basename(path.splitext(BENCH)[0]), True )
-    
-    if VERBOSE: print( "")
+    os.chdir(parameters['workdir_base'])
+    rmtree( parameters['workdir_base']+s+'wd_'+path.basename(path.splitext(BENCH)[0]), True )
+
+    if options['verbose']: print( "")
 
 if _dataNotMatching:
     print( "Errors detected")
