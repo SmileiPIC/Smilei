@@ -430,7 +430,7 @@ void VectorPatch::dynamics( Params &params,
             if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
                 // Dynamics with vectorized operators
                 if( spec->vectorized_operators || params.cell_sorting ) {
-                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch])
+                    #pragma omp task default(shared) firstprivate(ipatch,ispec)
                     { // every call of dynamics for a couple ipatch-ispec is an independent task
                     Species *spec_task = species( ipatch, ispec );
                     int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
@@ -446,7 +446,7 @@ void VectorPatch::dynamics( Params &params,
                 // Dynamics with scalar operators
                 else {
                     if( params.vectorization_mode == "adaptive" ) {
-                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch])
+                        #pragma omp task default(shared) firstprivate(ipatch,ispec)
                         { // every call of dynamics for a couple ipatch-ispec is an independent task
                         Species *spec_task = species( ipatch, ispec );
                         int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
@@ -459,7 +459,7 @@ void VectorPatch::dynamics( Params &params,
                                                         localDiags, buffer_id );
                         } // end task
                     } else {
-                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch])
+                        #pragma omp task default(shared) firstprivate(ipatch,ispec)
                         { // every call of dynamics for a couple ipatch-ispec is an independent task
                         Species *spec_task = species( ipatch, ispec );
                         int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
