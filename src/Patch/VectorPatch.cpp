@@ -350,17 +350,13 @@ void VectorPatch::dynamics( Params &params,
     } // end ipatch
 
 #  ifdef _TASKTRACING
-    if (int(time_dual/params.timestep)%(smpi->iter_frequency_task_tracing_)){
-        smpi->reference_time = MPI_Wtime();
-        diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
-    }
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
+    if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
 #  endif
 
 #  ifdef _DEVELOPTRACING
-    if (int(time_dual/params.timestep)%(smpi->iter_frequency_task_tracing_)){
-        smpi->reference_time = MPI_Wtime();
-        diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
-    }
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
+    if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
 #  endif
 
 #ifndef _OMPTASKS
@@ -4566,7 +4562,8 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
    
     int has_done_ponderomotive_update_susceptibility_and_momentum[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
-
+    bool diag_TaskTracing;
+ 
 #ifdef _OMPTASKS  
     #pragma omp single
     {
@@ -4583,15 +4580,13 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 #endif
 
 #  ifdef _TASKTRACING
-    if (int(time_dual/params.timestep)%(smpi->iter_frequency_task_tracing_)){
-        smpi->reference_time = MPI_Wtime();
-    }
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
+    if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
 #  endif
 
 #  ifdef _DEVELOPTRACING
-    if (int(time_dual/params.timestep)%(smpi->iter_frequency_task_tracing_)){
-        smpi->reference_time = MPI_Wtime();
-    }
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
+    if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
 #  endif
 
 #ifdef _OMPTASKS   
@@ -4764,6 +4759,17 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     unsigned int Npatches = this->size();
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
     int has_done_ponderomotive_update_position_and_currents[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
+    bool diag_TaskTracing; 
+
+#  ifdef _TASKTRACING
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
+    if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
+#  endif
+
+#  ifdef _DEVELOPTRACING
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
+    if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
+#  endif
 
 #ifdef _OMPTASKS  
     #pragma omp single
@@ -4943,9 +4949,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     #pragma omp single
     {
     int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
-    if (iteration%(smpi->iter_frequency_task_tracing_)==0){
-        writeTaskTracingOutput(params, smpi, iteration);
-    } // end if it is an iteration to write tracing output   
+    if (diag_TaskTracing) writeTaskTracingOutput(params, smpi, iteration);  
     } // end single
     #  endif
 #endif
@@ -4954,9 +4958,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     #pragma omp single
     {
     int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
-    if (iteration%(smpi->iter_frequency_task_tracing_)==0){
-        writeTaskTracingOutput(params, smpi, iteration);
-    } // end if it is an iteration to write tracing output   
+    if (diag_TaskTracing) writeTaskTracingOutput(params, smpi, iteration);  
     } // end single
 #  endif
 
