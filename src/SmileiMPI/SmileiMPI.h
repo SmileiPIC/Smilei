@@ -311,6 +311,15 @@ public:
     int iter_frequency_task_tracing_;
     double reference_time;
 
+    // determine if "task" tracing is performed at this iteration
+    bool diagTaskTracing(double time_dual, double timestep ){
+        bool diagTracing = false;
+        if (int((time_dual-0.5*timestep)/timestep)%(iter_frequency_task_tracing_)==0){
+            diagTracing = true;
+        }
+        return diagTracing;
+    }
+    // trace event or "task"
     void trace_event(int thread, double event_time,unsigned int event_start_or_end, int event_name)
     {
         task_tracing_event_time_[thread].push_back(event_time);           // write time

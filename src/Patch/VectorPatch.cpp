@@ -329,7 +329,8 @@ void VectorPatch::dynamics( Params &params,
 
     unsigned int Npatches = this->size();
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
-   
+    bool diag_TaskTracing;
+
     int has_done_dynamics[Npatches];  // dependency array for the Species dynamics tasks
     double reference_time;
 #ifdef _OMPTASKS  
@@ -351,12 +352,14 @@ void VectorPatch::dynamics( Params &params,
 #  ifdef _TASKTRACING
     if (int(time_dual/params.timestep)%(smpi->iter_frequency_task_tracing_)){
         smpi->reference_time = MPI_Wtime();
+        diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
     }
 #  endif
 
 #  ifdef _DEVELOPTRACING
     if (int(time_dual/params.timestep)%(smpi->iter_frequency_task_tracing_)){
         smpi->reference_time = MPI_Wtime();
+        diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
     }
 #  endif
 
@@ -488,9 +491,7 @@ void VectorPatch::dynamics( Params &params,
         double timer = MPI_Wtime();
 #endif
         #  ifdef _TASKTRACING
-        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-            smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
-        }
+        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
         #  endif
             
         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
@@ -518,9 +519,7 @@ void VectorPatch::dynamics( Params &params,
             } // end if (isProj or diag_flag) & (!ponderomotive dynamics)
         } // end species loop
         #  ifdef _TASKTRACING
-        if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-            smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
-        }
+        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
         #  endif
 #ifdef  __DETAILED_TIMERS
         ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -539,18 +538,14 @@ void VectorPatch::dynamics( Params &params,
             double timer = MPI_Wtime();
     #endif
             #  ifdef _TASKTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,8);
-            }
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,8);
             #  endif
 
             Species *spec_task = species( ipatch, ispec );
             spec_task->Ionize->joinNewElectrons(species( ipatch, ispec )->Nbins);
 
             #  ifdef _TASKTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,8);
-            }
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,8);
             #  endif
 
     #ifdef  __DETAILED_TIMERS
@@ -569,18 +564,14 @@ void VectorPatch::dynamics( Params &params,
             double timer = MPI_Wtime();
 #endif
             #  ifdef _TASKTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,9);
-            }
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,9);
             #  endif
 
             Species *spec_task = species( ipatch, ispec );
             spec_task->Radiate->joinNewPhotons(spec_task->Nbins);
 
             #  ifdef _TASKTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,9);
-            }
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,9);
             #  endif
 #ifdef  __DETAILED_TIMERS
             ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -597,16 +588,12 @@ void VectorPatch::dynamics( Params &params,
             double timer = MPI_Wtime();
 #endif
             #  ifdef _TASKTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,10);
-            }
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,10);
             #  endif
             Species *spec_task = species( ipatch, ispec );
             spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(spec_task->Nbins);
             #  ifdef _TASKTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,10);
-            }
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,10);
             #  endif
 #ifdef  __DETAILED_TIMERS
             ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -617,10 +604,8 @@ void VectorPatch::dynamics( Params &params,
         if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
             #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
             {
-            #  ifdef _TASKTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
-            }
+            #  ifdef _TASKTRACING               
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
             #  endif
             Species *spec_task = species( ipatch, ispec );
             for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
@@ -631,16 +616,17 @@ void VectorPatch::dynamics( Params &params,
                     }
                     } // end iPart loop
                 } // end cells loop
-            #  ifdef _TASKTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
-            }
+            #  ifdef _TASKTRACING                          
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
             #  endif
             } // end task on array count
         } else {
         if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
             #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
             {
+            #  ifdef _TASKTRACING                
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
+            #  endif
             Species *spec_task = species( ipatch, ispec );
             for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
                 for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
@@ -651,10 +637,8 @@ void VectorPatch::dynamics( Params &params,
                 } // end iPart loop
             } // end cells loop
             } // end task on array count
-            #  ifdef _TASKTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
-            }
+            #  ifdef _TASKTRACING                
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
             #  endif
             } // end if vectorization is adaptive
         }// end if on vectorized operators
@@ -787,9 +771,7 @@ void VectorPatch::dynamics( Params &params,
         #pragma omp single
         {
         int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
-        if (iteration%(smpi->iter_frequency_task_tracing_)==0){
-            writeTaskTracingOutput(params, smpi, iteration);
-        } // end if it is an iteration to write tracing output   
+        if(diag_TaskTracing) writeTaskTracingOutput(params, smpi, iteration);
         } // end single
         } // end if Laser envelope model
     #  endif
