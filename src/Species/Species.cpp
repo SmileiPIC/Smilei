@@ -491,7 +491,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     unsigned int iPart;
 
     std::vector<double> nrj_lost_per_thd( 1, 0. );
+    bool diag_TaskTracing;
 
+# ifdef _DEVELOPTRACING
+    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
+# endif
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
@@ -503,10 +507,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-            #  ifdef _DEVELOPTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,0);
-            }
+            #  ifdef _DEVELOPTRACING                          
+            if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,0);
             #  endif
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -515,10 +517,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             // Interpolate the fields at the particle position
             Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ibin] ), &( particles->last_index[ibin] ), ithread );
             #  ifdef _DEVELOPTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,0);
-            }
-        #  endif 
+            if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,0);
+            #  endif 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[0] += MPI_Wtime() - timer;
 #endif
@@ -529,16 +529,12 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
-                #  ifdef _DEVELOPTRACING
-                if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-                    smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,5);
-                }
+                #  ifdef _DEVELOPTRACING                      
+                if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,5);
                 #  endif
                 ( *Ionize )( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, patch, Proj );
-                #  ifdef _DEVELOPTRACING
-                if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-                    smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,5);
-                }
+                #  ifdef _DEVELOPTRACING                        
+                if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,5);
                 #  endif
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[4] += MPI_Wtime() - timer;
@@ -553,10 +549,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
-                #  ifdef _DEVELOPTRACING
-                if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-                    smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,6);
-                }
+                #  ifdef _DEVELOPTRACING                       
+                if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,6);
                 #  endif
                 // Radiation process
                 ( *Radiate )( *particles, photon_species_, smpi,
@@ -564,10 +558,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                               radiated_energy_,
                               particles->first_index[ibin],
                               particles->last_index[ibin], ithread );
-                #  ifdef _DEVELOPTRACING
-                if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-                    smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,6);
-                }
+                #  ifdef _DEVELOPTRACING                         
+                if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,6);
                 #  endif
                 // Update scalar variable for diagnostics
                 // radiated_energy_ += Radiate->getRadiatedEnergy();
@@ -592,10 +584,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
-                #  ifdef _DEVELOPTRACING
-                if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-                    smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,7);
-                }
+                #  ifdef _DEVELOPTRACING                   
+                if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,7);
                 #  endif
                 // Pair generation process
                 // We reuse radiated_energy_ for the pairs
@@ -616,10 +606,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 // Suppression of the decayed photons into pairs
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                     *particles, smpi, ibin, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
-                #  ifdef _DEVELOPTRACING
-                if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){                          
-                    smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,7);
-                }
+                #  ifdef _DEVELOPTRACING                         
+                if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,7);
                 #  endif
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[6] += MPI_Wtime() - timer;
@@ -631,17 +619,13 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             timer = MPI_Wtime();
 #endif
             #  ifdef _DEVELOPTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,1);
-            }
+            if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,1);
             #  endif
             // Push the particles and the photons
             ( *Push )( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread );
             //particles->testMove( particles->first_index[ibin], particles->last_index[ibin], params );
             #  ifdef _DEVELOPTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,1);
-            }
+            if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,1);
             #  endif
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[1] += MPI_Wtime() - timer;
@@ -657,9 +641,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
                 #  ifdef _DEVELOPTRACING
-                if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,2);
-                }
+                if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,2);
                 #  endif
                 // Apply wall and boundary conditions
                 if( mass_>0 ) {
@@ -689,9 +671,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
                 }
                 #  ifdef _DEVELOPTRACING
-                if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,2);
-                }
+                if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,2);
                 #  endif
 
 #ifdef  __DETAILED_TIMERS
@@ -704,9 +684,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
                 #  ifdef _DEVELOPTRACING
-                if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,3);
-                }
+                if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,3);
                 #  endif
                 // Project currents if not a Test species and charges as well if a diag is needed.
                 // Do not project if a photon
@@ -714,9 +692,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                     Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
                 }
                 #  ifdef _DEVELOPTRACING
-                if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                    smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
-                }
+                if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
                 #  endif
 
 #ifdef  __DETAILED_TIMERS
@@ -739,9 +715,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
         if( params.geometry != "AMcylindrical" ) {
             #  ifdef _DEVELOPTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,3);
-            }
+            if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,3);
             #  endif
             double *b_rho=nullptr;
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
@@ -751,9 +725,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 }
             }
             #  ifdef _DEVELOPTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
-            }
+            if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
             #  endif
         } else {
             int n_species = patch->vecSpecies.size();
@@ -774,9 +746,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 }
             }
             #  ifdef _DEVELOPTRACING
-            if (int((time_dual-0.5*params.timestep)/params.timestep)%(smpi->iter_frequency_task_tracing_)==0){
-                smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
-            }
+            if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
             #  endif
         }
     } // End projection for frozen particles
