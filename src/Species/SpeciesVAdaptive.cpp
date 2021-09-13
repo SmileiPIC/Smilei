@@ -83,7 +83,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 
     bool diag_TaskTracing;
 
-# ifdef _DEVELOPTRACING
+# ifdef _PARTEVENTTRACING
     diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
 # endif
 
@@ -113,12 +113,12 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
         timer = MPI_Wtime();
 #endif
 
-        #  ifdef _DEVELOPTRACING                  
+        #  ifdef _PARTEVENTTRACING                  
         if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,0);
         #  endif
         // Interpolate the fields at the particle position
         Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[0] ), &( particles->last_index[particles->last_index.size()-1] ), ithread, particles->first_index[0] );
-        #  ifdef _DEVELOPTRACING                  
+        #  ifdef _PARTEVENTTRACING                  
         if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,0);
         #  endif
 #ifdef  __DETAILED_TIMERS
@@ -130,7 +130,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             // Interpolate the fields at the particle position
             //for (unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++)
             //    (*Interp)(EMfields, *particles, smpi, &(particles->first_index[scell]), &(particles->last_index[scell]), ithread );
-            #  ifdef _DEVELOPTRACING                      
+            #  ifdef _PARTEVENTTRACING                      
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,5);
             #  endif
             for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
@@ -145,7 +145,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #endif
             
             }
-            #  ifdef _DEVELOPTRACING                  
+            #  ifdef _PARTEVENTTRACING                  
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,5);
             #  endif
         }
@@ -155,7 +155,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
         
             // Radiation losses
             if( Radiate ) {
-                #  ifdef _DEVELOPTRACING                   
+                #  ifdef _PARTEVENTTRACING                   
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,6);
                 #  endif
                 for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
@@ -182,14 +182,14 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #endif
             
             }
-            #  ifdef _DEVELOPTRACING
+            #  ifdef _PARTEVENTTRACING
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,6);
             #  endif
         } // end if Radiate
 
         // Multiphoton Breit-Wheeler
         if( Multiphoton_Breit_Wheeler_process ) {
-            #  ifdef _DEVELOPTRACING                     
+            #  ifdef _PARTEVENTTRACING                     
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,7);
             #  endif
             for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
@@ -221,7 +221,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #endif
             }
         
-            #  ifdef _DEVELOPTRACING                 
+            #  ifdef _PARTEVENTTRACING                 
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,7);
             #  endif
         } // end if Multiphoton Breit Wheeler
@@ -229,12 +229,12 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            #  ifdef _DEVELOPTRACING                          
+            #  ifdef _PARTEVENTTRACING                          
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,1);
             #  endif
             // Push the particles and the photons
             ( *Push )( *particles, smpi, 0, particles->last_index.back(), ithread, 0. );
-            #  ifdef _DEVELOPTRACING                       
+            #  ifdef _PARTEVENTTRACING                       
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,1);
             #  endif
 #ifdef  __DETAILED_TIMERS
@@ -242,7 +242,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             timer = MPI_Wtime();
 #endif
 
-            #  ifdef _DEVELOPTRACING                       
+            #  ifdef _PARTEVENTTRACING                       
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,2);
             #  endif
             for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
@@ -272,11 +272,11 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 } // end if mass_ > 0
             } // end loop on cells
 
-            #  ifdef _DEVELOPTRACING                       
+            #  ifdef _PARTEVENTTRACING                       
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,2);
             #  endif
 
-            #  ifdef _DEVELOPTRACING                      
+            #  ifdef _PARTEVENTTRACING                      
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
             #  endif
             for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
@@ -312,7 +312,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 } // end if mass_ > 0
             } // end loop on cells
 
-            #  ifdef _DEVELOPTRACING                          
+            #  ifdef _PARTEVENTTRACING                          
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
             #  endif
 #ifdef  __DETAILED_TIMERS
@@ -326,7 +326,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
-                #  ifdef _DEVELOPTRACING                       
+                #  ifdef _PARTEVENTTRACING                       
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,3);
                 #  endif
                 Proj->currentsAndDensityWrapper(
@@ -337,7 +337,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                     params.is_spectral,
                     ispec
             );
-                #  ifdef _DEVELOPTRACING                         
+                #  ifdef _PARTEVENTTRACING                         
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
                 #  endif
 #ifdef  __DETAILED_TIMERS
@@ -356,7 +356,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
     if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
 
         double *b_rho=nullptr;
-        #  ifdef _DEVELOPTRACING                
+        #  ifdef _PARTEVENTTRACING                
         if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,3);
         #  endif
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
@@ -366,7 +366,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 Proj->basic( b_rho, ( *particles ), iPart, 0 );
             }
         }
-        #  ifdef _DEVELOPTRACING                         
+        #  ifdef _PARTEVENTTRACING                         
         if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
         #  endif
     }
@@ -394,7 +394,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
 
     bool diag_TaskTracing;
 
-# ifdef _TASKTRACING
+# ifdef _PARTEVENTTRACING
     diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
 # endif
 
@@ -503,7 +503,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
             timer = MPI_Wtime();
 #endif
 
-            #  ifdef _TASKTRACING
+            #  ifdef _PARTEVENTTRACING
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,0);
             #  endif
 
@@ -513,7 +513,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                                    &( particles->last_index[last_cell_of_bin[ibin]] ),
                                    buffer_id, particles->first_index[0] );
             
-            #  ifdef _TASKTRACING                          
+            #  ifdef _PARTEVENTTRACING                          
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,0);
             #  endif
 
@@ -558,11 +558,11 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 //     Ionize->ionizationTunnelWithTasks( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj, ibin, ibin*clrw, bJx, bJy, bJz );
                 // } // end cell loop for Interpolator
 
-                #  ifdef _TASKTRACING                 
+                #  ifdef _PARTEVENTTRACING                 
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,5);
                 #  endif
                 Ionize->ionizationTunnelWithTasks( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, patch, Proj, ibin, ibin*clrw, bJx, bJy, bJz );
-                #  ifdef _TASKTRACING                      
+                #  ifdef _PARTEVENTTRACING                      
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,5);
                 #  endif
 
@@ -605,7 +605,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                  //                   particles->last_index[scell], buffer_id, ibin );
                  // }
 
-                 #  ifdef _TASKTRACING                         
+                 #  ifdef _PARTEVENTTRACING                         
                  if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,6);
                  #  endif
                  // Radiation process
@@ -614,7 +614,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                                radiated_energy_per_bin[ibin],
                                particles->first_index[first_cell_of_bin[ibin]],
                                particles->last_index[last_cell_of_bin[ibin]], buffer_id, ibin );
-                 #  ifdef _TASKTRACING                     
+                 #  ifdef _PARTEVENTTRACING                     
                  if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,6);
                  #  endif
                  // Update scalar variable for diagnostics
@@ -649,7 +649,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 ithread = omp_get_thread_num();
                 timer = MPI_Wtime();
 #endif
-                #  ifdef _TASKTRACING                        
+                #  ifdef _PARTEVENTTRACING                        
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,7);
                 #  endif
                 // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
@@ -671,7 +671,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                                                                          buffer_id );
 
                 // } // end scell    
-                #  ifdef _TASKTRACING                          
+                #  ifdef _PARTEVENTTRACING                          
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,7);
                 #  endif
 #ifdef  __DETAILED_TIMERS
@@ -690,7 +690,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
             ithread = omp_get_thread_num();
             timer = MPI_Wtime();
 #endif
-            #  ifdef _TASKTRACING                          
+            #  ifdef _PARTEVENTTRACING                          
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,7);
             #  endif
             // clean decayed photons from arrays 
@@ -699,7 +699,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                     *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], buffer_id );
             } // end scell              
-            #  ifdef _TASKTRACING                         
+            #  ifdef _PARTEVENTTRACING                         
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,7);
             #  endif
 
@@ -727,7 +727,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
             ithread = omp_get_thread_num();
             timer = MPI_Wtime();
 #endif
-            #  ifdef _TASKTRACING                
+            #  ifdef _PARTEVENTTRACING                
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,1);
             #  endif
             // Push the particles and the photons
@@ -735,7 +735,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                         particles->last_index[last_cell_of_bin[ibin]],
                         buffer_id, particles->first_index[0] );
 
-            #  ifdef _TASKTRACING                         
+            #  ifdef _PARTEVENTTRACING                         
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,1);
             #  endif
 #ifdef  __DETAILED_TIMERS
@@ -764,7 +764,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
             length[1]=params.n_space[1]+1;
             length[2]=params.n_space[2]+1;
 
-            #  ifdef _TASKTRACING                          
+            #  ifdef _PARTEVENTTRACING                          
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,2);
             #  endif
             for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
@@ -799,11 +799,11 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 } // end if condition on mass                
                 
             } // end scell loop
-            #  ifdef _TASKTRACING                         
+            #  ifdef _PARTEVENTTRACING                         
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,2);
             #  endif
 
-            #  ifdef _TASKTRACING                          
+            #  ifdef _PARTEVENTTRACING                          
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
             #  endif
             for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
@@ -839,7 +839,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 } // end if condition on mass                
                 
             } // end scell loop
-            #  ifdef _TASKTRACING                       
+            #  ifdef _PARTEVENTTRACING                       
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
             #  endif
 #ifdef  __DETAILED_TIMERS
@@ -863,7 +863,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
             timer = MPI_Wtime();
 #endif
 
-            #  ifdef _TASKTRACING                         
+            #  ifdef _PARTEVENTTRACING                         
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,3);
             #  endif
             // Project currents if not a Test species and charges as well if a diag is needed.
@@ -885,7 +885,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 } // end if AM
             } // end condition on test and mass
 
-            #  ifdef _TASKTRACING     
+            #  ifdef _PARTEVENTTRACING     
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
             #  endif
 #ifdef  __DETAILED_TIMERS
@@ -938,7 +938,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_ionized[ibin]) 
 #endif
                 {
-                #  ifdef _TASKTRACING                          
+                #  ifdef _PARTEVENTTRACING                          
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,3);
                 #  endif
                 for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
@@ -950,7 +950,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
                     Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
                 }
-                #  ifdef _TASKTRACING                       
+                #  ifdef _PARTEVENTTRACING                       
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
                 #  endif
 #ifdef  __DETAILED_TIMERS
@@ -967,7 +967,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 #pragma omp task default(shared) firstprivate(ibin,bin_size0) 
 #endif
                 {
-                #  ifdef _TASKTRACING                        
+                #  ifdef _PARTEVENTTRACING                        
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,3);
                 #  endif
                 for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
@@ -978,7 +978,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
                     Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
                 }
-                #  ifdef _TASKTRACING                 
+                #  ifdef _PARTEVENTTRACING                 
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
                 #  endif
 #ifdef  __DETAILED_TIMERS

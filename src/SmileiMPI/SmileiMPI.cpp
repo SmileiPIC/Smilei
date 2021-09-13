@@ -219,7 +219,7 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
         }
     }
 
-#ifdef _TASKTRACING
+#ifdef _PARTEVENTTRACING
     iter_frequency_task_tracing_ = 10;
     int nthreads = omp_get_max_threads();
     task_tracing_event_time_.resize(nthreads);
@@ -227,8 +227,8 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
     task_tracing_event_name_.resize(nthreads);
     for (unsigned int ithread = 0; ithread<nthreads; ithread++){
         task_tracing_event_time_[ithread].resize(0);          // stores time
-        task_tracing_start_or_end_[ithread].resize(0);   // stores start (0) or end (1)
-        task_tracing_event_name_[ithread].resize(0);      // stores task type
+        task_tracing_start_or_end_[ithread].resize(0);        // stores start (0) or end (1)
+        task_tracing_event_name_[ithread].resize(0);          // stores task type
         // task types:
         // -  0: Interp 
         // -  1: Push
@@ -245,19 +245,6 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
     }
 #endif
 
-#ifdef _DEVELOPTRACING
-    iter_frequency_task_tracing_ = 10;
-    int nthreads = omp_get_max_threads();
-    //task_tracing_ = new std::string[nthreads];
-    task_tracing_event_time_.resize(nthreads);
-    task_tracing_start_or_end_.resize(nthreads);
-    task_tracing_event_name_.resize(nthreads);
-    for (unsigned int ithread = 0; ithread<nthreads; ithread++){
-        task_tracing_event_time_[ithread].resize(0);
-        task_tracing_start_or_end_[ithread].resize(0);
-        task_tracing_event_name_[ithread].resize(0);
-    }
-#endif
 } // END init
 
 

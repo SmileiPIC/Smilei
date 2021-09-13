@@ -183,11 +183,11 @@ endif
 
 ifneq (,$(call parse_config,tasktracing))
     CXXFLAGS += -D_OMPTASKS
-    CXXFLAGS += -D_TASKTRACING
+    CXXFLAGS += -D_PARTEVENTTRACING
 endif
 
 ifneq (,$(call parse_config,developtracing))
-    CXXFLAGS += -D_DEVELOPTRACING
+    CXXFLAGS += -D_PARTEVENTTRACING
 endif
 
 CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
