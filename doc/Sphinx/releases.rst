@@ -20,15 +20,18 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present 
 * Lasers can be injected from all boundaries
 * Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
 * Probes can be time-integrated
 * ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
 * Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
 * ``LaserOffset`` may be re-used from a previous simulation
+* ``LaserOffset`` available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
 * Bugfixes:
 
   * Poynting scalars behaviour with several patches, or with checkpoints
+  * Densities too low are put to 0 to avoid underflow
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 

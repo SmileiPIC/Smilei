@@ -54,7 +54,6 @@ Species(
     momentum_initialization = "cold",
     particles_per_cell = 1,
     c_part_max = 1.0,
-    ponderomotive_dynamics = True, # = this species interacts with laser envelope
     mass = 1.0,
     charge = -1.0,
     charge_density = polygonal(xpoints=[center_laser+2.*laser_fwhm,center_laser+2.1*laser_fwhm,15000,20000],xvalues=[0.,0.0045,0.0045,0.]),

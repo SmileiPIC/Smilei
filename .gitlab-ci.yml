@@ -87,7 +87,7 @@ runAM:
   stage: run_default
   only:
     - develop
-    - pusher_cleaning
+    - validation_update
 
   script:
     # Move in test dir
@@ -110,7 +110,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - pusher_cleaning
+    - validation_update
 
   script:
     # Move in test dir
@@ -122,7 +122,7 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-    - pusher_cleaning
+    - validation_update
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -133,7 +133,7 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-    - pusher_cleaning
+    - validation_update
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -143,7 +143,7 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-    - pusher_cleaning
+    - validation_update
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -165,7 +165,7 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-    - pusher_cleaning
+    - validation_update
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

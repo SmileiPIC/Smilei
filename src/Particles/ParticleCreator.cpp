@@ -235,6 +235,11 @@ int ParticleCreator::create( struct SubSpace sub_space,
                         }
                     }
                     
+                    // No particles if density too low
+                    if( abs( density( i, j, k ) ) < 1e-200 ) {
+                        density( i, j, k ) = 0.;
+                    }
+                    
                     // If zero or less, zero particles
                     if( n_part_in_cell( i, j, k )<=0. || density( i, j, k )==0. ) {
                         n_part_in_cell( i, j, k ) = 0.;
@@ -304,7 +309,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
             for( unsigned int j=0; j<sub_space.box_size_[1]; j++ ) {
                 for( unsigned int k=0; k<sub_space.box_size_[2]; k++ ) {
                     // initialize particles in meshes where the density is non-zero
-                    if( density( i, j, k )>0 ) {
+                    if( density( i, j, k ) > 0. ) {
                         unsigned int nPart = n_part_in_cell( i, j, k );
                         
                         indexes[0]=i*species_->cell_length[0]+cell_position[0] + sub_space.cell_index_[0]*species_->cell_length[0];
