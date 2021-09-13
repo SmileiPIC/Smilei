@@ -102,7 +102,7 @@ LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_
         L[idim] = N[idim] * params->cell_length[j];
         o[idim] = params->oversize[j] * params->cell_length[j];
     }
-    ox = params->oversize[0] * params->cell_length[0];
+    ox = params->oversize[side] * params->cell_length[side];
     
     // Set the grid temporal dimension
     N[ndim-1] = ( int )( fft_time_window / params->timestep );
@@ -189,7 +189,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     }
     Py_DECREF( meshgrid );
     Py_DECREF( m );
-
+    
     // Apply each profile
     vector<PyObject *> arrays( nprofiles );
     for( unsigned int i=0; i<nprofiles; i++ ) {
@@ -541,7 +541,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         Py_DECREF( arrays[i] );
     }
     
-    MESSAGE( 3, "Finished calculating magnitde and phase ... " << MPI_Wtime() - timer << " s" );
+    MESSAGE( 3, "Finished calculating magnitude and phase ... " << MPI_Wtime() - timer << " s" );
     timer = MPI_Wtime();
     
     // 7- Store all info in HDF5 file
