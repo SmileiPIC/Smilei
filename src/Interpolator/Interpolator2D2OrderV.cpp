@@ -242,53 +242,86 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                 UNROLL_S(3)
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res += coeffxp2[iloc*32] * coeffyp2[jloc*32] * field_buffer[1+iloc][1+jloc];
+                    interp_res += coeffxp2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * field_buffer[1+iloc][1+jloc];
                 }
             }
             Epart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+        }
 
+        //Bx(primal, dual)
+
+        // Field buffers for vectorization (required on A64FX)
+        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                field_buffer[iloc+1][jloc+1] = ( *Bx2D )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+            }
         }
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-            double *coeffyp = &( coeff[1][0][1][ipart] );
-            double *coeffyd = &( coeff[1][1][1][ipart] );
-            double *coeffxd = &( coeff[0][1][1][ipart] );
-            double *coeffxp = &( coeff[0][0][1][ipart] );
-
-            //Bx(primal, dual)
             interp_res = 0.;
+            UNROLL_S(3)
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                UNROLL_S(3)
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res += *( coeffxp+iloc*32 ) * *( coeffyd+jloc*32 ) *
-                                  ( ( ( 1-dual[1][ipart] )*( *Bx2D )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[1][ipart]*( *Bx2D )( idxO[0]+1+iloc, idxO[1]+2+jloc ) ) );
+                    interp_res += coeffxp2[ipart+iloc*32] * coeffyd2[ipart+jloc*32] *
+                                  ( ( ( 1-dual[1][ipart] )*field_buffer[1+iloc][1+jloc] +
+                                  dual[1][ipart]*field_buffer[idxO[0]+1+iloc][idxO[1]+2+jloc] ) );
                 }
             }
             Bpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+        }
 
-            //By(dual, primal )
+        //By(dual, primal )
+
+        // Field buffers for vectorization (required on A64FX)
+        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                field_buffer[iloc+1][jloc+1] = ( *By2D )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+            }
+        }
+
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
             interp_res = 0.;
+            UNROLL_S(3)
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                UNROLL_S(3)
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res += *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) *
-                                  ( ( ( 1-dual[0][ipart] )*( *By2D )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *By2D )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) );
+                    interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] *
+                                  ( ( ( 1-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] +
+                                  dual[0][ipart]*field_buffer[idxO[0]+2+iloc][idxO[1]+1+jloc] ) );
                 }
             }
-            Bpart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+            Bpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+        }
 
-            //Bz(dual, dual)
+        //Bz(dual, dual)
+
+        // Field buffers for vectorization (required on A64FX)
+        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                field_buffer[iloc+1][jloc+1] = ( *Bz2D )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+            }
+        }
+
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
             interp_res = 0.;
+            UNROLL_S(3)
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                UNROLL_S(3)
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res += *( coeffxd+iloc*32 ) * *( coeffyd+jloc*32 ) *
-                                  ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*( *Bz2D )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *Bz2D )( idxO[0]+2+iloc, idxO[1]+1+jloc ) )
-                                    +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*( *Bz2D )( idxO[0]+1+iloc, idxO[1]+2+jloc ) + dual[0][ipart]*( *Bz2D )( idxO[0]+2+iloc, idxO[1]+2+jloc ) ) );
+                    interp_res += coeffxd2[ipart+iloc*32] * coeffyd2[ipart+jloc*32] *
+                                  ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] + dual[0][ipart]*field_buffer[2+iloc][1+jloc] )
+                                    +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*field_buffer[1+iloc][2+jloc] + dual[0][ipart]*field_buffer[2+iloc][2+jloc] ) );
                 }
             }
             Bpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-
-        }
+        } // end ipart
     }
 
 } // END Interpolator2D2OrderV
