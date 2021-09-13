@@ -4568,11 +4568,6 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
     if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
 #  endif
 
-#  ifdef _PARTEVENTTRACING
-    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
-    if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
-#  endif
-
 #ifdef _OMPTASKS   
     #pragma omp for schedule(runtime) 
     //#pragma omp single // one thread generates dynamics tasks. Use omp for to make multiple thread generate dynamics tasks
@@ -4744,11 +4739,6 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
     int has_done_ponderomotive_update_position_and_currents[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
     bool diag_TaskTracing; 
-
-#  ifdef _PARTEVENTTRACING
-    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
-    if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
-#  endif
 
 #  ifdef _PARTEVENTTRACING
     diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
@@ -4927,24 +4917,16 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 // #endif
 
 // Write Task tracing output files
-#ifdef _OMPTASKS
+#ifdef _PARTEVENTTRACING
+    #ifdef _OMPTASKS
     #pragma omp taskwait
-    #  ifdef _PARTEVENTTRACING
+    #endif
     #pragma omp single
     {
     int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
     if (diag_TaskTracing) writeTaskTracingOutput(params, smpi, iteration);  
     } // end single
-    #  endif
 #endif
-
-#  ifdef _PARTEVENTTRACING
-    #pragma omp single
-    {
-    int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
-    if (diag_TaskTracing) writeTaskTracingOutput(params, smpi, iteration);  
-    } // end single
-#  endif
 
     timers.particles.update( params.printNow( itime ) );
 #ifdef __DETAILED_TIMERS
