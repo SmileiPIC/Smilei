@@ -240,6 +240,10 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
         double coeffxp_loc[3];
         double coeffxd_loc[3];
+        double coeffyp_loc[3];
+        double coeffyd_loc[3];
+        double coeffzp_loc[3];
+        double coeffzd_loc[3];
 
         #pragma omp simd private(interp_res, coeffxp_loc, coeffxd_loc)
         for ( int ipart=0 ; ipart<np_computed; ipart++ ) {
@@ -248,19 +252,23 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                 coeffxp_loc[iloc+1] = coeffxp[ipart+iloc*32];
                 coeffxd_loc[iloc+1] = coeffxd[ipart+iloc*32];
+                coeffyp_loc[iloc+1] = coeffyp[ipart+iloc*32];
+                coeffyd_loc[iloc+1] = coeffyd[ipart+iloc*32];
+                coeffzp_loc[iloc+1] = coeffzp[ipart+iloc*32];
+                coeffzd_loc[iloc+1] = coeffzd[ipart+iloc*32];
             }
 
             //Ex(dual, primal, primal)
             interp_res = 0.;
             UNROLL_S(3)
-            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int iloc=0 ; iloc<3 ; iloc++ ) {
                 UNROLL_S(3)
-                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                for( int jloc=0 ; jloc<3 ; jloc++ ) {
                     UNROLL_S(3)
-                    for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                         interp_res += coeffxd_loc[iloc+1] * coeffyp[ipart+jloc*32]  * coeffzp[ipart+kloc*32] *
-                                       ( ( 1-dual[0][ipart] )*Exb[iloc+1][jloc+1][kloc+1] +
-                                       dual[0][ipart]*Exb[iloc+2][jloc+1][kloc+1] );
+                    for( int kloc=0 ; kloc<3 ; kloc++ ) {
+                         interp_res += coeffxd_loc[iloc] * coeffyp_loc[jloc]  * coeffzp_loc[kloc] *
+                                       ( ( 1-dual[0][ipart] )*Exb[iloc][jloc][kloc] +
+                                       dual[0][ipart]*Exb[iloc+1][jloc][kloc] );
 
                     }
                 }
@@ -271,14 +279,14 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             //Ey(primal, dual, primal)
             interp_res = 0.;
             UNROLL_S(3)
-            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int iloc=0 ; iloc<3 ; iloc++ ) {
                 UNROLL_S(3)
-                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                for( int jloc=0 ; jloc<3 ; jloc++ ) {
                     UNROLL_S(3)
-                    for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                        interp_res += coeffxp_loc[iloc+1] * coeffyd[ipart+jloc*32] * coeffzp[ipart+kloc*32] *
-                                    ( ( 1-dual[1][ipart] )*Eyb[iloc+1][jloc+1][kloc+1] +
-                                    dual[1][ipart]*Eyb[iloc+1][jloc+2][kloc+1] );
+                    for( int kloc=0 ; kloc<3 ; kloc++ ) {
+                        interp_res += coeffxp_loc[iloc] * coeffyd_loc[jloc] * coeffzp_loc[kloc] *
+                                    ( ( 1-dual[1][ipart] )*Eyb[iloc][jloc][kloc] +
+                                    dual[1][ipart]*Eyb[iloc][jloc+1][kloc] );
                     }
                 }
             }
@@ -288,14 +296,14 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             //Ez(primal, primal, dual)
             interp_res = 0.;
             UNROLL_S(3)
-            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int iloc=0 ; iloc<3 ; iloc++ ) {
                 UNROLL_S(3)
-                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                for( int jloc=0 ; jloc<3 ; jloc++ ) {
                     UNROLL_S(3)
-                    for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                        interp_res += coeffxp_loc[iloc+1] * coeffyp[ipart+jloc*32] * coeffzd[ipart+kloc*32] *
-                                    ( ( 1-dual[2][ipart] )*Ezb[iloc+1][jloc+1][kloc+1] +
-                                    dual[2][ipart]*Ezb[iloc+1][jloc+1][kloc+2] );
+                    for( int kloc=0 ; kloc<3 ; kloc++ ) {
+                        interp_res += coeffxp_loc[iloc] * coeffyp_loc[jloc] * coeffzd_loc[kloc] *
+                                    ( ( 1-dual[2][ipart] )*Ezb[iloc][jloc][kloc] +
+                                    dual[2][ipart]*Ezb[iloc][jloc][kloc+1] );
 
                     }
                 }
