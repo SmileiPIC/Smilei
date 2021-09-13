@@ -350,8 +350,10 @@ void VectorPatch::dynamics( Params &params,
     } // end ipatch
 
 #  ifdef _PARTEVENTTRACING
-    diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
-    if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
+    if( !params.Laser_Envelope_model ) {
+        diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
+        if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
+    }
 #  endif
 
 #ifndef _OMPTASKS
@@ -4742,7 +4744,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 
 #  ifdef _PARTEVENTTRACING
     diag_TaskTracing = smpi->diagTaskTracing( time_dual, params.timestep);
-    if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
+    // if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
 #  endif
 
 #ifdef _OMPTASKS  
