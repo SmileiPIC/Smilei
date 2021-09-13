@@ -419,7 +419,7 @@ void RadiationNiel::operator()(
 
                 // Effect on the momentum
                 // Temporary factor
-                temp = ( rad_energy - diffusion[ipart])
+                temp = ( rad_energy - diffusion[ipart - istart])
                        * gamma[ipart-ipart_ref]/( gamma[ipart-ipart_ref]*gamma[ipart-ipart_ref]-1. );
 
                 // Update of the momentum
