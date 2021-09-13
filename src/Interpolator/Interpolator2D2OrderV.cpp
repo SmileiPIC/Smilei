@@ -124,7 +124,7 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             // j = 0
 
-            delta   = delta0 - ( double )idx[0] + ( double )0*( 0.5-dual[0][ipart] );
+            delta   = delta0 - ( double )idx[0] ;
             delta2  = delta*delta;
             coeff[0][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
             coeff[0][0][1][ipart]    = ( 0.75 - delta2 );
@@ -133,7 +133,7 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             // j = 1
 
-            delta   = delta0 - ( double )idx[0] + ( double )1*( 0.5-dual[0][ipart] );
+            delta   = delta0 - ( double )idx[0] + ( 0.5-dual[0][ipart] );
             delta2  = delta*delta;
             coeff[0][1][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
             coeff[0][1][1][ipart]    = ( 0.75 - delta2 );
