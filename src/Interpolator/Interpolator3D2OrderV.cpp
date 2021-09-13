@@ -70,6 +70,13 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
     double * __restrict__ position_y = particles.getPtrPosition(1);
     double * __restrict__ position_z = particles.getPtrPosition(2);
 
+    double * Ex = &Ex3D->data_[0];
+    double * Ey = &Ey3D->data_[0];
+    double * Ez = &Ez3D->data_[0];
+    double * Bx = &Bx3D->data_[0];
+    double * By = &By3D->data_[0];
+    double * Bz = &Bz3D->data_[0];
+
     double coeff[3][2][3][32];
     int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0, delta_primal < 0) or if it is +1 (dual=1, delta_primal>=0).
 
@@ -217,10 +224,18 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
         // Field buffers for vectorization (required on A64FX)
         double field_buffer[4][4][4];
+
+        // field dimensions
+        std::vector<unsigned int> dims(3,0);
+        dims = Ex3D->dims();
+
+        //Ex(dual, primal, primal)
+
         for( int iloc=-1 ; iloc<3 ; iloc++ ) {
             for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                 for( int kloc=-1 ; kloc<2 ; kloc++ ) {
-                    field_buffer[iloc+1][jloc+1][kloc+1] = Ex3D->data_3D[idxO[0]+iloc][idxO[1]+jloc][idxO[2]+kloc];
+                    unsigned int idx = (idxO[0]+iloc)*dims[1]*dims[2]+(idxO[1]+jloc)*dims[2]+idxO[2]+kloc;
+                    field_buffer[iloc+1][jloc+1][kloc+1] = Ex[idx];
                 }
             }
         }
@@ -228,7 +243,6 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
         #pragma omp simd private(interp_res)
         for ( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-            //Ex(dual, primal, primal)
             interp_res = 0.;
             // #if defined(__clang__)
             //      #pragma clang loop unroll(full)

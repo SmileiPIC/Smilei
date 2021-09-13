@@ -169,13 +169,15 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         double * __restrict__ coeffxd2 = &( coeff[0][1][1][0] );
         double * __restrict__ coeffxp2 = &( coeff[0][0][1][0] );
 
+        // Local buffer to store the field components
+        double field_buffer[4][4];
+
         double interp_res = 0.;
 
         //Ex(dual, primal)
 
         // Field buffers for vectorization (required on A64FX)
-        double field_buffer[3][3];
-        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
             for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                 field_buffer[iloc+1][jloc+1] = ( *Ex2D )( idxO[0]+1+iloc, idxO[1]+1+jloc );
             }
@@ -198,6 +200,55 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
         }
 
+        //Ey(primal, dual)
+
+        // Field buffers for vectorization (required on A64FX)
+        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+                field_buffer[iloc+1][jloc+1] = ( *Ey2D )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+            }
+        }
+
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
+            interp_res = 0.;
+            UNROLL_S(3)
+            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                UNROLL_S(3)
+                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                    interp_res += coeffxp2[ipart+iloc*32] * coeffyd2[ipart+jloc*32] *
+                                  ( ( 1-dual[1][ipart] )*field_buffer[1+iloc][1+jloc]
+                                  + dual[1][ipart]*field_buffer[1+iloc][2+jloc] );
+                }
+            }
+            Epart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+        }
+
+        //Ez(primal, primal)
+
+        // Field buffers for vectorization (required on A64FX)
+        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                field_buffer[iloc+1][jloc+1] = ( *Ez2D )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+            }
+        }
+
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
+            interp_res = 0.;
+            UNROLL_S(3)
+            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                UNROLL_S(3)
+                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                    interp_res += coeffxp2[iloc*32] * coeffyp2[jloc*32] * field_buffer[1+iloc][1+jloc];
+                }
+            }
+            Epart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+
+        }
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
@@ -205,28 +256,6 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             double *coeffyd = &( coeff[1][1][1][ipart] );
             double *coeffxd = &( coeff[0][1][1][ipart] );
             double *coeffxp = &( coeff[0][0][1][ipart] );
-
-            //Ey(primal, dual)
-            interp_res = 0.;
-            UNROLL_S(3)
-            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-                UNROLL_S(3)
-                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res += *( coeffxp+iloc*32 ) * *( coeffyd+jloc*32 ) *
-                                  ( ( 1-dual[1][ipart] )*( *Ey2D )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[1][ipart]*( *Ey2D )( idxO[0]+1+iloc, idxO[1]+2+jloc ) );
-                }
-            }
-            Epart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-
-
-            //Ez(primal, primal)
-            interp_res = 0.;
-            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res += *( coeffxp+iloc*32 ) * *( coeffyp+jloc*32 ) * ( *Ez2D )( idxO[0]+1+iloc, idxO[1]+1+jloc );
-                }
-            }
-            Epart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
             //Bx(primal, dual)
             interp_res = 0.;
