@@ -2422,7 +2422,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
             timer = MPI_Wtime();
 #endif
             #  ifdef _PARTEVENTTRACING
-            if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,0);
+            if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,0);
             #  endif
             for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                 Interp->timeCenteredEnvelope( EMfields, *particles, smpi, &( particles->first_index[scell] ), &( particles->last_index[scell] ), buffer_id );
