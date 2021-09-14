@@ -223,22 +223,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
         double * __restrict__ coeffzd = &( coeff[2][1][1][0] );
 
         // Field buffers for vectorization (required on A64FX)
-        double Ezb[4][4][4];
-        double Bxb[4][4][4];
-        double Byb[4][4][4];
-        double Bzb[4][4][4];
         double field_buffer[4][4][4];
-
-        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
-            for( int jloc=-1 ; jloc<3 ; jloc++ ) {
-                for( int kloc=-1 ; kloc<3 ; kloc++ ) {
-                    Ezb[iloc+1][jloc+1][kloc+1] = (*Ez3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc);
-                    Bxb[iloc+1][jloc+1][kloc+1] = (*Bx3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc);
-                    Byb[iloc+1][jloc+1][kloc+1] = (*By3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc);
-                    Bzb[iloc+1][jloc+1][kloc+1] = (*Bz3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc);
-                }
-            }
-        }
 
         //Ex(dual, primal, primal)
 
@@ -303,6 +288,14 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
         // ---------------------------------------------------------------------
         //Ez(primal, primal, dual)
 
+        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                for( int kloc=-1 ; kloc<3 ; kloc++ ) {
+                    field_buffer[iloc+1][jloc+1][kloc+1] = (*Ez3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc);
+                }
+            }
+        }
+
         #pragma omp simd private(interp_res)
         for ( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
@@ -314,8 +307,8 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                     UNROLL_S(3)
                     for( int kloc=0 ; kloc<3 ; kloc++ ) {
                         interp_res += coeffxp[ipart+(iloc-1)*32] * coeffyp[ipart+(jloc-1)*32] * coeffzd[ipart + (kloc-1)*32] *
-                                    ( ( 1-dual[2][ipart] )*Ezb[iloc][jloc][kloc] +
-                                    dual[2][ipart]*Ezb[iloc][jloc][kloc+1] );
+                                    ( ( 1-dual[2][ipart] )*field_buffer[iloc][jloc][kloc] +
+                                    dual[2][ipart]*field_buffer[iloc][jloc][kloc+1] );
 
                     }
                 }
@@ -325,10 +318,19 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
         }
 
+        // ---------------------------------------------------------------------
+        //Bx(primal, dual , dual )
+
+        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+                for( int kloc=-1 ; kloc<3 ; kloc++ ) {
+                    field_buffer[iloc+1][jloc+1][kloc+1] = (*Bx3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc);
+                }
+            }
+        }
+
         #pragma omp simd private(interp_res)
         for ( int ipart=0 ; ipart<np_computed; ipart++ ) {
-
-            //Bx(primal, dual , dual )
 
             interp_res = 0.;
             UNROLL_S(3)
@@ -338,8 +340,8 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                     UNROLL_S(3)
                     for( int kloc=0 ; kloc<3 ; kloc++ ) {
                         interp_res += coeffxp[ipart+(iloc-1)*32] * coeffyd[ipart+(jloc-1)*32] * coeffzd[ipart + (kloc-1)*32] *
-                                    ( ( 1-dual[2][ipart] )* ( (1-dual[1][ipart])*Bxb[iloc][jloc][kloc] + dual[1][ipart]*Bxb[iloc][jloc+1][kloc] )  +
-                                    dual[2][ipart]        * ( (1-dual[1][ipart])*Bxb[iloc][jloc][kloc+1]  + dual[1][ipart]*Bxb[iloc][jloc+1][kloc+1] )  );
+                                    ( ( 1-dual[2][ipart] )* ( (1-dual[1][ipart])*field_buffer[iloc][jloc][kloc] + dual[1][ipart]*field_buffer[iloc][jloc+1][kloc] )  +
+                                    dual[2][ipart]        * ( (1-dual[1][ipart])*field_buffer[iloc][jloc][kloc+1]  + dual[1][ipart]*field_buffer[iloc][jloc+1][kloc+1] )  );
                     }
                 }
             }
@@ -348,10 +350,19 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
         }
 
+        // ---------------------------------------------------------------------
+        //By(dual, primal, dual )
+
+        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                for( int kloc=-1 ; kloc<3 ; kloc++ ) {
+                    field_buffer[iloc+1][jloc+1][kloc+1] = (*By3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc);
+                }
+            }
+        }
+
         #pragma omp simd private(interp_res)
         for ( int ipart=0 ; ipart<np_computed; ipart++ ) {
-
-            //By(dual, primal, dual )
 
             interp_res = 0.;
             UNROLL_S(3)
@@ -361,8 +372,8 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                     UNROLL_S(3)
                     for( int kloc=0 ; kloc<3 ; kloc++ ) {
                         interp_res += coeffxd[ipart+(iloc-1)*32] * coeffyp[ipart+(jloc-1)*32] * coeffzd[ipart + (kloc-1)*32] *
-                                    ( ( 1-dual[2][ipart] )*( (1-dual[0][ipart])*Byb[iloc][jloc][kloc] + dual[0][ipart]*Byb[iloc+1][jloc][kloc] )  +
-                                    dual[2][ipart]        *( (1-dual[0][ipart])*Byb[iloc][jloc][kloc+1] + dual[0][ipart]*Byb[iloc+1][jloc][kloc+1] )  );
+                                    ( ( 1-dual[2][ipart] )*( (1-dual[0][ipart])*field_buffer[iloc][jloc][kloc] + dual[0][ipart]*field_buffer[iloc+1][jloc][kloc] )  +
+                                    dual[2][ipart]        *( (1-dual[0][ipart])*field_buffer[iloc][jloc][kloc+1] + dual[0][ipart]*field_buffer[iloc+1][jloc][kloc+1] )  );
 
                     }
                 }
@@ -371,10 +382,20 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             Bpart[1][ipart] = interp_res;
 
         }
+
+        // ---------------------------------------------------------------------
+        //Bz(dual, dual, prim )
+
+        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+                for( int kloc=-1 ; kloc<2 ; kloc++ ) {
+                    field_buffer[iloc+1][jloc+1][kloc+1] = (*Bz3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc);
+                }
+            }
+        }
+
         #pragma omp simd private(interp_res)
         for ( int ipart=0 ; ipart<np_computed; ipart++ ) {
-
-            //Bz(dual, dual, prim )
 
             interp_res = 0.;
             UNROLL_S(3)
@@ -384,8 +405,8 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                     UNROLL_S(3)
                     for( int kloc=0; kloc<3 ; kloc++ ) {
                         interp_res += coeffxd[ipart+(iloc-1)*32] * coeffyd[ipart+(jloc-1)*32] * coeffzp[ipart + (kloc-1)*32] *
-                                    ( ( 1-dual[1][ipart] )*( (1-dual[0][ipart])*Bzb[iloc][jloc][kloc] + dual[0][ipart]*Bzb[iloc+1][jloc][kloc] )  +
-                                    dual[1][ipart]        *( (1-dual[0][ipart])*Bzb[iloc][jloc+1][kloc] + dual[0][ipart]*Bzb[iloc+1][jloc+1][kloc] )  );
+                                    ( ( 1-dual[1][ipart] )*( (1-dual[0][ipart])*field_buffer[iloc][jloc][kloc] + dual[0][ipart]*field_buffer[iloc+1][jloc][kloc] )  +
+                                    dual[1][ipart]        *( (1-dual[0][ipart])*field_buffer[iloc][jloc+1][kloc] + dual[0][ipart]*field_buffer[iloc+1][jloc+1][kloc] )  );
 
                     }
                 }

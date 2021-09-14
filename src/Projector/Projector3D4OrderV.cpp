@@ -671,6 +671,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             for( unsigned int j=1 ; j<7 ; j++ ) {
                 tmp = crz_p * ( 0.5*DSx[ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart] + one_third*DSx[ipart]*DSy[j*vecSize+ipart] );
                 int index( ( j*7 )*vecSize+ipart );
+                UNROLL_S(6)
                 for( unsigned int k=1 ; k<7 ; k++ ) {
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
                 }
@@ -679,6 +680,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             for( unsigned int i=1 ; i<7 ; i++ ) {
                 tmp = crz_p * ( 0.5*DSy[ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart] + one_third*DSx[i*vecSize+ipart]*DSy[ipart] );
                 int index( ( i*49 )*vecSize+ipart );
+                UNROLL_S(6)
                 for( unsigned int k=1 ; k<7 ; k++ ) {
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
                 }
