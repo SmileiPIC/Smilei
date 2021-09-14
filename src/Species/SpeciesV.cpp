@@ -1978,29 +1978,28 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
 #endif
                 } // end task susceptibility
             } // end ibin
-        }
 
-        for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { // loop on ibin
+            for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { // loop on ibin
 #ifdef  __DETAILED_TIMERS
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) private(ithread,timer)
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) private(ithread,timer)
 #else
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) 
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) 
 #endif
-            {
+                {
 #ifdef  __DETAILED_TIMERS
-            ithread = omp_get_thread_num();
-            timer = MPI_Wtime();
+                ithread = omp_get_thread_num();
+                timer = MPI_Wtime();
 #endif
-            // Push only the particle momenta
-            ( *Push )( *particles, smpi, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], buffer_id);
+                // Push only the particle momenta
+                ( *Push )( *particles, smpi, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], buffer_id);
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers_[9*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
+                patch->patch_timers_[9*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
 #endif
-            } // end task susceptibility
-        } // end ibin
-    
+                } // end task susceptibility
+            } // end ibin
+        } // end if moving particle
     } else { // immobile particle
-    } //END if time vs. time_frozen_
+    } //END if time vs. time_frozen_ or Ionize
 
     } // end taskgroup
 
