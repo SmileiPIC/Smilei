@@ -242,9 +242,9 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
 
         //Ex(dual, primal, primal)
 
-        for( int iloc=-1 ; iloc<4 ; iloc++ ) {
-            for( int jloc=-1 ; jloc<3 ; jloc++ ) {
-                for( int kloc=-1 ; kloc<3 ; kloc++ ) {
+        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                for( int kloc=-1 ; kloc<2 ; kloc++ ) {
                     field_buffer[iloc+1][jloc+1][kloc+1] = (*Ex3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc);
                 }
             }
@@ -270,11 +270,12 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             Epart[0][ipart] = interp_res;
         }
 
+        // ---------------------------------------------------------------------
         //Ey(primal, dual, primal)
 
-        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
-            for( int jloc=-1 ; jloc<4 ; jloc++ ) {
-                for( int kloc=-1 ; kloc<3 ; kloc++ ) {
+        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+                for( int kloc=-1 ; kloc<2 ; kloc++ ) {
                     field_buffer[iloc+1][jloc+1][kloc+1] = (*Ey3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc);
                 }
             }
@@ -299,10 +300,12 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             Epart[1][ipart] = interp_res;
         }
 
+        // ---------------------------------------------------------------------
+        //Ez(primal, primal, dual)
+
         #pragma omp simd private(interp_res)
         for ( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-            //Ez(primal, primal, dual)
             interp_res = 0.;
             UNROLL_S(3)
             for( int iloc=0 ; iloc<3 ; iloc++ ) {
