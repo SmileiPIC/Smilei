@@ -68,7 +68,10 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     double * __restrict__ position_y = particles.getPtrPosition(1);
 
     double coeff[2][2][3][32];
-    int dual[2][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
+
+     // Size ndim. Boolean indicating if the part
+     // has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
+    int dual[2][32];
 
     int vecSize = 32;
 
@@ -252,7 +255,7 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
         // Field buffers for vectorization (required on A64FX)
         for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+            for( int jloc=-1 ; jloc<3 ; jloc++ ) {
                 field_buffer[iloc+1][jloc+1] = ( *Bx2D )( idxO[0]+1+iloc, idxO[1]+1+jloc );
             }
         }
@@ -276,7 +279,7 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         //By(dual, primal )
 
         // Field buffers for vectorization (required on A64FX)
-        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
             for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                 field_buffer[iloc+1][jloc+1] = ( *By2D )( idxO[0]+1+iloc, idxO[1]+1+jloc );
             }
@@ -301,8 +304,8 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         //Bz(dual, dual)
 
         // Field buffers for vectorization (required on A64FX)
-        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<3 ; jloc++ ) {
                 field_buffer[iloc+1][jloc+1] = ( *Bz2D )( idxO[0]+1+iloc, idxO[1]+1+jloc );
             }
         }
