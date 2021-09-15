@@ -600,7 +600,7 @@ class Diagnostic(object):
 		# prepare the factors
 		self._xfactor = (self.options.xfactor or 1.) * self.units.xcoeff
 		self._yfactor = (self.options.yfactor or 1.) * self.units.ycoeff
-		self._vfactor = self.units.vcoeff
+		self._vfactor = (self.options.vfactor or 1.) * self.units.vcoeff
 		self._tfactor = (self.options.xfactor or 1.) * self.units.tcoeff * self.timestep
 	def _prepare2(self):
 		# prepare the animating function

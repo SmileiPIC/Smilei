@@ -141,6 +141,7 @@ class ParticleBinning(Diagnostic):
 		# Fabricate all axes values for all diags
 		self._spatialaxes = {"x":False, "y":False, "z":False}
 		self.auto_axes = False
+		user_axes = []
 		for iaxis, axis in enumerate(self._axes):
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"
@@ -181,6 +182,9 @@ class ParticleBinning(Diagnostic):
 				overall_min = "0"
 			elif axis["type"] == "chi":
 				overall_min = "0"
+			elif axis["type"][:4] == "user":
+				axis["units"] = ""
+				user_axes += [axis["type"]]
 			
 			# Store sum/subset info
 			if axis["type"] in sum:
@@ -217,6 +221,10 @@ class ParticleBinning(Diagnostic):
 			self._vunits = self._vunits.replace("#"+str(d), "( "+units[d]+" )")
 			self._title  = self._title .replace("#"+str(d), titles[d])
 		self._vunits = self.units._getUnits(self._vunits)
+		if user_axes:
+			self._title = "(%s)/(%s)"%(self._title, " x ".join(user_axes))
+		if deposited_quantity == "user_function":
+			self._title += "/volume"+("  x" if self._vunits else "")
 		
 		# Set the directory in case of exporting
 		self._exportPrefix = self._diagType+"_"+"-".join([str(d) for d in self._diags])
@@ -252,6 +260,9 @@ class ParticleBinning(Diagnostic):
 		elif deposited_quantity[:13] == "weight_power": # for radiation spectrum
 			title = "Power" + ("" if hasComposite else " density")
 			units = "K_r / T_r" if hasComposite else "N_r * K_r / T_r"
+		elif deposited_quantity == "user_function":
+			title = "user_function"
+			units = "1"
 		else:
 			title = ""
 			units = "1"
