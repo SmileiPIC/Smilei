@@ -46,7 +46,7 @@ def launch_job(base_command, job_command, dir, max_time, output, repeat=1, verbo
             check_call(job_command, shell=True)
             break
         except CalledProcessError:
-            if options['verbose']:
+            if verbose:
                 print()
                 print("Command failed #%d: `%s`"%(n, job_command))
                 if n < repeat:
@@ -54,7 +54,7 @@ def launch_job(base_command, job_command, dir, max_time, output, repeat=1, verbo
             sleep(10)
     # Exit if unsuccesful
     else:
-        if options['verbose']:
+        if verbose:
             print("Exit")
         sys.exit(2)
     # Otherwise job is running
@@ -74,7 +74,7 @@ def launch_job(base_command, job_command, dir, max_time, output, repeat=1, verbo
         #     sys.exit(2)
     # Check that the run succeeded
     if int(EXIT_STATUS) != 0:
-        if options['verbose']:
+        if verbose:
             print()
             print("Execution failed for command `"+base_command+"`")
             COMMAND = "/bin/bash cat "+output

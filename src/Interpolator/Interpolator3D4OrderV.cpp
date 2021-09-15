@@ -259,57 +259,46 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             #pragma omp simd
             for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-                interp_res = 0.;
+                double *coeffyp = &( coeff[1][0][2][ipart] );
+                double *coeffyd = &( coeff[1][1][2][ipart] );
+                double *coeffxd = &( coeff[0][1][2][ipart] );
+                double *coeffxp = &( coeff[0][0][2][ipart] );
+                double *coeffzp = &( coeff[2][0][2][ipart] );
+                double *coeffzd = &( coeff[2][1][2][ipart] );
 
-                UNROLL_S(5)
+                //Ex(dual, primal, primal)
+                interp_res = 0.;
                 for( int iloc=-2 ; iloc<3 ; iloc++ ) {
-                    UNROLL_S(5)
                     for( int jloc=-2 ; jloc<3 ; jloc++ ) {
-                        UNROLL_S(5)
                         for( int kloc=-2 ; kloc<3 ; kloc++ ) {
-                            interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
-                                ( ( 1-dual[0][ipart] )* Ex3D(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc)
-                                + dual[0][ipart]*Ex3D(idxO[0]+iloc+1,idxO[1]+jloc,idxO[2]+kloc] );
+                            interp_res += *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) * *( coeffzp+kloc*32 ) *
+                                          ( ( 1-dual[0][ipart] )*( *Ex3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[0][ipart]*( *Ex3D )( idxO[0]+1+iloc, idxO[1]+jloc, idxO[2]+kloc ) );
                         }
                     }
                 }
                 Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            }
 
-            #pragma omp simd
-            for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
+                //Ey(primal, dual, primal)
                 interp_res = 0.;
-
-                UNROLL_S(5)
                 for( int iloc=-2 ; iloc<3 ; iloc++ ) {
-                    UNROLL_S(5)
                     for( int jloc=-2 ; jloc<3 ; jloc++ ) {
-                        UNROLL_S(5)
                         for( int kloc=-2 ; kloc<3 ; kloc++ ) {
-                            interp_res += coeffxp2[ipart+iloc*32] * coeffyd2[ipart+jloc*32] * coeffzp2[ipart+kloc*32] *
-                                ( ( 1-dual[1][ipart] )* Ey3D(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc)
-                                + dual[1][ipart]*Ey3D(idxO[0]+iloc,idxO[1]+jloc+1,idxO[2]+kloc) );
+                            interp_res += *( coeffxp+iloc*32 ) * *( coeffyd+jloc*32 ) * *( coeffzp+kloc*32 ) *
+                                          ( ( 1-dual[1][ipart] )*( *Ey3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[1][ipart]*( *Ey3D )( idxO[0]+iloc, idxO[1]+1+jloc, idxO[2]+kloc ) );
                         }
                     }
                 }
                 Epart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            }
 
-            #pragma omp simd
-            for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
+                //Ez(primal, primal, dual)
                 interp_res = 0.;
-
-                UNROLL_S(5)
                 for( int iloc=-2 ; iloc<3 ; iloc++ ) {
-                    UNROLL_S(5)
                     for( int jloc=-2 ; jloc<3 ; jloc++ ) {
-                        UNROLL_S(5)
                         for( int kloc=-2 ; kloc<3 ; kloc++ ) {
-                            interp_res += coeffxp2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] * coeffzd2[ipart+kloc*32] *
-                                ( ( 1-dual[2][ipart] )* Ez3D(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc) +
-                                dual[2][ipart]*Ez3D(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc+1) );
+                            interp_res += *( coeffxp+iloc*32 ) * *( coeffyp+jloc*32 ) * *( coeffzd+kloc*32 ) *
+                                          ( ( 1-dual[2][ipart] )*( *Ez3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+kloc ) + dual[2][ipart]*( *Ez3D )( idxO[0]+iloc, idxO[1]+jloc, idxO[2]+1+kloc ) );
                         }
                     }
                 }
