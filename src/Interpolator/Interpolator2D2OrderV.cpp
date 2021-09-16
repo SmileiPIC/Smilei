@@ -269,8 +269,8 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 UNROLL_S(3)
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                     interp_res += coeffxp2[ipart+iloc*32] * coeffyd2[ipart+jloc*32] *
-                                  ( ( ( 1-dual[1][ipart] )*field_buffer[1+iloc][1+jloc] +
-                                  dual[1][ipart]*field_buffer[idxO[0]+1+iloc][idxO[1]+2+jloc] ) );
+                                  ( ( 1-dual[1][ipart] )*field_buffer[1+iloc][1+jloc] +
+                                  dual[1][ipart]*field_buffer[1+iloc][2+jloc] );
                 }
             }
             Bpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
@@ -295,7 +295,7 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                     interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] *
                                   ( ( ( 1-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] +
-                                  dual[0][ipart]*field_buffer[idxO[0]+2+iloc][idxO[1]+1+jloc] ) );
+                                  dual[0][ipart]*field_buffer[2+iloc][1+jloc] ) );
                 }
             }
             Bpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
