@@ -298,7 +298,7 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                                   dual[0][ipart]*field_buffer[2+iloc][1+jloc] ) );
                 }
             }
-            Bpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+            Bpart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
         }
 
         //Bz(dual, dual)
