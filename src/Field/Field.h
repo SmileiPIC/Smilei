@@ -94,7 +94,7 @@ public:
     std::vector<unsigned int> isDual_;
 
     //! Return 0 if direction i is primal, 1 if dual
-    inline  isDual( unsigned int i )
+    inline unsigned int __attribute__((always_inline)) isDual( unsigned int i )
     {
         if( i<dims_.size() ) {
             return isDual_[i];
@@ -104,7 +104,7 @@ public:
     }
 
     //! returns the dimension of the Field
-    inline std::vector<unsigned int>  dims()
+    inline std::vector<unsigned int> __attribute__((always_inline)) dims()
     {
         return dims_;
     }
@@ -114,19 +114,19 @@ public:
     //! pointer to the linearized array
     double *data_;
 
-    inline double *  data()
+    inline double * __attribute__((always_inline)) data()
     {
         return data_;
     }
     //! reference access to the linearized array (with check in DEBUG mode)
-    inline double &  operator()( unsigned int i )
+    inline double & __attribute__((always_inline)) operator()( unsigned int i )
     {
         DEBUGEXEC( if( i>=globalDims_ ) ERROR( name << " Out of limits "<< i << " < " << globalDims_ ) );
         DEBUGEXEC( if( !std::isfinite( data_[i] ) ) ERROR( name << " Not finite "<< i << " = " << data_[i] ) );
         return data_[i];
     };
     //! access to the linearized array (with check in DEBUG mode)
-    inline double  operator()( unsigned int i ) const
+    inline double __attribute__((always_inline)) operator()( unsigned int i ) const
     {
         DEBUGEXEC( if( i>=globalDims_ ) ERROR( name << " Out of limits "<< i ) );
         DEBUGEXEC( if( !std::isfinite( data_[i] ) ) ERROR( name << " Not finite "<< i << " = " << data_[i] ) );
@@ -142,7 +142,7 @@ public:
     }
 
     //! method used to put all entry of a field at a given value val
-    inline void  multiply( double val )
+    inline void __attribute__((always_inline)) multiply( double val )
     {
         if( data_ )
             for( unsigned int i=0; i<globalDims_; i++ ) {
@@ -152,7 +152,7 @@ public:
 
 
     //! 2D reference access to the linearized array (with check in DEBUG mode)
-    inline double &  operator()( unsigned int i, unsigned int j )
+    inline double & __attribute__((always_inline)) operator()( unsigned int i, unsigned int j )
     {
         int unsigned idx = i*dims_[1]+j;
         DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits & "<< i << " " << j ) );
@@ -160,7 +160,7 @@ public:
         return data_[idx];
     };
     //! 2D access to the linearized array (with check in DEBUG mode)
-    inline double operator()( unsigned int i, unsigned int j ) const
+    inline double __attribute__((always_inline)) operator()( unsigned int i, unsigned int j ) const
     {
         unsigned int idx = i*dims_[1]+j;
         DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits "<< i << " " << j ) );
@@ -169,7 +169,7 @@ public:
     };
 
     //! 3D reference access to the linearized array (with check in DEBUG mode)
-    inline double  &operator()( unsigned int i, unsigned int j, unsigned k )
+    inline double __attribute__((always_inline)) &operator()( unsigned int i, unsigned int j, unsigned k )
     {
         unsigned int idx = i*dims_[1]*dims_[2]+j*dims_[2]+k;
         DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits & "<< i << " " << j ) );
@@ -177,7 +177,7 @@ public:
         return data_[idx];
     };
     //! 3D access to the linearized array (with check in DEBUG mode)
-    inline double  operator()( unsigned int i, unsigned int j, unsigned k ) const
+    inline double __attribute__((always_inline)) operator()( unsigned int i, unsigned int j, unsigned k ) const
     {
         unsigned int idx = i*dims_[1]*dims_[2]+j*dims_[2]+k;
         DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits "<< i << " " << j ) );
@@ -218,7 +218,7 @@ public:
         return sum;
     }
 
-    inline long double  norm()
+    inline long double __attribute__((always_inline)) norm()
     {
         long double sum( 0. );
         for( unsigned int i=0; i<globalDims_; i++ ) {
@@ -227,7 +227,7 @@ public:
         return sum;
     }
 
-    inline void copyFrom( Field *from_field )
+    inline void __attribute__((always_inline)) copyFrom( Field *from_field )
     {
         DEBUGEXEC( if( globalDims_!=from_field->globalDims_ ) ERROR( "Field size do not match "<< name << " " << from_field->name ) );
         for( unsigned int i=0; i< globalDims_; i++ ) {
