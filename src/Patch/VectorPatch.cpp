@@ -761,14 +761,13 @@ void VectorPatch::dynamics( Params &params,
     #ifdef _OMPTASKS
     #pragma omp taskwait
     #endif
-    
     if (!params.Laser_Envelope_model){
         #pragma omp single
         {
         int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
         if(diag_TaskTracing) writeTaskTracingOutput(params, smpi, iteration);
         } // end single
-        } // end if Laser envelope model
+    } // end if Laser envelope model
 #  endif
 
     timers.particles.update( params.printNow( itime ) );
@@ -4546,10 +4545,10 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
 
     unsigned int Npatches = this->size();
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
-   
+
     int has_done_ponderomotive_update_susceptibility_and_momentum[Npatches];  // dependency array for the Species dynamics tasks
     bool diag_TaskTracing;
- 
+
 #ifdef _OMPTASKS  
     #pragma omp single
     {
@@ -4573,9 +4572,9 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
     if (diag_TaskTracing) smpi->reference_time = MPI_Wtime();
 #  endif
 
-#ifndef _OMPTASKS   
-    #pragma omp for schedule(runtime)
-    { // without tasks 
+#ifndef _OMPTASKS
+// if tasks are not activated 
+    #pragma omp for schedule(runtime) 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
@@ -4603,8 +4602,9 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
             } // end diagnostic or projection if condition on species
         } // end loop on species
     } // end loop on patches
-    } // end omp for without tasks
+// end if tasks are not activated
 #else
+// if tasks are activated
     #pragma omp single
     { // with tasks 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -4717,11 +4717,12 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
                 } // end task on reduction of new electrons from ionization
             } // end if Ionize
         } // end species loop
-        
+
     } // end loop on patches
     } // end single with tasks
+// end if tasks are activated 
 #endif
-    
+
 
 // #ifdef _OMPTASKS
 //     #pragma omp taskwait
@@ -4764,7 +4765,8 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     }
 #endif
 
-#ifndef _OMPTASKS   
+#ifndef _OMPTASKS
+// if tasks are not activated   
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
@@ -4794,8 +4796,9 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
             } // end diagnostic or projection if condition on species
         } // end loop on species
     } // end loop on patches
-    } // end omp for without task
-#else 
+// end if tasks are not activated 
+#else
+// if tasks are activated 
     #pragma omp single 
     { // with tasks
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -4933,12 +4936,12 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
             } // end if vectorization is adaptive
         }// end if on vectorized operators
     } // end ispec
-
     } // end loop on patches
     } // end single with tasks
+// end if tasks are activated 
 #endif
 
-   
+
 
 // #ifdef _OMPTASKS
 //     #pragma omp taskwait
@@ -4951,8 +4954,8 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     #endif
     #pragma omp single
     {
-    int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
-    if (diag_TaskTracing) writeTaskTracingOutput(params, smpi, iteration);  
+        int iteration = int((time_dual-0.5*params.timestep)/params.timestep);
+        if(diag_TaskTracing) writeTaskTracingOutput(params, smpi, iteration);
     } // end single
 #endif
 
