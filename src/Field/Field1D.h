@@ -60,7 +60,7 @@ public:
     void shift_x( unsigned int delta ) override;
 
     //! Overloading of the () operator allowing to set a new value for the ith element of a Field1D
-    inline double & __attribute__((always_inline)) operator()( unsigned int i )
+    inline double &  operator()( unsigned int i )
     {
         DEBUGEXEC( if( i>=dims_[0] ) ERROR( name << "Out of limits & "<< i ) );
         DEBUGEXEC( if( !std::isfinite( data_[i] ) ) ERROR( name << " not finite at i=" << i << " = " << data_[i] ) );
@@ -68,7 +68,7 @@ public:
     };
 
     //! Overloading of the () operator allowing to get the value of the ith element of a Field1D
-    inline double __attribute__((always_inline)) operator()( unsigned int i ) const
+    inline double  operator()( unsigned int i ) const
     {
         DEBUGEXEC( if( i>=dims_[0] ) ERROR( name << "Out of limits "<< i ) );
         DEBUGEXEC( if( !std::isfinite( data_[i] ) ) ERROR( name << "Not finite "<< i << " = " << data_[i] ) );

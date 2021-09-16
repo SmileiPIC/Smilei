@@ -44,13 +44,13 @@ public:
     //! allocate dimensions for field3D isPrimal define if mainDim is Primal or Dual
     void allocateDims( unsigned int mainDim, bool isPrimal ) override;
 
-    inline void __attribute__((always_inline)) allocateDims( std::vector<unsigned int> dims ) override
+    inline void  allocateDims( std::vector<unsigned int> dims ) override
     {
         dims_ = dims;
         allocateDims();
     };
 
-    inline void __attribute__((always_inline)) allocateDims( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) override
+    inline void  allocateDims( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) override
     {
         dims_ = dims;
         allocateDims( mainDim, isPrimal );
@@ -59,7 +59,7 @@ public:
     virtual void shift_x( unsigned int delta ) override;
 
     //! Overloading of the () operator allowing to set a new value for the (i,j,k) element of a Field3D
-    inline double & __attribute__((always_inline)) operator()( unsigned int i, unsigned int j, unsigned int k )
+    inline double &  operator()( unsigned int i, unsigned int j, unsigned int k )
     {
         DEBUGEXEC( if( i>=dims_[0] || j>=dims_[1] || k >= dims_[2] ) ERROR( name << "Out of limits & "<< i << " " << j << " " << k ) );
         return data_3D[i][j][k];
@@ -73,7 +73,7 @@ public:
     };*/
 
     //! Overloading of the () operator allowing to get the value for the (i,j,k) element of a Field3D
-    inline double __attribute__((always_inline)) operator()( unsigned int i, unsigned int j, unsigned int k ) const
+    inline double  operator()( unsigned int i, unsigned int j, unsigned int k ) const
     {
         DEBUGEXEC( if( i>=dims_[0] || j>=dims_[1] || k >= dims_[2] ) ERROR( name << "Out of limits "<< i << " " << j << " " << k ) );
         return data_3D[i][j][k];
