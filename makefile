@@ -227,8 +227,8 @@ header:
 	@if [ $(call parse_config,detailed_timers) ]; then echo "- Detailed timers option requested"; fi;
 	@if [ $(call parse_config,no_mpi_tm) ]; then echo "- Compiled without MPI_THREAD_MULTIPLE"; fi;
 	@if [ $(call parse_config,omptasks) ]; then echo "- Compiled with OpenMP tasks"; fi;
-	@if [ $(call parse_config,tasktracing) ]; then echo "- Compiled with OpenMP tasks and Task Tracing"; fi;
-	@if [ $(call parse_config,developtracing) ]; then echo "- Compiled with 'Task' Tracing without tasks"; fi;
+	@if [ $(call parse_config,tasktracing) ]; then echo "- Compiled with OpenMP tasks and particle events tracing"; fi;
+	@if [ $(call parse_config,developtracing) ]; then echo "- Compiled with particle events tracing, without tasks"; fi;
 	@echo " _____________________________________"
 	@echo ""
 
