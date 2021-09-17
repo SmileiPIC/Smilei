@@ -1512,79 +1512,37 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
                 bJx [( ( j )*7 )*vecSize+ipart] += sum[j]*tmp;
             }
 
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(6)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (6)
-            #endif
+            UNROLL_S(6)
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 tmp = cry_p * ( 0.5*DSx[0]*Sz0_buff_vect[( k-1 )*vecSize+ipart] + one_third*DSz[k*vecSize+ipart]*DSx[ipart] );
                 int index( ( k )*vecSize+ipart );
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(6)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (6)
-                #endif
+                UNROLL_S(6)
                 for( unsigned int j=1 ; j<7 ; j++ ) {
                     bJx [ index+7*j*vecSize ] += sum[j]*tmp;
                 }
             }
 
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(6)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (6)
-            #endif
+            UNROLL_S(6)
             for( unsigned int i=1 ; i<7 ; i++ ) {
                 tmp = cry_p * ( 0.5*DSz[ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart] + one_third*DSz[0]*DSx[i*vecSize+ipart] );
                 int index( ( i*49 )*vecSize+ipart );
 
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(6)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (6)
-                #endif
+                UNROLL_S(6)
                 for( unsigned int j=1 ; j<7 ; j++ ) {
                     bJx [ index+7*j*vecSize ] += sum[j]*tmp;
                 }
             }//i
 
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(6)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (6)
-            #endif
+            UNROLL_S(6)
             for( unsigned int i=1 ; i<7 ; i++ ) {
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(6)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (6)
-                #endif
+                UNROLL_S(6)
                 for( unsigned int k=1 ; k<7 ; k++ ) {
                     tmp = cry_p * ( Sz0_buff_vect[( k-1 )*vecSize+ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart]
                                     + 0.5*DSz[k*vecSize+ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart]
                                     + 0.5*DSx[i*vecSize+ipart]*Sz0_buff_vect[( k-1 )*vecSize+ipart]
                                     + one_third*DSz[k*vecSize+ipart]*DSx[i*vecSize+ipart] );
                     int index( ( i*49 + k )*vecSize+ipart );
-                    #if defined(__clang__)
-                        #pragma clang loop unroll_count(6)
-                    #elif defined (__FUJITSU)
-                        #pragma loop fullunroll_pre_simd
-                    #elif defined(__GNUC__)
-                        #pragma GCC unroll (6)
-                    #endif
+                    UNROLL_S(6)
                     for( unsigned int j=1 ; j<7 ; j++ ) {
                         bJx [ index+7*j*vecSize ] += sum[j]*tmp;
                     }
@@ -1603,15 +1561,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
             for( unsigned int k=0 ; k<7 ; k++ ) {
                 double tmpJy = 0.;
                 int ilocal = ( ( i )*49+j*7+k )*vecSize;
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(8)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (8)
-                #else
-                    #pragma unroll(8)
-                #endif
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpJy += bJx [ilocal+ipart];
                 }
@@ -1756,100 +1706,46 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
 
             double sum[7];
             sum[0] = 0.;
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(6)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (6)
-            #endif
+            UNROLL_S(6)
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 sum[k] = sum[k-1]-DSz[( k-1 )*vecSize+ipart];
             }
 
             double tmp( crz_p *one_third*DSx[ipart]*DSy[ipart] );
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(6)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (6)
-            #endif
+            UNROLL_S(6)
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 bJx[( k )*vecSize+ipart] += sum[k]*tmp;
             }
 
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(6)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (6)
-            #endif
+            UNROLL_S(6)
             for( unsigned int j=1 ; j<7 ; j++ ) {
                 tmp = crz_p * ( 0.5*DSx[ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart] + one_third*DSx[ipart]*DSy[j*vecSize+ipart] );
                 int index( ( j*7 )*vecSize+ipart );
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(6)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (6)
-                #endif
+                UNROLL_S(6)
                 for( unsigned int k=1 ; k<7 ; k++ ) {
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
                 }
             }
 
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(6)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (6)
-            #endif
+            UNROLL_S(6)
             for( unsigned int i=1 ; i<7 ; i++ ) {
                 tmp = crz_p * ( 0.5*DSy[ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart] + one_third*DSx[i*vecSize+ipart]*DSy[ipart] );
                 int index( ( i*49 )*vecSize+ipart );
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(6)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (6)
-                #endif
+                UNROLL_S(6)
                 for( unsigned int k=1 ; k<7 ; k++ ) {
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
                 }
             }//i
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(6)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #elif defined(__GNUC__)
-                #pragma GCC unroll (6)
-            #endif
+            UNROLL_S(6)
             for( unsigned int i=1 ; i<7 ; i++ ) {
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(6)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (6)
-                #endif
+                UNROLL_S(6)
                 for( unsigned int j=1 ; j<7 ; j++ ) {
                     tmp = crz_p * ( Sx0_buff_vect[( i-1 )*vecSize+ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart]
                                     + 0.5*DSx[i*vecSize+ipart]*Sy0_buff_vect[( j-1 )*vecSize+ipart]
                                     + 0.5*DSy[j*vecSize+ipart]*Sx0_buff_vect[( i-1 )*vecSize+ipart]
                                     + one_third*DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart] );
                     int index( ( i*49 + j*7 )*vecSize+ipart );
-                    #if defined(__clang__)
-                        #pragma clang loop unroll_count(6)
-                    #elif defined (__FUJITSU)
-                        #pragma loop fullunroll_pre_simd
-                    #elif defined(__GNUC__)
-                        #pragma GCC unroll (6)
-                    #endif
+                    UNROLL_S(6)
                     for( unsigned int k=1 ; k<7 ; k++ ) {
                         bJx [ index+k*vecSize ] += sum[k]*tmp;
                     }
@@ -1868,15 +1764,7 @@ void Projector3D4OrderV::currents( double * __restrict__ Jx,
             for( unsigned int k=1 ; k<7 ; k++ ) {
                 double tmpJz = 0.;
                 int ilocal = ( ( i )*49+j*7+k )*vecSize;
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(8)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #elif defined(__GNUC__)
-                    #pragma GCC unroll (8)
-                #else
-                    #pragma unroll(8)
-                #endif
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpJz +=  bJx[ilocal+ipart];
                 }
