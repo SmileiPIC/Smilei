@@ -342,7 +342,9 @@ void Projector2D2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
+void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz,
+                        Particles &particles, unsigned int istart, unsigned int iend,
+                        std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -371,6 +373,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
     // Pointer for GPU and vectorization on ARM processors
     double * __restrict__ position_x = particles.getPtrPosition(0);
     double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ momentum_z = particles.getPtrMomentum(2);
     double * __restrict__ weight     = particles.getPtrWeight();
     short  * __restrict__ charge     = particles.getPtrCharge();
 
@@ -699,8 +702,8 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             for( unsigned int i = 0; i < 5 ; i++ ) {
                 DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
             }
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
-            crz_p[ipart] = charge_weight[ipart]*one_third*particles.momentum( 2, ivect+istart+ipart )*( *invgf )[ivect+istart+ipart];
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )*weight[ivect+istart+ipart];
+            crz_p[ipart] = charge_weight[ipart]*one_third*momentum_z[ivect+istart+ipart]*( *invgf )[ivect+istart+ipart];
         }
 
         #pragma omp simd
