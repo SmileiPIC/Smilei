@@ -7,7 +7,7 @@
 
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class for 2nd order interpolator for 1Dcartesian simulations
+//! Class for 2nd order interpolator for 3Dcartesian simulations
 //  --------------------------------------------------------------------------------------------------------------------
 class Interpolator3D2Order final : public Interpolator3D
 {

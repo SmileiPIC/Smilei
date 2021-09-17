@@ -155,7 +155,7 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             // j = 0
 
-            delta   = delta0 - ( double )idx[1] + 0*( 0.5-dual[1][ipart] );
+            delta   = delta0 - ( double )idx[1];
             delta2  = delta*delta;
             delta3  = delta2*delta;
             delta4  = delta3*delta;
@@ -170,7 +170,7 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             // j = 1
 
-            delta   = delta0 - ( double )idx[1] + 1*( 0.5-dual[1][ipart] );
+            delta   = delta0 - ( double )idx[1] + ( 0.5-dual[1][ipart] );
             delta2  = delta*delta;
             delta3  = delta2*delta;
             delta4  = delta3*delta;
@@ -188,7 +188,7 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             // j = 0
 
-            delta   = delta0 - ( double )idx[2] + 0*( 0.5-dual[2][ipart] );
+            delta   = delta0 - ( double )idx[2];
             delta2  = delta*delta;
             delta3  = delta2*delta;
             delta4  = delta3*delta;

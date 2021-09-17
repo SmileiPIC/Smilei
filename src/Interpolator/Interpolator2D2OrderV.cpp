@@ -163,7 +163,6 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             coeff[1][1][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
             coeff[1][1][1][ipart]    = ( 0.75 - delta2 );
             coeff[1][1][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
-
         }
 
         // Coefficient pointer on primal and dual nodes

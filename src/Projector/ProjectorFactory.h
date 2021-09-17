@@ -44,11 +44,11 @@ public:
             if( !vectorization ) {
                 Proj = new Projector2D2Order( params, patch );
             }
-#ifdef _VECTO
-            else {
-                Proj = new Projector2D2OrderV( params, patch );
-            }
-#endif
+// #ifdef _VECTO
+//             else {
+//                 Proj = new Projector2D2OrderV( params, patch );
+//             }
+// #endif
         } else if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == ( unsigned int )4 ) ) {
             Proj = new Projector2D4Order( params, patch );
         }
@@ -73,7 +73,7 @@ public:
                 Proj = new Projector3D4OrderV( params, patch );
             }
 #endif
-            
+
         }
         // ---------------
         // AM simulation
@@ -87,9 +87,9 @@ public:
         } else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
         }
-        
+
         return Proj;
     }
-    
+
 };
 #endif

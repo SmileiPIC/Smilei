@@ -19,6 +19,8 @@ Interpolator2D4OrderV::Interpolator2D4OrderV( Params &params, Patch *patch ) : I
     dx_inv_ = 1.0/params.cell_length[0];
     dy_inv_ = 1.0/params.cell_length[1];
 
+    D_inv[0] = 1.0/params.cell_length[0];
+    D_inv[1] = 1.0/params.cell_length[1];
 
     //double defined for use in coefficients
     dble_1_ov_384 = 1.0/384.0;
@@ -186,6 +188,13 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
             deltaO[0][ipart-ipart_ref+ivect+istart[0]] = delta;
 
+            std::cerr << "ipart: " << ipart +ivect+istart[0]
+                      << " x: " << particles.position( 0, ipart+ivect+istart[0] )
+                      << " xpn: " << delta0
+                      << " delta: " << delta
+                      << " coeff: "<< coeff[0][0][0][ipart]
+                      << std::endl;
+
             // j = 1
 
             // deltax   = delta0 - ( double )idx[0] + 0.5;
@@ -227,7 +236,7 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
             // coeffyp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
             // coeffyp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
 
-            delta   = delta0 - ( double )idx[1] + 0*( 0.5-dual[1][ipart] );
+            delta   = delta0 - ( double )idx[1] ;
             delta2  = delta*delta;
             delta3  = delta2*delta;
             delta4  = delta3*delta;
@@ -253,7 +262,7 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
             // coeffyd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
 
 
-            delta   = delta0 - ( double )idx[1] + 1*( 0.5-dual[1][ipart] );
+            delta   = delta0 - ( double )idx[1] + ( 0.5-dual[1][ipart] );
             delta2  = delta*delta;
             delta3  = delta2*delta;
             delta4  = delta3*delta;
@@ -295,7 +304,7 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
         // Field buffers for vectorization (required on A64FX)
         for( int iloc=-2 ; iloc<4 ; iloc++ ) {
             for( int jloc=-2 ; jloc<3 ; jloc++ ) {
-                field_buffer[iloc+1][jloc+1] = ( *Ex2D )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+                field_buffer[iloc+2][jloc+2] = ( *Ex2D )( idxO[0]+iloc, idxO[1]+jloc );
             }
         }
 
@@ -309,8 +318,8 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
                 UNROLL_S(5)
                 for( int jloc=-2 ; jloc<3 ; jloc++ ) {
                     interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] *
-                                  ( ( 1-dual[0][ipart] )*field_buffer[2+iloc][2+jloc]
-                                  + dual[0][ipart]*field_buffer[3+iloc][2+jloc] );
+                                  ( ( 1-dual[0][ipart] )*( *Ex2D )( idxO[0]+iloc, idxO[1]+jloc)
+                                  + dual[0][ipart]*( *Ex2D )( idxO[0]+iloc+1, idxO[1]+jloc) );
                 }
             }
             Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
@@ -368,7 +377,9 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
             //Bz(dual, dual )
             interp_res = 0.;
+            UNROLL_S(5)
             for( int iloc=-2 ; iloc<3 ; iloc++ ) {
+                UNROLL_S(5)
                 for( int jloc=-2 ; jloc<3 ; jloc++ ) {
                     interp_res += coeffxd2[ipart+iloc*32] * coeffyd2[ipart+jloc*32] *
                             ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*( *Bz2D )( idxO[0]+iloc, idxO[1]+jloc) + dual[0][ipart]*( *Bz2D )( idxO[0]+1+iloc, idxO[1]+jloc) )
@@ -377,6 +388,17 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
             }
             Bpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
+        }
+
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+            std::cerr << "ipart: " << ipart +ivect+istart[0]
+                      << " Ex: " << Epart[0][ipart-ipart_ref+ivect+istart[0]]
+                      << " Ey: " << Epart[1][ipart-ipart_ref+ivect+istart[0]]
+                      << " Ez: " << Epart[2][ipart-ipart_ref+ivect+istart[0]]
+                      << " Bx: " << Bpart[0][ipart-ipart_ref+ivect+istart[0]]
+                      << " By: " << Bpart[1][ipart-ipart_ref+ivect+istart[0]]
+                      << " Bz: " << Bpart[2][ipart-ipart_ref+ivect+istart[0]]
+                      << std::endl;
         }
 
     }

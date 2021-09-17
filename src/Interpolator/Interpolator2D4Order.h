@@ -69,6 +69,11 @@ private:
         coeffxp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
         coeffxp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
 
+        // std::cerr << " xpn: " << xpn
+        //           << " delta: " << deltax
+        //           << " coeff: "<< coeffxp_[0]
+        //           << std::endl;
+
         deltay   = ypn - ( double )jd_ + 0.5;
         delta2  = deltay*deltay;
         delta3  = delta2*deltay;
@@ -95,6 +100,7 @@ private:
         id_ = id_ - i_domain_begin;
         jp_ = jp_ - j_domain_begin;
         jd_ = jd_ - j_domain_begin;
+
     }
 
 

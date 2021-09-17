@@ -18,8 +18,8 @@ Interpolator2D4Order::Interpolator2D4Order( Params &params, Patch *patch ) : Int
 
     dx_inv_ = 1.0/params.cell_length[0];
     dy_inv_ = 1.0/params.cell_length[1];
-    
-    
+
+
     //double defined for use in coefficients
     dble_1_ov_384 = 1.0/384.0;
     dble_1_ov_48 = 1.0/48.0;
@@ -32,8 +32,8 @@ Interpolator2D4Order::Interpolator2D4Order( Params &params, Patch *patch ) : Int
     dble_1_ov_6 = 1.0/6.0;
     dble_115_ov_192 = 115.0/192.0;
     dble_5_ov_8 = 5.0/8.0;
-    
-    
+
+
 }
 
 
@@ -49,13 +49,13 @@ void Interpolator2D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     Field2D *Bx2D = static_cast<Field2D *>( EMfields->Bx_m );
     Field2D *By2D = static_cast<Field2D *>( EMfields->By_m );
     Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_m );
-    
+
     // Normalized particle position
     double xpn = particles.position( 0, ipart )*dx_inv_;
     double ypn = particles.position( 1, ipart )*dy_inv_;
     // Calculate coeffs
     coeffs( xpn, ypn );
-    
+
     // Interpolation of Ex^(d,p)
     *( ELoc+0*nparts ) = compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_ );
     // Interpolation of Ey^(p,d)
@@ -74,10 +74,10 @@ void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 {
 
     int ipart = *istart;
-    
+
     double *ELoc = &( smpi->dynamics_Epart[ithread][ipart] );
     double *BLoc = &( smpi->dynamics_Bpart[ithread][ipart] );
-    
+
     // Interpolate E, B
     // Compute coefficient for ipart position
     // Static cast of the electromagnetic fields
@@ -91,15 +91,15 @@ void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     Field2D *Jy2D = static_cast<Field2D *>( EMfields->Jy_ );
     Field2D *Jz2D = static_cast<Field2D *>( EMfields->Jz_ );
     Field2D *Rho2D= static_cast<Field2D *>( EMfields->rho_ );
-    
+
     // Normalized particle position
     double xpn = particles.position( 0, ipart )*dx_inv_;
     double ypn = particles.position( 1, ipart )*dy_inv_;
     // Calculate coeffs
     coeffs( xpn, ypn );
-    
+
     int nparts( particles.size() );
-    
+
     // Interpolation of Ex^(d,p)
     *( ELoc+0*nparts ) =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_ );
     // Interpolation of Ey^(p,d)
@@ -130,7 +130,7 @@ void Interpolator2D4Order::oneField( Field **field, Particles &particles, int *i
     double *coeffy = F->isDual( 1 ) ? &coeffyd_[2] : &coeffyp_[2];
     int *i = F->isDual( 0 ) ? &id_ : &ip_;
     int *j = F->isDual( 1 ) ? &jd_ : &jp_;
-    
+
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xpn = particles.position( 0, ipart )*dx_inv_;
         double ypn = particles.position( 1, ipart )*dy_inv_;
@@ -144,10 +144,14 @@ void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
-    
+
     //Loop on bin particles
     int nparts( particles.size() );
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+
+        // std::cerr << "ipart: " << ipart
+        //           << " x: " << particles.position( 0, ipart );
+
         //Interpolation on current particle
         fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
         //Buffering of iol and delta
@@ -156,26 +160,38 @@ void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         ( *delta )[ipart+0*nparts] = deltax;
         ( *delta )[ipart+1*nparts] = deltay;
     }
-    
+
+    // for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+    //     std::cerr << "ipart: " << ipart
+    //               << " Ex: " << ( *Epart )[ipart+0*nparts]
+    //               << " Ey: " << ( *Epart )[ipart+1*nparts]
+    //               << " Ez: " << ( *Epart )[ipart+2*nparts]
+    //               << " Bx: " << ( *Bpart )[ipart+0*nparts]
+    //               << " By: " << ( *Bpart )[ipart+1*nparts]
+    //               << " Bz: " << ( *Bpart )[ipart+2*nparts]
+    //               << " iold: " << ( *iold )[ipart+0*nparts]
+    //               << std::endl;
+    // }
+
 }
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
 void Interpolator2D4Order::fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> *selection )
 {
     if( selection ) {
-    
+
         int nsel_tot = selection->size();
         for( int isel=0 ; isel<nsel_tot; isel++ ) {
             fields( EMfields, particles, ( *selection )[isel], offset, buffer+isel, buffer+isel+3*offset );
         }
-        
+
     } else {
-    
+
         int npart_tot = particles.size();
         for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
             fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
         }
-        
+
     }
 }
 
@@ -196,4 +212,3 @@ void Interpolator2D4Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }
-
