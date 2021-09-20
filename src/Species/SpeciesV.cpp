@@ -347,66 +347,67 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             }
 
             // Cell keys
+            computeParticleCellKeys( params, particles->first_index[ipack*packsize_], particles->last_index[ipack*packsize_+packsize_-1] );
 
-            if (params.geometry == "AMcylindrical"){
-
-                for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
-                    if ( particles->cell_keys[iPart] != -1 ) {
-                        //Compute cell_keys of remaining particles
-                        for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                            particles->cell_keys[iPart] *= length[i];
-                            particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                        }
-                        count[particles->cell_keys[iPart]] ++;
-                    }
-                }
-
-            } else if (nDim_field == 3) {
-
-                #pragma omp simd
-                for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
-                    if ( particles->cell_keys[iPart] != -1 ) {
-                        //Compute cell_keys of remaining particles
-                        particles->cell_keys[iPart] *= length[0];
-                        particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
-                        particles->cell_keys[iPart] *= length[1];
-                        particles->cell_keys[iPart] += round( (particles->position(1, iPart) - min_loc_vec[1]) * dx_inv_[1] );
-                        particles->cell_keys[iPart] *= length[2];
-                        particles->cell_keys[iPart] += round( (particles->position(2, iPart) - min_loc_vec[2]) * dx_inv_[2] );
-                    }
-                }
-
-            } else if (nDim_field == 2) {
-
-                #pragma omp simd
-                for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
-                    if ( particles->cell_keys[iPart] != -1 ) {
-                        //Compute cell_keys of remaining particles
-                        particles->cell_keys[iPart] *= length[0];
-                        particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
-                        particles->cell_keys[iPart] *= length[1];
-                        particles->cell_keys[iPart] += round( (particles->position(1, iPart) - min_loc_vec[1]) * dx_inv_[1] );
-
-                    }
-                }
-            } else if (nDim_field == 1) {
-
-                #pragma omp simd
-                for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
-                    if ( particles->cell_keys[iPart] != -1 ) {
-                        //Compute cell_keys of remaining particles
-                        particles->cell_keys[iPart] *= length[0];
-                        particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
-                    }
-                }
-
-            }
-
-            for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
-                if ( particles->cell_keys[iPart] != -1 ) {
-                    count[particles->cell_keys[iPart]] ++;
-                }
-            }
+            // if (params.geometry == "AMcylindrical"){
+            //
+            //     for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
+            //         if ( particles->cell_keys[iPart] != -1 ) {
+            //             //Compute cell_keys of remaining particles
+            //             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+            //                 particles->cell_keys[iPart] *= length[i];
+            //                 particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+            //             }
+            //             count[particles->cell_keys[iPart]] ++;
+            //         }
+            //     }
+            //
+            // } else if (nDim_field == 3) {
+            //
+            //     #pragma omp simd
+            //     for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
+            //         if ( particles->cell_keys[iPart] != -1 ) {
+            //             //Compute cell_keys of remaining particles
+            //             particles->cell_keys[iPart] *= length[0];
+            //             particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
+            //             particles->cell_keys[iPart] *= length[1];
+            //             particles->cell_keys[iPart] += round( (particles->position(1, iPart) - min_loc_vec[1]) * dx_inv_[1] );
+            //             particles->cell_keys[iPart] *= length[2];
+            //             particles->cell_keys[iPart] += round( (particles->position(2, iPart) - min_loc_vec[2]) * dx_inv_[2] );
+            //         }
+            //     }
+            //
+            // } else if (nDim_field == 2) {
+            //
+            //     #pragma omp simd
+            //     for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
+            //         if ( particles->cell_keys[iPart] != -1 ) {
+            //             //Compute cell_keys of remaining particles
+            //             particles->cell_keys[iPart] *= length[0];
+            //             particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
+            //             particles->cell_keys[iPart] *= length[1];
+            //             particles->cell_keys[iPart] += round( (particles->position(1, iPart) - min_loc_vec[1]) * dx_inv_[1] );
+            //
+            //         }
+            //     }
+            // } else if (nDim_field == 1) {
+            //
+            //     #pragma omp simd
+            //     for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
+            //         if ( particles->cell_keys[iPart] != -1 ) {
+            //             //Compute cell_keys of remaining particles
+            //             particles->cell_keys[iPart] *= length[0];
+            //             particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
+            //         }
+            //     }
+            //
+            // }
+            //
+            // for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
+            //     if ( particles->cell_keys[iPart] != -1 ) {
+            //         count[particles->cell_keys[iPart]] ++;
+            //     }
+            // }
 
 
 
@@ -666,29 +667,99 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
     }
 }
 
+// Compute particle cell_keys from istart to iend
+// This operation is normally done in the pusher to avoid additional particles pass.
+void SpeciesV::computeParticleCellKeys( Params &params, unsigned int istart, unsigned int iend ) {
 
+    unsigned int iPart;
+
+    if (params.geometry == "AMcylindrical"){
+
+        for( iPart=istart; iPart < iend ; iPart++ ) {
+            if ( particles->cell_keys[iPart] != -1 ) {
+                //Compute cell_keys of remaining particles
+                for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                    particles->cell_keys[iPart] *= length_[i];
+                    particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                }
+                count[particles->cell_keys[iPart]] ++;
+            }
+        }
+
+    } else if (nDim_field == 3) {
+
+        #pragma omp simd
+        for( iPart=istart; iPart < iend ; iPart++  ) {
+            if ( particles->cell_keys[iPart] != -1 ) {
+                //Compute cell_keys of remaining particles
+                particles->cell_keys[iPart] *= length_[0];
+                particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
+                particles->cell_keys[iPart] *= length_[1];
+                particles->cell_keys[iPart] += round( (particles->position(1, iPart) - min_loc_vec[1]) * dx_inv_[1] );
+                particles->cell_keys[iPart] *= length_[2];
+                particles->cell_keys[iPart] += round( (particles->position(2, iPart) - min_loc_vec[2]) * dx_inv_[2] );
+            }
+        }
+
+    } else if (nDim_field == 2) {
+
+        #pragma omp simd
+        for( iPart=istart; iPart < iend ; iPart++  ) {
+            if ( particles->cell_keys[iPart] != -1 ) {
+                //Compute cell_keys of remaining particles
+                particles->cell_keys[iPart] *= length_[0];
+                particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
+                particles->cell_keys[iPart] *= length_[1];
+                particles->cell_keys[iPart] += round( (particles->position(1, iPart) - min_loc_vec[1]) * dx_inv_[1] );
+
+            }
+        }
+    } else if (nDim_field == 1) {
+
+        #pragma omp simd
+        for( iPart=istart; iPart < iend ; iPart++  ) {
+            if ( particles->cell_keys[iPart] != -1 ) {
+                //Compute cell_keys of remaining particles
+                particles->cell_keys[iPart] *= length_[0];
+                particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
+            }
+        }
+
+    }
+
+    for( iPart=istart; iPart < iend ; iPart++  ) {
+        if ( particles->cell_keys[iPart] != -1 ) {
+            count[particles->cell_keys[iPart]] ++;
+        }
+    }
+}
+
+//Compute part_cell_keys at patch creation.
+// This operation is normally done in the pusher to avoid additional particles pass.
 void SpeciesV::computeParticleCellKeys( Params &params )
 {
-    //Compute part_cell_keys at patch creation. This operation is normally done in the pusher to avoid additional particles pass.
 
-    unsigned int ip, npart;
-    int IX;
-    double X;
+    //unsigned int ip
+    unsigned int npart;
+    // int IX;
+    // double X;
 
     npart = particles->size(); //Number of particles
 
-    #pragma omp simd
-    for( ip=0; ip < npart ; ip++ ) {
-        // Counts the # of particles in each cell (or sub_cell) and store it in sparticles->last_index.
-        for( unsigned int ipos=0; ipos < nDim_field ; ipos++ ) {
-            X = ((this)->*(distance[ipos]))(particles, ipos, ip);
-            IX = round( X * dx_inv_[ipos] );
-            particles->cell_keys[ip] = particles->cell_keys[ip] * this->length_[ipos] + IX;
-        }
-    }
-    for( ip=0; ip < npart ; ip++ ) {
-        count[particles->cell_keys[ip]] ++ ;
-    }
+    // #pragma omp simd
+    // for( ip=0; ip < npart ; ip++ ) {
+    //     // Counts the # of particles in each cell (or sub_cell) and store it in sparticles->last_index.
+    //     for( unsigned int ipos=0; ipos < nDim_field ; ipos++ ) {
+    //         X = ((this)->*(distance[ipos]))(particles, ipos, ip);
+    //         IX = round( X * dx_inv_[ipos] );
+    //         particles->cell_keys[ip] = particles->cell_keys[ip] * this->length_[ipos] + IX;
+    //     }
+    // }
+    // for( ip=0; ip < npart ; ip++ ) {
+    //     count[particles->cell_keys[ip]] ++ ;
+    // }
+
+    computeParticleCellKeys( params, 0, npart );
 
 }
 

@@ -72,6 +72,9 @@ public:
     void sortParticles( Params &params , Patch * patch) override;
     //void countSortParticles(Params& param);
 
+    //! Compute cell_keys for all particles from istart to iend
+    void computeParticleCellKeys( Params &params, unsigned int istart, unsigned int iend ) override;
+
     //! Compute cell_keys for all particles of the current species
     void computeParticleCellKeys( Params &params ) override;
 
