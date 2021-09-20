@@ -55,7 +55,7 @@ run1D:
 run2D:
   stage: run_default
   only:
-    - develop
+#    - develop
     - validation_update
 
   script:
@@ -70,7 +70,7 @@ run2D:
 run3D:
   stage: run_default
   only:
-    - develop
+#    - develop
     - validation_update
 
   script:
@@ -86,7 +86,7 @@ run3D:
 runAM:
   stage: run_default
   only:
-    - develop
+#    - develop
     - validation_update
 
   script:
@@ -109,7 +109,7 @@ runAM:
 runCollisions:
   stage: run_default
   only:
-    - develop
+#    - develop
     - validation_update
 
   script:
@@ -121,7 +121,7 @@ runCollisions:
 compile_picsar:
   stage: compile_picsar
   only:
-    - develop
+#    - develop
     - validation_update
 
   script:
@@ -132,7 +132,7 @@ compile_picsar:
 run_picsar:
   stage: run_picsar
   only:
-    - develop
+#    - develop
     - validation_update
 
   script:
@@ -142,7 +142,7 @@ run_picsar:
 compile_debug:
   stage: compile_debug
   only:
-    - develop
+#    - develop
     - validation_update
 
   script:
@@ -153,7 +153,7 @@ compile_debug:
 compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
-    - develop
+#    - develop
     - validation_update
 
   script:
@@ -164,7 +164,7 @@ compile_no_mpi_threadmultiple:
 compile_no_openmp:
   stage: compile_no_openmp
   only:
-    - develop
+#    - develop
     - validation_update
 
   script:
