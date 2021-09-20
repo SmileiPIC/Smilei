@@ -693,15 +693,19 @@ void SpeciesV::computeParticleCellKeys( Params &params, unsigned int istart, uns
 
     } else if (nDim_field == 3) {
 
+        double min_loc_x = min_loc_vec[0];
+        double min_loc_y = min_loc_vec[1];
+        double min_loc_z = min_loc_vec[2];
+
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++  ) {
             if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys of remaining particles
-                cell_keys[iPart]  = round( (position_x[iPart] - min_loc_vec[0]) * dx_inv_[0] );
+                cell_keys[iPart]  = round( (position_x[iPart] - min_loc_x) * dx_inv_[0] );
                 cell_keys[iPart] *= length_[1];
-                cell_keys[iPart] += round( (position_y[iPart] - min_loc_vec[1]) * dx_inv_[1] );
+                cell_keys[iPart] += round( (position_y[iPart] - min_loc_y) * dx_inv_[1] );
                 cell_keys[iPart] *= length_[2];
-                cell_keys[iPart] += round( (position_z[iPart] - min_loc_vec[2]) * dx_inv_[2] );
+                cell_keys[iPart] += round( (position_z[iPart] - min_loc_z) * dx_inv_[2] );
             }
         }
 
@@ -709,11 +713,11 @@ void SpeciesV::computeParticleCellKeys( Params &params, unsigned int istart, uns
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++  ) {
-            if ( particles->cell_keys[iPart] != -1 ) {
+            if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys of remaining particles
-                particles->cell_keys[iPart] = round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
-                particles->cell_keys[iPart] *= length_[1];
-                particles->cell_keys[iPart] += round( (particles->position(1, iPart) - min_loc_vec[1]) * dx_inv_[1] );
+                cell_keys[iPart]  = round( (position_x[iPart] - min_loc_vec[0]) * dx_inv_[0] );
+                cell_keys[iPart] *= length_[1];
+                cell_keys[iPart] += round( (position_y[iPart] - min_loc_vec[1]) * dx_inv_[1] );
 
             }
         }
@@ -721,16 +725,16 @@ void SpeciesV::computeParticleCellKeys( Params &params, unsigned int istart, uns
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++  ) {
-            if ( particles->cell_keys[iPart] != -1 ) {
+            if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys of remaining particles
-                particles->cell_keys[iPart] = round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
+                cell_keys[iPart] = round( (position_x[iPart] - min_loc_vec[0]) * dx_inv_[0] );
             }
         }
 
     }
 
     for( iPart=istart; iPart < iend ; iPart++  ) {
-        if ( particles->cell_keys[iPart] != -1 ) {
+        if ( cell_keys[iPart] != -1 ) {
             count[particles->cell_keys[iPart]] ++;
         }
     }
