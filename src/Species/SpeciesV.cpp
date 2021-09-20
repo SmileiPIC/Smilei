@@ -280,10 +280,17 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             length[1]=params.n_space[1]+1;
             length[2]=params.n_space[2]+1;
 
-            for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
-                double ener_iPart( 0. );
-                // Apply wall and boundary conditions
-                if( mass_>0 ) {
+            // Boundary conditions and energy lost
+
+            double ener_iPart( 0. );
+
+            if( mass_>0 ) {
+
+                for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
+
+                    ener_iPart = 0;
+
+                    // Apply wall and boundary conditions
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, ithread, ener_iPart );
                         nrj_lost_per_thd[tid] += mass_ * ener_iPart;
@@ -295,19 +302,24 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, ithread, ener_iPart );
                     nrj_lost_per_thd[tid] += mass_ * ener_iPart;
 
-                    for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                            //Compute cell_keys of remaining particles
-                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                                particles->cell_keys[iPart] *= this->length_[i];
-                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                            }
-                            //First reduction of the count sort algorithm. Lost particles are not included.
-                            count[particles->cell_keys[iPart]] ++;
-                        }
-                    }
+                    // for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
+                    //     if ( particles->cell_keys[iPart] != -1 ) {
+                    //         //Compute cell_keys of remaining particles
+                    //         for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                    //             particles->cell_keys[iPart] *= length[i];
+                    //             particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                    //         }
+                    //         count[particles->cell_keys[iPart]] ++;
+                    //     }
+                    // }
 
-                } else if( mass_==0 ) {
+                }
+
+            } else if( mass_==0 ) {
+
+                for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
+
+                    ener_iPart = 0;
 
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, ithread, ener_iPart );
@@ -320,19 +332,33 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, ithread, ener_iPart );
                     nrj_lost_per_thd[tid] += ener_iPart;
 
-                    for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                            //Compute cell_keys of remaining particles
-                            for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                                particles->cell_keys[iPart] *= length[i];
-                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                            }
-                            count[particles->cell_keys[iPart]] ++;
-                        }
-                    }
+                    // for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
+                    //     if ( particles->cell_keys[iPart] != -1 ) {
+                    //         //Compute cell_keys of remaining particles
+                    //         for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                    //             particles->cell_keys[iPart] *= length[i];
+                    //             particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                    //         }
+                    //         count[particles->cell_keys[iPart]] ++;
+                    //     }
+                    // }
+
                 }
             }
-            //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
+
+            // Cell keys
+
+                for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
+                    if ( particles->cell_keys[iPart] != -1 ) {
+                        //Compute cell_keys of remaining particles
+                        for( unsigned int i = 0 ; i<nDim_field; i++ ) {
+                            particles->cell_keys[iPart] *= length[i];
+                            particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                        }
+                        count[particles->cell_keys[iPart]] ++;
+                    }
+                }
+
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[3] += MPI_Wtime() - timer;
@@ -909,7 +935,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
                 patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
             }
-            
+
             if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
 
             // Project susceptibility, the source term of envelope equation
