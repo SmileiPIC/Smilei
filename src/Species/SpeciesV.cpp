@@ -376,14 +376,9 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     }
                 }
 
-                for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
-                    if ( particles->cell_keys[iPart] != -1 ) {
-                        count[particles->cell_keys[iPart]] ++;
-                    }
-                }
-
             } else if (nDim_field == 2) {
 
+                #pragma omp simd
                 for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
                     if ( particles->cell_keys[iPart] != -1 ) {
                         //Compute cell_keys of remaining particles
@@ -392,10 +387,25 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                         particles->cell_keys[iPart] *= length[1];
                         particles->cell_keys[iPart] += round( (particles->position(1, iPart) - min_loc_vec[1]) * dx_inv_[1] );
 
-                        count[particles->cell_keys[iPart]] ++;
+                    }
+                }
+            } else if (nDim_field == 1) {
+
+                #pragma omp simd
+                for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
+                    if ( particles->cell_keys[iPart] != -1 ) {
+                        //Compute cell_keys of remaining particles
+                        particles->cell_keys[iPart] *= length[0];
+                        particles->cell_keys[iPart] += round( (particles->position(0, iPart) - min_loc_vec[0]) * dx_inv_[0] );
                     }
                 }
 
+            }
+
+            for( iPart=particles->first_index[ipack*packsize_] ; iPart<particles->last_index[ipack*packsize_+packsize_-1]; iPart++ ) {
+                if ( particles->cell_keys[iPart] != -1 ) {
+                    count[particles->cell_keys[iPart]] ++;
+                }
             }
 
 
