@@ -347,7 +347,11 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             }
 
             // Cell keys
-            computeParticleCellKeys( params, particles->first_index[ipack*packsize_], particles->last_index[ipack*packsize_+packsize_-1] );
+            computeParticleCellKeys( params,
+                                     particles,
+                                     &particles->cell_keys[0],
+                                     particles->first_index[ipack*packsize_],
+                                     particles->last_index[ipack*packsize_+packsize_-1] );
 
             // if (params.geometry == "AMcylindrical"){
             //
@@ -531,18 +535,26 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
     for( unsigned int idim=0; idim < nDim_field ; idim++ ) {
         for( unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++ ) {
             buf_cell_keys[idim][ineighbor].resize( MPI_buffer_.part_index_recv_sz[idim][ineighbor] );
-            #pragma omp simd
-            for( unsigned int ip=0; ip < MPI_buffer_.part_index_recv_sz[idim][ineighbor]; ip++ ) {
-                for( unsigned int ipos=0; ipos < nDim_field ; ipos++ ) {
-                    double X = ((this)->*(distance[ipos]))(&MPI_buffer_.partRecv[idim][ineighbor], ipos, ip);
-                    int IX = round( X * dx_inv_[ipos] );
-                    buf_cell_keys[idim][ineighbor][ip] = buf_cell_keys[idim][ineighbor][ip] * length[ipos] + IX;
-                }
-            }
-            // not vectorizable because random access to count
-            for( unsigned int ip=0; ip < MPI_buffer_.part_index_recv_sz[idim][ineighbor]; ip++ ) {
-                count[buf_cell_keys[idim][ineighbor][ip]] ++;
-            }
+
+            // #pragma omp simd
+            // for( unsigned int ip=0; ip < MPI_buffer_.part_index_recv_sz[idim][ineighbor]; ip++ ) {
+            //     for( unsigned int ipos=0; ipos < nDim_field ; ipos++ ) {
+            //         double X = ((this)->*(distance[ipos]))(&MPI_buffer_.partRecv[idim][ineighbor], ipos, ip);
+            //         int IX = round( X * dx_inv_[ipos] );
+            //         buf_cell_keys[idim][ineighbor][ip] = buf_cell_keys[idim][ineighbor][ip] * length[ipos] + IX;
+            //     }
+            // }
+            // // not vectorizable because random access to count
+            // for( unsigned int ip=0; ip < MPI_buffer_.part_index_recv_sz[idim][ineighbor]; ip++ ) {
+            //     count[buf_cell_keys[idim][ineighbor][ip]] ++;
+            // }
+
+            computeParticleCellKeys( params,
+                                     &MPI_buffer_.partRecv[idim][ineighbor],
+                                     &buf_cell_keys[idim][ineighbor][0],
+                                     0,
+                                     MPI_buffer_.part_index_recv_sz[idim][ineighbor] );
+
         }
     }
 
@@ -668,12 +680,16 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
 }
 
 // Compute particle cell_keys from istart to iend
-// This operation is normally done in the pusher to avoid additional particles pass.
-void SpeciesV::computeParticleCellKeys( Params &params, unsigned int istart, unsigned int iend ) {
+// This function vectorizes well on Intel and ARM architectures
+void SpeciesV::computeParticleCellKeys( Params    & params,
+                                        Particles * particles,
+                                        int       * cell_keys,
+                                        unsigned int istart,
+                                        unsigned int iend ) {
 
     unsigned int iPart;
 
-    int    * __restrict__ cell_keys  = particles->getPtrCellKeys();
+    // int    * __restrict__ cell_keys  = particles->getPtrCellKeys();
     double * __restrict__ position_x = particles->getPtrPosition(0);
     double * __restrict__ position_y = particles->getPtrPosition(1);
     double * __restrict__ position_z = particles->getPtrPosition(2);
@@ -681,13 +697,13 @@ void SpeciesV::computeParticleCellKeys( Params &params, unsigned int istart, uns
     if (params.geometry == "AMcylindrical"){
 
         for( iPart=istart; iPart < iend ; iPart++ ) {
-            if ( particles->cell_keys[iPart] != -1 ) {
+            if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys of remaining particles
                 for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                    particles->cell_keys[iPart] *= length_[i];
-                    particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
+                    cell_keys[iPart] *= length_[i];
+                    cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
                 }
-                count[particles->cell_keys[iPart]] ++;
+                count[cell_keys[iPart]] ++;
             }
         }
 
@@ -757,6 +773,8 @@ void SpeciesV::computeParticleCellKeys( Params &params )
 
     npart = particles->size(); //Number of particles
 
+    int * __restrict__ cell_keys  = particles->getPtrCellKeys();
+
     // #pragma omp simd
     // for( ip=0; ip < npart ; ip++ ) {
     //     // Counts the # of particles in each cell (or sub_cell) and store it in sparticles->last_index.
@@ -770,7 +788,7 @@ void SpeciesV::computeParticleCellKeys( Params &params )
     //     count[particles->cell_keys[ip]] ++ ;
     // }
 
-    computeParticleCellKeys( params, 0, npart );
+    computeParticleCellKeys( params, particles, cell_keys, 0, npart );
 
 }
 

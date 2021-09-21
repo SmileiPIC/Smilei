@@ -433,7 +433,11 @@ public:
     //! Method used to sort particles
     virtual void sortParticles( Params &param, Patch * patch );
 
-    virtual void computeParticleCellKeys( Params &params, unsigned int istart, unsigned int iend ) {};
+    virtual void computeParticleCellKeys(   Params    & params,
+                                            Particles * particles,
+                                            int       * cell_keys,
+                                            unsigned int istart,
+                                            unsigned int iend ) {};
 
     virtual void computeParticleCellKeys( Params &params ) {};
 
