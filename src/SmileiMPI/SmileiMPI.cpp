@@ -225,7 +225,29 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
     task_tracing_event_time_.resize(nthreads);
     task_tracing_start_or_end_.resize(nthreads);
     task_tracing_event_name_.resize(nthreads);
+
+    unsigned int tot_species_number = PyTools::nComponents( "Species" );
+    unsigned int Npatches           = params.tot_number_of_patches;
+    unsigned int Nbins              = params.n_space[0]/params.clrw;
+    // estimate of the number of tasks
+    unsigned int Ntasks             = Npatches*Nbins*tot_species_number;
+    if (!params.Laser_Envelope_model){
+        Ntasks *= 8 ; // 7 operators (Interp+Push+BC+Proj+Ioniz+Rad+MBW+Vecto)
+        Ntasks += Npatches; // Density reductions  
+        Ntasks += Npatches*tot_species_number*4; // Reductions for Ioniz, Rad, MBW, Vecto  
+    } else {
+        Ntasks *= 9  ; // 7 operators (Interp1+Push1+Interp2+Push2+BC+Proj1+Proj2+Ioniz+Vecto)
+        Ntasks += Npatches * 2; // Density + susceptibility reductions 
+        Ntasks += Npatches*tot_species_number*2; // Reductions for Ioniz, Vecto 
+    }
+    Ntasks = int(Ntasks/nthreads); // suppose tasks are evenly distributed among threads
+
     for (unsigned int ithread = 0; ithread<nthreads; ithread++){
+        // use reserve to prevent frequent memory reallocation which increases tracing overhead
+        task_tracing_event_time_[ithread].reserve(Ntasks);
+        task_tracing_start_or_end_[ithread].reserve(Ntasks);
+        task_tracing_event_name_[ithread].reserve(Ntasks);
+        // initialize vectors to zero size
         task_tracing_event_time_[ithread].resize(0);          // stores time
         task_tracing_start_or_end_[ithread].resize(0);        // stores start (0) or end (1)
         task_tracing_event_name_[ithread].resize(0);          // stores task type
