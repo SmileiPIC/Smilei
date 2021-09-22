@@ -259,7 +259,7 @@ The envelope model in cylindrical coordinates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :doc:`laser_envelope` for cartesian geometries has been
-implemented also in cylindrical geometry, as described in [Massimo2020]_.
+implemented also in cylindrical geometry, as described in [Massimo2020b]_.
 
 Only the mode :math:`m=0` is available for the envelope
 in the present implementation, i.e. the electromagnetic and

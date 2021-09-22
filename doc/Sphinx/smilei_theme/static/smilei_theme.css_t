@@ -692,6 +692,12 @@ div.header > * {
 .orange {
 	color:orange;
 }
+.blue > a, .red > a, .purple > a, .green > a, .orange > a {
+	color: inherit;
+}
+.blue > a:hover, .red > a:hover, .purple > a:hover, .green > a:hover, .orange > a:hover {
+	border-bottom: 1px solid;
+}
 
 /* Style for an emphasized link */
 .emphlink {
