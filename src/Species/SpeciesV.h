@@ -75,7 +75,8 @@ public:
     //! Compute cell_keys for all particles from istart to iend
     void computeParticleCellKeys(   Params    & params,
                                     Particles * particles,
-                                    int       * cell_keys,
+                                    int       * __restrict__ cell_keys,
+                                    int       * __restrict__ count,
                                     unsigned int istart,
                                     unsigned int iend ) override;
 

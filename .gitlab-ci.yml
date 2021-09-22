@@ -43,7 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
-#    - develop-mat
+    - develop-mat
 
   script:
     # Move in test dir
@@ -62,10 +62,10 @@ run2D:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-#    - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1 -l "/sps2/gitlab-runner/logs"
-#    - python validation.py -b "tst2d_s_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst2d_s_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
     - python validation.py -b "tst2d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
-#    - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
 
 run3D:
   stage: run_default

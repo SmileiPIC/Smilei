@@ -350,6 +350,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             computeParticleCellKeys( params,
                                      particles,
                                      &particles->cell_keys[0],
+                                     &count[0],
                                      particles->first_index[ipack*packsize_],
                                      particles->last_index[ipack*packsize_+packsize_-1] );
 
@@ -552,6 +553,7 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
             computeParticleCellKeys( params,
                                      &MPI_buffer_.partRecv[idim][ineighbor],
                                      &buf_cell_keys[idim][ineighbor][0],
+                                     &count[0],
                                      0,
                                      MPI_buffer_.part_index_recv_sz[idim][ineighbor] );
 
@@ -683,7 +685,8 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
 // This function vectorizes well on Intel and ARM architectures
 void SpeciesV::computeParticleCellKeys( Params    & params,
                                         Particles * particles,
-                                        int       * cell_keys,
+                                        int       * __restrict__ cell_keys,
+                                        int       * __restrict__ count,
                                         unsigned int istart,
                                         unsigned int iend ) {
 
@@ -788,7 +791,7 @@ void SpeciesV::computeParticleCellKeys( Params &params )
     //     count[particles->cell_keys[ip]] ++ ;
     // }
 
-    computeParticleCellKeys( params, particles, cell_keys, 0, npart );
+    computeParticleCellKeys( params, particles, cell_keys, &count[0], 0, npart );
 
 }
 
@@ -809,16 +812,25 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
 
     // compute cell keys of new parts
     vector<int> src_cell_keys( npart, 0 );
-    for ( unsigned int ip = 0 ; ip < npart ; ip++ ) {
-        for( unsigned int ipos=0; ipos < nDim_field ; ipos++ ) {
-            double X = ((this)->*(distance[ipos]))(&source_particles, ipos, ip);
-            int IX = round( X * dx_inv_[ipos] );
-            src_cell_keys[ip] = src_cell_keys[ip] * length[ipos] + IX;
-        }
-    }
     vector<int> src_count( ncells, 0 );
-    for( unsigned int ip=0; ip < npart ; ip++ )
-        src_count[src_cell_keys[ip]] ++;
+
+    // for ( unsigned int ip = 0 ; ip < npart ; ip++ ) {
+    //     for( unsigned int ipos=0; ipos < nDim_field ; ipos++ ) {
+    //         double X = ((this)->*(distance[ipos]))(&source_particles, ipos, ip);
+    //         int IX = round( X * dx_inv_[ipos] );
+    //         src_cell_keys[ip] = src_cell_keys[ip] * length[ipos] + IX;
+    //     }
+    // }
+    // for( unsigned int ip=0; ip < npart ; ip++ ) {
+    //     src_count[src_cell_keys[ip]] ++;
+    // }
+
+    computeParticleCellKeys( params,
+                             &source_particles,
+                             &src_cell_keys[0],
+                             &src_count[0],
+                             0,
+                             npart );
 
     // sort new parts per cells
     int istart = 0;
