@@ -647,6 +647,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             }
     }
 
+    bool defined_cell_sort = true;
+    if (!PyTools::extractOrNone( "cell_sorting", cell_sorting, "Main"  )){
+    //cell_sorting is undefined by the user
+        defined_cell_sort = false;
+        cell_sorting = false;
+    }
+
     // Activation of the vectorized subroutines
     vectorization_mode = "off";
     has_adaptive_vectorization = false;
@@ -670,6 +677,12 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 ERROR("In block `Vectorization`, `adaptive` mode only available in 3D")
             }
         }
+        // Check cell sorting is allowed
+        if (defined_cell_sort == true && cell_sorting == false){
+            ERROR(" Cell sorting must be allowed in order to use vectorization.")
+        }
+        cell_sorting = true;
+
 
         // Default mode for the adaptive mode
         PyTools::extract( "initial_mode", adaptive_default_mode, "Vectorization"   );
@@ -685,12 +698,14 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             );
     }
 
-    PyTools::extract( "cell_sorting", cell_sorting, "Main"  );
     
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
 
         // collisions need sorting per cell
+        if (defined_cell_sort == true && cell_sorting == false){
+            ERROR(" Cell sorting must be allowed in order to use collisions.")
+        }
         cell_sorting = true;
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
@@ -738,8 +753,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
 	//Use cell sorting if merge is used.
         PyTools::extract( "merging_method", merging_method, "Species", ispec );
-	if (merging_method != "none") cell_sorting = true;
+	if (merging_method != "none"){
+            if (defined_cell_sort == true && cell_sorting == false){
+                ERROR(" Cell sorting must be allowed in order to use particle merge.")
+            }
+            cell_sorting = true;
+        }
     }
+
+    //Set final value of cell_sort
+    if (!cell_sorting) cell_sorting = false;
 
     // -------------------------------------------------------
     // Parameters for the synchrotron-like radiation losses
