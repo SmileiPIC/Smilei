@@ -155,7 +155,6 @@ compile_no_mpi_threadmultiple:
   only:
     - develop
     - cell_sorting_flag
-    
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean

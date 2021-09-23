@@ -744,7 +744,7 @@ try:
         file_ = file or ('LaserOffset'+str(_N_LaserOffset)+'.h5')
         
         L = Laser(
-            box_side = "xmin",
+            box_side = box_side,
             file = file_,
         )
         
@@ -768,7 +768,7 @@ except:
     
     def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., fft_time_window=None, extra_envelope=lambda *a:1., keep_n_strongest_modes=100, angle=0., number_of_processes=None, file=None):
         L = Laser(
-            box_side = "xmin",
+            box_side = box_side,
             file = "none",
             time_envelope = extra_envelope
         )

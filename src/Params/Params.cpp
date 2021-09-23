@@ -898,8 +898,18 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             unsigned int normal_axis = 0;
             if( box_side == "xmin" || box_side == "xmax" ) {
                 normal_axis = 0;
+            } else if( box_side == "ymin" || box_side == "ymax" ) {
+                if( geometry != "2Dcartesian" && geometry != "3Dcartesian" ) {
+                    ERROR( "For LaserOffset #" << n_laser_offset << ": box_side `ymin` or `ymax` requires 2D or 3D geometry" );
+                }
+                normal_axis = 1;
+            } else if( box_side == "zmin" || box_side == "zmax" ) {
+                if( geometry != "3Dcartesian" ) {
+                    ERROR( "For LaserOffset #" << n_laser_offset << ": box_side `zmin` or `zmax` requires 3D geometry" );
+                }
+                normal_axis = 2;
             } else {
-                ERROR( "For LaserOffset #" << n_laser_offset << ": box_side must be `xmin` or `xmax`" );
+                ERROR( "For LaserOffset #" << n_laser_offset << ": box_side must be `xmin`, `xmax`, `ymin`, `ymax`, `zmin` or `zmax`" );
             }
             
             if( smpi->getRank() < number_of_processes && ! restart ) {

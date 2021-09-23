@@ -1,0 +1,48 @@
+#
+# Machine script for ARCHER2
+# --------------------------
+#
+# Clone Smilei to your directory in the /work filesystem
+#
+# # Set up environment:
+#
+# module restore PrgEnv-gnu
+# export CXX=CC
+# module load cray-python
+# module load cray-hdf5-parallel
+# export PYTHONHOME=/opt/cray/pe/python/3.8.5.0/
+# export LD_LIBRARY_PATH=/opt/cray/pe/python/3.8.5.0/lib:$LD_LIBRARY_PATH
+# export LIBRARY_PATH=$LIBRARY_PATH:/opt/cray/pe/python/3.8.5.0/lib
+# export PATH=/opt/cray/pe/python/3.8.5.0/lib:$PATH
+#
+SMILEICXX=CC
+CXXFLAGS += -O3 -march=znver2 -fopenmp
+#
+# # Compile:
+#
+# make -j 32 machine=archer2
+#
+# Example job script (replace items in <BRACKETS>):
+#
+#```
+##!/bin/bash
+##SBATCH --job-name=smilei
+##SBATCH --time=00:10:00
+##SBATCH --nodes=1
+##SBATCH --tasks-per-node=2
+##SBATCH --cpus-per-task=64
+##SBATCH --account=<ACCOUNT>
+##SBATCH --partition=standard
+##SBATCH --qos=standard
+#
+#module load epcc-job-env
+#module load cray-python
+#module load cray-hdf5-parallel
+#export LD_LIBRARY_PATH=/opt/cray/pe/python/3.8.5.0/lib:$LD_LIBRARY_PATH
+#
+#export OMP_NUM_THREADS=64
+#export OMP_PLACES=cores
+#export OMP_SCHEDULE=dynamic
+#
+#srun --hint=nomultithread --distribution=block:block </PATH/TO/SMILEI>/smilei <SMILEI_NAMELIST>.py
+#```

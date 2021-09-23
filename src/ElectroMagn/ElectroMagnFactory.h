@@ -118,7 +118,7 @@ public:
             if( !PyTools::extract_pyProfile( "profile", profile, "PrescribedField", n_extfield ) ) {
                 ERROR( "PrescribedField #"<<n_extfield<<": parameter 'profile' not understood" );
             }
-            extField.profile = new Profile( profile, params.nDim_field+1, name.str(), params, true );
+            extField.profile = new Profile( profile, params.nDim_field+1, name.str(), params, true, true, true );
             // Find which index the field is in the allFields vector
             extField.index = 1000;
             for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
