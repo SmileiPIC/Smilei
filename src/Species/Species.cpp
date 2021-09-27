@@ -232,7 +232,7 @@ void Species::initOperators( Params &params, Patch *patch )
 {
 
     // interpolation operator (virtual)
-    Interp = InterpolatorFactory::create( params, patch, this->vectorized_operators && !params.cell_sorting ); // + patchId -> idx_domain_begin (now = ref smpi)
+    Interp = InterpolatorFactory::create( params, patch, this->vectorized_operators ); // + patchId -> idx_domain_begin (now = ref smpi)
 
     // assign the correct Pusher to Push
     Push = PusherFactory::create( params, this );
@@ -241,7 +241,7 @@ void Species::initOperators( Params &params, Patch *patch )
     }
 
     // projection operator (virtual)
-    Proj = ProjectorFactory::create( params, patch, this->vectorized_operators && !params.cell_sorting );  // + patchId -> idx_domain_begin (now = ref smpi)
+    Proj = ProjectorFactory::create( params, patch, this->vectorized_operators );  // + patchId -> idx_domain_begin (now = ref smpi)
 
     // Assign the Ionization model (if needed) to Ionize
     //  Needs to be placed after ParticleCreator() because requires the knowledge of max_charge_
