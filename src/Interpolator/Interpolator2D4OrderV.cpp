@@ -118,9 +118,9 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
     int idx[2], idxO[2];
     //Primal indices are constant over the all cell
     idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
-    idxO[0] = idx[0] - i_domain_begin -1 ;
+    idxO[0] = idx[0] - i_domain_begin  ;
     idx[1]  = round( particles.position( 1, *istart ) * D_inv[1] );
-    idxO[1] = idx[1] - j_domain_begin -1 ;
+    idxO[1] = idx[1] - j_domain_begin  ;
 
     Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
     Field2D *Ey2D = static_cast<Field2D *>( EMfields->Ey_ );
@@ -169,7 +169,7 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
             delta0 = position_x[ipart+ivect+istart[0]] *D_inv[0];
             dual [0][ipart] = ( delta0 - ( double )idx[0] >=0. );
 
-            // j = 0
+            // coefficient x primal grid (i=0, j=0)
 
             delta   = delta0 - ( double )idx[0] ;
             delta2  = delta*delta;
@@ -186,9 +186,15 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
             // std::cerr << "ipart: " << ipart +ivect+istart[0]
             //           << " x: " << particles.position( 0, ipart+ivect+istart[0] )
-            //           << " xpn: " << delta0
-            //           << " delta: " << delta
-            //           << " coeff: "<< coeff[0][0][0][ipart]
+            //           << " y: " << particles.position( 1, ipart+ivect+istart[0] )
+            //           << std::endl;
+            //
+            // std::cerr << " delta: " << delta
+            //           << " coeffxp: " << coeff[0][0][0][ipart]
+            //           << " " << coeff[0][0][1][ipart]
+            //           << " " << coeff[0][0][2][ipart]
+            //           << " " << coeff[0][0][3][ipart]
+            //           << " " << coeff[0][0][4][ipart]
             //           << std::endl;
 
             // j = 1
@@ -204,6 +210,8 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
             // coeffxd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
 
 
+            // coefficient x dual grid (i=0, j=1)
+
             delta   = delta0 - ( double )idx[0] + ( 0.5-dual[0][ipart] );
             delta2  = delta*delta;
             delta3  = delta2*delta;
@@ -214,6 +222,16 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
             coeff[0][1][2][ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
             coeff[0][1][3][ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
             coeff[0][1][4][ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+
+            // std::cerr
+            //           << " delta: " << delta
+            //           << " coeffxd: " << coeff[0][1][0][ipart]
+            //           << " " << coeff[0][1][1][ipart]
+            //           << " " << coeff[0][1][2][ipart]
+            //           << " " << coeff[0][1][3][ipart]
+            //           << " " << coeff[0][1][4][ipart]
+            //           << std::endl;
+
 
             // i = 1
 
@@ -245,6 +263,15 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
             deltaO[1][ipart-ipart_ref+ivect+istart[0]] = delta;
 
+            // std::cerr
+            //           << " delta: " << delta
+            //           << " coeffyp: " << coeff[1][0][0][ipart]
+            //           << " " << coeff[1][0][1][ipart]
+            //           << " " << coeff[1][0][2][ipart]
+            //           << " " << coeff[1][0][3][ipart]
+            //           << " " << coeff[1][0][4][ipart]
+            //           << std::endl;
+
             // j = 1
 
             // deltay   = ypn - ( double )jd_ + 0.5;
@@ -269,6 +296,19 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
             coeff[1][1][3][ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
             coeff[1][1][4][ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
 
+            // std::cerr
+            //           << " delta: " << delta
+            //           << " coeffyd: " << coeff[1][1][0][ipart]
+            //           << " " << coeff[1][1][1][ipart]
+            //           << " " << coeff[1][1][2][ipart]
+            //           << " " << coeff[1][1][3][ipart]
+            //           << " " << coeff[1][1][4][ipart]
+            //           << std::endl;
+            //
+            // std::cerr << " xpn: " << particles.position( 0, *istart ) * D_inv[0]
+            //           << " ypn: " << particles.position( 1, *istart ) * D_inv[1]
+            //           << " idx0[0]: " << idxO[0]
+            //           << " idx0[1]: " << idxO[1] << std::endl;
 
             //!\todo CHECK if this is correct for both primal & dual grids !!!
             // First index for summation
@@ -384,7 +424,7 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
         }
 
         // for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-        //     std::cerr << "ipart: " << ipart +ivect+istart[0]
+        //     std::cerr
         //               << " Ex: " << Epart[0][ipart-ipart_ref+ivect+istart[0]]
         //               << " Ey: " << Epart[1][ipart-ipart_ref+ivect+istart[0]]
         //               << " Ez: " << Epart[2][ipart-ipart_ref+ivect+istart[0]]

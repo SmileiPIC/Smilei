@@ -101,6 +101,37 @@ private:
         jp_ = jp_ - j_domain_begin;
         jd_ = jd_ - j_domain_begin;
 
+        // std::cerr << " coefxp: " << coeffxp_[0]
+        //           << " " << coeffxp_[1]
+        //           << " " << coeffxp_[2]
+        //           << " " << coeffxp_[3]
+        //           << " " << coeffxp_[4] << std::endl;
+        //
+        // std::cerr << " coefyp: " << coeffyp_[0]
+        //           << " " << coeffyp_[1]
+        //           << " " << coeffyp_[2]
+        //           << " " << coeffyp_[3]
+        //           << " " << coeffyp_[4] << std::endl;
+        //
+        // std::cerr << " coefxd: " << coeffxd_[0]
+        //           << " " << coeffxd_[1]
+        //           << " " << coeffxd_[2]
+        //           << " " << coeffxd_[3]
+        //           << " " << coeffxd_[4] << std::endl;
+        //
+        // std::cerr << " coefyd: " << coeffyd_[0]
+        //           << " " << coeffyd_[1]
+        //           << " " << coeffyd_[2]
+        //           << " " << coeffyd_[3]
+        //           << " " << coeffyd_[4] << std::endl;
+        //
+        // std::cerr << " xpn: " << xpn
+        //           << " ypn: " << ypn
+        //           << " ip: " << ip_
+        //           << " id: " << id_
+        //           << " jp: " << jp_
+        //           << " jd: " << jd_ << std::endl;
+
     }
 
 

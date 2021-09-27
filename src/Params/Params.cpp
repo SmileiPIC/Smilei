@@ -1182,6 +1182,13 @@ void Params::print_init()
     }
     MESSAGE( 1, sr.str() );
 
+    ostringstream cs;
+    cs << "cell sorting: ";
+    if (cell_sorting) {
+        cs << "Activated";
+        MESSAGE( 1, cs.str() );
+    }
+
     TITLE( "Electromagnetic boundary conditions" );
     string xyz = geometry=="AMcylindrical" ? "xr" : "xyz";
     for( unsigned int i=0 ; i<grid_length.size() ; i++ ) {

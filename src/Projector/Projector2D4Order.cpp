@@ -253,9 +253,13 @@ void Projector2D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     double  Sx0[7], Sx1[7], Sy0[7], Sy1[7], DSx[7], DSy[7], tmpJx[7];
 
     double Jxpart[7][7];
+    double Jypart[7][7];
+    double Jzpart[7][7];
     for (int i = 0 ; i < 7 ; i++) {
         for (int j = 0 ; j < 7 ; j++) {
             Jxpart[i][j] = 0;
+            Jypart[i][j] = 0;
+            Jzpart[i][j] = 0;
         }
     }
 
@@ -371,6 +375,7 @@ void Projector2D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
         tmp2 = 0.5*Sx1[i] + Sx0[i];
         tmp3 = 0.5*Sx0[i] + Sx1[i];
         Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
+        Jzpart[i][0] += crz_p * ( Sy1[0]*tmp3 );
         rho[iloc] += charge_weight * Sx1[i]*Sy1[0];
         tmp = 0;
         tmpY = Sx0[i] + 0.5*DSx[i];
@@ -380,27 +385,35 @@ void Projector2D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
             Jxpart[i][j] += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
+            Jypart[i][j] += tmp;
             Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            Jzpart[i][j] += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }
     }//i
 
-    double summ = 0;
+    double summx = 0;
+    double summy = 0;
+    double summz = 0;
 
     // std::cerr << "ipart: " << ipart
     //           << " x: " << particles.position( 0, ipart )
     //           << " y: " << particles.position( 1, ipart );
     //           for( unsigned int j=1 ; j<7 ; j++ ) {
     //               for( unsigned int i=1 ; i<7 ; i++ ) {
-    //                   summ += Jxpart[i][j];
+    //                   summx += Jxpart[i][j];
+    //                   summy += Jypart[i][j];
+    //                   summz += Jzpart[i][j];
     //               }
     //           }
-    //           std::cerr << " sum: " << summ;
-    //           for( unsigned int j=1 ; j<7 ; j++ ) {
-    //               for( unsigned int i=1 ; i<7 ; i++ ) {
-    //                   std:cerr << " " << Jxpart[i][j];
-    //               }
-    //           }
+    //           std::cerr << " Jx - sumx: " << summx
+    //                     << " sumy: " << summy
+    //                     << " sumz: " << summz;
+    //           // for( unsigned int j=1 ; j<7 ; j++ ) {
+    //           //     for( unsigned int i=1 ; i<7 ; i++ ) {
+    //           //         std:cerr << " " << Jxpart[i][j];
+    //           //     }
+    //           // }
     //           std::cerr << std::endl;
 
 }

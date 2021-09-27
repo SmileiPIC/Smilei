@@ -3,7 +3,7 @@
 # Different tools for the validation process
 # --------------------------------------------
 
-import os
+import os, sys
 from subprocess import check_call
 from time import sleep, ctime, strftime
 from subprocess import call, check_call, check_output, CalledProcessError

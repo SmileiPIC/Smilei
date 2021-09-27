@@ -150,7 +150,8 @@ void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         // std::cerr << "ipart: " << ipart
-        //           << " x: " << particles.position( 0, ipart );
+        //           << " x: " << particles.position( 0, ipart )
+        //           << " y: " << particles.position( 1, ipart );
 
         //Interpolation on current particle
         fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
@@ -159,19 +160,17 @@ void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         ( *iold )[ipart+1*nparts]  = jp_;
         ( *delta )[ipart+0*nparts] = deltax;
         ( *delta )[ipart+1*nparts] = deltay;
-    }
 
-    // for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-    //     std::cerr << "ipart: " << ipart
-    //               << " Ex: " << ( *Epart )[ipart+0*nparts]
-    //               << " Ey: " << ( *Epart )[ipart+1*nparts]
-    //               << " Ez: " << ( *Epart )[ipart+2*nparts]
-    //               << " Bx: " << ( *Bpart )[ipart+0*nparts]
-    //               << " By: " << ( *Bpart )[ipart+1*nparts]
-    //               << " Bz: " << ( *Bpart )[ipart+2*nparts]
-    //               << " iold: " << ( *iold )[ipart+0*nparts]
-    //               << std::endl;
-    // }
+        // std::cerr << " Ex: " << ( *Epart )[ipart+0*nparts]
+        //           << " Ey: " << ( *Epart )[ipart+1*nparts]
+        //           << " Ez: " << ( *Epart )[ipart+2*nparts]
+        //           << " Bx: " << ( *Bpart )[ipart+0*nparts]
+        //           << " By: " << ( *Bpart )[ipart+1*nparts]
+        //           << " Bz: " << ( *Bpart )[ipart+2*nparts]
+        //           << " iold: " << ( *iold )[ipart+0*nparts]
+        //           << std::endl;
+
+    }
 
 }
 

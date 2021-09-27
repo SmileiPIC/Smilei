@@ -19,7 +19,7 @@ class Profile
 {
 public:
     //! Default constructor
-    Profile( PyObject *, unsigned int nvariables, std::string name, Params &params, bool try_numpy=false, bool try_file=false );
+    Profile( PyObject *, unsigned int nvariables, std::string name, Params &params, bool try_numpy=false, bool try_file=false, bool time_variable=false );
     //! Cloning constructor
     Profile( Profile * );
     //! Default destructor
@@ -51,241 +51,17 @@ public:
     //! mode = 1 : ADD values
     //! mode = 2 : set values at given time
     //! mode = 3 : ADD values at given time
-    inline void valuesAt( std::vector<Field *> &coordinates, std::vector<double> global_origin, Field &ret, int mode = 0, double time = 0 )
-    {
-        unsigned int nvar = coordinates.size();
-        unsigned int size = coordinates[0]->globalDims_;
-#ifdef SMILEI_USE_NUMPY
-        // If numpy profile, then expose coordinates as numpy before evaluating profile
-        if( uses_numpy_ ) {
-            std::vector<PyArrayObject *> x( nvar );
-            PyArrayObject *values = NULL;
-            int ndim = coordinates[0]->dims().size();
-            npy_intp dims[ndim];
-            for( int idim=0; idim<ndim; idim++ ) {
-                dims[idim] = ( npy_intp )( coordinates[0]->dims()[idim] );
-            }
-            // Expose arrays as numpy, and evaluate
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                x[ivar] = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( coordinates[ivar]->data() ) );
-            }
-            if( mode & 0b10 ) {
-                values = function_->valueAt( x, time );
-            } else {
-                values = function_->valueAt( x );
-            }
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                Py_DECREF( x[ivar] );
-            }
-            // Copy array to return Field3D
-            double *arr = ( double * ) PyArray_GETPTR1( values, 0 );
-            if( mode & 0b01 ) {
-                for( unsigned int i=0; i<size; i++ ) {
-                    ret( i ) += arr[i];
-                }
-            } else {
-                for( unsigned int i=0; i<size; i++ ) {
-                    ret( i ) = arr[i];
-                }
-            }
-            Py_DECREF( values );
-        } else
-#endif
-        // Profile read from a file
-        if( uses_file_ ) {
-            std::vector<double> start( nvar );
-            std::vector<double> stop ( nvar );
-            std::vector<unsigned int> n = static_cast<Field3D*>(coordinates[0])->dims();
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                start[ivar]=( *coordinates[ivar] )( 0 ) - global_origin[ivar];
-                stop [ivar]=( *coordinates[ivar] )( size - 1 ) - global_origin[ivar];
-            }
-            Field3D values = static_cast<Function_File *>( function_ )->valuesAt( start, stop, n );
-            Field * v = static_cast<Field *>( &values );
-            if( mode & 0b01 ) {
-                for( unsigned int i=0; i<size; i++ ) {
-                    ret( i ) += ( *v )( i );
-                }
-            } else {
-                for( unsigned int i=0; i<size; i++ ) {
-                    ret( i ) = ( *v )( i );
-                }
-            }
-        
-        // Otherwise, calculate profile for each point
-        } else {
-            std::vector<double> x( nvar );
-            if( mode == 0 ) {
-                for( unsigned int i=0; i<size; i++ ) {
-                    for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                        x[ivar]=( *coordinates[ivar] )( i );
-                    }
-                    ret( i ) = function_->valueAt( x );
-                }
-            } else if( mode == 1 ) {
-                for( unsigned int i=0; i<size; i++ ) {
-                    for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                        x[ivar]=( *coordinates[ivar] )( i );
-                    }
-                    ret( i ) += function_->valueAt( x );
-                }
-            } else if( mode == 2 ) {
-                for( unsigned int i=0; i<size; i++ ) {
-                    for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                        x[ivar]=( *coordinates[ivar] )( i );
-                    }
-                    ret( i ) = function_->valueAt( x, time );
-                }
-            } else if( mode == 3 ) {
-                for( unsigned int i=0; i<size; i++ ) {
-                    for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                        x[ivar]=( *coordinates[ivar] )( i );
-                    }
-                    ret( i ) += function_->valueAt( x, time );
-                }
-            } else {
-                ERROR("valuesAt : wrong mode "<<mode);
-            }
-        }
-    };
+    void valuesAt( std::vector<Field *> &coordinates, std::vector<double> global_origin, Field &ret, int mode = 0, double time = 0. );
     
     //! Get/add the complex value of the profile at several locations
     //! mode = 0 : set values
     //! mode = 1 : ADD values
     //! mode = 2 : set values at given time
     //! mode = 3 : ADD values at given time
-    inline void complexValuesAt( std::vector<Field *> &coordinates, cField &ret, int mode = 0, double time = 0 )
-    {
-        unsigned int nvar = coordinates.size();
-        unsigned int size = coordinates[0]->globalDims_;
-#ifdef SMILEI_USE_NUMPY
-        // If numpy profile, then expose coordinates as numpy before evaluating profile
-        if( uses_numpy_ ) {
-            std::vector<PyArrayObject *> x( nvar );
-            PyArrayObject *values = NULL;
-            int ndim = coordinates[0]->dims().size();
-            npy_intp dims[ndim];
-            for( int idim=0; idim<ndim; idim++ ) {
-                dims[idim] = ( npy_intp ) coordinates[0]->dims()[idim];
-            }
-            // Expose arrays as numpy, and evaluate
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                x[ivar] = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( coordinates[ivar]->data() ) );
-            }
-            if( mode & 0b10 ) {
-                values = function_->complexValueAt( x, time );
-            } else {
-                values = function_->complexValueAt( x );
-            }
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                Py_DECREF( x[ivar] );
-            }
-            // Copy array to return cField2D
-            std::complex<double> *arr = ( std::complex<double> * ) PyArray_GETPTR1( values, 0 );
-            if( mode & 0b01 ) {
-                for( unsigned int i=0; i<size; i++ ) {
-                    ret( i ) += arr[i];
-                }
-            } else {
-                for( unsigned int i=0; i<size; i++ ) {
-                    ret( i ) = arr[i];
-                }
-            }
-            Py_DECREF( values );
-        } else
-#endif
-        // Profile read from a file
-        if( uses_file_ ) {
-            ERROR( "Profile from file not available in complex" );
-        
-        // Otherwise, calculate profile for each point
-        } else {
-            std::vector<double> x( nvar );
-            if( mode == 0 ) {
-                for( unsigned int i=0; i<size; i++ ) {
-                    for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                        x[ivar]=( *coordinates[ivar] )( i );
-                    }
-                    ret( i ) = function_->complexValueAt( x );
-                }
-            } else if( mode == 1 ) {
-                for( unsigned int i=0; i<size; i++ ) {
-                    for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                        x[ivar]=( *coordinates[ivar] )( i );
-                    }
-                    ret( i ) += function_->complexValueAt( x );
-                }
-            } else if( mode == 2 ) {
-                for( unsigned int i=0; i<size; i++ ) {
-                    for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                        x[ivar]=( *coordinates[ivar] )( i );
-                    }
-                    ret( i ) = function_->complexValueAt( x, time );
-                }
-            } else if( mode == 3 ) {
-                for( unsigned int i=0; i<size; i++ ) {
-                    for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                        x[ivar]=( *coordinates[ivar] )( i );
-                    }
-                    ret( i ) += function_->complexValueAt( x, time );
-                }
-            } else {
-                ERROR("complexValuesAt : wrong mode "<<mode);
-            }
-        }
-    };
+    void complexValuesAt( std::vector<Field *> &coordinates, cField &ret, int mode = 0, double time = 0. );
     
     //! Get the complex value of the profile at several locations (spatial + times)
-    inline void complexValuesAtTimes( std::vector<Field *> &coordinates, Field *time, cField &ret )
-    {
-        unsigned int nvar = coordinates.size();
-        unsigned int size = coordinates[0]->globalDims_;
-#ifdef SMILEI_USE_NUMPY
-        // If numpy profile, then expose coordinates as numpy before evaluating profile
-        if( uses_numpy_ ) {
-            std::vector<PyArrayObject *> x( nvar );
-            PyArrayObject *t;
-            int ndim = coordinates[0]->dims().size();
-            npy_intp dims[ndim];
-            for( int idim=0; idim<ndim; idim++ ) {
-                dims[idim] = ( npy_intp ) coordinates[0]->dims()[idim];
-            }
-            // Expose arrays as numpy, and evaluate
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                x[ivar] = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( coordinates[ivar]->data() ) );
-            }
-            t = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( time->data() ) );
-            PyArrayObject *values = function_->complexValueAt( x, t );
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                Py_DECREF( x[ivar] );
-            }
-            Py_DECREF( t );
-            // Copy array to return Field3D
-            std::complex<double> *arr = ( std::complex<double> * ) PyArray_GETPTR1( values, 0 );
-            for( unsigned int i=0; i<size; i++ ) {
-                ret( i ) = arr[i];
-            }
-            Py_DECREF( values );
-        } else
-#endif
-        // Profile read from a file
-        if( uses_file_ ) {
-            ERROR( "Profile from file not available in complex" );
-        
-        // Otherwise, calculate profile for each point
-        } else {
-            std::vector<double> x( nvar );
-            double t;
-            
-            for( unsigned int i=0; i<size; i++ ) {
-                for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                    x[ivar]=( *coordinates[ivar] )( i );
-                }
-                t = ( *time )( i );
-                ret( i ) = function_->complexValueAt( x, t );
-            }
-        }
-    };
+    void complexValuesAtTimes( std::vector<Field *> &coordinates, Field *time, cField &ret );
     
     //! Get info on the loaded profile, to be printed later
     std::string getInfo()
