@@ -3,7 +3,6 @@
 
 #include "Projector2D.h"
 
-
 class Projector2D2OrderV : public Projector2D
 {
 public:

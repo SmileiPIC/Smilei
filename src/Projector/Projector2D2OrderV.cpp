@@ -8,7 +8,6 @@
 #include "Particles.h"
 #include "Tools.h"
 #include "Patch.h"
-
 #include "Pragma.h"
 
 using namespace std;
@@ -87,7 +86,6 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 
     // Jx, Jy, Jz
     currents( Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, ipart_ref );
-
 
     // rho^(p,p,d)
     cell_nparts = ( int )iend-( int )istart;
@@ -378,7 +376,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz,
     short  * __restrict__ charge     = particles.getPtrCharge();
 
     #pragma omp simd
-    for( unsigned int j=0; j<200; j++ ) {
+    for( unsigned int j=0; j<bsize; j++ ) {
         bJx[j] = 0.;
     }
 
@@ -718,7 +716,8 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz,
             tmp = crz_p[ipart] * Sx1_buff_vect[ipart];
             UNROLL(4)
             for( unsigned int j=1; j<5 ; j++ ) {
-                bJx [j*vecSize+ipart] +=  tmp * ( 0.5*Sy0_buff_vect[j*vecSize+ipart]* + Sy1_buff_vect[j*vecSize+ipart] );
+                bJx [j*vecSize+ipart] +=  tmp * ( 0.5*Sy0_buff_vect[j*vecSize+ipart]
+                                              + Sy1_buff_vect[j*vecSize+ipart] );
             }
 
             UNROLL(4)

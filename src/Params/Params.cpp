@@ -1105,10 +1105,9 @@ void Params::check_consistency()
             ERROR( "Vectorized algorithms not implemented for this geometry" );
         }
 
-        if( ( geometry=="2Dcartesian" ) && ( interpolation_order==4 ) ) {
-            ERROR( "4th order vectorized algorithms not implemented in 2D" );
-        }
-
+        // if( ( geometry=="2Dcartesian" ) && ( interpolation_order==4 ) ) {
+        //     ERROR( "4th order vectorized algorithms not implemented in 2D" );
+        // }
 
         if( hasMultiphotonBreitWheeler ) {
             WARNING( "Performances of advanced physical processes which generates new particles could be degraded for the moment !" );

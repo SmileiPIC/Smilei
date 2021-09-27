@@ -809,18 +809,19 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             DSz [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 ;
             DSz [6*vecSize+ipart] =                                        p1 * S4 ;
 
-            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )*weight[ivect+istart+ipart];
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )
+                                                   * weight[ivect+istart+ipart];
         }
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            UNROLL_S(6)
+            UNROLL_S(7)
             for( unsigned int i=0 ; i<7 ; i++ ) {
                 iloc += nprimy*nprimz;
-                UNROLL_S(6)
+                UNROLL_S(7)
                 for( unsigned int j=0 ; j<7 ; j++ ) {
                     int index( ( i*49 + j*7 )*vecSize+ipart );
-                    UNROLL_S(6)
+                    UNROLL_S(7)
                     for( unsigned int k=0 ; k<7 ; k++ ) {
                         bJx [ index+k*vecSize ] +=  charge_weight[ipart] * DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart];
                     }

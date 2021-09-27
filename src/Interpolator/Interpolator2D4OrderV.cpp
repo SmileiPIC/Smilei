@@ -161,10 +161,6 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-            // Normalized particle position
-            double xpn = particles.position( 0, ipart )*dx_inv_;
-            double ypn = particles.position( 1, ipart )*dy_inv_;
-
             // Declaration and calculation of the coefficient for interpolation
             double delta0, delta, delta2, delta3, delta4;
 
@@ -188,12 +184,12 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
             deltaO[0][ipart-ipart_ref+ivect+istart[0]] = delta;
 
-            std::cerr << "ipart: " << ipart +ivect+istart[0]
-                      << " x: " << particles.position( 0, ipart+ivect+istart[0] )
-                      << " xpn: " << delta0
-                      << " delta: " << delta
-                      << " coeff: "<< coeff[0][0][0][ipart]
-                      << std::endl;
+            // std::cerr << "ipart: " << ipart +ivect+istart[0]
+            //           << " x: " << particles.position( 0, ipart+ivect+istart[0] )
+            //           << " xpn: " << delta0
+            //           << " delta: " << delta
+            //           << " coeff: "<< coeff[0][0][0][ipart]
+            //           << std::endl;
 
             // j = 1
 
@@ -288,9 +284,6 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
         double * __restrict__ coeffyp2 = &( coeff[1][0][2][0] );
         double * __restrict__ coeffyd2 = &( coeff[1][1][2][0] );
-
-        double * __restrict__ coeffzp2 = &( coeff[2][0][2][0] );
-        double * __restrict__ coeffzd2 = &( coeff[2][1][2][0] );
 
         // Local buffer to store the field components
         double field_buffer[6][6];
@@ -390,16 +383,16 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
         }
 
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            std::cerr << "ipart: " << ipart +ivect+istart[0]
-                      << " Ex: " << Epart[0][ipart-ipart_ref+ivect+istart[0]]
-                      << " Ey: " << Epart[1][ipart-ipart_ref+ivect+istart[0]]
-                      << " Ez: " << Epart[2][ipart-ipart_ref+ivect+istart[0]]
-                      << " Bx: " << Bpart[0][ipart-ipart_ref+ivect+istart[0]]
-                      << " By: " << Bpart[1][ipart-ipart_ref+ivect+istart[0]]
-                      << " Bz: " << Bpart[2][ipart-ipart_ref+ivect+istart[0]]
-                      << std::endl;
-        }
+        // for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+        //     std::cerr << "ipart: " << ipart +ivect+istart[0]
+        //               << " Ex: " << Epart[0][ipart-ipart_ref+ivect+istart[0]]
+        //               << " Ey: " << Epart[1][ipart-ipart_ref+ivect+istart[0]]
+        //               << " Ez: " << Epart[2][ipart-ipart_ref+ivect+istart[0]]
+        //               << " Bx: " << Bpart[0][ipart-ipart_ref+ivect+istart[0]]
+        //               << " By: " << Bpart[1][ipart-ipart_ref+ivect+istart[0]]
+        //               << " Bz: " << Bpart[2][ipart-ipart_ref+ivect+istart[0]]
+        //               << std::endl;
+        // }
 
     }
 

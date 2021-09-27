@@ -15,7 +15,7 @@
 #ifdef _VECTO
 #include "Interpolator1D2OrderV.h"
 #include "Interpolator2D2OrderV.h"
-//#include "Interpolator2D4OrderV.h"
+#include "Interpolator2D4OrderV.h"
 #include "Interpolator3D2OrderV.h"
 #include "Interpolator3D4OrderV.h"
 #endif
@@ -59,14 +59,14 @@ public:
             }
 #endif
         } else if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
-            // if( !vectorization ) {
+            if( !vectorization ) {
                 Interp = new Interpolator2D4Order( params, patch );
-            // }
-// #ifdef _VECTO
-//             else {
-//                 Interp = new Interpolator2D4OrderV( params, patch );
-//             }
-// #endif
+            }
+#ifdef _VECTO
+            else {
+                Interp = new Interpolator2D4OrderV( params, patch );
+            }
+#endif
         }
         // ---------------
         // 3Dcartesian simulation

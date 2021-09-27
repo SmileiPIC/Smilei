@@ -141,6 +141,7 @@ else ifneq (,$(call parse_config,advisor))
 else ifneq (,$(call parse_config,inspector))
     CXXFLAGS += -g -O0 -I$(INSPECTOR_ROOT_DIR)/include/
     LDFLAGS += $(INSPECTOR_ROOT_DIR)/lib64/libittnotify.a
+
 # Default configuration
 else
     ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
