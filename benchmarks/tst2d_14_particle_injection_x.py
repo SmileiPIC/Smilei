@@ -51,7 +51,6 @@ Main(
     cell_length = cell_length,
     grid_length  = grid_length,
     number_of_patches = number_of_patches,
-    #cell_sorting = True,
     timestep = timestep,
     simulation_time = simulation_time,
     EM_boundary_conditions = field_boundary_conditions,

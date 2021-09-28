@@ -154,6 +154,7 @@ public:
     double valueAt( std::vector<double>, double ); // space + time
     std::complex<double> complexValueAt( std::vector<double>, double ); // space + time
 #ifdef SMILEI_USE_NUMPY
+    PyArrayObject *valueAt( std::vector<PyArrayObject *> , double ); // numpy + time
     PyArrayObject *complexValueAt( std::vector<PyArrayObject *>, PyArrayObject * ); // numpy
     PyArrayObject *complexValueAt( std::vector<PyArrayObject *>, double ); // numpy + time
 #endif

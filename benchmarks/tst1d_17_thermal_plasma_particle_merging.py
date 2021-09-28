@@ -55,7 +55,6 @@ Main(
     grid_length = grid_length,
     number_of_patches = number_of_patches,
     EM_boundary_conditions = [ ["periodic","periodic"] ],
-    cell_sorting = True,
     random_seed = 0,
 )
 

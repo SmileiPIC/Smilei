@@ -378,11 +378,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
     The order of the spectral solver in each dimension. Set order to zero for infinite order.
     In AM geometry, only infinite order is supported along the radial dimension.
 
+..
   .. py:data:: initial_rotational_cleaning
 
     :default: ``False``
 
-    If ``True``, use the picsar library to do the rotational cleaning.
+    If ``True``, uses the picsar library to do the rotational cleaning.
 
     Rotational cleaning corrects field initialization in spectral space
     in order to make sure that the fields at :math:`t=0` are a valid solution
@@ -390,6 +391,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
     This operation is only supported in AM geometry and with picsar
     spectral solver. It requires a FFT of the full domain on a single MPI
     process so very large simulations may face problems with this procedure.
+
+..
+  .. py:data:: cell_sorting
+
+    :default: ``False``
+
+    If ``True``, forces the use of cell sorting for particles. This flag is automatically set to true if any feature requiring cell sorting is requested (vectorization, collisions or
+    particle merging) so it is mainly a convenience for developers.
 
 ----
 

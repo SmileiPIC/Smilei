@@ -12,7 +12,7 @@ install:
   stage: install
   only:
     - develop
-    - validation_update
+    - cell_sorting_flag
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,7 +31,7 @@ compile_default:
   stage: compile_default
   only:
     - develop
-    - validation_update
+    - cell_sorting_flag
 
   script:
     # Move in test dir
@@ -43,7 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
-    - validation_update
+    - cell_sorting_flag
 
   script:
     # Move in test dir
@@ -55,8 +55,8 @@ run1D:
 run2D:
   stage: run_default
   only:
-#    - develop
-    - validation_update
+    - develop
+    - cell_sorting_flag
 
   script:
     # Move in test dir
@@ -70,8 +70,8 @@ run2D:
 run3D:
   stage: run_default
   only:
-#    - develop
-    - validation_update
+    - develop
+    - cell_sorting_flag
 
   script:
     # Move in test dir
@@ -86,8 +86,8 @@ run3D:
 runAM:
   stage: run_default
   only:
-#    - develop
-    - validation_update
+    - develop
+    - cell_sorting_flag
 
   script:
     # Move in test dir
@@ -109,8 +109,8 @@ runAM:
 runCollisions:
   stage: run_default
   only:
-#    - develop
-    - validation_update
+    - develop
+    - cell_sorting_flag
 
   script:
     # Move in test dir
@@ -121,8 +121,8 @@ runCollisions:
 compile_picsar:
   stage: compile_picsar
   only:
-#    - develop
-    - validation_update
+    - develop
+    - cell_sorting_flag
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -132,8 +132,8 @@ compile_picsar:
 run_picsar:
   stage: run_picsar
   only:
-#    - develop
-    - validation_update
+    - develop
+    - cell_sorting_flag
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -142,8 +142,8 @@ run_picsar:
 compile_debug:
   stage: compile_debug
   only:
-#    - develop
-    - validation_update
+    - develop
+    - cell_sorting_flag
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -153,9 +153,8 @@ compile_debug:
 compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
-#    - develop
-    - validation_update
-
+    - develop
+    - cell_sorting_flag
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
@@ -164,8 +163,8 @@ compile_no_mpi_threadmultiple:
 compile_no_openmp:
   stage: compile_no_openmp
   only:
-#    - develop
-    - validation_update
+    - develop
+    - cell_sorting_flag
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

@@ -91,25 +91,31 @@ PyArrayObject *Function_Python2D::complexValueAt( std::vector<PyArrayObject *> x
 PyArrayObject *Function_Python1D::valueAt( std::vector<PyArrayObject *> x, double time )
 {
     PyObject *t = PyFloat_FromDouble( time );
-    PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], t, NULL );
+    PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, t, NULL );
     Py_DECREF( t );
     return ret;
 }
 PyArrayObject *Function_Python2D::valueAt( std::vector<PyArrayObject *> x, double time  )
 {
     PyObject *t = PyFloat_FromDouble( time );
-    PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], t, NULL );
+    PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], t, NULL );
     Py_DECREF( t );
     return ret;
 }
 PyArrayObject *Function_Python3D::valueAt( std::vector<PyArrayObject *> x, double time  )
 {
     PyObject *t = PyFloat_FromDouble( time );
-    PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], t, NULL );
+    PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], t, NULL );
     Py_DECREF( t );
     return ret;
 }
-PyArrayObject *Function_Python4D::complexValueAt( std::vector<PyArrayObject *> x, double time )
+PyArrayObject *Function_Python4D::valueAt( std::vector<PyArrayObject *> x, double time  )
+{
+    PyObject *t = PyFloat_FromDouble( time );
+    PyArrayObject * ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], t, NULL );
+    Py_DECREF( t );
+    return ret;
+}PyArrayObject *Function_Python4D::complexValueAt( std::vector<PyArrayObject *> x, double time )
 {
     PyObject *t = PyFloat_FromDouble( time );
     PyObject * values = PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], t, NULL );

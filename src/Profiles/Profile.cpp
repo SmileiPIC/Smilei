@@ -274,13 +274,13 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, Pa
         }
         
         // Assign the evaluating function, which depends on the number of arguments
-        if( nvariables_ - time_variable == 1 ) {
+        if( nvariables_ == 1 ) {
             function_ = new Function_Python1D( py_profile );
-        } else if( nvariables_ - time_variable  == 2 ) {
+        } else if( nvariables_  == 2 ) {
             function_ = new Function_Python2D( py_profile );
-        } else if( nvariables_ - time_variable  == 3 ) {
+        } else if( nvariables_  == 3 ) {
             function_ = new Function_Python3D( py_profile );
-        } else if( nvariables_ - time_variable  == 4 ) {
+        } else if( nvariables_  == 4 ) {
             function_ = new Function_Python4D( py_profile );
         }
     
