@@ -32,9 +32,6 @@ Main(
     random_seed = smilei_mpi_rank
 )
 
-Vectorization(
-    mode = "off",
-)
 
 # We build a gaussian laser from scratch instead of using LaserGaussian2D
 # The goal is to test the space_time_profile attribute
