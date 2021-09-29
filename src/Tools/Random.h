@@ -25,6 +25,10 @@ public:
     inline uint32_t integer() {
         return xorshift32();
     }
+    //! Random true/false
+    inline bool cointoss() {
+        return xorshift32() & 1;
+    }
     //! Uniform rand from xorshift32 generator, between 0 (excluded) and 1 (included)
     inline double uniform() {
         return xorshift32() * xorshift32_invmax;

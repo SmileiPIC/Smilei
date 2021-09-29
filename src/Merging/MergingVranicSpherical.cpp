@@ -364,7 +364,7 @@ void MergingVranicSpherical::operator() (
                     theta_dim[phi_i]   = std::max((unsigned int)(round(theta_interval / theta_delta[phi_i])), theta_dim_min);
                     if (accumulation_correction_) {
                         theta_delta[phi_i] = theta_interval / (theta_dim[phi_i]-1);
-                        theta_min[phi_i]   = theta_min_ref - 0.99*theta_delta[phi_i]*Rand::uniform();
+                        theta_min[phi_i]   = theta_min_ref - 0.99*theta_delta[phi_i]*rand_->uniform();
                         theta_max[phi_i]   = theta_delta[phi_i]*theta_dim[phi_i] + theta_min[phi_i];
                     } else {
                         theta_delta[phi_i] = theta_interval / (theta_dim[phi_i]);
@@ -377,7 +377,7 @@ void MergingVranicSpherical::operator() (
                     theta_dim[phi_i]   = theta_dim_min;
                     if (accumulation_correction_) {
                         theta_delta[phi_i] = theta_interval / (theta_dim[phi_i]-1);
-                        theta_min[phi_i]   = theta_min_ref - 0.99*theta_delta[phi_i]*Rand::uniform();
+                        theta_min[phi_i]   = theta_min_ref - 0.99*theta_delta[phi_i]*rand_->uniform();
                         theta_max[phi_i]   = theta_delta[phi_i]*theta_dim[phi_i] + theta_min[phi_i];
                     } else {
                         theta_delta[phi_i] = theta_interval / (theta_dim[phi_i]);

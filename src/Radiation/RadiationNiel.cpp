@@ -170,7 +170,7 @@ void RadiationNiel::operator()(
             // deviation sqrt(dt_) (variance dt_)
             //random_numbers[ipart] = 2.*Rand::uniform() -1.;
             //random_numbers[ipart] = 2.*drand48() -1.;
-            random_numbers[ipart] = 2.*rand_->uniform() -1.;
+            random_numbers[ipart] = rand_->uniform2();
         }
         // else {
         //     random_numbers[ipart] = 0;

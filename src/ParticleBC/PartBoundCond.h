@@ -21,45 +21,42 @@ public:
     
     //! Xmin particles boundary conditions pointers (same prototypes for all conditions)
     //! @see BoundaryConditionType.h for functions that this pointers will target
-    void ( *bc_xmin )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
+    void ( *bc_xmin )( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
     //! Xmax particles boundary conditions pointers
-    void ( *bc_xmax )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
+    void ( *bc_xmax )( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
     //! Ymin particles boundary conditions pointers
-    void ( *bc_ymin )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
+    void ( *bc_ymin )( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
     //! Ymax particles boundary conditions pointers
-    void ( *bc_ymax )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
+    void ( *bc_ymax )( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
     //! Zmin particles boundary conditions pointers
-    void ( *bc_zmin )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
+    void ( *bc_zmin )( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
     //! Zmax particles boundary conditions pointers
-    void ( *bc_zmax )( Particles &particles, SmileiMPI* smpi, int ifirst, int ilast, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
+    void ( *bc_zmax )( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
     
     //! Method which applies particles boundary conditions.
     //! If the MPI process is not a border process, particles will be flagged as an exchange particle returning 0
     //! Conditions along X are applied first, then Y, then Z.
-    //! The decision whether the particle is added or not on the Exchange Particle List is defined by the final
-    //! value of keep_part.
-    //! Be careful, once an a BC along a given dimension set keep_part to 0, it will remain to 0.
-    inline void apply( Particles &particles, SmileiMPI* smpi, int imin, int imax, Species *species, int ithread, double &nrj_tot )
+    inline void apply( Species *species, int imin, int imax, std::vector<double> &invgf, Random * rand, double &energy_tot )
     {
         for (int ipart=imin ; ipart<imax ; ipart++ ) {
-            particles.cell_keys[ipart] = 0;
+            species->particles->cell_keys[ipart] = 0;
         }
 
-        double nrj_iPart = 0.;
-        ( *bc_xmin )( particles, smpi, imin, imax, 0, x_min, dt_, species, ithread, nrj_iPart );
-        nrj_tot += nrj_iPart;
-        ( *bc_xmax )( particles, smpi, imin, imax, 0, x_max, dt_, species, ithread, nrj_iPart );
-        nrj_tot += nrj_iPart;
+        double energy_change = 0.;
+        ( *bc_xmin )( species, imin, imax, 0, x_min, dt_, invgf, rand, energy_change );
+        energy_tot += energy_change;
+        ( *bc_xmax )( species, imin, imax, 0, x_max, dt_, invgf, rand, energy_change );
+        energy_tot += energy_change;
         if( nDim_particle >= 2 ) {
-            ( *bc_ymin )( particles, smpi, imin, imax, 1, y_min, dt_, species, ithread, nrj_iPart );
-            nrj_tot += nrj_iPart;
-            ( *bc_ymax )( particles, smpi, imin, imax, 1, y_max, dt_, species, ithread, nrj_iPart );
-            nrj_tot += nrj_iPart;
+            ( *bc_ymin )( species, imin, imax, 1, y_min, dt_, invgf, rand, energy_change );
+            energy_tot += energy_change;
+            ( *bc_ymax )( species, imin, imax, 1, y_max, dt_, invgf, rand, energy_change );
+            energy_tot += energy_change;
             if( ( nDim_particle == 3 ) && (!isAM) ) {
-                ( *bc_zmin )( particles, smpi, imin, imax, 2, z_min, dt_, species, ithread, nrj_iPart );
-                nrj_tot += nrj_iPart;
-                ( *bc_zmax )( particles, smpi, imin, imax, 2, z_max, dt_, species, ithread, nrj_iPart );
-                nrj_tot += nrj_iPart;
+                ( *bc_zmin )( species, imin, imax, 2, z_min, dt_, invgf, rand, energy_change );
+                energy_tot += energy_change;
+                ( *bc_zmax )( species, imin, imax, 2, z_max, dt_, invgf, rand, energy_change );
+                energy_tot += energy_change;
             }
         }
 
