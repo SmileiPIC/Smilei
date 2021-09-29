@@ -116,26 +116,14 @@ void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-            #if defined(__clang__)
-                #pragma clang loop unroll_count(5)
-            #elif defined (__FUJITSU)
-                #pragma loop fullunroll_pre_simd
-            #endif
+            UNROLL_S(5)
             for( unsigned int i=0 ; i<5 ; i++ ) {
 
-                #if defined(__clang__)
-                    #pragma clang loop unroll_count(5)
-                #elif defined (__FUJITSU)
-                    #pragma loop fullunroll_pre_simd
-                #endif
+                UNROLL_S(5)
                 for( unsigned int j=0 ; j<5 ; j++ ) {
                     int index( ( i*25 + j*5 )*vecSize+ipart );
 
-                    #if defined(__clang__)
-                        #pragma clang loop unroll_count(5)
-                    #elif defined (__FUJITSU)
-                        #pragma loop fullunroll_pre_simd
-                    #endif
+                    UNROLL_S(5)
                     for( unsigned int k=0 ; k<5 ; k++ ) {
                         bJx [ index+k*vecSize ] +=  charge_weight[ipart] * DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart];
                     }
@@ -399,6 +387,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
     unsigned int bsize = 5*5*5*vecSize;
 
     double bJx[bsize] __attribute__( ( aligned( 64 ) ) );
+    double bJy[bsize] __attribute__( ( aligned( 64 ) ) );
 
     double Sx0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
     double Sy0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
@@ -423,6 +412,10 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
     }
 
     // Jx^(d,p,p)
+    // Jy^(p,d,p)
+    // Jz^(p,p,d)
+
+
     #pragma omp simd
     for( unsigned int j=0; j<1000; j++ ) {
         bJx[j] = 0.;
@@ -446,6 +439,11 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             computeJ( ipart, charge_weight, DSx, DSy, DSz, Sy0_buff_vect, Sz0_buff_vect, bJx, dx_ov_dt, 25, 5, 1 );
         } // END ipart (compute coeffs)
 
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJy, dy_ov_dt, 5, 25, 1 );
+        } // END ipart (compute coeffs)
+
     } // END ivect
 
     int iglobal0 = ipom2*nyz+jpom2*nprimz+kpom2;
@@ -467,35 +465,6 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         }
     }
 
-
-    // Jy^(p,d,p)
-    #pragma omp simd
-    for( unsigned int j=0; j<1000; j++ ) {
-        bJx[j] = 0.;
-    }
-
-
-    cell_nparts = ( int )iend-( int )istart;
-    for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
-
-        int np_computed( min( cell_nparts-ivect, vecSize ) );
-        int istart0 = ( int )istart + ivect;
-
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances(  position_x, position_y, position_z,
-                                npart_total, ipart, istart0, ipart_ref, deltaold, iold,
-                                Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
-        }
-
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJx, dy_ov_dt, 5, 25, 1 );
-        } // END ipart (compute coeffs)
-    }
-
-    iglobal = iglobal0+ipom2*nprimz;
     for( unsigned int i=0 ; i<5 ; i++ ) {
         for( unsigned int j=1 ; j<5 ; j++ ) {
             #pragma omp simd
@@ -504,7 +473,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
                 UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
-                    tmpJy += bJx [ilocal+ipart];
+                    tmpJy += bJy [ilocal+ipart];
                 }
                 Jy[iglobal+j*nprimz+k] += tmpJy;
             }
