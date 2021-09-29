@@ -351,11 +351,22 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
                 UNROLL_S(5)
                 for( int jloc=-2 ; jloc<3 ; jloc++ ) {
                     interp_res += coeffxd2[ipart+iloc*32] * coeffyp2[ipart+jloc*32] *
-                                  ( ( 1-dual[0][ipart] )*( *Ex2D )( idxO[0]+iloc, idxO[1]+jloc)
-                                  + dual[0][ipart]*( *Ex2D )( idxO[0]+iloc+1, idxO[1]+jloc) );
+                                  ( ( 1-dual[0][ipart] )*field_buffer[iloc+2][jloc+2]
+                                  + dual[0][ipart]*field_buffer[iloc+3][jloc+2] );
                 }
             }
             Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+        }
+
+        // Field buffers for vectorization (required on A64FX)
+        for( int iloc=-2 ; iloc<3 ; iloc++ ) {
+            for( int jloc=-2 ; jloc<4 ; jloc++ ) {
+                field_buffer[iloc+2][jloc+2] = ( *Ey2D )( idxO[0]+iloc, idxO[1]+jloc );
+            }
+        }
+
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
             //Ey(primal, dual)
             interp_res = 0.;

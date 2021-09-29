@@ -433,21 +433,24 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
         nbVec++;
     }
 
-    double Jxpart[cell_nparts][7][7];
-    double Jypart[cell_nparts][7][7];
-    double Jzpart[cell_nparts][7][7];
+    // __________________________________________________________
+    // For debugging
 
-    for (int ip = 0 ; ip < cell_nparts ; ip++) {
-        for (int i = 0 ; i < 7 ; i++) {
-            for (int j = 0 ; j < 7 ; j++) {
-                Jxpart[ip][i][j] = 0;
-                Jypart[ip][i][j] = 0;
-                Jzpart[ip][i][j] = 0;
-            }
-        }
-    }
+    // double Jxpart[cell_nparts][7][7];
+    // double Jypart[cell_nparts][7][7];
+    // double Jzpart[cell_nparts][7][7];
 
-    // std::cerr << "X" << std::endl;
+    // for (int ip = 0 ; ip < cell_nparts ; ip++) {
+    //     for (int i = 0 ; i < 7 ; i++) {
+    //         for (int j = 0 ; j < 7 ; j++) {
+    //             Jxpart[ip][i][j] = 0;
+    //             Jypart[ip][i][j] = 0;
+    //             Jzpart[ip][i][j] = 0;
+    //         }
+    //     }
+    // }
+    // __________________________________________________________
+
 
     // Jx^(d,p,p)
 
@@ -567,7 +570,7 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
             UNROLL_S(6)
             for( unsigned int i=1 ; i<7 ; i++ ) {
                 bJx [( ( i )*7 )*vecSize+ipart] += sum[i]*tmp;
-                Jxpart[ivect + ipart][i][0] += sum[i]*tmp;
+                //Jxpart[ivect + ipart][i][0] += sum[i]*tmp;
             }
 
             UNROLL_S(6)
@@ -576,7 +579,7 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
                 UNROLL_S(6)
                 for( unsigned int i=1 ; i<7 ; i++ ) {
                     bJx [ ( i*7+j )*vecSize+ipart ] += sum[i]*tmp;
-                    Jxpart[ivect + ipart][i][j] += sum[i]*tmp;
+                    //Jxpart[ivect + ipart][i][j] += sum[i]*tmp;
                 }
             }//j
 
@@ -720,7 +723,7 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
             UNROLL_S(6)
             for( unsigned int j=1 ; j<7 ; j++ ) {
                 bJx [j*vecSize+ipart] += sum[j]*tmp;
-                Jypart[ivect + ipart][0][j] += sum[j]*tmp;
+                //Jypart[ivect + ipart][0][j] += sum[j]*tmp;
             }
 
 
@@ -731,7 +734,7 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
                 UNROLL_S(6)
                 for( unsigned int j=1 ; j<7 ; j++ ) {
                     bJx [ ( i*7+j )*vecSize+ipart ] += sum[j]*tmp;
-                    Jypart[ivect + ipart][i][j] += sum[j]*tmp;
+                    //Jypart[ivect + ipart][i][j] += sum[j]*tmp;
                 }
             }//i
 
@@ -885,8 +888,8 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
             for( unsigned int i=1 ; i<7 ; i++ ) {
                 bJx [( ( i )*7 )*vecSize+ipart] += tmp * ( 0.5*Sx0_buff_vect[(i-1)*vecSize+ipart]
                                                        + Sx1_buff_vect[i*vecSize+ipart] );
-                Jzpart[ivect+ipart][i][0] += tmp * ( 0.5*Sx0_buff_vect[(i-1)*vecSize+ipart]
-                                                       + Sx1_buff_vect[i*vecSize+ipart] );
+                //Jzpart[ivect+ipart][i][0] += tmp * ( 0.5*Sx0_buff_vect[(i-1)*vecSize+ipart]
+                //                                       + Sx1_buff_vect[i*vecSize+ipart] );
             }
 
             tmp = crz_p[ipart] * Sx1_buff_vect[ipart];
@@ -894,8 +897,8 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
             for( unsigned int j=1; j<7 ; j++ ) {
                 bJx [j*vecSize+ipart] +=  tmp * ( 0.5*Sy0_buff_vect[(j-1)*vecSize+ipart]
                                               + Sy1_buff_vect[j*vecSize+ipart] );
-                Jzpart[ivect+ipart][0][j] +=  tmp * ( 0.5*Sy0_buff_vect[(j-1)*vecSize+ipart]
-                                              + Sy1_buff_vect[j*vecSize+ipart] );
+                //Jzpart[ivect+ipart][0][j] +=  tmp * ( 0.5*Sy0_buff_vect[(j-1)*vecSize+ipart]
+                //                              + Sy1_buff_vect[j*vecSize+ipart] );
             }
 
             UNROLL(6)
@@ -906,14 +909,17 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
                 for( unsigned int j=1; j<7 ; j++ ) {
                     bJx [( ( i )*7+j )*vecSize+ipart] += ( Sy0_buff_vect[(j-1)*vecSize+ipart]* tmp1
                                                        + Sy1_buff_vect[j*vecSize+ipart]* tmp0 );
-                    Jzpart[ivect+ipart][i][j] += ( Sy0_buff_vect[(j-1)*vecSize+ipart]* tmp1
-                                                       + Sy1_buff_vect[j*vecSize+ipart]* tmp0 );
+                    // Jzpart[ivect+ipart][i][j] += ( Sy0_buff_vect[(j-1)*vecSize+ipart]* tmp1
+                    //                                    + Sy1_buff_vect[j*vecSize+ipart]* tmp0 );
                 }
             }
 
         } // END ipart (compute coeffs)
 
     }
+
+    // ________________________________________________________________________
+    // For debugging
 
     // for (int ip=0 ; ip < cell_nparts ; ip++) {
     //     double summx = 0;
@@ -939,6 +945,8 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
     //     // }
     //     std::cerr << std::endl;
     // }
+
+    // ________________________________________________________________________
 
     iglobal = iglobal0;
     for( unsigned int i=0 ; i<7 ; i++ ) {
