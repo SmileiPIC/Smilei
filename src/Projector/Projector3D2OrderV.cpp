@@ -449,7 +449,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJz, dz_ov_dt, 5, 25, 1 );
+            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJz, dz_ov_dt, 1, 25, 5 );
         } // END ipart (compute coeffs)
 
     } // END ivect
