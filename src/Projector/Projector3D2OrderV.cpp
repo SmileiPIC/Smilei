@@ -466,6 +466,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         }
     }
 
+    iglobal = iglobal0+ipom2*nprimz;
     for( unsigned int i=0 ; i<5 ; i++ ) {
         for( unsigned int j=1 ; j<5 ; j++ ) {
             #pragma omp simd
