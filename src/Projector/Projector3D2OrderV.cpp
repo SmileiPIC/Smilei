@@ -417,8 +417,9 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
 
     #pragma omp simd
-    for( unsigned int j=0; j<1000; j++ ) {
+    for( unsigned int j=0; j<bsize; j++ ) {
         bJx[j] = 0.;
+        bJy[j] = 0.;
     }
 
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
