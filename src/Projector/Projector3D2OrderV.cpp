@@ -388,6 +388,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 
     double bJx[bsize] __attribute__( ( aligned( 64 ) ) );
     double bJy[bsize] __attribute__( ( aligned( 64 ) ) );
+    double bJz[bsize] __attribute__( ( aligned( 64 ) ) );
 
     double Sx0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
     double Sy0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
@@ -420,6 +421,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
     for( unsigned int j=0; j<bsize; j++ ) {
         bJx[j] = 0.;
         bJy[j] = 0.;
+        bJz[j] = 0.;
     }
 
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
@@ -443,6 +445,11 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJy, dy_ov_dt, 5, 25, 1 );
+        } // END ipart (compute coeffs)
+
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sy0_buff_vect, bJz, dz_ov_dt, 1, 25, 5 );
         } // END ipart (compute coeffs)
 
     } // END ivect
@@ -483,34 +490,6 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         iglobal += ( nprimy+1 )*nprimz;
     }
 
-
-    // Jz^(p,p,d)
-    cell_nparts = ( int )iend-( int )istart;
-    #pragma omp simd
-    for( unsigned int j=0; j<1000; j++ ) {
-        bJx[j] = 0.;
-    }
-
-    for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
-
-        int np_computed( min( cell_nparts-ivect, vecSize ) );
-        int istart0 = ( int )istart + ivect;
-
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances(  position_x, position_y, position_z,
-                                npart_total, ipart, istart0, ipart_ref, deltaold, iold,
-                                Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
-        }
-
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            computeJ( ipart, charge_weight, DSz, DSx, DSy, Sx0_buff_vect, Sy0_buff_vect, bJx, dz_ov_dt, 1, 25, 5 );
-        } // END ipart (compute coeffs)
-
-    }
-
     iglobal = iglobal0  + jpom2 +ipom2*nprimy;
     for( unsigned int i=0 ; i<5 ; i++ ) {
         for( unsigned int j=0 ; j<5 ; j++ ) {
@@ -520,7 +499,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
                 UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
-                    tmpJz +=  bJx[ilocal+ipart];
+                    tmpJz +=  bJz[ilocal+ipart];
                 }
                 Jz [iglobal + ( j )*( nprimz+1 ) + k] +=  tmpJz;
             }
