@@ -14,13 +14,24 @@ class Interpolator2D4OrderV final : public Interpolator2D
 {
 
 public:
+
+    //! Creator for Interpolator2D2Order
     Interpolator2D4OrderV( Params &, Patch * );
+
+    //! Destructor for Interpolator2D2Order
     ~Interpolator2D4OrderV() override final {};
 
     inline void __attribute__((always_inline)) fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc );
+
+    //! Interpolation of all fields and currents for a single particles located at istart.
     void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override final ;
+
     void fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> *selection ) override final {};
+
+    //! Wrapper called by the particle dynamics section
     void fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final ;
+
+    //! Interpolator on another field than the basic ones
     void oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1=NULL, double *l2=NULL, double *l3=NULL ) override final;
 
     inline double __attribute__((always_inline)) compute( double *coeffx, double *coeffy, Field2D *f, int idx, int idy )
@@ -35,10 +46,13 @@ public:
     };
 
     void fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
+
     void timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
+
     void envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc ) override final;
 
 private:
+
     inline void __attribute__((always_inline)) coeffs( double xpn, double ypn )
     {
         // Indexes of the central nodes

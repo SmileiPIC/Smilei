@@ -15,11 +15,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Interpolator2D2OrderV::Interpolator2D2OrderV( Params &params, Patch *patch ) : Interpolator2D2Order( params, patch )
 {
-
-    dx_inv_ = 1.0/params.cell_length[0];
-    dy_inv_ = 1.0/params.cell_length[1];
-    D_inv[0] = 1.0/params.cell_length[0];
-    D_inv[1] = 1.0/params.cell_length[1];
+    d_inv_[0] = 1.0/params.cell_length[0];
+    d_inv_[1] = 1.0/params.cell_length[1];
 
 }
 
@@ -54,9 +51,9 @@ void Interpolator2D2OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
     int idx[2], idxO[2];
     //Primal indices are constant over the all cell
-    idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
+    idx[0]  = round( particles.position( 0, *istart ) * d_inv_[0] );
     idxO[0] = idx[0] - i_domain_begin -1 ;
-    idx[1]  = round( particles.position( 1, *istart ) * D_inv[1] );
+    idx[1]  = round( particles.position( 1, *istart ) * d_inv_[1] );
     idxO[1] = idx[1] - j_domain_begin -1 ;
 
     Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
@@ -103,7 +100,7 @@ void Interpolator2D2OrderV::fieldsWrapper(  ElectroMagn *EMfields,
             double delta2;
 
             // for( int i=0; i<2; i++ ) { // for X/Y
-            //     delta0 = particles.position( i, ipart+ivect+istart[0] )*D_inv[i];
+            //     delta0 = particles.position( i, ipart+ivect+istart[0] )*d_inv_[i];
             //     dual [i][ipart] = ( delta0 - ( double )idx[i] >=0. );
             //
             //     for( int j=0; j<2; j++ ) { // for dual
@@ -124,7 +121,7 @@ void Interpolator2D2OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
             // i = 0
 
-            delta0 = position_x[ipart+ivect+istart[0]] *D_inv[0];
+            delta0 = position_x[ipart+ivect+istart[0]] *d_inv_[0];
             dual [0][ipart] = ( delta0 - ( double )idx[0] >=0. );
 
             // j = 0
@@ -146,7 +143,7 @@ void Interpolator2D2OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
             // i = 1
 
-            delta0 = position_y[ipart+ivect+istart[0]] *D_inv[1];
+            delta0 = position_y[ipart+ivect+istart[0]] *d_inv_[1];
             dual [1][ipart] = ( delta0 - ( double )idx[1] >=0. );
 
             // j = 0
@@ -331,14 +328,14 @@ void Interpolator2D2OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 } // END Interpolator2D2OrderV
 
 
-// _____________________________________________________________________________
+// -----------------------------------------------------------------------------
 //
 //! Interpolation of all fields and currents for a single particles
 //! located at istart.
 //! This version is not vectorized.
 //! The input parameter iend not used for now, probes are interpolated one by one for now.
 //
-// _____________________________________________________________________________
+// -----------------------------------------------------------------------------
 void Interpolator2D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
 
@@ -354,9 +351,9 @@ void Interpolator2D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
 
     int idx[2], idxO[2];
     //Primal indices are constant over the all cell
-    idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
+    idx[0]  = round( particles.position( 0, *istart ) * d_inv_[0] );
     idxO[0] = idx[0] - i_domain_begin -1 ;
-    idx[1]  = round( particles.position( 1, *istart ) * D_inv[1] );
+    idx[1]  = round( particles.position( 1, *istart ) * d_inv_[1] );
     idxO[1] = idx[1] - j_domain_begin -1 ;
 
     Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
@@ -373,7 +370,7 @@ void Interpolator2D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
     double delta2;
 
     for( int i=0; i<2; i++ ) { // for X/Y
-        delta0 = particles.position( i, ipart )*D_inv[i];
+        delta0 = particles.position( i, ipart )*d_inv_[i];
         dual [i] = ( delta0 - ( double )idx[i] >=0. );
 
         for( int j=0; j<2; j++ ) { // for dual

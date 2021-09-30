@@ -16,11 +16,8 @@ using namespace std;
 Interpolator2D4OrderV::Interpolator2D4OrderV( Params &params, Patch *patch ) : Interpolator2D( params, patch )
 {
 
-    dx_inv_ = 1.0/params.cell_length[0];
-    dy_inv_ = 1.0/params.cell_length[1];
-
-    D_inv[0] = 1.0/params.cell_length[0];
-    D_inv[1] = 1.0/params.cell_length[1];
+    d_inv_[0] = 1.0/params.cell_length[0];
+    d_inv_[1] = 1.0/params.cell_length[1];
 
     //double defined for use in coefficients
     dble_1_ov_384 = 1.0/384.0;
@@ -53,8 +50,8 @@ void Interpolator2D4OrderV::fields( ElectroMagn *EMfields, Particles &particles,
     Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_m );
 
     // Normalized particle position
-    double xpn = particles.position( 0, ipart )*dx_inv_;
-    double ypn = particles.position( 1, ipart )*dy_inv_;
+    double xpn = particles.position( 0, ipart )*d_inv_[0];
+    double ypn = particles.position( 1, ipart )*d_inv_[0];
     // Calculate coeffs
     coeffs( xpn, ypn );
 
@@ -117,9 +114,9 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
     int idx[2], idxO[2];
     //Primal indices are constant over the all cell
-    idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
+    idx[0]  = round( particles.position( 0, *istart ) * d_inv_[0] );
     idxO[0] = idx[0] - i_domain_begin  ;
-    idx[1]  = round( particles.position( 1, *istart ) * D_inv[1] );
+    idx[1]  = round( particles.position( 1, *istart ) * d_inv_[1] );
     idxO[1] = idx[1] - j_domain_begin  ;
 
     Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
@@ -166,7 +163,7 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
             // i = 0
 
-            delta0 = position_x[ipart+ivect+istart[0]] *D_inv[0];
+            delta0 = position_x[ipart+ivect+istart[0]] *d_inv_[0];
             dual [0][ipart] = ( delta0 - ( double )idx[0] >=0. );
 
             // coefficient x primal grid (i=0, j=0)
@@ -235,7 +232,7 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
             // i = 1
 
-            delta0 = position_y[ipart+ivect+istart[0]] *D_inv[1];
+            delta0 = position_y[ipart+ivect+istart[0]] *d_inv_[1];
             dual [1][ipart] = ( delta0 - ( double )idx[1] >=0. );
 
             // j = 0
@@ -305,8 +302,8 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
             //           << " " << coeff[1][1][4][ipart]
             //           << std::endl;
             //
-            // std::cerr << " xpn: " << particles.position( 0, *istart ) * D_inv[0]
-            //           << " ypn: " << particles.position( 1, *istart ) * D_inv[1]
+            // std::cerr << " xpn: " << particles.position( 0, *istart ) * d_inv_[0]
+            //           << " ypn: " << particles.position( 1, *istart ) * d_inv_[1]
             //           << " idx0[0]: " << idxO[0]
             //           << " idx0[1]: " << idxO[1] << std::endl;
 
@@ -472,8 +469,8 @@ void Interpolator2D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
     Field2D *Rho2D= static_cast<Field2D *>( EMfields->rho_ );
 
     // Normalized particle position
-    double xpn = particles.position( 0, ipart )*dx_inv_;
-    double ypn = particles.position( 1, ipart )*dy_inv_;
+    double xpn = particles.position( 0, ipart )*d_inv_[0];
+    double ypn = particles.position( 1, ipart )*d_inv_[0];
     // Calculate coeffs
     coeffs( xpn, ypn );
 

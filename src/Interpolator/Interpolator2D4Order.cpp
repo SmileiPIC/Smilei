@@ -16,8 +16,8 @@ using namespace std;
 Interpolator2D4Order::Interpolator2D4Order( Params &params, Patch *patch ) : Interpolator2D( params, patch )
 {
 
-    dx_inv_ = 1.0/params.cell_length[0];
-    dy_inv_ = 1.0/params.cell_length[1];
+    d_inv_[0] = 1.0/params.cell_length[0];
+    d_inv_[1] = 1.0/params.cell_length[1];
 
 
     //double defined for use in coefficients
@@ -32,7 +32,6 @@ Interpolator2D4Order::Interpolator2D4Order( Params &params, Patch *patch ) : Int
     dble_1_ov_6 = 1.0/6.0;
     dble_115_ov_192 = 115.0/192.0;
     dble_5_ov_8 = 5.0/8.0;
-
 
 }
 
@@ -51,8 +50,8 @@ void Interpolator2D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_m );
 
     // Normalized particle position
-    double xpn = particles.position( 0, ipart )*dx_inv_;
-    double ypn = particles.position( 1, ipart )*dy_inv_;
+    double xpn = particles.position( 0, ipart )*d_inv_[0];
+    double ypn = particles.position( 1, ipart )*d_inv_[1];
     // Calculate coeffs
     coeffs( xpn, ypn );
 
@@ -93,8 +92,8 @@ void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     Field2D *Rho2D= static_cast<Field2D *>( EMfields->rho_ );
 
     // Normalized particle position
-    double xpn = particles.position( 0, ipart )*dx_inv_;
-    double ypn = particles.position( 1, ipart )*dy_inv_;
+    double xpn = particles.position( 0, ipart )*d_inv_[0];
+    double ypn = particles.position( 1, ipart )*d_inv_[1];
     // Calculate coeffs
     coeffs( xpn, ypn );
 
@@ -132,8 +131,8 @@ void Interpolator2D4Order::oneField( Field **field, Particles &particles, int *i
     int *j = F->isDual( 1 ) ? &jd_ : &jp_;
 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        double xpn = particles.position( 0, ipart )*dx_inv_;
-        double ypn = particles.position( 1, ipart )*dy_inv_;
+        double xpn = particles.position( 0, ipart )*d_inv_[0];
+        double ypn = particles.position( 1, ipart )*d_inv_[1];
         coeffs( xpn, ypn );
         FieldLoc[ipart] = compute( coeffx, coeffy, F, *i, *j );
     }

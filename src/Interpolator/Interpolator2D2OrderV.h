@@ -23,7 +23,7 @@ public:
     ~Interpolator2D2OrderV() override final {};
 
     // Scalar basic all field interpolation
-    inline void __attribute__((always_inline)) fields( ElectroMagn *EMfields, Particles &particles, int ipart, double *ELoc, double *BLoc );
+    // inline void __attribute__((always_inline)) fields( ElectroMagn *EMfields, Particles &particles, int ipart, double *ELoc, double *BLoc );
 
     //! Interpolation of all fields and currents for a single particles located at istart.
     void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override final ;

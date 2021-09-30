@@ -17,8 +17,8 @@ using namespace std;
 Interpolator2D2Order::Interpolator2D2Order( Params &params, Patch *patch ) : Interpolator2D( params, patch )
 {
 
-    dx_inv_ = 1.0/params.cell_length[0];
-    dy_inv_ = 1.0/params.cell_length[1];
+    d_inv_[0] = 1.0/params.cell_length[0];
+    d_inv_[1] = 1.0/params.cell_length[1];
 
 }
 
@@ -37,8 +37,8 @@ void Interpolator2D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
 
 
     // Normalized particle position
-    double xpn = particles.position( 0, ipart )*dx_inv_;
-    double ypn = particles.position( 1, ipart )*dy_inv_;
+    double xpn = particles.position( 0, ipart )*d_inv_[0];
+    double ypn = particles.position( 1, ipart )*d_inv_[1];
     // Calculate coeffs
     coeffs( xpn, ypn );
 
@@ -86,8 +86,8 @@ void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     Field2D *Rho2D= static_cast<Field2D *>( EMfields->rho_ );
 
     // Normalized particle position
-    double xpn = particles.position( 0, ipart )*dx_inv_;
-    double ypn = particles.position( 1, ipart )*dy_inv_;
+    double xpn = particles.position( 0, ipart )*d_inv_[0];
+    double ypn = particles.position( 1, ipart )*d_inv_[1];
     // Calculate coeffs
     coeffs( xpn, ypn );
 
@@ -125,8 +125,8 @@ void Interpolator2D2Order::oneField( Field **field, Particles &particles, int *i
     int *j = F->isDual( 1 ) ? &jd_ : &jp_;
 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        double xpn = particles.position( 0, ipart )*dx_inv_;
-        double ypn = particles.position( 1, ipart )*dy_inv_;
+        double xpn = particles.position( 0, ipart )*d_inv_[0];
+        double ypn = particles.position( 1, ipart )*d_inv_[1];
         coeffs( xpn, ypn );
         FieldLoc[ipart] = compute( coeffx, coeffy, F, *i, *j );
     }
@@ -263,8 +263,8 @@ void Interpolator2D2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         // Normalized particle position
-        double xpn = particles.position( 0, ipart )*dx_inv_;
-        double ypn = particles.position( 1, ipart )*dy_inv_;
+        double xpn = particles.position( 0, ipart )*d_inv_[0];
+        double ypn = particles.position( 1, ipart )*d_inv_[1];
 
 
         // Indexes of the central nodes
@@ -339,8 +339,8 @@ void Interpolator2D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     Field2D *Env_Ex_abs_2D = static_cast<Field2D *>( EMfields->Env_Ex_abs_ );
 
     // Normalized particle position
-    double xpn = particles.position( 0, ipart )*dx_inv_;
-    double ypn = particles.position( 1, ipart )*dy_inv_;
+    double xpn = particles.position( 0, ipart )*d_inv_[0];
+    double ypn = particles.position( 1, ipart )*d_inv_[1];
 
 
 
@@ -409,8 +409,8 @@ void Interpolator2D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         // Normalized particle position
-        double xpn = particles.position( 0, ipart )*dx_inv_;
-        double ypn = particles.position( 1, ipart )*dy_inv_;
+        double xpn = particles.position( 0, ipart )*d_inv_[0];
+        double ypn = particles.position( 1, ipart )*d_inv_[1];
 
         // Indexes of the central nodes
         ip_ = round( xpn );
