@@ -12,6 +12,7 @@ species_list = ["electron","positron","photon"]
 #
 species_first_index = [0,0,5]
 # Large relative error because of stochasticity
+relative_error_ukin = 0.12
 relative_error = 0.1
 
 Scalar = {}
@@ -28,7 +29,7 @@ for ispecies,species in enumerate(species_list):
     name = "Ukin_{}".format(species)
     Scalar[name] = np.array(S.Scalar(name).getData())
     for index,value in enumerate(Scalar[name][species_first_index[ispecies]:]):
-        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
+        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error_ukin)
 
     name = "Dens_{}".format(species)
     Scalar[name] = np.array(S.Scalar(name).getData())
