@@ -69,7 +69,22 @@ void Interpolator2D4Order::fields( ElectroMagn *EMfields, Particles &particles, 
     *( BLoc+2*nparts ) = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_ );
 } // END Interpolator2D4Order
 
-void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
+// -----------------------------------------------------------------------------
+//
+//! Interpolation of all fields and currents for a single particles
+//! located at istart.
+//! This version is not vectorized.
+//! The input parameter iend not used for now, probes are interpolated one by one for now.
+//
+// -----------------------------------------------------------------------------
+void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields,
+                                                Particles &particles,
+                                                SmileiMPI *smpi,
+                                                int *istart,
+                                                int *iend,
+                                                int ithread,
+                                                LocalFields *JLoc,
+                                                double *RhoLoc )
 {
 
     int ipart = *istart;
@@ -121,7 +136,7 @@ void Interpolator2D4Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
     ( *RhoLoc ) = compute( &coeffxp_[2], &coeffyp_[2], Rho2D, ip_, jp_ );
 }
 
-// Interpolator on another field than the basic ones
+//! Interpolator on another field than the basic ones
 void Interpolator2D4Order::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
 {
     Field2D *F = static_cast<Field2D *>( *field );
@@ -137,6 +152,7 @@ void Interpolator2D4Order::oneField( Field **field, Particles &particles, int *i
         FieldLoc[ipart] = compute( coeffx, coeffy, F, *i, *j );
     }
 }
+
 void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
@@ -173,7 +189,9 @@ void Interpolator2D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
 
 }
 
-// Interpolator specific to tracked particles. A selection of particles may be provided
+// -----------------------------------------------------------------------------
+//! Interpolator specific to tracked particles. A selection of particles may be provided
+// -----------------------------------------------------------------------------
 void Interpolator2D4Order::fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> *selection )
 {
     if( selection ) {

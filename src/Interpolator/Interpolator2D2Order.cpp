@@ -27,6 +27,7 @@ Interpolator2D2Order::Interpolator2D2Order( Params &params, Patch *patch ) : Int
 // ---------------------------------------------------------------------------------------------------------------------
 void Interpolator2D2Order::fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc )
 {
+
     // Static cast of the electromagnetic fields
     Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
     Field2D *Ey2D = static_cast<Field2D *>( EMfields->Ey_ );
@@ -34,7 +35,6 @@ void Interpolator2D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     Field2D *Bx2D = static_cast<Field2D *>( EMfields->Bx_m );
     Field2D *By2D = static_cast<Field2D *>( EMfields->By_m );
     Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_m );
-
 
     // Normalized particle position
     double xpn = particles.position( 0, ipart )*d_inv_[0];
@@ -56,14 +56,14 @@ void Interpolator2D2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     *( BLoc+2*nparts ) = compute( &coeffxd_[1], &coeffyd_[1], Bz2D, id_, jd_ );
 } // END Interpolator2D2Order
 
-// _____________________________________________________________________________
+// -----------------------------------------------------------------------------
 //
 //! Interpolation of all fields and currents for a single particles
 //! located at istart.
 //! This version is not vectorized.
 //! The input parameter iend not used for now, probes are interpolated one by one for now.
 //
-// _____________________________________________________________________________
+// -----------------------------------------------------------------------------
 void Interpolator2D2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
     int ipart = *istart;
@@ -163,10 +163,16 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
 }
 
 // -----------------------------------------------------------------------------
-//! Interpolator specific to tracked particles. A selection of particles may be provided
+//! Interpolator specific to tracked particles.
+//! A selection of particles may be provided
 // -----------------------------------------------------------------------------
-void Interpolator2D2Order::fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> *selection )
+void Interpolator2D2Order::fieldsSelection( ElectroMagn *EMfields,
+                                            Particles &particles,
+                                            double *buffer,
+                                            int offset,
+                                            vector<unsigned int> *selection )
 {
+
     if( selection ) {
 
         int nsel_tot = selection->size();
