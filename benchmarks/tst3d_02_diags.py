@@ -22,7 +22,7 @@ Main(
 	EM_boundary_conditions = [ ["periodic"] ],
 	print_every = 10,
 	
-	random_seed = smilei_mpi_rank
+#	random_seed = smilei_mpi_rank
 )
 
 
