@@ -11,9 +11,9 @@ using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Creator for Interpolator2D2OrderV
+//! Creator for Interpolator2D2OrderV
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator2D2OrderV::Interpolator2D2OrderV( Params &params, Patch *patch ) : Interpolator2D( params, patch )
+Interpolator2D2OrderV::Interpolator2D2OrderV( Params &params, Patch *patch ) : Interpolator2D2Order( params, patch )
 {
 
     dx_inv_ = 1.0/params.cell_length[0];
@@ -23,14 +23,16 @@ Interpolator2D2OrderV::Interpolator2D2OrderV( Params &params, Patch *patch ) : I
 
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// 2nd OrderV Interpolation of the fields at a the particle position (3 nodes are used)
-// ---------------------------------------------------------------------------------------------------------------------
-void Interpolator2D2OrderV::fields( ElectroMagn *EMfields, Particles &particles, int ipart, double *ELoc, double *BLoc )
-{
-}
-
-void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+// -----------------------------------------------------------------------------
+//! Wrapper called by the particle dynamics section
+// -----------------------------------------------------------------------------
+void Interpolator2D2OrderV::fieldsWrapper(  ElectroMagn *EMfields,
+                                            Particles &particles,
+                                            SmileiMPI *smpi,
+                                            int *istart,
+                                            int *iend,
+                                            int ithread,
+                                            int ipart_ref )
 {
     if( istart[0] == iend[0] ) {
         return;    //Don't treat empty cells.
@@ -328,10 +330,17 @@ void Interpolator2D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
 } // END Interpolator2D2OrderV
 
+
+// _____________________________________________________________________________
+//
+//! Interpolation of all fields and currents for a single particles
+//! located at istart.
+//! This version is not vectorized.
+//! The input parameter iend not used for now, probes are interpolated one by one for now.
+//
+// _____________________________________________________________________________
 void Interpolator2D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc )
 {
-    // iend not used for now
-    // probes are interpolated one by one for now
 
     int ipart = *istart;
     int nparts( particles.size() );
@@ -491,7 +500,6 @@ void Interpolator2D2OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
     ( *RhoLoc ) = interp_res;
 
 }
-
 
 // Interpolator on another field than the basic ones
 void Interpolator2D2OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
