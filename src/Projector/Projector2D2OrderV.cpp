@@ -59,6 +59,7 @@ void Projector2D2OrderV::currentsAndDensity( double * __restrict__ Jx,
                                             double * __restrict__ invgf,
                                             int    * __restrict__ iold,
                                             double * __restrict__ deltaold,
+                                            unsigned int buffer_size,
                                             int ipart_ref )
 {
 
@@ -66,7 +67,6 @@ void Projector2D2OrderV::currentsAndDensity( double * __restrict__ Jx,
     // Variable declaration & initialization
     // -------------------------------------
 
-    //int npart_total = invgf->size();
     int ipo = iold[0];
     int jpo = iold[1];
     int ipom2 = ipo-2;
@@ -359,13 +359,13 @@ void Projector2D2OrderV::currents( double * __restrict__ Jx,
                                    double * __restrict__ invgf,
                                    int    * __restrict__ iold,
                                    double * __restrict__ deltaold,
+                                   unsigned int buffer_size,
                                    int ipart_ref )
 {
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
 
-    int npart_total = particles.size();
     int ipo = iold[0];
     int jpo = iold[1];
     int ipom2 = ipo-2;
@@ -462,7 +462,7 @@ void Projector2D2OrderV::currents( double * __restrict__ Jx,
             Sy1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
             Sy1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
             //                            Y                                 //
-            delta = deltaold[ivect+ipart-ipart_ref+istart+npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+buffer_size];
             delta2 = delta*delta;
             Sy0_buff_vect[          ipart] = 0;
             Sy0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
@@ -640,7 +640,7 @@ void Projector2D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
             double *b_Jx =  &( *EMfields->Jx_ )( 0 );
             double *b_Jy =  &( *EMfields->Jy_ )( 0 );
             double *b_Jz =  &( *EMfields->Jz_ )( 0 );
-            currents( b_Jx, b_Jy, b_Jz, particles,  istart, iend, invgf->data(), iold, &( *delta )[0], ipart_ref );
+            currents( b_Jx, b_Jy, b_Jz, particles,  istart, iend, invgf->data(), iold, &( *delta )[0], invgf->size(), ipart_ref );
         } else {
             ERROR( "TO DO with rho" );
         }
@@ -651,7 +651,7 @@ void Projector2D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
         double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
         double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
         double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles, istart, iend, invgf->data(), iold, &( *delta )[0], ipart_ref );
+        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles, istart, iend, invgf->data(), iold, &( *delta )[0], invgf->size(), ipart_ref );
     }
 }
 

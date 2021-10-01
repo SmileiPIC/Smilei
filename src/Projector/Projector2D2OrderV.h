@@ -6,10 +6,15 @@
 class Projector2D2OrderV : public Projector2D
 {
 public:
+
+    // Creator
     Projector2D2OrderV( Params &, Patch *patch );
+
+    // Destructor
     ~Projector2D2OrderV();
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
+    //! \param buffer_size number of particles in the buffers invgf, iold, deltaold
     void currents( double * __restrict__ Jx,
                    double * __restrict__ Jy,
                    double * __restrict__ Jz,
@@ -17,9 +22,11 @@ public:
                    unsigned int istart, unsigned int iend,
                    double * __restrict__ invgf,
                    int    * __restrict__ iold,
-                   double * __restrict__ deltaold, int ipart_ref = 0 );
+                   double * __restrict__ deltaold,
+                   unsigned int buffer_size, int ipart_ref = 0 );
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
+    //! \param buffer_size number of particles in the buffers invgf, iold, deltaold
     inline void __attribute__((always_inline)) currentsAndDensity(  double * __restrict__ Jx,
                                                                     double * __restrict__ Jy,
                                                                     double * __restrict__ Jz,
@@ -29,6 +36,7 @@ public:
                                                                     double * __restrict__ invgf,
                                                                     int    * __restrict__ iold,
                                                                     double * __restrict__ deltaold,
+                                                                    unsigned int buffer_size,
                                                                     int ipart_ref );
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep

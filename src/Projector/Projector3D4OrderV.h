@@ -7,10 +7,14 @@
 class Projector3D4OrderV : public Projector3D
 {
 public:
+
+    //! Creator for Projector3D4OrderV
     Projector3D4OrderV( Params &, Patch *patch );
+
     ~Projector3D4OrderV();
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
+    //! \param buffer_size number of particles in the buffers invgf, iold, deltaold
     inline void __attribute__((always_inline)) currents( double    * __restrict__ Jx,
                                                          double    * __restrict__ Jy,
                                                          double    * __restrict__ Jz,
@@ -20,10 +24,23 @@ public:
                                                          double    * __restrict__ invgf,
                                                          int       * __restrict__ iold,
                                                          double    * __restrict__ deltaold,
+                                                         unsigned int buffer_size,
                                                          int ipart_ref = 0 );
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    inline void __attribute__((always_inline)) currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
+    //! \param buffer_size number of particles in the buffers invgf, iold, deltaold
+    inline void __attribute__((always_inline)) currentsAndDensity( double *Jx,
+                                                double  * __restrict__ Jy,
+                                                double  * __restrict__ Jz,
+                                                double  * __restrict__ rho,
+                                                Particles &particles,
+                                                unsigned int istart,
+                                                unsigned int iend,
+                                                double  * __restrict__ invgf,
+                                                int     * __restrict__ iold,
+                                                double  * __restrict__ deltaold,
+                                                unsigned int buffer_size,
+                                                int ipart_ref = 0 );
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int bin ) override final;
