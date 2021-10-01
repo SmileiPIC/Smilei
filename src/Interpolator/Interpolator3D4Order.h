@@ -22,7 +22,6 @@ public:
 
     //! 4th Order Interpolation of the fields at a the particle position
     inline void __attribute__((always_inline)) fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc );
-
     //inline void fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc );
 
     //! Interpolation of all fields and currents for a single particles located at istart.
