@@ -20,7 +20,7 @@ public:
     //! Destructor for Interpolator2D2Order
     ~Interpolator2D4Order() override {};
 
-    //! 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
+    //! 4th Order Interpolation of the fields at a the particle position 
     inline void __attribute__((always_inline)) fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc );
 
     //! Interpolation of all fields and currents for a single particles located at istart.

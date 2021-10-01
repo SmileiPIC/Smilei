@@ -13,24 +13,19 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator3D2OrderV
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator3D2OrderV::Interpolator3D2OrderV( Params &params, Patch *patch ) : Interpolator3D( params, patch )
+Interpolator3D2OrderV::Interpolator3D2OrderV( Params &params, Patch *patch ) : Interpolator3D2Order( params, patch )
 {
-
-    dx_inv_ = 1.0/params.cell_length[0];
-    dy_inv_ = 1.0/params.cell_length[1];
-    dz_inv_ = 1.0/params.cell_length[2];
-    D_inv[0] = 1.0/params.cell_length[0];
-    D_inv[1] = 1.0/params.cell_length[1];
-    D_inv[2] = 1.0/params.cell_length[2];
-
+    d_inv_[0] = 1.0/params.cell_length[0];
+    d_inv_[1] = 1.0/params.cell_length[1];
+    d_inv_[2] = 1.0/params.cell_length[2];
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd OrderV Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator3D2OrderV::fields( ElectroMagn *EMfields, Particles &particles, int ipart, double *ELoc, double *BLoc )
-{
-}
+// void Interpolator3D2OrderV::fields( ElectroMagn *EMfields, Particles &particles, int ipart, double *ELoc, double *BLoc )
+// {
+// }
 
 void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                                            Particles &particles,
@@ -47,11 +42,11 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
     int idxO[3];
     double idx[3];
     //Primal indices are the same for all particles
-    idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
+    idx[0]  = round( particles.position( 0, *istart ) * d_inv_[0] );
     idxO[0] = ( int )idx[0] - i_domain_begin ;
-    idx[1]  = round( particles.position( 1, *istart ) * D_inv[1] );
+    idx[1]  = round( particles.position( 1, *istart ) * d_inv_[1] );
     idxO[1] = ( int )idx[1] - j_domain_begin ;
-    idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
+    idx[2]  = round( particles.position( 2, *istart ) * d_inv_[2] );
     idxO[2] = ( int )idx[2] - k_domain_begin ;
 
     Field3D * __restrict__ Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
@@ -125,7 +120,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             // #endif
             // for( int i=0; i<3; i++ ) { // for X/Y/Z
             //     //delta primal = distance to primal node
-            //     delta   = particles.position( i, ipart+ivect+istart[0] )*D_inv[i] - idx[i];
+            //     delta   = particles.position( i, ipart+ivect+istart[0] )*d_inv_[i] - idx[i];
             //     delta2  = delta*delta;
             //     coeff[i][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
             //     coeff[i][0][1][ipart]    = ( 0.75 - delta2 );
@@ -150,7 +145,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             int ipart2 = ipart+ivect+istart[0];
 
             //delta primal = distance to primal node
-            delta   = position_x[ipart2]*D_inv[0] - idx[0];
+            delta   = position_x[ipart2]*d_inv_[0] - idx[0];
             delta2  = delta*delta;
             coeff[0][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
             coeff[0][0][1][ipart]    = ( 0.75 - delta2 );
@@ -171,7 +166,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             // Y direction
 
             //delta primal = distance to primal node
-            delta   = position_y[ipart2]*D_inv[1] - idx[1];
+            delta   = position_y[ipart2]*d_inv_[1] - idx[1];
             delta2  = delta*delta;
             coeff[1][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
             coeff[1][0][1][ipart]    = ( 0.75 - delta2 );
@@ -192,7 +187,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
             // Z direction
 
             //delta primal = distance to primal node
-            delta   = position_z[ipart2]*D_inv[2] - idx[2];
+            delta   = position_z[ipart2]*d_inv_[2] - idx[2];
             delta2  = delta*delta;
             coeff[2][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
             coeff[2][0][1][ipart]    = ( 0.75 - delta2 );
@@ -424,7 +419,8 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn * __restrict__ EMfiel
                                                Particles &particles,
                                                SmileiMPI * __restrict__ smpi,
                                                int * __restrict__ istart,
-                                               int * __restrict__ iend, int ithread,
+                                               int * __restrict__ iend,
+                                               int ithread,
                                                LocalFields * __restrict__ JLoc,
                                                double * __restrict__ RhoLoc )
 {
@@ -444,11 +440,11 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn * __restrict__ EMfiel
     int idxO[3];
     double idx[3];
     //Primal indices are the same for all particles
-    idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
+    idx[0]  = round( particles.position( 0, *istart ) * d_inv_[0] );
     idxO[0] = ( int )idx[0] - i_domain_begin ;
-    idx[1]  = round( particles.position( 1, *istart ) * D_inv[1] );
+    idx[1]  = round( particles.position( 1, *istart ) * d_inv_[1] );
     idxO[1] = ( int )idx[1] - j_domain_begin ;
-    idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
+    idx[2]  = round( particles.position( 2, *istart ) * d_inv_[2] );
     idxO[2] = ( int )idx[2] - k_domain_begin ;
 
     Field3D * __restrict__ Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
@@ -469,7 +465,7 @@ void Interpolator3D2OrderV::fieldsAndCurrents( ElectroMagn * __restrict__ EMfiel
 
     for( int i=0; i<3; i++ ) { // for X/Y
         //delta primal = distance to primal node
-        delta   = particles.position( i, ipart )*D_inv[i] - idx[i];
+        delta   = particles.position( i, ipart )*d_inv_[i] - idx[i];
         delta2  = delta*delta;
         coeff[i][0][0]    =  0.5 * ( delta2-delta+0.25 );
         coeff[i][0][1]    = ( 0.75 - delta2 );
@@ -653,11 +649,11 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
 
     int idx[3], idxO[3];
     //Primal indices are constant over the all cell
-    idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
+    idx[0]  = round( particles.position( 0, *istart ) * d_inv_[0] );
     idxO[0] = idx[0] - i_domain_begin -1 ;
-    idx[1]  = round( particles.position( 1, *istart ) * D_inv[1] );
+    idx[1]  = round( particles.position( 1, *istart ) * d_inv_[1] );
     idxO[1] = idx[1] - j_domain_begin -1 ;
-    idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
+    idx[2]  = round( particles.position( 2, *istart ) * d_inv_[2] );
     idxO[2] = idx[2] - k_domain_begin -1 ;
 
     Field3D *Ex3D       = static_cast<Field3D *>( EMfields->Ex_ );
@@ -704,7 +700,7 @@ void Interpolator3D2OrderV::fieldsAndEnvelope( ElectroMagn *EMfields, Particles 
 
 
             for( int i=0; i<3; i++ ) { // for X/Y
-                delta0 = particles.position( i, ipart+ivect+istart[0] )*D_inv[i];
+                delta0 = particles.position( i, ipart+ivect+istart[0] )*d_inv_[i];
                 dual [i][ipart] = ( delta0 - ( double )idx[i] >=0. );
 
                 for( int j=0; j<2; j++ ) { // for dual
@@ -892,11 +888,11 @@ void Interpolator3D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
 
     int idx[3], idxO[3];
     //Primal indices are constant over the all cell
-    idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
+    idx[0]  = round( particles.position( 0, *istart ) * d_inv_[0] );
     idxO[0] = idx[0] - i_domain_begin -1 ;
-    idx[1]  = round( particles.position( 1, *istart ) * D_inv[1] );
+    idx[1]  = round( particles.position( 1, *istart ) * d_inv_[1] );
     idxO[1] = idx[1] - j_domain_begin -1 ;
-    idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
+    idx[2]  = round( particles.position( 2, *istart ) * d_inv_[2] );
     idxO[2] = idx[2] - k_domain_begin -1 ;
 
     Field3D *Phi_m3D      = static_cast<Field3D *>( EMfields->envelope->Phi_m );
@@ -934,7 +930,7 @@ void Interpolator3D2OrderV::timeCenteredEnvelope( ElectroMagn *EMfields, Particl
 
 
             for( int i=0; i<3; i++ ) { // for X/Y
-                delta0 = particles.position( i, ipart+ivect+istart[0] )*D_inv[i];
+                delta0 = particles.position( i, ipart+ivect+istart[0] )*d_inv_[i];
                 delta   = delta0 - ( double )idx[i] ;
                 delta2  = delta*delta;
 
@@ -1015,11 +1011,11 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
 
     int idx[3], idxO[3];
     //Primal indices are constant over the all cell
-    idx[0]  = round( particles.position( 0, ipart ) * D_inv[0] );
+    idx[0]  = round( particles.position( 0, ipart ) * d_inv_[0] );
     idxO[0] = idx[0] - i_domain_begin -1 ;
-    idx[1]  = round( particles.position( 1, ipart ) * D_inv[1] );
+    idx[1]  = round( particles.position( 1, ipart ) * d_inv_[1] );
     idxO[1] = idx[1] - j_domain_begin -1 ;
-    idx[2]  = round( particles.position( 2, ipart ) * D_inv[2] );
+    idx[2]  = round( particles.position( 2, ipart ) * d_inv_[2] );
     idxO[2] = idx[2] - k_domain_begin -1 ;
 
     Field3D *Env_A_abs_3D  = static_cast<Field3D *>( EMfields->Env_A_abs_ );
@@ -1034,7 +1030,7 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility( ElectroMagn *EMfields, Pa
 
 
     for( int i=0; i<3; i++ ) { // for X/Y
-        delta0 = particles.position( i, ipart )*D_inv[i];
+        delta0 = particles.position( i, ipart )*d_inv_[i];
 
         delta   = delta0 - ( double )idx[i] ;
         delta2  = delta*delta;

@@ -19,9 +19,9 @@ Interpolator3D4OrderV::Interpolator3D4OrderV( Params &params, Patch *patch ) : I
     dx_inv_ = 1.0/params.cell_length[0];
     dy_inv_ = 1.0/params.cell_length[1];
     dz_inv_ = 1.0/params.cell_length[2];
-    D_inv[0] = 1.0/params.cell_length[0];
-    D_inv[1] = 1.0/params.cell_length[1];
-    D_inv[2] = 1.0/params.cell_length[2];
+    d_inv_[0] = 1.0/params.cell_length[0];
+    d_inv_[1] = 1.0/params.cell_length[1];
+    d_inv_[2] = 1.0/params.cell_length[2];
 
     //double defined for use in coefficients
     dble_1_ov_384 = 1.0/384.0;
@@ -68,11 +68,11 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
     int idx[3], idxO[3];
     //Primal indices are constant over the all cell
-    idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
+    idx[0]  = round( particles.position( 0, *istart ) * d_inv_[0] );
     idxO[0] = idx[0] - i_domain_begin  ;
-    idx[1]  = round( particles.position( 1, *istart ) * D_inv[1] );
+    idx[1]  = round( particles.position( 1, *istart ) * d_inv_[1] );
     idxO[1] = idx[1] - j_domain_begin  ;
-    idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
+    idx[2]  = round( particles.position( 2, *istart ) * d_inv_[2] );
     idxO[2] = idx[2] - k_domain_begin  ;
 
     Field3D *Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
@@ -117,7 +117,7 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             // i = 0
 
-            delta0 = position_x[ipart+ivect+istart[0]] *D_inv[0];
+            delta0 = position_x[ipart+ivect+istart[0]] *d_inv_[0];
             dual [0][ipart] = ( delta0 - ( double )idx[0] >=0. );
 
             // j = 0
@@ -150,7 +150,7 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             // i = 1
 
-            delta0 = position_y[ipart+ivect+istart[0]] *D_inv[1];
+            delta0 = position_y[ipart+ivect+istart[0]] *d_inv_[1];
             dual [1][ipart] = ( delta0 - ( double )idx[1] >=0. );
 
             // j = 0
@@ -183,7 +183,7 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
             // i = 2
 
-            delta0 = position_z[ipart+ivect+istart[0]] *D_inv[2];
+            delta0 = position_z[ipart+ivect+istart[0]] *d_inv_[2];
             dual [2][ipart] = ( delta0 - ( double )idx[2] >=0. );
 
             // j = 0
@@ -218,7 +218,7 @@ void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             // The code above is the hand-unrollling of this loop
             //
             // for( int i=0; i<3; i++ ) { // for X/Y
-            //     delta0 = particles.position( i, ipart+ivect+istart[0] )*D_inv[i];
+            //     delta0 = particles.position( i, ipart+ivect+istart[0] )*d_inv_[i];
             //     dual [i][ipart] = ( delta0 - ( double )idx[i] >=0. );
             //
             //     for( int j=0; j<2; j++ ) { // for dual
@@ -587,11 +587,11 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
 
     int idx[3], idxO[3];
     //Primal indices are constant over the all cell
-    idx[0]  = round( particles.position( 0, *istart ) * D_inv[0] );
+    idx[0]  = round( particles.position( 0, *istart ) * d_inv_[0] );
     idxO[0] = idx[0] - i_domain_begin  ;
-    idx[1]  = round( particles.position( 1, *istart ) * D_inv[1] );
+    idx[1]  = round( particles.position( 1, *istart ) * d_inv_[1] );
     idxO[1] = idx[1] - j_domain_begin  ;
-    idx[2]  = round( particles.position( 2, *istart ) * D_inv[2] );
+    idx[2]  = round( particles.position( 2, *istart ) * d_inv_[2] );
     idxO[2] = idx[2] - k_domain_begin  ;
 
     Field3D *Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
@@ -612,7 +612,7 @@ void Interpolator3D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields, Particles 
     double delta2, delta3, delta4;
 
     for( int i=0; i<3; i++ ) { // for X/Y
-        delta0 = particles.position( i, ipart )*D_inv[i];
+        delta0 = particles.position( i, ipart )*d_inv_[i];
         dual [i] = ( delta0 - ( double )idx[i] >=0. );
 
         for( int j=0; j<2; j++ ) { // for dual

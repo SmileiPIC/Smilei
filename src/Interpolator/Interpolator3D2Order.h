@@ -9,19 +9,33 @@
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class for 2nd order interpolator for 3Dcartesian simulations
 //  --------------------------------------------------------------------------------------------------------------------
-class Interpolator3D2Order final : public Interpolator3D
+class Interpolator3D2Order : public Interpolator3D
 {
 
 public:
+
+    //! Creator for Interpolator3D2Order
     Interpolator3D2Order( Params &, Patch * );
-    ~Interpolator3D2Order() override final {};
 
+    //! Destructor for Interpolator3D2Order
+    ~Interpolator3D2Order() override {};
+
+    //! 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
     inline void __attribute__((always_inline)) fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc );
-    void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override final ;
-    void fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final ;
-    void fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> *selection ) override final;
-    void oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1=NULL, double *l2=NULL, double *l3=NULL ) override final;
 
+    //! Interpolation of all fields and currents for a single particles located at istart.
+    void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override ;
+
+    //! Wrapper called by the particle dynamics section
+    void fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override ;
+
+    //! Interpolator specific to tracked particles. A selection of particles may be provided
+    void fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> *selection ) override final;
+
+    //! Interpolator on another field than the basic ones
+    void oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1=NULL, double *l2=NULL, double *l3=NULL ) override ;
+
+    //! Computation of a field from provided coefficients
     inline double __attribute__((always_inline)) compute( double *coeffx, double *coeffy, double *coeffz, Field3D *f, int idx, int idy, int idz )
     {
         double interp_res( 0. );
@@ -36,6 +50,7 @@ public:
         return interp_res;
     };
 
+    //! Computation of a field from provided coefficients
     inline double __attribute__((always_inline)) compute( double *coeffx, double *coeffy, double *coeffz, double *f, int idx, int idy, int idz, int nx, int ny, int nz )
     {
         double interp_res( 0. );
@@ -50,12 +65,21 @@ public:
         return interp_res;
     };
 
-    void fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
-    void timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
-    void envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc ) override final;
+    //! Interpolator specific to the envelope model
+    void fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override ;
+
+    //! Interpolator specific to the envelope model
+    void timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override ;
+
+    //! Interpolator specific to the envelope model
+    void envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc, double *Env_Ex_abs_Loc ) override ;
+
+    //! Interpolator specific to the envelope model
     void envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
 
 private:
+
+    //! Compuation of coefficients for interpolation using particle normalized positions xpn, ypn, zpn
     inline void __attribute__((always_inline)) coeffs( double xpn, double ypn, double zpn )
     {
         // Indexes of the central nodes
@@ -115,6 +139,7 @@ private:
         kd_ = kd_ - k_domain_begin;
     }
 
+    //! Compuation of coefficients for interpolation using particle normalized positions xpn, ypn, zpn
     inline void __attribute__((always_inline)) coeffs( double xpn, double ypn, double zpn, int* idx_p, int* idx_d,
                         double *coeffxp, double *coeffyp, double *coeffzp,
                         double *coeffxd, double *coeffyd, double *coeffzd, double* delta_p )
