@@ -8,7 +8,7 @@
 
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class for 2nd order interpolator for 2Dcartesian simulations
+//! Class for vectorized 4th order interpolator for 2Dcartesian simulations
 //  --------------------------------------------------------------------------------------------------------------------
 class Interpolator2D4OrderV final : public Interpolator2D4Order
 {

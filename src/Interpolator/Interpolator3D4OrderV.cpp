@@ -13,12 +13,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for Interpolator3D4OrderV
 // ---------------------------------------------------------------------------------------------------------------------
-Interpolator3D4OrderV::Interpolator3D4OrderV( Params &params, Patch *patch ) : Interpolator3D( params, patch )
+Interpolator3D4OrderV::Interpolator3D4OrderV( Params &params, Patch *patch ) : Interpolator3D4Order( params, patch )
 {
-
-    dx_inv_ = 1.0/params.cell_length[0];
-    dy_inv_ = 1.0/params.cell_length[1];
-    dz_inv_ = 1.0/params.cell_length[2];
     d_inv_[0] = 1.0/params.cell_length[0];
     d_inv_[1] = 1.0/params.cell_length[1];
     d_inv_[2] = 1.0/params.cell_length[2];
@@ -35,15 +31,14 @@ Interpolator3D4OrderV::Interpolator3D4OrderV( Params &params, Patch *patch ) : I
     dble_1_ov_6 = 1.0/6.0;
     dble_115_ov_192 = 115.0/192.0;
     dble_5_ov_8 = 5.0/8.0;
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // 4th OrderV Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator3D4OrderV::fields( ElectroMagn *EMfields, Particles &particles, int ipart, double *ELoc, double *BLoc )
-{
-}
+// void Interpolator3D4OrderV::fields( ElectroMagn *EMfields, Particles &particles, int ipart, double *ELoc, double *BLoc )
+// {
+// }
 
 void Interpolator3D4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {

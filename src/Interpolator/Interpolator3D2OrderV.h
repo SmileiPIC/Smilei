@@ -7,7 +7,7 @@
 #include "Pragma.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class for 2nd order interpolator for 1d3v simulations
+//! Class for vectorized 2nd order interpolator for 3d3v simulations
 //  --------------------------------------------------------------------------------------------------------------------
 class Interpolator3D2OrderV final : public Interpolator3D2Order
 {
@@ -23,7 +23,7 @@ public:
     // inline void __attribute__((always_inline)) fields( ElectroMagn *EMfields, Particles &particles, int ipart, double *ELoc, double *BLoc );
 
     //! Interpolation of all fields and currents for a single particles located at istart.
-    void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override final ;
+    void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override final;
 
     //! Wrapper called by the particle dynamics section
     void fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;

@@ -7,7 +7,7 @@
 
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class for 2nd order interpolator for 2Dcartesian simulations
+//! Class for 4th order interpolator for 2Dcartesian simulations
 //  --------------------------------------------------------------------------------------------------------------------
 class Interpolator2D4Order : public Interpolator2D
 {
@@ -20,7 +20,7 @@ public:
     //! Destructor for Interpolator2D2Order
     ~Interpolator2D4Order() override {};
 
-    //! 4th Order Interpolation of the fields at a the particle position 
+    //! 4th Order Interpolation of the fields at a the particle position
     inline void __attribute__((always_inline)) fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc );
 
     //! Interpolation of all fields and currents for a single particles located at istart.

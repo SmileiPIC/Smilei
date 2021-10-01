@@ -1,14 +1,12 @@
 #ifndef INTERPOLATOR2D2ORDERV_H
 #define INTERPOLATOR2D2ORDERV_H
 
-
-#include "Interpolator2D.h"
 #include "Interpolator2D2Order.h"
 #include "Field2D.h"
 #include "Pragma.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class for 2nd order interpolator for 2d3v simulations
+//! Class for vectorized 2nd order interpolator for 2d3v simulations
 //! This class inherits from Interpolator2D2Order for some scalar versions
 //  --------------------------------------------------------------------------------------------------------------------
 class Interpolator2D2OrderV final : public Interpolator2D2Order
