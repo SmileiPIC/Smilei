@@ -16,7 +16,7 @@ ang = 0.5
 Main(
     geometry = "2Dcartesian",
 
-    interpolation_order = 4 ,
+    interpolation_order = 2 ,
 
     cell_length = [l0/resx,l0/resx],
     grid_length  = Lsim,

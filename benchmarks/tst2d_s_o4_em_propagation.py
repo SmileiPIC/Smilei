@@ -16,7 +16,7 @@ ang = 0.5
 Main(
     geometry = "2Dcartesian",
 
-    interpolation_order = 4 ,
+    interpolation_order = 4,
 
     cell_length = [l0/resx,l0/resx],
     grid_length  = Lsim,
@@ -34,10 +34,6 @@ Main(
     EM_boundary_conditions_k = [[cos(ang), sin(ang)],[-1.,0.],[0.,1.],[0.,-1.]],
 
     random_seed = smilei_mpi_rank
-)
-
-Vectorization(
-    mode="on",
 )
 
 LaserGaussian2D(
