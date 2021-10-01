@@ -26,6 +26,17 @@ public:
                                                          double    * __restrict__ deltaold,
                                                          unsigned int buffer_size,
                                                          int ipart_ref = 0 );
+    inline void __attribute__((always_inline)) currents_old( double    * __restrict__ Jx,
+                                                         double    * __restrict__ Jy,
+                                                         double    * __restrict__ Jz,
+                                                         Particles &particles,
+                                                         unsigned int istart,
+                                                         unsigned int iend,
+                                                         double    * __restrict__ invgf,
+                                                         int       * __restrict__ iold,
+                                                         double    * __restrict__ deltaold,
+                                                         unsigned int buffer_size,
+                                                         int ipart_ref = 0 );
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
     //! \param buffer_size number of particles in the buffers invgf, iold, deltaold
