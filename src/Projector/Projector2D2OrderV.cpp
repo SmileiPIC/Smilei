@@ -95,7 +95,7 @@ void Projector2D2OrderV::currentsAndDensity( double * __restrict__ Jx,
     }
 
     // Jx, Jy, Jz
-    currents( Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, ipart_ref );
+    currents( Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, buffer_size, ipart_ref );
 
     // rho^(p,p,d)
     cell_nparts = ( int )iend-( int )istart;
