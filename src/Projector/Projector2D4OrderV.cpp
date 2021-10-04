@@ -496,6 +496,7 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
             Sx0_buff_vect[4*vecSize+ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
             Sx0_buff_vect[5*vecSize+ipart] = 0.;
 
+
             //                            Y                                 //
             delta = deltaold[ivect+ipart-ipart_ref+istart+buffer_size];
             delta2 = delta*delta;
@@ -676,7 +677,7 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-            bJx [ipart] += crz_p[ipart] * Sx1_buff_vect[ipart] * Sy1_buff_vect[ipart];
+            bJz [ipart] += crz_p[ipart] * Sx1_buff_vect[ipart] * Sy1_buff_vect[ipart];
             double tmp( crz_p[ipart] * Sy1_buff_vect[ipart] );
             UNROLL(6)
             for( unsigned int i=1 ; i<7 ; i++ ) {
@@ -737,7 +738,7 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
             int ilocal = ( ( i )*7+j )*vecSize;
             UNROLL(8)
             for( int ipart=0 ; ipart<8; ipart++ ) {
-                tmpJy += bJx [ilocal+ipart];
+                tmpJy += bJy [ilocal+ipart];
             }
             Jy[iglobal+j] += tmpJy;
         }
@@ -782,7 +783,7 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
             int ilocal = ( i*7+j )*vecSize;
             UNROLL(8)
             for( int ipart=0 ; ipart<8; ipart++ ) {
-                tmpJz  +=  bJx [ilocal+ipart];
+                tmpJz  +=  bJz [ilocal+ipart];
             }
             Jz[iglobal+j]  +=  tmpJz;
         }//i
