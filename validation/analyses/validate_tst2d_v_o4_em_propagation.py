@@ -45,17 +45,30 @@ Validate("Value of the grid step", dx, 1e-6)
 Validate("Patch size", patchSize)
 
 # COMPARE THE FIELDS OF TRACKED PARTICLES
-attributes = ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]
-data = S.TrackParticles.eon(axes=attributes, select="any(t==0, Id==100)").getData()
-for f in attributes:
-	Validate("Field "+f+" of tracked electrons", data[f].flatten(), 5e-4)
+#attributes = ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]
+#data = S.TrackParticles.eon(axes=attributes, select="any(t==0, Id==100)").getData()
+#for f in attributes:
+#	Validate("Field "+f+" of tracked electrons", data[f].flatten(), 5e-4)
 
-attributes = ["x", "y"]
-data = S.TrackParticles.eon(axes=attributes, select="any(t==0, Id==100)").getData()
-for f in attributes:
-	Validate("trajectory in "+f+" of tracked electrons", data[f].flatten(), 5e-4)
+#attributes = ["x", "y"]
+#data = S.TrackParticles.eon(axes=attributes, select="any(t==0, Id==100)").getData()
+#for f in attributes:
+#	Validate("trajectory in "+f+" of tracked electrons", data[f].flatten(), 5e-4)
 
-attributes = ["px", "py", "pz"]
-data = S.TrackParticles.eon(axes=attributes, select="any(t==0, Id==100)").getData()
-for f in attributes:
-	Validate("momentum in "+f+" of tracked electrons", data[f].flatten(), 5e-4)
+#attributes = ["px", "py", "pz"]
+#data = S.TrackParticles.eon(axes=attributes, select="any(t==0, Id==100)").getData()
+#for f in attributes:
+#	Validate("momentum in "+f+" of tracked electrons", data[f].flatten(), 5e-4)
+
+axes=["x","y","px","py","pz","Ex",'Ey','Ez']
+
+track_data = S.TrackParticles.eon(axes=axes,sort=True).getData()
+for ip in [3,9]:
+    for key, values in track_data.items():
+        if (key in axes):
+            array = track_data[key].T[ip]
+            #values = np.array(track_data[key].T[ip])
+            for i in range(len(array)):
+                if np.isnan(array[i]):
+                    array[i] = 0. 
+            Validate("Particle {} - attribute {}".format(ip,key),array, 5e-4)
