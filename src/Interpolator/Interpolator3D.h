@@ -26,13 +26,12 @@ public:
     virtual void oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1=NULL, double *l2=NULL, double *l3=NULL ) override = 0;
 
 protected:
-    //! Inverse of the spatial-step
-    double dx_inv_;
-    double dy_inv_;
-    double dz_inv_;
+
     int i_domain_begin;
     int j_domain_begin;
     int k_domain_begin;
+
+    //! Inverse of the spatial-step
     double d_inv_[3];
 };
 
