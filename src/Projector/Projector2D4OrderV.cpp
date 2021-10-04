@@ -419,6 +419,8 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
     unsigned int bsize = 7*7*vecSize;
 
     double bJx[bsize] __attribute__( ( aligned( 64 ) ) );
+    double bJy[bsize] __attribute__( ( aligned( 64 ) ) );
+    double bJz[bsize] __attribute__( ( aligned( 64 ) ) );
 
     double Sx0_buff_vect[48] __attribute__( ( aligned( 64 ) ) );
     double Sy0_buff_vect[48] __attribute__( ( aligned( 64 ) ) );
@@ -469,6 +471,8 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
     #pragma omp simd
     for( unsigned int j=0; j<bsize; j++ ) {
         bJx[j] = 0.;
+        bJy[j] = 0.;
+        bJz[j] = 0.;
     }
 
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
@@ -524,13 +528,31 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
             double m1 = ( cell_shift == -1 );
             double c0 = ( cell_shift ==  0 );
             double p1 = ( cell_shift ==  1 );
-            DSx [          ipart] = m1 * S0                                                                         ;
-            DSx [  vecSize+ipart] = c0 * S0 + m1 * S1                              - Sx0_buff_vect[          ipart] ;
-            DSx [2*vecSize+ipart] = p1 * S0 + c0 * S1 + m1* S2                     - Sx0_buff_vect[  vecSize+ipart] ;
-            DSx [3*vecSize+ipart] =           p1 * S1 + c0* S2 + m1 * S3           - Sx0_buff_vect[2*vecSize+ipart] ;
-            DSx [4*vecSize+ipart] =                     p1* S2 + c0 * S3 + m1 * S4 - Sx0_buff_vect[3*vecSize+ipart] ;
-            DSx [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sx0_buff_vect[4*vecSize+ipart] ;
-            DSx [6*vecSize+ipart] =                                        p1 * S4                                  ;
+
+            Sx1_buff_vect [          ipart] = m1 * S0                                        ;
+            Sx1_buff_vect [  vecSize+ipart] = c0 * S0 + m1 * S1                              ;
+            Sx1_buff_vect [2*vecSize+ipart] = p1 * S0 + c0 * S1 + m1* S2                     ;
+            Sx1_buff_vect [3*vecSize+ipart] =           p1 * S1 + c0* S2 + m1 * S3           ;
+            Sx1_buff_vect [4*vecSize+ipart] =                     p1* S2 + c0 * S3 + m1 * S4 ;
+            Sx1_buff_vect [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 ;
+            Sx1_buff_vect [6*vecSize+ipart] =                                        p1 * S4 ;
+
+            DSx [          ipart] = Sx1_buff_vect [          ipart]                                  ;
+            DSx [  vecSize+ipart] = Sx1_buff_vect [  vecSize+ipart] - Sx0_buff_vect[0*vecSize+ipart] ;
+            DSx [2*vecSize+ipart] = Sx1_buff_vect [2*vecSize+ipart] - Sx0_buff_vect[1*vecSize+ipart] ;
+            DSx [3*vecSize+ipart] = Sx1_buff_vect [3*vecSize+ipart] - Sx0_buff_vect[2*vecSize+ipart] ;
+            DSx [4*vecSize+ipart] = Sx1_buff_vect [4*vecSize+ipart] - Sx0_buff_vect[3*vecSize+ipart] ;
+            DSx [5*vecSize+ipart] = Sx1_buff_vect [5*vecSize+ipart] - Sx0_buff_vect[4*vecSize+ipart] ;
+            DSx [6*vecSize+ipart] = Sx1_buff_vect [6*vecSize+ipart]                                  ;
+
+            // DSx [          ipart] = m1 * S0                                                                         ;
+            // DSx [  vecSize+ipart] = c0 * S0 + m1 * S1                              - Sx0_buff_vect[          ipart] ;
+            // DSx [2*vecSize+ipart] = p1 * S0 + c0 * S1 + m1* S2                     - Sx0_buff_vect[  vecSize+ipart] ;
+            // DSx [3*vecSize+ipart] =           p1 * S1 + c0* S2 + m1 * S3           - Sx0_buff_vect[2*vecSize+ipart] ;
+            // DSx [4*vecSize+ipart] =                     p1* S2 + c0 * S3 + m1 * S4 - Sx0_buff_vect[3*vecSize+ipart] ;
+            // DSx [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sx0_buff_vect[4*vecSize+ipart] ;
+            // DSx [6*vecSize+ipart] =                                        p1 * S4                                  ;
+
             //                            Y                                 //
             pos = position_y[ivect+ipart+istart] * dy_inv_;
             cell = round( pos );
@@ -553,15 +575,36 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
             m1 = ( cell_shift == -1 );
             c0 = ( cell_shift ==  0 );
             p1 = ( cell_shift ==  1 );
-            DSy [          ipart] = m1 * S0                                                                         ;
-            DSy [  vecSize+ipart] = c0 * S0 + m1 * S1                              - Sy0_buff_vect[          ipart] ;
-            DSy [2*vecSize+ipart] = p1 * S0 + c0 * S1 + m1* S2                     - Sy0_buff_vect[  vecSize+ipart] ;
-            DSy [3*vecSize+ipart] =           p1 * S1 + c0* S2 + m1 * S3           - Sy0_buff_vect[2*vecSize+ipart] ;
-            DSy [4*vecSize+ipart] =                     p1* S2 + c0 * S3 + m1 * S4 - Sy0_buff_vect[3*vecSize+ipart] ;
-            DSy [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sy0_buff_vect[4*vecSize+ipart] ;
-            DSy [6*vecSize+ipart] =                                        p1 * S4                                  ;
+
+            Sy1_buff_vect [          ipart] = m1 * S0                                        ;
+            Sy1_buff_vect [  vecSize+ipart] = c0 * S0 + m1 * S1                              ;
+            Sy1_buff_vect [2*vecSize+ipart] = p1 * S0 + c0 * S1 + m1* S2                     ;
+            Sy1_buff_vect [3*vecSize+ipart] =           p1 * S1 + c0* S2 + m1 * S3           ;
+            Sy1_buff_vect [4*vecSize+ipart] =                     p1* S2 + c0 * S3 + m1 * S4 ;
+            Sy1_buff_vect [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 ;
+            Sy1_buff_vect [6*vecSize+ipart] =                                        p1 * S4 ;
+
+            DSy [          ipart] = Sy1_buff_vect [          ipart]                                  ;                                                                     ;
+            DSy [  vecSize+ipart] = Sy1_buff_vect [  vecSize+ipart] - Sy0_buff_vect[0*vecSize+ipart] ;
+            DSy [2*vecSize+ipart] = Sy1_buff_vect [2*vecSize+ipart] - Sy0_buff_vect[1*vecSize+ipart] ;
+            DSy [3*vecSize+ipart] = Sy1_buff_vect [3*vecSize+ipart] - Sy0_buff_vect[2*vecSize+ipart] ;
+            DSy [4*vecSize+ipart] = Sy1_buff_vect [4*vecSize+ipart] - Sy0_buff_vect[3*vecSize+ipart] ;
+            DSy [5*vecSize+ipart] = Sy1_buff_vect [5*vecSize+ipart] - Sy0_buff_vect[4*vecSize+ipart] ;
+            DSy [6*vecSize+ipart] = Sy1_buff_vect [6*vecSize+ipart]                                  ;
+
+            // DSy [          ipart] = m1 * S0                                                                         ;
+            // DSy [  vecSize+ipart] = c0 * S0 + m1 * S1                              - Sy0_buff_vect[          ipart] ;
+            // DSy [2*vecSize+ipart] = p1 * S0 + c0 * S1 + m1* S2                     - Sy0_buff_vect[  vecSize+ipart] ;
+            // DSy [3*vecSize+ipart] =           p1 * S1 + c0* S2 + m1 * S3           - Sy0_buff_vect[2*vecSize+ipart] ;
+            // DSy [4*vecSize+ipart] =                     p1* S2 + c0 * S3 + m1 * S4 - Sy0_buff_vect[3*vecSize+ipart] ;
+            // DSy [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sy0_buff_vect[4*vecSize+ipart] ;
+            // DSy [6*vecSize+ipart] =                                        p1 * S4                                  ;
 
             charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )*weight[ivect+istart+ipart];
+
+            crz_p[ipart] = charge_weight[ipart]*one_third*momentum_z[ivect+istart+ipart]
+                                               * invgf[ivect+istart+ipart];
+
         }
 
 
@@ -597,6 +640,76 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
 
         } // END ipart (compute coeffs)
 
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+            //optrpt complains about the following loop but not unrolling it actually seems to give better result.
+            double cry_p = charge_weight[ipart]*dy_ov_dt;
+
+            double sum[7];
+            sum[0] = 0.;
+            UNROLL_S(6)
+            for( unsigned int k=1 ; k<7 ; k++ ) {
+                sum[k] = sum[k-1]-DSy[( k-1 )*vecSize+ipart];
+            }
+
+            double tmp( cry_p *0.5*DSx[ipart] );
+            UNROLL_S(6)
+            for( unsigned int j=1 ; j<7 ; j++ ) {
+                bJy [j*vecSize+ipart] += sum[j]*tmp;
+                //Jypart[ivect + ipart][0][j] += sum[j]*tmp;
+            }
+
+
+            UNROLL_S(6)
+            for( unsigned int i=1 ; i<7 ; i++ ) {
+                tmp = cry_p * ( Sx0_buff_vect[(i-1)*vecSize+ipart] + 0.5*DSx[i*vecSize+ipart] );
+
+                UNROLL_S(6)
+                for( unsigned int j=1 ; j<7 ; j++ ) {
+                    bJy [ ( i*7+j )*vecSize+ipart ] += sum[j]*tmp;
+                    //Jypart[ivect + ipart][i][j] += sum[j]*tmp;
+                }
+            }//i
+
+        } // END ipart (compute coeffs)
+
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
+            bJx [ipart] += crz_p[ipart] * Sx1_buff_vect[ipart] * Sy1_buff_vect[ipart];
+            double tmp( crz_p[ipart] * Sy1_buff_vect[ipart] );
+            UNROLL(6)
+            for( unsigned int i=1 ; i<7 ; i++ ) {
+                bJz [( ( i )*7 )*vecSize+ipart] += tmp * ( 0.5*Sx0_buff_vect[(i-1)*vecSize+ipart]
+                                                       + Sx1_buff_vect[i*vecSize+ipart] );
+                //Jzpart[ivect+ipart][i][0] += tmp * ( 0.5*Sx0_buff_vect[(i-1)*vecSize+ipart]
+                //                                       + Sx1_buff_vect[i*vecSize+ipart] );
+            }
+
+            tmp = crz_p[ipart] * Sx1_buff_vect[ipart];
+            UNROLL(6)
+            for( unsigned int j=1; j<7 ; j++ ) {
+                bJz [j*vecSize+ipart] +=  tmp * ( 0.5*Sy0_buff_vect[(j-1)*vecSize+ipart]
+                                              + Sy1_buff_vect[j*vecSize+ipart] );
+                //Jzpart[ivect+ipart][0][j] +=  tmp * ( 0.5*Sy0_buff_vect[(j-1)*vecSize+ipart]
+                //                              + Sy1_buff_vect[j*vecSize+ipart] );
+            }
+
+            UNROLL(6)
+            for( unsigned int i=1 ; i<7 ; i++ ) {
+                double tmp0( crz_p[ipart] * ( 0.5*Sx0_buff_vect[(i-1)*vecSize+ipart] + Sx1_buff_vect[i*vecSize+ipart] ) );
+                double tmp1( crz_p[ipart] * ( 0.5*Sx1_buff_vect[i*vecSize+ipart] + Sx0_buff_vect[(i-1)*vecSize+ipart] ) );
+                UNROLL(6)
+                for( unsigned int j=1; j<7 ; j++ ) {
+                    bJz [( ( i )*7+j )*vecSize+ipart] += ( Sy0_buff_vect[(j-1)*vecSize+ipart]* tmp1
+                                                       + Sy1_buff_vect[j*vecSize+ipart]* tmp0 );
+                    // Jzpart[ivect+ipart][i][j] += ( Sy0_buff_vect[(j-1)*vecSize+ipart]* tmp1
+                    //                                    + Sy1_buff_vect[j*vecSize+ipart]* tmp0 );
+                }
+            }
+
+        } // END ipart (compute coeffs)
+
     } // END ivect
 
 
@@ -616,143 +729,6 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
         }
     }
 
-
-    // Jy^(p,d,p)
-
-    // std::cerr << "Y" << std::endl;
-
-    #pragma omp simd
-    for( unsigned int j=0; j<bsize; j++ ) {
-        bJx[j] = 0.;
-    }
-
-
-    cell_nparts = ( int )iend-( int )istart;
-    for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
-
-        int np_computed( min( cell_nparts-ivect, vecSize ) );
-
-        //#pragma omp simd
-        //for (unsigned int i=0; i<200; i++)
-        //    bJx[i] = 0.;
-
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-
-            // locate the particle on the primal grid at former time-step & calculate coeff. S0
-            //                            X                                 //
-            double delta = deltaold[ivect+ipart-ipart_ref+istart];
-            double delta2 = delta*delta;
-            double delta3 = delta2*delta;
-            double delta4 = delta3*delta;
-
-            Sx0_buff_vect[          ipart] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            Sx0_buff_vect[  vecSize+ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            Sx0_buff_vect[2*vecSize+ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4  * delta4;
-            Sx0_buff_vect[3*vecSize+ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            Sx0_buff_vect[4*vecSize+ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            Sx0_buff_vect[5*vecSize+ipart] = 0.;
-
-            //                            Y                                 //
-            delta = deltaold[ivect+ipart-ipart_ref+istart+buffer_size];
-            delta2 = delta*delta;
-            delta3 = delta2*delta;
-            delta4 = delta3*delta;
-
-            Sy0_buff_vect[          ipart] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            Sy0_buff_vect[  vecSize+ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            Sy0_buff_vect[2*vecSize+ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4  * delta4;
-            Sy0_buff_vect[3*vecSize+ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            Sy0_buff_vect[4*vecSize+ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            Sy0_buff_vect[5*vecSize+ipart] = 0.;
-
-
-            // locate the particle on the primal grid at current time-step & calculate coeff. S1
-            //                            X                                 //
-            double pos = position_x[ivect+ipart+istart] * dx_inv_;
-            int cell = round( pos );
-            int cell_shift = cell-ipo-i_domain_begin;
-            delta  = pos - ( double )cell;
-            delta2 = delta*delta;
-            delta3 = delta2*delta;
-            delta4 = delta3*delta;
-            double S0 = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            double S1 = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            double S2 = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4  * delta4;
-            double S3 = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            double S4 = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            double m1 = ( cell_shift == -1 );
-            double c0 = ( cell_shift ==  0 );
-            double p1 = ( cell_shift ==  1 );
-            DSx [          ipart] = m1 * S0                                                                         ;
-            DSx [  vecSize+ipart] = c0 * S0 + m1 * S1                              - Sx0_buff_vect[          ipart] ;
-            DSx [2*vecSize+ipart] = p1 * S0 + c0 * S1 + m1* S2                     - Sx0_buff_vect[  vecSize+ipart] ;
-            DSx [3*vecSize+ipart] =           p1 * S1 + c0* S2 + m1 * S3           - Sx0_buff_vect[2*vecSize+ipart] ;
-            DSx [4*vecSize+ipart] =                     p1* S2 + c0 * S3 + m1 * S4 - Sx0_buff_vect[3*vecSize+ipart] ;
-            DSx [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sx0_buff_vect[4*vecSize+ipart] ;
-            DSx [6*vecSize+ipart] =                                        p1 * S4                                  ;
-            //                            Y                                 //
-            pos = position_y[ivect+ipart+istart] * dy_inv_;
-            cell = round( pos );
-            cell_shift = cell-jpo-j_domain_begin;
-            delta  = pos - ( double )cell;
-            delta2 = delta*delta;
-            delta3 = delta2*delta;
-            delta4 = delta3*delta;
-            S0 = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            S1 = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            S2 = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4  * delta4;
-            S3 = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            S4 = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            m1 = ( cell_shift == -1 );
-            c0 = ( cell_shift ==  0 );
-            p1 = ( cell_shift ==  1 );
-            DSy [          ipart] = m1 * S0                                                                         ;
-            DSy [  vecSize+ipart] = c0 * S0 + m1 * S1                              - Sy0_buff_vect[          ipart] ;
-            DSy [2*vecSize+ipart] = p1 * S0 + c0 * S1 + m1* S2                     - Sy0_buff_vect[  vecSize+ipart] ;
-            DSy [3*vecSize+ipart] =           p1 * S1 + c0* S2 + m1 * S3           - Sy0_buff_vect[2*vecSize+ipart] ;
-            DSy [4*vecSize+ipart] =                     p1* S2 + c0 * S3 + m1 * S4 - Sy0_buff_vect[3*vecSize+ipart] ;
-            DSy [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 - Sy0_buff_vect[4*vecSize+ipart] ;
-            DSy [6*vecSize+ipart] =                                        p1 * S4                                  ;
-
-            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )
-                                                   * weight[ivect+istart+ipart];
-        }
-
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-            double cry_p = charge_weight[ipart]*dy_ov_dt;
-
-            double sum[7];
-            sum[0] = 0.;
-            UNROLL_S(6)
-            for( unsigned int k=1 ; k<7 ; k++ ) {
-                sum[k] = sum[k-1]-DSy[( k-1 )*vecSize+ipart];
-            }
-
-            double tmp( cry_p *0.5*DSx[ipart] );
-            UNROLL_S(6)
-            for( unsigned int j=1 ; j<7 ; j++ ) {
-                bJx [j*vecSize+ipart] += sum[j]*tmp;
-                //Jypart[ivect + ipart][0][j] += sum[j]*tmp;
-            }
-
-
-            UNROLL_S(6)
-            for( unsigned int i=1 ; i<7 ; i++ ) {
-                tmp = cry_p * ( Sx0_buff_vect[(i-1)*vecSize+ipart] + 0.5*DSx[i*vecSize+ipart] );
-
-                UNROLL_S(6)
-                for( unsigned int j=1 ; j<7 ; j++ ) {
-                    bJx [ ( i*7+j )*vecSize+ipart ] += sum[j]*tmp;
-                    //Jypart[ivect + ipart][i][j] += sum[j]*tmp;
-                }
-            }//i
-
-        } // END ipart (compute coeffs)
-    }
-
     iglobal = iglobal0+ipom2;
     for( unsigned int i=0 ; i<7 ; i++ ) {
         #pragma omp simd
@@ -766,168 +742,6 @@ void Projector2D4OrderV::currents( double * __restrict__ Jx,
             Jy[iglobal+j] += tmpJy;
         }
         iglobal += ( nprimy+1 );
-    }
-
-    // _________________________________________________________________________
-    // Current in z
-
-    // std::cerr << "Z" << std::endl;
-
-    cell_nparts = ( int )iend-( int )istart;
-    #pragma omp simd
-    for( unsigned int j=0; j<bsize; j++ ) {
-        bJx[j] = 0.;
-    }
-
-    for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
-
-        int np_computed( min( cell_nparts-ivect, vecSize ) );
-
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-
-            // locate the particle on the primal grid at former time-step & calculate coeff. S0
-            //                            X                                 //
-            double delta = deltaold[ivect+ipart-ipart_ref+istart];
-            double delta2 = delta*delta;
-            double delta3 = delta2*delta;
-            double delta4 = delta3*delta;
-
-            //Sx0_buff_vect[          ipart] = 0.;
-            Sx0_buff_vect[0*vecSize+ipart] = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            Sx0_buff_vect[1*vecSize+ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            Sx0_buff_vect[2*vecSize+ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4  * delta4;
-            Sx0_buff_vect[3*vecSize+ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            Sx0_buff_vect[4*vecSize+ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            Sx0_buff_vect[5*vecSize+ipart] = 0.;
-
-            //                            Y                                 //
-            delta = deltaold[ivect+ipart-ipart_ref+istart+buffer_size];
-            delta2 = delta*delta;
-            delta3 = delta2*delta;
-            delta4 = delta3*delta;
-
-            // Sy0_buff_vect[          ipart] = 0.;
-            Sy0_buff_vect[0*vecSize+ipart] = dble_1_ov_384   - dble_1_ov_48  * delta
-                                            - dble_1_ov_12 * delta3
-                                            + dble_1_ov_16 * delta2
-                                            + dble_1_ov_24 * delta4;
-            Sy0_buff_vect[1*vecSize+ipart] = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            Sy0_buff_vect[2*vecSize+ipart] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4  * delta4;
-            Sy0_buff_vect[3*vecSize+ipart] = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            Sy0_buff_vect[4*vecSize+ipart] = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            Sy0_buff_vect[5*vecSize+ipart] = 0.;
-
-            // locate the particle on the primal grid at current time-step & calculate coeff. S1
-            //                            X                                 //
-            double pos = position_x[ivect+ipart+istart] * dx_inv_;
-            int cell = round( pos );
-            int cell_shift = cell-ipo-i_domain_begin;
-            delta  = pos - ( double )cell;
-            delta2 = delta*delta;
-            delta3 = delta2*delta;
-            delta4 = delta3*delta;
-            double S0 = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            double S1 = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            double S2 = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4  * delta4;
-            double S3 = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            double S4 = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            double m1 = ( cell_shift == -1 );
-            double c0 = ( cell_shift ==  0 );
-            double p1 = ( cell_shift ==  1 );
-
-            Sx1_buff_vect [          ipart] = m1 * S0                                                                         ;
-            Sx1_buff_vect [  vecSize+ipart] = c0 * S0 + m1 * S1                              ;
-            Sx1_buff_vect [2*vecSize+ipart] = p1 * S0 + c0 * S1 + m1* S2                     ;
-            Sx1_buff_vect [3*vecSize+ipart] =           p1 * S1 + c0* S2 + m1 * S3           ;
-            Sx1_buff_vect [4*vecSize+ipart] =                     p1* S2 + c0 * S3 + m1 * S4 ;
-            Sx1_buff_vect [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 ;
-            Sx1_buff_vect [6*vecSize+ipart] =                                        p1 * S4 ;
-
-            DSx [          ipart] = Sx1_buff_vect [          ipart]                                  ;
-            DSx [  vecSize+ipart] = Sx1_buff_vect [  vecSize+ipart] - Sx0_buff_vect[0*vecSize+ipart] ;
-            DSx [2*vecSize+ipart] = Sx1_buff_vect [2*vecSize+ipart] - Sx0_buff_vect[1*vecSize+ipart] ;
-            DSx [3*vecSize+ipart] = Sx1_buff_vect [3*vecSize+ipart] - Sx0_buff_vect[2*vecSize+ipart] ;
-            DSx [4*vecSize+ipart] = Sx1_buff_vect [4*vecSize+ipart] - Sx0_buff_vect[3*vecSize+ipart] ;
-            DSx [5*vecSize+ipart] = Sx1_buff_vect [5*vecSize+ipart] - Sx0_buff_vect[4*vecSize+ipart] ;
-            DSx [6*vecSize+ipart] = Sx1_buff_vect [6*vecSize+ipart]                                  ;
-            //                            Y                                 //
-            pos = position_y[ivect+ipart+istart] * dy_inv_;
-            cell = round( pos );
-            cell_shift = cell-jpo-j_domain_begin;
-            delta  = pos - ( double )cell;
-            delta2 = delta*delta;
-            delta3 = delta2*delta;
-            delta4 = delta3*delta;
-            S0 = dble_1_ov_384   - dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            S1 = dble_19_ov_96   - dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            S2 = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4  * delta4;
-            S3 = dble_19_ov_96   + dble_11_ov_24 * delta  + dble_1_ov_4  * delta2 - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-            S4 = dble_1_ov_384   + dble_1_ov_48  * delta  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-            m1 = ( cell_shift == -1 );
-            c0 = ( cell_shift ==  0 );
-            p1 = ( cell_shift ==  1 );
-
-            Sy1_buff_vect [          ipart] = m1 * S0                                                                         ;
-            Sy1_buff_vect [  vecSize+ipart] = c0 * S0 + m1 * S1                              ;
-            Sy1_buff_vect [2*vecSize+ipart] = p1 * S0 + c0 * S1 + m1* S2                     ;
-            Sy1_buff_vect [3*vecSize+ipart] =           p1 * S1 + c0* S2 + m1 * S3           ;
-            Sy1_buff_vect [4*vecSize+ipart] =                     p1* S2 + c0 * S3 + m1 * S4 ;
-            Sy1_buff_vect [5*vecSize+ipart] =                              p1 * S3 + c0 * S4 ;
-            Sy1_buff_vect [6*vecSize+ipart] =                                        p1 * S4 ;
-
-            DSy [          ipart] = Sy1_buff_vect [          ipart]                                  ;                                                                     ;
-            DSy [  vecSize+ipart] = Sy1_buff_vect [  vecSize+ipart] - Sy0_buff_vect[0*vecSize+ipart] ;
-            DSy [2*vecSize+ipart] = Sy1_buff_vect [2*vecSize+ipart] - Sy0_buff_vect[1*vecSize+ipart] ;
-            DSy [3*vecSize+ipart] = Sy1_buff_vect [3*vecSize+ipart] - Sy0_buff_vect[2*vecSize+ipart] ;
-            DSy [4*vecSize+ipart] = Sy1_buff_vect [4*vecSize+ipart] - Sy0_buff_vect[3*vecSize+ipart] ;
-            DSy [5*vecSize+ipart] = Sy1_buff_vect [5*vecSize+ipart] - Sy0_buff_vect[4*vecSize+ipart] ;
-            DSy [6*vecSize+ipart] = Sy1_buff_vect [6*vecSize+ipart]                                  ;                                ;
-
-            charge_weight[ipart] = inv_cell_volume * ( double )( charge[ivect+istart+ipart] )
-                                                   * weight[ivect+istart+ipart];
-            crz_p[ipart] = charge_weight[ipart]*one_third*momentum_z[ivect+istart+ipart]
-                                               * invgf[ivect+istart+ipart];
-
-        }
-
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-
-            bJx [ipart] += crz_p[ipart] * Sx1_buff_vect[ipart] * Sy1_buff_vect[ipart];
-            double tmp( crz_p[ipart] * Sy1_buff_vect[ipart] );
-            UNROLL(6)
-            for( unsigned int i=1 ; i<7 ; i++ ) {
-                bJx [( ( i )*7 )*vecSize+ipart] += tmp * ( 0.5*Sx0_buff_vect[(i-1)*vecSize+ipart]
-                                                       + Sx1_buff_vect[i*vecSize+ipart] );
-                //Jzpart[ivect+ipart][i][0] += tmp * ( 0.5*Sx0_buff_vect[(i-1)*vecSize+ipart]
-                //                                       + Sx1_buff_vect[i*vecSize+ipart] );
-            }
-
-            tmp = crz_p[ipart] * Sx1_buff_vect[ipart];
-            UNROLL(6)
-            for( unsigned int j=1; j<7 ; j++ ) {
-                bJx [j*vecSize+ipart] +=  tmp * ( 0.5*Sy0_buff_vect[(j-1)*vecSize+ipart]
-                                              + Sy1_buff_vect[j*vecSize+ipart] );
-                //Jzpart[ivect+ipart][0][j] +=  tmp * ( 0.5*Sy0_buff_vect[(j-1)*vecSize+ipart]
-                //                              + Sy1_buff_vect[j*vecSize+ipart] );
-            }
-
-            UNROLL(6)
-            for( unsigned int i=1 ; i<7 ; i++ ) {
-                double tmp0( crz_p[ipart] * ( 0.5*Sx0_buff_vect[(i-1)*vecSize+ipart] + Sx1_buff_vect[i*vecSize+ipart] ) );
-                double tmp1( crz_p[ipart] * ( 0.5*Sx1_buff_vect[i*vecSize+ipart] + Sx0_buff_vect[(i-1)*vecSize+ipart] ) );
-                UNROLL(6)
-                for( unsigned int j=1; j<7 ; j++ ) {
-                    bJx [( ( i )*7+j )*vecSize+ipart] += ( Sy0_buff_vect[(j-1)*vecSize+ipart]* tmp1
-                                                       + Sy1_buff_vect[j*vecSize+ipart]* tmp0 );
-                    // Jzpart[ivect+ipart][i][j] += ( Sy0_buff_vect[(j-1)*vecSize+ipart]* tmp1
-                    //                                    + Sy1_buff_vect[j*vecSize+ipart]* tmp0 );
-                }
-            }
-
-        } // END ipart (compute coeffs)
-
     }
 
     // ________________________________________________________________________
