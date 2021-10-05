@@ -331,7 +331,8 @@ void VectorPatch::dynamics( Params &params,
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
     bool diag_TaskTracing;
 
-    int has_done_dynamics[Npatches];  // dependency array for the Species dynamics tasks
+    int has_done_dynamics[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
+    int has_reduced[Npatches][Nspecies];  // dependency array for the density reductions tasks
     double reference_time;
 #ifdef _OMPTASKS  
     #pragma omp single
@@ -414,10 +415,6 @@ void VectorPatch::dynamics( Params &params,
     #pragma omp single
     {
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        #pragma omp task default(shared) firstprivate(ipatch) depend(out:has_done_dynamics[ipatch])
-        {
-        #pragma omp taskgroup
-        {
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             Species *spec = species( ipatch, ispec );
             
@@ -428,7 +425,7 @@ void VectorPatch::dynamics( Params &params,
             if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
                 // Dynamics with vectorized operators
                 if( spec->vectorized_operators || params.cell_sorting ) {
-                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch])
+                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
                     { // every call of dynamics for a couple ipatch-ispec is an independent task
                     Species *spec_task = species( ipatch, ispec );
                     int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
@@ -444,7 +441,7 @@ void VectorPatch::dynamics( Params &params,
                 // Dynamics with scalar operators
                 else {
                     if( params.vectorization_mode == "adaptive" ) {
-                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch])
+                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
                         { // every call of dynamics for a couple ipatch-ispec is an independent task
                         Species *spec_task = species( ipatch, ispec );
                         int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
@@ -457,7 +454,7 @@ void VectorPatch::dynamics( Params &params,
                                                         localDiags, buffer_id );
                         } // end task
                     } else {
-                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch])
+                        #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(out:has_done_dynamics[ipatch][ispec])
                         { // every call of dynamics for a couple ipatch-ispec is an independent task
                         Species *spec_task = species( ipatch, ispec );
                         int buffer_id = (ipatch*(( *this )(0)->vecSpecies.size())+ispec);
@@ -471,172 +468,257 @@ void VectorPatch::dynamics( Params &params,
                         } // end task
                       } // end case vectorization non adaptive
                 } // end if condition on vectorization
+
+            if (ispec==0){
+                    int clrw = params.clrw;
+                    #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_dynamics[ipatch][ispec]) depend(out:has_reduced[ipatch][ispec])
+                    { // only the ipatch iterations are parallelized
+            #ifdef  __DETAILED_TIMERS
+                    int ithread = omp_get_thread_num();
+                    double timer = MPI_Wtime();
+            #endif
+                    #  ifdef _PARTEVENTTRACING
+                    if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
+                    #  endif
+                         
+                            // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
+                            // Frozen Species are reduced only if diag_flag
+                            // DO NOT parallelize this species loop unless race condition prevention is used!
+                            Species *spec_task = species( ipatch, ispec );
+                            std::vector<unsigned int> b_dim = spec_task->b_dim;
+                            for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
+                                if (params.geometry != "AMcylindrical"){
+                                    double *b_Jx             = spec_task->b_Jx[ibin];
+                                    double *b_Jy             = spec_task->b_Jy[ibin];
+                                    double *b_Jz             = spec_task->b_Jz[ibin];
+                                    double *b_rho            = spec_task->b_rho[ibin];
+                                    (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                                } else { // AM geometry
+                                    complex<double> *b_Jl    = spec_task->b_Jl[ibin];
+                                    complex<double> *b_Jr    = spec_task->b_Jr[ibin];
+                                    complex<double> *b_Jt    = spec_task->b_Jt[ibin];
+                                    complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
+                                    (( *this )( ipatch )->EMfields)->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
+                                }
+                            } // ibin
+                    #  ifdef _PARTEVENTTRACING
+                    if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
+                    #  endif
+            #ifdef  __DETAILED_TIMERS
+                    ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            #endif
+                    } // end task on reduction of patch densities
+            
+            } else { //ispec>0
+
+                int clrw = params.clrw;
+                #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_dynamics[ipatch][ispec]) depend(in:has_reduced[ipatch][ispec-1]) depend(out:has_reduced[ipatch][ispec])
+                { // only the ipatch iterations are parallelized
+        #ifdef  __DETAILED_TIMERS
+                int ithread = omp_get_thread_num();
+                double timer = MPI_Wtime();
+        #endif
+                #  ifdef _PARTEVENTTRACING
+                if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
+                #  endif
+                     
+                        // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
+                        // Frozen Species are reduced only if diag_flag
+                        // DO NOT parallelize this species loop unless race condition prevention is used!
+                        Species *spec_task = species( ipatch, ispec );
+                        std::vector<unsigned int> b_dim = spec_task->b_dim;
+                        for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
+                            if (params.geometry != "AMcylindrical"){
+                                double *b_Jx             = spec_task->b_Jx[ibin];
+                                double *b_Jy             = spec_task->b_Jy[ibin];
+                                double *b_Jz             = spec_task->b_Jz[ibin];
+                                double *b_rho            = spec_task->b_rho[ibin];
+                                (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+                            } else { // AM geometry
+                                complex<double> *b_Jl    = spec_task->b_Jl[ibin];
+                                complex<double> *b_Jr    = spec_task->b_Jr[ibin];
+                                complex<double> *b_Jt    = spec_task->b_Jt[ibin];
+                                complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
+                                (( *this )( ipatch )->EMfields)->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
+                            }
+                        } // ibin
+                #  ifdef _PARTEVENTTRACING
+                if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
+                #  endif
+        #ifdef  __DETAILED_TIMERS
+                ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+        #endif
+                } // end task on reduction of patch densities
+
+            }
+
+
+
+
             } // end if condition on species
         } // end loop on species
-        } // end taskgroup
-        } // end task patch
 
-        int clrw = params.clrw;
-        #pragma omp task firstprivate(ipatch,clrw) depend(in:has_done_dynamics[ipatch])
-        { // only the ipatch iterations are parallelized
-#ifdef  __DETAILED_TIMERS
-        int ithread = omp_get_thread_num();
-        double timer = MPI_Wtime();
-#endif
-        #  ifdef _PARTEVENTTRACING
-        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
-        #  endif
-            
-        for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
-            if(( species(ipatch,ispec)->isProj( time_dual, simWindow ) || diag_flag ) ) {  
-                // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
-                // Frozen Species are reduced only if diag_flag
-                // DO NOT parallelize this species loop unless race condition prevention is used!
-                Species *spec_task = species( ipatch, ispec );
-                std::vector<unsigned int> b_dim = spec_task->b_dim;
-                for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
-                    if (params.geometry != "AMcylindrical"){
-                        double *b_Jx             = spec_task->b_Jx[ibin];
-                        double *b_Jy             = spec_task->b_Jy[ibin];
-                        double *b_Jz             = spec_task->b_Jz[ibin];
-                        double *b_rho            = spec_task->b_rho[ibin];
-                        (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
-                    } else { // AM geometry
-                        complex<double> *b_Jl    = spec_task->b_Jl[ibin];
-                        complex<double> *b_Jr    = spec_task->b_Jr[ibin];
-                        complex<double> *b_Jt    = spec_task->b_Jt[ibin];
-                        complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
-                        (( *this )( ipatch )->EMfields)->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
-                    }
-                } // ibin
-            } // end if (isProj or diag_flag) & (!ponderomotive dynamics)
-        } // end species loop
-        #  ifdef _PARTEVENTTRACING
-        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
-        #  endif
-#ifdef  __DETAILED_TIMERS
-        ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
-#endif
-        } // end task on reduction of patch densities
+//         int clrw = params.clrw;
+//         #pragma omp task firstprivate(ipatch,clrw) depend(in:has_done_dynamics[ipatch])
+//         { // only the ipatch iterations are parallelized
+// #ifdef  __DETAILED_TIMERS
+//         int ithread = omp_get_thread_num();
+//         double timer = MPI_Wtime();
+// #endif
+//         #  ifdef _PARTEVENTTRACING
+//         if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
+//         #  endif
+// 
+//         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
+//             if(( species(ipatch,ispec)->isProj( time_dual, simWindow ) || diag_flag ) ) {  
+//                 // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
+//                 // Frozen Species are reduced only if diag_flag
+//                 // DO NOT parallelize this species loop unless race condition prevention is used!
+//                 Species *spec_task = species( ipatch, ispec );
+//                 std::vector<unsigned int> b_dim = spec_task->b_dim;
+//                 for( unsigned int ibin = 0 ; ibin < spec_task->Nbins  ; ibin++ ) {
+//                     if (params.geometry != "AMcylindrical"){
+//                         double *b_Jx             = spec_task->b_Jx[ibin];
+//                         double *b_Jy             = spec_task->b_Jy[ibin];
+//                         double *b_Jz             = spec_task->b_Jz[ibin];
+//                         double *b_rho            = spec_task->b_rho[ibin];
+//                         (( *this )( ipatch )->EMfields)->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+//                     } else { // AM geometry
+//                         complex<double> *b_Jl    = spec_task->b_Jl[ibin];
+//                         complex<double> *b_Jr    = spec_task->b_Jr[ibin];
+//                         complex<double> *b_Jt    = spec_task->b_Jt[ibin];
+//                         complex<double> *b_rhoAM = spec_task->b_rhoAM[ibin];
+//                         (( *this )( ipatch )->EMfields)->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
+//                     }
+//                 } // ibin
+//             } // end if (isProj or diag_flag) & (!ponderomotive dynamics)
+//         } // end species loop
+//         #  ifdef _PARTEVENTTRACING
+//         if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
+//         #  endif
+// #ifdef  __DETAILED_TIMERS
+//         ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+// #endif
+//         } // end task on reduction of patch densities
 
-        for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
-        // Reduction of the new particles created through ionization and radiation, for each species
-        // Ionization
-        if( species( ipatch, ispec )->Ionize ) {
-            
-            #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
-            {            
-    #ifdef  __DETAILED_TIMERS
-            int ithread = omp_get_thread_num();
-            double timer = MPI_Wtime();
-    #endif
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,8);
-            #  endif
-
-            Species *spec_task = species( ipatch, ispec );
-            spec_task->Ionize->joinNewElectrons(species( ipatch, ispec )->Nbins);
-
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,8);
-            #  endif
-
-    #ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
-    #endif
-            } // end task on reduction of new electrons from ionization
-        } // end if Ionize
- 
-        // Radiation
-        if( species( ipatch, ispec )->Radiate ) {
-            
-            #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
-            {
-#ifdef  __DETAILED_TIMERS
-            int ithread = omp_get_thread_num();
-            double timer = MPI_Wtime();
-#endif
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,9);
-            #  endif
-
-            Species *spec_task = species( ipatch, ispec );
-            spec_task->Radiate->joinNewPhotons(spec_task->Nbins);
-
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,9);
-            #  endif
-#ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
-#endif
-            } // end task on reduction of new photons from radiation
-        } // end if Radiate
-
-        // Multiphoton Breit Wheeler
-        if( species( ipatch, ispec )->Multiphoton_Breit_Wheeler_process ) {
-            #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
-            {
-#ifdef  __DETAILED_TIMERS
-            int ithread = omp_get_thread_num();
-            double timer = MPI_Wtime();
-#endif
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,10);
-            #  endif
-            Species *spec_task = species( ipatch, ispec );
-            spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(spec_task->Nbins);
-            #  ifdef _PARTEVENTTRACING
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,10);
-            #  endif
-#ifdef  __DETAILED_TIMERS
-            ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
-#endif
-            } // end task on reduction of new photons from Multiphoton Breit Wheeler
-        } // end if Multiphoton Breit Wheeler
-
-        if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
-            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
-            {
-            #  ifdef _PARTEVENTTRACING               
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
-            #  endif
-            Species *spec_task = species( ipatch, ispec );
-            for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
-                for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-                    if ( spec_task->particles->cell_keys[iPart] != -1 ) {
-                        //First reduction of the count sort algorithm. Lost particles are not included.
-                        spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
-                    }
-                    } // end iPart loop
-                } // end cells loop
-            #  ifdef _PARTEVENTTRACING                          
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
-            #  endif
-            } // end task on array count
-        } else {
-        if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
-            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
-            {
-            #  ifdef _PARTEVENTTRACING                
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
-            #  endif
-            Species *spec_task = species( ipatch, ispec );
-            for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
-                for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
-                    if ( spec_task->particles->cell_keys[iPart] != -1 ) {
-                        //First reduction of the count sort algorithm. Lost particles are not included.
-                        spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
-                    }
-                } // end iPart loop
-            } // end cells loop
-            } // end task on array count
-            #  ifdef _PARTEVENTTRACING                
-            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
-            #  endif
-            } // end if vectorization is adaptive
-        }// end if on vectorized operators
-        
-        } // end loop on species
+//         for( unsigned int ispec=0 ; ispec<Nspecies ; ispec++ ) {
+//         // Reduction of the new particles created through ionization and radiation, for each species
+//         // Ionization
+//         if( species( ipatch, ispec )->Ionize ) {
+// 
+//             #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+//             {            
+//     #ifdef  __DETAILED_TIMERS
+//             int ithread = omp_get_thread_num();
+//             double timer = MPI_Wtime();
+//     #endif
+//             #  ifdef _PARTEVENTTRACING
+//             if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,8);
+//             #  endif
+// 
+//             Species *spec_task = species( ipatch, ispec );
+//             spec_task->Ionize->joinNewElectrons(species( ipatch, ispec )->Nbins);
+// 
+//             #  ifdef _PARTEVENTTRACING
+//             if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,8);
+//             #  endif
+// 
+//     #ifdef  __DETAILED_TIMERS
+//             ( *this )( ipatch )->patch_timers_[4*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+//     #endif
+//             } // end task on reduction of new electrons from ionization
+//         } // end if Ionize
+// 
+//         // Radiation
+//         if( species( ipatch, ispec )->Radiate ) {
+// 
+//             #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+//             {
+// #ifdef  __DETAILED_TIMERS
+//             int ithread = omp_get_thread_num();
+//             double timer = MPI_Wtime();
+// #endif
+//             #  ifdef _PARTEVENTTRACING
+//             if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,9);
+//             #  endif
+// 
+//             Species *spec_task = species( ipatch, ispec );
+//             spec_task->Radiate->joinNewPhotons(spec_task->Nbins);
+// 
+//             #  ifdef _PARTEVENTTRACING
+//             if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,9);
+//             #  endif
+// #ifdef  __DETAILED_TIMERS
+//             ( *this )( ipatch )->patch_timers_[5*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+// #endif
+//             } // end task on reduction of new photons from radiation
+//         } // end if Radiate
+// 
+//         // Multiphoton Breit Wheeler
+//         if( species( ipatch, ispec )->Multiphoton_Breit_Wheeler_process ) {
+//             #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+//             {
+// #ifdef  __DETAILED_TIMERS
+//             int ithread = omp_get_thread_num();
+//             double timer = MPI_Wtime();
+// #endif
+//             #  ifdef _PARTEVENTTRACING
+//             if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,10);
+//             #  endif
+//             Species *spec_task = species( ipatch, ispec );
+//             spec_task->Multiphoton_Breit_Wheeler_process->joinNewElectronPositronPairs(spec_task->Nbins);
+//             #  ifdef _PARTEVENTTRACING
+//             if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,10);
+//             #  endif
+// #ifdef  __DETAILED_TIMERS
+//             ( *this )( ipatch )->patch_timers_[6*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+// #endif
+//             } // end task on reduction of new photons from Multiphoton Breit Wheeler
+//         } // end if Multiphoton Breit Wheeler
+// 
+//         if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
+//             #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+//             {
+//             #  ifdef _PARTEVENTTRACING               
+//             if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
+//             #  endif
+//             Species *spec_task = species( ipatch, ispec );
+//             for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+//                 for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+//                     if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+//                         //First reduction of the count sort algorithm. Lost particles are not included.
+//                         spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+//                     }
+//                     } // end iPart loop
+//                 } // end cells loop
+//             #  ifdef _PARTEVENTTRACING                          
+//             if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
+//             #  endif
+//             } // end task on array count
+//         } else {
+//         if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
+//             #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+//             {
+//             #  ifdef _PARTEVENTTRACING                
+//             if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
+//             #  endif
+//             Species *spec_task = species( ipatch, ispec );
+//             for( unsigned int scell = 0 ; scell < spec_task->Ncells ; scell++ ) {
+//                 for( unsigned int iPart=spec_task->particles->first_index[scell] ; ( int )iPart<spec_task->particles->last_index[scell]; iPart++ ) {
+//                     if ( spec_task->particles->cell_keys[iPart] != -1 ) {
+//                         //First reduction of the count sort algorithm. Lost particles are not included.
+//                         spec_task->count[spec_task->particles->cell_keys[iPart]] ++;
+//                     }
+//                 } // end iPart loop
+//             } // end cells loop
+//             } // end task on array count
+//             #  ifdef _PARTEVENTTRACING                
+//             if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
+//             #  endif
+//             } // end if vectorization is adaptive
+//         }// end if on vectorized operators
+        // 
+        // } // end loop on species
     } // end loop on patches 
     
     // Reduction of the new particles created through ionization and radiation, for each species
