@@ -11,9 +11,31 @@ public:
     ~Projector3D2OrderV();
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-    inline void currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
+    inline void currents( double * __restrict__ Jx,
+                          double * __restrict__ Jy,
+                          double * __restrict__ Jz,
+                          Particles &particles,
+                          unsigned int istart,
+                          unsigned int iend,
+                          double * __restrict__ invgf,
+                          int    * __restrict__ iold,
+                          double * __restrict__ deltaold,
+                          unsigned int buffer_size,
+                          int ipart_ref = 0 );
+
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    inline void currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
+    inline void currentsAndDensity( double * __restrict__ Jx,
+                                    double * __restrict__ Jy,
+                                    double * __restrict__ Jz,
+                                    double * __restrict__ rho,
+                                    Particles &particles,
+                                    unsigned int istart,
+                                    unsigned int iend,
+                                    double * __restrict__ invgf,
+                                    int    * __restrict__ iold,
+                                    double * __restrict__ deltaold,
+                                    unsigned int buffer_size,
+                                    int ipart_ref = 0 );
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int bin ) override final;
@@ -121,7 +143,7 @@ private:
     };
 
     inline void __attribute__((always_inline)) compute_distances(  double * __restrict__ position_x,
-                                    double * __restrict__ position_y,
+                                                                   double * __restrict__ position_y,
                                     double * __restrict__ position_z,
                                     int npart_total, int ipart, int istart, int ipart_ref,
                                     double *delta0, int *iold, double *Sx0, double *Sy0,

@@ -677,6 +677,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 ERROR("In block `Vectorization`, `adaptive` mode only available in 3D")
             }
         }
+
         // Check cell sorting is allowed
         if (defined_cell_sort == true && cell_sorting == false){
             ERROR(" Cell sorting must be allowed in order to use vectorization.")

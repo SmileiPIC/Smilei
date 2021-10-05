@@ -58,14 +58,24 @@ Projector3D2OrderV::~Projector3D2OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
+void Projector3D2OrderV::currentsAndDensity( double * __restrict__ Jx,
+                                             double * __restrict__ Jy,
+                                             double * __restrict__ Jz,
+                                             double * __restrict__ rho,
+                                             Particles &particles,
+                                             unsigned int istart,
+                                             unsigned int iend,
+                                             double * __restrict__ invgf,
+                                             int    * __restrict__ iold,
+                                             double * __restrict__ deltaold,
+                                             unsigned int buffer_size,
+                                             int ipart_ref )
 {
 
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
 
-    int npart_total = invgf->size();
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
@@ -92,7 +102,7 @@ void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 
 
     // Jx, Jy, Jz
-    currents( Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, ipart_ref );
+    currents( Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, buffer_size, ipart_ref );
 
 
     // rho^(p,p,d)
@@ -109,7 +119,7 @@ void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, DSx, DSy, DSz );
+            compute_distances( particles, buffer_size, ipart, istart0, ipart_ref, deltaold, iold, DSx, DSy, DSz );
             charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
         }
 
@@ -368,13 +378,22 @@ void Projector3D2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
+void Projector3D2OrderV::currents( double * __restrict__ Jx,
+                                   double * __restrict__ Jy,
+                                   double * __restrict__ Jz,
+                                   Particles &particles,
+                                   unsigned int istart,
+                                   unsigned int iend,
+                                   double * __restrict__ invgf,
+                                   int    * __restrict__ iold,
+                                   double * __restrict__ deltaold,
+                                   unsigned int buffer_size,
+                                   int ipart_ref )
 {
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
 
-    int npart_total = invgf->size();
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
@@ -432,7 +451,7 @@ void Projector3D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             compute_distances( position_x, position_y, position_z,
-                               npart_total, ipart, istart0, ipart_ref, deltaold, iold,
+                               (int)(buffer_size), ipart, istart0, ipart_ref, deltaold, iold,
                                Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
             charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
         }
@@ -546,7 +565,7 @@ void Projector3D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields,
             double *b_Jx =  &( *EMfields->Jx_ )( 0 );
             double *b_Jy =  &( *EMfields->Jy_ )( 0 );
             double *b_Jz =  &( *EMfields->Jz_ )( 0 );
-            currents( b_Jx, b_Jy, b_Jz, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
+            currents( b_Jx, b_Jy, b_Jz, particles,  istart, iend, invgf->data(), iold, &( *delta )[0], invgf->size(), ipart_ref );
         } else {
             ERROR( "TO DO with rho" );
         }
@@ -557,7 +576,7 @@ void Projector3D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields,
         double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
         double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
         double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
+        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  istart, iend, invgf->data(), iold, &( *delta )[0], invgf->size(), ipart_ref );
     }
 }
 
