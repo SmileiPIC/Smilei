@@ -472,7 +472,8 @@ void VectorPatch::dynamics( Params &params,
             if (ispec==0){
                     int clrw = params.clrw;
                     #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_dynamics[ipatch][ispec]) depend(out:has_reduced[ipatch][ispec])
-                    { // only the ipatch iterations are parallelized
+                    { // this task is done only if previous species has already done it, 
+                      // to avoid a race condition on the grid densities
                     #ifdef  __DETAILED_TIMERS
                     int ithread = omp_get_thread_num();
                     double timer = MPI_Wtime();
@@ -480,12 +481,12 @@ void VectorPatch::dynamics( Params &params,
                     #  ifdef _PARTEVENTTRACING
                     if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
                     #  endif
-                         
+
                     // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
                     // Frozen Species are reduced only if diag_flag
                     // DO NOT parallelize this species loop unless race condition prevention is used!
                     (( *this )( ipatch ))->copySpeciesBinsInLocalDensities(ispec, clrw, params, diag_flag);
-                            
+
                     #  ifdef _PARTEVENTTRACING
                     if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
                     #  endif
@@ -498,7 +499,8 @@ void VectorPatch::dynamics( Params &params,
 
                 int clrw = params.clrw;
                 #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_dynamics[ipatch][ispec]) depend(in:has_reduced[ipatch][ispec-1]) depend(out:has_reduced[ipatch][ispec])
-                { // only the ipatch iterations are parallelized
+                { // this task is done only if previous species has already done it, 
+                  // to avoid a race condition on the grid densities
                 #ifdef  __DETAILED_TIMERS
                 int ithread = omp_get_thread_num();
                 double timer = MPI_Wtime();
