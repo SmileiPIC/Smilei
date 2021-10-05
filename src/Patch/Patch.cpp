@@ -112,7 +112,7 @@ void Patch::initStep1( Params &params )
     }
     
     // Initialize the random number generator
-    rand_ = new Random( params.random_seed );
+    rand_ = new Random( params.random_seed + hindex );
     
     // Obtain the cell_volume
     cell_volume = params.cell_volume;

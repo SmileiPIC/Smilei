@@ -420,7 +420,7 @@ def loadReference(bench_name):
         print("Unable to find the reference data for "+bench_name)
         sys.exit(1)
 
-def matchesWithReference(data, expected_data, data_name, precision):
+def matchesWithReference(data, expected_data, data_name, precision, error_type="absolute_error"):
     # ok if exactly equal (including strings or lists of strings)
     try:
         if expected_data == data:
@@ -432,6 +432,19 @@ def matchesWithReference(data, expected_data, data_name, precision):
         double_data = np.array(np.double(data), ndmin=1)
         if precision is not None:
             error = np.abs( double_data-np.array(np.double(expected_data), ndmin=1) )
+            if error_type == "absolute_error":
+                pass
+            elif error_type == "relative_error":
+                try:
+                    error /= double_data
+                    if np.isnan( error ).any():
+                        raise
+                except Exception as e:
+                    print( "Error in comparing with reference: division by zero (relative error)" )
+                    return False
+            else:
+                print( "Unknown error_type = `"+error_type+"`" )
+                return False
             max_error_location = np.unravel_index(np.argmax(error), error.shape)
             max_error = error[max_error_location]
             if max_error < precision:
@@ -454,7 +467,7 @@ class CreateReference(object):
         self.reference_file = parameters['smilei_reference_path']+s+bench_name+".txt"
         self.data = {}
 
-    def __call__(self, data_name, data, precision=None):
+    def __call__(self, data_name, data, precision=None, error_type="absolute_error"):
         self.data[data_name] = data
 
     def write(self):
@@ -473,13 +486,13 @@ class CompareToReference(object):
     def __init__(self, bench_name):
         self.data = loadReference(bench_name)
 
-    def __call__(self, data_name, data, precision=None):
+    def __call__(self, data_name, data, precision=None, error_type="absolute_error"):
         # verify the name is in the reference
         if data_name not in self.data.keys():
             print("Reference quantity '"+data_name+"' not found")
             sys.exit(1)
         expected_data = self.data[data_name]
-        if not matchesWithReference(data, expected_data, data_name, precision):
+        if not matchesWithReference(data, expected_data, data_name, precision, error_type):
             print("Reference data:")
             print(expected_data)
             print("New data:")
@@ -493,7 +506,7 @@ class ShowDiffWithReference(object):
     def __init__(self, bench_name):
         self.data = loadReference(bench_name)
 
-    def __call__(self, data_name, data, precision=None):
+    def __call__(self, data_name, data, precision=None, error_type="absolute_error"):
         import matplotlib.pyplot as plt
         plt.ion()
         print("Showing differences about '"+data_name+"'")
@@ -506,7 +519,7 @@ class ShowDiffWithReference(object):
             expected_data = self.data[data_name]
         print_data = False
         # First, check whether the data matches
-        if not matchesWithReference(data, expected_data, data_name, precision):
+        if not matchesWithReference(data, expected_data, data_name, precision, error_type):
             global _dataNotMatching
             _dataNotMatching = True
         # try to convert to array

@@ -139,7 +139,7 @@ LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_
     
     // Display some info
     MESSAGE( 2, "Uses " << MPI_size << " MPI processes");
-    unsigned int Ntot = (ndim+1) * max( Nlocal[0]*N[1], N[0]*Nlocal[1] ) * ( N[2] ? N[2] : 1 );
+    uint64_t Ntot = (ndim+1) * max( (uint64_t)Nlocal[0]*(uint64_t)N[1], (uint64_t)N[0]*(uint64_t)Nlocal[1] ) * (uint64_t)( N[2] ? N[2] : 1 );
     MESSAGE( 2, "Estimated memory required per MPI process: " << 2*2*Ntot*sizeof(double)/(1024*1024) << " MB");
     
 #else
@@ -170,8 +170,10 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     
     // Make coordinates array
     vector<PyObject *> coords( ndim );
+    npy_intp np = 1;
     for( unsigned int i=0; i<ndim; i++ ) {
         npy_intp dims = local_x[i].size();
+        np *= dims;
         coords[i] = PyArray_SimpleNewFromData( 1, &dims, NPY_DOUBLE, ( double * )( local_x[i].data() ) );
     }
 
@@ -196,7 +198,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         // Try first if the function is numpy-compatible
         arrays[i] = PyObject_CallObject( profiles[i], mesh );
         // If it failed, use numpy.vectorize
-        if( PyTools::checkPyError( false, false ) ) {
+        if( PyTools::checkPyError( false, false ) || !PyArray_Check(arrays[i]) || PyArray_Size( arrays[i] ) != np ) {
             WARNING( "\t\tProfile #" << i << " is not numpy-compatible. It can be very slow." );
             PyObject *profile = PyObject_CallMethod( numpy, const_cast<char *>("vectorize"), const_cast<char *>("O"), profiles[i] );
             arrays[i] = PyObject_CallObject( profile, mesh );
