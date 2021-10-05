@@ -678,10 +678,12 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             }
         }
         // Check cell sorting is allowed
-        if (defined_cell_sort == true && cell_sorting == false){
-            ERROR(" Cell sorting must be allowed in order to use vectorization.")
-        }
-        cell_sorting = true;
+        if( !( vectorization_mode == "off") ){
+    	    if (defined_cell_sort == true && cell_sorting == false){
+                ERROR(" Cell sorting must be allowed in order to use vectorization.")
+            }
+            cell_sorting = true;
+	}
 
 
         // Default mode for the adaptive mode
