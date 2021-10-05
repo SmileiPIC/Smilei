@@ -437,8 +437,10 @@ def matchesWithReference(data, expected_data, data_name, precision, error_type="
             elif error_type == "relative_error":
                 try:
                     error /= double_data
+                    if np.isnan( error ).any():
+                        raise
                 except Exception as e:
-                    print( "Error in comparing with reference: division by zero" )
+                    print( "Error in comparing with reference: division by zero (relative error)" )
                     return False
             else:
                 print( "Unknown error_type = `"+error_type+"`" )

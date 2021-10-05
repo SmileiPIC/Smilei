@@ -75,10 +75,10 @@ threshols["MC"] = 0.15
 for radiation in radiation_list:
 
     # Validation of the kinetic energy
-    Validate("Kinetic energy evolution for {}".format(radiation), ukin[radiation]/utot[radiation][0], threshols[radiation], "relative_error" )
+    Validate("Kinetic energy evolution for {}".format(radiation), ukin[radiation][1:]/utot[radiation][0], threshols[radiation], "relative_error" )
 
     # Validation of the radiated energy
-    Validate("Radiated energy evolution for {}".format(radiation), urad[radiation]/utot[radiation][0], threshols[radiation], "relative_error" )
+    Validate("Radiated energy evolution for {}".format(radiation), urad[radiation][1:]/utot[radiation][0], threshols[radiation], "relative_error" )
 
     # Validation of the total energy
     Validate("Total energy error (max - min)/uref for {}".format(radiation),(utot[radiation].max() - utot[radiation].min())/utot[radiation][0], 1e-2)
@@ -216,7 +216,7 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     print(line)
 # Validation with 10% error
 for k,model in enumerate(radiation_list):
-    Validate("Average quantum parameter for the {} model".format(model),chi_ave[:,k], 0.1, "relative_error" )
+    Validate("Average quantum parameter for the {} model".format(model),chi_ave[1:,k], 0.1, "relative_error" )
 
 print("")
 print(" 4) Analyze of chi using the chi distribution")
@@ -237,7 +237,7 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     print(line)
 # Validation with 10% error
 for k,model in enumerate(radiation_list):
-    Validate("Average quantum parameter for the {} model".format(model),chi_ave_from_dists[:,k], 0.1, "relative_error")
+    Validate("Average quantum parameter for the {} model".format(model),chi_ave_from_dists[1:,k], 0.1, "relative_error")
 
 print("")
 print(" 5) Analyze of gamma using the gamma distribution")
@@ -259,7 +259,7 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     
 # Validation
 for k,model in enumerate(radiation_list):
-    Validate("Total kinetic energy for the {} model".format(model),ekin_from_dists[:,k], 0.1, "relative_error" )
+    Validate("Total kinetic energy for the {} model".format(model),ekin_from_dists[1:,k], 0.1, "relative_error" )
 
 print(" ---------------------------------------------------------")
 print(" Average kinetic energy from energy distribution         |")
@@ -277,7 +277,7 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     
 # Validation
 for k,model in enumerate(radiation_list):
-    Validate("Average kinetic energy for the {} model".format(model),ekin_ave_from_dists[:,k], 0.1, "relative_error" )
+    Validate("Average kinetic energy for the {} model".format(model),ekin_ave_from_dists[1:,k], 0.1, "relative_error" )
 
 # ______________________________________________________________________________
 # Figures
