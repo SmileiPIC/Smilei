@@ -1438,3 +1438,26 @@ void Patch::finalizeSumField( Field *field, int iDim )
     }
 
 } // END finalizeSumField
+
+void Patch::copySpeciesBinsInLocalDensities(int ispec, int clrw, Params &params, bool diag_flag)
+{   // in this patch, for the species ispec, for all its bins, 
+    // copy the current/charge densities in the patch grid
+    Species *spec = vecSpecies[ispec];
+    int Nbins = spec->Nbins;
+    std::vector<unsigned int> b_dim = spec->b_dim;
+    for( unsigned int ibin = 0 ; ibin < Nbins  ; ibin++ ) {
+        if (params.geometry != "AMcylindrical"){
+            double *b_Jx             = spec->b_Jx[ibin];
+            double *b_Jy             = spec->b_Jy[ibin];
+            double *b_Jz             = spec->b_Jz[ibin];
+            double *b_rho            = spec->b_rho[ibin];
+            EMfields->copyInLocalDensities(ispec, ibin*clrw, b_Jx, b_Jy, b_Jz, b_rho, b_dim, diag_flag);
+        } else { // AM geometry
+            complex<double> *b_Jl    = spec->b_Jl[ibin];
+            complex<double> *b_Jr    = spec->b_Jr[ibin];
+            complex<double> *b_Jt    = spec->b_Jt[ibin];
+            complex<double> *b_rhoAM = spec->b_rhoAM[ibin];
+            EMfields->copyInLocalAMDensities(ispec, ibin*clrw, b_Jl, b_Jr, b_Jt, b_rhoAM, b_dim, diag_flag);
+        }
+    } // ibin
+}
