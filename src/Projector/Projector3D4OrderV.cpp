@@ -198,10 +198,9 @@ void Projector3D4OrderV::currentsAndDensity( double * __restrict__ Jx,
                                                    * weight[ivect+istart+ipart];
         }
 
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            UNROLL_S(7)
-            for( unsigned int i=0 ; i<7 ; i++ ) {
+        for( unsigned int i=0 ; i<7 ; i++ ) {
+            #pragma omp simd
+            for( int ipart=0 ; ipart<np_computed; ipart++ ) {
                 UNROLL_S(7)
                 for( unsigned int j=0 ; j<7 ; j++ ) {
                     int index( ( i*49 + j*7 )*vecSize+ipart );
