@@ -526,7 +526,7 @@ void VectorPatch::dynamics( Params &params,
 
         if( species( ipatch, ispec )->Ionize ) {
 
-            #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+            #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
             {            
     #ifdef  __DETAILED_TIMERS
             int ithread = omp_get_thread_num();
@@ -617,7 +617,7 @@ void VectorPatch::dynamics( Params &params,
             } // end task on array count
         } else {
         if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
-            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch])
+            #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
             {
             #  ifdef _PARTEVENTTRACING                
             if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
@@ -4800,7 +4800,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
             } // end if ispec>0 for density reduction
 
             if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
-                #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch])
+                #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
                 {
                 #  ifdef _PARTEVENTTRACING
                 if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
@@ -4820,7 +4820,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
                 } // end task on array count
             } else {
                 if ((params.vectorization_mode == "adaptive") && (time_dual >species( ipatch, ispec )->time_frozen_)){
-                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch])
+                    #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
                     {
                     #  ifdef _PARTEVENTTRACING
                     if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,11);
