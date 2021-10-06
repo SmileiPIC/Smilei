@@ -352,6 +352,7 @@ public:
     bool is_small = true;
 
     void copySpeciesBinsInLocalDensities(int ispec, int clrw, Params &params, bool diag_flag);
+    void copySpeciesBinsInLocalSusceptibility(int ispec, int clrw, Params &params, bool diag_flag);
         
 protected:
     // Complementary members for the description of the geometry

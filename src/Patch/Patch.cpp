@@ -1461,3 +1461,20 @@ void Patch::copySpeciesBinsInLocalDensities(int ispec, int clrw, Params &params,
         }
     } // ibin
 }
+
+void Patch::copySpeciesBinsInLocalSusceptibility(int ispec, int clrw, Params &params, bool diag_flag)
+{   // in this patch, for the species ispec, for all its bins, 
+    // copy the current/charge densities in the patch grid
+    Species *spec = vecSpecies[ispec];
+    int Nbins = spec->Nbins;
+    std::vector<unsigned int> b_dim = spec->b_dim;
+    for( unsigned int ibin = 0 ; ibin < Nbins  ; ibin++ ) {
+        if (params.geometry != "AMcylindrical"){
+            double *b_Chi   = spec->b_Chi[ibin];
+            EMfields->copyInLocalSusceptibility(ispec, ibin*clrw, b_Chi, b_dim, diag_flag);
+        } else { // AM geometry
+            double *b_ChiAM = spec->b_ChiAM[ibin];
+            EMfields->copyInLocalSusceptibility(ispec, ibin*clrw, b_ChiAM, b_dim, diag_flag);
+        }
+    } // ibin
+}
