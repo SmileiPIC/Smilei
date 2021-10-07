@@ -375,6 +375,7 @@ int main( int argc, char *argv[] )
                     PyTools::setIteration( itime ); // sets python variable "Main.iteration" for users
                 }
             }
+            #pragma omp barrier
 
             // Patch reconfiguration
             if( params.has_adaptive_vectorization && params.adaptive_vecto_time_selection->theTimeIsNow( itime ) ) {
