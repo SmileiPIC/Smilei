@@ -29,10 +29,13 @@ public :
         PyTools::extract( "shape", shape, "DiagScreen", idiag );
         std::vector<std::string> excluded_axes( 0 );
         if( shape == "plane" ) {
-            excluded_axes.push_back( "theta_yx" );
-            excluded_axes.push_back( "theta_zx" );
-        } else {
+            excluded_axes.push_back( "theta" );
+            excluded_axes.push_back( "phi" );
+        } else if( shape == "sphere" ) {
             excluded_axes.push_back( "a" );
+            excluded_axes.push_back( "b" );
+        } else { // cylinder
+            excluded_axes.push_back( "theta" );
             excluded_axes.push_back( "b" );
         }
         return excluded_axes;

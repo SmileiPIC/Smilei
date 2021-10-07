@@ -28,6 +28,7 @@ Changes made in the repository (not released)
 * Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
 * ``LaserOffset`` may be re-used from a previous simulation
 * ``LaserOffset`` available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
+* Screens may have a ``cylinder`` shape
 * Bugfixes:
 
   * Poynting scalars behaviour with several patches, or with checkpoints
