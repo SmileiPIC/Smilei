@@ -1946,9 +1946,9 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
         if( time_dual>time_frozen_) {
             for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) { // loop on ibin
 #ifdef  __DETAILED_TIMERS
-                #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) depend(out:bin_has_projected_chi[ibin]) private(ithread,timer)
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_projected_chi[ibin]) private(ithread,timer)
 #else
-                #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) depend(out:bin_has_projected_chi[ibin])
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_projected_chi[ibin])
 #endif
                 {
                 // Project susceptibility, the source term of envelope equation
