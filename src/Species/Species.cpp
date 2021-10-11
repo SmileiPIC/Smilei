@@ -421,22 +421,22 @@ Species::~Species()
 
 #ifdef _OMPTASKS
     if (nrj_lost_per_bin != NULL){
-        delete nrj_lost_per_bin;
+        delete[] nrj_lost_per_bin;
     }
     if (radiated_energy_per_bin != NULL){
-        delete radiated_energy_per_bin;
+        delete[] radiated_energy_per_bin;
     }
     if (bin_has_interpolated != NULL){
-        delete bin_has_interpolated;
+        delete[] bin_has_interpolated;
     }
     if (bin_has_pushed != NULL){
-        delete bin_has_pushed;
+        delete[] bin_has_pushed;
     }
     if (bin_has_done_particles_BC != NULL){
-        delete bin_has_done_particles_BC;
+        delete[] bin_has_done_particles_BC;
     }
     if ( Push_ponderomotive_position && (bin_has_projected_chi != NULL) ){
-        delete bin_has_projected_chi;
+        delete[] bin_has_projected_chi;
     }
     if (geometry != "AMcylindrical"){
         if (b_Jx[0]){
