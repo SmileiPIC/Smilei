@@ -779,7 +779,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
         radiated_energy_per_bin[ibin] = 0.;
     }
     // Init tags for the task dependencies of the particle operations
-    int *bin_has_interpolated                   = new int[Nbins+1]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
+    int *bin_has_interpolated                   = new int[Nbins];
     int *bin_has_pushed                         = new int[Nbins];
     int *bin_has_done_particles_BC              = new int[Nbins];
 
@@ -992,13 +992,6 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                     #  ifdef _PARTEVENTTRACING
                     if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,7);
                     #  endif
-                } else {
-                  // empty task for the pusher dependency
-                    #pragma omp task default(shared) depend(out:bin_has_interpolated[Nbins])
-                    {
-                    // Remember that bin_has_interpolated[Nbins] 
-                    // is used to manage the pusher dependency on the photon cleaning 
-                    } 
                 }// end if Multiphoton_Breit_Wheeler_process
 
                 for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
@@ -2102,7 +2095,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
     //     radiated_energy_per_bin[ibin] = 0.;
     // }
     // Init tags for the task dependencies of the particle operations
-    int *bin_has_interpolated                   = new int[Nbins]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
+    int *bin_has_interpolated                   = new int[Nbins];
     int *bin_has_ionized                        = new int[Nbins];
     int *bin_has_projected_chi                  = new int[Nbins];
 
@@ -2187,9 +2180,9 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
         if( time_dual>time_frozen_) {
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
 #ifdef  __DETAILED_TIMERS
-                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) private(ithread,timer)
+                #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_projected_chi[ibin]) private(ithread,timer)
 #else
-                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin])
+                #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_projected_chi[ibin])
 #endif
                 {
                 // Project susceptibility, the source term of envelope equation
@@ -2224,9 +2217,9 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
 
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
 #ifdef  __DETAILED_TIMERS
-                #pragma omp task default(shared) firstprivate(ibin) private(ithread,timer)
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin]) private(ithread,timer)
 #else
-                #pragma omp task default(shared) firstprivate(ibin)
+                #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_projected_chi[ibin])
 #endif
                 {
 #ifdef  __DETAILED_TIMERS
@@ -2501,7 +2494,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
         // radiated_energy_per_bin[ibin] = 0.;
     }
     // Init tags for the task dependencies of the particle operations
-    int *bin_has_interpolated               = new int[Nbins]; // the last element is used to manage the Multiphoton Breit Wheeler dependency
+    int *bin_has_interpolated               = new int[Nbins];
     int *bin_has_pushed                     = new int[Nbins];
     int *bin_has_done_particles_BC          = new int[Nbins];
 
@@ -2556,9 +2549,9 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin]) private(ithread,timer)
 #else
-            #pragma omp task default(shared) firstprivate(ibin) depend(in:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin])
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) depend(out:bin_has_pushed[ibin])
 #endif
             {
 #ifdef  __DETAILED_TIMERS
