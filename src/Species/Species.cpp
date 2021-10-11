@@ -447,6 +447,11 @@ Species::~Species()
                 delete[] b_Jz[ibin];
                 delete[] b_rho[ibin];
             }
+            // frees vector memory
+            std::vector<double*>( b_Jx ).swap( b_Jx );
+            std::vector<double*>( b_Jy ).swap( b_Jy );
+            std::vector<double*>( b_Jz ).swap( b_Jz );
+            std::vector<double*>( b_rho ).swap( b_rho );
         }
         if (Push_ponderomotive_position){
             if (b_Chi[0]){
@@ -454,6 +459,8 @@ Species::~Species()
                     // delete buffers
                     delete[] b_Chi[ibin];
                 }
+                // frees vector memory
+                std::vector<double*>( b_Chi ).swap( b_Chi );
             }
         }
     } else {
@@ -465,6 +472,11 @@ Species::~Species()
                 delete[] b_Jt[ibin];
                 delete[] b_rhoAM[ibin];
             }
+            // frees vector memory
+            std::vector<std::complex<double>*>( b_Jl ).swap( b_Jl );
+            std::vector<std::complex<double>*>( b_Jr ).swap( b_Jr );
+            std::vector<std::complex<double>*>( b_Jt ).swap( b_Jt );
+            std::vector<std::complex<double>*>( b_rhoAM ).swap( b_rhoAM );
         }
         if (Push_ponderomotive_position){
             if (b_ChiAM[0]){
@@ -472,6 +484,8 @@ Species::~Species()
                     // delete buffer
                     delete[] b_ChiAM[ibin];
                 }
+                // frees vector memory
+                std::vector<double*>( b_ChiAM ).swap( b_ChiAM );
             }
         }
     }
