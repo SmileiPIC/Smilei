@@ -165,8 +165,16 @@ void Species::initCluster( Params &params )
     }
 
 #ifdef _OMPTASKS
-        nrj_lost_per_bin                       = new double[Nbins];
-        radiated_energy_per_bin                = new double[Nbins];      
+        nrj_lost_per_bin          = new double[Nbins];
+        radiated_energy_per_bin   = new double[Nbins];
+        // Init tags for the task dependencies of the particle operations
+        bin_has_interpolated      = new int[Nbins];
+        bin_has_pushed            = new int[Nbins];
+        bin_has_done_particles_BC = new int[Nbins];
+        if (params.Laser_Envelope_model){
+            bin_has_projected_chi = new int[Nbins];
+        }
+    
         if (params.geometry != "AMcylindrical" ){
             //! buffers for currents and charge
             b_Jx.resize(Nbins);
@@ -417,7 +425,19 @@ Species::~Species()
     }
     if (radiated_energy_per_bin != NULL){
         delete radiated_energy_per_bin;
-    }     
+    }
+    if (bin_has_interpolated != NULL){
+        delete bin_has_interpolated;
+    }
+    if (bin_has_pushed != NULL){
+        delete bin_has_pushed;
+    }
+    if (bin_has_done_particles_BC != NULL){
+        delete bin_has_done_particles_BC;
+    }
+    if ( Push_ponderomotive_position && (bin_has_projected_chi != NULL) ){
+        delete bin_has_projected_chi;
+    }
     if (geometry != "AMcylindrical"){
         if (b_Jx[0]){
             for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
@@ -778,10 +798,6 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
         nrj_lost_per_bin[ibin] = 0.;
         radiated_energy_per_bin[ibin] = 0.;
     }
-    // Init tags for the task dependencies of the particle operations
-    int *bin_has_interpolated                   = new int[Nbins];
-    int *bin_has_pushed                         = new int[Nbins];
-    int *bin_has_done_particles_BC              = new int[Nbins];
 
     #pragma omp taskgroup
     {
@@ -2090,13 +2106,9 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
 # endif
 
     int bin_size0 = b_dim[0];
-    // for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
-    //     nrj_lost_per_bin[ibin] = 0.;
-    //     radiated_energy_per_bin[ibin] = 0.;
-    // }
+    
     // Init tags for the task dependencies of the particle operations
     int *bin_has_interpolated                   = new int[Nbins];
-    int *bin_has_ionized                        = new int[Nbins];
     int *bin_has_projected_chi                  = new int[Nbins];
 
 
@@ -2493,10 +2505,6 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
         nrj_lost_per_bin[ibin] = 0.;
         // radiated_energy_per_bin[ibin] = 0.;
     }
-    // Init tags for the task dependencies of the particle operations
-    int *bin_has_interpolated               = new int[Nbins];
-    int *bin_has_pushed                     = new int[Nbins];
-    int *bin_has_done_particles_BC          = new int[Nbins];
 
     #pragma omp taskgroup
     {

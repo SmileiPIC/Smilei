@@ -655,6 +655,12 @@ public:
     std::vector<double *> b_rho;
     std::vector<double *> b_Chi;
 
+    // Tags for the task dependencies of the particle operations
+    int *bin_has_interpolated;
+    int *bin_has_pushed;
+    int *bin_has_done_particles_BC;
+    int *bin_has_projected_chi;
+
     // buffers for bin projection when tasks are used
     std::vector< std::complex<double> *> b_Jl;
     std::vector< std::complex<double> *> b_Jr;
