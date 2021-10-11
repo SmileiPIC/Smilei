@@ -332,7 +332,7 @@ void VectorPatch::dynamics( Params &params,
     bool diag_TaskTracing;
 
     int has_done_dynamics[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
-    int has_reduced_densities[Npatches][Nspecies];  // dependency array for the density reductions tasks
+    int has_reduced_densities[Npatches];        // dependency array for the density reductions tasks
     double reference_time;
 #ifdef _OMPTASKS  
     #pragma omp single
@@ -469,60 +469,33 @@ void VectorPatch::dynamics( Params &params,
                       } // end case vectorization non adaptive
                 } // end if condition on vectorization
 
-            if (ispec==0){
-                    int clrw = params.clrw;
-                    #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_dynamics[ipatch][ispec]) depend(out:has_reduced_densities[ipatch][ispec])
-                    { // this task is done only if previous species has already done it, 
-                      // to avoid a race condition on the grid densities
-                    #ifdef  __DETAILED_TIMERS
-                    int ithread = omp_get_thread_num();
-                    double timer = MPI_Wtime();
-                    #endif
-                    #  ifdef _PARTEVENTTRACING
-                    if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
-                    #  endif
-
-                    // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
-                    // Frozen Species are reduced only if diag_flag
-                    // DO NOT parallelize this species loop unless race condition prevention is used!
-                    (( *this )( ipatch ))->copySpeciesBinsInLocalDensities(ispec, clrw, params, diag_flag);
-
-                    #  ifdef _PARTEVENTTRACING
-                    if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
-                    #  endif
-                    #ifdef  __DETAILED_TIMERS
-                    ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
-                    #endif
-                    } // end task on reduction of patch densities
             
-            } else { //ispec>0
+        int clrw = params.clrw;
+        // using the same out dependency will ensure that 
+        // for each patch the reduction of the species densities 
+        // is performed sequentially (ispec=0,1,2,...)
+        #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_dynamics[ipatch][ispec]) depend(out:has_reduced_densities[ipatch])
+        { 
+        #ifdef  __DETAILED_TIMERS
+        int ithread = omp_get_thread_num();
+        double timer = MPI_Wtime();
+        #endif
+        #  ifdef _PARTEVENTTRACING
+        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
+        #  endif
 
-                int clrw = params.clrw;
-                #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_dynamics[ipatch][ispec]) depend(in:has_reduced_densities[ipatch][ispec-1]) depend(out:has_reduced_densities[ipatch][ispec])
-                { // this task is done only if previous species has already done it, 
-                  // to avoid a race condition on the grid densities
-                #ifdef  __DETAILED_TIMERS
-                int ithread = omp_get_thread_num();
-                double timer = MPI_Wtime();
-                #endif
-                #  ifdef _PARTEVENTTRACING
-                if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
-                #  endif
-                     
-                // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
-                // Frozen Species are reduced only if diag_flag
-                // DO NOT parallelize this species loop unless race condition prevention is used!
-                (( *this )( ipatch ))->copySpeciesBinsInLocalDensities(ispec, clrw, params, diag_flag);
-                        
-                #  ifdef _PARTEVENTTRACING
-                if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
-                #  endif
-                #ifdef  __DETAILED_TIMERS
-                ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
-                #endif
-                } // end task on reduction of patch densities
+        // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
+        // Frozen Species are reduced only if diag_flag
+        // DO NOT parallelize this species loop unless race condition prevention is used!
+        (( *this )( ipatch ))->copySpeciesBinsInLocalDensities(ispec, clrw, params, diag_flag);
 
-        } // end if ispec>0 for density reduction
+        #  ifdef _PARTEVENTTRACING
+        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
+        #  endif
+        #ifdef  __DETAILED_TIMERS
+        ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+        #endif
+        } // end task on reduction of patch densities
 
         if( species( ipatch, ispec )->Ionize ) {
 
@@ -4445,7 +4418,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
 
     int has_done_ponderomotive_update_susceptibility_and_momentum[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
-    int has_reduced_susceptibility[Npatches][Nspecies];  // dependency array for the susceptibility reduction tasks
+    int has_reduced_susceptibility[Npatches];  // dependency array for the susceptibility reduction tasks
     bool diag_TaskTracing;
 
 #ifdef _OMPTASKS  
@@ -4546,54 +4519,31 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
                         } // end condition on adaptive vectorization
                    } // end condition on vectorization
 
-                if (ispec==0){
-                        int clrw = params.clrw;
-                        #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_ponderomotive_update_susceptibility_and_momentum[ipatch][ispec]) depend(out:has_reduced_susceptibility[ipatch][ispec])
-                        { // this task is done only if previous species has already done it, 
-                          // to avoid a race condition on the grid densities
-                        #ifdef  __DETAILED_TIMERS
-                        int ithread = omp_get_thread_num();
-                        double timer = MPI_Wtime();
-                        #endif
-                        #  ifdef _PARTEVENTTRACING
-                        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
-                        #  endif
+            // using the same out dependency will ensure that 
+            // for each patch the reduction of the species susceptibility
+            // is performed sequentially (ispec=0,1,2,...)
+            int clrw = params.clrw;
+            #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_ponderomotive_update_susceptibility_and_momentum[ipatch][ispec]) depend(out:has_reduced_susceptibility[ipatch])
+            { 
+            #ifdef  __DETAILED_TIMERS
+            int ithread = omp_get_thread_num();
+            double timer = MPI_Wtime();
+            #endif
+            #  ifdef _PARTEVENTTRACING
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
+            #  endif
 
-                        (( *this )( ipatch ))->copySpeciesBinsInLocalSusceptibility(ispec, clrw, params, diag_flag);
+            (( *this )( ipatch ))->copySpeciesBinsInLocalSusceptibility(ispec, clrw, params, diag_flag);
 
-                        #  ifdef _PARTEVENTTRACING
-                        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
-                        #  endif
-                        #ifdef  __DETAILED_TIMERS
-                        ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
-                        #endif
-                        } // end task on reduction of patch densities
+            #  ifdef _PARTEVENTTRACING
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
+            #  endif
+            #ifdef  __DETAILED_TIMERS
+            ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            #endif
+            } // end task on reduction of patch densities
                 
-                } else { //ispec>0
-
-                    int clrw = params.clrw;
-                    #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_ponderomotive_update_susceptibility_and_momentum[ipatch][ispec]) depend(in:has_reduced_susceptibility[ipatch][ispec-1]) depend(out:has_reduced_susceptibility[ipatch][ispec])
-                    { // this task is done only if previous species has already done it, 
-                      // to avoid a race condition on the grid densities
-                    #ifdef  __DETAILED_TIMERS
-                    int ithread = omp_get_thread_num();
-                    double timer = MPI_Wtime();
-                    #endif
-                    #  ifdef _PARTEVENTTRACING
-                    if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
-                    #  endif
-
-                    (( *this )( ipatch ))->copySpeciesBinsInLocalSusceptibility(ispec, clrw, params, diag_flag);
-                            
-                    #  ifdef _PARTEVENTTRACING
-                    if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
-                    #  endif
-                    #ifdef  __DETAILED_TIMERS
-                    ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
-                    #endif
-                    } // end task on reduction of patch densities
-
-            } // end if ispec>0 for density reduction            
+                         
 
             // Reduction of the new particles created through ionization, for each species
             // Ionization
@@ -4654,7 +4604,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     unsigned int Npatches = this->size();
     unsigned int Nspecies = ( *this )( 0 )->vecSpecies.size();
     int has_done_ponderomotive_update_position_and_currents[Npatches][Nspecies];  // dependency array for the Species dynamics tasks
-    int has_reduced_densities[Npatches][Nspecies];  // dependency array for the density reduction tasks
+    int has_reduced_densities[Npatches];  // dependency array for the density reduction tasks
     bool diag_TaskTracing; 
 
 #  ifdef _PARTEVENTTRACING
@@ -4745,59 +4695,34 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
                             } // end task
                         }
                     } // condition on vectorized operators
-                if (ispec==0){
-                        int clrw = params.clrw;
-                        #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec]) depend(out:has_reduced_densities[ipatch][ispec])
-                        { // this task is done only if previous species has already done it, 
-                          // to avoid a race condition on the grid densities
-                        #ifdef  __DETAILED_TIMERS
-                        int ithread = omp_get_thread_num();
-                        double timer = MPI_Wtime();
-                        #endif
-                        #  ifdef _PARTEVENTTRACING
-                        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
-                        #  endif
-
-                        // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
-                        // Frozen Species are reduced only if diag_flag
-                        // DO NOT parallelize this species loop unless race condition prevention is used!
-                        (( *this )( ipatch ))->copySpeciesBinsInLocalDensities(ispec, clrw, params, diag_flag);
-
-                        #  ifdef _PARTEVENTTRACING
-                        if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
-                        #  endif
-                        #ifdef  __DETAILED_TIMERS
-                        ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
-                        #endif
-                        } // end task on reduction of patch densities
                 
-                } else { //ispec>0
+            // using the same out dependency will ensure that 
+            // for each patch the reduction of the species densities 
+            // is performed sequentially (ispec=0,1,2,...)
+            int clrw = params.clrw;
+            #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec]) depend(out:has_reduced_densities[ipatch])
+            { // this task is done only if previous species has already done it, 
+              // to avoid a race condition on the grid densities
+            #ifdef  __DETAILED_TIMERS
+            int ithread = omp_get_thread_num();
+            double timer = MPI_Wtime();
+            #endif
+            #  ifdef _PARTEVENTTRACING
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
+            #  endif
 
-                    int clrw = params.clrw;
-                    #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec]) depend(in:has_reduced_densities[ipatch][ispec-1]) depend(out:has_reduced_densities[ipatch][ispec])
-                    { // this task is done only if previous species has already done it, 
-                      // to avoid a race condition on the grid densities
-                    #ifdef  __DETAILED_TIMERS
-                    int ithread = omp_get_thread_num();
-                    double timer = MPI_Wtime();
-                    #endif
-                    #  ifdef _PARTEVENTTRACING
-                    if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,4);
-                    #  endif
-                         
-                    // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
-                    // Frozen Species are reduced only if diag_flag
-                    // DO NOT parallelize this species loop unless race condition prevention is used!
-                    (( *this )( ipatch ))->copySpeciesBinsInLocalDensities(ispec, clrw, params, diag_flag);
-                            
-                    #  ifdef _PARTEVENTTRACING
-                    if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
-                    #  endif
-                    #ifdef  __DETAILED_TIMERS
-                    ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
-                    #endif
-                    } // end task on reduction of patch densities
-            } // end if ispec>0 for density reduction
+            // Reduction with envelope must be performed only after VectorPatch::runEnvelopeModule, which is after VectorPatch::dynamics
+            // Frozen Species are reduced only if diag_flag
+            // DO NOT parallelize this species loop unless race condition prevention is used!
+            (( *this )( ipatch ))->copySpeciesBinsInLocalDensities(ispec, clrw, params, diag_flag);
+
+            #  ifdef _PARTEVENTTRACING
+            if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,4);
+            #  endif
+            #ifdef  __DETAILED_TIMERS
+            ( *this )( ipatch )->patch_timers_[2*( *this )( ipatch )->thread_number_ + ithread] += MPI_Wtime() - timer;
+            #endif
+            } // end task on reduction of patch densities
 
             if(( species( ipatch, ispec )->vectorized_operators || params.cell_sorting ) && (time_dual >species( ipatch, ispec )->time_frozen_)) {
                 #pragma omp task default(shared) firstprivate(ipatch,ispec) depend(in:has_done_ponderomotive_update_position_and_currents[ipatch][ispec])
