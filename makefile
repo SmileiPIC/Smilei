@@ -149,7 +149,7 @@ else
     else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
         CXXFLAGS += -Ofast -g -ffast-math
     else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
-        CXXFLAGS += -Kfast -g
+        CXXFLAGS += -O3 -Kfast -g
     else
         CXXFLAGS += -O3 -g
     endif
@@ -261,9 +261,13 @@ $(BUILD_DIR)/%.d: %.cpp
 	$(Q) if [ ! -d "$(@D)" ]; then mkdir -p "$(@D)"; fi;
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -MF"$@" -MM -MP -MT"$@ $(@:.d=.o)" $<
 
+ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
+
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
 	$(Q) $(SMILEICXX) $(CXXFLAGS) -O1 -c $< -o $@
+
+endif
 
 $(BUILD_DIR)/src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.o : src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
