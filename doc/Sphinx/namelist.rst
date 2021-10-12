@@ -334,10 +334,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: random_seed
 
-  :default: the machine clock
+  :default: 0
 
-  The value of the random seed. To create a per-processor random seed, you may use
-  the variable  :py:data:`smilei_mpi_rank`.
+  The value of the random seed. Each patch has its own random number generator, with a seed
+  equal to ``random_seed`` + the index of the patch.
 
 .. py:data:: number_of_AM
 
@@ -3334,17 +3334,9 @@ namelist. They should not be re-defined by the user!
 
   The total number of MPI processes.
 
-.. py:data:: smilei_rand_max
+..
+  <<Not showing this anymore because of new rand system>>
+  .. py:data:: smilei_rand_max
 
-  The largest random integer.
+    The largest random integer.
 
-
-As an example of their use, this script randomizes both python's
-and :program:`Smilei`'s random seeds.
-::
-
-    import random, math
-    # reshuffle python random generator
-    random.seed(random.random()*smilei_mpi_rank)
-    # get 32bit pseudo random integer to be passed to smilei
-    random_seed = random.randint(0,smilei_rand_max)
