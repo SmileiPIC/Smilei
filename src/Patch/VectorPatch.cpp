@@ -50,9 +50,16 @@ VectorPatch::~VectorPatch()
 
 void VectorPatch::close( SmileiMPI *smpiData )
 {
+    // Close collision debug files
+    for( unsigned int icoll = 0; icoll < patches_[0]->vecCollisions.size(); icoll++ ) {
+        if( patches_[0]->vecCollisions[icoll]->debug_file_ ) {
+            delete patches_[0]->vecCollisions[icoll]->debug_file_;
+        }
+    }
+    
+    // Close diagnostics
     closeAllDiags( smpiData );
-
-
+    
     if( diag_timers.size() ) {
         MESSAGE( "\n\tDiagnostics profile :" );
     }
@@ -61,13 +68,12 @@ void VectorPatch::close( SmileiMPI *smpiData )
         MPI_Reduce( &diag_timers[idiag]->time_acc_, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
         MESSAGE( "\t\t" << setw( 20 ) << diag_timers[idiag]->name_ << "\t" << sum/( double )smpiData->getSize() );
     }
-
+    
     for( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
         delete diag_timers[idiag];
     }
     diag_timers.clear();
-
-
+    
     for( unsigned int idiag=0 ; idiag<localDiags.size(); idiag++ ) {
         delete localDiags[idiag];
     }

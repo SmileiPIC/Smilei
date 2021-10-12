@@ -2268,7 +2268,6 @@ The full list of available scalars is given in the table below.
 | +--------------+-------------------------------------------------------------------------+ |
 | | UmBWpairs    | Total energy converted into electron-position pairs                     | |
 | +--------------+-------------------------------------------------------------------------+ |
-| +--------------+-------------------------------------------------------------------------+ |
 +--------------------------------------------------------------------------------------------+
 | **Space- & time-integrated Energies lost/gained at boundaries**                            |
 +--------------------------------------------------------------------------------------------+
@@ -2872,21 +2871,24 @@ for instance::
 
 .. py:data:: shape
 
-   The shape of the screen surface: ``"plane"`` or ``"sphere"``.
+   The shape of the screen surface: ``"plane"``, ``"sphere"``, or ``"cylinder"``.
 
 .. py:data:: point
 
    :type: A list of floats ``[X]`` in 1D,  ``[X,Y]`` in 2D,  ``[X,Y,Z]`` in 3D
 
    The coordinates of a point that defines the screen surface:
-   a point of the ``"plane"`` or the center of the ``"sphere"``.
+   a point of the ``"plane"``, the center of the ``"sphere"``,
+   or a point on the ``"cylinder"`` axis.
 
 .. py:data:: vector
 
    :type: A list of floats ``[X]`` in 1D,  ``[X,Y]`` in 2D,  ``[X,Y,Z]`` in 3D
 
    The coordinates of a vector that defines the screen surface:
-   the normal to the ``"plane"`` or a radius of the ``"sphere"``.
+   the normal to the ``"plane"``, a radius of the ``"sphere"``.
+   or the axis of the ``"cylinder"`` (in the latter case, the vector
+   norm defines the cylinder radius).
 
 .. py:data:: direction
 
@@ -2930,6 +2932,7 @@ for instance::
 
   * If ``shape="plane"``, then ``"a"`` and ``"b"`` are the axes perpendicular to the ``vector``.
   * If ``shape="sphere"``, then ``"theta"`` and ``"phi"`` are the angles with respect to the ``vector``.
+  * If ``shape="cylinder"``, then ``"a"`` is along the cylinder axis and ``"phi"`` is the angle around it.
 
 
 ----

@@ -44,6 +44,7 @@ Collisions::Collisions(
     coeff2_ = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
     
     // Open the HDF5 file
+    debug_file_ = NULL;
     if( debug_every > 0 ) {
         MPI_Comm comm = MPI_COMM_WORLD;
         debug_file_ = new H5Write( filename_, &comm );
