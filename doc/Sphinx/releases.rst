@@ -29,6 +29,7 @@ Changes made in the repository (not released)
 * ``LaserOffset`` may be re-used from a previous simulation
 * ``LaserOffset`` available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
 * Screens may have a ``cylinder`` shape
+* Option to create neutrons for D-D fusion
 * Bugfixes:
 
   * Poynting scalars behaviour with several patches, or with checkpoints
