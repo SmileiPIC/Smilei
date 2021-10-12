@@ -109,8 +109,6 @@ void Interpolator1D2OrderV::oneField( Field **field, Particles &particles, int *
 void Interpolator1D2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &particles,
                                           SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
-    std::vector<double> *Epart  = &( smpi->dynamics_Epart[ithread] );
-    std::vector<double> *Bpart  = &( smpi->dynamics_Bpart[ithread] );
     int    * __restrict__ iold  = &( smpi->dynamics_iold[ithread][0] );
     double * __restrict__ delta = &( smpi->dynamics_deltaold[ithread][0] );
 

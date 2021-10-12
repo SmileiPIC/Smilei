@@ -411,65 +411,6 @@ void Interpolator2D4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
 
 }
 
-// void Interpolator2D4OrderV::fieldsAndCurrents( ElectroMagn *EMfields,
-//                                                 Particles &particles,
-//                                                 SmileiMPI *smpi,
-//                                                 int *istart,
-//                                                 int *iend,
-//                                                 int ithread,
-//                                                 LocalFields *JLoc,
-//                                                 double *RhoLoc )
-// {
-//
-//     int ipart = *istart;
-//
-//     double *ELoc = &( smpi->dynamics_Epart[ithread][ipart] );
-//     double *BLoc = &( smpi->dynamics_Bpart[ithread][ipart] );
-//
-//     // Interpolate E, B
-//     // Compute coefficient for ipart position
-//     // Static cast of the electromagnetic fields
-//     Field2D *Ex2D = static_cast<Field2D *>( EMfields->Ex_ );
-//     Field2D *Ey2D = static_cast<Field2D *>( EMfields->Ey_ );
-//     Field2D *Ez2D = static_cast<Field2D *>( EMfields->Ez_ );
-//     Field2D *Bx2D = static_cast<Field2D *>( EMfields->Bx_m );
-//     Field2D *By2D = static_cast<Field2D *>( EMfields->By_m );
-//     Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_m );
-//     Field2D *Jx2D = static_cast<Field2D *>( EMfields->Jx_ );
-//     Field2D *Jy2D = static_cast<Field2D *>( EMfields->Jy_ );
-//     Field2D *Jz2D = static_cast<Field2D *>( EMfields->Jz_ );
-//     Field2D *Rho2D= static_cast<Field2D *>( EMfields->rho_ );
-//
-//     // Normalized particle position
-//     double xpn = particles.position( 0, ipart )*d_inv_[0];
-//     double ypn = particles.position( 1, ipart )*d_inv_[0];
-//     // Calculate coeffs
-//     coeffs( xpn, ypn );
-//
-//     int nparts( particles.size() );
-//
-//     // Interpolation of Ex^(d,p)
-//     *( ELoc+0*nparts ) =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_ );
-//     // Interpolation of Ey^(p,d)
-//     *( ELoc+1*nparts ) = compute( &coeffxp_[2], &coeffyd_[2], Ey2D, ip_, jd_ );
-//     // Interpolation of Ez^(p,p)
-//     *( ELoc+2*nparts ) = compute( &coeffxp_[2], &coeffyp_[2], Ez2D, ip_, jp_ );
-//     // Interpolation of Bx^(p,d)
-//     *( BLoc+0*nparts ) = compute( &coeffxp_[2], &coeffyd_[2], Bx2D, ip_, jd_ );
-//     // Interpolation of By^(d,p)
-//     *( BLoc+1*nparts ) = compute( &coeffxd_[2], &coeffyp_[2], By2D, id_, jp_ );
-//     // Interpolation of Bz^(d,d)
-//     *( BLoc+2*nparts ) = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_ );
-//     // Interpolation of Jx^(d,p)
-//     JLoc->x = compute( &coeffxd_[2], &coeffyp_[2], Jx2D, id_, jp_ );
-//     // Interpolation of Ey^(p,d)
-//     JLoc->y = compute( &coeffxp_[2], &coeffyd_[2], Jy2D, ip_, jd_ );
-//     // Interpolation of Ez^(p,p)
-//     JLoc->z = compute( &coeffxp_[2], &coeffyp_[2], Jz2D, ip_, jp_ );
-//     // Interpolation of Rho^(p,p)
-//     ( *RhoLoc ) = compute( &coeffxp_[2], &coeffyp_[2], Rho2D, ip_, jp_ );
-// }
-
 // Interpolator on another field than the basic ones
 void Interpolator2D4OrderV::oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1, double *l2, double *l3 )
 {

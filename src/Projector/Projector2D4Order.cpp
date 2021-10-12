@@ -201,9 +201,9 @@ void Projector2D4Order::currents( double *Jx, double *Jy, double *Jz, Particles 
         }
     }//i
 
-    double summx = 0;
-    double summy = 0;
-    double summz = 0;
+    // double summx = 0;
+    // double summy = 0;
+    // double summz = 0;
 
     // std::cerr << "ipart: " << ipart
     //           << " x: " << particles.position( 0, ipart )
@@ -392,9 +392,9 @@ void Projector2D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
         }
     }//i
 
-    double summx = 0;
-    double summy = 0;
-    double summz = 0;
+    // double summx = 0;
+    // double summy = 0;
+    // double summz = 0;
 
     // std::cerr << "ipart: " << ipart
     //           << " x: " << particles.position( 0, ipart )
