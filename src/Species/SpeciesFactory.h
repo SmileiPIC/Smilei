@@ -493,8 +493,10 @@ public:
         PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", ispec );
         if( PyTools::py2scalar( py_pos_init, this_species->position_initialization_ ) ) {
             if( this_species->position_initialization_.empty() ) {
-                ERROR( "For species '" << species_name << "' empty position_initialization" );
+                ERROR( "For species '" << species_name << "' empty position_initialization." );
             // Regular, random, centered
+            } else if(    this_species->position_initialization_=="centered" and params.geometry == "AMcylindrical"){ 
+                ERROR( "For species '" << species_name << "' centered position_initialization is not supported in AM geometry." );
             } else if(    this_species->position_initialization_=="regular"
                        || this_species->position_initialization_=="random"
                        || this_species->position_initialization_=="centered" ) {

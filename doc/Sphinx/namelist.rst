@@ -745,7 +745,7 @@ Each species has to be defined in a ``Species`` block::
 
    * ``"regular"`` for regularly spaced. See :py:data:`regular_number`.
    * ``"random"`` for randomly distributed.
-   * ``"centered"`` for centered in each cell.
+   * ``"centered"`` for centered in each cell (not supported in ``AMcylindrical`` geometry.
    * The :py:data:`name` of another species from which the positions are copied.
      The *source* species must have positions initialized using one of the three
      other options above, and must be defined before this species.
