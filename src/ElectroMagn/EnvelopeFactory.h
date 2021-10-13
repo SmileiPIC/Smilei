@@ -19,7 +19,7 @@ public:
             return new LaserEnvelope3D( params, patch, EMfields );
         } else if( params.geometry == "AMcylindrical" ) {
             if (params.nmodes!=1){
-                ERROR("AMcylindrical geometry with envelope supports only one azimuthal mode"); 
+                WARNING("The envelope will be modeled with only 1 azimuthal mode, \n while the electromagentic fields will use all the modes"); 
             }
             return new LaserEnvelopeAM( params, patch, EMfields );
         } else {
@@ -39,9 +39,6 @@ public:
         } else if( dynamic_cast<LaserEnvelope3D *>( envelope ) ) {
             return new LaserEnvelope3D( envelope, patch, EMfields, params, n_moved );
         } else if( dynamic_cast<LaserEnvelopeAM *>( envelope ) ) {
-            if (params.nmodes!=1){
-                ERROR("AMcylindrical geometry with envelope supports only one azimuthal mode"); 
-            }
             return new LaserEnvelopeAM( envelope, patch, EMfields, params, n_moved );
         } else {
             return NULL;
