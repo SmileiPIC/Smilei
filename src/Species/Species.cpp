@@ -1334,7 +1334,7 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
     // -------------------------------
     if( time_dual>time_frozen_ ) { // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_particle, particles->last_index.back(), false );
+        smpi->dynamics_resize( ithread, nDim_particle, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) { // loop on ibin
 
