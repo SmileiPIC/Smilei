@@ -204,6 +204,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     keep_python_running_ = PyTools::runPyFunction<bool>( "_keep_python_running" );
 
     // random seed
+    random_seed = 0;
     if( PyTools::extractOrNone( "random_seed", random_seed, "Main" ) ) {
         // Init of the seed for the vectorized C++ random generator recommended by Intel
         // See https://software.intel.com/en-us/articles/random-number-function-vectorization

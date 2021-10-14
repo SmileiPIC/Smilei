@@ -48,6 +48,7 @@ for Da_nppc, Db_nppc, v in [
 	Da = "Da_"+str(i)
 	Db = "Db_"+str(i)
 	He = "He_"+str(i)
+	n_ = "n_"+str(i)
 	
 	Species(
 		name = Da,
@@ -73,7 +74,7 @@ for Da_nppc, Db_nppc, v in [
 		particles_per_cell= Db_nppc,
 		atomic_number = 1,
 		mass = 3870.5,
-		charge = 0.,
+		charge = 1.,
 		number_density = 100.,
 		mean_velocity = [-v, 0., 0.],
 		temperature = [0.00000001]*3,
@@ -98,11 +99,26 @@ for Da_nppc, Db_nppc, v in [
 		],
 	)
 	
+	Species(
+		name = n_,
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
+		particles_per_cell= 0,
+		atomic_number = 0,
+		mass = 1838.7,
+		charge = 0.,
+		number_density = 0.,
+		time_frozen = 100000000.0,
+		boundary_conditions = [
+			["periodic", "periodic"],
+		],
+	)
+	
 	Collisions(
 		species1 = [Da],
 		species2 = [Db],
 		coulomb_log = 0.001,
-		nuclear_reaction = [He],
+		nuclear_reaction = [He, n_],
 		debug_every = 10
 	)
 	
