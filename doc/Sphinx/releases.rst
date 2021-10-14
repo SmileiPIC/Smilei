@@ -36,6 +36,7 @@ Changes made in the repository (not released)
   * Densities too low are put to 0 to avoid underflow
   * Prescribed fields in 2D
   * ``ellipticity = -1.`` was doing ``+1.``
+  * Setting ``units`` in happi's ``TrackParticles`` was wrong (for plotting only)
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
