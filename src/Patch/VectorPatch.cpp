@@ -1085,11 +1085,8 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             if (params.geometry != "AMcylindrical"){
                 if (params.currentFilter_model=="customFIR"){
                     SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJx_, *this, smpi );
-                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
                     SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJy_, *this, smpi );
-                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
                     SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJz_, *this, smpi );
-                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
                 } else {
                     SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJx_, *this, smpi );
                     SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
