@@ -445,12 +445,25 @@ def matchesWithReference(data, expected_data, data_name, precision, error_type="
             else:
                 print( "Unknown error_type = `"+error_type+"`" )
                 return False
-            max_error_location = np.unravel_index(np.argmax(error), error.shape)
-            max_error = error[max_error_location]
-            if max_error < precision:
-                return True
-            print("Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)+")")
-            print("Max error = "+str(max_error)+" at index "+str(max_error_location))
+            if type(precision) in [int, float]:
+                max_error_location = np.unravel_index(np.argmax(error), error.shape)
+                max_error = error[max_error_location]
+                if max_error < precision:
+                    return True
+                print("Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)+")")
+                print("Max error = "+str(max_error)+" at index "+str(max_error_location))
+            else:
+                try:
+                    precision = np.array(precision)
+                    if (error <= precision).all():
+                        return True
+                    print("Reference quantity '"+data_name+"' does not match the data")
+                    print("Precision = ")
+                    print(precision)
+                    print("Failure at indices "+", ".join([str(a) for a in np.flatnonzero(error < precision)]))
+                except Exception as e:
+                    print( "Error with requested precision (of type %s). Cannot be compared to the data (of type %s)"%(type(precision), type(error)) )
+                    return False
         else:
             if np.all(double_data == np.double(expected_data)):
                 return True
