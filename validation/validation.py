@@ -458,9 +458,11 @@ def matchesWithReference(data, expected_data, data_name, precision, error_type="
                     if (error <= precision).all():
                         return True
                     print("Reference quantity '"+data_name+"' does not match the data")
+                    print("Error = ")
+                    print(error)
                     print("Precision = ")
                     print(precision)
-                    print("Failure at indices "+", ".join([str(a) for a in np.flatnonzero(error < precision)]))
+                    print("Failure at indices "+", ".join([str(a) for a in np.flatnonzero(error > precision)]))
                 except Exception as e:
                     print( "Error with requested precision (of type %s). Cannot be compared to the data (of type %s)"%(type(precision), type(error)) )
                     return False

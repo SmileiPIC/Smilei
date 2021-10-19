@@ -15,7 +15,9 @@ def adaptive_error(values, statistics, thresholds):
     """
     This function return an error that depends on the statistic.
     """
-    return values * np.interp(statistics, thresholds["points"], thresholds["factor"])
+    v = values.copy()
+    v[statistics==0] = 1.
+    return v * np.interp(statistics, thresholds["points"], thresholds["factor"])
 
 # ______________________________________________________________________________
 
