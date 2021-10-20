@@ -660,6 +660,7 @@ public:
     int *bin_has_pushed;
     int *bin_has_done_particles_BC;
     int *bin_has_projected_chi;
+    int *bin_has_projected;
 
     // buffers for bin projection when tasks are used
     std::vector< std::complex<double> *> b_Jl;

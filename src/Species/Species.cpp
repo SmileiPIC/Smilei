@@ -171,6 +171,7 @@ void Species::initCluster( Params &params )
         bin_has_interpolated      = new int[Nbins];
         bin_has_pushed            = new int[Nbins];
         bin_has_done_particles_BC = new int[Nbins];
+        bin_has_projected         = new int[Nbins];
         if (params.Laser_Envelope_model){
             bin_has_projected_chi = new int[Nbins];
         }
@@ -434,6 +435,9 @@ Species::~Species()
     }
     if (bin_has_done_particles_BC != NULL){
         delete[] bin_has_done_particles_BC;
+    }
+    if (bin_has_projected != NULL){
+        delete[] bin_has_projected;
     }
     if ( Push_ponderomotive_position && (bin_has_projected_chi != NULL) ){
         delete[] bin_has_projected_chi;
@@ -819,14 +823,17 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
     // calculate the particle dynamics
     // -------------------------------
     if( time_dual>time_frozen_  || Ionize ) { // if moving particle or it can be ionized
+        int buffers_resized;
+        #pragma omp task default(shared) depend(out:buffers_resized)
+        {
         // resize the dynamics buffers to treat all the particles in this Patch ipatch and Species ispec
         smpi->dynamics_resize( buffer_id, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
-
+        }
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
-            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer)
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) private(ithread,timer) depend(in:buffers_resized)
 #else
-            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin])
+            #pragma omp task default(shared) firstprivate(ibin) depend(out:bin_has_interpolated[ibin]) depend(in:buffers_resized)
 #endif
             {
             #  ifdef _PARTEVENTTRACING
@@ -1112,9 +1119,9 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 
         for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
 #ifdef  __DETAILED_TIMERS
-            #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin])
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
 #else
-            #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin])
+            #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(in:bin_has_done_particles_BC[ibin]) depend(out:bin_has_projected[ibin])
 #endif
             {
             #  ifdef _PARTEVENTTRACING
@@ -1281,9 +1288,9 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 
                     for( unsigned int ibin = 0 ; ibin < Nbins ; ibin ++ ) { //Loop for projection on buffer_proj
 #ifdef  __DETAILED_TIMERS
-                        #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) 
+                        #pragma omp task default(shared) firstprivate(ibin,bin_size0) private(ithread,timer) depend(out:bin_has_projected)
 #else
-                        #pragma omp task default(shared) firstprivate(ibin,bin_size0)
+                        #pragma omp task default(shared) firstprivate(ibin,bin_size0) depend(out:bin_has_projected)
 #endif
                         {
                         for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i]   = 0.0;
@@ -1316,6 +1323,10 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
         } // end condition on diag and not particle test
 
      } // end moving particle
+     #pragma omp task default(shared) depend(in:bin_has_projected[0:(Nbins-1)])
+     {
+     smpi->reduce_dynamics_buffer_size( buffer_id, params.geometry=="AMcylindrical" );
+     }
      }// end taskgroup for all the Interp, Push, Particles BC and Projector tasks
 
      if(time_dual>time_frozen_){
