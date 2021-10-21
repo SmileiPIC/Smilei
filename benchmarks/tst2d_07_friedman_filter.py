@@ -90,7 +90,6 @@ Main(
     
     # regular seed
     # this is used to regularize the regular number generator
-    random_seed = smilei_mpi_rank
 )
 
 CurrentFilter(

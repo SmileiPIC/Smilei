@@ -37,7 +37,6 @@ Main(
     number_of_patches = [4,4,4],
     EM_boundary_conditions = [ ["periodic"] ],
     print_every = 1,
-    random_seed = smilei_mpi_rank
 )
 
 

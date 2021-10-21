@@ -263,7 +263,6 @@ Main(
     clrw = 5,
     EM_boundary_conditions = [ ['silver-muller'] ],
     print_every = 1,
-    random_seed = smilei_mpi_rank,
     save_magnectic_fields_for_SM = False,
 )
 

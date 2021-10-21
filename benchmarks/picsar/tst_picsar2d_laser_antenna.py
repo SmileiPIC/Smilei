@@ -31,7 +31,6 @@ Main(
         ['periodic','periodic'],
         ['periodic','periodic'],
     ],
-    random_seed = smilei_mpi_rank
 )
 
 MultipleDecomposition(
