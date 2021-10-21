@@ -384,11 +384,7 @@ private:
 
         double sum[5];
         sum[0] = 0.;
-        #if defined(__clang__)
-            #pragma clang loop unroll_count(4)
-        #elif defined (__FUJITSU)
-            #pragma loop fullunroll_pre_simd
-        #endif
+        UNROLL_S(4)
         for( unsigned int k=1 ; k<5 ; k++ ) {
             sum[k] = sum[k-1]-DSx[( k-1 )*vecSize+ipart];
         }
