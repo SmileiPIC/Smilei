@@ -7,7 +7,7 @@ import math
 l0 = 2.0*math.pi		# laser wavelength
 t0 = l0					# optical cicle
 Lsim = [50.*l0,50.*l0]	# length of the simulation
-Tsim = 400.*t0			# duration of the simulation
+Tsim = 50.*t0			# duration of the simulation
 resx = 8.				# nb of cells in on laser wavelength
 rest = 16.				# time of timestep in one optical cycle 
 
@@ -28,10 +28,14 @@ Main(
     print_every=10,
      
     EM_boundary_conditions = [
-        ['silver-muller','silver-muller'],
-        ['silver-muller','silver-muller'],
+        ['periodic','periodic'],
+        ['periodic','periodic'],
     ],
     random_seed = smilei_mpi_rank
+)
+
+MultipleDecomposition(
+    region_ghost_cells=8,
 )
 
 globalEvery = 20
@@ -48,6 +52,6 @@ DiagScalar(every=globalEvery)
 
 DiagFields(
     every = globalEvery,
-    fields = ['Ez','Jz','Rho_electron','Rho_species1']
+    fields = ['Ez','Jz']
 )
 
