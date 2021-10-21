@@ -37,6 +37,7 @@ Changes made in the repository (not released)
   * Prescribed fields in 2D
   * ``ellipticity = -1.`` was doing ``+1.``
   * Setting ``units`` in happi's ``TrackParticles`` was wrong (for plotting only)
+  * Current communication correction for FIR filters
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
