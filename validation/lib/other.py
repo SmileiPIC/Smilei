@@ -1,4 +1,4 @@
-from tools import *
+from .tools import *
 
 def run_other(command, dir, mode, options, parameters):
     try:

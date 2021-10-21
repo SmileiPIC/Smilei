@@ -126,7 +126,6 @@ SMILEI_TOOLS_R = parameters['smilei_root']+s+"smilei_tables"
 
 COMPILE_ERRORS = parameters['workdir_base']+s+'compilation_errors'
 COMPILE_OUT = parameters['workdir_base']+s+'compilation_out'
-COMPILE_OUT_TMP = parameters['workdir_base']+s+'compilation_out_temp'
 
 POINCARE = "poincare"
 LLR = "llrlsi-gw"
@@ -146,39 +145,39 @@ os.chdir(INITIAL_DIRECTORY)
 sys.path.insert(0, parameters['smilei_root'])
 import happi
 # import tools
-sys.path.append(parameters['smilei_validation_path'] + '/lib/')
-from log import *
+from lib.tools import *
+from lib.log import *
 # import specific machine modules
-from ruche import *
-from llr import *
-from other import *
-from poincare import *
-from irene_a64fx import *
-from irene_skylake import *
+from lib.ruche import *
+from lib.llr import *
+from lib.other import *
+from lib.poincare import *
+from lib.irene_a64fx import *
+from lib.irene_skylake import *
 
 # ------------------------
 # Get command-line options
 # ------------------------
 
 # General options
-options = {}
-
-# Default values
-options['omp'] = 12
-options['mpi'] = 4
-options['ppn'] = 12
-options['max_time'] = "00:10:00"
-options['execution'] = False
-options['verbose'] = False
-options['bench']=""
-options['compile_only'] = False
-options['generate'] = False
-options['showdiff'] = False
-options['nb_restarts'] = 0
-options['compile_mode']=""
-options['log'] = False
-options['partition'] = "jollyjumper"
-options['accout'] = "" # Account for some super-computers
+options = dict(
+    # Default values
+    omp = 12,
+    mpi = 4,
+    ppn = 12,
+    max_time = "00:10:00",
+    execution = False,
+    verbose = False,
+    bench="",
+    compile_only = False,
+    generate = False,
+    showdiff = False,
+    nb_restarts = 0,
+    compile_mode="",
+    log = False,
+    partition = "jollyjumper",
+    account = "" # Account for some super-computers
+)
 
 try:
     external_options, remainder = getopt(
@@ -209,7 +208,7 @@ for opt, arg in external_options:
     elif opt in ('-t', '--time'):
         options['max_time']=arg
     elif opt in ('-a', '--account'):
-        options['accout']=arg
+        options['account']=arg
     elif opt in ('-h', '--HELP'):
         print( "-b")
         print( "     -b <bench_case>")
@@ -307,8 +306,8 @@ if LLR in HOSTNAME:
         sys.exit(4)
     NODES = int(ceil(options['mpi']/2.))
     NPERSOCKET = 1
-    COMPILE_COMMAND = str(MAKE)+' -j '+str(options['ppn'])+' > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
-    COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_COMMAND = str(MAKE)+' -j '+str(options['ppn'])+' > '+COMPILE_OUT+' 2>'+COMPILE_ERRORS
+    COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(options['ppn']) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(options['omp']) + " -n "+str(options['mpi'])+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']+" 2>&1"
     RUN = run_llr
@@ -319,14 +318,14 @@ elif "ruche" in HOSTNAME:
         sys.exit(4)
     NODES=int(ceil(options['mpi']/2.))
     NPERSOCKET = 1
-    COMPILE_COMMAND = str(MAKE)+' -j 20 machine=ruche > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
-    COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_COMMAND = str(MAKE)+' -j 20 machine=ruche > '+COMPILE_OUT+' 2>'+COMPILE_ERRORS
+    COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND ="srun "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']+" 2>&1"
     RUN = run_ruche
 elif POINCARE in HOSTNAME:
-    COMPILE_COMMAND = str(MAKE)+' -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
-    COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_COMMAND = str(MAKE)+' -j 6 > '+COMPILE_OUT+' 2>'+COMPILE_ERRORS
+    COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
     RUN_COMMAND = "mpirun -np "+str(options['mpi'])+" "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']
     RUN = run_poincare
@@ -343,8 +342,8 @@ else: # Local computers
     else:
         MPIRUN = "mpirun -np "
 
-    COMPILE_COMMAND = str(MAKE)+' -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
-    COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+    COMPILE_COMMAND = str(MAKE)+' -j4 > '+COMPILE_OUT+' 2>'+COMPILE_ERRORS
+    COMPILE_TOOLS_COMMAND = 'make tables > '+COMPILE_OUT+' 2>'+COMPILE_ERRORS
     CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
     RUN_COMMAND = "export OMP_NUM_THREADS="+str(options['omp'])+"; "+MPIRUN+str(options['mpi'])+" "+parameters['workdir_base']+s+"smilei %s >"+parameters['output_file']
     RUN = run_other
@@ -374,7 +373,6 @@ try:
         os.remove(parameters['workdir_base']+s+COMPILE_ERRORS)
     # Compile
     RUN( COMPILE_COMMAND, parameters['smilei_root'], 'compilation', options, parameters )
-    os.rename(COMPILE_OUT_TMP, COMPILE_OUT)
     if STAT_SMILEI_R_OLD!=os.stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R): # or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
         # if new bin, archive the workdir (if it contains a smilei bin)
         # and create a new one with new smilei and compilation_out inside

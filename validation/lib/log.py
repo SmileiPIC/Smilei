@@ -1,7 +1,7 @@
 import re
 import os
 import json
-from tools import *
+from .tools import *
 
 # DEFINE A CLASS FOR LOGGING DATA
 class Log:
