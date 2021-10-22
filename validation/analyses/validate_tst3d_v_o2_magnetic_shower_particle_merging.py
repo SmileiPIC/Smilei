@@ -17,23 +17,13 @@ relative_error = 0.1
 Scalar = {}
 
 for ispecies,species in enumerate(species_list):
-    name = "Ntot_{}".format(species)
-    Scalar[name] = np.array(S.Scalar(name).getData())
-    for index,value in enumerate(Scalar[name][species_first_index[ispecies]:]):
-        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
-
-    print("Number of {}s at beginning: {}".format(species,Scalar[name][0]))
-    print("Number of {}s at the end: {}".format(species,Scalar[name][-1]))
-
-    name = "Ukin_{}".format(species)
-    Scalar[name] = np.array(S.Scalar(name).getData())
-    for index,value in enumerate(Scalar[name][species_first_index[ispecies]:]):
-        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
-
-    name = "Dens_{}".format(species)
-    Scalar[name] = np.array(S.Scalar(name).getData())
-    for index,value in enumerate(Scalar[name][species_first_index[ispecies]:]):
-        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
+    for name in ["Ntot_", "Ukin_", "Dens_"]:
+        sc = np.array(S.Scalar(name+species).getData())
+        Validate("Scalar "+name+species, sc[species_first_index[ispecies]:], relative_error, "relative_error")
+        
+        if name == "Ntot_":
+            print("Number of {}s at beginning: {}".format(species,sc[0]))
+            print("Number of {}s at the end: {}".format(species,sc[-1]))
 
 # Energy _________________________________________________________________
 

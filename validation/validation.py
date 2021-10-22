@@ -385,9 +385,9 @@ try:
                 print("Smilei validation succeed.")
             exit(0)
     else:
+        if options['verbose']:
+            print("Smilei validation not needed.")
         if options['compile_only'] :
-            if options['verbose']:
-                print("Smilei validation not needed.")
             exit(0)
 
 except CalledProcessError as e:
