@@ -13,8 +13,7 @@ using namespace std;
 // Constructor
 CollisionalNuclearReaction::CollisionalNuclearReaction(
     Params *params,
-    vector<Particles*> *product_particles,
-    vector<unsigned int> *product_species,
+    vector<Species *> *product_species,
     double rate_multiplier
     )
 {
@@ -26,13 +25,15 @@ CollisionalNuclearReaction::CollisionalNuclearReaction(
         rate_multiplier_ = rate_multiplier;
     }
     product_particles_.resize(0);
-    product_species_.resize(0);
+    product_ispecies_.resize(0);
+    product_mass_.resize(0);
     if( params ) {
-        for( unsigned int i=0; i<product_particles->size(); i++ ) {
-            if( product_particles->at(i) != NULL ) {
+        for( unsigned int i=0; i<product_species->size(); i++ ) {
+            if( product_species->at(i) != NULL ) {
                 product_particles_.push_back( new Particles() );
-                product_particles_.back()->initialize( 0, *product_particles->at(i) );
-                product_species_.push_back(product_species->at(i));
+                product_particles_.back()->initialize( 0, *( product_species->at(i)->particles ) );
+                product_ispecies_.push_back( product_species->at(i)->species_number_ );
+                product_mass_.push_back( product_species->at(i)->mass_ );
             }
         }
     }
@@ -41,7 +42,7 @@ CollisionalNuclearReaction::CollisionalNuclearReaction(
 // Cloning Constructor
 CollisionalNuclearReaction::CollisionalNuclearReaction( CollisionalNuclearReaction *CNR )
 {
-    product_species_ = CNR->product_species_;
+    product_ispecies_ = CNR->product_ispecies_;
     rate_multiplier_ = CNR->rate_multiplier_;
     auto_multiplier_ = CNR->auto_multiplier_;
     product_particles_.resize( CNR->product_particles_.size(), NULL );
@@ -88,7 +89,7 @@ void CollisionalNuclearReaction::finish(
 ) {
     // Move new particles in place
     for( unsigned int i=0; i<product_particles_.size(); i++ ) {
-        patch->vecSpecies[product_species_[i]]->importParticles( params, patch, *product_particles_[i], localDiags );
+        patch->vecSpecies[product_ispecies_[i]]->importParticles( params, patch, *product_particles_[i], localDiags );
     }
     
     // Remove reactants that have fully reacted (very rare)

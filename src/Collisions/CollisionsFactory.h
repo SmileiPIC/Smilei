@@ -214,17 +214,16 @@ public:
             // Type of reaction
             unsigned int A0 = round( vecSpecies[sgroup[0][0]]->mass_ / 1822.89 );
             unsigned int A1 = round( vecSpecies[sgroup[1][0]]->mass_ / 1822.89 );
-            std::vector<Particles *> product_particles;
-            std::vector<unsigned int> product_species;
+            std::vector<Species *> product_species;
             // D-D fusion
             if( Z0 == 1 && Z1 == 1 && A0 == 2 && A1 == 2 ) {
                 
-                std::vector<unsigned int> Z(2); Z[0] = 2; Z[1] = 0;
-                std::vector<unsigned int> A(2); A[0] = 3; A[1] = 1;
-                std::vector<std::string> name(2); name[0] = "helium3"; name[1] = "neutron";
-                findProducts( vecSpecies, products, Z, A, name, product_particles, product_species, n_collisions );
+                std::vector<unsigned int> Z = {2, 0};
+                std::vector<unsigned int> A = {3 ,1};
+                std::vector<std::string> name = {"helium3", "neutron"};
+                findProducts( vecSpecies, products, Z, A, name, product_species, n_collisions );
                 
-                NuclearReaction = new CollisionalFusionDD( &params, product_particles, product_species, rate_multiplier );
+                NuclearReaction = new CollisionalFusionDD( &params, &product_species, rate_multiplier );
                 
             // Unknown types
             } else {
@@ -378,14 +377,12 @@ public:
         std::vector<unsigned int> Z,
         std::vector<unsigned int> A,
         std::vector<std::string> name,
-        std::vector<Particles *> &product_particles,
-        std::vector<unsigned int> &product_species,
+        std::vector<Species *> &product_species,
         unsigned int n_coll
         )
     {
         unsigned int n = Z.size();
-        product_particles.resize( n, NULL );
-        product_species.resize( n, 0 );
+        product_species.resize( n, NULL );
         
         std::ostringstream list("");
         list << name[0];
@@ -401,11 +398,10 @@ public:
             bool product_found = false;
             for( unsigned int i=0; i<n; i++ ) {
                 if( Zj == Z[i] && Aj == A[i] ) {
-                    if( product_particles[i] ) {
+                    if( product_species[i] ) {
                         ERROR( "In collisions #" << n_coll << ", nuclear_reaction : should have only 1 "<<name[i]<<" species" );
                     }
-                    product_species[i] = products[j];
-                    product_particles[i] = s->particles;
+                    product_species[i] = s;
                     product_found = true;
                 }
             }

@@ -11,7 +11,7 @@ class CollisionalFusionDD : public CollisionalNuclearReaction
 
 public:
     //! Constructor
-    CollisionalFusionDD( Params*, std::vector<Particles*>, std::vector<unsigned int>, double );
+    CollisionalFusionDD( Params*, std::vector<Species*>*, double );
     //! Cloning Constructor
     CollisionalFusionDD( CollisionalNuclearReaction * );
     //! Destructor
@@ -30,7 +30,8 @@ public:
     static const double DB_log_crossSection[50];
     
 private:
-    
+    unsigned int index_He_;
+    unsigned int index_n_;
     
 };
 

@@ -28,18 +28,35 @@ const double CollisionalFusionDD::DB_log_crossSection[50] = {
 // Constructor
 CollisionalFusionDD::CollisionalFusionDD(
     Params *params,
-    vector<Particles*> product_particles,
-    vector<unsigned int> product_species,
+    vector<Species *> *product_species,
     double rate_multiplier
 )
-: CollisionalNuclearReaction(params, &product_particles, &product_species, rate_multiplier)
+: CollisionalNuclearReaction(params, product_species, rate_multiplier)
 {
+    // Find which product is helium / neutron
+    index_He_ = product_species->size();
+    index_n_ = product_species->size();
+    for( unsigned int iprod = 0; iprod < product_species->size(); iprod++ ) {
+        if( product_species->at(iprod) ) {
+            if( product_species->at(iprod)->atomic_number_ == 2 ) {
+                index_He_ = iprod;
+            } else if( product_species->at(iprod)->atomic_number_ == 0 ) {
+                index_n_ = iprod;
+            }
+        }
+    }
+    if( index_He_ >= product_species->size() ) {
+        ERROR( "Missing helium product in D-D fusion reaction" );
+    }
 }
 
 // Cloning constructor
 CollisionalFusionDD::CollisionalFusionDD( CollisionalNuclearReaction *NR )
 : CollisionalNuclearReaction( NR )
 {
+    CollisionalFusionDD * DD = dynamic_cast<CollisionalFusionDD *>( NR );
+    index_He_ = DD->index_He_;
+    index_n_ = DD->index_n_;
 }
 
 
@@ -95,17 +112,26 @@ void CollisionalFusionDD::makeProducts(
     const double Q = 6.397; // Qvalue
     const double m_n = 1838.7;
     const double m_He = 5497.9;
-    double p_COM = { sqrt(
-        (ekin+Q) * (ekin+Q+2.*m_n) * (ekin+Q+2.*m_He) * (ekin+Q+2.*m_n+2.*m_He) )
-        / ( ( ekin+Q+m_n+m_He ) * (2.*m_He)
-    ) };
+    double p_COM = {
+        sqrt( (ekin+Q) * (ekin+Q+2.*m_n) * (ekin+Q+2.*m_He) * (ekin+Q+2.*m_n+2.*m_He) )
+        / ( 2.* ( ekin+Q+m_n+m_He ) )
+    };
+    if( ! up ) {
+        p_COM = -p_COM;
+    }
     
     // Set particle properties
-    q = { (short) tot_charge };
-    particles = { product_particles_[0] }; // helium3
-    if( up ) {
-        new_p_COM = { p_COM };
-    } else {
-        new_p_COM = { -p_COM };
+    q.resize( product_particles_.size() );
+    particles.resize( product_particles_.size() );
+    new_p_COM.resize( product_particles_.size() );
+    // helium3
+    q[index_He_] = (short) tot_charge;
+    particles[index_He_] = product_particles_[index_He_];
+    new_p_COM[index_He_] = p_COM / m_He;
+    // neutron
+    if( index_n_ <  product_particles_.size() ) {
+        q[index_n_] = (short) 0.;
+        particles[index_n_] = product_particles_[index_n_];
+        new_p_COM[index_n_] = - p_COM / m_n;
     }
 }

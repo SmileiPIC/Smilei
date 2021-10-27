@@ -285,7 +285,7 @@ public:
             py2scalar( PyObject_Str( PyObject_Type( py_val ) ), print_type );
             ERROR( "In "<<component<<"#"<<nComponent<<": `"<<name<<"` should be "<<testMessage<<" but is "<<print_type );
         }
-    };
+    }
 
     //! extract a bool but accepts None (which returns false, and does not change the variable)
     static bool extractOrNone( std::string name, bool &val, std::string component=std::string( "" ), int nComponent=0 );
@@ -315,7 +315,7 @@ public:
             ERROR( "In "<<component<<"#"<<nComponent<<": `"<<name<<"` should be "<<testMessage<<" but is "<<print_type );
         }
         return true;
-    };
+    }
 
     //! extract vector
     template< typename T>
@@ -326,7 +326,7 @@ public:
             return pyvector2vector( py_val, val );
         }
         return false;
-    };
+    }
 
     //! extract vector of vectors
     template< typename T>
@@ -345,7 +345,7 @@ public:
             val.push_back( vec );
         }
         return true;
-    };
+    }
 
     //! retrieve python object
     static PyObject *extract_py( std::string name, std::string component=std::string( "" ), int nComponent=0 );
@@ -383,7 +383,7 @@ public:
             Py_XDECREF( py_value );
         }
         return success;
-    };
+    }
 
     //! Get an object's attribute for lists
     template <typename T>
@@ -428,7 +428,7 @@ public:
         }
         //This should never happen
         return false;
-    };
+    }
 
     //! Get an object's repr
     static std::string repr( PyObject *obj )

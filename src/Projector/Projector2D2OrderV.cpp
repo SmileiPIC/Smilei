@@ -395,7 +395,7 @@ void Projector2D2OrderV::currents( double * __restrict__ Jx,
     short  * __restrict__ charge     = particles.getPtrCharge();
 
     #pragma omp simd
-    for( unsigned int j=0; j<bsize; j++ ) {
+    for( int j=0; j<bsize; j++ ) {
         bJx[j] = 0.;
         bJy[j] = 0.;
         bJz[j] = 0.;
