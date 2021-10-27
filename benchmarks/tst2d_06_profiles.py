@@ -40,7 +40,6 @@ Main(
 	print_every = 10,
 	solve_poisson = False,
 	
-    random_seed = smilei_mpi_rank
 )
 
 def custom(x, y):

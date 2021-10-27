@@ -245,7 +245,7 @@ img.screenshot {
 	margin:0
 }
 
-code.descname, code.descclassname {
+code.descname, code.descclassname, span.descname, span.descclassname {
 	font-size: 0.95em;
 	color: {{ theme_keyword_color }};
 }

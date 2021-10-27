@@ -456,13 +456,10 @@ def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
 
 
 def transformPolarization(polarization_phi, ellipticity):
-    from math import pi, sqrt, sin, cos, tan, atan
+    from math import pi, sqrt, sin, cos, tan, atan2
     e2 = ellipticity**2
     p = (1.-e2)*sin(2.*polarization_phi)/2.
-    if abs(p) < 1e-10:
-        dephasing = pi/2.
-    else:
-        dephasing = atan(ellipticity/p)
+    dephasing = atan2(ellipticity, p)
     amplitude = sqrt(1./(1.+e2))
     c2 = cos(polarization_phi)**2
     s2 = 1. - c2
