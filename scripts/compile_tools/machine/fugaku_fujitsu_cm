@@ -1,5 +1,5 @@
 #
-# Machine file for The Fugaku super-computer 
+# Machine file for The Fugaku super-computer
 # using the Fujitsu compiler in clang mode
 # __________________________________________________________
 #
@@ -10,5 +10,5 @@
 # * `-Nlibomp`: LLVM OpenMP backend
 # * `-Nfjomplib`: Fujitsu OpenMP backend
 
-CXXFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp
-LDFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp
+CXXFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp -D__AARCH64EL__="1"
+LDFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp -D__AARCH64EL__="1"

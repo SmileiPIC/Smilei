@@ -11,5 +11,5 @@
 # * `-Nlibomp`: LLVM OpenMP backend
 # * `-Nfjomplib`: Fujitsu OpenMP backend
 
-CXXFLAGS += -Kparallel -Ksimd=2 -Kassume=notime_saving_compilation -Kocl -Nlibomp
-LDFLAGS += -Kparallel -Ksimd=2 -Kassume=notime_saving_compilation -Kocl -Nlibomp
+CXXFLAGS += -Kparallel -Ksimd=2 -Kassume=notime_saving_compilation -Kocl -Nlibomp -D__AARCH64EL__="1"
+LDFLAGS += -Kparallel -Ksimd=2 -Kassume=notime_saving_compilation -Kocl -Nlibomp -D__AARCH64EL__="1"
