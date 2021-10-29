@@ -50,15 +50,19 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum(
     PyObject* photon_energy_axis = PyTools::extract_py( "photon_energy_axis", "DiagRadiationSpectrum", diagId );
     ostringstream t("");
     t << errorPrefix << "photon_energy_axis : ";
-    photon_axis = HistogramFactory::createAxis( photon_energy_axis, params, species, patch, excluded_axes, t.str(), false );
+    photon_axis = HistogramFactory::createAxis( photon_energy_axis, params, species_indices, patch, excluded_axes, t.str(), false );
     total_axes++;
     dims.push_back( photon_axis->nbins );
+    
+    if( std::isnan( photon_axis->min ) || std::isnan( photon_axis->max ) ) {
+        ERROR( errorPrefix << "photon_energy_axis cannot have `auto` limits" );
+    }
     
     // construct the list of photon_energies
     photon_energies.resize( photon_axis->nbins );
     delta_energies.resize( photon_axis->nbins );
-    double emin = photon_axis->actual_min;
-    double emax = photon_axis->actual_max;
+    emin = photon_axis->logscale ? log10( photon_axis->min ) : photon_axis->min;
+    emax = photon_axis->logscale ? log10( photon_axis->max ) : photon_axis->max;
     double spacing = (emax-emin) / photon_axis->nbins;
     for( int i=0; i<photon_axis->nbins; i++ ) {
         photon_energies[i] = emin + (i+0.5)*spacing;
@@ -74,7 +78,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum(
     // Calculate the size of the output array
     uint64_t total_size = (uint64_t)output_size * photon_axis->nbins;
     if( total_size > 2147483648 ) { // 2^31
-        ERROR( errorPrefix << ": too many points (" << total_size << " > 2^312)" );
+        ERROR( errorPrefix << ": too many points (" << total_size << " > 2^31)" );
     }
     output_size = ( unsigned int ) total_size;
     
@@ -113,51 +117,41 @@ void DiagnosticRadiationSpectrum::openFile( Params& params, SmileiMPI* smpi )
 }
 
 // run one particle binning diagnostic
-void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* simWindow )
+void DiagnosticRadiationSpectrum::run( Patch* patch, int itime, SimWindow* simWindow )
 {
 
-    vector<int> int_buffer;
-    vector<double> double_buffer;
+    // Calculate the total number of particles in this patch and resize buffers
+    unsigned int npart = 0;
+    vector<Species *> species;
+    for( unsigned int ispec=0 ; ispec < species_indices.size() ; ispec++ ) {
+        Species *s = patch->vecSpecies[species_indices[ispec]];
+        species.push_back( s );
+        npart += s->getNbrOfParticles();
+    }
+    vector<int> int_buffer( npart, 0 );
+    vector<double> double_buffer( npart );
     
-//    // Update spatial_min and spatial_max if needed
-//    if( simWindow ) {
-//        bool did_move = false;
-//        for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
-//            if( histogram->axes[i]->type == "moving_x" ) {
-//                spatial_min[0] = histogram->axes[i]->min + simWindow->getXmoved();
-//                spatial_max[0] = histogram->axes[i]->max + simWindow->getXmoved();
-//                did_move = true;
-//            }
-//        }
-//        if( ! did_move ) {
-//            spatial_max[0] += simWindow->getXmoved() - spatial_min[0];
-//            spatial_min[0] = simWindow->getXmoved();
-//        }
-//    }
+    // Get the index (int_buffer) of each particle in the final array (data_sum)
+    histogram->digitize( species, double_buffer, int_buffer, simWindow );
     
-    // loop species
-    for( unsigned int ispec=0 ; ispec < species.size() ; ispec++ ) {
-        
-        Species *s = patch->vecSpecies[species[ispec]];
-        unsigned int npart = s->particles->size();
-        int_buffer   .resize( npart );
-        double_buffer.resize( npart );
-        
-        fill(int_buffer.begin(), int_buffer.end(), 0);
-        
-        histogram->digitize( s, double_buffer, int_buffer, simWindow );
+    // loop species & fill the histogram
+    unsigned int istart = 0;
+    for( unsigned int ispec=0 ; ispec < species_indices.size() ; ispec++ ) {
         
         // Sum the data into the data_sum
         // ------------------------------
-        int ind;
         
         double gamma_inv, gamma, chi, xi, zeta, nu, cst;
         double two_third_ov_chi, increment0, increment;
         int iphoton_energy_max;
+        double coeff = ( ( double ) photon_axis->nbins )/( emax - emin );
         
+        Species *s = patch->vecSpecies[species_indices[ispec]];
+        unsigned int npart = s->getNbrOfParticles();
+        int *index = &int_buffer[istart];
         for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
-            ind = int_buffer[ipart];
-            if( ind<0 ) continue; // skip already discarded particles
+            int ind = index[ipart];
+            if( ind < 0 ) continue; // skip already discarded particles
             ind *= photon_axis->nbins;
             
             // Get the quantum parameter
@@ -178,7 +172,7 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
             if( photon_axis->logscale ) {
                 gamma = log10( gamma );
             }
-            iphoton_energy_max = int( (gamma - photon_axis->actual_min) * photon_axis->coeff );
+            iphoton_energy_max = int( (gamma - emin) * coeff );
             //iphoton_energy_max can not be greater than photon_energy_nbins
             iphoton_energy_max = min( iphoton_energy_max, photon_axis->nbins );
             
@@ -192,8 +186,9 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
                 #pragma omp atomic
                 data_sum[ind+i] += increment;
             }
-            
         }
+        
+        istart += npart;
     
     }
     

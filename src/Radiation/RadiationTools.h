@@ -15,6 +15,16 @@ class RadiationTools {
 
     public:
 
+        //! Computation of the function g of Erber using the Ridgers
+        //! approximation formulae
+        //! \param particle_chi particle quantum parameter
+        //#pragma omp declare simd
+        static inline double computeRidgersFit( double particle_chi )
+        {
+            return std::pow( 1.0 + 4.8*( 1.0+particle_chi )*std::log( 1.0 + 1.7*particle_chi )
+                        + 2.44*particle_chi*particle_chi, -2.0/3.0 );
+        };
+
         // -----------------------------------------------------------------------------
         //! Return the value of the function h(particle_chi) of Niel et al.
         //! from a polynomial numerical fit at order 10

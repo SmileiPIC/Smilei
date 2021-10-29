@@ -1,5 +1,5 @@
 
-#include <string>
+#include <algorithm>
 
 #include "DiagnosticFields.h"
 #include "VectorPatch.h"
@@ -36,7 +36,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
     // Extract the requested fields
     vector<string> fieldsToDump( 0 );
     PyTools::extractV( "fields", fieldsToDump, "DiagFields", ndiag );
-   
+    
     //Avoid modes repetition in the namelist by interpreting field quantity as all modes of this quantity
     if (params.geometry == "AMcylindrical") {
         vector<string> fieldsToAdd( 0 );
@@ -52,32 +52,44 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
             fieldsToDump.push_back(fieldsToAdd[ifield]);
         }
     }
- 
+    
     // List all fields that are requested
     ostringstream ss( "" );
     fields_indexes.resize( 0 );
     fields_names  .resize( 0 );
     hasRhoJs = false;
-    //MESSAGE("HNA");
+    vector<string> allFields( vecPatches.emfields( 0 )->allFields.size() );
+    for( unsigned int i=0; i<allFields.size(); i++ ) {
+        allFields[i] = vecPatches.emfields( 0 )->allFields[i]->name;
+    }
+    // If empty list, use all fields
+    if( fieldsToDump.size()==0 ) {
+        fieldsToDump = allFields;
+    }
     // Loop fields
-    for( unsigned int i=0; i<vecPatches.emfields( 0 )->allFields.size(); i++ ) {
-        string field_name = vecPatches.emfields( 0 )->allFields[i]->name;
-        
-        // If field in list of fields to dump, then add it
-        if( hasField( field_name, fieldsToDump ) ) {
-            ss << field_name << " ";
-            fields_indexes.push_back( i );
-            fields_names  .push_back( field_name );
-            if( field_name.at( 0 )=='J' || field_name.at( 0 )=='R' ) {
-                hasRhoJs = true;
-            }
-            // If field specific to a species, then allocate it
-            if( params.speciesField( field_name ) != "" ) {
-                vecPatches.allocateField( i, params );
+    for( unsigned int j=0; j<fieldsToDump.size(); j++ ) {
+        bool hasfield = false;
+        for( unsigned int i=0; i<allFields.size(); i++ ) {
+            // If field to dump available, then add it
+            if( fieldsToDump[j] == allFields[i] ) {
+                ss << allFields[i] << " ";
+                fields_indexes.push_back( i );
+                fields_names  .push_back( allFields[i] );
+                if( allFields[i].at( 0 )=='J' || allFields[i].at( 0 )=='R' ) {
+                    hasRhoJs = true;
+                }
+                // If field specific to a species, then allocate it
+                if( params.speciesField( allFields[i] ) != "" ) {
+                    vecPatches.allocateField( i, params );
+                }
+                hasfield = true;
+                break;
             }
         }
+        if( ! hasfield ) {
+            ERROR( "Diagnostic Fields #"<<ndiag<<": field `"<<fieldsToDump[j]<<"` does not exist" );
+        }
     }
-    //MESSAGE("possible bug");
     
     // Extract subgrid info
     PyObject *subgrid = PyTools::extract_py( "subgrid", "DiagFields", ndiag );
@@ -208,24 +220,6 @@ DiagnosticFields::~DiagnosticFields()
     delete flush_timeSelection;
 }
 
-
-bool DiagnosticFields::hasField( string field_name, vector<string> fieldsToDump )
-{
-    bool hasfield;
-    if( fieldsToDump.size()==0 ) {
-        hasfield = true;
-    } else {
-        hasfield = false;
-        for( unsigned int j=0; j<fieldsToDump.size(); j++ ) {
-            if( field_name == fieldsToDump[j] ) {
-                hasfield = true;
-                break;
-            }
-        }
-    }
-    return hasfield;
-}
-
 void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi )
 {
     if( file_ ) {
@@ -233,7 +227,7 @@ void DiagnosticFields::openFile( Params &params, SmileiMPI *smpi )
     }
     
     // Create file
-    file_ = new H5Write( filename, true );
+    file_ = new H5Write( filename, &smpi->world() );
     
     file_->attr( "name", diag_name_ );
     
@@ -403,7 +397,7 @@ uint64_t DiagnosticFields::getDiskFootPrint( int istart, int istop, Patch *patch
 }
 
 // Calculates the intersection between a subgrid (aka slice in python) and a contiguous zone
-// of the PIC grid. The zone can be a patch or a MPI region.
+// of the PIC grid. The zone can be a patch or a MPI patch collection.
 void DiagnosticFields::findSubgridIntersection(
     unsigned int subgrid_start,
     unsigned int subgrid_stop,

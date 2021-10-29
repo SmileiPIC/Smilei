@@ -45,7 +45,6 @@ Main(
     print_every = 100,
     reference_angular_frequency_SI = 2.*math.pi * 3.e8/(Lmu*1.e-6),
 
-    random_seed = smilei_mpi_rank
 )
 
 
@@ -92,7 +91,6 @@ Species(
     mean_velocity = [0., 0., 0.],
     time_frozen = 0.0,
     pusher = "ponderomotive_boris",
-    ponderomotive_dynamics = "True",
     boundary_conditions = [
        ["remove", "remove"],
        ["reflective", "remove"],
@@ -118,7 +116,6 @@ Species(
     mean_velocity = [0., 0., 0.],
     time_frozen = 20000.0,
     pusher = "ponderomotive_boris",
-    ponderomotive_dynamics = "True",
     boundary_conditions = [
        ["remove", "remove"],
        ["reflective", "remove"],
@@ -139,7 +136,6 @@ Species(
     mean_velocity = [0., 0., 0.],
     time_frozen = 0.0,
     pusher = "ponderomotive_boris",
-    ponderomotive_dynamics = "True",
     boundary_conditions = [
        ["remove", "remove"],
        ["reflective", "remove"],

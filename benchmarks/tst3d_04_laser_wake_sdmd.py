@@ -21,7 +21,6 @@ Main(
     grid_length = [ Lx,  Ltrans, Ltrans],
 
     number_of_patches = [npatch_x, 4, 4],
-    uncoupled_grids = "True",
 
     clrw = nx/npatch_x,
     
@@ -31,7 +30,9 @@ Main(
     solve_poisson = False,
     print_every = 100,
 
-    random_seed = smilei_mpi_rank
+)
+
+MultipleDecomposition(
 )
 
 MovingWindow(

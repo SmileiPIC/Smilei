@@ -164,39 +164,39 @@ public:
     //! Should be pure virtual, see child classes
     inline bool isXmin()
     {
-        return locateOnBorders( 0, 0 );
+        return isBoundary( 0, 0 );
     }
     //! Should be pure virtual, see child classes
     inline bool isXmax()
     {
-        return locateOnBorders( 0, 1 );
+        return isBoundary( 0, 1 );
     }
     //! Should be pure virtual, see child classes
     inline bool isYmin()
     {
-        return locateOnBorders( 1, 0 );
+        return isBoundary( 1, 0 );
     }
     //! Should be pure virtual, see child classes
     inline bool isYmax()
     {
-        return locateOnBorders( 1, 1 );
+        return isBoundary( 1, 1 );
     }
     //! Should be pure virtual, see child classes
     inline bool isZmin()
     {
-        return locateOnBorders( 2, 0 );
+        return isBoundary( 2, 0 );
     }
     //! Should be pure virtual, see child classes
     inline bool isZmax()
     {
-        return locateOnBorders( 2, 1 );
+        return isBoundary( 2, 1 );
     }
     //! Determine wether the patch is at the domain boundary
-    inline bool isBoundary()
+    inline bool isAnyBoundary()
     {
         bool flag = false;
-        for (int i = 0 ; i < nDim_fields_ ; i++) {
-            flag = flag || locateOnBorders( i, 0 ) || locateOnBorders( i, 1 ) ;
+        for( unsigned int i = 0 ; i < (unsigned int) nDim_fields_ ; i++ ) {
+            flag = flag || isBoundary( i, 0 ) || isBoundary( i, 1 ) ;
         }
         return flag;
     }
@@ -207,12 +207,16 @@ public:
     }
     
     //! Test neighbbor's patch Id to apply or not a boundary condition
-    inline bool locateOnBorders( int dir, int way )
+    inline bool isBoundary( unsigned int axis, unsigned int min_max )
     {
-        if( neighbor_[dir][way] == MPI_PROC_NULL ) {
-            return true;
-        }
-        return false;
+        return neighbor_[axis][min_max] == MPI_PROC_NULL;
+    }
+    //! Test neighbbor's patch Id to apply or not a boundary condition (xmin,xmax,ymin,ymax,...)
+    inline bool isBoundary( unsigned int iboundary )
+    {
+        unsigned int axis = iboundary / 2;
+        unsigned int min_max = iboundary % 2;
+        return isBoundary( axis, min_max );
     }
     
     //! Compute MPI rank of neigbors patch regarding neigbors patch Ids

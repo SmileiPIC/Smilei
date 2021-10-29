@@ -8,8 +8,10 @@
 #include "SmileiMPI.h"
 #include "Tools.h"
 #include "PyTools.h"
+#include "H5.h"
 #include "Function.h"
 #include "Field.h"
+#include "Field3D.h"
 #include "cField.h"
 #include <cmath>
 
@@ -17,7 +19,7 @@ class Profile
 {
 public:
     //! Default constructor
-    Profile( PyObject *, unsigned int, std::string, bool=false );
+    Profile( PyObject *, unsigned int nvariables, std::string name, Params &params, bool try_numpy=false, bool try_file=false, bool time_variable=false );
     //! Cloning constructor
     Profile( Profile * );
     //! Default destructor
@@ -26,306 +28,82 @@ public:
     //! Get the value of the profile at some location (spatial)
     inline double valueAt( std::vector<double> coordinates )
     {
-        return function->valueAt( coordinates );
+        return function_->valueAt( coordinates );
     };
     //! Get the value of the profile at some location (temporal)
     inline double valueAt( double time )
     {
-        return function->valueAt( time );
+        return function_->valueAt( time );
     };
     //! Get the value of the profile at some location (spatio-temporal)
     inline double valueAt( std::vector<double> coordinates, double time )
     {
-        return function->valueAt( coordinates, time );
+        return function_->valueAt( coordinates, time );
     };
     //! Get the complex value of the profile at some location (spatio-temporal)
     inline std::complex<double> complexValueAt( std::vector<double> coordinates, double time )
     {
-        return function->complexValueAt( coordinates, time );
+        return function_->complexValueAt( coordinates, time );
     };
     
-    //! Get the value of the profile at several locations (spatial)
-    inline void valuesAt( std::vector<Field *> &coordinates, Field &ret )
-    {
-        unsigned int nvar = coordinates.size();
-        unsigned int size = coordinates[0]->globalDims_;
-#ifdef SMILEI_USE_NUMPY
-        // If numpy profile, then expose coordinates as numpy before evaluating profile
-        if( uses_numpy ) {
-            std::vector<PyArrayObject *> x( nvar );
-            int ndim = coordinates[0]->dims().size();
-            npy_intp dims[ndim];
-            for( int idim=0; idim<ndim; idim++ ) {
-                dims[idim] = ( npy_intp )( coordinates[0]->dims()[idim] );
-            }
-            // Expose arrays as numpy, and evaluate
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                x[ivar] = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( coordinates[ivar]->data() ) );
-            }
-            PyArrayObject *values = function->valueAt( x );
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                Py_DECREF( x[ivar] );
-            }
-            // Copy array to return Field3D
-            double *arr = ( double * ) PyArray_GETPTR1( values, 0 );
-            for( unsigned int i=0; i<size; i++ ) {
-                ret( i ) = arr[i];
-            }
-            Py_DECREF( values );
-        } else
-#endif
-            // Otherwise, calculate profile for each point
-        {
-            std::vector<double> x( nvar );
-            for( unsigned int i=0; i<size; i++ ) {
-                for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                    x[ivar]=( *coordinates[ivar] )( i );
-                }
-                ret( i ) = function->valueAt( x );
-            }
-        }
-    };
+    //! Get/add the value of the profile at several locations
+    //! mode = 0 : set values
+    //! mode = 1 : ADD values
+    //! mode = 2 : set values at given time
+    //! mode = 3 : ADD values at given time
+    void valuesAt( std::vector<Field *> &coordinates, std::vector<double> global_origin, Field &ret, int mode = 0, double time = 0. );
     
-    //! Add the value of the profile at several locations (spatial)
-    inline void addValuesAt( std::vector<Field *> &coordinates, Field &ret )
-    {
-        unsigned int nvar = coordinates.size();
-        unsigned int size = coordinates[0]->globalDims_;
-#ifdef SMILEI_USE_NUMPY
-        // If numpy profile, then expose coordinates as numpy before evaluating profile
-        if( uses_numpy ) {
-            std::vector<PyArrayObject *> x( nvar );
-            int ndim = coordinates[0]->dims().size();
-            npy_intp dims[ndim];
-            for( int idim=0; idim<ndim; idim++ ) {
-                dims[idim] = ( npy_intp )( coordinates[0]->dims()[idim] );
-            }
-            // Expose arrays as numpy, and evaluate
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                x[ivar] = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( coordinates[ivar]->data() ) );
-            }
-            PyArrayObject *values = function->valueAt( x );
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                Py_DECREF( x[ivar] );
-            }
-            // Copy array to return Field3D
-            double *arr = ( double * ) PyArray_GETPTR1( values, 0 );
-            for( unsigned int i=0; i<size; i++ ) {
-                ret( i ) += arr[i];
-            }
-            Py_DECREF( values );
-        } else
-#endif
-            // Otherwise, calculate profile for each point
-        {
-            std::vector<double> x( nvar );
-            for( unsigned int i=0; i<size; i++ ) {
-                for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                    x[ivar]=( *coordinates[ivar] )( i );
-                }
-                ret( i ) += function->valueAt( x );
-            }
-        }
-    };
-
-    //! Add the value of the profile at several locations (spatial) and particular time
-    inline void addValuesAtTime( std::vector<Field *> &coordinates, double time, Field &ret )
-    {
-        unsigned int nvar = coordinates.size();
-        unsigned int size = coordinates[0]->globalDims_;
-#ifdef SMILEI_USE_NUMPY
-        // If numpy profile, then expose coordinates as numpy before evaluating profile
-        if( uses_numpy ) {
-            std::vector<PyArrayObject *> x( nvar );
-            int ndim = coordinates[0]->dims().size();
-            npy_intp dims[ndim];
-            for( int idim=0; idim<ndim; idim++ ) {
-                dims[idim] = ( npy_intp )( coordinates[0]->dims()[idim] );
-            }
-            // Expose arrays as numpy, and evaluate
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                x[ivar] = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( coordinates[ivar]->data() ) );
-            }
-            PyArrayObject *values = function->valueAt( x, time );
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                Py_DECREF( x[ivar] );
-            }
-            // Copy array to return Field3D
-            double *arr = ( double * ) PyArray_GETPTR1( values, 0 );
-            for( unsigned int i=0; i<size; i++ ) {
-                ret( i ) += arr[i];
-            }
-            Py_DECREF( values );
-        } else
-#endif
-            // Otherwise, calculate profile for each point
-        {
-            std::vector<double> x( nvar );
-            for( unsigned int i=0; i<size; i++ ) {
-                for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                    x[ivar]=( *coordinates[ivar] )( i );
-                }
-                ret( i ) += function->valueAt( x, time );
-            }
-        }
-    };
-    
-    //! Add the complex value of the profile at several locations (spatial)
-    inline void addComplexValuesAt( std::vector<Field *> &coordinates, cField &ret )
-    {
-        unsigned int nvar = coordinates.size();
-        unsigned int size = coordinates[0]->globalDims_;
-#ifdef SMILEI_USE_NUMPY
-        // If numpy profile, then expose coordinates as numpy before evaluating profile
-        if( uses_numpy ) {
-            std::vector<PyArrayObject *> x( nvar );
-            int ndim = coordinates[0]->dims().size();
-            npy_intp dims[ndim];
-            for( int idim=0; idim<ndim; idim++ ) {
-                dims[idim] = ( npy_intp ) coordinates[0]->dims()[idim];
-            }
-            // Expose arrays as numpy, and evaluate
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                x[ivar] = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( coordinates[ivar]->data() ) );
-            }
-            PyArrayObject *values = function->complexValueAt( x );
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                Py_DECREF( x[ivar] );
-            }
-            // Copy array to return cField2D
-            std::complex<double> *arr = ( std::complex<double> * ) PyArray_GETPTR1( values, 0 );
-            for( unsigned int i=0; i<size; i++ ) {
-                ret( i ) += arr[i];
-            }
-            Py_DECREF( values );
-        } else
-#endif
-            // Otherwise, calculate profile for each point
-        {
-            std::vector<double> x( nvar );
-            for( unsigned int i=0; i<size; i++ ) {
-                for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                    x[ivar]=( *coordinates[ivar] )( i );
-                }
-                ret( i ) += function->complexValueAt( x );
-            }
-        }
-    };
-    
-    //! Add the complex value of the profile at several locations (spatial) and one time
-    inline void addComplexValuesAtTime( std::vector<Field *> &coordinates, double time, cField &ret )
-    {
-        unsigned int nvar = coordinates.size();
-        unsigned int size = coordinates[0]->globalDims_;
-#ifdef SMILEI_USE_NUMPY
-        // If numpy profile, then expose coordinates as numpy before evaluating profile
-        if( uses_numpy ) {
-            std::vector<PyArrayObject *> x( nvar );
-            int ndim = coordinates[0]->dims().size();
-            npy_intp dims[ndim];
-            for( int idim=0; idim<ndim; idim++ ) {
-                dims[idim] = ( npy_intp ) coordinates[0]->dims()[idim];
-            }
-            // Expose arrays as numpy, and evaluate
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                x[ivar] = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( coordinates[ivar]->data() ) );
-            }
-            PyArrayObject *values = function->complexValueAt( x, time );
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                Py_DECREF( x[ivar] );
-            }
-            // Copy array to return cField2D
-            std::complex<double> *arr = ( std::complex<double> * ) PyArray_GETPTR1( values, 0 );
-            for( unsigned int i=0; i<size; i++ ) {
-                ret( i ) += arr[i];
-            }
-            Py_DECREF( values );
-        } else
-#endif
-            // Otherwise, calculate profile for each point
-        {
-            std::vector<double> x( nvar );
-            for( unsigned int i=0; i<size; i++ ) {
-                for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                    x[ivar]=( *coordinates[ivar] )( i );
-                }
-                ret( i ) += function->complexValueAt( x , time );
-            }
-        }
-    };
-    
+    //! Get/add the complex value of the profile at several locations
+    //! mode = 0 : set values
+    //! mode = 1 : ADD values
+    //! mode = 2 : set values at given time
+    //! mode = 3 : ADD values at given time
+    void complexValuesAt( std::vector<Field *> &coordinates, cField &ret, int mode = 0, double time = 0. );
     
     //! Get the complex value of the profile at several locations (spatial + times)
-    inline void complexValuesAtTimes( std::vector<Field *> &coordinates, Field *time, cField &ret )
-    {
-        unsigned int nvar = coordinates.size();
-        unsigned int size = coordinates[0]->globalDims_;
-#ifdef SMILEI_USE_NUMPY
-        // If numpy profile, then expose coordinates as numpy before evaluating profile
-        if( uses_numpy ) {
-            std::vector<PyArrayObject *> x( nvar );
-            PyArrayObject *t;
-            int ndim = coordinates[0]->dims().size();
-            npy_intp dims[ndim];
-            for( int idim=0; idim<ndim; idim++ ) {
-                dims[idim] = ( npy_intp ) coordinates[0]->dims()[idim];
-            }
-            // Expose arrays as numpy, and evaluate
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                x[ivar] = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( coordinates[ivar]->data() ) );
-            }
-            t = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( time->data() ) );
-            PyArrayObject *values = function->complexValueAt( x, t );
-            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                Py_DECREF( x[ivar] );
-            }
-            Py_DECREF( t );
-            // Copy array to return Field3D
-            std::complex<double> *arr = ( std::complex<double> * ) PyArray_GETPTR1( values, 0 );
-            for( unsigned int i=0; i<size; i++ ) {
-                ret( i ) = arr[i];
-            }
-            Py_DECREF( values );
-        } else
-#endif
-            // Otherwise, calculate profile for each point
-        {
-            std::vector<double> x( nvar );
-            double t;
-            
-            for( unsigned int i=0; i<size; i++ ) {
-                for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
-                    x[ivar]=( *coordinates[ivar] )( i );
-                }
-                t = ( *time )( i );
-                ret( i ) = function->complexValueAt( x, t );
-            }
-        }
-    };
-    
-    
+    void complexValuesAtTimes( std::vector<Field *> &coordinates, Field *time, cField &ret );
     
     //! Get info on the loaded profile, to be printed later
-    inline std::string getInfo()
+    std::string getInfo()
     {
-        return info;
+        std::ostringstream info( "" );
+        info << nvariables_ << "D";
+        
+        if( ! profileName_.empty() ) {
+            info << " built-in profile `" << profileName_ << "`" ;
+        } else if( uses_file_ ) {
+            info << " from file `" << filename_ << "`";
+        } else {
+            info << " user-defined function";
+            if( uses_numpy_ ) {
+                info << " (uses numpy)";
+            }
+        }
+        
+        if( function_ ) {
+            info << function_->getInfo();
+        }
+        
+        return info.str();
     };
+
+private:
     
     //! Name of the profile, in the case of a built-in profile
-    std::string profileName;
+    std::string profileName_;
     
-private:
     //! Object that holds the information on the profile function
-    Function *function;
-    
-    //! String containing some info on the profile
-    std::string info;
+    Function *function_;
     
     //! Number of variables for the profile function
     int nvariables_;
     
     //! Whether the profile is using numpy
-    bool uses_numpy;
+    bool uses_numpy_;
+    
+    //! Whether the profile is taken from a file
+    bool uses_file_;
+    std::string filename_;
     
 };//END class Profile
 

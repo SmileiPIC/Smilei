@@ -15,11 +15,11 @@ public :
     //! Default destructor
     ~DiagnosticScreen();
     
-    bool prepare( int timestep ) override;
+    bool prepare( int itime ) override;
     
-    void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
+    void run( Patch *patch, int itime, SimWindow *simWindow ) override;
     
-    bool writeNow( int timestep ) override;
+    bool writeNow( int itime ) override;
     
     //! Clear the array
     void clear() override;
@@ -29,10 +29,13 @@ public :
         PyTools::extract( "shape", shape, "DiagScreen", idiag );
         std::vector<std::string> excluded_axes( 0 );
         if( shape == "plane" ) {
-            excluded_axes.push_back( "theta_yx" );
-            excluded_axes.push_back( "theta_zx" );
-        } else {
+            excluded_axes.push_back( "theta" );
+            excluded_axes.push_back( "phi" );
+        } else if( shape == "sphere" ) {
             excluded_axes.push_back( "a" );
+            excluded_axes.push_back( "b" );
+        } else { // cylinder
+            excluded_axes.push_back( "theta" );
             excluded_axes.push_back( "b" );
         }
         return excluded_axes;

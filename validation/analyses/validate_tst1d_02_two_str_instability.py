@@ -21,13 +21,17 @@ Validate("Initial electron momentum distribution", px, 0.1 )
 px = S.ParticleBinning.Diag0(sum={"x":"all"}, timesteps=2000).getData()[0]
 Validate("Final electron momentum distribution", px, 0.1)
 
-Validate("List of fields in Probe", S.Probe(0).getFields() )
+max_screen_error = np.abs(S.Screen("#0+#1-#2").getData()).max()
+Validate("Max error on screen multiple species", max_screen_error, 1e-7)
+
+Validate("List of fields in Probe", S.Probe(0, 'Rho_eon1').getFields() )
 
 Validate("Species probe", S.Probe(0, 'Rho_eon1', timesteps=2000).getData()[0], 1e-4 )
 
 # CONSISTENCY OF DIAGPERFORMANCES
 #   check available quantities
-Validate("Performances available quantities", sorted(S.Performances().getAvailableQuantities()))
+info = S.performanceInfo()
+Validate("Performances available quantities", sorted(info["quantities_uint"]+info["quantities_double"]))
 #   check number of MPI processes
 with h5py.File("./restart000/Performances.h5", "r") as f:
 	MPI_SIZE = f.attrs["MPI_SIZE"]

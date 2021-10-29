@@ -1,4 +1,5 @@
 #include "Tools.h"
+#include "PyTools.h"
 #include "Params.h"
 #include "LaserPropagator.h"
 #include "Field2D.h"
@@ -75,20 +76,25 @@ PyObject *PyCall( PyObject *callable, PyObject *args, PyObject *kwargs )
 }
 
 
-void LaserPropagator::init( Params *params, SmileiMPI *smpi, unsigned int side )
+LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_time_window, MPI_Comm &comm )
 {
 
 #ifdef SMILEI_USE_NUMPY
     ndim = params->nDim_field;
     _2D = ndim==2;
-    MPI_size = smpi->getSize();
-    MPI_rank = smpi->getRank();
-
+    
+    comm_ = comm;
+    int size, rank;
+    MPI_Comm_size( comm, &size );
+    MPI_Comm_rank( comm, &rank );
+    MPI_size = size;
+    MPI_rank = rank;
+    
     N     .resize( 3, 0 ); // third value not used in 2D
     L     .resize( ndim );
     Nlocal.resize( ndim );
     o     .resize( ndim, 0. );
-
+    
     // Set the grid spatial dimensions
     for( unsigned int idim=0; idim<ndim-1; idim++ ) {
         unsigned int j = ( side+idim+1 )%ndim;
@@ -96,12 +102,12 @@ void LaserPropagator::init( Params *params, SmileiMPI *smpi, unsigned int side )
         L[idim] = N[idim] * params->cell_length[j];
         o[idim] = params->oversize[j] * params->cell_length[j];
     }
-    ox = params->oversize[0] * params->cell_length[0];
-
+    ox = params->oversize[side] * params->cell_length[side];
+    
     // Set the grid temporal dimension
-    N[ndim-1] = params->n_time;
-    L[ndim-1] = params->simulation_time;
-
+    N[ndim-1] = ( int )( fft_time_window / params->timestep );
+    L[ndim-1] = fft_time_window;
+    
     // Make the array bigger to accommodate for the parallel FFT
     double old_L = L[0];
     for( unsigned int idim=0; idim<2; idim++ ) {
@@ -114,7 +120,7 @@ void LaserPropagator::init( Params *params, SmileiMPI *smpi, unsigned int side )
     // Calculate some array size that relates to the parallel decomposition
     Nlocal[0] = N[0] / MPI_size;
     Nlocal[1] = N[1] / MPI_size;
-
+    
     // Arrays of coordinates (y, z, t) owning to the current processor
     local_x.resize( ndim );
     local_x[0] = linspace( -o[0]-O, L[0]-o[0]-O, N[0], MPI_rank*Nlocal[0], ( MPI_rank+1 )*Nlocal[0] );
@@ -122,7 +128,7 @@ void LaserPropagator::init( Params *params, SmileiMPI *smpi, unsigned int side )
     if( ! _2D ) {
         local_x[2] = linspace( 0, L[2], N[2], 0, N[2] );
     }
-
+    
     // Arrays of wavenumbers (ky, kz, w) owning to the current processor
     local_k.resize( ndim );
     fftfreq( local_k[0], N[0], L[0]/N[0], 0, N[0] );
@@ -130,7 +136,12 @@ void LaserPropagator::init( Params *params, SmileiMPI *smpi, unsigned int side )
     if( ! _2D ) {
         fftfreq( local_k[2], N[2], L[2]/N[2], 0, N[2] );
     }
-
+    
+    // Display some info
+    MESSAGE( 2, "Uses " << MPI_size << " MPI processes");
+    uint64_t Ntot = (ndim+1) * max( (uint64_t)Nlocal[0]*(uint64_t)N[1], (uint64_t)N[0]*(uint64_t)Nlocal[1] ) * (uint64_t)( N[2] ? N[2] : 1 );
+    MESSAGE( 2, "Estimated memory required per MPI process: " << 2*2*Ntot*sizeof(double)/(1024*1024) << " MB");
+    
 #else
     ERROR( "Cannot use LaserOffset without numpy" );
 #endif
@@ -143,7 +154,8 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     //const complex<double> i_ (0., 1.); // the imaginary number
 
     unsigned int nprofiles = profiles.size();
-
+    double timer = MPI_Wtime();
+    
     // Import several functions from numpy
     PyObject *numpy = PyImport_AddModule( "numpy" );
     PyObject *numpyfft = PyObject_GetAttrString( numpy, "fft" );
@@ -152,14 +164,16 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     PyObject *fft2     = PyObject_GetAttrString( numpyfft, "fft2" );
     Py_DECREF( numpyfft );
     int complex_type_num=0;
-
+    
     // 1- Calculate the value of the profiles at all points (y,z,t)
     // --------------------------------
-
+    
     // Make coordinates array
     vector<PyObject *> coords( ndim );
+    npy_intp np = 1;
     for( unsigned int i=0; i<ndim; i++ ) {
         npy_intp dims = local_x[i].size();
+        np *= dims;
         coords[i] = PyArray_SimpleNewFromData( 1, &dims, NPY_DOUBLE, ( double * )( local_x[i].data() ) );
     }
 
@@ -177,18 +191,25 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     }
     Py_DECREF( meshgrid );
     Py_DECREF( m );
-
+    
     // Apply each profile
     vector<PyObject *> arrays( nprofiles );
     for( unsigned int i=0; i<nprofiles; i++ ) {
-        // Vectorize the profile
-        PyObject *profile = PyObject_CallMethod( numpy, "vectorize", "O", profiles[i] );
-        // Apply to the mesh
-        arrays[i] = PyObject_CallObject( profile, mesh );
-        Py_DECREF( profile );
+        // Try first if the function is numpy-compatible
+        arrays[i] = PyObject_CallObject( profiles[i], mesh );
+        // If it failed, use numpy.vectorize
+        if( PyTools::checkPyError( false, false ) || !PyArray_Check(arrays[i]) || PyArray_Size( arrays[i] ) != np ) {
+            WARNING( "\t\tProfile #" << i << " is not numpy-compatible. It can be very slow." );
+            PyObject *profile = PyObject_CallMethod( numpy, const_cast<char *>("vectorize"), const_cast<char *>("O"), profiles[i] );
+            arrays[i] = PyObject_CallObject( profile, mesh );
+            Py_DECREF( profile );
+        }
     }
     Py_DECREF( mesh );
-
+    
+    MESSAGE( 3, "Finished applying profiles ... " << MPI_Wtime() - timer << " s" );
+    timer = MPI_Wtime();
+    
     // 2- Fourier transform of the fields at destination
     // --------------------------------
 
@@ -237,7 +258,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         MPI_Alltoall(
             PyArray_GETPTR1( ( PyArrayObject * ) arrays[i], 0 ), 2*block_size, MPI_DOUBLE,
             PyArray_GETPTR1( ( PyArrayObject * ) a, 0 ), 2*block_size, MPI_DOUBLE,
-            MPI_COMM_WORLD
+            comm_
         );
         Py_DECREF( arrays[i] );
 
@@ -245,7 +266,10 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         arrays[i] = PyCall( fft, Py_BuildValue( "(O)", a ), Py_BuildValue( "{s:i}", "axis", 0 ) );
         Py_DECREF( a );
     }
-
+    
+    MESSAGE( 3, "Finished FFT at destination ... " << MPI_Wtime() - timer << " s" );
+    timer = MPI_Wtime();
+    
     // 3- Select only interesting omegas
     // --------------------------------
 
@@ -267,7 +291,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         }
         MPI_Gather( &local_spectrum[0], Nlocal[1], MPI_DOUBLE,
                     &      spectrum[0], Nlocal[1], MPI_DOUBLE,
-                    0, MPI_COMM_WORLD );
+                    0, comm_ );
         // Remove the negative frequencies
         if( MPI_rank==0 ) {
             spectrum.resize( N[1]/2 );
@@ -288,7 +312,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         if( MPI_rank==0 ) {
             spectrum.resize( lmax );
         }
-        MPI_Reduce( &local_spectrum[0], &spectrum[0], lmax, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+        MPI_Reduce( &local_spectrum[0], &spectrum[0], lmax, MPI_DOUBLE, MPI_SUM, 0, comm_ );
     }
 
     // Rank 0 finds the most intense points of the spectrum
@@ -301,11 +325,11 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     }
 
     // Broadcast the number of selected points
-    MPI_Bcast( &n_omega, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD );
+    MPI_Bcast( &n_omega, 1, MPI_UNSIGNED, 0, comm_ );
     indices.resize( n_omega );
 
     // Broadcast the selected indices to all processes
-    MPI_Bcast( &indices[0], n_omega, MPI_UNSIGNED, 0, MPI_COMM_WORLD );
+    MPI_Bcast( &indices[0], n_omega, MPI_UNSIGNED, 0, comm_ );
 
     MESSAGE( 2, "keeping the "<<n_omega<<" strongest temporal modes" );
 
@@ -351,7 +375,10 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
             kz2[i] = local_k[1][i] * local_k[1][i];
         }
     }
-
+    
+    MESSAGE( 3, "Finished selecting modes ... " << MPI_Wtime() - timer << " s" );
+    timer = MPI_Wtime();
+    
     // 4- Propagate and rotate in k-space, while extracting only selected omegas
     // --------------------------------
 
@@ -430,7 +457,10 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
             arrays[i] = a;
         }
     }
-
+    
+    MESSAGE( 3, "Finished propagation and rotation ... " << MPI_Wtime() - timer << " s" );
+    timer = MPI_Wtime();
+    
     // 5- Fourier transform back to real space, excluding the omega axis
     // --------------------------------
 
@@ -460,7 +490,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
             MPI_Alltoall(
                 PyArray_GETPTR1( ( PyArrayObject * ) arrays[i], 0 ), 2*block_size, MPI_DOUBLE,
                 PyArray_GETPTR1( ( PyArrayObject * ) a, 0 ), 2*block_size, MPI_DOUBLE,
-                MPI_COMM_WORLD
+                comm_
             );
             Py_DECREF( arrays[i] );
 
@@ -489,7 +519,10 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
             Py_DECREF( a );
         }
     }
-
+    
+    MESSAGE( 3, "Finished FFT back to real space ... " << MPI_Wtime() - timer << " s" );
+    timer = MPI_Wtime();
+    
     // 6- Obtain the magnitude and the phase of the complex values
     // --------------------------------
     unsigned int local_size = ( _2D ? N[0] : Nlocal[0]*N[1] ) * n_omega_local;
@@ -509,7 +542,10 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         }
         Py_DECREF( arrays[i] );
     }
-
+    
+    MESSAGE( 3, "Finished calculating magnitude and phase ... " << MPI_Wtime() - timer << " s" );
+    timer = MPI_Wtime();
+    
     // 7- Store all info in HDF5 file
     // --------------------------------
 
@@ -517,7 +553,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     vector<hsize_t> dims(ndim), start(ndim), count(ndim);
     if( _2D ) {
         unsigned int MPI_omega_offset;
-        MPI_Scan( &n_omega_local, &MPI_omega_offset, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD );
+        MPI_Scan( &n_omega_local, &MPI_omega_offset, 1, MPI_UNSIGNED, MPI_SUM, comm_ );
         MPI_omega_offset -= n_omega_local;
         dims[0] = N[0];
         start[0] = 0;
@@ -538,7 +574,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     }
     
     // Create File with parallel access
-    H5Write f( file, true );
+    H5Write f( file, &comm_ );
     
     // Store "omega" dataset
     hsize_t npoints = (!_2D && MPI_rank!=0) ? 0 : n_omega_local; // Only rank 0 writes in 3D
@@ -563,6 +599,9 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     Py_DECREF( fft );
     Py_DECREF( ifft );
     Py_DECREF( fft2 );
-
+    
+    MESSAGE( 3, "Finished writing file ... " << MPI_Wtime() - timer << " s" );
+    timer = MPI_Wtime();
+    
 #endif
 }

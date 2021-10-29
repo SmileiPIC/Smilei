@@ -9,7 +9,7 @@
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class for 2nd order interpolator for 1d3v simulations
 //  --------------------------------------------------------------------------------------------------------------------
-class Interpolator2D2OrderV : public Interpolator2D
+class Interpolator2D2OrderV final : public Interpolator2D
 {
 
 public:

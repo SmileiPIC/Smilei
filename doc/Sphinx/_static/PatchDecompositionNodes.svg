@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 155">
+  <defs>
+    <pattern id="patternY" width="0.168" height="0.203">
+      <rect style="fill:#ffca29;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+    <pattern id="patternG" width="0.168" height="0.203">
+      <rect style="fill:#75dc09;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+    <pattern id="patternB" width="0.168" height="0.203">
+      <rect style="fill:#15adf3;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+    <pattern id="patternR" width="0.168" height="0.203">
+      <rect style="fill:#ff5050;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+    <pattern id="patternP" width="0.168" height="0.203">
+      <rect style="fill:#d377ea;" width="2.3" height="2.3" x="0" y="0" />
+    </pattern>
+  </defs>
+  
+  <g style="fill:#1ab054">
+    <rect width="90" height="95" x="5"   y="0"/>
+    <rect width="90" height="95" x="100" y="0"/>
+    <rect width="90" height="95" x="195" y="0"/>
+    <rect width="90" height="95" x="290" y="0"/>
+    <rect width="90" height="95" x="385" y="0"/>
+  </g>
+  <g style="fill:#ffffff">
+    <rect width="80" height="70" x="10"  y="10" rx="4" ry="4" />
+    <rect width="80" height="70" x="105" y="10" rx="4" ry="4" />
+    <rect width="80" height="70" x="200" y="10" rx="4" ry="4" />
+    <rect width="80" height="70" x="295" y="10" rx="4" ry="4" />
+    <rect width="80" height="70" x="390" y="10" rx="4" ry="4" />
+  </g>
+  <g style="fill:#b74222">
+    <rect width="90" height="50" x="5"   y="100" />
+    <rect width="90" height="50" x="100" y="100" />
+    <rect width="90" height="50" x="195" y="100" />
+    <rect width="90" height="50" x="290" y="100" />
+    <rect width="90" height="50" x="385" y="100" />
+  </g>
+  <g style="fill:#fccd9d">
+    <rect width="80" height="35" x="10"  y="105" rx="4" ry="4" />
+    <rect width="80" height="35" x="105" y="105" rx="4" ry="4" />
+    <rect width="80" height="35" x="200" y="105" rx="4" ry="4" />
+    <rect width="80" height="35" x="295" y="105" rx="4" ry="4" />
+    <rect width="80" height="35" x="390" y="105" rx="4" ry="4" />
+  </g>
+  <g>
+    <g style="fill:#9f3d80">
+      <rect width="10" height="10" x="19" y="110" />
+      <rect width="10" height="10" x="37" y="110" />
+      <rect width="10" height="10" x="53" y="110" />
+      <rect width="10" height="10" x="71" y="110" />
+      <text x="50" y="134" text-anchor="middle" style="font:bold 12px sans">threads</text>
+    </g>
+    <g style="stroke:#9f3d80; stroke-width:1.5; fill:none">
+      <path d="M 24 110 C 24 50, 24 50, 32 50"/>
+      <path d="M 42 110 C 42 70, 42 70, 42 70"/>
+      <path d="M 58 110 C 58 70, 60 70, 60 70"/>
+      <path d="M 76 110 C 76 50, 66 50, 66 50"/>
+    </g>
+  </g>
+  
+  <g style="fill:url(#patternY);" transform="translate(32,8)">
+    <rect width="18" height="15" x="0" y="16" />
+    <rect width="18" height="15" x="0" y="32" />
+    <rect width="18" height="15" x="0" y="48" />
+    <rect width="18" height="15" x="19" y="32" />
+    <rect width="18" height="15" x="19" y="48" />
+  </g>
+  <g style="fill:url(#patternG);" transform="translate(108,15)">
+    <rect width="18" height="15" x="0" y="0" />
+    <rect width="18" height="15" x="19" y="0" />
+    <rect width="18" height="15" x="38" y="0" />
+    <rect width="18" height="15" x="57" y="0" />
+    <rect width="18" height="15" x="19" y="16" />
+    <rect width="18" height="15" x="38" y="16" />
+    <rect width="18" height="15" x="57" y="16" />
+    <rect width="18" height="15" x="38" y="32" />
+    <rect width="18" height="15" x="57" y="32" />
+    <rect width="18" height="15" x="38" y="48" />
+  </g>
+  <g style="fill:url(#patternB);" transform="translate(213,15)">
+    <rect width="18" height="15" x="19" y="0" />
+    <rect width="18" height="15" x="19" y="16" />
+    <rect width="18" height="15" x="19" y="32" />
+    <rect width="18" height="15" x="38" y="32" />
+    <rect width="18" height="15" x="0" y="48" />
+    <rect width="18" height="15" x="19" y="48" />
+    <rect width="18" height="15" x="38" y="48" />
+  </g>
+  <g style="fill:url(#patternR);" transform="translate(308,30)">
+    <rect width="18" height="15" x="0" y="0" />
+    <rect width="18" height="15" x="19" y="0" />
+    <rect width="18" height="15" x="38" y="0" />
+    <rect width="18" height="15" x="0" y="16" />
+    <rect width="18" height="15" x="19" y="16" />
+    <rect width="18" height="15" x="38" y="16" />
+  </g>
+  <g style="fill:url(#patternP);" transform="translate(411,30)">
+    <rect width="18" height="15" x="0" y="0" />
+    <rect width="18" height="15" x="19" y="0" />
+    <rect width="18" height="15" x="0" y="16" />
+    <rect width="18" height="15" x="19" y="16" />
+  </g>
+  
+  <g transform="translate(95,0)">
+    <g style="fill:#9f3d80">
+      <rect width="10" height="10" x="19" y="110" />
+      <rect width="10" height="10" x="37" y="110" />
+      <rect width="10" height="10" x="53" y="110" />
+      <rect width="10" height="10" x="71" y="110" />
+      <text x="50" y="134" text-anchor="middle" style="font:bold 12px sans">threads</text>
+    </g>
+    <g style="stroke:#9f3d80; stroke-width:1.5; fill:none">
+      <path d="M 24 110 C 24 40, 20 30, 20 28"/>
+      <path d="M 42 110 C 42 70, 42 30, 53 25"/>
+      <path d="M 58 110 C 58 70, 60 70, 60 70"/>
+      <path d="M 76 110 C 76 50, 70 50, 66 40"/>
+    </g>
+  </g>
+  <g transform="translate(190,0)">
+    <g style="fill:#9f3d80">
+      <rect width="10" height="10" x="19" y="110" />
+      <rect width="10" height="10" x="37" y="110" />
+      <rect width="10" height="10" x="53" y="110" />
+      <rect width="10" height="10" x="71" y="110" />
+      <text x="50" y="134" text-anchor="middle" style="font:bold 12px sans">threads</text>
+    </g>
+    <g style="stroke:#9f3d80; stroke-width:1.5; fill:none">
+      <path d="M 24 110 C 24 40, 30 25, 45 23"/>
+      <path d="M 42 110 C 42 70, 42 40, 53 40"/>
+      <path d="M 58 110 C 58 60, 60 55, 67 55"/>
+      <path d="M 76 110 C 76 75, 76 70, 70 70"/>
+    </g>
+  </g>
+  <g transform="translate(285,0)">
+    <g style="fill:#9f3d80">
+      <rect width="10" height="10" x="19" y="110" />
+      <rect width="10" height="10" x="37" y="110" />
+      <rect width="10" height="10" x="53" y="110" />
+      <rect width="10" height="10" x="71" y="110" />
+      <text x="50" y="134" text-anchor="middle" style="font:bold 12px sans">threads</text>
+    </g>
+    <g style="stroke:#9f3d80; stroke-width:1.5; fill:none">
+      <path d="M 24 110 C 24 70, 24 70, 28 58"/>
+      <path d="M 42 110 C 42 70, 42 50, 34 40"/>
+      <path d="M 58 110 C 58 70, 58 70, 54 58"/>
+      <path d="M 76 110 C 76 70, 76 70, 70 58"/>
+    </g>
+  </g>
+  <g transform="translate(380,0)">
+    <g style="fill:#9f3d80">
+      <rect width="10" height="10" x="19" y="110" />
+      <rect width="10" height="10" x="37" y="110" />
+      <rect width="10" height="10" x="53" y="110" />
+      <rect width="10" height="10" x="71" y="110" />
+      <text x="50" y="134" text-anchor="middle" style="font:bold 12px sans">threads</text>
+    </g>
+    <g style="stroke:#9f3d80; stroke-width:1.5; fill:none">
+      <path d="M 24 110 C 24 70, 24 50, 33 42"/>
+      <path d="M 42 110 C 42 80, 42 80, 40 58"/>
+      <path d="M 58 110 C 58 70, 58 70, 57 58"/>
+      <path d="M 76 110 C 76 70, 76 45, 63 42"/>
+    </g>
+  </g>
+</svg>

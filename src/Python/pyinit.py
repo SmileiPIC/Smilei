@@ -165,7 +165,6 @@ class Main(SmileiSingleton):
     number_of_timesteps = None
     interpolation_order = 2
     custom_oversize = 2
-    custom_region_oversize = 2
     number_of_patches = None
     patch_arrangement = "hilbertian"
     clrw = -1
@@ -173,19 +172,13 @@ class Main(SmileiSingleton):
     timestep = None
     number_of_AM = 2
     number_of_AM_relativistic_field_initialization = 1
+    number_of_AM_classical_Poisson_solver = 1
     timestep_over_CFL = None
-    cell_sorting = False
-    number_of_damping_cells = [0]
-
+    cell_sorting = None
 
     # PXR tuning
-    uncoupled_grids = False
-    global_factor = []
-    norder = []
-    pseudo_spectral_guardells = 0
-    apply_rotational_cleaning = False
-    is_spectral = False
-    is_pxr = False
+    spectral_solver_order = []
+    initial_rotational_cleaning = False
 
     # Poisson tuning
     solve_poisson = True
@@ -288,6 +281,10 @@ class LoadBalancing(SmileiSingleton):
     cell_load            = 1.0
     frozen_particle_load = 0.1
 
+class MultipleDecomposition(SmileiSingleton):
+    """Multiple Decomposition parameters"""
+    region_ghost_cells   = 2
+
 # Radiation reaction configuration (continuous and MC algorithms)
 class Vectorization(SmileiSingleton):
     """
@@ -374,7 +371,6 @@ class Species(SmileiComponent):
     time_frozen = 0.0
     radiating = False
     relativistic_field_initialization = False
-    time_relativistic_initialization = 0.0
     boundary_conditions = [["periodic"]]
     ionization_model = "none"
     ionization_electrons = None
@@ -383,7 +379,6 @@ class Species(SmileiComponent):
     maximum_charge_state = 0
     is_test = False
     relativistic_field_initialization = False
-    ponderomotive_dynamics = False
 
 class ParticleInjector(SmileiComponent):
     """Parameters for particle injection at boundaries"""
@@ -450,6 +445,7 @@ class DiagProbe(SmileiComponent):
     vectors = []
     fields = []
     flush_every = 1
+    time_integral = False
 
 class DiagParticleBinning(SmileiComponent):
     """Particle Binning diagnostic"""

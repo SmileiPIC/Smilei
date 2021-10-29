@@ -33,11 +33,11 @@ using namespace std;
 
 
 
-ElectroMagnBC2D_refl::ElectroMagnBC2D_refl( Params &params, Patch *patch, unsigned int _min_max )
-    : ElectroMagnBC2D( params, patch, _min_max )
+ElectroMagnBC2D_refl::ElectroMagnBC2D_refl( Params &params, Patch *patch, unsigned int i_boundary )
+    : ElectroMagnBC2D( params, patch, i_boundary )
 {
     // oversize
-    if (!params.uncoupled_grids)
+    if (!params.multiple_decomposition)
         oversize_ = params.oversize[0];
     else
         oversize_ = params.region_oversize[0];
@@ -49,7 +49,7 @@ ElectroMagnBC2D_refl::ElectroMagnBC2D_refl( Params &params, Patch *patch, unsign
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-    if( min_max == 0 && patch->isXmin() ) {
+    if( i_boundary_ == 0 && patch->isXmin() ) {
     
         // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
         // Static cast of the fields
@@ -64,21 +64,21 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         
         //        // for Bx^(p,d)
         //        for (unsigned int i=oversize_; i>0; i--) {
-        //            for (unsigned int j=0 ; j<ny_d ; j++) {
+        //            for (unsigned int j=0 ; j<n_d[1] ; j++) {
         //                (*Bx2D)(i-1,j) = (*Bx2D)(i,j);
         //            }//j
         //        }//i
         
         // for By^(d,p)
         for( unsigned int i=oversize_; i>0; i-- ) {
-            for( unsigned int j=0 ; j<ny_p ; j++ ) {
+            for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
                 ( *By2D )( i-1, j ) = ( *By2D )( i, j );
             }//j
         }//i
         
         // for Bz^(d,d)
         for( unsigned int i=oversize_; i>0; i-- ) {
-            for( unsigned int j=0 ; j<ny_d ; j++ ) {
+            for( unsigned int j=0 ; j<n_d[1] ; j++ ) {
                 ( *Bz2D )( i-1, j ) = ( *Bz2D )( i, j );
             }
         }
@@ -86,21 +86,21 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         //        // FORCE ZERO ELECTRIC FIELDS
         //
         //        // for Ex^(d,p)
-        //        for (unsigned int i=0; i<nx_d; i++) {
+        //        for (unsigned int i=0; i<n_d[0]; i++) {
         //            for (unsigned int j=0 ; j<oversize_ ; j++) {
         //                (*Ex2D)(i,j) = 0.0;
         //            }//j
         //        }//i
         //
         //        // for Ey^(p,d)
-        //        for (unsigned int i=0; i<nx_p; i++) {
+        //        for (unsigned int i=0; i<n_p[0]; i++) {
         //            for (unsigned int j=0 ; j<oversize_+1 ; j++) {
         //                (*Ey2D)(i,j) = 0.0;
         //            }//j
         //        }//i
         //
         //        // for Ez^(p,p)
-        //        for (unsigned int i=0; i<nx_p; i++) {
+        //        for (unsigned int i=0; i<n_p[0]; i++) {
         //            for (unsigned int j=0 ; j<oversize_ ; j++) {
         //                (*Ez2D)(i,j) = 0.0;
         //            }
@@ -117,18 +117,18 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
          // normal component of B is zero <--> Bn=0
          // By and Bz just outside equal By and Bz just inside.
          // for By^(d,p)
-         for (unsigned int j=0 ; j<ny_p ; j++) {
+         for (unsigned int j=0 ; j<n_p[1] ; j++) {
          (*By2D)(0,j) = (*By2D)(1,j);
          }
         
         
          // for Bz^(d,d)
-         for (unsigned int j=0 ; j<ny_d ; j++) {
+         for (unsigned int j=0 ; j<n_d[1] ; j++) {
          (*Bz2D)(0,j) = (*Bz2D)(1,j);
          }
          */
         
-    } else if( min_max == 1 && patch->isXmax() ) {
+    } else if( i_boundary_ == 1 && patch->isXmax() ) {
     
         // Static cast of the fields
         //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -141,22 +141,22 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         // FORCE CONSTANT MAGNETIC FIELDS
         
         //        // for Bx^(p,d)
-        //        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
-        //            for (unsigned int j=0 ; j<ny_d ; j++) {
+        //        for (unsigned int i=n_p[0]-oversize_; i<n_p[0]; i++) {
+        //            for (unsigned int j=0 ; j<n_d[1] ; j++) {
         //                (*Bx2D)(i,j) = (*Bx2D)(i-1,j);
         //            }//j
         //        }//i
         
         // for By^(d,p)
-        for( unsigned int i=nx_d-oversize_; i<nx_d; i++ ) {
-            for( unsigned int j=0 ; j<ny_p ; j++ ) {
+        for( unsigned int i=n_d[0]-oversize_; i<n_d[0]; i++ ) {
+            for( unsigned int j=0 ; j<n_p[1] ; j++ ) {
                 ( *By2D )( i, j ) = ( *By2D )( i-1, j );
             }//j
         }//i
         
         // for Bz^(d,d)
-        for( unsigned int i=nx_d-oversize_; i<nx_d; i++ ) {
-            for( unsigned int j=0 ; j<ny_d ; j++ ) {
+        for( unsigned int i=n_d[0]-oversize_; i<n_d[0]; i++ ) {
+            for( unsigned int j=0 ; j<n_d[1] ; j++ ) {
                 ( *Bz2D )( i, j ) = ( *Bz2D )( i-1, j );
             }
         }
@@ -164,22 +164,22 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         //        // FORCE ZERO ELECTRIC FIELDS
         //
         //        // for Ex^(d,p)
-        //        for (unsigned int i=nx_d-oversize_; i<nx_d; i++) {
-        //            for (unsigned int j=0 ; j<ny_p ; j++) {
+        //        for (unsigned int i=n_d[0]-oversize_; i<n_d[0]; i++) {
+        //            for (unsigned int j=0 ; j<n_p[1] ; j++) {
         //                (*Ex2D)(i,j) = 0.0;
         //            }//j
         //        }//i
         //
         //        // for Ey^(p,d)
-        //        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
-        //            for (unsigned int j=0 ; j<ny_d ; j++) {
+        //        for (unsigned int i=n_p[0]-oversize_; i<n_p[0]; i++) {
+        //            for (unsigned int j=0 ; j<n_d[1] ; j++) {
         //                (*Ey2D)(i,j) = 0.0;
         //            }//j
         //        }//i
         //
         //        // for Ez^(p,p)
-        //        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
-        //            for (unsigned int j=0 ; j<ny_p ; j++) {
+        //        for (unsigned int i=n_p[0]-oversize_; i<n_p[0]; i++) {
+        //            for (unsigned int j=0 ; j<n_p[1] ; j++) {
         //                (*Ez2D)(i,j) = 0.0;
         //            }
         //        }
@@ -196,19 +196,19 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
          // By and Bz just outside equal By and Bz just inside.
         
          // for By^(d,p)
-         for (unsigned int j=0 ; j<ny_p ; j++) {
-         (*By2D)(nx_d-1,j) = (*By2D)(nx_d-2,j);
+         for (unsigned int j=0 ; j<n_p[1] ; j++) {
+         (*By2D)(n_d[0]-1,j) = (*By2D)(n_d[0]-2,j);
          }//j
         
          // for Bz^(d,d)
-         for (unsigned int j=0 ; j<ny_d ; j++) {
-         (*Bz2D)(nx_d-1,j) = (*Bz2D)(nx_d-2,j);
+         for (unsigned int j=0 ; j<n_d[1] ; j++) {
+         (*Bz2D)(n_d[0]-1,j) = (*Bz2D)(n_d[0]-2,j);
          }//j
          */
         
         
         
-    } else if( min_max == 2 && patch->isYmin() ) {
+    } else if( i_boundary_ == 2 && patch->isYmin() ) {
     
         // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
         // Static cast of the fields
@@ -222,21 +222,21 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         // FORCE CONSTANT MAGNETIC FIELDS
         
         // for Bx^(p,d)
-        for( unsigned int i=0; i<nx_p; i++ ) {
+        for( unsigned int i=0; i<n_p[0]; i++ ) {
             for( unsigned int j=oversize_ ; j>0 ; j-- ) {
                 ( *Bx2D )( i, j-1 ) = ( *Bx2D )( i, j );
             }//j
         }//i
         
         //        // for By^(d,p)
-        //        for (unsigned int i=0; i<nx_d; i++) {
+        //        for (unsigned int i=0; i<n_d[0]; i++) {
         //            for (unsigned int j=oversize_ ; j>0 ; j--) {
         //                (*By2D)(i,j-1) = (*By2D)(i,j);
         //            }//j
         //        }//i
         
         // for Bz^(d,d)
-        for( unsigned int i=0; i<nx_d; i++ ) {
+        for( unsigned int i=0; i<n_d[0]; i++ ) {
             for( unsigned int j=oversize_ ; j>0 ; j-- ) {
                 ( *Bz2D )( i, j-1 ) = ( *Bz2D )( i, j );
             }
@@ -245,21 +245,21 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         //        // FORCE ZERO ELECTRIC FIELDS
         //
         //        // for Ex^(d,p)
-        //        for (unsigned int i=0; i<nx_d; i++){
+        //        for (unsigned int i=0; i<n_d[0]; i++){
         //            for (unsigned int j=0 ; j<oversize_ ; j++) {
         //                (*Ex2D)(i,j) = 0.0;
         //            }//j
         //        }//i
         //
         //        // for Ey^(p,d)
-        //        for (unsigned int i=0; i<nx_p; i++) {
+        //        for (unsigned int i=0; i<n_p[0]; i++) {
         //            for (unsigned int j=0 ; j<oversize_ ; j++) {//j<oversize_+1???
         //                (*Ey2D)(i,j) = 0.0;
         //            }//j
         //        }//i
         //
         //        // for Ez^(p,p)
-        //        for (unsigned int i=0; i<nx_p; i++) {
+        //        for (unsigned int i=0; i<n_p[0]; i++) {
         //            for (unsigned int j=0 ; j<oversize_ ; j++) {
         //                (*Ez2D)(i,j) = 0.0;
         //            }
@@ -276,17 +276,17 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
          // By and Bz just outside equal By and Bz just inside.
         
          // for Bx^(p,d)
-         for (unsigned int i=0 ; i<nx_p; i++) {
+         for (unsigned int i=0 ; i<n_p[0]; i++) {
          (*Bx2D)(i,0) = (*Bx2D)(i,1);
          }
         
          // for Bz^(d,d)
-         for (unsigned int i=0 ; i<nx_d ; i++) {
+         for (unsigned int i=0 ; i<n_d[0] ; i++) {
          (*Bz2D)(i,0) = (*Bz2D)(i,1);
          }
          */
         
-    } else if( min_max == 3 && patch->isYmax() ) {
+    } else if( i_boundary_ == 3 && patch->isYmax() ) {
     
         // Static cast of the fields
         //Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -299,22 +299,22 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         // FORCE CONSTANT MAGNETIC FIELDS
         
         // for Bx^(p,d)
-        for( unsigned int i=0; i<nx_p; i++ ) {
-            for( unsigned int j=ny_d-oversize_; j<ny_d ; j++ ) {
+        for( unsigned int i=0; i<n_p[0]; i++ ) {
+            for( unsigned int j=n_d[1]-oversize_; j<n_d[1] ; j++ ) {
                 ( *Bx2D )( i, j ) = ( *Bx2D )( i, j-1 );
             }//j
         }//i
         
         //        // for By^(d,p)
-        //        for (unsigned int i=0; i<nx_d; i++) {
-        //            for (unsigned int j=ny_p-oversize_ ; j<ny_p ; j++) {
+        //        for (unsigned int i=0; i<n_d[0]; i++) {
+        //            for (unsigned int j=n_p[1]-oversize_ ; j<n_p[1] ; j++) {
         //                (*By2D)(i,j) = (*By2D)(i,j-1);
         //            }//j
         //        }//i
         
         // for Bz^(d,d)
-        for( unsigned int i=0; i<nx_d; i++ ) {
-            for( unsigned int j=ny_d-oversize_; j<ny_d ; j++ ) {
+        for( unsigned int i=0; i<n_d[0]; i++ ) {
+            for( unsigned int j=n_d[1]-oversize_; j<n_d[1] ; j++ ) {
                 ( *Bz2D )( i, j ) = ( *Bz2D )( i, j-1 );
             }
         }
@@ -322,22 +322,22 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
         //        // FORCE ZERO ELECTRIC FIELDS
         //
         //        // for Ex^(d,p)
-        //        for (unsigned int i=0; i<nx_d; i++) {
-        //            for (unsigned int j=ny_p-oversize_ ; j<ny_p ; j++) {
+        //        for (unsigned int i=0; i<n_d[0]; i++) {
+        //            for (unsigned int j=n_p[1]-oversize_ ; j<n_p[1] ; j++) {
         //                (*Ex2D)(i,j) = 0.0;
         //            }//j
         //        }//i
         //
         //        // for Ey^(p,d)
-        //        for (unsigned int i=0; i<nx_p; i++) {
-        //            for (unsigned int j=ny_d-oversize_ ; j<ny_d ; j++) {
+        //        for (unsigned int i=0; i<n_p[0]; i++) {
+        //            for (unsigned int j=n_d[1]-oversize_ ; j<n_d[1] ; j++) {
         //                (*Ey2D)(i,j) = 0.0;
         //            }//j
         //        }//i
         //
         //        // for Ez^(p,p)
-        //        for (unsigned int i=0; i<nx_p; i++) {
-        //            for (unsigned int j=ny_p-oversize_ ; j<ny_p ; j++) {
+        //        for (unsigned int i=0; i<n_p[0]; i++) {
+        //            for (unsigned int j=n_p[1]-oversize_ ; j<n_p[1] ; j++) {
         //                (*Ez2D)(i,j) = 0.0;
         //            }
         //        }
@@ -355,13 +355,13 @@ void ElectroMagnBC2D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
          // By and Bz just outside equal By and Bz just inside.
         
          // for Bx^(p,d)
-         for (unsigned int i=0 ; i<nx_p ; i++) {
-         (*Bx2D)(i,ny_d-1) = (*Bx2D)(i,ny_d-2);
+         for (unsigned int i=0 ; i<n_p[0] ; i++) {
+         (*Bx2D)(i,n_d[1]-1) = (*Bx2D)(i,n_d[1]-2);
          }//i
         
          // for Bz^(d,d)
-         for (unsigned int i=0 ; i<nx_d ; i++) {
-         (*Bz2D)(i,ny_d-1) = (*Bz2D)(i,ny_d-2);
+         for (unsigned int i=0 ; i<n_d[0] ; i++) {
+         (*Bz2D)(i,n_d[1]-1) = (*Bz2D)(i,n_d[1]-2);
          }//i
          */
         

@@ -44,8 +44,10 @@ Collisions::Collisions(
     coeff2_ = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
     
     // Open the HDF5 file
+    debug_file_ = NULL;
     if( debug_every > 0 ) {
-        debug_file_ = new H5Write( filename_, true );
+        MPI_Comm comm = MPI_COMM_WORLD;
+        debug_file_ = new H5Write( filename_, &comm );
     }
 }
 
@@ -345,11 +347,8 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             }
             
             logL = coulomb_log_;
-            double U1  = patch->rand_->uniform();
-            double U2  = patch->rand_->uniform();
-            double phi = patch->rand_->uniform_2pi();
             
-            s = one_collision( p1, i1, s1->mass_, p2, i2, s2->mass_, coeff1_, coeff3*weight_correction, coeff4*weight_correction, n123, n223, debye2, logL, U1, U2, phi );
+            s = one_collision( p1, i1, s1->mass_, p2, i2, s2->mass_, coeff1_, coeff3*weight_correction, coeff4*weight_correction, n123, n223, debye2, logL, patch->rand_ );
             
             // Handle ionization
             Ionization->apply( patch, p1, i1, p2, i2, dt_corr*weight_correction );

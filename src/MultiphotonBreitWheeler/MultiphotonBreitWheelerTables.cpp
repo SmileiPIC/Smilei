@@ -381,11 +381,11 @@ void MultiphotonBreitWheelerTables::bcastTableT( SmileiMPI *smpi )
 
     // buffer size
     if( smpi->getRank() == 0 ) {
-        MPI_Pack_size( 1, MPI_INT, smpi->getGlobalComm(), &position );
+        MPI_Pack_size( 1, MPI_INT, smpi->world(), &position );
         buf_size = position;
-        MPI_Pack_size( 2, MPI_DOUBLE, smpi->getGlobalComm(), &position );
+        MPI_Pack_size( 2, MPI_DOUBLE, smpi->world(), &position );
         buf_size += position;
-        MPI_Pack_size( T_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm(),
+        MPI_Pack_size( T_.size_photon_chi_, MPI_DOUBLE, smpi->world(),
                        &position );
         buf_size += position;
     }
@@ -393,7 +393,7 @@ void MultiphotonBreitWheelerTables::bcastTableT( SmileiMPI *smpi )
     //MESSAGE( 2,"Buffer size: " << buf_size );
 
     // Exchange buf_size with all ranks
-    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );
+    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->world() );
 
     // Packet that will contain all parameters
     char *buffer = new char[buf_size];
@@ -402,35 +402,35 @@ void MultiphotonBreitWheelerTables::bcastTableT( SmileiMPI *smpi )
     if( smpi->getRank() == 0 ) {
         position = 0;
         MPI_Pack( &T_.size_photon_chi_,
-                  1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_INT, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &T_.min_photon_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &T_.max_photon_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
 
         MPI_Pack( &T_.table_[0], T_.size_photon_chi_,
-                  MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
 
     }
 
     // Bcast all parameters
-    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->getGlobalComm() );
+    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->world() );
 
     // Other ranks unpack
     if( smpi->getRank() != 0 ) {
         position = 0;
         MPI_Unpack( buffer, buf_size, &position,
-                    &T_.size_photon_chi_, 1, MPI_INT, smpi->getGlobalComm() );
+                    &T_.size_photon_chi_, 1, MPI_INT, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &T_.min_photon_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &T_.min_photon_chi_, 1, MPI_DOUBLE, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &T_.max_photon_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &T_.max_photon_chi_, 1, MPI_DOUBLE, smpi->world() );
 
         // Resize table before unpacking values
         T_.table_.resize( T_.size_photon_chi_ );
 
         MPI_Unpack( buffer, buf_size, &position, &T_.table_[0],
-                    T_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
+                    T_.size_photon_chi_, MPI_DOUBLE, smpi->world() );
 
     }
 
@@ -465,22 +465,22 @@ void MultiphotonBreitWheelerTables::bcastTableXi( SmileiMPI *smpi )
 
     // Compute the buffer size
     if( smpi->getRank() == 0 ) {
-        MPI_Pack_size( 2, MPI_INT, smpi->getGlobalComm(), &position );
+        MPI_Pack_size( 2, MPI_INT, smpi->world(), &position );
         buf_size = position;
-        MPI_Pack_size( 2, MPI_DOUBLE, smpi->getGlobalComm(), &position );
+        MPI_Pack_size( 2, MPI_DOUBLE, smpi->world(), &position );
         buf_size += position;
-        MPI_Pack_size( xi_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm(),
+        MPI_Pack_size( xi_.size_photon_chi_, MPI_DOUBLE, smpi->world(),
                        &position );
         buf_size += position;
         MPI_Pack_size( xi_.size_photon_chi_*xi_.size_particle_chi_, MPI_DOUBLE,
-                       smpi->getGlobalComm(), &position );
+                       smpi->world(), &position );
         buf_size += position;
     }
 
     //MESSAGE( 2,"Buffer size for MPI exchange: " << buf_size );
 
     // Exchange buf_size with all ranks
-    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );
+    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->world() );
 
     // Packet that will contain all parameters
     char *buffer = new char[buf_size];
@@ -489,45 +489,45 @@ void MultiphotonBreitWheelerTables::bcastTableXi( SmileiMPI *smpi )
     if( smpi->getRank() == 0 ) {
         position = 0;
         MPI_Pack( &xi_.size_photon_chi_,
-                  1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_INT, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &xi_.size_particle_chi_,
-                  1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_INT, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &xi_.min_photon_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &xi_.max_photon_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
 
         MPI_Pack( &xi_.min_particle_chi_[0], xi_.size_photon_chi_,
-                  MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
 
         MPI_Pack( &xi_.table_[0], xi_.size_particle_chi_*xi_.size_photon_chi_,
-                  MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
     }
 
     // Bcast all parameters
-    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->getGlobalComm() );
+    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->world() );
 
     // Other ranks unpack
     if( smpi->getRank() != 0 ) {
         position = 0;
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.size_photon_chi_, 1, MPI_INT, smpi->getGlobalComm() );
+                    &xi_.size_photon_chi_, 1, MPI_INT, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.size_particle_chi_, 1, MPI_INT, smpi->getGlobalComm() );
+                    &xi_.size_particle_chi_, 1, MPI_INT, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.min_photon_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &xi_.min_photon_chi_, 1, MPI_DOUBLE, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.max_photon_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &xi_.max_photon_chi_, 1, MPI_DOUBLE, smpi->world() );
 
         // Resize tables before unpacking values
         xi_.min_particle_chi_.resize( xi_.size_photon_chi_ );
         xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
 
         MPI_Unpack( buffer, buf_size, &position, &xi_.min_particle_chi_[0],
-                    xi_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
+                    xi_.size_photon_chi_, MPI_DOUBLE, smpi->world() );
 
         MPI_Unpack( buffer, buf_size, &position, &xi_.table_[0],
-                    xi_.size_particle_chi_*xi_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
+                    xi_.size_particle_chi_*xi_.size_photon_chi_, MPI_DOUBLE, smpi->world() );
     }
 
     delete[] buffer;

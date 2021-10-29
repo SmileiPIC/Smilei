@@ -24,7 +24,6 @@
 
 #include "DomainDecompositionFactory.h"
 #include "Hilbert_functions.h"
-#include "PatchesFactory.h"
 #include "SpeciesFactory.h"
 #include "ParticleInjectorFactory.h"
 #include "Particles.h"
@@ -113,7 +112,7 @@ void Patch::initStep1( Params &params )
     }
     
     // Initialize the random number generator
-    rand_ = new Random( params.random_seed );
+    rand_ = new Random( params.random_seed + hindex );
     
     // Obtain the cell_volume
     cell_volume = params.cell_volume;
@@ -132,8 +131,8 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
     cell_starting_global_index.resize( params.nDim_field, 0 );
     radius = 0.;
     for( unsigned int i = 0 ; i<params.nDim_field ; i++ ) {
-        min_local[i] = ( Pcoordinates[i] )*( params.n_space[i]*params.cell_length[i] );
-        max_local[i] = ( ( Pcoordinates[i]+1 ) )*( params.n_space[i]*params.cell_length[i] );
+        min_local[i] = ( Pcoordinates[i]   )*( params.n_space[i]*params.cell_length[i] );
+        max_local[i] = ( Pcoordinates[i]+1 )*( params.n_space[i]*params.cell_length[i] );
         cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
         cell_starting_global_index[i] -= params.oversize[i];
         center[i] = ( min_local[i]+max_local[i] )*0.5;

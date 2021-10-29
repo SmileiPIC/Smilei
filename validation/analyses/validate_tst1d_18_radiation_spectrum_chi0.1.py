@@ -134,3 +134,7 @@ Validate("Radiation Spectrum (noRR)", spc_noRR, 1.e-6)
 #spc_cLL
 #spc_FP
 #spc_MC
+
+
+max_spectrum_error = np.abs( S.RadiationSpectrum("#0+#1+#2+#3-#4").getData() ).max()
+Validate( "Radiation spectrum max error with multiple species", max_spectrum_error, 1e-7)

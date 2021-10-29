@@ -1356,7 +1356,7 @@ void ElectroMagn2D::computePoynting()
         unsigned int jBy=istart[1][By2D_m->isDual( 1 )];
         
         poynting_inst[0][0] = 0.;
-        for( unsigned int j=0; j<=bufsize[1][Ez2D->isDual( 1 )]; j++ ) {
+        for( unsigned int j=0; j<bufsize[1][Ez2D->isDual( 1 )]; j++ ) {
         
             double Ey__ = 0.5*( ( *Ey2D )( iEy, jEy+j ) + ( *Ey2D )( iEy, jEy+j+1 ) );
             double Bz__ = 0.25*( ( *Bz2D_m )( iBz, jBz+j )+( *Bz2D_m )( iBz+1, jBz+j )+( *Bz2D_m )( iBz, jBz+j+1 )+( *Bz2D_m )( iBz+1, jBz+j+1 ) );
@@ -1383,7 +1383,7 @@ void ElectroMagn2D::computePoynting()
         unsigned int jBy=istart[1][By2D_m->isDual( 1 )];
         
         poynting_inst[1][0] = 0.;
-        for( unsigned int j=0; j<=bufsize[1][Ez2D->isDual( 1 )]; j++ ) {
+        for( unsigned int j=0; j<bufsize[1][Ez2D->isDual( 1 )]; j++ ) {
         
             double Ey__ = 0.5*( ( *Ey2D )( iEy, jEy+j ) + ( *Ey2D )( iEy, jEy+j+1 ) );
             double Bz__ = 0.25*( ( *Bz2D_m )( iBz, jBz+j )+( *Bz2D_m )( iBz+1, jBz+j )+( *Bz2D_m )( iBz, jBz+j+1 )+( *Bz2D_m )( iBz+1, jBz+j+1 ) );
@@ -1409,7 +1409,7 @@ void ElectroMagn2D::computePoynting()
         unsigned int jBz=istart[1][Bz_m->isDual( 1 )];
         
         poynting_inst[0][1] = 0.;
-        for( unsigned int i=0; i<=bufsize[0][Ez2D->isDual( 0 )]; i++ ) {
+        for( unsigned int i=0; i<bufsize[0][Ez2D->isDual( 0 )]; i++ ) {
             double Ez__ = ( *Ez2D )( iEz+i, jEz );
             double Bx__ = 0.5*( ( *Bx2D_m )( iBx+i, jBx ) + ( *Bx2D_m )( iBx+i, jBx+1 ) );
             double Ex__ = 0.5*( ( *Ex2D )( iEx+i, jEx ) + ( *Ex2D )( iEx+i+1, jEx ) );
@@ -1435,7 +1435,7 @@ void ElectroMagn2D::computePoynting()
         unsigned int jBz=istart[1][Bz2D_m->isDual( 1 )] + offset;
         
         poynting_inst[1][1] = 0.;
-        for( unsigned int i=0; i<=bufsize[0][Ez_->isDual( 0 )]; i++ ) {
+        for( unsigned int i=0; i<bufsize[0][Ez_->isDual( 0 )]; i++ ) {
             double Ez__ = ( *Ez2D )( iEz+i, jEz );
             double Bx__ = 0.5*( ( *Bx2D_m )( iBx+i, jBx ) + ( *Bx2D_m )( iBx+i, jBx+1 ) );
             double Ex__ = 0.5*( ( *Ex2D )( iEx+i, jEx ) + ( *Ex2D )( iEx+i+1, jEx ) );
@@ -1451,25 +1451,38 @@ void ElectroMagn2D::computePoynting()
 
 void ElectroMagn2D::applyExternalField( Field *my_field,  Profile *profile, Patch *patch )
 {
-
     Field2D *field2D=static_cast<Field2D *>( my_field );
     
     vector<double> pos( 2, 0 );
     pos[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
     double pos1 = dy*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
-    int N0 = ( int )field2D->dims()[0];
-    int N1 = ( int )field2D->dims()[1];
     
-    // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
-    for( int i=0 ; i<N0 ; i++ ) {
+    vector<Field *> xyz( 2 );
+    vector<unsigned int> dims = { field2D->dims_[0], field2D->dims_[1], 1 };
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        xyz[idim] = new Field3D( dims );
+    }
+    
+    for( unsigned int i=0 ; i<dims[0] ; i++ ) {
         pos[1] = pos1;
-        for( int j=0 ; j<N1 ; j++ ) {
-            ( *field2D )( i, j ) += profile->valueAt( pos );
+        for( unsigned int j=0 ; j<dims[1] ; j++ ) {
+            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+                ( *xyz[idim] )( i, j ) = pos[idim];
+            }
             pos[1] += dy;
         }
         pos[0] += dx;
     }
     
+    vector<double> global_origin = { 
+        dx * ( ( field2D->isDual( 0 )?-0.5:0. ) - oversize[0] ),
+        dy * ( ( field2D->isDual( 1 )?-0.5:0. ) - oversize[1] )
+    };
+    profile->valuesAt( xyz, global_origin, *field2D, 1 );
+    
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        delete xyz[idim];
+    }
 }
 
 void ElectroMagn2D::applyPrescribedField( Field *my_field,  Profile *profile, Patch *patch, double time )
@@ -1480,17 +1493,33 @@ void ElectroMagn2D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
     vector<double> pos( 2, 0 );
     pos[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
     double pos1 = dy*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
-    int N0 = ( int )field2D->dims()[0];
-    int N1 = ( int )field2D->dims()[1];
     
-    // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
-    for( int i=0 ; i<N0 ; i++ ) {
+    // Create the x,y,z maps where profiles will be evaluated
+    vector<Field *> xyz( 2 );
+    vector<unsigned int> dims = { field2D->dims_[0], field2D->dims_[1] };
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        xyz[idim] = new Field2D( dims );
+    }
+    
+    for( unsigned int i=0 ; i<dims[0] ; i++ ) {
         pos[1] = pos1;
-        for( int j=0 ; j<N1 ; j++ ) {
-            ( *field2D )( i, j ) += profile->valueAt( pos, time );
+        for( unsigned int j=0 ; j<dims[1] ; j++ ) {
+            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+                ( *xyz[idim] )( i, j ) = pos[idim];
+            }
             pos[1] += dy;
         }
         pos[0] += dx;
+    }
+    
+    vector<double> global_origin = { 
+        dx * ( ( field2D->isDual( 0 )?-0.5:0. ) - oversize[0] ),
+        dy * ( ( field2D->isDual( 1 )?-0.5:0. ) - oversize[1] )
+    };
+    profile->valuesAt( xyz, global_origin, *field2D, 3, time );
+    
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        delete xyz[idim];
     }
     
 }

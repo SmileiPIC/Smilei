@@ -33,14 +33,14 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
         try_numpy = true; // use numpy for quicker initialisation in 3D
     }
     
-    profile_ = new Profile( profile, params.nDim_field+1, "envelope", try_numpy );
+    profile_ = new Profile( profile, params.nDim_field+1, "envelope", params, try_numpy );
     // params.Laser_Envelope_model = true;
     
     ostringstream name( "" );
     name << "Laser Envelope " << endl;
     ostringstream info( "" );
-
-    // extract laser frequency 
+    
+    // extract laser frequency
     PyTools::extract( "omega", omega, "LaserEnvelope" );
     info << "\t\tomega : " << omega << endl;
 
@@ -82,7 +82,7 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     one_ov_2dx      = 1./2./cell_length[0];
 
     
-    delta = ( 1.-pow((timestep/cell_length[0]),2)) / 3. ;    
+    delta = ( 1.-pow((timestep/cell_length[0]),2)) / 3. ;
 
     info << "\t Laser Envelope parameters: "<< endl;
     // envelope solver
@@ -202,7 +202,7 @@ LaserEnvelope::~LaserEnvelope()
     }
     if( GradPhiy_m ) {
         delete GradPhiy_m;
-    }  
+    }
     if( GradPhiz_ ) {
         delete GradPhiz_;
     }
@@ -255,8 +255,3 @@ void LaserEnvelope::boundaryConditions( int itime, double time_dual, Patch *patc
     }
     
 } // end LaserEnvelope::boundaryConditions
-
-
-
-
-

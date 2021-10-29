@@ -296,8 +296,8 @@ For both methods, the implemented algorithm is very similar.
     Then, for each sub-group:
 
     1. Division of the macro-particles of the sub-groupinto
-       packets (size depends on the user parameters `merge_min_packet_size`
-       and `merge_max_packet_size`)
+       packets (size depends on the user parameters ``merge_min_packet_size``
+       and ``merge_max_packet_size``)
     2. Merge of the packs using the previously described Vranic algorithm.
        Partly vectorized.
     3. Creation of the merged macro-particles at the position

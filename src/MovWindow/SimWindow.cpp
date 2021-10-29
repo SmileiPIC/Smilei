@@ -98,7 +98,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     if( ! isMoving( time_dual ) && itime != additional_shifts_iteration ) {
         return;
     }
-    
+ 
     unsigned int h0;
     //double energy_field_lost( 0. );
     //std::vector<double> energy_part_lost( vecPatches( 0 )->vecSpecies.size(), 0. );
@@ -171,7 +171,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 if( mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL ) {
                     if ( vecPatches_old[ipatch]->Pcoordinates[0]!=0 ) {
                         send_patches_.push_back( mypatch ); // Stores pointers to patches to be sent later
-                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] ) * nmessage, params );
+                        int Href_receiver = 0;
+                        for (int irk = 0; irk < mypatch->MPI_neighbor_[0][0]; irk++) Href_receiver += smpi->patch_count[irk];
+                        // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
+                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] - Href_receiver ) * nmessage, params );
                     }
                 }
             } else { //In case my left neighbor belongs to me:
@@ -224,7 +227,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             //Receive Patch if necessary
             if( mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL ) {
                 if ( mypatch->Pcoordinates[0]!=params.number_of_patches[0]-1 ) {
-                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex )*nmessage, params );
+                    // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
+                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex - vecPatches.refHindex_ )*nmessage, params );
                     patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
                 }
             }
@@ -238,7 +242,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 }
                 mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
                 mypatch->EMfields->laserDisabled();
-                if (!params.uncoupled_grids)
+                if (!params.multiple_decomposition)
                     mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
             }
             
@@ -284,7 +288,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 }
                 mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
                 mypatch->EMfields->laserDisabled();
-                if (!params.uncoupled_grids)
+                if (!params.multiple_decomposition)
                     mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
             }
             if( mypatch->wasXmax( params ) ) {
@@ -425,12 +429,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
                     
                     // If new particles are required
-                    if( patch_particle_created[ithread][j] ) {
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             mypatch->vecSpecies[ispec]->computeParticleCellKeys( params );
                             mypatch->vecSpecies[ispec]->sortParticles( params , mypatch);
                         }
-                    } // end test patch_particle_created[ithread][j]
                 } // end j loop
             } // End ithread loop
             //}
@@ -594,7 +596,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     #pragma omp barrier
     #pragma omp master
     {
-        if (params.uncoupled_grids) {
+        if (params.multiple_decomposition) {
             if ( params.geometry != "AMcylindrical" )
                 operate(region, vecPatches, smpi, params, time_dual);
             else {
@@ -605,7 +607,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     #pragma omp barrier
 
 
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         if ( params.geometry != "AMcylindrical" ) {
             // warkaround for !params.full_B_exchange (in 3D, with SM some border elements are not computed)
             SyncVectorPatch::exchangeE( params, region.vecPatch_, smpi );
@@ -655,7 +657,7 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
 
     // Deadlock if moving window & load balancing enabled
     //     Recompute patch distribution does not change
-    //if (params.uncoupled_grids) {
+    //if (params.multiple_decomposition) {
     //    region.reset_mapping();
     //    region.identify_additional_patches( smpi, vecPatches, params );
     //    region.identify_missing_patches( smpi, vecPatches, params );
@@ -701,7 +703,7 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
 
     // Deadlock if moving window & load balancing enabled
     //     Recompute patch distribution does not change
-    //if (params.uncoupled_grids) {
+    //if (params.multiple_decomposition) {
     //    region.reset_mapping();
     //    region.identify_additional_patches( smpi, vecPatches, params );
     //    region.identify_missing_patches( smpi, vecPatches, params );

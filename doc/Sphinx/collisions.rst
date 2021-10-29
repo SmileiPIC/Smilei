@@ -50,7 +50,20 @@ given in the input file:
   the calculation of the Coulomb Logarithm, the last parenthesis is
   written as a squared expression, but should not.
 
-
+* The deflection angle distribution given by [Nanbu1997]_
+  (which is basically a fit from Monte-Carlo simulations)
+  is modified for better accuracy and performance.
+  Given Nanbu's :math:`s` parameter and a random number :math:`U\in [0,1]`,
+  the deflection angle :math:`\chi` is:
+  
+  .. math::
+  
+    \sin^2\frac\chi 2 = \begin{cases} 
+    \alpha U/\sqrt{1-U + \alpha^2 U} &, s < 4\\
+    1-U &, \textrm{otherwise}
+    \end{cases}
+    
+  where :math:`\alpha = 0.37 s-0.005 s^2-0.0064 s^3`.
 
 ----
 
@@ -449,7 +462,7 @@ increases the number of reactions to ensure enough statistics. The weights
 of the products are adjusted accordingly, and the reactants are not destroyed
 in the process: we simply decrease their weight by the same amount.
 
-In Smilei, this factor `R` can be forced by the user to some value, but by
+In Smilei, this factor *R* can be forced by the user to some value, but by
 default, it is automatically adjusted so that the final number of created particles
 approches the initial number of pairs.
 

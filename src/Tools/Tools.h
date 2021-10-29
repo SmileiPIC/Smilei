@@ -109,7 +109,7 @@ class Tools
 {
 public:
     static void printMemFootPrint( std::string tag );
-    static double getMemFootPrint();
+    static double getMemFootPrint(int type_of_memory);
     
     //! Converts a number of Bytes in a readable string in KiB, MiB, GiB or TiB
     static std::string printBytes( uint64_t nbytes );

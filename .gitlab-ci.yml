@@ -1,113 +1,172 @@
 stages:
-    - compile
-    - makerun
-    - use_picsar
+    - install
+    - compile_default
+    - run_default
+    - compile_picsar
+    - run_picsar
+    - compile_debug
+    - compile_no_mpi_threadmultiple
+    - compile_no_openmp
 
-compile:
-  stage: compile
+install:
+  stage: install
   only:
     - develop
-    - refactor_for_GPU
+    - cell_sorting_flag
 
   script:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
     - env
-    - if [ -d /sps2/gitlab-runner/$CI_PIPELINE_ID ] ; then rm -rf /sps2/gitlab-runner/$CI_PIPELINE_ID ; fi
+    - if [ -d /sps/gitlab-runner/$CI_PIPELINE_ID ] ; then rm -rf /sps/gitlab-runner/$CI_PIPELINE_ID ; fi
     # Move in test dir
-    - mkdir -p /sps2/gitlab-runner/$CI_PIPELINE_ID
-    - cp -r $CI_PROJECT_DIR /sps2/gitlab-runner/$CI_PIPELINE_ID
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - mkdir -p /sps/gitlab-runner/$CI_PIPELINE_ID
+    - cp -r $CI_PROJECT_DIR /sps/gitlab-runner/$CI_PIPELINE_ID
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
     # Set the environment
     - make uninstall_happi
     - make happi
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run validation script
-    - python validation.py -c  -v -l "/sps2/gitlab-runner/logs"
 
-makerun1D:
-  stage: makerun
+compile_default:
+  stage: compile_default
   only:
     - develop
-    - refactor_for_GPU
-    
-  script:
-    # Move in test dir
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run validation script
-    - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
-    - python validation.py -b "tst_ionization_current_1d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
-
-makerun2D:
-  stage: makerun
-  only:
-    - develop
-    - refactor_for_GPU
+    - cell_sorting_flag
 
   script:
     # Move in test dir
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1 -l "/sps2/gitlab-runner/logs"
-    - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -c  -v -l "/sps/gitlab-runner/logs" -t "00:30:00"
 
-makerun3D:
-  stage: makerun
+run1D:
+  stage: run_default
   only:
     - develop
-    - refactor_for_GPU
+    - cell_sorting_flag
 
   script:
     # Move in test dir
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps2/gitlab-runner/logs"
-    - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_1d*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
 
-makerunAM:
-  stage: makerun
+run2D:
+  stage: run_default
   only:
     - develop
-    - refactor_for_GPU
-    
-  script:
-    # Move in test dir
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run validation script
-    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -l "/sps2/gitlab-runner/logs"
-
-makerunV:
-  stage: makerun
-  only:
-    - develop
-    - refactor_for_GPU
+    - cell_sorting_flag
 
   script:
     # Move in test dir
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst?d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst2d_s_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst2d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
 
-makerunCollisions:
-  stage: makerun
+run3D:
+  stage: run_default
   only:
     - develop
-    - refactor_for_GPU
-    
+    - cell_sorting_flag
+
   script:
     # Move in test dir
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run validation script
+    - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst3d_s_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst3d_v_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst3d_a_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
+
+runAM:
+  stage: run_default
+  only:
+    - develop
+    - cell_sorting_flag
+
+  script:
+    # Move in test dir
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run validation script
+    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -t 00:30:00 -l "/sps/gitlab-runner/logs"
+
+#runV:
+#  stage: run_default
+#  only:
+#    - develop
+#    - pusher_cleaning
+
+#  script:
+#    # Move in test dir
+#    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+#    # Run validation script
+
+runCollisions:
+  stage: run_default
+  only:
+    - develop
+    - cell_sorting_flag
+
+  script:
+    # Move in test dir
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
-    - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps2/gitlab-runner/logs"
+    - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
 
-use_picsar:
-  stage: use_picsar
+compile_picsar:
+  stage: compile_picsar
   only:
     - develop
-    - refactor_for_GPU
+    - cell_sorting_flag
 
   script:
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - python validation/validation.py -k picsar -c -v
+
+run_picsar:
+  stage: run_picsar
+  only:
+    - develop
+    - cell_sorting_flag
+
+  script:
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
+
+compile_debug:
+  stage: compile_debug
+  only:
+    - develop
+    - cell_sorting_flag
+
+  script:
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make clean
+    - python validation/validation.py -k debug -c -v
+
+compile_no_mpi_threadmultiple:
+  stage: compile_no_mpi_threadmultiple
+  only:
+    - develop
+    - cell_sorting_flag
+  script:
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make clean
+    - python validation/validation.py -k no_mpi_tm -c -v
+
+compile_no_openmp:
+  stage: compile_no_openmp
+  only:
+    - develop
+    - cell_sorting_flag
+
+  script:
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make clean
+    - python validation/validation.py -k noopenmp -c -v

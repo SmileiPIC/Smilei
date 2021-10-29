@@ -113,7 +113,7 @@ void SpeciesVAdaptiveMixedSort::computeParticleCellKeys( Params &params )
     nparts = particles->size();
 
     // Cell_keys is resized at the current number of particles
-    particles->cell_keys.resize( nparts );
+    particles->resizeCellKeys( nparts );
 
     // Reinitialize count to 0
     for( unsigned int ic=0; ic < count.size() ; ic++ ) {

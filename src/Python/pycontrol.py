@@ -6,7 +6,8 @@
 
 gc.collect()
 import math
-import glob, re
+from glob import glob
+from re import search
 
 def _mkdir(role, path):
     if not os.path.exists(path):
@@ -32,19 +33,20 @@ def _prepare_checkpoint_dir():
 
 def _smilei_check():
     """Do checks over the script"""
+    
     # Verify classes were not overriden
     for CheckClassName in ["SmileiComponent","Species", "Laser","Collisions",
             "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields",
             "DiagTrackParticles","DiagPerformances","ExternalField","PrescribedField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
             "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler",
-            "Vectorization"]:
+            "Vectorization", "MultipleDecomposition"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
-
+    
     # Checkpoint: Verify the restart_dir and find possible restart file for each rank
     if len(Checkpoints)==1 and Checkpoints.restart_dir:
         if len(Checkpoints.restart_files) == 0 :
@@ -52,13 +54,13 @@ def _smilei_check():
             pattern = Checkpoints.restart_dir + os.sep + "checkpoints" + os.sep
             if Checkpoints.file_grouping:
                 pattern += "*"+ os.sep
-            pattern += "dump-*-*.h5";
+            pattern += "dump-*-*.h5"
             # pick those file that match the mpi rank
-            files = filter(lambda a: smilei_mpi_rank==int(re.search(r'dump-[0-9]*-([0-9]*).h5$',a).groups()[-1]), glob.glob(pattern))
+            files = filter(lambda a: smilei_mpi_rank==int(search(r'dump-[0-9]*-([0-9]*).h5$',a).groups()[-1]), glob(pattern))
             
             if Checkpoints.restart_number is not None:
                 # pick those file that match the restart_number
-                files = filter(lambda a: Checkpoints.restart_number==int(re.search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]), files)
+                files = filter(lambda a: Checkpoints.restart_number==int(search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]), files)
             
             Checkpoints.restart_files = list(files)
             
@@ -71,10 +73,11 @@ def _smilei_check():
             
         else :
             raise Exception("restart_dir and restart_files are both not empty")
-
+    
     # Verify that constant() and tconstant() were not redefined
     if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):
         raise Exception("Names `constant` and `tconstant` cannot be overriden")
+    
     # Convert float profiles to constant() or tconstant()
     def toSpaceProfile(input):
         try   : return constant(input*1.)
@@ -110,6 +113,7 @@ def _smilei_check():
         s.particles_per_cell = toSpaceProfile(s.particles_per_cell )
         s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
         s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
+
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
@@ -142,8 +146,8 @@ def _keep_python_running():
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True
-    # Verify uncoupled grids
-    if len(LoadBalancing)>0 and Main.uncoupled_grids:
+    # Verify SDMD grids
+    if len(LoadBalancing)>0 and len(MultipleDecomposition)>0:
         return True
     # Verify the tracked species that require a particle selection
     for d in DiagTrackParticles:

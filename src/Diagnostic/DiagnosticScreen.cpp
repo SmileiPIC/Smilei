@@ -29,8 +29,10 @@ DiagnosticScreen::DiagnosticScreen(
         screen_type = 0;
     } else if( screen_shape == "sphere" ) {
         screen_type = 1;
+    } else if( screen_shape == "cylinder" ) {
+        screen_type = 2;
     } else {
-        ERROR( errorPrefix << ": parameter `shape` must be 'plane' or 'sphere'" );
+        ERROR( errorPrefix << ": parameter `shape` must be 'plane', 'sphere' or 'cylinder'" );
     }
     
     // get parameter "point" that determines the plane reference point, or the sphere center
@@ -52,6 +54,7 @@ DiagnosticScreen::DiagnosticScreen(
     if( screen_vector.size() != params.nDim_particle ) {
         ERROR( errorPrefix << ": parameter `vector` must have "<<params.nDim_particle<<" elements in "<<params.nDim_particle<<"D" );
     }
+    
     // Calculate the unit vector
     screen_unitvector.resize( params.nDim_particle, 0. );
     screen_vectornorm = 0.;
@@ -65,6 +68,7 @@ DiagnosticScreen::DiagnosticScreen(
     for( unsigned int i=0; i<params.nDim_particle; i++ ) {
         screen_unitvector[i] = screen_vector[i]/screen_vectornorm;
     }
+    
     // Calculate other unit vectors to form an orthogonal base
     screen_vector_a.resize( params.nDim_particle, 0. );
     screen_vector_b.resize( params.nDim_particle, 0. );
@@ -86,7 +90,7 @@ DiagnosticScreen::DiagnosticScreen(
         screen_vector_b[2] = screen_unitvector[0]*screen_vector_a[1] - screen_unitvector[1]*screen_vector_a[0];
     }
     
-    // get parameter "oriented", true if particles coming from the other side count negatively
+    // get parameter "direction"
     PyTools::extract( "direction", direction, "DiagScreen", diagId );
     if( direction=="both" ) {
         direction_type = 0;
@@ -110,18 +114,30 @@ DiagnosticScreen::DiagnosticScreen(
                 coefficients[idim] = screen_point[idim];
             }
             if( type == "a" ) {
+                if( screen_type == 1 ) {
+                    ERROR( errorPrefix << ": axis `a` not available for`" << screen_shape << "` screen" );
+                }
                 for( idim=0; idim<params.nDim_particle; idim++ ) {
-                    coefficients[params.nDim_particle+idim] = screen_vector_a[idim];
+                    coefficients[params.nDim_particle+idim] = (screen_type == 0) ? screen_vector_a[idim] : screen_unitvector[idim];
                 }
             } else if( type == "b" ) {
+                if( screen_type > 0 ) {
+                    ERROR( errorPrefix << ": axis `b` not available for `" << screen_shape << "` screen" );
+                }
                 for( idim=0; idim<params.nDim_particle; idim++ ) {
                     coefficients[params.nDim_particle+idim] = screen_vector_b[idim];
                 }
             } else if( type == "theta" ) {
+                if( screen_type != 1 ) {
+                    ERROR( errorPrefix << ": axis `theta` not available for `" << screen_shape << "` screen" );
+                }
                 for( idim=0; idim<params.nDim_particle; idim++ ) {
                     coefficients[params.nDim_particle+idim] = screen_vector[idim] / pow( screen_vectornorm, 2 );
                 }
             } else if( type == "phi" ) {
+                if( screen_type == 0 ) {
+                    ERROR( errorPrefix << ": axis `phi` not available for `" << screen_shape << "` screen" );
+                }
                 coefficients.resize( params.nDim_particle * 3 );
                 for( idim=0; idim<params.nDim_particle; idim++ ) {
                     coefficients[params.nDim_particle+idim] = screen_vector_a[idim];
@@ -144,7 +160,7 @@ DiagnosticScreen::~DiagnosticScreen()
 } // END DiagnosticScreen::~DiagnosticScreen
 
 
-bool DiagnosticScreen::prepare( int timestep )
+bool DiagnosticScreen::prepare( int itime )
 {
 
     // This diag always runs, but the output is not done at every timestep
@@ -154,120 +170,175 @@ bool DiagnosticScreen::prepare( int timestep )
 
 
 // run one screen diagnostic
-void DiagnosticScreen::run( Patch *patch, int timestep, SimWindow *simWindow )
+void DiagnosticScreen::run( Patch *patch, int itime, SimWindow *simWindow )
 {
 
-    vector<int> int_buffer;
-    vector<double> double_buffer;
-    vector<bool> opposite;
-    unsigned int npart, ndim = screen_point.size(), ipart, idim, nuseful;
-    double side, side_old, dtg;
+    unsigned int ndim = screen_point.size();
     
     // Verify that this patch is in a useful region for this diag
     if( screen_type == 0 ) { // plane
         double distance_to_plane = 0.;
-        for( idim=0; idim<ndim; idim++ ) {
+        for( unsigned int idim=0; idim<ndim; idim++ ) {
             distance_to_plane += ( patch->center[idim] - screen_point[idim] ) * screen_unitvector[idim];
         }
         if( abs( distance_to_plane ) > patch->radius ) {
             return;
         }
-    } else { // sphere
+    } else if( screen_type == 1 ) { // sphere
         double distance_to_center = 0.;
-        for( idim=0; idim<ndim; idim++ ) {
+        for( unsigned int idim=0; idim<ndim; idim++ ) {
             distance_to_center += pow( patch->center[idim] - screen_point[idim], 2 );
         }
         distance_to_center = sqrt( distance_to_center );
         if( abs( screen_vectornorm - distance_to_center ) > patch->radius ) {
             return;
         }
+    } else if( screen_type == 2 ) { // cylinder
+        double distance_to_axis = 0.;
+        for( unsigned int idim=0; idim<ndim; idim++ ) {
+            distance_to_axis += pow( 
+                 ( patch->center[(idim+1)%ndim] - screen_point[(idim+1)%ndim] ) * screen_unitvector[(idim+2)%ndim]
+                -( patch->center[(idim+2)%ndim] - screen_point[(idim+2)%ndim] ) * screen_unitvector[(idim+1)%ndim]
+                , 2 );
+        }
+        distance_to_axis = sqrt( distance_to_axis );
+        if( abs( screen_vectornorm - distance_to_axis ) > patch->radius ) {
+            return;
+        }
+    } else {
+        ERROR( "unkown screen_type " << screen_type );
     }
     
-    // loop species
-    for( unsigned int ispec=0 ; ispec < species.size() ; ispec++ ) {
+    // Calculate the total number of particles in this patch and resize buffers
+    unsigned int npart_total = 0;
+    vector<Species *> species;
+    for( unsigned int ispec=0 ; ispec < species_indices.size() ; ispec++ ) {
+        Species *s = patch->vecSpecies[species_indices[ispec]];
+        species.push_back( s );
+        npart_total += s->getNbrOfParticles();
+    }
+    vector<int> int_buffer( npart_total, 0 );
+    vector<double> double_buffer( npart_total );
+    bool opposite[npart_total]; // cannot use vector<bool>
+    for( unsigned int i=0; i<npart_total; i++ ) {
+        opposite[i] = false;
+    }
     
-        Species *s = patch->vecSpecies[species[ispec]];
-        npart = s->particles->size();
-        nuseful = 0;
-        int_buffer   .resize( npart );
-        double_buffer.resize( npart );
-        opposite     .resize( npart, false );
-        
+    // loop species & find crossing particles
+    unsigned int nuseful = 0;
+    unsigned int istart = 0;
+    for( unsigned int ispec=0 ; ispec < species_indices.size() ; ispec++ ) {
+    
+        Species *s = patch->vecSpecies[species_indices[ispec]];
+        unsigned int npart = s->getNbrOfParticles();
+        int *index = &int_buffer[istart];
+        bool *opp = &opposite[istart];
+       
         // Fill the int_buffer with -1 (not crossing screen) and 0 (crossing screen)
         if( screen_type == 0 ) { // plane
-            for( ipart=0; ipart<npart; ipart++ ) {
-                side = 0.;
-                side_old = 0.;
-                dtg = dt / s->particles->LorentzFactor( ipart );
-                for( idim=0; idim<ndim; idim++ ) {
+            for( unsigned int ipart=0; ipart<npart; ipart++ ) {
+                double side = 0.;
+                double side_old = 0.;
+                double dtg = dt / s->particles->LorentzFactor( ipart );
+                for( unsigned int idim=0; idim<ndim; idim++ ) {
                     side += ( s->particles->Position[idim][ipart] - screen_point[idim] ) * screen_unitvector[idim];
                     side_old += ( s->particles->Position[idim][ipart] - dtg*( s->particles->Momentum[idim][ipart] ) - screen_point[idim] ) * screen_unitvector[idim];
                 }
                 if( side*side_old < 0. ) {
-                    int_buffer[ipart] = 0;
+                    index[ipart] = 0;
                     nuseful++;
                     if( side < 0. ) {
-                        opposite[ipart] = true;
+                        opp[ipart] = true;
                     }
                 } else {
-                    int_buffer[ipart] = -1;
+                    index[ipart] = -1;
                 }
             }
-        } else { // sphere
-            for( ipart=0; ipart<npart; ipart++ ) {
-                side = 0.;
-                side_old = 0.;
-                dtg = dt / s->particles->LorentzFactor( ipart );
-                for( idim=0; idim<ndim; idim++ ) {
+        } else if( screen_type == 1 ) { // sphere
+            for( unsigned int ipart=0; ipart<npart; ipart++ ) {
+                double side = 0.;
+                double side_old = 0.;
+                double dtg = dt / s->particles->LorentzFactor( ipart );
+                for( unsigned int idim=0; idim<ndim; idim++ ) {
                     side += pow( s->particles->Position[idim][ipart] - screen_point[idim], 2 );
                     side_old += pow( s->particles->Position[idim][ipart] - dtg*( s->particles->Momentum[idim][ipart] ) - screen_point[idim], 2 );
                 }
                 side     = screen_vectornorm-sqrt( side );
                 side_old = screen_vectornorm-sqrt( side_old );
                 if( side*side_old < 0. ) {
-                    int_buffer[ipart] = 0;
+                    index[ipart] = 0;
                     nuseful++;
                     if( side > 0. ) {
-                        opposite[ipart] = true;
+                        opp[ipart] = true;
                     }
                 } else {
-                    int_buffer[ipart] = -1;
+                    index[ipart] = -1;
+                }
+            }
+        } else { // cylinder
+            double r2 = screen_vectornorm * screen_vectornorm;
+            for( unsigned int ipart=0; ipart<npart; ipart++ ) {
+                double side = 0.;
+                double side_old = 0.;
+                double dtg = dt / s->particles->LorentzFactor( ipart );
+                for( unsigned int idim=0; idim<ndim; idim++ ) {
+                    double u1 = s->particles->Position[(idim+1)%ndim][ipart] - screen_point[(idim+1)%ndim];
+                    double u2 = s->particles->Position[(idim+2)%ndim][ipart] - screen_point[(idim+2)%ndim];
+                    side += pow( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim], 2 );
+                    u1 -= dtg * s->particles->Momentum[(idim+1)%ndim][ipart];
+                    u2 -= dtg * s->particles->Momentum[(idim+1)%ndim][ipart];
+                    side_old += pow( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim], 2 );
+                }
+                side     = r2 - side;
+                side_old = r2 - side_old;
+                if( side*side_old < 0. ) {
+                    index[ipart] = 0;
+                    nuseful++;
+                    if( side > 0. ) {
+                        opp[ipart] = true;
+                    }
+                } else {
+                    index[ipart] = -1;
                 }
             }
         }
         
-        if( nuseful == 0 ) {
-            continue;
-        }
-        
-        histogram->digitize( s, double_buffer, int_buffer, simWindow );
-        histogram->valuate( s, double_buffer, int_buffer );
-        
-        if( direction_type == 1 ) { // canceling
-            for( ipart=0; ipart<npart; ipart++ )
-                if( opposite[ipart] ) {
-                    double_buffer[ipart] = -double_buffer[ipart];
-                }
-        } else if( direction_type == 2 ) { // forward
-            for( ipart=0; ipart<npart; ipart++ )
-                if( opposite[ipart] ) {
-                    double_buffer[ipart] = 0.;
-                }
-        } else if( direction_type == 3 ) { // backward
-            for( ipart=0; ipart<npart; ipart++ )
-                if( int_buffer[ipart]>=0 && !opposite[ipart] ) {
-                    double_buffer[ipart] = 0.;
-                }
-        }
-        
-        histogram->distribute( double_buffer, int_buffer, data_sum );
-        
+        istart += npart;
     }
+    
+    if( nuseful == 0 ) {
+        return;
+    }
+    
+    histogram->digitize( species, double_buffer, int_buffer, simWindow );
+    histogram->valuate( species, double_buffer, int_buffer );
+    
+    if( direction_type == 1 ) { // canceling
+        for( unsigned int ipart=0; ipart<npart_total; ipart++ ) {
+            if( opposite[ipart] ) {
+                double_buffer[ipart] = -double_buffer[ipart];
+            }
+        }
+    } else if( direction_type == 2 ) { // forward
+        for( unsigned int ipart=0; ipart<npart_total; ipart++ ) {
+            if( opposite[ipart] ) {
+                double_buffer[ipart] = 0.;
+            }
+        }
+    } else if( direction_type == 3 ) { // backward
+        for( unsigned int ipart=0; ipart<npart_total; ipart++ ) {
+            if( int_buffer[ipart]>=0 && !opposite[ipart] ) {
+                double_buffer[ipart] = 0.;
+            }
+        }
+    }
+    
+    histogram->distribute( double_buffer, int_buffer, data_sum );
     
 } // END run
 
-bool DiagnosticScreen::writeNow( int timestep ) {
-    return timeSelection->theTimeIsNow( timestep );
+bool DiagnosticScreen::writeNow( int itime ) {
+    return timeSelection->theTimeIsNow( itime );
 }
 
 //! Zero the array

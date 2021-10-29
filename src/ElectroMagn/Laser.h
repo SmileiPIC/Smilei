@@ -24,10 +24,7 @@ class LaserProfile
 public:
     LaserProfile() {};
     virtual ~LaserProfile() {};
-    virtual double getAmplitude( std::vector<double> pos, double t, int j, int k )
-    {
-        return 0.;
-    };
+    virtual double getAmplitude( std::vector<double> pos, double t, int j, int k ) = 0;
     virtual std::complex<double> getAmplitudecomplex( std::vector<double> pos, double t, int j, int k )
     {
         return 0.;
@@ -52,7 +49,7 @@ class Laser
     friend class Checkpoint;
 public:
     //! Normal laser constructor
-    Laser( Params &params, int ilaser, Patch *patch );
+    Laser( Params &params, int ilaser, Patch *patch, bool verbose = false );
     //! Cloning laser constructor
     Laser( Laser *, Params & );
     ~Laser();
@@ -85,8 +82,8 @@ public:
         profiles[1]->initFields( params, patch );
     };
     
-    //! Side (xmin/xmax) from which the laser enters the box
-    std::string box_side;
+    //! Boundary from which the laser enters the box (xmin, xmax, ymin, ymax, zmin, zmax)
+    unsigned int i_boundary_;
     
     //! Disables the laser
     void disable();
@@ -113,7 +110,7 @@ class LaserProfileSeparable : public LaserProfile
     friend class SmileiMPI;
     friend class Patch;
 public:
-    LaserProfileSeparable( double, Profile *, Profile *, Profile *, Profile *, double, bool );
+    LaserProfileSeparable( double, Profile *, Profile *, Profile *, Profile *, double, bool, unsigned int );
     LaserProfileSeparable( LaserProfileSeparable * );
     ~LaserProfileSeparable();
     void createFields( Params &params, Patch *patch );
@@ -126,6 +123,7 @@ private:
     double omega_;
     Profile *timeProfile_, *chirpProfile_, *spaceProfile_, *phaseProfile_;
     double delay_phase_;
+    unsigned int axis_;
 };
 
 // Laser profile for non-separable space and time
@@ -164,10 +162,10 @@ class LaserProfileFile : public LaserProfile
     friend class SmileiMPI;
     friend class Checkpoint;
 public:
-    LaserProfileFile( std::string file_, Profile *ep_, bool pr_ )
-        : magnitude( NULL ), phase( NULL ), file( file_ ), extraProfile( ep_ ), primal_( pr_ ) {};
+    LaserProfileFile( std::string file_, Profile *ep_, bool pr_, unsigned int axis )
+        : magnitude( NULL ), phase( NULL ), file( file_ ), extraProfile( ep_ ), primal_( pr_ ), axis_( axis ) {};
     LaserProfileFile( LaserProfileFile *lp )
-        : magnitude( NULL ), phase( NULL ), file( lp->file ), extraProfile( new Profile( lp->extraProfile ) ), primal_( lp->primal_ ) {};
+        : magnitude( NULL ), phase( NULL ), file( lp->file ), extraProfile( new Profile( lp->extraProfile ) ), primal_( lp->primal_ ), axis_( lp->axis_ ) {};
     ~LaserProfileFile();
     void createFields( Params &params, Patch *patch );
     void initFields( Params &params, Patch *patch );
@@ -179,6 +177,7 @@ private:
     std::string file;
     Profile *extraProfile;
     bool primal_;
+    unsigned int axis_;
 };
 
 // Null laser profile

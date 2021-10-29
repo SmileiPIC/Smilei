@@ -1,6 +1,22 @@
 import math
+import numpy as np
 
 L0 = 2.*math.pi # Wavelength in PIC units
+Lcell = [0.01*L0, 0.01*L0]
+Lsim = [1.*L0, 1.*L0]
+
+# Make a profile in a file
+def preprocess():
+	if smilei_mpi_rank == 0:
+		from numpy import linspace, meshgrid, ceil, exp
+		import h5py
+		x = linspace(0., Lsim[0], int(ceil(Lsim[0]/Lcell[0])) + 1 )
+		y = linspace(0., Lsim[1], int(ceil(Lsim[1]/Lcell[1])) + 1 )
+		xx, yy = meshgrid(x, y)
+		with h5py.File("test_profile.h5","w") as f:
+			g = f.create_group("some_group")
+			g.create_dataset("the_profile", data = exp(-((xx-0.4*L0)/(0.1*L0))**2 -((yy-0.6*L0)/(0.1*L0))**2) )
+
 
 Main(
 	geometry = "2Dcartesian",
@@ -8,14 +24,14 @@ Main(
 	interpolation_order = 2,
 	
 	timestep = 0.005 * L0,
-	simulation_time  = 0.01 * L0,
+	simulation_time  = 0.02 * L0,
 	
-	cell_length = [0.01 * L0]*2,
-	grid_length  = [1. * L0]*2,
+	cell_length = Lcell,
+	grid_length  = Lsim,
 	
 	number_of_patches = [ 4 ]*2,
 	
-	time_fields_frozen = 10000000.,
+	time_fields_frozen = 0.01,
 	
 	EM_boundary_conditions = [
 		["periodic"],
@@ -24,7 +40,6 @@ Main(
 	print_every = 10,
 	solve_poisson = False,
 	
-    random_seed = smilei_mpi_rank
 )
 
 def custom(x, y):
@@ -38,7 +53,8 @@ profiles = {
 "polygonal"  :polygonal  (xpoints=[0.1*L0, 0.2*L0, 0.4*L0, 0.8*L0], xvalues=[1.,0.5,0.8, 0.1]),
 "cosine"     :cosine     (1., xamplitude=0.4, xvacuum=0.3*L0, xlength=0.4*L0, xphi=0.1*L0, xnumber=3, yamplitude=0.2, yvacuum=0.2*L0, ylength=0.6*L0, yphi=0.3*L0, ynumber=10),
 "polynomial" :polynomial (x0=0.4*L0, y0=0.5*L0, order0=1., order1=[-1./L0,-0.1/L0], order2=[(1./L0)**2,(0.1/L0)**2,(0.1/L0)**2]),
-"custom"     :custom
+"custom"     :custom,
+"file"       :"test_profile.h5/some_group/the_profile"
 }
 
 for name, profile in profiles.items():
@@ -78,11 +94,14 @@ Species(
 	is_test = True
 )
 
-
 for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
 	ExternalField(
 		field = field,
 		profile = gaussian(0.1)
+	)
+	PrescribedField(
+		field = field,
+		profile = lambda x,y,t: 0.1*np.cos(x+y)*np.sin(math.pi/2*t/Main.simulation_time)
 	)
 
 
@@ -98,7 +117,7 @@ DiagParticleBinning(
 
 
 DiagFields(
-	every = 5,
+	every = 4,
 )
 
 

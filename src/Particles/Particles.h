@@ -28,7 +28,7 @@ public:
     Particles();
 
     //! Destructor for Particle
-    ~Particles();
+    virtual ~Particles();
 
     //! Create nParticles null particles of nDim size
     void initialize( unsigned int nParticles, unsigned int nDim, bool keep_position_old );
@@ -47,6 +47,9 @@ public:
 
     //! Resize Particles vectors
     void resize( unsigned int nParticles);
+
+    //! Resize the cell_keys vector
+    void resizeCellKeys(unsigned int nParticles);
 
     //! Remove extra capacity of Particles vectors
     void shrinkToFit();
@@ -82,9 +85,9 @@ public:
     //! Insert nPart particles starting at ipart to dest_id in dest_parts
     void copyParticles( unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id );
     
-    //! Copy particle iPart at the end of dest_parts -- safe
-    void copyParticleSafe( unsigned int ipart, Particles &dest_parts );
-    
+    //! Make a new particle at the position of another
+    void makeParticleAt( Particles &source_particles, unsigned int ipart, double w, short q=0., double px=0., double py=0., double pz=0. );
+
     //! Suppress particle iPart
     void eraseParticle( unsigned int iPart );
     //! Suppress nPart particles from iPart
@@ -268,17 +271,14 @@ public:
     //! containing the particle quantum parameter
     std::vector<double> Chi;
 
+    //! Incremental optical depth for the Monte-Carlo process
+    std::vector<double> Tau;
+
     //! charge state of the particle (multiples of e>0)
     std::vector<short> Charge;
 
     //! Id of the particle
     std::vector<uint64_t> Id;
-
-    // Discontinuous radiation losses
-
-    //! Incremental optical depth for
-    //! the Monte-Carlo process
-    std::vector<double> Tau;
 
     //! cell_keys of the particle
     std::vector<int> cell_keys;
@@ -433,7 +433,5 @@ public:
 private:
 
 };
-
-
 
 #endif

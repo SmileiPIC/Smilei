@@ -27,20 +27,18 @@ Make sure that Sphinx is installed using::
 3. Build the doc
 ================
 
-Go to the Smilei/doc/Sphinx folder in the command line.
+In the command line, go to the Smilei folder.
 
 * On Unix systems, type::
 
-  make html
-  
-  (You can also go in the root Smilei directory and type ``make doc``)
+  make doc
 
-* On Window, launch the executable `make.bat`
+* On Window, launch the executable ``make.bat``
 
 
 4. Open the doc
 ===============
 
-Open `Smilei/doc/Sphinx/_build/html/index.html` in your web browser.
+Open ``build/html/index.html`` in your web browser.
 
 

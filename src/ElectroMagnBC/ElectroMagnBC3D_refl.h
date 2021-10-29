@@ -10,7 +10,7 @@ class ElectroMagn;
 class ElectroMagnBC3D_refl : public ElectroMagnBC3D
 {
 public:
-    ElectroMagnBC3D_refl( Params &params, Patch *patch, unsigned int _min_max );
+    ElectroMagnBC3D_refl( Params &params, Patch *patch, unsigned int i_boundary );
     ~ElectroMagnBC3D_refl() {};
     
     void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) override;

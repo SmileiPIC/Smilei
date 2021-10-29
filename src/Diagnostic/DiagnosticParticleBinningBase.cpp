@@ -62,7 +62,7 @@ DiagnosticParticleBinningBase::DiagnosticParticleBinningBase(
         ERROR( errorPrefix << ": parameter `species` required" );
     }
     // verify that the species exist, remove duplicates and sort by number
-    species = params.FindSpecies( patch->vecSpecies, species_names );
+    species_indices = params.FindSpecies( patch->vecSpecies, species_names );
     
 //    // Temporarily set the spatial min and max to the simulation box size
 //    spatial_min.resize( params.nDim_particle, 0. );
@@ -74,7 +74,7 @@ DiagnosticParticleBinningBase::DiagnosticParticleBinningBase(
     vector<PyObject *> pyAxes=PyTools::extract_pyVec( "axes", pyDiag, idiag );
     
     // Create the Histogram object based on the extracted parameters above
-    histogram = HistogramFactory::create( params, deposited_quantity, pyAxes, species, patch, excluded_axes, errorPrefix );
+    histogram = HistogramFactory::create( params, deposited_quantity, pyAxes, species_indices, patch, excluded_axes, errorPrefix );
     total_axes = histogram->axes.size();
     dims.resize( total_axes );
     for( int iaxis=0; iaxis<total_axes; iaxis++ ) {
@@ -154,21 +154,32 @@ void DiagnosticParticleBinningBase::openFile( Params &params, SmileiMPI *smpi )
     // write all species
     ostringstream mystream( "" );
     mystream.str( "" ); // clear
-    for( unsigned int i=0 ; i < species.size() ; i++ ) {
-        mystream << species[i] << " ";
+    for( unsigned int i=0 ; i < species_indices.size() ; i++ ) {
+        mystream << species_indices[i] << " ";
     }
     file_->attr( "species", mystream.str() );
     // write each axis
     for( unsigned int iaxis=0 ; iaxis < histogram->axes.size() ; iaxis++ ) {
+        HistogramAxis * ax = histogram->axes[iaxis];
         mystream.str( "" ); // clear
         mystream << "axis" << iaxis;
         string str1 = mystream.str();
         mystream.str( "" ); // clear
-        mystream << histogram->axes[iaxis]->type << " " << histogram->axes[iaxis]->min << " " << histogram->axes[iaxis]->max << " "
-                 << histogram->axes[iaxis]->nbins << " " << histogram->axes[iaxis]->logscale << " " << histogram->axes[iaxis]->edge_inclusive << " [";
-        for( unsigned int idim=0; idim<histogram->axes[iaxis]->coefficients.size(); idim++ ) {
-            mystream << histogram->axes[iaxis]->coefficients[idim];
-            if( idim<histogram->axes[iaxis]->coefficients.size()-1 ) {
+        mystream << ax->type << " ";
+        if( std::isnan(ax->min) ) {
+            mystream << "auto ";
+        } else {
+            mystream << ax->min << " ";
+        }
+        if( std::isnan(ax->max) ) {
+            mystream << "auto ";
+        } else {
+            mystream << ax->max << " ";
+        }
+        mystream << ax->nbins << " " << ax->logscale << " " << ax->edge_inclusive << " [";
+        for( unsigned int idim=0; idim<ax->coefficients.size(); idim++ ) {
+            mystream << ax->coefficients[idim];
+            if( idim < ax->coefficients.size()-1 ) {
                 mystream << ",";
             }
         }
@@ -189,13 +200,13 @@ void DiagnosticParticleBinningBase::closeFile()
 } // END closeFile
 
 
-bool DiagnosticParticleBinningBase::prepare( int timestep )
+bool DiagnosticParticleBinningBase::prepare( int itime )
 {
     // Get the previous timestep of the time selection
-    int previousTime = timeSelection->previousTime( timestep );
+    int previousTime = timeSelection->previousTime( itime );
     
     // Leave if the timestep is not the good one
-    if( timestep - previousTime >= time_average ) {
+    if( itime - previousTime >= time_average ) {
         return false;
     }
     
@@ -203,7 +214,7 @@ bool DiagnosticParticleBinningBase::prepare( int timestep )
     data_sum.resize( output_size );
     
     // if first time, erase output array
-    if( timestep == previousTime ) {
+    if( itime == previousTime ) {
         fill( data_sum.begin(), data_sum.end(), 0. );
     }
     
@@ -211,14 +222,60 @@ bool DiagnosticParticleBinningBase::prepare( int timestep )
     
 } // END prepare
 
+void DiagnosticParticleBinningBase::calculate_auto_limits( Patch *patch, SimWindow *simWindow, unsigned int ipatch )
+{
+    patches_mins[ipatch].resize( 0 );
+    patches_maxs[ipatch].resize( 0 );
+    for( unsigned int iaxis=0; iaxis<histogram->axes.size(); iaxis++ ) {
+        HistogramAxis * axis = histogram->axes[iaxis];
+        if( !std::isnan( axis->min ) && !std::isnan( axis->max ) ) {
+            continue;
+        }
+        double axis_min = numeric_limits<double>::max();
+        double axis_max = numeric_limits<double>::lowest();
+        for( unsigned int i_s=0; i_s<species_indices.size(); i_s++ ) {
+            Species *s = patch->vecSpecies[species_indices[i_s]];
+            unsigned int n = s->getNbrOfParticles();
+            if( n <= 0 ) {
+                continue;
+            }
+            std::vector<double> double_buffer( n );
+            std::vector<int> int_buffer( n, 0 );
+            axis->calculate_locations( s, &double_buffer[0], &int_buffer[0], n, simWindow );
+            if( std::isnan( axis->min ) ) {
+                axis_min = min( axis_min, *min_element( double_buffer.begin(), double_buffer.end() ) );
+            }
+            if( std::isnan( axis->max ) ) {
+                axis_max = max( axis_max, *max_element( double_buffer.begin(), double_buffer.end() ) );
+            }
+        }
+        if( axis_min > axis_max ) {
+            axis_min = -1.;
+            axis_max = 1.;
+        }
+        if( axis_min == axis_max ) {
+            if( axis_min == 0. ) {
+                axis_min = -1.;
+                axis_max = 1.;
+            } else {
+                double m = axis_min * 0.5;
+                axis_min -= m;
+                axis_max += m;
+            }
+        }
+        if( std::isnan( axis->min ) ) {
+            patches_mins[ipatch].push_back( axis_min );
+        }
+        if( std::isnan( axis->max ) ) {
+            patches_maxs[ipatch].push_back( axis_max );
+        }
+    }
+}
 
 // run one particle binning diagnostic
-void DiagnosticParticleBinningBase::run( Patch *patch, int timestep, SimWindow *simWindow )
+void DiagnosticParticleBinningBase::run( Patch *patch, int itime, SimWindow *simWindow )
 {
 
-    vector<int> int_buffer;
-    vector<double> double_buffer;
-    unsigned int npart;
     
 //    // Update spatial_min and spatial_max if needed
 //    if( simWindow ) {
@@ -236,33 +293,32 @@ void DiagnosticParticleBinningBase::run( Patch *patch, int timestep, SimWindow *
 //        }
 //    }
     
-    // loop species
-    for( unsigned int ispec=0 ; ispec < species.size() ; ispec++ ) {
-    
-        Species *s = patch->vecSpecies[species[ispec]];
-        npart = s->particles->size();
-        int_buffer   .resize( npart );
-        double_buffer.resize( npart );
-        
-        fill( int_buffer.begin(), int_buffer.end(), 0 );
-        
-        histogram->digitize( s, double_buffer, int_buffer, simWindow );
-        histogram->valuate( s, double_buffer, int_buffer );
-        histogram->distribute( double_buffer, int_buffer, data_sum );
-        
+    // Calculate the total number of particles in this patch and resize buffers
+    unsigned int npart = 0;
+    vector<Species *> species;
+    for( unsigned int ispec=0 ; ispec < species_indices.size() ; ispec++ ) {
+        Species *s = patch->vecSpecies[species_indices[ispec]];
+        species.push_back( s );
+        npart += s->getNbrOfParticles();
     }
+    vector<int> int_buffer( npart, 0 );
+    vector<double> double_buffer( npart );
+    
+    histogram->digitize( species, double_buffer, int_buffer, simWindow );
+    histogram->valuate( species, double_buffer, int_buffer );
+    histogram->distribute( double_buffer, int_buffer, data_sum );
     
 } // END run
 
-bool DiagnosticParticleBinningBase::writeNow( int timestep ) {
-    return timestep - timeSelection->previousTime() == time_average-1;
+bool DiagnosticParticleBinningBase::writeNow( int itime ) {
+    return itime - timeSelection->previousTime() == time_average-1;
 }
 
 // Now the data_sum has been filled
 // if needed now, store result to hdf file
-void DiagnosticParticleBinningBase::write( int timestep, SmileiMPI *smpi )
+void DiagnosticParticleBinningBase::write( int itime, SmileiMPI *smpi )
 {
-    if( !smpi->isMaster() || !writeNow( timestep ) ) {
+    if( !smpi->isMaster() || !writeNow( itime ) ) {
         return;
     }
     
@@ -277,15 +333,27 @@ void DiagnosticParticleBinningBase::write( int timestep, SmileiMPI *smpi )
     // make name of the array
     ostringstream mystream( "" );
     mystream.str( "" );
-    mystream << "timestep" << setw( 8 ) << setfill( '0' ) << timestep;
+    mystream << "timestep" << setw( 8 ) << setfill( '0' ) << itime;
+    string dataname = mystream.str();
     
     // write the array if it does not exist already
-    if( ! file_->has( mystream.str() ) ) {
+    if( ! file_->has( dataname ) ) {
         H5Space d( dims );
-        file_->array( mystream.str(), data_sum[0], &d, &d );
+        H5Write dataset = file_->array( dataname, data_sum[0], &d, &d );
+        
+        // When auto limits, write the limits
+        for( unsigned int iaxis=0 ; iaxis < histogram->axes.size() ; iaxis++ ) {
+            HistogramAxis * ax = histogram->axes[iaxis];
+            if( std::isnan(ax->min) ) {
+                dataset.attr( "min"+to_string(iaxis), ax->global_min );
+            }
+            if( std::isnan(ax->max) ) {
+                dataset.attr( "max"+to_string(iaxis), ax->global_max );
+            }
+        }
     }
     
-    if( flush_timeSelection->theTimeIsNow( timestep ) ) {
+    if( flush_timeSelection->theTimeIsNow( itime ) ) {
         file_->flush();
     }
     

@@ -50,9 +50,16 @@ VectorPatch::~VectorPatch()
 
 void VectorPatch::close( SmileiMPI *smpiData )
 {
+    // Close collision debug files
+    for( unsigned int icoll = 0; icoll < patches_[0]->vecCollisions.size(); icoll++ ) {
+        if( patches_[0]->vecCollisions[icoll]->debug_file_ ) {
+            delete patches_[0]->vecCollisions[icoll]->debug_file_;
+        }
+    }
+    
+    // Close diagnostics
     closeAllDiags( smpiData );
-
-
+    
     if( diag_timers.size() ) {
         MESSAGE( "\n\tDiagnostics profile :" );
     }
@@ -61,13 +68,12 @@ void VectorPatch::close( SmileiMPI *smpiData )
         MPI_Reduce( &diag_timers[idiag]->time_acc_, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
         MESSAGE( "\t\t" << setw( 20 ) << diag_timers[idiag]->name_ << "\t" << sum/( double )smpiData->getSize() );
     }
-
+    
     for( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
         delete diag_timers[idiag];
     }
     diag_timers.clear();
-
-
+    
     for( unsigned int idiag=0 ; idiag<localDiags.size(); idiag++ ) {
         delete localDiags[idiag];
     }
@@ -328,7 +334,6 @@ void VectorPatch::dynamics( Params &params,
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
-        //MESSAGE("restart rhoj");
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             Species *spec = species( ipatch, ispec );
             
@@ -336,7 +341,7 @@ void VectorPatch::dynamics( Params &params,
                 spec->particles->savePositions();
             }
             
-            if( spec->ponderomotive_dynamics ) {
+            if( params.Laser_Envelope_model ) {
                 continue;
             }
             
@@ -388,12 +393,12 @@ void VectorPatch::dynamics( Params &params,
     timers.multiphoton_Breit_Wheeler_timer.update( *this, params.printNow( itime ) );
 #endif
 
-    timers.syncPart.restart();
+    timers.syncPart.restart();  
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
         Species *spec = species( 0, ispec );
-        if( !spec->ponderomotive_dynamics && spec->isProj( time_dual, simWindow ) ) {
+        if ( (!params.Laser_Envelope_model) && (spec->isProj( time_dual, simWindow )) ){
             SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sortParticles
-        } // end condition on species
+        } // end condition on Species and on envelope model
     } // end loop on species
     //MESSAGE("exchange particles");
     timers.syncPart.update( params.printNow( itime ) );
@@ -436,13 +441,11 @@ void VectorPatch::projectionForDiags( Params &params,
             ( *this )( ipatch )->EMfields->restartEnvChi();
             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                    if( species( ipatch, ispec )->ponderomotive_dynamics ) {
-                        species( ipatch, ispec )->ponderomotiveProjectSusceptibility( time_dual, ispec,
-                                emfields( ipatch ),
-                                params, diag_flag,
-                                ( *this )( ipatch ), smpi,
-                                localDiags );
-                    } // end condition on ponderomotive dynamics
+                    species( ipatch, ispec )->ponderomotiveProjectSusceptibility( time_dual, ispec,
+                             emfields( ipatch ),
+                             params, diag_flag,
+                             ( *this )( ipatch ), smpi,
+                             localDiags );
                 } // end diagnostic or projection if condition on species
             } // end loop on species
         } // end loop on patches
@@ -541,12 +544,13 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
     
     //#pragma omp for schedule(runtime)
     #pragma omp single
+    {
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         
         Patch * patch = ( *this )( ipatch );
         
         // Only for patch at the domain boundary
-        if (patch->isBoundary()) {
+        if (patch->isAnyBoundary()) {
             
             // Targeted species and species index
             unsigned int i_species ;
@@ -666,6 +670,34 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     //particle_index[i_injector] = previous_particle_number_per_species[i_species];
                     // Creation of the particles in local_particles_vector
                     particle_creator.create( init_space, params, patch, itime );
+                    
+                    
+                    // suppress all particles in the thermalized region
+                    //int * mask = new int[injector_species->particles->size()];
+                    // std::vector<int> mask(injector_species->particles->size());
+                    // for( int icell = 0 ; icell < injector_species->particles->first_index.size(); icell++ ) {
+                    //     for ( int ip = injector_species->particles->first_index[icell] ; ip < injector_species->particles->last_index[icell] ; ip-- ){
+                    //         if ( ( patch->isXmin() && (injector_species->particles->Position[0][ip] < (init_space.cell_index_[0] + init_space.box_size_[0])*params.cell_length[0]) ) ||
+                    //             (  patch->isXmax() && ( injector_species->particles->Position[0][ip] > (init_space.cell_index_[0]*params.cell_length[0]) ) ) ) {
+                    //             mask[ip] = -1;
+                    //             injector_species->count[icell] --;
+                    //         } else {
+                    //             mask[ip] = 1;
+                    //         }
+                    //     }
+                    // }
+                    //
+                    // injector_species->particles->eraseParticlesWithMask(0, injector_species->particles->size(), mask );
+                    //
+                    // // Update of first and last cell indexes
+                    // injector_species->particles->first_index[0] = 0;
+                    // injector_species->particles->last_index[0] = injector_species->particles->size();
+                    // for( int scell = 1 ; scell < particles->first_index.size(); scell++ ) {
+                    //     injector_species->particles->first_index[scell] = particles->last_index[scell-1];
+                    //     injector_species->particles->last_index[scell] = particles->first_index[scell] + injector_species->count[scell];
+                    // }
+                    //delete [] mask;
+                    
                 }
             }
 
@@ -696,7 +728,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     position_shift[2] = 0;
                 }
             }
-            
             
             // Update positions from momentum
             for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
@@ -767,28 +798,16 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     new_particle_number = particles->size() - 1;
 
                     // Suppr not interesting parts ...
-                    // 1D Xmin
-                    if ( patch->isXmin()) {
-                        for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
-                            if ( particles->Position[0][ip] < 0. ) {
-                                if (new_particle_number != ip) {
-                                    particles->overwriteParticle(new_particle_number,ip);
-                                }
-                                new_particle_number--;
+                    // 1D
+                    for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
+                        if ( ( patch->isXmin() && (particles->Position[0][ip] < 0.) ) ||
+                            (  patch->isXmax() && ( particles->Position[0][ip] > params.grid_length[0] ) ) ) {
+                            if (new_particle_number > ip) {
+                                particles->overwriteParticle(new_particle_number,ip);
                             }
-                        } // end loop on particles
-                    }
-                    // 1D Xmax
-                    if ( patch->isXmax()) {
-                        for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
-                            if ( particles->Position[0][ip] > params.grid_length[0] ) {
-                                if (new_particle_number != ip) {
-                                    particles->overwriteParticle(new_particle_number,ip);
-                                }
-                                new_particle_number--;
-                            }
-                        } // end loop on particles
-                    }
+                            new_particle_number--;
+                        }
+                    } // end loop on particles
 
                     // 2D
                     if (params.nDim_field > 1) {
@@ -822,7 +841,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     new_particle_number += 1;
                         
                     // New energy from particles
-                    if( patch->isXmin() || patch->isXmax() ) {
+                    //if( patch->isXmin() || patch->isXmax() || patch->isYmin() || patch->isYmax() || patch->isZmin() || patch->isZmax()) {
                         double energy = 0.;
                         // Matter particle case
                         if( injector_species->mass_ > 0 ) {
@@ -838,7 +857,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                             }
                             injector_species->new_particles_energy_ += energy;
                         }
-                    }
+                    //}
                         
                     // Insertion of the particles as a group in the vector of species
                     if (new_particle_number > 0) {
@@ -855,28 +874,33 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
         } // Test patch at boundary
 
     } // end for ipatch
+    } // end omp single
     
     timers.particleInjection.update( params.printNow( itime ) );
 }
 
 //! Computation of the total charge
-void VectorPatch::computeCharge()
+void VectorPatch::computeCharge(bool old /*=false*/)
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        ( *this )( ipatch )->EMfields->restartRhoJ();
+        if (old) {
+            static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields)->restartRhoold();
+        } else {
+            ( *this )( ipatch )->EMfields->restartRhoJ();
+        }
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
-                species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ) );
+                species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ), old );
             } else {
-                species( ipatch, ispec )->Species::computeCharge( ispec, emfields( ipatch ) );
+                species( ipatch, ispec )->Species::computeCharge( ispec, emfields( ipatch ), old );
             }
         }
     }
 
 } // END computeRho
 
-void VectorPatch::computeChargeRelativisticSpecies( double time_primal )
+void VectorPatch::computeChargeRelativisticSpecies( double time_primal, Params &params )
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -884,7 +908,7 @@ void VectorPatch::computeChargeRelativisticSpecies( double time_primal )
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             // project only if species needs relativistic initialization and it is the right time to initialize its fields
             if( ( species( ipatch, ispec )->relativistic_field_initialization_ ) &&
-                    ( time_primal == species( ipatch, ispec )->time_relativistic_initialization_ ) ) {
+                    ( (int)(time_primal/params.timestep) == species( ipatch, ispec )->iter_relativistic_initialization_ ) ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
                     species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ) );
                 } else {
@@ -895,11 +919,13 @@ void VectorPatch::computeChargeRelativisticSpecies( double time_primal )
     }
 } // END computeRho
 
-void VectorPatch::resetRhoJ()
+void VectorPatch::resetRhoJ(bool old/*=false*/)
 {
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->restartRhoJ();
+        if (old)
+            static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields)->restartRhoold();
     }
 }
 
@@ -931,11 +957,11 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
 
     timers.syncDens.restart();
     if( params.geometry != "AMcylindrical" ) {
-        if ( (!params.uncoupled_grids)||(itime==0) )
+        if ( (!params.multiple_decomposition)||(itime==0) )
             SyncVectorPatch::sumRhoJ( params, ( *this ), smpi, timers, itime ); // MPI
     } else {
 
-        if ( (!params.uncoupled_grids)||(itime==0) )
+        if ( (!params.multiple_decomposition)||(itime==0) )
             for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->Jl_.size() ; imode++ ) {
                 SyncVectorPatch::sumRhoJ( params, ( *this ), imode, smpi, timers, itime );
             }
@@ -961,24 +987,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             if (emAM->isYmin){
-                for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
-                    ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( &( *emAM->rho_AM_[imode] )( 0 ), &( *emAM->Jl_[imode] )( 0 ), &( *emAM->Jr_[imode] )( 0 ), &( *emAM->Jt_[imode] )( 0 ), imode, diag_flag );
-                }
-                //Also apply BC on axis on species diagnostics
-                if (diag_flag) {
-                    unsigned int n_species = ( *this )( 0 )->vecSpecies.size();
-                    for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
-                        for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
-                            unsigned int ifield = imode*n_species+ispec;
-                            complex<double> *Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : NULL ;
-                            complex<double> *Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : NULL ;
-                            complex<double> *Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : NULL ;
-                            complex<double> *rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : NULL ;
-                            ( *this )( ipatch )->vecSpecies[ispec]->Proj->axisBC( rho , Jl, Jr, Jt, imode, diag_flag );
-                        }
-                    }
-                }
-
+                ( *this )( ipatch )->vecSpecies[0]->Proj->axisBC( emAM, diag_flag );
             }
         }
     }
@@ -1013,10 +1022,8 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
     if( diag_flag ) {
         for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
             if( !( *this )( 0 )->vecSpecies[ispec]->particles->is_test ) {
-                if( species( 0, ispec )->ponderomotive_dynamics ) {
-                    updateFieldList( ispec, smpi );
-                    SyncVectorPatch::sumEnvChis( params, ( *this ), ispec, smpi, timers, itime );
-                } // MPI
+                updateFieldList( ispec, smpi );
+                SyncVectorPatch::sumEnvChis( params, ( *this ), ispec, smpi, timers, itime );
             }
         }
     }
@@ -1078,11 +1085,8 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             if (params.geometry != "AMcylindrical"){
                 if (params.currentFilter_model=="customFIR"){
                     SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJx_, *this, smpi );
-                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
                     SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJy_, *this, smpi );
-                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
                     SyncVectorPatch::exchangeSynchronizedPerDirection<double,Field>( listJz_, *this, smpi );
-                    SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
                 } else {
                     SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJx_, *this, smpi );
                     SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
@@ -1102,11 +1106,6 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 }
             }
         }
-    }
-
-    if ( params.is_spectral and params.geometry == "AMcylindrical"){
-        // Current correction in spectral space
-        (*this)( 0 )->EMfields->MaxwellAmpereSolver_->densities_correction( (*this)( 0 )->EMfields );
     }
 
     #pragma omp for schedule(static)
@@ -1147,7 +1146,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
     timers.syncField.update( params.printNow( itime ) );
     
     
-    if ( (params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true
+    if ( (params.multiple_decomposition) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // multiple_decomposition = true -> is_spectral = true
         timers.syncField.restart();
         if( params.is_spectral && params.geometry != "AMcylindrical" ) {
             SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
@@ -1166,7 +1165,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
             }
         }
-        if( params.is_spectral ) {
+        if( params.is_spectral && params.geometry != "AMcylindrical" ) {
             saveOldRho( params );
         }
     }
@@ -1231,7 +1230,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
-    if ( (!params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true
+    if ( (!params.multiple_decomposition) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // multiple_decomposition = true -> is_spectral = true
         if( params.geometry != "AMcylindrical" ) {
             timers.syncField.restart();
             SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
@@ -1261,18 +1260,17 @@ void VectorPatch::initExternals( Params &params )
 {
     // Init all lasers
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
-        if( ( *this )( ipatch )->isXmin() && ( *this )( ipatch )->EMfields->emBoundCond[0] != NULL ) {
-            unsigned int nlaser = ( *this )( ipatch )->EMfields->emBoundCond[0]->vecLaser.size();
-            for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
-                ( *this )( ipatch )->EMfields->emBoundCond[0]->vecLaser[ilaser]->initFields( params, ( *this )( ipatch ) );
+        Patch * patch = ( *this )( ipatch );
+        
+        for( unsigned ib=0; ib<2*params.nDim_field; ib++ ) {
+            
+            if( patch->isBoundary(ib) && patch->EMfields->emBoundCond[ib] ) {
+                unsigned int nlaser = patch->EMfields->emBoundCond[ib]->vecLaser.size();
+                for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
+                    patch->EMfields->emBoundCond[ib]->vecLaser[ilaser]->initFields( params, patch );
+                }
             }
-        }
-
-        if( ( *this )( ipatch )->isXmax() && ( *this )( ipatch )->EMfields->emBoundCond[1] != NULL ) {
-            unsigned int nlaser = ( *this )( ipatch )->EMfields->emBoundCond[1]->vecLaser.size();
-            for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
-                ( *this )( ipatch )->EMfields->emBoundCond[1]->vecLaser[ilaser]->initFields( params, ( *this )( ipatch ) );
-            }
+            
         }
     }
 
@@ -1285,7 +1283,8 @@ void VectorPatch::initExternals( Params &params )
 
 void VectorPatch::initAllDiags( Params &params, SmileiMPI *smpi )
 {
-    // Global diags: scalars + particles
+
+    // Global diags: scalars + binnings
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         globalDiags[idiag]->init( params, smpi, *this );
         // MPI master creates the file
@@ -1324,14 +1323,80 @@ void VectorPatch::closeAllDiags( SmileiMPI *smpi )
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int itime, Timers &timers, SimWindow *simWindow )
 {
-    // Global diags: scalars + particles
     timers.diags.restart();
+    
+    // Pre-process for binning diags with auto limits
+    vector<double> MPI_mins, MPI_maxs;
+    for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
+        diag_timers[idiag]->restart();
+        
+        #pragma omp single
+        globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
+        
+        // Get the mins and maxs from this diag, for the current MPI
+        DiagnosticParticleBinningBase* binning = dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag] );
+        if( globalDiags[idiag]->theTimeIsNow && binning ) {
+            #pragma omp master
+            {
+                binning->patches_mins.resize( size() );
+                binning->patches_maxs.resize( size() );
+            }
+            #pragma omp barrier
+            // Calculate mins and maxs for each patch
+            #pragma omp for schedule(runtime)
+            for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
+                binning->calculate_auto_limits( patches_[ipatch], simWindow, ipatch );
+            }
+            // reduction of mins and maxs for all patches in this MPI
+            #pragma omp master
+            {
+                vector<double> mins = binning->patches_mins[0];
+                vector<double> maxs = binning->patches_maxs[0];
+                for( unsigned int i=0; i<mins.size(); i++ ) {
+                    for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
+                        mins[i] = min( mins[i], binning->patches_mins[ipatch][i] );
+                        maxs[i] = max( maxs[i], binning->patches_maxs[ipatch][i] );
+                    }
+                }
+                MPI_mins.insert( MPI_mins.end(), mins.begin(), mins.end() );
+                MPI_maxs.insert( MPI_maxs.end(), maxs.begin(), maxs.end() );
+            }
+        }
+        diag_timers[idiag]->update();
+    }
+    #pragma omp master
+    {
+        vector<double> global_mins( MPI_mins.size() ), global_maxs( MPI_maxs.size() );
+        // Now reduce all the mins and max from all MPIs
+        if( MPI_mins.size() > 0 ) {
+            MPI_Allreduce( &MPI_mins[0], &global_mins[0], (int) MPI_mins.size(), MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
+        }
+        if( MPI_maxs.size() > 0 ) {
+            MPI_Allreduce( &MPI_maxs[0], &global_maxs[0], (int) MPI_maxs.size(), MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+        }
+        // Set the auto limits in the diags
+        unsigned int imin = 0, imax = 0;
+        for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
+            DiagnosticParticleBinningBase* binning = dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag] );
+            if( globalDiags[idiag]->theTimeIsNow && binning ) {
+                for( unsigned int iaxis=0; iaxis<binning->histogram->axes.size(); iaxis++ ) {
+                    HistogramAxis * axis = binning->histogram->axes[iaxis];
+                    if( std::isnan( axis->min ) ) {
+                        axis->global_min = global_mins[imin++];
+                    }
+                    if( std::isnan( axis->max ) ) {
+                        axis->global_max = global_maxs[imax++];
+                    }
+                }
+            }
+        }
+    }
+    #pragma omp barrier
+    
+    // Global diags: scalars + binnings
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers[idiag]->restart();
 
-        #pragma omp single
-        globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
-        #pragma omp barrier
         if( globalDiags[idiag]->theTimeIsNow ) {
             // All patches run
             #pragma omp for schedule(runtime)
@@ -1355,7 +1420,6 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
 
         #pragma omp single
         localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
-        #pragma omp barrier
         // All MPI run their stuff and write out
         if( localDiags[idiag]->theTimeIsNow ) {
             localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
@@ -1376,9 +1440,10 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     }
     timers.diags.update();
 
-    if (itime==0) {
-        for( unsigned int idiag = 0 ; idiag < diag_timers.size() ; idiag++ )
+    if( itime==0 ) {
+        for( unsigned int idiag = 0 ; idiag < diag_timers.size() ; idiag++ ) {
             diag_timers[idiag]->reboot();
+        }
     }
 
 } // END runAllDiags
@@ -1695,7 +1760,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
     
     // For each mode, repeat the initialization procedure
     // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
-    for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+    for( unsigned int imode=0 ; imode<params.nmodes_classical_Poisson_field_init ; imode++ ) {
         
         // init Phi, r, p values
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -1868,7 +1933,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
     }
 
     // // Exchange the fields after the addition of the relativistic species fields
-    for( unsigned int imode = 0 ; imode < params.nmodes_rel_field_init ; imode++ ) {
+    for( unsigned int imode = 0 ; imode < params.nmodes_classical_Poisson_field_init ; imode++ ) {
         SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
         SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
     }
@@ -1901,7 +1966,7 @@ void VectorPatch::runNonRelativisticPoissonModule( Params &params, SmileiMPI* sm
 void VectorPatch::runRelativisticModule( double time_prim, Params &params, SmileiMPI* smpi,  Timers &timers )
 {
     // Compute rho only for species needing relativistic field Initialization
-    computeChargeRelativisticSpecies( time_prim );
+    computeChargeRelativisticSpecies( time_prim, params );
 
     if (params.geometry != "AMcylindrical"){
         SyncVectorPatch::sum<double,Field>( listrho_, (*this), smpi, timers, 0 );
@@ -1958,7 +2023,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
         if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization_ ) {
+                if( (int)(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
@@ -2385,7 +2450,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
         if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization_ ) {
+                if( (int)(time_primal/params.timestep)==species( ipatch, ispec )->iter_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
@@ -2834,7 +2899,6 @@ void VectorPatch::createPatches( Params &params, SmileiMPI *smpi, SimWindow *sim
 void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
 {
 
-    //int newMPIrankbis, oldMPIrankbis, tmp;
     int newMPIrank = smpi->getRank() -1;
     int oldMPIrank = smpi->getRank() -1;
     int istart = 0;
@@ -2843,6 +2907,14 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
     for( int irk=0 ; irk<smpi->getRank() ; irk++ ) {
         istart += smpi->patch_count[irk];
     }
+    //tags keep track of the number of patches sent and received to/from the left and right.
+    //This works because send and receive operations are queued in the same index increasing order.
+    //left and right refers to previous and next MPI process ranks.
+    int tagsend_right = 0;
+    int tagsend_left = 0;
+    int tagrecv_left = 0;
+    int tagrecv_right = 0;
+    int tag=0;
 
 
     // Send particles
@@ -2853,8 +2925,12 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         // if hindex of patch to be sent      >  future hindex of the first patch owned by this process
         if( send_patch_id_[ipatch]+refHindex_ > istart ) {
             newMPIrank = smpi->getRank() + 1;
+            tag = tagsend_right*nmessage;
+            tagsend_right ++;
+        } else {
+            tag = tagsend_left*nmessage;
+            tagsend_left ++;
         }
-        int tag = ( refHindex_+send_patch_id_[ipatch] )*nmessage;
         int maxtag = 0;
         smpi->isend_species( ( *this )( send_patch_id_[ipatch] ), newMPIrank, maxtag, tag, params );
     }
@@ -2863,8 +2939,12 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore.
         if( recv_patch_id_[ipatch] > refHindex_ ) {
             oldMPIrank = smpi->getRank() + 1;
+            tag = tagrecv_right*nmessage;
+            tagrecv_right ++;
+        } else {
+            tag = tagrecv_left*nmessage;
+            tagrecv_left ++;
         }
-        int tag = recv_patch_id_[ipatch]*nmessage;
         smpi->recv_species( recv_patches_[ipatch], oldMPIrank, tag, params );
     }
 
@@ -2889,18 +2969,28 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         // if hindex of patch to be sent      >  future hindex of the first patch owned by this process
         if( send_patch_id_[ipatch]+refHindex_ > istart ) {
             newMPIrank = smpi->getRank() + 1;
+            tag = tagsend_right;
+            tagsend_right ++;
+        } else {
+            tag = tagsend_left;
+            tagsend_left ++;
         }
 
-        smpi->isend_fields( ( *this )( send_patch_id_[ipatch] ), newMPIrank, ( refHindex_+send_patch_id_[ipatch] )*nmessage, params );
+        smpi->isend_fields( ( *this )( send_patch_id_[ipatch] ), newMPIrank, tag*nmessage, params );
     }
 
     for( unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++ ) {
         //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore.
         if( recv_patch_id_[ipatch] > refHindex_ ) {
             oldMPIrank = smpi->getRank() + 1;
+            tag = tagrecv_right;
+            tagrecv_right ++;
+        } else {
+            tag = tagrecv_left;
+            tagrecv_left ++;
         }
 
-        smpi->recv_fields( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
+        smpi->recv_fields( recv_patches_[ipatch], oldMPIrank, tag*nmessage, params );
     }
 
 
@@ -2922,7 +3012,16 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
     }
 
 #ifdef _VECTO
-    if( params.vectorization_mode == "adaptive_mixed_sort" ) {
+    if( params.vectorization_mode == "on" || ( params.cell_sorting ) ) {
+        // vectorization or cell sorting
+        // Recompute the cell keys and sort  frozen particles
+        for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
+            for( unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++ ) {
+                    dynamic_cast<SpeciesV *>( recv_patches_[ipatch]->vecSpecies[ispec] )->computeParticleCellKeys( params );
+                    dynamic_cast<SpeciesV *>( recv_patches_[ipatch]->vecSpecies[ispec] )->sortParticles( params, recv_patches_[ipatch] );
+            }
+        }
+    } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
         // adaptive vectorization -- mixed sort
         // Recompute the cell keys before the next step and configure operators
         for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
@@ -3095,6 +3194,9 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
         listJr_.resize( nmodes ) ;
         listJt_.resize( nmodes ) ;
         listrho_AM_.resize( nmodes ) ;
+        if (static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->rho_old_AM_[0])
+            listrho_old_AM_.resize( nmodes ) ;
+        listrho_AM_.resize( nmodes ) ;
         listJls_.resize( nmodes ) ;
         listJrs_.resize( nmodes ) ;
         listJts_.resize( nmodes ) ;
@@ -3111,6 +3213,8 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
             listJr_[imode].resize( size() );
             listJt_[imode].resize( size() );
             listrho_AM_[imode].resize( size() );
+            if (static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->rho_old_AM_[imode])
+                listrho_old_AM_[imode].resize( size() );
             listEl_[imode].resize( size() );
             listEr_[imode].resize( size() );
             listEt_[imode].resize( size() );
@@ -3122,6 +3226,8 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listJr_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Jr_[imode] ;
                 listJt_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Jt_[imode] ;
                 listrho_AM_[imode][ipatch] =static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_AM_[imode];
+                if (static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_old_AM_[imode])
+                    listrho_old_AM_[imode][ipatch] =static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_old_AM_[imode];
                 listEl_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->El_[imode] ;
                 listEr_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Er_[imode] ;
                 listEt_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Et_[imode] ;
@@ -3350,6 +3456,8 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listEr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listEt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listrho_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                if (static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->rho_old_AM_[imode])
+                    listrho_old_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
             }
         }
         if( patches_[0]->EMfields->envelope != NULL ) {
@@ -3651,75 +3759,61 @@ void VectorPatch::saveExternalFields( Params &params )
     }
 }
 
+// Combines info on memory from all MPI processes
+string combineMemoryConsumption( SmileiMPI *smpi, long int data, string name )
+{
+    long int maxData( 0 );
+    MPI_Reduce( &data, &maxData, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    
+    long double globalData = ( double )data / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalData, &globalData, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    
+    ostringstream t("");
+    t << setw(22) << name << ": "
+      << "Master " << ( int )( ( double )data / 1024./1024. ) << " MB;   "
+      << "Max " << ( int )( ( double )maxData / 1024./1024. ) << " MB;   "
+      << "Global " << setprecision( 3 ) << globalData << " GB";
+    return t.str();
+}
 
 // Print information on the memory consumption
-void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi )
+void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *region_vecpatches )
 {
+    // Particles memory
     long int particlesMem( 0 );
-    for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ )
+    for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++ ) {
             particlesMem += patches_[ipatch]->vecSpecies[ispec]->getMemFootPrint();
         }
-    MESSAGE( 1, "(Master) Species part = " << ( int )( ( double )particlesMem / 1024./1024. ) << " MB" );
-
-    long double dParticlesMem = ( double )particlesMem / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dParticlesMem, &dParticlesMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, setprecision( 3 ) << "Global Species part = " << dParticlesMem << " GB" );
-
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&particlesMem, &particlesMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, "Max Species part = " << ( int )( ( double )particlesMem / 1024./1024. ) << " MB" );
-
-    // fieldsMem contains field per species and average fields
+    }
+    string m = combineMemoryConsumption( smpi, particlesMem, "Particles" );
+    MESSAGE( m );
+    
+    // Fields memory (including per species and averaged fields, etc)
     long int fieldsMem( 0 );
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         fieldsMem += patches_[ipatch]->EMfields->getMemFootPrint();
     }
-    MESSAGE( 1, "(Master) Fields part = " << ( int )( ( double )fieldsMem / 1024./1024. ) << " MB" );
-
-    long double dFieldsMem = ( double )fieldsMem / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dFieldsMem, &dFieldsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, setprecision( 3 ) << "Global Fields part = " << dFieldsMem << " GB" );
-
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&fieldsMem, &fieldsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-    MESSAGE( 1, "Max Fields part = " << ( int )( ( double )fieldsMem / 1024./1024. ) << " MB" );
-
-
-    for( unsigned int idiags=0 ; idiags<globalDiags.size() ; idiags++ ) {
-        // fieldsMem contains field per species
-        long int diagsMem( 0 );
-        diagsMem += globalDiags[idiags]->getMemFootPrint();
-
-        long double dDiagsMem = ( double )diagsMem / 1024./1024./1024.;
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "(Master) " <<  globalDiags[idiags]->filename << "  = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
-            MESSAGE( 1, setprecision( 3 ) << "Global " <<  globalDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
-        }
-
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "Max " <<  globalDiags[idiags]->filename << " = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
-        }
+    m = combineMemoryConsumption( smpi, fieldsMem, "Fields" );
+    MESSAGE( m );
+    
+    // Fields from SDMD grid
+    if( ! region_vecpatches->patches_.empty() ) {
+        long int RegionMem = region_vecpatches->patches_[0]->EMfields->getMemFootPrint();
+        m = combineMemoryConsumption( smpi, RegionMem, "SDMD grid" );
+        MESSAGE( m );
     }
-
-    for( unsigned int idiags=0 ; idiags<localDiags.size() ; idiags++ ) {
-        // fieldsMem contains field per species
-        long int diagsMem( 0 );
-        diagsMem += localDiags[idiags]->getMemFootPrint();
-
-        long double dDiagsMem = ( double )diagsMem / 1024./1024./1024.;
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&dDiagsMem, &dDiagsMem, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "(Master) " <<  localDiags[idiags]->filename << "  = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
-            MESSAGE( 1, setprecision( 3 ) << "Global " <<  localDiags[idiags]->filename << " = " << dDiagsMem << " GB" );
-        }
-
-        MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&diagsMem, &diagsMem, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
-        if( dDiagsMem>0. ) {
-            MESSAGE( 1, "Max " <<  localDiags[idiags]->filename << " = " << ( int )( ( double )diagsMem / 1024./1024. ) << " MB" );
-        }
+    
+    // Diags memory
+    vector<Diagnostic*> allDiags( 0 );
+    allDiags.insert( allDiags.end(), globalDiags.begin(), globalDiags.end() );
+    allDiags.insert( allDiags.end(), localDiags.begin(), localDiags.end() );
+    for( unsigned int idiags=0 ; idiags<allDiags.size() ; idiags++ ) {
+        long int diagsMem = allDiags[idiags]->getMemFootPrint();
+        m = combineMemoryConsumption( smpi, diagsMem, allDiags[idiags]->filename );
+        MESSAGE( m );
     }
-
+    
     // Read value in /proc/pid/status
     //Tools::printMemFootPrint( "End Initialization" );
 }
@@ -3727,6 +3821,9 @@ void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi )
 
 void VectorPatch::saveOldRho( Params &params )
 {
+
+    cout << "save old rho. Should not be called in this test" << endl;
+
     //Spectral methods need the old density. This function is not called in FDTD.
     int n=0;
     if( params.geometry!="AMcylindrical" ) {
@@ -3934,30 +4031,27 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
         ( *this )( ipatch )->EMfields->restartEnvChi();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                if( species( ipatch, ispec )->ponderomotive_dynamics ) {
-                    if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting )
-                        species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
+                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting )
+                    species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag,
                                 ( *this )( ipatch ), smpi,
                                 localDiags );
-                    else {
-                        if( params.vectorization_mode == "adaptive" ) {
-                            species( ipatch, ispec )->scalarPonderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
-                                    emfields( ipatch ),
-                                    params, diag_flag,
-                                    ( *this )( ipatch ), smpi,
-                                    localDiags );
-                        } else {
-                            species( ipatch, ispec )->Species::ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
-                                    emfields( ipatch ),
-                                    params, diag_flag,
-                                    ( *this )( ipatch ), smpi,
-                                    localDiags );
+                else {
+                    if( params.vectorization_mode == "adaptive" ) {
+                        species( ipatch, ispec )->scalarPonderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
+                                 emfields( ipatch ),
+                                 params, diag_flag,
+                                 ( *this )( ipatch ), smpi,
+                                 localDiags );
+                    } else {
+                        species( ipatch, ispec )->Species::ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
+                                 emfields( ipatch ),
+                                 params, diag_flag,
+                                 ( *this )( ipatch ), smpi,
+                                 localDiags );
                         }
-                    }
-
-                } // end condition on ponderomotive dynamics
+                }  
             } // end diagnostic or projection if condition on species
         } // end loop on species
     } // end loop on patches
@@ -3986,31 +4080,28 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                if( species( ipatch, ispec )->ponderomotive_dynamics ) {
-                    if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting )
-                        species( ipatch, ispec )->ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
-                                emfields( ipatch ),
-                                params, diag_flag, partwalls( ipatch ),
-                                ( *this )( ipatch ), smpi,
-                                localDiags );
-                    else {
+                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting ){
+                    species( ipatch, ispec )->ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
+                           emfields( ipatch ),
+                           params, diag_flag, partwalls( ipatch ),
+                           ( *this )( ipatch ), smpi,
+                           localDiags );
+                } else {
 
-                        if( params.vectorization_mode == "adaptive" ) {
+                         if( params.vectorization_mode == "adaptive" ) {
                             species( ipatch, ispec )->scalarPonderomotiveUpdatePositionAndCurrents( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag, partwalls( ipatch ),
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
-                        } else {
+                         } else {
                             species( ipatch, ispec )->Species::ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag, partwalls( ipatch ),
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
-                        }
-                    }
-
-                } // end condition on ponderomotive dynamics
+                         }
+                }
             } // end diagnostic or projection if condition on species
         } // end loop on species
     } // end loop on patches
@@ -4025,11 +4116,9 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 
     timers.syncPart.restart();
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
-        if( ( *this )( 0 )->vecSpecies[ispec]->ponderomotive_dynamics ) {
-            if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
-                SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sortParticles
-            } // end condition on species
-        } // end condition on envelope dynamics
+        if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
+            SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sortParticles
+        } // end condition on species
     } // end loop on species
     timers.syncPart.update( params.printNow( itime ) );
 

@@ -9,6 +9,7 @@
 #include "ElectroMagnAM.h"
 #include "ElectroMagnBC.h"
 #include "EnvelopeFactory.h"
+#include "RegionDomainDecomposition.h"
 
 #include "Patch.h"
 #include "Params.h"
@@ -41,26 +42,22 @@ public:
             EMfields->envelope = EnvelopeFactory::create( params, patch, EMfields );
         }
         
+        bool first_creation = patch->isMaster() && ! dynamic_cast<RegionDomainDecomposition*>( domain_decomposition );
         
         // -----------------
         // Lasers properties
         // -----------------
         int nlaser = PyTools::nComponents( "Laser" );
-        if( patch->isMaster() && nlaser > 0) {
-            TITLE("Initializing laser parameters" );
+        if( first_creation && nlaser > 0 ) {
+            TITLE( "Initializing laser parameters" );
         }
         for( int ilaser = 0; ilaser < nlaser; ilaser++ ) {
-            Laser *laser = new Laser( params, ilaser, patch );
-            if( laser->box_side == "xmin" && EMfields->emBoundCond[0] ) {
-                if( patch->isXmin() ) {
+            Laser *laser = new Laser( params, ilaser, patch, first_creation );
+            if( EMfields->emBoundCond[laser->i_boundary_] ) {
+                if( patch->isBoundary( laser->i_boundary_ ) ) {
                     laser->createFields( params, patch );
                 }
-                EMfields->emBoundCond[0]->vecLaser.push_back( laser );
-            } else if( laser->box_side == "xmax" && EMfields->emBoundCond[1] ) {
-                if( patch->isXmax() ) {
-                    laser->createFields( params, patch );
-                }
-                EMfields->emBoundCond[1]->vecLaser.push_back( laser );
+                EMfields->emBoundCond[laser->i_boundary_]->vecLaser.push_back( laser );
             } else {
                 delete laser;
             }
@@ -70,7 +67,7 @@ public:
         // ExtFields properties
         // -----------------
         unsigned int numExtFields=PyTools::nComponents( "ExternalField" );
-        if( patch->isMaster() && numExtFields > 0) {
+        if( first_creation && numExtFields > 0) {
             TITLE("Initializing External fields" );
         }
         for( unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++ ) {
@@ -83,7 +80,7 @@ public:
             if( !PyTools::extract_pyProfile( "profile", profile, "ExternalField", n_extfield ) ) {
                 ERROR( "ExternalField #"<<n_extfield<<": parameter 'profile' not understood" );
             }
-            extField.profile = new Profile( profile, params.nDim_field, name.str(), true );
+            extField.profile = new Profile( profile, params.nDim_field, name.str(), params, true, true );
             // Find which index the field is in the allFields vector
             extField.index = 1000;
             for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
@@ -97,7 +94,9 @@ public:
                 ERROR( "ExternalField #"<<n_extfield<<": field "<<extField.field<<" not found" );
             }
             
-            MESSAGE( 1, "External field " << extField.field << ": " << extField.profile->getInfo() );
+            if( first_creation ) {
+                MESSAGE( 1, "External field " << extField.field << ": " << extField.profile->getInfo() );
+            }
             EMfields->extFields.push_back( extField );
         }
 
@@ -105,7 +104,7 @@ public:
         // PrescribedFields properties
         // -----------------
         unsigned int prescribed_field_number = PyTools::nComponents( "PrescribedField" );
-        if( patch->isMaster() && prescribed_field_number > 0) {
+        if( first_creation && prescribed_field_number > 0) {
             TITLE("Initializing Prescribed Fields" );
         }
         for( unsigned int n_extfield = 0; n_extfield < PyTools::nComponents( "PrescribedField" ); n_extfield++ ) {
@@ -119,7 +118,7 @@ public:
             if( !PyTools::extract_pyProfile( "profile", profile, "PrescribedField", n_extfield ) ) {
                 ERROR( "PrescribedField #"<<n_extfield<<": parameter 'profile' not understood" );
             }
-            extField.profile = new Profile( profile, params.nDim_field+1, name.str(), true );
+            extField.profile = new Profile( profile, params.nDim_field+1, name.str(), params, true, true, true );
             // Find which index the field is in the allFields vector
             extField.index = 1000;
             for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
@@ -143,7 +142,9 @@ public:
                 ERROR( "PrescribedField #"<<n_extfield<<": field "<<fieldName<<" not found" );
             }
             
-            MESSAGE(1, "Prescribed field " << fieldName << ": " << extField.profile->getInfo());
+            if( first_creation ) {
+                MESSAGE(1, "Prescribed field " << fieldName << ": " << extField.profile->getInfo());
+            }
             EMfields->prescribedFields.push_back( extField );
         }
         
@@ -152,7 +153,7 @@ public:
         // Antenna properties
         // -----------------
         unsigned int antenna_number=PyTools::nComponents( "Antenna" );
-        if( patch->isMaster() && antenna_number > 0) {
+        if( first_creation && antenna_number > 0) {
             TITLE("Initializing Antenna" );
         }
         for( unsigned int n_antenna = 0; n_antenna < antenna_number; n_antenna++ ) {
@@ -171,7 +172,7 @@ public:
             if( !PyTools::extract_pyProfile( "space_profile", profile, "Antenna", n_antenna ) ) {
                 ERROR( " Antenna #"<<n_antenna<<": parameter 'space_profile' not understood" );
             }
-            antenna.space_profile = new Profile( profile, params.nDim_field, name.str() );
+            antenna.space_profile = new Profile( profile, params.nDim_field, name.str(), params );
             
             // Extract the time profile
             name.str( "" );
@@ -179,7 +180,7 @@ public:
             if( !PyTools::extract_pyProfile( "time_profile", profile, "Antenna", n_antenna ) ) {
                 ERROR( " Antenna #"<<n_antenna<<": parameter 'time_profile' not understood" );
             }
-            antenna.time_profile =  new Profile( profile, 1, name.str() );
+            antenna.time_profile =  new Profile( profile, 1, name.str(), params );
             
             // Find the index of the field in allFields
             antenna.index = 1000;
@@ -206,8 +207,8 @@ public:
     {
         // Workaround for a Laser bug
         // count laser for later
-        int nlaser_tot( 0 );
-        for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
+        unsigned int nlaser_tot( 0 );
+        for( unsigned int iBC=0; iBC<EMfields->emBoundCond.size(); iBC++ ) { // xmax and xmin
             if( ! EMfields->emBoundCond[iBC] ) {
                 continue;
             }
@@ -247,21 +248,19 @@ public:
         // Clone Lasers properties
         // -----------------
         if( nlaser_tot>0 ) {
-            int nlaser;
-            for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
+            for( unsigned int iBC=0; iBC<newEMfields->emBoundCond.size(); iBC++ ) { // xmin, xmax, ymin, ymax
                 if( ! newEMfields->emBoundCond[iBC] ) {
                     continue;
                 }
                 
                 newEMfields->emBoundCond[iBC]->vecLaser.resize( 0 );
-                nlaser = EMfields->emBoundCond[iBC]->vecLaser.size();
+                unsigned int nlaser = EMfields->emBoundCond[iBC]->vecLaser.size();
                 // Create lasers one by one
-                for( int ilaser = 0; ilaser < nlaser; ilaser++ ) {
+                for( unsigned int ilaser = 0; ilaser < nlaser; ilaser++ ) {
                     // Create laser
                     Laser *laser = new Laser( EMfields->emBoundCond[iBC]->vecLaser[ilaser], params );
                     // If patch is on border, then fill the fields arrays
-                    if( ( iBC==0 && patch->isXmin() )
-                            || ( iBC==1 && patch->isXmax() ) ) {
+                    if( iBC == laser->i_boundary_ && patch->isBoundary( iBC ) ) {
                         laser->createFields( params, patch );
                     }
                     // Append the laser to the vector

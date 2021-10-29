@@ -29,7 +29,7 @@ import shlex
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-mathjax_path = 'https://www.gitcdn.xyz/cdn/mathjax/MathJax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+mathjax_path = 'https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js'
 extensions = [
     'sphinx.ext.mathjax',
 # In order to generate the doc in pdf:
@@ -320,4 +320,6 @@ rst_prolog = """
    :class: green
 .. role:: orange
    :class: orange
+.. role:: grey
+   :class: grey
 """

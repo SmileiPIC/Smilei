@@ -73,7 +73,6 @@ Main(
     relativistic_poisson_max_iteration = 50000,    
     print_every = 100,
 
-    random_seed = smilei_mpi_rank
 )
 
 #MovingWindow(
@@ -110,11 +109,8 @@ Species(
 
 
 
-list_fields = ['Ex','Ey','Ez','Bx','By','Bz','Rho','Jx','Jy']
-
 DiagFields(
     every = 200,
-#        fields = list_fields
 )
 
 

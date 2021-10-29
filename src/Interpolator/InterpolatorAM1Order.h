@@ -9,7 +9,7 @@
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class for 1st order interpolator for AM simulations
 //  --------------------------------------------------------------------------------------------------------------------
-class InterpolatorAM1Order : public InterpolatorAM
+class InterpolatorAM1Order final : public InterpolatorAM
 {
 
 public:
@@ -107,12 +107,12 @@ private:
         if (rpn < 0.){ // If particle is between 0 and dr/2 initial jp_=-1
             jp_ = 0;
             // coeffs 2-3 are used when F(-dr/2) = - F(dr/2) <==> when field mode is zero on axis
-            coeffyp_[2] = coeffyp_[1] - coeffyp_[0];    
-            coeffyp_[3] = 0.; // Terms are already acuumulated in coeffyp_[2] 
+            coeffyp_[2] = coeffyp_[1] - coeffyp_[0];
+            coeffyp_[3] = 0.; // Terms are already acuumulated in coeffyp_[2]
             // coeffs 0-1 are used when F(-dr/2) = + F(dr/2) <==> when field is constant on axis
-            coeffyp_[0] = 1.; // = coeffyp_[1] + coeffyp_[0];    
-            coeffyp_[1] = 0.; // Terms are already acuumulated in coeffyp_[0] 
-            deltar_ -= 1.; // To account for the cell shift and proper recomputation of r_old in projector
+            coeffyp_[0] = 1.; // = coeffyp_[1] + coeffyp_[0];
+            coeffyp_[1] = 0.; // Terms are already acuumulated in coeffyp_[0]
+            deltar -= 1.; // To account for the cell shift and proper recomputation of r_old in projector
         }
         
         // First index for summation

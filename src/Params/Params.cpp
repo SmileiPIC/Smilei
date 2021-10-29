@@ -175,30 +175,36 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Running pycontrol.py
     runScript( string( reinterpret_cast<const char *>( pycontrol_py ), pycontrol_py_len ), "pycontrol.py", globals );
-
+    
     // Run custom pre-processing function
     MESSAGE( 1, "Check for function preprocess()" );
     PyTools::runPyFunction( "preprocess" );
     PyErr_Clear();
-
+    
     smpi->barrier();
-
+    
     // Error if no block Main() exists
     if( PyTools::nComponents( "Main" ) == 0 ) {
         ERROR( "Block Main() not defined" );
     }
-
+    
     // CHECK namelist on python side
     PyTools::runPyFunction( "_smilei_check" );
     smpi->barrier();
-
+    
     // Python makes the checkpoint dir tree
     if( ! smpi->test_mode ) {
         PyTools::runPyFunction( "_prepare_checkpoint_dir" );
         smpi->barrier();
     }
-
+    
+    // Call python function _keep_python_running (see pyontrol.py)
+    // Return false if we can close the python interpreter
+    MESSAGE( 1, "Calling python _keep_python_running() :" );
+    keep_python_running_ = PyTools::runPyFunction<bool>( "_keep_python_running" );
+    
     // random seed
+    random_seed = 0;
     if( PyTools::extractOrNone( "random_seed", random_seed, "Main" ) ) {
         // Init of the seed for the vectorized C++ random generator recommended by Intel
         // See https://software.intel.com/en-us/articles/random-number-function-vectorization
@@ -242,9 +248,36 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
     setDimensions();
 
+    // Maxwell Solver
+    PyTools::extract( "maxwell_solver", maxwell_sol, "Main"   );
+    is_spectral = false;
+    is_pxr = false;
+    if( maxwell_sol == "Lehe" || maxwell_sol == "Bouchard" ) {
+        full_B_exchange=true;
+    } else if( maxwell_sol == "spectral" ) {
+        is_spectral = true;
+        is_pxr = true;
+        full_B_exchange = true;
+    } else if( maxwell_sol == "picsar" ) {
+        is_pxr = true;
+    }
+
+#ifndef _PICSAR
+    if (is_pxr) {
+        ERROR( "Smilei not linked with picsar, use make config=picsar" );
+    }
+#endif
+
     // interpolation order
     PyTools::extract( "interpolation_order", interpolation_order, "Main"  );
-    if( interpolation_order!=2 && interpolation_order!=4 ) {
+    if( geometry=="AMcylindrical") {
+        if( interpolation_order != 1 && is_spectral ) {
+            ERROR( "Main.interpolation_order " << interpolation_order << " should be 1 for PSATD solver" );
+        }
+        if( interpolation_order != 2 && !is_spectral ){
+            ERROR( "Main.interpolation_order " << interpolation_order << " should be 2 for FDTD solver." );
+        }
+    } else if( interpolation_order!=2 && interpolation_order!=4 && !is_spectral ) {
         ERROR( "Main.interpolation_order " << interpolation_order << " should be 2 or 4" );
     }
 
@@ -272,13 +305,22 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // Number of modes in AMcylindrical geometry
     PyTools::extract( "number_of_AM", nmodes, "Main"   );
 
-    nmodes_rel_field_init = 1;
+    nmodes_rel_field_init = 1; // default value
 
     // Number of modes in AMcylindrical geometry for relativistic field initialization
-    // if not specified, it will be equal to the number of modes of the simulation
+    // if not specified, it will be equal to 1
     PyTools::extract( "number_of_AM_relativistic_field_initialization", nmodes_rel_field_init, "Main"   );
     if (nmodes_rel_field_init>nmodes){
         ERROR( "The number of AM modes computed in relativistic field initialization must be lower or equal than the number of modes of the simulation" );
+    }
+
+    nmodes_classical_Poisson_field_init = 1; // default value
+
+    // Number of modes in AMcylindrical geometry for non relativistic field initialization with Poisson solver
+    // if not specified, it will be equal to 1
+    PyTools::extract( "number_of_AM_classical_Poisson_solver", nmodes_classical_Poisson_field_init, "Main"   );
+    if (nmodes_classical_Poisson_field_init>nmodes){
+        ERROR( "The number of AM modes computed in classical Poisson solver must be lower or equal than the number of modes of the simulation" );
     }
 
     
@@ -309,16 +351,12 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
         if( EM_BCs[iDim].size() == 1 ) { // if just one type is specified, then take the same bc type in a given dimension
             EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
-        } else if( ( EM_BCs[iDim][0] != EM_BCs[iDim][1] ) && ( EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic" ) ) {
-            ERROR( "EM_boundary_conditions along dimension "<<"012"[iDim]<<" cannot be periodic only on one side" );
+        } else if( EM_BCs[iDim][0] != EM_BCs[iDim][1] && ( EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic" ) ) {
+            ERROR( "EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side" );
         }
-        if( ( is_spectral ) && (geometry != "AMcylindrical") && ( EM_BCs[iDim][0] != "periodic" || EM_BCs[iDim][1] != "periodic" ) ) {
-            ERROR( "EM_boundary_conditions along dimension "<<"012"[iDim]<<" must be periodic for spectral solver in cartesian geometry." );
+        if( is_spectral && geometry != "AMcylindrical" && ( EM_BCs[iDim][0] != "periodic" || EM_BCs[iDim][1] != "periodic" ) ) {
+            ERROR( "EM_boundary_conditions along "<<"xyz"[iDim]<<" must be periodic for spectral solver in cartesian geometry." );
         }
-    }
-
-    if( !PyTools::extractV( "number_of_damping_cells", number_of_damping_cells, "Main" ) ) {
-        ERROR( "The parameter `number_of_damping_cells` must be defined as a list of integers" );
     }
 
     int n_envlaser = PyTools::nComponents( "LaserEnvelope" );
@@ -370,14 +408,17 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
 
     }
-
+    
+    open_boundaries.resize( nDim_field );
     for( unsigned int iDim = 0 ; iDim < nDim_field; iDim++ ) {
-        if( EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman" ) {
-            full_B_exchange = true;
-            open_boundaries = true;
-        }
-        if( EM_BCs[iDim][0] == "silver-muller" || EM_BCs[iDim][1] == "silver-muller" ) {
-            open_boundaries = true;
+        open_boundaries[iDim].resize( 2, false );
+        for( unsigned int j = 0; j < 2; j++ ) {
+            if( EM_BCs[iDim][j] == "buneman" ) {
+                full_B_exchange = true;
+                open_boundaries[iDim][j] = true;
+            } else if( EM_BCs[iDim][j] == "silver-muller" ) {
+                open_boundaries[iDim][j] = true;
+            }
         }
     }
 
@@ -423,7 +464,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main"   );
 
     // -----------------------------------
-    // MAXWELL SOLVERS & FILTERING OPTIONS
+    // POISSON & FILTERING OPTIONS
     // -----------------------------------
 
     time_fields_frozen=0.0;
@@ -437,24 +478,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "solve_relativistic_poisson", solve_relativistic_poisson, "Main"   );
     PyTools::extract( "relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main"   );
     PyTools::extract( "relativistic_poisson_max_error", relativistic_poisson_max_error, "Main"   );
-
-    // PXR parameters
-    PyTools::extract( "is_spectral", is_spectral, "Main"   );
-    if( is_spectral ) {
-        full_B_exchange=true;
-    }
-    PyTools::extract( "is_pxr", is_pxr, "Main" );
-#ifndef _PICSAR
-    if (is_pxr) {
-        ERROR( "Smilei not linked with picsar, use make config=picsar" );
-    }
-#endif
-
-    // Maxwell Solver
-    PyTools::extract( "maxwell_solver", maxwell_sol, "Main"   );
-    if( (maxwell_sol == "Lehe")||(maxwell_sol == "Bouchard") ) {
-        full_B_exchange=true;
-    }
 
     // Current filter properties
     int nCurrentFilter = PyTools::nComponents( "CurrentFilter" );
@@ -515,9 +538,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         res_space2 += res_space[i]*res_space[i];
     }
     if( geometry == "AMcylindrical" ) {
-        if(!is_spectral){
+        if( !is_spectral ){
             res_space2 += ( ( nmodes-1 )*( nmodes-1 )-1 )*res_space[1]*res_space[1];
-        } else { //if spectral
+        } else {
             res_space2 = max(res_space[0], res_space[1]) * max(res_space[0], res_space[1]);
             if( timestep != min(cell_length[0], cell_length[1]) ) {
                 WARNING( " timestep=" << timestep << " is not equal to optimal timestep for this solver = " << min(cell_length[0], cell_length[1])  );
@@ -562,28 +585,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 #endif
 
-    PyTools::extract( "uncoupled_grids", uncoupled_grids, "Main" );
 
-    global_factor.resize( nDim_field, 1 );
-    PyTools::extractV( "global_factor", global_factor, "Main" );
-    norder.resize( nDim_field, 1 );
-    norder.resize( nDim_field, 1 );
-    PyTools::extractV( "norder", norder, "Main" );
-    //norderx=norder[0];
-    //nordery=norder[1];
-    //norderz=norder[2];
+    spectral_solver_order.resize( nDim_field, 1 );
+    PyTools::extractV( "spectral_solver_order", spectral_solver_order, "Main" );
 
-    apply_rotational_cleaning = false;
-    if ( is_spectral && geometry == "AMcylindrical" ) {
-        PyTools::extract( "pseudo_spectral_guardells", pseudo_spectral_guardells, "Main" );
-        if (!pseudo_spectral_guardells) {
-            ERROR( "You must specify Main.pseudo_spectral_guardells with is_spectral=True in AM" );
+    initial_rotational_cleaning = false;
+    if( is_spectral && geometry == "AMcylindrical" ) {
+        PyTools::extract( "initial_rotational_cleaning", initial_rotational_cleaning, "Main" );
+        if( initial_rotational_cleaning && smpi->getSize() > 1 ) {
+            WARNING("Rotational cleaning (laser initialization) is not parallelized for now and may use a large amount of memory.");
         }
-        PyTools::extract( "apply_rotational_cleaning", apply_rotational_cleaning, "Main" );
-        if ( ( apply_rotational_cleaning ) && ( smpi->getSize() > 1 ) ) {
-            WARNING("Divergence cleaning not parallelized for now");
-        }
-
     }
 
     PyTools::extract( "patch_arrangement", patch_arrangement, "Main"  );
@@ -598,6 +609,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             }
         }
     }
+
+
 
 
     if( PyTools::nComponents( "LoadBalancing" )>0 ) {
@@ -635,6 +648,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             }
     }
 
+    bool defined_cell_sort = true;
+    if (!PyTools::extractOrNone( "cell_sorting", cell_sorting, "Main"  )){
+    //cell_sorting is undefined by the user
+        defined_cell_sort = false;
+        cell_sorting = false;
+    }
+
     // Activation of the vectorized subroutines
     vectorization_mode = "off";
     has_adaptive_vectorization = false;
@@ -654,10 +674,18 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
         // Check that we are in 3D, adaptive mode not possible in 2d
         if( vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive" ) {
-            if (nDim_particle != 3) {
+            if (geometry!="3Dcartesian") {
                 ERROR("In block `Vectorization`, `adaptive` mode only available in 3D")
             }
         }
+        // Check cell sorting is allowed
+        if( !( vectorization_mode == "off") ){
+    	    if (defined_cell_sort == true && cell_sorting == false){
+                ERROR(" Cell sorting must be allowed in order to use vectorization.")
+            }
+            cell_sorting = true;
+	}
+
 
         // Default mode for the adaptive mode
         PyTools::extract( "initial_mode", adaptive_default_mode, "Vectorization"   );
@@ -673,29 +701,24 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             );
     }
 
-    PyTools::extract( "cell_sorting", cell_sorting, "Main"  );
-    //MESSAGE("Sorting per cell : " << cell_sorting );
-    //if (cell_sorting)
-    //    vectorization_mode = "on";
     
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
 
+        // collisions need sorting per cell
+        if (defined_cell_sort == true && cell_sorting == false){
+            ERROR(" Cell sorting must be allowed in order to use collisions.")
+        }
+        cell_sorting = true;
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
                 && geometry!="3Dcartesian" ) {
             ERROR( "Collisions only valid for cartesian geometries for the moment" )
         }
         
-        // collisions need sorting per cell
         if( vectorization_mode == "adaptive_mixed_sort" ) {
             ERROR( "Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'." )
         }
-        
-        if( vectorization_mode == "off" ) {
-            cell_sorting = true;
-        }
-            
     }
 
     // Read the "print_every" parameter
@@ -719,6 +742,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     unsigned int tot_species_number = PyTools::nComponents( "Species" );
 
     double mass, mass2=0;
+    std::string merging_method;
 
     for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
         PyTools::extract( "mass", mass, "Species", ispec );
@@ -730,7 +754,18 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 }
             }
         }
+	//Use cell sorting if merge is used.
+        PyTools::extract( "merging_method", merging_method, "Species", ispec );
+	if (merging_method != "none"){
+            if (defined_cell_sort == true && cell_sorting == false){
+                ERROR(" Cell sorting must be allowed in order to use particle merge.")
+            }
+            cell_sorting = true;
+        }
     }
+
+    //Set final value of cell_sort
+    if (!cell_sorting) cell_sorting = false;
 
     // -------------------------------------------------------
     // Parameters for the synchrotron-like radiation losses
@@ -810,7 +845,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // -------------------------------------------------------
     unsigned int n_laser = PyTools::nComponents( "Laser" );
     unsigned int n_laser_offset = 0;
-    LaserPropagator propagateX;
     
     for( unsigned int i_laser=0; i_laser<n_laser; i_laser++ ) {
         double offset = 0.;
@@ -826,13 +860,20 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             double angle_z = 0.;
             PyTools::extract( "_angle", angle_z, "Laser", i_laser );
             
-            // Prepare propagator
-            if( n_laser_offset == 0 ) {
-                TITLE( "Pre-processing LaserOffset" );
-                propagateX.init( this, smpi, 0 );
-            }
+            // Extract _fft_time_window
+            double fft_time_window = 0.;
+            PyTools::extract( "_fft_time_window", fft_time_window, "Laser", i_laser );
             
-            MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
+            // Extract _number_of_processes
+            int number_of_processes = 0;
+            MPI_Comm comm;
+            if( PyTools::extractOrNone( "_number_of_processes", number_of_processes, "Laser", i_laser ) ) {
+                int color = smpi->getRank() < number_of_processes ? 1 : MPI_UNDEFINED;
+                MPI_Comm_split( smpi->world(), color, smpi->getRank(), &comm );
+            } else {
+                number_of_processes = smpi->getSize();
+                MPI_Comm_dup( smpi->world(), &comm );
+            }
             
             // Extract the file name
             string file( "" );
@@ -877,9 +918,38 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 ERROR( "For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer" );
             }
             
-            // Make the propagation happen and write out the file
-            if( ! smpi->test_mode && ! restart ) {
-                propagateX( profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
+            // Extract box_side
+            string box_side = "";
+            PyTools::extract( "box_side", box_side, "Laser", i_laser );
+            unsigned int normal_axis = 0;
+            if( box_side == "xmin" || box_side == "xmax" ) {
+                normal_axis = 0;
+            } else if( box_side == "ymin" || box_side == "ymax" ) {
+                if( geometry != "2Dcartesian" && geometry != "3Dcartesian" ) {
+                    ERROR( "For LaserOffset #" << n_laser_offset << ": box_side `ymin` or `ymax` requires 2D or 3D geometry" );
+                }
+                normal_axis = 1;
+            } else if( box_side == "zmin" || box_side == "zmax" ) {
+                if( geometry != "3Dcartesian" ) {
+                    ERROR( "For LaserOffset #" << n_laser_offset << ": box_side `zmin` or `zmax` requires 3D geometry" );
+                }
+                normal_axis = 2;
+            } else {
+                ERROR( "For LaserOffset #" << n_laser_offset << ": box_side must be `xmin`, `xmax`, `ymin`, `ymax`, `zmin` or `zmax`" );
+            }
+            
+            if( smpi->getRank() < number_of_processes && ! restart ) {
+                if( n_laser_offset == 0 ) {
+                    TITLE( "Calculate LaserOffset" );
+                }
+                // Prepare propagator
+                MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
+                LaserPropagator propagateX( this, normal_axis, fft_time_window, comm );
+                
+                // Make the propagation happen and write out the file
+                if( ! smpi->test_mode ) {
+                    propagateX( profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
+                }
             }
             
             n_laser_offset ++;
@@ -887,6 +957,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
     
     check_consistency();
+    
 }
 
 Params::~Params()
@@ -929,7 +1000,9 @@ void Params::compute()
     patch_dimensions.resize( 3, 0. );
     cell_volume=1.0;
     n_cell_per_patch = 1;
-
+    
+    multiple_decomposition = PyTools::nComponents( "MultipleDecomposition" )>0;
+    
     // compute number of cells & normalized lengths
     for( unsigned int i=0; i<nDim_field; i++ ) {
         n_space[i] = round( grid_length[i]/cell_length[i] );
@@ -951,13 +1024,12 @@ void Params::compute()
     //Define number of cells per patch and number of ghost cells
     for( unsigned int i=0; i<nDim_field; i++ ) {
         PyTools::extract( "custom_oversize", custom_oversize, "Main"  );
-        if (uncoupled_grids==false){
-            oversize[i]  = max( interpolation_order, max( ( unsigned int )( norder[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
-            if ( (currentFilter_model == "customFIR") && (oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) ) {
+        if( ! multiple_decomposition ) {
+            oversize[i]  = max( interpolation_order, max( ( unsigned int )( spectral_solver_order[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
+            if( currentFilter_model == "customFIR" && oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) {
                 ERROR( "With the `customFIR` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2" );
             }
-        }
-        if (uncoupled_grids==true){
+        } else {
             oversize[i] = interpolation_order + ( exchange_particles_each-1 );
         }
         n_space_global[i] = n_space[i];
@@ -970,23 +1042,31 @@ void Params::compute()
         }
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
-    } 
-    //region_oversize = oversize ;
-    if ( is_spectral && geometry == "AMcylindrical" )  {
-        //Force ghost cells number in L when spectral
-        region_oversize[0] = pseudo_spectral_guardells;
-        //Force zero ghost cells in R when spectral
-        region_oversize[1] = oversize[1];
     }
-    else if ( is_spectral ) {
-        for( unsigned int i=0; i<nDim_field; i++ )
-            region_oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
+
+    if( multiple_decomposition ) {
+        if( is_spectral ) {
+            for( unsigned int i=0; i<nDim_field; i++ ){
+                region_oversize[i]  = max( interpolation_order, ( unsigned int )( spectral_solver_order[i]/2+1 ) ) + ( exchange_particles_each-1 );
+            }
+        } else {
+            for( unsigned int i=0; i<nDim_field; i++ ){
+                region_oversize[i]  = interpolation_order + ( exchange_particles_each-1 );
+            }
+        }
+        PyTools::extract( "region_ghost_cells", region_ghost_cells, "MultipleDecomposition" );
+        for( unsigned int i=0; i<nDim_field; i++ ) {
+            region_oversize[i] = max( region_oversize[i], region_ghost_cells );
+        }
+        if( is_spectral && geometry == "AMcylindrical" )  {
+            //Force ghost cells number in L when spectral
+            region_oversize[0] = region_ghost_cells;
+            //Force zero ghost cells in R when spectral
+            WARNING("Forcing region ghost-cell size along r from " << region_oversize[1] << " to " <<  oversize[1])
+            region_oversize[1] = oversize[1];
+        }
     }
-    PyTools::extract( "custom_region_oversize", custom_region_oversize, "Main"  );
-    for( unsigned int i=0; i<nDim_field; i++ ) {
-        region_oversize[i] = max( region_oversize[i], custom_region_oversize );
-    }
- 
+    
     // Set clrw if not set by the user
     if( clrw == -1 ) {
 
@@ -1032,8 +1112,8 @@ void Params::compute()
     }
 
     // Define domain decomposition if double grids are used for particles and fields
-    if ( uncoupled_grids ) {
-        uncoupled_decomposition();
+    if ( multiple_decomposition ) {
+        multiple_decompose();
         full_B_exchange = true;
     }
 
@@ -1095,43 +1175,72 @@ void Params::print_init()
     TITLE( "Geometry: " << geometry );
     MESSAGE( 1, "Interpolation order : " <<  interpolation_order );
     MESSAGE( 1, "Maxwell solver : " <<  maxwell_sol );
-    MESSAGE( 1, "(Time resolution, Total simulation time) : (" << res_time << ", " << simulation_time << ")" );
-    MESSAGE( 1, "(Total number of iterations,   timestep) : (" << n_time << ", " << timestep << ")" );
-    MESSAGE( 1, "           timestep  = " << timestep/dtCFL << " * CFL" );
-
+    MESSAGE( 1, "simulation duration = " << simulation_time <<",   total number of iterations = " << n_time);
+    MESSAGE( 1, "timestep = " << timestep << " = " << timestep/dtCFL << " x CFL,   time resolution = " << res_time);
+    
+    ostringstream gl;
+    gl << "Grid length: ";
     for( unsigned int i=0 ; i<grid_length.size() ; i++ ) {
-        MESSAGE( 1, "dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")" );
-        MESSAGE( 1, "            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")" );
-        MESSAGE( 1, "            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")" );
-        if( open_boundaries ) {
-            cout << setprecision( 2 );
-            cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] ;
-            for( unsigned int ii=1 ; ii<grid_length.size() ; ii++ ) {
-                cout << ", " << EM_BCs_k[2*i][ii] ;
+        gl << grid_length[i] << ( i<grid_length.size()-1 ? ", " : "" );
+    }
+    MESSAGE( 1, gl.str() );
+    
+    ostringstream cl;
+    cl << "Cell length: ";
+    for( unsigned int i=0 ; i<cell_length.size() ; i++ ) {
+        cl << cell_length[i] << ( i<cell_length.size()-1 ? ", " : "" );
+    }
+    MESSAGE( 1, cl.str() );
+    
+    ostringstream nc;
+    nc << "Number of cells: " ;
+    for( unsigned int i=0 ; i<nDim_field ; i++ ) {
+        nc << n_space_global[i] << ( i<nDim_field-1 ? ", " : "" );
+    }
+    MESSAGE( 1, nc.str() );
+    
+    ostringstream sr;
+    sr << "Spatial resolution: ";
+    for( unsigned int i=0 ; i<nDim_field ; i++ ) {
+        sr << res_space[i] << ( i<nDim_field-1 ? ", " : "" );
+    }
+    MESSAGE( 1, sr.str() );
+    
+    TITLE( "Electromagnetic boundary conditions" );
+    string xyz = geometry=="AMcylindrical" ? "xr" : "xyz";
+    for( unsigned int i=0 ; i<grid_length.size() ; i++ ) {
+        for( unsigned int j=0 ; j<2 ; j++ ) {
+            ostringstream bc( "" );
+            bc << xyz[i] << (  j==0 ? "min " : "max ") << EM_BCs[i][j];
+            if( open_boundaries[i][j] ) {
+                bc << setprecision( 2 ) << ", absorbing vector " << "[" << EM_BCs_k[2*i+j][0];
+                for( unsigned int ii=1 ; ii<grid_length.size() ; ii++ ) {
+                    bc << ", " << EM_BCs_k[2*i+j][ii] ;
+                }
+                bc << "]";
             }
-            cout << "] , [" << EM_BCs_k[2*i+1][0] ;
-            for( unsigned int ii=1 ; ii<grid_length.size() ; ii++ ) {
-                cout << ", " << EM_BCs_k[2*i+1][ii] ;
-            }
-            cout << "] )" << endl;
+            MESSAGE( 1, bc.str() );
         }
     }
-
-    if (currentFilter_passes.size() > 0){
+    
+    if( full_B_exchange ) {
+        MESSAGE( 1, "All components of B are exchanged at synchronization" );
+    }
+    
+    if( currentFilter_passes.size() > 0 ){
+        TITLE( "Current filtering" );
         if( *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) > 0 ) {
             for( unsigned int idim=0 ; idim < nDim_field ; idim++ ){
                 std::string strpass = (currentFilter_passes[idim] > 1 ? "passes" : "pass");
-                MESSAGE( 1, currentFilter_model << " current filtering : " << currentFilter_passes[idim] << " " << strpass << " along dimension " << idim );
+                MESSAGE( 1, currentFilter_model << " current filtering: " << currentFilter_passes[idim] << " " << strpass << " along dimension " << idim );
             }
         }
     }
     if( Friedman_filter ) {
+        TITLE( "Field filtering" );
         MESSAGE( 1, "Friedman field filtering : theta = " << Friedman_theta );
     }
-    if( full_B_exchange ) {
-        MESSAGE( 1, "All components of B are exchanged at synchronization" );
-    }
-
+    
     if( has_load_balancing ) {
         TITLE( "Load Balancing: " );
         if( initial_balance ) {
@@ -1156,35 +1265,46 @@ void Params::print_init()
 // ---------------------------------------------------------------------------------------------------------------------
 // Printing out some data at a given timestep
 // ---------------------------------------------------------------------------------------------------------------------
-void Params::print_timestep( unsigned int itime, double time_dual, Timer &timer )
+void Params::print_timestep( SmileiMPI *smpi, unsigned int itime, double time_dual, Timer &timer, double npart )
 {
-    double before = timer.getTime();
-    timer.update();
-    double now = timer.getTime();
-    ostringstream my_msg;
-    my_msg << "  " << setw( timestep_width ) << itime << "/" << n_time << " "
-           << "  " << scientific << setprecision( 4 ) << setw( 12 ) << time_dual << " "
-           << "  " << scientific << setprecision( 4 ) << setw( 12 ) << now << " "
-           << "  " << "(" << scientific << setprecision( 4 ) << setw( 12 ) << now - before << " )"
-           ;
-    #pragma omp master
-    MESSAGE( my_msg.str() );
-    #pragma omp barrier
+    if( smpi->isMaster() ) {
+        double before = timer.getTime();
+        timer.update();
+        double now = timer.getTime();
+        
+        ostringstream push_time;
+        if( npart * (double) print_every > 0 ) {
+            push_time << setw( 14 ) << (int)( 1e9 * (now - before) * (double) smpi->getGlobalNumCores() / ( npart * (double) print_every ) );
+        } else {
+            push_time << "  ??";
+        }
+        
+        #pragma omp master
+        MESSAGE(
+            "  " << setw( timestep_width ) << itime << "/" << n_time << " "
+            << "  " << scientific << setprecision( 4 ) << setw( 12 ) << time_dual << " "
+            << "  " << scientific << setprecision( 4 ) << setw( 12 ) << now << " "
+            << "  " << "(" << scientific << setprecision( 4 ) << setw( 12 ) << now - before << " )"
+            << "  " << push_time.str() << " "
+        );
+        #pragma omp barrier
+    }
 }
 
-void Params::print_timestep_headers()
+void Params::print_timestep_headers( SmileiMPI *smpi )
 {
     timestep_width = log10( n_time ) + 1;
     if( timestep_width<3 ) {
         timestep_width = 3;
     }
-    ostringstream my_msg;
-    my_msg << setw( timestep_width*2+4 ) << " timestep "
-           << setw( 15 ) << "sim time "
-           << setw( 15 ) << "cpu time [s] "
-           << "  (" << setw( 12 ) << "diff [s]" << " )"
-           ;
-    MESSAGE( my_msg.str() );
+    WARNING( "The following `push time` assumes a global number of "<<smpi->getGlobalNumCores()<<" cores (hyperthreading is unknown)" );
+    MESSAGE(
+        setw( timestep_width*2+4 ) << " timestep "
+        << setw( 15 ) << "sim time "
+        << setw( 15 ) << "cpu time [s] "
+        << "  (" << setw( 12 ) << "diff [s]" << " )"
+        << setw( 17 ) << "   push time [ns]"
+    );
 }
 
 
@@ -1192,38 +1312,39 @@ void Params::print_timestep_headers()
 void Params::print_parallelism_params( SmileiMPI *smpi )
 {
     if( smpi->isMaster() ) {
+        
 #ifndef _NO_MPI_TM
         MESSAGE( 1, "MPI_THREAD_MULTIPLE enabled" );
 #else
         MESSAGE( 1, "MPI_THREAD_MULTIPLE not enabled" );
 #endif
-        MESSAGE( 1, "Number of MPI process : " << smpi->getSize() );
-        MESSAGE( 1, "Number of patches : " );
-        for( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ) {
-            MESSAGE( 2, "dimension " << iDim << " - number_of_patches : " << number_of_patches[iDim] );
+    
+        MESSAGE( 1, "Number of MPI processes: " << smpi->getSize() );
+        
+#ifdef _OPENMP
+        MESSAGE( 1, "Number of threads per MPI process : " << smpi->getOMPMaxThreads() );
+#else
+        MESSAGE( 1, "OpenMP disabled" );
+#endif
+        MESSAGE( "" );
+        
+        ostringstream np;
+        np << "Number of patches: " << number_of_patches[0];
+        for( unsigned int iDim=1 ; iDim<nDim_field ; iDim++ ) {
+            np << " x " << number_of_patches[iDim];
         }
-
-        MESSAGE( 1, "Patch size :" );
-        for( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ) {
-            MESSAGE( 2, "dimension " << iDim << " - n_space : " << n_space[iDim] << " cells." );
+        MESSAGE( 1, np.str() );
+        
+        ostringstream ps;
+        ps << "Number of cells in one patch: " << n_space[0];
+        for( unsigned int iDim=1 ; iDim<nDim_field ; iDim++ ) {
+            ps << " x " << n_space[iDim];
         }
-
+        MESSAGE( 1, ps.str() );
+        
         MESSAGE( 1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
     }
 
-    if( smpi->isMaster() ) {
-        TITLE( "OpenMP" );
-#ifdef _OPENMP
-//    int nthds(0);
-//#pragma omp parallel shared(nthds)
-//    {
-//        nthds = omp_get_num_threads();
-//    }
-        MESSAGE( 1, "Number of thread per MPI process : " << smpi->getOMPMaxThreads() );
-#else
-        MESSAGE( "Disabled" );
-#endif
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1301,16 +1422,13 @@ void Params::cleanup( SmileiMPI *smpi )
     PyTools::runPyFunction( "cleanup" );
     // this will reset error in python in case cleanup doesn't exists
     PyErr_Clear();
-
+    
     smpi->barrier();
-
-    // this function is defined in the Python/pyontrol.py file and should return false if we can close
-    // the python interpreter
-    MESSAGE( 1, "Calling python _keep_python_running() :" );
-    if( PyTools::runPyFunction<bool>( "_keep_python_running" ) ) {
-        MESSAGE( 2, "Keeping Python interpreter alive" );
+    
+    if( keep_python_running_ ) {
+        MESSAGE( 1, "Keeping Python interpreter alive" );
     } else {
-        MESSAGE( 2, "Closing Python" );
+        MESSAGE( 1, "Closing Python" );
         PyErr_Print();
         Py_Finalize();
     }
@@ -1318,27 +1436,28 @@ void Params::cleanup( SmileiMPI *smpi )
 }
 
 
-void Params::uncoupled_decomposition()
+void Params::multiple_decompose()
 {
     n_space_region.resize(3,1);
     number_of_region.resize( 3, 1 );
 
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-    if (rk==0) {
+    if( rk==0 ) {
         cout << "Number of patches : ";
         for ( unsigned int iDim  = 0 ; iDim < nDim_field ; iDim++ )
             cout << number_of_patches[iDim] << " ";
         cout << endl;
     }
-
-    if (nDim_field==1)
-        uncoupled_decomposition_1D();
-    else if (nDim_field==2)
-        uncoupled_decomposition_2D();
-    else if (nDim_field==3)
-        uncoupled_decomposition_3D();
-
+    
+    if( nDim_field==1 ) {
+        multiple_decompose_1D();
+    } else if( nDim_field==2 ) {
+        multiple_decompose_2D();
+    } else if( nDim_field==3 ) {
+        multiple_decompose_3D();
+    }
+    
     // Build the map of offset, contains offset for each domain, expressed in number of cells
     offset_map.resize( nDim_field );
     for ( unsigned int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
@@ -1361,11 +1480,11 @@ void Params::uncoupled_decomposition()
         }
     }
 
-    print_uncoupled_params();
+    print_multiple_decomposition_params();
 }
 
 
-void Params::print_uncoupled_params()
+void Params::print_multiple_decomposition_params()
 {
     int rk(0);
     int sz(1);
@@ -1397,7 +1516,7 @@ void Params::print_uncoupled_params()
     }
 }
 
-void Params::uncoupled_decomposition_1D()
+void Params::multiple_decompose_1D()
 {
     int rk(0);
     int sz(1);
@@ -1439,7 +1558,7 @@ void Params::uncoupled_decomposition_1D()
 }
 
 
-void Params::uncoupled_decomposition_2D()
+void Params::multiple_decompose_2D()
 {
     int rk(0);
     int sz(1);
@@ -1448,7 +1567,7 @@ void Params::uncoupled_decomposition_2D()
     MPI_Comm_size( MPI_COMM_WORLD, &sz );
 
 
-    if ( ( geometry != "AMcylindrical" ) || (!is_spectral) ) {
+    if ( geometry != "AMcylindrical" || !is_spectral ) {
         // Number of domain in 2D
         double tmp(0.);
         tmp  = number_of_patches[0] / number_of_patches[1];
@@ -1516,7 +1635,7 @@ void Params::uncoupled_decomposition_2D()
 }
 
 
-void Params::uncoupled_decomposition_3D()
+void Params::multiple_decompose_3D()
 {
     int rk(0);
     int sz(1);
@@ -1594,10 +1713,13 @@ void Params::uncoupled_decomposition_3D()
 string Params::speciesField( string field_name )
 {
     if( geometry != "AMcylindrical" ) {
-        size_t i1 = field_name.rfind( "_" );
+        size_t i1 = field_name.find( "_" );
         size_t l = field_name.length();
         if( i1 != string::npos && l-i1 > 2 ) {
-            return field_name.substr( i1+1, l-i1-1 );
+            string field = field_name.substr( 0, i1 );
+            if( field == "Jx" || field == "Jy" || field == "Jz" || field == "Rho" ) {
+                return field_name.substr( i1+1, l-i1-1 );
+            }
         }
     } else {
         size_t i1 = field_name.find( "_" );

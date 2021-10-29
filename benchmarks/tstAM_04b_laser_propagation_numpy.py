@@ -55,7 +55,6 @@ Main(
         ["silver-muller","silver-muller"],
         ["buneman","buneman"],
     ],
-    random_seed = smilei_mpi_rank,
     solve_poisson = False,
     print_every = 100
 )

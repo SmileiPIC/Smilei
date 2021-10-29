@@ -4,30 +4,30 @@ from .._Utils import *
 class ParticleBinning(Diagnostic):
 	"""Class for loading a particle binning diagnostic"""
 	
-	_diagName = "ParticleBinning"
+	_diagType = "ParticleBinning"
 	hasComposite = False
 	
 	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, data_transform=None, include={}, **kwargs):
 		
 		# Search available diags
-		diag_numbers, diag_names = self.simulation.getDiags(self._diagName)
+		diag_numbers, diag_names = self.simulation.getDiags(self._diagType)
 		
 		if diagNumber is None:
-			self._error += ["Printing available %s:" % self._diagName]
-			self._error += ["------------------------------------------------"]
+			error = ["`diagNumber` is not defined"]
+			error += ["Printing available %s:" % self._diagType]
+			error += ["------------------------------------------------"]
 			for diagNumber in diag_numbers:
-				self._error += [self._printInfo(self._getInfo(diagNumber))]
+				error += [self._printInfo(self._getInfo(self.simulation, self._diagType, diagNumber))]
 			if len(diag_numbers)==0:
-				self._error += ["      No %s found" % self._diagName]
-			return
+				error += ["      No %s found" % self._diagType]
+			raise Exception("\n".join(error))
 		
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Check the requested diags are ok
 		if type(diagNumber) is int:
 			if diagNumber<0:
-				self._error += ["Argument 'diagNumber' cannot be a negative integer."]
-				return
+				raise Exception("Argument 'diagNumber' cannot be a negative integer.")
 			self.operation = '#' + str(diagNumber)
 		elif type(diagNumber) is str:
 			if diagNumber in diag_names:
@@ -36,28 +36,26 @@ class ParticleBinning(Diagnostic):
 			else:
 				self.operation = diagNumber
 		else:
-			self._error += ["Argument 'diagNumber' must be and integer or a string."]
-			return
+			raise Exception("Argument 'diagNumber' must be and integer or a string.")
 		
 		# Get list of requested diags
 		self._myinfo = {}
 		self._diags = sorted(set([ int(d[1:]) for d in self._re.findall('#\d+',self.operation) ]))
 		for d in self._diags:
 			try:
-				info = self._getInfo(d)
+				info = self._getInfo(self.simulation, self._diagType, d)
 				if info is False: raise
 				self._myinfo.update({ d:info })
-			except:
-				self._error += ["%s #%d invalid or non-existent" % (self._diagName,d)]
-				return
+			except Exception as e:
+				raise Exception("%s #%d invalid or non-existent" % (self._diagType,d))
 		# Test the operation
 		self._include = include
 		try:
 			exec(self._re.sub('#\d+','1.',self.operation), self._include, {"t":0})
-		except ZeroDivisionError: pass
-		except:
-			self._error += ["Cannot understand operation '"+self.operation+"'"]
-			return
+		except ZeroDivisionError:
+			pass
+		except Exception as e:
+			raise Exception("Cannot understand operation '"+self.operation+"'")
 		# Verify that all requested diags all have the same shape
 		self._axes = {}
 		self._naxes = {}
@@ -65,33 +63,30 @@ class ParticleBinning(Diagnostic):
 			self._axes .update ({ d:self._myinfo[d]["axes"] })
 			self._naxes.update ({ d:len(self._axes[d]) })
 			if self._naxes[d] != self._naxes[self._diags[0]]:
-				self._error += [
+				raise Exception(
 					"All diagnostics in operation '%s' must have as many axes. %s #%d has %d axes and #%d has %d axes"
-					% (self.operation, self._diagName, d, self._naxes[d], self._diags[0], self._naxes[self._diags[0]])
-				]
-				return
-			for a in self._axes[d]:
-				if self._axes[d] != self._axes[self._diags[0]]:
-					self._error += [
-						"In operation '%s', %s #%d and #%d must have the same shape."
-						% (self.operation, self._diagName, d, self._diags[0])
-					]
-					return
+					% (self.operation, self._diagType, d, self._naxes[d], self._diags[0], self._naxes[self._diags[0]])
+				)
+			if self._axes[d] != self._axes[self._diags[0]]:
+				raise Exception(
+					"In operation '%s', %s #%d and #%d must have the same shape."
+					% (self.operation, self._diagType, d, self._diags[0])
+				)
 		
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
 		
 		# Check subset
-		if subset is None: subset = {}
+		if subset is None:
+			subset = {}
 		elif type(subset) is not dict:
-			self._error += ["Argument `subset` must be a dictionary"]
-			return
+			raise Exception("Argument `subset` must be a dictionary")
 		
 		# Check sum
-		if sum is None: sum = {}
+		if sum is None:
+			sum = {}
 		elif type(sum) is not dict:
-			self._error += ["Argument 'sum' must be a dictionary"]
-			return
+			raise Exception("Argument `sum` must be a dictionary")
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -108,7 +103,10 @@ class ParticleBinning(Diagnostic):
 			# Gather data from all timesteps, and the list of timesteps
 			items = {}
 			for path in self._results_path:
-				f = self._h5py.File(path+self._os.sep+self._diagName+str(d)+'.h5', 'r')
+				try:
+					f = self._h5py.File(path+self._os.sep+self._diagType+str(d)+'.h5', 'r')
+				except:
+					continue
 				items.update( dict(f) )
 			items = sorted(items.items())
 			self._h5items[d] = [it[1] for it in items]
@@ -122,148 +120,90 @@ class ParticleBinning(Diagnostic):
 			if timesteps is not None:
 				try:
 					self._timesteps[d] = self._selectTimesteps(timesteps, self._timesteps[d])
-				except:
-					self._error += ["Argument 'timesteps' must be one or two non-negative integers"]
-					return
+				except Exception as e:
+					raise Exception("Argument 'timesteps' must be one or two non-negative integers")
 			# Verify that timesteps are the same for all diagnostics
 			if (self._timesteps[d] != self._timesteps[self._diags[0]]).any() :
-				self._error += [
+				raise Exception(
 					"All diagnostics in operation '%s' must have the same timesteps. Diagnotic #%d has %d timesteps and #%d has %d timesteps"
 					% (self.operation, d, len(self._timesteps[d]), self._diags[0], len(self._timesteps[self._diags[0]]))
-				]
-				return
+				)
 		# Now we need to keep only one array of timesteps because they should be all the same
 		self._timesteps  = self._timesteps [self._diags[0]]
 		self._alltimesteps = self._alltimesteps[self._diags[0]]
 		
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error += ["Timesteps not found"]
-			return
+			raise Exception("Timesteps not found")
 		
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# Fabricate all axes values for all diags
-		plot_diff = []
-		coeff = 1.
-		spatialaxes = {"x":False, "y":False, "z":False}
-		self._finalShape = [[]]*self._naxes
-		self._sums = [False]*self._naxes
-		self._selection = [self._np.s_[:]]*self._naxes
-		uniform = True
-		
-		for iaxis in range(self._naxes):
-			axis = self._axes[iaxis]
-			axistype = axis["type"]
-			
-			# Find the vector of values along the axis
-			if axis["log"]:
-				edges = self._np.linspace(self._np.log10(axis["min"]), self._np.log10(axis["max"]), axis["size"]+1)
-				centers = edges + (edges[1]-edges[0])/2.
-				edges = 10.**edges
-				centers = 10.**(centers[:-1])
-			else:
-				edges = self._np.linspace(axis["min"], axis["max"], axis["size"]+1)
-				centers = edges + (edges[1]-edges[0])/2.
-				centers = centers[:-1]
-			axis.update({ "edges"   : edges   })
-			axis.update({ "centers" : centers })
-			
+		self._spatialaxes = {"x":False, "y":False, "z":False}
+		self.auto_axes = False
+		user_axes = []
+		for iaxis, axis in enumerate(self._axes):
 			# Find some quantities depending on the axis type
-			overall_min = "-inf"; overall_max = "inf"
-			axis_units = ""
-			if   axistype in ["x","y","z","moving_x"]:
-				axis_units = "L_r"
-				spatialaxes[axistype[-1]] = True
-			elif axistype in ["a","b"]:
-				axis_units = "L_r"
+			overall_min = "-inf"
+			overall_max = "inf"
+			axis["units"] = ""
+			if   axis["type"] in ["x","y","z","moving_x"]:
+				axis["units"] = "L_r"
+				self._spatialaxes[axis["type"][-1]] = True
+			elif axis["type"] in ["a","b"]:
+				axis["units"] = "L_r"
 				self.hasComposite = True
-			elif axistype == "theta" and self._ndim_particles==2:
-				axis_units = "rad"
+			elif axis["type"] == "theta" and self._ndim_particles==2:
+				axis["units"] = "rad"
 				overall_min = "-3.141592653589793"
 				overall_max = "3.141592653589793"
-			elif axistype == "theta" and self._ndim_particles==3:
-				axis_units = "rad"
+			elif axis["type"] == "theta" and self._ndim_particles==3:
+				axis["units"] = "rad"
 				overall_min = "0"
 				overall_max = "3.141592653589793"
-			elif axistype == "phi":
-				axis_units = "rad"
+			elif axis["type"] == "phi":
+				axis["units"] = "rad"
 				overall_min = "-3.141592653589793"
 				overall_max = " 3.141592653589793"
-			elif axistype in ["px","py","pz","p"]:
-				axis_units = "P_r"
-			elif axistype in ["vx","vy","vz","v"]:
-				axis_units = "V_r"
-			elif axistype in ["vperp2"]:
-				axis_units = "V_r**2"
+			elif axis["type"] in ["px","py","pz","p"]:
+				axis["units"] = "P_r"
+			elif axis["type"] in ["vx","vy","vz","v"]:
+				axis["units"] = "V_r"
+			elif axis["type"] in ["vperp2"]:
+				axis["units"] = "V_r**2"
 				overall_min = "0"
-			elif axistype == "gamma":
+			elif axis["type"] == "gamma":
 				overall_min = "1"
-			elif axistype == "ekin":
-				axis_units = "K_r"
+			elif axis["type"] == "ekin":
+				axis["units"] = "K_r"
 				overall_min = "0"
-			elif axistype == "charge":
-				axis_units = "Q_r"
+			elif axis["type"] == "charge":
+				axis["units"] = "Q_r"
 				overall_min = "0"
-			elif axistype == "chi":
+			elif axis["type"] == "chi":
 				overall_min = "0"
+			elif axis["type"][:4] == "user":
+				axis["units"] = ""
+				user_axes += [axis["type"]]
 			
-			# if this axis has to be summed, then select the bounds
-			if axistype in sum:
-				if axistype in subset:
-					self._error += ["`subset` not possible on the same axes as `sum`"]
-					return
-				
-				self._sums[iaxis] = True
-				
-				try:
-					axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
-						= self._selectRange(sum[axistype], centers, axistype, axis_units, "sum", axis["edges_included"])
-				except:
-					return
-				
-				if axistype in ["x","y","z","moving_x"]:
-					first_edge = edges[self._selection[iaxis].start or 0]
-					last_edge  = edges[(self._selection[iaxis].stop or len(centers))]
-					coeff /= last_edge - first_edge
-				
-				plot_diff.append( self._np.ones((self._finalShape[iaxis],)) )
+			# Store sum/subset info
+			if axis["type"] in sum:
+				if axis["type"] in subset:
+					raise Exception("`subset` not possible on the same axes as `sum`")
+				axis["sum"] = sum[axis["type"]]
+			elif axis["type"] in subset:
+				axis["subset"] = subset[axis["type"]]
 			
-			# if not summed
-			else:
-				# If taking a subset of this axis
-				if axistype in subset:
-					try:
-						axis["subsetInfo"], self._selection[iaxis], self._finalShape[iaxis] \
-							= self._selectSubset(subset[axistype], centers, axistype, axis_units, "subset")
-					except:
-						return
-					# If selection is not a slice (meaning only one element) then axis removed from plot
-					if type(self._selection[iaxis]) is not slice and axistype in ["x","y","z","moving_x"]:
-						first_edge = edges[self._selection[iaxis]]
-						last_edge  = edges[self._selection[iaxis]+1]
-						coeff /= last_edge - first_edge
-				
-				# If no subset, or subset has more than 1 point, use this axis in the plot
-				if type(self._selection[iaxis]) is slice:
-					self._type   .append(axistype)
-					self._shape  .append(axis["size"])
-					self._centers.append(centers[self._selection[iaxis]])
-					self._log    .append(axis["log"])
-					self._label  .append(axistype)
-					self._units  .append(axis_units)
-					if axistype == "theta" and self._ndim_particles==3:
-						uniform = False
-						plot_diff.append(self._np.diff(self._np.cos(edges))[self._selection[iaxis]])
-					else:
-						plot_diff.append(self._np.diff(edges)[self._selection[iaxis]])
-					self._finalShape[iaxis] = len(self._centers[-1])
-					if axis["log"]:
-						uniform = False
-				else:
-					plot_diff.append( self._np.ones((self._finalShape[iaxis],)) )
+			# Get limits when auto limits
+			if axis["min"] == "auto":
+				axis["auto_min"] = [it.attrs["min%d"%iaxis] for it in self._h5items[self._diags[0]]]
+				self.auto_axes = True
+			if axis["max"] == "auto":
+				axis["auto_max"] = [it.attrs["max%d"%iaxis] for it in self._h5items[self._diags[0]]]
+				self.auto_axes =  True
 		
-		self._selection = tuple(self._selection)
+		# Set all axes sum/subset
+		self._updateAxes(self._timesteps[0])
 		
 		# Build units
 		titles = {}
@@ -281,31 +221,13 @@ class ParticleBinning(Diagnostic):
 			self._vunits = self._vunits.replace("#"+str(d), "( "+units[d]+" )")
 			self._title  = self._title .replace("#"+str(d), titles[d])
 		self._vunits = self.units._getUnits(self._vunits)
-		
-		# If any spatial dimension did not appear, then count it for calculating the correct density
-		if self._ndim_particles>=1 and not spatialaxes["x"]: coeff /= self._ncels[ 0]*self._cell_length[ 0]
-		if self._ndim_particles>=2 and not spatialaxes["y"]: coeff /= self._ncels[ 1]*self._cell_length[ 1]
-		if self._ndim_particles==3 and not spatialaxes["z"]: coeff /= self._ncels[-1]*self._cell_length[-1]
-		
-		# Calculate the array that represents the bins sizes in order to get units right.
-		# This array will be the same size as the plotted array
-		if uniform:
-			self._bsize = 1.
-			for d in plot_diff:
-				self._bsize *= d[0]
-		else:
-			if len(plot_diff)==0:
-				self._bsize = 1.
-			elif len(plot_diff)==1:
-				self._bsize = plot_diff[0]
-			else:
-				self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
-				self._bsize = self._bsize.transpose([1,0]+list(range(2,len(plot_diff))))
-		self._bsize = 1. / self._bsize
-		if not self.hasComposite: self._bsize *= coeff
+		if user_axes:
+			self._title = "(%s)/(%s)"%(self._title, " x ".join(user_axes))
+		if deposited_quantity == "user_function":
+			self._title += "/volume"+("  x" if self._vunits else "")
 		
 		# Set the directory in case of exporting
-		self._exportPrefix = self._diagName+"_"+"-".join([str(d) for d in self._diags])
+		self._exportPrefix = self._diagType+"_"+"-".join([str(d) for d in self._diags])
 		self._exportDir = self._setExportDir(self._exportPrefix)
 		
 		# Finish constructor
@@ -338,21 +260,25 @@ class ParticleBinning(Diagnostic):
 		elif deposited_quantity[:13] == "weight_power": # for radiation spectrum
 			title = "Power" + ("" if hasComposite else " density")
 			units = "K_r / T_r" if hasComposite else "N_r * K_r / T_r"
+		elif deposited_quantity == "user_function":
+			title = "user_function"
+			units = "1"
 		else:
 			title = ""
 			units = "1"
 		return title, units
 	
 	# Gets info about diagnostic number "diagNumber"
-	def _getInfo(self,diagNumber):
+	@staticmethod
+	def _getInfo(simulation, diagType, diagNumber):
 		info = {}
-		for path in self._results_path:
+		for path in simulation._results_path:
 			# Open file
 			try:
-				file = path+self._os.sep+self._diagName+str(diagNumber)+'.h5'
-				f = self._h5py.File(file, 'r')
-			except:
-				return False
+				file = path+simulation._os.sep+diagType+str(diagNumber)+'.h5'
+				f = simulation._h5py.File(file, 'r')
+			except Exception as e:
+				continue
 			# get attributes from file
 			axes = []
 			deposited_quantity = "weight_power" # necessary for radiation spectrum
@@ -362,7 +288,7 @@ class ParticleBinning(Diagnostic):
 				if name == "deposited_quantity":
 					try:
 						deposited_quantity = bytes.decode(value)
-					except:
+					except Exception as e:
 						deposited_quantity = "user_function"
 				elif name == "time_average":
 					time_average = int(value)
@@ -374,7 +300,7 @@ class ParticleBinning(Diagnostic):
 					sp = bytes.decode(value).split()
 					while len(axes)<n+1: axes.append({}) # extend the array to the adequate size
 					axes[n] = dict(
-						type = sp[0], min = float(sp[1]), max = float(sp[2]), size = int(sp[3]),
+						type = sp[0], min = sp[1], max = sp[2], size = int(sp[3]),
 						log = bool(int(sp[4])), edges_included = bool(int(sp[5])), coefficients = 0 if sp[6]=="[]" else eval(sp[6])
 					)
 				elif name == "photon_energy_axis":
@@ -389,8 +315,10 @@ class ParticleBinning(Diagnostic):
 				info = {"#":diagNumber, "deposited_quantity":deposited_quantity, "tavg":time_average, "species":species, "axes":axes}
 			else:
 				if deposited_quantity!=info["deposited_quantity"] or axes!=info["axes"]:
-					print(self._diagName+" #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
+					print(diagType+" #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
+		if not info:
+			return False
 		return info
 	
 	# Prints the info obtained by the function "getInfo"
@@ -428,6 +356,111 @@ class ParticleBinning(Diagnostic):
 			if "subsetInfo" in ax: info += ax["subsetInfo"]+"\n"
 		return info
 	
+	def _updateAxes(self, timestep):
+		uniform = True
+		plot_diff = []
+		coeff = 1.
+		self._finalShape = [[]]*self._naxes
+		self._selection = [self._np.s_[:]]*self._naxes
+		self._type    = []
+		self._shape   = []
+		self._centers = []
+		self._log     = []
+		self._label   = []
+		self._units   = []
+		i = self._indexOfTime[self._diags[0]][timestep]
+		
+		for iaxis, axis in enumerate(self._axes):
+			axismin = axis["auto_min"][i] if axis["min"]=="auto" else float(axis["min"])
+			axismax = axis["auto_max"][i] if axis["max"]=="auto" else float(axis["max"])
+			
+			# Find the vector of values along the axis
+			if axis["log"]:
+				edges = self._np.linspace(self._np.log10(axismin), self._np.log10(axismax), axis["size"]+1)
+				centers = edges + (edges[1]-edges[0])/2.
+				edges = 10.**edges
+				centers = 10.**(centers[:-1])
+			else:
+				edges = self._np.linspace(axismin, axismax, axis["size"]+1)
+				centers = edges + (edges[1]-edges[0])/2.
+				centers = centers[:-1]
+			axis["edges"  ] = edges
+			axis["centers"] = centers
+			
+			# if this axis has to be summed, then select the bounds
+			if "sum" in axis:
+				axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
+					= self._selectRange(axis["sum"], centers, axis["type"], axis["units"], "sum", axis["edges_included"])
+				
+				if axis["type"] in ["x","y","z","moving_x"]:
+					first_edge = edges[self._selection[iaxis].start or 0]
+					last_edge  = edges[(self._selection[iaxis].stop or len(centers))]
+					coeff /= last_edge - first_edge
+				
+				plot_diff.append( self._np.ones((self._finalShape[iaxis],)) )
+			
+			# if not summed
+			else:
+				# If taking a subset of this axis
+				if "subset" in axis:
+					axis["subsetInfo"], self._selection[iaxis], self._finalShape[iaxis] \
+						= self._selectSubset(axis["subset"], centers, axis["type"], axis["units"], "subset")
+					
+					# If selection is not a slice (meaning only one element) then axis removed from plot
+					if type(self._selection[iaxis]) is not slice and axis["type"] in ["x","y","z","moving_x"]:
+						first_edge = edges[self._selection[iaxis]]
+						last_edge  = edges[self._selection[iaxis]+1]
+						coeff /= last_edge - first_edge
+				
+				# If no subset, or subset has more than 1 point, use this axis in the plot
+				if type(self._selection[iaxis]) is slice:
+					self._type   .append(axis["type"])
+					self._shape  .append(axis["size"])
+					self._centers.append(centers[self._selection[iaxis]])
+					self._log    .append(axis["log"])
+					self._label  .append(axis["type"])
+					self._units  .append(axis["units"])
+					if axis["type"] == "theta" and self._ndim_particles==3:
+						uniform = False
+						plot_diff.append(self._np.diff(self._np.cos(edges))[self._selection[iaxis]])
+					else:
+						plot_diff.append(self._np.diff(edges)[self._selection[iaxis]])
+					self._finalShape[iaxis] = len(self._centers[-1])
+					if axis["log"]:
+						uniform = False
+				else:
+					plot_diff.append( self._np.ones((self._finalShape[iaxis],)) )
+		
+		self._selection = tuple(self._selection)
+		
+		# If any spatial dimension did not appear, then count it for calculating the correct density
+		if self._ndim_particles>=1 and not self._spatialaxes["x"]: coeff /= self._ncels[ 0]*self._cell_length[ 0]
+		if self._ndim_particles>=2 and not self._spatialaxes["y"]: coeff /= self._ncels[ 1]*self._cell_length[ 1]
+		if self._ndim_particles==3 and not self._spatialaxes["z"]: coeff /= self._ncels[-1]*self._cell_length[-1]
+		
+		# Calculate the array that represents the bins sizes in order to get units right.
+		# This array will be the same size as the plotted array
+		if uniform:
+			self._bsize = 1.
+			for d in plot_diff:
+				self._bsize *= d[0]
+		else:
+			if len(plot_diff)==0:
+				self._bsize = 1.
+			elif len(plot_diff)==1:
+				self._bsize = plot_diff[0]
+			else:
+				self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
+				self._bsize = self._bsize.transpose([1,0]+list(range(2,len(plot_diff))))
+		self._bsize = 1. / self._bsize
+		if not self.hasComposite:
+			self._bsize *= coeff
+		
+	def _getCenters(self, axis_index, timestep):
+		if self.auto_axes:
+			self._updateAxes(timestep)
+		return self._np.array(self._centers[axis_index])
+	
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):
 		# if argument "diagNumber" not provided, return the times calculated in __init__
@@ -438,9 +471,9 @@ class ParticleBinning(Diagnostic):
 			times = set()
 			for path in self._results_path:
 				try:
-					file = path+self._os.sep+self._diagName+str(diagNumber)+'.h5'
+					file = path+self._os.sep+self._diagType+str(diagNumber)+'.h5'
 					f = self._h5py.File(file, 'r')
-				except:
+				except Exception as e:
 					print("Cannot open file "+file)
 					return self._np.array([])
 				times.update( set(f.keys()) )
@@ -451,20 +484,37 @@ class ParticleBinning(Diagnostic):
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
 		if not self._validate(): return
+		# Auto axes require recalculation of bin size and centers
+		if self.auto_axes:
+			self._updateAxes(t)
+			if len(self._shape) > 1:
+				# prepare extent for 2d plots
+				self._extent = [
+					self._xfactor*self._centers[0][0],
+					self._xfactor*self._centers[0][-1],
+					self._yfactor*self._centers[1][0],
+					self._yfactor*self._centers[1][-1]
+				]
+				if self._log[0]:
+					self._extent[0] = self._np.log10(self._extent[0])
+					self._extent[1] = self._np.log10(self._extent[1])
+				if self._log[1]:
+					self._extent[2] = self._np.log10(self._extent[2])
+					self._extent[3] = self._np.log10(self._extent[3])
 		# Get arrays from all requested diagnostics
 		A = {}
 		for d in self._diags:
 			# find the index of the array corresponding to the requested timestep
 			try:
 				index = self._indexOfTime[d][t]
-			except:
+			except Exception as e:
 				print("Timestep "+str(t)+" not found in this diagnostic")
 				return []
 			# get data
 			B = self._np.empty(self._finalShape)
 			try:
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
-			except:
+			except Exception as e:
 				B = self._np.squeeze(B)
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 				B = self._np.reshape(B, self._finalShape)
@@ -480,7 +530,7 @@ class ParticleBinning(Diagnostic):
 		A = eval(data_operation, self._include, locals())
 		# Apply the summing
 		for iaxis in range(self._naxes):
-			if self._sums[iaxis]:
+			if "sum" in self._axes[iaxis]:
 				A = self._np.sum(A, axis=iaxis, keepdims=True)
 		# remove summed axes
 		A = self._np.squeeze(A)

@@ -12,8 +12,8 @@
 
 using namespace std;
 
-ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( Params &params, Patch *patch, unsigned int _min_max )
-    : ElectroMagnBC2D( params, patch, _min_max )
+ElectroMagnBC2D_Trans_Damping::ElectroMagnBC2D_Trans_Damping( Params &params, Patch *patch, unsigned int i_boundary )
+    : ElectroMagnBC2D( params, patch, i_boundary )
 {
     // number of dumping layers
     ny_l = 50;// To be read in file.in
@@ -41,80 +41,80 @@ void ElectroMagnBC2D_Trans_Damping::apply( ElectroMagn *EMfields, double time_du
     Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_ );
     
     
-    //   BC : Bx(i=0...nx_p, 0) & Bx(i=0...nx_p, ny_d-1)
+    //   BC : Bx(i=0...n_p[0], 0) & Bx(i=0...n_p[0], n_d[1]-1)
     if( patch->isYmin() ) {
         // for Bx^(p,d)
-        for( unsigned int i=0 ; i<nx_p ; i++ )
+        for( unsigned int i=0 ; i<n_p[0] ; i++ )
             for( unsigned int j=0 ; j<ny_l ; j++ ) {
                 ( *Bx2D )( i, j ) *= coeff[j];
             }
             
         // for Bz^(d,d)
-        for( unsigned int i=0 ; i<nx_d ; i++ )
+        for( unsigned int i=0 ; i<n_d[0] ; i++ )
             for( unsigned int j=0 ; j<ny_l ; j++ ) {
                 ( *Bz2D )( i, j ) *= coeff[j];
             }
             
         // for By^(d,p)
-        //for (unsigned int i=0 ; i<nx_d ; i++)
+        //for (unsigned int i=0 ; i<n_d[0] ; i++)
         //    for (unsigned int j=0 ; j<ny_l ; j++)
         //        (*By2D)(i,j) *= coeff[j];
         
         
         // for Ex^(d,p)
-        for( unsigned int i=0 ; i<nx_d ; i++ )
+        for( unsigned int i=0 ; i<n_d[0] ; i++ )
             for( unsigned int j=0 ; j<ny_l ; j++ ) {
                 ( *Ex2D )( i, j ) *= coeff[j];
             }
             
         // for Ez^(p,p)
-        for( unsigned int i=0 ; i<nx_p ; i++ )
+        for( unsigned int i=0 ; i<n_p[0] ; i++ )
             for( unsigned int j=0 ; j<ny_l ; j++ ) {
                 ( *Ez2D )( i, j ) *= coeff[j];
             }
             
         // for Ey^(p,d)
-        //for (unsigned int i=0 ; i<nx_p ; i++)
+        //for (unsigned int i=0 ; i<n_p[0] ; i++)
         //    for (unsigned int j=0 ; j<ny_l ; j++)
         //        (*Ey2D)(i,j) *= coeff[j];
         
     }
     
-    //   BC : Bz(i=0...nx_d-1, 0) & Bz(i=0...nx_d-1, ny_d-1)
+    //   BC : Bz(i=0...n_d[0]-1, 0) & Bz(i=0...n_d[0]-1, n_d[1]-1)
     if( patch->isYmax() ) {
         // for Bx^(p,d)
-        for( unsigned int i=0 ; i<nx_p ; i++ )
+        for( unsigned int i=0 ; i<n_p[0] ; i++ )
             for( unsigned int j=0 ; j<ny_l ; j++ ) {
-                ( *Bx2D )( i, ny_d-1-j ) *= coeff[j];
+                ( *Bx2D )( i, n_d[1]-1-j ) *= coeff[j];
             }
             
         // for Bz^(d,d)
-        for( unsigned int i=0 ; i<nx_d ; i++ )
+        for( unsigned int i=0 ; i<n_d[0] ; i++ )
             for( unsigned int j=0 ; j<ny_l ; j++ ) {
-                ( *Bz2D )( i, ny_d-1-j ) *= coeff[j];
+                ( *Bz2D )( i, n_d[1]-1-j ) *= coeff[j];
             }
             
         // for By^(d,p)
-        //for (unsigned int i=0 ; i<nx_d ; i++)
+        //for (unsigned int i=0 ; i<n_d[0] ; i++)
         //    for (unsigned int j=0 ; j<ny_l ; j++)
-        //        (*By2D)(i,ny_p-1-j) *= coeff[j];
+        //        (*By2D)(i,n_p[1]-1-j) *= coeff[j];
         
         // for Ex^(d,p)
-        for( unsigned int i=0 ; i<nx_d ; i++ )
+        for( unsigned int i=0 ; i<n_d[0] ; i++ )
             for( unsigned int j=0 ; j<ny_l ; j++ ) {
-                ( *Ex2D )( i, ny_p-1-j ) *= coeff[j];
+                ( *Ex2D )( i, n_p[1]-1-j ) *= coeff[j];
             }
             
         // for Ez^(p,p)
-        for( unsigned int i=0 ; i<nx_p ; i++ )
+        for( unsigned int i=0 ; i<n_p[0] ; i++ )
             for( unsigned int j=0 ; j<ny_l ; j++ ) {
-                ( *Ez2D )( i, ny_p-1-j ) *= coeff[j];
+                ( *Ez2D )( i, n_p[1]-1-j ) *= coeff[j];
             }
             
         // for Ey^(p,d)
-        //for (unsigned int i=0 ; i<nx_p ; i++)
+        //for (unsigned int i=0 ; i<n_p[0] ; i++)
         //    for (unsigned int j=0 ; j<ny_l ; j++)
-        //        (*Ey2D)(i,ny_d-1-j) *= coeff[j];
+        //        (*Ey2D)(i,n_d[1]-1-j) *= coeff[j];
     }
     
     

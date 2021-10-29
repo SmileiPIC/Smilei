@@ -19,8 +19,8 @@ using namespace std;
 //      - electric fields are put to zero in the ghost cells
 //      - magnetic fields are constant in the ghost cells
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( Params &params, Patch *patch, unsigned int _min_max )
-    : ElectroMagnBC1D( params, patch, _min_max )
+ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( Params &params, Patch *patch, unsigned int i_boundary )
+    : ElectroMagnBC1D( params, patch, i_boundary )
 {
 
     // oversize
@@ -33,7 +33,7 @@ ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( Params &params, Patch *patch, unsign
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC1D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-    if( min_max == 0 ) {
+    if( i_boundary_ == 0 ) {
         if( patch->isXmin() ) {
         
             // Application over the full-ghost cell
@@ -86,17 +86,17 @@ void ElectroMagnBC1D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
             Field1D *Bz1D   = static_cast<Field1D *>( EMfields->Bz_ );
             
             // force constant magnetic fields in the ghost cells
-            //        for (unsigned int i=nx_p-oversize_; i<nx_p; i++)
+            //        for (unsigned int i=n_p[0]-oversize_; i<n_p[0]; i++)
             //            (*Bx1D)(i) = (*Bx1D)(i-1);
-            for( unsigned int i=nx_d-oversize_; i<nx_d; i++ ) {
+            for( unsigned int i=n_d[0]-oversize_; i<n_d[0]; i++ ) {
                 ( *By1D )( i ) = ( *By1D )( i-1 );
                 ( *Bz1D )( i ) = ( *Bz1D )( i-1 );
             }
             
             //        // force 0 electric fields in the ghost cells
-            //        for (unsigned int i=nx_d-oversize_; i<nx_d; i++)
+            //        for (unsigned int i=n_d[0]-oversize_; i<n_d[0]; i++)
             //            (*Ex1D)(i) = 0.0;
-            //        for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
+            //        for (unsigned int i=n_p[0]-oversize_; i<n_p[0]; i++) {
             //            (*Ey1D)(i) = 0.0;
             //            (*Ez1D)(i) = 0.0;
             //        }
@@ -107,8 +107,8 @@ void ElectroMagnBC1D_refl::apply( ElectroMagn *EMfields, double time_dual, Patch
             
              // normal derivative of tangential B is zero.
              // By and Bz just outside equal By and Bz just inside.
-             (*By1D)(nx_d-1) = (*By1D)(nx_d-2);
-             (*Bz1D)(nx_d-1) = (*Bz1D)(nx_d-2);
+             (*By1D)(n_d[0]-1) = (*By1D)(n_d[0]-2);
+             (*Bz1D)(n_d[0]-1) = (*Bz1D)(n_d[0]-2);
              */
             
         }//if Xmax

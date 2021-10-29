@@ -101,8 +101,8 @@ public:
     //! logical true if particles are relativistic and require proper electromagnetic field initialization
     bool relativistic_field_initialization_;
 
-    //! Time for which the species field is initialized in case of relativistic initialization
-    double time_relativistic_initialization_;
+    //! Iteration for which the species field is initialized in case of relativistic initialization
+    int iter_relativistic_initialization_;
 
     //! electron and positron Species for the multiphoton Breit-Wheeler
     std::vector<std::string> multiphoton_Breit_Wheeler_;
@@ -141,15 +141,15 @@ public:
 
     //! Vector containing all Particles of the considered Species
     Particles *particles;
-    //! Data structure through which passes particles which move fomr one patch to another
+    //! Data structure through which passes particles which move from one patch to another
     Particles *particles_to_move;
     Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
-    
+
     //! If initialization from file, this contains the number of particles. Otherwise 0
     unsigned int file_position_npart_;
     unsigned int file_momentum_npart_;
-    
+
     //! Pointer toward position array
     double *position_initialization_array_;
     //! Pointer toward regular number of particles array
@@ -162,8 +162,6 @@ public:
     bool position_initialization_on_species_;
     //! Index of the species where position initialization is made
     int position_initialization_on_species_index;
-    //! Boolean to know if species follows ponderomotive loop (laser modeled with envelope)
-    bool ponderomotive_dynamics;
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
     //! Index of the species where field-ionized electrons go
@@ -241,7 +239,7 @@ public:
     //! Accumulate energy added with new particles
     double new_particles_energy_;
     //! Accumulate energy lost by the particle with the radiation
-    double nrj_radiation;
+    double radiated_energy_;
 
     //! whether to choose vectorized operators with respective sorting methods
     int vectorized_operators;
@@ -278,7 +276,7 @@ public:
 
     //! Discretization scale
     bool merge_log_scale_;
-    
+
     //! Minimum momentum value in log scale
     double merge_min_momentum_log_scale_;
 
@@ -425,7 +423,7 @@ public:
 
 
     //! Method calculating the Particle charge on the grid (projection)
-    virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields );
+    virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old=false );
 
     //! Method used to select particles which will change of patches
     virtual void extractParticles();
@@ -465,7 +463,7 @@ public:
     {
         nrj_bc_lost = value;
     }
-    
+
     //! Get the energy lost in the boundary conditions
     double getLostNrjBC() const
     {
@@ -481,19 +479,19 @@ public:
     //! Get the energy radiated away by the particles
     double getNrjRadiation() const
     {
-        return nrj_radiation;
+        return radiated_energy_;
     }
 
     //! Set the energy radiated away by the particles
     void setNrjRadiation( double value )
     {
-        nrj_radiation = value;
+        radiated_energy_ = value;
     }
 
     //! Add the energy radiated away by the particles
     void addNrjRadiation( double value )
     {
-        nrj_radiation += value;
+        radiated_energy_ += value;
     }
 
     //! Set gained via new particles
@@ -501,7 +499,7 @@ public:
     {
         new_particles_energy_ = value;
     }
-    
+
     //! Get energy gained via new particles
     double getNewParticlesNRJ() const
     {
@@ -514,7 +512,7 @@ public:
         //nrj_bc_lost = 0;
         nrj_mw_lost = 0;
         //new_particles_energy_ = 0;
-        //nrj_radiation = 0;
+        //radiated_energy_ = 0;
     }
 
     inline void storeNRJlost( double nrj )
@@ -589,7 +587,7 @@ public:
                     + part->position(idim+1, ipart) * part->position(idim+1, ipart))
                - min_loc_vec[idim];
     }
-    
+
     //! Erase all particles with zero weight
     void eraseWeightlessParticles();
 

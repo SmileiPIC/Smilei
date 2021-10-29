@@ -364,7 +364,7 @@ void MergingVranicSpherical::operator() (
                     theta_dim[phi_i]   = std::max((unsigned int)(round(theta_interval / theta_delta[phi_i])), theta_dim_min);
                     if (accumulation_correction_) {
                         theta_delta[phi_i] = theta_interval / (theta_dim[phi_i]-1);
-                        theta_min[phi_i]   = theta_min_ref - 0.99*theta_delta[phi_i]*Rand::uniform();
+                        theta_min[phi_i]   = theta_min_ref - 0.99*theta_delta[phi_i]*rand_->uniform();
                         theta_max[phi_i]   = theta_delta[phi_i]*theta_dim[phi_i] + theta_min[phi_i];
                     } else {
                         theta_delta[phi_i] = theta_interval / (theta_dim[phi_i]);
@@ -377,7 +377,7 @@ void MergingVranicSpherical::operator() (
                     theta_dim[phi_i]   = theta_dim_min;
                     if (accumulation_correction_) {
                         theta_delta[phi_i] = theta_interval / (theta_dim[phi_i]-1);
-                        theta_min[phi_i]   = theta_min_ref - 0.99*theta_delta[phi_i]*Rand::uniform();
+                        theta_min[phi_i]   = theta_min_ref - 0.99*theta_delta[phi_i]*rand_->uniform();
                         theta_max[phi_i]   = theta_delta[phi_i]*theta_dim[phi_i] + theta_min[phi_i];
                     } else {
                         theta_delta[phi_i] = theta_interval / (theta_dim[phi_i]);
@@ -392,8 +392,8 @@ void MergingVranicSpherical::operator() (
             // ---------------------------------------------------------------------------------------------------------
             // Checkpoint for debugging
             //
-            // if (isnan(theta_min[phi_i])
-            //   || isnan(theta_max[phi_i])
+            // if (std::isnan(theta_min[phi_i])
+            //   || std::isnan(theta_max[phi_i])
             //    ) {
             //     std::cerr << std::scientific
             //               << std::setprecision(15)
@@ -517,9 +517,9 @@ void MergingVranicSpherical::operator() (
 
                 // -----------------------------------------------------------------------------------------------------
                 // Checkpoint for debugging
-                // if ( (mr_i < 0 || mr_i > (mr_dim-1) || isnan(mr_i))
-                //      || (phi_i < 0 || phi_i > (phi_dim-1) || isnan(phi_i))
-                //      || (theta_i < 0 || theta_i > (theta_dim[phi_i]-1) || isnan(theta_i))
+                // if ( (mr_i < 0 || mr_i > (mr_dim-1) || std::isnan(mr_i))
+                //      || (phi_i < 0 || phi_i > (phi_dim-1) || std::isnan(phi_i))
+                //      || (theta_i < 0 || theta_i > (theta_dim[phi_i]-1) || std::isnan(theta_i))
                 //     )
                 // {
                 //     std::cerr << " momentum_cell_index: " << momentum_cell_index[ipr]
@@ -552,9 +552,9 @@ void MergingVranicSpherical::operator() (
                 // -----------------------------------------------------------------------------------------------------
                 // Checkpoint for debugging
                 //
-                // if ( (mr_i < 0 || mr_i > (mr_dim-1) || isnan(mr_i))
-                //      || (phi_i < 0 || phi_i > (phi_dim-1) || isnan(phi_i))
-                //      || (theta_i < 0 || theta_i > (theta_dim[phi_i]-1) || isnan(theta_i))
+                // if ( (mr_i < 0 || mr_i > (mr_dim-1) || std::isnan(mr_i))
+                //      || (phi_i < 0 || phi_i > (phi_dim-1) || std::isnan(phi_i))
+                //      || (theta_i < 0 || theta_i > (theta_dim[phi_i]-1) || std::isnan(theta_i))
                 //     )
                 // {
                 // std::cerr << "momentum_cell_index: " << momentum_cell_index[ipr]
@@ -914,11 +914,11 @@ void MergingVranicSpherical::operator() (
                                 // }
                                 // double phi2 = asin(momentum[2][ip] / mr);
                                 // double theta2 = atan2(momentum[1][ip] , momentum[0][ip]);
-                                // if (isnan(momentum[0][ip])
-                                //      || (isnan(momentum[1][ip]))
-                                //      || (isnan(momentum[2][ip]))
-                                //     || (isnan(momentum[0][ip]))
-                                //     || (isnan(weight[ip]))
+                                // if (std::isnan(momentum[0][ip])
+                                //      || (std::isnan(momentum[1][ip]))
+                                //      || (std::isnan(momentum[2][ip]))
+                                //     || (std::isnan(momentum[0][ip]))
+                                //     || (std::isnan(weight[ip]))
                                 //     || (phi2 < phi_i * phi_delta + phi_min)
                                 //     || (phi2 > (phi_i+1) * phi_delta + phi_min)
                                 //     // (theta < theta_i * theta_delta[phi_i] + theta_min) ||

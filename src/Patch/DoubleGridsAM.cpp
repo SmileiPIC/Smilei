@@ -7,7 +7,7 @@
 #include "VectorPatch.h"
 #include "Params.h"
 #include "SmileiMPI.h"
-#include "PatchesFactory.h"
+#include "DomainDecomposition.h"
 
 using namespace std;
 
@@ -58,8 +58,8 @@ void DoubleGridsAM::syncCurrentsOnRegion( VectorPatch &vecPatches, Region &regio
         patch_fields->Jr_[imode]->add( region_fields->Jr_[imode], params, smpi, vecPatches(ipatch), region.patch_ );
         patch_fields->Jt_[imode]->add( region_fields->Jt_[imode], params, smpi, vecPatches(ipatch), region.patch_ );
         if(params.is_spectral){
-            patch_fields->rho_AM_[imode]->add( region_fields->rho_AM_[imode], params, smpi, vecPatches(ipatch), region.patch_ );
-            // rho_old is save directly on the Region after the resolution of the Maxwell solver
+            patch_fields->rho_AM_[imode]->add(     region_fields->rho_AM_[imode]    , params, smpi, vecPatches(ipatch), region.patch_ );
+            patch_fields->rho_old_AM_[imode]->add( region_fields->rho_old_AM_[imode], params, smpi, vecPatches(ipatch), region.patch_ );
         }
 
     }
@@ -76,7 +76,8 @@ void DoubleGridsAM::currentsOnRegionSend( ElectroMagnAM* localfields, unsigned i
     smpi->isendComplex( localfields->Jt_[imode], send_to_global_patch_rank, hindex*5+2, patch->requests_[2] );    
 
     if(params.is_spectral) {
-        smpi->isendComplex( localfields->rho_AM_[imode], send_to_global_patch_rank, hindex*5+3, patch->requests_[3] );
+        smpi->isendComplex( localfields->rho_AM_[imode]    , send_to_global_patch_rank, hindex*5+3, patch->requests_[3] );
+        smpi->isendComplex( localfields->rho_old_AM_[imode], send_to_global_patch_rank, hindex*5+4, patch->requests_[4] );
     }
 
 }
@@ -91,6 +92,7 @@ void DoubleGridsAM::currentsOnRegionSendFinalize( ElectroMagnAM* localfields, un
 
     if(params.is_spectral) {
         MPI_Wait( &(patch->requests_[3]), &status );
+        MPI_Wait( &(patch->requests_[4]), &status );
     }
 }
 
@@ -117,6 +119,9 @@ void DoubleGridsAM::currentsOnRegionRecv( ElectroMagnAM* globalfields, unsigned 
     if(params.is_spectral) {
         smpi->recvComplex( fake_fields->rho_AM_[imode], local_patch_rank, hindex*5+3 );
         fake_fields->rho_AM_[imode]->add( globalfields->rho_AM_[imode], params, smpi, region.fake_patch, region.patch_ );
+
+        smpi->recvComplex( fake_fields->rho_old_AM_[imode], local_patch_rank, hindex*5+4 );
+        fake_fields->rho_old_AM_[imode]->add( globalfields->rho_old_AM_[imode], params, smpi, region.fake_patch, region.patch_ );
     }
 
 }

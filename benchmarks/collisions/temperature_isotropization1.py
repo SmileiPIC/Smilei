@@ -25,7 +25,6 @@ Main(
     EM_boundary_conditions = [ ["periodic"] ],
 
 
-    random_seed = smilei_mpi_rank+1,
 
 	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
     print_every = 10,
@@ -51,7 +50,8 @@ Species(
 Collisions(
 	species1 = ["electron1"],
 	species2 = ["electron1"],
-	coulomb_log = 2
+	coulomb_log = 2,
+	debug_every=5
 )
 
 

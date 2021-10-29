@@ -15,7 +15,7 @@ const int    CollisionalFusionDD::npoints = 50;
 const double CollisionalFusionDD::npointsm1 = ( double )( npoints-1 );
 const double CollisionalFusionDD::a1 = log(511./(2.*2.013553)); // = ln(me*c^2 / Emin / n_nucleons)
 const double CollisionalFusionDD::a2 = 3.669039; // = (npoints-1) / ln( Emax/Emin )
-const double CollisionalFusionDD::a3 = log(511000./(2.*2.013553));; // = ln(me*c^2 / eV / n_nucleons)
+const double CollisionalFusionDD::a3 = log(511./0.7/(2.*2.013553));; // = ln(me*c^2 / Eref / n_nucleons)
 // Log of cross-section in units of 4 pi re^2
 const double CollisionalFusionDD::DB_log_crossSection[50] = {
     -27.307, -23.595, -20.383, -17.607, -15.216, -13.167, -11.418, -9.930, -8.666, -7.593,
@@ -28,26 +28,41 @@ const double CollisionalFusionDD::DB_log_crossSection[50] = {
 // Constructor
 CollisionalFusionDD::CollisionalFusionDD(
     Params *params,
-    vector<Particles*> product_particles,
-    vector<unsigned int> product_species,
+    vector<Species *> *product_species,
     double rate_multiplier
 )
-: CollisionalNuclearReaction(params, &product_particles, &product_species, rate_multiplier)
+: CollisionalNuclearReaction(params, product_species, rate_multiplier)
 {
+    // Find which product is helium / neutron
+    index_He_ = product_species->size();
+    index_n_ = product_species->size();
+    for( unsigned int iprod = 0; iprod < product_species->size(); iprod++ ) {
+        if( product_species->at(iprod) ) {
+            if( product_species->at(iprod)->atomic_number_ == 2 ) {
+                index_He_ = iprod;
+            } else if( product_species->at(iprod)->atomic_number_ == 0 ) {
+                index_n_ = iprod;
+            }
+        }
+    }
+    if( index_He_ >= product_species->size() ) {
+        ERROR( "Missing helium product in D-D fusion reaction" );
+    }
 }
 
 // Cloning constructor
 CollisionalFusionDD::CollisionalFusionDD( CollisionalNuclearReaction *NR )
 : CollisionalNuclearReaction( NR )
 {
+    CollisionalFusionDD * DD = dynamic_cast<CollisionalFusionDD *>( NR );
+    index_He_ = DD->index_He_;
+    index_n_ = DD->index_n_;
 }
 
 
-bool CollisionalFusionDD::occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &ekin, double &log_ekin, double &W )
+double CollisionalFusionDD::crossSection( double log_ekin )
 {
     // Interpolate the total cross-section at some value of ekin = m1(g1-1) + m2(g2-1)
-    ekin = m1 * (g1-1.) + m2 * (g2-1.);
-    log_ekin = log( ekin );
     double x = a2*( a1 + log_ekin );
     double cs;
     // if energy below Emin, approximate to 0.
@@ -69,42 +84,54 @@ bool CollisionalFusionDD::occurs( double U, double coeff, double m1, double m2, 
             ( DB_log_crossSection[npoints-1]-DB_log_crossSection[npoints-2] )*a + DB_log_crossSection[npoints-1]
         );
     }
-    
-    // Calculate probability for fusion
-    double prob = coeff * cs * rate_multiplier_;
-    tot_probability_ += prob;
-    if( U > exp( -prob ) ) {
-        W /= rate_multiplier_;
-        return true;
-    } else {
-        return false;
-    }
+    return cs;
 }
 
 void CollisionalFusionDD::makeProducts(
-    double U, double ekin, double log_ekin, double q, 
-    Particles *&p3, Particles *&p4,
-    double &p3_COM, double &p4_COM,
-    double &q3, double &q4,
-    double &cosX
+    Random* random, // Access to random numbers
+    double ekin, double log_ekin, // total kinetic energy and its natural log
+    double tot_charge, //  total charge
+    std::vector<Particles*> &particles, // List of Particles objects to store the reaction products
+    std::vector<double> &new_p_COM, // List of gamma*v of reaction products in COM frame
+    std::vector<short> &q, // List of charges of reaction products
+    std::vector<double> &sinX, // List of sin of outgoing angle of reaction products
+    std::vector<double> &cosX // List of cos of outgoing angle of reaction products
 ) {
-    // Sample the products angle from empirical fits
-    double A = 0.083 * (a3 + log_ekin);
-    A *= A*A; // ^3
-    A *= A; // ^6
-    A = 1. / min(10., 1. + A);
-    double B = 0.06 * (a3 + log_ekin);
-    B = 2. + B*B;
-    cosX = 1. - A*U - (1.-A)*pow(U, B);
+    double U = random->uniform2(); // random number ]-1,1]
+    double U1 = abs( U );
+    bool up = U > 0.;
     
-    // Calculate the resulting momenta
+    // Sample the products angle from empirical fits
+    double lnE = a3 + log_ekin;
+    double alpha = lnE < 0. ? 1. : exp(-0.024*lnE*lnE);
+    double one_m_cosX = alpha*U1 / sqrt( (1.-U1) + alpha*alpha*U1 );
+    cosX = { 1. - one_m_cosX };
+    sinX = { sqrt( one_m_cosX * (1.+cosX[0]) ) };
+    
+    // Calculate the resulting momenta from energy / momentum conservation
     const double Q = 6.397; // Qvalue
     const double m_n = 1838.7;
     const double m_He = 5497.9;
-    p3_COM = sqrt( (ekin+Q) * (ekin+Q+2.*m_n) * (ekin+Q+2.*m_He) * (ekin+Q+2.*m_n+2.*m_He) )
-        / ( ( ekin+Q+m_n+m_He ) * (2.*m_He) );
+    double p_COM = {
+        sqrt( (ekin+Q) * (ekin+Q+2.*m_n) * (ekin+Q+2.*m_He) * (ekin+Q+2.*m_n+2.*m_He) )
+        / ( 2.* ( ekin+Q+m_n+m_He ) )
+    };
+    if( ! up ) {
+        p_COM = -p_COM;
+    }
     
-    // Other properties
-    q3 = q;
-    p3 = product_particles_[0]; // helium3
+    // Set particle properties
+    q.resize( product_particles_.size() );
+    particles.resize( product_particles_.size() );
+    new_p_COM.resize( product_particles_.size() );
+    // helium3
+    q[index_He_] = (short) tot_charge;
+    particles[index_He_] = product_particles_[index_He_];
+    new_p_COM[index_He_] = p_COM / m_He;
+    // neutron
+    if( index_n_ <  product_particles_.size() ) {
+        q[index_n_] = (short) 0.;
+        particles[index_n_] = product_particles_[index_n_];
+        new_p_COM[index_n_] = - p_COM / m_n;
+    }
 }

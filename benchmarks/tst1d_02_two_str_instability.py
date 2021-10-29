@@ -22,7 +22,6 @@ Main(
      
     EM_boundary_conditions = [ ['periodic'] ],
      
-    random_seed = smilei_mpi_rank
 )
 
 
@@ -96,6 +95,20 @@ DiagParticleBinning(
 		["px", -0.4, 0.4, 100]
 	]
 )
+
+for species in [["eon1"], ["eon2"], ["eon1","eon2"]]:
+	DiagScreen(
+		shape = "plane",
+		point = [L/2],
+		vector = [1.],
+		direction = "canceling",
+		deposited_quantity = "weight",
+		every = every,
+		species = species,
+		axes = [
+			["px", -0.4, 0.4, 100]
+		]
+	)
 
 DiagTrackParticles(
 	species = "ion",

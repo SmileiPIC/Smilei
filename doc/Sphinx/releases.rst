@@ -15,9 +15,57 @@ Get Smilei
 
 ----
 
+.. _latestVersion:
+
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present 
+* Lasers can be injected from all boundaries
+* Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
+* Probes can be time-integrated
+* ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
+* Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
+* ``LaserOffset`` may be re-used from a previous simulation
+* ``LaserOffset`` available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
+* Screens may have a ``cylinder`` shape
+* Option to create neutrons for D-D fusion
+* Bugfixes:
+
+  * Poynting scalars behaviour with several patches, or with checkpoints
+  * Densities too low are put to 0 to avoid underflow
+  * Prescribed fields in 2D
+  * ``ellipticity = -1.`` was doing ``+1.``
+  * Setting ``units`` in happi's ``TrackParticles`` was wrong (for plotting only)
+  * Current communication correction for FIR filters
+
+**Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
+
+----
+
+Projects
+^^^^^^^^^^^^^^^^
+
+* Already available, but experimental:
+
+  * Interface with the PICSAR library for AM spectral solver
+  * :doc:`SDMD`
+  * Particle merging
+  * Nuclear reactions
+
+* In the future:
+
+  * More spectral solvers
+  * GPU support
+
+----
+
+Release 4.6
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.6 <_downloads/smilei-v4.6.tar.gz>`_
+
+* :doc:`SDMD`
 * New 4th-order non-standard FDTD solver ``Bouchard`` for 2D and 3D geometries
 * New method for current filtering with a user-provided FIR kernel for 1D, 2D and 3D geometries
 * Diagnostics may now have a ``name`` (useful during post-processing)
@@ -28,6 +76,7 @@ Changes made in the repository (not released)
   * normalized laser frequency can be different from 1
 
 * Particles can be imported from a file
+* Some :doc:`profiles` can be imported from a file
 * Coulomb logarithm may be multiplied by a constant factor
 * Happi:
 
@@ -35,9 +84,11 @@ Changes made in the repository (not released)
   * time slider available with multiple plotting
   * ``vsym`` option for symmetric graph
   * ``getXmoved`` now accounts for requested units
+  * Tracked particles can be selected before sorting
 
 * Bugfixes:
 
+  * Fix in the vectorized projection at order 4
   * Photons could not be read from numpy array
   * DiagFields with ``time_average`` did not work for densities
   * Prescribed fields caused unstable real fields
@@ -45,34 +96,6 @@ Changes made in the repository (not released)
   * Better positionning of collisionally-ionised electrons
   * Fix segfault from thermalizing boundary
   * Running a simulation displayed the wrong version v4.4
-
-----
-
-Projects
-^^^^^^^^^^^^^^^^
-
-* Already available, but experimental:
-
-  * ``AMcylindrical`` geometry
-  * Particle merging
-  * Nuclear reactions
-  * Interface with the PICSAR library for AM spectral solver
-
-* In the future:
-
-  * Single Domain Multiple Decomposition
-  * Spectral Solvers
-
-----
-
-.. _latestVersion:
-
-Latest version
-^^^^^^^^^^^^^^^^^^^^^
-
-The latest version tarball can be donwloaded here:
-
-**Download**: `Smilei latest <_downloads/Smilei.tar.gz>`_
 
 ----
 
@@ -195,7 +218,7 @@ Release 4.1
   * adaptive vectorization with dynamic load balancing
   * memory leak in the laser envelope model
 
-* Disable usage of `-ipo` to compile on supercomputers
+* Disable usage of ``-ipo`` to compile on supercomputers
   despite of saving time simulation
 
   * it needs too many resources (time and memory) to link
@@ -219,9 +242,9 @@ Release 4.0
 
 * :ref:`vectorization`
 * :ref:`laser_envelope`
-* MPI option `MPI_THREAD_MULTIPLE` is now optional (but recommended)
+* MPI option ``MPI_THREAD_MULTIPLE`` is now optional (but recommended)
 * Faster collisions
-* Bugfixes: handling `sum` for happi's `ParticleBinning`
+* Bugfixes: handling ``sum`` for happi's ``ParticleBinning``
 
 ----
 

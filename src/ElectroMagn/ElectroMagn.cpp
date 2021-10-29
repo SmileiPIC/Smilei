@@ -55,14 +55,14 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
             oversize[i] = params.region_oversize[i];
     }
 
-    if ( dynamic_cast<PatchAM *>( patch ) ) {
+    if( dynamic_cast<PatchAM *>( patch ) ) {
         PatchAM *patchAM = static_cast<PatchAM *>( patch );
         int j_glob_ = patchAM->Pcoordinates[1]*n_space[1]-oversize[1]; //cell_starting_global_index is only define later during patch creation.
         int nr_p = n_space[1]+1+2*oversize[1];
         double dr = params.cell_length[1];
         patchAM->invR.resize( nr_p );
 
-        if (!params.is_spectral){
+        if( !params.is_spectral ){
             patchAM->invRd.resize( nr_p+1 );
             for( int j = 0; j< nr_p; j++ ) {
                 if( j_glob_ + j == 0 ) {
@@ -119,7 +119,7 @@ ElectroMagn::ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch ) 
         double dr = params.cell_length[1];
         patchAM->invR.resize( nr_p );
 
-        if (!params.is_spectral){
+        if( !params.is_spectral ) {
             patchAM->invRd.resize( nr_p+1 );
             for( int j = 0; j< nr_p; j++ ) {
                 if( j_glob_ + j == 0 ) {
@@ -522,8 +522,10 @@ void ElectroMagn::incrementAvgField( Field *field, Field *field_avg )
 
 void ElectroMagn::laserDisabled()
 {
-    if( emBoundCond.size() && emBoundCond[0] ) {
-        emBoundCond[0]->laserDisabled();
+    for( unsigned int i=0; i<emBoundCond.size(); i++ ) {
+        if( emBoundCond[i] ) {
+            emBoundCond[i]->laserDisabled();
+        }
     }
 }
 

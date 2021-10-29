@@ -90,6 +90,20 @@ div.logo a:hover {
 	border: none;
 }
 
+.version {
+    position: relative;
+}
+
+.version::before {
+	display: inline-block;
+	content: "v{{ version }}";
+	position: absolute;
+	bottom: 5%;
+	right: 5%;
+	font: bold 1.6em BPreplay;
+	color: {{ theme_main_color_bold }};;
+}
+
 /* -- body styles ----------------------------------------------------------- */
 
 a {
@@ -127,6 +141,7 @@ div.body h3 { font-size: 150%; }
 div.body h4 { font-size: 130%; }
 div.body h5 { font-size: 100%; }
 div.body h6 { font-size: 100%; }
+.small li { font-size: 1em !important; }
 
 :target {
 	margin-top: -{{ theme_head_height| float *1.2 }}mm;
@@ -153,7 +168,16 @@ div.body p, div.body li {
 }
 
 div.body p {
+	margin-top: 0.5em;
 	margin-bottom: 0.5em;
+}
+
+div.body dd > p {
+	margin: 0;
+}
+
+dl.field-list > dt {
+	padding-top: 2px;
 }
 
 div.body table p {
@@ -221,7 +245,7 @@ img.screenshot {
 	margin:0
 }
 
-code.descname, code.descclassname {
+code.descname, code.descclassname, span.descname, span.descclassname {
 	font-size: 0.95em;
 	color: {{ theme_keyword_color }};
 }
@@ -254,7 +278,6 @@ table.docutils td, table.docutils th {
 table.fancy {
 	position: relative;
 	z-index:0;
-	display: block;
 	overflow-x: auto;
 	border:1px solid {{ theme_main_color_med }};
 	white-space: nowrap;
@@ -266,6 +289,22 @@ table.fancy * {
 
 table.fancy > tbody > tr.row-odd {
 	background-color: {{ theme_main_color_pale }};
+}
+
+table.fancy > tbody > tr > td {
+	padding: 0.5em;
+}
+
+table.fancy > tbody > tr > td td{
+	padding: 0 0.5em;
+}
+
+table.fancy p {
+	margin: 0;
+}
+
+table.fancy table {
+	width: 100%;
 }
 
 table.field-list, table.footnote {
@@ -311,12 +350,12 @@ table.noborder td:first-child > .reference {
 }
 
 dl {
-	margin: 0;
+	margin: 0.5em 0;
 	padding: 0;
 }
 
 dl dd {
-	margin-left: 1em;
+	margin: 0.5em 0 0.5em 1em;
 }
 
 blockquote {
@@ -653,6 +692,12 @@ div.header > * {
 .orange {
 	color:orange;
 }
+.blue > a, .red > a, .purple > a, .green > a, .orange > a {
+	color: inherit;
+}
+.blue > a:hover, .red > a:hover, .purple > a:hover, .green > a:hover, .orange > a:hover {
+	border-bottom: 1px solid;
+}
 
 /* Style for an emphasized link */
 .emphlink {
@@ -662,7 +707,8 @@ div.header > * {
 
 div.experimental > h1:first-of-type::after,
 div.experimental > h2:first-of-type::after,
-dl.experimental dt:first-of-type::after
+dl.experimental > dt:first-of-type::after,
+ul.experimental p:first-of-type::after
 {
 	content: "experimental";
 	display: inline-block;
@@ -674,6 +720,7 @@ dl.experimental dt:first-of-type::after
 	font-size: 0.8em;
 	font-family: "BPreplay";
 	font-weight: bold;
+	line-height: normal;
 }
 
 /* --------------------------------------------------------------------*/
@@ -806,14 +853,13 @@ dl.citation > * {
 dl.citation p {
 	line-height: normal;
 }
+
 /* Make a "bigcitation" class for citations with several lines */
-table.bigcitation td.label,
-dt.bigcitation
+.bigcitation .citation td.label, .bigcitation .citation dt
 {
 	max-width: 0;
 }
-table.bigcitation td.label + td,
-dt.bigcitation + dd
+.bigcitation .citation td.label + td, .bigcitation .citation dt + dd
 {
 	padding-top: 1.5em;
 }
@@ -911,6 +957,10 @@ div.toctree-smilei hr {
 		margin:0;
 	}
 	
+	.version::before {
+		font-size: 3vw;
+	}
+	
 	ul, ol {
 		margin-left: 0.6em;
 	}
@@ -964,6 +1014,11 @@ div.toctree-smilei hr {
 	#searchinput {
 		display:block !important;
 		width:100%;
+	}
+	
+	table.fancy, table.fancy > tbody, table.fancy > tbody > tr {
+		display: block;
+		width: 100%;
 	}
 }
 

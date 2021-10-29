@@ -62,7 +62,6 @@ Main(
     timestep = dt,
     simulation_time = Tsim,
     EM_boundary_conditions = [['periodic']],
-    random_seed = smilei_mpi_rank,
     reference_angular_frequency_SI = wr,
     solve_poisson = False,
     time_fields_frozen = 2.*Tsim,
@@ -289,6 +288,13 @@ DiagRadiationSpectrum(
 DiagRadiationSpectrum(
     every = 1,
     species = ["electron_FP"],
+    photon_energy_axis = [photon_energy_max/1.e6,photon_energy_max, 400, 'logscale'],
+    axes = []
+)
+
+DiagRadiationSpectrum(
+    every = 1,
+    species = ["electron_noRR", "electron_LL", "electron_cLL", "electron_FP"],
     photon_energy_axis = [photon_energy_max/1.e6,photon_energy_max, 400, 'logscale'],
     axes = []
 )

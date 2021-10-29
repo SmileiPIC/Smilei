@@ -66,7 +66,7 @@ public:
             std::vector<Diagnostic *> &localDiags ) override;
 
     //! Method calculating the Particle charge on the grid (projection)
-    void computeCharge( unsigned int ispec, ElectroMagn *EMfields ) override;
+    void computeCharge( unsigned int ispec, ElectroMagn *EMfields, bool old=false ) override;
 
     //! Method used to sort particles
     void sortParticles( Params &params , Patch * patch) override;
@@ -74,9 +74,6 @@ public:
 
     //! Compute cell_keys for all particles of the current species
     void computeParticleCellKeys( Params &params ) override;
-
-    //! Compute cell_keys for the specified bin boundaries.
-    void compute_bin_cell_keys( Params &params, int istart, int iend );
 
     //! Create a new entry for a particle
     void addSpaceForOneParticle() override

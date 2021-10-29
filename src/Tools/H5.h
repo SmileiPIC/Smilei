@@ -67,7 +67,7 @@ class H5
 {
 public:
     //! Open HDF5 file + location
-    H5( std::string file, unsigned access, bool parallel, bool _raise );
+    H5( std::string file, unsigned access, MPI_Comm * comm, bool _raise );
     
     ~H5();
     
@@ -124,8 +124,8 @@ class H5Write : public H5
 {
 public:
     //! Open HDF5 file + location
-    H5Write( std::string file, bool parallel = false, bool _raise = true )
-     : H5( file, H5F_ACC_RDWR, parallel, _raise ) {};
+    H5Write( std::string file, MPI_Comm * comm = NULL, bool _raise = true )
+     : H5( file, H5F_ACC_RDWR, comm, _raise ) {};
     
     //! Create group given H5Write location
     H5Write( H5Write *loc, std::string group_name )
@@ -406,8 +406,8 @@ class H5Read : public H5
 {
 public:
     //! Open HDF5 file + location
-    H5Read( std::string file, bool parallel = false, bool _raise = true )
-     : H5( file, H5F_ACC_RDONLY, parallel,  _raise ) {};
+    H5Read( std::string file, MPI_Comm * comm = NULL, bool _raise = true )
+     : H5( file, H5F_ACC_RDONLY, comm, _raise ) {};
     
     //! Location already opened
     H5Read( hid_t id, hid_t dcr, hid_t dxpl ) : H5( id, dcr, dxpl ) {};

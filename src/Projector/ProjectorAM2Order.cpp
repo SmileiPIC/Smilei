@@ -69,7 +69,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     double delta, delta2;
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
-    complex<double>  Jl_p[5][5], Jr_p[5][5];
+    complex<double>  Jl_p[5], Jr_p[5];
     complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m = 1.; //, C_m_old;
     complex<double> *Jl, *Jr, *Jt, *rho;
     
@@ -147,12 +147,6 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
-    for( unsigned int j=0 ; j<5 ; j++ ) {
-        Jl_p[0][j]= 0.;
-    }
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        Jr_p[i][4]= 0.;
-    }
     
     // ---------------------------
     // Calculate the total current
@@ -162,20 +156,26 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     complex<double> crt_p= charge_weight*( particles.momentum( 2, ipart )* real(e_bar_m1) - particles.momentum( 1, ipart )*imag(e_bar_m1) ) * invgf;
 
     // Compute everything independent of theta
+    double tmpJl[5];
     for( unsigned int j=0 ; j<5 ; j++ ) {
-        double tmp = crl_p * ( Sr0[j] + 0.5*DSr[j] )* invR_local[j];
-        for( unsigned int i=1 ; i<5 ; i++ ) {
-            Jl_p[i][j]= Jl_p[i-1][j] - DSl[i-1] * tmp;
-        }
+        tmpJl[j] = crl_p * ( Sr0[j] + 0.5*DSr[j] )* invR_local[j];
+    }
+    Jl_p[0]= 0.;
+    for( unsigned int i=1 ; i<5 ; i++ ) {
+        Jl_p[i]= Jl_p[i-1] - DSl[i-1];
     }
 
+
+    double Vd[5];
+    double tmpJr[5];
     for( int j=3 ; j>=0 ; j-- ) {
         jloc = j+jpo+1;
-        double Vd = abs( jloc + j_domain_begin + 0.5 )* invRd[jloc]*dr ;
-        double tmp = crr_p * DSr[j+1] * invRd[jpo+j+1]*dr;
-        for( unsigned int i=0 ; i<5 ; i++ ) {
-            Jr_p[i][j] =  Jr_p[i][j+1] * Vd + ( Sl0[i] + 0.5*DSl[i] ) * tmp;
-        }
+        Vd[j] = abs( jloc + j_domain_begin + 0.5 )* invRd[jloc]*dr ;
+        tmpJr[j] = crr_p * DSr[j+1] * invRd[jpo+j+1]*dr;
+    }
+    Jr_p[4]= 0.;
+    for( int j=3 ; j>=0 ; j-- ) {
+        Jr_p[j] =  Jr_p[j+1] * Vd[j] + tmpJr[j];
     }
  
     e_delta = 1.5;
@@ -225,7 +225,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             iloc = ( i+ipo )*nprimr+jpo;
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 linindex = iloc+j;
-                Jl [linindex] += C_m * Jl_p[i][j] ;
+                Jl [linindex] += C_m * Jl_p[i]*tmpJl[j] ;
             }
         }//i
 
@@ -234,7 +234,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             iloc = ( i+ipo )*( nprimr+1 )+jpo+1;
             for( unsigned int j=0 ; j<4 ; j++ ) {
                 linindex = iloc+j;
-                Jr [linindex] += C_m * Jr_p[i][j] ;
+                Jr [linindex] += C_m * ( Sl0[i] + 0.5*DSl[i] ) * Jr_p[j] ;
             }
         }//i
 
@@ -342,74 +342,100 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
 } // END Project for diags local current densities
 
 // Apply boundary conditions on axis for currents and densities
-void ProjectorAM2Order::axisBC(complex<double> *rhoj, complex<double> *Jl,complex<double> *Jr,complex<double> *Jt,  int imode, bool diag_flag )
+void ProjectorAM2Order::axisBC(ElectroMagnAM *emAM, bool diag_flag )
 {
 
-    double sign = -1.;
-    for (int i=0; i< imode; i++) sign *= -1;
+   for (unsigned int imode=0; imode < Nmode; imode++){ 
+       
+       std::complex<double> *rhoj = &( *emAM->rho_AM_[imode] )( 0 );
+       std::complex<double> *Jl = &( *emAM->Jl_[imode] )( 0 );
+       std::complex<double> *Jr = &( *emAM->Jr_[imode] )( 0 );
+       std::complex<double> *Jt = &( *emAM->Jt_[imode] )( 0 );
+
+       apply_axisBC(rhoj, Jl, Jr, Jt, imode, diag_flag);
+   }
+       
+   if (diag_flag){
+       unsigned int n_species = emAM->Jl_s.size() / Nmode;
+       for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
+           for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
+               unsigned int ifield = imode*n_species+ispec;
+               complex<double> *Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : NULL ;
+               complex<double> *Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : NULL ;
+               complex<double> *Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : NULL ;
+               complex<double> *rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : NULL ;
+               apply_axisBC( rho , Jl, Jr, Jt, imode, diag_flag );
+           }
+       }
+   }
+}
+
+void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, unsigned int imode, bool diag_flag )
+{
+
+   double sign = -1.;
+   for (int i=0; i< imode; i++) sign *= -1;
    
-        if (diag_flag and rhoj) {
-            for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
-                //Fold rho 
-                for( unsigned int j=1 ; j<3; j++ ) {
-                    rhoj[i+j] += sign * rhoj[i-j];
-                    rhoj[i-j]  = sign * rhoj[i+j];
-                }
-                //Apply BC
-                if (imode > 0){
-                    rhoj[i] = 0.;
-                } else {
-                    rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
-                }
+   if (diag_flag && rhoj) {
+       for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
+           //Fold rho 
+           for( unsigned int j=1 ; j<3; j++ ) {
+               rhoj[i+j] += sign * rhoj[i-j];
+               rhoj[i-j]  = sign * rhoj[i+j];
+           }
+           //Apply BC
+           if (imode > 0){
+               rhoj[i] = 0.;
+           } else {
+               rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
+           }
+       }
+   }
+               
+   if (Jl) {
+       for( unsigned int i=2 ; i<(npriml+1)*nprimr+2; i+=nprimr ) {
+           //Fold Jl
+           for( unsigned int j=1 ; j<3; j++ ) {
+               Jl [i+j] +=  sign * Jl[i-j];
+               Jl[i-j]   =  sign * Jl[i+j];
             }
-        }
-                    
-        if (Jl) {
-            for( unsigned int i=2 ; i<(npriml+1)*nprimr+2; i+=nprimr ) {
-                //Fold Jl
-                for( unsigned int j=1 ; j<3; j++ ) {
-                    Jl [i+j] +=  sign * Jl[i-j];
-                    Jl[i-j]   =  sign * Jl[i+j];
-                 }
-                 if (imode > 0){
-                     Jl [i] = 0. ;
-                } else {
-                     //Force dJl/dr = 0 at r=0.
-                     Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
-                }
-            }
-        }
+            if (imode > 0){
+                Jl [i] = 0. ;
+           } else {
+                //Force dJl/dr = 0 at r=0.
+                Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
+           }
+       }
+   }
 
-        if (Jt and Jr) {
-            for( unsigned int i=0 ; i<npriml; i++ ) {
-                int iloc = i*nprimr+2;
-                int ilocr = i*(nprimr+1)+3;
-                //Fold Jt
-                for( unsigned int j=1 ; j<3; j++ ) {
-                    Jt [iloc+j] += -sign * Jt[iloc-j];
-                    Jt[iloc-j]   = -sign * Jt[iloc+j];
-                }
-                for( unsigned int j=0 ; j<3; j++ ) {
-                    Jr [ilocr+2-j] += -sign * Jr [ilocr-3+j];
-                    Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
-                }
+   if (Jt && Jr) {
+       for( unsigned int i=0 ; i<npriml; i++ ) {
+           int iloc = i*nprimr+2;
+           int ilocr = i*(nprimr+1)+3;
+           //Fold Jt
+           for( unsigned int j=1 ; j<3; j++ ) {
+               Jt [iloc+j] += -sign * Jt[iloc-j];
+               Jt[iloc-j]   = -sign * Jt[iloc+j];
+           }
+           for( unsigned int j=0 ; j<3; j++ ) {
+               Jr [ilocr+2-j] += -sign * Jr [ilocr-3+j];
+               Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
+           }
 
-                if (imode == 1){
-                    Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
-                    //Force dJr/dr = 0 at r=0.
-                    //Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
-                    Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
-                } else{
-                    Jt [iloc] = 0. ;
-                    //Force dJr/dr = 0 and Jr=0 at r=0.
-                    //Jr [ilocr] =  Jr [ilocr+1]/9.;
-                    Jr [ilocr-1] = -Jr [ilocr];
-                }
-            }
-        }
-
-    return;
-
+           if (imode == 1){
+               Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
+               //Force dJr/dr = 0 at r=0.
+               //Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
+               Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
+           } else{
+               Jt [iloc] = 0. ;
+               //Force dJr/dr = 0 and Jr=0 at r=0.
+               //Jr [ilocr] =  Jr [ilocr+1]/9.;
+               Jr [ilocr-1] = -Jr [ilocr];
+           }
+       }
+   }
+   return;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

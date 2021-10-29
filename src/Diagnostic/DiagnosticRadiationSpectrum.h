@@ -16,7 +16,7 @@ public :
     
     void openFile( Params &params, SmileiMPI *smpi ) override;
     
-    void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
+    void run( Patch *patch, int itime, SimWindow *simWindow ) override;
     
     static std::vector<std::string> excludedAxes() {
         std::vector<std::string> excluded_axes( 0 );
@@ -34,6 +34,9 @@ private :
     
     //! Extra axis for photon energies
     HistogramAxis *photon_axis;
+    
+    //! Energy boundaries
+    double emin, emax;
     
     //! Minimum photon energy for radiation spectrum
     double minimum_chi_continuous_;

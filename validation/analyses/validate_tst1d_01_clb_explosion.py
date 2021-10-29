@@ -14,4 +14,4 @@ Validate("Initial momentum distribution", momentum_distribution, 0.001 )
 max_ubal = np.max( np.abs(S.Scalar.Ubal().getData()) )
 Validate("Max Ubal is below 2%", max_ubal<0.02 )
 
-Validate("List of fields in Field0", S.Field.Field0().getFields() )
+Validate("List of fields in Field0", S.fieldInfo(0)["fields"] )

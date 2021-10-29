@@ -1,13 +1,21 @@
 .. title:: Home
 
+.. rst-class:: version
 
-.. image:: _static/smileiLogo.svg
+..
+
+  .. image:: _static/smileiLogo.svg
+
+
+.. rst-class:: emphlink red
+
+  `❰ Registrations for the 3rd user & training workshop ❱ <https://indico.math.cnrs.fr/e/smilei3>`_
+
 
 **Smilei** is a Particle-In-Cell code for plasma simulation.
 Open-source, collaborative, user-friendly and designed for high performances on super-computers,
 it is applied to a wide range of physics studies: from relativistic laser-plasma
 interaction to astrophysics.
-
 
 .. raw:: html
 
@@ -77,6 +85,7 @@ interaction to astrophysics.
   Tutorials</a>
 
   </div>
+
 
 
 .. toctree::

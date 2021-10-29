@@ -33,7 +33,6 @@ Main(
     
     EM_boundary_conditions_k = [[cos(ang), sin(ang)],[-1.,0.],[0.,1.],[0.,-1.]],
     
-    random_seed = smilei_mpi_rank
 )
 
 LaserGaussian2D(
@@ -97,6 +96,18 @@ DiagProbe(
     every = 10,
     origin = [0.1*Lsim[0], 0.5*Lsim[1]],
     fields = []
+)
+
+DiagProbe(
+    every = 100,
+    number = [10, 1000],
+    origin = [0., 0.],
+    corners = [
+        [Lsim[0], 0.],
+        [0., Lsim[1]],
+    ],
+    fields = ["PoyX", "PoyY", "PoyZ"],
+    time_integral = True
 )
 
 

@@ -65,7 +65,7 @@ public:
         }
 
         int n_envlaser = params.Laser_Envelope_model;
-        if( ( n_envlaser >=1 ) & ( species->ponderomotive_dynamics ) & ( species->radiation_model_ != "none" ) ) {
+        if( ( n_envlaser >=1 ) & ( species->radiation_model_ != "none" ) ) {
             ERROR( "Radiation model is not yet implemented for species interacting with Laser Envelope model." );
         }
 

@@ -96,11 +96,11 @@ class Diagnostic(object):
 	def _validate(self):
 		try:
 			self.simulation.valid
-		except:
+		except Exception as e:
 			print("No valid Smilei simulation selected")
 			return False
 		if not self.simulation.valid or not self.valid:
-			print("Diagnostic is invalid")
+			print("***ERROR*** - Diagnostic is invalid")
 			print("\n".join(self._error))
 			return False
 		return True
@@ -180,8 +180,11 @@ class Diagnostic(object):
 		"""
 		if not self._validate(): return []
 		return self.units.tcoeff * self.timestep * self._np.array(self._timesteps)
-
-	def getAxis(self, axis):
+	
+	def _getCenters(self, axis_index, timestep):
+		return  self._np.array(self._centers[axis_index])
+	
+	def getAxis(self, axis, timestep=0):
 		"""
 		Obtains the list of positions of the diagnostic data along the requested axis.
 		By default, axis positions are in the code's units, but are converted to
@@ -191,6 +194,9 @@ class Diagnostic(object):
 		-----------
 		axis: str
 			The name of the requested axis.
+		timestep: int
+			The timestep at which the axis is obtained. Only matters in ParticleBinning,
+			Screen and RadiationSpectrum when `auto` axis limits are requested.
 
 		Returns:
 		--------
@@ -201,14 +207,15 @@ class Diagnostic(object):
 		of the positions of the diagnostic data along x.
 		"""
 		try: axis_index = self._type.index(axis)
-		except: return []
+		except Exception as e: return []
 		if   axis_index == 0:
 			factor = (self.options.xfactor or 1.) * self.units.xcoeff
 		elif axis_index == 1:
 			factor = (self.options.yfactor or 1.) * self.units.ycoeff
 		else:
 			factor, _ = self.units._convert(self._units[axis_index], None)
-		return factor * self._np.array(self._centers[axis_index])
+		axis = self._getCenters(axis_index, timestep)
+		return factor * axis
 
 	# Method to obtain the data and the axes
 	def get(self, timestep=None):
@@ -514,9 +521,8 @@ class Diagnostic(object):
 		try:
 			s = self._np.double(portion)
 			if s.size>3 or s.size<1: raise
-		except:
-			self._error += ["`"+operation+"` along axis "+axisname+" should be a list of 1 to 3 floats"]
-			raise
+		except Exception as e:
+			raise Exception("`"+operation+"` along axis "+axisname+" should be a list of 1 to 3 floats")
 		step = 1
 		if s.size==1:
 			indices = self._np.array([(self._np.abs(meshpoints-s)).argmin()])
@@ -528,13 +534,11 @@ class Diagnostic(object):
 				try:
 					step = int(s[2])
 					if step - s[2] != 0: raise
-				except:
-					self._error += ["`"+operation+"` along axis "+axisname+": third number must be an integer"]
-					raise
+				except Exception as e:
+					raise Exception("`"+operation+"` along axis "+axisname+": third number must be an integer")
 				indices = indices[::step]
 		if indices.size == 0:
-			self._error += ["`"+operation+"` along "+axisname+" is out of range"]
-			raise
+			raise Exception("`"+operation+"` along "+axisname+" is out of range")
 		elif indices.size == 1:
 			info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
 			selection = self._np.s_[indices[0]]
@@ -558,9 +562,8 @@ class Diagnostic(object):
 			try:
 				s = self._np.double(portion)
 				if s.size>2 or s.size<1: raise
-			except:
-				self._error += ["`"+operation+"` along axis "+axisname+" should be one or two floats"]
-				raise
+			except Exception as e:
+				raise Exception("`"+operation+"` along axis "+axisname+" should be one or two floats")
 			if s.size==1:
 				indices = self._np.array([(self._np.abs(meshpoints-s)).argmin()])
 			elif s.size==2:
@@ -568,8 +571,7 @@ class Diagnostic(object):
 				if indices.size == 0:
 					indices = self._np.array([(self._np.abs(meshpoints-s.mean())).argmin()])
 			if indices.size == 0:
-				self._error += ["`"+operation+"` along "+axisname+" is out of range"]
-				raise
+				raise Exception("`"+operation+"` along "+axisname+" is out of range")
 			elif indices.size == 1:
 				info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
 				selection = slice(indices[0],indices[0]+1)
@@ -598,7 +600,7 @@ class Diagnostic(object):
 		# prepare the factors
 		self._xfactor = (self.options.xfactor or 1.) * self.units.xcoeff
 		self._yfactor = (self.options.yfactor or 1.) * self.units.ycoeff
-		self._vfactor = self.units.vcoeff
+		self._vfactor = (self.options.vfactor or 1.) * self.units.vcoeff
 		self._tfactor = (self.options.xfactor or 1.) * self.units.tcoeff * self.timestep
 	def _prepare2(self):
 		# prepare the animating function
@@ -712,7 +714,7 @@ class Diagnostic(object):
 		if cax_id not in ax.cax and ("aspect" not in self.options.cax or self.options.cax["aspect"]>0):
 			try:
 				divider = ax.divider
-			except:
+			except Exception as e:
 				from mpl_toolkits.axes_grid1 import make_axes_locatable
 				divider = make_axes_locatable(ax)
 				ax.divider = divider
@@ -816,12 +818,12 @@ class Diagnostic(object):
 		# Tick formatting
 		try:
 			if self.options.xtick: ax.ticklabel_format(axis="x",**self.options.xtick)
-		except:
+		except Exception as e:
 			if self._verbose: print("Cannot format x ticks (typically happens with log-scale)")
 			self.options.xtick = []
 		try:
 			if self.options.ytick: ax.ticklabel_format(axis="y",**self.options.ytick)
-		except:
+		except Exception as e:
 			if self._verbose: print("Cannot format y ticks (typically happens with log-scale)")
 			self.options.ytick = []
 	def _setColorbarOptions(self, ax):

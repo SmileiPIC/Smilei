@@ -18,34 +18,6 @@ import os, re, numpy as np, h5py
 import happi
 
 # ______________________________________________________________________________
-# Useful functions
-
-def adaptive_error(value, number_of_points, thresholds):
-    """
-    This function return an error that depends on the statistic.
-    """
-    
-    # We eliminate the case where there is no data
-    if (number_of_points <= 0):
-        return thresholds["factor"][0]
-    
-    flag = True
-    i_threshold = 0
-    while(flag):
-        if (number_of_points < thresholds["points"][i_threshold]):
-            flag = False
-        else:
-            i_threshold+=1
-        if (i_threshold >= np.size(thresholds["points"])):
-            flag = False
-    if ((i_threshold == 0) or (i_threshold >= np.size(thresholds["points"]))):
-        return thresholds["factor"][i_threshold]*value
-    else:
-        i_threshold -= 1
-        d = (number_of_points - thresholds["points"][i_threshold]) / (thresholds["points"][i_threshold+1] - thresholds["points"][i_threshold])
-        return value*(thresholds["factor"][i_threshold]*(1-d) + d*thresholds["factor"][i_threshold+1])
-        
-# ______________________________________________________________________________
 # opening of the case
 
 S = happi.Open(["./restart*"], verbose=False)
@@ -91,8 +63,18 @@ for it,time in enumerate(times[::5]):
 
 print("")
 
+print(" -------------------------------------------------|")
+print(" Diag scalars (Radiated energy)                    |")
+print(" iteration | CLL        | Niel       | MC         |")
+print(" -------------------------------------------------|")
+
+for it,time in enumerate(times[::5]):
+    print(" {0:5d}     | {1:.4e} | {2:.4e} | {3:.4e} | ".format(it*500,urad["CLL"][it*5],urad["Niel"][it*5],urad["MC"][it*5]))
+
+print("")
+
 for radiation in radiation_list:
-    
+
     print(' Final kinetic energy for {}: {}'.format(radiation,ukin[radiation][-1]))
     print(' Final radiated energy for {}: {}'.format(radiation,urad[radiation][-1]))
 
@@ -104,12 +86,10 @@ threshols["MC"] = 0.2
 for radiation in radiation_list:
 
     # Validation of the kinetic energy
-    for it,val in enumerate(ukin[radiation]):
-        Validate("Kinetic energy evolution for {} at {}".format(radiation,it), val/utot[radiation][0], val/utot[radiation][0]*threshols[radiation])
+    Validate("Kinetic energy evolution for {}".format(radiation), ukin[radiation][1:]/utot[radiation][0], threshols[radiation], "relative_error" )
 
     # Validation of the radiated energy
-    for it,val in enumerate(urad[radiation]):
-        Validate("Radiated energy evolution for {} at {}".format(radiation,it) , val/utot[radiation][0], val/utot[radiation][0]*threshols[radiation] )
+    Validate("Radiated energy evolution for {}".format(radiation) , urad[radiation][1:]/utot[radiation][0], threshols[radiation], "relative_error" )
 
     # Validation of the total energy
     Validate("Total energy error (max - min)/uref for {}".format(radiation),(utot[radiation].max() - utot[radiation].min())/utot[radiation][0], 1e-2)
@@ -182,7 +162,7 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
         log10_chi_distr_axis = np.log10(chi_distr_axis)
         delta = log10_chi_distr_axis[1] - log10_chi_distr_axis[0]
         bin_size =  np.power(10.,log10_chi_distr_axis + 0.5*delta) - np.power(10.,log10_chi_distr_axis - 0.5*delta)
-        
+
         # Energy distribution
         ekin_dist = S.ParticleBinning(diagNumber=i+3*len(radiation_list),timesteps=timestep).get()
         ekin_distr_axis = np.array(ekin_dist["ekin"])
@@ -190,7 +170,7 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
         log10_ekin_distr_axis = np.log10(ekin_distr_axis)
         delta = log10_ekin_distr_axis[1] - log10_ekin_distr_axis[0]
         bin_size =  np.power(10.,log10_ekin_distr_axis + 0.5*delta) - np.power(10.,log10_ekin_distr_axis - 0.5*delta)
-        
+
         # Local average chi from spatial distribution
         chi = weight_chi[weight>0] / weight[weight>0]
         # Maximal chi value from spatial distribution
@@ -202,7 +182,7 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
             chi_ave_from_dists[itimestep,i] = np.sum(chi_distr_axis * chi_distr_data * bin_size) / np.sum(chi_distr_data * bin_size)
         imax = np.argmax(chi_distr_data)
         chi_max_from_dists[itimestep,i] = chi_distr_axis[imax]
-        
+
         # Average kinetic energy from energy distribution
         ekin_from_dists[itimestep,i] = dx*dy*np.sum(ekin_distr_axis * ekin_distr_data * bin_size)
         if (itimestep > 0):
@@ -225,7 +205,7 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     for k,model in enumerate(radiation_list):
         line += " {0:.5f} |".format(chi_max[itimestep,k])
     print(line)
-    
+
 # Validation with 50% error
 # The maximal quantum parameter can vary importantly
 # for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
@@ -245,9 +225,9 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     for k,model in enumerate(radiation_list):
         line += " {0:.5f} |".format(chi_ave[itimestep,k])
     print(line)
-    # Validation with 10% error
-    for k,model in enumerate(radiation_list):
-        Validate("Average quantum parameter for the {} model at iteration {}".format(model,timestep),chi_ave[itimestep,k],chi_ave[itimestep,k]*0.1)
+# Validation with 10% error
+for k,model in enumerate(radiation_list):
+    Validate("Average quantum parameter for the {} model".format(model),chi_ave[1:,k],0.1, "relative_error")
 
 print("")
 print(" 4) Analyze of chi using the chi distribution")
@@ -266,9 +246,9 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     for k,model in enumerate(radiation_list):
         line += " {0:.4e} |".format(chi_ave_from_dists[itimestep,k])
     print(line)
-    # Validation with 10% error
-    for k,model in enumerate(radiation_list):
-        Validate("Average quantum parameter for the {} model at iteration {}".format(model,timestep),chi_ave_from_dists[itimestep,k],chi_ave_from_dists[itimestep,k]*0.1)
+# Validation with 10% error
+for k,model in enumerate(radiation_list):
+    Validate("Average quantum parameter for the {} model".format(model),chi_ave_from_dists[1:,k],0.1, "relative_error")
 
 print("")
 print(" 5) Analyze of gamma using the gamma distribution")
@@ -287,11 +267,10 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     for k,model in enumerate(radiation_list):
         line += " {0:.4e} |".format(ekin_from_dists[itimestep,k])
     print(line)
-    
+
 # Validation
-for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
-    for k,model in enumerate(radiation_list):
-        Validate("Total kinetic energy for the {} model at iteration {}".format(model,timestep),ekin_from_dists[itimestep,k],ekin_from_dists[itimestep,k]*0.1)
+for k,model in enumerate(radiation_list):
+    Validate("Total kinetic energy for the {} model".format(model),ekin_from_dists[1:,k],0.1,"relative_error")
 
 print(" ---------------------------------------------------------")
 print(" Average kinetic energy from energy distribution         |")
@@ -306,11 +285,10 @@ for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
     for k,model in enumerate(radiation_list):
         line += " {0:.4e} |".format(ekin_ave_from_dists[itimestep,k])
     print(line)
-    
+
 # Validation
-for itimestep,timestep in enumerate(range(0,maximal_iteration,period)):
-    for k,model in enumerate(radiation_list):
-        Validate("Average kinetic energy for the {} model at iteration {}".format(model,timestep),ekin_ave_from_dists[itimestep,k],ekin_ave_from_dists[itimestep,k]*0.1)
+for k,model in enumerate(radiation_list):
+    Validate("Average kinetic energy for the {} model".format(model),ekin_ave_from_dists[1:,k], 0.1, "relative_error" )
 
 # ______________________________________________________________________________
 # Figures

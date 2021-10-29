@@ -74,8 +74,6 @@ Main(
     EM_boundary_conditions = [ ["periodic"] ],
 
     patch_arrangement = "linearized_XYZ",
-
-    random_seed = smilei_mpi_rank
 )
 
 Vectorization(

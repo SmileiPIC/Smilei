@@ -23,10 +23,10 @@ RadiationTables::RadiationTables()
 {
 
     // Default parameters
-    
+
     minimum_chi_continuous_ = 1e-3;
     minimum_chi_discontinuous_ = 1e-2;
-    
+
     // Default init of the tables
     RadiationTablesDefault::setDefault( niel_, integfochi_, xi_ );
 
@@ -162,6 +162,18 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
         } else {
             ERROR( " The parameter `Niel_computation_method` must be `table`, `fit5`, `fit10` or `ridgers`." );
         }
+
+        // Convert computational methods in index for GPUs
+        if( niel_.computation_method_ == "table") {
+            niel_.computation_method_index_ = 0;
+        } else if (niel_.computation_method_ == "fit5") {
+            niel_.computation_method_index_ = 1;
+        } else if (niel_.computation_method_ == "fit10") {
+            niel_.computation_method_index_ = 2;
+        } else if (niel_.computation_method_ == "ridgers") {
+            niel_.computation_method_index_ = 3;
+        }
+
     }
 
     MESSAGE( "" );
@@ -175,7 +187,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
             MESSAGE(1,"Default tables (stored in the code) are used:");
         }
     }
-    
+
     if( params.hasMCRadiation ) {
         MESSAGE( "" );
         MESSAGE( 1,"--- Integration F/particle_chi table:" );
@@ -189,7 +201,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
         MESSAGE( 2,"Minimum particle chi: " << xi_.min_particle_chi_ );
         MESSAGE( 2,"Maximum particle chi: " << xi_.max_particle_chi_ );
     }
-    
+
     if( params.hasNielRadiation ) {
         MESSAGE( "" );
         MESSAGE( 1, "--- `h` table for the model of Niel et al.:" );
@@ -325,15 +337,15 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
 {
     // Log10 of particle_chi
     double log10_particle_chi;
-    
+
     // Photon chi (1 and 2 for interpolation)
     double photon_chi;
     double photon_chi_1;
     double photon_chi_2;
-    
+
     // Random xi
     double xi;
-    
+
     //double chiph_xip_delta;
     double chiph_xip_delta_1;
     double chiph_xip_delta_2;
@@ -354,7 +366,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     // ---------------------------------------
     // index of particle_chi in xi_.table
     // ---------------------------------------
-    
+
     // Use floor so that particle_chi corresponding to ichipa is <= given particle_chi
     ichipa = int( floor( ( log10_particle_chi-xi_.log10_min_particle_chi_ )*( xi_.inv_particle_chi_delta_ ) ) );
 
@@ -583,13 +595,13 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
     if( Tools::fileExists( file ) ) {
         if( smpi->isMaster() ) {
             H5Read f( file );
-            
+
             // First, we read attributes
             H5Read h = f.dataset( "h" );
             h.attr( "size_particle_chi", niel_.size_particle_chi_ );
             h.attr( "min_particle_chi", niel_.min_particle_chi_ );
             h.attr( "max_particle_chi", niel_.max_particle_chi_ );
-            
+
             // Resize and read array
             niel_.table_.resize( niel_.size_particle_chi_ );
             f.vect( "h", niel_.table_ );
@@ -621,18 +633,18 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
     if( Tools::fileExists( file ) ) {
         if( smpi->isMaster() ) {
             H5Read f( file );
-            
+
             // First, we read attributes
             H5Read c = f.dataset( "integfochi" );
             c.attr( "size_particle_chi", integfochi_.size_particle_chi_ );
             c.attr( "min_particle_chi", integfochi_.min_particle_chi_ );
             c.attr( "max_particle_chi", integfochi_.max_particle_chi_ );
-            
+
             // Resize and read array
             integfochi_.table_.resize( integfochi_.size_particle_chi_ );
             f.vect( "integfochi", integfochi_.table_ );
         }
-        
+
         // Bcast the table to all MPI ranks
         RadiationTables::bcastIntegfochiTable( smpi );
     }
@@ -655,7 +667,7 @@ void RadiationTables::readXiTable( SmileiMPI *smpi )
     if( Tools::fileExists( file ) ) {
         if( smpi->isMaster() ) {
             H5Read f( file );
-            
+
             // First, we read attributes
             H5Read xi = f.dataset( "xi" );
             xi.attr( "size_particle_chi", xi_.size_particle_chi_ );
@@ -669,10 +681,10 @@ void RadiationTables::readXiTable( SmileiMPI *smpi )
             f.vect( "min_photon_chi_for_xi", xi_.min_photon_chi_table_ );
             f.vect( "xi", xi_.table_ );
         }
-        
+
         // Bcast the table to all MPI ranks
         RadiationTables::bcastTableXi( smpi );
-        
+
     }
     // Else, the table can not be found, we throw an error
     else {
@@ -723,11 +735,11 @@ void RadiationTables::bcastHTable( SmileiMPI *smpi )
 
     // buffer size
     if( smpi->getRank() == 0 ) {
-        MPI_Pack_size( 1, MPI_INT, smpi->getGlobalComm(), &position );
+        MPI_Pack_size( 1, MPI_INT, smpi->world(), &position );
         buf_size = position;
-        MPI_Pack_size( 2, MPI_DOUBLE, smpi->getGlobalComm(), &position );
+        MPI_Pack_size( 2, MPI_DOUBLE, smpi->world(), &position );
         buf_size += position;
-        MPI_Pack_size( niel_.size_particle_chi_, MPI_DOUBLE, smpi->getGlobalComm(),
+        MPI_Pack_size( niel_.size_particle_chi_, MPI_DOUBLE, smpi->world(),
                        &position );
         buf_size += position;
     }
@@ -735,7 +747,7 @@ void RadiationTables::bcastHTable( SmileiMPI *smpi )
     //MESSAGE( 2,"Buffer size: " << buf_size );
 
     // Exchange buf_size with all ranks
-    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );
+    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->world() );
 
     // Packet that will contain all parameters
     char *buffer = new char[buf_size];
@@ -744,35 +756,35 @@ void RadiationTables::bcastHTable( SmileiMPI *smpi )
     if( smpi->getRank() == 0 ) {
         position = 0;
         MPI_Pack( &niel_.size_particle_chi_,
-                  1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_INT, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &niel_.min_particle_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &niel_.max_particle_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
 
         MPI_Pack( &niel_.table_[0], niel_.size_particle_chi_,
-                  MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
 
     }
 
     // Bcast all parameters
-    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->getGlobalComm() );
+    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->world() );
 
     // Other ranks unpack
     if( smpi->getRank() != 0 ) {
         position = 0;
         MPI_Unpack( buffer, buf_size, &position,
-                    &niel_.size_particle_chi_, 1, MPI_INT, smpi->getGlobalComm() );
+                    &niel_.size_particle_chi_, 1, MPI_INT, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &niel_.min_particle_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &niel_.min_particle_chi_, 1, MPI_DOUBLE, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &niel_.max_particle_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &niel_.max_particle_chi_, 1, MPI_DOUBLE, smpi->world() );
 
         // Resize table before unpacking values
         niel_.table_.resize( niel_.size_particle_chi_ );
 
         MPI_Unpack( buffer, buf_size, &position, &niel_.table_[0],
-                    niel_.size_particle_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
+                    niel_.size_particle_chi_, MPI_DOUBLE, smpi->world() );
 
     }
 
@@ -807,11 +819,11 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
 
     // buffer size
     if( smpi->getRank() == 0 ) {
-        MPI_Pack_size( 1, MPI_INT, smpi->getGlobalComm(), &position );
+        MPI_Pack_size( 1, MPI_INT, smpi->world(), &position );
         buf_size = position;
-        MPI_Pack_size( 2, MPI_DOUBLE, smpi->getGlobalComm(), &position );
+        MPI_Pack_size( 2, MPI_DOUBLE, smpi->world(), &position );
         buf_size += position;
-        MPI_Pack_size( integfochi_.size_particle_chi_, MPI_DOUBLE, smpi->getGlobalComm(),
+        MPI_Pack_size( integfochi_.size_particle_chi_, MPI_DOUBLE, smpi->world(),
                        &position );
         buf_size += position;
     }
@@ -819,7 +831,7 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
     //MESSAGE( 2,"Buffer size: " << buf_size );
 
     // Exchange buf_size with all ranks
-    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );
+    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->world() );
 
     // Packet that will contain all parameters
     char *buffer = new char[buf_size];
@@ -828,35 +840,35 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
     if( smpi->getRank() == 0 ) {
         position = 0;
         MPI_Pack( &integfochi_.size_particle_chi_,
-                  1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_INT, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &integfochi_.min_particle_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &integfochi_.max_particle_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
 
         MPI_Pack( &integfochi_.table_[0], integfochi_.size_particle_chi_,
-                  MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
 
     }
 
     // Bcast all parameters
-    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->getGlobalComm() );
+    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->world() );
 
     // Other ranks unpack
     if( smpi->getRank() != 0 ) {
         position = 0;
         MPI_Unpack( buffer, buf_size, &position,
-                    &integfochi_.size_particle_chi_, 1, MPI_INT, smpi->getGlobalComm() );
+                    &integfochi_.size_particle_chi_, 1, MPI_INT, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &integfochi_.min_particle_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &integfochi_.min_particle_chi_, 1, MPI_DOUBLE, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &integfochi_.max_particle_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &integfochi_.max_particle_chi_, 1, MPI_DOUBLE, smpi->world() );
 
         // Resize table before unpacking values
         integfochi_.table_.resize( integfochi_.size_particle_chi_ );
 
         MPI_Unpack( buffer, buf_size, &position, &integfochi_.table_[0],
-                    integfochi_.size_particle_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
+                    integfochi_.size_particle_chi_, MPI_DOUBLE, smpi->world() );
 
     }
 
@@ -917,22 +929,22 @@ void RadiationTables::bcastTableXi( SmileiMPI *smpi )
 
     // Compute the buffer size
     if( smpi->getRank() == 0 ) {
-        MPI_Pack_size( 2, MPI_INT, smpi->getGlobalComm(), &position );
+        MPI_Pack_size( 2, MPI_INT, smpi->world(), &position );
         buf_size = position;
-        MPI_Pack_size( 2, MPI_DOUBLE, smpi->getGlobalComm(), &position );
+        MPI_Pack_size( 2, MPI_DOUBLE, smpi->world(), &position );
         buf_size += position;
-        MPI_Pack_size( xi_.size_particle_chi_, MPI_DOUBLE, smpi->getGlobalComm(),
+        MPI_Pack_size( xi_.size_particle_chi_, MPI_DOUBLE, smpi->world(),
                        &position );
         buf_size += position;
         MPI_Pack_size( xi_.size_particle_chi_*xi_.size_photon_chi_, MPI_DOUBLE,
-                       smpi->getGlobalComm(), &position );
+                       smpi->world(), &position );
         buf_size += position;
     }
 
     //MESSAGE( 2,"Buffer size for MPI exchange: " << buf_size );
 
     // Exchange buf_size with all ranks
-    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );
+    MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->world() );
 
     // Packet that will contain all parameters
     char *buffer = new char[buf_size];
@@ -941,46 +953,46 @@ void RadiationTables::bcastTableXi( SmileiMPI *smpi )
     if( smpi->getRank() == 0 ) {
         position = 0;
         MPI_Pack( &xi_.size_particle_chi_,
-                  1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_INT, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &xi_.size_photon_chi_,
-                  1, MPI_INT, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_INT, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &xi_.min_particle_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
         MPI_Pack( &xi_.max_particle_chi_,
-                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  1, MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
 
         MPI_Pack( &xi_.min_photon_chi_table_[0], xi_.size_particle_chi_,
-                  MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
 
         MPI_Pack( &xi_.table_[0], xi_.size_particle_chi_*xi_.size_photon_chi_,
-                  MPI_DOUBLE, buffer, buf_size, &position, smpi->getGlobalComm() );
+                  MPI_DOUBLE, buffer, buf_size, &position, smpi->world() );
     }
 
     // Bcast all parameters
-    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->getGlobalComm() );
+    MPI_Bcast( &buffer[0], buf_size, MPI_PACKED, 0, smpi->world() );
 
     // Other ranks unpack
     if( smpi->getRank() != 0 ) {
         position = 0;
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.size_particle_chi_, 1, MPI_INT, smpi->getGlobalComm() );
+                    &xi_.size_particle_chi_, 1, MPI_INT, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.size_photon_chi_, 1, MPI_INT, smpi->getGlobalComm() );
+                    &xi_.size_photon_chi_, 1, MPI_INT, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.min_particle_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &xi_.min_particle_chi_, 1, MPI_DOUBLE, smpi->world() );
         MPI_Unpack( buffer, buf_size, &position,
-                    &xi_.max_particle_chi_, 1, MPI_DOUBLE, smpi->getGlobalComm() );
+                    &xi_.max_particle_chi_, 1, MPI_DOUBLE, smpi->world() );
 
         // Resize tables before unpacking values
         xi_.min_photon_chi_table_.resize( xi_.size_particle_chi_ );
         xi_.table_.resize( xi_.size_particle_chi_*xi_.size_photon_chi_ );
 
         MPI_Unpack( buffer, buf_size, &position, &xi_.min_photon_chi_table_[0],
-                    xi_.size_particle_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
+                    xi_.size_particle_chi_, MPI_DOUBLE, smpi->world() );
 
         MPI_Unpack( buffer, buf_size, &position, &xi_.table_[0],
-                    xi_.size_particle_chi_*xi_.size_photon_chi_, MPI_DOUBLE, smpi->getGlobalComm() );
-                    
+                    xi_.size_particle_chi_*xi_.size_photon_chi_, MPI_DOUBLE, smpi->world() );
+
     }
 
     delete[] buffer;

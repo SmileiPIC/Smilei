@@ -74,7 +74,7 @@ for each MPI process). The following steps are executed:
    This is a good place to delete unused heavy variables.
 
 #. *Python* checks whether the *python* interpreter is needed during the simulation
-   (e.g. the user has defined a temporal :ref:`profile <profiles>` which requires *python*
+   (e.g. the user has defined a temporal :doc:`profile <profiles>` which requires *python*
    to calculate it every timestep). Otherwise, *python* is stopped.
 
 All these instructions are summarized in a file ``smilei.py``,
@@ -115,7 +115,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``"1Dcartesian"``
   * ``"2Dcartesian"``
   * ``"3Dcartesian"``
-  * ``"AMcylindrical"``: cylindrical geometry with azimuthal Fourier decomposition. See :doc:`algorithms`.
+  * ``"AMcylindrical"``: cylindrical geometry with :doc:`azimuthal_modes_decomposition`.
 
   In the following documentation, all references to dimensions or coordinates
   depend on the ``geometry``.
@@ -214,7 +214,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Only ``"Yee"`` is available for all geometries at the moment.
   ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``.
   ``"Lehe"`` and ``"Bouchard"`` is available for ``3DCartesian``.
-  The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
+  The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_.
+  The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_
 
 .. py:data:: solve_poisson
 
@@ -259,20 +260,27 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[["periodic"]]``
 
   The boundary conditions for the electromagnetic fields. Each boundary may have one of
-  the following conditions: ``"periodic"``, ``"silver-muller"``, or ``"reflective"``.
+  the following conditions: ``"periodic"``, ``"silver-muller"``, ``"reflective"`` or ``"ramp??"``.
 
   | **Syntax 1:** ``[[bc_all]]``, identical for all boundaries.
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
-  ``"silver-muller"`` is an open boundary condition.
-  The incident wave vector :math:`k_{inc}` on each face is defined by
-  ``"EM_boundary_conditions_k"``.
-  When using ``"silver-muller"`` as an injecting boundary,
-  make sure :math:`k_{inc}` is aligned with the wave you are injecting.
-  When using ``"silver-muller"`` as an absorbing boundary,
-  the optimal wave absorption on a given face will be along :math:`k_{abs}`
-  the specular reflection of :math:`k_{inc}` on the considered face.
+  * ``"silver-muller"`` is an open boundary condition.
+    The incident wave vector :math:`k_{inc}` on each face is defined by
+    ``"EM_boundary_conditions_k"``.
+    When using ``"silver-muller"`` as an injecting boundary,
+    make sure :math:`k_{inc}` is aligned with the wave you are injecting.
+    When using ``"silver-muller"`` as an absorbing boundary,
+    the optimal wave absorption on a given face will be along :math:`k_{abs}`
+    the specular reflection of :math:`k_{inc}` on the considered face.
+
+  * ``"ramp??"`` is a basic, open boundary condition designed
+    for the spectral solver in ``AMcylindrical`` geometry.
+    The ``??`` is an integer representing a number of cells
+    (smaller than the number of ghost cells).
+    Over the first half, the fields remain untouched.
+    Over the second half, all fields are progressively reduced down to zero.
 
 .. py:data:: EM_boundary_conditions_k
 
@@ -280,17 +288,16 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[[1.,0.],[-1.,0.],[0.,1.],[0.,-1.]]`` in 2D
   :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
-  The incident unit wave vector `k` for each face
-  (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax) is
-  defined by its coordinates in the `xyz` frame.
+  For ``silver-muller`` absorbing boundaries,
+  the *x,y,z* coordinates of the unit wave vector ``k`` incident on each face
+  (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax).
   The number of coordinates is equal to the dimension of the simulation.
   The number of given vectors must be equal to 1 or to the number of faces
   which is twice the dimension of the simulation. In cylindrical geometry,
-  `k` coordinates are given in the `xr` frame and only the Rmax face is affected.
+  ``k`` coordinates are given in the ``xr`` frame and only the Rmax face is affected.
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
-
 
 .. py:data:: time_fields_frozen
 
@@ -318,26 +325,34 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: print_expected_disk_usage
 
-  :default: `True`
+  :default: ``True``
 
-  If `False`, the calculation of the expected disk usage, that is usually printed in the
+  If ``False``, the calculation of the expected disk usage, that is usually printed in the
   standard output, is skipped. This might be useful in rare cases where this calculation
   is costly.
 
 
 .. py:data:: random_seed
 
-  :default: the machine clock
+  :default: 0
 
-  The value of the random seed. To create a per-processor random seed, you may use
-  the variable  :py:data:`smilei_mpi_rank`.
+  The value of the random seed. Each patch has its own random number generator, with a seed
+  equal to ``random_seed`` + the index of the patch.
 
 .. py:data:: number_of_AM
 
+  :type: integer
   :default: 2
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
-  The modes range from mode 0 to mode `"number_of_AM-1"`.
+  The modes range from mode 0 to mode ``"number_of_AM-1"``.
+
+.. py:data:: number_of_AM_classical_Poisson_solver
+
+  :default: 1
+
+  The number of azimuthal modes used for the field initialization with non relativistic Poisson solver in ``"AMcylindrical"`` geometry.
+  Note that this number must be lower or equal to the number of modes of the simulation.
 
 .. py:data:: number_of_AM_relativistic_field_initialization
 
@@ -346,30 +361,44 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
   Note that this number must be lower or equal to the number of modes of the simulation.
 
-.. rst-class:: experimental
-
-.. py:data:: uncoupled_grids
-
-  :default: `False`
-
-  * If `False`, the parallelization of the simulation is done according to :doc:`parallelization`.
-  * If `True`, the simulated domain is decomposed in dedicated shapes for particles
-    and fields operations. Benefits of this option are illustrated
-    `in this paper <https://arxiv.org/abs/1912.04064>`_.
-
 .. py:data:: custom_oversize
 
+   :type: integer
    :default: 2
 
    The number of ghost-cell for each patches. The default value is set accordingly with
    the ``interpolation_order`` value.
 
-.. py:data:: custom_region_oversize
+..
+  .. py:data:: spectral_solver_order
 
-   :default: 2
+    :type: A list of integers
+    :default: ``[0,0]`` in AM geometry.
 
-   The number of ghost-cell for each region when ``uncoupled_grids=True``.
-   The default value is set accordingly with the ``interpolation_order`` value.
+    The order of the spectral solver in each dimension. Set order to zero for infinite order.
+    In AM geometry, only infinite order is supported along the radial dimension.
+
+..
+  .. py:data:: initial_rotational_cleaning
+
+    :default: ``False``
+
+    If ``True``, uses the picsar library to do the rotational cleaning.
+
+    Rotational cleaning corrects field initialization in spectral space
+    in order to make sure that the fields at :math:`t=0` are a valid solution
+    of the Maxwell equation.
+    This operation is only supported in AM geometry and with picsar
+    spectral solver. It requires a FFT of the full domain on a single MPI
+    process so very large simulations may face problems with this procedure.
+
+..
+  .. py:data:: cell_sorting
+
+    :default: ``False``
+
+    If ``True``, forces the use of cell sorting for particles. This flag is automatically set to true if any feature requiring cell sorting is requested (vectorization, collisions or
+    particle merging) so it is mainly a convenience for developers.
 
 ----
 
@@ -421,6 +450,38 @@ occur every 150 iterations.
 
 ----
 
+.. rst-class:: experimental
+
+Multiple decomposition of the domain
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The block ``MultipleDecomposition`` is necessary for spectral solvers and optional in all other cases.
+When present, it activates
+the :doc:`SDMD` (SDMD) technique
+which separates the decomposition of the field grids from that of the particles.
+Fields are set on large sub-domain called *regions* (1 region per MPI process) while
+particles are kept as small *patches* as in the standard decomposition (many patches per MPI process).
+Benefits of this option are illustrated `in this paper <https://hal.archives-ouvertes.fr/hal-02973139>`_.
+
+
+.. code-block:: python
+
+  MultipleDecomposition(
+      region_ghost_cells = 2
+  )
+
+.. py:data:: region_ghost_cells
+
+   :type: integer
+   :default: 2
+
+   The number of ghost cells for each region.
+   The default value is set accordingly with the ``interpolation_order``.
+   The same number of ghost cells is used in all dimensions except for spectral solver in AM geometry for which the number of radial ghost cells is always automatically set to be the same as patches.
+
+
+----
+
 .. _Vectorization:
 
 Vectorization
@@ -450,7 +511,7 @@ It requires :ref:`additional compilation options<vectorization_flags>` to be act
     Particles are sorted per cell.
   * ``"adaptive"``: the best operators (scalar or vectorized)
     are determined and configured dynamically and locally
-    (per patch and per species).
+    (per patch and per species). For the moment this mode is only supported in ``3Dcartesian`` geometry.
     Particles are sorted per cell.
 
   In the ``"adaptive"`` mode, :py:data:`clrw` is set to the maximum.
@@ -521,7 +582,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
   :type: Float.
   :default: 0.
 
-  The average velocity of the moving window in the `x_max` direction. It muste be between 0 and 1.
+  The average velocity of the moving window in the ``x_max`` direction. It muste be between 0 and 1.
 
 .. py:data:: number_of_additional_shifts
 
@@ -541,7 +602,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 .. note::
 
   The :ref:`particle binning diagnostics <DiagParticleBinning>` accept an "axis" called ``moving_x``
-  corresponding to the `x` coordinate corrected by the moving window's current movement.
+  corresponding to the ``x`` coordinate corrected by the moving window's current movement.
 
 ----
 
@@ -564,25 +625,26 @@ which parameters are controlled in the following block::
 
   :default: ``"binomial"``
 
-  The model for current filtering. ``"binomial"`` current filtering is available.
-  With ``"customFIR"`` the user can provide a self made FIR kernel.
+  The model for current filtering.
+
+  * ``"binomial"`` for a binomial filter.
+  * ``"customFIR"`` for a custom FIR kernel.
 
 .. py:data:: passes
 
   :type: A python list of integers.
   :default: ``[0]``
 
-  The number of passes in the filter at each timestep given for all dimensions.
+  The number of passes (at each timestep) given for each dimension.
   If the list is of length 1, the same number of passes is assumed for all dimensions.
 
 .. py:data:: kernelFIR
 
   :default: ``"[0.25,0.5,0.25]"``
 
-  The FIR kernel for the ``"customFIR"`` model. Be carefull, the number of coefficients
-  of the kernel have to be less than 2 times the number of ghost-cell.
-  If you use a kernel with more than 3 coefficients, you have to increase
-  the number of ghost-cell with ``"custom_oversize"`` in ``"Main()"``
+  The FIR kernel for the ``"customFIR"`` model. The number of coefficients
+  must be less than twice the number of ghost cells
+  (adjusted using :py:data:`custom_oversize`).
 
 
 ----
@@ -649,7 +711,6 @@ Each species has to be defined in a ``Species`` block::
       # ionization_electrons = None,
       # ionization_rate = None,
       is_test = False,
-      # ponderomotive_dynamics = False,
       pusher = "boris",
 
       # Radiation reaction, for particles only:
@@ -670,8 +731,8 @@ Each species has to be defined in a ``Species`` block::
       merge_every = 5,
       merge_min_particles_per_cell = 16,
       merge_max_packet_size = 4,
-      merge_min_packet_size = 2,
-      merge_momentum_cell_size = [32,16,16],
+      merge_min_packet_size = 4,
+      merge_momentum_cell_size = [16,16,16],
   )
 
 .. py:data:: name
@@ -684,7 +745,7 @@ Each species has to be defined in a ``Species`` block::
 
    * ``"regular"`` for regularly spaced. See :py:data:`regular_number`.
    * ``"random"`` for randomly distributed.
-   * ``"centered"`` for centered in each cell.
+   * ``"centered"`` for centered in each cell (not supported in ``AMcylindrical`` geometry.
    * The :py:data:`name` of another species from which the positions are copied.
      The *source* species must have positions initialized using one of the three
      other options above, and must be defined before this species.
@@ -696,7 +757,7 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: regular_number
 
    :type: A list of as many integers as the simulation dimension
-   
+
    When ``position_initialization = "regular"``, this sets the number of evenly-spaced
    particles per cell in each direction: ``[Nx, Ny, Nz]`` in cartesian geometries and
    ``[Nx, Nr, Ntheta]`` in ``AMcylindrical`` in which case we recommend
@@ -718,7 +779,7 @@ Each species has to be defined in a ``Species`` block::
 
 .. py:data:: particles_per_cell
 
-  :type: float or *python* function (see section :ref:`profiles`)
+  :type: float or :doc:`profile <profiles>`
 
   The number of particles per cell.
 
@@ -744,7 +805,7 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: number_density
              charge_density
 
-  :type: float or *python* function (see section :ref:`profiles`)
+  :type: float or :doc:`profile <profiles>`
 
   The absolute value of the number density or charge density (choose one only)
   of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`).
@@ -752,14 +813,14 @@ Each species has to be defined in a ``Species`` block::
 
 .. py:data:: charge
 
-  :type: float or *python* function (see section :ref:`profiles`)
+  :type: float or :doc:`profile <profiles>`
 
   The particle charge, in units of the elementary charge :math:`e`.
 
 
 .. py:data:: mean_velocity
 
-  :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+  :type: a list of 3 floats or :doc:`profiles <profiles>`
 
   The initial drift velocity of the particles, in units of the speed of light :math:`c`.
 
@@ -767,7 +828,7 @@ Each species has to be defined in a ``Species`` block::
 
 .. py:data:: temperature
 
-  :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+  :type: a list of 3 floats or :doc:`profiles <profiles>`
 
   The initial temperature of the particles, in units of :math:`m_ec^2`.
 
@@ -820,7 +881,7 @@ Each species has to be defined in a ``Species`` block::
   The model for ionization:
 
   * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
-  * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>` (requires species with an :py:data:`atomic_number` and :py:data:`ponderomotive_dynamics=True`)
+  * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>`
   * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
 
 .. py:data:: ionization_rate
@@ -861,15 +922,6 @@ Each species has to be defined in a ``Species`` block::
   Flag for test particles. If ``True``, this species will contain only test particles
   which do not participate in the charge and currents.
 
-.. py:data:: ponderomotive_dynamics
-
-  :default: ``False``
-
-  Flag for particles interacting with an envelope model for the laser, if present.
-  If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
-  See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
-.. note:: Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
-
 
 .. .. py:data:: c_part_max
 ..
@@ -887,7 +939,7 @@ Each species has to be defined in a ``Species`` block::
   * ``"vay"``: The relativistic pusher of J. L. Vay
   * ``"higueracary"``: The relativistic pusher of A. V. Higuera and J. R. Cary
   * ``"norm"``:  For photon species only (rectilinear propagation)
-  * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species whose flag ``"ponderomotive_dynamics"`` is ``True``. Valid only if the species has non-zero mass
+  * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species interacting with the laser envelope model. Valid only if the species has non-zero mass
 
 .. py:data:: radiation_model
 
@@ -990,7 +1042,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
         box_side  = "xmin",
         time_envelope = tgaussian(start=0, duration=10., order=4),
 
-        # Parameters inherited from the associated `species` by default
+        # Parameters inherited from the associated ``species`` by default
 
         position_initialization = "species",
         momentum_initialization = "rectangular",
@@ -1023,7 +1075,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
 .. py:data:: time_envelope
 
-    :type: a *python* function or a :ref:`time profile <profiles>`
+    :type: a *python* function or a :doc:`time profile <profiles>`
     :default:  ``tconstant()``
 
     The temporal envelope of the injector.
@@ -1054,7 +1106,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
 .. py:data:: mean_velocity
 
-    :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+    :type: a list of 3 floats or :doc:`profiles <profiles>`
     :default: parameters provided the species
 
     The initial drift velocity of the particles, in units of the speed of light :math:`c`.
@@ -1063,14 +1115,14 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
 .. py:data:: temperature
 
-    :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+    :type: a list of 3 floats or :doc:`profiles <profiles>`
     :default: parameters provided the species
 
     The initial temperature of the particles, in units of :math:`m_ec^2`.
 
 .. py:data:: particles_per_cell
 
-    :type: float or *python* function (see section :ref:`profiles`)
+    :type: float or :doc:`profile <profiles>`
     :default: parameters provided the species
 
     The number of particles per cell to use for the injector.
@@ -1078,7 +1130,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 .. py:data:: number_density
              charge_density
 
-    :type: float or *python* function (see section :ref:`profiles`)
+    :type: float or :doc:`profile <profiles>`
     :default: parameters provided the species
 
     The absolute value of the number density or charge density (choose one only)
@@ -1102,6 +1154,7 @@ Particle Merging
 
 The macro-particle merging method is documented in
 the :doc:`corresponding page <particle_merging>`.
+Note that for merging to be able to operate either vectorization or cell sorting must be activated.
 It is optionnally specified in the ``Species`` block::
 
   Species(
@@ -1112,8 +1165,8 @@ It is optionnally specified in the ``Species`` block::
       merge_every = 5,
       merge_min_particles_per_cell = 16,
       merge_max_packet_size = 4,
-      merge_min_packet_size = 2,
-      merge_momentum_cell_size = [32,16,16],
+      merge_min_packet_size = 4,
+      merge_momentum_cell_size = [16,16,16],
       merge_discretization_scale = "linear",
       # Extra parameters for experts:
       merge_min_momentum_cell_length = [1e-10, 1e-10, 1e-10],
@@ -1147,7 +1200,7 @@ It is optionnally specified in the ``Species`` block::
 
   :default: ``4``
 
-  The minimum number of particles per packet to merge.
+  The minimum number of particles per packet to merge. Must be greater or equal to 4.
 
 .. py:data:: merge_max_packet_size
 
@@ -1206,6 +1259,13 @@ field on one of the box sides. The only boundary condition that supports lasers
 is ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
 There are several syntaxes to introduce a laser in :program:`Smilei`:
 
+.. note::
+
+  The following definitions are given for lasers incoming from the ``xmin`` or ``xmax``
+  boundaries. For lasers incoming from ``ymin`` or ``ymax``, replace the ``By``
+  profiles by ``Bx`` profiles. For lasers incoming from ``zmin`` or ``zmax``,
+  replace ``By`` and ``Bz`` profiles by ``Bx`` and ``By`` profiles, respectively.
+
 .. rubric:: 1. Defining a generic wave
 
 ..
@@ -1222,8 +1282,16 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     :default: ``"xmin"``
 
-    Side of the box from which the laser originates: at the moment, only ``"xmin"`` and
-    ``"xmax"`` are supported.
+    Side of the box from which the laser originates: ``"xmin"``, ``"xmax"``, ``"ymin"``,
+    ``"ymax"``, ``"zmin"`` or ``"zmax"``.
+
+    In the cases of ``"ymin"`` or ``"ymax"``, replace, in the following profiles,
+    coordinates *y* by *x*, and fields :math:`B_y` by :math:`B_x`.
+
+    In the cases of ``"zmin"`` or ``"zmax"``, replace, in the following profiles,
+    coordinates *y* by *x*, coordinates *z* by *y*, fields :math:`B_y` by :math:`B_x`
+    and fields :math:`B_z` by :math:`B_y`.
+
 
 .. py:data:: space_time_profile
 
@@ -1233,15 +1301,15 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     functions taking several arguments depending on the simulation dimension:
     :math:`(t)` for a 1-D simulation, :math:`(y,t)` for a 2-D simulation (etc.)
     The two functions represent :math:`B_y` and :math:`B_z`, respectively.
-    This can be used only in `Cartesian` geometries.
+    This can be used only in Cartesian geometries.
 
 .. py:data:: space_time_profile_AM
 
-    :type: A list of maximum 2*`number_of_AM` *python* functions.
+    :type: A list of maximum 2 x ``number_of_AM`` *python* functions.
 
-    These profiles define the first modes of `Br` and `Bt` in the order shown in the above example.
-    Undefined modes are considered zero.
-    This can be used only in `AMcylindrical` geometry.
+    These profiles define the first modes of :math:`B_r` and :math:`B_\theta` in the
+    order shown in the above example. Undefined modes are considered zero.
+    This can be used only in ``AMcylindrical`` geometry.
 
 
 
@@ -1285,7 +1353,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
   .. py:data:: chirp_profile
 
-    :type: a *python* function or a :ref:`time profile <profiles>`
+    :type: a *python* function or a :doc:`time profile <profiles>`
     :default: ``tconstant()``
 
     The variation of the laser frequency over time, such that
@@ -1323,21 +1391,21 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
   .. py:data:: time_envelope
 
-    :type: a *python* function or a :ref:`time profile <profiles>`
+    :type: a *python* function or a :doc:`time profile <profiles>`
     :default:  ``tconstant()``
 
     The temporal envelope of the laser.
 
   .. py:data:: space_envelope
 
-    :type: a list of two *python* functions or two :ref:`spatial profiles <profiles>`
+    :type: a list of two *python* functions or two :doc:`spatial profiles <profiles>`
     :default: ``[ 1., 0. ]``
 
     The two spatial envelopes :math:`S_y` and :math:`S_z`.
 
   .. py:data:: phase
 
-    :type: a list of two *python* functions or two :ref:`spatial profiles <profiles>`
+    :type: a list of two *python* functions or two :doc:`spatial profiles <profiles>`
     :default: ``[ 0., 0. ]``
 
     The two spatially-varying phases :math:`\phi_y` and :math:`\phi_z`.
@@ -1420,7 +1488,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     :default: 0.
 
-    The angle of the laser beam relative to the X axis, in radians.
+    The angle of the laser beam relative to the normal to the injection plane, in radians.
 
   .. py:data:: time_envelope
 
@@ -1447,8 +1515,10 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
-  two angles, corresponding to rotations around `y` and `z`, respectively.
+  two angles, corresponding to rotations around ``y`` and ``z``, respectively.
 
+  When injecting on ``"ymin"`` or ``"ymax"``, the incidence angles corresponds to
+  rotations around ``x`` and ``z``, respectively.
 
 .. rubric:: 6. Defining a gaussian wave with Azimuthal Fourier decomposition
 
@@ -1503,11 +1573,11 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
   .. py:data:: extra_envelope
 
-    :type: a *python* function or a :ref:`python profile <profiles>`
+    :type: a *python* function or a :doc:`python profile <profiles>`
     :default:  ``lambda *z: 1.``, which means a profile of value 1 everywhere
 
     An extra envelope applied at the boundary, on top of the :py:data:`space_time_profile`.
-    This envelope takes two arguments (`y`, `t`) in 2D, and three arguments (`y`, `z`, `t`)
+    This envelope takes two arguments (``y``, ``t``) in 2D, and three arguments (``y``, ``z``, ``t``)
     in 3D.
     As the wave propagation technique stores a limited number of Fourier modes (in the time
     domain) of the wave, some periodicity can be obtained in the actual laser.
@@ -1528,6 +1598,32 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     Angle between the boundary and the profile's plane, the rotation being around :math:`z`.
     See :doc:`this page <laser_offset>` for more details.
 
+  .. py:data:: fft_time_window
+
+    :default: :py:data:`simulation_time`
+
+    Time during which the ``space_time_profile`` is sampled (calculating the
+    ``LaserOffset`` on the whole simulation duration can be costly). Note that
+    the Fourier approach will naturally repeat the signal periodically.
+
+  .. py:data:: number_of_processes
+
+    :default: *all available processes*
+
+    The number of MPI processes that will be used for computing the ``LaserOffset``.
+    Using more processes computes the FFT faster, but too many processes may
+    be very costly in communication. In addition, using too few may not allow
+    the arrays to fit in memory.
+
+  .. py:data:: file
+  
+    :default: ``None``
+    
+    The path to a ``LaserOffset*.h5`` file generated from a previous simulation. This option
+    can help reduce the computation time by re-using the ``LaserOffset`` computation
+    from a previous simulation.
+
+
 ----
 
 .. _laser_envelope:
@@ -1535,7 +1631,8 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 Laser envelope model
 ^^^^^^^^^^^^^^^^^^^^^^
 
-In all the available geometries, it is possible to model a laser pulse propagating in the ``x`` direction
+In all the available geometries, it is possible to model a laser pulse
+propagating in the ``x`` direction
 using an envelope model (see :doc:`laser_envelope` for the advantages
 and limits of this approximation).
 The fast oscillations of the laser are neglected and all the physical
@@ -1592,7 +1689,7 @@ Following is the generic laser envelope creator ::
 
 .. py:data:: envelope_profile
 
-   :type: a *python* function or a :ref:`python profile <profiles>`
+   :type: a *python* function or a :doc:`python profile <profiles>`
    :default: None
 
    The laser space-time profile, so if the geometry is ``3Dcartesian`` a function of 4 arguments (3 for space, 1 for time) is necessary.
@@ -1612,7 +1709,7 @@ Following is the generic laser envelope creator ::
   The solver scheme for the envelope equation.
 
   * ``"explicit"``: an explicit scheme based  on central finite differences.
-  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along `x` in the ``"explicit"`` solver are substituted by
+  * ``"explicit_reduced_dispersion"``: the finite difference derivatives along ``x`` in the ``"explicit"`` solver are substituted by
     optimized derivatives to reduce numerical dispersion.
 
 .. py:data:: Envelope_boundary_conditions
@@ -1763,7 +1860,7 @@ An constant external field can be applied over the whole box
 
 .. py:data:: profile
 
-  :type: float or *python* function (see section :ref:`profiles`)
+  :type: float or :doc:`profile <profiles>`
 
   The initial spatial profile of the applied field.
   Refer to :doc:`units` to understand the units of this field.
@@ -1805,7 +1902,7 @@ This feature is accessible using the ``PrescribedField`` block::
 
 .. py:data:: profile
 
-  :type: float or *python* function (see section :ref:`profiles`)
+  :type: float or :doc:`profile <profiles>`
 
   The spatio-temporal profile of the applied field: a *python* function
   with arguments (*x*, *t*) or (*x*, *y*, *t*), etc.
@@ -1834,7 +1931,7 @@ It is applied using an ``Antenna`` block::
 
 .. py:data:: space_profile
 
-  :type: float or *python* function (see section :ref:`profiles`)
+  :type: float or :doc:`profile <profiles>`
 
   The initial spatial profile of the applied antenna.
   Refer to :doc:`units` to understand the units of this current.
@@ -1842,225 +1939,9 @@ It is applied using an ``Antenna`` block::
 
 .. py:data:: time_profile
 
-  :type: float or *python* function (see section :ref:`profiles`)
+  :type: float or :doc:`profile <profiles>`
 
   The temporal profile of the applied antenna. It multiplies ``space_profile``.
-
-
-----
-
-.. _profiles:
-
-Profiles
-^^^^^^^^
-
-Several quantities require the input of a profile: particle charge, particle density,
-external fields, etc. Depending on the case, they can be *spatial* or *temporal*
-profiles.
-
-.. rubric:: 1. Constant profiles
-
-* ``Species( ... , charge = -3., ... )`` defines a species with charge :math:`Z^\star=3`.
-
-* ``Species( ... , number_density = 10., ... )`` defines a species with density :math:`10\,N_r`.
-  You can choose ``number_density`` or ``charge_density``
-
-* ``Species( ... , mean_velocity = [0.05, 0., 0.], ... )`` defines a species
-  with drift velocity :math:`v_x = 0.05\,c` over the whole box.
-
-* ``Species(..., momentum_initialization="maxwell-juettner", temperature=[1e-5], ...)`` defines
-  a species with a Maxwell-Jüttner distribution of temperature :math:`T = 10^{-5}\,m_ec^2` over the whole box.
-  Note that the temperature may be anisotropic: ``temperature=[1e-5, 2e-5, 2e-5]``.
-
-* ``Species( ... , particles_per_cell = 10., ... )`` defines a species with 10 particles per cell.
-
-* ``ExternalField( field="Bx", profile=0.1 )`` defines a constant external field :math:`B_x = 0.1 B_r`.
-
-
-.. rubric:: 2. *Python* profiles
-
-..
-
-  Any *python* function can be a profile. Examples::
-
-    def f(x):
-        if x<1.: return 0.
-        else: return 1.
-
-  .. code-block:: python
-
-    import math
-    def f(x,y):    # two variables for 2D simulation
-        twoPI = 2.* math.pi
-        return math.cos(  twoPI * x/3.2 )
-
-  .. code-block:: python
-
-    f = lambda x: x**2 - 1.
-
-
-
-  Once the function is created, you have to include it in the block you want,
-  for example::
-
-    Species( ... , charge = f, ... )
-
-    Species( ... , mean_velocity = [f, 0, 0], ... )
-
-
-.. note:: It is possible, for higher performances, to create functions with
-  arguments *(x, y, etc.)* that are actually *numpy* arrays. If the function returns
-  a *numpy* array of the same size, it will automatically be considered as a profile
-  acting on arrays instead of single floats. Currently, this feature is only available
-  on Species' profiles.
-
-
-.. rubric:: 3. Pre-defined *spatial* profiles
-
-..
-
-  .. py:function:: constant(value, xvacuum=0., yvacuum=0.)
-
-    :param value: the magnitude
-    :param xvacuum: vacuum region before the start of the profile.
-
-  .. py:function:: trapezoidal(max, \
-            xvacuum=0., xplateau=None, xslope1=0., xslope2=0., \
-            yvacuum=0., yplateau=None, yslope1=0., yslope2=0. )
-
-    :param max: maximum value
-    :param xvacuum: empty length before the ramp up
-    :param xplateau: length of the plateau (default is :py:data:`grid_length` :math:`-` ``xvacuum``)
-    :param xslope1: length of the ramp up
-    :param xslope2: length of the ramp down
-
-  .. py:function:: gaussian(max, \
-     xvacuum=0., xlength=None, xfwhm=None, xcenter=None, xorder=2, \
-     yvacuum=0., ylength=None, yfwhm=None, ycenter=None, yorder=2 )
-
-    :param max: maximum value
-    :param xvacuum: empty length before starting the profile
-    :param xlength:  length of the profile (default is :py:data:`grid_length` :math:`-` ``xvacuum``)
-    :param xfwhm: gaussian FWHM (default is ``xlength/3.``)
-    :param xcenter: gaussian center position (default is in the middle of ``xlength``)
-    :param xorder: order of the gaussian.
-    :note: If ``yorder`` equals 0, then the profile is constant over :math:`y`.
-
-  .. py:function:: polygonal( xpoints=[], xvalues=[] )
-
-    :param xpoints: list of the positions of the points
-    :param xvalues: list of the values of the profile at each point
-
-  .. py:function:: cosine( base, amplitude=1., \
-           xvacuum=0., xlength=None, xphi=0., xnumber=1 )
-
-    :param base: offset of the profile value
-    :param amplitude: amplitude of the cosine
-    :param xvacuum: empty length before starting the profile
-    :param xlength: length of the profile (default is :py:data:`grid_length` :math:`-` ``xvacuum``)
-    :param xphi: phase offset
-    :param xnumber: number of periods within ``xlength``
-
-  .. py:function:: polynomial( x0=0., y0=0., z0=0., order0=[], order1=[], ... )
-
-    :param x0,y0: The reference position(s)
-    :param order0: Coefficient for the 0th order
-    :param order1: Coefficient for the 1st order (2 coefficients in 2D)
-    :param order2: Coefficient for the 2nd order (3 coefficients in 2D)
-    :param etc:
-
-    Creates a polynomial of the form
-
-    .. math::
-
-      \begin{eqnarray}
-      &\sum_i a_i(x-x_0)^i & \quad\mathrm{in\, 1D}\\
-      &\sum_i \sum_j a_{ij}(x-x0)^{i-j}(y-y0)^j & \quad\mathrm{in\, 2D}\\
-      &\sum_i \sum_j \sum_k a_{ijk}(x-x0)^{i-j-k}(y-y0)^j(z-z0)^k & \quad\mathrm{in\, 3D}
-      \end{eqnarray}
-
-    Each ``orderi`` is a coefficient (or list of coefficents) associated to the order ``i``.
-    In 1D, there is only one coefficient per order. In 2D, each ``orderi`` is a list
-    of ``i+1`` coefficients. For instance, the second order has three coefficients
-    associated to :math:`x^2`, :math:`xy` and :math:`y^2`, respectively.
-    In 3D, each ``orderi`` is a list of ``(i+1)*(i+2)/2`` coefficients. For instance,
-    the second order has 6 coefficients associated to :math:`x^2`, :math:`xy`, :math:`xz`,
-    :math:`y^2`, :math:`yz` and :math:`z^2`, respectively.
-
-  **Examples**::
-
-    Species( ... , density = gaussian(10., xfwhm=0.3, xcenter=0.8), ... )
-
-    ExternalField( ..., profile = constant(2.2), ... )
-
-
-.. rubric:: 4. Pre-defined *temporal* profiles
-
-..
-
-  .. py:function:: tconstant(start=0.)
-
-    :param start: starting time
-
-  .. py:function:: ttrapezoidal(start=0., plateau=None, slope1=0., slope2=0.)
-
-    :param start: starting time
-    :param plateau: duration of the plateau (default is :py:data:`simulation_time` :math:`-` ``start``)
-    :param slope1: duration of the ramp up
-    :param slope2: duration of the ramp down
-
-  .. py:function:: tgaussian(start=0., duration=None, fwhm=None, center=None, order=2)
-
-    :param start: starting time
-    :param duration: duration of the profile (default is :py:data:`simulation_time` :math:`-` ``start``)
-    :param fwhm: gaussian FWHM (default is ``duration/3.``)
-    :param center: gaussian center time (default is in the middle of ``duration``)
-    :param order: order of the gaussian
-
-  .. py:function:: tpolygonal( points=[], values=[] )
-
-    :param points: list of times
-    :param values: list of the values at each time
-
-  .. py:function:: tcosine( base=0., amplitude=1., start=0., duration=None, phi=0., freq=1. )
-
-    :param base: offset of the profile value
-    :param amplitude: amplitude of the cosine
-    :param start: starting time
-    :param duration: duration of the profile (default is :py:data:`simulation_time` :math:`-` ``start``)
-    :param phi: phase offset
-    :param freq: frequency
-
-  .. py:function:: tpolynomial( t0=0., order0=[], order1=[], ... )
-
-    :param t0: The reference position
-    :param order0: Coefficient for the 0th order
-    :param order1: Coefficient for the 1st order
-    :param order2: Coefficient for the 2nd order
-    :param etc:
-
-    Creates a polynomial of the form :math:`\sum_i a_i(t-t_0)^i`.
-
-  .. py:function:: tsin2plateau( start=0., fwhm=0., plateau=None, slope1=fwhm, slope2=slope1 )
-
-    :param start: Profile is 0 before start
-    :param fwhm:  Full width half maximum of the profile
-    :param plateau: Length of the plateau
-    :param slope1: Duration of the ramp up of the profil
-    :param slope2: Duration of the ramp down of the profil
-
-    Creates a sin squared profil with a plateau in the middle if needed. If slope1 and 2 are used, fwhm is overwritten.
-
-  **Example**::
-
-    Antenna( ... , time_profile = tcosine(freq=0.01), ... )
-
-
-.. rubric:: Illustrations of the pre-defined spatial and temporal profiles
-
-.. image:: _static/pythonprofiles.png
-
-.. image:: _static/pythonprofiles_t.png
 
 
 ----
@@ -2266,19 +2147,19 @@ tables.
 
 .. py:data:: Niel_computation_method
 
-  :default: "table"
+  :default: ``"table"``
 
-  Method to compute the value of the table *h* of Niel `et al` during the emission process.
+  Method to compute the value of the table *h* of Niel *et al* during the emission process.
   The possible values are:
 
-  * "table": the *h* function is tabulated. The table is computed at initialization or read from an external file.
-  * "fit5": A polynomial fit of order 5 is used. No table is required.
+  * ``"table"``: the *h* function is tabulated. The table is computed at initialization or read from an external file.
+  * ``"fit5"``: A polynomial fit of order 5 is used. No table is required.
     The maximal relative error to the reference data is of maximum of 0.02.
     The fit is valid for quantum parameters :math:`\chi` between 1e-3 and 10.
-  * "fit10":  A polynomial fit of order 10 is used. No table is required.
+  * ``"fit10"``:  A polynomial fit of order 10 is used. No table is required.
     The precision if better than the fit of order 5 with a maximal relative error of 0.0002.
     The fit is valid for quantum parameters :math:`\chi` between 1e-3 and 10.
-  * "ridgers": The fit of Ridgers given in Ridgers et al., ArXiv 1708.04511 (2017)
+  * ``"ridgers"``: The fit of Ridgers given in Ridgers *et al.*, ArXiv 1708.04511 (2017)
 
   The use of tabulated values is best for accuracy but not for performance.
   Table access prevent total vectorization.
@@ -2380,9 +2261,12 @@ The full list of available scalars is given in the table below.
 | | Ubal_norm    | Normalized balance (Ubal :math:`/` Utot)                                | |
 | +--------------+-------------------------------------------------------------------------+ |
 | | Uelm_Ex      | Ex field contribution (:math:`\int E_x^2 dV /2`)                        | |
+| +--------------+-------------------------------------------------------------------------+ |
 | |              |  ... same for fields Ey, Ez, Bx_m, By_m and Bz_m                        | |
 | +--------------+-------------------------------------------------------------------------+ |
 | | Urad         | Total radiated                                                          | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | UmBWpairs    | Total energy converted into electron-position pairs                     | |
 | +--------------+-------------------------------------------------------------------------+ |
 +--------------------------------------------------------------------------------------------+
 | **Space- & time-integrated Energies lost/gained at boundaries**                            |
@@ -2395,7 +2279,9 @@ The full list of available scalars is given in the table below.
 | | PoyXminInst  | Poynting contribution through xmin boundary during the timestep         | |
 | +--------------+-------------------------------------------------------------------------+ |
 | | PoyXmin      | Time-accumulated Poynting contribution through xmin boundary            | |
+| +--------------+-------------------------------------------------------------------------+ |
 | |              |  ... same for other boundaries                                          | |
+| +--------------+-------------------------------------------------------------------------+ |
 | +--------------+-------------------------------------------------------------------------+ |
 +--------------------------------------------------------------------------------------------+
 | **Particle information**                                                                   |
@@ -2463,7 +2349,7 @@ This is done by including a block ``DiagFields``::
 
   Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
 
-  When `flush_every` coincides with `every`, the output
+  When ``flush_every`` coincides with ``every``, the output
   file is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
@@ -2601,9 +2487,12 @@ or several points arranged in a 2-D or 3-D grid.
 
 .. note::
 
-  Probes follow the moving window.
-  To obtain the fields at fixed points in the plasma instead, create a cold,
-  chargeless species, and :ref:`track the particles <DiagTrackParticles>`.
+  * **Probes follow the moving window.**
+    To obtain the fields at fixed points in the plasma instead, create a cold,
+    chargeless species, and :ref:`track the particles <DiagTrackParticles>`.
+  * **In "AMcylindrical" geometry**, probes are defined with 3D Cartesian coordinates
+    and cannot be separated per mode. Use Field diagnostics for cylindrical coordinates and
+    information per mode.
 
 
 To add one probe diagnostic, include the block ``DiagProbe``::
@@ -2634,7 +2523,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 
   Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
 
-  When `flush_every` coincides with `every`, the output
+  When ``flush_every`` coincides with ``every``, the output
   file is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
@@ -2666,26 +2555,24 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 
   :default: ``[]``, which means ``["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho"]``
 
-  A list of fields among ``"Ex"``, ``"Ey"``, ``"Ez"``,
-  ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``.
-  Only listed fields will be saved although they are all calculated.
+  A list of fields among:
 
-  The contributions of each species to the currents and the density are also available,
-  although they are not included by default. They may be added to the list as
-  ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` or ``"Rho_abc"``, where ``abc`` is the
-  species name.
+  * the electric field components ``"Ex"``, ``"Ey"``, ``"Ez"``
+  * the magnetic field components ``"Bx"``, ``"By"``, ``"Bz"``
+  * the Poynting vector components ``"PoyX"``, ``"PoyY"``, ``"PoyZ"``
+  * the current density components ``"Jx"``, ``"Jy"``, ``"Jz"`` and density ``"Rho"``
+  * the current density ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` and density ``"Rho_abc"``
+    of a given species named ``"abc"``
 
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``, ``"Env_Ex_abs"``.
 
-  .. warning::
+.. py:data:: time_integral
 
-    In ``"AMcylindrical"``, contrary to the Field diagnostic, Probes are defined as in a
-    3D Cartesian geometry and return Cartesian fields.
-    Fields per mode are not available in Probe diagnostics. See Field diagnostics if
-    per mode information is needed.
+  :default: ``False``
 
-
+  If ``True``, the output is integrated over time. As this option forces field interpolation
+  at every timestep, it is recommended to use few probe points.
 
 
 **Examples of probe diagnostics**
@@ -2815,7 +2702,7 @@ for instance::
 
   Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
 
-  When `flush_every` coincides with `every`, the output
+  When ``flush_every`` coincides with ``every``, the output
   file is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
@@ -2856,7 +2743,10 @@ for instance::
       its location in the histogram binning.
 
   * The axis is discretized for ``type`` from ``min`` to ``max`` in ``nsteps`` bins.
-  * The optional keyword ``logscale`` sets the axis scale to logarithmic instead of linear.
+  * The ``min`` and ``max`` may be set to ``"auto"`` so that they are automatically
+    computed from all the particles in the simulation. This option can be bad for performances.
+  * The optional keyword ``logscale`` sets the axis scale to logarithmic instead of linear
+    (bins become uneven).
   * The optional keyword ``edge_inclusive`` includes the particles outside the range
     [``min``, ``max``] into the extrema bins.
 
@@ -2981,21 +2871,24 @@ for instance::
 
 .. py:data:: shape
 
-   The shape of the screen surface: ``"plane"`` or ``"sphere"``.
+   The shape of the screen surface: ``"plane"``, ``"sphere"``, or ``"cylinder"``.
 
 .. py:data:: point
 
    :type: A list of floats ``[X]`` in 1D,  ``[X,Y]`` in 2D,  ``[X,Y,Z]`` in 3D
 
    The coordinates of a point that defines the screen surface:
-   a point of the ``"plane"`` or the center of the ``"sphere"``.
+   a point of the ``"plane"``, the center of the ``"sphere"``,
+   or a point on the ``"cylinder"`` axis.
 
 .. py:data:: vector
 
    :type: A list of floats ``[X]`` in 1D,  ``[X,Y]`` in 2D,  ``[X,Y,Z]`` in 3D
 
    The coordinates of a vector that defines the screen surface:
-   the normal to the ``"plane"`` or a radius of the ``"sphere"``.
+   the normal to the ``"plane"``, a radius of the ``"sphere"``.
+   or the axis of the ``"cylinder"`` (in the latter case, the vector
+   norm defines the cylinder radius).
 
 .. py:data:: direction
 
@@ -3022,7 +2915,7 @@ for instance::
 
   Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
 
-  When `flush_every` coincides with `every`, the output
+  When ``flush_every`` coincides with ``every``, the output
   file is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
@@ -3039,6 +2932,7 @@ for instance::
 
   * If ``shape="plane"``, then ``"a"`` and ``"b"`` are the axes perpendicular to the ``vector``.
   * If ``shape="sphere"``, then ``"theta"`` and ``"phi"`` are the angles with respect to the ``vector``.
+  * If ``shape="cylinder"``, then ``"a"`` is along the cylinder axis and ``"phi"`` is the angle around it.
 
 
 ----
@@ -3083,7 +2977,7 @@ A radiation spectrum diagnostic is defined by a block ``RadiationSpectrum()``::
 
   Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
 
-  When `flush_every` coincides with `every`, the output
+  When ``flush_every`` coincides with ``every``, the output
   file is actually written ("flushed" from the buffer). Flushing
   too often can *dramatically* slow down the simulation.
 
@@ -3210,7 +3104,7 @@ for instance::
 .. Warning:: The ``px``, ``py`` and ``pz`` quantities are not exactly the momenta.
   They are actually the velocities multiplied by the lorentz factor, i.e.,
   :math:`\gamma v_x`, :math:`\gamma v_y` and :math:`\gamma v_z`. This is true only
-  inside the `filter` function (not for the output of the diagnostic).
+  inside the ``filter`` function (not for the output of the diagnostic).
 
 .. Note:: The ``id`` attribute contains the :doc:`particles identification number<ids>`.
   This number is set to 0 at the beginning of the simulation. **Only after particles have
@@ -3267,9 +3161,9 @@ Only one block ``DiagPerformances()`` may be added in the namelist, for instance
 
 .. py:data:: patch_information
 
-  :default: False
+  :default: ``False``
 
-  If `True`, some information is calculated at the patch level (see :py:meth:`Performances`)
+  If ``True``, some information is calculated at the patch level (see :py:meth:`Performances`)
   but this may impact the code performances.
 
 ----
@@ -3440,17 +3334,9 @@ namelist. They should not be re-defined by the user!
 
   The total number of MPI processes.
 
-.. py:data:: smilei_rand_max
+..
+  <<Not showing this anymore because of new rand system>>
+  .. py:data:: smilei_rand_max
 
-  The largest random integer.
+    The largest random integer.
 
-
-As an example of their use, this script randomizes both python's
-and :program:`Smilei`'s random seeds.
-::
-
-    import random, math
-    # reshuffle python random generator
-    random.seed(random.random()*smilei_mpi_rank)
-    # get 32bit pseudo random integer to be passed to smilei
-    random_seed = random.randint(0,smilei_rand_max)

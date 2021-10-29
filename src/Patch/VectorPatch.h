@@ -25,8 +25,8 @@ class Timer;
 class SimWindow;
 class DomainDecomposition;
 
-//! Class Patch : sub MPI domain
-//!     Collection of patch = MPI domain
+//! Class vectorPatch
+//! This class corresponds to the MPI Patch Collection.
 
 class VectorPatch
 {
@@ -139,7 +139,7 @@ public :
     void injectParticlesFromBoundaries( Params &params, Timers &timers, unsigned int itime );
                                       
     //! Computation of the total charge
-    void computeCharge();
+    void computeCharge(bool old = false);
     
     void projectionForDiags( Params &params,
                                SmileiMPI *smpi,
@@ -148,7 +148,7 @@ public :
                                Timers &timers, int itime );
                                
     // compute rho only given by relativistic species which require initialization of the relativistic fields
-    void computeChargeRelativisticSpecies( double time_primal );
+    void computeChargeRelativisticSpecies( double time_primal, Params &params );
     
     // run particles ponderomptive dynamics, envelope's solver
     void runEnvelopeModule( Params &params,
@@ -165,7 +165,7 @@ public :
             SmileiMPI *smpi,
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );
-    void resetRhoJ();
+    void resetRhoJ(bool old = false);
     
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities( Params &params, double time_dual, Timers &timers, int itime, SimWindow *simWindow, SmileiMPI *smpi );
@@ -307,6 +307,7 @@ public :
     std::vector<std::vector< Field *>> listJr_;
     std::vector<std::vector< Field *>> listJt_;
     std::vector<std::vector< Field *>> listrho_AM_;
+    std::vector<std::vector< Field *>> listrho_old_AM_;
     std::vector<std::vector< Field *>> listJls_;
     std::vector<std::vector< Field *>> listJrs_;
     std::vector<std::vector< Field *>> listJts_;
@@ -325,8 +326,19 @@ public :
     //! 1st patch index of patches_ (stored for balancing op)
     int refHindex_;
     
+    //! Count global (MPI x patches) number of particles
+    uint64_t getGlobalNumberOfParticles( SmileiMPI *smpi )
+    {
+        std::vector<uint64_t> nParticles = getGlobalNumberOfParticlesPerSpecies( smpi );
+        
+        uint64_t global_number_particles = 0;
+        for( unsigned int i = 0; i<nParticles.size(); i++ ) {
+            global_number_particles += nParticles[i];
+        }
+        return global_number_particles;
+    }
     //! Count global (MPI x patches) number of particles per species
-    void printNumberOfParticles( SmileiMPI *smpi )
+    std::vector<uint64_t> getGlobalNumberOfParticlesPerSpecies( SmileiMPI *smpi )
     {
         unsigned int nSpecies( ( *this )( 0 )->vecSpecies.size() );
         std::vector< uint64_t > nParticles( nSpecies, 0 );
@@ -337,12 +349,21 @@ public :
         }
         for( unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {
             uint64_t tmp( 0 );
-            MPI_Reduce( &( nParticles[ispec] ), &tmp, 1, MPI_UINT64_T, MPI_SUM, 0, smpi->SMILEI_COMM_WORLD );
-            MESSAGE( 2, "Species " << ispec << " (" << ( *this )( 0 )->vecSpecies[ispec]->name_ << ") created with " << tmp << " particles" );
+            MPI_Reduce( &( nParticles[ispec] ), &tmp, 1, MPI_UINT64_T, MPI_SUM, 0, smpi->world() );
+            nParticles[ispec] = tmp;
+        }
+        return nParticles;
+    }
+    //! Print global (MPI x patches) number of particles per species
+    void printGlobalNumberOfParticlesPerSpecies( SmileiMPI *smpi )
+    {
+        std::vector< uint64_t > nParticles = getGlobalNumberOfParticlesPerSpecies( smpi );
+        for( unsigned int ispec = 0 ; ispec < nParticles.size() ; ispec++ ) {
+            MESSAGE( 2, "Species " << ispec << " (" << ( *this )( 0 )->vecSpecies[ispec]->name_ << ") created with " << nParticles[ispec] << " particles" );
         }
     }
     
-    void checkMemoryConsumption( SmileiMPI *smpi );
+    void checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *region_vecpatches );
     
     void checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint );
     

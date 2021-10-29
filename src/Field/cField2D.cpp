@@ -19,6 +19,7 @@ using namespace std;
 // with no input argument
 cField2D::cField2D() : cField()
 {
+    cleaned_ = false;
     sendFields_.resize(4,NULL);
     recvFields_.resize(4,NULL);
 }
@@ -26,6 +27,7 @@ cField2D::cField2D() : cField()
 // with the dimensions as input argument
 cField2D::cField2D( vector<unsigned int> dims ) : cField( dims )
 {
+    cleaned_ = false;
     allocateDims( dims );
     sendFields_.resize(4,NULL);
     recvFields_.resize(4,NULL);
@@ -34,6 +36,7 @@ cField2D::cField2D( vector<unsigned int> dims ) : cField( dims )
 // with the dimensions and output (dump) file name as input argument
 cField2D::cField2D( vector<unsigned int> dims, string name_in ) : cField( dims, name_in )
 {
+    cleaned_ = false;
     allocateDims( dims );
     sendFields_.resize(4,NULL);
     recvFields_.resize(4,NULL);
@@ -42,6 +45,7 @@ cField2D::cField2D( vector<unsigned int> dims, string name_in ) : cField( dims, 
 // with the dimensions as input argument
 cField2D::cField2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : cField( dims, mainDim, isPrimal )
 {
+    cleaned_ = false;
     allocateDims( dims, mainDim, isPrimal );
     sendFields_.resize(4,NULL);
     recvFields_.resize(4,NULL);
@@ -50,6 +54,7 @@ cField2D::cField2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrim
 // with the dimensions and output (dump) file name as input argument
 cField2D::cField2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in ) : cField( dims, mainDim, isPrimal, name_in )
 {
+    cleaned_ = false;
     allocateDims( dims, mainDim, isPrimal );
     sendFields_.resize(4,NULL);
     recvFields_.resize(4,NULL);
@@ -58,6 +63,7 @@ cField2D::cField2D( vector<unsigned int> dims, unsigned int mainDim, bool isPrim
 // without allocating
 cField2D::cField2D( string name_in, vector<unsigned int> dims ) : cField( dims, name_in )
 {
+    cleaned_ = false;
     dims_ = dims;
     globalDims_ = dims_[0]*dims_[1];
     sendFields_.resize(4,NULL);
@@ -71,7 +77,9 @@ cField2D::cField2D( string name_in, vector<unsigned int> dims ) : cField( dims, 
 // ---------------------------------------------------------------------------------------------------------------------
 cField2D::~cField2D()
 {
-    for (int iside=0 ; iside<sendFields_.size() ; iside++ ) {
+    if (cleaned_ )
+        return;
+    for (int iside=0 ; iside<(int)(sendFields_.size()) ; iside++ ) {
         if ( sendFields_[iside] != NULL ) {
             delete sendFields_[iside];
             sendFields_[iside] = NULL;
@@ -122,6 +130,7 @@ void cField2D::deallocateDataAndSetTo( Field* f )
     cdata_ = NULL;
     delete [] data_2D;
     data_2D = NULL;
+    cleaned_ = true;
 
     cdata_ = (static_cast<cField2D *>(f))->cdata_;
     data_2D = (static_cast<cField2D *>(f))->data_2D;
@@ -277,7 +286,7 @@ void cField2D::create_sub_fields  ( int iDim, int iNeighbor, int ghost_size )
         sendFields_[iDim*2+iNeighbor] = new cField2D(n_space);
         recvFields_[iDim*2+iNeighbor] = new cField2D(n_space);
     }
-    else if ( ghost_size != sendFields_[iDim*2+iNeighbor]->dims_[iDim] ) {
+    else if ( ghost_size != int(sendFields_[iDim*2+iNeighbor]->dims_[iDim]) ) {
         delete sendFields_[iDim*2+iNeighbor];
         sendFields_[iDim*2+iNeighbor] = new cField2D(n_space);
         delete recvFields_[iDim*2+iNeighbor];
@@ -303,8 +312,8 @@ void cField2D::extract_fields_exch( int iDim, int iNeighbor, int ghost_size )
 
     complex<double>* sub = static_cast<cField*>(sendFields_[iDim*2+iNeighbor])->cdata_;
     complex<double>* field = cdata_;
-    for( unsigned int i=0; i<NX; i++ ) {
-        for( unsigned int j=0; j<NY; j++ ) {
+    for( unsigned int i=0; i< (unsigned int)(NX); i++ ) {
+        for( unsigned int j=0; j<(unsigned int)(NY); j++ ) {
             sub[i*NY+j] = field[ (ix+i)*dimY+(iy+j) ];
         }
     }
@@ -328,8 +337,8 @@ void cField2D::inject_fields_exch ( int iDim, int iNeighbor, int ghost_size )
 
     complex<double>* sub = static_cast<cField*>(recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_;
     complex<double>* field = cdata_;
-    for( unsigned int i=0; i<NX; i++ ) {
-        for( unsigned int j=0; j<NY; j++ ) {
+    for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
+        for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
             field[ (ix+i)*dimY+(iy+j) ] = sub[i*NY+j];
         }
     }
@@ -353,8 +362,8 @@ void cField2D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
 
     complex<double>* sub = static_cast<cField*>(sendFields_[iDim*2+iNeighbor])->cdata_;
     complex<double>* field = cdata_;
-    for( unsigned int i=0; i<NX; i++ ) {
-        for( unsigned int j=0; j<NY; j++ ) {
+    for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
+        for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
             sub[i*NY+j] = field[ (ix+i)*dimY+(iy+j) ];
         }
     }
@@ -378,8 +387,8 @@ void cField2D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
 
     complex<double>* sub = static_cast<cField*>(recvFields_[iDim*2+(iNeighbor+1)%2])->cdata_;
     complex<double>* field = cdata_;
-    for( unsigned int i=0; i<NX; i++ ) {
-        for( unsigned int j=0; j<NY; j++ ) {
+    for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
+        for( unsigned int j=0; j<(unsigned int)NY; j++ ) {
             field[ (ix+i)*dimY+(iy+j) ] += sub[i*NY+j];
         }
     }

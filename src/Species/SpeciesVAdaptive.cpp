@@ -139,11 +139,11 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #endif
                 // Radiation process
                 ( *Radiate )( *particles, this->photon_species_, smpi,
-                              RadiationTables, nrj_radiation,
+                              RadiationTables, radiated_energy_,
                               particles->first_index[scell], particles->last_index[scell], ithread );
 
                 // // Update scalar variable for diagnostics
-                // nrj_radiation += Radiate->getRadiatedEnergy();
+                // radiated_energy_ += Radiate->getRadiatedEnergy();
                 //
                 // // Update the quantum parameter chi
                 // Radiate->computeParticlesChi( *particles,
@@ -162,14 +162,12 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
                 // Pair generation process
+                // We reuse radiated_energy_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
                                                         MultiphotonBreitWheelerTables,
+                                                        radiated_energy_,
                                                         particles->first_index[scell], particles->last_index[scell], ithread );
-
-                // Update scalar variable for diagnostics
-                // We reuse nrj_radiation for the pairs
-                nrj_radiation += Multiphoton_Breit_Wheeler_process->getPairEnergy();
 
                 // Update the photon quantum parameter chi of all photons
                 Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
@@ -199,20 +197,17 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             timer = MPI_Wtime();
 #endif
 
-            // Computation of the particle cell keys for all particles
-            // this->compute_bin_cell_keys(params,0, particles->last_index.back());
-
             for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
-                double ener_iPart( 0. );
+                double energy_lost( 0. );
                 // Apply wall and boundary conditions
                 if( mass_>0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        (*partWalls )[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
-                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                        (*partWalls )[iwall]->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                        nrj_lost_per_thd[tid] += mass_ * energy_lost;
                     }
 
-                    partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                    partBoundCond->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                    nrj_lost_per_thd[tid] += mass_ * energy_lost;
 
                     for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
@@ -228,15 +223,13 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 
                 } else if( mass_==0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        (*partWalls )[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
-                        nrj_lost_per_thd[tid] += ener_iPart;
+                        (*partWalls )[iwall]->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                        nrj_lost_per_thd[tid] += energy_lost;
                     }
 
                     // Boundary Condition may be physical or due to domain decomposition
-                    // apply returns 0 if iPart is not in the local domain anymore
-                    //        if omp, create a list per thread
-                    partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += ener_iPart;
+                    partBoundCond->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                    nrj_lost_per_thd[tid] += energy_lost;
 
                     for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
@@ -358,7 +351,7 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
     // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
     //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(count,8);
-    
+
     // Test metrics, if necessary we reasign operators
     //if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
     //  || (ratio_number_of_vecto_cells < 0.5 && this->vectorized_operators == true))
@@ -366,7 +359,7 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
     //    reasign_operators = true;
     //}
     // --------------------------------------------------------------------
-    
+
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
     SpeciesMetrics::get_computation_time( count,
@@ -378,10 +371,10 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
         reasign_operators = true;
     }
     // --------------------------------------------------------------------
-    
+
     // Operator reasignment if required by the metrics
     if( reasign_operators ) {
-    
+
         // The type of operator is changed
         this->vectorized_operators = !this->vectorized_operators;
 
@@ -460,7 +453,7 @@ void SpeciesVAdaptive::reconfigure_operators( Params &params, Patch *patch )
     delete Interp;
     //delete Push;
     delete Proj;
-    
+
     // Reassign the correct Interpolator
     Interp = InterpolatorFactory::create( params, patch, this->vectorized_operators );
     // Reassign the correct Pusher to Push
@@ -504,7 +497,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( doubl
 #endif
 
         // Ionization
-        if (Ionize){  
+        if (Ionize){
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
@@ -598,19 +591,17 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
 #endif
 
         for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
-            double ener_iPart( 0. );
+            double energy_lost( 0. );
             // Apply wall and boundary conditions
             if( mass_>0 ) {
                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                    (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                    (*partWalls)[iwall]->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                    nrj_lost_per_thd[tid] += mass_ * energy_lost;
                 }
 
                 // Boundary Condition may be physical or due to domain decomposition
-                // apply returns 0 if iPart is not in the local domain anymore
-                //        if omp, create a list per thread
-                partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
-                nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                partBoundCond->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                nrj_lost_per_thd[tid] += mass_ * energy_lost;
 
                 for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
                     if ( particles->cell_keys[iPart] != -1 ) {

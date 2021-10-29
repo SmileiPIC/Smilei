@@ -6,7 +6,7 @@ Azimuthal modes decomposition
 a decomposition in azimuthal modes (*AM*), as described in
 `this article <http://doi.org/10.1016/j.jcp.2008.11.017>`_.
 This requires a system with cylindrical symmetry or close to cylindrical symmetry
-(around the `x` axis in :program:`Smilei`).
+(around the ``x`` axis in :program:`Smilei`).
 
 ----
 
@@ -38,7 +38,7 @@ of the first four azimuthal modes.
   :width: 15cm
 
   Real part of the first four pure azimuthal modes :math:`exp(-im\theta)`
-  on the `yz` plane.
+  on the ``yz`` plane.
 
 Eq. :eq:`AzimuthalDecomposition1` can be expanded as:
 
@@ -150,7 +150,7 @@ space with cartesian coordinates.
 .. figure:: _static/AM_grid_particles.jpg
   :width: 10cm
 
-  Blue arrows: the `x` and `r` axes of the 2D grid (red)
+  Blue arrows: the ``x`` and ``r`` axes of the 2D grid (red)
   where the electromagnetic fields are defined.
   Macro-particle positions and momenta are defined in 3D.
 
@@ -198,7 +198,7 @@ the AM and 3D geometries:
   the 3D transverse grid.
 
 * Particles are defined 3D space, so their coordinates should be
-  provided in terms of *x*, *y*, *z* if needed (e.g. a `Species`
+  provided in terms of *x*, *y*, *z* if needed (e.g. a ``Species``
   initialized with a numpy array).
   However, the density profiles of particles are assimilated to
   scalar fields defined on the :math:`(x,r)` grid.
@@ -259,7 +259,7 @@ The envelope model in cylindrical coordinates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :doc:`laser_envelope` for cartesian geometries has been
-implemented also in cylindrical geometry, as described in [Massimo2020]_.
+implemented also in cylindrical geometry, as described in [Massimo2020b]_.
 
 Only the mode :math:`m=0` is available for the envelope
 in the present implementation, i.e. the electromagnetic and

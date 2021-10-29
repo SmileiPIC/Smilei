@@ -7,7 +7,6 @@
 
 #include "DomainDecompositionFactory.h"
 #include "Hilbert_functions.h"
-#include "PatchesFactory.h"
 #include "Species.h"
 #include "Particles.h"
 
@@ -21,7 +20,7 @@ PatchAM::PatchAM( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
     : Patch( params, smpi, domain_decomposition, ipatch, n_moved )
 {
     // Test if the patch is a particle patch (Hilbert or Linearized are for VectorPatch)
-    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) ) 
+    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
         || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
         initStep2( params, domain_decomposition );
         initStep3( params, smpi, n_moved );
@@ -185,24 +184,21 @@ void PatchAM::createType2( Params &params )
         return;
     }
     
-    int nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
+    // int nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
     int ny0 = params.n_space_region[1] + 1 + 2*oversize[1];
     //unsigned int clrw = params.clrw;
 
     // MPI_Datatype ntype_[nDim][primDual][primDual]
-    int nx, ny;
-    int nx_sum, ny_sum;
     
     for( int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++ ) {
-        nx = nx0 + ix_isPrim;
+        // int nx = nx0 + ix_isPrim;
         for( int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++ ) {
-            ny = ny0 + iy_isPrim;
+            int ny = ny0 + iy_isPrim;
             
             // Still used ??? Yes, for moving window and SDMD
             ntype_complex_[ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             MPI_Type_contiguous(2*ny*params.n_space[0], MPI_DOUBLE, &(ntype_complex_[ix_isPrim][iy_isPrim]));   //clrw lines
             MPI_Type_commit( &( ntype_complex_[ix_isPrim][iy_isPrim] ) );
-
         }
     }
     
@@ -239,7 +235,7 @@ void PatchAM::exchangeField_movewin( Field* field, int nshift )
         MPI_Bsend(  &( ( *f2D )( ix, iy ) ), 1, ntype, MPI_neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
     } // END of Send
 
-    //Once the message is in the buffer we can safely shift the field in memory. 
+    //Once the message is in the buffer we can safely shift the field in memory.
     field->shift_x(nshift);
     // and then receive the complementary field from the East.
 
@@ -260,4 +256,3 @@ void PatchAM::exchangeField_movewin( Field* field, int nshift )
 
 
 } // END exchangeField_movewin
-
