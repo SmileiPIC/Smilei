@@ -1,5 +1,6 @@
 #
-# Machine file for Irene Joliot-Curie A64FX using the Fujitsu compiler
+# Machine file for the Fugaku super-computer
+# using the Fujitsu compiler in trad mode
 # __________________________________________________________
 #
 # Load the correct modules:
@@ -11,5 +12,5 @@
 # * `-Nlibomp`: LLVM OpenMP backend
 # * `-Nfjomplib`: Fujitsu OpenMP backend
 
-CXXFLAGS += -Kparallel -Ksimd=2 -Kassume=notime_saving_compilation -Kocl -Nlibomp -D__AARCH64EL__="1"
-LDFLAGS += -Kparallel -Ksimd=2 -Kassume=notime_saving_compilation -Kocl -Nlibomp -D__AARCH64EL__="1"
+CXXFLAGS += -KA64FX -Kparallel -Ksimd=2 -Kassume=notime_saving_compilation -Kocl -Nlibomp -D__AARCH64EL__="1" -Kzfill
+LDFLAGS += -KA64FX -Kparallel -Ksimd=2 -Kassume=notime_saving_compilation -Kocl -Nlibomp -D__AARCH64EL__="1" -Kzfill
