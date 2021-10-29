@@ -84,7 +84,6 @@ Main(
     timestep = dt,
     simulation_time = simulation_time,
     EM_boundary_conditions = [ ["periodic"] ],
-    random_seed = smilei_mpi_rank,
     print_every = 10,
     reference_angular_frequency_SI = wr,
 )

@@ -290,7 +290,10 @@ class Probe(Diagnostic):
 	def __del__(self):
 		if hasattr(self, "_h5probe"):
 			for file in self._h5probe:
-				file.close()
+				try:
+					file.close()
+				except Exception as e:
+					pass
 
 	# Method to print info previously obtained with getInfo
 	def _info(self, info=None):

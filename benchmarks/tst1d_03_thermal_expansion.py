@@ -32,7 +32,7 @@ Main(
     
     EM_boundary_conditions = [ ['silver-muller','silver-muller'] ] ,
     
-    random_seed = int(random.getrandbits(32))+smilei_mpi_rank
+    random_seed = int(random.getrandbits(32))
 )
 
 Species(

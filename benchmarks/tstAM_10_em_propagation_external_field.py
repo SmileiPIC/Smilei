@@ -29,7 +29,6 @@ Main(
         ["buneman","buneman"],
     ],
     
-    random_seed = smilei_mpi_rank,
     print_every = 100,
 )
 

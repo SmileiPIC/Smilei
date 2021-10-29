@@ -21,7 +21,6 @@ Main(
 	print_every = 1,
 	solve_poisson = False,
 	
-	random_seed = smilei_mpi_rank
 )
 
 def custom(x, y, z):

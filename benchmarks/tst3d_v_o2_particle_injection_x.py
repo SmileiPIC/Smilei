@@ -53,7 +53,6 @@ Main(
         ['periodic'],
         ['periodic']
     ],
-    random_seed = smilei_mpi_rank,
 )
 
 # Initial plasma shape

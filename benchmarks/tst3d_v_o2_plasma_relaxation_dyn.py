@@ -77,7 +77,6 @@ Main(
 
     patch_arrangement = "linearized_XYZ",
 
-    random_seed = smilei_mpi_rank
 )
 
 Vectorization(
