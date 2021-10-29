@@ -10,5 +10,6 @@
 # * `-Nlibomp`: LLVM OpenMP backend
 # * `-Nfjomplib`: Fujitsu OpenMP backend
 
-CXXFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp
-LDFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp
+CXXFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp -ffj-zfill -msve-vector-bits=512
+LDFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp -ffj-zfill -msve-vector-bits=512
+
