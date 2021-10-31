@@ -81,6 +81,8 @@ ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
     CXXFLAGS += -std=c++11 -Wall
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
     CXXFLAGS += -std=c++11 -Wall
+else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
+    CXXFLAGS += -std=c++11 -Wall
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
     CXXFLAGS += -std=c++11
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCCpx)
