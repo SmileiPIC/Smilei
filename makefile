@@ -145,9 +145,9 @@ else ifneq (,$(call parse_config,inspector))
 # Default configuration
 else
     ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    	CXXFLAGS += -Ofast -g -ffast-math -fno-math-errno
+    	CXXFLAGS += -Ofast -g  -fno-math-errno
     else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
-        CXXFLAGS += -Ofast -g -ffast-math
+        CXXFLAGS += -Ofast -g
     else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
         CXXFLAGS += -O3 -Kfast -g
     else
