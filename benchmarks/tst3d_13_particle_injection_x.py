@@ -61,7 +61,6 @@ Main(
     timestep = timestep,
     simulation_time = simulation_time,
     EM_boundary_conditions = EM_boundary_conditions,
-    random_seed = smilei_mpi_rank,
 )
 
 # Initial plasma shape

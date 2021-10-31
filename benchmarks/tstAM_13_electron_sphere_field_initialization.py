@@ -54,7 +54,6 @@ Main(
     poisson_max_iteration = 50000,    
     print_every = 100,
 
-    random_seed = smilei_mpi_rank
 )
 
 

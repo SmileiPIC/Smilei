@@ -33,7 +33,6 @@ Main(
         ["ramp44","ramp44"],
         ["silver-muller","buneman"],
     ],
-    random_seed = smilei_mpi_rank,
     solve_poisson = False,
     print_every = 100,
     initial_rotational_cleaning = True,

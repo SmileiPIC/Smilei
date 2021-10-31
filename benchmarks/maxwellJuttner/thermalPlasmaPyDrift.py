@@ -34,7 +34,6 @@ Main(
      timestep = dt,
      simulation_time = 0.,
      EM_boundary_conditions = [ ['periodic'] ],
-     random_seed = smilei_mpi_rank,
      print_every = int(t_sim/dt/100.)
 )
 

@@ -19,9 +19,9 @@
 # -SSL2 : link with math library
 # -Kopenmp : use OpenMP (use OMP_PROC_BIND=true)
 
-CXXFLAGS += -KA64FX -KSVE -SSL2 -D__AARCH64EL__="1" -Kparallel -Kunroll -Kopenmp_simd -Ksimd=2 -Kassume=notime_saving_compilation -Nfjomplib -w 0 -Kocl -Kzfill
+CXXFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp
 #CXXFLAGS += -D__AARCH64EL__="1" -Nfjomplib -w 0 -Kocl
 
-LDFLAGS += -KA64FX -KSVE -SSL2 -D__AARCH64EL__="1" -Kparallel -Kunroll -Kopenmp_simd -Ksimd=2 -Kassume=notime_saving_compilation -Nfjomplib -Kocl -Kzfill
+LDFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp
 
 LDFLAGS += -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/python/3.8.10/s2azw3pgbfzhfcf44tvnh652pju2vtyj/lib  -lcrypt -lpthread -ldl -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/gettext/0.21/i4aacmkl6pqxumiqfa36455yfhoojidl/lib -lintl -lutil -lm

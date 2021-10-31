@@ -83,6 +83,8 @@ else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
     CXXFLAGS += -std=c++11 -Wall
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
     CXXFLAGS += -std=c++11
+else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCCpx)
+    CXXFLAGS += -std=c++11
 else
     CXXFLAGS += -std=c++11 -Wall
 endif
@@ -150,6 +152,8 @@ else
         CXXFLAGS += -Ofast -g
     else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
         CXXFLAGS += -O3 -Kfast -g
+    else ifeq ($(findstring FCCpx, $(COMPILER_INFO)), FCCpx)
+        CXXFLAGS += -O3 -Kfast -g
     else
         CXXFLAGS += -O3 -g
     endif
@@ -163,6 +167,8 @@ ifneq (,$(call parse_config,opt-report))
     else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
         CXXFLAGS += -fsave-optimization-record -Rpass-analysis=loop-vectorize
     else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
+        CXXFLAGS += -Koptmsg=2 -Nlst=t
+    else ifeq ($(findstring FCCpx, $(COMPILER_INFO)), FCCpx)
         CXXFLAGS += -Koptmsg=2 -Nlst=t
     else ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
         CXXFLAGS += -fopt-info
@@ -181,6 +187,8 @@ endif
 # For Fujitsu compiler: -Kopenmp
 ifeq (,$(call parse_config,noopenmp))
     ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)
+        OPENMP_FLAG ?= -Kopenmp -Kopenmp_simd
+    else ifeq ($(findstring FCCpx, $(COMPILER_INFO)), FCCpx)
         OPENMP_FLAG ?= -Kopenmp -Kopenmp_simd
     else
     	OPENMP_FLAG ?= -fopenmp

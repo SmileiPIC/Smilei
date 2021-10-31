@@ -31,7 +31,6 @@ Main(
 		['reflective'],
 	],
 
-	random_seed = smilei_mpi_rank
 )
 
 Vectorization(

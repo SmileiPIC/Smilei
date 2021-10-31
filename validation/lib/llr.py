@@ -1,4 +1,4 @@
-from tools import *
+from .tools import *
 from math import ceil
 
 def run_llr(command, dir, mode, options, parameters):

@@ -110,7 +110,6 @@ Main(
 
     print_every = 50,
 
-    random_seed = smilei_mpi_rank,
 
     clrw = 1,
 
