@@ -27,7 +27,7 @@ ProjectorAM1Order::ProjectorAM1Order( Params &params, Patch *patch ) : Projector
     dr_ov_dt_  = params.cell_length[1] / params.timestep;
     dr_inv_   = 1.0 / dr;
     one_ov_dt  = 1.0 / params.timestep;
-    Nmode=params.nmodes;
+    Nmode_=params.nmodes;
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
 
@@ -203,7 +203,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
     }
 
-    for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
+    for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
         if( imode == 1 ) {
             C_m[0] = 2.;
             C_m[1] = 2.;
@@ -214,7 +214,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             m1powerimode *= -1.;
         }
         
-       unsigned int n_species = emAM->Jl_s.size() / Nmode;
+       unsigned int n_species = emAM->Jl_s.size() / Nmode_;
        unsigned int ifield = imode*n_species+ispec;
         if (!diag_flag){
             Jl =  &( *emAM->Jl_[imode] )( 0 );
@@ -273,7 +273,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 void ProjectorAM1Order::axisBC(ElectroMagnAM *emAM, bool diag_flag )
 {
     
-    for (unsigned int imode=0; imode < Nmode; imode++){ 
+    for (unsigned int imode=0; imode < Nmode_; imode++){ 
 
        std::complex<double> *rho     = &( *emAM->rho_AM_[imode] )( 0 );
        std::complex<double> *rho_old = &( *emAM->rho_old_AM_[imode] )( 0 );
@@ -288,7 +288,7 @@ void ProjectorAM1Order::axisBC(ElectroMagnAM *emAM, bool diag_flag )
     }
 
     if (diag_flag){
-        unsigned int n_species = emAM->Jl_s.size() / Nmode;
+        unsigned int n_species = emAM->Jl_s.size() / Nmode_;
         for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
             for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
                 unsigned int ifield = imode*n_species+ispec;

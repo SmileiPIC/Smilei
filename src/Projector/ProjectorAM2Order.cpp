@@ -26,7 +26,7 @@ ProjectorAM2Order::ProjectorAM2Order( Params &params, Patch *patch ) : Projector
     dr_ov_dt_  = params.cell_length[1] / params.timestep;
     dr_inv_   = 1.0 / dr;
     one_ov_dt  = 1.0 / params.timestep;
-    Nmode=params.nmodes;
+    Nmode_=params.nmodes;
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
     
@@ -187,7 +187,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
         Sr1[j] *= invR_local[j];
     }
 
-    for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
+    for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
 
         if (imode > 0){
             e_delta *= e_delta_m1;
@@ -203,7 +203,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             Jr =  &( *emAM->Jr_[imode] )( 0 );
             Jt =  &( *emAM->Jt_[imode] )( 0 );
         } else {
-            unsigned int n_species = emAM->Jl_s.size() / Nmode;
+            unsigned int n_species = emAM->Jl_s.size() / Nmode_;
             unsigned int ifield = imode*n_species+ispec;
             Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
             Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
@@ -345,7 +345,7 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
 void ProjectorAM2Order::axisBC(ElectroMagnAM *emAM, bool diag_flag )
 {
 
-   for (unsigned int imode=0; imode < Nmode; imode++){ 
+   for (unsigned int imode=0; imode < Nmode_; imode++){ 
        
        std::complex<double> *rhoj = &( *emAM->rho_AM_[imode] )( 0 );
        std::complex<double> *Jl = &( *emAM->Jl_[imode] )( 0 );
@@ -356,7 +356,7 @@ void ProjectorAM2Order::axisBC(ElectroMagnAM *emAM, bool diag_flag )
    }
        
    if (diag_flag){
-       unsigned int n_species = emAM->Jl_s.size() / Nmode;
+       unsigned int n_species = emAM->Jl_s.size() / Nmode_;
        for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
            for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
                unsigned int ifield = imode*n_species+ispec;

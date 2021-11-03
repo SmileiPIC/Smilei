@@ -38,7 +38,7 @@ protected:
     int i_domain_begin_;
     int j_domain_begin_;
     int nscellr_;
-    unsigned int Nmode;
+    unsigned int Nmode_;
     unsigned int nprimr_, npriml_;
     int oversize_[2];
     double dq_inv_[2];
