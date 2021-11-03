@@ -18,12 +18,12 @@ using namespace std;
 Projector2D4Order::Projector2D4Order( Params &params, Patch *patch ) : Projector2D( params, patch )
 {
     dx_inv_   = 1.0/params.cell_length[0];
-    dx_ov_dt  = params.cell_length[0] / params.timestep;
+    dx_ov_dt_  = params.cell_length[0] / params.timestep;
     dy_inv_   = 1.0/params.cell_length[1];
-    dy_ov_dt  = params.cell_length[1] / params.timestep;
+    dy_ov_dt_  = params.cell_length[1] / params.timestep;
     
-    i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
-    j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
+    i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
+    j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
     
     nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
     
@@ -54,8 +54,8 @@ void Projector2D4Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     int iloc;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double crx_p = charge_weight*dx_ov_dt;
-    double cry_p = charge_weight*dy_ov_dt;
+    double crx_p = charge_weight*dx_ov_dt_;
+    double cry_p = charge_weight*dy_ov_dt_;
     double crz_p = charge_weight*one_third*particles.momentum( 2, ipart )*invgf;
     
     // variable declaration
@@ -106,7 +106,7 @@ void Projector2D4Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     xpn = particles.position( 0, ipart ) * dx_inv_;
     int ip = round( xpn );
     int ipo = iold[0*nparts];
-    int ip_m_ipo = ip-ipo-i_domain_begin;
+    int ip_m_ipo = ip-ipo-i_domain_begin_;
     delta  = xpn - ( double )ip;
     delta2 = delta*delta;
     delta3 = delta2*delta;
@@ -121,7 +121,7 @@ void Projector2D4Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     ypn = particles.position( 1, ipart ) * dy_inv_;
     int jp = round( ypn );
     int jpo = iold[1*nparts];
-    int jp_m_jpo = jp-jpo-j_domain_begin;
+    int jp_m_jpo = jp-jpo-j_domain_begin_;
     delta  = ypn - ( double )jp;
     delta2 = delta*delta;
     delta3 = delta2*delta;
@@ -201,8 +201,8 @@ void Projector2D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     int iloc;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double crx_p = charge_weight*dx_ov_dt;
-    double cry_p = charge_weight*dy_ov_dt;
+    double crx_p = charge_weight*dx_ov_dt_;
+    double cry_p = charge_weight*dy_ov_dt_;
     double crz_p = charge_weight*one_third*particles.momentum( 2, ipart )*invgf;
     
     // variable declaration
@@ -253,7 +253,7 @@ void Projector2D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     xpn = particles.position( 0, ipart ) * dx_inv_;
     int ip = round( xpn );
     int ipo = iold[0*nparts];
-    int ip_m_ipo = ip-ipo-i_domain_begin;
+    int ip_m_ipo = ip-ipo-i_domain_begin_;
     delta  = xpn - ( double )ip;
     delta2 = delta*delta;
     delta3 = delta2*delta;
@@ -268,7 +268,7 @@ void Projector2D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     ypn = particles.position( 1, ipart ) * dy_inv_;
     int jp = round( ypn );
     int jpo = iold[1*nparts];
-    int jp_m_jpo = jp-jpo-j_domain_begin;
+    int jp_m_jpo = jp-jpo-j_domain_begin_;
     delta  = ypn - ( double )jp;
     delta2 = delta*delta;
     delta3 = delta2*delta;
@@ -414,8 +414,8 @@ void Projector2D4Order::basic( double *rhoj, Particles &particles, unsigned int 
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ip -= i_domain_begin + 3;
-    jp -= j_domain_begin + 3;
+    ip -= i_domain_begin_ + 3;
+    jp -= j_domain_begin_ + 3;
     
     for( unsigned int i=0 ; i<7 ; i++ ) {
         iloc = ( i+ip )*ny+jp;
@@ -504,10 +504,10 @@ void  Projector2D4Order::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
     Syd[3] = dble_19_ov_96   + dble_11_ov_24 * ypmyjd  + dble_1_ov_4  * ypmyjd2 - dble_1_ov_6  * ypmyjd3 - dble_1_ov_6  * ypmyjd4;
     Syd[4] = dble_1_ov_384   + dble_1_ov_48  * ypmyjd  + dble_1_ov_16 * ypmyjd2 + dble_1_ov_12 * ypmyjd3 + dble_1_ov_24 * ypmyjd4;
 
-    ip  -= i_domain_begin;
-    id  -= i_domain_begin;
-    jp  -= j_domain_begin;
-    jd  -= j_domain_begin;
+    ip  -= i_domain_begin_;
+    id  -= i_domain_begin_;
+    jp  -= j_domain_begin_;
+    jd  -= j_domain_begin_;
 
     for (unsigned int i=0 ; i<5 ; i++) {
         int iploc=ip+i-2;

@@ -23,17 +23,17 @@ ProjectorAM1Order::ProjectorAM1Order( Params &params, Patch *patch ) : Projector
     dt = params.timestep;
     dr = params.cell_length[1];
     dl_inv_   = 1.0/params.cell_length[0];
-    dl_ov_dt  = params.cell_length[0] / params.timestep;
-    dr_ov_dt  = params.cell_length[1] / params.timestep;
+    dl_ov_dt_  = params.cell_length[0] / params.timestep;
+    dr_ov_dt_  = params.cell_length[1] / params.timestep;
     dr_inv_   = 1.0 / dr;
     one_ov_dt  = 1.0 / params.timestep;
     Nmode=params.nmodes;
-    i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
-    j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
+    i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
+    j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
 
-    oversizeR = params.oversize[1]; 
-    nprimr = params.n_space[1] + 2*params.oversize[1] + 1;
-    npriml = params.n_space[0] + 2*params.oversize[0] + 1;
+    oversize_[1] = params.oversize[1]; 
+    nprimr_ = params.n_space[1] + 2*params.oversize[1] + 1;
+    npriml_ = params.n_space[0] + 2*params.oversize[0] + 1;
 
     invR = &((static_cast<PatchAM *>( patch )->invR)[0]);
     invRd = &((static_cast<PatchAM *>( patch )->invRd)[0]);
@@ -62,7 +62,7 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
    
     // This projection for currents is used only in cases where position=position_old.
     // Warning: will fail evaluating the current at t=0 if a plasma is already in the box.
-    int iloc, nr( nprimr );
+    int iloc, nr( nprimr_ );
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
     double m1powerimode = 1.;
@@ -117,9 +117,9 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
         Sr1[1] = 0.; 
     }
  
-    ip -= i_domain_begin ;
-    jp -= j_domain_begin ;
-    // j_domain_begin should always be zero in spectral since no paralellization along r.
+    ip -= i_domain_begin_ ;
+    jp -= j_domain_begin_ ;
+    // j_domain_begin_ should always be zero in spectral since no paralellization along r.
     
     for( unsigned int i=0 ; i<2 ; i++ ) {
         iloc = ( i+ip )*nr+jp;
@@ -170,10 +170,10 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
     
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
-    xpn[0] = i_domain_begin + iold[0*nparts] + deltaold[0*nparts];  // position at t=t0
+    xpn[0] = i_domain_begin_ + iold[0*nparts] + deltaold[0*nparts];  // position at t=t0
     xpn[1] = particles.position( 0, ipart ) * dl_inv_ ;             // position at t=t0+dt
     xpn[0] = 0.5*(xpn[0]+xpn[1]);                                   // position at t=t0+dt/2
-    rpn[0] = j_domain_begin + iold[1*nparts] + deltaold[1*nparts];
+    rpn[0] = j_domain_begin_ + iold[1*nparts] + deltaold[1*nparts];
     rpn[1] = rp * dr_inv_ - 0.5 ;
     rpn[0] = 0.5*(rpn[0]+rpn[1]);
 
@@ -198,8 +198,8 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             Sr1[irho][2] = 0.;
         }
 
-        ip[irho]  -= i_domain_begin ;
-        jp[irho]  -= j_domain_begin ;
+        ip[irho]  -= i_domain_begin_ ;
+        jp[irho]  -= j_domain_begin_ ;
 
     }
 
@@ -235,8 +235,8 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
         // Jr^(p,p) Jt^(p,p) Jl^(p,p) Rho^(p,p)
         for( unsigned int i=0 ; i<2 ; i++ ) {
-            iloc[0] = ( i+ip[0] )* nprimr + jp[0];
-            iloc[1] = ( i+ip[1] )* nprimr + jp[1];
+            iloc[0] = ( i+ip[0] )* nprimr_ + jp[0];
+            iloc[1] = ( i+ip[1] )* nprimr_ + jp[1];
             for( unsigned int j=0 ; j<2 ; j++ ) {
                 linindex = iloc[0]+j;
                 complex<double> increment =  C_m[0]*charge_weight* Sl1[0][i]*Sr1[0][j]*invR[jp[0]+j];
@@ -250,7 +250,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
         //Correction below axis for currents
         if (Sr1[0][2] != 0.) {
             for( unsigned int i=0 ; i<2 ; i++ ) {
-                iloc[0] = ( i+ip[0] )* nprimr + jp[0];
+                iloc[0] = ( i+ip[0] )* nprimr_ + jp[0];
                 linindex = iloc[0];
                 complex<double> increment =  C_m[0]*charge_weight* Sl1[0][i]*m1powerimode*Sr1[0][2]*invR[jp[0]];
                 Jl [linindex] += crl_p * increment ;
@@ -261,7 +261,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
         //Correction below axis for density
         if (Sr1[1][2] != 0.) {
             for( unsigned int i=0 ; i<2 ; i++ ) {
-                iloc[1] = ( i+ip[1] )* nprimr + jp[1];
+                iloc[1] = ( i+ip[1] )* nprimr_ + jp[1];
                 rho [iloc[1]] += C_m[1]*charge_weight* Sl1[1][i]*m1powerimode*Sr1[1][2]*invR[jp[1]];
             }
         }
@@ -315,14 +315,14 @@ void ProjectorAM1Order::apply_axisBC(std::complex<double> *rho, unsigned int imo
     const double one_ov_16 = 1./16.; 
     //non zero mode is not zero on axis. Mode 0 for rho and Jl, mode 1 for Jr and Jt
     if (imode == nonzeromode){
-        for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+        for( unsigned int i=oversize_[1] ; i<npriml_*nprimr_+oversize_[1]; i+=nprimr_ ) {
             rho[i] = (25.*rho[i+1] - 9.*rho[i+2])*one_ov_16;
         }//i
     } else { //m !=  non zero mode
         // rho_m[r=0] = 0 and drho_m/dr[r=0] = 0 when m is even and !=0 when m is odd. 
         // quadratic interpolation for even m and linear interpolation when m is odd
         const double slope = (imode%2==0 ? one_ov_9 : 1./3.);
-        for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+        for( unsigned int i=oversize_[1] ; i<npriml_*nprimr_+oversize_[1]; i+=nprimr_ ) {
             rho[i] = rho[i+1] * slope;
         }//i
     }
@@ -393,7 +393,7 @@ void ProjectorAM1Order::susceptibility( ElectroMagn *EMfields, Particles &partic
         // (charge over mass)^2
         charge_sq_over_mass_sq      = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*one_over_mass*one_over_mass;
 
-        int iloc, nr( nprimr );
+        int iloc, nr( nprimr_ );
     
         double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
     
@@ -439,8 +439,8 @@ void ProjectorAM1Order::susceptibility( ElectroMagn *EMfields, Particles &partic
         Sr1[0] = delta;
         Sr1[1] = 1.-delta;
     
-        ip -= i_domain_begin ;
-        jp -= j_domain_begin ;
+        ip -= i_domain_begin_ ;
+        jp -= j_domain_begin_ ;
     
     
         for( unsigned int i=0 ; i<2 ; i++ ) {
@@ -466,7 +466,7 @@ void ProjectorAM1Order::axisBCEnvChi( double *EnvChi )
     //const double one_ov_9  = 1./9.; 
     const double one_ov_16 = 1./16.; 
     
-    for( unsigned int i=oversizeR ; i<npriml*nprimr+oversizeR; i+=nprimr ) {
+    for( unsigned int i=oversize_[1] ; i<npriml_*nprimr_+oversize_[1]; i+=nprimr_ ) {
           
         EnvChi[i] = (25.*EnvChi[i+1] - 9.*EnvChi[i+2])*one_ov_16;
     }//i

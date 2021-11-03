@@ -112,7 +112,7 @@ private:
             // coeffs 0-1 are used when F(-dr/2) = + F(dr/2) <==> when field is constant on axis
             coeffyp_[0] = 1.; // = coeffyp_[1] + coeffyp_[0];
             coeffyp_[1] = 0.; // Terms are already acuumulated in coeffyp_[0]
-            deltar -= 1.; // To account for the cell shift and proper recomputation of r_old in projector
+            deltar_ -= 1.; // To account for the cell shift and proper recomputation of r_old in projector
         }
         
         // First index for summation

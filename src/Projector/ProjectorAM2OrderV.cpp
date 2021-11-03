@@ -1,36 +1,38 @@
-#include "Projector2D2OrderV.h"
+#include "ProjectorAM2OrderV.h"
 
 #include <cmath>
 #include <iostream>
-
-#include "ElectroMagn.h"
-#include "Field2D.h"
+#include <complex>
+#include "dcomplex.h"
+#include "ElectroMagnAM.h"
+#include "cField2D.h"
 #include "Particles.h"
 #include "Tools.h"
 #include "Patch.h"
+#include "PatchAM.h"
 
 using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Constructor for Projector2D2OrderV
+// Constructor for ProjectorAM2OrderV
 // ---------------------------------------------------------------------------------------------------------------------
-Projector2D2OrderV::Projector2D2OrderV( Params &params, Patch *patch ) : Projector2D( params, patch )
+ProjectorAM2OrderV::ProjectorAM2OrderV( Params &params, Patch *patch ) : ProjectorAM( params, patch )
 {
-    dx_inv_   = 1.0/params.cell_length[0];
-    dx_ov_dt_  = params.cell_length[0] / params.timestep;
-    dy_inv_   = 1.0/params.cell_length[1];
-    dy_ov_dt_  = params.cell_length[1] / params.timestep;
+    dl_inv_   = 1.0/params.cell_length[0];
+    dl_ov_dt_  = params.cell_length[0] / params.timestep;
+    dr_inv_   = 1.0/params.cell_length[1];
+    dr_ov_dt_  = params.cell_length[1] / params.timestep;
     
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
     
-    nscelly_ = params.n_space[1] + 1;
-    oversize[0] = params.oversize[0];
-    oversize[1] = params.oversize[1];
-    nprimy = nscelly_ + 2*oversize[1];
-    dq_inv[0] = dx_inv_;
-    dq_inv[1] = dy_inv_;
+    nscellr_ = params.n_space[1] + 1;
+    oversize_[0] = params.oversize[0];
+    oversize_[1] = params.oversize[1];
+    nprimr_ = nscellr_ + 2*oversize_[1];
+    dq_inv_[0] = dl_inv_;
+    dq_inv_[1] = dr_inv_;
     
     
     DEBUG( "cell_length "<< params.cell_length[0] );
@@ -39,12 +41,14 @@ Projector2D2OrderV::Projector2D2OrderV( Params &params, Patch *patch ) : Project
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Destructor for Projector2D2OrderV
+// Destructor for ProjectorAM2OrderV
 // ---------------------------------------------------------------------------------------------------------------------
-Projector2D2OrderV::~Projector2D2OrderV()
+ProjectorAM2OrderV::~ProjectorAM2OrderV()
 {
 }
 
+
+/*
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
@@ -441,7 +445,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            double crx_p = charge_weight[ipart]*dx_ov_dt_;
+            double crx_p = charge_weight[ipart]*dx_ov_dt;
             
             double sum[5];
             sum[0] = 0.;
@@ -560,7 +564,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            double cry_p = charge_weight[ipart]*dy_ov_dt_;
+            double cry_p = charge_weight[ipart]*dy_ov_dt;
             
             double sum[5];
             sum[0] = 0.;
@@ -734,8 +738,8 @@ void Projector2D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
     //}
     int iold[2];
-    iold[0] = scell/nscelly_+oversize[0];
-    iold[1] = ( scell%nscelly_ )+oversize[1];
+    iold[0] = scell/nscelly_+oversize_[0];
+    iold[1] = ( scell%nscelly_ )+oversize_[1];
     
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
@@ -764,4 +768,4 @@ void Projector2D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
 {
     ERROR( "Vectorized projection of the susceptibility for the envelope model is not implemented for 2D geometry" );
 }
-
+*/
