@@ -33,7 +33,7 @@ exit $?"""
         Compile Smilei
         """
         with open(self.smilei_path.exec_script, 'w') as f:
-            f.write( script.format(command=self.COMPILE_COMMAND, omp=self.options.omp) )
+            f.write( self.script.format(command=self.COMPILE_COMMAND, omp=self.options.omp) )
         
         self.launch_job(self.COMPILE_COMMAND, self.JOB, dir, self.options.max_time_seconds, self.smilei_path.output_file, repeat=2)
     
@@ -44,7 +44,7 @@ exit $?"""
         """
         command = self.RUN_COMMAND % arguments
         with open(self.smilei_path.exec_script, 'w') as f:
-            f.write( script.format(command=command, omp=self.options.omp) )
+            f.write( self.script.format(command=command, omp=self.options.omp) )
             
         self.launch_job(command, self.JOB, dir, self.options.max_time_seconds, self.smilei_path.output_file, repeat=2)
     

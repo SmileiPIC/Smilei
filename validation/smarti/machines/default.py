@@ -29,7 +29,7 @@ class Machine(object):
     def clean(self):
         from subprocess import call
         
-        call(CLEAN_COMMAND , shell=True)
+        call(self.CLEAN_COMMAND , shell=True)
     
     
     def compile(self, dir):
@@ -65,7 +65,7 @@ class Machine(object):
             exit(2)
     
     
-    def launch_job(self, base_command, sub_command, dir, max_time_seconds, output, repeat=1):
+    def launch_job(self, base_command, sub_command, dir, max_time_seconds, error_file, repeat=1):
         """
         Submit/launch a job based on the given options
         """
@@ -117,10 +117,10 @@ class Machine(object):
             if self.options.verbose:
                 print()
                 print("Execution failed for command `"+base_command+"`")
-                COMMAND = "/bin/bash cat "+output
+                COMMAND = "cat "+error_file
                 try:
                     check_call(COMMAND, shell=True)
                 except CalledProcessError:
                     print()
-                    print("Failed to print file `%s`"%output)
+                    print("Failed to print file `%s`"%error_file)
             exit(2)

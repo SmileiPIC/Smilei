@@ -60,7 +60,7 @@ echo $? > exit_status_file"""
         Compile Smilei
         """
         with open(self.smilei_path.exec_script, 'w') as f:
-            f.write( script.format(command=self.COMPILE_COMMAND, nodes=self.NODES, mpi=self.options.mpi, max_time=self.options.max_time, omp=self.options.omp, dir=dir) )
+            f.write( self.script.format(command=self.COMPILE_COMMAND, nodes=self.NODES, mpi=self.options.mpi, max_time=self.options.max_time, omp=self.options.omp, dir=dir) )
         
         self.launch_job(self.COMPILE_COMMAND, self.JOB, dir, self.options.max_time_seconds, self.smilei_path.output_file, repeat=2)
     
@@ -71,7 +71,7 @@ echo $? > exit_status_file"""
         """
         command = self.RUN_COMMAND % arguments
         with open(self.smilei_path.exec_script, 'w') as f:
-            f.write( script.format(command=command, nodes=self.NODES, mpi=self.options.mpi, max_time=self.options.max_time, omp=self.options.omp, dir=dir) )
+            f.write( self.script.format(command=command, nodes=self.NODES, mpi=self.options.mpi, max_time=self.options.max_time, omp=self.options.omp, dir=dir) )
         
         self.launch_job(command, self.JOB, dir, self.options.max_time_seconds, self.smilei_path.output_file, repeat=2)
     

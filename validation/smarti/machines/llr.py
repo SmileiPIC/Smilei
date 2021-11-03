@@ -49,10 +49,10 @@ echo $? > exit_status_file"""
             self.JOB = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+self.smilei_path.exec_script
         
         NPERSOCKET = 1
-        self.COMPILE_COMMAND = self.MAKE+' -j '+str(self.options.ppn)+' > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
+        self.COMPILE_COMMAND = self.MAKE+' -j '+str(self.ppn)+' > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         self.COMPILE_TOOLS_COMMAND = 'make tables > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         self.CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-        self.RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(self.options.ppn) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(self.options.omp) + " -n "+str(self.options.mpi)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+self.smilei_path.workdirs+"smilei %s >"+self.smilei_path.output_file+" 2>&1"
+        self.RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(self.ppn) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(self.options.omp) + " -n "+str(self.options.mpi)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+self.smilei_path.workdirs+"smilei %s >"+self.smilei_path.output_file+" 2>&1"
     
     
     def compile(self, dir):
@@ -60,9 +60,9 @@ echo $? > exit_status_file"""
         Compile Smilei
         """
         with open(self.smilei_path.exec_script, 'w') as f:
-            f.write( script.format(command=self.COMPILE_COMMAND, nodes=self.NODES, ppn=self.ppn, max_time=self.options.max_time, omp=self.options.omp, dir=dir) )
+            f.write( self.script.format(command=self.COMPILE_COMMAND, nodes=self.NODES, ppn=self.ppn, max_time=self.options.max_time, omp=self.options.omp, dir=dir) )
         
-        self.launch_job(self.COMPILE_COMMAND, self.JOB, dir, self.options.max_time_seconds, self.smilei_path.output_file, repeat=2)
+        self.launch_job(self.COMPILE_COMMAND, self.JOB, dir, self.options.max_time_seconds, self.smilei_path.COMPILE_ERRORS, repeat=2)
     
     
     def run(self, arguments, dir):
@@ -71,7 +71,7 @@ echo $? > exit_status_file"""
         """
         command = self.RUN_COMMAND % arguments
         with open(self.smilei_path.exec_script, 'w') as f:
-            f.write( script.format(command=self.command, nodes=self.NODES, ppn=self.ppn, max_time=self.options.max_time, omp=self.options.omp, dir=dir) )
+            f.write( self.script.format(command=self.command, nodes=self.NODES, ppn=self.ppn, max_time=self.options.max_time, omp=self.options.omp, dir=dir) )
         
         self.launch_job(command, self.JOB, dir, self.options.max_time_seconds, self.smilei_path.output_file, repeat=2)
     

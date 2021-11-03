@@ -203,9 +203,9 @@ class Validation(object):
             if STAT_SMILEI_R_OLD!=stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R): # or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
                 # if new bin, archive the workdir (if it contains a smilei bin)
                 # and create a new one with new smilei and compilation_out inside
-                if exists(self.smilei_path.SMILEI_W): # and path.exists(SMILEI_TOOLS_W):
+                if exists(SMILEI_W): # and path.exists(SMILEI_TOOLS_W):
                     workdir_archiv()
-                copy2(self.smilei_path.SMILEI_R, self.smilei_path.SMILEI_W)
+                copy2(SMILEI_R, SMILEI_W)
                 #copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
                 if self.options.verbose:
                     print("Smilei compilation succeed.")

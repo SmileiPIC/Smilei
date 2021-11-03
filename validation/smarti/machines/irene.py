@@ -90,7 +90,7 @@ echo $? > exit_status_file"""
         Compile Smilei
         """
         with open(self.smilei_path.exec_script, 'w') as f:
-            f.write( compilation.format(command=self.COMPILE_COMMAND, env=self.env, account=self.options.account, max_time=self.options.max_time, dir=dir) )
+            f.write( self.compilation.format(command=self.COMPILE_COMMAND, env=self.env, account=self.options.account, max_time=self.options.max_time, dir=dir) )
         
         self.launch_job(self.COMPILE_COMMAND, self.JOB, dir, self.options.max_time_seconds, self.smilei_path.output_file, repeat=2)
     
@@ -104,6 +104,6 @@ echo $? > exit_status_file"""
         NODES = int(ceil(self.options.mpi/2.))
         ppn = 24
         with open(self.smilei_path.exec_script, 'w') as f:
-            f.write( script.format(command=command, env=self.env, account=self.options.account, nodes=NODES, ppn=ppn, max_time=self.options.max_time, mpi=self.options.mpi, omp=self.options.omp, dir=dir) )
+            f.write( self.script.format(command=command, env=self.env, account=self.options.account, nodes=NODES, ppn=ppn, max_time=self.options.max_time, mpi=self.options.mpi, omp=self.options.omp, dir=dir) )
         
         self.launch_job(command, self.JOB, dir, self.options.max_time_seconds, self.smilei_path.output_file, repeat=2)
