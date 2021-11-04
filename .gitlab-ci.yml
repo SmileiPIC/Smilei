@@ -43,6 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
+    - smarti
 
   script:
     # Move in test dir
@@ -70,6 +71,7 @@ run3D:
   stage: run_default
   only:
     - develop
+    - smarti
 
   script:
     # Move in test dir
@@ -85,6 +87,7 @@ runAM:
   stage: run_default
   only:
     - develop
+    - smarti
 
   script:
     # Move in test dir
@@ -96,7 +99,6 @@ runAM:
 #  stage: run_default
 #  only:
 #    - develop
-#    - pusher_cleaning
 
 #  script:
 #    # Move in test dir
@@ -107,6 +109,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
+    - smarti
 
   script:
     # Move in test dir
@@ -118,6 +121,7 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
+    - smarti
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -128,6 +132,7 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
+    - smarti
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -137,6 +142,7 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
+    - smarti
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -147,6 +153,7 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
+    - smarti
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -157,6 +164,7 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
+    - smarti
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
