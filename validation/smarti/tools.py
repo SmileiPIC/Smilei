@@ -10,7 +10,7 @@ from time import ctime
 try:
     execfile
 except: # python3
-    def execfile(file, globals=globals(), locals=locals()):
+    def execfile(file, globals=globals(), locals={}):
         exec(compile(open(file).read(), file, 'exec'), globals, locals)
 
 try:

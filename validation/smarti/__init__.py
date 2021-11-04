@@ -383,7 +383,7 @@ class Validation(object):
                     print( 'Generating reference for '+BENCH)
                     print( '----------------------------------------------------')
                 Validate = self.CreateReference(self.smilei_path.references, BENCH)
-                execfile(validation_script, globals(), locals())
+                execfile(validation_script, globals(), {"Validate":Validate})
                 Validate.write()
             
             # Or plot differences with respect to existing references
@@ -393,7 +393,7 @@ class Validation(object):
                     print( 'Viewing differences for '+BENCH)
                     print( '----------------------------------------------------')
                 Validate = self.ShowDiffWithReference(self.smilei_path.references, BENCH)
-                execfile(validation_script, globals(), locals())
+                execfile(validation_script, globals(), {"Validate":Validate})
                 if _dataNotMatching:
                     print("Benchmark "+BENCH+" did NOT pass")
             
@@ -404,7 +404,7 @@ class Validation(object):
                     print( 'Validating '+BENCH)
                     print( '----------------------------------------------------')
                 Validate = self.CompareToReference(self.smilei_path.references, BENCH)
-                execfile(validation_script, globals(), locals())
+                execfile(validation_script, globals(), {"Validate":Validate})
                 if _dataNotMatching:
                     chdir(INITIAL_DIRECTORY)
                     exit(1)
