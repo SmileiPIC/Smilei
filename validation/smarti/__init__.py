@@ -190,7 +190,7 @@ class Validation(object):
             # Creates an archives of the workdir directory
             exe_path = self.smilei_path.workdirs+"smilei"
             if exists(exe_path):
-                ARCH_WORKDIR = self.smilei_path.workdirs+'_'+date_string(exe_path)
+                ARCH_WORKDIR = self.smilei_path.validation+'workdir_'+date_string(exe_path)
                 rename(self.smilei_path.workdirs, ARCH_WORKDIR)
                 mkdir(self.smilei_path.workdirs)
         
@@ -393,7 +393,6 @@ class Validation(object):
                     print( 'Viewing differences for '+BENCH)
                     print( '----------------------------------------------------')
                 Validate = self.ShowDiffWithReference(self.smilei_path.references, BENCH)
-                execfile(validation_script, d, d)
                 execfile(validation_script, {"Validate":Validate})
                 if _dataNotMatching:
                     print("Benchmark "+BENCH+" did NOT pass")
