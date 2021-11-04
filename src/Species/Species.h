@@ -235,7 +235,9 @@ public:
     //! Accumulate energy lost with bc
     double nrj_bc_lost;
     //! Accumulate energy lost with moving window
-    double nrj_mw_lost;
+    double nrj_mw_out;
+    //! Accumulate energy gained with moving window
+    double nrj_mw_inj;
     //! Accumulate energy added with new particles
     double new_particles_energy_;
     //! Accumulate energy lost by the particle with the radiation
@@ -458,68 +460,61 @@ public:
     //! Method to know if we have to project this species or not.
     bool  isProj( double time_dual, SimWindow *simWindow );
 
-    //! Set the energy lost in the boundary conditions
-    void setLostNrjBC( double value )
-    {
+    //! Set / get / add the energy lost in the boundary conditions
+    void setLostNrjBC( double value ) {
         nrj_bc_lost = value;
     }
-
-    //! Get the energy lost in the boundary conditions
-    double getLostNrjBC() const
-    {
+    double getLostNrjBC() const {
         return nrj_bc_lost;
     }
-
-    //! Get energy lost with moving window (fields)
-    double getLostNrjMW() const
-    {
-        return nrj_mw_lost;
+    void addLostNrjBC( double value ) {
+        nrj_bc_lost += value;
     }
-
-    //! Get the energy radiated away by the particles
-    double getNrjRadiation() const
-    {
-        return radiated_energy_;
+    
+    //! Set / get / add energy lost with moving window (particles)
+    void setNrjOutMW( double value ) {
+        nrj_mw_out = value;
     }
-
-    //! Set the energy radiated away by the particles
-    void setNrjRadiation( double value )
-    {
+    double getNrjOutMW() const {
+        return nrj_mw_out;
+    }
+    void addNrjOutMW( double value ) {
+        nrj_mw_out += value;
+    }
+    
+    //! Set / get / add energy gained with moving window (particles)
+    void setNrjInjMW( double value ) {
+        nrj_mw_inj = value;
+    }
+    double getNrjInjMW() const {
+        return nrj_mw_inj;
+    }
+    void addNrjInjMW( double value ) {
+        nrj_mw_inj += value;
+    }
+    
+    //! Set / get / add the energy radiated away by the particles
+    void setNrjRadiation( double value ) {
         radiated_energy_ = value;
     }
-
-    //! Add the energy radiated away by the particles
-    void addNrjRadiation( double value )
-    {
+    double getNrjRadiation() const {
+        return radiated_energy_;
+    }
+    void addNrjRadiation( double value ) {
         radiated_energy_ += value;
     }
 
-    //! Set gained via new particles
-    void setNewParticlesNRJ( double value )
-    {
+    //! Set / get add / energy gained via new particles
+    void setNewParticlesNRJ( double value ) {
         new_particles_energy_ = value;
     }
-
-    //! Get energy gained via new particles
-    double getNewParticlesNRJ() const
-    {
+    double getNewParticlesNRJ() const {
         return new_particles_energy_;
     }
-
-    //! Reinitialize the scalar diagnostics buffer
-    void reinitDiags()
-    {
-        //nrj_bc_lost = 0;
-        nrj_mw_lost = 0;
-        //new_particles_energy_ = 0;
-        //radiated_energy_ = 0;
+    void addNewParticlesNRJ( double value ) {
+        new_particles_energy_ += value;
     }
-
-    inline void storeNRJlost( double nrj )
-    {
-        nrj_mw_lost += nrj;
-    };
-
+    
     inline double computeNRJ()
     {
         double nrj( 0. );

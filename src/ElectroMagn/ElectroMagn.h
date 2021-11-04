@@ -418,25 +418,24 @@ public:
     virtual void initAntennas( Patch *patch, Params& params ) {};
     
     double computeNRJ();
-    double getLostNrjMW() const
-    {
-        return nrj_mw_lost;
+    void setNrjOutMW( double value ) {
+        nrj_mw_out = value;
+    }
+    double getNrjOutMW() const {
+        return nrj_mw_out;
+    }
+    void addNrjOutMW( double value ) {
+        nrj_mw_out += value;
     }
     
-    double getNewFieldsNRJ() const
-    {
-        return nrj_new_fields;
+    void setNrjInjMW( double value ) {
+        nrj_mw_inj = value;
     }
-    
-    void reinitDiags()
-    {
-        nrj_mw_lost = 0.;
-        nrj_new_fields = 0.;
+    double getNrjInjMW() const{
+        return nrj_mw_inj;
     }
-    
-    inline void storeNRJlost( double nrj )
-    {
-        nrj_mw_lost += nrj;
+    void addNrjInjMW( double value ) {
+        nrj_mw_inj += value;
     }
     
     inline int getMemFootPrint()
@@ -497,11 +496,11 @@ protected :
     
 private:
 
-    //! Accumulate nrj lost with moving window
-    double nrj_mw_lost;
+    //! Accumulate nrj lost / gained with moving window
+    double nrj_mw_out;
     
     //! Accumulate nrj added with new fields
-    double nrj_new_fields;
+    double nrj_mw_inj;
     
     
 };

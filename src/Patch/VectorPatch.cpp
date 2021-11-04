@@ -2902,7 +2902,6 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
     int newMPIrank = smpi->getRank() -1;
     int oldMPIrank = smpi->getRank() -1;
     int istart = 0;
-    int nmessage = nrequests;
 
     for( int irk=0 ; irk<smpi->getRank() ; irk++ ) {
         istart += smpi->patch_count[irk];
@@ -2925,24 +2924,24 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         // if hindex of patch to be sent      >  future hindex of the first patch owned by this process
         if( send_patch_id_[ipatch]+refHindex_ > istart ) {
             newMPIrank = smpi->getRank() + 1;
-            tag = tagsend_right*nmessage;
+            tag = tagsend_right*nrequests;
             tagsend_right ++;
         } else {
-            tag = tagsend_left*nmessage;
+            tag = tagsend_left*nrequests;
             tagsend_left ++;
         }
-        int maxtag = 0;
-        smpi->isend_species( ( *this )( send_patch_id_[ipatch] ), newMPIrank, maxtag, tag, params );
+        int irequest = 0;
+        smpi->isend_species( ( *this )( send_patch_id_[ipatch] ), newMPIrank, irequest, tag, params );
     }
 
     for( unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++ ) {
         //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore.
         if( recv_patch_id_[ipatch] > refHindex_ ) {
             oldMPIrank = smpi->getRank() + 1;
-            tag = tagrecv_right*nmessage;
+            tag = tagrecv_right*nrequests;
             tagrecv_right ++;
         } else {
-            tag = tagrecv_left*nmessage;
+            tag = tagrecv_left*nrequests;
             tagrecv_left ++;
         }
         smpi->recv_species( recv_patches_[ipatch], oldMPIrank, tag, params );
@@ -2975,8 +2974,8 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
             tag = tagsend_left;
             tagsend_left ++;
         }
-
-        smpi->isend_fields( ( *this )( send_patch_id_[ipatch] ), newMPIrank, tag*nmessage, params );
+        int irequest = 0;
+        smpi->isend_fields( ( *this )( send_patch_id_[ipatch] ), newMPIrank, irequest, tag*nrequests, params );
     }
 
     for( unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++ ) {
@@ -2989,8 +2988,8 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
             tag = tagrecv_left;
             tagrecv_left ++;
         }
-
-        smpi->recv_fields( recv_patches_[ipatch], oldMPIrank, tag*nmessage, params );
+        int patch_tag = tag * nrequests;
+        smpi->recv_fields( recv_patches_[ipatch], oldMPIrank, patch_tag, params );
     }
 
 
