@@ -4,8 +4,7 @@
 # --------------------------------------------
 
 import os, sys
-from time import ctime
-
+from time import ctime, strftime
 
 try:
     execfile
