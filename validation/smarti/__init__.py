@@ -364,7 +364,7 @@ class Validation(object):
             
             # Append info in log file
             if self.options.log:
-                log.append(git_version)
+                log.append(self.git_version)
             
             # Find the validation script for this bench
             validation_script = self.smilei_path.analyses + "validate_" + BENCH
