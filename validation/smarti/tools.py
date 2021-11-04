@@ -7,10 +7,10 @@ import os, sys
 from time import ctime, strftime
 
 try:
-    execfile
+    execfile = execfile
 except: # python3
-    def execfile(file, globals=globals(), locals={}):
-        exec(compile(open(file).read(), file, 'exec'), globals, locals)
+    def execfile(file, globals=globals()):
+        exec(compile(open(file).read(), file, 'exec'), globals)
 
 try:
     raw_input

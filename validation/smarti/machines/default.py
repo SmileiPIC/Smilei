@@ -55,12 +55,12 @@ class Machine(object):
         
         try:
             if self.options.verbose:
-                print()
+                print("")
                 print("Trying command `"+command+"`")
             check_call(command, shell=True)
         except CalledProcessError:
             if  self.options.verbose:
-                print()
+                print("")
                 print("Execution failed for command `"+command+"`")
             exit(2)
     
@@ -86,7 +86,7 @@ class Machine(object):
                 break
             except CalledProcessError:
                 if self.options.verbose:
-                    print()
+                    print("")
                     print("Command failed #%d: `%s`"%(n, sub_command))
                     if n < repeat:
                         print("Wait and retry")
@@ -99,7 +99,7 @@ class Machine(object):
         
         # Otherwise job is running
         if self.options.verbose:
-            print()
+            print("")
             print("Submitted job with command `"+base_command+"`")
             print("\tmax duration: %d s"%max_time_seconds)
         # Wait for the exit status to be set
@@ -115,12 +115,12 @@ class Machine(object):
         # Check that the run succeeded
         if int(EXIT_STATUS) != 0:
             if self.options.verbose:
-                print()
+                print("")
                 print("Execution failed for command `"+base_command+"`")
                 COMMAND = "cat "+error_file
                 try:
                     check_call(COMMAND, shell=True)
                 except CalledProcessError:
-                    print()
+                    print("")
                     print("Failed to print file `%s`"%error_file)
             exit(2)
