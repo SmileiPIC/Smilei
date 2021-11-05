@@ -737,11 +737,14 @@ void SmileiMPI::isend_fields( Patch *patch, int to, int &irequest, int tag, Para
     }
     
     // Send some scalars
-    unsigned int nscalars = 2;
+    unsigned int nscalars = 2 + 2*params.nDim_field;
     patch->buffer_scalars_fields.resize( nscalars );
-    for( unsigned int i=0; i<nscalars; i++ ) {
-        patch->buffer_scalars_fields[i+0] = patch->EMfields->getNrjOutMW(); // lost by moving window
-        patch->buffer_scalars_fields[i+1] = patch->EMfields->getNrjInjMW(); // lost by moving window
+    patch->buffer_scalars_fields[0] = patch->EMfields->getNrjOutMW(); // lost by moving window
+    patch->buffer_scalars_fields[1] = patch->EMfields->getNrjInjMW(); // lost by moving window
+    for( unsigned int jp=0; jp<2; jp++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for( unsigned int i=0 ; i<params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
+            patch->buffer_scalars_fields[2+i*2+jp] = patch->EMfields->poynting[jp][i];
+        }
     }
     MPI_Isend( &patch->buffer_scalars_fields[0], patch->buffer_scalars_fields.size(), MPI_DOUBLE, to, tag + irequest, world_, &patch->requests_[irequest] );
     irequest ++;
@@ -862,14 +865,17 @@ void SmileiMPI::recv_fields( Patch *patch, int from, int &tag, Params &params )
     }
     
     // Receive some scalars
-    unsigned int nscalars = 2;
+    unsigned int nscalars = 2 + 2*params.nDim_field;
     patch->buffer_scalars_fields.resize( nscalars );
     MPI_Status status;
     MPI_Recv( &patch->buffer_scalars_fields[0], patch->buffer_scalars_fields.size(), MPI_DOUBLE, from, tag, world_, &status );
     tag++;
-    for( unsigned int i=0; i<nscalars; i++ ) {
-        patch->EMfields->setNrjOutMW( patch->buffer_scalars_fields[i+0] );
-        patch->EMfields->setNrjInjMW( patch->buffer_scalars_fields[i+1] );
+    patch->EMfields->setNrjOutMW( patch->buffer_scalars_fields[0] );
+    patch->EMfields->setNrjInjMW( patch->buffer_scalars_fields[1] );
+    for( unsigned int jp=0; jp<2; jp++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for( unsigned int i=0 ; i<params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
+            patch->EMfields->poynting[jp][i] = patch->buffer_scalars_fields[2+i*2+jp];
+        }
     }
 } // END recv ( Patch )
 

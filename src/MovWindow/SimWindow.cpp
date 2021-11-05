@@ -552,20 +552,23 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         // Delete useless patches while saving some scalar quantities
         for( unsigned int j=0; j < delete_patches_.size(); j++ ) {
             mypatch = delete_patches_[j];
-            for( unsigned int jp=0; jp<2; jp++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
-                for( unsigned int i=0 ; i<params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
-                    poynting[jp][i] += mypatch->EMfields->poynting[jp][i];
-                }
-            }
             
-            energy_field_out += mypatch->EMfields->getNrjOutMW() + mypatch->EMfields->computeNRJ();
-            energy_field_inj += mypatch->EMfields->getNrjInjMW();
-            for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                energy_part_out[ispec] += mypatch->vecSpecies[ispec]->getNrjOutMW() + mypatch->vecSpecies[ispec]->computeNRJ();
-                energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->getNrjInjMW();
-                ukin_new[ispec] += mypatch->vecSpecies[ispec]->getNewParticlesNRJ();
-                ukin_bc [ispec] += mypatch->vecSpecies[ispec]->getLostNrjBC();
-                urad    [ispec] += mypatch->vecSpecies[ispec]->getNrjRadiation();
+            if( mypatch->isXmin() ) {
+                for( unsigned int jp=0; jp<2; jp++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+                    for( unsigned int i=0 ; i<params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
+                        poynting[jp][i] += mypatch->EMfields->poynting[jp][i];
+                    }
+                }
+                
+                energy_field_out += mypatch->EMfields->getNrjOutMW() + mypatch->EMfields->computeNRJ();
+                energy_field_inj += mypatch->EMfields->getNrjInjMW();
+                for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
+                    energy_part_out[ispec] += mypatch->vecSpecies[ispec]->getNrjOutMW() + mypatch->vecSpecies[ispec]->computeNRJ();
+                    energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->getNrjInjMW();
+                    ukin_new[ispec] += mypatch->vecSpecies[ispec]->getNewParticlesNRJ();
+                    ukin_bc [ispec] += mypatch->vecSpecies[ispec]->getLostNrjBC();
+                    urad    [ispec] += mypatch->vecSpecies[ispec]->getNrjRadiation();
+                }
             }
             
             delete  mypatch;
@@ -575,9 +578,11 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         for( unsigned int j=0; j< patch_to_be_created[my_thread].size(); j++ ) {
             mypatch = vecPatches.patches_[patch_to_be_created[my_thread][j]];
             
-            energy_field_inj += mypatch->EMfields->computeNRJ();
-            for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
+            if( mypatch->isXmax() ) {
+                energy_field_inj += mypatch->EMfields->computeNRJ();
+                for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
+                    energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
+                }
             }
         }
         
