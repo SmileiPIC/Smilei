@@ -457,28 +457,28 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             
             // If radiation activated
             if( vecSpecies[ispec]->Radiate ) {
-                *sUrad[ispec] += vecSpecies[ispec]->getNrjRadiation();
-                Urad_         += vecSpecies[ispec]->getNrjRadiation();
+                *sUrad[ispec] += vecSpecies[ispec]->nrj_radiated_;
+                Urad_         += vecSpecies[ispec]->nrj_radiated_;
             }
             
             // If multiphoton Breit-Wheeler activated for photons
             // increment the total pair energy from this process
             if( vecSpecies[ispec]->Multiphoton_Breit_Wheeler_process ) {
-                UmBWpairs_ += vecSpecies[ispec]->getNrjRadiation();
+                UmBWpairs_ += vecSpecies[ispec]->nrj_radiated_;
             }
         }
         
         if( necessary_Ukin_BC ) {
             // particle energy lost due to boundary conditions
-            Ukin_bnd_     += vecSpecies[ispec]->getLostNrjBC();
+            Ukin_bnd_     += vecSpecies[ispec]->nrj_bc_lost;
             // particle energy lost due to moving window
-            Ukin_out_mvw_ += vecSpecies[ispec]->getNrjOutMW();
+            Ukin_out_mvw_ += vecSpecies[ispec]->nrj_mw_out;
             // particle energy added by moving window
-            Ukin_inj_mvw_ += vecSpecies[ispec]->getNrjInjMW();
+            Ukin_inj_mvw_ += vecSpecies[ispec]->nrj_mw_inj;
         }
         
         // particle energy from new particles
-        Ukin_new_ += vecSpecies[ispec]->getNewParticlesNRJ();
+        Ukin_new_ += vecSpecies[ispec]->nrj_new_part_;
         
     } // for ispec
     
@@ -570,10 +570,10 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
     // Lost/added elm energies through the moving window
     if( necessary_Uelm_BC ) {
         // nrj lost with moving window (fields)
-        *Uelm_out_mvw += EMfields->getNrjOutMW() * 0.5*cell_volume;
+        *Uelm_out_mvw += EMfields->nrj_mw_out * 0.5*cell_volume;
         
         // nrj added due to moving window (fields)
-        *Uelm_inj_mvw += EMfields->getNrjInjMW() * 0.5*cell_volume;
+        *Uelm_inj_mvw += EMfields->nrj_mw_inj * 0.5*cell_volume;
     }
     
     

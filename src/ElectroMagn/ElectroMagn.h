@@ -71,7 +71,11 @@ struct Antenna {
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
 class ElectroMagn
 {
-
+    friend class SmileiMPI;
+    friend class SimWindow;
+    friend class Checkpoint;
+    friend class DiagnosticScalar;
+    
 public:
     //! Constructor for Electromagn
     ElectroMagn( Params &params, DomainDecomposition *domain_decomposition, std::vector<Species *> &vecSpecies, Patch *patch );
@@ -418,25 +422,6 @@ public:
     virtual void initAntennas( Patch *patch, Params& params ) {};
     
     virtual double computeNRJ();
-    void setNrjOutMW( double value ) {
-        nrj_mw_out = value;
-    }
-    double getNrjOutMW() const {
-        return nrj_mw_out;
-    }
-    void addNrjOutMW( double value ) {
-        nrj_mw_out += value;
-    }
-    
-    void setNrjInjMW( double value ) {
-        nrj_mw_inj = value;
-    }
-    double getNrjInjMW() const{
-        return nrj_mw_inj;
-    }
-    void addNrjInjMW( double value ) {
-        nrj_mw_inj += value;
-    }
     
     inline int getMemFootPrint()
     {
@@ -494,14 +479,14 @@ public:
 protected :
     bool is_pxr;
     
-private:
-
     //! Accumulate nrj lost / gained with moving window
     double nrj_mw_out;
     
     //! Accumulate nrj added with new fields
     double nrj_mw_inj;
     
+private:
+
     
 };
 

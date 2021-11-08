@@ -225,7 +225,7 @@ public:
     {
         double nrj( 0. );
         
-        for( int imode=0; imode<nmodes; imode++ ) {
+        for( unsigned int imode=0; imode<nmodes; imode++ ) {
             nrj += El_[imode]->norm2( istart, bufsize );
             nrj += Er_[imode]->norm2( istart, bufsize );
             nrj += Et_[imode]->norm2( istart, bufsize );

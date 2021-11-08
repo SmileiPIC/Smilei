@@ -239,9 +239,9 @@ public:
     //! Accumulate energy gained with moving window
     double nrj_mw_inj;
     //! Accumulate energy added with new particles
-    double new_particles_energy_;
+    double nrj_new_part_;
     //! Accumulate energy lost by the particle with the radiation
-    double radiated_energy_;
+    double nrj_radiated_;
 
     //! whether to choose vectorized operators with respective sorting methods
     int vectorized_operators;
@@ -459,61 +459,6 @@ public:
 
     //! Method to know if we have to project this species or not.
     bool  isProj( double time_dual, SimWindow *simWindow );
-
-    //! Set / get / add the energy lost in the boundary conditions
-    void setLostNrjBC( double value ) {
-        nrj_bc_lost = value;
-    }
-    double getLostNrjBC() const {
-        return nrj_bc_lost;
-    }
-    void addLostNrjBC( double value ) {
-        nrj_bc_lost += value;
-    }
-    
-    //! Set / get / add energy lost with moving window (particles)
-    void setNrjOutMW( double value ) {
-        nrj_mw_out = value;
-    }
-    double getNrjOutMW() const {
-        return nrj_mw_out;
-    }
-    void addNrjOutMW( double value ) {
-        nrj_mw_out += value;
-    }
-    
-    //! Set / get / add energy gained with moving window (particles)
-    void setNrjInjMW( double value ) {
-        nrj_mw_inj = value;
-    }
-    double getNrjInjMW() const {
-        return nrj_mw_inj;
-    }
-    void addNrjInjMW( double value ) {
-        nrj_mw_inj += value;
-    }
-    
-    //! Set / get / add the energy radiated away by the particles
-    void setNrjRadiation( double value ) {
-        radiated_energy_ = value;
-    }
-    double getNrjRadiation() const {
-        return radiated_energy_;
-    }
-    void addNrjRadiation( double value ) {
-        radiated_energy_ += value;
-    }
-
-    //! Set / get add / energy gained via new particles
-    void setNewParticlesNRJ( double value ) {
-        new_particles_energy_ = value;
-    }
-    double getNewParticlesNRJ() const {
-        return new_particles_energy_;
-    }
-    void addNewParticlesNRJ( double value ) {
-        new_particles_energy_ += value;
-    }
     
     inline double computeNRJ()
     {

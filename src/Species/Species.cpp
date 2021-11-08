@@ -155,8 +155,8 @@ void Species::initCluster( Params &params )
     nrj_bc_lost = 0.;
     nrj_mw_out = 0.;
     nrj_mw_inj = 0.;
-    new_particles_energy_ = 0.;
-    radiated_energy_ = 0.;
+    nrj_new_part_ = 0.;
+    nrj_radiated_ = 0.;
 
 }//END initCluster
 
@@ -408,12 +408,12 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 // Radiation process
                 ( *Radiate )( *particles, photon_species_, smpi,
                               RadiationTables,
-                              radiated_energy_,
+                              nrj_radiated_,
                               particles->first_index[ibin],
                               particles->last_index[ibin], ithread );
 
                 // Update scalar variable for diagnostics
-                // radiated_energy_ += Radiate->getRadiatedEnergy();
+                // nrj_radiated_ += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
                 // Radiate->computeParticlesChi( *particles,
@@ -437,11 +437,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                 // Pair generation process
-                // We reuse radiated_energy_ for the pairs
+                // We reuse nrj_radiated_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
                                                         MultiphotonBreitWheelerTables,
-                                                        radiated_energy_,
+                                                        nrj_radiated_,
                                                         particles->first_index[ibin],
                                                         particles->last_index[ibin], ithread );
 

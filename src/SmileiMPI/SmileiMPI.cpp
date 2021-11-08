@@ -715,12 +715,12 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &irequest, int tag, Par
     patch->buffer_scalars_particles.resize( nscalars*nspec );
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         unsigned int i = ispec*nscalars;
-        patch->buffer_scalars_particles[i+0] = patch->vecSpecies[ispec]->getLostNrjBC(); // lost at boundaries
-        patch->buffer_scalars_particles[i+1] = patch->vecSpecies[ispec]->getNewParticlesNRJ(); // injected
-        patch->buffer_scalars_particles[i+2] = patch->vecSpecies[ispec]->getNrjOutMW(); // lost by moving window
-        patch->buffer_scalars_particles[i+3] = patch->vecSpecies[ispec]->getNrjInjMW(); // gained by moving window
+        patch->buffer_scalars_particles[i+0] = patch->vecSpecies[ispec]->nrj_bc_lost; // lost at boundaries
+        patch->buffer_scalars_particles[i+1] = patch->vecSpecies[ispec]->nrj_new_part_; // injected
+        patch->buffer_scalars_particles[i+2] = patch->vecSpecies[ispec]->nrj_mw_out; // lost by moving window
+        patch->buffer_scalars_particles[i+3] = patch->vecSpecies[ispec]->nrj_mw_inj; // gained by moving window
         if( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation ) {
-            patch->buffer_scalars_particles[i+4] = patch->vecSpecies[ispec]->getNrjRadiation(); // radiated energy
+            patch->buffer_scalars_particles[i+4] = patch->vecSpecies[ispec]->nrj_radiated_; // radiated energy
         }
     }
     MPI_Isend( &patch->buffer_scalars_particles[0], patch->buffer_scalars_particles.size(), MPI_DOUBLE, to, tag + irequest, world_, &patch->requests_[irequest] );
@@ -739,8 +739,8 @@ void SmileiMPI::isend_fields( Patch *patch, int to, int &irequest, int tag, Para
     // Send some scalars
     unsigned int nscalars = 2 + 2*params.nDim_field;
     patch->buffer_scalars_fields.resize( nscalars );
-    patch->buffer_scalars_fields[0] = patch->EMfields->getNrjOutMW(); // lost by moving window
-    patch->buffer_scalars_fields[1] = patch->EMfields->getNrjInjMW(); // lost by moving window
+    patch->buffer_scalars_fields[0] = patch->EMfields->nrj_mw_out; // lost by moving window
+    patch->buffer_scalars_fields[1] = patch->EMfields->nrj_mw_inj; // lost by moving window
     for( unsigned int jp=0; jp<2; jp++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
         for( unsigned int i=0 ; i<params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
             patch->buffer_scalars_fields[2+i*2+jp] = patch->EMfields->poynting[jp][i];
@@ -844,12 +844,12 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
     tag++;
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         unsigned int i = ispec*nscalars;
-        patch->vecSpecies[ispec]->setLostNrjBC      ( patch->buffer_scalars_particles[i+0] );
-        patch->vecSpecies[ispec]->setNewParticlesNRJ( patch->buffer_scalars_particles[i+1] );
-        patch->vecSpecies[ispec]->setNrjOutMW       ( patch->buffer_scalars_particles[i+2] );
-        patch->vecSpecies[ispec]->setNrjInjMW       ( patch->buffer_scalars_particles[i+3] );
+        patch->vecSpecies[ispec]->nrj_bc_lost   = patch->buffer_scalars_particles[i+0];
+        patch->vecSpecies[ispec]->nrj_new_part_ = patch->buffer_scalars_particles[i+1];
+        patch->vecSpecies[ispec]->nrj_mw_out    = patch->buffer_scalars_particles[i+2];
+        patch->vecSpecies[ispec]->nrj_mw_inj    = patch->buffer_scalars_particles[i+3];
         if( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation ) {
-            patch->vecSpecies[ispec]->setNrjRadiation( patch->buffer_scalars_particles[i+4] );
+            patch->vecSpecies[ispec]->nrj_radiated_ = patch->buffer_scalars_particles[i+4];
         }
     }
 }
@@ -870,8 +870,8 @@ void SmileiMPI::recv_fields( Patch *patch, int from, int &tag, Params &params )
     MPI_Status status;
     MPI_Recv( &patch->buffer_scalars_fields[0], patch->buffer_scalars_fields.size(), MPI_DOUBLE, from, tag, world_, &status );
     tag++;
-    patch->EMfields->setNrjOutMW( patch->buffer_scalars_fields[0] );
-    patch->EMfields->setNrjInjMW( patch->buffer_scalars_fields[1] );
+    patch->EMfields->nrj_mw_out =  patch->buffer_scalars_fields[0] ;
+    patch->EMfields->nrj_mw_inj =  patch->buffer_scalars_fields[1] ;
     for( unsigned int jp=0; jp<2; jp++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
         for( unsigned int i=0 ; i<params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
             patch->EMfields->poynting[jp][i] = patch->buffer_scalars_fields[2+i*2+jp];

@@ -848,14 +848,14 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                             for( int ip = 0; ip<new_particle_number; ip++ ) {
                                 energy += particles->weight( ip )*( particles->LorentzFactor( ip )-1.0 );
                             }
-                            injector_species->new_particles_energy_ += injector_species->mass_ * energy;
+                            injector_species->nrj_new_part_ += injector_species->mass_ * energy;
                         }
                         // Photon case
                         else if( injector_species->mass_ == 0 ) {
                             for( int ip=0; ip<new_particle_number; ip++ ) {
                                 energy += particles->weight( ip )*( particles->momentumNorm( ip ) );
                             }
-                            injector_species->new_particles_energy_ += energy;
+                            injector_species->nrj_new_part_ += energy;
                         }
                     //}
                         

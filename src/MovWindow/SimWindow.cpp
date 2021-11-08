@@ -560,14 +560,14 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     }
                 }
                 
-                energy_field_out += mypatch->EMfields->getNrjOutMW() + mypatch->EMfields->computeNRJ();
-                energy_field_inj += mypatch->EMfields->getNrjInjMW();
+                energy_field_out += mypatch->EMfields->nrj_mw_out + mypatch->EMfields->computeNRJ();
+                energy_field_inj += mypatch->EMfields->nrj_mw_inj;
                 for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                    energy_part_out[ispec] += mypatch->vecSpecies[ispec]->getNrjOutMW() + mypatch->vecSpecies[ispec]->computeNRJ();
-                    energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->getNrjInjMW();
-                    ukin_new[ispec] += mypatch->vecSpecies[ispec]->getNewParticlesNRJ();
-                    ukin_bc [ispec] += mypatch->vecSpecies[ispec]->getLostNrjBC();
-                    urad    [ispec] += mypatch->vecSpecies[ispec]->getNrjRadiation();
+                    energy_part_out[ispec] += mypatch->vecSpecies[ispec]->nrj_mw_out + mypatch->vecSpecies[ispec]->computeNRJ();
+                    energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->nrj_mw_inj;
+                    ukin_new[ispec] += mypatch->vecSpecies[ispec]->nrj_new_part_;
+                    ukin_bc [ispec] += mypatch->vecSpecies[ispec]->nrj_bc_lost;
+                    urad    [ispec] += mypatch->vecSpecies[ispec]->nrj_radiated_;
                 }
             }
             
@@ -597,14 +597,14 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 }
             }
             
-            vecPatches( 0 )->EMfields->addNrjOutMW( energy_field_out );
-            vecPatches( 0 )->EMfields->addNrjInjMW( energy_field_inj );
+            vecPatches( 0 )->EMfields->nrj_mw_out += energy_field_out;
+            vecPatches( 0 )->EMfields->nrj_mw_inj += energy_field_inj;
             for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                vecPatches( 0 )->vecSpecies[ispec]->addNrjOutMW( energy_part_out[ispec] );
-                vecPatches( 0 )->vecSpecies[ispec]->addNrjInjMW( energy_part_inj[ispec] );
-                vecPatches( 0 )->vecSpecies[ispec]->addNewParticlesNRJ( ukin_new[ispec] );
-                vecPatches( 0 )->vecSpecies[ispec]->addLostNrjBC      ( ukin_bc [ispec] );
-                vecPatches( 0 )->vecSpecies[ispec]->addNrjRadiation   ( urad    [ispec] );
+                vecPatches( 0 )->vecSpecies[ispec]->nrj_mw_out    += energy_part_out[ispec];
+                vecPatches( 0 )->vecSpecies[ispec]->nrj_mw_inj    += energy_part_inj[ispec];
+                vecPatches( 0 )->vecSpecies[ispec]->nrj_new_part_ += ukin_new[ispec];
+                vecPatches( 0 )->vecSpecies[ispec]->nrj_bc_lost   += ukin_bc [ispec];
+                vecPatches( 0 )->vecSpecies[ispec]->nrj_radiated_ += urad    [ispec];
             }
         }
 
