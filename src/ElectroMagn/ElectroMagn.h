@@ -417,7 +417,7 @@ public:
     //! Method that fills the initial spatial profile of the antenna
     virtual void initAntennas( Patch *patch, Params& params ) {};
     
-    double computeNRJ();
+    virtual double computeNRJ();
     void setNrjOutMW( double value ) {
         nrj_mw_out = value;
     }

@@ -220,6 +220,24 @@ public:
         return norm2;
     }
     
+    //! Compute total energy in fields
+    double computeNRJ() override
+    {
+        double nrj( 0. );
+        
+        for( int imode=0; imode<nmodes; imode++ ) {
+            nrj += El_[imode]->norm2( istart, bufsize );
+            nrj += Er_[imode]->norm2( istart, bufsize );
+            nrj += Et_[imode]->norm2( istart, bufsize );
+            
+            nrj += Bl_m[imode]->norm2( istart, bufsize );
+            nrj += Br_m[imode]->norm2( istart, bufsize );
+            nrj += Bt_m[imode]->norm2( istart, bufsize );
+        }
+        
+        return nrj;
+    }
+    
     //! from smpi is ymax
     const bool isYmin;
     
