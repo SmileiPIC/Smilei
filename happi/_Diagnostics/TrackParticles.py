@@ -363,7 +363,7 @@ class TrackParticles(Diagnostic):
 							elif seltype[k] == "all(": selection *= selectionAtTimeT * existing
 						stack.append(selection)
 					# Merge all stack items according to the operations
-					selectedParticles = self._np.union1d( selectedParticles, eval(operation).nonzero()[0] )
+					selectedParticles = self._np.union1d( selectedParticles, eval(operation).nonzero()[0].astype("uint64") )
 			else:
 				# Execute the selector item
 				selectedParticles = self._np.array([], dtype="uint64")

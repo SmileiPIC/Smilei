@@ -969,7 +969,6 @@ Params::~Params()
     if( adaptive_vecto_time_selection ) {
         delete adaptive_vecto_time_selection;
     }
-    PyTools::closePython();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1720,10 +1719,13 @@ void Params::multiple_decompose_3D()
 string Params::speciesField( string field_name )
 {
     if( geometry != "AMcylindrical" ) {
-        size_t i1 = field_name.rfind( "_" );
+        size_t i1 = field_name.find( "_" );
         size_t l = field_name.length();
         if( i1 != string::npos && l-i1 > 2 ) {
-            return field_name.substr( i1+1, l-i1-1 );
+            string field = field_name.substr( 0, i1 );
+            if( field == "Jx" || field == "Jy" || field == "Jz" || field == "Rho" ) {
+                return field_name.substr( i1+1, l-i1-1 );
+            }
         }
     } else {
         size_t i1 = field_name.find( "_" );

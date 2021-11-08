@@ -176,6 +176,8 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
     nDim_particle=params.nDim_particle;
 }
 
+Checkpoint::~Checkpoint() {}
+
 void Checkpoint::dump( VectorPatch &vecPatches, Region &region, unsigned int itime, SmileiMPI *smpi, SimWindow *simWindow, Params &params )
 {
 

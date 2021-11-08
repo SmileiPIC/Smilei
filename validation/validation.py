@@ -90,9 +90,8 @@ try:
 except: # python3
     raw_input = input
 
-
 def usage():
-    print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>] [-k <compile_mode>] [-p <partition name>] [-l <logs_folder>]' )
+    print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>] [-t <max_time>] [-k <compile_mode>] [-p <partition name>] [-l <logs_folder>]' )
     print( '    Try `validation.py -h` for more details' )
 
 # --------------------
@@ -210,48 +209,45 @@ for opt, arg in external_options:
     elif opt in ('-a', '--account'):
         options['account']=arg
     elif opt in ('-h', '--HELP'):
-        print( "-b")
-        print( "     -b <bench_case>")
-        print( "       <bench_case> : benchmark(s) to validate. Accepts wildcards.")
-        print( "     DEFAULT : All benchmarks are validated.")
-        print( "-o")
-        print( "     -o <nb_OMPThreads>")
-        print( "       <nb_OMPThreads> : number of OpenMP threads used for the execution")
-        print( "     DEFAULT : 4")
-        print( "-m")
-        print( "     -m <nb_MPIProcs>")
-        print( "       <nb_MPIProcs> : number of MPI processes used for the execution")
-        print( "     DEFAULT : 4")
-        print( "-p")
-        print( "     -p <partition name>")
-        print( "       <partition name>: partition name on super-computers")
-        print( "                         - ruche")
-        print( "                         - tornado")
-        print( "                         - jollyjumper")
-        print( "                         - irene_skylake")
-        print( "                         - irene_a64fx")
-        print( "-t")
-        print( "     -t <max time>")
-        print( "       <max time>: format hh:mm:ss")
-        print( "-a")
-        print( "     -a --account <account id>")
-        print( "       <account id>: account/project id given by some super-computer facilities")
-        print( "-g")
-        print( "     Generates the references")
-        print( "-s")
-        print( "     Plot differences with references (python -i option required to keep figures on screen)")
-        print( "-r")
-        print( "     -r <nb_restarts>")
-        print( "       <nb_restarts> : number of restarts to run, as long as the simulations provide them.")
-        print( "     DEFAULT : 0 (meaning no restarts, only one simulation)")
-        print( "-c")
-        print( "     Compilation only")
-        print( "-k")
-        print( "     Compilation using config=... See make help for details")
-        print( "-v")
-        print( "     Verbose mode")
-        print( "-l")
-        print( "     Log some performance info in the directory `logs`")
+        print( """
+Options:
+  -b <bench_case>
+       <bench_case> : benchmark(s) to validate. Accepts wildcards.
+       DEFAULT : All benchmarks are validated.
+  -o <nb_OMPThreads>
+       <nb_OMPThreads> : number of OpenMP threads used for the execution
+       DEFAULT : 4
+  -m <nb_MPIProcs>
+       <nb_MPIProcs> : number of MPI processes used for the execution
+       DEFAULT : 4
+  -g
+       Generates the references
+  -s
+       Plot differences with references (python -i option required to keep figures on screen)
+  -c
+       Compilation only
+  -k
+       Compilation using config=... See make help for details
+  -r <nb_restarts>
+       <nb_restarts> : number of restarts to run, as long as the simulations provide them.
+       DEFAULT : 0 (meaning no restarts, only one simulation)
+  -v
+       Verbose mode
+  -t <max time>
+       <max time>: format hh:mm:ss
+  -p <partition name>
+       <partition name>: partition name on super-computers
+                           - ruche
+                           - tornado
+                           - jollyjumper
+                           - irene_skylake
+                           - irene_a64fx
+  -a <account id>
+  --account <account id>
+       <account id>: account/project id given by some super-computer facilities
+  -l
+       Log some performance info in the directory `logs`
+""")
         sys.exit(0)
     elif opt in ('-g', '--GENERATE'):
         options['generate'] = True
