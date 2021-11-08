@@ -968,7 +968,6 @@ Params::~Params()
     if( adaptive_vecto_time_selection ) {
         delete adaptive_vecto_time_selection;
     }
-    PyTools::closePython();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

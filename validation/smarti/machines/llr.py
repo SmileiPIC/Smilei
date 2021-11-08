@@ -9,21 +9,20 @@ class MachineLLR(Machine):
 module purge
 unset MODULEPATH
 module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles_el7
-module load mpi/openmpi/3.1.6-ib-icc
-module load hdf5/1.10.5-icc-omp3.1.6
+module load hdf5/1.10.5-icc-omp4.1.1
 module load python/3.7.0
-module load h5py/hdf5_1.10.5-icc-omp3.1.6-py3.7.0
-module load mpi4py/omp3.1.6-ib-icc_py3.7.0
+module load h5py/hdf5_1.10.5-icc-omp4.1.1-py3.7.0
+module load mpi4py/omp4.1.1-ib-icc_py3.7.0
 module load compilers/gcc/9.x.x
-module load fftw/3.3.10-omp-3.1.6-icc-19
+module load fftw/3.3.10-omp-4.1.1-icc-19
 export OMP_NUM_THREADS={omp}
 export OMP_SCHEDULE=DYNAMIC
 export KMP_AFFINITY=verbose
 export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck
 export LIBPXR=/home/llr/galop/derouil/applications.ompi216.Py3/picsar/lib
 export LD_LIBRARY_PATH=$LIBPXR:$LD_LIBRARY_PATH
-export FFTW3_LIB=/opt/exp_soft/vo.llr.in2p3.fr/fftw/3.3.10/opm-3.1.6-intel-19-el7/lib
-export FFTW3_INC=/opt/exp_soft/vo.llr.in2p3.fr/fftw/3.3.10/opm-3.1.6-intel-19-el7/include
+export FFTW3_LIB=/opt/exp_soft/vo.llr.in2p3.fr/fftw/3.3.10/opm-4.1.1-intel-19-el7/lib
+export FFTW3_INC=/opt/exp_soft/vo.llr.in2p3.fr/fftw/3.3.10/opm-4.1.1-intel-19-el7/include
 ulimit -s unlimited
 #Specify the number of sockets per node in -mca orte_num_sockets
 #Specify the number of cores per sockets in -mca orte_num_cores

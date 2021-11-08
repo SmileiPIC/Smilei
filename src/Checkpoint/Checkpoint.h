@@ -38,7 +38,7 @@ class Checkpoint
 public:
     Checkpoint( Params &params, SmileiMPI *smpi );
     //! Destructor for Checkpoint
-    virtual ~Checkpoint() {};
+    ~Checkpoint();
     
     //! Space dimension of a particle
     unsigned int nDim_particle;
