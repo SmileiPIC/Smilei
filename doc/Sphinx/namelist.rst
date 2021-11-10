@@ -2282,6 +2282,15 @@ The full list of available scalars is given in the table below.
 | +--------------+-------------------------------------------------------------------------+ |
 | |              |  ... same for other boundaries                                          | |
 | +--------------+-------------------------------------------------------------------------+ |
+| | Ukin_new     | Time-accumulated kinetic energy from new particles (injector)           | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Ukin_out_mvw | Time-accumulated kinetic energy lost by the moving window               | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Ukin_inj_mvw | Time-accumulated kinetic energy gained by the moving window             | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Uelm_out_mvw | Time-accumulated EM energy lost by the moving window                    | |
+| +--------------+-------------------------------------------------------------------------+ |
+| | Uelm_inj_mvw | Time-accumulated EM energy gained by the moving window                  | |
 | +--------------+-------------------------------------------------------------------------+ |
 +--------------------------------------------------------------------------------------------+
 | **Particle information**                                                                   |

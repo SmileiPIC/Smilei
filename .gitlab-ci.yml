@@ -12,7 +12,11 @@ install:
   stage: install
   only:
     - develop
+<<<<<<< HEAD
     - develop-mat
+=======
+    - mvw_scalars
+>>>>>>> origin/develop
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,7 +35,11 @@ compile_default:
   stage: compile_default
   only:
     - develop
+<<<<<<< HEAD
     - develop-mat
+=======
+    - mvw_scalars
+>>>>>>> origin/develop
 
   script:
     # Move in test dir
@@ -43,7 +51,11 @@ run1D:
   stage: run_default
   only:
     - develop
+<<<<<<< HEAD
     - develop-mat
+=======
+    - mvw_scalars
+>>>>>>> origin/develop
 
   script:
     # Move in test dir
@@ -56,7 +68,11 @@ run2D:
   stage: run_default
   only:
     - develop
+<<<<<<< HEAD
     - develop-mat
+=======
+    - mvw_scalars
+>>>>>>> origin/develop
 
   script:
     # Move in test dir
@@ -71,7 +87,11 @@ run3D:
   stage: run_default
   only:
     - develop
+<<<<<<< HEAD
     - develop-mat
+=======
+    - mvw_scalars
+>>>>>>> origin/develop
 
   script:
     # Move in test dir
@@ -87,7 +107,11 @@ runAM:
   stage: run_default
   only:
     - develop
+<<<<<<< HEAD
     - develop-mat
+=======
+    - mvw_scalars
+>>>>>>> origin/develop
 
   script:
     # Move in test dir
@@ -95,22 +119,15 @@ runAM:
     # Run validation script
     - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -t 00:30:00 -l "/sps/gitlab-runner/logs"
 
-#runV:
-#  stage: run_default
-#  only:
-#    - develop
-#    - pusher_cleaning
-
-#  script:
-#    # Move in test dir
-#    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-#    # Run validation script
-
 runCollisions:
   stage: run_default
   only:
     - develop
+<<<<<<< HEAD
     - develop-mat
+=======
+    - mvw_scalars
+>>>>>>> origin/develop
 
   script:
     # Move in test dir
@@ -118,32 +135,50 @@ runCollisions:
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
 
+<<<<<<< HEAD
 compile_picsar:
   stage: compile_picsar
   only:
     - develop
     - develop-mat
+=======
+# compile_picsar:
+#   stage: compile_picsar
+#   only:
+#     - develop
+>>>>>>> origin/develop
 
-  script:
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
-    - make clean
-    - python validation/validation.py -k picsar -c -v
+#   script:
+#     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
+#     - make clean
+#     - python validation/validation.py -k picsar -c -v
 
+<<<<<<< HEAD
 run_picsar:
   stage: run_picsar
   only:
     - develop
     - develop-mat
+=======
+# run_picsar:
+#   stage: run_picsar
+#   only:
+#     - develop
+>>>>>>> origin/develop
 
-  script:
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
+#   script:
+#     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+#     - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
 
 compile_debug:
   stage: compile_debug
   only:
     - develop
+<<<<<<< HEAD
     - develop-mat
+=======
+    - mvw_scalars
+>>>>>>> origin/develop
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -154,8 +189,12 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
+<<<<<<< HEAD
     - develop-mat
 
+=======
+    - mvw_scalars
+>>>>>>> origin/develop
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
@@ -165,7 +204,11 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
+<<<<<<< HEAD
     - develop-mat
+=======
+    - mvw_scalars
+>>>>>>> origin/develop
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei

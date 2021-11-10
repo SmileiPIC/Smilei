@@ -139,11 +139,11 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #endif
                 // Radiation process
                 ( *Radiate )( *particles, this->photon_species_, smpi,
-                              RadiationTables, radiated_energy_,
+                              RadiationTables, nrj_radiated_,
                               particles->first_index[scell], particles->last_index[scell], ithread );
 
                 // // Update scalar variable for diagnostics
-                // radiated_energy_ += Radiate->getRadiatedEnergy();
+                // nrj_radiated_ += Radiate->getRadiatedEnergy();
                 //
                 // // Update the quantum parameter chi
                 // Radiate->computeParticlesChi( *particles,
@@ -162,11 +162,11 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
                 // Pair generation process
-                // We reuse radiated_energy_ for the pairs
+                // We reuse nrj_radiated_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
                                                         MultiphotonBreitWheelerTables,
-                                                        radiated_energy_,
+                                                        nrj_radiated_,
                                                         particles->first_index[scell], particles->last_index[scell], ithread );
 
                 // Update the photon quantum parameter chi of all photons
