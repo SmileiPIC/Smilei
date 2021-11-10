@@ -107,24 +107,24 @@ runCollisions:
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
 
-# compile_picsar:
-#   stage: compile_picsar
-#   only:
-#     - develop
+compile_picsar:
+  stage: compile_picsar
+  only:
+    - develop
 
-#   script:
-#     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
-#     - make clean
-#     - python validation/validation.py -k picsar -c -v
+  script:
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make clean
+    - python validation/validation.py -k picsar -c -v
 
-# run_picsar:
-#   stage: run_picsar
-#   only:
-#     - develop
+run_picsar:
+  stage: run_picsar
+  only:
+    - develop
 
-#   script:
-#     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-#     - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
+  script:
+    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
 
 compile_debug:
   stage: compile_debug
