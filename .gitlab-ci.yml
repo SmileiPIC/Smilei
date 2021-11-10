@@ -95,17 +95,6 @@ runAM:
     # Run validation script
     - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -t 00:30:00 -l "/sps/gitlab-runner/logs"
 
-#runV:
-#  stage: run_default
-#  only:
-#    - develop
-#    - pusher_cleaning
-
-#  script:
-#    # Move in test dir
-#    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-#    # Run validation script
-
 runCollisions:
   stage: run_default
   only:
@@ -118,26 +107,26 @@ runCollisions:
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
 
-compile_picsar:
-  stage: compile_picsar
-  only:
-    - develop
-    - cell_sorting_flag
+# compile_picsar:
+#   stage: compile_picsar
+#   only:
+#     - develop
+#     - cell_sorting_flag
 
-  script:
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
-    - make clean
-    - python validation/validation.py -k picsar -c -v
+#   script:
+#     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
+#     - make clean
+#     - python validation/validation.py -k picsar -c -v
 
-run_picsar:
-  stage: run_picsar
-  only:
-    - develop
-    - cell_sorting_flag
+# run_picsar:
+#   stage: run_picsar
+#   only:
+#     - develop
+#     - cell_sorting_flag
 
-  script:
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
+#   script:
+#     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+#     - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
 
 compile_debug:
   stage: compile_debug
