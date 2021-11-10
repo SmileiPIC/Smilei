@@ -379,7 +379,8 @@ protected:
     
     //! Buffers for exchange
     std::vector<int> buffer_vecto;
-    std::vector<double> buffer_scalars;
+    std::vector<double> buffer_scalars_particles;
+    std::vector<double> buffer_scalars_fields;
         
 };
 

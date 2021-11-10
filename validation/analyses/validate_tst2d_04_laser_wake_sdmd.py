@@ -29,8 +29,8 @@ Validate("Final load balance", final_balance, 1)
 
 # SCALARS RELATED TO BOUNDARIES AND MOVING WINDOW
 Validate("Scalar Ukin_bnd"    , S.Scalar.Ukin_bnd    ().getData(), 0.0001)
-Validate("Scalar Uelm_bnd"    , S.Scalar.Uelm_bnd    ().getData(), 1000. )
-Validate("Scalar Ukin_out_mvw", S.Scalar.Ukin_out_mvw().getData(), 1.    )
-Validate("Scalar Ukin_inj_mvw", S.Scalar.Ukin_inj_mvw().getData(), 2.e-7 )
-Validate("Scalar Uelm_out_mvw", S.Scalar.Uelm_out_mvw().getData(), 1.    )
-Validate("Scalar Uelm_inj_mvw", S.Scalar.Uelm_inj_mvw().getData(), 1.    )
+Validate("Scalar Uelm_bnd"    , S.Scalar.Uelm_bnd    ().getData(), 1.    )
+Validate("Scalar Ukin_out_mvw", S.Scalar.Ukin_out_mvw().getData(), 0.005 )
+Validate("Scalar Ukin_inj_mvw", S.Scalar.Ukin_inj_mvw().getData(), 1.e-6 )
+Validate("Scalar Uelm_out_mvw", S.Scalar.Uelm_out_mvw().getData(), 0.01  )
+Validate("Scalar Uelm_inj_mvw", S.Scalar.Uelm_inj_mvw().getData(), 0.01  )
