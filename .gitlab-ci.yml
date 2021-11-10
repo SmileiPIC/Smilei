@@ -58,6 +58,7 @@ run2D:
     - develop
     - develop-mat
 
+
   script:
     # Move in test dir
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -72,6 +73,7 @@ run3D:
   only:
     - develop
     - develop-mat
+
 
   script:
     # Move in test dir
@@ -88,6 +90,7 @@ runAM:
   only:
     - develop
     - develop-mat
+
 
   script:
     # Move in test dir
@@ -107,22 +110,24 @@ runCollisions:
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
 
-compile_picsar:
-  stage: compile_picsar
-  only:
-    - develop
-    - develop-mat
+
+# compile_picsar:
+#   stage: compile_picsar
+#   only:
+#     - develop
+#     - develop-mat
 
 #   script:
 #     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
 #     - make clean
 #     - python validation/validation.py -k picsar -c -v
 
-run_picsar:
-  stage: run_picsar
-  only:
-    - develop
-    - develop-mat
+
+# run_picsar:
+#   stage: run_picsar
+#   only:
+#     - develop
+#     - develop-mat
 
 #   script:
 #     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -155,6 +160,7 @@ compile_no_openmp:
   only:
     - develop
     - develop-mat
+
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
