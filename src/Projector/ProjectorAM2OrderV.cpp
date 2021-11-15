@@ -19,10 +19,12 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ProjectorAM2OrderV::ProjectorAM2OrderV( Params &params, Patch *patch ) : ProjectorAM( params, patch )
 {
+    dt = params.timestep;
+    dr = params.cell_length[1];
     dl_inv_   = 1.0/params.cell_length[0];
     dl_ov_dt_  = params.cell_length[0] / params.timestep;
-    dr_inv_   = 1.0/params.cell_length[1];
-    dr_ov_dt_  = params.cell_length[1] / params.timestep;
+    dr_inv_   = 1.0/dr;
+    dr_ov_dt_  = dr / dt;
     
     i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
@@ -31,9 +33,14 @@ ProjectorAM2OrderV::ProjectorAM2OrderV( Params &params, Patch *patch ) : Project
     oversize_[0] = params.oversize[0];
     oversize_[1] = params.oversize[1];
     nprimr_ = nscellr_ + 2*oversize_[1];
+    npriml_ = params.n_space[0] + 1 + 2*oversize_[0];
+
+    Nmode_=params.nmodes;
     dq_inv_[0] = dl_inv_;
     dq_inv_[1] = dr_inv_;
     
+    invR = &((static_cast<PatchAM *>( patch )->invR)[0]);
+    invRd = &((static_cast<PatchAM *>( patch )->invRd)[0]);
     
     DEBUG( "cell_length "<< params.cell_length[0] );
     
@@ -332,11 +339,11 @@ void Projector2D2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
     
 } // END Project global current densities (ionize)
 
-
+*/
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
+void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -379,7 +386,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = particles.position( 0, ivect+ipart+istart ) * dl_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin_;
             double delta  = pos - ( double )cell;
@@ -410,7 +417,10 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
             }
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            double rp = sqrt( particles.position( 1, ivect+ipart+istart )*particles.position( 1, ivect+ipart+istart )+particles.position( 2, ivect+ipart+istart )*particles.position( 2, ivect+ipart+istart ) );
+            std::complex<double> theta_old = array_eitheta_old[0]; //Probably wrong index
+            std::complex<double> eitheta = ( particles.position( 1, ivect+ipart+istart + Icpx * particles.position( 2, ivect+ipart+istart ) / rp ; //exp(i theta)
+            pos = rp * dr_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin_;
             delta  = pos - ( double )cell;
@@ -445,7 +455,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            double crx_p = charge_weight[ipart]*dx_ov_dt;
+            double crx_p = charge_weight[ipart]*dl_ov_dt_;
             
             double sum[5];
             sum[0] = 0.;
@@ -468,10 +478,10 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         
     }
     
-    int iloc0 = ipom2*nprimy+jpom2;
+    int iloc0 = ipom2*nprimr_+jpom2;
     int iloc = iloc0;
     for( unsigned int i=1 ; i<5 ; i++ ) {
-        iloc += nprimy;
+        iloc += nprimr_;
         #pragma omp simd
         for( unsigned int j=0 ; j<5 ; j++ ) {
             double tmpJx( 0. );
@@ -498,7 +508,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = particles.position( 0, ivect+ipart+istart ) * dl_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin_;
             double delta  = pos - ( double )cell;
@@ -529,7 +539,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
             }
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            pos = particles.position( 1, ivect+ipart+istart ) * dr_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin_;
             delta  = pos - ( double )cell;
@@ -564,7 +574,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            double cry_p = charge_weight[ipart]*dy_ov_dt;
+            double cry_p = charge_weight[ipart]*dr_ov_dt_;
             
             double sum[5];
             sum[0] = 0.;
@@ -599,7 +609,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             }
             Jy[iloc+j] += tmpJy;
         }
-        iloc += ( nprimy+1 );
+        iloc += ( nprimr_+1 );
     }
     
     #pragma omp simd
@@ -616,7 +626,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
+            double pos = particles.position( 0, ivect+ipart+istart ) * dl_inv_;
             int cell = round( pos );
             int cell_shift = cell-ipo-i_domain_begin_;
             double delta  = pos - ( double )cell;
@@ -647,7 +657,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
             }
             //                            Y                                 //
-            pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
+            pos = particles.position( 1, ivect+ipart+istart ) * dr_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin_;
             delta  = pos - ( double )cell;
@@ -678,7 +688,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
                 DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
             }
             charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
-            crz_p[ipart] = charge_weight[ipart]*one_third*particles.momentum( 2, ivect+istart+ipart )*( *invgf )[ivect+istart+ipart];
+            crz_p[ipart] = charge_weight[ipart]/3.*particles.momentum( 2, ivect+istart+ipart )*( *invgf )[ivect+istart+ipart];
         }
         
         #pragma omp simd
@@ -717,7 +727,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             }
             Jz[iloc+j]  +=  tmpJz;
         }//i
-        iloc += nprimy;
+        iloc += nprimr_;
     } // ipart
     
 } // END Project vectorized
@@ -726,7 +736,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread,  bool diag_flag, bool is_spectral, int ispec, int scell, int ipart_ref )
+void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread,  bool diag_flag, bool is_spectral, int ispec, int scell, int ipart_ref )
 {
     if( istart == iend ) {
         return;    //Don't treat empty cells.
@@ -736,36 +746,40 @@ void Projector2D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
     //{
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
+    std::vector<std::complex<double>> *array_eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
+    ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+
+
     //}
     int iold[2];
-    iold[0] = scell/nscelly_+oversize_[0];
-    iold[1] = ( scell%nscelly_ )+oversize_[1];
+    iold[0] = scell/nscellr_+oversize_[0];
+    iold[1] = ( scell%nscellr_ )+oversize_[1];
     
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
         if( !is_spectral ) {
-            double *b_Jx =  &( *EMfields->Jx_ )( 0 );
-            double *b_Jy =  &( *EMfields->Jy_ )( 0 );
-            double *b_Jz =  &( *EMfields->Jz_ )( 0 );
-            currents( b_Jx, b_Jy, b_Jz, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
+            //complex<double> *b_Jl =  &( *EMfields->Jl_ )( 0 );
+            //complex<double> *b_Jr =  &( *EMfields->Jr_ )( 0 );
+            //complex<double> *b_Jt =  &( *EMfields->Jt_ )( 0 );
+            currents( emAM, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
         } else {
-            ERROR( "TO DO with rho" );
+            ERROR( "Vectorized projection is not supported in spectral AM" );
         }
         
         // Otherwise, the projection may apply to the species-specific arrays
-    } else {
+    } /*else {
         double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
         double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
         double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
         double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
         currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles, istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
-    }
+    }*/
 }
 
 // Project susceptibility
-void Projector2D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+void ProjectorAM2OrderV::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 {
-    ERROR( "Vectorized projection of the susceptibility for the envelope model is not implemented for 2D geometry" );
+    ERROR( "Vectorized projection of the susceptibility for the envelope model is not implemented for AM geometry" );
 }
-*/
+
