@@ -198,7 +198,7 @@ public:
     int j_glob_;
     
     //! compute Poynting on borders
-    void computePoynting() override;
+    void computePoynting( unsigned int axis, unsigned int side ) override;
     //! Method used to impose external fields
     void applyExternalFields( Patch *patch ) override;
     //! Method used to impose external time fields
@@ -226,16 +226,16 @@ public:
         double nrj( 0. );
         
         for( unsigned int imode=0; imode<nmodes; imode++ ) {
-            nrj += El_[imode]->norm2( istart, bufsize );
-            nrj += Er_[imode]->norm2( istart, bufsize );
-            nrj += Et_[imode]->norm2( istart, bufsize );
+            nrj += El_[imode]->norm2_cylindrical( istart, bufsize, j_glob_ );
+            nrj += Er_[imode]->norm2_cylindrical( istart, bufsize, j_glob_ );
+            nrj += Et_[imode]->norm2_cylindrical( istart, bufsize, j_glob_ );
             
-            nrj += Bl_m[imode]->norm2( istart, bufsize );
-            nrj += Br_m[imode]->norm2( istart, bufsize );
-            nrj += Bt_m[imode]->norm2( istart, bufsize );
+            nrj += Bl_m[imode]->norm2_cylindrical( istart, bufsize, j_glob_ );
+            nrj += Br_m[imode]->norm2_cylindrical( istart, bufsize, j_glob_ );
+            nrj += Bt_m[imode]->norm2_cylindrical( istart, bufsize, j_glob_ );
         }
         
-        return nrj;
+        return nrj * dr; // multiplication by cell_volume is done in scalars
     }
     
     //! from smpi is ymax

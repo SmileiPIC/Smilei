@@ -1648,7 +1648,7 @@ void ElectroMagnAM::computeTotalEnvChi()
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute electromagnetic energy flows vectors on the border of the simulation box
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnAM::computePoynting()
+void ElectroMagnAM::computePoynting( unsigned int axis, unsigned int side )
 {
 }
 

@@ -1424,3 +1424,14 @@ void Patch::finalizeSumField( Field *field, int iDim )
 
 } // END finalizeSumField
 
+
+void Patch::computePoynting() {
+    for( unsigned int axis = 0; axis < (unsigned int) nDim_fields_; axis++ ) {
+        if( isBoundary( axis, 0 ) ) {
+            EMfields->computePoynting( axis, 0 );
+        }
+        if( isBoundary( axis, 1 ) ) {
+            EMfields->computePoynting( axis, 1 );
+        }
+    }
+}

@@ -340,7 +340,7 @@ public:
     void incrementAvgField( Field *field, Field *field_avg );
     
     //! compute Poynting on borders
-    virtual void computePoynting() = 0;
+    virtual void computePoynting( unsigned int axis, unsigned int side ) = 0;
     
     //! pointing vector on borders
     //! 1D: poynting[0][0]=left , poynting[1][0]=right
@@ -466,11 +466,7 @@ public:
     //! Vector of boundary-condition per side for the fields
     std::vector<ElectroMagnBC *> emBoundCond;
     
-    //! from smpi is xmin
-    bool isXmin;
-    
-    //! from smpi is xmax
-    bool isXmax;
+    bool isXmin, isXmax;
     
     //! Corners coefficient for BC
     std::vector<double> beta_edge;

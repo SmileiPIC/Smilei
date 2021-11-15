@@ -330,6 +330,9 @@ public:
     //    cell_starting_global_index[0] += (idx_moved);
     //}
     
+    //! Update Poyting quantities depending on location of the patch
+    void computePoynting();
+    
     //! MPI rank of current patch
     int MPI_me_;
     

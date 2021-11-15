@@ -330,7 +330,7 @@ void DiagnosticScalar::run( Patch *patch, int itime, SimWindow *simWindow )
 {
 
     // Must keep track of Poynting flux even without diag
-    patch->EMfields->computePoynting();
+    patch->computePoynting();
     
     // Compute all scalars when needed
     if( timeSelection->theTimeIsNow( itime ) && itime>latest_timestep ) {
