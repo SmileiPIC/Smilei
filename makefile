@@ -212,7 +212,7 @@ ifneq (,$(call parse_config,picsar))
 
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
-	LDFLAGS += -lgfortran
+	#LDFLAGS += -lgfortran
 endif
 
 
