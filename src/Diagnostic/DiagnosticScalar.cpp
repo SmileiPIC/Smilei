@@ -125,7 +125,7 @@ void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
     // Make the list of fields
     ElectroMagn *EMfields = vecPatches( 0 )->EMfields;
     vector<string> fields;
-    unsigned int  nmodes( 0 );
+    unsigned int nmodes = 1;
     if( params.geometry != "AMcylindrical" ) {
         fields.push_back( EMfields->Ex_ ->name );
         fields.push_back( EMfields->Ey_ ->name );
@@ -147,13 +147,15 @@ void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
     } else {
         ElectroMagnAM *emfields = static_cast<ElectroMagnAM *>( EMfields );
         nmodes = emfields->El_.size();
-        for( unsigned int imode=0 ; imode < nmodes ; imode++ ) {
-            fields.push_back( "Uelm_"+emfields->El_[imode] ->name );
-            fields.push_back( "Uelm_"+emfields->Er_[imode] ->name );
-            fields.push_back( "Uelm_"+emfields->Et_[imode] ->name );
-            fields.push_back( "Uelm_"+emfields->Bl_m[imode]->name );
-            fields.push_back( "Uelm_"+emfields->Br_m[imode]->name );
-            fields.push_back( "Uelm_"+emfields->Bt_m[imode]->name );
+        for( unsigned int imode=0; imode < nmodes; imode++ ) {
+            fields.push_back( emfields->El_[imode] ->name );
+            fields.push_back( emfields->Er_[imode] ->name );
+            fields.push_back( emfields->Et_[imode] ->name );
+            fields.push_back( emfields->Bl_m[imode]->name );
+            fields.push_back( emfields->Br_m[imode]->name );
+            fields.push_back( emfields->Bt_m[imode]->name );
+        }
+        for( unsigned int imode=0; imode < nmodes; imode++ ) {
             fields.push_back( emfields->Jl_[imode]->name );
             fields.push_back( emfields->Jr_[imode]->name );
             fields.push_back( emfields->Jt_[imode]->name );
@@ -192,7 +194,7 @@ void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
         }
     }
     // Fields
-    unsigned int nfield = 6;
+    unsigned int nfield = nmodes * 6;
     necessary_fieldUelm.resize( nfield, false );
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
         necessary_fieldUelm[ifield] = necessary_Uelm || allowedKey( Tools::merge( "Uelm_", fields[ifield] ) );
@@ -275,15 +277,14 @@ void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
     }
     
     // Scalars related to field's electromagnetic energy
-    //nfield = 6;
-    nfield = ( params.geometry == "AMcylindrical" ) ? nmodes * 6 : 6;
+    nfield = nmodes * 6;
     fieldUelm.resize( nfield, NULL );
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
         fieldUelm[ifield] = newScalar_SUM( Tools::merge( "Uelm_", fields[ifield] ) );
     }
     
     // Scalars related to fields min and max
-    nfield = fields.size();
+    nfield = ( params.geometry == "AMcylindrical" ) ? 0 : fields.size();
     fieldMin.resize( nfield, NULL );
     fieldMax.resize( nfield, NULL );
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
@@ -403,6 +404,9 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
     ElectroMagn *EMfields = patch->EMfields;
     std::vector<Species *> &vecSpecies = patch->vecSpecies;
     
+    ElectroMagnAM *AMfields = dynamic_cast<ElectroMagnAM *>( patch->EMfields );
+    bool AM = AMfields;
+    
     // ------------------------
     // SPECIES-related energies
     // ------------------------
@@ -505,7 +509,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
     
     vector<Field *> fields;
     
-    if( ( !dynamic_cast<ElectroMagnAM *>( patch->EMfields ) ) ) {
+    if( !AM ) {
         fields.push_back( EMfields->Ex_ );
         fields.push_back( EMfields->Ey_ );
         fields.push_back( EMfields->Ez_ );
@@ -513,52 +517,39 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
         fields.push_back( EMfields->By_m );
         fields.push_back( EMfields->Bz_m );
     } else {
-        ElectroMagnAM *emfields = static_cast<ElectroMagnAM *>( patch->EMfields );
-        unsigned int nmodes = emfields->El_.size();
+        unsigned int nmodes = AMfields->El_.size();
         for( unsigned int imode=0 ; imode < nmodes ; imode++ ) {
-            fields.push_back( emfields->El_[imode] );
-            fields.push_back( emfields->Er_[imode] );
-            fields.push_back( emfields->Et_[imode] );
-            fields.push_back( emfields->Bl_m[imode] );
-            fields.push_back( emfields->Br_m[imode] );
-            fields.push_back( emfields->Bt_m[imode] );
+            fields.push_back( AMfields->El_[imode] );
+            fields.push_back( AMfields->Er_[imode] );
+            fields.push_back( AMfields->Et_[imode] );
+            fields.push_back( AMfields->Bl_m[imode] );
+            fields.push_back( AMfields->Br_m[imode] );
+            fields.push_back( AMfields->Bt_m[imode] );
         }
     }
     
-    double Uelm_=0.0; // total electromagnetic energy in the fields
+    double Uelm_ = 0.0; // total electromagnetic energy in the fields
     
     // loop on all electromagnetic fields
     unsigned int nfield = fields.size();
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
-    
         if( necessary_fieldUelm[ifield] ) {
             Field *field = fields[ifield];
-            // compute the starting/ending points of each fields (w/out ghost cells) as well as the field global size
-            vector<unsigned int> iFieldStart( 3, 0 ), iFieldEnd( 3, 1 ), iFieldGlobalSize( 3, 1 );
-            for( unsigned int i=0 ; i<field->isDual_.size() ; i++ ) {
-                iFieldStart[i]      = EMfields->istart[i][field->isDual( i )];
-                iFieldEnd[i]        = iFieldStart[i] + EMfields->bufsize[i][field->isDual( i )];
-                iFieldGlobalSize[i] = field->dims_[i];
-            }
-            
-            
-            // loop on all (none-ghost) cells & add-up the squared-field to the energy density
-            //for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
-            //    for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
-            //        for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-            //            unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
-            //            Utot_crtField += (*field)(ii) * (*field)(ii);
-            //        }
-            //    }
-            //}
             
             // total energy in current field
-            double Utot_crtField = field->norm2( EMfields->istart, EMfields->bufsize );
-            // Utot = Dx^N/2 * Field^2
-            Utot_crtField *= 0.5*cell_volume;
+            double Uem = 0.;
+            if( ! AM ) {
+                Uem = field->norm2( EMfields->istart, EMfields->bufsize );
+            } else {
+                Uem = 0.5 * AMfields->dr * dynamic_cast<cField2D*>( field )->norm2_cylindrical( AMfields->istart, AMfields->bufsize, AMfields->j_glob_ );
+                if( ifield < 6 ) {
+                    Uem *= 2.; // Factor 2 for mode 0
+                }
+            }
+            Uem *= 0.5*cell_volume;
             
-            *fieldUelm[ifield] += Utot_crtField;
-            Uelm_+=Utot_crtField;
+            *fieldUelm[ifield] += Uem;
+            Uelm_ += Uem;
         }
     }
     
@@ -603,7 +594,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
     nfield = fields.size();
 
     // if AM, scalar on fields not managed
-    if ( EMfields->Ex_ == NULL ){
+    if( AM ){
         nfield = 0;
     }
 

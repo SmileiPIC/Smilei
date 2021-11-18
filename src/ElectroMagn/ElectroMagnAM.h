@@ -233,9 +233,13 @@ public:
             nrj += Bl_m[imode]->norm2_cylindrical( istart, bufsize, j_glob_ );
             nrj += Br_m[imode]->norm2_cylindrical( istart, bufsize, j_glob_ );
             nrj += Bt_m[imode]->norm2_cylindrical( istart, bufsize, j_glob_ );
+            
+            if( imode == 0 ) {
+                nrj *= 2;
+            }
         }
         
-        return nrj * dr; // multiplication by cell_volume is done in scalars
+        return 0.5 * nrj * dr; // multiplication by cell_volume is done in scalars
     }
     
     //! from smpi is ymax

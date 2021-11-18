@@ -331,7 +331,7 @@ public:
     //}
     
     //! Update Poyting quantities depending on location of the patch
-    void computePoynting();
+    virtual void computePoynting();
     
     //! MPI rank of current patch
     int MPI_me_;
