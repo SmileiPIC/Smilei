@@ -30,6 +30,7 @@ Changes made in the repository (not released)
 * ``LaserOffset`` available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
 * Screens may have a ``cylinder`` shape
 * Option to create neutrons for D-D fusion
+* Most scalar diagnostics now available in AM
 * Bugfixes:
 
   * Poynting scalars behaviour with several patches, or with checkpoints
