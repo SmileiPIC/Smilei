@@ -160,7 +160,7 @@ runAM:
   stage: run_default
   only:
     - develop
-#    - develop-mat
+    - develop-mat
 
 
   script:
@@ -173,7 +173,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-#    - develop-mat
+    - develop-mat
 
   script:
     # Move in test dir
@@ -185,6 +185,7 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
+    - develop-mat
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -195,6 +196,7 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
+    - develop-mat
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -204,7 +206,7 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-#    - develop-mat
+    - develop-mat
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -215,7 +217,7 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-#    - develop-mat
+    - develop-mat
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -226,7 +228,7 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-#    - develop-mat
+    - develop-mat
 
 
   script:
