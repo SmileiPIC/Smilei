@@ -67,7 +67,7 @@ You may define the SMILEI_ROOT environment variable to use a different installat
 from sys import argv, exit
 from glob import glob
 from getopt import getopt, GetoptError
-from smarti import Validation
+from easi import Validation
 
 def usage():
     print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>] [-t <max_time>] [-k <compile_mode>] [-p <partition name>] [-l <logs_folder>]' )
