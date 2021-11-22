@@ -225,7 +225,7 @@ void Patch::finalizeMPIenvironment( Params &params )
     }
 
     // Scalars
-    nb_comms ++;
+    nb_comms += 2;
 
     // Just apply on species & fields to start
 

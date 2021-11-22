@@ -37,7 +37,7 @@ inline std::complex<double> complex_interpolate( std::complex<double> *z, unsign
 class LaserPropagator
 {
 public:
-    LaserPropagator( Params *params, unsigned int side, double fft_time_window, MPI_Comm &comm );
+    LaserPropagator( Params *params, unsigned int side, double fft_time_window, double fft_time_step, MPI_Comm &comm );
     ~LaserPropagator() {
         MPI_Comm_free( &comm_ );
     };
