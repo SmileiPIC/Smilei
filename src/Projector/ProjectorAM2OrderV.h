@@ -43,12 +43,14 @@ private:
         Sl0[          ipart] = 0.5 * ( delta2-delta+0.25 );
         Sl0[  vecSize+ipart] = 0.75-delta2;
         Sl0[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+        Sl0[3*vecSize+ipart] = 0.;
         //                            R                                 //
         delta = deltaold[istart+ipart-ipart_ref+npart_total];
         delta2 = delta*delta;
         Sr0[          ipart] = 0.5 * ( delta2-delta+0.25 );
         Sr0[  vecSize+ipart] = 0.75-delta2;
         Sr0[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+        Sr0[3*vecSize+ipart] = 0.;
 
 
         // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -89,6 +91,33 @@ private:
         DSr [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sr0[2*vecSize+ipart] ;
         DSr [4*vecSize+ipart] =                             p1* deltap  ;
     }
+
+    inline void computeJl( int ipart, double *charge_weight, double *DSl, double *DSr, double *Sr0, double *bJ, double dl_ov_dt, double *invR_local )
+    {
+
+        int vecSize = 8;
+        double sum[5];
+
+        double crl_p = charge_weight[ipart]*dl_ov_dt_;
+        
+        sum[0] = 0.;
+        for( unsigned int k=1 ; k<5 ; k++ ) {
+            sum[k] = sum[k-1]-DSl[( k-1 )*vecSize+ipart];
+        }
+        
+        double tmp( crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] );
+        for( unsigned int i=1 ; i<5 ; i++ ) {
+            bJ [( i*5 )*vecSize+ipart] += sum[i] * tmp;
+        }
+        
+        for( unsigned int j=1; j<5 ; j++ ) {
+            tmp =  crl_p * ( Sr0[(j-1)*vecSize+ipart] + 0.5*DSr[j*vecSize+ipart] ) * invR_local[j];
+            for( unsigned int i=1 ; i<5 ; i++ ) {
+                bJ [( i*5+j )*vecSize+ipart] += sum[i] * tmp;
+            }
+        }
+    }
+
 };
 
 #endif
