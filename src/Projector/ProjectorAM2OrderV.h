@@ -28,6 +28,67 @@ public:
     void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref ) override final;
     
 private:
+
+    inline void compute_distances( Particles &particles, int npart_total, int ipart, int istart, int ipart_ref, double *deltaold, int *iold, double *Sl0, double *Sr0, double *DSl, double *DSr)
+    {
+
+        int ipo = iold[0];
+        int jpo = iold[1];
+        int vecSize = 8;
+
+        // locate the particle on the primal grid at former time-step & calculate coeff. S0
+        //                            L                                 //
+        double delta = deltaold[istart+ipart-ipart_ref];
+        double delta2 = delta*delta;
+        Sl0[          ipart] = 0.5 * ( delta2-delta+0.25 );
+        Sl0[  vecSize+ipart] = 0.75-delta2;
+        Sl0[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+        //                            R                                 //
+        delta = deltaold[istart+ipart-ipart_ref+npart_total];
+        delta2 = delta*delta;
+        Sr0[          ipart] = 0.5 * ( delta2-delta+0.25 );
+        Sr0[  vecSize+ipart] = 0.75-delta2;
+        Sr0[2*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+
+
+        // locate the particle on the primal grid at current time-step & calculate coeff. S1
+        //                            L                                 //
+        double pos = particles.position( 0, istart + ipart ) * dl_inv_;
+        int cell = round( pos );
+        int cell_shift = cell-ipo-i_domain_begin_;
+        delta  = pos - ( double )cell;
+        delta2 = delta*delta;
+        double deltam =  0.5 * ( delta2-delta+0.25 );
+        double deltap =  0.5 * ( delta2+delta+0.25 );
+        delta2 = 0.75 - delta2;
+        double m1 = ( cell_shift == -1 );
+        double c0 = ( cell_shift ==  0 );
+        double p1 = ( cell_shift ==  1 );
+        DSl [          ipart] = m1 * deltam                             ;
+        DSl [  vecSize+ipart] = c0 * deltam + m1 * delta2               -  Sl0[          ipart];
+        DSl [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap  -  Sl0[  vecSize+ipart];
+        DSl [3*vecSize+ipart] =               p1 * delta2 + c0* deltap  -  Sl0[2*vecSize+ipart];
+        DSl [4*vecSize+ipart] =                             p1* deltap  ;
+        
+        //                            R                                 //
+        double rp = sqrt( particles.position( 1, istart+ipart )*particles.position( 1, istart+ipart )+particles.position( 2, istart+ipart )*particles.position( 2, istart+ipart ) );
+        pos = rp * dr_inv_;
+        cell = round( pos );
+        cell_shift = cell-jpo-j_domain_begin_;
+        delta  = pos - ( double )cell;
+        delta2 = delta*delta;
+        deltam =  0.5 * ( delta2-delta+0.25 );
+        deltap =  0.5 * ( delta2+delta+0.25 );
+        delta2 = 0.75 - delta2;
+        m1 = ( cell_shift == -1 );
+        c0 = ( cell_shift ==  0 );
+        p1 = ( cell_shift ==  1 );
+        DSr [          ipart] = m1 * deltam                            ;
+        DSr [  vecSize+ipart] = c0 * deltam + m1 * delta2              -  Sr0[          ipart]                 ;
+        DSr [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap -  Sr0[  vecSize+ipart] ;
+        DSr [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sr0[2*vecSize+ipart] ;
+        DSr [4*vecSize+ipart] =                             p1* deltap  ;
+    }
 };
 
 #endif

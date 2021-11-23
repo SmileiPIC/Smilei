@@ -360,10 +360,10 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
     
     complex<double> bJ[bsize] __attribute__( ( aligned( 64 ) ) );
     
-    double Sl0_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
-    double Sr0_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
-    double Sl1_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
-    double Sr1_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
+    double Sl0_buff_vect[24] __attribute__( ( aligned( 64 ) ) );
+    double Sr0_buff_vect[24] __attribute__( ( aligned( 64 ) ) );
+    double Sl1_buff_vect[40] __attribute__( ( aligned( 64 ) ) ); //useless in the end
+    double Sr1_buff_vect[40] __attribute__( ( aligned( 64 ) ) ); //useless in the end
     double DSl[40] __attribute__( ( aligned( 64 ) ) );
     double DSr[40] __attribute__( ( aligned( 64 ) ) );
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
@@ -385,77 +385,12 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
     
         int np_computed = min( cell_nparts-ivect, vecSize );
+        int istart0 = ( int )istart + ivect;
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-        
-            // locate the particle on the primal grid at current time-step & calculate coeff. S1
-            //                            X                                 //
-            double pos = particles.position( 0, ivect+ipart+istart ) * dl_inv_;
-            int cell = round( pos );
-            int cell_shift = cell-ipo-i_domain_begin_;
-            double delta  = pos - ( double )cell;
-            double delta2 = delta*delta;
-            double deltam =  0.5 * ( delta2-delta+0.25 );
-            double deltap =  0.5 * ( delta2+delta+0.25 );
-            delta2 = 0.75 - delta2;
-            double m1 = ( cell_shift == -1 );
-            double c0 = ( cell_shift ==  0 );
-            double p1 = ( cell_shift ==  1 );
-            Sl1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sl1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
-            Sl1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
-            Sl1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
-            Sl1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
-            // locate the particle on the primal grid at former time-step & calculate coeff. S0
-            //                            X                                 //
-            delta = deltaold[ivect+ipart-ipart_ref+istart];
-            delta2 = delta*delta;
-            Sl0_buff_vect[          ipart] = 0;
-            Sl0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
-            Sl0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
-            Sl0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
-            Sl0_buff_vect[4*vecSize+ipart] = 0;
-            //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-#pragma unroll
-            for( unsigned int i = 0; i < 5 ; i++ ) {
-                DSl[i*vecSize+ipart] = Sl1_buff_vect[ i*vecSize+ipart] - Sl0_buff_vect[ i*vecSize+ipart];
-            }
-            //                            Y                                 //
-            double rp = sqrt( particles.position( 1, ivect+ipart+istart )*particles.position( 1, ivect+ipart+istart )+particles.position( 2, ivect+ipart+istart )*particles.position( 2, ivect+ipart+istart ) );
-            std::complex<double> eitheta_old = array_eitheta_old[0]; //Probably wrong index
-            std::complex<double> eitheta = ( particles.position( 1, ivect+ipart+istart) + Icpx * particles.position( 2, ivect+ipart+istart )) / rp ; //exp(i theta)
-            pos = rp * dr_inv_;
-            cell = round( pos );
-            cell_shift = cell-jpo-j_domain_begin_;
-            delta  = pos - ( double )cell;
-            delta2 = delta*delta;
-            deltam =  0.5 * ( delta2-delta+0.25 );
-            deltap =  0.5 * ( delta2+delta+0.25 );
-            delta2 = 0.75 - delta2;
-            m1 = ( cell_shift == -1 );
-            c0 = ( cell_shift ==  0 );
-            p1 = ( cell_shift ==  1 );
-            Sr1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sr1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
-            Sr1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
-            Sr1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
-            Sr1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
-            //                            Y                                 //
-            delta = deltaold[ivect+ipart-ipart_ref+istart+npart_total];
-            delta2 = delta*delta;
-            Sr0_buff_vect[          ipart] = 0;
-            Sr0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
-            Sr0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
-            Sr0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
-            Sr0_buff_vect[4*vecSize+ipart] = 0;
-            
-            //optrpt complains about the following loop but not unrolling it actually seems to give better result.
-#pragma unroll
-            for( unsigned int i = 0; i < 5 ; i++ ) {
-                DSr[i*vecSize+ipart] = Sr1_buff_vect[ i*vecSize+ipart] - Sr0_buff_vect[ i*vecSize+ipart];
-            }
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
+            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr );
+            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
         }
         
         #pragma omp simd
