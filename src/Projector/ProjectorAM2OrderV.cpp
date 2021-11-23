@@ -356,9 +356,9 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
     int jpom2 = jpo-2;
     
     int vecSize = 8;
-    int bsize = 5*5*vecSize;
+    int bsize = 5*5*vecSize*Nmode_;
     
-    double bJ[bsize] __attribute__( ( aligned( 64 ) ) );
+    std::complex<double> bJ[bsize] __attribute__( ( aligned( 64 ) ) );
     
     double Sl0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
     double Sr0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
@@ -367,15 +367,11 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
     complex<double> crt_p[8] __attribute__( ( aligned( 64 ) ) );
     complex<double> *Jl, *Jr, *Jt;
-    unsigned int imode = 0; /// TEMPORARY FIX imode
-    Jl =  &( *emAM->Jl_[imode] )( 0 );
-    Jr =  &( *emAM->Jr_[imode] )( 0 );
-    Jt =  &( *emAM->Jt_[imode] )( 0 );
 
     double *invR_local = &(invR[jpom2]);
     
     #pragma omp simd
-    for( unsigned int j=0; j<200; j++ ) {
+    for( unsigned int j=0; j<200*Nmode_; j++ ) {
         bJ[j] = 0.;
     }
     
@@ -386,32 +382,36 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
     
         int np_computed = min( cell_nparts-ivect, vecSize );
         int istart0 = ( int )istart + ivect;
+        complex<double> e_bar[8], C_m[8] = {2.}; 
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr );
+            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr, e_bar );
             charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
         }
        
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            computeJl( ipart, charge_weight, DSl, DSr, Sr0_buff_vect, bJ, dl_ov_dt_, invR_local);
+            computeJl( ipart, charge_weight, DSl, DSr, Sr0_buff_vect, bJ, dl_ov_dt_, invR_local, C_m, e_bar);
         } 
     } //End ivect
     
     int iloc0 = ipom2*nprimr_+jpom2;
-    int iloc = iloc0;
-    for( unsigned int i=1 ; i<5 ; i++ ) {
-        iloc += nprimr_;
-        #pragma omp simd
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            complex<double> tmpJl( 0. );
-            int ilocal = ( i*5+j )*vecSize;
-#pragma unroll
-            for( int ipart=0 ; ipart<8; ipart++ ) {
-                tmpJl += bJ [ilocal+ipart];
+    for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
+        Jl =  &( *emAM->Jl_[imode] )( 0 );
+        int iloc = iloc0;
+        for( unsigned int i=1 ; i<5 ; i++ ) {
+            iloc += nprimr_;
+            #pragma omp simd
+            for( unsigned int j=0 ; j<5 ; j++ ) {
+                complex<double> tmpJl( 0. );
+                int ilocal = ( i*5+j )*vecSize;
+                #pragma unroll
+                for( int ipart=0 ; ipart<8; ipart++ ) {
+                    tmpJl += bJ [200*imode + ilocal+ipart];
+                }
+                Jl[iloc+j] += tmpJl;
             }
-            Jl[iloc+j] += tmpJl;
         }
     }
     

@@ -29,7 +29,7 @@ public:
     
 private:
 
-    inline void compute_distances( Particles &particles, int npart_total, int ipart, int istart, int ipart_ref, double *deltaold, int *iold, double *Sl0, double *Sr0, double *DSl, double *DSr)
+    inline void compute_distances( Particles &particles, int npart_total, int ipart, int istart, int ipart_ref, double *deltaold, int *iold, double *Sl0, double *Sr0, double *DSl, double *DSr, std::complex<double> *e_bar)
     {
 
         int ipo = iold[0];
@@ -92,7 +92,7 @@ private:
         DSr [4*vecSize+ipart] =                             p1* deltap  ;
     }
 
-    inline void computeJl( int ipart, double *charge_weight, double *DSl, double *DSr, double *Sr0, double *bJ, double dl_ov_dt, double *invR_local )
+    inline void computeJl( int ipart, double *charge_weight, double *DSl, double *DSr, double *Sr0, std::complex<double> *bJ, double dl_ov_dt, double *invR_local, std::complex<double> *C_m, std::complex<double> *e_bar )
     {
 
         int vecSize = 8;
@@ -105,15 +105,29 @@ private:
             sum[k] = sum[k-1]-DSl[( k-1 )*vecSize+ipart];
         }
         
+        //mode 0
         double tmp( crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] );
         for( unsigned int i=1 ; i<5 ; i++ ) {
             bJ [( i*5 )*vecSize+ipart] += sum[i] * tmp;
         }
-        
-        for( unsigned int j=1; j<5 ; j++ ) {
+        for ( unsigned int j=1; j<5 ; j++ ) {
             tmp =  crl_p * ( Sr0[(j-1)*vecSize+ipart] + 0.5*DSr[j*vecSize+ipart] ) * invR_local[j];
             for( unsigned int i=1 ; i<5 ; i++ ) {
-                bJ [( i*5+j )*vecSize+ipart] += sum[i] * tmp;
+                bJ [(i*5+j )*vecSize+ipart] += sum[i] * tmp;
+            }
+        }
+        //mode > 0
+        for (unsigned int imode=1; imode<Nmode_; imode++){ 
+            C_m[ipart] *= e_bar[ipart];
+            double tmp( crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] );
+            for( unsigned int i=1 ; i<5 ; i++ ) {
+                bJ [(200*imode + i*5 )*vecSize+ipart] += sum[i] * tmp * C_m[ipart];
+            }
+            for ( unsigned int j=1; j<5 ; j++ ) {
+                tmp =  crl_p * ( Sr0[(j-1)*vecSize+ipart] + 0.5*DSr[j*vecSize+ipart] ) * invR_local[j];
+                for( unsigned int i=1 ; i<5 ; i++ ) {
+                    bJ [(200*imode + i*5+j )*vecSize+ipart] += sum[i] * tmp * C_m[ipart];
+                }
             }
         }
     }
