@@ -99,8 +99,6 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     Sr0[3] = 0.5 * ( delta2+delta+0.25 );
     //calculate exponential coefficients
     
-    double yp = particles.position( 1, ipart );
-    double zp = particles.position( 2, ipart );
     double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
     std::complex<double> theta_old = array_eitheta_old[0];
     std::complex<double> eitheta = ( particles.position( 1, ipart ) + Icpx * particles.position( 2, ipart ) ) / rp ; //exp(i theta)
@@ -374,7 +372,7 @@ void ProjectorAM2Order::apply_axisBC(std::complex<double> *rhoj,std::complex<dou
 {
 
    double sign = -1.;
-   for (int i=0; i< imode; i++) sign *= -1;
+   for (unsigned int i=0; i< imode; i++) sign *= -1;
    
    if (diag_flag && rhoj) {
        for( unsigned int i=2 ; i<npriml_*nprimr_+2; i+=nprimr_ ) {

@@ -193,7 +193,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
 
     double coeff[2][2][3][32];
-    int dual[2][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
+    double dual[2][32]; // Size ndim. Boolean converted into double indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
     
     int vecSize = 32;
     
@@ -225,7 +225,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             delta0[1] = r * D_inv_[1]  ;
 
             for( int i=0; i<2; i++ ) { // for X/R
-                dual [i][ipart] = ( delta0[i] - ( double )idx[i] >=0. );
+                dual [i][ipart] = (double)( delta0[i] - ( double )idx[i] >= 0. );
                 
                 for( int j=0; j<2; j++ ) { // for dual
                 
