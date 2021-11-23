@@ -11,7 +11,7 @@ public:
     ~ProjectorAM2OrderV();
     
     //! Project global current densities (EMfields->Jl_/Jr_/Jt_)
-    void currents(ElectroMagnAM *emAM, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
+    void currents(ElectroMagnAM *emAM, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, int ipart_ref = 0 );
     ////! Project global current densities (EMfields->Jl_/Jr_/Jt_/rho), diagFields timestep
     //inline void currentsAndDensity( double *Jl, double *Jr, double *Jt, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref );
     //

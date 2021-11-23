@@ -75,10 +75,10 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
     int vecSize = 8;
     unsigned int bsize = 5*5*vecSize;
     
-    double bJx[bsize] __attribute__( ( aligned( 64 ) ) );
+    double bJ[bsize] __attribute__( ( aligned( 64 ) ) );
     
-    double Sx1_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
-    double Sy1_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
+    double Sl1_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
+    double Sr1_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
     
     // Closest multiple of 8 higher or equal than npart = iend-istart.
@@ -97,7 +97,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
     cell_nparts = ( int )iend-( int )istart;
     #pragma omp simd
     for( unsigned int j=0; j<200; j++ ) {
-        bJx[j] = 0.;
+        bJ[j] = 0.;
     }
     
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
@@ -121,11 +121,11 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             double m1 = ( cell_shift == -1 );
             double c0 = ( cell_shift ==  0 );
             double p1 = ( cell_shift ==  1 );
-            Sx1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sx1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
-            Sx1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
-            Sx1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
-            Sx1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
+            Sl1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
+            Sl1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
+            Sl1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
+            Sl1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
+            Sl1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
             //                            Y                                 //
             pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
             cell = round( pos );
@@ -138,11 +138,11 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             m1 = ( cell_shift == -1 );
             c0 = ( cell_shift ==  0 );
             p1 = ( cell_shift ==  1 );
-            Sy1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sy1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
-            Sy1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
-            Sy1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
-            Sy1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
+            Sr1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
+            Sr1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
+            Sr1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
+            Sr1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
+            Sr1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
 
             charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
         }
@@ -152,7 +152,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             for( unsigned int i=0 ; i<5 ; i++ ) {
                 for( unsigned int j=0 ; j<5 ; j++ ) {
                     int index( ( i*5 + j )*vecSize+ipart );
-                    bJx [ index ] +=  charge_weight[ipart] * Sx1_buff_vect[i*vecSize+ipart]*Sy1_buff_vect[j*vecSize+ipart];
+                    bJ [ index ] +=  charge_weight[ipart] * Sl1_buff_vect[i*vecSize+ipart]*Sr1_buff_vect[j*vecSize+ipart];
                 }
             }//i
         } // END ipart (compute coeffs)
@@ -168,7 +168,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             int ilocal = ( ( i )*5+j )*vecSize;
             #pragma unroll(8)
             for( int ipart=0 ; ipart<8; ipart++ ) {
-                tmpRho +=  bJx[ilocal+ipart];
+                tmpRho +=  bJ[ilocal+ipart];
             }
             rho [iloc + j] +=  tmpRho;
         }
@@ -210,12 +210,12 @@ void Projector2D2OrderV::basic( double *rhoj, Particles &particles, unsigned int
     // variable declaration
     double xpn, ypn;
     double delta, delta2;
-    double Sx1[5], Sy1[5]; // arrays used for the Esirkepov projection method
+    double Sl1[5], Sr1[5]; // arrays used for the Esirkepov projection method
     
     // Initialize all current-related arrays to zero
     for( unsigned int i=0; i<5; i++ ) {
-        Sx1[i] = 0.;
-        Sy1[i] = 0.;
+        Sl1[i] = 0.;
+        Sr1[i] = 0.;
     }
     
     // --------------------------------------------------------
@@ -227,17 +227,17 @@ void Projector2D2OrderV::basic( double *rhoj, Particles &particles, unsigned int
     int ip        = round( xpn + 0.5 * ( type==1 ) );                       // index of the central node
     delta  = xpn - ( double )ip;
     delta2 = delta*delta;
-    Sx1[1] = 0.5 * ( delta2-delta+0.25 );
-    Sx1[2] = 0.75-delta2;
-    Sx1[3] = 0.5 * ( delta2+delta+0.25 );
+    Sl1[1] = 0.5 * ( delta2-delta+0.25 );
+    Sl1[2] = 0.75-delta2;
+    Sl1[3] = 0.5 * ( delta2+delta+0.25 );
     
     ypn = particles.position( 1, ipart ) * dy_inv_;
     int jp = round( ypn + 0.5*( type==2 ) );
     delta  = ypn - ( double )jp;
     delta2 = delta*delta;
-    Sy1[1] = 0.5 * ( delta2-delta+0.25 );
-    Sy1[2] = 0.75-delta2;
-    Sy1[3] = 0.5 * ( delta2+delta+0.25 );
+    Sr1[1] = 0.5 * ( delta2-delta+0.25 );
+    Sr1[2] = 0.75-delta2;
+    Sr1[3] = 0.5 * ( delta2+delta+0.25 );
     
     // ---------------------------
     // Calculate the total current
@@ -248,7 +248,7 @@ void Projector2D2OrderV::basic( double *rhoj, Particles &particles, unsigned int
     for( unsigned int i=0 ; i<5 ; i++ ) {
         iloc = ( i+ip )*ny+jp;
         for( unsigned int j=0 ; j<5 ; j++ ) {
-            rhoj[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
+            rhoj[iloc+j] += charge_weight * Sl1[i]*Sr1[j];
         }
     }//i
 } // END Project local current densities (sort)
@@ -343,7 +343,7 @@ void Projector2D2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
+void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, int ipart_ref )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -358,20 +358,25 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
     int vecSize = 8;
     int bsize = 5*5*vecSize;
     
-    double bJx[bsize] __attribute__( ( aligned( 64 ) ) );
+    complex<double> bJ[bsize] __attribute__( ( aligned( 64 ) ) );
     
-    double Sx0_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
-    double Sy0_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
-    double Sx1_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
-    double Sy1_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
-    double DSx[40] __attribute__( ( aligned( 64 ) ) );
-    double DSy[40] __attribute__( ( aligned( 64 ) ) );
+    double Sl0_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
+    double Sr0_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
+    double Sl1_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
+    double Sr1_buff_vect[40] __attribute__( ( aligned( 64 ) ) );
+    double DSl[40] __attribute__( ( aligned( 64 ) ) );
+    double DSr[40] __attribute__( ( aligned( 64 ) ) );
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
-    double crz_p[8] __attribute__( ( aligned( 64 ) ) );
+    complex<double> crt_p[8] __attribute__( ( aligned( 64 ) ) );
+    complex<double> *Jl, *Jr, *Jt;
+    unsigned int imode = 0; /// TEMPORARY FIX imode
+    Jl =  &( *emAM->Jl_[imode] )( 0 );
+    Jr =  &( *emAM->Jr_[imode] )( 0 );
+    Jt =  &( *emAM->Jt_[imode] )( 0 );
     
     #pragma omp simd
     for( unsigned int j=0; j<200; j++ ) {
-        bJx[j] = 0.;
+        bJ[j] = 0.;
     }
     
     // Closest multiple of 8 higher or equal than npart = iend-istart.
@@ -397,29 +402,29 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
             double m1 = ( cell_shift == -1 );
             double c0 = ( cell_shift ==  0 );
             double p1 = ( cell_shift ==  1 );
-            Sx1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sx1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
-            Sx1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
-            Sx1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
-            Sx1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
+            Sl1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
+            Sl1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
+            Sl1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
+            Sl1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
+            Sl1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
             //                            X                                 //
             delta = deltaold[ivect+ipart-ipart_ref+istart];
             delta2 = delta*delta;
-            Sx0_buff_vect[          ipart] = 0;
-            Sx0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
-            Sx0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
-            Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
-            Sx0_buff_vect[4*vecSize+ipart] = 0;
+            Sl0_buff_vect[          ipart] = 0;
+            Sl0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
+            Sl0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
+            Sl0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+            Sl0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
 #pragma unroll
             for( unsigned int i = 0; i < 5 ; i++ ) {
-                DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
+                DSl[i*vecSize+ipart] = Sl1_buff_vect[ i*vecSize+ipart] - Sl0_buff_vect[ i*vecSize+ipart];
             }
             //                            Y                                 //
             double rp = sqrt( particles.position( 1, ivect+ipart+istart )*particles.position( 1, ivect+ipart+istart )+particles.position( 2, ivect+ipart+istart )*particles.position( 2, ivect+ipart+istart ) );
-            std::complex<double> theta_old = array_eitheta_old[0]; //Probably wrong index
-            std::complex<double> eitheta = ( particles.position( 1, ivect+ipart+istart + Icpx * particles.position( 2, ivect+ipart+istart ) / rp ; //exp(i theta)
+            std::complex<double> eitheta_old = array_eitheta_old[0]; //Probably wrong index
+            std::complex<double> eitheta = ( particles.position( 1, ivect+ipart+istart) + Icpx * particles.position( 2, ivect+ipart+istart )) / rp ; //exp(i theta)
             pos = rp * dr_inv_;
             cell = round( pos );
             cell_shift = cell-jpo-j_domain_begin_;
@@ -431,24 +436,24 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
             m1 = ( cell_shift == -1 );
             c0 = ( cell_shift ==  0 );
             p1 = ( cell_shift ==  1 );
-            Sy1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sy1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
-            Sy1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
-            Sy1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
-            Sy1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
+            Sr1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
+            Sr1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
+            Sr1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
+            Sr1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
+            Sr1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
             //                            Y                                 //
             delta = deltaold[ivect+ipart-ipart_ref+istart+npart_total];
             delta2 = delta*delta;
-            Sy0_buff_vect[          ipart] = 0;
-            Sy0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
-            Sy0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
-            Sy0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
-            Sy0_buff_vect[4*vecSize+ipart] = 0;
+            Sr0_buff_vect[          ipart] = 0;
+            Sr0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
+            Sr0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
+            Sr0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+            Sr0_buff_vect[4*vecSize+ipart] = 0;
             
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
 #pragma unroll
             for( unsigned int i = 0; i < 5 ; i++ ) {
-                DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
+                DSr[i*vecSize+ipart] = Sr1_buff_vect[ i*vecSize+ipart] - Sr0_buff_vect[ i*vecSize+ipart];
             }
             charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
         }
@@ -460,18 +465,18 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
             double sum[5];
             sum[0] = 0.;
             for( unsigned int k=1 ; k<5 ; k++ ) {
-                sum[k] = sum[k-1]-DSx[( k-1 )*vecSize+ipart];
+                sum[k] = sum[k-1]-DSl[( k-1 )*vecSize+ipart];
             }
             
-            double tmp( crx_p * ( 0.5*DSy[ipart] ) );
+            double tmp( crx_p * ( 0.5*DSr[ipart] ) );
             for( unsigned int i=1 ; i<5 ; i++ ) {
-                bJx [( i*5 )*vecSize+ipart] += sum[i] * tmp;
+                bJ [( i*5 )*vecSize+ipart] += sum[i] * tmp;
             }
             
             for( unsigned int j=1; j<5 ; j++ ) {
-                tmp =  crx_p * ( Sy0_buff_vect[j*vecSize+ipart] + 0.5*DSy[j*vecSize+ipart] );
+                tmp =  crx_p * ( Sr0_buff_vect[j*vecSize+ipart] + 0.5*DSr[j*vecSize+ipart] );
                 for( unsigned int i=1 ; i<5 ; i++ ) {
-                    bJx [( i*5+j )*vecSize+ipart] += sum[i] * tmp;
+                    bJ [( i*5+j )*vecSize+ipart] += sum[i] * tmp;
                 }
             }
         }
@@ -484,19 +489,19 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
         iloc += nprimr_;
         #pragma omp simd
         for( unsigned int j=0 ; j<5 ; j++ ) {
-            double tmpJx( 0. );
+            complex<double> tmpJl( 0. );
             int ilocal = ( i*5+j )*vecSize;
 #pragma unroll
             for( int ipart=0 ; ipart<8; ipart++ ) {
-                tmpJx += bJx [ilocal+ipart];
+                tmpJl += bJ [ilocal+ipart];
             }
-            Jx[iloc+j] += tmpJx;
+            Jl[iloc+j] += tmpJl;
         }
     }
     
     #pragma omp simd
     for( unsigned int j=0; j<200; j++ ) {
-        bJx[j] = 0.;
+        bJ[j] = 0.;
     }
     
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
@@ -519,24 +524,24 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
             double m1 = ( cell_shift == -1 );
             double c0 = ( cell_shift ==  0 );
             double p1 = ( cell_shift ==  1 );
-            Sx1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sx1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
-            Sx1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
-            Sx1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
-            Sx1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
+            Sl1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
+            Sl1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
+            Sl1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
+            Sl1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
+            Sl1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
             //                            X                                 //
             delta = deltaold[ivect+ipart-ipart_ref+istart];
             delta2 = delta*delta;
-            Sx0_buff_vect[          ipart] = 0;
-            Sx0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
-            Sx0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
-            Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
-            Sx0_buff_vect[4*vecSize+ipart] = 0;
+            Sl0_buff_vect[          ipart] = 0;
+            Sl0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
+            Sl0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
+            Sl0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+            Sl0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
 #pragma unroll
             for( unsigned int i = 0; i < 5 ; i++ ) {
-                DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
+                DSl[i*vecSize+ipart] = Sl1_buff_vect[ i*vecSize+ipart] - Sl0_buff_vect[ i*vecSize+ipart];
             }
             //                            Y                                 //
             pos = particles.position( 1, ivect+ipart+istart ) * dr_inv_;
@@ -550,24 +555,24 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
             m1 = ( cell_shift == -1 );
             c0 = ( cell_shift ==  0 );
             p1 = ( cell_shift ==  1 );
-            Sy1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sy1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
-            Sy1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
-            Sy1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
-            Sy1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
+            Sr1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
+            Sr1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
+            Sr1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
+            Sr1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
+            Sr1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
             //                            Y                                 //
             delta = deltaold[ivect+ipart-ipart_ref+istart+npart_total];
             delta2 = delta*delta;
-            Sy0_buff_vect[          ipart] = 0;
-            Sy0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
-            Sy0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
-            Sy0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
-            Sy0_buff_vect[4*vecSize+ipart] = 0;
+            Sr0_buff_vect[          ipart] = 0;
+            Sr0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
+            Sr0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
+            Sr0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+            Sr0_buff_vect[4*vecSize+ipart] = 0;
             
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
 #pragma unroll
             for( unsigned int i = 0; i < 5 ; i++ ) {
-                DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
+                DSr[i*vecSize+ipart] = Sr1_buff_vect[ i*vecSize+ipart] - Sr0_buff_vect[ i*vecSize+ipart];
             }
             charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
         }
@@ -579,18 +584,18 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
             double sum[5];
             sum[0] = 0.;
             for( unsigned int k=1 ; k<5 ; k++ ) {
-                sum[k] = sum[k-1]-DSy[( k-1 )*vecSize+ipart];
+                sum[k] = sum[k-1]-DSr[( k-1 )*vecSize+ipart];
             }
             
-            double tmp( cry_p * ( 0.5*DSx[ipart] ) );
+            double tmp( cry_p * ( 0.5*DSl[ipart] ) );
             for( unsigned int j=1 ; j<5 ; j++ ) {
-                bJx [j*vecSize+ipart] += sum[j] * tmp;
+                bJ [j*vecSize+ipart] += sum[j] * tmp;
             }
             
             for( unsigned int i=1; i<5 ; i++ ) {
-                tmp = cry_p * ( Sx0_buff_vect[i*vecSize+ipart] + 0.5*DSx[i*vecSize+ipart] );
+                tmp = cry_p * ( Sl0_buff_vect[i*vecSize+ipart] + 0.5*DSl[i*vecSize+ipart] );
                 for( unsigned int j=1 ; j<5 ; j++ ) {
-                    bJx [( i*5+j )*vecSize+ipart] += sum[j] * tmp;
+                    bJ [( i*5+j )*vecSize+ipart] += sum[j] * tmp;
                 }
             }
         }
@@ -601,20 +606,20 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
     for( unsigned int i=0 ; i<5 ; i++ ) {
         #pragma omp simd
         for( unsigned int j=1 ; j<5 ; j++ ) {
-            double tmpJy( 0. );
+            complex<double> tmpJr( 0. );
             int ilocal = ( i*5+j )*vecSize;
 #pragma unroll
             for( int ipart=0 ; ipart<8; ipart++ ) {
-                tmpJy += bJx [ilocal+ipart];
+                tmpJr += bJ [ilocal+ipart];
             }
-            Jy[iloc+j] += tmpJy;
+            Jr[iloc+j] += tmpJr;
         }
         iloc += ( nprimr_+1 );
     }
     
     #pragma omp simd
     for( unsigned int j=0; j<200; j++ ) {
-        bJx[j] = 0.;
+        bJ[j] = 0.;
     }
     
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
@@ -637,24 +642,24 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
             double m1 = ( cell_shift == -1 );
             double c0 = ( cell_shift ==  0 );
             double p1 = ( cell_shift ==  1 );
-            Sx1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sx1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
-            Sx1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
-            Sx1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
-            Sx1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
+            Sl1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
+            Sl1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
+            Sl1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
+            Sl1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
+            Sl1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
             //                            X                                 //
             delta = deltaold[ivect+ipart-ipart_ref+istart];
             delta2 = delta*delta;
-            Sx0_buff_vect[          ipart] = 0;
-            Sx0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
-            Sx0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
-            Sx0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
-            Sx0_buff_vect[4*vecSize+ipart] = 0;
+            Sl0_buff_vect[          ipart] = 0;
+            Sl0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
+            Sl0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
+            Sl0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+            Sl0_buff_vect[4*vecSize+ipart] = 0;
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
 #pragma unroll
             for( unsigned int i = 0; i < 5 ; i++ ) {
-                DSx[i*vecSize+ipart] = Sx1_buff_vect[ i*vecSize+ipart] - Sx0_buff_vect[ i*vecSize+ipart];
+                DSl[i*vecSize+ipart] = Sl1_buff_vect[ i*vecSize+ipart] - Sl0_buff_vect[ i*vecSize+ipart];
             }
             //                            Y                                 //
             pos = particles.position( 1, ivect+ipart+istart ) * dr_inv_;
@@ -668,47 +673,49 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
             m1 = ( cell_shift == -1 );
             c0 = ( cell_shift ==  0 );
             p1 = ( cell_shift ==  1 );
-            Sy1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
-            Sy1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
-            Sy1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
-            Sy1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
-            Sy1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
+            Sr1_buff_vect[          ipart] = m1 * deltam                                                                                  ;
+            Sr1_buff_vect[  vecSize+ipart] = c0 * deltam + m1*delta2                                               ;
+            Sr1_buff_vect[2*vecSize+ipart] = p1 * deltam + c0*delta2 + m1*deltap;
+            Sr1_buff_vect[3*vecSize+ipart] =               p1*delta2 + c0*deltap;
+            Sr1_buff_vect[4*vecSize+ipart] =                           p1*deltap;
             //                            Y                                 //
             delta = deltaold[ivect+ipart-ipart_ref+istart+npart_total];
             delta2 = delta*delta;
-            Sy0_buff_vect[          ipart] = 0;
-            Sy0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
-            Sy0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
-            Sy0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
-            Sy0_buff_vect[4*vecSize+ipart] = 0;
+            Sr0_buff_vect[          ipart] = 0;
+            Sr0_buff_vect[  vecSize+ipart] = 0.5 * ( delta2-delta+0.25 );
+            Sr0_buff_vect[2*vecSize+ipart] = 0.75-delta2;
+            Sr0_buff_vect[3*vecSize+ipart] = 0.5 * ( delta2+delta+0.25 );
+            Sr0_buff_vect[4*vecSize+ipart] = 0;
             
             //optrpt complains about the following loop but not unrolling it actually seems to give better result.
 #pragma unroll
             for( unsigned int i = 0; i < 5 ; i++ ) {
-                DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
+                DSr[i*vecSize+ipart] = Sr1_buff_vect[ i*vecSize+ipart] - Sr0_buff_vect[ i*vecSize+ipart];
             }
             charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( ivect+istart+ipart ) )*particles.weight( ivect+istart+ipart );
-            crz_p[ipart] = charge_weight[ipart]/3.*particles.momentum( 2, ivect+istart+ipart )*( *invgf )[ivect+istart+ipart];
+            //initial value of crt_p for imode = 0.
+            crt_p[ipart] = charge_weight*( particles.momentum( 2, ivect+istart+ipart )* real(e_bar_m1) - particles.momentum( 1, ivect+istart+ipart )*imag(e_bar_m1) ) * (*invgf)[ivect+istart+ipart];
+            //crt_p[ipart] = charge_weight[ipart]/3.*particles.momentum( 2, ivect+istart+ipart )*( *invgf )[ivect+istart+ipart];
         }
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            bJx [ipart] += crz_p[ipart] * Sx1_buff_vect[ipart] * Sy1_buff_vect[ipart];
-            double tmp( crz_p[ipart] * Sy1_buff_vect[ipart] );
+            bJ [ipart] += crt_p[ipart] * Sl1_buff_vect[ipart] * Sr1_buff_vect[ipart];
+            complex<double> tmp( crt_p[ipart] * Sr1_buff_vect[ipart] );
             for( unsigned int i=1 ; i<5 ; i++ ) {
-                bJx [( ( i )*5 )*vecSize+ipart] += tmp * ( 0.5*Sx0_buff_vect[i*vecSize+ipart] + Sx1_buff_vect[i*vecSize+ipart] );
+                bJ [( ( i )*5 )*vecSize+ipart] += tmp * ( 0.5*Sl0_buff_vect[i*vecSize+ipart] + Sl1_buff_vect[i*vecSize+ipart] );
             }
             
-            tmp = crz_p[ipart] * Sx1_buff_vect[ipart];
+            tmp = crt_p[ipart] * Sl1_buff_vect[ipart];
             for( unsigned int j=1; j<5 ; j++ ) {
-                bJx [j*vecSize+ipart] +=  tmp * ( 0.5*Sy0_buff_vect[j*vecSize+ipart]* + Sy1_buff_vect[j*vecSize+ipart] );
+                bJ [j*vecSize+ipart] +=  tmp * ( 0.5*Sr0_buff_vect[j*vecSize+ipart]* + Sr1_buff_vect[j*vecSize+ipart] );
             }
             
             for( unsigned int i=1 ; i<5 ; i++ ) {
-                double tmp0( crz_p[ipart] * ( 0.5*Sx0_buff_vect[i*vecSize+ipart] + Sx1_buff_vect[i*vecSize+ipart] ) );
-                double tmp1( crz_p[ipart] * ( 0.5*Sx1_buff_vect[i*vecSize+ipart] + Sx0_buff_vect[i*vecSize+ipart] ) );
+                complex<double> tmp0( crt_p[ipart] * ( 0.5*Sl0_buff_vect[i*vecSize+ipart] + Sl1_buff_vect[i*vecSize+ipart] ) );
+                complex<double> tmp1( crt_p[ipart] * ( 0.5*Sl1_buff_vect[i*vecSize+ipart] + Sl0_buff_vect[i*vecSize+ipart] ) );
                 for( unsigned int j=1; j<5 ; j++ ) {
-                    bJx [( ( i )*5+j )*vecSize+ipart] += ( Sy0_buff_vect[j*vecSize+ipart]* tmp1 + Sy1_buff_vect[j*vecSize+ipart]* tmp0 );
+                    bJ [( ( i )*5+j )*vecSize+ipart] += ( Sr0_buff_vect[j*vecSize+ipart]* tmp1 + Sr1_buff_vect[j*vecSize+ipart]* tmp0 );
                 }
             }
             
@@ -719,13 +726,13 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
     for( unsigned int i=0 ; i<5 ; i++ ) {
         #pragma omp simd
         for( unsigned int j=0 ; j<5 ; j++ ) {
-            double tmpJz( 0. );
+            complex<double> tmpJt( 0. );
             int ilocal = ( i*5+j )*vecSize;
 #pragma unroll
             for( int ipart=0 ; ipart<8; ipart++ ) {
-                tmpJz  +=  bJx [ilocal+ipart];
+                tmpJt  +=  bJ [ilocal+ipart];
             }
-            Jz[iloc+j]  +=  tmpJz;
+            Jt[iloc+j]  +=  tmpJt;
         }//i
         iloc += nprimr_;
     } // ipart
@@ -759,10 +766,7 @@ void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
         if( !is_spectral ) {
-            //complex<double> *b_Jl =  &( *EMfields->Jl_ )( 0 );
-            //complex<double> *b_Jr =  &( *EMfields->Jr_ )( 0 );
-            //complex<double> *b_Jt =  &( *EMfields->Jt_ )( 0 );
-            currents( emAM, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
+            currents( emAM, particles,  istart, iend, invgf, iold, &( *delta )[0], &( *array_eitheta_old )[0], ipart_ref );
         } else {
             ERROR( "Vectorized projection is not supported in spectral AM" );
         }
