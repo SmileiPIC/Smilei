@@ -49,7 +49,7 @@ echo $? > exit_status_file"""
             exit(4)
         if self.options.nodes:
             self.NODES = self.options.nodes
-            MPI_PER_SOCKET = int(ceil(self.options.mpi/2.))
+            MPI_PER_SOCKET = int(ceil(self.options.mpi/(self.NODES*2)))
         else:
             self.NODES = int(ceil(self.options.mpi/2.))
             MPI_PER_SOCKET = 1
