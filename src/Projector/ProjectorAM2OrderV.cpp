@@ -343,13 +343,21 @@ void Projector2D2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, int ipart_ref )
+void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
+                                   Particles &particles,
+                                   unsigned int istart,
+                                   unsigned int iend,
+                                   double * __restrict__ invgf,
+                                   int * __restrict__ iold,
+                                   double * __restrict__ deltaold,
+                                   std::complex<double> * __restrict__ array_eitheta_old,
+                                   int npart_total,
+                                   int ipart_ref )
 {
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
     
-    int npart_total = invgf->size();
     int ipo = iold[0];
     int jpo = iold[1];
     int ipom2 = ipo-2;
@@ -366,10 +374,19 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
     double DSr[40] __attribute__( ( aligned( 64 ) ) );
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
     complex<double> crt_p[8] __attribute__( ( aligned( 64 ) ) );
-    complex<double> *Jl, *Jr, *Jt;
+    complex<double> * __restrict__ Jl;
+    complex<double> * __restrict__ Jr;
+    complex<double> * __restrict__ Jt;
 
     double *invR_local = &(invR[jpom2]);
-    
+
+    // Pointer for GPU and vectorization on ARM processors
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ position_z = particles.getPtrPosition(2);
+    double * __restrict__ weight     = particles.getPtrWeight();
+    short  * __restrict__ charge     = particles.getPtrCharge();
+  
     #pragma omp simd
     for( unsigned int j=0; j<200*Nmode_; j++ ) {
         bJ[j] = 0.;
@@ -386,8 +403,8 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, array_eitheta_old, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr, e_bar );
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
+            compute_distances( position_x, position_y, position_z, npart_total, ipart, istart0, ipart_ref, deltaold, array_eitheta_old, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr, e_bar );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
         }
        
         #pragma omp simd
@@ -682,7 +699,7 @@ void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
         if( !is_spectral ) {
-            currents( emAM, particles,  istart, iend, invgf, iold, &( *delta )[0], &( *array_eitheta_old )[0], ipart_ref );
+            currents( emAM, particles,  istart, iend, invgf->data(), iold, delta->data(), array_eitheta_old->data(), invgf->size(), ipart_ref );
         } else {
             ERROR( "Vectorized projection is not supported in spectral AM" );
         }

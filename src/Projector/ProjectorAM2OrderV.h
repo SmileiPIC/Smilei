@@ -4,6 +4,7 @@
 #include "ProjectorAM.h"
 #include <complex>
 #include "dcomplex.h"
+#include "Pragma.h"
 
 
 class ProjectorAM2OrderV : public ProjectorAM
@@ -13,7 +14,7 @@ public:
     ~ProjectorAM2OrderV();
     
     //! Project global current densities (EMfields->Jl_/Jr_/Jt_)
-    void currents(ElectroMagnAM *emAM, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, int ipart_ref = 0 );
+    void currents(ElectroMagnAM *emAM, Particles &particles, unsigned int istart, unsigned int iend, double *invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, int npart_total, int ipart_ref = 0 );
     ////! Project global current densities (EMfields->Jl_/Jr_/Jt_/rho), diagFields timestep
     //inline void currentsAndDensity( double *Jl, double *Jr, double *Jt, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref );
     //
@@ -31,7 +32,12 @@ public:
     
 private:
 
-    inline void compute_distances( Particles &particles, int npart_total, int ipart, int istart, int ipart_ref, double *deltaold, std::complex<double> *array_eitheta_old, int *iold, double *Sl0, double *Sr0, double *DSl, double *DSr, std::complex<double> *e_bar)
+    inline void __attribute__((always_inline)) compute_distances(  double * __restrict__ position_x,
+                                                                   double * __restrict__ position_y,
+                                                                   double * __restrict__ position_z,
+                                                                   int npart_total, int ipart, int istart, int ipart_ref,
+                                                                   double *deltaold, std::complex<double> *array_eitheta_old, int *iold,
+                                                                   double *Sl0, double *Sr0, double *DSl, double *DSr, std::complex<double> *e_bar)
     {
 
         int ipo = iold[0];
@@ -57,7 +63,7 @@ private:
 
         // locate the particle on the primal grid at current time-step & calculate coeff. S1
         //                            L                                 //
-        double pos = particles.position( 0, istart + ipart ) * dl_inv_;
+        double pos = position_x[istart + ipart] * dl_inv_;
         int cell = round( pos );
         int cell_shift = cell-ipo-i_domain_begin_;
         delta  = pos - ( double )cell;
@@ -75,7 +81,7 @@ private:
         DSl [4*vecSize+ipart] =                             p1* deltap  ;
         
         //                            R                                 //
-        double rp = sqrt( particles.position( 1, istart+ipart )*particles.position( 1, istart+ipart )+particles.position( 2, istart+ipart )*particles.position( 2, istart+ipart ) );
+        double rp = sqrt( position_y[istart+ipart]*position_y[istart+ipart] +  position_z[istart+ipart]*position_z[istart+ipart] );
         pos = rp * dr_inv_;
         cell = round( pos );
         cell_shift = cell-jpo-j_domain_begin_;
@@ -93,10 +99,8 @@ private:
         DSr [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sr0[2*vecSize+ipart] ;
         DSr [4*vecSize+ipart] =                             p1* deltap  ;
 
-        std::complex<double> eitheta = ( particles.position( 1, istart+ipart ) + Icpx * particles.position( 2, istart+ipart ) ) / rp ; //exp(i theta)
+        std::complex<double> eitheta = ( position_y[istart+ipart] + Icpx * position_z[istart+ipart] ) / rp ; //exp(i theta)
         e_bar[ipart] = array_eitheta_old[istart+ipart-ipart_ref] * std::sqrt(eitheta * (2.*std::real(array_eitheta_old[istart+ipart-ipart_ref]) - array_eitheta_old[istart+ipart-ipart_ref]));
-
-
 
     }
 
@@ -109,15 +113,18 @@ private:
         double crl_p = charge_weight[ipart]*dl_ov_dt_;
         
         sum[0] = 0.;
+        UNROLL_S(4)
         for( unsigned int k=1 ; k<5 ; k++ ) {
             sum[k] = sum[k-1]-DSl[( k-1 )*vecSize+ipart];
         }
         
         //mode 0
         double tmp( crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] );
+        UNROLL_S(4)
         for( unsigned int i=1 ; i<5 ; i++ ) {
             bJ [( i*5 )*vecSize+ipart] += sum[i] * tmp;
         }
+        UNROLL_S(4)
         for ( unsigned int j=1; j<5 ; j++ ) {
             tmp =  crl_p * ( Sr0[(j-1)*vecSize+ipart] + 0.5*DSr[j*vecSize+ipart] ) * invR_local[j];
             for( unsigned int i=1 ; i<5 ; i++ ) {
@@ -128,11 +135,14 @@ private:
         for (unsigned int imode=1; imode<Nmode_; imode++){ 
             C_m *= e_bar[ipart];
             double tmp( crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] );
+            UNROLL_S(4)
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJ [(200*imode + i*5 )*vecSize+ipart] += sum[i] * tmp * C_m;
             }
+            UNROLL_S(4)
             for ( unsigned int j=1; j<5 ; j++ ) {
                 tmp =  crl_p * ( Sr0[(j-1)*vecSize+ipart] + 0.5*DSr[j*vecSize+ipart] ) * invR_local[j];
+                UNROLL_S(4)
                 for( unsigned int i=1 ; i<5 ; i++ ) {
                     bJ [(200*imode + i*5+j )*vecSize+ipart] += sum[i] * tmp * C_m;
                 }
