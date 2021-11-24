@@ -260,7 +260,6 @@ class Validation(object):
         
         _dataNotMatching = False
         for BENCH in self.list_benchmarks():
-            print(BENCH)
             SMILEI_BENCH = self.smilei_path.benchmarks + BENCH
             
             # Prepare specific resources if requested in a resource file
@@ -367,6 +366,7 @@ class Validation(object):
                 # Run smilei
                 if execution:
                     if options.verbose:
+                        print("")
                         print("---------------------------")
                         print("Running " + BENCH + " on " + self.HOSTNAME)
                         print("Resources: " + str(options.mpi) + " MPI processes x " + str(options.omp) +" openMP threads on " + str(options.nodes) + " nodes"
