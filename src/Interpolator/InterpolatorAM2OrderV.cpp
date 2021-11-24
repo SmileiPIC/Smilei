@@ -167,14 +167,18 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
     int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
 
-    //std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
-    //std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    double *Epart[3], *Bpart[3];
+    double * __restrict__ Epart[3];
+    double * __restrict__ Bpart[3];
+
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ position_z = particles.getPtrPosition(2);
+
     for( unsigned int k=0; k<3; k++ ) {
         Epart[k]= &( smpi->dynamics_Epart[ithread][k*nparts] );
         Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts] );
     }
-    //std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
+
     double *deltaO[2];
     deltaO[0] = &( smpi->dynamics_deltaold[ithread][0] );
     deltaO[1] = &( smpi->dynamics_deltaold[ithread][nparts] );
@@ -186,9 +190,9 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
     int idx[2], idxO[2];
     //Primal indices are constant over the all cell
-    idx[0]  = round( particles.position( 0, *istart ) * D_inv_[0] );
+    idx[0]  = round( position_x[istart[0]] * D_inv_[0] );
     idxO[0] = idx[0] - i_domain_begin_ -1 ;
-    idx[1] = round( sqrt( particles.position( 1, *istart )*particles.position( 1, *istart )+particles.position( 2, *istart )*particles.position( 2, *istart ) ) * D_inv_[1] ) ;
+    idx[1] = round( sqrt( position_y[istart[0]]*position_y[istart[0]] + position_z[istart[0]]*position_z[istart[0]] ) * D_inv_[1] ) ;
     idxO[1] = idx[1] - j_domain_begin_ -1 ;
 
 
@@ -207,8 +211,10 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
     int np_computed( vecSize );
     std::vector<complex<double>> exp_m_theta_( vecSize), exp_mm_theta( vecSize,  1.) ;                                                          //exp(-i theta), exp(-i m theta)
+
     //Loop on groups of vecSize particles
     for( int iivect=0 ; iivect<nbVec; iivect++ ) {
+
         int ivect = vecSize*iivect;
         //adjust np_computed for last element of the loop 
         if (iivect == nbVec -1) np_computed = cell_nparts - ivect; 
@@ -216,12 +222,12 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
         
-            double r = sqrt( particles.position( 1, ipart-ipart_ref+ivect+istart[0] )*particles.position( 1, ipart-ipart_ref+ivect+istart[0] )+particles.position( 2, ipart-ipart_ref+ivect+istart[0] )*particles.position( 2, ipart-ipart_ref+ivect+istart[0] ) );
-            exp_m_theta_[ipart] = ( particles.position( 1, ipart-ipart_ref+ivect+istart[0] ) - Icpx * particles.position( 2, ipart-ipart_ref+ivect+istart[0] ) ) / r ;
+            double r = sqrt( position_y[ipart-ipart_ref+ivect+istart[0]]*position_y[ipart-ipart_ref+ivect+istart[0]] + position_z[ipart-ipart_ref+ivect+istart[0]]*position_z[ipart-ipart_ref+ivect+istart[0]] );
+            exp_m_theta_[ipart] = ( position_y[ipart-ipart_ref+ivect+istart[0]] - Icpx * position_z[ipart-ipart_ref+ivect+istart[0]] ) / r ;
             double delta0[2], delta;
             double delta2;
             
-            delta0[0] = particles.position( 0, ipart-ipart_ref+ivect+istart[0] )*D_inv_[0];
+            delta0[0] = position_x[ipart-ipart_ref+ivect+istart[0]]*D_inv_[0];
             delta0[1] = r * D_inv_[1]  ;
 
             for( int i=0; i<2; i++ ) { // for X/R
@@ -250,12 +256,12 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
        double *coeffyp, *coeffyd, *coeffxd, *coeffxp ;
         // Static cast of the electromagnetic fields
-        cField2D *El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
-        cField2D *Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[0];
-        cField2D *Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[0];
-        cField2D *Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[0];
-        cField2D *Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[0];
-        cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
+        cField2D * __restrict__ El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
+        cField2D * __restrict__ Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[0];
+        cField2D * __restrict__ Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[0];
+        cField2D * __restrict__ Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[0];
+        cField2D * __restrict__ Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[0];
+        cField2D * __restrict__ Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
         
@@ -329,12 +335,12 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
         for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
             // Static cast of the electromagnetic fields
-            cField2D *El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
-            cField2D *Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
-            cField2D *Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
-            cField2D *Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[imode];
-            cField2D *Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
-            cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
+            cField2D * __restrict__ El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
+            cField2D * __restrict__ Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
+            cField2D * __restrict__ Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
+            cField2D * __restrict__ Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[imode];
+            cField2D * __restrict__ Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
+            cField2D * __restrict__ Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
 
             #pragma omp simd
             for( int ipart=0 ; ipart<np_computed; ipart++ ) {

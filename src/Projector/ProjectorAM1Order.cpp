@@ -35,8 +35,8 @@ ProjectorAM1Order::ProjectorAM1Order( Params &params, Patch *patch ) : Projector
     nprimr_ = params.n_space[1] + 2*params.oversize[1] + 1;
     npriml_ = params.n_space[0] + 2*params.oversize[0] + 1;
 
-    invR = &((static_cast<PatchAM *>( patch )->invR)[0]);
-    invRd = &((static_cast<PatchAM *>( patch )->invRd)[0]);
+    invR_ = &((static_cast<PatchAM *>( patch )->invR)[0]);
+    invRd_ = &((static_cast<PatchAM *>( patch )->invRd)[0]);
 
     dts2           = params.timestep/2.;
     dts4           = params.timestep/4.;
@@ -124,7 +124,7 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     for( unsigned int i=0 ; i<2 ; i++ ) {
         iloc = ( i+ip )*nr+jp;
         for( unsigned int j=0 ; j<2 ; j++ ) {
-            rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
+            rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR_[j+jp];
         }
     }//i
 } // END Project for diags local current densities
@@ -239,11 +239,11 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             iloc[1] = ( i+ip[1] )* nprimr_ + jp[1];
             for( unsigned int j=0 ; j<2 ; j++ ) {
                 linindex = iloc[0]+j;
-                complex<double> increment =  C_m[0]*charge_weight* Sl1[0][i]*Sr1[0][j]*invR[jp[0]+j];
+                complex<double> increment =  C_m[0]*charge_weight* Sl1[0][i]*Sr1[0][j]*invR_[jp[0]+j];
                 Jl [linindex] += crl_p * increment ;
                 Jr [linindex] += crr_p * increment ;
                 Jt [linindex] += crt_p * increment ;
-                rho [iloc[1]+j] += C_m[1]*charge_weight* Sl1[1][i]*Sr1[1][j]*invR[jp[1]+j];
+                rho [iloc[1]+j] += C_m[1]*charge_weight* Sl1[1][i]*Sr1[1][j]*invR_[jp[1]+j];
             }
         }//i
 
@@ -252,7 +252,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             for( unsigned int i=0 ; i<2 ; i++ ) {
                 iloc[0] = ( i+ip[0] )* nprimr_ + jp[0];
                 linindex = iloc[0];
-                complex<double> increment =  C_m[0]*charge_weight* Sl1[0][i]*m1powerimode*Sr1[0][2]*invR[jp[0]];
+                complex<double> increment =  C_m[0]*charge_weight* Sl1[0][i]*m1powerimode*Sr1[0][2]*invR_[jp[0]];
                 Jl [linindex] += crl_p * increment ;
                 Jr [linindex] -= crr_p * increment ;
                 Jt [linindex] -= crt_p * increment ;
@@ -262,7 +262,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
         if (Sr1[1][2] != 0.) {
             for( unsigned int i=0 ; i<2 ; i++ ) {
                 iloc[1] = ( i+ip[1] )* nprimr_ + jp[1];
-                rho [iloc[1]] += C_m[1]*charge_weight* Sl1[1][i]*m1powerimode*Sr1[1][2]*invR[jp[1]];
+                rho [iloc[1]] += C_m[1]*charge_weight* Sl1[1][i]*m1powerimode*Sr1[1][2]*invR_[jp[1]];
             }
         }
 
@@ -446,7 +446,7 @@ void ProjectorAM1Order::susceptibility( ElectroMagn *EMfields, Particles &partic
         for( unsigned int i=0 ; i<2 ; i++ ) {
             iloc = ( i+ip )*nr+jp;
             for( unsigned int j=0 ; j<2 ; j++ ) {
-                    Chi_envelope [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
+                    Chi_envelope [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR_[j+jp];
             }
         }//i
     

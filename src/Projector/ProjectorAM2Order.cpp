@@ -33,8 +33,8 @@ ProjectorAM2Order::ProjectorAM2Order( Params &params, Patch *patch ) : Projector
     nprimr_ = params.n_space[1] + 2*params.oversize[1] + 1;
     npriml_ = params.n_space[0] + 2*params.oversize[0] + 1;
   
-    invR = &((static_cast<PatchAM *>( patch )->invR)[0]);
-    invRd = &((static_cast<PatchAM *>( patch )->invRd)[0]);
+    invR_ = &((static_cast<PatchAM *>( patch )->invR)[0]);
+    invRd_ = &((static_cast<PatchAM *>( patch )->invRd)[0]);
 
     dts2           = params.timestep/2.;
     dts4           = params.timestep/4.;
@@ -138,7 +138,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 2;
 
-    double *invR_local = &(invR[jpo]);
+    double *invR__local = &(invR_[jpo]);
 
     // ------------------------------------------------
     // Local current created by the particle
@@ -155,7 +155,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // Compute everything independent of theta
     double tmpJl[5];
     for( unsigned int j=0 ; j<5 ; j++ ) {
-        tmpJl[j] = crl_p * ( Sr0[j] + 0.5*DSr[j] )* invR_local[j];
+        tmpJl[j] = crl_p * ( Sr0[j] + 0.5*DSr[j] )* invR__local[j];
     }
     Jl_p[0]= 0.;
     for( unsigned int i=1 ; i<5 ; i++ ) {
@@ -167,8 +167,8 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     double tmpJr[5];
     for( int j=3 ; j>=0 ; j-- ) {
         jloc = j+jpo+1;
-        Vd[j] = abs( jloc + j_domain_begin_ + 0.5 )* invRd[jloc]*dr ;
-        tmpJr[j] = crr_p * DSr[j+1] * invRd[jpo+j+1]*dr;
+        Vd[j] = abs( jloc + j_domain_begin_ + 0.5 )* invRd_[jloc]*dr ;
+        tmpJr[j] = crr_p * DSr[j+1] * invRd_[jpo+j+1]*dr;
     }
     Jr_p[4]= 0.;
     for( int j=3 ; j>=0 ; j-- ) {
@@ -180,8 +180,8 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
    //Compute division by R in advance for Jt and rho evaluation.
     for( unsigned int j=0 ; j<5 ; j++ ) {
-        Sr0[j] *= invR_local[j];
-        Sr1[j] *= invR_local[j];
+        Sr0[j] *= invR__local[j];
+        Sr1[j] *= invR__local[j];
     }
 
     for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
@@ -325,14 +325,14 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
         for( unsigned int i=1 ; i<4 ; i++ ) {
             iloc = ( i+ip )*nr+jp;
             for( unsigned int j=1 ; j<4 ; j++ ) {
-                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
+                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR_[j+jp];
             }
         }//i
     } else {
         for( unsigned int i=1 ; i<4 ; i++ ) {
             iloc = ( i+ip )*nr+jp;
             for( unsigned int j=1 ; j<4 ; j++ ) {
-                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invRd[j+jp];
+                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invRd_[j+jp];
             }
         }//i
     }
@@ -641,7 +641,7 @@ void ProjectorAM2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
         for( unsigned int i=1 ; i<4 ; i++ ) {
             iloc = ( i+ip )*nr+jp;
             for( unsigned int j=1 ; j<4 ; j++ ) {
-                    Chi_envelope [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
+                    Chi_envelope [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR_[j+jp];
             }
         }//i
 

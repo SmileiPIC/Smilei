@@ -43,7 +43,7 @@ protected:
     int oversize_[2];
     double dq_inv_[2];
     //! Inverse radius
-    double *invR, *invRd;
+    double *invR_, *invRd_;
     
 };
 

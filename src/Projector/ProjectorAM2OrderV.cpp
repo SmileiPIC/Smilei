@@ -39,8 +39,8 @@ ProjectorAM2OrderV::ProjectorAM2OrderV( Params &params, Patch *patch ) : Project
     dq_inv_[0] = dl_inv_;
     dq_inv_[1] = dr_inv_;
     
-    invR = &((static_cast<PatchAM *>( patch )->invR)[0]);
-    invRd = &((static_cast<PatchAM *>( patch )->invRd)[0]);
+    invR_ = &((static_cast<PatchAM *>( patch )->invR)[0]);
+    invRd_ = &((static_cast<PatchAM *>( patch )->invRd)[0]);
     
     DEBUG( "cell_length "<< params.cell_length[0] );
     
@@ -378,7 +378,7 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
     complex<double> * __restrict__ Jr;
     complex<double> * __restrict__ Jt;
 
-    double *invR_local = &(invR[jpom2]);
+    double *invR_local = &(invR_[jpom2]);
 
     // Pointer for GPU and vectorization on ARM processors
     double * __restrict__ position_x = particles.getPtrPosition(0);
