@@ -865,6 +865,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             double fft_time_window = 0.;
             PyTools::extract( "_fft_time_window", fft_time_window, "Laser", i_laser );
 
+            // Extract _fft_time_step
+            double fft_time_step = 0.;
+            PyTools::extract( "_fft_time_step", fft_time_step, "Laser", i_laser );
+
             // Extract _number_of_processes
             int number_of_processes = 0;
             MPI_Comm comm;
@@ -945,7 +949,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 }
                 // Prepare propagator
                 MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
-                LaserPropagator propagateX( this, normal_axis, fft_time_window, comm );
+                LaserPropagator propagateX( this, normal_axis, fft_time_window, fft_time_step, comm );
 
                 // Make the propagation happen and write out the file
                 if( ! smpi->test_mode ) {

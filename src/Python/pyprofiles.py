@@ -735,7 +735,9 @@ try:
     
     _N_LaserOffset = 0
     
-    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., fft_time_window=None, extra_envelope=lambda *a:1., keep_n_strongest_modes=100, angle=0., number_of_processes=None, file=None):
+    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., angle=0., extra_envelope=lambda *a:1.,
+            fft_time_window=None, fft_time_step=None, keep_n_strongest_modes=100,
+            number_of_processes=None, file=None):
         global _N_LaserOffset
         
         file_ = file or ('LaserOffset'+str(_N_LaserOffset)+'.h5')
@@ -749,6 +751,7 @@ try:
         L._extra_envelope = extra_envelope
         L._profiles = space_time_profile
         L._fft_time_window = fft_time_window or Main.simulation_time
+        L._fft_time_step = fft_time_step or Main.timestep
         L._keep_n_strongest_modes = keep_n_strongest_modes
         L._angle = angle
         L._number_of_processes = number_of_processes
