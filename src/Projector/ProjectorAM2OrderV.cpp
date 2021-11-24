@@ -382,17 +382,17 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM, Particles &particles, un
     
         int np_computed = min( cell_nparts-ivect, vecSize );
         int istart0 = ( int )istart + ivect;
-        complex<double> e_bar[8], C_m[8] = {2.}; 
+        complex<double> e_bar[8]; 
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr, e_bar );
+            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, array_eitheta_old, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr, e_bar );
             charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
         }
        
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            computeJl( ipart, charge_weight, DSl, DSr, Sr0_buff_vect, bJ, dl_ov_dt_, invR_local, C_m, e_bar);
+            computeJl( ipart, charge_weight, DSl, DSr, Sr0_buff_vect, bJ, dl_ov_dt_, invR_local, e_bar);
         } 
     } //End ivect
     

@@ -2,6 +2,8 @@
 #define PROJECTORAM2ORDERV_H
 
 #include "ProjectorAM.h"
+#include <complex>
+#include "dcomplex.h"
 
 
 class ProjectorAM2OrderV : public ProjectorAM
@@ -29,7 +31,7 @@ public:
     
 private:
 
-    inline void compute_distances( Particles &particles, int npart_total, int ipart, int istart, int ipart_ref, double *deltaold, int *iold, double *Sl0, double *Sr0, double *DSl, double *DSr, std::complex<double> *e_bar)
+    inline void compute_distances( Particles &particles, int npart_total, int ipart, int istart, int ipart_ref, double *deltaold, std::complex<double> *array_eitheta_old, int *iold, double *Sl0, double *Sr0, double *DSl, double *DSr, std::complex<double> *e_bar)
     {
 
         int ipo = iold[0];
@@ -90,14 +92,20 @@ private:
         DSr [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap -  Sr0[  vecSize+ipart] ;
         DSr [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sr0[2*vecSize+ipart] ;
         DSr [4*vecSize+ipart] =                             p1* deltap  ;
+
+        std::complex<double> eitheta = ( particles.position( 1, istart+ipart ) + Icpx * particles.position( 2, istart+ipart ) ) / rp ; //exp(i theta)
+        e_bar[ipart] = array_eitheta_old[istart+ipart-ipart_ref] * std::sqrt(eitheta * (2.*std::real(array_eitheta_old[istart+ipart-ipart_ref]) - array_eitheta_old[istart+ipart-ipart_ref]));
+
+
+
     }
 
-    inline void computeJl( int ipart, double *charge_weight, double *DSl, double *DSr, double *Sr0, std::complex<double> *bJ, double dl_ov_dt, double *invR_local, std::complex<double> *C_m, std::complex<double> *e_bar )
+    inline void computeJl( int ipart, double *charge_weight, double *DSl, double *DSr, double *Sr0, std::complex<double> *bJ, double dl_ov_dt, double *invR_local, std::complex<double> *e_bar )
     {
 
         int vecSize = 8;
         double sum[5];
-
+        std::complex<double> C_m =2.;
         double crl_p = charge_weight[ipart]*dl_ov_dt_;
         
         sum[0] = 0.;
@@ -118,15 +126,15 @@ private:
         }
         //mode > 0
         for (unsigned int imode=1; imode<Nmode_; imode++){ 
-            C_m[ipart] *= e_bar[ipart];
+            C_m *= e_bar[ipart];
             double tmp( crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] );
             for( unsigned int i=1 ; i<5 ; i++ ) {
-                bJ [(200*imode + i*5 )*vecSize+ipart] += sum[i] * tmp * C_m[ipart];
+                bJ [(200*imode + i*5 )*vecSize+ipart] += sum[i] * tmp * C_m;
             }
             for ( unsigned int j=1; j<5 ; j++ ) {
                 tmp =  crl_p * ( Sr0[(j-1)*vecSize+ipart] + 0.5*DSr[j*vecSize+ipart] ) * invR_local[j];
                 for( unsigned int i=1 ; i<5 ; i++ ) {
-                    bJ [(200*imode + i*5+j )*vecSize+ipart] += sum[i] * tmp * C_m[ipart];
+                    bJ [(200*imode + i*5+j )*vecSize+ipart] += sum[i] * tmp * C_m;
                 }
             }
         }
