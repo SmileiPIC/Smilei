@@ -101,7 +101,10 @@ echo $? > exit_status_file"""
         """
         from math import ceil
         command = self.RUN_COMMAND % arguments
-        NODES = int(ceil(self.options.mpi/2.))
+        if self.options.nodes:
+            self.NODES = self.options.nodes
+        else:
+            self.NODES = int(ceil(self.options.mpi/2.))
         ppn = 24
         with open(self.smilei_path.exec_script, 'w') as f:
             f.write( self.script.format(command=command, env=self.env, account=self.options.account, nodes=NODES, ppn=ppn, max_time=self.options.max_time, mpi=self.options.mpi, omp=self.options.omp, dir=dir) )

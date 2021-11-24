@@ -47,8 +47,12 @@ echo $? > exit_status_file"""
         if ppn < self.options.omp :
             print("Smilei cannot be run with "+str(self.options.omp)+" threads on Ruche and partition "+self.options.partition)
             exit(4)
-        self.NODES = int(ceil(self.options.mpi/2.))
-        NPERSOCKET = 1
+        if self.options.nodes:
+            self.NODES = self.options.nodes
+            MPI_PER_SOCKET = int(ceil(self.options.mpi/2.))
+        else:
+            self.NODES = int(ceil(self.options.mpi/2.))
+            MPI_PER_SOCKET = 1
         self.COMPILE_COMMAND = self.MAKE+' -j 20 machine=ruche > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         # self.COMPILE_TOOLS_COMMAND = 'make tables > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         self.CLEAN_COMMAND = 'make clean > /dev/null 2>&1'

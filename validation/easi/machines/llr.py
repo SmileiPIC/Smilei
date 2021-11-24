@@ -39,7 +39,12 @@ echo $? > exit_status_file"""
         
         self.MAKE = "make" + (" config=%s"%self.options.compile_mode if self.options.compile_mode else "")
         
-        self.NODES=int(ceil(self.options.mpi/2.))
+        if self.options.nodes:
+            self.NODES = self.options.nodes
+            MPI_PER_SOCKET = int(ceil(self.options.mpi/2.))
+        else:
+            self.NODES = int(ceil(self.options.mpi/2.))
+            MPI_PER_SOCKET = 1
         self.ppn = {"jollyjumper":24, "tornado":36}[self.options.partition]
         
         if self.options.partition == "jollyjumper":
@@ -47,11 +52,10 @@ echo $? > exit_status_file"""
         elif self.options.partition == "tornado":
             self.JOB = "PBS_DEFAULT=poltrnd.in2p3.fr qsub  "+self.smilei_path.exec_script
         
-        NPERSOCKET = 1
         self.COMPILE_COMMAND = self.MAKE+' -j '+str(self.ppn)+' > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         self.COMPILE_TOOLS_COMMAND = 'make tables > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         self.CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-        self.RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(self.ppn) + " -map-by ppr:"+str(NPERSOCKET)+":socket:"+"pe="+str(self.options.omp) + " -n "+str(self.options.mpi)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+self.smilei_path.workdirs+"smilei %s >"+self.smilei_path.output_file+" 2>&1"
+        self.RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(self.ppn) + " -map-by ppr:"+str(MPI_PER_SOCKET)+":socket:"+"pe="+str(self.options.omp) + " -n "+str(self.options.mpi)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+self.smilei_path.workdirs+"smilei %s >"+self.smilei_path.output_file+" 2>&1"
     
     
     def compile(self, dir):

@@ -31,27 +31,32 @@ class SmileiPath(object):
 class ValidationOptions(object):
     def __init__(self, **kwargs):
         # Get general parameters from kwargs
-        self.verbose      = kwargs.pop( "verbose"     , False         )
-        self.compile_only = kwargs.pop( "compile_only", False         )
-        self.bench        = kwargs.pop( "bench"       , ""            )
-        self.omp          = kwargs.pop( "omp"         , 12            )
-        self.mpi          = kwargs.pop( "mpi"         , 4             )
-        self.generate     = kwargs.pop( "generate"    , False         )
-        self.showdiff     = kwargs.pop( "showdiff"    , False         )
-        self.nb_restarts  = kwargs.pop( "nb_restarts" , 0             )
-        self.max_time     = kwargs.pop( "max_time"    , "00:10:00"    )
-        self.compile_mode = kwargs.pop( "compile_mode", ""            )
-        self.log          = kwargs.pop( "log"         , ""            )
-        self.partition    = kwargs.pop( "partition"   , "jollyjumper" )
-        self.account      = kwargs.pop( "account"     , ""            )
+        self.verbose       = kwargs.pop( "verbose"      , False         )
+        self.compile_only  = kwargs.pop( "compile_only" , False         )
+        self.bench         = kwargs.pop( "bench"        , ""            )
+        self.omp           = kwargs.pop( "omp"          , 12            )
+        self.mpi           = kwargs.pop( "mpi"          , 4             )
+        self.nodes         = kwargs.pop( "nodes"        , 0             )
+        self.resource_file = kwargs.pop( "resource-file", ""            )
+        self.generate      = kwargs.pop( "generate"     , False         )
+        self.showdiff      = kwargs.pop( "showdiff"     , False         )
+        self.nb_restarts   = kwargs.pop( "nb_restarts"  , 0             )
+        self.max_time      = kwargs.pop( "max_time"     , "00:30:00"    )
+        self.compile_mode  = kwargs.pop( "compile_mode" , ""            )
+        self.log           = kwargs.pop( "log"          , ""            )
+        self.partition     = kwargs.pop( "partition"    , "jollyjumper" )
+        self.account       = kwargs.pop( "account"      , ""            )
         
         if kwargs:
             raise Exception("Unknown options for validation: "+", ".join(kwargs))
         
         from numpy import array, sum
         self.max_time_seconds = sum(array(self.max_time.split(":"),dtype=int)*array([3600,60,1]))
-
-
+    
+    def copy(self):
+        v = ValidationOptions()
+        v.__dict__ = self.__dict__.copy()
+        return v
 
 def loadReference(references_path, bench_name):
     import pickle
@@ -144,20 +149,33 @@ class Validation(object):
         else:
             self.git_version += check_output("cd "+self.smilei_path.root+" && echo `git rev-parse --abbrev-ref HEAD`", shell=True ).decode()[:-1]
         
+        # Get the benchmark-specific resources if specified in a file
+        from json import load
+        self.resources = {}
+        if self.options.resource_file:
+            with open(self.options.resource_file, 'r') as f:
+                self.resources = load( f )
+            if self.options.verbose:
+                print("Found resource file `"+self.options.resource_file+"` including cases:")
+                for k in self.resources:
+                    print("\t"+k)
+                print("")
+        
         # Define commands depending on host
         from socket import gethostname
         from .machines import Machine, MachineLLR, MachinePoincare, MachineRuche, MachineIrene
         self.HOSTNAME = gethostname()
         if "llrlsi-gw" in self.HOSTNAME:
-            self.machine = MachineLLR( self.smilei_path, self.options )
+            self.machine_class = MachineLLR
         elif "poincare" in self.HOSTNAME:
-            self.machine = MachinePoincare( self.smilei_path, self.options )
+            self.machine_class = MachinePoincare
         elif "ruche" in self.HOSTNAME:
-            self.machine = MachineRuche( self.smilei_path, self.options )
+            self.machine_class = MachineRuche
         elif "irene" in self.HOSTNAME:
-            self.machine = MachineIrene( self.smilei_path, self.options )
+            self.machine_class = MachineIrene
         else:
-            self.machine = Machine( self.smilei_path, self.options )
+            self.machine_class = Machine
+        self.machine = self.machine_class( self.smilei_path, self.options )
     
     def compile(self):
         from sys import exit
@@ -242,35 +260,45 @@ class Validation(object):
         
         _dataNotMatching = False
         for BENCH in self.list_benchmarks():
-            
+            print(BENCH)
             SMILEI_BENCH = self.smilei_path.benchmarks + BENCH
+            
+            # Prepare specific resources if requested in a resource file
+            if BENCH in self.resources:
+                options = self.options.copy()
+                for k,v in self.resources[BENCH].items():
+                    setattr(options, k, v)
+                machine = self.machine_class( self.smilei_path, options )
+            else:
+                options = self.options
+                machine = self.machine
             
             # Create the workdir path
             WORKDIR = self.smilei_path.workdirs + 'wd_'+basename(splitext(BENCH)[0]) + sep
             mkdir(WORKDIR)
-            WORKDIR += str(self.options.mpi) + sep
+            WORKDIR += str(options.mpi) + sep
             mkdir(WORKDIR)
-            WORKDIR += str(self.options.omp) + sep
+            WORKDIR += str(options.omp) + sep
             mkdir(WORKDIR)
             
             # If there are restarts, prepare a Checkpoints block in the namelist
             RESTART_INFO = ""
-            if self.options.nb_restarts > 0:
+            if options.nb_restarts > 0:
                 # Load the namelist
                 namelist = happi.openNamelist(SMILEI_BENCH)
                 niter = namelist.Main.simulation_time / namelist.Main.timestep
                 # If the simulation does not have enough timesteps, change the number of restarts
-                if self.options.nb_restarts > niter - 4:
-                    self.options.nb_restarts = max(0, niter - 4)
-                    if self.options.verbose:
-                        print("Not enough timesteps for restarts. Changed to "+str(self.options.nb_restarts)+" restarts")
-                if self.options.nb_restarts > 0:
+                if options.nb_restarts > niter - 4:
+                    options.nb_restarts = max(0, niter - 4)
+                    if options.verbose:
+                        print("Not enough timesteps for restarts. Changed to "+str(options.nb_restarts)+" restarts")
+                if options.nb_restarts > 0:
                     # Find out the optimal dump_step
-                    dump_step = int( (niter+3.) / (self.options.nb_restarts+1) )
+                    dump_step = int( (niter+3.) / (options.nb_restarts+1) )
                     # Prepare block
                     if len(namelist.Checkpoints) > 0:
                         RESTART_INFO = (" \""
-                            + "Checkpoints.keep_n_dumps="+str(self.options.nb_restarts)+";"
+                            + "Checkpoints.keep_n_dumps="+str(options.nb_restarts)+";"
                             + "Checkpoints.dump_minutes=0.;"
                             + "Checkpoints.dump_step="+str(dump_step)+";"
                             + "Checkpoints.exit_after_dump=True;"
@@ -279,7 +307,7 @@ class Validation(object):
                         )
                     else:
                         RESTART_INFO = (" \"Checkpoints("
-                            + "    keep_n_dumps="+str(self.options.nb_restarts)+","
+                            + "    keep_n_dumps="+str(options.nb_restarts)+","
                             + "    dump_minutes=0.,"
                             + "    dump_step="+str(dump_step)+","
                             + "    exit_after_dump=True,"
@@ -289,19 +317,19 @@ class Validation(object):
                 del namelist
             
             # Prepare logging
-            if self.options.log:
-                log_dir = ("" if isabs(self.options.log) else INITIAL_DIRECTORY + sep) + self.options.log + sep
+            if options.log:
+                log_dir = ("" if isabs(options.log) else INITIAL_DIRECTORY + sep) + options.log + sep
                 log = Log(log_dir, log_dir + BENCH + ".log")
             
             # Loop restarts
-            for irestart in range(self.options.nb_restarts+1):
+            for irestart in range(options.nb_restarts+1):
                 
                 RESTART_WORKDIR = WORKDIR + "restart%03d"%irestart + sep
 
                 execution = True
                 if not exists(RESTART_WORKDIR):
                     mkdir(RESTART_WORKDIR)
-                elif self.options.generate:
+                elif options.generate:
                     execution = False
 
                 chdir(RESTART_WORKDIR)
@@ -323,13 +351,13 @@ class Validation(object):
                 #         # Copy the database
                 #         check_call(['cp '+SMILEI_DATABASE+'/*.h5 '+RESTART_WORKDIR], shell=True)
                 #     except CalledProcessError:
-                #         if self.options.verbose :
+                #         if options.verbose :
                 #             print(  "Execution failed to copy databases in ",RESTART_WORKDIR)
                 #         sys.exit(2)
                 
                 # If there are restarts, adds the Checkpoints block
                 arguments = SMILEI_BENCH
-                if self.options.nb_restarts > 0:
+                if options.nb_restarts > 0:
                     if irestart == 0:
                         RESTART_DIR = "None"
                     else:
@@ -338,11 +366,15 @@ class Validation(object):
                 
                 # Run smilei
                 if execution:
-                    if self.options.verbose:
+                    if options.verbose:
                         print("---------------------------")
-                        print('Running '+BENCH+' on '+self.HOSTNAME+' with '+str(self.options.omp)+'x'+str(self.options.mpi)+' OMPxMPI' + ((", restart #"+str(irestart)) if irestart>0 else ""))
+                        print("Running " + BENCH + " on " + self.HOSTNAME)
+                        print("Resources: " + str(options.mpi) + " MPI processes x " + str(options.omp) +" openMP threads on " + str(options.nodes) + " nodes"
+                            + ( " (overridden by --resource-file)" if BENCH in self.resources else "" ))
+                        if options.nb_restarts > 0:
+                            print("Restart #" + str(irestart))
                         print("---------------------------")
-                    self.machine.run( arguments, RESTART_WORKDIR )
+                    machine.run( arguments, RESTART_WORKDIR )
                 
                 # Check the output for errors
                 errors = []
@@ -350,7 +382,7 @@ class Validation(object):
                 with open(self.smilei_path.output_file,"r") as fout:
                     errors = [line for line in fout if search_error.search(line)]
                 if errors:
-                    if self.options.verbose:
+                    if options.verbose:
                         print("")
                         print("Errors appeared while running the simulation:")
                         print("---------------------------------------------")
@@ -359,16 +391,16 @@ class Validation(object):
                     exit(2)
                 
                 # Scan some info for logging
-                if self.options.log:
+                if options.log:
                     log.scan(self.smilei_path.output_file)
             
             # Append info in log file
-            if self.options.log:
+            if options.log:
                 log.append(self.git_version)
             
             # Find the validation script for this bench
             validation_script = self.smilei_path.analyses + "validate_" + BENCH
-            if self.options.verbose:
+            if options.verbose:
                 print("")
             if not exists(validation_script):
                 print("Unable to find the validation script "+validation_script)
@@ -377,8 +409,8 @@ class Validation(object):
             chdir(WORKDIR)
             
             # If required, generate the references
-            if self.options.generate:
-                if self.options.verbose:
+            if options.generate:
+                if options.verbose:
                     print( '----------------------------------------------------')
                     print( 'Generating reference for '+BENCH)
                     print( '----------------------------------------------------')
@@ -387,8 +419,8 @@ class Validation(object):
                 Validate.write()
             
             # Or plot differences with respect to existing references
-            elif self.options.showdiff:
-                if self.options.verbose:
+            elif options.showdiff:
+                if options.verbose:
                     print( '----------------------------------------------------')
                     print( 'Viewing differences for '+BENCH)
                     print( '----------------------------------------------------')
@@ -399,7 +431,7 @@ class Validation(object):
             
             # Otherwise, compare to the existing references
             else:
-                if self.options.verbose:
+                if options.verbose:
                     print( '----------------------------------------------------')
                     print( 'Validating '+BENCH)
                     print( '----------------------------------------------------')
@@ -412,7 +444,7 @@ class Validation(object):
             # Clean workdirs, goes here only if succeeded
             chdir(self.smilei_path.workdirs)
             rmtree(WORKDIR, True)
-            if self.options.verbose:
+            if options.verbose:
                 print( "")
         
         if _dataNotMatching:

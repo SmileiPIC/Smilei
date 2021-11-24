@@ -77,8 +77,8 @@ def usage():
 try:
     external_options, remainder = getopt(
         argv[1:],
-        'o:m:b:r:k:p:gshvcl:t:a:',
-        ['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG=', 'time=', 'account=']
+        'o:m:b:r:k:p:gshvcl:t:a:n:',
+        ['OMP=', 'MPI=', 'BENCH=', 'RESTARTS=', 'PARTITION=', 'GENERATE', 'SHOW', 'HELP', 'VERBOSE', 'COMPILE_ONLY', 'COMPILE_MODE=', 'LOG=', 'time=', 'account=', 'nodes=', 'resource-file=']
     )
 except GetoptError as err:
     usage()
@@ -91,6 +91,10 @@ for opt, arg in external_options:
         options['omp'] = int(arg)
     elif opt in ('-m', '--MPI'):
         options['mpi'] = int(arg)
+    elif opt in ('-n', '--nodes'):
+        options['nodes'] = int(arg)
+    elif opt in ('--resource-file',):
+        options['resource-file'] = arg
     elif opt in ('-b', '--BENCH'):
         options['bench'] = arg
     elif opt in ('-p', '--PARTITION'):
@@ -130,6 +134,11 @@ Options:
   -m <nb_MPIProcs>
        <nb_MPIProcs> : number of MPI processes used for the execution
        DEFAULT : 4
+  -n <nb_nodes>
+       <nb_nodes> : number of nodes to use for the execution
+       DEFAULT : computed so that 1 mpi = 1 socket
+  --resource-file <file>
+       <file> : file containing benchmark-specific resources to override values in -o, -m and -n
   -g
        Generates the references
   -s
