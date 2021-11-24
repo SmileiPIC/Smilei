@@ -92,3 +92,6 @@ DiagPerformances(
 	every = 1000,
 )
 
+DiagScalar(
+	every = 20
+)

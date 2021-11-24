@@ -12,6 +12,7 @@ species_list = ["electron","positron","photon"]
 #
 species_first_index = [0,0,5]
 # Large relative error because of stochasticity
+relative_error_ukin = 0.12
 relative_error = 0.1
 
 Scalar = {}
@@ -20,7 +21,7 @@ for ispecies,species in enumerate(species_list):
     for name in ["Ntot_", "Ukin_", "Dens_"]:
         sc = np.array(S.Scalar(name+species).getData())
         Validate("Scalar "+name+species, sc[species_first_index[ispecies]:], relative_error, "relative_error")
-        
+
         if name == "Ntot_":
             print("Number of {}s at beginning: {}".format(species,sc[0]))
             print("Number of {}s at the end: {}".format(species,sc[-1]))

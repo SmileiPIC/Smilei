@@ -175,34 +175,34 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Running pycontrol.py
     runScript( string( reinterpret_cast<const char *>( pycontrol_py ), pycontrol_py_len ), "pycontrol.py", globals );
-    
+
     // Run custom pre-processing function
     MESSAGE( 1, "Check for function preprocess()" );
     PyTools::runPyFunction( "preprocess" );
     PyErr_Clear();
-    
+
     smpi->barrier();
-    
+
     // Error if no block Main() exists
     if( PyTools::nComponents( "Main" ) == 0 ) {
         ERROR( "Block Main() not defined" );
     }
-    
+
     // CHECK namelist on python side
     PyTools::runPyFunction( "_smilei_check" );
     smpi->barrier();
-    
+
     // Python makes the checkpoint dir tree
     if( ! smpi->test_mode ) {
         PyTools::runPyFunction( "_prepare_checkpoint_dir" );
         smpi->barrier();
     }
-    
+
     // Call python function _keep_python_running (see pyontrol.py)
     // Return false if we can close the python interpreter
     MESSAGE( 1, "Calling python _keep_python_running() :" );
     keep_python_running_ = PyTools::runPyFunction<bool>( "_keep_python_running" );
-    
+
     // random seed
     random_seed = 0;
     if( PyTools::extractOrNone( "random_seed", random_seed, "Main" ) ) {
@@ -323,7 +323,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         ERROR( "The number of AM modes computed in classical Poisson solver must be lower or equal than the number of modes of the simulation" );
     }
 
-    
+
     // simulation duration & length
     PyTools::extract( "simulation_time", simulation_time, "Main"   );
 
@@ -408,7 +408,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
 
     }
-    
+
     open_boundaries.resize( nDim_field );
     for( unsigned int iDim = 0 ; iDim < nDim_field; iDim++ ) {
         open_boundaries[iDim].resize( 2, false );
@@ -678,6 +678,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 ERROR("In block `Vectorization`, `adaptive` mode only available in 3D")
             }
         }
+
         // Check cell sorting is allowed
         if( !( vectorization_mode == "off") ){
     	    if (defined_cell_sort == true && cell_sorting == false){
@@ -701,7 +702,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             );
     }
 
-    
+
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
 
@@ -715,7 +716,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 && geometry!="3Dcartesian" ) {
             ERROR( "Collisions only valid for cartesian geometries for the moment" )
         }
-        
+
         if( vectorization_mode == "adaptive_mixed_sort" ) {
             ERROR( "Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'." )
         }
@@ -730,11 +731,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Read the "print_expected_disk_usage" parameter
     PyTools::extract( "print_expected_disk_usage", print_expected_disk_usage, "Main"   );
-    
+
     // Decide when necessary to keep position_old
     keep_position_old = false;
     DEBUGEXEC( keep_position_old = true );
-    
+
     // -------------------------------------------------------
     // Checking species order
     // -------------------------------------------------------
@@ -816,7 +817,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // also defines defaults values for the species lengths
     // -------------------------------------------------------
     compute();
- 
+
     // add the read or computed value of clrw to the content of smilei.py
     namelist += string( "Main.clrw= " ) + to_string( clrw ) + "\n";
 
@@ -845,25 +846,29 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // -------------------------------------------------------
     unsigned int n_laser = PyTools::nComponents( "Laser" );
     unsigned int n_laser_offset = 0;
-    
+
     for( unsigned int i_laser=0; i_laser<n_laser; i_laser++ ) {
         double offset = 0.;
-        
+
         // If this laser has the hidden _offset attribute
         if( PyTools::extractOrNone( "_offset", offset, "Laser", i_laser ) ) {
-            
+
             bool propagate = false;
             PyTools::extract( "_propagate", propagate, "Laser", i_laser );
             if( ! propagate ) continue;
-            
+
             // Extract the angle
             double angle_z = 0.;
             PyTools::extract( "_angle", angle_z, "Laser", i_laser );
-            
+
             // Extract _fft_time_window
             double fft_time_window = 0.;
             PyTools::extract( "_fft_time_window", fft_time_window, "Laser", i_laser );
-            
+
+            // Extract _fft_time_step
+            double fft_time_step = 0.;
+            PyTools::extract( "_fft_time_step", fft_time_step, "Laser", i_laser );
+
             // Extract _number_of_processes
             int number_of_processes = 0;
             MPI_Comm comm;
@@ -874,11 +879,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 number_of_processes = smpi->getSize();
                 MPI_Comm_dup( smpi->world(), &comm );
             }
-            
+
             // Extract the file name
             string file( "" );
             PyTools::extract( "file", file, "Laser", i_laser );
-            
+
             // Extract the list of profiles and verify their content
             PyObject *p = PyTools::extract_py( "_profiles", "Laser", i_laser );
             vector<PyObject *> profiles;
@@ -910,14 +915,14 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                     ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs );
                 }
             }
-            
+
             // Extract _keep_n_strongest_modes
             int keep_n_strongest_modes=0;
             PyTools::extract( "_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser );
             if( keep_n_strongest_modes<1 ) {
                 ERROR( "For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer" );
             }
-            
+
             // Extract box_side
             string box_side = "";
             PyTools::extract( "box_side", box_side, "Laser", i_laser );
@@ -937,27 +942,27 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             } else {
                 ERROR( "For LaserOffset #" << n_laser_offset << ": box_side must be `xmin`, `xmax`, `ymin`, `ymax`, `zmin` or `zmax`" );
             }
-            
+
             if( smpi->getRank() < number_of_processes && ! restart ) {
                 if( n_laser_offset == 0 ) {
                     TITLE( "Calculate LaserOffset" );
                 }
                 // Prepare propagator
                 MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
-                LaserPropagator propagateX( this, normal_axis, fft_time_window, comm );
-                
+                LaserPropagator propagateX( this, normal_axis, fft_time_window, fft_time_step, comm );
+
                 // Make the propagation happen and write out the file
                 if( ! smpi->test_mode ) {
                     propagateX( profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z );
                 }
             }
-            
+
             n_laser_offset ++;
         }
     }
-    
+
     check_consistency();
-    
+
 }
 
 Params::~Params()
@@ -968,7 +973,6 @@ Params::~Params()
     if( adaptive_vecto_time_selection ) {
         delete adaptive_vecto_time_selection;
     }
-    PyTools::closePython();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1000,9 +1004,9 @@ void Params::compute()
     patch_dimensions.resize( 3, 0. );
     cell_volume=1.0;
     n_cell_per_patch = 1;
-    
+
     multiple_decomposition = PyTools::nComponents( "MultipleDecomposition" )>0;
-    
+
     // compute number of cells & normalized lengths
     for( unsigned int i=0; i<nDim_field; i++ ) {
         n_space[i] = round( grid_length[i]/cell_length[i] );
@@ -1066,7 +1070,7 @@ void Params::compute()
             region_oversize[1] = oversize[1];
         }
     }
-    
+
     // Set clrw if not set by the user
     if( clrw == -1 ) {
 
@@ -1128,10 +1132,9 @@ void Params::check_consistency()
             ERROR( "Vectorized algorithms not implemented for this geometry" );
         }
 
-        if( ( geometry=="2Dcartesian" ) && ( interpolation_order==4 ) ) {
-            ERROR( "4th order vectorized algorithms not implemented in 2D" );
-        }
-
+        // if( ( geometry=="2Dcartesian" ) && ( interpolation_order==4 ) ) {
+        //     ERROR( "4th order vectorized algorithms not implemented in 2D" );
+        // }
 
         if( hasMultiphotonBreitWheeler ) {
             WARNING( "Performances of advanced physical processes which generates new particles could be degraded for the moment !" );
@@ -1177,35 +1180,42 @@ void Params::print_init()
     MESSAGE( 1, "Maxwell solver : " <<  maxwell_sol );
     MESSAGE( 1, "simulation duration = " << simulation_time <<",   total number of iterations = " << n_time);
     MESSAGE( 1, "timestep = " << timestep << " = " << timestep/dtCFL << " x CFL,   time resolution = " << res_time);
-    
+
     ostringstream gl;
     gl << "Grid length: ";
     for( unsigned int i=0 ; i<grid_length.size() ; i++ ) {
         gl << grid_length[i] << ( i<grid_length.size()-1 ? ", " : "" );
     }
     MESSAGE( 1, gl.str() );
-    
+
     ostringstream cl;
     cl << "Cell length: ";
     for( unsigned int i=0 ; i<cell_length.size() ; i++ ) {
         cl << cell_length[i] << ( i<cell_length.size()-1 ? ", " : "" );
     }
     MESSAGE( 1, cl.str() );
-    
+
     ostringstream nc;
     nc << "Number of cells: " ;
     for( unsigned int i=0 ; i<nDim_field ; i++ ) {
         nc << n_space_global[i] << ( i<nDim_field-1 ? ", " : "" );
     }
     MESSAGE( 1, nc.str() );
-    
+
     ostringstream sr;
     sr << "Spatial resolution: ";
     for( unsigned int i=0 ; i<nDim_field ; i++ ) {
         sr << res_space[i] << ( i<nDim_field-1 ? ", " : "" );
     }
     MESSAGE( 1, sr.str() );
-    
+
+    ostringstream cs;
+    cs << "cell sorting: ";
+    if (cell_sorting) {
+        cs << "Activated";
+        MESSAGE( 1, cs.str() );
+    }
+
     TITLE( "Electromagnetic boundary conditions" );
     string xyz = geometry=="AMcylindrical" ? "xr" : "xyz";
     for( unsigned int i=0 ; i<grid_length.size() ; i++ ) {
@@ -1222,11 +1232,11 @@ void Params::print_init()
             MESSAGE( 1, bc.str() );
         }
     }
-    
+
     if( full_B_exchange ) {
         MESSAGE( 1, "All components of B are exchanged at synchronization" );
     }
-    
+
     if( currentFilter_passes.size() > 0 ){
         TITLE( "Current filtering" );
         if( *std::max_element(std::begin(currentFilter_passes), std::end(currentFilter_passes)) > 0 ) {
@@ -1240,7 +1250,7 @@ void Params::print_init()
         TITLE( "Field filtering" );
         MESSAGE( 1, "Friedman field filtering : theta = " << Friedman_theta );
     }
-    
+
     if( has_load_balancing ) {
         TITLE( "Load Balancing: " );
         if( initial_balance ) {
@@ -1271,14 +1281,14 @@ void Params::print_timestep( SmileiMPI *smpi, unsigned int itime, double time_du
         double before = timer.getTime();
         timer.update();
         double now = timer.getTime();
-        
+
         ostringstream push_time;
         if( npart * (double) print_every > 0 ) {
             push_time << setw( 14 ) << (int)( 1e9 * (now - before) * (double) smpi->getGlobalNumCores() / ( npart * (double) print_every ) );
         } else {
             push_time << "  ??";
         }
-        
+
         #pragma omp master
         MESSAGE(
             "  " << setw( timestep_width ) << itime << "/" << n_time << " "
@@ -1312,36 +1322,36 @@ void Params::print_timestep_headers( SmileiMPI *smpi )
 void Params::print_parallelism_params( SmileiMPI *smpi )
 {
     if( smpi->isMaster() ) {
-        
+
 #ifndef _NO_MPI_TM
         MESSAGE( 1, "MPI_THREAD_MULTIPLE enabled" );
 #else
         MESSAGE( 1, "MPI_THREAD_MULTIPLE not enabled" );
 #endif
-    
+
         MESSAGE( 1, "Number of MPI processes: " << smpi->getSize() );
-        
+
 #ifdef _OPENMP
         MESSAGE( 1, "Number of threads per MPI process : " << smpi->getOMPMaxThreads() );
 #else
         MESSAGE( 1, "OpenMP disabled" );
 #endif
         MESSAGE( "" );
-        
+
         ostringstream np;
         np << "Number of patches: " << number_of_patches[0];
         for( unsigned int iDim=1 ; iDim<nDim_field ; iDim++ ) {
             np << " x " << number_of_patches[iDim];
         }
         MESSAGE( 1, np.str() );
-        
+
         ostringstream ps;
         ps << "Number of cells in one patch: " << n_space[0];
         for( unsigned int iDim=1 ; iDim<nDim_field ; iDim++ ) {
             ps << " x " << n_space[iDim];
         }
         MESSAGE( 1, ps.str() );
-        
+
         MESSAGE( 1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
     }
 
@@ -1422,9 +1432,9 @@ void Params::cleanup( SmileiMPI *smpi )
     PyTools::runPyFunction( "cleanup" );
     // this will reset error in python in case cleanup doesn't exists
     PyErr_Clear();
-    
+
     smpi->barrier();
-    
+
     if( keep_python_running_ ) {
         MESSAGE( 1, "Keeping Python interpreter alive" );
     } else {
@@ -1449,7 +1459,7 @@ void Params::multiple_decompose()
             cout << number_of_patches[iDim] << " ";
         cout << endl;
     }
-    
+
     if( nDim_field==1 ) {
         multiple_decompose_1D();
     } else if( nDim_field==2 ) {
@@ -1457,7 +1467,7 @@ void Params::multiple_decompose()
     } else if( nDim_field==3 ) {
         multiple_decompose_3D();
     }
-    
+
     // Build the map of offset, contains offset for each domain, expressed in number of cells
     offset_map.resize( nDim_field );
     for ( unsigned int iDim = 0 ; iDim < nDim_field ; iDim++ ) {

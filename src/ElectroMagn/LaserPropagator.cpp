@@ -76,7 +76,7 @@ PyObject *PyCall( PyObject *callable, PyObject *args, PyObject *kwargs )
 }
 
 
-LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_time_window, MPI_Comm &comm )
+LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_time_window, double fft_time_step, MPI_Comm &comm )
 {
 
 #ifdef SMILEI_USE_NUMPY
@@ -105,7 +105,7 @@ LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_
     ox = params->oversize[side] * params->cell_length[side];
     
     // Set the grid temporal dimension
-    N[ndim-1] = ( int )( fft_time_window / params->timestep );
+    N[ndim-1] = ( int )( fft_time_window / fft_time_step );
     L[ndim-1] = fft_time_window;
     
     // Make the array bigger to accommodate for the parallel FFT
@@ -280,10 +280,11 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         vector<double> local_spectrum( Nlocal[1], 0. );
         for( unsigned int i=0; i<nprofiles; i++ ) {
             complex<double> *z = ( complex<double> * ) PyArray_GETPTR1( ( PyArrayObject * ) arrays[i], 0 );
-            for( unsigned int k=0; k<Nlocal[1]; k++ )
+            for( unsigned int k=0; k<Nlocal[1]; k++ ) {
                 for( unsigned int j=0; j<N[0]; j++ ) {
                     local_spectrum[k] += abs( z[j + N[0]*k] );
                 }
+            }
         }
         // In 2D, the spectrum is scattered across processors, so we gather to root
         if( MPI_rank==0 ) {
@@ -302,11 +303,13 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         vector<double> local_spectrum( lmax, 0. );
         for( unsigned int i=0; i<nprofiles; i++ ) {
             complex<double> *z = ( complex<double> * ) PyArray_GETPTR1( ( PyArrayObject * ) arrays[i], 0 );
-            for( unsigned int l=0; l<lmax; l++ )
-                for( unsigned int k=0; k<Nlocal[1]; k++ )
+            for( unsigned int l=0; l<lmax; l++ ) {
+                for( unsigned int k=0; k<Nlocal[1]; k++ ){
                     for( unsigned int j=0; j<N[0]; j++ ) {
                         local_spectrum[l] += abs( z[j + N[0]*( k + Nlocal[1]*l )] );
                     }
+                }
+            }
         }
         // In 3D, each processor has the full spectrum, so we sum all contributions
         if( MPI_rank==0 ) {

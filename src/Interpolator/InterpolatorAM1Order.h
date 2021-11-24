@@ -15,29 +15,29 @@ class InterpolatorAM1Order final : public InterpolatorAM
 public:
     InterpolatorAM1Order( Params &, Patch * );
     ~InterpolatorAM1Order() override final {};
-    
-    inline void fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc );
+
+    inline void __attribute__((always_inline)) fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc );
     void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override final ;
     void fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final ;
     void fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> *selection ) override final;
     void oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1=NULL, double *l2=NULL, double *l3=NULL ) override final;
-    
-    
-    inline std::complex<double> compute( double *coeffx, double *coeffy, cField2D *f, int idx, int idy )
+
+
+    inline std::complex<double> __attribute__((always_inline)) compute( double *coeffx, double *coeffy, cField2D *f, int idx, int idy )
     {
         std::complex<double> interp_res( 0. );
         for( int iloc=0 ; iloc<2 ; iloc++ ) {
             for( int jloc=0 ; jloc<2 ; jloc++ ) {
                 interp_res += *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
-                
+
                 //std::cout<<"f "<<std::fixed << std::setprecision(3)<<(*f)(idx+iloc,idy+jloc)<<std::endl;
             }
         }
         //std::cout<<"interp res "<< interp_res <<std::endl;
         return interp_res;
     };
-     
-    inline std::complex<double> compute_0_T( double *coeffx, double *coeffy, cField2D *f, int idx, int idy )
+
+    inline std::complex<double> __attribute__((always_inline)) compute_0_T( double *coeffx, double *coeffy, cField2D *f, int idx, int idy )
     {
         std::complex<double> interp_res( 0. );
         for( int iloc=0 ; iloc<2 ; iloc++ ) {
@@ -51,7 +51,7 @@ public:
         }
         return interp_res;
     };
-    inline std::complex<double> compute_0_L( double *coeffx, double *coeffy, cField2D *f, int idx, int idy )
+    inline std::complex<double> __attribute__((always_inline)) compute_0_L( double *coeffx, double *coeffy, cField2D *f, int idx, int idy )
     {
         std::complex<double> interp_res( 0. );
         for( int iloc=0 ; iloc<2 ; iloc++ ) {
@@ -61,7 +61,7 @@ public:
         }
         return interp_res;
     };
-    inline std::complex<double> compute_1_T( double *coeffx, double *coeffy, cField2D *f, int idx, int idy, std::complex<double> *exptheta )
+    inline std::complex<double> __attribute__((always_inline)) compute_1_T( double *coeffx, double *coeffy, cField2D *f, int idx, int idy, std::complex<double> *exptheta )
     {
         std::complex<double> interp_res( 0. );
         for( int iloc=0 ; iloc<2 ; iloc++ ) {
@@ -71,7 +71,7 @@ public:
         }
         return interp_res;
     };
-    inline std::complex<double> compute_1_L( double *coeffx, double *coeffy, cField2D *f, int idx, int idy, std::complex<double> *exptheta )
+    inline std::complex<double> __attribute__((always_inline)) compute_1_L( double *coeffx, double *coeffy, cField2D *f, int idx, int idy, std::complex<double> *exptheta )
     {
         std::complex<double> interp_res( 0. );
         for( int iloc=0 ; iloc<2 ; iloc++ ) {
@@ -86,12 +86,12 @@ public:
         return interp_res;
     };
 private:
-    inline void coeffs( double xpn, double rpn )
+    inline void __attribute__((always_inline)) coeffs( double xpn, double rpn )
     {
         // Indexes of the central nodes
         ip_ = floor( xpn );
         jp_ = floor( rpn );
-        
+
         // Declaration and calculation of the coefficient for interpolation
         
         deltax_   = xpn - ( double )ip_;
@@ -114,12 +114,12 @@ private:
             coeffyp_[1] = 0.; // Terms are already acuumulated in coeffyp_[0]
             deltar_ -= 1.; // To account for the cell shift and proper recomputation of r_old in projector
         }
-        
+
         // First index for summation
         ip_ = ip_ - i_domain_begin_;
         jp_ = jp_ - j_domain_begin_;
     };
-    
+
     // Last prim index computed
     int ip_, jp_;
     // Last delta computed
@@ -130,8 +130,6 @@ private:
     double coeffxp_[2], coeffyp_[4] ;// coeff[2-3] to use when fields are 0 on axis.
     //! Number of modes;
     unsigned int nmodes_;
-    
-    
 };//END class
 
 #endif

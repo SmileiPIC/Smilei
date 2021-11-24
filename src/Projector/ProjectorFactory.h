@@ -14,6 +14,7 @@
 
 #ifdef _VECTO
 #include "Projector2D2OrderV.h"
+#include "Projector2D4OrderV.h"
 #include "Projector3D2OrderV.h"
 #include "Projector3D4OrderV.h"
 #endif
@@ -50,7 +51,14 @@ public:
             }
 #endif
         } else if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == ( unsigned int )4 ) ) {
-            Proj = new Projector2D4Order( params, patch );
+            if( !vectorization ) {
+                Proj = new Projector2D4Order( params, patch );
+            }
+#ifdef _VECTO
+            else {
+                Proj = new Projector2D4OrderV( params, patch );
+            }
+#endif
         }
         // ---------------
         // 3Dcartesian simulation
@@ -73,7 +81,7 @@ public:
                 Proj = new Projector3D4OrderV( params, patch );
             }
 #endif
-            
+
         }
         // ---------------
         // AM simulation
@@ -87,9 +95,9 @@ public:
         } else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
         }
-        
+
         return Proj;
     }
-    
+
 };
 #endif

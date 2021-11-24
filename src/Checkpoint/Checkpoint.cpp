@@ -176,6 +176,8 @@ Checkpoint::Checkpoint( Params &params, SmileiMPI *smpi ) :
     nDim_particle=params.nDim_particle;
 }
 
+Checkpoint::~Checkpoint() {}
+
 void Checkpoint::dump( VectorPatch &vecPatches, Region &region, unsigned int itime, SmileiMPI *smpi, SimWindow *simWindow, Params &params )
 {
 
@@ -469,7 +471,12 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
 
         s.attr( "partCapacity", spec->particles->capacity() );
         s.attr( "partSize", spec->particles->size() );
-        s.attr( "radiatedEnergy", spec->getNrjRadiation() );
+        
+        s.attr( "nrj_bc_lost", spec->nrj_bc_lost );
+        s.attr( "nrj_mw_inj", spec->nrj_mw_inj );
+        s.attr( "nrj_mw_out", spec->nrj_mw_out );
+        s.attr( "nrj_new_part", spec->nrj_new_part_ );
+        s.attr( "radiatedEnergy", spec->nrj_radiated_ );
 
         if( spec->particles->size()>0 ) {
 
@@ -498,7 +505,11 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
         } // End if partSize
 
     } // End for ispec
-
+    
+    // Save some scalars
+    g.attr( "nrj_mw_inj", EMfields->nrj_mw_inj );
+    g.attr( "nrj_mw_out", EMfields->nrj_mw_out );
+    cout<<setprecision(10)<< EMfields->nrj_mw_out<<endl;
     // Manage some collisions parameters
     std::vector<double> rate_multiplier(  patch->vecCollisions.size() );
     for( unsigned int icoll = 0; icoll< patch->vecCollisions.size(); icoll++ ) {
@@ -843,13 +854,13 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
         unsigned int partSize=0;
         s.attr( "partSize", partSize );
         spec->particles->initialize( partSize, nDim_particle, params.keep_position_old );
-
-        double radiated_energy;
-        if( s.hasAttr( "radiatedEnergy" ) ) {
-            s.attr( "radiatedEnergy", radiated_energy );
-            spec->setNrjRadiation( radiated_energy );
-        }
-
+        
+        s.attr( "nrj_bc_lost", spec->nrj_bc_lost );
+        s.attr( "nrj_mw_inj", spec->nrj_mw_inj );
+        s.attr( "nrj_mw_out", spec->nrj_mw_out );
+        s.attr( "nrj_new_part", spec->nrj_new_part_ );
+        s.attr( "radiatedEnergy", spec->nrj_radiated_ );
+        
         if( partSize>0 ) {
             for( unsigned int i=0; i<spec->particles->Position.size(); i++ ) {
                 ostringstream namePos( "" );
@@ -880,7 +891,11 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
 
         }
     }
-
+    
+    // Load some scalars
+    g.attr( "nrj_mw_inj", EMfields->nrj_mw_inj );
+    g.attr( "nrj_mw_out", EMfields->nrj_mw_out );
+    cout<<setprecision(10)<< EMfields->nrj_mw_out<<endl;
     // Manage some collisions parameters
     if( g.vectSize( "collisions_rate_multiplier" ) > 0 ) {
         std::vector<double> rate_multiplier;
