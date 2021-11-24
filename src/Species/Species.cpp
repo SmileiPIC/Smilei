@@ -1465,7 +1465,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
             if( params.geometry != "AMcylindrical" ) {
                 b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                    for( unsigned int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+                    for( unsigned int iPart= (unsigned int)(particles->first_index[ibin]) ; (unsigned int)(iPart<particles->last_index[ibin]); iPart++ ) {
                         Proj->basic( b_rho, ( *particles ), iPart, 0 );
                     }
                 }//End loop on bins
