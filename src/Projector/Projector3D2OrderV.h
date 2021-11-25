@@ -216,7 +216,7 @@ private:
                                     double * __restrict__ position_y,
                                     double * __restrict__ position_z,
                                     int npart_total,
-                                    int ipart, int istart, int ipart_ref,
+                                    int ipart, int istart,
                                     double *delta0, int *iold, double *Sx1, double *Sy1, double *Sz1 )
     {
 

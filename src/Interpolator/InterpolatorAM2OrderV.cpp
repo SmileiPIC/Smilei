@@ -179,14 +179,8 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts] );
     }
 
-    double *deltaO[2];
-    deltaO[0] = &( smpi->dynamics_deltaold[ithread][0] );
-    deltaO[1] = &( smpi->dynamics_deltaold[ithread][nparts] );
-
-
-
-    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );  // Not used in V
-    std::vector<std::complex<double>> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
+    double * __restrict__ deltaO[2]; //Delta is the distance of the particle from its primal node in cell size. Delta is in [-0.5, +0.5[
+    std::complex<double> * __restrict__ eitheta_old; //eithetaold stores exp(i theta) of the particle before pusher. 
 
     int idx[2], idxO[2];
     //Primal indices are constant over the all cell
@@ -200,7 +194,9 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     double dual[2][32]; // Size ndim. Boolean converted into double indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
     
     int vecSize = 32;
-    
+    double delta, delta2; 
+
+   
     int cell_nparts( ( int )iend[0]-( int )istart[0] );
 
     std::vector<complex<double>> exp_m_theta_( vecSize), exp_mm_theta( vecSize,  1.) ;                                                          //exp(-i theta), exp(-i m theta)
@@ -209,39 +205,54 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
 
         int np_computed( min( cell_nparts-ivect, vecSize ) );
+        deltaO[0]   =  &(   smpi->dynamics_deltaold[ithread][0        + ivect + istart[0] - ipart_ref] );
+        deltaO[1]   =  &(   smpi->dynamics_deltaold[ithread][nparts   + ivect + istart[0] - ipart_ref] );
+        eitheta_old =  &( smpi->dynamics_eithetaold[ithread][           ivect + istart[0] - ipart_ref] );
 
-        #pragma omp simd
+        #pragma omp simd private(delta2, delta)
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
         
-            double r = sqrt( position_y[ipart-ipart_ref+ivect+istart[0]]*position_y[ipart-ipart_ref+ivect+istart[0]] + position_z[ipart-ipart_ref+ivect+istart[0]]*position_z[ipart-ipart_ref+ivect+istart[0]] );
-            exp_m_theta_[ipart] = ( position_y[ipart-ipart_ref+ivect+istart[0]] - Icpx * position_z[ipart-ipart_ref+ivect+istart[0]] ) / r ;
-            double delta0[2], delta;
-            double delta2;
-            
-            delta0[0] = position_x[ipart-ipart_ref+ivect+istart[0]]*D_inv_[0];
-            delta0[1] = r * D_inv_[1]  ;
+            int ipart2 = ipart+ivect+istart[0];
+            double r = sqrt( position_y[ipart2]*position_y[ipart2] + position_z[ipart2]*position_z[ipart2] );
+            exp_m_theta_[ipart] = ( position_y[ipart2] - Icpx * position_z[ipart2] ) / r ;
+            eitheta_old[ipart] =  2.*std::real(exp_m_theta_[ipart]) - exp_m_theta_[ipart] ;  //exp(i theta)
 
-            for( int i=0; i<2; i++ ) { // for X/R
-                dual [i][ipart] = (double)( delta0[i] - ( double )idx[i] >= 0. );
-                
-                for( int j=0; j<2; j++ ) { // for dual
-                
-                    delta   = delta0[i] - ( double )idx[i] + ( double )j*( 0.5-dual[i][ipart] );
-                    delta2  = delta*delta;
-                    
-                    coeff[i][j][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
-                    coeff[i][j][1][ipart]    = ( 0.75 - delta2 );
-                    coeff[i][j][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
-                    
-                    if( j==0 ) {
-                        deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
-                    }
-                    
-                }
-            }
-            ( *iold )[ipart-ipart_ref+ivect+istart[0]+0*nparts]  = idxO[0]; // Not used in V
-            ( *iold )[ipart-ipart_ref+ivect+istart[0]+1*nparts]  = idxO[1]; // Not used in V
-            ( *eitheta_old)[ipart-ipart_ref+ivect+istart[0]] =  2.*std::real(exp_m_theta_[ipart]) - exp_m_theta_[ipart] ;  //exp(i theta)
+            // i= 0 ==> X
+            //             j=0 primal
+            delta = position_x[ipart2]*D_inv_[0] - (double)idx[0];
+            delta2  = delta*delta;
+            coeff[0][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            coeff[0][0][1][ipart]    = ( 0.75 - delta2 );
+            coeff[0][0][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+            deltaO[0][ipart] = delta;
+
+            //              j=1 dual
+            dual [0][ipart] = ( delta >= 0. );
+            //delta dual = distance to dual node
+            delta   = delta - dual[0][ipart] + 0.5 ;
+            delta2  = delta*delta;
+            coeff[0][1][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            coeff[0][1][1][ipart]    = ( 0.75 - delta2 );
+            coeff[0][1][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+            
+            // i= 1 ==> Y
+            //             j=0 primal
+            delta = r * D_inv_[1] - (double)idx[1];
+            delta2  = delta*delta;
+            coeff[1][0][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            coeff[1][0][1][ipart]    = ( 0.75 - delta2 );
+            coeff[1][0][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+            deltaO[1][ipart] = delta;
+
+            //              j=1 dual
+            dual [1][ipart] = ( delta >= 0. );
+            //delta dual = distance to dual node
+            delta   = delta - dual[1][ipart] + 0.5 ;
+            delta2  = delta*delta;
+            coeff[1][1][0][ipart]    =  0.5 * ( delta2-delta+0.25 );
+            coeff[1][1][1][ipart]    = ( 0.75 - delta2 );
+            coeff[1][1][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
+
 
         }
 
