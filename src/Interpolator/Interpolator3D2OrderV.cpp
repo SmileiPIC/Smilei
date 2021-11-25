@@ -78,22 +78,10 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
     int vecSize = 32;
 
     int cell_nparts( ( int )iend[0]-( int )istart[0] );
-    int nbVec = ( iend[0]-istart[0]+( cell_nparts-1 )-( ( iend[0]-istart[0]-1 )&( cell_nparts-1 ) ) ) / vecSize;
 
-    if( nbVec*vecSize != cell_nparts ) {
-        nbVec++;
-    }
+    for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
 
-    for( int iivect=0 ; iivect<nbVec; iivect++ ) {
-        int ivect = vecSize*iivect;
-
-        int np_computed( 0 );
-        if( cell_nparts > vecSize ) {
-            np_computed = vecSize;
-            cell_nparts -= vecSize;
-        } else {
-            np_computed = cell_nparts;
-        }
+        int np_computed( min( cell_nparts-ivect, vecSize ) );
 
         double * __restrict__ deltaO[3]; //Delta is the distance of the particle from its primal node in cell size. Delta is in [-0.5, +0.5[
         deltaO[0] = &( smpi->dynamics_deltaold[ithread][0        + ivect + istart[0] - ipart_ref] );

@@ -202,22 +202,13 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     int vecSize = 32;
     
     int cell_nparts( ( int )iend[0]-( int )istart[0] );
-    //int nbVec = ( iend[0]-istart[0]+( cell_nparts-1 )-( ( iend[0]-istart[0]-1 )&( cell_nparts-1 ) ) ) / vecSize;
-    int nbVec = cell_nparts / vecSize;
-    
-    if( nbVec*vecSize != cell_nparts ) {
-        nbVec++;
-    }
 
-    int np_computed( vecSize );
     std::vector<complex<double>> exp_m_theta_( vecSize), exp_mm_theta( vecSize,  1.) ;                                                          //exp(-i theta), exp(-i m theta)
 
     //Loop on groups of vecSize particles
-    for( int iivect=0 ; iivect<nbVec; iivect++ ) {
+    for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
 
-        int ivect = vecSize*iivect;
-        //adjust np_computed for last element of the loop 
-        if (iivect == nbVec -1) np_computed = cell_nparts - ivect; 
+        int np_computed( min( cell_nparts-ivect, vecSize ) );
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
