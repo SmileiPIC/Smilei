@@ -55,7 +55,7 @@ echo $? > exit_status_file"""
         self.COMPILE_COMMAND = self.MAKE+' -j '+str(self.ppn)+' > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         self.COMPILE_TOOLS_COMMAND = 'make tables > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         self.CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
-        self.RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(self.ppn) + " -map-by ppr:"+str(MPI_PER_SOCKET)+":socket:"+"pe="+str(self.options.omp) + " -n "+str(self.options.mpi)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+self.smilei_path.workdirs+"smilei %s >"+self.smilei_path.output_file+" 2>&1"
+        self.RUN_COMMAND = "mpirun --mca mpi_warn_on_fork 0 -mca orte_num_sockets 2 -mca orte_num_cores "+str(self.ppn//2) + " -map-by ppr:"+str(MPI_PER_SOCKET)+":socket:"+"pe="+str(self.options.omp) + " -n "+str(self.options.mpi)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+self.smilei_path.workdirs+"smilei %s >"+self.smilei_path.output_file+" 2>&1"
     
     
     def compile(self, dir):
