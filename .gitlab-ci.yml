@@ -87,7 +87,7 @@ runAM:
   stage: run_default
   only:
     - develop
-#    - smarti
+    - smarti
 
   script:
     # Move in test dir
@@ -99,7 +99,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-#    - smarti
+    - smarti
 
   script:
     # Move in test dir
