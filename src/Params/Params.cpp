@@ -1175,6 +1175,10 @@ void Params::setDimensions()
 // ---------------------------------------------------------------------------------------------------------------------
 void Params::print_init()
 {
+    if( full_B_exchange ) {
+        MESSAGE( 1, "All components of B are exchanged at synchronization" );
+    }
+
     TITLE( "Geometry: " << geometry );
     MESSAGE( 1, "Interpolation order : " <<  interpolation_order );
     MESSAGE( 1, "Maxwell solver : " <<  maxwell_sol );
@@ -1233,9 +1237,19 @@ void Params::print_init()
         }
     }
 
-    if( full_B_exchange ) {
-        MESSAGE( 1, "All components of B are exchanged at synchronization" );
+    if ( Laser_Envelope_model ) {
+        TITLE( "Laser Envelope parameters" );
+        ostringstream info( "" );
+        info << "\tpolarization angle : " << envelope_polarization_phi << endl;
+        info << "\t\tellipticity        : " << envelope_ellipticity << endl;
+        info << "\t\tEnvelope solver    : " << envelope_solver << endl;
+        MESSAGE( 1, info.str() );
+        for( unsigned int i=0 ; i<grid_length.size() ; i++ ) {
+            MESSAGE( 1, "\tdimension " << i );
+            MESSAGE( 1, "\t- Envelope boundary conditions: " << "(" << Env_BCs[i][0] << ", " << Env_BCs[i][1] << ")" );
+        }
     }
+
 
     if( currentFilter_passes.size() > 0 ){
         TITLE( "Current filtering" );

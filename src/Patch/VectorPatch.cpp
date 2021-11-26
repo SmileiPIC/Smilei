@@ -3932,8 +3932,6 @@ void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *region_v
 void VectorPatch::saveOldRho( Params &params )
 {
 
-    cout << "save old rho. Should not be called in this test" << endl;
-
     //Spectral methods need the old density. This function is not called in FDTD.
     int n=0;
     if( params.geometry!="AMcylindrical" ) {

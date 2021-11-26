@@ -25,7 +25,7 @@ Region::Region( Params &params ) :
 {
 }
 
-void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD, bool global_region )
+void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD, bool global_region, unsigned int n_moved )
 {
     // New_DD
     int rk(0);
@@ -57,8 +57,7 @@ void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     vecPatch_.initExternals( params );
     if (!params.initial_rotational_cleaning)
         vecPatch_.applyExternalFields();
-    
-    fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
+    fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, n_moved, false);
     if (params.is_spectral)
         patch_->EMfields->saveMagneticFields( true );
         
