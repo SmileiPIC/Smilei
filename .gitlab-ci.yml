@@ -43,7 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
-    - smarti
+#    - smarti
 
   script:
     # Move in test dir
@@ -56,7 +56,7 @@ run2D:
   stage: run_default
   only:
     - develop
-    - smarti
+#    - smarti
 
   script:
     # Move in test dir
@@ -87,7 +87,7 @@ runAM:
   stage: run_default
   only:
     - develop
-    - smarti
+#    - smarti
 
   script:
     # Move in test dir
@@ -99,7 +99,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - smarti
+#    - smarti
 
   script:
     # Move in test dir
