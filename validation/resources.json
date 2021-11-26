@@ -1,4 +1,9 @@
 {
+    "tst3d_s_o2_thermal_plasma.py": {
+        "mpi": 4,
+        "omp": 8,
+        "nodes": 2
+    },
     "tst3d_s_o4_thermal_plasma.py": {
         "mpi": 4,
         "omp": 8,
