@@ -11,6 +11,7 @@ def run_llr(command, dir, mode, options, parameters):
             +"#PBS -q default \n"
             +"#PBS -j oe\n"
             +"#PBS -l walltime="+options['max_time']+"\n"
+            +"echo $HOSTNAME\n"
             +"module purge\n"
             +"unset MODULEPATH;\n"
             +"module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles_el7\n"
