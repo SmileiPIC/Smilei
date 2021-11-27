@@ -43,7 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
-    - develop-mat
+#    - develop-mat
 
   script:
     # Move in test dir
@@ -68,23 +68,7 @@ run2D:
     - python validation.py -b "tst2d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
     - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
 
-# run3D:
-#   stage: run_default
-#   only:
-#     - develop
-#     - develop-mat
-#
-#   script:
-#     # Move in test dir
-#     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-#     # Run validation script
-#     - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
-#     - python validation.py -b "tst3d_s_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
-#     - python validation.py -b "tst3d_v_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
-#     - python validation.py -b "tst3d_a_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
-#     - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
-
-run_3d_scalar:
+run3D:
   stage: run_default
   only:
     - develop
@@ -96,18 +80,6 @@ run_3d_scalar:
     # Run validation script
     - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
     - python validation.py -b "tst3d_s_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
-    - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
-
-run_3d_vecto:
-  stage: run_default
-  only:
-    - develop
-    - develop-mat
-
-  script:
-    # Move in test dir
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run validation script
     - python validation.py -b "tst3d_v_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
     - python validation.py -b "tst3d_a_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
     - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
@@ -117,7 +89,6 @@ runAM:
   only:
     - develop
     - develop-mat
-
 
   script:
     # Move in test dir
@@ -141,6 +112,7 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
+    - develop-mat
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -151,6 +123,7 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
+    - develop-mat
 
   script:
     - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

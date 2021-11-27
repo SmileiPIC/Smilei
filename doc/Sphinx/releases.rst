@@ -26,8 +26,12 @@ Changes made in the repository (not released)
 * Probes can be time-integrated
 * ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
 * Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
-* ``LaserOffset`` may be re-used from a previous simulation
-* ``LaserOffset`` available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
+* ``LaserOffset``:
+
+  * may be re-used from a previous simulation
+  * available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
+  * has new arguments ``fft_time_window`` and ``fft_time_step``
+  
 * Screens may have a ``cylinder`` shape
 * Option to create neutrons for D-D fusion
 * Bugfixes:

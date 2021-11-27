@@ -865,6 +865,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             double fft_time_window = 0.;
             PyTools::extract( "_fft_time_window", fft_time_window, "Laser", i_laser );
 
+            // Extract _fft_time_step
+            double fft_time_step = 0.;
+            PyTools::extract( "_fft_time_step", fft_time_step, "Laser", i_laser );
+
             // Extract _number_of_processes
             int number_of_processes = 0;
             MPI_Comm comm;
@@ -945,7 +949,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 }
                 // Prepare propagator
                 MESSAGE( 1, "LaserOffset #"<< n_laser_offset );
-                LaserPropagator propagateX( this, normal_axis, fft_time_window, comm );
+                LaserPropagator propagateX( this, normal_axis, fft_time_window, fft_time_step, comm );
 
                 // Make the propagation happen and write out the file
                 if( ! smpi->test_mode ) {
@@ -1171,6 +1175,10 @@ void Params::setDimensions()
 // ---------------------------------------------------------------------------------------------------------------------
 void Params::print_init()
 {
+    if( full_B_exchange ) {
+        MESSAGE( 1, "All components of B are exchanged at synchronization" );
+    }
+
     TITLE( "Geometry: " << geometry );
     MESSAGE( 1, "Interpolation order : " <<  interpolation_order );
     MESSAGE( 1, "Maxwell solver : " <<  maxwell_sol );
@@ -1229,9 +1237,19 @@ void Params::print_init()
         }
     }
 
-    if( full_B_exchange ) {
-        MESSAGE( 1, "All components of B are exchanged at synchronization" );
+    if ( Laser_Envelope_model ) {
+        TITLE( "Laser Envelope parameters" );
+        ostringstream info( "" );
+        info << "\tpolarization angle : " << envelope_polarization_phi << endl;
+        info << "\t\tellipticity        : " << envelope_ellipticity << endl;
+        info << "\t\tEnvelope solver    : " << envelope_solver << endl;
+        MESSAGE( 1, info.str() );
+        for( unsigned int i=0 ; i<grid_length.size() ; i++ ) {
+            MESSAGE( 1, "\tdimension " << i );
+            MESSAGE( 1, "\t- Envelope boundary conditions: " << "(" << Env_BCs[i][0] << ", " << Env_BCs[i][1] << ")" );
+        }
     }
+
 
     if( currentFilter_passes.size() > 0 ){
         TITLE( "Current filtering" );
