@@ -36,16 +36,16 @@ MergingVranicCartesian::MergingVranicCartesian(Params& params,
     min_momentum_cell_length_[0] = species->merge_min_momentum_cell_length_[0];
     min_momentum_cell_length_[1] = species->merge_min_momentum_cell_length_[1];
     min_momentum_cell_length_[2] = species->merge_min_momentum_cell_length_[2];
-    
+
     // Accumulation correction
     accumulation_correction_ = species->merge_accumulation_correction_;
-    
+
     // Discretization scale
     log_scale_ = species->merge_log_scale_;
-    
+
     // Minimum momentum value in log scale
     min_momentum_log_scale_ = species->merge_min_momentum_log_scale_;
-    
+
 }
 
 // -----------------------------------------------------------------------------
@@ -221,13 +221,21 @@ void MergingVranicCartesian::operator() (
             momentum_max[2] = std::max(momentum_max[2],momentum[2][ip]);
         }
 
+        // ---------------------------------------------------------------------
+        // debugging
         // std::cerr << " momentum_min[0]: " << momentum_min[0]
         //           << " momentum_max[0]: " << momentum_max[0]
-        //           << " momentum_min[1]: " << momentum_min[1]
-        //           << " momentum_max[1]: " << momentum_max[1]
-        //           << " momentum_min[2]: " << momentum_min[2]
-        //           << " momentum_max[2]: " << momentum_max[2]
+        //           << " min_momentum_cell_length_[0]: " << min_momentum_cell_length_[0]
         //           << std::endl;
+        // std::cerr << " momentum_min[1]: " << momentum_min[1]
+        //           << " momentum_max[1]: " << momentum_max[1]
+        //           << " min_momentum_cell_length_[1]: " << min_momentum_cell_length_[1]
+        //           << std::endl;
+        // std::cerr << " momentum_min[2]: " << momentum_min[2]
+        //           << " momentum_max[2]: " << momentum_max[2]
+        //           << " min_momentum_cell_length_[2]: " << min_momentum_cell_length_[2]
+        //           << std::endl;
+        // ---------------------------------------------------------------------
 
         // Extra to include the max in the discretization
         // mr_max += (mr_max - mr_min)*0.01;
@@ -256,12 +264,12 @@ void MergingVranicCartesian::operator() (
             } else {
                 // If the user request a single cell in this direction
                 if (dim[ip] == 1) {
-                    momentum_max[ip] += (momentum_max[ip] - momentum_min[ip])*0.01;
+                    momentum_max[ip] += (momentum_max[ip] - momentum_min[ip])*momentum_max_factor_;
                     momentum_delta[ip] = (momentum_max[ip] - momentum_min[ip]);
                     inv_momentum_delta[ip] = 1.0/momentum_delta[ip];
                 // If momentum_min[ip] and momentum_max[ip] have the same sign
                 } else if (momentum_max[ip] <= 0 || momentum_min[ip] >= 0) {
-                    momentum_max[ip] += (momentum_max[ip] - momentum_min[ip])*0.01;
+                    momentum_max[ip] += (momentum_max[ip] - momentum_min[ip])*momentum_max_factor_;
                     if (accumulation_correction_) {
                         momentum_delta[ip] = (momentum_max[ip] - momentum_min[ip]) / (dim[ip]-1);
                         //momentum_min[ip] -= 0.99*momentum_delta[ip]*Rand::uniform();
@@ -277,12 +285,34 @@ void MergingVranicCartesian::operator() (
                         //dim[ip] = int(dim[ip]*(1+Rand::uniform()));
                         dim[ip] = int(dim[ip]*(1+rand_->uniform()));
                     }
+
+                    // if (ip == 1) {
+                    //     std::cerr
+                    //               << " momentum_min[1]: " << momentum_min[ip]
+                    //               << " momentum_max[1]: " << momentum_max[ip]
+                    //               << std::endl;
+                    // }
+
+                    momentum_max[ip] += (momentum_max[ip] - momentum_min[ip])*momentum_max_factor_;
+
                     momentum_delta[ip] = fabs(momentum_max[ip] - momentum_min[ip]) / dim[ip];
                     inv_momentum_delta[ip] = 1.0/momentum_delta[ip];
-                    nb_delta = ceil(fabs(momentum_min[ip]) * inv_momentum_delta[ip]);
-                    momentum_min[ip] = -nb_delta*momentum_delta[ip];
-                    dim[ip] += 1;
-                    momentum_max[ip] = momentum_min[ip] + dim[ip] * momentum_delta[ip];
+                    double nb_delta_min = (ceil(fabs(momentum_min[ip]) * inv_momentum_delta[ip]));
+                    double nb_delta_max = (ceil(fabs(momentum_max[ip]) * inv_momentum_delta[ip]));
+                    momentum_min[ip] = - nb_delta_min * momentum_delta[ip];
+                    momentum_max[ip] =   nb_delta_max * momentum_delta[ip];
+                    dim[ip] = (unsigned int)(nb_delta_max + nb_delta_min);
+
+                    // if (ip == 1) {
+                    //     std::cerr << " nb_delta_min: "  << nb_delta_min
+                    //               << " nb_delta_max: " << nb_delta_max
+                    //               << " momentum_min[1]: " << momentum_min[ip]
+                    //               << " momentum_max[1]: " << momentum_max[ip]
+                    //               << " momentum_delta[1]: " << momentum_delta[ip]
+                    //               << " dim[1]: " << dim[ip]
+                    //               << std::endl;
+                    // }
+
                 }
             }
         }
@@ -323,7 +353,7 @@ void MergingVranicCartesian::operator() (
         //         momentum_max[1] = momentum_min[1] + dim[1] * momentum_delta[1];
         //     }
         // }
-        
+
         // std::cerr << std::scientific << std::setprecision(15)
         //           << " My centering: "
         //           << " my interval: " << fabs(momentum_max[1] - momentum_min[1])
@@ -334,7 +364,7 @@ void MergingVranicCartesian::operator() (
         //           << " my_dim: " << dim[1]
         //           << " nb_delta: " << nb_delta
         //           << std::endl;
-        
+
 
 
         // std::cerr << std::scientific << std::setprecision(15)
@@ -392,17 +422,37 @@ void MergingVranicCartesian::operator() (
             momentum_cell_index[ipr] = mz_i * dim[0]*dim[1]
                           + my_i * dim[0] + mx_i;
 
-                // std::cerr << "momentum_cell_index: " << momentum_cell_index[ipr]
-                //           << " / " << dim[0]*dim[1]*dim[2]
-                //           << " mx_i: " << mx_i
-                //           << " my_i: " << my_i
-                //           << " mz_i: " << mz_i
-                //           << " / " << dim[2]
-                //           << " mz: " << momentum[2][ip]
-                //           << " momentum_min[2]: " << momentum_min[2]
-                //           << " momentum_max[2]: " << momentum_max[2]
-                //           << " momentum_delta[2]: " << momentum_delta[2]
-                //           << std::endl;
+            if (momentum_cell_index[ipr] >= momentum_cells) {
+
+                std::cerr << " Particle #" << ipr << " (" << ip <<  ")"
+                          << std::endl;
+
+                std::cerr << "   momentum_cell_index: " << momentum_cell_index[ipr]
+                          << " / " << dim[0]*dim[1]*dim[2]
+                          << " mx_i: " << mx_i << " / " << dim[0]
+                          << " my_i: " << my_i << " / " << dim[1]
+                          << " mz_i: " << mz_i << " / " << dim[2]
+                          << std::endl;
+
+                std::cerr << "   mx: " << momentum[0][ip]
+                          << " momentum_min[0]: " << momentum_min[0]
+                          << " momentum_max[0]: " << momentum_max[0]
+                          << " momentum_delta[0]: " << momentum_delta[0]
+                          << std::endl;
+
+                std::cerr << "   my: " << momentum[1][ip]
+                          << " momentum_min[1]: " << momentum_min[1]
+                          << " momentum_max[1]: " << momentum_max[1]
+                          << " momentum_delta[1]: " << momentum_delta[1]
+                          << std::endl;
+
+                std::cerr << "   mz: " << momentum[2][ip]
+                          << " momentum_min[2]: " << momentum_min[2]
+                          << " momentum_max[2]: " << momentum_max[2]
+                          << " momentum_delta[2]: " << momentum_delta[2]
+                          << std::endl;
+
+            }
 
         }
 
@@ -435,10 +485,19 @@ void MergingVranicCartesian::operator() (
             // Momentum cell index for this particle
             ic = momentum_cell_index[ipr];
 
-            // std::cerr << " ic: " << ic
-            //           << " ipr: " << ipr
-            //           << " momentum_cell_particle_index[ic]: " << momentum_cell_particle_index[ic]
-            //           << std::endl;
+            if ((momentum_cell_particle_index[ic]+ particles_per_momentum_cells[ic] >= sorted_particles.size()) ||
+                (ic >= momentum_cells) ) {
+
+                std::cerr << " ic: " << ic
+                          << " ipr: " << ipr
+                          << " istart: " << istart
+                          << " momentum_cells: " << momentum_cells
+                          << " sorted_particles.size: " << sorted_particles.size()
+                          << " momentum_cell_particle_index[ic]: " << momentum_cell_particle_index[ic]
+                          << " particles_per_momentum_cells[ic]: " << particles_per_momentum_cells[ic]
+                          << std::endl;
+
+            }
 
             sorted_particles[momentum_cell_particle_index[ic]
             + particles_per_momentum_cells[ic]] = istart + ipr;
@@ -554,7 +613,7 @@ void MergingVranicCartesian::operator() (
                             // All particle momenta are not collinear
                             if (fabs(e3_x*e3_x + e3_y*e3_y + e3_z*e3_z) > 0)
                             {
-                                
+
                                 // Computation of e2  = e1 x e3 unit vector
                                 // e2_x = e1_y*e1_y*cell_vec_x
                                 //      - e1_x * (e1_y*cell_vec_y + e1_z*cell_vec_z)
@@ -569,7 +628,7 @@ void MergingVranicCartesian::operator() (
                                 e2_x = e1_y*e3_z - e1_z*e3_y;
                                 e2_y = e1_z*e3_x - e1_x*e3_z;
                                 e2_z = e1_x*e3_y - e1_y*e3_x;
-                            
+
                                 e2_norm = 1./sqrt(e2_x*e2_x + e2_y*e2_y + e2_z*e2_z);
 
                                 // e2 is normalized to be a unit vector
@@ -651,37 +710,37 @@ void MergingVranicCartesian::operator() (
                                 //     )
                                 //     //<< std::endl;
                                 // }
-                                
+
                                 // Create the merged particles
                                 // --------------------------------------------
-                                
+
                                 // Method 1: determinist - use the position of
                                 // the first particles of the list
-                                
+
                                 // Update momentum of the first photon
                                 ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
-                                
+
                                 momentum[0][ip] = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
                                 momentum[1][ip] = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
                                 momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
                                 weight[ip] = 0.5*total_weight;
-                                
+
                                 // Update momentum of the second particle
                                 ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min + 1];
                                 momentum[0][ip] = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
                                 momentum[1][ip] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
                                 momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
                                 weight[ip] = 0.5*total_weight;
-                                
+
                                 // Other photons are tagged to be removed after
                                 for (ipr = ipr_min + 2; ipr < ipr_max ; ipr ++) {
                                     ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
                                     mask[ip] = -1;
                                     count--;
                                 }
-                                
+
                                 // Method 2: random - pick up randomly old particle positions
-                                
+
                                 // unsigned int ipr1 = ipr_min + int(Rand::uniform()*(ipr_max - ipr_min));
                                 // unsigned int ipr2 = ipr_min + int(Rand::uniform()*(ipr_max - ipr_min));
                                 // while (ipr1 == ipr2)
@@ -708,32 +767,32 @@ void MergingVranicCartesian::operator() (
                                 //         count--;
                                 //     }
                                 // }
-                                
+
                             // Special treatment for collinear photons
                             // Collinear particles are merged
                             } else {
-                                
+
                                 if (mass == 0) {
                                     // Method 1: determinist - use the position of
                                     // the first particles of the list
-                                    
+
                                     // Update momentum of the first photon
                                     ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
-                                    
+
                                     momentum[0][ip] = new_momentum_norm*e1_x;
                                     momentum[1][ip] = new_momentum_norm*e1_y;
                                     momentum[2][ip] = new_momentum_norm*e1_z;
                                     weight[ip] = total_weight;
-                                    
+
                                     // Other photons are tagged to be removed after
                                     for (ipr = ipr_min + 1; ipr < ipr_max ; ipr ++) {
                                         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
                                         mask[ip] = -1;
                                         count--;
                                     }
-                                    
+
                                     // Method 2: random - pick up randomly old particle positions
-                                    
+
                                     // unsigned int ipr1 = ipr_min + int(Rand::uniform()*(ipr_max - ipr_min));
                                     // for (ipr = ipr_min; ipr < ipr_max ; ipr ++) {
                                     //     if (ipr == ipr1) {
@@ -749,7 +808,7 @@ void MergingVranicCartesian::operator() (
                                     //     }
                                     // }
                                 }
-                                
+
                             }// end check collinear momenta
 
                         }
