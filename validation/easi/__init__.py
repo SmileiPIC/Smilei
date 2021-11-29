@@ -176,6 +176,14 @@ class Validation(object):
         else:
             self.machine_class = Machine
         self.machine = self.machine_class( self.smilei_path, self.options )
+        
+        # Define sync()
+        import os
+        if hasattr(os, 'sync'):
+            self.sync = os.sync
+        else:
+            import ctypes
+            self.sync = ctypes.CDLL("libc.so.6").sync
     
     def compile(self):
         from sys import exit
@@ -201,8 +209,10 @@ class Validation(object):
         # If no smilei bin in the workdir, or it is older than the one in smilei directory,
         # clean to force compilation
         mkdir(self.smilei_path.workdirs)
+        self.sync()
         if exists(SMILEI_R) and (not exists(SMILEI_W) or date(SMILEI_W)<date(SMILEI_R)):
             self.machine.clean()
+            self.sync()
         
         def workdir_archiv() :
             # Creates an archives of the workdir directory
@@ -218,6 +228,7 @@ class Validation(object):
                 remove(self.smilei_path.COMPILE_ERRORS)
             # Compile
             self.machine.compile( self.smilei_path.root )
+            self.sync()
             if STAT_SMILEI_R_OLD!=stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R): # or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
                 # if new bin, archive the workdir (if it contains a smilei bin)
                 # and create a new one with new smilei and compilation_out inside
@@ -256,6 +267,7 @@ class Validation(object):
         sys.path.insert(0, self.smilei_path.root)
         import happi
         
+        self.sync()
         INITIAL_DIRECTORY = getcwd()
         
         _dataNotMatching = False
@@ -375,6 +387,7 @@ class Validation(object):
                             print("Restart #" + str(irestart))
                         print("---------------------------")
                     machine.run( arguments, RESTART_WORKDIR )
+                    self.sync()
                 
                 # Check the output for errors
                 errors = []
