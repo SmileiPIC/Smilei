@@ -1,0 +1,13 @@
+#
+# Machine file to run on the Graviton 2 processor
+# __________________________________________________________
+#
+
+# The following flags are automatically added by the makefile:
+# -Ofast -g -fopenmp -std=c++11 -Wall
+
+# Compilation flags
+CXXFLAGS +=
+
+# Linking flags
+LDFLAGS +=

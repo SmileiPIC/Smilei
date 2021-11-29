@@ -97,6 +97,16 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
 
     }
 
+    // Position quick pointers
+    position_x = &Position[0][0];
+    position_y = &Position[1][0];
+    position_z = &Position[2][0];
+
+    // Momentum quick pointers
+    momentum_x = &Momentum[0][0];
+    momentum_y = &Momentum[1][0];
+    momentum_z = &Momentum[2][0];
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -170,7 +180,7 @@ void Particles::resize( unsigned int nParticles, unsigned int nDim, bool keep_po
     for( unsigned int i=0 ; i<nDim ; i++ ) {
         Position[i].resize( nParticles, 0. );
     }
-    
+
     if( keep_position_old ) {
         Position_old.resize( nDim );
         for( unsigned int i=0 ; i<nDim ; i++ ) {
@@ -250,9 +260,9 @@ void Particles::shrinkToFit()
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         std::vector<uint64_t>( *uint64_prop[iprop] ).swap( *uint64_prop[iprop] );
     }
-    
+
     //cell_keys.swap(cell_keys);
-    
+
 }
 
 
@@ -273,9 +283,9 @@ void Particles::clear()
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         uint64_prop[iprop]->clear();
     }
-    
+
     //cell_keys.clear();
-    
+
 }
 
 //! copy particles ipart at the end of the particle vector
@@ -363,28 +373,28 @@ void Particles::makeParticleAt( Particles &source_particles, unsigned int ipart,
     for( unsigned int i=0 ; i<Position.size() ; i++ ) {
         Position[i].push_back( source_particles.Position[i][ipart] );
     }
-    
+
     if( Position_old.size() > 0. ) {
         for( unsigned int i=0 ; i<Position_old.size() ; i++ ) {
             Position_old[i].push_back( source_particles.Position_old[i][ipart] );
         }
     }
-    
+
     Momentum[0].push_back( px );
     Momentum[1].push_back( py );
     Momentum[2].push_back( pz );
-    
+
     Weight.push_back( w );
     Charge.push_back( q );
-    
+
     if( tracked ) {
         Id.push_back( 0 );
     }
-    
+
     if( isQuantumParameter ) {
         Chi.push_back( 0. );
     }
-    
+
     if( isMonteCarlo ) {
         Tau.push_back( 0. );
     }
@@ -778,7 +788,7 @@ void Particles::createParticles( int nAdditionalParticles )
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         ( *uint64_prop[iprop] ).resize( nParticles+nAdditionalParticles, 0 );
     }
-    
+
     cell_keys.resize( nParticles+nAdditionalParticles, 0);
 
 //MESSAGE("create2");
@@ -890,11 +900,11 @@ void Particles::createParticles( int nAdditionalParticles, int pstart )
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0. );
     }
-    
+
     for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
         ( *short_prop[iprop] ).insert( ( *short_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0 );
     }
-    
+
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0 );
     }
@@ -908,15 +918,15 @@ void Particles::moveParticles( int iPart, int new_pos )
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+new_pos,( *double_prop[iprop] )[iPart]  );
     }
-    
+
     for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
         ( *short_prop[iprop] ).insert( ( *short_prop[iprop] ).begin()+new_pos, ( *short_prop[iprop] )[iPart] );
     }
-    
+
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+new_pos,( *uint64_prop[iprop] )[iPart]  );
     }
-  
+
     eraseParticle( iPart+1 );
 }
 
@@ -990,12 +1000,35 @@ void Particles::savePositions() {
         p[i] =  &( Position[i][0] );
         pold[i] =  &( Position_old[i][0] );
     }
-    #pragma omp simd
-    for( unsigned int ipart=0 ; ipart<npart; ipart++ ) {
-        for( unsigned int i = 0 ; i<ndim ; i++ ) {
-            pold[i][ipart] = p[i][ipart];
+    if (ndim == 1) {
+        #pragma omp simd
+        for( unsigned int ipart=0 ; ipart<npart; ipart++ ) {
+            pold[0][ipart] = p[0][ipart];
+        }
+    } else if (ndim == 2) {
+        #pragma omp simd
+        for( unsigned int ipart=0 ; ipart<npart; ipart++ ) {
+            pold[0][ipart] = p[0][ipart];
+            pold[1][ipart] = p[1][ipart];
+        }
+    } else if (ndim == 3) {
+        #pragma omp simd
+        for( unsigned int ipart=0 ; ipart<npart; ipart++ ) {
+            pold[0][ipart] = p[0][ipart];
+            pold[1][ipart] = p[1][ipart];
+            pold[2][ipart] = p[2][ipart];
         }
     }
+
+    // --- old version that only vectorizes with Intel ---
+    // #pragma omp simd
+    // for( unsigned int ipart=0 ; ipart<npart; ipart++ ) {
+    //     for( unsigned int i = 0 ; i<ndim ; i++ ) {
+    //         pold[i][ipart] = p[i][ipart];
+    //     }
+    // }
+    // -----------------------------------------------------
+
 }
 
 #ifdef __DEBUG
