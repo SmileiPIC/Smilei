@@ -111,9 +111,6 @@ void MergingVranicCartesian::operator() (
         unsigned int my_i;
         unsigned int mz_i;
 
-        // Adjustement of the discretization
-        double nb_delta;
-
         // Local particle index
         unsigned int ic;
         unsigned int icc;
