@@ -121,8 +121,8 @@ void RadiationLandauLifshitz::operator()(
         particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                        momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                        gamma,
-                       ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                       ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+                       Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref] ,
+                       Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
         // Effect on the momentum
         if( (gamma>1.) && (particle_chi >= RadiationTables.getMinimumChiContinuous()) ) {
