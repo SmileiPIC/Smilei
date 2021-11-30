@@ -495,7 +495,7 @@ public:
             if( this_species->position_initialization_.empty() ) {
                 ERROR( "For species '" << species_name << "' empty position_initialization." );
             // Regular, random, centered
-            } else if(    this_species->position_initialization_=="centered" and params.geometry == "AMcylindrical"){ 
+            } else if(    this_species->position_initialization_=="centered" and params.geometry == "AMcylindrical"){
                 ERROR( "For species '" << species_name << "' centered position_initialization is not supported in AM geometry." );
             } else if(    this_species->position_initialization_=="regular"
                        || this_species->position_initialization_=="random"
@@ -666,6 +666,10 @@ public:
                 WARNING( "For species '" << species_name << "' possible conflict between time-frozen & not cold initialization" );
             }
         }
+        if (this_species->time_frozen_ > 0) {
+            MESSAGE( 2, "> Species frozen until time: " << this_species->time_frozen_ );
+        }
+
         // iteration when the relativistic field initialization is applied, if enabled
         this_species->iter_relativistic_initialization_ = ( int )( this_species->time_frozen_/params.timestep );
 

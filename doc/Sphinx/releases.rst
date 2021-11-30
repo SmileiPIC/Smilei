@@ -20,6 +20,8 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* Improved performance for ARM-based processors including the Fujitsu A64FX
+* Improved performance for GNU, LLVM, arm-clang and Fujitsu compilers on all types of architectures
 * Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present 
 * Lasers can be injected from all boundaries
 * Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
@@ -42,6 +44,8 @@ Changes made in the repository (not released)
   * ``ellipticity = -1.`` was doing ``+1.``
   * Setting ``units`` in happi's ``TrackParticles`` was wrong (for plotting only)
   * Current communication correction for FIR filters
+  * Fix for particle merging segmentation fault in spherical and Cartesian modes
+  * Tracked particles with the vectorized mode
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
