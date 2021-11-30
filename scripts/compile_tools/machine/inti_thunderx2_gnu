@@ -1,0 +1,14 @@
+#
+# Machine file for the Inti ThunderX2 partition using the GNU compiler
+# __________________________________________________________
+#
+# Load the correct modules:
+# module purge
+# module load gnu mpi
+#
+# module load gnu mpi flavor/hdf5/parallel hdf5
+#
+
+CXXFLAGS += -march=native -mtune=native -ftree-vectorizer-verbose=2
+FLAGS += -march=native -mtune=native 
+
