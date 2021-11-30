@@ -19,7 +19,7 @@ class RadiationTools {
         //! approximation formulae
         //! \param particle_chi particle quantum parameter
         //#pragma omp declare simd
-        static inline double computeRidgersFit( double particle_chi )
+        static inline double __attribute__((always_inline)) computeRidgersFit( double particle_chi )
         {
             return std::pow( 1.0 + 4.8*( 1.0+particle_chi )*std::log( 1.0 + 1.7*particle_chi )
                         + 2.44*particle_chi*particle_chi, -2.0/3.0 );
@@ -31,7 +31,7 @@ class RadiationTools {
         //! Valid between particle_chi in 1E-3 and 1E1
         //! \param particle_chi particle quantum parameter
         // -----------------------------------------------------------------------------
-        static inline double getHNielFitOrder10(double particle_chi)
+        static inline double __attribute__((always_inline)) getHNielFitOrder10(double particle_chi)
         {
             // Max relative error ~2E-4
             double logchi1 = log(particle_chi);
@@ -58,7 +58,7 @@ class RadiationTools {
         //! Valid between particle_chi in 1E-3 and 1E1
         //! \param particle_chi particle quantum parameter
         // -----------------------------------------------------------------------------
-        static double inline getHNielFitOrder5(double particle_chi)
+        static inline double __attribute__((always_inline)) getHNielFitOrder5(double particle_chi)
         {
 
             double logchi1 = log(particle_chi);
@@ -79,7 +79,7 @@ class RadiationTools {
         //! Ridgers et al., ArXiv 1708.04511 (2017)
         //! \param particle_chi particle quantum parameter
         // -----------------------------------------------------------------------------
-        static double inline getHNielFitRidgers(double particle_chi)
+        static inline double __attribute__((always_inline)) getHNielFitRidgers(double particle_chi)
         {
             double chi2 = particle_chi * particle_chi;
             double chi3 = chi2 * particle_chi;
@@ -94,7 +94,7 @@ class RadiationTools {
         //! approximation formulae
         //! \param particle_chi particle quantum parameter
         //#pragma omp declare simd
-        static double inline computeGRidgers(double particle_chi)
+        static inline double __attribute__((always_inline)) computeGRidgers(double particle_chi)
         {
             return std::pow(1. + 4.8*(1.0+particle_chi)*log(1. + 1.7*particle_chi)
                        + 2.44*particle_chi*particle_chi,-2./3.);
@@ -104,7 +104,7 @@ class RadiationTools {
         //! Return f1(nu) = Int_nu^\infty K_{5/3}(y) dy
         //! used in computed synchrotron power spectrum
         // -----------------------------------------------------------------------------
-        static double inline computeF1Nu(double nu)
+        static inline double __attribute__((always_inline)) computeF1Nu(double nu)
         {
             if (nu<0.1)      return 2.149528241483088*std::pow(nu,-0.6666666666666667) - 1.813799364234217;
             else if (nu>10)  return 1.253314137315500*std::pow(nu,-0.5)*exp(-nu);
@@ -139,7 +139,7 @@ class RadiationTools {
         //! Return f2(nu) = BesselK_{2/3}(nu)
         //! used in computed synchrotron power spectrum
         // -----------------------------------------------------------------------------
-        static double inline computeF2Nu(double nu)
+        static inline double __attribute__((always_inline)) computeF2Nu(double nu)
         {
             if (nu<0.05)     return 1.074764120720013*std::pow(nu,-0.6666666666666667);
             else if (nu>10)  return 1.253314137315500*std::pow(nu,-0.5)*exp(-nu);
@@ -175,7 +175,7 @@ class RadiationTools {
         //! = Int_nu^\infty K_{5/3}(y) dy + cst * BesselK_{2/3}(nu)
         //! used in computed synchrotron power spectrum
         // -----------------------------------------------------------------------------
-        static double inline computeBesselPartsRadiatedPower(double nu, double cst)
+        static inline double __attribute__((always_inline)) computeBesselPartsRadiatedPower(double nu, double cst)
         {
             double f1, f2;
             if (nu<0.1)

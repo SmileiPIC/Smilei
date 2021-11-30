@@ -1,5 +1,5 @@
 #
-# Machine file to run on the Graviton 2 processor
+# Machine file to run on the Graviton 2 processor with the GNU compiler
 # __________________________________________________________
 #
 
@@ -7,7 +7,7 @@
 # -Ofast -g -fopenmp -std=c++11 -Wall
 
 # Compilation flags
-CXXFLAGS +=
+CXXFLAGS += -march=native -mtune=native
 
 # Linking flags
-LDFLAGS +=
+LDFLAGS += -march=native -mtune=native
