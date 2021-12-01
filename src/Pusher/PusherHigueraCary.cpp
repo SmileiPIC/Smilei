@@ -42,14 +42,14 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     } else {
         nparts = particles.size();
     }
-    double *Ex = &( ( *Epart )[0*nparts] );
-    double *Ey = &( ( *Epart )[1*nparts] );
-    double *Ez = &( ( *Epart )[2*nparts] );
-    double *Bx = &( ( *Bpart )[0*nparts] );
-    double *By = &( ( *Bpart )[1*nparts] );
-    double *Bz = &( ( *Bpart )[2*nparts] );
+    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
+    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
-    double *invgf = &( smpi->dynamics_invgf[ithread][0] );
+    double * __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
 
     double charge_over_mass_dts2;
     double umx, umy, umz, upx, upy, upz, gfm2;
@@ -58,20 +58,20 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     double pxsm, pysm, pzsm;
     double local_invgf;
 
-    double* position_x = particles.getPtrPosition(0);
-    double* position_y = NULL;
-    double* position_z = NULL;
+    double* __restrict__ position_x = particles.getPtrPosition(0);
+    double* __restrict__ position_y = NULL;
+    double* __restrict__ position_z = NULL;
     if (nDim_>1) {
         position_y = particles.getPtrPosition(1);
         if (nDim_>2) {
             position_z = particles.getPtrPosition(2);
         }
     }
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
+    double* __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double* __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double* __restrict__ momentum_z = particles.getPtrMomentum(2);
 
-    short *charge = particles.getPtrCharge();
+    short * __restrict__ charge = particles.getPtrCharge();
 
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {

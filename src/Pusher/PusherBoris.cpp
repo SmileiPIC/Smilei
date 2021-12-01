@@ -62,12 +62,12 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     } else {
         nparts = particles.size();
     }
-    double * Ex = &( ( *Epart )[0*nparts] );
-    double * Ey = &( ( *Epart )[1*nparts] );
-    double * Ez = &( ( *Epart )[2*nparts] );
-    double * Bx = &( ( *Bpart )[0*nparts] );
-    double * By = &( ( *Bpart )[1*nparts] );
-    double * Bz = &( ( *Bpart )[2*nparts] );
+    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
+    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
