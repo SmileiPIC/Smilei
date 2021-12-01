@@ -29,6 +29,7 @@ public:
         double coulomb_log,
         double coulomb_log_factor,
         bool intra_collisions,
+        int every,
         int debug_every,
         CollisionalIonization *ionization,
         CollisionalNuclearReaction *nuclear_reaction,
@@ -74,6 +75,9 @@ protected:
 
     //! True if collisions inside a group of species, False if collisions between different groups of species
     bool intra_collisions_;
+    
+    //! Number of timesteps between each calculation of collisions
+    int every_;
     
     //! Number of timesteps between each dump of collisions debugging
     int debug_every_;
