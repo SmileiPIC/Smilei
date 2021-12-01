@@ -55,19 +55,21 @@ ProjectorAM2OrderV::~ProjectorAM2OrderV()
 }
 
 
-/*
+
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
+void ProjectorAM2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
 {
 
+     return;
+    //
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
     
     //int npart_total = invgf->size();
-    int ipo = iold[0];
+    /*int ipo = iold[0];
     int jpo = iold[1];
     int ipom2 = ipo-2;
     int jpom2 = jpo-2;
@@ -173,7 +175,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             rho [iloc + j] +=  tmpRho;
         }
         iloc += nprimy;
-    }
+    }*/
 
 } // END Project local current densities at dag timestep.
 
@@ -181,14 +183,15 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void ProjectorAM2OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
 {
 
+     return;
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
     
-    int iloc, ny( nprimy );
+    /*int iloc, ny( nprimy );
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     
@@ -250,16 +253,17 @@ void Projector2D2OrderV::basic( double *rhoj, Particles &particles, unsigned int
         for( unsigned int j=0 ; j<5 ; j++ ) {
             rhoj[iloc+j] += charge_weight * Sl1[i]*Sr1[j];
         }
-    }//i
-} // END Project local current densities (sort)
+    }//i*/
+} // END basic
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization (WARNING: Not Vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion )
+void ProjectorAM2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion )
 {
-    Field2D *Jx2D  = static_cast<Field2D *>( Jx );
+    return;
+/*    Field2D *Jx2D  = static_cast<Field2D *>( Jx );
     Field2D *Jy2D  = static_cast<Field2D *>( Jy );
     Field2D *Jz2D  = static_cast<Field2D *>( Jz );
     
@@ -334,12 +338,12 @@ void Projector2D2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
             // Jz^(p,p)
             ( *Jz2D )( iploc, jploc ) += Jz_ion * Sxp[i]*Syp[j];
         }
-    }//i
+    }//i*/
     
     
 } // END Project global current densities (ionize)
 
-*/
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
@@ -705,13 +709,13 @@ void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
         }
         
         // Otherwise, the projection may apply to the species-specific arrays
-    } /*else {
+    } else {
         double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
         double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
         double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
         double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
         currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles, istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
-    }*/
+    }
 }
 
 // Project susceptibility

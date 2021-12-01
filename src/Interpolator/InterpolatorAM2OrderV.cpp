@@ -57,25 +57,25 @@ InterpolatorAM2OrderV::InterpolatorAM2OrderV( Params &params, Patch *patch ) : I
 //    int nparts( particles.size() );
 //    
 //    // Interpolation of El^(d,p)
-//    *( ELoc+0*nparts ) = std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ ) );
+//    *( ELoc+0*nparts ) = std::real( compute( &coeffld_[1], &coeffrp_[1], El, id_, jp_ ) );
 //    // Interpolation of Er^(p,d)
-//    *( ELoc+1*nparts ) = std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, ip_, jd_ ) );
+//    *( ELoc+1*nparts ) = std::real( compute( &coefflp_[1], &coeffrd_[1], Er, ip_, jd_ ) );
 //    // Interpolation of Et^(p,p)
-//    *( ELoc+2*nparts ) = std::real( compute( &coeffxp_[1], &coeffyp_[1], Et, ip_, jp_ ) );
+//    *( ELoc+2*nparts ) = std::real( compute( &coefflp_[1], &coeffrp_[1], Et, ip_, jp_ ) );
 //    // Interpolation of Bl^(p,d)
-//    *( BLoc+0*nparts ) = std::real( compute( &coeffxp_[1], &coeffyd_[1], Bl, ip_, jd_ ) );
+//    *( BLoc+0*nparts ) = std::real( compute( &coefflp_[1], &coeffrd_[1], Bl, ip_, jd_ ) );
 //    // Interpolation of Br^(d,p)
-//    *( BLoc+1*nparts ) = std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_ ) );
+//    *( BLoc+1*nparts ) = std::real( compute( &coeffld_[1], &coeffrp_[1], Br, id_, jp_ ) );
 //    // Interpolation of Bt^(d,d)
-//    *( BLoc+2*nparts ) = std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_ ) );
+//    *( BLoc+2*nparts ) = std::real( compute( &coeffld_[1], &coeffrd_[1], Bt, id_, jd_ ) );
 //    // Interpolation of Jl^(d,p,p)
-//    JLoc->x = std::real( compute( &coeffxd_[1], &coeffyp_[1], Jl, id_, jp_ ) );
+//    JLoc->x = std::real( compute( &coeffld_[1], &coeffrp_[1], Jl, id_, jp_ ) );
 //    // Interpolation of Jr^(p,d,p)
-//    JLoc->y = std::real( compute( &coeffxp_[1], &coeffyd_[1], Jr, ip_, jd_ ) );
+//    JLoc->y = std::real( compute( &coefflp_[1], &coeffrd_[1], Jr, ip_, jd_ ) );
 //    // Interpolation of Jt^(p,p,d)
-//    JLoc->z = std::real( compute( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_ ) );
+//    JLoc->z = std::real( compute( &coefflp_[1], &coeffrp_[1], Jt, ip_, jp_ ) );
 //    // Interpolation of Rho^(p,p,p)
-//    ( *RhoLoc ) = std::real( compute( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_ ) );
+//    ( *RhoLoc ) = std::real( compute( &coefflp_[1], &coeffrp_[1], Rho, ip_, jp_ ) );
 //   
 //    if (r > 0){ 
 //        exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
@@ -96,16 +96,16 @@ InterpolatorAM2OrderV::InterpolatorAM2OrderV( Params &params, Patch *patch ) : I
 //        
 //        exp_mm_theta *= exp_m_theta_ ;
 //        
-//        *( ELoc+0*nparts ) += std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ ) * exp_mm_theta ) ;
-//        *( ELoc+1*nparts ) += std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, ip_, jd_ ) * exp_mm_theta ) ;
-//        *( ELoc+2*nparts ) += std::real( compute( &coeffxp_[1], &coeffyp_[1], Et, ip_, jp_ ) * exp_mm_theta ) ;
-//        *( BLoc+0*nparts ) += std::real( compute( &coeffxp_[1], &coeffyd_[1], Bl, ip_, jd_ ) * exp_mm_theta ) ;
-//        *( BLoc+1*nparts ) += std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_ ) * exp_mm_theta ) ;
-//        *( BLoc+2*nparts ) += std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_ ) * exp_mm_theta ) ;
-//        JLoc->x += std::real( compute( &coeffxd_[1], &coeffyp_[1], Jl, id_, jp_ ) * exp_mm_theta ) ;
-//        JLoc->y += std::real( compute( &coeffxp_[1], &coeffyd_[1], Jr, ip_, jd_ ) * exp_mm_theta ) ;
-//        JLoc->z += std::real( compute( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_ ) * exp_mm_theta ) ;
-//        ( *RhoLoc ) += std::real( compute( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_ )* exp_mm_theta ) ;
+//        *( ELoc+0*nparts ) += std::real( compute( &coeffld_[1], &coeffrp_[1], El, id_, jp_ ) * exp_mm_theta ) ;
+//        *( ELoc+1*nparts ) += std::real( compute( &coefflp_[1], &coeffrd_[1], Er, ip_, jd_ ) * exp_mm_theta ) ;
+//        *( ELoc+2*nparts ) += std::real( compute( &coefflp_[1], &coeffrp_[1], Et, ip_, jp_ ) * exp_mm_theta ) ;
+//        *( BLoc+0*nparts ) += std::real( compute( &coefflp_[1], &coeffrd_[1], Bl, ip_, jd_ ) * exp_mm_theta ) ;
+//        *( BLoc+1*nparts ) += std::real( compute( &coeffld_[1], &coeffrp_[1], Br, id_, jp_ ) * exp_mm_theta ) ;
+//        *( BLoc+2*nparts ) += std::real( compute( &coeffld_[1], &coeffrd_[1], Bt, id_, jd_ ) * exp_mm_theta ) ;
+//        JLoc->x += std::real( compute( &coeffld_[1], &coeffrp_[1], Jl, id_, jp_ ) * exp_mm_theta ) ;
+//        JLoc->y += std::real( compute( &coefflp_[1], &coeffrd_[1], Jr, ip_, jd_ ) * exp_mm_theta ) ;
+//        JLoc->z += std::real( compute( &coefflp_[1], &coeffrp_[1], Jt, ip_, jp_ ) * exp_mm_theta ) ;
+//        ( *RhoLoc ) += std::real( compute( &coefflp_[1], &coeffrp_[1], Rho, ip_, jp_ )* exp_mm_theta ) ;
 //    }
 //    double delta2 = std::real( exp_m_theta_ ) * *( ELoc+1*nparts ) + std::imag( exp_m_theta_ ) * *( ELoc+2*nparts );
 //    *( ELoc+2*nparts ) = -std::imag( exp_m_theta_ ) * *( ELoc+1*nparts ) + std::real( exp_m_theta_ ) * *( ELoc+2*nparts );
@@ -145,10 +145,10 @@ InterpolatorAM2OrderV::InterpolatorAM2OrderV( Params &params, Patch *patch ) : I
 //            cField2D *Jr  = static_cast<cField2D *>( *(field+4*imode+1) );
 //            cField2D *Jt  = static_cast<cField2D *>( *(field+4*imode+2) );
 //            cField2D *Rho = static_cast<cField2D *>( *(field+4*imode+3) );
-//            Jx_  += std::real( compute( &coeffxd_[1], &coeffyp_[1], Jl , id_, jp_ ) * exp_mm_theta );
-//            Jy_  += std::real( compute( &coeffxp_[1], &coeffyd_[1], Jr , ip_, jd_ ) * exp_mm_theta );
-//            Jz_  += std::real( compute( &coeffxp_[1], &coeffyp_[1], Jt , ip_, jp_ ) * exp_mm_theta );
-//            Rho_ += std::real( compute( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_ ) * exp_mm_theta );
+//            Jx_  += std::real( compute( &coeffld_[1], &coeffrp_[1], Jl , id_, jp_ ) * exp_mm_theta );
+//            Jy_  += std::real( compute( &coefflp_[1], &coeffrd_[1], Jr , ip_, jd_ ) * exp_mm_theta );
+//            Jz_  += std::real( compute( &coefflp_[1], &coeffrp_[1], Jt , ip_, jp_ ) * exp_mm_theta );
+//            Rho_ += std::real( compute( &coefflp_[1], &coeffrp_[1], Rho, ip_, jp_ ) * exp_mm_theta );
 //
 //            exp_mm_theta *= exp_m_theta_;
 //        }
@@ -184,10 +184,12 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
     int idx[2], idxO[2];
     //Primal indices are constant over the all cell
-    idx[0]  = round( position_x[istart[0]] * D_inv_[0] );
+    idx[0]  = round( position_x[*istart] * D_inv_[0] );
+    int idxtest  = round( particles.position( 0, *istart ) * D_inv_[0] );
     idxO[0] = idx[0] - i_domain_begin_ -1 ;
-    idx[1] = round( sqrt( position_y[istart[0]]*position_y[istart[0]] + position_z[istart[0]]*position_z[istart[0]] ) * D_inv_[1] ) ;
+    idx[1] = round( sqrt( position_y[*istart]*position_y[*istart] + position_z[*istart]*position_z[*istart] ) * D_inv_[1] ) ;
     idxO[1] = idx[1] - j_domain_begin_ -1 ;
+    cout << idx[0] << " " << idxtest << " " << idxO[0] << " " << i_domain_begin_ << endl;
 
 
     double coeff[2][2][3][32];
@@ -255,8 +257,12 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
 
         }
+        double interp_res;
+        double * __restrict__ coeffld = &( coeff[0][1][1][0] );
+        double * __restrict__ coefflp = &( coeff[0][0][1][0] );
+        double * __restrict__ coeffrp = &( coeff[1][0][1][0] );
+        double * __restrict__ coeffrd = &( coeff[1][1][1][0] );
 
-       double *coeffyp, *coeffyd, *coeffxd, *coeffxp ;
         // Static cast of the electromagnetic fields
         cField2D * __restrict__ El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
         cField2D * __restrict__ Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[0];
@@ -264,20 +270,26 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         cField2D * __restrict__ Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[0];
         cField2D * __restrict__ Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[0];
         cField2D * __restrict__ Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
-        #pragma omp simd
+
+        // Local buffer to store the field components
+        std::complex<double> field_buffer[4][4];
+        // Field buffers for vectorization (required on A64FX)
+        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                field_buffer[iloc+1][jloc+1] = ( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+            }
+        }
+
+        #pragma omp simd private(interp_res)
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
         
-            coeffyp = &( coeff[1][0][1][ipart] );
-            coeffyd = &( coeff[1][1][1][ipart] );
-            coeffxd = &( coeff[0][1][1][ipart] );
-            coeffxp = &( coeff[0][0][1][ipart] );
             
             //El(dual, primal)
-            double interp_res = 0.;
+            interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res += std::real( *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) *
-                                  ( ( 1-dual[0][ipart] )*( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *El )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) );
+                    interp_res += std::real( coeffld[ipart + iloc*32] * coeffrp[ipart + jloc*32] *
+                                  ( ( 1.-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] + dual[0][ipart]*field_buffer[2+iloc][1+jloc] ) );
                 }
             }
             Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
@@ -286,7 +298,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res +=  std::real (*( coeffxp+iloc*32 ) * *( coeffyd+jloc*32 ) *
+                    interp_res +=  std::real (*( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
                                   ( ( 1-dual[1][ipart] )*( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[1][ipart]*( *Er )( idxO[0]+1+iloc, idxO[1]+2+jloc ) ) );
                 }
             }
@@ -297,7 +309,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res +=  std::real(  *( coeffxp+iloc*32 ) * *( coeffyp+jloc*32 ) * ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc ) );
+                    interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) * ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc ) );
                 }
             }
             Epart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
@@ -306,7 +318,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res +=  std::real(  *( coeffxp+iloc*32 ) * *( coeffyd+jloc*32 ) *
+                    interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
                                   ( ( ( 1-dual[1][ipart] )*( *Bl )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[1][ipart]*( *Bl )( idxO[0]+1+iloc, idxO[1]+2+jloc ) ) ) );
                 }
             }
@@ -316,7 +328,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res +=  std::real(  *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) *
+                    interp_res +=  std::real(  *( coeffld+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) *
                                   ( ( ( 1-dual[0][ipart] )*( *Br )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *Br )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) ) );
                 }
             }
@@ -326,7 +338,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             interp_res = 0.;
             for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                 for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res +=  std::real(  *( coeffxd+iloc*32 ) * *( coeffyd+jloc*32 ) *
+                    interp_res +=  std::real(  *( coeffld+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
                                   ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+1+jloc ) )
                                     +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+2+jloc ) + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+2+jloc ) ) ) );
                 }
@@ -351,7 +363,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 double interp_res = 0.;
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                        interp_res += std::real( *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) *
+                        interp_res += std::real( *( coeffld+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) *
                                       ( ( 1-dual[0][ipart] )*( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *El )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) * exp_mm_theta[ipart] );
                     }
                 }
@@ -361,7 +373,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 interp_res = 0.;
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                        interp_res +=  std::real (*( coeffxp+iloc*32 ) * *( coeffyd+jloc*32 ) *
+                        interp_res +=  std::real (*( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
                                       ( ( 1-dual[1][ipart] )*( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[1][ipart]*( *Er )( idxO[0]+1+iloc, idxO[1]+2+jloc ) ) * exp_mm_theta[ipart] );
                     }
                 }
@@ -372,7 +384,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 interp_res = 0.;
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                        interp_res +=  std::real(  *( coeffxp+iloc*32 ) * *( coeffyp+jloc*32 ) * ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc ) * exp_mm_theta[ipart] );
+                        interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) * ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc ) * exp_mm_theta[ipart] );
                     }
                 }
                 Epart[2][ipart-ipart_ref+ivect+istart[0]] += interp_res;
@@ -381,7 +393,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 interp_res = 0.;
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                        interp_res +=  std::real(  *( coeffxp+iloc*32 ) * *( coeffyd+jloc*32 ) *
+                        interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
                                       ( ( ( 1-dual[1][ipart] )*( *Bl )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[1][ipart]*( *Bl )( idxO[0]+1+iloc, idxO[1]+2+jloc ) ) ) * exp_mm_theta[ipart] );
                     }
                 }
@@ -391,7 +403,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 interp_res = 0.;
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                        interp_res +=  std::real(  *( coeffxd+iloc*32 ) * *( coeffyp+jloc*32 ) *
+                        interp_res +=  std::real(  *( coeffld+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) *
                                       ( ( ( 1-dual[0][ipart] )*( *Br )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *Br )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) ) * exp_mm_theta[ipart] );
                     }
                 }
@@ -401,7 +413,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                 interp_res = 0.;
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                        interp_res +=  std::real(  *( coeffxd+iloc*32 ) * *( coeffyd+jloc*32 ) *
+                        interp_res +=  std::real(  *( coeffld+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
                                       ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+1+jloc ) )
                                         +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+2+jloc ) + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+2+jloc ) ) ) * exp_mm_theta[ipart] );
                     }
@@ -470,23 +482,23 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 //        // only mode 0 is used
 //
 //        // Interpolation of El^(d,p)
-//        ( *Epart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ ) );
+//        ( *Epart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffld_[1], &coeffrp_[1], El, id_, jp_ ) );
 //        // Interpolation of Er^(p,d)
-//        ( *Epart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, ip_, jd_ ) );
+//        ( *Epart ) [ 1*nparts+ipart ]       = std::real( compute( &coefflp_[1], &coeffrd_[1], Er, ip_, jd_ ) );
 //        // Interpolation of Et^(p,p)
-//        ( *Epart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyp_[1], Et, ip_, jp_ ) );
+//        ( *Epart ) [ 2*nparts+ipart ]       = std::real( compute( &coefflp_[1], &coeffrp_[1], Et, ip_, jp_ ) );
 //        // Interpolation of Bl^(p,d)
-//        ( *Bpart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyd_[1], Bl, ip_, jd_ ) );
+//        ( *Bpart ) [ 0*nparts+ipart ]       = std::real( compute( &coefflp_[1], &coeffrd_[1], Bl, ip_, jd_ ) );
 //        // Interpolation of Br^(d,p)
-//        ( *Bpart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_ ) );
+//        ( *Bpart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffld_[1], &coeffrp_[1], Br, id_, jp_ ) );
 //        // Interpolation of Bt^(d,d)
-//        ( *Bpart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_ ) );
+//        ( *Bpart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffld_[1], &coeffrd_[1], Bt, id_, jd_ ) );
 //        // Interpolation of Phi^(p,p)
-//        ( *PHIpart ) [ 0*nparts+ipart ]     = compute( &coeffxp_[1], &coeffyp_[1], Phi, ip_, jp_ ) ;
+//        ( *PHIpart ) [ 0*nparts+ipart ]     = compute( &coefflp_[1], &coeffrp_[1], Phi, ip_, jp_ ) ;
 //        // Interpolation of GradPhil^(p,p)
-//        ( *GradPHIpart ) [ 0*nparts+ipart ] = compute( &coeffxp_[1], &coeffyp_[1], GradPhil, ip_, jp_ ) ;
+//        ( *GradPHIpart ) [ 0*nparts+ipart ] = compute( &coefflp_[1], &coeffrp_[1], GradPhil, ip_, jp_ ) ;
 //        // Interpolation of GradPhir^(p,p)
-//        ( *GradPHIpart ) [ 1*nparts+ipart ] = compute( &coeffxp_[1], &coeffyp_[1], GradPhir, ip_, jp_ ) ;
+//        ( *GradPHIpart ) [ 1*nparts+ipart ] = compute( &coefflp_[1], &coeffrp_[1], GradPhir, ip_, jp_ ) ;
 //        // GradPhit = 0 in cylindr_ical symmetry
 //        ( *GradPHIpart ) [ 2*nparts+ipart ] = 0.;
 //   
@@ -552,17 +564,17 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 //        // -------------------------
 //        // Interpolation of Phi_m^(p,p)
 //        // -------------------------
-//        ( *PHI_mpart )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], Phi_m2Dcyl, ip_, jp_ );
+//        ( *PHI_mpart )[ipart] = compute( &coefflp_[1], &coeffrp_[1], Phi_m2Dcyl, ip_, jp_ );
 //    
 //        // -------------------------
 //        // Interpolation of GradPhi_m^(p,p), l component
 //        // -------------------------
-//        ( *GradPHI_mpart )[ipart+0*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhil_m2Dcyl, ip_, jp_ );
+//        ( *GradPHI_mpart )[ipart+0*nparts] = compute( &coefflp_[1], &coeffrp_[1], GradPhil_m2Dcyl, ip_, jp_ );
 //    
 //        // -------------------------
 //        // Interpolation of GradPhi_m^(p,p), r component
 //        // -------------------------
-//        ( *GradPHI_mpart )[ipart+1*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhir_m2Dcyl, ip_, jp_ );
+//        ( *GradPHI_mpart )[ipart+1*nparts] = compute( &coefflp_[1], &coeffrp_[1], GradPhir_m2Dcyl, ip_, jp_ );
 //    
 //        // -------------------------
 //        // Interpolation of GradPhi_m^(p,p), theta component
@@ -614,22 +626,22 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 //    // -------------------------
 //    // Interpolation of Env_A_abs_^(p,p)
 //    // -------------------------
-//    *( Env_A_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_A_abs_2Dcyl, ip_, jp_);
+//    *( Env_A_abs_Loc ) = compute( &coefflp_[1], &coeffrp_[1], Env_A_abs_2Dcyl, ip_, jp_);
 //  
 //    // -------------------------  
 //    // Interpolation of Env_Chi_^(p,p)
 //    // -------------------------
-//    *( Env_Chi_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_Chi_2Dcyl, ip_, jp_);
+//    *( Env_Chi_Loc ) = compute( &coefflp_[1], &coeffrp_[1], Env_Chi_2Dcyl, ip_, jp_);
 //   
 //    // -------------------------
 //    // Interpolation of Env_E_abs_^(p,p)
 //    // -------------------------
-//    *( Env_E_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_E_abs_2Dcyl, ip_, jp_);
+//    *( Env_E_abs_Loc ) = compute( &coefflp_[1], &coeffrp_[1], Env_E_abs_2Dcyl, ip_, jp_);
 //
 //    // -------------------------
 //    // Interpolation of Env_Ex_abs_^(p,p)
 //    // -------------------------
-//    *( Env_Ex_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_Ex_abs_2Dcyl, ip_, jp_);
+//    *( Env_Ex_abs_Loc ) = compute( &coefflp_[1], &coeffrp_[1], Env_Ex_abs_2Dcyl, ip_, jp_);
 //  
 //} // END InterpolatorAM2OrderV
 //
@@ -660,12 +672,12 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 //        // ---------------------------------
 //        // Interpolation of Env_E_abs^(p,p)
 //        // ---------------------------------
-//        ( *EnvEabs_part )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], EnvEabs, ip_, jp_ );
+//        ( *EnvEabs_part )[ipart] = compute( &coefflp_[1], &coeffrp_[1], EnvEabs, ip_, jp_ );
 //  
 //        // ---------------------------------
 //        // Interpolation of Env_Ex_abs^(p,p)
 //        // ---------------------------------
-//        ( *EnvExabs_part )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], EnvExabs, ip_, jp_ );
+//        ( *EnvExabs_part )[ipart] = compute( &coefflp_[1], &coeffrp_[1], EnvExabs, ip_, jp_ );
 //    
 //    }
 //    
