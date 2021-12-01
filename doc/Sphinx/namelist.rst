@@ -2042,6 +2042,14 @@ Collisions & reactions
   of :py:data:`coulomb_log` being automatically computed or set to a constant value.
   This can help, for example, to compensate artificially-reduced ion masses.
 
+.. py:data:: every
+
+  :default: 1
+
+  Number of timesteps between each computation of the collisions. Use a number higher than 1
+  only if you know the collision frequency is low with respect to the inverse of the timestep.
+
+
 .. py:data:: debug_every
 
   :default: 0

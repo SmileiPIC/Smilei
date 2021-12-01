@@ -24,6 +24,7 @@ Collisions::Collisions(
     double coulomb_log,
     double coulomb_log_factor,
     bool intra_collisions,
+    int every,
     int debug_every,
     CollisionalIonization *ionization,
     CollisionalNuclearReaction *nuclear_reaction,
@@ -37,6 +38,7 @@ Collisions::Collisions(
     coulomb_log_( coulomb_log ),
     coulomb_log_factor_( coulomb_log_factor ),
     intra_collisions_( intra_collisions ),
+    every_( every ),
     debug_every_( debug_every ),
     filename_( filename )
 {
@@ -62,6 +64,7 @@ Collisions::Collisions( Collisions *coll )
     coulomb_log_        = coll->coulomb_log_       ;
     coulomb_log_factor_ = coll->coulomb_log_factor_;
     intra_collisions_   = coll->intra_collisions_  ;
+    every_              = coll->every_             ;
     debug_every_        = coll->debug_every_       ;
     filename_           = coll->filename_          ;
     coeff1_             = coll->coeff1_            ;
@@ -180,7 +183,10 @@ void Collisions::calculate_debye_length( Params &params, Patch *patch )
 // Calculates the collisions for a given Collisions object
 void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagnostic *> &localDiags )
 {
-
+    if( itime % every_ != 0 ) {
+        return;
+    }
+    
     vector<unsigned int> *sg1, *sg2, index1, index2;
     unsigned int nspec1, nspec2; // numbers of species in each group
     unsigned int npart1, npart2; // numbers of macro-particles in each group
@@ -306,7 +312,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         
         // Pre-calculate some numbers before the big loop
         unsigned int ncorr = intra_collisions_ ? 2*npairs-1 : npairs;
-        double dt_corr = params.timestep * ((double)ncorr) * inv_cell_volume;
+        double dt_corr = every_ * params.timestep * ((double)ncorr) * inv_cell_volume;
         coeff3 = coeff2_ * dt_corr * coulomb_log_factor_;
         coeff4 = pow( 3.*coeff2_, -1./3. ) * dt_corr;
         double weight_correction_1 = 1. / (double)( (npairs-1) / N2max );
