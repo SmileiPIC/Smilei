@@ -76,9 +76,9 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
 
         // Rotation in the magnetic field
 
-        Tx    = alpha * ( *( Bx+ipart-ipart_buffer_offset ) );
-        Ty    = alpha * ( *( By+ipart-ipart_buffer_offset ) );
-        Tz    = alpha * ( *( Bz+ipart-ipart_buffer_offset ) );
+        Tx    = alpha * ( Bx[ipart-ipart_buffer_offset] );
+        Ty    = alpha * ( By[ipart-ipart_buffer_offset] );
+        Tz    = alpha * ( Bz[ipart-ipart_buffer_offset] );
 
         T2 = Tx*Tx + Ty*Ty + Tz*Tz;
 
@@ -92,9 +92,9 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
         upz = umz + umx*Sy - umy*Sx;
 
 
-        momentum_x[ipart] = mass_ * ( upx + alpha*( *( Ex+ipart-ipart_buffer_offset ) ) );
-        momentum_y[ipart] = mass_ * ( upy + alpha*( *( Ey+ipart-ipart_buffer_offset ) ) );
-        momentum_z[ipart] = mass_ * ( upz + alpha*( *( Ez+ipart-ipart_buffer_offset ) ) );
+        momentum_x[ipart] = mass_ * ( upx + alpha*( Ex[ipart-ipart_buffer_offset] ) );
+        momentum_y[ipart] = mass_ * ( upy + alpha*( Ey[ipart-ipart_buffer_offset] ) );
+        momentum_z[ipart] = mass_ * ( upz + alpha*( Ez[ipart-ipart_buffer_offset] ) );
 
         // Move the particle
         position_x[ipart] += dt * momentum_x[ipart];
