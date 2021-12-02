@@ -30,7 +30,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
     std::vector<double> * Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> * Bpart = &( smpi->dynamics_Bpart[ithread] );
-    double * __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
+    //double * __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
 
     double pxsm, pysm, pzsm;
     double local_invgf;

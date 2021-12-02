@@ -81,9 +81,9 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
         
         // Rotation in the magnetic field, using updated gamma ponderomotive
         alpha = charge_over_mass_dts2 * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset];
-        Tx    = alpha * ( *( Bx+ipart-ipart_buffer_offset ) );
-        Ty    = alpha * ( *( By+ipart-ipart_buffer_offset ) );
-        Tz    = alpha * ( *( Bz+ipart-ipart_buffer_offset ) );
+        Tx    = alpha * ( Bx[ipart-ipart_buffer_offset] );
+        Ty    = alpha * ( By[ipart-ipart_buffer_offset] );
+        Tz    = alpha * ( Bz[ipart-ipart_buffer_offset] );
         Tx2   = Tx*Tx;
         Ty2   = Ty*Ty;
         Tz2   = Tz*Tz;
