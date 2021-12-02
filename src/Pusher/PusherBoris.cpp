@@ -99,7 +99,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
         // finalize Half-acceleration in the electric field
         local_invgf = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
-        invgf[ipart2] = local_invgf //1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        invgf[ipart2] = local_invgf; //1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
 
         momentum_x[ipart] = pxsm;
         momentum_y[ipart] = pysm;
