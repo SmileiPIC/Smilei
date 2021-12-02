@@ -88,9 +88,9 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
         // Rotation in the magnetic field
         local_invgf = charge_over_mass_dts2 / sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
-        Tx    = local_invgf * ( Bx[ipart2] ) );
-        Ty    = local_invgf * ( By[ipart2] ) );
-        Tz    = local_invgf * ( Bz[ipart2] ) );
+        Tx    = local_invgf * ( Bx[ipart2] );
+        Ty    = local_invgf * ( By[ipart2] );
+        Tz    = local_invgf * ( Bz[ipart2] );
         inv_det_T = 1.0/( 1.0+Tx*Tx+Ty*Ty+Tz*Tz );
 
         pxsm += ( ( 1.0+Tx*Tx-Ty*Ty-Tz*Tz )* umx  +      2.0*( Tx*Ty+Tz )* umy  +      2.0*( Tz*Tx-Ty )* umz )*inv_det_T;
