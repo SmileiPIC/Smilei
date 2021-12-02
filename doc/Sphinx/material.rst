@@ -26,15 +26,27 @@ Reference article
 
 ----
 
-Accepted
+Statement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.
+In what follows, we provide a list of papers using Smilei.
+Only papers published in peer-reviewed journals are listed.
+
+So far (November 2021), 90 papers have been published covering a broad range of topics, from laser-plasma interaction (LPI) 
+[for inertial fusion (FCI), ultra-high intensity (UHI) applications, or the study of quantum electrodynamics effect (QED) processes in plasmas],
+to the study of astrophysical and space plasmas. The figure below gives an *indicative* repartition of the papers per topic.
+
+.. _fig_paper_topics:
+
+.. figure:: _static/figures/paper_topics.png
+  :width: 50%
+
+
 
 ----
 
-Published papers using Smilei
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Papers using Smilei
+^^^^^^^^^^^^^^^^^^^^
 
 .. READ THIS 
    There is now a utility to add new entries to this list.
@@ -66,6 +78,72 @@ Published papers using Smilei
   `Phys. Rev. Lett. 126, 044801 (2021) <http://dx.doi.org/10.1103/PhysRevLett.126.044801>`_
   `arXiv:1902.05014 <https://arxiv.org/abs/1902.05014>`_
 
+.. [Budriga2020]
+
+  O. Budriga, L. E. Ionel, D. Tatomirescu and K. A. Tanaka,
+  `Enhancement of laser-focused intensity greater than 10 times through a re-entrant cone in the petawatt regime`,
+  `Optics Letters 45, 3454 (2020) <https://doi.org/10.1364/OL.395316>`_
+
+.. [Nghiem2020]
+
+  P. A. P. Nghiem, R. Assmann, A. Beck et al., 
+  `Toward a plasma-based accelerator at high beam energy with high beam charge and high beam quality`,
+  `Phys. Rev. Accel. Beams 23, 031301 (2020) <https://doi.org/10.1103/PhysRevAccelBeams.23.031301>`_
+
+.. [Pisarczyk2020]
+
+  T. Pisarczyk, M. Kalal, S. Yu. Gus'kov et al.,
+  `Hot electron retention in laser plasma created under terawatt subnanosecond irradiation of Cu targets`,
+  `Plasma Phys. Control. Fusion 62, 115020 (2020) <https://doi.org/10.1088/1361-6587/abb74b>`_
+
+.. [Pagano2020]
+
+  I. Pagano, J. Brooks, A. Bernstein, R. Zgadzaj, J. Leddy, J. Cary and M. C. Downer,
+  `Low Density Plasma Waveguides Driven by Ultrashort (30 fs) and Long (300 ps) Pulses for Laser Wakefield Acceleration`,
+  `2018 IEEE Advanced Accelerator Concepts Workshop (AAC), 1 <https://doi.org/10.1109/AAC.2018.8659410>`_
+
+.. [Ruyer2020]
+
+  C. Ruyer, A. Debayle, P. Loiseau, M. Casanova and P. E. Masson-Laborde,
+  `Kinetic analytical modeling of Gaussian pulse beam-bending including the transient regime`,
+  `Physics of Plasmas 27, 102105 (2020) <https://doi.org/10.1063/5.0016214>`_
+
+.. [Peng2020]
+
+  H. Peng, C. Riconda, M. Grech, C.-T. Zhou and S. Weber,
+  `Dynamical aspects of plasma gratings driven by a static ponderomotive potential`,
+  `Plasma Phys. Control. Fusion 62, 115015 (2020) <https://doi.org/10.1088/1361-6587/abb3aa>`_
+
+.. [Glek2020]
+
+  P. B. Glek, A. A. Voronin, V. Ya. Panchenko and A. M. Zheltikov,
+  `Relativistic electron bunches locked to attosecond optical field waveforms: an attosecond light–matter bound state`,
+  `Laser Phys. Lett. 17 055401 (2020) <https://doi.org/10.1088/1612-202X/ab7827>`_
+
+.. [Margarone2020]
+
+  D. Margarone, A. Morace, J. Bonvalet et al.,
+  `Generation of α-Particle Beams With a Multi-kJ, Peta-Watt Class Laser System`,
+  `Front. Phys. 8, 343 (2020) <https://doi.org/10.3389/fphy.2020.00343>`_
+
+.. [Sinha2020]
+
+  U. Sinha and N. Kumar,
+  `Pair-beam propagation in a magnetized plasma for modeling the polarized radiation emission from gamma-ray bursts in laboratory astrophysics experiments`,
+  `Phys. Rev. E 101, 063204 (2020) <https://doi.org/10.1103/PhysRevE.101.063204>`_
+
+.. [Mitrofanov2020]
+
+  A. V. Mitrofanov, D. A. Sidorov-Biryukov, P. B. Glek, M. V. Rozhko, E. A. Stepanov, A. D. Shutov, S. V. Ryabchuk, A. A. Voronin, A. B. Fedotov, and A. M. Zheltikov,
+  `Chirp-controlled high-harmonic and attosecond-pulse generation via coherent-wake plasma emission driven by mid-infrared laser pulses`,
+  `Optics Letters 45, 750 (2020) <https://doi.org/10.1364/OL.45.000750>`_
+
+.. [Spiers2020]
+
+  B. T. Spiers, M. P. Hill, C. Brown, L. Ceurvorst, N. Ratan, A. F. Savin, P. Allan, E. Floyd, J. Fyrth, L. Hobbs, S. James, J. Luis, M. Ramsay, N. Sircombe, J. Skidmore, R. Aboushelbaya, M. W. Mayr, R. Paddock, R. H. W. Wang and P. A. Norreys,
+  `Whole-beam self-focusing in fusion-relevant plasma`,
+  `Phil. Trans. R. Soc. A379, 20200159 <https://doi.org/10.1098/rsta.2020.0159>`_
+
 .. [Derouillat2020]
 
   J. Derouillat and A. Beck,
@@ -73,11 +151,17 @@ Published papers using Smilei
   `J. Phys.: Conf. Ser. 1596, 012052 (2020) <http://dx.doi.org/10.1088/1742-6596/1596/1/012052>`_
   `arXiv:1912.04064 <https://arxiv.org/abs/1912.04064>`_
 
+.. [Zemzemi2020]
+
+  I. Zemzemi, F. Massimo and A. Beck,
+  `Azimuthal decomposition study of a realistic laser profile for efficient modeling of Laser WakeField Acceleration`,
+  `J. Phys.: Conf. Ser. 1596, 012055 (2020) <https://doi.org/10.1088/1742-6596/1596/1/012054>`_
+
 .. [Massimo2020b]
 
   F. Massimo, I. Zemzemi, A. Beck, J. Derouillat and A. Specka,
   `Efficient cylindrical envelope modeling for laser wakefield acceleration`,
-  `J. Phys.: Conf. Ser. 1596, 012055 (2020) <http://dx.doi.org/10.1088/1742-6596/1596/1/012055>`_
+  `J. Phys.: Conf. Ser. 1596, 012054 (2020) <http://dx.doi.org/10.1088/1742-6596/1596/1/012055>`_
   `arXiv:1912.04674 <https://arxiv.org/abs/1912.04674>`_
 
 .. [Massimo2020a]
@@ -101,9 +185,15 @@ Published papers using Smilei
   `Geophys. Res. Lett. 47, 2019GL086546 (2020) <http://dx.doi.org/10.1029/2019GL086546>`_
   `arXiv:2002.02243 <https://arxiv.org/abs/2002.02243>`_
 
-.. [Sundström2020]
+.. [Sundström2020b]
 
-  Andréas Sundström, Laurent Gremillet, Evangelos Siminos and István Pusztai,
+  A. Sundström, L. Gremillet, E. Siminos and I. Pusztai,
+  `Collisional effects on the electrostatic shock dynamics in thin-foil targets driven by an ultraintense short pulse laser`,
+  `Plasma Phys. Control. Fusion 62, 085015 (2020) <https://doi.org/10.1088/1361-6587/ab9a62>`_
+
+.. [Sundström2020a]
+
+  A. Sundström, L. Gremillet, E. Siminos and I. Pusztai,
   `Fast collisional electron heating and relaxation in thin foils driven by a circularly polarized ultraintense short-pulse laser`,
   `J. Plasma Phys. 86, 755860201 (2020) <http://dx.doi.org/10.1017/S0022377820000264>`_
   `arXiv:1911.09562 <https://arxiv.org/abs/1911.09562>`_
@@ -121,6 +211,47 @@ Published papers using Smilei
   `Enhancement of laser-driven ion acceleration in non-periodic nanostructured targets`,
   `J. Plasma Phys. 86, 905860101 (2020) <http://dx.doi.org/10.1017/S0022377819000898>`_
   `arXiv:1905.11131 <https://arxiv.org/abs/1905.11131>`_
+
+.. [Marques2019]
+
+  J.-R. Marquès, L. Lancia, T. Gangolf, M. Blecher, S. Bolaños, J. Fuchs, O. Willi, F. Amiranoff, R. L. Berger, M. Chiaramello, S. Weber, and C. Riconda,
+  `Joule-Level High-Efficiency Energy Transfer to Subpicosecond Laser Pulses by a Plasma-Based Amplifier`,
+  `Phys. Rev. X 9, 021008 (2019) <https://doi.org/10.1103/PhysRevX.9.021008>`_
+
+.. [Plotnikov2019]
+  I. Plotnikov and L. Sironi,
+  `The synchrotron maser emission from relativistic shocks in Fast Radio Bursts: 1D PIC simulations of cold pair plasmas`,
+  `Monthly Notices of the Royal Astronomical Society 485, 3816 (2019) <https://doi.org/10.1093/mnras/stz640>`_
+
+.. [Dargent2019b]
+
+  J. Dargent, N. Aunai, B. Lavraud, S. Toledo-Redondo and F. Califano,
+  `Signatures of Cold Ions in a Kinetic Simulation of the Reconnecting Magnetopause`,
+  `Journal of Geophysical Research: Space Physics, 124, 2497 (2019) <https://doi.org/10.1029/2018JA026343>`_
+
+.. [Dargent2019a]
+
+  J. Dargent, F. Lavorenti, F. Califano, P. Henri, F. Pucci and S. S. Cerri,
+  `Interplay between Kelvin–Helmholtz and lower-hybrid drift instabilities`, 
+  `Journal of Plasma Physics 85, 805850601 <https://doi.org/10.1017/S0022377819000758>`_
+
+.. [Geng2019]
+
+  X. S. Geng, L. L. Ji, B. F. Shen et al.,
+  `Quantum reflection above the classical radiation-reaction barrier in the quantum electro-dynamics regime`,
+  `Commun. Phys. 2, 66 (2019) <https://doi.org/10.1038/s42005-019-0164-2>`_  
+
+.. [Sinha2019]
+
+  U. Sinha, C. H. Keitel, and N. Kumar,
+  `Polarized Light from the Transportation of a Matter-Antimatter Beam in a Plasma`,
+  `Phys. Rev. Lett. 122, 204801 (2019) <https://doi.org/10.1103/PhysRevLett.122.204801>`_
+
+.. [Malko2019]
+
+  S. Malko, X. Vaisseau, F. Perez, D. Batani, A. Curcio, M. Ehret, J. Honrubia, K. Jakubowska, A. Morace, J. J. Santos and L. Volpe, 
+  `Enhanced relativistic-electron beam collimation using two consecutive laser pulses`, 
+  `Sci Rep 9, 14061 (2019) <https://doi.org/10.1038/s41598-019-50401-y>`_
 
 .. [Peng2019]
 
@@ -175,6 +306,24 @@ Published papers using Smilei
   `Electron Beam Driven Generation of Frequency-Tunable Isolated Relativistic Subcycle Pulses`,
   `Phys. Rev. Lett. 122, 104803 (2019) <http://dx.doi.org/10.1103/PhysRevLett.122.104803>`_
   `arXiv:1806.04976 <https://arxiv.org/abs/1806.04976>`_
+
+.. [Massimo2018]
+
+  F. Massimo, A. Beck, A. Specka, I. Zemzemi, J. Derouillat, M. Grech and F. Pérez,
+  `Efficient Modeling of Laser Wakefield Acceleration Through the PIC Code Smilei in CILEX Project`,
+  `Proc. 13th International Computational Accelerator Physics Conference (ICAP'18), Key West, FL, USA, 20-24 October 2018 <https://doi.org/10.18429/JACoW-ICAP2018-MOPAG02>`_
+
+.. [ToledoRedondo2018]
+
+  S. Toledo-Redondo, J. Dargent, N. Aunai, B. Lavraud, M. André, W. Li, B. Giles, P.-A. Lindvist, R. E. Ergun, C. T. Russel and J. L. Burch,
+  `Perpendicular Current Reduction Caused by Cold Ions of Ionospheric Origin in Magnetic Reconnection at the Magnetopause: Particle-in-Cell Simulations and Spacecraft Observations`,
+  `Geophys. Res. Lett. 45, 10,033 (2018)  <https://doi.org/10.1029/2018GL079051>`_
+
+.. [Gelfer2018]
+
+  E. Gelfer, N. Elkina and A. Fedotov,
+  `Unexpected impact of radiation friction: enhancing production of longitudinal plasma waves`,
+  `Sci. Rep. 8, 6478 (2018) <https://doi.org/10.1038/s41598-018-24930-x>`_
 
 .. [Niel2018b]
 
