@@ -29,7 +29,7 @@ Reference article
 Papers involving Smilei
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Only papers published in peer-reviewed journals are listed.
+Only papers published in peer-reviewed journals are listed (for the complete list of citing papers see `Google Scholar <https://scholar.google.com/scholar?hl=fr&as_sdt=2005&sciodt=0,5&cites=17416460455672944837&scipsc=&q=&scisbd=1>`_).
 As of November 2021, 90 papers have been published covering a broad range of topics:
 
 * laser-plasma interaction (LPI) / inertial fusion (FCI)
