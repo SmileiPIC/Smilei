@@ -23,19 +23,24 @@ Changes made in the repository (not released)
 * Improved performance for ARM-based processors including the Fujitsu A64FX
 * Improved performance for GNU, LLVM, arm-clang and Fujitsu compilers on all types of architectures
 * Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present 
+* Option to create neutrons for D-D fusion
+* Collisions can be done less often
 * Lasers can be injected from all boundaries
-* Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
-* Probes can be time-integrated
-* ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
-* Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
 * ``LaserOffset``:
 
   * may be re-used from a previous simulation
   * available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
   * has new arguments ``fft_time_window`` and ``fft_time_step``
-  
-* Screens may have a ``cylinder`` shape
-* Option to create neutrons for D-D fusion
+
+* Diagnostics:
+
+  * Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
+  * Probes can be time-integrated
+  * ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
+  * Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
+  * Screens may have a ``cylinder`` shape
+  * Scalar diagnostics for AM geometry now available
+
 * Bugfixes:
 
   * Poynting scalars behaviour with several patches, or with checkpoints
