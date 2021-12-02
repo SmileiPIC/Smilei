@@ -78,9 +78,9 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
 
         // init Half-acceleration in the electric field
-        pxsm = charge_over_mass_dts2*( *( Ex+ipart-ipart_buffer_offset ) );
-        pysm = charge_over_mass_dts2*( *( Ey+ipart-ipart_buffer_offset ) );
-        pzsm = charge_over_mass_dts2*( *( Ez+ipart-ipart_buffer_offset ) );
+        pxsm = charge_over_mass_dts2*( Ex[ipart-ipart_buffer_offset] );
+        pysm = charge_over_mass_dts2*( Ey[ipart-ipart_buffer_offset] );
+        pzsm = charge_over_mass_dts2*( Ez[ipart-ipart_buffer_offset] );
 
         //(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);
         umx = momentum_x[ipart] + pxsm;
@@ -92,9 +92,9 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         gfm2 = ( 1.0 + umx*umx + umy*umy + umz*umz );
 
         // Equivalent of betax,betay,betaz in the paper
-        Tx    = charge_over_mass_dts2 * ( *( Bx+ipart-ipart_buffer_offset ) );
-        Ty    = charge_over_mass_dts2 * ( *( By+ipart-ipart_buffer_offset ) );
-        Tz    = charge_over_mass_dts2 * ( *( Bz+ipart-ipart_buffer_offset ) );
+        Tx    = charge_over_mass_dts2 * ( Bx[ipart-ipart_buffer_offset] );
+        Ty    = charge_over_mass_dts2 * ( By[ipart-ipart_buffer_offset] );
+        Tz    = charge_over_mass_dts2 * ( Bz[ipart-ipart_buffer_offset] );
 
         // beta**2
         beta2 = Tx*Tx + Ty*Ty + Tz*Tz;
@@ -132,29 +132,29 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         momentum_z[ipart] = pzsm;
 
         // Move the particle
-        local_invgf *= dt;
+        // local_invgf *= dt;
         position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart-ipart_buffer_offset];
-        // if (nDim_>1) {
-        //     position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart-ipart_buffer_offset];
-        //     if (nDim_>2) {
-        //         position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart-ipart_buffer_offset];
-        //     }
-        // }
+        if (nDim_>1) {
+            position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart-ipart_buffer_offset];
+            if (nDim_>2) {
+                position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart-ipart_buffer_offset];
+            }
+        }
     } // end ipart
 
-    if (nDim_>1) {
-        #pragma omp simd
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-            position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
-        }
-    }
-
-    if (nDim_>2) {
-        #pragma omp simd
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-            position_z[ipart] += momentum_z[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
-        }
-    }
+    // if (nDim_>1) {
+    //     #pragma omp simd
+    //     for( int ipart=istart ; ipart<iend; ipart++ ) {
+    //         position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
+    //     }
+    // }
+    // 
+    // if (nDim_>2) {
+    //     #pragma omp simd
+    //     for( int ipart=istart ; ipart<iend; ipart++ ) {
+    //         position_z[ipart] += momentum_z[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
+    //     }
+    // }
 
     // if( vecto ) {
     //     int *cell_keys;

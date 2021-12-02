@@ -77,9 +77,9 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
 
         // init Half-acceleration in the electric field
-        pxsm = charge_over_mass_dts2*( *( Ex+ipart2 ) );
-        pysm = charge_over_mass_dts2*( *( Ey+ipart2 ) );
-        pzsm = charge_over_mass_dts2*( *( Ez+ipart2) );
+        pxsm = charge_over_mass_dts2*( Ex[ipart2] );
+        pysm = charge_over_mass_dts2*( Ey[ipart2] );
+        pzsm = charge_over_mass_dts2*( Ez[ipart2] );
 
         //(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);
         umx = momentum_x[ipart] + pxsm;
@@ -88,9 +88,9 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
         // Rotation in the magnetic field
         local_invgf = charge_over_mass_dts2 / sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
-        Tx    = local_invgf * ( *( Bx+ipart2 ) );
-        Ty    = local_invgf * ( *( By+ipart2 ) );
-        Tz    = local_invgf * ( *( Bz+ipart2 ) );
+        Tx    = local_invgf * ( Bx[ipart2] ) );
+        Ty    = local_invgf * ( By[ipart2] ) );
+        Tz    = local_invgf * ( Bz[ipart2] ) );
         inv_det_T = 1.0/( 1.0+Tx*Tx+Ty*Ty+Tz*Tz );
 
         pxsm += ( ( 1.0+Tx*Tx-Ty*Ty-Tz*Tz )* umx  +      2.0*( Tx*Ty+Tz )* umy  +      2.0*( Tz*Tx-Ty )* umz )*inv_det_T;
@@ -98,35 +98,36 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         pzsm += ( 2.0*( Tz*Tx+Ty )* umx  +      2.0*( Ty*Tz-Tx )* umy  + ( 1.0-Tx*Tx-Ty*Ty+Tz*Tz )* umz )*inv_det_T;
 
         // finalize Half-acceleration in the electric field
-        //local_invgf = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
-        invgf[ipart2] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        local_invgf = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        //invgf[ipart2] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
 
         momentum_x[ipart] = pxsm;
         momentum_y[ipart] = pysm;
         momentum_z[ipart] = pzsm;
 
         // Move the particle
-        //local_invgf *= dt;
-        position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart2];
-        // if (nDim_>1) {
-        //     position_y[ipart] += pysm*local_invgf;
-        //     if (nDim_>2) {
-        //         position_z[ipart] += pzsm*local_invgf;
-        //     }
-        // }
-    }
-
-    if (nDim_>1) {
-        #pragma omp simd
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-            position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
+        local_invgf *= dt;
+        //position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart2];
+        position_x[ipart] += pxsm*local_invgf;
+        if (nDim_>1) {
+            position_y[ipart] += pysm*local_invgf;
+            if (nDim_>2) {
+                position_z[ipart] += pzsm*local_invgf;
+            }
         }
     }
 
-    if (nDim_>2) {
-        #pragma omp simd
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-            position_z[ipart] += momentum_z[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
-        }
-    }
+    // if (nDim_>1) {
+    //     #pragma omp simd
+    //     for( int ipart=istart ; ipart<iend; ipart++ ) {
+    //         position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
+    //     }
+    // }
+    // 
+    // if (nDim_>2) {
+    //     #pragma omp simd
+    //     for( int ipart=istart ; ipart<iend; ipart++ ) {
+    //         position_z[ipart] += momentum_z[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
+    //     }
+    // }
 }
