@@ -64,15 +64,15 @@ void RadiationNiel::operator()(
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
     int nparts = Epart->size()/3;
-    double *Ex = &( ( *Epart )[0*nparts] );
-    double *Ey = &( ( *Epart )[1*nparts] );
-    double *Ez = &( ( *Epart )[2*nparts] );
-    double *Bx = &( ( *Bpart )[0*nparts] );
-    double *By = &( ( *Bpart )[1*nparts] );
-    double *Bz = &( ( *Bpart )[2*nparts] );
+    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
+    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
     // Used to store gamma directly
-    double *gamma = &( smpi->dynamics_invgf[ithread][0] );
+    double * __restrict__ gamma = &( smpi->dynamics_invgf[ithread][0] );
 
     // Charge divided by the square of the mass
     double charge_over_mass_square = 0.;
@@ -102,18 +102,18 @@ void RadiationNiel::operator()(
     double random_numbers[nbparticles];
 
     // Momentum shortcut
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
+    double* __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double* __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double* __restrict__ momentum_z = particles.getPtrMomentum(2);
 
     // Charge shortcut
-    short *charge = particles.getPtrCharge();
+    short* __restrict__ charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double *weight = particles.getPtrWeight();
+    double* __restrict__ weight = particles.getPtrWeight();
 
     // Quantum parameter
-    double* particle_chi = particles.getPtrChi();
+    double* __restrict__ particle_chi = particles.getPtrChi();
 
     const double minimum_chi_continuous_ = RadiationTables.getMinimumChiContinuous();
     const double factor_classical_radiated_power_      = RadiationTables.getFactorClassicalRadiatedPower();
@@ -139,8 +139,8 @@ void RadiationNiel::operator()(
         particle_chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
                               momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                               gamma[ipart],
-                              ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                              ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+                              Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
+                              Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
     }
 
     //double t1 = MPI_Wtime();
@@ -332,8 +332,8 @@ void RadiationNiel::operator()(
         particle_chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
                      momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                      new_gamma,
-                     ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                     ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+                     Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
+                     Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
     }
     radiated_energy += radiated_energy_loc;
