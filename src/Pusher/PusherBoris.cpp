@@ -30,7 +30,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
     std::vector<double> * Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> * Bpart = &( smpi->dynamics_Bpart[ithread] );
-    //double * __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
+    double * __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
 
     double pxsm, pysm, pzsm;
     double local_invgf;
@@ -99,7 +99,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
         // finalize Half-acceleration in the electric field
         local_invgf = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
-        //invgf[ipart2] = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        invgf[ipart2] = local_invgf //1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
 
         momentum_x[ipart] = pxsm;
         momentum_y[ipart] = pysm;
