@@ -509,7 +509,6 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
     // Save some scalars
     g.attr( "nrj_mw_inj", EMfields->nrj_mw_inj );
     g.attr( "nrj_mw_out", EMfields->nrj_mw_out );
-    cout<<setprecision(10)<< EMfields->nrj_mw_out<<endl;
     // Manage some collisions parameters
     std::vector<double> rate_multiplier(  patch->vecCollisions.size() );
     for( unsigned int icoll = 0; icoll< patch->vecCollisions.size(); icoll++ ) {
@@ -895,7 +894,6 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
     // Load some scalars
     g.attr( "nrj_mw_inj", EMfields->nrj_mw_inj );
     g.attr( "nrj_mw_out", EMfields->nrj_mw_out );
-    cout<<setprecision(10)<< EMfields->nrj_mw_out<<endl;
     // Manage some collisions parameters
     if( g.vectSize( "collisions_rate_multiplier" ) > 0 ) {
         std::vector<double> rate_multiplier;
