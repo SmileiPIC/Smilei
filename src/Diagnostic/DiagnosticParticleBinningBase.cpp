@@ -221,7 +221,7 @@ bool DiagnosticParticleBinningBase::theTimeIsNow( int itime )
 
 bool DiagnosticParticleBinningBase::prepare( int itime )
 {
-    if( ! theTimeIsNow_ ) {
+    if( ! theTimeIsNow( itime ) ) {
         return false;
     }
     
