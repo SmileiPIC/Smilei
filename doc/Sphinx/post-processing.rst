@@ -134,6 +134,7 @@ about the corresponding diagnostics in the simulation.
   * ``"quantities_uint"``: a list of the available integer quantities
   * ``"quantities_double"``: a list of the available float quantities
   * ``"patch_arrangement"``: the type of patch arrangement
+  * ``"timesteps"``: the list of timesteps
 
 ----
 

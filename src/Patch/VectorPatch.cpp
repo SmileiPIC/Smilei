@@ -1440,37 +1440,39 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     vector<double> MPI_mins, MPI_maxs;
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers[idiag]->restart();
-
-        #pragma omp single
-        globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
-
+        
         // Get the mins and maxs from this diag, for the current MPI
         DiagnosticParticleBinningBase* binning = dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag] );
-        if( globalDiags[idiag]->theTimeIsNow && binning ) {
-            #pragma omp master
-            {
-                binning->patches_mins.resize( size() );
-                binning->patches_maxs.resize( size() );
-            }
-            #pragma omp barrier
-            // Calculate mins and maxs for each patch
-            #pragma omp for schedule(runtime)
-            for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
-                binning->calculate_auto_limits( patches_[ipatch], simWindow, ipatch );
-            }
-            // reduction of mins and maxs for all patches in this MPI
-            #pragma omp master
-            {
-                vector<double> mins = binning->patches_mins[0];
-                vector<double> maxs = binning->patches_maxs[0];
-                for( unsigned int i=0; i<mins.size(); i++ ) {
-                    for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
-                        mins[i] = min( mins[i], binning->patches_mins[ipatch][i] );
-                        maxs[i] = max( maxs[i], binning->patches_maxs[ipatch][i] );
-                    }
+        if( binning && binning->has_auto_limits_ ) {
+            #pragma omp single
+            binning->theTimeIsNow_ = binning->theTimeIsNow( itime );
+            
+            if( binning->theTimeIsNow_ ) {
+                #pragma omp master
+                {
+                    binning->patches_mins.resize( size() );
+                    binning->patches_maxs.resize( size() );
                 }
-                MPI_mins.insert( MPI_mins.end(), mins.begin(), mins.end() );
-                MPI_maxs.insert( MPI_maxs.end(), maxs.begin(), maxs.end() );
+                #pragma omp barrier
+                // Calculate mins and maxs for each patch
+                #pragma omp for schedule(runtime)
+                for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
+                    binning->calculate_auto_limits( patches_[ipatch], simWindow, ipatch );
+                }
+                // reduction of mins and maxs for all patches in this MPI
+                #pragma omp master
+                {
+                    vector<double> mins = binning->patches_mins[0];
+                    vector<double> maxs = binning->patches_maxs[0];
+                    for( unsigned int i=0; i<mins.size(); i++ ) {
+                        for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
+                            mins[i] = min( mins[i], binning->patches_mins[ipatch][i] );
+                            maxs[i] = max( maxs[i], binning->patches_maxs[ipatch][i] );
+                        }
+                    }
+                    MPI_mins.insert( MPI_mins.end(), mins.begin(), mins.end() );
+                    MPI_maxs.insert( MPI_maxs.end(), maxs.begin(), maxs.end() );
+                }
             }
         }
         diag_timers[idiag]->update();
@@ -1489,7 +1491,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         unsigned int imin = 0, imax = 0;
         for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
             DiagnosticParticleBinningBase* binning = dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag] );
-            if( globalDiags[idiag]->theTimeIsNow && binning ) {
+            if( binning && binning->has_auto_limits_ && binning->theTimeIsNow_ ) {
                 for( unsigned int iaxis=0; iaxis<binning->histogram->axes.size(); iaxis++ ) {
                     HistogramAxis * axis = binning->histogram->axes[iaxis];
                     if( std::isnan( axis->min ) ) {
@@ -1507,8 +1509,11 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     // Global diags: scalars + binnings
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
         diag_timers[idiag]->restart();
-
-        if( globalDiags[idiag]->theTimeIsNow ) {
+        
+        #pragma omp single
+        globalDiags[idiag]->theTimeIsNow_ = globalDiags[idiag]->prepare( itime );
+        
+        if( globalDiags[idiag]->theTimeIsNow_ ) {
             // All patches run
             #pragma omp for schedule(runtime)
             for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
@@ -1530,9 +1535,9 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         diag_timers[globalDiags.size()+idiag]->restart();
 
         #pragma omp single
-        localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
+        localDiags[idiag]->theTimeIsNow_ = localDiags[idiag]->prepare( itime );
         // All MPI run their stuff and write out
-        if( localDiags[idiag]->theTimeIsNow ) {
+        if( localDiags[idiag]->theTimeIsNow_ ) {
             localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
         }
 

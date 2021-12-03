@@ -369,6 +369,7 @@ class SmileiSimulation(object):
 		available_uint   = []
 		available_double = []
 		patch_arrangement = "?"
+		timesteps = set()
 		for path in self._results_path:
 			file = path+self._os.sep+'Performances.h5'
 			try:
@@ -385,8 +386,14 @@ class SmileiSimulation(object):
 				available_double = quantities_double
 				if "patch_arrangement" in f.attrs:
 					patch_arrangement = _decode(f.attrs["patch_arrangement"])
+				timesteps = timesteps.union([int(k) for k in f])
 				f.close()
 			except Exception as e:
 				raise Exception("File '"+file+"' does not seem to contain correct data")
 			
-		return dict(quantities_uint=available_uint, quantities_double=available_double, patch_arrangement=patch_arrangement)
+		return dict(
+			quantities_uint = available_uint,
+			quantities_double = available_double,
+			patch_arrangement = patch_arrangement,
+			timesteps = sorted(timesteps)
+			)
