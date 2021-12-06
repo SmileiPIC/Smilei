@@ -174,10 +174,11 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #endif
 
             // Interpolate the fields at the particle position
-            for( unsigned int scell = 0 ; scell < packsize_ ; scell++ )
+            for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
                 Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ),
                                        &( particles->last_index[ipack*packsize_+scell] ),
                                        ithread, particles->first_index[ipack*packsize_] );
+            }
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -554,7 +555,6 @@ void SpeciesV::sortParticles( Params &params, Patch *patch )
         particles->last_index[ic-1]= particles->first_index[ic];
     }
 
-
     //New total number of particles is stored as last element of particles->last_index
     particles->last_index[ncell-1] = particles->last_index[ncell-2] + count.back() ;
 
@@ -679,21 +679,22 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
 
     unsigned int iPart;
 
-    // int    * __restrict__ cell_keys  = particles->getPtrCellKeys();
     double * __restrict__ position_x = particles->getPtrPosition(0);
     double * __restrict__ position_y = particles->getPtrPosition(1);
     double * __restrict__ position_z = particles->getPtrPosition(2);
 
     if (params.geometry == "AMcylindrical"){
 
+        double min_loc_l = min_loc_vec[0];
+        double min_loc_r = min_loc_vec[1];
+
+        #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++ ) {
             if ( cell_keys[iPart] != -1 ) {
-                //Compute cell_keys of remaining particles
-                for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                    cell_keys[iPart] *= length_[i];
-                    cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
-                }
-                count[cell_keys[iPart]] ++;
+                //Compute cell_keys particles
+                cell_keys[iPart]  = round( (position_x[iPart] - min_loc_l) * dx_inv_[0] );
+                cell_keys[iPart] *= length_[1];
+                cell_keys[iPart] += round( (sqrt(position_y[iPart]*position_y[iPart]+position_z[iPart]*position_z[iPart]) - min_loc_r) * dx_inv_[1] );
             }
         }
 

@@ -189,8 +189,6 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     idxO[0] = idx[0] - i_domain_begin_ -1 ;
     idx[1] = round( sqrt( position_y[*istart]*position_y[*istart] + position_z[*istart]*position_z[*istart] ) * D_inv_[1] ) ;
     idxO[1] = idx[1] - j_domain_begin_ -1 ;
-    cout << idx[0] << " " << idxtest << " " << idxO[0] << " " << i_domain_begin_ << endl;
-
 
     double coeff[2][2][3][32];
     double dual[2][32]; // Size ndim. Boolean converted into double indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
