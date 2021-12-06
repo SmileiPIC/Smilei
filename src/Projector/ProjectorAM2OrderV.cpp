@@ -59,9 +59,19 @@ ProjectorAM2OrderV::~ProjectorAM2OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
+void ProjectorAM2OrderV::currentsAndDensity( ElectroMagnAM *emAM,
+                                   Particles &particles,
+                                   unsigned int istart,
+                                   unsigned int iend,
+                                   double * __restrict__ invgf,
+                                   int * __restrict__ iold,
+                                   double * __restrict__ deltaold,
+                                   std::complex<double> * __restrict__ array_eitheta_old,
+                                   int npart_total,
+                                   int ipart_ref )
 {
 
+     currents( emAM, particles,  istart, iend, invgf, iold, deltaold, array_eitheta_old, npart_total, ipart_ref );
      return;
     //
     // -------------------------------------
@@ -710,11 +720,11 @@ void ProjectorAM2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
         
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
-        double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
-        double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
-        double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles, istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
+        //double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
+        //double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
+        //double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
+        //double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+        currentsAndDensity( emAM, particles, istart, iend, invgf->data(), iold, delta->data(), array_eitheta_old->data(), invgf->size(), ipart_ref );
     }
 }
 
