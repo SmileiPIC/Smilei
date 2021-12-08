@@ -112,7 +112,7 @@ private:
 
     }
 
-    inline void computeJl( int ipart, double *charge_weight, double *DSl, double *DSr, double *Sr0, std::complex<double> *bJ, double dl_ov_dt, double *invR_local, std::complex<double> *e_bar )
+    inline void __attribute__((always_inline)) computeJl( int ipart, double *charge_weight, double *DSl, double *DSr, double *Sr0, std::complex<double> *bJ, double dl_ov_dt, double *invR_local, std::complex<double> *e_bar )
     {
 
         int vecSize = 8;
@@ -158,7 +158,7 @@ private:
         }
     }
 
-    inline void computeJr( int ipart, double *charge_weight, double *DSl, double *DSr, double *Sl0, std::complex<double> *bJ, double one_ov_dt, double *invRd_local, std::complex<double> *e_bar, int jpo )
+    inline void __attribute__((always_inline)) computeJr( int ipart, double *charge_weight, double *DSl, double *DSr, double *Sl0, std::complex<double> *bJ, double one_ov_dt, double *invRd_local, std::complex<double> *e_bar, int jpo )
     {
 
         int vecSize = 8;

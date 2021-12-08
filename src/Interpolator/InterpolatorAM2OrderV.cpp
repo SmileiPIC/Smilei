@@ -185,7 +185,6 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     int idx[2], idxO[2];
     //Primal indices are constant over the all cell
     idx[0]  = round( position_x[*istart] * D_inv_[0] );
-    int idxtest  = round( particles.position( 0, *istart ) * D_inv_[0] );
     idxO[0] = idx[0] - i_domain_begin_ -1 ;
     idx[1] = round( sqrt( position_y[*istart]*position_y[*istart] + position_z[*istart]*position_z[*istart] ) * D_inv_[1] ) ;
     idxO[1] = idx[1] - j_domain_begin_ -1 ;
@@ -255,6 +254,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
 
         }
+
         double interp_res;
         double * __restrict__ coeffld = &( coeff[0][1][1][0] );
         double * __restrict__ coefflp = &( coeff[0][0][1][0] );
@@ -354,11 +354,11 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             cField2D * __restrict__ Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
             cField2D * __restrict__ Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
 
-            #pragma omp simd
+            #pragma omp simd private(interp_res)
             for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             
                 //El(dual, primal)
-                double interp_res = 0.;
+                interp_res = 0.;
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                         interp_res += std::real( *( coeffld+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) *
