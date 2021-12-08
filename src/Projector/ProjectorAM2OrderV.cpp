@@ -23,6 +23,7 @@ ProjectorAM2OrderV::ProjectorAM2OrderV( Params &params, Patch *patch ) : Project
     dr = params.cell_length[1];
     dl_inv_   = 1.0/params.cell_length[0];
     dl_ov_dt_  = params.cell_length[0] / params.timestep;
+    one_ov_dt  = 1.0 / params.timestep;
     dr_inv_   = 1.0/dr;
     dr_ov_dt_  = dr / dt;
     
@@ -513,7 +514,9 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
     int vecSize = 8;
     int bsize = 5*5*vecSize*Nmode_;
     
-    std::complex<double> bJ[bsize] __attribute__( ( aligned( 64 ) ) );
+    std::complex<double> bJl[bsize] __attribute__( ( aligned( 64 ) ) );
+    std::complex<double> bJr[bsize] __attribute__( ( aligned( 64 ) ) );
+    std::complex<double> bJt[bsize] __attribute__( ( aligned( 64 ) ) );
     
     double Sl0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
     double Sr0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
@@ -526,6 +529,7 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
     complex<double> * __restrict__ Jt;
 
     double *invR_local = &(invR_[jpom2]);
+    double *invRd_local = &(invRd_[jpom2]);
 
     // Pointer for GPU and vectorization on ARM processors
     double * __restrict__ position_x = particles.getPtrPosition(0);
@@ -536,7 +540,9 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
   
     #pragma omp simd
     for( unsigned int j=0; j<200*Nmode_; j++ ) {
-        bJ[j] = 0.;
+        bJl[j] = 0.;
+        bJr[j] = 0.;
+        bJt[j] = 0.;
     }
     
     // Closest multiple of 8 higher or equal than npart = iend-istart.
@@ -556,7 +562,12 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
        
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            computeJl( ipart, charge_weight, DSl, DSr, Sr0_buff_vect, bJ, dl_ov_dt_, invR_local, e_bar);
+            computeJl( ipart, charge_weight, DSl, DSr, Sr0_buff_vect, bJl, dl_ov_dt_, invR_local, e_bar);
+        } 
+
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+            computeJr( ipart, charge_weight, DSl, DSr, Sl0_buff_vect, bJr, one_ov_dt, invRd_local, e_bar, jpom2);
         } 
     } //End ivect
     
@@ -570,15 +581,33 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 complex<double> tmpJl( 0. );
                 int ilocal = ( i*5+j )*vecSize;
-                #pragma unroll
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
-                    tmpJl += bJ [200*imode + ilocal+ipart];
+                    tmpJl += bJl [200*imode + ilocal+ipart];
                 }
                 Jl[iloc+j] += tmpJl;
             }
         }
     }
-    
+
+    for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
+        Jr =  &( *emAM->Jr_[imode] )( 0 );
+        int iloc = iloc0 + ipom2;
+        for( unsigned int i=1 ; i<5 ; i++ ) {
+            iloc += nprimr_+1;
+            #pragma omp simd
+            for( unsigned int j=0 ; j<5 ; j++ ) {
+                complex<double> tmpJr( 0. );
+                int ilocal = ( i*5+j )*vecSize;
+                UNROLL(8)
+                for( int ipart=0 ; ipart<8; ipart++ ) {
+                    tmpJr += bJr [200*imode + ilocal+ipart];
+                }
+                Jr[iloc+j] += tmpJr;
+            }
+        }
+    }
+ 
     //#pragma omp simd
     //for( unsigned int j=0; j<200; j++ ) {
     //    bJ[j] = 0.;
