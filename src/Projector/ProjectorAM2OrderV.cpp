@@ -189,83 +189,216 @@ void ProjectorAM2OrderV::currentsAndDensity( ElectroMagnAM *emAM,
 
 } // END Project local current densities at dag timestep.
 
-
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project charge : frozen & diagFields timstep (not vectorized)
+//! Project for diags and frozen species -
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void ProjectorAM2OrderV::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
 {
+    //Warning : this function is not charge conserving.
+    // This function also assumes that particles position is evaluated at the same time as currents which is usually not true (half time-step difference).
+    // It will therefore fail to evaluate the current accurately at t=0 if a plasma is already in the box.
 
-     return;
+
+
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
     
-    /*int iloc, ny( nprimy );
-    // (x,y,z) components of the current density for the macro-particle
+    int iloc, nr( nprimr_ );
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    
-    if( type > 0 ) {
+    double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
+
+    if( type > 0 ) { //if current density
         charge_weight *= 1./sqrt( 1.0 + particles.momentum( 0, ipart )*particles.momentum( 0, ipart )
                                   + particles.momentum( 1, ipart )*particles.momentum( 1, ipart )
                                   + particles.momentum( 2, ipart )*particles.momentum( 2, ipart ) );
-                                  
-        if( type == 1 ) {
+        if( type == 1 ) { //if Jl
             charge_weight *= particles.momentum( 0, ipart );
-        } else if( type == 2 ) {
-            charge_weight *= particles.momentum( 1, ipart );
-            ny ++;
-        } else {
-            charge_weight *= particles.momentum( 2, ipart );
+        } else if( type == 2 ) { //if Jr
+            charge_weight *= ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) )/ r ;
+            nr++;
+        } else { //if Jt
+            charge_weight *= ( -particles.momentum( 1, ipart )*particles.position( 2, ipart ) + particles.momentum( 2, ipart )*particles.position( 1, ipart ) ) / r ;
         }
     }
-    
-    // variable declaration
+
+    complex<double> e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/r;
+    complex<double> C_m = 1.;
+    if( imode > 0 ) {
+        C_m = 2.;
+    }
+    for( unsigned int i=0; i<( unsigned int )imode; i++ ) {
+        C_m *= e_theta;
+    }
+
     double xpn, ypn;
     double delta, delta2;
-    double Sl1[5], Sr1[5]; // arrays used for the Esirkepov projection method
-    
-    // Initialize all current-related arrays to zero
-    for( unsigned int i=0; i<5; i++ ) {
-        Sl1[i] = 0.;
-        Sr1[i] = 0.;
-    }
-    
+    double Sl1[5], Sr1[5];
+
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
-    
+
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
-    xpn = particles.position( 0, ipart ) * dx_inv_;
-    int ip        = round( xpn + 0.5 * ( type==1 ) );                       // index of the central node
+    xpn = particles.position( 0, ipart ) * dl_inv_;
+    int ip = round( xpn + 0.5 * ( type==1 ) );
     delta  = xpn - ( double )ip;
     delta2 = delta*delta;
     Sl1[1] = 0.5 * ( delta2-delta+0.25 );
     Sl1[2] = 0.75-delta2;
     Sl1[3] = 0.5 * ( delta2+delta+0.25 );
-    
-    ypn = particles.position( 1, ipart ) * dy_inv_;
+    ypn = r * dr_inv_ ;
     int jp = round( ypn + 0.5*( type==2 ) );
     delta  = ypn - ( double )jp;
     delta2 = delta*delta;
     Sr1[1] = 0.5 * ( delta2-delta+0.25 );
     Sr1[2] = 0.75-delta2;
     Sr1[3] = 0.5 * ( delta2+delta+0.25 );
-    
+
     // ---------------------------
-    // Calculate the total current
+    // Calculate the total charge
     // ---------------------------
     ip -= i_domain_begin_ + 2;
     jp -= j_domain_begin_ + 2;
     
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ip )*ny+jp;
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            rhoj[iloc+j] += charge_weight * Sl1[i]*Sr1[j];
-        }
-    }//i*/
-} // END basic
+    if( type != 2 ) {
+        for( unsigned int i=1 ; i<4 ; i++ ) {
+            iloc = ( i+ip )*nr+jp;
+            for( unsigned int j=1 ; j<4 ; j++ ) {
+                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR_[j+jp];
+            }
+        }//i
+    } else {
+        for( unsigned int i=1 ; i<4 ; i++ ) {
+            iloc = ( i+ip )*nr+jp;
+            for( unsigned int j=1 ; j<4 ; j++ ) {
+                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invRd_[j+jp];
+            }
+        }//i
+    }
+} // END Project for diags local current densities
 
+// Apply boundary conditions on axis for currents and densities
+void ProjectorAM2OrderV::axisBC(ElectroMagnAM *emAM, bool diag_flag )
+{
+
+   for (unsigned int imode=0; imode < Nmode_; imode++){ 
+       
+       std::complex<double> *rhoj = &( *emAM->rho_AM_[imode] )( 0 );
+       std::complex<double> *Jl = &( *emAM->Jl_[imode] )( 0 );
+       std::complex<double> *Jr = &( *emAM->Jr_[imode] )( 0 );
+       std::complex<double> *Jt = &( *emAM->Jt_[imode] )( 0 );
+
+       apply_axisBC(rhoj, Jl, Jr, Jt, imode, diag_flag);
+   }
+
+   if (diag_flag){
+       unsigned int n_species = emAM->Jl_s.size() / Nmode_;
+       for( unsigned int imode = 0 ; imode < emAM->Jl_.size() ; imode++ ) {
+           for( unsigned int ispec = 0 ; ispec < n_species ; ispec++ ) {
+               unsigned int ifield = imode*n_species+ispec;
+               complex<double> *Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : NULL ;
+               complex<double> *Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : NULL ;
+               complex<double> *Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : NULL ;
+               complex<double> *rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : NULL ;
+               apply_axisBC( rho , Jl, Jr, Jt, imode, diag_flag );
+           }
+       }
+   }
+}
+
+void ProjectorAM2OrderV::apply_axisBC(std::complex<double> *rhoj,std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, unsigned int imode, bool diag_flag )
+{
+
+   double sign = -1.;
+   for (unsigned int i=0; i< imode; i++) sign *= -1;
+   
+   if (diag_flag && rhoj) {
+       for( unsigned int i=2 ; i<npriml_*nprimr_+2; i+=nprimr_ ) {
+           //Fold rho 
+           for( unsigned int j=1 ; j<3; j++ ) {
+               rhoj[i+j] += sign * rhoj[i-j];
+               rhoj[i-j]  = sign * rhoj[i+j];
+           }
+           //Apply BC
+           if (imode > 0){
+               rhoj[i] = 0.;
+           } else {
+               rhoj[i] = (4.*rhoj[i+1] - rhoj[i+2])/3.;
+           }
+       }
+   }
+
+   if (Jl) {
+       for( unsigned int i=2 ; i<(npriml_+1)*nprimr_+2; i+=nprimr_ ) {
+           //Fold Jl
+           for( unsigned int j=1 ; j<3; j++ ) {
+               Jl [i+j] +=  sign * Jl[i-j];
+               Jl[i-j]   =  sign * Jl[i+j];
+            }
+            if (imode > 0){
+                Jl [i] = 0. ;
+           } else {
+                //Force dJl/dr = 0 at r=0.
+                Jl [i] =  (4.*Jl [i+1] - Jl [i+2])/3. ;
+           }
+       }
+   }
+
+   if (Jt && Jr) {
+       for( unsigned int i=0 ; i<npriml_; i++ ) {
+           int iloc = i*nprimr_+2;
+           int ilocr = i*(nprimr_+1)+3;
+           //Fold Jt
+           for( unsigned int j=1 ; j<3; j++ ) {
+               Jt [iloc+j] += -sign * Jt[iloc-j];
+               Jt[iloc-j]   = -sign * Jt[iloc+j];
+           }
+           for( unsigned int j=0 ; j<3; j++ ) {
+               Jr [ilocr+2-j] += -sign * Jr [ilocr-3+j];
+               Jr[ilocr-3+j]     = -sign * Jr[ilocr+2-j];
+           }
+
+           if (imode == 1){
+               Jt [iloc]= -Icpx/8.*( 9.*Jr[ilocr]- Jr[ilocr+1]);
+               //Force dJr/dr = 0 at r=0.
+               //Jr [ilocr] =  (25.*Jr[ilocr+1] - 9*Jr[ilocr+2])/16. ;
+               Jr [ilocr-1] = 2.*Icpx*Jt[iloc] - Jr [ilocr];
+           } else{
+               Jt [iloc] = 0. ;
+               //Force dJr/dr = 0 and Jr=0 at r=0.
+               //Jr [ilocr] =  Jr [ilocr+1]/9.;
+               Jr [ilocr-1] = -Jr [ilocr];
+           }
+       }
+   }
+   return;
+}
+
+void ProjectorAM2OrderV::axisBCEnvChi( double *EnvChi )
+{
+    double sign = 1.;
+    int imode = 0;
+    for (int i=0; i< imode; i++) sign *= -1;
+    if (EnvChi) {
+        for( unsigned int i=2 ; i<npriml_*nprimr_+2; i+=nprimr_ ) {
+            //Fold EnvChi
+            //for( unsigned int j=1 ; j<3; j++ ) {
+            //    EnvChi[i+j] += sign * EnvChi[i-j];
+            //    EnvChi[i-j]  = sign * EnvChi[i+j];
+            //}
+            //EnvChi[i] = (4.*EnvChi[i+1] - EnvChi[i+2])/3.;
+
+            EnvChi[i]   = EnvChi[i+1];
+            for( unsigned int j=1 ; j<3; j++ ) {
+                EnvChi[i-j]  = sign * EnvChi[i+j];
+            }
+
+        }
+    }
+
+return;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization (WARNING: Not Vectorized)
