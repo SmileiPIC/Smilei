@@ -1947,17 +1947,17 @@ void ElectroMagn3D::initAntennas( Patch *patch, Params& params )
 
     // Filling the space profiles of antennas
     for( unsigned int i=0; i<antennas.size(); i++ ) {
-        if      (antennas[i].fieldName == "Jx")
-            antennas[i].field = FieldFactory::create(dimPrim, 0, false, "Jx", params);
-        else if (antennas[i].fieldName == "Jy")
-            antennas[i].field = FieldFactory::create(dimPrim, 1, false, "Jy", params);
-        else if (antennas[i].fieldName == "Jz")
-            antennas[i].field = FieldFactory::create(dimPrim, 2, false, "Jz", params);
-        else {
+        if( antennas[i].fieldName == "Jx" ) {
+            antennas[i].field = FieldFactory::create( dimPrim, 0, false, "Jx", params );
+        } else if( antennas[i].fieldName == "Jy" ) {
+            antennas[i].field = FieldFactory::create( dimPrim, 1, false, "Jy", params );
+        } else if( antennas[i].fieldName == "Jz" ) {
+            antennas[i].field = FieldFactory::create( dimPrim, 2, false, "Jz", params );
+        } else {
             ERROR("Antenna cannot be applied to field "<<antennas[i].fieldName);
         }
         
-        if( antennas[i].field ) {
+        if( ! antennas[i].spacetime && antennas[i].field ) {
             applyExternalField( antennas[i].field, antennas[i].space_profile, patch );
         }
     }

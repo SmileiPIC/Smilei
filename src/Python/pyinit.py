@@ -530,6 +530,7 @@ class Antenna(SmileiComponent):
     field = None
     time_profile  = None
     space_profile = None
+    space_time_profile = None
 
 # Particle wall
 class PartWall(SmileiComponent):

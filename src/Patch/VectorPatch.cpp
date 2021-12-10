@@ -3756,17 +3756,31 @@ void VectorPatch::applyAntennas( double time )
 
     // Loop antennas
     for( unsigned int iAntenna=0; iAntenna<nAntennas; iAntenna++ ) {
+        
+        // Space-time profile
+        if( patches_[0]->EMfields->antennas[iAntenna].spacetime ) {
+            
+            #pragma omp for schedule(static)
+            for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
+                Antenna * A = &( patches_[ipatch]->EMfields->antennas[iAntenna] );
+                Field *field = patches_[ipatch]->EMfields->allFields[A->index];
+                patches_[ipatch]->EMfields->applyPrescribedField( field, A->space_time_profile, patches_[ipatch], time );
+            }
+        
+        // Separated profiles for space & time
+        } else {
+            
+            // Get intensity from antenna of the first patch
+            #pragma omp single
+            antenna_intensity = patches_[0]->EMfields->antennas[iAntenna].time_profile->valueAt( time );
 
-        // Get intensity from antenna of the first patch
-        #pragma omp single
-        antenna_intensity = patches_[0]->EMfields->antennas[iAntenna].time_profile->valueAt( time );
-
-        // Loop patches to apply
-        #pragma omp for schedule(static)
-        for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-            patches_[ipatch]->EMfields->applyAntenna( iAntenna, antenna_intensity );
+            // Loop patches to apply
+            #pragma omp for schedule(static)
+            for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
+                patches_[ipatch]->EMfields->applyAntenna( iAntenna, antenna_intensity );
+            }
+            
         }
-
     }
 }
 
