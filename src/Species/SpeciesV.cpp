@@ -685,16 +685,16 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
 
     if (params.geometry == "AMcylindrical"){
 
-        double min_loc_l = min_loc_vec[0];
-        double min_loc_r = min_loc_vec[1];
+        double min_loc_l = round(min_loc_vec[0]*dx_inv_[0]);
+        double min_loc_r = round(min_loc_vec[1]*dx_inv_[1]);
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++ ) {
             if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys particles
-                cell_keys[iPart]  = round( (position_x[iPart] - min_loc_l) * dx_inv_[0] );
+                cell_keys[iPart]  = round( position_x[iPart] * dx_inv_[0]) - min_loc_l ;
                 cell_keys[iPart] *= length_[1];
-                cell_keys[iPart] += round( (sqrt(position_y[iPart]*position_y[iPart]+position_z[iPart]*position_z[iPart]) - min_loc_r) * dx_inv_[1] );
+                cell_keys[iPart] += round( sqrt(position_y[iPart]*position_y[iPart]+position_z[iPart]*position_z[iPart]) * dx_inv_[1] ) - min_loc_r;
             }
         }
 
