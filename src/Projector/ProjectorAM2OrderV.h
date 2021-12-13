@@ -45,7 +45,8 @@ private:
                                                                    double * __restrict__ position_z,
                                                                    int npart_total, int ipart, int istart, int ipart_ref,
                                                                    double *deltaold, std::complex<double> *array_eitheta_old, int *iold,
-                                                                   double *Sl0, double *Sr0, double *DSl, double *DSr, std::complex<double> *e_bar)
+                                                                   double *Sl0, double *Sr0, double *DSl, double *DSr,
+                                                                   double *r_bar, std::complex<double> *e_bar, std::complex<double> *e_delta_m1)
     {
 
         int ipo = iold[0];
@@ -107,8 +108,10 @@ private:
         DSr [3*vecSize+ipart] =               p1 * delta2 + c0* deltap -  Sr0[2*vecSize+ipart] ;
         DSr [4*vecSize+ipart] =                             p1* deltap  ;
 
+        r_bar[ipart] = ((jpo + j_domain_begin_)*dr + deltaold[istart+ipart-ipart_ref+npart_total] + rp) * 0.5; // r at t = t0 - dt/2
         std::complex<double> eitheta = ( position_y[istart+ipart] + Icpx * position_z[istart+ipart] ) / rp ; //exp(i theta)
-        e_bar[ipart] = array_eitheta_old[istart+ipart-ipart_ref] * std::sqrt(eitheta * (2.*std::real(array_eitheta_old[istart+ipart-ipart_ref]) - array_eitheta_old[istart+ipart-ipart_ref]));
+        e_delta_m1[ipart] = std::sqrt(eitheta * (2.*std::real(array_eitheta_old[istart+ipart-ipart_ref]) - array_eitheta_old[istart+ipart-ipart_ref]));
+        e_bar[ipart] = array_eitheta_old[istart+ipart-ipart_ref] * e_delta_m1[ipart];
 
     }
 
@@ -204,6 +207,27 @@ private:
         }
     }
  
+    inline void __attribute__((always_inline)) computeJt( int ipart, 
+                                                                   double * __restrict__ momentum_y,
+                                                                   double * __restrict__ momentum_z,
+                                                                   double *charge_weight,
+                                                                   double *invgf,
+                                                                   double *DSl, double *DSr, double *Sl0_buff_vect, double *Sr0_buff_vect,
+                                                                   std::complex<double> *bJ, double *invR_local, double *r_bar, std::complex<double> *e_bar, std::complex<double> *e_delta_m1, 
+                                                                   double one_ov_dt)
+    {
+
+        int vecSize = 8;
+        std::complex<double> crt_p= charge_weight[ipart]*( momentum_z[ipart]* real(e_bar[ipart]) - momentum_y[ipart]*imag(e_delta_m1[ipart]) ) * invgf[ipart];
+        //mode 0
+
+
+       //mode >0
+        for (unsigned int imode=1; imode<Nmode_; imode++){ 
+            crt_p = charge_weight[ipart]*Icpx*e_bar[ipart] * one_ov_dt * 2. * r_bar[ipart] / ( double )imode ;
+        }
+    
+    }
 };
 
 #endif
