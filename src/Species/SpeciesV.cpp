@@ -700,46 +700,46 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
 
     } else if (nDim_field == 3) {
 
-        double min_loc_x = min_loc_vec[0];
-        double min_loc_y = min_loc_vec[1];
-        double min_loc_z = min_loc_vec[2];
+        double min_loc_x = round (min_loc_vec[0] * dx_inv[0]);
+        double min_loc_y = round (min_loc_vec[1] * dx_inv[1]);
+        double min_loc_z = round (min_loc_vec[2] * dx_inv[2]);
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++  ) {
             if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys of remaining particles
-                cell_keys[iPart]  = round( (position_x[iPart] - min_loc_x) * dx_inv_[0] );
-                cell_keys[iPart] *= length_[1];
-                cell_keys[iPart] += round( (position_y[iPart] - min_loc_y) * dx_inv_[1] );
-                cell_keys[iPart] *= length_[2];
-                cell_keys[iPart] += round( (position_z[iPart] - min_loc_z) * dx_inv_[2] );
+                cell_keys[iPart]  = round( (position_x[iPart] * dx_inv_[0] )- min_loc_x ;
+                cell_keys[iPart] *= length_[1];                                         
+                cell_keys[iPart] += round( (position_y[iPart] * dx_inv_[1] )- min_loc_y ;
+                cell_keys[iPart] *= length_[2];                                         
+                cell_keys[iPart] += round( (position_z[iPart] * dx_inv_[2] )- min_loc_z ;
             }
         }
 
     } else if (nDim_field == 2) {
 
-        double min_loc_x = min_loc_vec[0];
-        double min_loc_y = min_loc_vec[1];
+        double min_loc_x = round (min_loc_vec[0] * dx_inv[0]);
+        double min_loc_y = round (min_loc_vec[1] * dx_inv[1]);
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++  ) {
             if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys of remaining particles
-                cell_keys[iPart]  = round( (position_x[iPart] - min_loc_x) * dx_inv_[0] );
+                cell_keys[iPart]  = round( (position_x[iPart] * dx_inv_[0] )- min_loc_x ;
                 cell_keys[iPart] *= length_[1];
-                cell_keys[iPart] += round( (position_y[iPart] - min_loc_y) * dx_inv_[1] );
+                cell_keys[iPart] += round( (position_y[iPart] * dx_inv_[1] )- min_loc_y ;
 
             }
         }
     } else if (nDim_field == 1) {
 
-        double min_loc_x = min_loc_vec[0];
+        double min_loc_x = round (min_loc_vec[0] * dx_inv[0]);
 
         #pragma omp simd
         for( iPart=istart; iPart < iend ; iPart++  ) {
             if ( cell_keys[iPart] != -1 ) {
                 //Compute cell_keys of remaining particles
-                cell_keys[iPart] = round( (position_x[iPart] - min_loc_x) * dx_inv_[0] );
+                cell_keys[iPart]  = round( (position_x[iPart] * dx_inv_[0] )- min_loc_x ;
             }
         }
 
