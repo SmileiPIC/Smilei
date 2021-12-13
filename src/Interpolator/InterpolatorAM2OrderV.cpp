@@ -174,10 +174,6 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     double * __restrict__ position_y = particles.getPtrPosition(1);
     double * __restrict__ position_z = particles.getPtrPosition(2);
 
-    for( unsigned int k=0; k<3; k++ ) {
-        Epart[k]= &( smpi->dynamics_Epart[ithread][k*nparts] );
-        Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts] );
-    }
 
     double * __restrict__ deltaO[2]; //Delta is the distance of the particle from its primal node in cell size. Delta is in [-0.5, +0.5[
     std::complex<double> * __restrict__ eitheta_old; //eithetaold stores exp(i theta) of the particle before pusher. 
@@ -207,6 +203,11 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         deltaO[0]   =  &(   smpi->dynamics_deltaold[ithread][0        + ivect + istart[0] - ipart_ref] );
         deltaO[1]   =  &(   smpi->dynamics_deltaold[ithread][nparts   + ivect + istart[0] - ipart_ref] );
         eitheta_old =  &( smpi->dynamics_eithetaold[ithread][           ivect + istart[0] - ipart_ref] );
+
+        for( unsigned int k=0; k<3; k++ ) {
+            Epart[k]= &( smpi->dynamics_Epart[ithread][k*nparts-ipart_ref+ivect+istart[0]] );
+            Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts-ipart_ref+ivect+istart[0]] );
+        }
 
         #pragma omp simd private(delta2, delta)
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
@@ -261,91 +262,11 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         double * __restrict__ coeffrp = &( coeff[1][0][1][0] );
         double * __restrict__ coeffrd = &( coeff[1][1][1][0] );
 
-        // Static cast of the electromagnetic fields
-        cField2D * __restrict__ El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[0];
-        cField2D * __restrict__ Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[0];
-        cField2D * __restrict__ Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[0];
-        cField2D * __restrict__ Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_m[0];
-        cField2D * __restrict__ Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[0];
-        cField2D * __restrict__ Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[0];
 
         // Local buffer to store the field components
         std::complex<double> field_buffer[4][4];
-        // Field buffers for vectorization (required on A64FX)
-        for( int iloc=-1 ; iloc<3 ; iloc++ ) {
-            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                field_buffer[iloc+1][jloc+1] = ( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc );
-            }
-        }
 
-        #pragma omp simd private(interp_res)
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-        
-            
-            //El(dual, primal)
-            interp_res = 0.;
-            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res += std::real( coeffld[ipart + iloc*32] * coeffrp[ipart + jloc*32] *
-                                  ( ( 1.-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] + dual[0][ipart]*field_buffer[2+iloc][1+jloc] ) );
-                }
-            }
-            Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
-            //Er(primal, dual)
-            interp_res = 0.;
-            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res +=  std::real (*( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
-                                  ( ( 1-dual[1][ipart] )*( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[1][ipart]*( *Er )( idxO[0]+1+iloc, idxO[1]+2+jloc ) ) );
-                }
-            }
-            Epart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
-            
-            //Et(primal, primal)
-            interp_res = 0.;
-            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) * ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc ) );
-                }
-            }
-            Epart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
-            //Bl(primal, dual)
-            interp_res = 0.;
-            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
-                                  ( ( ( 1-dual[1][ipart] )*( *Bl )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[1][ipart]*( *Bl )( idxO[0]+1+iloc, idxO[1]+2+jloc ) ) ) );
-                }
-            }
-            Bpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
-            //Br(dual, primal )
-            interp_res = 0.;
-            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res +=  std::real(  *( coeffld+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) *
-                                  ( ( ( 1-dual[0][ipart] )*( *Br )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *Br )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) ) );
-                }
-            }
-            Bpart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            
-            //Bt(dual, dual)
-            interp_res = 0.;
-            for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                    interp_res +=  std::real(  *( coeffld+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
-                                  ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+1+jloc ) )
-                                    +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+2+jloc ) + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+2+jloc ) ) ) );
-                }
-            }
-            Bpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-            exp_mm_theta[ipart] *= exp_m_theta_[ipart] ;
-        }
-
-        for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
+        for( unsigned int imode = 0; imode < nmodes_ ; imode++ ) {
             // Static cast of the electromagnetic fields
             cField2D * __restrict__ El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
             cField2D * __restrict__ Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
@@ -354,82 +275,169 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             cField2D * __restrict__ Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
             cField2D * __restrict__ Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
 
+
+
+            // Field buffers for vectorization (required on A64FX)
+            //for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+            //    for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+            //        field_buffer[iloc+1][jloc+1] = ( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+            //    }
+            //}
+
             #pragma omp simd private(interp_res)
             for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             
+                
                 //El(dual, primal)
                 interp_res = 0.;
+                UNROLL_S(3) 
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                    UNROLL_S(3) 
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                        interp_res += std::real( *( coeffld+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) *
-                                      ( ( 1-dual[0][ipart] )*( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *El )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) * exp_mm_theta[ipart] );
+                        interp_res += std::real( coeffld[ipart + iloc*32] * coeffrp[ipart + jloc*32] *
+                                      ( ( 1.-dual[0][ipart] )*( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
+                                           + dual[0][ipart]  *( *El )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) * exp_mm_theta[ipart]) ;
+                                      //( ( 1.-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] 
+                                      //     + dual[0][ipart]  *field_buffer[2+iloc][1+jloc] ) * exp_mm_theta[ipart]) ;
                     }
                 }
-                Epart[0][ipart-ipart_ref+ivect+istart[0]] += interp_res;
+                Epart[0][ipart] = interp_res;
+           }
+
+           //for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+           //    for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+           //        field_buffer[iloc+1][jloc+1] = ( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+           //    }
+           //}
                 
-                //Er(primal, dual)
-                interp_res = 0.;
-                for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-                    for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                        interp_res +=  std::real (*( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
-                                      ( ( 1-dual[1][ipart] )*( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[1][ipart]*( *Er )( idxO[0]+1+iloc, idxO[1]+2+jloc ) ) * exp_mm_theta[ipart] );
-                    }
-                }
-                Epart[1][ipart-ipart_ref+ivect+istart[0]] += interp_res;
+           #pragma omp simd private(interp_res)
+           for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+               //Er(primal, dual)
+               interp_res = 0.;
+               UNROLL_S(3) 
+               for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                   UNROLL_S(3) 
+                   for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                       interp_res +=  std::real (*( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
+                                     ( ( 1-dual[1][ipart] )*( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
+                                         + dual[1][ipart]  *( *Er )( idxO[0]+1+iloc, idxO[1]+2+jloc ) ) );
+                                     //( ( 1-dual[1][ipart] )*field_buffer[1+iloc][1+jloc] 
+                                     //    + dual[1][ipart]  *field_buffer[1+iloc][2+jloc] )  * exp_mm_theta[ipart]);
+                   }
+               }
+               Epart[1][ipart] = interp_res;
+           }
                 
+           //for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+           //    for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+           //        field_buffer[iloc+1][jloc+1] = ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+           //    }
+           //}
                 
+           #pragma omp simd private(interp_res)
+           for( int ipart=0 ; ipart<np_computed; ipart++ ) {
                 //Et(primal, primal)
                 interp_res = 0.;
+                UNROLL_S(3) 
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                    UNROLL_S(3) 
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-                        interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) * ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc ) * exp_mm_theta[ipart] );
+                        interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) * 
+                                                    ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc ) );
+                                                    //field_buffer[1+iloc][1+jloc]  * exp_mm_theta[ipart]);
                     }
                 }
-                Epart[2][ipart-ipart_ref+ivect+istart[0]] += interp_res;
+                Epart[2][ipart] = interp_res;
+           }
                 
+           //for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+           //    for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+           //        field_buffer[iloc+1][jloc+1] = ( *Bl )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+           //    }
+           //}
+
+           #pragma omp simd private(interp_res)
+           for( int ipart=0 ; ipart<np_computed; ipart++ ) {
                 //Bl(primal, dual)
                 interp_res = 0.;
+                UNROLL_S(3) 
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                    UNROLL_S(3) 
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                         interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
-                                      ( ( ( 1-dual[1][ipart] )*( *Bl )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[1][ipart]*( *Bl )( idxO[0]+1+iloc, idxO[1]+2+jloc ) ) ) * exp_mm_theta[ipart] );
+                                      ( ( ( 1-dual[1][ipart] )*( *Bl )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
+                                            + dual[1][ipart]  *( *Bl )( idxO[0]+1+iloc, idxO[1]+2+jloc ) )
+                                      //( ( ( 1-dual[1][ipart] ) * field_buffer[1+iloc][1+jloc] 
+                                      //      + dual[1][ipart]   * field_buffer[1+iloc][2+jloc] )
+                                                )  * exp_mm_theta[ipart] );
                     }
                 }
-                Bpart[0][ipart-ipart_ref+ivect+istart[0]] += interp_res;
+                Bpart[0][ipart] = interp_res;
+           }
                 
+           //for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+           //    for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+           //        field_buffer[iloc+1][jloc+1] = ( *Br )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+           //    }
+           //}
+           #pragma omp simd private(interp_res)
+           for( int ipart=0 ; ipart<np_computed; ipart++ ) {
                 //Br(dual, primal )
                 interp_res = 0.;
+                UNROLL_S(3) 
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                    UNROLL_S(3) 
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                         interp_res +=  std::real(  *( coeffld+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) *
-                                      ( ( ( 1-dual[0][ipart] )*( *Br )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *Br )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) ) * exp_mm_theta[ipart] );
+                                      ( ( ( 1-dual[0][ipart] )*( *Br )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
+                                            + dual[0][ipart] * ( *Br )( idxO[0]+2+iloc, idxO[1]+1+jloc ) )
+                                      //( ( ( 1-dual[0][ipart] )* field_buffer[ 1+iloc][1+jloc ] 
+                                      //      + dual[0][ipart]  * field_buffer[ 2+iloc][1+jloc ] )
+                                                )  * exp_mm_theta[ipart]);
                     }
                 }
-                Bpart[1][ipart-ipart_ref+ivect+istart[0]] += interp_res;
+                Bpart[1][ipart] = interp_res;
+           }
                 
+           //for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+           //    for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+           //        field_buffer[iloc+1][jloc+1] = ( *Bt )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+           //    }
+           //}
+           #pragma omp simd private(interp_res)
+           for( int ipart=0 ; ipart<np_computed; ipart++ ) {
                 //Bt(dual, dual)
                 interp_res = 0.;
+                UNROLL_S(3) 
                 for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+                    UNROLL_S(3) 
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                         interp_res +=  std::real(  *( coeffld+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
-                                      ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+1+jloc ) + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+1+jloc ) )
-                                        +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+2+jloc ) + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+2+jloc ) ) ) * exp_mm_theta[ipart] );
+                                      ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
+                                                                     + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+1+jloc ) )
+                                        +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+2+jloc ) 
+                                                                     + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+2+jloc ) )
+                                      //( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] 
+                                      //                               + dual[0][ipart]*field_buffer[2+iloc][1+jloc] )
+                                      //  +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*field_buffer[1+iloc][2+jloc] 
+                                      //                               + dual[0][ipart]*field_buffer[2+iloc][2+jloc] )
+                                                ) * exp_mm_theta[ipart] );
                     }
                 }
-                Bpart[2][ipart-ipart_ref+ivect+istart[0]] += interp_res;
-                exp_mm_theta[ipart] *= exp_m_theta_[ipart] ;
-            } // end loop on part
-        } //end loop on modes
+                Bpart[2][ipart] = interp_res;
+                exp_mm_theta[ipart] *= exp_m_theta_[ipart]; //prepare for next mode
+           }
+       } //end loop on modes
 
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             //Translate field into the cartesian y,z coordinates
-            double delta2 = std::real( exp_m_theta_[ipart] ) * Epart[1][ipart-ipart_ref+ivect+istart[0]] + std::imag( exp_m_theta_[ipart] ) * Epart[2][ipart-ipart_ref+ivect+istart[0]];
-            Epart[2][ipart-ipart_ref+ivect+istart[0]] = -std::imag( exp_m_theta_[ipart] ) * Epart[1][ipart-ipart_ref+ivect+istart[0]] + std::real( exp_m_theta_[ipart] ) * Epart[2][ipart-ipart_ref+ivect+istart[0]];
-            Epart[1][ipart-ipart_ref+ivect+istart[0]] = delta2 ;
-            delta2 = std::real( exp_m_theta_[ipart] ) * Bpart[1][ipart-ipart_ref+ivect+istart[0]] + std::imag( exp_m_theta_[ipart] ) * Bpart[2][ipart-ipart_ref+ivect+istart[0]];
-            Bpart[2][ipart-ipart_ref+ivect+istart[0]] = -std::imag( exp_m_theta_[ipart] ) * Bpart[1][ipart-ipart_ref+ivect+istart[0]] + std::real( exp_m_theta_[ipart] ) * Bpart[2][ipart-ipart_ref+ivect+istart[0]];
-            Bpart[1][ipart-ipart_ref+ivect+istart[0]] = delta2 ;
+            double delta2 = std::real( exp_m_theta_[ipart] ) * Epart[1][ipart] + std::imag( exp_m_theta_[ipart] ) * Epart[2][ipart];
+            Epart[2][ipart] = -std::imag( exp_m_theta_[ipart] ) * Epart[1][ipart] + std::real( exp_m_theta_[ipart] ) * Epart[2][ipart];
+            Epart[1][ipart] = delta2 ;
+            delta2 = std::real( exp_m_theta_[ipart] ) * Bpart[1][ipart] + std::imag( exp_m_theta_[ipart] ) * Bpart[2][ipart];
+            Bpart[2][ipart] = -std::imag( exp_m_theta_[ipart] ) * Bpart[1][ipart] + std::real( exp_m_theta_[ipart] ) * Bpart[2][ipart];
+            Bpart[1][ipart] = delta2 ;
         }
 
 

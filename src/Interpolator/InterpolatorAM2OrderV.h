@@ -5,6 +5,7 @@
 #include "InterpolatorAM.h"
 #include "cField2D.h"
 #include "Field2D.h"
+#include "Pragma.h"
 
 
 //  --------------------------------------------------------------------------------------------------------------------
