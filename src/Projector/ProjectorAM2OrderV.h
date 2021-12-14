@@ -184,6 +184,7 @@ private:
         UNROLL_S(4)
         for ( unsigned int j=1; j<5 ; j++ ) {
             tmp = Sl0[(j-1)*vecSize + ipart] + 0.5*DSl[j*vecSize + ipart];
+            UNROLL_S(4)
             for( unsigned int i=0 ; i<4 ; i++ ) {
                 bJ [(i*5+j )*vecSize + ipart] += sum[i] * tmp;
             }
@@ -200,6 +201,7 @@ private:
             UNROLL_S(4)
             for ( unsigned int j=1; j<5 ; j++ ) {
                 tmp = Sl0[(j-1)*vecSize + ipart] + 0.5*DSl[j*vecSize + ipart];
+                UNROLL_S(4)
                 for( unsigned int i=0 ; i<4 ; i++ ) {
                     bJ [200*imode + (i*5+j )*vecSize + ipart] += sum[i] * tmp * C_m;
                 }
@@ -213,20 +215,70 @@ private:
                                                                    double *charge_weight,
                                                                    double *invgf,
                                                                    double *DSl, double *DSr, double *Sl0_buff_vect, double *Sr0_buff_vect,
-                                                                   std::complex<double> *bJ, double *invR_local, double *r_bar, std::complex<double> *e_bar, std::complex<double> *e_delta_m1, 
+                                                                   std::complex<double> *bJ, double *invR_local, double *r_bar, std::complex<double> *e_bar_m1, std::complex<double> *e_delta_m1, 
                                                                    double one_ov_dt)
     {
 
         int vecSize = 8;
-        std::complex<double> crt_p= charge_weight[ipart]*( momentum_z[ipart]* real(e_bar[ipart]) - momentum_y[ipart]*imag(e_delta_m1[ipart]) ) * invgf[ipart];
         //mode 0
+        //i=0 and i=4: Sl0=Sr0=0
+        //Sr0 and Sr1 need to be divided by inv_R
+        // S1 = DS + S0
+        double Sl1[5], Sr1[5];
+
+        Sl1[0] = DSl[            ipart] ;
+        Sl1[1] = DSl[1*vecSize + ipart]  + Sl0_buff_vect[            ipart];
+        Sl1[2] = DSl[2*vecSize + ipart]  + Sl0_buff_vect[1*vecSize + ipart];
+        Sl1[3] = DSl[3*vecSize + ipart]  + Sl0_buff_vect[2*vecSize + ipart];
+        Sl1[4] = DSl[4*vecSize + ipart] ; 
+
+        Sr1[0] = (DSr[            ipart]                                    ) * invR_local[0];
+        Sr1[1] = (DSr[1*vecSize + ipart]  + Sr0_buff_vect[            ipart]) * invR_local[1];
+        Sr1[2] = (DSr[2*vecSize + ipart]  + Sr0_buff_vect[1*vecSize + ipart]) * invR_local[2];
+        Sr1[3] = (DSr[3*vecSize + ipart]  + Sr0_buff_vect[2*vecSize + ipart]) * invR_local[3];
+        Sr1[4] = (DSr[4*vecSize + ipart]                                    ) * invR_local[4]; 
+
+        Sr0_buff_vect[            ipart] *= invR_local[1];
+        Sr0_buff_vect[1*vecSize + ipart] *= invR_local[2];
+        Sr0_buff_vect[2*vecSize + ipart] *= invR_local[3];
+
+        //mode 0
+        std::complex<double> crt_p= charge_weight[ipart]*( momentum_z[ipart]* real(e_bar_m1[ipart]) - momentum_y[ipart]*imag(e_bar_m1[ipart]) ) * invgf[ipart];
+        std::complex<double> e_delta = 1.5;
+        std::complex<double> e_delta_inv = 0.5;
+        std::complex<double> e_bar = 1.;
 
 
-       //mode >0
-        for (unsigned int imode=1; imode<Nmode_; imode++){ 
-            crt_p = charge_weight[ipart]*Icpx*e_bar[ipart] * one_ov_dt * 2. * r_bar[ipart] / ( double )imode ;
-        }
-    
+        for (unsigned int imode=0; imode<Nmode_; imode++){ 
+            if (imode > 0){
+                e_delta *= e_delta_m1[ipart];
+                e_bar *= e_bar_m1[ipart];
+                e_delta_inv =1./e_delta - 1.;
+                crt_p = charge_weight[ipart]*Icpx*e_bar * one_ov_dt * 2. * r_bar[ipart] /( double )imode ;
+            }
+
+            //j=0 case
+            UNROLL_S(5)
+            for( unsigned int i=0 ; i<5 ; i++ ) {
+                bJ [(i*5 )*vecSize + ipart] += crt_p*(Sr1[0]*Sl1[i]*e_delta_inv );
+            }
+            //i=0 case
+            UNROLL_S(4)
+            for( unsigned int j=1 ; j<4 ; j++ ) {
+                bJ [(j)*vecSize + ipart] += crt_p*(Sr1[j]*Sl1[0]*e_delta_inv );
+            }
+
+
+            UNROLL_S(4)
+            for ( unsigned int j=1; j<5 ; j++ ) {
+                UNROLL_S(4)
+                for( unsigned int i=1 ; i<5 ; i++ ) {
+                    bJ [(i*5+j )*vecSize + ipart] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0_buff_vect[(j-1)*vecSize + ipart]*Sl0_buff_vect[(i-1)*vecSize + ipart]*( e_delta-1. ));
+                }
+            }
+
+            if (imode == 0) e_delta = 1. ; //Restore e_delta correct initial value.
+       }
     }
 };
 
