@@ -260,12 +260,12 @@ private:
             //j=0 case
             UNROLL_S(5)
             for( unsigned int i=0 ; i<5 ; i++ ) {
-                bJ [(i*5 )*vecSize + ipart] += crt_p*(Sr1[0]*Sl1[i]*e_delta_inv );
+                bJ [200*imode + (i*5 )*vecSize + ipart] += crt_p*(Sr1[0]*Sl1[i]*e_delta_inv );
             }
             //i=0 case
             UNROLL_S(4)
             for( unsigned int j=1 ; j<4 ; j++ ) {
-                bJ [(j)*vecSize + ipart] += crt_p*(Sr1[j]*Sl1[0]*e_delta_inv );
+                bJ [200*imode + (j)*vecSize + ipart] += crt_p*(Sr1[j]*Sl1[0]*e_delta_inv );
             }
 
 
@@ -273,7 +273,7 @@ private:
             for ( unsigned int j=1; j<5 ; j++ ) {
                 UNROLL_S(4)
                 for( unsigned int i=1 ; i<5 ; i++ ) {
-                    bJ [(i*5+j )*vecSize + ipart] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0_buff_vect[(j-1)*vecSize + ipart]*Sl0_buff_vect[(i-1)*vecSize + ipart]*( e_delta-1. ));
+                    bJ [200*imode + (i*5+j )*vecSize + ipart] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0_buff_vect[(j-1)*vecSize + ipart]*Sl0_buff_vect[(i-1)*vecSize + ipart]*( e_delta-1. ));
                 }
             }
 
