@@ -280,6 +280,56 @@ private:
             if (imode == 0) e_delta = 1. ; //Restore e_delta correct initial value.
        }
     }
+
+    inline void __attribute__((always_inline)) computeRho( int ipart, 
+                                                                   double *charge_weight,
+                                                                   double *DSl, double *DSr, double *Sl0_buff_vect, double *Sr0_buff_vect,
+                                                                   std::complex<double> *brho, double *invR_local, std::complex<double> *e_bar_m1) 
+    {
+
+        int vecSize = 8;
+        //mode 0
+        //i=0 and i=4: Sl0=Sr0=0
+        //Sr0 and Sr1 need to be divided by inv_R
+        // S1 = DS + S0
+        double Sl1[5], Sr1[5];
+
+        Sl1[0] = DSl[            ipart] ;
+        Sl1[1] = DSl[1*vecSize + ipart]  + Sl0_buff_vect[            ipart];
+        Sl1[2] = DSl[2*vecSize + ipart]  + Sl0_buff_vect[1*vecSize + ipart];
+        Sl1[3] = DSl[3*vecSize + ipart]  + Sl0_buff_vect[2*vecSize + ipart];
+        Sl1[4] = DSl[4*vecSize + ipart] ; 
+
+        Sr1[0] = (DSr[            ipart]                                    ) * invR_local[0];
+        Sr1[1] = (DSr[1*vecSize + ipart]  + Sr0_buff_vect[            ipart]) * invR_local[1];
+        Sr1[2] = (DSr[2*vecSize + ipart]  + Sr0_buff_vect[1*vecSize + ipart]) * invR_local[2];
+        Sr1[3] = (DSr[3*vecSize + ipart]  + Sr0_buff_vect[2*vecSize + ipart]) * invR_local[3];
+        Sr1[4] = (DSr[4*vecSize + ipart]                                    ) * invR_local[4]; 
+
+        Sr0_buff_vect[            ipart] *= invR_local[1];
+        Sr0_buff_vect[1*vecSize + ipart] *= invR_local[2];
+        Sr0_buff_vect[2*vecSize + ipart] *= invR_local[3];
+
+        //mode 0
+        std::complex<double> C_m = 1.;
+        std::complex<double> e_bar = 1.;
+
+        for (unsigned int imode=0; imode<Nmode_; imode++){ 
+            if (imode > 0){
+                e_bar *= e_bar_m1[ipart];
+                C_m = 2. * e_bar;
+            }
+
+            UNROLL_S(5)
+            for ( unsigned int j=0; j<5 ; j++ ) {
+                UNROLL_S(5)
+                for( unsigned int i=0 ; i<5 ; i++ ) {
+                    brho [200*imode + (i*5+j )*vecSize + ipart] += C_m * charge_weight[ipart]*(Sr1[j]*Sl1[i]);
+                }
+            }
+       }
+    }
+
 };
 
 #endif
