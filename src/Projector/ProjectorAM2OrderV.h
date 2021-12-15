@@ -171,22 +171,22 @@ private:
         
         sum[4] = 0.;
         UNROLL_S(4)
-        for( int k=3 ; k>=0 ; k-- ) {
-            sum[k] = sum[k+1] * abs( jpo+k+1 + j_domain_begin_ + 0.5 )*dr * invRd_local[k+1] +  crr_p * DSr[(k+1)*vecSize+ipart] * invRd_local[k+1]*dr;
+        for( int j=3 ; j>=0 ; j-- ) {
+            sum[j] = sum[j+1] * abs( jpo+j+1 + j_domain_begin_ + 0.5 )*dr * invRd_local[j+1] +  crr_p * DSr[(j+1)*vecSize+ipart] * invRd_local[j+1]*dr;
         }
         
         //mode 0
         double tmp = 0.5*DSl[ipart];
         UNROLL_S(4)
-        for( unsigned int i=0 ; i<4 ; i++ ) {
-            bJ [( i*5 )*vecSize+ipart] += sum[i] * tmp;
+        for( unsigned int j=0 ; j<4 ; j++ ) {
+            bJ [( j )*vecSize+ipart] += sum[j] * tmp;
         }
         UNROLL_S(4)
-        for ( unsigned int j=1; j<5 ; j++ ) {
-            tmp = Sl0[(j-1)*vecSize + ipart] + 0.5*DSl[j*vecSize + ipart];
+        for ( unsigned int i=1; i<5 ; i++ ) {
+            tmp = Sl0[(i-1)*vecSize + ipart] + 0.5*DSl[i*vecSize + ipart];
             UNROLL_S(4)
-            for( unsigned int i=0 ; i<4 ; i++ ) {
-                bJ [(i*5+j )*vecSize + ipart] += sum[i] * tmp;
+            for( unsigned int j=0 ; j<4 ; j++ ) {
+                bJ [(i*5+j )*vecSize + ipart] += sum[j] * tmp;
             }
         }
 
@@ -195,15 +195,15 @@ private:
             C_m *= e_bar[ipart];
             tmp = 0.5*DSl[ipart];
             UNROLL_S(4)
-            for( unsigned int i=0 ; i<4 ; i++ ) {
-                bJ [200*imode + ( i*5 )*vecSize+ipart] += sum[i] * tmp * C_m;
+            for( unsigned int j=0 ; j<4 ; j++ ) {
+                bJ [200*imode + ( j )*vecSize+ipart] += sum[j] * tmp * C_m;
             }
             UNROLL_S(4)
-            for ( unsigned int j=1; j<5 ; j++ ) {
-                tmp = Sl0[(j-1)*vecSize + ipart] + 0.5*DSl[j*vecSize + ipart];
+            for ( unsigned int i=1; i<5 ; i++ ) {
+                tmp = Sl0[(i-1)*vecSize + ipart] + 0.5*DSl[i*vecSize + ipart];
                 UNROLL_S(4)
-                for( unsigned int i=0 ; i<4 ; i++ ) {
-                    bJ [200*imode + (i*5+j )*vecSize + ipart] += sum[i] * tmp * C_m;
+                for( unsigned int j=0 ; j<4 ; j++ ) {
+                    bJ [200*imode + (i*5+j )*vecSize + ipart] += sum[j] * tmp * C_m;
                 }
             }
         }
