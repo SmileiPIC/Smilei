@@ -133,13 +133,13 @@ private:
         double tmp( crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] );
         UNROLL_S(4)
         for( unsigned int i=1 ; i<5 ; i++ ) {
-            bJ [( i*5 )*vecSize+ipart] += sum[i] * tmp;
+            bJ [( i*5 )*vecSize+ipart] = sum[i] * tmp;
         }
         UNROLL_S(4)
         for ( unsigned int j=1; j<5 ; j++ ) {
             tmp =  crl_p * ( Sr0[(j-1)*vecSize+ipart] + 0.5*DSr[j*vecSize+ipart] ) * invR_local[j];
             for( unsigned int i=1 ; i<5 ; i++ ) {
-                bJ [(i*5+j )*vecSize+ipart] += sum[i] * tmp;
+                bJ [(i*5+j )*vecSize+ipart] = sum[i] * tmp;
             }
         }
         //mode > 0
@@ -148,14 +148,14 @@ private:
             double tmp( crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] );
             UNROLL_S(4)
             for( unsigned int i=1 ; i<5 ; i++ ) {
-                bJ [200*imode + (i*5 )*vecSize+ipart] += sum[i] * tmp * C_m;
+                bJ [200*imode + (i*5 )*vecSize+ipart] = sum[i] * tmp * C_m;
             }
             UNROLL_S(4)
             for ( unsigned int j=1; j<5 ; j++ ) {
                 tmp =  crl_p * ( Sr0[(j-1)*vecSize+ipart] + 0.5*DSr[j*vecSize+ipart] ) * invR_local[j];
                 UNROLL_S(4)
                 for( unsigned int i=1 ; i<5 ; i++ ) {
-                    bJ [200*imode + (i*5+j )*vecSize+ipart] += sum[i] * tmp * C_m;
+                    bJ [200*imode + (i*5+j )*vecSize+ipart] = sum[i] * tmp * C_m;
                 }
             }
         }
@@ -179,14 +179,14 @@ private:
         double tmp = 0.5*DSl[ipart];
         UNROLL_S(4)
         for( unsigned int j=0 ; j<4 ; j++ ) {
-            bJ [( j )*vecSize+ipart] += sum[j] * tmp;
+            bJ [( j )*vecSize+ipart] = sum[j] * tmp;
         }
         UNROLL_S(4)
         for ( unsigned int i=1; i<5 ; i++ ) {
             tmp = Sl0[(i-1)*vecSize + ipart] + 0.5*DSl[i*vecSize + ipart];
             UNROLL_S(4)
             for( unsigned int j=0 ; j<4 ; j++ ) {
-                bJ [(i*5+j )*vecSize + ipart] += sum[j] * tmp;
+                bJ [(i*5+j )*vecSize + ipart] = sum[j] * tmp;
             }
         }
 
@@ -196,14 +196,14 @@ private:
             tmp = 0.5*DSl[ipart];
             UNROLL_S(4)
             for( unsigned int j=0 ; j<4 ; j++ ) {
-                bJ [200*imode + ( j )*vecSize+ipart] += sum[j] * tmp * C_m;
+                bJ [200*imode + ( j )*vecSize+ipart] = sum[j] * tmp * C_m;
             }
             UNROLL_S(4)
             for ( unsigned int i=1; i<5 ; i++ ) {
                 tmp = Sl0[(i-1)*vecSize + ipart] + 0.5*DSl[i*vecSize + ipart];
                 UNROLL_S(4)
                 for( unsigned int j=0 ; j<4 ; j++ ) {
-                    bJ [200*imode + (i*5+j )*vecSize + ipart] += sum[j] * tmp * C_m;
+                    bJ [200*imode + (i*5+j )*vecSize + ipart] = sum[j] * tmp * C_m;
                 }
             }
         }
@@ -260,20 +260,20 @@ private:
             //j=0 case
             UNROLL_S(5)
             for( unsigned int i=0 ; i<5 ; i++ ) {
-                bJ [200*imode + (i*5 )*vecSize + ipart] += crt_p*(Sr1[0]*Sl1[i]*e_delta_inv );
+                bJ [200*imode + (i*5 )*vecSize + ipart] = crt_p*(Sr1[0]*Sl1[i]*e_delta_inv );
             }
             //i=0 case
             UNROLL_S(4)
-            for( unsigned int j=1 ; j<4 ; j++ ) {
-                bJ [200*imode + (j)*vecSize + ipart] += crt_p*(Sr1[j]*Sl1[0]*e_delta_inv );
+            for( unsigned int j=1 ; j<5 ; j++ ) {
+                bJ [200*imode + (j)*vecSize + ipart] = crt_p*(Sr1[j]*Sl1[0]*e_delta_inv );
             }
 
 
             UNROLL_S(4)
-            for ( unsigned int j=1; j<5 ; j++ ) {
+            for( unsigned int i=1 ; i<5 ; i++ ) {
                 UNROLL_S(4)
-                for( unsigned int i=1 ; i<5 ; i++ ) {
-                    bJ [200*imode + (i*5+j )*vecSize + ipart] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0_buff_vect[(j-1)*vecSize + ipart]*Sl0_buff_vect[(i-1)*vecSize + ipart]*( e_delta-1. ));
+                for ( unsigned int j=1; j<5 ; j++ ) {
+                    bJ [200*imode + (i*5+j )*vecSize + ipart] = crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0_buff_vect[(j-1)*vecSize + ipart]*Sl0_buff_vect[(i-1)*vecSize + ipart]*( e_delta-1. ));
                 }
             }
 
@@ -321,10 +321,10 @@ private:
             }
 
             UNROLL_S(5)
-            for ( unsigned int j=0; j<5 ; j++ ) {
+            for( unsigned int i=0 ; i<5 ; i++ ) {
                 UNROLL_S(5)
-                for( unsigned int i=0 ; i<5 ; i++ ) {
-                    brho [200*imode + (i*5+j )*vecSize + ipart] += C_m * charge_weight[ipart]*(Sr1[j]*Sl1[i]);
+                for ( unsigned int j=0; j<5 ; j++ ) {
+                    brho [200*imode + (i*5+j )*vecSize + ipart] = C_m * charge_weight[ipart]*(Sr1[j]*Sl1[i]);
                 }
             }
        }

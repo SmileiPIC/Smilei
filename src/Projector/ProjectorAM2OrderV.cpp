@@ -577,8 +577,7 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
     for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
         Jt =  &( *emAM->Jt_[imode] )( 0 );
         int iloc = iloc0;
-        for( unsigned int i=1 ; i<5 ; i++ ) {
-            iloc += nprimr_;
+        for( unsigned int i=0 ; i<5 ; i++ ) {
             #pragma omp simd
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 complex<double> tmpJt( 0. );
@@ -589,6 +588,7 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
                 }
                 Jt[iloc+j] += tmpJt;
             }
+            iloc += nprimr_;
         }
     }
 } // END Projection currents vectorized
