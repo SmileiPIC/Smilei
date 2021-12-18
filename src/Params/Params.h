@@ -96,6 +96,9 @@ public:
     //! defines the interpolation/projection order
     unsigned int interpolation_order;
 
+    //! defines the WT interpolation is used
+    bool interpolation_WT;
+
     //! number of space dimensions for the particles
     unsigned int nDim_particle;
 

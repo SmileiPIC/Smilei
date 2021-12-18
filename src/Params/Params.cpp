@@ -252,7 +252,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "maxwell_solver", maxwell_sol, "Main"   );
     is_spectral = false;
     is_pxr = false;
-    if( maxwell_sol == "Lehe" || maxwell_sol == "Bouchard" ) {
+    if( maxwell_sol == "Lehe" || maxwell_sol == "Bouchard" || maxwell_sol == "M4" ) {
         full_B_exchange=true;
     } else if( maxwell_sol == "spectral" ) {
         is_spectral = true;
@@ -280,6 +280,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     } else if( interpolation_order!=2 && interpolation_order!=4 && !is_spectral ) {
         ERROR( "Main.interpolation_order " << interpolation_order << " should be 2 or 4" );
     }
+
+    // WT interpolation
+    PyTools::extract( "interpolation_WT", interpolation_WT, "Main"  );
 
     //!\todo (MG to JD) Please check if this parameter should still appear here
     // Disabled, not compatible for now with particles sort
