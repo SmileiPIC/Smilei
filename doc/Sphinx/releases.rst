@@ -26,6 +26,8 @@ Changes made in the repository (not released)
 * Option to create neutrons for D-D fusion
 * Collisions can be done less often
 * Lasers can be injected from all boundaries
+* New 4th-order non-standard FDTD solver ``M4``
+* Timestep dependent field interpolation scheme
 * ``LaserOffset``:
 
   * may be re-used from a previous simulation
