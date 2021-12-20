@@ -556,14 +556,15 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
         }
     }
 
+
     for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
         Jr =  &( *emAM->Jr_[imode] )( 0 );
-        int iloc = iloc0 + ipom2;
+        int iloc = iloc0 + ipom2 + 1;
         for( unsigned int i=0 ; i<5 ; i++ ) {
             #pragma omp simd
             for( unsigned int j=0 ; j<4 ; j++ ) {
                 complex<double> tmpJr( 0. );
-                int ilocal = ( i*5+j )*vecSize;
+                int ilocal = ( i*5+j+1 )*vecSize;
                 UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpJr += bJr [200*imode + ilocal+ipart];
