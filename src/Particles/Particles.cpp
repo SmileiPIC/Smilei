@@ -772,7 +772,7 @@ void Particles::createParticle()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Create n_additional_particles new particles at the end of vectors
+//! Create n_additional_particles new particles at the end of vectors
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::createParticles( int n_additional_particles )
 {
@@ -795,7 +795,7 @@ void Particles::createParticles( int n_additional_particles )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Create n_additional_particles new particles at the position pstart
+//! Create n_additional_particles new particles at the position pstart
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::createParticles( int n_additional_particles, int pstart )
 {
