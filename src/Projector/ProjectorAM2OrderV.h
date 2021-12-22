@@ -140,6 +140,7 @@ private:
         UNROLL_S(4)
         for ( unsigned int j=1; j<5 ; j++ ) {
             tmp =  crl_p * ( Sr0[(j-1)*vecSize+ipart] + 0.5*DSr[j*vecSize+ipart] ) * invR_local[j];
+            UNROLL_S(4)
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJ [(i*5+j )*vecSize+ipart] += sum[i] * tmp;
             }
