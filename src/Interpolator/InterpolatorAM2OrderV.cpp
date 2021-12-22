@@ -185,6 +185,8 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
     idx[1] = round( sqrt( position_y[*istart]*position_y[*istart] + position_z[*istart]*position_z[*istart] ) * D_inv_[1] ) ;
     idxO[1] = idx[1] - j_domain_begin_ -1 ;
 
+    //std::cout << "vecto xpn = " << idx[0] << " rpn = " << idx[1] << std::endl; 
+
     double coeff[2][2][3][32];
     double dual[2][32]; // Size ndim. Boolean converted into double indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
     
@@ -204,10 +206,6 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         deltaO[1]   =  &(   smpi->dynamics_deltaold[ithread][nparts   + ivect + istart[0] - ipart_ref] );
         eitheta_old =  &( smpi->dynamics_eithetaold[ithread][           ivect + istart[0] - ipart_ref] );
 
-        for( unsigned int k=0; k<3; k++ ) {
-            Epart[k]= &( smpi->dynamics_Epart[ithread][k*nparts-ipart_ref+ivect+istart[0]] );
-            Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts-ipart_ref+ivect+istart[0]] );
-        }
 
         #pragma omp simd private(delta2, delta)
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
@@ -253,6 +251,12 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             coeff[1][1][1][ipart]    = ( 0.75 - delta2 );
             coeff[1][1][2][ipart]    =  0.5 * ( delta2+delta+0.25 );
 
+            //std::cout << "coeffxp = " <<  coeff[0][0][0][ipart] << " " << coeff[0][0][1][ipart]  << " " <<  coeff[0][0][2][ipart] << std::endl; 
+            //std::cout << "coeffxd = " <<  coeff[0][1][0][ipart] << " " << coeff[0][1][1][ipart]  << " " <<  coeff[0][1][2][ipart] << std::endl; 
+            //std::cout << "coeffyp = " <<  coeff[1][0][0][ipart] << " " << coeff[1][0][1][ipart]  << " " <<  coeff[1][0][2][ipart] << std::endl; 
+            //std::cout << "coeffyd = " <<  coeff[1][1][0][ipart] << " " << coeff[1][1][1][ipart]  << " " <<  coeff[1][1][2][ipart] << std::endl; 
+            //std::cout << "thetas = " << exp_m_theta_[ipart] << " " <<  eitheta_old[ipart] << std::endl;
+
 
         }
 
@@ -262,6 +266,15 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
         double * __restrict__ coeffrp = &( coeff[1][0][1][0] );
         double * __restrict__ coeffrd = &( coeff[1][1][1][0] );
 
+        for( unsigned int k=0; k<3; k++ ) {
+            Epart[k]= &( smpi->dynamics_Epart[ithread][k*nparts-ipart_ref+ivect+istart[0]] );
+            Bpart[k]= &( smpi->dynamics_Bpart[ithread][k*nparts-ipart_ref+ivect+istart[0]] );
+            #pragma omp simd 
+            for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+                Epart[k][ipart] = 0.;
+                Bpart[k][ipart] = 0.;
+            }
+        }
 
         // Local buffer to store the field components
         std::complex<double> field_buffer[4][4];
@@ -296,12 +309,13 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                         interp_res += std::real( coeffld[ipart + iloc*32] * coeffrp[ipart + jloc*32] *
                                       ( ( 1.-dual[0][ipart] )*( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
-                                           + dual[0][ipart]  *( *El )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) * exp_mm_theta[ipart]) ;
+                                           + dual[0][ipart]  *( *El )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) 
                                       //( ( 1.-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] 
-                                      //     + dual[0][ipart]  *field_buffer[2+iloc][1+jloc] ) * exp_mm_theta[ipart]) ;
+                                      //     + dual[0][ipart]  *field_buffer[2+iloc][1+jloc] ) 
+                                            * exp_mm_theta[ipart]) ; 
                     }
                 }
-                Epart[0][ipart] = interp_res;
+                Epart[0][ipart] += interp_res;
            }
 
            //for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -318,14 +332,16 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                for( int iloc=-1 ; iloc<2 ; iloc++ ) {
                    UNROLL_S(3) 
                    for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                       //cout << "Er vecto idx = " << idxO[0]+1 << " idy = " << idxO[1]+1 << " iloc = " << iloc << " jloc = " << jloc << " " << *( coefflp+ipart+iloc*32 ) << " " << *( coeffrd+ipart+jloc*32 ) << " dual = " << dual[1][ipart] << " " <<   ( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc ) << " " << ( *Er )( idxO[0]+1+iloc, idxO[1]+2+jloc ) << endl;
                        interp_res +=  std::real (*( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
                                      ( ( 1-dual[1][ipart] )*( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
-                                         + dual[1][ipart]  *( *Er )( idxO[0]+1+iloc, idxO[1]+2+jloc ) ) );
+                                         + dual[1][ipart]  *( *Er )( idxO[0]+1+iloc, idxO[1]+2+jloc ) )
                                      //( ( 1-dual[1][ipart] )*field_buffer[1+iloc][1+jloc] 
-                                     //    + dual[1][ipart]  *field_buffer[1+iloc][2+jloc] )  * exp_mm_theta[ipart]);
+                                     //    + dual[1][ipart]  *field_buffer[1+iloc][2+jloc] )
+                                           * exp_mm_theta[ipart]);
                    }
                }
-               Epart[1][ipart] = interp_res;
+               Epart[1][ipart] += interp_res;
            }
                 
            //for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -343,11 +359,12 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                     UNROLL_S(3) 
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                         interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) * 
-                                                    ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc ) );
-                                                    //field_buffer[1+iloc][1+jloc]  * exp_mm_theta[ipart]);
+                                                    ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc )
+                                                    //field_buffer[1+iloc][1+jloc]  
+                                                      * exp_mm_theta[ipart]);
                     }
                 }
-                Epart[2][ipart] = interp_res;
+                Epart[2][ipart] += interp_res;
            }
                 
            //for( int iloc=-1 ; iloc<2 ; iloc++ ) {
@@ -372,7 +389,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                                                 )  * exp_mm_theta[ipart] );
                     }
                 }
-                Bpart[0][ipart] = interp_res;
+                Bpart[0][ipart] += interp_res;
            }
                 
            //for( int iloc=-1 ; iloc<3 ; iloc++ ) {
@@ -396,7 +413,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                                                 )  * exp_mm_theta[ipart]);
                     }
                 }
-                Bpart[1][ipart] = interp_res;
+                Bpart[1][ipart] += interp_res;
            }
                 
            //for( int iloc=-1 ; iloc<3 ; iloc++ ) {
@@ -424,9 +441,10 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                                                 ) * exp_mm_theta[ipart] );
                     }
                 }
-                Bpart[2][ipart] = interp_res;
+                Bpart[2][ipart] += interp_res;
                 exp_mm_theta[ipart] *= exp_m_theta_[ipart]; //prepare for next mode
            }
+           //std::cout << "mode " << imode << " " << Epart[0][0] << " " <<Epart[1][0]   << " " <<Epart[2][0]<<" " <<Bpart[0][0] << " " <<Bpart[1][0]   << " " <<Bpart[2][0] << endl;
        } //end loop on modes
 
         #pragma omp simd
@@ -439,6 +457,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             Bpart[2][ipart] = -std::imag( exp_m_theta_[ipart] ) * Bpart[1][ipart] + std::real( exp_m_theta_[ipart] ) * Bpart[2][ipart];
             Bpart[1][ipart] = delta2 ;
         }
+        //std::cout << " after cartesianism " <<  Epart[0][0] << " " <<  Epart[1][0] << " " <<  Epart[2][0] <<  Bpart[0][0] << " " <<  Bpart[1][0] << " " <<  Bpart[2][0]  << std::endl;
 
 
     } //end loop on ivec
