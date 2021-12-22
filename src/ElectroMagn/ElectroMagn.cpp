@@ -529,7 +529,7 @@ void ElectroMagn::laserDisabled()
     }
 }
 
-double ElectroMagn::computeNRJ()
+double ElectroMagn::computeEnergy()
 {
     double nrj( 0. );
     

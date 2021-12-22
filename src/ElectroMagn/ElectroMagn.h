@@ -424,7 +424,7 @@ public:
     //! Method that fills the initial spatial profile of the antenna
     virtual void initAntennas( Patch *patch, Params& params ) {};
     
-    virtual double computeNRJ();
+    virtual double computeEnergy();
     
     inline int getMemFootPrint()
     {
