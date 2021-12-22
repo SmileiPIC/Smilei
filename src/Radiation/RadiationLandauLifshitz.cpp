@@ -167,7 +167,7 @@ void RadiationLandauLifshitz::operator()(
 #ifndef _GPU
 
             // Exact energy loss due to the radiation
-            rad_norm_energy[ipart] = gamma - std::sqrt( 1.0
+            rad_norm_energy[ipart-istart] = gamma - std::sqrt( 1.0
                                               + momentum_x[ipart]*momentum_x[ipart]
                                               + momentum_y[ipart]*momentum_y[ipart]
                                               + momentum_z[ipart]*momentum_z[ipart] );

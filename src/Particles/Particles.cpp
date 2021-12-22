@@ -772,26 +772,44 @@ void Particles::createParticle()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Create nParticles new particles at the end of vectors
+//! Create n_additional_particles new particles at the end of vectors
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::createParticles( int nAdditionalParticles )
+void Particles::createParticles( int n_additional_particles )
 {
     int nParticles = size();
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] ).resize( nParticles+nAdditionalParticles, 0. );
+        ( *double_prop[iprop] ).resize( nParticles+n_additional_particles, 0. );
     }
 
     for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] ).resize( nParticles+nAdditionalParticles, 0 );
+        ( *short_prop[iprop] ).resize( nParticles+n_additional_particles, 0 );
     }
 
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] ).resize( nParticles+nAdditionalParticles, 0 );
+        ( *uint64_prop[iprop] ).resize( nParticles+n_additional_particles, 0 );
     }
 
-    cell_keys.resize( nParticles+nAdditionalParticles, 0);
+    cell_keys.resize( nParticles+n_additional_particles, 0);
 
 //MESSAGE("create2");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Create n_additional_particles new particles at the position pstart
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::createParticles( int n_additional_particles, int pstart )
+{
+    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
+        ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+pstart, n_additional_particles, 0. );
+    }
+
+    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
+        ( *short_prop[iprop] ).insert( ( *short_prop[iprop] ).begin()+pstart, n_additional_particles, 0 );
+    }
+
+    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
+        ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+pstart, n_additional_particles, 0 );
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -891,24 +909,6 @@ void Particles::eraseParticlesWithMask( int istart, int iend) {
 //         }
 //     }
 // }
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Create nParticles new particles at the end of vectors
-// ---------------------------------------------------------------------------------------------------------------------
-void Particles::createParticles( int nAdditionalParticles, int pstart )
-{
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0. );
-    }
-
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] ).insert( ( *short_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0 );
-    }
-
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0 );
-    }
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Move ipart at new_pos in the particles data structure

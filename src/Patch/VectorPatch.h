@@ -426,9 +426,9 @@ private :
     std::vector<int> send_patch_id_;
     
     //! Current intensity of antennas
-    double antenna_intensity;
+    double antenna_intensity_;
     
-    std::vector<Timer *> diag_timers;
+    std::vector<Timer *> diag_timers_;
 };
 
 

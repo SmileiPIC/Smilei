@@ -129,11 +129,11 @@ public:
     //! Create new particle
     void createParticle();
 
-    //! Create nParticles new particles
-    void createParticles( int nAdditionalParticles );
+    //! Create n_additional_particles new particles
+    void createParticles( int n_additional_particles );
 
-    //! Create nParticles new particles at position pstart in the particles data structure
-    void createParticles( int nAdditionalParticles, int pstart );
+    //! Create n_additional_particles new particles at position pstart in the particles data structure
+    void createParticles( int n_additional_particles, int pstart );
 
     //! Move ipart at new_pos in the particles data structure
     void moveParticles( int iPart, int new_pos );
