@@ -76,7 +76,7 @@ PyObject *PyCall( PyObject *callable, PyObject *args, PyObject *kwargs )
 }
 
 
-LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_time_window, MPI_Comm &comm )
+LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_time_window, double fft_time_step, MPI_Comm &comm )
 {
 
 #ifdef SMILEI_USE_NUMPY
@@ -102,10 +102,10 @@ LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_
         L[idim] = N[idim] * params->cell_length[j];
         o[idim] = params->oversize[j] * params->cell_length[j];
     }
-    ox = params->oversize[0] * params->cell_length[0];
+    ox = params->oversize[side] * params->cell_length[side];
     
     // Set the grid temporal dimension
-    N[ndim-1] = ( int )( fft_time_window / params->timestep );
+    N[ndim-1] = ( int )( fft_time_window / fft_time_step );
     L[ndim-1] = fft_time_window;
     
     // Make the array bigger to accommodate for the parallel FFT
@@ -139,7 +139,7 @@ LaserPropagator::LaserPropagator( Params *params, unsigned int side, double fft_
     
     // Display some info
     MESSAGE( 2, "Uses " << MPI_size << " MPI processes");
-    unsigned int Ntot = (ndim+1) * max( Nlocal[0]*N[1], N[0]*Nlocal[1] ) * ( N[2] ? N[2] : 1 );
+    uint64_t Ntot = (ndim+1) * max( (uint64_t)Nlocal[0]*(uint64_t)N[1], (uint64_t)N[0]*(uint64_t)Nlocal[1] ) * (uint64_t)( N[2] ? N[2] : 1 );
     MESSAGE( 2, "Estimated memory required per MPI process: " << 2*2*Ntot*sizeof(double)/(1024*1024) << " MB");
     
 #else
@@ -170,8 +170,10 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     
     // Make coordinates array
     vector<PyObject *> coords( ndim );
+    npy_intp np = 1;
     for( unsigned int i=0; i<ndim; i++ ) {
         npy_intp dims = local_x[i].size();
+        np *= dims;
         coords[i] = PyArray_SimpleNewFromData( 1, &dims, NPY_DOUBLE, ( double * )( local_x[i].data() ) );
     }
 
@@ -189,14 +191,14 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
     }
     Py_DECREF( meshgrid );
     Py_DECREF( m );
-
+    
     // Apply each profile
     vector<PyObject *> arrays( nprofiles );
     for( unsigned int i=0; i<nprofiles; i++ ) {
         // Try first if the function is numpy-compatible
         arrays[i] = PyObject_CallObject( profiles[i], mesh );
         // If it failed, use numpy.vectorize
-        if( PyTools::checkPyError( false, false ) ) {
+        if( PyTools::checkPyError( false, false ) || !PyArray_Check(arrays[i]) || PyArray_Size( arrays[i] ) != np ) {
             WARNING( "\t\tProfile #" << i << " is not numpy-compatible. It can be very slow." );
             PyObject *profile = PyObject_CallMethod( numpy, const_cast<char *>("vectorize"), const_cast<char *>("O"), profiles[i] );
             arrays[i] = PyObject_CallObject( profile, mesh );
@@ -278,10 +280,11 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         vector<double> local_spectrum( Nlocal[1], 0. );
         for( unsigned int i=0; i<nprofiles; i++ ) {
             complex<double> *z = ( complex<double> * ) PyArray_GETPTR1( ( PyArrayObject * ) arrays[i], 0 );
-            for( unsigned int k=0; k<Nlocal[1]; k++ )
+            for( unsigned int k=0; k<Nlocal[1]; k++ ) {
                 for( unsigned int j=0; j<N[0]; j++ ) {
                     local_spectrum[k] += abs( z[j + N[0]*k] );
                 }
+            }
         }
         // In 2D, the spectrum is scattered across processors, so we gather to root
         if( MPI_rank==0 ) {
@@ -300,11 +303,13 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         vector<double> local_spectrum( lmax, 0. );
         for( unsigned int i=0; i<nprofiles; i++ ) {
             complex<double> *z = ( complex<double> * ) PyArray_GETPTR1( ( PyArrayObject * ) arrays[i], 0 );
-            for( unsigned int l=0; l<lmax; l++ )
-                for( unsigned int k=0; k<Nlocal[1]; k++ )
+            for( unsigned int l=0; l<lmax; l++ ) {
+                for( unsigned int k=0; k<Nlocal[1]; k++ ){
                     for( unsigned int j=0; j<N[0]; j++ ) {
                         local_spectrum[l] += abs( z[j + N[0]*( k + Nlocal[1]*l )] );
                     }
+                }
+            }
         }
         // In 3D, each processor has the full spectrum, so we sum all contributions
         if( MPI_rank==0 ) {
@@ -541,7 +546,7 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         Py_DECREF( arrays[i] );
     }
     
-    MESSAGE( 3, "Finished calculating magnitde and phase ... " << MPI_Wtime() - timer << " s" );
+    MESSAGE( 3, "Finished calculating magnitude and phase ... " << MPI_Wtime() - timer << " s" );
     timer = MPI_Wtime();
     
     // 7- Store all info in HDF5 file

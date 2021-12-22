@@ -2,6 +2,7 @@
 #define PartWall_H
 
 #include "Params.h"
+#include "Random.h"
 #include "tabulatedFunctions.h"
 
 class Patch;
@@ -21,10 +22,10 @@ public:
     
     //! Wall boundary condition pointer (same prototypes for all conditions)
     //! @see BoundaryConditionType.h for functions that this pointer will target
-    void ( *wall )( Particles &particles, SmileiMPI *smpi, int imin, int imax, int direction, double limit_pos, double dt, Species *species, int ithread, double &nrj_iPart );
+    void ( *wall )( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change );
     
     //! Method which applies particles wall
-    void apply( Particles &particles, SmileiMPI *smpi, int imin, int imax, Species *species, int ithread, double &nrj_iPart );
+    void apply( Species *species, int imin, int imax, std::vector<double> &invgf, Random * rand, double &energy_change );
     
     double dt_;
 
@@ -79,6 +80,8 @@ public:
     }
     
 private:
+    double dt_;
+    
     //! The vector of partWall objects
     std::vector<PartWall *> vecPartWall;
     

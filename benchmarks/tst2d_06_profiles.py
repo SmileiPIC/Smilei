@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 L0 = 2.*math.pi # Wavelength in PIC units
 Lcell = [0.01*L0, 0.01*L0]
@@ -23,14 +24,14 @@ Main(
 	interpolation_order = 2,
 	
 	timestep = 0.005 * L0,
-	simulation_time  = 0.01 * L0,
+	simulation_time  = 0.02 * L0,
 	
 	cell_length = Lcell,
 	grid_length  = Lsim,
 	
 	number_of_patches = [ 4 ]*2,
 	
-	time_fields_frozen = 10000000.,
+	time_fields_frozen = 0.01,
 	
 	EM_boundary_conditions = [
 		["periodic"],
@@ -39,7 +40,6 @@ Main(
 	print_every = 10,
 	solve_poisson = False,
 	
-    random_seed = smilei_mpi_rank
 )
 
 def custom(x, y):
@@ -94,11 +94,14 @@ Species(
 	is_test = True
 )
 
-
 for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
 	ExternalField(
 		field = field,
 		profile = gaussian(0.1)
+	)
+	PrescribedField(
+		field = field,
+		profile = lambda x,y,t: 0.1*np.cos(x+y)*np.sin(math.pi/2*t/Main.simulation_time)
 	)
 
 
@@ -114,7 +117,7 @@ DiagParticleBinning(
 
 
 DiagFields(
-	every = 5,
+	every = 4,
 )
 
 

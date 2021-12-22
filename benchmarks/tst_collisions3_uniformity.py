@@ -26,8 +26,6 @@ Main(
 	solve_poisson = False,
 	
 	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
-
-	random_seed = smilei_mpi_rank	
 )
 
 

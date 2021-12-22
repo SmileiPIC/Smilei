@@ -112,7 +112,7 @@ void Patch::initStep1( Params &params )
     }
     
     // Initialize the random number generator
-    rand_ = new Random( params.random_seed );
+    rand_ = new Random( params.random_seed + hindex );
     
     // Obtain the cell_volume
     cell_volume = params.cell_volume;
@@ -225,7 +225,7 @@ void Patch::finalizeMPIenvironment( Params &params )
     }
 
     // Scalars
-    nb_comms ++;
+    nb_comms += 2;
 
     // Just apply on species & fields to start
 

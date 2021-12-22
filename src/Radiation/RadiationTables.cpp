@@ -539,7 +539,9 @@ double RadiationTables::computePhotonProductionYield( double particle_chi, doubl
 //! from the computed table niel_.table
 //! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
+#ifdef _GPU
 #pragma acc routine seq
+#endif
 double RadiationTables::getHNielFromTable( double particle_chi, double * niel_table )
 {
     int ichipa;

@@ -58,7 +58,7 @@ Species::Species( Params &params, Patch *patch ) :
     time_frozen_( 0 ),
     radiating_( false ),
     relativistic_field_initialization_( false ),
-    time_relativistic_initialization_( 0 ),
+    iter_relativistic_initialization_( 0 ),
     multiphoton_Breit_Wheeler_( 2, "" ),
     ionization_model( "none" ),
     density_profile_type_( "none" ),
@@ -155,9 +155,10 @@ void Species::initCluster( Params &params )
 
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
-    nrj_mw_lost = 0.;
-    new_particles_energy_ = 0.;
-    radiated_energy_ = 0.;
+    nrj_mw_out = 0.;
+    nrj_mw_inj = 0.;
+    nrj_new_part_ = 0.;
+    nrj_radiated_ = 0.;
 
 }//END initCluster
 
@@ -234,16 +235,16 @@ void Species::initOperators( Params &params, Patch *patch )
 {
 
     // interpolation operator (virtual)
-    Interp = InterpolatorFactory::create( params, patch, this->vectorized_operators && !params.cell_sorting ); // + patchId -> idx_domain_begin (now = ref smpi)
+    Interp = InterpolatorFactory::create( params, patch, this->vectorized_operators ); // + patchId -> idx_domain_begin (now = ref smpi)
 
     // assign the correct Pusher to Push
     Push = PusherFactory::create( params, this );
-    if( this->ponderomotive_dynamics ) {
+    if( params.Laser_Envelope_model ) {
         Push_ponderomotive_position = PusherFactory::create_ponderomotive_position_updater( params, this );
     }
 
     // projection operator (virtual)
-    Proj = ProjectorFactory::create( params, patch, this->vectorized_operators && !params.cell_sorting );  // + patchId -> idx_domain_begin (now = ref smpi)
+    Proj = ProjectorFactory::create( params, patch, this->vectorized_operators );  // + patchId -> idx_domain_begin (now = ref smpi)
 
     // Assign the Ionization model (if needed) to Ionize
     //  Needs to be placed after ParticleCreator() because requires the knowledge of max_charge_
@@ -421,12 +422,12 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 // Radiation process
                 ( *Radiate )( *particles, photon_species_, smpi,
                               RadiationTables,
-                              radiated_energy_,
+                              nrj_radiated_,
                               particles->first_index[ibin],
                               particles->last_index[ibin], ithread );
 
                 // Update scalar variable for diagnostics
-                // radiated_energy_ += Radiate->getRadiatedEnergy();
+                // nrj_radiated_ += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
                 // Radiate->computeParticlesChi( *particles,
@@ -450,11 +451,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                 // Pair generation process
-                // We reuse radiated_energy_ for the pairs
+                // We reuse nrj_radiated_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
                                                         MultiphotonBreitWheelerTables,
-                                                        radiated_energy_,
+                                                        nrj_radiated_,
                                                         particles->first_index[ibin],
                                                         particles->last_index[ibin], ithread );
 
@@ -491,7 +492,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
         if( time_dual>time_frozen_){ // do not apply particles BC nor project frozen particles
             for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-                double ener_iPart( 0. );
+                double energy_lost( 0. );
 
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
@@ -500,29 +501,23 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 // Apply wall and boundary conditions
                 if( mass_>0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                        (*partWalls)[iwall]->apply( this, particles->first_index[ibin], particles->last_index[ibin], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                        nrj_lost_per_thd[tid] += mass_ * energy_lost;
                     }
                     // Boundary Condition may be physical or due to domain decomposition
-                    // apply returns 0 if iPart is not in the local domain anymore
-                    //        if omp, create a list per thread
                     if(!params.is_spectral){
-                        partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                        partBoundCond->apply( this, particles->first_index[ibin], particles->last_index[ibin], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                        nrj_lost_per_thd[tid] += mass_ * energy_lost;
                     }
 
                 } else if( mass_==0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                        nrj_lost_per_thd[tid] += ener_iPart;
+                        (*partWalls)[iwall]->apply( this, particles->first_index[ibin], particles->last_index[ibin], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                        nrj_lost_per_thd[tid] += energy_lost;
                     }
-
                     // Boundary Condition may be physical or due to domain decomposition
-                    // apply returns 0 if iPart is not in the local domain anymore
-                    //        if omp, create a list per thread
-                    partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += ener_iPart;
-
+                    partBoundCond->apply( this, particles->first_index[ibin], particles->last_index[ibin], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                    nrj_lost_per_thd[tid] += energy_lost;
                 }
 
 #ifdef  __DETAILED_TIMERS
@@ -545,8 +540,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 patch->patch_timers[2] += MPI_Wtime() - timer;
 #endif
                 if(params.is_spectral && mass_>0){
-                    partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                    partBoundCond->apply( this, particles->first_index[ibin], particles->last_index[ibin], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                    nrj_lost_per_thd[tid] += mass_ * energy_lost;
                 }
 
             }// ibin
@@ -1428,7 +1423,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
         smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin++ ) {
-            double ener_iPart( 0. );
+            double energy_lost( 0. );
 
             // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
 #ifdef  __DETAILED_TIMERS
@@ -1451,15 +1446,13 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
             // Apply wall and boundary conditions
             if( mass_>0 ) {
                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                    (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                    (*partWalls)[iwall]->apply( this, particles->first_index[ibin], particles->last_index[ibin], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                    nrj_lost_per_thd[tid] += mass_ * energy_lost;
                 }
 
                 // Boundary Condition may be physical or due to domain decomposition
-                // apply returns 0 if iPart is not in the local domain anymore
-                //        if omp, create a list per thread
-                partBoundCond->apply( *particles, smpi, particles->first_index[ibin], particles->last_index[ibin], this, ithread, ener_iPart );
-                nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                partBoundCond->apply( this, particles->first_index[ibin], particles->last_index[ibin], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                nrj_lost_per_thd[tid] += mass_ * energy_lost;
 
             } else if( mass_==0 ) {
                 ERROR( "Particles with zero mass cannot interact with envelope" );
@@ -1494,7 +1487,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
             if( params.geometry != "AMcylindrical" ) {
                 b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                    for( unsigned int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
+                    for( unsigned int iPart= (unsigned int)(particles->first_index[ibin]) ; (unsigned int)(iPart<particles->last_index[ibin]); iPart++ ) {
                         Proj->basic( b_rho, ( *particles ), iPart, 0 );
                     }
                 }//End loop on bins

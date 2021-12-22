@@ -47,13 +47,11 @@ Main(
     cell_length = cell_length,
     grid_length  = grid_length,
     number_of_patches = number_of_patches,
-    #cell_sorting = True,
     timestep = timestep,
     simulation_time = simulation_time,
     EM_boundary_conditions = [
         ['silver-muller'],
     ],
-    random_seed = smilei_mpi_rank,
 )
 
 # Initial plasma shape

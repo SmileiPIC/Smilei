@@ -29,7 +29,6 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     double z_min_global = 0;
     double z_max_global = params.cell_length[2]*( params.n_space_global[2] );
     
-    // by default apply no bcs
     bc_xmin  = NULL;
     bc_xmax  = NULL;
     bc_ymin  = NULL;
@@ -84,13 +83,13 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     // Define the kind of applied boundary conditions
     // ----------------------------------------------
     
-    void ( *remove_inf )( Particles &, SmileiMPI*, int, int, int, double, double, Species *, int, double & );
+    void ( *remove_inf )( Species*, int, int, int, double, double, std::vector<double>&, Random *rand, double& );
     if( species->mass_ == 0 ) {
         remove_inf = &remove_photon_inf;
     } else {
         remove_inf = &remove_particle_inf;
     }
-    void ( *remove_sup)( Particles &, SmileiMPI*, int, int, int, double, double, Species *, int, double & );
+    void ( *remove_sup)( Species*, int, int, int, double, double, std::vector<double>&, Random *rand, double& );
     if( species->mass_ == 0 ) {
         remove_sup = &remove_photon_sup;
     } else {

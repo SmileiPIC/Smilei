@@ -27,7 +27,7 @@ public:
                 ERROR( "Charge > atomic_number for species " << species->name_ );
             }
 
-            if( (params.Laser_Envelope_model) & ( species->ponderomotive_dynamics ) ) {
+            if( params.Laser_Envelope_model ) {
                 ERROR( "The ionization model for species interacting with envelope is tunnel_envelope_averaged" );
             }
             
@@ -43,8 +43,8 @@ public:
             
             Ionize = new IonizationTunnelEnvelopeAveraged( params, species );
             
-            if ( !((params.Laser_Envelope_model) & ( species->ponderomotive_dynamics )) ) {
-                ERROR( "The ionization model tunnel_envelope_averaged needs a laser envelope and ponderomotive_dynamics = True" );
+            if ( !params.Laser_Envelope_model ) {
+                ERROR( "The ionization model tunnel_envelope_averaged needs a laser envelope");
             }
 
          } else if( model == "from_rate" ) {

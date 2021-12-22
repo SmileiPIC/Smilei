@@ -11,8 +11,6 @@ public:
     Random( unsigned int seed ) {
         // Initialize the state of the random number generator
         xorshift32_state = seed;
-        // Ensure that the random seed is different for each patch
-        xorshift32_state += std::rand();
         // zero is not acceptable for xorshift
         if( xorshift32_state==0 ) {
             xorshift32_state = 1073741824;
@@ -24,6 +22,10 @@ public:
     //! random integer
     inline uint32_t integer() {
         return xorshift32();
+    }
+    //! Random true/false
+    inline bool cointoss() {
+        return xorshift32() & 1;
     }
     //! Uniform rand from xorshift32 generator, between 0 (excluded) and 1 (included)
     inline double uniform() {

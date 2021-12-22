@@ -172,6 +172,7 @@ class Main(SmileiSingleton):
     timestep = None
     number_of_AM = 2
     number_of_AM_relativistic_field_initialization = 1
+    number_of_AM_classical_Poisson_solver = 1
     timestep_over_CFL = None
     cell_sorting = False
     gpu_computing = False                      # Activate the computation on GPU
@@ -373,7 +374,6 @@ class Species(SmileiComponent):
     time_frozen = 0.0
     radiating = False
     relativistic_field_initialization = False
-    time_relativistic_initialization = 0.0
     boundary_conditions = [["periodic"]]
     ionization_model = "none"
     ionization_electrons = None
@@ -382,7 +382,6 @@ class Species(SmileiComponent):
     maximum_charge_state = 0
     is_test = False
     relativistic_field_initialization = False
-    ponderomotive_dynamics = False
 
 class ParticleInjector(SmileiComponent):
     """Parameters for particle injection at boundaries"""
@@ -432,6 +431,7 @@ class Collisions(SmileiComponent):
     species2 = None
     coulomb_log = 0.
     coulomb_log_factor = 1.
+    every = 1
     debug_every = 0
     ionizing = False
     nuclear_reaction = None
@@ -533,6 +533,7 @@ class Antenna(SmileiComponent):
     field = None
     time_profile  = None
     space_profile = None
+    space_time_profile = None
 
 # Particle wall
 class PartWall(SmileiComponent):

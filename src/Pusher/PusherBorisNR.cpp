@@ -24,8 +24,8 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    
-    
+
+
     int nparts;
     if (vecto) {
         nparts = Epart->size()/3;
@@ -33,29 +33,29 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
         //nparts = particles.size();
         nparts = particles.last_index.back();
     }
-    double *Ex = &( ( *Epart )[0*nparts] );
-    double *Ey = &( ( *Epart )[1*nparts] );
-    double *Ez = &( ( *Epart )[2*nparts] );
-    double *Bx = &( ( *Bpart )[0*nparts] );
-    double *By = &( ( *Bpart )[1*nparts] );
-    double *Bz = &( ( *Bpart )[2*nparts] );
-    
-    double* position_x = particles.getPtrPosition(0);
-    double* position_y = NULL;
-    double* position_z = NULL;
+    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
+    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
+
+    double* __restrict__ position_x = particles.getPtrPosition(0);
+    double* __restrict__ position_y = NULL;
+    double* __restrict__ position_z = NULL;
     if (nDim_>1) {
         position_y = particles.getPtrPosition(1);
         if (nDim_>2) {
             position_z = particles.getPtrPosition(2);
         }
     }
-    
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
-    
-    short *charge = particles.getPtrCharge();
-    
+
+    double* __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double* __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double* __restrict__ momentum_z = particles.getPtrMomentum(2);
+
+    short * __restrict__ charge = particles.getPtrCharge();
+
     double charge_over_mass ;
     double umx, umy, umz;
     double upx, upy, upz;
@@ -72,37 +72,37 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
         #pragma acc loop gang worker vector
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-    
+
         charge_over_mass = (double)( charge[ipart] ) *one_over_mass_;
         alpha = charge_over_mass*dts2;
-        
+
         // uminus = v + q/m * dt/2 * E
-        umx = momentum_x[ipart] * one_over_mass_ + alpha * ( *( Ex+ipart-ipart_buffer_offset ) );
-        umy = momentum_y[ipart] * one_over_mass_ + alpha * ( *( Ey+ipart-ipart_buffer_offset ) );
-        umz = momentum_z[ipart] * one_over_mass_ + alpha * ( *( Ez+ipart-ipart_buffer_offset ) );
-        
+        umx = momentum_x[ipart] * one_over_mass_ + alpha * ( Ex[ipart-ipart_buffer_offset] );
+        umy = momentum_y[ipart] * one_over_mass_ + alpha * ( Ey[ipart-ipart_buffer_offset] );
+        umz = momentum_z[ipart] * one_over_mass_ + alpha * ( Ez[ipart-ipart_buffer_offset] );
+
         // Rotation in the magnetic field
-        
-        Tx    = alpha * ( *( Bx+ipart-ipart_buffer_offset ) );
-        Ty    = alpha * ( *( By+ipart-ipart_buffer_offset ) );
-        Tz    = alpha * ( *( Bz+ipart-ipart_buffer_offset ) );
-        
+
+        Tx    = alpha * ( Bx[ipart-ipart_buffer_offset] );
+        Ty    = alpha * ( By[ipart-ipart_buffer_offset] );
+        Tz    = alpha * ( Bz[ipart-ipart_buffer_offset] );
+
         T2 = Tx*Tx + Ty*Ty + Tz*Tz;
-        
+
         Sx = 2*Tx/( 1.+T2 );
         Sy = 2*Ty/( 1.+T2 );
         Sz = 2*Tz/( 1.+T2 );
-        
+
         // uplus = uminus + uprims x S
         upx = umx + umy*Sz - umz*Sy;
         upy = umy + umz*Sx - umx*Sz;
         upz = umz + umx*Sy - umy*Sx;
-        
-        
-        momentum_x[ipart] = mass_ * ( upx + alpha*( *( Ex+ipart-ipart_buffer_offset ) ) );
-        momentum_y[ipart] = mass_ * ( upy + alpha*( *( Ey+ipart-ipart_buffer_offset ) ) );
-        momentum_z[ipart] = mass_ * ( upz + alpha*( *( Ez+ipart-ipart_buffer_offset ) ) );
-        
+
+
+        momentum_x[ipart] = mass_ * ( upx + alpha*( Ex[ipart-ipart_buffer_offset] ) );
+        momentum_y[ipart] = mass_ * ( upy + alpha*( Ey[ipart-ipart_buffer_offset] ) );
+        momentum_z[ipart] = mass_ * ( upz + alpha*( Ez[ipart-ipart_buffer_offset] ) );
+
         // Move the particle
         position_x[ipart] += dt * momentum_x[ipart];
         if (nDim_>1) {
@@ -111,7 +111,7 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
                 position_z[ipart] += dt * momentum_z[ipart];
             }
         }
-        
+
     }
     //
     // if( vecto ) {
@@ -133,5 +133,5 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
     //
     //     }
     // }
-    
+
 }

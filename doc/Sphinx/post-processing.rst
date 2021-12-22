@@ -84,6 +84,60 @@ In the case of the species, you can also obtain a given species by its name::
 
 ----
 
+Obtain diagnostic information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. rubric:: Print available diagnostics
+
+Commands ``S.Scalar``, ``S.Field``, ``S.Probe`` (etc.) will display general information
+about the corresponding diagnostics in the simulation.
+
+.. rubric:: List available diagnostics
+
+.. py:method:: getDiags(diagType)
+
+  Returns a list of available diagnostics of the given type
+  
+  * ``diagType``: The diagnostic type (``"Field"``, ``"Probe"``, etc.)
+
+.. py:method:: getTrackSpecies()
+
+  Returns a list of available tracked species.
+  
+.. rubric:: Information on specific diagnostics
+
+.. py:method:: fieldInfo(diag)
+
+  * ``diag``: the number or name of a Field diagnostic
+  
+  Returns a dictionnary containing:
+  
+  * ``"diagNumber"``: the diagnostic number
+  * ``"diagName"``: the diagnostic name
+  * ``"fields"``: list of the available fields in this diagnostic. In the case of
+    ``AMcylindrical`` geometry, this is a dictionnary with a list of modes for each field.
+
+.. py:method:: probeInfo(diag)
+
+  * ``diag``: the number or name of a Probe diagnostic
+  
+  Returns a dictionnary containing:
+  
+  * ``"probeNumber"``: the diagnostic number
+  * ``"probeName"``: the diagnostic name
+  * ``"fields"``: list of the available fields in this diagnostic
+  
+.. py:method:: performanceInfo()
+ 
+  Returns a dictionnary containing:
+  
+  * ``"quantities_uint"``: a list of the available integer quantities
+  * ``"quantities_double"``: a list of the available float quantities
+  * ``"patch_arrangement"``: the type of patch arrangement
+  * ``"timesteps"``: the list of timesteps
+
+----
+
 Open a Scalar diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -224,13 +278,18 @@ Open a ParticleBinning diagnostic
   S = happi.Open("path/to/my/results")
   Diag = S.ParticleBinning(1)
 
-.. note::
 
-  The :ref:`macro-particle weights<Weights>` are not in units of density,
-  but of density multiplied by hypervolume.
-  In the ``ParticleBinning`` post-processing, this is accounted for: the
-  results are divided by the hypervolume corresponding to the diagnostic's
-  definition.
+**Units of the results:**
+
+  The raw quantity stored in the output file has the units of the :py:data:`deposited_quantity`.
+  Generally, this is a sum of :ref:`macro-particle weights<Weights>`. As those weights
+  are not in units of density (but of density multiplied by hypervolume), a correction
+  is applied in *happi*: it divides the data by an hypervolume. More precisely,
+  for each direction ``x``, ``y`` or ``z``, if this direction is not included in one of 
+  the diagnostic's axes, *happi* divides by the length of the box in that direction.
+  
+  In addition, in order to make the units relative to the bin size, *happi* divides the data
+  in each bin by the bin size.
 
 
 ----
@@ -375,7 +434,8 @@ and only one mode between those three.
   * ``timer_syncDens``             : time spent synchronzing densities by each proc
   * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
-  * ``memory_total``               : the total memory used by the process
+  * ``memory_total``               : the total memory (RSS) used by the process in GB
+  * ``memory_peak``               : the peak memory (peak RSS) used by the process in GB
 
   **WARNING**: The timers ``loadBal`` and ``diags`` include *global* communications.
   This means they might contain time doing nothing, waiting for other processes.

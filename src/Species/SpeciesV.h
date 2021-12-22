@@ -72,11 +72,16 @@ public:
     void sortParticles( Params &params , Patch * patch) override;
     //void countSortParticles(Params& param);
 
+    //! Compute cell_keys for all particles from istart to iend
+    void computeParticleCellKeys(   Params    & params,
+                                    Particles * particles,
+                                    int       * __restrict__ cell_keys,
+                                    int       * __restrict__ count,
+                                    unsigned int istart,
+                                    unsigned int iend ) override;
+
     //! Compute cell_keys for all particles of the current species
     void computeParticleCellKeys( Params &params ) override;
-
-    //! Compute cell_keys for the specified bin boundaries.
-    void compute_bin_cell_keys( Params &params, int istart, int iend );
 
     //! Create a new entry for a particle
     void addSpaceForOneParticle() override

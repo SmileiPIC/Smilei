@@ -54,7 +54,9 @@ public:
     //! Computation of the photon production yield dNph/dt which is
     //! also the cross-section for the Monte-Carlo
     //#pragma acc routine seq
+#ifdef _GPU
     #pragma acc routine seq
+#endif
     double computePhotonProductionYield( double particle_chi, double particle_gamma, 
                                          double * integfochi_table );
 
@@ -68,7 +70,9 @@ public:
     //! Computation of the photon quantum parameter photon_chi for emission
     //! ramdomly and using the tables xi and chiphmin
     //! \param particle_chi particle quantum parameter
+#ifdef _GPU
     #pragma acc routine seq
+#endif
     double computeRandomPhotonChiWithInterpolation( double particle_chi, double xi,
                                  double * table_min_photon_chi, double * table_xi);
 
@@ -84,7 +88,9 @@ public:
     //! from the computed table niel_.table
     //! \param particle_chi particle quantum parameter
     
+#ifdef _GPU
     #pragma acc routine seq
+#endif
     double getHNielFromTable( double particle_chi, double * tableNiel);
 
     //! Return the stochastic diffusive component of the pusher
@@ -103,8 +109,10 @@ public:
     //! \param particle_chi particle quantum parameter
     //! \param dt time step
     //#pragma omp declare simd
+#ifdef _GPU
     #pragma acc routine seq
-    inline double getRidgersCorrectedRadiatedEnergy( double particle_chi,
+#endif
+    inline double __attribute__((always_inline)) getRidgersCorrectedRadiatedEnergy( double particle_chi,
             double dt )
     {
         return RadiationTools::computeRidgersFit( particle_chi )*dt*particle_chi*particle_chi*factor_classical_radiated_power_;
@@ -113,34 +121,40 @@ public:
     //! Get of the classical continuous radiated energy during dt
     //! \param particle_chi particle quantum parameter
     //! \param dt time step
-    inline double getClassicalRadiatedEnergy( double particle_chi, double dt )
+#ifdef _GPU
+    #pragma acc routine seq
+#endif
+    inline double __attribute__((always_inline)) getClassicalRadiatedEnergy( double particle_chi, double dt )
     {
         return dt*particle_chi*particle_chi*factor_classical_radiated_power_;
     };
 
     //! Return the minimum_chi_discontinuous_ value
     //! Under this value, no discontinuous radiation reaction
-    //#pragma acc routine seq
+#ifdef _GPU
     #pragma acc routine seq
-    inline double getMinimumChiDiscontinuous()
+#endif
+    inline double __attribute__((always_inline)) getMinimumChiDiscontinuous()
     {
         return minimum_chi_discontinuous_;
     }
 
     //! Return the minimum_chi_continuous_ value
     //! Under this value, no continuous radiation reaction
+#ifdef _GPU
     #pragma acc routine seq
-    inline double getMinimumChiContinuous()
+#endif
+    inline double __attribute__((always_inline)) getMinimumChiContinuous()
     {
         return minimum_chi_continuous_;
     }
 
-    inline std::string getNielHComputationMethod()
+    inline std::string __attribute__((always_inline)) getNielHComputationMethod()
     {
         return this->niel_.computation_method_;
     }
 
-    inline int getNielHComputationMethodIndex()
+    inline int __attribute__((always_inline)) getNielHComputationMethodIndex()
     {
         return this->niel_.computation_method_index_;
     }
@@ -148,7 +162,7 @@ public:
     // -----------------------------------------------------------------------------
     //! Return the classical power factor factor_classical_radiated_power_.
     // -----------------------------------------------------------------------------
-    inline double getFactorClassicalRadiatedPower()
+    inline double __attribute__((always_inline)) getFactorClassicalRadiatedPower()
     {
         return factor_classical_radiated_power_;
     }

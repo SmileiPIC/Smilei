@@ -8,20 +8,19 @@ Main(
 	interpolation_order = 2,
 	
 	timestep = 0.005 * L0,
-	simulation_time  = 0.01 * L0,
+	simulation_time  = 0.02 * L0,
 	
 	cell_length = [0.01 * L0]*3,
 	grid_length  = [1. * L0]*3,
 	
 	number_of_patches = [ 4 ]*3,
 	
-	time_fields_frozen = 10000000.,
+	time_fields_frozen = 0.01,
 	
 	EM_boundary_conditions = [ ["periodic"] ],
-	print_every = 10,
+	print_every = 1,
 	solve_poisson = False,
 	
-	random_seed = smilei_mpi_rank
 )
 
 def custom(x, y, z):
@@ -73,10 +72,14 @@ for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
 		field = field,
 		profile = gaussian(10.)
 	)
+	PrescribedField(
+		field = field,
+		profile = lambda x,y,z,t: 10.*np.cos(x+y+z)*np.sin(math.pi/2*t/Main.simulation_time)
+	)
 
 
 DiagFields(
-	every = 5,
+	every = 4,
 )
 
 

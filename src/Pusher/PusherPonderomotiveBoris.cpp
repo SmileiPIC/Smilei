@@ -80,9 +80,9 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
         // one_ov_gamma_ponderomotive = dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset];
         
         // init Half-acceleration in the electric field and ponderomotive force
-        pxsm = charge_over_mass_dts2 * ( *( Ex+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhix+ipart-ipart_buffer_offset ) ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
-        pysm = charge_over_mass_dts2 * ( *( Ey+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiy+ipart-ipart_buffer_offset ) ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
-        pzsm = charge_over_mass_dts2 * ( *( Ez+ipart-ipart_buffer_offset ) ) - charge_sq_over_mass_sq_dts4 * ( *( GradPhiz+ipart-ipart_buffer_offset ) ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
+        pxsm = charge_over_mass_dts2 * ( Ex[ipart-ipart_buffer_offset] ) - charge_sq_over_mass_sq_dts4 * ( GradPhix[ipart-ipart_buffer_offset] ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
+        pysm = charge_over_mass_dts2 * ( Ey[ipart-ipart_buffer_offset] ) - charge_sq_over_mass_sq_dts4 * ( GradPhiy[ipart-ipart_buffer_offset] ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
+        pzsm = charge_over_mass_dts2 * ( Ez[ipart-ipart_buffer_offset] ) - charge_sq_over_mass_sq_dts4 * ( GradPhiz[ipart-ipart_buffer_offset] ) * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset] ;
         
         umx = momentum_x[ipart] + pxsm;
         umy = momentum_y[ipart] + pysm;
@@ -90,9 +90,9 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
         
         // Rotation in the magnetic field, using updated gamma ponderomotive
         alpha = charge_over_mass_dts2 * dynamics_inv_gamma_ponderomotive[ipart-ipart_buffer_offset];
-        Tx    = alpha * ( *( Bx+ipart-ipart_buffer_offset ) );
-        Ty    = alpha * ( *( By+ipart-ipart_buffer_offset ) );
-        Tz    = alpha * ( *( Bz+ipart-ipart_buffer_offset ) );
+        Tx    = alpha * ( Bx[ipart-ipart_buffer_offset] );
+        Ty    = alpha * ( By[ipart-ipart_buffer_offset] );
+        Tz    = alpha * ( Bz[ipart-ipart_buffer_offset] );
         Tx2   = Tx*Tx;
         Ty2   = Ty*Ty;
         Tz2   = Tz*Tz;

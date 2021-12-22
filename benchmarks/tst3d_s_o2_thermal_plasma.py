@@ -42,8 +42,6 @@ Main(
     EM_boundary_conditions = [ ["periodic"] ],
     
     print_every = 1,
-
-    random_seed = smilei_mpi_rank
 )
 
 
@@ -128,6 +126,20 @@ for direction in ["forward", "backward", "both", "canceling"]:
 	    axes = [
 	    	["a", -Ly/2., Ly/2., 10],
 	    	["b", -Lz/2., Lz/2., 10],
+	    	],
+	    every = 40,
+	    time_average = 30
+	)
+	DiagScreen(
+	    shape = "cylinder",
+	    point = [Lx/2., Ly/3., Lz/3.],
+	    vector = [Ly*0.4, 0.1, 0.1],
+	    direction = direction,
+	    deposited_quantity = "weight",
+	    species = ["electron"],
+	    axes = [
+	    	["a", -Lx/2., Lx/2., 10],
+	    	["phi", -math.pi, math.pi, 10],
 	    	],
 	    every = 40,
 	    time_average = 30

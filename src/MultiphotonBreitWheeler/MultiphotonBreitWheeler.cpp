@@ -9,7 +9,7 @@
 
 #include "MultiphotonBreitWheeler.h"
 #include "Species.h"
-
+ 
 // -----------------------------------------------------------------------------
 //! Constructor for Radiation
 // input: simulation parameters & Species index
