@@ -174,7 +174,7 @@ class Main(SmileiSingleton):
     number_of_AM_relativistic_field_initialization = 1
     number_of_AM_classical_Poisson_solver = 1
     timestep_over_CFL = None
-    cell_sorting = False
+    cell_sorting = None
     gpu_computing = False                      # Activate the computation on GPU
     number_of_damping_cells = [0]
 

@@ -777,9 +777,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 }
             }
         }
-	//Use cell sorting if merge is used.
+        //Use cell sorting if merge is used.
         PyTools::extract( "merging_method", merging_method, "Species", ispec );
-	if (merging_method != "none"){
+        if (merging_method != "none"){
             if (defined_cell_sort == true && cell_sorting == false){
                 ERROR(" Cell sorting must be allowed in order to use particle merge.")
             }
