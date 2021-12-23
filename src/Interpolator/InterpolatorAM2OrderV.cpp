@@ -196,7 +196,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
    
     int cell_nparts( ( int )iend[0]-( int )istart[0] );
 
-    std::vector<complex<double>> exp_m_theta_( vecSize), exp_mm_theta( vecSize,  1.) ;                                                          //exp(-i theta), exp(-i m theta)
+    std::vector<complex<double>> exp_m_theta_( vecSize), exp_mm_theta( vecSize) ;                                                          //exp(-i theta), exp(-i m theta)
 
     //Loop on groups of vecSize particles
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
@@ -213,6 +213,7 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             int ipart2 = ipart+ivect+istart[0];
             double r = sqrt( position_y[ipart2]*position_y[ipart2] + position_z[ipart2]*position_z[ipart2] );
             exp_m_theta_[ipart] = ( position_y[ipart2] - Icpx * position_z[ipart2] ) / r ;
+            exp_mm_theta[ipart] = 1. ;
             eitheta_old[ipart] =  2.*std::real(exp_m_theta_[ipart]) - exp_m_theta_[ipart] ;  //exp(i theta)
 
             // i= 0 ==> X
@@ -456,8 +457,8 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
             delta2 = std::real( exp_m_theta_[ipart] ) * Bpart[1][ipart] + std::imag( exp_m_theta_[ipart] ) * Bpart[2][ipart];
             Bpart[2][ipart] = -std::imag( exp_m_theta_[ipart] ) * Bpart[1][ipart] + std::real( exp_m_theta_[ipart] ) * Bpart[2][ipart];
             Bpart[1][ipart] = delta2 ;
+            //std::cout << " vecto final " <<  Epart[0][ipart] << " " <<  Epart[1][ipart] << " " <<  Epart[2][ipart] << " " <<  Bpart[0][ipart] << " " <<  Bpart[1][ipart] << " " <<  Bpart[2][ipart]  << std::endl;
         }
-        //std::cout << " after cartesianism " <<  Epart[0][0] << " " <<  Epart[1][0] << " " <<  Epart[2][0] <<  Bpart[0][0] << " " <<  Bpart[1][0] << " " <<  Bpart[2][0]  << std::endl;
 
 
     } //end loop on ivec
