@@ -40,10 +40,11 @@ void nvidiaParticles::initializeDataOnDevice()
         return ;
     }
 
+    int ndim = Position.size();
 
     double res_fac = 1.;
     nvidia_position_.resize( Position.size() );
-    for (int idim=0;idim<Position.size();idim++) {
+    for (int idim=0;idim<ndim;idim++) {
         nvidia_position_[idim].reserve( res_fac*Position[idim].size() );
         nvidia_position_[idim].resize( Position[idim].size() );
     }
@@ -91,9 +92,9 @@ void nvidiaParticles::initializeDataOnDevice()
 
     // Initialize the list of pointers
 
-    if( nividia_double_prop_.empty() ) {  // do this just once
+    if( nvidia_double_prop_.empty() ) {  // do this just once
 
-        for( unsigned int i=0 ; i< nDim ; i++ ) {
+        for( unsigned int i=0 ; i< ndim ; i++ ) {
             nividia_double_prop_.push_back( &( nvidia_position_[i] ) );
         }
 
@@ -103,7 +104,7 @@ void nvidiaParticles::initializeDataOnDevice()
 
         nividia_double_prop_.push_back( &nvidia_weight_ );
 
-        short_prop.push_back( &nvidia_charge_ );
+        nvidia_short_prop_.push_back( &nvidia_charge_ );
 
         // Quantum parameter (for QED effects):
         // - if radiation reaction (continuous or discontinuous)
