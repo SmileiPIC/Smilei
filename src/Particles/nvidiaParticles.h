@@ -54,7 +54,7 @@ public:
     std::vector< thrust::device_vector<double>* > nvidia_double_prop_;
     
     //! List of short* arrays
-    std::vector< thrust::device_vector<double>* > nvidia_short_prop_;
+    std::vector< thrust::device_vector<short>* > nvidia_short_prop_;
 
     double* getPtrPosition( int idim ) override {
         return thrust::raw_pointer_cast( nvidia_position_[idim].data() );

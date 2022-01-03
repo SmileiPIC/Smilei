@@ -130,7 +130,7 @@ public:
     void createParticle();
 
     //! Create n_additional_particles new particles
-    void createParticles( int n_additional_particles );
+    virtual void createParticles( int n_additional_particles );
 
     //! Create n_additional_particles new particles at position pstart in the particles data structure
     void createParticles( int n_additional_particles, int pstart );

@@ -182,7 +182,7 @@ void RadiationLandauLifshitz::operator()(
             radiated_energy_loc += weight[ipart]*(gamma - std::sqrt( 1.0
                                               + momentum_x[ipart]*momentum_x[ipart]
                                               + momentum_y[ipart]*momentum_y[ipart]
-                                              + momentum_z[ipart]*momentum_z[ipart] );
+                                              + momentum_z[ipart]*momentum_z[ipart] ));
 #endif
 
 

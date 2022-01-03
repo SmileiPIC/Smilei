@@ -95,14 +95,14 @@ void nvidiaParticles::initializeDataOnDevice()
     if( nvidia_double_prop_.empty() ) {  // do this just once
 
         for( unsigned int i=0 ; i< ndim ; i++ ) {
-            nividia_double_prop_.push_back( &( nvidia_position_[i] ) );
+            nvidia_double_prop_.push_back( &( nvidia_position_[i] ) );
         }
 
         for( unsigned int i=0 ; i< 3 ; i++ ) {
-            nividia_double_prop_.push_back( &( nvidia_momentum_[i] ) );
+            nvidia_double_prop_.push_back( &( nvidia_momentum_[i] ) );
         }
 
-        nividia_double_prop_.push_back( &nvidia_weight_ );
+        nvidia_double_prop_.push_back( &nvidia_weight_ );
 
         nvidia_short_prop_.push_back( &nvidia_charge_ );
 
@@ -110,14 +110,14 @@ void nvidiaParticles::initializeDataOnDevice()
         // - if radiation reaction (continuous or discontinuous)
         // - if multiphoton-Breit-Wheeler if photons
         if( isQuantumParameter ) {
-            nividia_double_prop_.push_back( &nvidia_chi_ );
+            nvidia_double_prop_.push_back( &nvidia_chi_ );
         }
 
         // Optical Depth for Monte-Carlo processes:
         // - if the discontinuous (Monte-Carlo) radiation reaction
         // is activated, tau is the incremental optical depth to emission
         if( isMonteCarlo ) {
-            nividia_double_prop_.push_back( &nvidia_tau_ );
+            nvidia_double_prop_.push_back( &nvidia_tau_ );
         }
     }
 }
