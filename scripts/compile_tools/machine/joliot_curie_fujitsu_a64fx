@@ -1,0 +1,27 @@
+#
+# Machine file for Irene Joliot-Curie A64FX using the Fujitsu compiler
+# __________________________________________________________
+#
+# Load the correct modules:
+# module purge
+# module load fujitsu mpi
+# module load python3/3.8.10
+#
+# You have to install your own hdf5:
+# export HDF5_ROOT=<path to your installation folder>
+# export PATH=${HDF5_ROOT}/bin:${PATH}
+# export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
+# export HDF5_ROOT_DIR=${HDF5_ROOT}
+#
+# List of Fujitsu flags for optimization on A64FX
+# -Kfast : optimization
+# -march=armv8.2-a+sve or -KA64FX -KSVE : optimization for architecture
+# -SSL2 : link with math library
+# -Kopenmp : use OpenMP (use OMP_PROC_BIND=true)
+
+CXXFLAGS += -KA64FX -KSVE -SSL2 -D__AARCH64EL__="1" -Kparallel -Kunroll -Kopenmp_simd -Ksimd=2 -Kassume=notime_saving_compilation -Nfjomplib -w 0 -Kocl -Kzfill
+#CXXFLAGS += -D__AARCH64EL__="1" -Nfjomplib -w 0 -Kocl
+
+LDFLAGS += -KA64FX -KSVE -SSL2 -D__AARCH64EL__="1" -Kparallel -Kunroll -Kopenmp_simd -Ksimd=2 -Kassume=notime_saving_compilation -Nfjomplib -Kocl -Kzfill
+
+LDFLAGS += -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/python/3.8.10/s2azw3pgbfzhfcf44tvnh652pju2vtyj/lib  -lcrypt -lpthread -ldl -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/gettext/0.21/i4aacmkl6pqxumiqfa36455yfhoojidl/lib -lintl -lutil -lm

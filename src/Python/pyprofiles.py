@@ -456,13 +456,10 @@ def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
 
 
 def transformPolarization(polarization_phi, ellipticity):
-    from math import pi, sqrt, sin, cos, tan, atan
+    from math import pi, sqrt, sin, cos, tan, atan2
     e2 = ellipticity**2
     p = (1.-e2)*sin(2.*polarization_phi)/2.
-    if abs(p) < 1e-10:
-        dephasing = pi/2.
-    else:
-        dephasing = atan(ellipticity/p)
+    dephasing = atan2(ellipticity, p)
     amplitude = sqrt(1./(1.+e2))
     c2 = cos(polarization_phi)**2
     s2 = 1. - c2
@@ -738,34 +735,42 @@ try:
     
     _N_LaserOffset = 0
     
-    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., fft_time_window=None, extra_envelope=lambda *a:1., keep_n_strongest_modes=100, angle=0., number_of_processes=None):
+    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., angle=0., extra_envelope=lambda *a:1.,
+            fft_time_window=None, fft_time_step=None, keep_n_strongest_modes=100,
+            number_of_processes=None, file=None):
         global _N_LaserOffset
         
-        file = 'LaserOffset'+str(_N_LaserOffset)+'.h5'
+        file_ = file or ('LaserOffset'+str(_N_LaserOffset)+'.h5')
         
         L = Laser(
-            box_side = "xmin",
-            file = file,
+            box_side = box_side,
+            file = file_,
         )
         
         L._offset = offset
         L._extra_envelope = extra_envelope
         L._profiles = space_time_profile
         L._fft_time_window = fft_time_window or Main.simulation_time
+        L._fft_time_step = fft_time_step or Main.timestep
         L._keep_n_strongest_modes = keep_n_strongest_modes
         L._angle = angle
         L._number_of_processes = number_of_processes
-        L._propagate = True
+        if file:
+            if not os.path.exists(file):
+                raise Exception("File not found or not accessible: "+file)
+            L._propagate = False
+        else:
+            L._propagate = True
         
         _N_LaserOffset += 1
 
 except:
     
-    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., time_envelope=1.):
+    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., fft_time_window=None, extra_envelope=lambda *a:1., keep_n_strongest_modes=100, angle=0., number_of_processes=None, file=None):
         L = Laser(
-            box_side = "xmin",
+            box_side = box_side,
             file = "none",
-            time_envelope = time_envelope
+            time_envelope = extra_envelope
         )
         print("WARNING: LaserOffset unavailable because numpy was not found")
 

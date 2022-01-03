@@ -36,7 +36,6 @@ Main(
     solve_poisson = False,
     print_every = 100,
 
-    random_seed = smilei_mpi_rank
 )
 
 MovingWindow(
@@ -85,7 +84,6 @@ Species(
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.,0.,0.],
     pusher = "ponderomotive_boris",
-    ponderomotive_dynamics = "True",
     time_frozen = 0.0,
     boundary_conditions = [
        ["remove", "remove"],

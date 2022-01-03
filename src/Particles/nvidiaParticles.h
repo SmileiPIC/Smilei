@@ -29,7 +29,10 @@ public:
     void syncGPU() override;
     void syncCPU() override;
 
+    //! Position vector on device
     std::vector< thrust::device_vector<double> > nvidia_position_;
+    
+    //! Momentum vector on device 
     std::vector< thrust::device_vector<double> > nvidia_momentum_;
 
     //! Weight
@@ -46,6 +49,12 @@ public:
 
     //! Monte-Carlo parameter
     thrust::device_vector<double> nvidia_tau_;
+
+    //! List of double* arrays
+    std::vector< thrust::device_vector<double>* > nvidia_double_prop_;
+    
+    //! List of short* arrays
+    std::vector< thrust::device_vector<double>* > nvidia_short_prop_;
 
     double* getPtrPosition( int idim ) override {
         return thrust::raw_pointer_cast( nvidia_position_[idim].data() );
@@ -75,8 +84,23 @@ public:
         return gpu_nparts_;
     }
 
+    // -----------------------------------------------------------------------------
+    //! Extract particles from the Particles object and put 
+    //! them in the Particles object `particles_to_move`
+    // -----------------------------------------------------------------------------
     void extractParticles( Particles* particles_to_move ) override;
+    
+    // -----------------------------------------------------------------------------
+    //! Inject particles from particles_to_move object and put 
+    //! them in the Particles object
+    // -----------------------------------------------------------------------------
     int injectParticles( Particles* particles_to_move ) override;
+
+    // ---------------------------------------------------------------------------------------------------------------------
+    //! Create n_additional_particles new particles at the end of vectors
+    //! Fill the new elements with 0
+    // ---------------------------------------------------------------------------------------------------------------------
+    void createParticles( int n_additional_particles ) override;
 
     int gpu_nparts_;
     int nparts_to_move_;

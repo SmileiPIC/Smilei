@@ -59,7 +59,6 @@ Main(
 
 	reference_angular_frequency_SI = 6*math.pi*1e14,
 
-	random_seed = smilei_mpi_rank
 )
 
 Species(

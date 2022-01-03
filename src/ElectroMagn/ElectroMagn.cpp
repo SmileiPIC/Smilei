@@ -34,8 +34,8 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
     isXmin( patch->isXmin() ),
     isXmax( patch->isXmax() ),
     is_pxr( params.is_pxr ),
-    nrj_mw_lost( 0. ),
-    nrj_new_fields( 0. )
+    nrj_mw_out( 0. ),
+    nrj_mw_inj( 0. )
 {
     n_space.resize( params.n_space.size() );
     // Test if the patch is a small patch (Hilbert or Linearized are for VectorPatch)
@@ -108,8 +108,8 @@ ElectroMagn::ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch ) 
     isXmin( patch->isXmin() ),
     isXmax( patch->isXmax() ),
     is_pxr( emFields->is_pxr ),
-    nrj_mw_lost( 0. ),
-    nrj_new_fields( 0. )
+    nrj_mw_out( 0. ),
+    nrj_mw_inj( 0. )
 {
 
     if ( dynamic_cast<PatchAM *>( patch ) ) {

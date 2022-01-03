@@ -58,7 +58,7 @@ public:
                               Particles * particles,
                               Species * species,
                               unsigned int nPart,
-                              unsigned int iPart, double *indexes, Params &params );
+                              unsigned int iPart, double *indexes, Params &params, Random * rand );
     
     //! Creation of the particle momentum
     static void createMomentum( std::string momentum_initialization,
@@ -67,7 +67,9 @@ public:
                             unsigned int nPart,
                             unsigned int iPart,
                             double *temp,
-                            double *vel);
+                            double *vel,
+                            Random * rand
+                            );
     
     //! Creation of the particle weight
     static void createWeight( std::string position_initialization,
@@ -133,7 +135,7 @@ public:
 private:
 
     //! Provides a Maxwell-Juttner distribution of energies
-    static std::vector<double> maxwellJuttner( Species * species, unsigned int npoints, double temperature );
+    static std::vector<double> maxwellJuttner( Species * species, unsigned int npoints, double temperature, Random * rand );
     //! Array used in the Maxwell-Juttner sampling (see doc)
     static const double lnInvF[1000];
     //! Array used in the Maxwell-Juttner sampling (see doc)

@@ -22,7 +22,6 @@ Main(
     
     EM_boundary_conditions = [ ['silver-muller'] ],
     
-    random_seed = smilei_mpi_rank
 )
 
 ang = [-pi/7., pi/6.]

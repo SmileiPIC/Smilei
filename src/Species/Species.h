@@ -101,8 +101,8 @@ public:
     //! logical true if particles are relativistic and require proper electromagnetic field initialization
     bool relativistic_field_initialization_;
 
-    //! Time for which the species field is initialized in case of relativistic initialization
-    double time_relativistic_initialization_;
+    //! Iteration for which the species field is initialized in case of relativistic initialization
+    int iter_relativistic_initialization_;
 
     //! electron and positron Species for the multiphoton Breit-Wheeler
     std::vector<std::string> multiphoton_Breit_Wheeler_;
@@ -162,8 +162,6 @@ public:
     bool position_initialization_on_species_;
     //! Index of the species where position initialization is made
     int position_initialization_on_species_index;
-    //! Boolean to know if species follows ponderomotive loop (laser modeled with envelope)
-    bool ponderomotive_dynamics;
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
     //! Index of the species where field-ionized electrons go
@@ -237,11 +235,13 @@ public:
     //! Accumulate energy lost with bc
     double nrj_bc_lost;
     //! Accumulate energy lost with moving window
-    double nrj_mw_lost;
+    double nrj_mw_out;
+    //! Accumulate energy gained with moving window
+    double nrj_mw_inj;
     //! Accumulate energy added with new particles
-    double new_particles_energy_;
+    double nrj_new_part_;
     //! Accumulate energy lost by the particle with the radiation
-    double radiated_energy_;
+    double nrj_radiated_;
 
     //! whether to choose vectorized operators with respective sorting methods
     int vectorized_operators;
@@ -435,6 +435,13 @@ public:
     //! Method used to sort particles
     virtual void sortParticles( Params &param, Patch * patch );
 
+    virtual void computeParticleCellKeys(   Params    & params,
+                                            Particles * particles,
+                                            int       * __restrict__ cell_keys,
+                                            int       * __restrict__ count,
+                                            unsigned int istart,
+                                            unsigned int iend ) {};
+
     virtual void computeParticleCellKeys( Params &params ) {};
 
     //! This function configures the type of species according to the default mode
@@ -459,69 +466,7 @@ public:
 
     //! Method to know if we have to project this species or not.
     bool  isProj( double time_dual, SimWindow *simWindow );
-
-    //! Set the energy lost in the boundary conditions
-    void setLostNrjBC( double value )
-    {
-        nrj_bc_lost = value;
-    }
-
-    //! Get the energy lost in the boundary conditions
-    double getLostNrjBC() const
-    {
-        return nrj_bc_lost;
-    }
-
-    //! Get energy lost with moving window (fields)
-    double getLostNrjMW() const
-    {
-        return nrj_mw_lost;
-    }
-
-    //! Get the energy radiated away by the particles
-    double getNrjRadiation() const
-    {
-        return radiated_energy_;
-    }
-
-    //! Set the energy radiated away by the particles
-    void setNrjRadiation( double value )
-    {
-        radiated_energy_ = value;
-    }
-
-    //! Add the energy radiated away by the particles
-    void addNrjRadiation( double value )
-    {
-        radiated_energy_ += value;
-    }
-
-    //! Set gained via new particles
-    void setNewParticlesNRJ( double value )
-    {
-        new_particles_energy_ = value;
-    }
-
-    //! Get energy gained via new particles
-    double getNewParticlesNRJ() const
-    {
-        return new_particles_energy_;
-    }
-
-    //! Reinitialize the scalar diagnostics buffer
-    void reinitDiags()
-    {
-        //nrj_bc_lost = 0;
-        nrj_mw_lost = 0;
-        //new_particles_energy_ = 0;
-        //radiated_energy_ = 0;
-    }
-
-    inline void storeNRJlost( double nrj )
-    {
-        nrj_mw_lost += nrj;
-    };
-
+    
     inline double computeNRJ()
     {
         double nrj( 0. );

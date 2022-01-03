@@ -40,6 +40,7 @@ void nvidiaParticles::initializeDataOnDevice()
         return ;
     }
 
+
     double res_fac = 1.;
     nvidia_position_.resize( Position.size() );
     for (int idim=0;idim<Position.size();idim++) {
@@ -88,6 +89,36 @@ void nvidiaParticles::initializeDataOnDevice()
         nvidia_cell_keys_.reserve( 100 );
     }
 
+    // Initialize the list of pointers
+
+    if( nividia_double_prop_.empty() ) {  // do this just once
+
+        for( unsigned int i=0 ; i< nDim ; i++ ) {
+            nividia_double_prop_.push_back( &( nvidia_position_[i] ) );
+        }
+
+        for( unsigned int i=0 ; i< 3 ; i++ ) {
+            nividia_double_prop_.push_back( &( nvidia_momentum_[i] ) );
+        }
+
+        nividia_double_prop_.push_back( &nvidia_weight_ );
+
+        short_prop.push_back( &nvidia_charge_ );
+
+        // Quantum parameter (for QED effects):
+        // - if radiation reaction (continuous or discontinuous)
+        // - if multiphoton-Breit-Wheeler if photons
+        if( isQuantumParameter ) {
+            nividia_double_prop_.push_back( &nvidia_chi_ );
+        }
+
+        // Optical Depth for Monte-Carlo processes:
+        // - if the discontinuous (Monte-Carlo) radiation reaction
+        // is activated, tau is the incremental optical depth to emission
+        if( isMonteCarlo ) {
+            nividia_double_prop_.push_back( &nvidia_tau_ );
+        }
+    }
 }
 
 void nvidiaParticles::syncCPU()
@@ -140,6 +171,10 @@ void nvidiaParticles::syncGPU()
     gpu_nparts_ = Charge.size();
 }
 
+// -----------------------------------------------------------------------------
+//! Extract particles from the Particles object and put 
+//! them in the Particles object `particles_to_move`
+// -----------------------------------------------------------------------------
 void nvidiaParticles::extractParticles( Particles* particles_to_move )
 {
     int nparts = gpu_nparts_;
@@ -334,4 +369,32 @@ int nvidiaParticles::injectParticles( Particles* particles_to_move )
     nparts_to_move_ = 0;
 
     return nparts_add;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Create n_additional_particles new particles at the end of vectors
+//! Fill the new elements with 0
+// ---------------------------------------------------------------------------------------------------------------------
+void nvidiaParticles::createParticles( int n_additional_particles )
+{
+    int n_particles = gpu_nparts_;
+    int new_size = n_particles + n_additional_particles;
+    for( unsigned int iprop=0 ; iprop<nvidia_double_prop_.size() ; iprop++ ) {
+        ( *nvidia_double_prop_[iprop] ).resize(new_size);
+         thrust::fill(( *nvidia_double_prop_[iprop] ).begin() + n_particles, ( *nvidia_double_prop_[iprop] ).begin() + new_size, 0);
+    }
+
+    for( unsigned int iprop=0 ; iprop<nvidia_short_prop_.size() ; iprop++ ) {
+        ( *nvidia_short_prop_[iprop] ).resize(new_size);
+        thrust::fill(( *nvidia_short_prop_[iprop] ).begin() + n_particles, ( *nvidia_short_prop_[iprop] ).begin() + new_size, 0);
+    }
+    
+    // 
+    // for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
+    //     ( *nvidia_uint64_prop[iprop] ).resize( n_particles+n_additional_particles );
+    // }
+
+    nvidia_cell_keys_.resize( n_particles+n_additional_particles);
+    thrust::fill(nvidia_cell_keys_.begin() + n_particles, nvidia_cell_keys_.begin() + new_size, 0);
+
 }

@@ -58,7 +58,6 @@ Main(
     
     EM_boundary_conditions = [ ['silver-muller'] ],
     
-    random_seed = smilei_mpi_rank
 )
 
 LaserPlanar1D(

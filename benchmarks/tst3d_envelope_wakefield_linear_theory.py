@@ -32,7 +32,6 @@ Main(
     solve_poisson = False,
     print_every = 100,
 
-    random_seed = smilei_mpi_rank
 )
 
 MovingWindow(
@@ -53,7 +52,6 @@ Species(
     momentum_initialization = "cold",
     particles_per_cell = 1,
     c_part_max = 1.0,
-    ponderomotive_dynamics = True, # = this species interacts with laser envelope
     mass = 1.0,
     charge = -1.0,
     charge_density = polygonal(xpoints=[3.*laser_fwhm,3.5*laser_fwhm,24.5*laser_fwhm,25.*laser_fwhm],xvalues=[0.,0.0017,0.0017,0.]),

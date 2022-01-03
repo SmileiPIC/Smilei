@@ -3,8 +3,8 @@
 import math
 
 
-dx = 1.
-dtrans = 1.
+dx = 1.2
+dtrans = 1.2
 dt = 0.8*dx
 nx =  128 
 ntrans = 64 
@@ -23,10 +23,10 @@ center_sphere = nx*dx/2.
 
 # normalized density of a sphere with uniform density
 def nsphere_(x,r):
-    if ( (x-center_sphere)**2+r**2 <  R_sphere**2 ):
-    	return n0
-    else:
-        return 0.
+	if ( (x-center_sphere)**2+r**2 <  R_sphere**2 ):
+		return n0
+	else:
+		return 0.
 
 Main(
     geometry = "AMcylindrical",
@@ -54,7 +54,6 @@ Main(
     poisson_max_iteration = 50000,    
     print_every = 100,
 
-    random_seed = smilei_mpi_rank
 )
 
 
@@ -90,4 +89,5 @@ DiagProbe(
     corners  = [ [nx*dx,-ntrans*dtrans,0.], [0,ntrans*dtrans,0.] ],
     number   = [nx, 2*ntrans]
 )
+
 

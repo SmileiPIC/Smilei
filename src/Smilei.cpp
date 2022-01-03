@@ -196,7 +196,7 @@ int main( int argc, char *argv[] )
             region.define_regions_map(target_map, &smpi, params);
 
             // params.map_rank used to defined regions neighborood
-            region.build( params, &smpi, vecPatches, openPMD, false );
+            region.build( params, &smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
         }
@@ -256,7 +256,7 @@ int main( int argc, char *argv[] )
         if( params.multiple_decomposition ) {
             TITLE( "Create SDMD grids" );
             region.vecPatch_.refHindex_ = smpi.getRank();
-            region.build( params, &smpi, vecPatches, openPMD, false );
+            region.build( params, &smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
             //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
@@ -267,7 +267,7 @@ int main( int argc, char *argv[] )
             region.clean();
             region.reset_mapping();
             
-            region.build( params, &smpi, vecPatches, openPMD, false );
+            region.build( params, &smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
             region.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region.identify_missing_patches( &smpi, vecPatches, params );
             //cout << smpi.getRank() << "\t - local : " << region.local_patches_.size()
@@ -336,7 +336,7 @@ int main( int argc, char *argv[] )
         if( params.initial_rotational_cleaning ) {
             TITLE( "Rotational cleaning" );
             Region region_global( params );
-            region_global.build( params, &smpi, vecPatches, openPMD, true );
+            region_global.build( params, &smpi, vecPatches, openPMD, true, simWindow->getNmoved() );
             region_global.identify_additional_patches( &smpi, vecPatches, params, simWindow );
             region_global.identify_missing_patches( &smpi, vecPatches, params );
             for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
@@ -429,6 +429,7 @@ int main( int argc, char *argv[] )
                     PyTools::setIteration( itime ); // sets python variable "Main.iteration" for users
                 }
             }
+            #pragma omp barrier
 
             // Patch reconfiguration
             if( params.has_adaptive_vectorization && params.adaptive_vecto_time_selection->theTimeIsNow( itime ) ) {
@@ -641,7 +642,7 @@ int main( int argc, char *argv[] )
                     region.reset_fitting( &smpi, params );
                     region.clean();
                     region.reset_mapping();
-                    region.build( params, &smpi, vecPatches, openPMD, false );
+                    region.build( params, &smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
                     if( params.is_pxr ) {
                         region.coupling( params, false );
                     }
@@ -745,7 +746,7 @@ int executeTestMode( VectorPatch &vecPatches,
     if( params.restart ) {
         if (params.multiple_decomposition) {
             checkpoint.readRegionDistribution( region );
-            region.build( params, smpi, vecPatches, openPMD, false );
+            region.build( params, smpi, vecPatches, openPMD, false, simWindow->getNmoved() );
         }
         checkpoint.restartAll( vecPatches, region, smpi, simWindow, params, openPMD );
     }

@@ -29,8 +29,10 @@ DiagnosticScreen::DiagnosticScreen(
         screen_type = 0;
     } else if( screen_shape == "sphere" ) {
         screen_type = 1;
+    } else if( screen_shape == "cylinder" ) {
+        screen_type = 2;
     } else {
-        ERROR( errorPrefix << ": parameter `shape` must be 'plane' or 'sphere'" );
+        ERROR( errorPrefix << ": parameter `shape` must be 'plane', 'sphere' or 'cylinder'" );
     }
     
     // get parameter "point" that determines the plane reference point, or the sphere center
@@ -52,6 +54,7 @@ DiagnosticScreen::DiagnosticScreen(
     if( screen_vector.size() != params.nDim_particle ) {
         ERROR( errorPrefix << ": parameter `vector` must have "<<params.nDim_particle<<" elements in "<<params.nDim_particle<<"D" );
     }
+    
     // Calculate the unit vector
     screen_unitvector.resize( params.nDim_particle, 0. );
     screen_vectornorm = 0.;
@@ -65,6 +68,7 @@ DiagnosticScreen::DiagnosticScreen(
     for( unsigned int i=0; i<params.nDim_particle; i++ ) {
         screen_unitvector[i] = screen_vector[i]/screen_vectornorm;
     }
+    
     // Calculate other unit vectors to form an orthogonal base
     screen_vector_a.resize( params.nDim_particle, 0. );
     screen_vector_b.resize( params.nDim_particle, 0. );
@@ -86,7 +90,7 @@ DiagnosticScreen::DiagnosticScreen(
         screen_vector_b[2] = screen_unitvector[0]*screen_vector_a[1] - screen_unitvector[1]*screen_vector_a[0];
     }
     
-    // get parameter "oriented", true if particles coming from the other side count negatively
+    // get parameter "direction"
     PyTools::extract( "direction", direction, "DiagScreen", diagId );
     if( direction=="both" ) {
         direction_type = 0;
@@ -110,18 +114,30 @@ DiagnosticScreen::DiagnosticScreen(
                 coefficients[idim] = screen_point[idim];
             }
             if( type == "a" ) {
+                if( screen_type == 1 ) {
+                    ERROR( errorPrefix << ": axis `a` not available for`" << screen_shape << "` screen" );
+                }
                 for( idim=0; idim<params.nDim_particle; idim++ ) {
-                    coefficients[params.nDim_particle+idim] = screen_vector_a[idim];
+                    coefficients[params.nDim_particle+idim] = (screen_type == 0) ? screen_vector_a[idim] : screen_unitvector[idim];
                 }
             } else if( type == "b" ) {
+                if( screen_type > 0 ) {
+                    ERROR( errorPrefix << ": axis `b` not available for `" << screen_shape << "` screen" );
+                }
                 for( idim=0; idim<params.nDim_particle; idim++ ) {
                     coefficients[params.nDim_particle+idim] = screen_vector_b[idim];
                 }
             } else if( type == "theta" ) {
+                if( screen_type != 1 ) {
+                    ERROR( errorPrefix << ": axis `theta` not available for `" << screen_shape << "` screen" );
+                }
                 for( idim=0; idim<params.nDim_particle; idim++ ) {
                     coefficients[params.nDim_particle+idim] = screen_vector[idim] / pow( screen_vectornorm, 2 );
                 }
             } else if( type == "phi" ) {
+                if( screen_type == 0 ) {
+                    ERROR( errorPrefix << ": axis `phi` not available for `" << screen_shape << "` screen" );
+                }
                 coefficients.resize( params.nDim_particle * 3 );
                 for( idim=0; idim<params.nDim_particle; idim++ ) {
                     coefficients[params.nDim_particle+idim] = screen_vector_a[idim];
@@ -163,20 +179,34 @@ void DiagnosticScreen::run( Patch *patch, int itime, SimWindow *simWindow )
     if( screen_type == 0 ) { // plane
         double distance_to_plane = 0.;
         for( unsigned int idim=0; idim<ndim; idim++ ) {
-            distance_to_plane += ( patch->center[idim] - screen_point[idim] ) * screen_unitvector[idim];
+            distance_to_plane += ( patch->center_[idim] - screen_point[idim] ) * screen_unitvector[idim];
         }
         if( abs( distance_to_plane ) > patch->radius ) {
             return;
         }
-    } else { // sphere
+    } else if( screen_type == 1 ) { // sphere
         double distance_to_center = 0.;
         for( unsigned int idim=0; idim<ndim; idim++ ) {
-            distance_to_center += pow( patch->center[idim] - screen_point[idim], 2 );
+            distance_to_center += pow( patch->center_[idim] - screen_point[idim], 2 );
         }
         distance_to_center = sqrt( distance_to_center );
         if( abs( screen_vectornorm - distance_to_center ) > patch->radius ) {
             return;
         }
+    } else if( screen_type == 2 ) { // cylinder
+        double distance_to_axis = 0.;
+        for( unsigned int idim=0; idim<ndim; idim++ ) {
+            distance_to_axis += pow( 
+                 ( patch->center_[(idim+1)%ndim] - screen_point[(idim+1)%ndim] ) * screen_unitvector[(idim+2)%ndim]
+                -( patch->center_[(idim+2)%ndim] - screen_point[(idim+2)%ndim] ) * screen_unitvector[(idim+1)%ndim]
+                , 2 );
+        }
+        distance_to_axis = sqrt( distance_to_axis );
+        if( abs( screen_vectornorm - distance_to_axis ) > patch->radius ) {
+            return;
+        }
+    } else {
+        ERROR( "unkown screen_type " << screen_type );
     }
     
     // Calculate the total number of particles in this patch and resize buffers
@@ -224,7 +254,7 @@ void DiagnosticScreen::run( Patch *patch, int itime, SimWindow *simWindow )
                     index[ipart] = -1;
                 }
             }
-        } else { // sphere
+        } else if( screen_type == 1 ) { // sphere
             for( unsigned int ipart=0; ipart<npart; ipart++ ) {
                 double side = 0.;
                 double side_old = 0.;
@@ -235,6 +265,32 @@ void DiagnosticScreen::run( Patch *patch, int itime, SimWindow *simWindow )
                 }
                 side     = screen_vectornorm-sqrt( side );
                 side_old = screen_vectornorm-sqrt( side_old );
+                if( side*side_old < 0. ) {
+                    index[ipart] = 0;
+                    nuseful++;
+                    if( side > 0. ) {
+                        opp[ipart] = true;
+                    }
+                } else {
+                    index[ipart] = -1;
+                }
+            }
+        } else { // cylinder
+            double r2 = screen_vectornorm * screen_vectornorm;
+            for( unsigned int ipart=0; ipart<npart; ipart++ ) {
+                double side = 0.;
+                double side_old = 0.;
+                double dtg = dt / s->particles->LorentzFactor( ipart );
+                for( unsigned int idim=0; idim<ndim; idim++ ) {
+                    double u1 = s->particles->Position[(idim+1)%ndim][ipart] - screen_point[(idim+1)%ndim];
+                    double u2 = s->particles->Position[(idim+2)%ndim][ipart] - screen_point[(idim+2)%ndim];
+                    side += pow( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim], 2 );
+                    u1 -= dtg * s->particles->Momentum[(idim+1)%ndim][ipart];
+                    u2 -= dtg * s->particles->Momentum[(idim+1)%ndim][ipart];
+                    side_old += pow( u1 * screen_unitvector[(idim+2)%ndim] - u2 * screen_unitvector[(idim+1)%ndim], 2 );
+                }
+                side     = r2 - side;
+                side_old = r2 - side_old;
                 if( side*side_old < 0. ) {
                     index[ipart] = 0;
                     nuseful++;

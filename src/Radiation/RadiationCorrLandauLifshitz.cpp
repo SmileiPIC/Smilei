@@ -65,12 +65,12 @@ void RadiationCorrLandauLifshitz::operator()(
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
     int nparts = Epart->size()/3;
-    double *Ex = &( ( *Epart )[0*nparts] );
-    double *Ey = &( ( *Epart )[1*nparts] );
-    double *Ez = &( ( *Epart )[2*nparts] );
-    double *Bx = &( ( *Bpart )[0*nparts] );
-    double *By = &( ( *Bpart )[1*nparts] );
-    double *Bz = &( ( *Bpart )[2*nparts] );
+    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
+    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
     // Charge divided by the square of the mass
     double charge_over_mass_square;
@@ -88,28 +88,40 @@ void RadiationCorrLandauLifshitz::operator()(
     double temp;
 
     // Momentum shortcut
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
+    double * __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double * __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double * __restrict__ momentum_z = particles.getPtrMomentum(2);
 
     // Charge shortcut
-    short *charge = particles.getPtrCharge();
+    short * __restrict__ charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double *weight = particles.getPtrWeight();
+    double * __restrict__ weight = particles.getPtrWeight();
 
     // Optical depth for the Monte-Carlo process
-    double* chi = particles.getPtrChi();
+    double * __restrict__ chi = particles.getPtrChi();
 
-    // Local vector to store the radiated energy
-    double rad_norm_energy = 0;
+    // cumulative Radiated energy from istart to iend
     double radiated_energy_loc = 0;
+
+#ifndef _GPU
+    // Local vector to store the radiated energy
+
+    // double * rad_norm_energy = new double [iend-istart];
+    double  * rad_norm_energy = (double*) aligned_alloc(64, (iend-istart)*sizeof(double));
+    #pragma omp simd
+    for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
+        rad_norm_energy[ipart] = 0;
+    }
+#else
+    double rad_norm_energy = 0;
+#endif
 
     // _______________________________________________________________
     // Computation
 
     #ifndef _GPU
-        #pragma omp simd reduction(+:radiated_energy_loc) private(rad_norm_energy)
+        #pragma omp simd
     #else
         int np = iend-istart;
         #pragma acc parallel \
@@ -131,8 +143,8 @@ void RadiationCorrLandauLifshitz::operator()(
         particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                        momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                        gamma,
-                       ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                       ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+                       Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref] ,
+                       Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
         // Effect on the momentum
         // (Should be vectorized with masked instructions)
@@ -149,19 +161,39 @@ void RadiationCorrLandauLifshitz::operator()(
             momentum_y[ipart] -= temp*momentum_y[ipart];
             momentum_z[ipart] -= temp*momentum_z[ipart];
 
-            // Exact energy loss due to the radiation
-            rad_norm_energy = gamma - sqrt( 1.0
-                                              + momentum_x[ipart]*momentum_x[ipart]
-                                              + momentum_y[ipart]*momentum_y[ipart]
-                                              + momentum_z[ipart]*momentum_z[ipart] );
-
     // _______________________________________________________________
     // Computation of the thread radiated energy
 
-        radiated_energy_loc += weight[ipart]*rad_norm_energy ;
+#ifndef _GPU
+
+            // Exact energy loss due to the radiation
+            rad_norm_energy[ipart-istart] = gamma - std::sqrt( 1.0
+                                              + momentum_x[ipart]*momentum_x[ipart]
+                                              + momentum_y[ipart]*momentum_y[ipart]
+                                              + momentum_z[ipart]*momentum_z[ipart] );
+        } // end if
+    } // end loop ipart
+
+    #pragma omp simd reduction(+:radiated_energy_loc)
+    for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
+        radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart] ;
+    }
+#else
+            radiated_energy_loc += weight[ipart]*(gamma - std::sqrt( 1.0
+                                              + momentum_x[ipart]*momentum_x[ipart]
+                                              + momentum_y[ipart]*momentum_y[ipart]
+                                              + momentum_z[ipart]*momentum_z[ipart] );
+#endif
+
 
     // _______________________________________________________________
     // Update of the quantum parameter
+    
+#ifndef _GPU
+    #pragma omp simd private(gamma)
+    for( int ipart=istart ; ipart<iend; ipart++ ) {
+#endif
+    
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
@@ -173,17 +205,25 @@ void RadiationCorrLandauLifshitz::operator()(
         chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
                        momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                        gamma,
-                       ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                       ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+                       Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
+                       Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
-                 }
-        }
-    #ifdef _GPU
+    #ifndef _GPU
+    } // end loop ipart
+    #else
+            } // end if
+        } // end loop ipart
     } // end acc parallel
     #endif
 
     // Add the local energy to the patch one
     radiated_energy += radiated_energy_loc;
 
+    #ifndef _GPU
+        // _______________________________________________________________
+        // Cleaning
+
+        delete [] rad_norm_energy;
+    #endif
 
 }

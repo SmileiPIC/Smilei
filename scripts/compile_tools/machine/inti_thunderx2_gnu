@@ -1,0 +1,14 @@
+#
+# Machine file for the Inti ThunderX2 partition using the GNU compiler
+# __________________________________________________________
+#
+# Load the correct modules:
+# module purge
+# module load gnu mpi
+#
+# module load gnu mpi flavor/hdf5/parallel hdf5
+#
+
+CXXFLAGS += -march=armv8-a+fp+simd -ftree-vectorize #-ftree-vectorizer-verbose=2
+FLAGS += -march=armv8-a+fp+simd -ftree-vectorize
+

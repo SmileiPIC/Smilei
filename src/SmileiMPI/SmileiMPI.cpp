@@ -48,8 +48,10 @@ SmileiMPI::SmileiMPI( int *argc, char ***argv )
     int mpi_provided;
 
 #ifdef _OPENMP
+#ifdef _NO_MPI_TM
+    MPI_Init_thread( argc, argv, MPI_THREAD_SERIALIZED, &mpi_provided );
+#else
     MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
-#ifndef _NO_MPI_TM
     if( mpi_provided != MPI_THREAD_MULTIPLE ) {
         ERROR( "MPI_THREAD_MULTIPLE not supported. Compile your MPI library with THREAD_MULTIPLE support." );
     }
@@ -61,11 +63,11 @@ SmileiMPI::SmileiMPI( int *argc, char ***argv )
     smilei_omp_max_threads = 1;
     number_of_cores = 1;
 #endif
-    
+
     world_ = MPI_COMM_WORLD;
     MPI_Comm_size( world_, &smilei_sz );
     MPI_Comm_rank( world_, &smilei_rk );
-    
+
     MPI_Allreduce( &number_of_cores, &global_number_of_cores, 1, MPI_INT, MPI_SUM, world_ );
 } // END SmileiMPI::SmileiMPI
 
@@ -200,7 +202,7 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
             MESSAGE( 1, "applied topology for periodic BCs in "<<"xyz"[i]<<"-direction" );
         }
     }
-    
+
     // Estimate the maximum tag requires by Smilei regarding the current patch distribution
     auto it = max_element(std::begin(patch_count), std::end(patch_count));
     // the maximum tag use the maximum local patch id, iDim=1, iNeghibor=1, 8 for Jx
@@ -212,7 +214,7 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
         if (!smilei_rk) {
             ERROR( "The MPI library you are using authorizes as upper bound for a tag : " << tagUB << endl <<
                    "Regarding the number of patches you are using and the number of MPI process, Smilei will at least generate as larger tag : " << tagmax << endl <<
-                   "You should use " << ratio << " more MPI process, or " << ratio << " less patches or change of MPI library." << endl << 
+                   "You should use " << ratio << " more MPI process, or " << ratio << " less patches or change of MPI library." << endl <<
                    "This is a trough estimation, which depends of the plasma load imbalance." );
         }
     }
@@ -667,21 +669,15 @@ void SmileiMPI::isend( Patch *patch, int to, int tag, Params &params )
     //MPI_Request request;
 
     // Count number max of comms :
-    int maxtag = 0;
-    
-    isend_species( patch, to, maxtag, tag, params );
-    
-    // Send fields
-    if( params.geometry != "AMcylindrical" ) {
-        isend( patch->EMfields, to, maxtag, patch->requests_, tag );
-    } else {
-        isend( patch->EMfields, to, maxtag, patch->requests_, tag, static_cast<ElectroMagnAM *>( patch->EMfields )->El_.size() );
-    }
+    int irequest = 0;
+
+    isend_species( patch, to, irequest, tag, params );
+    isend_fields ( patch, to, irequest, tag, params );
 
 } // END isend( Patch )
 
 
-void SmileiMPI::isend_species( Patch *patch, int to, int &maxtag, int tag, Params &params )
+void SmileiMPI::isend_species( Patch *patch, int to, int &irequest, int tag, Params &params )
 {
 
     // number of species
@@ -700,58 +696,58 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &maxtag, int tag, Param
         for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
             patch->buffer_vecto[ispec] = patch->vecSpecies[ispec]->vectorized_operators;
         }
-        MPI_Isend( &patch->buffer_vecto[0], nspec, MPI_INT, to, tag+maxtag, MPI_COMM_WORLD, &patch->requests_[maxtag] );
-        maxtag ++;
+        MPI_Isend( &patch->buffer_vecto[0], nspec, MPI_INT, to, tag+irequest, MPI_COMM_WORLD, &patch->requests_[irequest] );
+        irequest ++;
     }
 
     // For the particles
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        isend( &( patch->vecSpecies[ispec]->particles->last_index ), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
+        isend( &( patch->vecSpecies[ispec]->particles->last_index ), to, tag+irequest+2*ispec+1, patch->requests_[irequest+2*ispec] );
         if( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ) {
             patch->vecSpecies[ispec]->exchangePatch = createMPIparticles( patch->vecSpecies[ispec]->particles );
-            isend( patch->vecSpecies[ispec]->particles, to, tag+maxtag+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[maxtag+2*ispec+1] );
+            isend( patch->vecSpecies[ispec]->particles, to, tag+irequest+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[irequest+2*ispec+1] );
         }
     }
-
-    maxtag += 2*nspec;
-
+    irequest += 2*nspec;
+    
     // Send some scalars
-    if( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation ) {
-        patch->buffer_scalars.resize( 3*nspec );
-    } else {
-        patch->buffer_scalars.resize( 2*nspec );
-    }
-    unsigned int i = 0;
-    // Energy lost at boundaries
+    unsigned int nscalars = 4 + ( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation );
+    patch->buffer_scalars_particles.resize( nscalars*nspec );
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        patch->buffer_scalars[i] = patch->vecSpecies[ispec]->getLostNrjBC();
-        i++;
-    }
-    // Energy injected at boundaries
-    for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        patch->buffer_scalars[i] = patch->vecSpecies[ispec]->getNewParticlesNRJ();
-        i++;
-    }
-    // Radiated energy
-    if( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation ) {
-        for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-            patch->buffer_scalars[i] = patch->vecSpecies[ispec]->getNrjRadiation();
-            i++;
+        unsigned int i = ispec*nscalars;
+        patch->buffer_scalars_particles[i+0] = patch->vecSpecies[ispec]->nrj_bc_lost; // lost at boundaries
+        patch->buffer_scalars_particles[i+1] = patch->vecSpecies[ispec]->nrj_new_part_; // injected
+        patch->buffer_scalars_particles[i+2] = patch->vecSpecies[ispec]->nrj_mw_out; // lost by moving window
+        patch->buffer_scalars_particles[i+3] = patch->vecSpecies[ispec]->nrj_mw_inj; // gained by moving window
+        if( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation ) {
+            patch->buffer_scalars_particles[i+4] = patch->vecSpecies[ispec]->nrj_radiated_; // radiated energy
         }
     }
-    MPI_Isend( &patch->buffer_scalars[0], patch->buffer_scalars.size(), MPI_DOUBLE, to, tag + maxtag, world_, &patch->requests_[maxtag] );
-    maxtag ++;
+    MPI_Isend( &patch->buffer_scalars_particles[0], patch->buffer_scalars_particles.size(), MPI_DOUBLE, to, tag + irequest, world_, &patch->requests_[irequest] );
+    irequest ++;
 }
 
-void SmileiMPI::isend_fields( Patch *patch, int to, int tag, Params &params )
+void SmileiMPI::isend_fields( Patch *patch, int to, int &irequest, int tag, Params &params )
 {
     // Send fields
     if( params.geometry != "AMcylindrical" ) {
-        isend( patch->EMfields, to, 0, patch->requests_, tag );
+        isend( patch->EMfields, to, irequest, patch->requests_, tag );
     } else {
-        isend( patch->EMfields, to, 0, patch->requests_, tag, static_cast<ElectroMagnAM *>( patch->EMfields )->El_.size() );
+        isend( patch->EMfields, to, irequest, patch->requests_, tag, static_cast<ElectroMagnAM *>( patch->EMfields )->El_.size() );
     }
-
+    
+    // Send some scalars
+    unsigned int nscalars = 2 + 2*params.nDim_field;
+    patch->buffer_scalars_fields.resize( nscalars );
+    patch->buffer_scalars_fields[0] = patch->EMfields->nrj_mw_out; // lost by moving window
+    patch->buffer_scalars_fields[1] = patch->EMfields->nrj_mw_inj; // lost by moving window
+    for( unsigned int jp=0; jp<2; jp++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for( unsigned int i=0 ; i<params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
+            patch->buffer_scalars_fields[2+i*2+jp] = patch->EMfields->poynting[jp][i];
+        }
+    }
+    MPI_Isend( &patch->buffer_scalars_fields[0], patch->buffer_scalars_fields.size(), MPI_DOUBLE, to, tag + irequest, world_, &patch->requests_[irequest] );
+    irequest ++;
 } // END isend( Patch )
 
 
@@ -782,15 +778,10 @@ void SmileiMPI::recv( Patch *patch, int from, int tag, Params &params )
 {
     // Receive species
     recv_species( patch, from, tag, params );
-    
-    // Receive EM fields
-    patch->EMfields->initAntennas( patch, params );
-    if( params.geometry != "AMcylindrical" ) {
-        recv( patch->EMfields, from, tag );
-    } else {
-        recv( patch->EMfields, from, tag, static_cast<ElectroMagnAM *>( patch->EMfields )->El_.size() );
-    }
 
+    // Receive EM fields
+    recv_fields( patch, from, tag, params );
+    
 } // END recv ( Patch )
 
 
@@ -798,10 +789,10 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
 {
     MPI_Datatype recvParts;
     int nbrOfPartsRecv;
-    
+
     // number of species
     unsigned int nspec = patch->vecSpecies.size();
-    
+
     // Adaptive vectorization:
     // In the case of the adaptive mixed sort Vectorization,
     // we communicate the operator state (vectorized_operators variable)
@@ -843,40 +834,27 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
                   << " particles->last_index: " <<  patch->vecSpecies[ispec]->particles->last_index[0]
                   << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
     }
-    
     tag += 2*nspec;
     
     // Receive some scalars
-    if( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation ) {
-        patch->buffer_scalars.resize( 3*nspec );
-    } else {
-        patch->buffer_scalars.resize( 2*nspec );
-    }
+    unsigned int nscalars = 4 + ( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation );
+    patch->buffer_scalars_particles.resize( nscalars*nspec );
     MPI_Status status;
-    MPI_Recv( &patch->buffer_scalars[0], patch->buffer_scalars.size(), MPI_DOUBLE, from, tag, world_, &status );
+    MPI_Recv( &patch->buffer_scalars_particles[0], patch->buffer_scalars_particles.size(), MPI_DOUBLE, from, tag, world_, &status );
     tag++;
-    unsigned int i = 0;
-    // Energy lost at boundaries
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        patch->vecSpecies[ispec]->setLostNrjBC( patch->buffer_scalars[i] );
-        i++;
-    }
-    // Energy injected at boundaries
-    for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-        patch->vecSpecies[ispec]->setNewParticlesNRJ( patch->buffer_scalars[i] );
-        i++;
-    }
-    // Radiated energy
-    if( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation ) {
-        for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
-            patch->vecSpecies[ispec]->setNrjRadiation( patch->buffer_scalars[i] );
-            i++;
+        unsigned int i = ispec*nscalars;
+        patch->vecSpecies[ispec]->nrj_bc_lost   = patch->buffer_scalars_particles[i+0];
+        patch->vecSpecies[ispec]->nrj_new_part_ = patch->buffer_scalars_particles[i+1];
+        patch->vecSpecies[ispec]->nrj_mw_out    = patch->buffer_scalars_particles[i+2];
+        patch->vecSpecies[ispec]->nrj_mw_inj    = patch->buffer_scalars_particles[i+3];
+        if( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation ) {
+            patch->vecSpecies[ispec]->nrj_radiated_ = patch->buffer_scalars_particles[i+4];
         }
     }
-    
 }
 
-void SmileiMPI::recv_fields( Patch *patch, int from, int tag, Params &params )
+void SmileiMPI::recv_fields( Patch *patch, int from, int &tag, Params &params )
 {
     // Receive EM fields
     patch->EMfields->initAntennas( patch, params );
@@ -885,7 +863,20 @@ void SmileiMPI::recv_fields( Patch *patch, int from, int tag, Params &params )
     } else {
         recv( patch->EMfields, from, tag, static_cast<ElectroMagnAM *>( patch->EMfields )->El_.size() );
     }
-
+    
+    // Receive some scalars
+    unsigned int nscalars = 2 + 2*params.nDim_field;
+    patch->buffer_scalars_fields.resize( nscalars );
+    MPI_Status status;
+    MPI_Recv( &patch->buffer_scalars_fields[0], patch->buffer_scalars_fields.size(), MPI_DOUBLE, from, tag, world_, &status );
+    tag++;
+    patch->EMfields->nrj_mw_out =  patch->buffer_scalars_fields[0] ;
+    patch->EMfields->nrj_mw_inj =  patch->buffer_scalars_fields[1] ;
+    for( unsigned int jp=0; jp<2; jp++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for( unsigned int i=0 ; i<params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
+            patch->EMfields->poynting[jp][i] = patch->buffer_scalars_fields[2+i*2+jp];
+        }
+    }
 } // END recv ( Patch )
 
 
@@ -933,64 +924,64 @@ void SmileiMPI::recv( std::vector<double> *vec, int from, int tag )
 } // End recv
 
 
-void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &requests, int mpi_tag )
+void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Request> &requests, int tag )
 {
 
-    isend( EM->Ex_, to, mpi_tag+tag, requests[tag] );
-    tag++;
-    isend( EM->Ey_, to, mpi_tag+tag, requests[tag] );
-    tag++;
-    isend( EM->Ez_, to, mpi_tag+tag, requests[tag] );
-    tag++;
-    isend( EM->Bx_, to, mpi_tag+tag, requests[tag] );
-    tag++;
-    isend( EM->By_, to, mpi_tag+tag, requests[tag] );
-    tag++;
-    isend( EM->Bz_, to, mpi_tag+tag, requests[tag] );
-    tag++;
-    isend( EM->Bx_m, to, mpi_tag+tag, requests[tag] );
-    tag++;
-    isend( EM->By_m, to, mpi_tag+tag, requests[tag] );
-    tag++;
-    isend( EM->Bz_m, to, mpi_tag+tag, requests[tag] );
-    tag++;
+    isend( EM->Ex_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Ey_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Ez_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Bx_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->By_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Bz_, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Bx_m, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->By_m, to, tag+irequest, requests[irequest] );
+    irequest++;
+    isend( EM->Bz_m, to, tag+irequest, requests[irequest] );
+    irequest++;
 
     // if laser envelope is present, send it
     // send also Phi, Phi_m, GradPhi, GradPhi_m
     if( EM->envelope!=NULL ) {
-        isendComplex( EM->envelope->A_, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isendComplex( EM->envelope->A0_, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->Phi_, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->Phi_m, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->GradPhix_, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->GradPhix_m, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->GradPhiy_, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->GradPhiy_m, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->GradPhiz_, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->GradPhiz_m, to, mpi_tag+tag, requests[tag] );
-        tag++;
+        isendComplex( EM->envelope->A_, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isendComplex( EM->envelope->A0_, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->Phi_, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->Phi_m, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->GradPhix_, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->GradPhix_m, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->GradPhiy_, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->GradPhiy_m, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->GradPhiz_, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->GradPhiz_m, to, tag+irequest, requests[irequest] );
+        irequest++;
 
     }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++ ) {
         for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++ ) {
-            isend( EM->allFields_avg[idiag][ifield], to, mpi_tag+tag, requests[tag] );
-            tag++;
+            isend( EM->allFields_avg[idiag][ifield], to, tag+irequest, requests[irequest] );
+            irequest++;
         }
     }
 
     for( unsigned int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++ ) {
-        isend( EM->antennas[antennaId].field, to, mpi_tag+tag, requests[tag] );
-        tag++;
+        isend( EM->antennas[antennaId].field, to, tag+irequest, requests[irequest] );
+        irequest++;
     }
 
     for( unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
@@ -1007,15 +998,15 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
                 if( ! profile->space_envelope ) {
                     continue;
                 }
-                isend( profile->space_envelope, to, mpi_tag+tag, requests[tag] );
-                tag++;
-                isend( profile->phase, to, mpi_tag+tag, requests[tag] );
-                tag++;
+                isend( profile->space_envelope, to, tag+irequest, requests[irequest] );
+                irequest++;
+                isend( profile->phase, to, tag+irequest, requests[irequest] );
+                irequest++;
                 profile = static_cast<LaserProfileSeparable *>( laser->profiles[1] );
-                isend( profile->space_envelope, to, mpi_tag+tag, requests[tag] );
-                tag++;
-                isend( profile->phase, to, mpi_tag+tag, requests[tag] );
-                tag++;
+                isend( profile->space_envelope, to, tag+irequest, requests[irequest] );
+                irequest++;
+                isend( profile->phase, to, tag+irequest, requests[irequest] );
+                irequest++;
             }
         }
 
@@ -1023,25 +1014,25 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
 
             if( dynamic_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] ) ) {
                 ElectroMagnBC1D_SM *embc = static_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] );
-                MPI_Isend( &( embc->By_val ), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] );
-                tag++;
-                MPI_Isend( &( embc->Bz_val ), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] );
-                tag++;
+                MPI_Isend( &( embc->By_val ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
+                irequest++;
+                MPI_Isend( &( embc->Bz_val ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
+                irequest++;
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] ) ) {
                 // BCs at the x-border
                 ElectroMagnBC2D_SM *embc = static_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] );
 
                 if( embc->B_val[0].size() ) {
-                    isend( &embc->B_val[0], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( &embc->B_val[0], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
                 if( embc->B_val[1].size() ) {
-                    isend( &embc->B_val[1], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( &embc->B_val[1], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
                 if( embc->B_val[2].size() ) {
-                    isend( &embc->B_val[2], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( &embc->B_val[2], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
 
             } else if( dynamic_cast<ElectroMagnBC3D_SM *>( EM->emBoundCond[bcId] ) ) {
@@ -1049,16 +1040,16 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
 
                 // BCs at the border
                 if( embc->B_val[0] ) {
-                    isend( embc->B_val[0], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( embc->B_val[0], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
                 if( embc->B_val[1] ) {
-                    isend( embc->B_val[1], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( embc->B_val[1], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
                 if( embc->B_val[2] ) {
-                    isend( embc->B_val[2], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( embc->B_val[2], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
 
             }
@@ -1067,63 +1058,63 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
     }
 } // End isend ( ElectroMagn )
 
-void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &requests, int mpi_tag, unsigned int nmodes )
+void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Request> &requests, int tag, unsigned int nmodes )
 {
 
     ElectroMagnAM *EMAM = static_cast<ElectroMagnAM *>( EM );
     for( unsigned int imode =0; imode < nmodes; imode++ ) {
-        isendComplex( EMAM->El_[imode], to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isendComplex( EMAM->Er_[imode], to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isendComplex( EMAM->Et_[imode], to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isendComplex( EMAM->Bl_[imode], to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isendComplex( EMAM->Br_[imode], to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isendComplex( EMAM->Bt_[imode], to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isendComplex( EMAM->Bl_m[imode], to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isendComplex( EMAM->Br_m[imode], to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isendComplex( EMAM->Bt_m[imode], to, mpi_tag+tag, requests[tag] );
-        tag++;
+        isendComplex( EMAM->El_[imode], to, tag+irequest, requests[irequest] );
+        irequest++;
+        isendComplex( EMAM->Er_[imode], to, tag+irequest, requests[irequest] );
+        irequest++;
+        isendComplex( EMAM->Et_[imode], to, tag+irequest, requests[irequest] );
+        irequest++;
+        isendComplex( EMAM->Bl_[imode], to, tag+irequest, requests[irequest] );
+        irequest++;
+        isendComplex( EMAM->Br_[imode], to, tag+irequest, requests[irequest] );
+        irequest++;
+        isendComplex( EMAM->Bt_[imode], to, tag+irequest, requests[irequest] );
+        irequest++;
+        isendComplex( EMAM->Bl_m[imode], to, tag+irequest, requests[irequest] );
+        irequest++;
+        isendComplex( EMAM->Br_m[imode], to, tag+irequest, requests[irequest] );
+        irequest++;
+        isendComplex( EMAM->Bt_m[imode], to, tag+irequest, requests[irequest] );
+        irequest++;
     }
 
     // if laser envelope is present, send it
     // send also Phi, Phi_m, GradPhi, GradPhi_m
     if( EM->envelope!=NULL ) {
-        isendComplex( EM->envelope->A_, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isendComplex( EM->envelope->A0_, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->Phi_, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->Phi_m, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->GradPhil_, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->GradPhil_m, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->GradPhir_, to, mpi_tag+tag, requests[tag] );
-        tag++;
-        isend( EM->envelope->GradPhir_m, to, mpi_tag+tag, requests[tag] );
-        tag++;
+        isendComplex( EM->envelope->A_, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isendComplex( EM->envelope->A0_, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->Phi_, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->Phi_m, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->GradPhil_, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->GradPhil_m, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->GradPhir_, to, tag+irequest, requests[irequest] );
+        irequest++;
+        isend( EM->envelope->GradPhir_m, to, tag+irequest, requests[irequest] );
+        irequest++;
 
     }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++ ) {
         for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++ ) {
-            isend( EM->allFields_avg[idiag][ifield], to, mpi_tag+tag, requests[tag] );
-            tag++;
+            isend( EM->allFields_avg[idiag][ifield], to, tag+irequest, requests[irequest] );
+            irequest++;
         }
     }
 
     for( unsigned int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++ ) {
-        isend( EM->antennas[antennaId].field, to, mpi_tag+tag, requests[tag] );
-        tag++;
+        isend( EM->antennas[antennaId].field, to, tag+irequest, requests[irequest] );
+        irequest++;
     }
 
     for( unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
@@ -1140,15 +1131,15 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
                 if( ! profile->space_envelope ) {
                     continue;
                 }
-                isend( profile->space_envelope, to, mpi_tag+tag, requests[tag] );
-                tag++;
-                isend( profile->phase, to, mpi_tag+tag, requests[tag] );
-                tag++;
+                isend( profile->space_envelope, to, tag+irequest, requests[irequest] );
+                irequest++;
+                isend( profile->phase, to, tag+irequest, requests[irequest] );
+                irequest++;
                 profile = static_cast<LaserProfileSeparable *>( laser->profiles[1] );
-                isend( profile->space_envelope, to, mpi_tag+tag, requests[tag] );
-                tag++;
-                isend( profile->phase, to, mpi_tag+tag, requests[tag] );
-                tag++;
+                isend( profile->space_envelope, to, tag+irequest, requests[irequest] );
+                irequest++;
+                isend( profile->phase, to, tag+irequest, requests[irequest] );
+                irequest++;
             }
         }
 
@@ -1156,25 +1147,25 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
 
             if( dynamic_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] ) ) {
                 ElectroMagnBC1D_SM *embc = static_cast<ElectroMagnBC1D_SM *>( EM->emBoundCond[bcId] );
-                MPI_Isend( &( embc->By_val ), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] );
-                tag++;
-                MPI_Isend( &( embc->Bz_val ), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] );
-                tag++;
+                MPI_Isend( &( embc->By_val ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
+                irequest++;
+                MPI_Isend( &( embc->Bz_val ), 1, MPI_DOUBLE, to, tag+irequest, MPI_COMM_WORLD, &requests[irequest] );
+                irequest++;
             } else if( dynamic_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] ) ) {
                 // BCs at the x-border
                 ElectroMagnBC2D_SM *embc = static_cast<ElectroMagnBC2D_SM *>( EM->emBoundCond[bcId] );
 
                 if( embc->B_val[0].size() ) {
-                    isend( &embc->B_val[0], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( &embc->B_val[0], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
                 if( embc->B_val[1].size() ) {
-                    isend( &embc->B_val[1], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( &embc->B_val[1], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
                 if( embc->B_val[2].size() ) {
-                    isend( &embc->B_val[2], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( &embc->B_val[2], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
 
             } else if( dynamic_cast<ElectroMagnBC3D_SM *>( EM->emBoundCond[bcId] ) ) {
@@ -1182,16 +1173,16 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
 
                 // BCs at the border
                 if( embc->B_val[0] ) {
-                    isend( embc->B_val[0], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( embc->B_val[0], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
                 if( embc->B_val[1] ) {
-                    isend( embc->B_val[1], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( embc->B_val[1], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
                 if( embc->B_val[2] ) {
-                    isend( embc->B_val[2], to, mpi_tag+tag, requests[tag] );
-                    tag++;
+                    isend( embc->B_val[2], to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
 
             }
@@ -1201,7 +1192,7 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
 } // End isend ( ElectroMagn LRT )
 
 
-void SmileiMPI::recv( ElectroMagn *EM, int from, int tag )
+void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag )
 {
     recv( EM->Ex_, from, tag );
     tag++;
@@ -1332,7 +1323,7 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int tag )
 
 } // End recv ( ElectroMagn )
 
-void SmileiMPI::recv( ElectroMagn *EM, int from, int tag, unsigned int nmodes )
+void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, unsigned int nmodes )
 {
     ElectroMagnAM *EMAM = static_cast<ElectroMagnAM *>( EM );
     for( unsigned int imode =0; imode < nmodes; imode++ ) {
@@ -1462,59 +1453,59 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int tag, unsigned int nmodes )
 
 } // End recv ( ElectroMagn LRT )
 
-void SmileiMPI::isend( Field *field, int to, int hindex, MPI_Request &request )
+void SmileiMPI::isend( Field *field, int to, int tag, MPI_Request &request )
 {
-    MPI_Isend( &( ( *field )( 0 ) ), field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD, &request );
+    MPI_Isend( &( ( *field )( 0 ) ), field->globalDims_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
 } // End isend ( Field )
 
-void SmileiMPI::isendComplex( Field *field, int to, int hindex, MPI_Request &request )
+void SmileiMPI::isendComplex( Field *field, int to, int tag, MPI_Request &request )
 {
     cField *cf = static_cast<cField *>( field );
-    MPI_Isend( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD, &request );
+    MPI_Isend( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
 } // End isendComplex ( Field )
 
-void SmileiMPI::sendComplex( Field *field, int to, int hindex )
+void SmileiMPI::sendComplex( Field *field, int to, int tag )
 {
     cField *cf = static_cast<cField *>( field );
-    MPI_Send( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD );
-    
+    MPI_Send( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD );
+
 } // End isendComplex ( Field )
 
 
-void SmileiMPI::send(Field* field, int to, int hindex)
+void SmileiMPI::send(Field* field, int to, int tag)
 {
-    MPI_Send( &((*field)(0)),field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD );
+    MPI_Send( &((*field)(0)),field->globalDims_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD );
 
 } // End isend ( Field )
 
 
-void SmileiMPI::recv( Field *field, int from, int hindex )
+void SmileiMPI::recv( Field *field, int from, int tag )
 {
     MPI_Status status;
-    MPI_Recv( &( ( *field )( 0 ) ), field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &status );
+    MPI_Recv( &( ( *field )( 0 ) ), field->globalDims_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 
-void SmileiMPI::recvComplex( Field *field, int from, int hindex )
+void SmileiMPI::recvComplex( Field *field, int from, int tag )
 {
     MPI_Status status;
     cField *cf = static_cast<cField *>( field );
-    MPI_Recv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &status );
+    MPI_Recv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 
-void SmileiMPI::irecvComplex( Field *field, int from, int hindex, MPI_Request &request )
+void SmileiMPI::irecvComplex( Field *field, int from, int tag, MPI_Request &request )
 {
     cField *cf = static_cast<cField *>( field );
-    MPI_Irecv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
-    
+    MPI_Irecv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &request );
+
 } // End recv ( Field )
 
-void SmileiMPI::irecv(Field* field, int from, int hindex, MPI_Request& request)
+void SmileiMPI::irecv(Field* field, int from, int tag, MPI_Request& request)
 {
-    MPI_Irecv( &((*field)(0)),2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
+    MPI_Irecv( &((*field)(0)),2*field->globalDims_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &request );
 
 } // End recv ( Field )
 
@@ -1648,6 +1639,7 @@ void SmileiMPI::computeGlobalDiags( DiagnosticScalar *scalars, int itime )
             double Ukin_bnd     = *scalars->Ukin_bnd    ;
             double Ukin_out_mvw = *scalars->Ukin_out_mvw;
             double Ukin_inj_mvw = *scalars->Ukin_inj_mvw;
+            double Ukin_new     = *scalars->Ukin_new    ;
             // Global elm energy, and BC losses/gains
             double Uelm_bnd     = *scalars->Uelm_bnd    ;
             double Uelm_out_mvw = *scalars->Uelm_out_mvw;
@@ -1655,9 +1647,9 @@ void SmileiMPI::computeGlobalDiags( DiagnosticScalar *scalars, int itime )
             // Global radiated energy
             //double Urad = *scalars->Urad;
             // expected total energy
-            double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw
-                          + Uelm_inj_mvw
-                          - ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
+            double Uexp = scalars->Energy_time_zero
+                + Uelm_bnd + Ukin_inj_mvw + Uelm_inj_mvw + Ukin_new
+                - ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
             *scalars->Uexp = Uexp;
         }
 

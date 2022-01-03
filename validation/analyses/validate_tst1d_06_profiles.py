@@ -33,7 +33,7 @@ for i, (name, tprofile) in enumerate(S.namelist.tprofiles):
 #	v = [tprofile(tt) for tt in t*S.namelist.Main.timestep]
 #	plt.plot(t, thisJz, color=c[i])
 #	plt.plot(t, v, "o", markeredgecolor=c[i], markerfacecolor="none")
-	Validate("Temporal profile "+name, thisJz, 0.01)
+	Validate("Temporal profile "+name, thisJz[1:], 0.01)
 
 # Verify that "time_fields_frozen" and external fields works
 #for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:

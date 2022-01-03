@@ -39,20 +39,20 @@ class PyTools
 private:
     //! convert Python object to bool
     static bool pyconvert( PyObject *py_val, bool &val );
-    
+
     //! convert Python object to any integer type (short, uint, int, etc.)
     template<typename T>
     static bool pyconvert( PyObject *py_val, T &val );
-    
+
     //! convert Python object to double
     static bool pyconvert( PyObject *py_val, double &val );
-    
+
     //! convert Python object to complex
     static bool pyconvert( PyObject *py_val, std::complex<double> &val );
-    
+
     //! convert Python object to string
     static bool pyconvert( PyObject *py_val, std::string &val );
-    
+
     //! check error and display message
     template <typename T>
     static T get_py_result( PyObject *pyresult )
@@ -78,10 +78,10 @@ private:
         }
         return cppresult;
     }
-    
+
     // DECREF for vectors of python objects
     static void DECREF( std::vector<PyObject *> pyvec );
-    
+
 public:
 
     static void openPython()
@@ -90,14 +90,14 @@ public:
             Py_Initialize();
         }
     }
-    
+
     static void closePython()
     {
         if( Py_IsInitialized() ) {
             Py_Finalize();
         }
     }
-    
+
     static std::string python_version()
     {
         std::string version;
@@ -109,7 +109,7 @@ public:
         PyErr_Print();
         return version;
     }
-    
+
     //! convert Python object to C++ value
     template <typename T>
     static bool py2scalar( PyObject *py_val, T &val )
@@ -117,7 +117,7 @@ public:
         bool retval=pyconvert( py_val, val );
         return retval;
     }
-    
+
     //! convert vector of Python objects to vector of C++ values
     template <typename T>
     static bool pyvector2vector( std::vector<PyObject *> py_vec, std::vector<T> &val )
@@ -131,10 +131,10 @@ public:
         }
         return retval;
     }
-    
+
     //! convert python list to vector of python objects
     static bool py2pyvector( PyObject *py_list, std::vector<PyObject *> &py_vec );
-    
+
     //! convert python list to vector of c++ values
     template <typename T>
     static bool py2vector( PyObject *py_list, std::vector<T> &vec )
@@ -148,8 +148,8 @@ public:
             DECREF( py_vec );
         }
         return ret;
-    }
-    
+    };
+
     //! check if there has been a python error
     static bool checkPyError( bool exitOnError=false, bool print=true )
     {
@@ -157,7 +157,7 @@ public:
             if( exitOnError || print ) {
                 PyObject *type, *value, *traceback;
                 PyErr_Fetch( &type, &value, &traceback );
-                
+
                 std::ostringstream message( "" );
                 if( type ) {
                     std::string str( "" );
@@ -187,7 +187,7 @@ public:
         }
         return false;
     }
-    
+
     //! run void python function
     static void runPyFunction( std::string name )
     {
@@ -201,7 +201,7 @@ public:
             MESSAGE( 1, "python " << name << " function does not exist" );
         }
     }
-    
+
     //! run typed python function without arguments
     template <typename T=double>
     static T runPyFunction( std::string name, std::string component=std::string( "" ) )
@@ -221,7 +221,7 @@ public:
         }
         return retval;
     }
-    
+
     //! run typed python function with one argument
     template <typename T=double>
     static T runPyFunction( PyObject *pyFunction, double x1 )
@@ -231,7 +231,7 @@ public:
         Py_XDECREF( pyresult );
         return retval;
     }
-    
+
     //! run typed python function with two arguments
     template <typename T=double>
     static T runPyFunction( PyObject *pyFunction, double x1, double x2 )
@@ -241,7 +241,7 @@ public:
         Py_XDECREF( pyresult );
         return retval;
     }
-    
+
     //! run typed python function with three arguments
     template <typename T=double>
     static T runPyFunction( PyObject *pyFunction, double x1, double x2, double x3 )
@@ -251,7 +251,7 @@ public:
         Py_XDECREF( pyresult );
         return retval;
     }
-    
+
     //! run typed python function with four arguments
     template <typename T=double>
     static T runPyFunction( PyObject *pyFunction, double x1, double x2, double x3, double x4 )
@@ -261,19 +261,19 @@ public:
         Py_XDECREF( pyresult );
         return retval;
     }
-    
+
     //! extract a bool
-    static void extract( std::string name, bool &val, std::string component=std::string( "" ), int nComponent=0 );    
+    static void extract( std::string name, bool &val, std::string component=std::string( "" ), int nComponent=0 );
     //! extract an integer-like
     template< typename T>
     static void extract( std::string name, T &val, std::string component=std::string( "" ), int nComponent=0 );
-    
+
     //! extract a float
     static void extract( std::string name, double &val, std::string component=std::string( "" ), int nComponent=0 );
-    
+
     //! extract a string
     static void extract( std::string name, std::string &val, std::string component=std::string( "" ), int nComponent=0 );
-    
+
     //! extract any scalar
     template< typename T>
     static void extract( std::string name, T &val, std::string component, int nComponent, std::string testMessage )
@@ -289,14 +289,14 @@ public:
     
     //! extract a bool but accepts None (which returns false, and does not change the variable)
     static bool extractOrNone( std::string name, bool &val, std::string component=std::string( "" ), int nComponent=0 );
-    
+
     //! extract an integer-like but accepts None (which returns false, and does not change the variable)
     template< typename T>
     static bool extractOrNone( std::string name, T &val, std::string component=std::string( "" ), int nComponent=0 );
-    
+
     //! extract a float but accepts None (which returns false, and does not change the variable)
     static bool extractOrNone( std::string name, double &val, std::string component=std::string( "" ), int nComponent=0 );
-    
+
     //! extract a string but accepts None (which returns false, and does not change the variable)
     static bool extractOrNone( std::string name, std::string &val, std::string component=std::string( "" ), int nComponent=0 );
 
@@ -349,29 +349,29 @@ public:
     
     //! retrieve python object
     static PyObject *extract_py( std::string name, std::string component=std::string( "" ), int nComponent=0 );
-    
+
     //! retrieve a vector of python objects
     static std::vector<PyObject *> extract_pyVec( std::string name, std::string component=std::string( "" ), int nComponent=0 );
-    
+
     // extract 1 profile
     static bool extract_pyProfile( std::string name, PyObject *&prof, std::string component=std::string( "" ), int nComponent=0 );
-    
+
     // extract a vector of profiles
     static bool extract_pyProfiles( std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof );
-    
+
     // extract a vector of 1 or 3 profiles
     static bool extract_1or3Profiles( std::string name, std::string component, int nComponent, std::vector<PyObject *>&prof );
-    
+
     // extract 2 profiles from namelist (used for laser profile)
     static bool extract2Profiles( std::string varname, int ilaser, std::vector<PyObject *> &profiles );
-    
+
     // extract 2N profiles from namelist (used for laser profile)
     static bool extract2NProfiles( std::string varname, int ilaser, std::vector<PyObject *> &profiles );
-    
-    
+
+
     //! return the number of components (see pyinit.py)
     static unsigned int nComponents( std::string componentName );
-    
+
     //! Get an object's attribute ( int, double, etc.)
     template <typename T>
     static bool getAttr( PyObject *object, std::string attr_name, T &value )
@@ -439,7 +439,7 @@ public:
         Py_XDECREF( s );
         return str;
     }
-    
+
     // Set a python variable to itime so that it can be accessed at run-time
     inline static void setIteration( int itime )
     {
@@ -449,7 +449,7 @@ public:
         Py_DECREF( iteration );
         Py_DECREF( Main );
     }
-    
+
     // Test whether a python object is a function
     // Return the number of arguments
     // If there are python *args, return -1
@@ -474,7 +474,7 @@ public:
             return nargs;
         }
     }
-    
+
     //! Finds if there is a species with a given name
     static bool isSpecies( std::string name );
 };

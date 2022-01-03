@@ -31,10 +31,10 @@ void Tools::printMemFootPrint( std::string tag )
     }
     
     // Peak resident set size
-    S=strstr( sbuf, "VmRSS:" )+8;
+    S=strstr( sbuf, "VmRSS:" )+6;
     val[1] = ( int )atoi( S );
     // Peak virtual memory usage
-    S=strstr( sbuf, "VmSize:" )+8;
+    S=strstr( sbuf, "VmSize:" )+6;
     val[2] = atoi( S );
     
     std::cout << "=== Mem usage === " <<  std::setw( 20 ) << tag << "\t=== " << std::setw( 6 )
@@ -42,7 +42,7 @@ void Tools::printMemFootPrint( std::string tag )
               
 }
 
-double Tools::getMemFootPrint()
+double Tools::getMemFootPrint(int type_of_memory)
 {
 
     int val[4];
@@ -70,10 +70,15 @@ double Tools::getMemFootPrint()
     }
     
     // Peak resident set size
-    S=strstr( sbuf, "VmRSS:" )+8;
+    if (type_of_memory == 0){
+        S=strstr( sbuf, "VmRSS:" )+6;
+    } else if (type_of_memory == 1){
+        S=strstr( sbuf, "VmHWM:" )+6;
+    } 
+
     val[1] = ( int )atoi( S );
     
-    // Return RSS in Gb
+    // Return RSS in GB
     return ( double )val[1]/1024./1024.;
     
 }

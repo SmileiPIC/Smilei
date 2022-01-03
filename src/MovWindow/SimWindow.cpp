@@ -98,10 +98,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     if( ! isMoving( time_dual ) && itime != additional_shifts_iteration ) {
         return;
     }
-    
+ 
     unsigned int h0;
-    //double energy_field_lost( 0. );
-    //std::vector<double> energy_part_lost( vecPatches( 0 )->vecSpecies.size(), 0. );
     Patch *mypatch;
     
     //Initialization for inter-process communications
@@ -429,12 +427,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
                     
                     // If new particles are required
-                    if( patch_particle_created[ithread][j] ) {
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             mypatch->vecSpecies[ispec]->computeParticleCellKeys( params );
                             mypatch->vecSpecies[ispec]->sortParticles( params , mypatch);
                         }
-                    } // end test patch_particle_created[ithread][j]
                 } // end j loop
             } // End ithread loop
             //}
@@ -545,52 +541,73 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         poynting[0].resize( params.nDim_field, 0.0 );
         poynting[1].resize( params.nDim_field, 0.0 );
         
-        std::vector<double> urad( nSpecies, 0. );
+        double energy_field_out( 0. );
+        double energy_field_inj( 0. );
+        std::vector<double> energy_part_out( nSpecies, 0. );
+        std::vector<double> energy_part_inj( nSpecies, 0. );
+        std::vector<double> ukin_new( nSpecies, 0. );
+        std::vector<double> ukin_bc ( nSpecies, 0. );
+        std::vector<double> urad    ( nSpecies, 0. );
         
-        //Delete useless patches
+        // Delete useless patches while saving some scalar quantities
         for( unsigned int j=0; j < delete_patches_.size(); j++ ) {
             mypatch = delete_patches_[j];
             
-            //if (mypatch->isXmin()) {
-            //    energy_field_lost += mypatch->EMfields->computeNRJ();
-            //    for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
-            //        energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
-            //}
-            
-            for( unsigned int jp=0; jp<2; jp++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
-                for( unsigned int i=0 ; i<params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
-                    poynting[jp][i] += mypatch->EMfields->poynting[jp][i];
+            if( mypatch->isXmin() ) {
+                for( unsigned int jp=0; jp<2; jp++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+                    for( unsigned int i=0 ; i<params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
+                        poynting[jp][i] += mypatch->EMfields->poynting[jp][i];
+                    }
                 }
-            }
-            
-            for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                urad[ispec] += mypatch->vecSpecies[ispec]->getNrjRadiation();
+                
+                energy_field_out += mypatch->EMfields->nrj_mw_out + mypatch->EMfields->computeNRJ();
+                energy_field_inj += mypatch->EMfields->nrj_mw_inj;
+                for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
+                    energy_part_out[ispec] += mypatch->vecSpecies[ispec]->nrj_mw_out + mypatch->vecSpecies[ispec]->computeNRJ();
+                    energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->nrj_mw_inj;
+                    ukin_new[ispec] += mypatch->vecSpecies[ispec]->nrj_new_part_;
+                    ukin_bc [ispec] += mypatch->vecSpecies[ispec]->nrj_bc_lost;
+                    urad    [ispec] += mypatch->vecSpecies[ispec]->nrj_radiated_;
+                }
             }
             
             delete  mypatch;
         }
         
-        // SUM energy_field_lost, energy_part_lost and poynting / All threads
+        // Also account for new patches in scalars
+        for( unsigned int j=0; j< patch_to_be_created[my_thread].size(); j++ ) {
+            mypatch = vecPatches.patches_[patch_to_be_created[my_thread][j]];
+            
+            if( mypatch->isXmax() ) {
+                energy_field_inj += mypatch->EMfields->computeNRJ();
+                for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
+                    energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
+                }
+            }
+        }
+        
+        // Add the scalars to the patch #0
 #ifndef _NO_MPI_TM
         #pragma omp critical
 #endif
         {
-            //vecPatches( 0 )->EMfields->storeNRJlost( energy_field_lost );
-            //for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-            //    vecPatches( 0 )->vecSpecies[ispec]->storeNRJlost( energy_part_lost[ispec] );
-            //}
-            
             for( unsigned int j=0; j<2; j++ ) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
                 for( unsigned int i=0 ; i< params.nDim_field ; i++ ) { //axis 0=x, 1=y, 2=z
                     vecPatches( 0 )->EMfields->poynting[j][i] += poynting[j][i];
                 }
             }
             
+            vecPatches( 0 )->EMfields->nrj_mw_out += energy_field_out;
+            vecPatches( 0 )->EMfields->nrj_mw_inj += energy_field_inj;
             for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                vecPatches( 0 )->vecSpecies[ispec]->addNrjRadiation( urad[ispec] );
+                vecPatches( 0 )->vecSpecies[ispec]->nrj_mw_out    += energy_part_out[ispec];
+                vecPatches( 0 )->vecSpecies[ispec]->nrj_mw_inj    += energy_part_inj[ispec];
+                vecPatches( 0 )->vecSpecies[ispec]->nrj_new_part_ += ukin_new[ispec];
+                vecPatches( 0 )->vecSpecies[ispec]->nrj_bc_lost   += ukin_bc [ispec];
+                vecPatches( 0 )->vecSpecies[ispec]->nrj_radiated_ += urad    [ispec];
             }
         }
-        
+
 #ifdef _NO_MPI_TM
     } // end omp master
 #endif
@@ -598,6 +615,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     #pragma omp barrier
     #pragma omp master
     {
+        // for( unsigned int i=0; i<vecPatches.size(); i++ ){
+        //     MESSAGE(vecPatches(i)->vecSpecies[0]->getNrjOutMW());
+        // }
         if (params.multiple_decomposition) {
             if ( params.geometry != "AMcylindrical" )
                 operate(region, vecPatches, smpi, params, time_dual);

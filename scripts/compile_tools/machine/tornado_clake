@@ -1,0 +1,5 @@
+# Machine file for Cascadelake processors for tornado machine
+# Compilation with the Intel compiler
+# __________________________________________________________
+
+CXXFLAGS += -xCOMMON-AVX512 -ip -inline-factor=1000 -D__INTEL_CASCADELAKE_6240R -qopt-zmm-usage=high -fno-alias -ipo

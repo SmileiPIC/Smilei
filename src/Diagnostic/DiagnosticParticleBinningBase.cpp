@@ -81,6 +81,15 @@ DiagnosticParticleBinningBase::DiagnosticParticleBinningBase(
         dims[iaxis] = histogram->axes[iaxis]->nbins;
     }
     
+    // Has auto limits ?
+    has_auto_limits_ = false;
+    for( int iaxis=0; iaxis<total_axes; iaxis++ ) {
+        dims[iaxis] = histogram->axes[iaxis]->nbins;
+        if( std::isnan(histogram->axes[iaxis]->min) || std::isnan(histogram->axes[iaxis]->max) ) {
+            has_auto_limits_ = true;
+        }
+    }
+    
 //    // Get info on the spatial extent
 //    for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
 //        if( histogram->axes[i]->type == "x" ) {
@@ -97,7 +106,7 @@ DiagnosticParticleBinningBase::DiagnosticParticleBinningBase(
     
     // Calculate the size of the output array
     uint64_t total_size = 1;
-    for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
+    for( int i=0; i<total_axes; i++ ) {
         total_size *= histogram->axes[i]->nbins;
     }
     if( total_size > 2147483648 ) { // 2^31
@@ -200,13 +209,19 @@ void DiagnosticParticleBinningBase::closeFile()
 } // END closeFile
 
 
-bool DiagnosticParticleBinningBase::prepare( int itime )
+bool DiagnosticParticleBinningBase::theTimeIsNow( int itime )
 {
     // Get the previous timestep of the time selection
-    int previousTime = timeSelection->previousTime( itime );
+    previousTime_ = timeSelection->previousTime( itime );
     
-    // Leave if the timestep is not the good one
-    if( itime - previousTime >= time_average ) {
+    return itime - previousTime_ < time_average;
+    
+} // END prepare
+
+
+bool DiagnosticParticleBinningBase::prepare( int itime )
+{
+    if( ! theTimeIsNow( itime ) ) {
         return false;
     }
     
@@ -214,7 +229,7 @@ bool DiagnosticParticleBinningBase::prepare( int itime )
     data_sum.resize( output_size );
     
     // if first time, erase output array
-    if( itime == previousTime ) {
+    if( itime == previousTime_ ) {
         fill( data_sum.begin(), data_sum.end(), 0. );
     }
     
@@ -236,6 +251,9 @@ void DiagnosticParticleBinningBase::calculate_auto_limits( Patch *patch, SimWind
         for( unsigned int i_s=0; i_s<species_indices.size(); i_s++ ) {
             Species *s = patch->vecSpecies[species_indices[i_s]];
             unsigned int n = s->getNbrOfParticles();
+            if( n <= 0 ) {
+                continue;
+            }
             std::vector<double> double_buffer( n );
             std::vector<int> int_buffer( n, 0 );
             axis->calculate_locations( s, &double_buffer[0], &int_buffer[0], n, simWindow );
@@ -244,6 +262,20 @@ void DiagnosticParticleBinningBase::calculate_auto_limits( Patch *patch, SimWind
             }
             if( std::isnan( axis->max ) ) {
                 axis_max = max( axis_max, *max_element( double_buffer.begin(), double_buffer.end() ) );
+            }
+        }
+        if( axis_min > axis_max ) {
+            axis_min = -1.;
+            axis_max = 1.;
+        }
+        if( axis_min == axis_max ) {
+            if( axis_min == 0. ) {
+                axis_min = -1.;
+                axis_max = 1.;
+            } else {
+                double m = axis_min * 0.5;
+                axis_min -= m;
+                axis_max += m;
             }
         }
         if( std::isnan( axis->min ) ) {

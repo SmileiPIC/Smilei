@@ -112,7 +112,7 @@ void Patch::initStep1( Params &params )
     }
     
     // Initialize the random number generator
-    rand_ = new Random( params.random_seed );
+    rand_ = new Random( params.random_seed + hindex );
     
     // Obtain the cell_volume
     cell_volume = params.cell_volume;
@@ -125,31 +125,31 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
     updateMPIenv( smpi );
 
     // Compute patch boundaries
-    min_local.resize( params.nDim_field, 0. );
-    max_local.resize( params.nDim_field, 0. );
-    center   .resize( params.nDim_field, 0. );
+    min_local_.resize( params.nDim_field, 0. );
+    max_local_.resize( params.nDim_field, 0. );
+    center_   .resize( params.nDim_field, 0. );
     cell_starting_global_index.resize( params.nDim_field, 0 );
     radius = 0.;
     for( unsigned int i = 0 ; i<params.nDim_field ; i++ ) {
-        min_local[i] = ( Pcoordinates[i]   )*( params.n_space[i]*params.cell_length[i] );
-        max_local[i] = ( Pcoordinates[i]+1 )*( params.n_space[i]*params.cell_length[i] );
+        min_local_[i] = ( Pcoordinates[i]   )*( params.n_space[i]*params.cell_length[i] );
+        max_local_[i] = ( Pcoordinates[i]+1 )*( params.n_space[i]*params.cell_length[i] );
         cell_starting_global_index[i] += Pcoordinates[i]*params.n_space[i];
         cell_starting_global_index[i] -= params.oversize[i];
-        center[i] = ( min_local[i]+max_local[i] )*0.5;
-        radius += pow( max_local[i] - center[i] + params.cell_length[i], 2 );
+        center_[i] = ( min_local_[i]+max_local_[i] )*0.5;
+        radius += pow( max_local_[i] - center_[i] + params.cell_length[i], 2 );
     }
     radius = sqrt( radius );
 
     cell_starting_global_index[0] += n_moved;
-    min_local[0] += n_moved*params.cell_length[0];
-    max_local[0] += n_moved*params.cell_length[0];
-    center   [0] += n_moved*params.cell_length[0];
+    min_local_[0] += n_moved*params.cell_length[0];
+    max_local_[0] += n_moved*params.cell_length[0];
+    center_   [0] += n_moved*params.cell_length[0];
 
     //Shift point position by dr/2 for the AM spectral geometry
     //if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-    //    min_local[1] += params.cell_length[1]/2.;
-    //    max_local[1] += params.cell_length[1]/2.;
-    //    center   [1] += params.cell_length[1]/2.;
+    //    min_local_[1] += params.cell_length[1]/2.;
+    //    max_local_[1] += params.cell_length[1]/2.;
+    //    center_   [1] += params.cell_length[1]/2.;
     //}
     
 }
@@ -225,7 +225,7 @@ void Patch::finalizeMPIenvironment( Params &params )
     }
 
     // Scalars
-    nb_comms ++;
+    nb_comms += 2;
 
     // Just apply on species & fields to start
 
@@ -264,9 +264,9 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
     Pcoordinates.resize( params.nDim_field );
 
 
-    min_local = vecPatch( 0 )->min_local;
-    max_local = vecPatch( 0 )->max_local;
-    center   .resize( nDim_fields_, 0. );
+    min_local_ = vecPatch( 0 )->min_local_;
+    max_local_ = vecPatch( 0 )->max_local_;
+    center_   .resize( nDim_fields_, 0. );
     cell_starting_global_index = vecPatch( 0 )->cell_starting_global_index;
     radius = 0.;
 
@@ -278,15 +278,15 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 // Coupling v0    for (int i = 0 ; i<nDim_fields_ ; i++) {
 // Coupling v0
 // Coupling v0        for ( unsigned int ipatch = 0 ; ipatch < vecPatch.size() ; ipatch++  ) {
-// Coupling v0            if ( vecPatch(ipatch)->min_local[i] <= min_local[i] ) {
-// Coupling v0                min_local[i] = vecPatch(ipatch)->min_local[i];
+// Coupling v0            if ( vecPatch(ipatch)->min_local_[i] <= min_local_[i] ) {
+// Coupling v0                min_local_[i] = vecPatch(ipatch)->min_local_[i];
 // Coupling v0                if (vecPatch(ipatch)->MPI_neighbor_[i][0]!=MPI_PROC_NULL)
 // Coupling v0                    MPI_neighbor_[i][0] = vecPatch(ipatch)->MPI_neighbor_[i][0];
 // Coupling v0                if (vecPatch(ipatch)->neighbor_[i][0]!=MPI_PROC_NULL)
 // Coupling v0                    neighbor_[i][0] = (vecPatch(ipatch)->neighbor_[i][0] / vecPatch.size() );
 // Coupling v0            }
-// Coupling v0            if( vecPatch( ipatch )->max_local[i] >= max_local[i] ) {
-// Coupling v0                max_local[i] = vecPatch( ipatch )->max_local[i];
+// Coupling v0            if( vecPatch( ipatch )->max_local_[i] >= max_local_[i] ) {
+// Coupling v0                max_local_[i] = vecPatch( ipatch )->max_local_[i];
 // Coupling v0                if( vecPatch( ipatch )->MPI_neighbor_[i][1]!=MPI_PROC_NULL ) {
 // Coupling v0                    MPI_neighbor_[i][1] = vecPatch( ipatch )->MPI_neighbor_[i][1];
 // Coupling v0                }
@@ -299,8 +299,8 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 // Coupling v0            }
 // Coupling v0        }
 // Coupling v0        
-// Coupling v0        center[i] = (min_local[i]+max_local[i])*0.5;
-// Coupling v0        radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);
+// Coupling v0        center_[i] = (min_local_[i]+max_local_[i])*0.5;
+// Coupling v0        radius += pow(max_local_[i] - center_[i] + params.cell_length[i], 2);
 // Coupling v0    }
 
     // New_DD 
@@ -320,8 +320,8 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                         if (params.map_rank[xDom][yDom][zDom] == rk ) {
                             Pcoordinates[0] = xDom;
                             Pcoordinates[1] = yDom;
-                            min_local[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
-                            max_local[0] = (params.offset_map[0][xDom]+params.n_space_region[0]) * params.cell_length[0];
+                            min_local_[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
+                            max_local_[0] = (params.offset_map[0][xDom]+params.n_space_region[0]) * params.cell_length[0];
 
                             cell_starting_global_index[0] = params.offset_map[0][xDom];
 
@@ -363,21 +363,21 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 
                             //cout << "coords = " << Pcoordinates[0] << " " << Pcoordinates[1] <<endl;
 
-                            min_local[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
-                            max_local[0] = (params.offset_map[0][xDom]+params.n_space_region[0]) * params.cell_length[0];
-                            min_local[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
-                            max_local[1] = (params.offset_map[1][yDom]+params.n_space_region[1]) * params.cell_length[1];
+                            min_local_[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
+                            max_local_[0] = (params.offset_map[0][xDom]+params.n_space_region[0]) * params.cell_length[0];
+                            min_local_[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
+                            max_local_[1] = (params.offset_map[1][yDom]+params.n_space_region[1]) * params.cell_length[1];
 
-                            center[0] = ( min_local[0]+max_local[0] )*0.5;
-                            radius += pow( max_local[0] - center[0] + params.cell_length[0], 2 );
-                            center[1] = ( min_local[1]+max_local[1] )*0.5;
-                            radius += pow( max_local[1] - center[1] + params.cell_length[1], 2 );
+                            center_[0] = ( min_local_[0]+max_local_[0] )*0.5;
+                            radius += pow( max_local_[0] - center_[0] + params.cell_length[0], 2 );
+                            center_[1] = ( min_local_[1]+max_local_[1] )*0.5;
+                            radius += pow( max_local_[1] - center_[1] + params.cell_length[1], 2 );
 
                             //Shift point position by dr/2 for the AM spectral geometry
                             //if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-                            //    min_local[1] += params.cell_length[1]/2.;
-                            //    max_local[1] += params.cell_length[1]/2.;
-                            //    center   [1] += params.cell_length[1]/2.;
+                            //    min_local_[1] += params.cell_length[1]/2.;
+                            //    max_local_[1] += params.cell_length[1]/2.;
+                            //    center_   [1] += params.cell_length[1]/2.;
                             //}
  
                             cell_starting_global_index[0] = params.offset_map[0][xDom];
@@ -473,19 +473,19 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             Pcoordinates[2] = zDom;
                             //cout << hindex << " - coords = " << xDom << " " << yDom << " " << zDom << endl;
 
-                            min_local[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
-                            max_local[0] = (params.offset_map[0][xDom]+params.n_space_region[0]) * params.cell_length[0];
-                            min_local[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
-                            max_local[1] = (params.offset_map[1][yDom]+params.n_space_region[1]) * params.cell_length[1];
-                            min_local[2] =  params.offset_map[2][zDom]                           * params.cell_length[2];
-                            max_local[2] = (params.offset_map[2][zDom]+params.n_space_region[2]) * params.cell_length[2];
+                            min_local_[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
+                            max_local_[0] = (params.offset_map[0][xDom]+params.n_space_region[0]) * params.cell_length[0];
+                            min_local_[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
+                            max_local_[1] = (params.offset_map[1][yDom]+params.n_space_region[1]) * params.cell_length[1];
+                            min_local_[2] =  params.offset_map[2][zDom]                           * params.cell_length[2];
+                            max_local_[2] = (params.offset_map[2][zDom]+params.n_space_region[2]) * params.cell_length[2];
 
-                            center[0] = ( min_local[0]+max_local[0] )*0.5;
-                            radius += pow( max_local[0] - center[0] + params.cell_length[0], 2 );
-                            center[1] = ( min_local[1]+max_local[1] )*0.5;
-                            radius += pow( max_local[1] - center[1] + params.cell_length[1], 2 );
-                            center[2] = ( min_local[2]+max_local[2] )*0.5;
-                            radius += pow( max_local[2] - center[2] + params.cell_length[2], 2 );
+                            center_[0] = ( min_local_[0]+max_local_[0] )*0.5;
+                            radius += pow( max_local_[0] - center_[0] + params.cell_length[0], 2 );
+                            center_[1] = ( min_local_[1]+max_local_[1] )*0.5;
+                            radius += pow( max_local_[1] - center_[1] + params.cell_length[1], 2 );
+                            center_[2] = ( min_local_[2]+max_local_[2] )*0.5;
+                            radius += pow( max_local_[2] - center_[2] + params.cell_length[2], 2 );
 
 
                             cell_starting_global_index[0] = params.offset_map[0][xDom];
@@ -612,11 +612,11 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
         }
         for ( int iDim=0 ; iDim<nDim_fields_ ; iDim++ ) {
             Pcoordinates[iDim] = 0;
-            min_local[iDim] = 0.;
-            max_local[iDim] = params.n_space_global[iDim]*params.cell_length[iDim];
+            min_local_[iDim] = 0.;
+            max_local_[iDim] = params.n_space_global[iDim]*params.cell_length[iDim];
 
-            center[iDim] = ( min_local[iDim]+max_local[iDim] )*0.5;
-            radius += pow( max_local[iDim] - center[iDim] + params.cell_length[iDim], 2 );
+            center_[iDim] = ( min_local_[iDim]+max_local_[iDim] )*0.5;
+            radius += pow( max_local_[iDim] - center_[iDim] + params.cell_length[iDim], 2 );
 
             cell_starting_global_index[iDim] = -oversize[iDim];
 
@@ -633,9 +633,9 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 
         }
         //if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-        //    min_local[1] += params.cell_length[1]/2.;
-        //    max_local[1] += params.cell_length[1]/2.;
-        //    center   [1] += params.cell_length[1]/2.;
+        //    min_local_[1] += params.cell_length[1]/2.;
+        //    max_local_[1] += params.cell_length[1]/2.;
+        //    center_   [1] += params.cell_length[1]/2.;
         //}
 
     }
@@ -810,13 +810,13 @@ void Patch::initExchParticles( SmileiMPI *smpi, int ispec, Params &params )
             idim = 0;
             //Put indexes of particles in the first direction they will be exchanged and correct their position according to periodicity for the first exchange only.
             while( check == 0 && idim<ndim ) {
-                if( cuParticles.position( idim, iPart ) < min_local[idim] ) {
+                if( cuParticles.position( idim, iPart ) < min_local_[idim] ) {
                     if( neighbor_[idim][0]!=MPI_PROC_NULL ) {
                         vecSpecies[ispec]->MPI_buffer_.part_index_send[idim][0].push_back( iPart );
                     }
                     //If particle is outside of the global domain (has no neighbor), it will not be put in a send buffer and will simply be deleted.
                     check = 1;
-                } else if( cuParticles.position( idim, iPart ) >= max_local[idim] ) {
+                } else if( cuParticles.position( idim, iPart ) >= max_local_[idim] ) {
                     if( neighbor_[idim][1]!=MPI_PROC_NULL ) {
                         vecSpecies[ispec]->MPI_buffer_.part_index_send[idim][1].push_back( iPart );
                     }
@@ -827,27 +827,27 @@ void Patch::initExchParticles( SmileiMPI *smpi, int ispec, Params &params )
         }
     } else { //if (geometry == "AMcylindrical")
         double r_min2, r_max2;
-        r_max2 = max_local[1] * max_local[1] ;
-        r_min2 = min_local[1] * min_local[1] ;
+        r_max2 = max_local_[1] * max_local_[1] ;
+        r_min2 = min_local_[1] * min_local_[1] ;
         for( int i=0 ; i<n_part_send ; i++ ) {
             iPart = i;
             //Put indexes of particles in the first direction they will be exchanged and correct their position according to periodicity for the first exchange only.
-            if( cuParticles.position( 0, iPart ) < min_local[0] ) {
+            if( cuParticles.position( 0, iPart ) < min_local_[0] ) {
                 if( neighbor_[0][0]!=MPI_PROC_NULL ) {
                     if ( (Pcoordinates[0]==0) && ( vecSpecies[ispec]->boundary_conditions[0][0]!="periodic" ) ) {
                         continue;
                     }
                     vecSpecies[ispec]->MPI_buffer_.part_index_send[0][0].push_back( iPart );
-                    //MESSAGE("Sending particle to the left x= " << cuParticles.position(0,iPart) <<  " xmin = " <<  min_local[0] );
+                    //MESSAGE("Sending particle to the left x= " << cuParticles.position(0,iPart) <<  " xmin = " <<  min_local_[0] );
                 }
                 //If particle is outside of the global domain (has no neighbor), it will not be put in a send buffer and will simply be deleted.
-            } else if( cuParticles.position( 0, iPart ) >= max_local[0] ) {
+            } else if( cuParticles.position( 0, iPart ) >= max_local_[0] ) {
                 if ( (Pcoordinates[0]==params.number_of_patches[0]-1) && ( vecSpecies[ispec]->boundary_conditions[0][1]!="periodic" ) ) {
                     continue;
                 }
                 if( neighbor_[0][1]!=MPI_PROC_NULL ) {
                     vecSpecies[ispec]->MPI_buffer_.part_index_send[0][1].push_back( iPart );
-                    // MESSAGE("Sending particle to the right x= " << cuParticles.position(0,iPart) <<  " xmax = " <<  max_local[0] );
+                    // MESSAGE("Sending particle to the right x= " << cuParticles.position(0,iPart) <<  " xmax = " <<  max_local_[0] );
                 }
             } else if( cuParticles.distance2ToAxis( iPart ) < r_min2 ) {
                 if( neighbor_[1][0]!=MPI_PROC_NULL ) {
@@ -1082,7 +1082,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                         idim = iDim+1;//We check next dimension
                         while( check == 0 && idim<ndim ) {
                             //If particle not in the domain...
-                            if( ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).position( idim, iPart ) < min_local[idim] ) {
+                            if( ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).position( idim, iPart ) < min_local_[idim] ) {
                                 if( neighbor_[idim][0]!=MPI_PROC_NULL ) { //if neighbour exists
                                     //... copy it at the back of the local particle vector ...
                                     ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );
@@ -1097,7 +1097,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                 check = 1;
                             }
                             //Other side of idim
-                            else if( ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).position( idim, iPart ) >= max_local[idim] ) {
+                            else if( ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).position( idim, iPart ) >= max_local_[idim] ) {
                                 if( neighbor_[idim][1]!=MPI_PROC_NULL ) { //if neighbour exists
                                     ( vecSpecies[ispec]->MPI_buffer_.partRecv[iDim][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );
                                     //...adjust particles->last_index or cell_keys ...
@@ -1114,8 +1114,8 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                 } else { //In AM geometry
                     //In this case, iDim = 0 and idim = iDim + 1 = 1. We only have to check potential comms along R.
                     double r_min2, r_max2;
-                    r_min2 = min_local[1]*min_local[1];
-                    r_max2 = max_local[1]*max_local[1];
+                    r_min2 = min_local_[1]*min_local_[1];
+                    r_max2 = max_local_[1]*max_local_[1];
                     for( int iPart=n_part_recv-1 ; iPart>=0; iPart-- ) {
                         //MESSAGE("test particle diag r2 = " << (vecSpecies[ispec]->MPI_buffer_.partRecv[0][(iNeighbor+1)%2]).distance2ToAxis(iPart) << "rmin2 = " << r_min2 << " rmax2 = " << r_max2 );
                         if( ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).distance2ToAxis( iPart ) < r_min2 ) {

@@ -522,8 +522,7 @@ class Diagnostic(object):
 			s = self._np.double(portion)
 			if s.size>3 or s.size<1: raise
 		except Exception as e:
-			self._error += ["`"+operation+"` along axis "+axisname+" should be a list of 1 to 3 floats"]
-			raise
+			raise Exception("`"+operation+"` along axis "+axisname+" should be a list of 1 to 3 floats")
 		step = 1
 		if s.size==1:
 			indices = self._np.array([(self._np.abs(meshpoints-s)).argmin()])
@@ -536,12 +535,10 @@ class Diagnostic(object):
 					step = int(s[2])
 					if step - s[2] != 0: raise
 				except Exception as e:
-					self._error += ["`"+operation+"` along axis "+axisname+": third number must be an integer"]
-					raise
+					raise Exception("`"+operation+"` along axis "+axisname+": third number must be an integer")
 				indices = indices[::step]
 		if indices.size == 0:
-			self._error += ["`"+operation+"` along "+axisname+" is out of range"]
-			raise
+			raise Exception("`"+operation+"` along "+axisname+" is out of range")
 		elif indices.size == 1:
 			info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
 			selection = self._np.s_[indices[0]]
@@ -566,8 +563,7 @@ class Diagnostic(object):
 				s = self._np.double(portion)
 				if s.size>2 or s.size<1: raise
 			except Exception as e:
-				self._error += ["`"+operation+"` along axis "+axisname+" should be one or two floats"]
-				raise
+				raise Exception("`"+operation+"` along axis "+axisname+" should be one or two floats")
 			if s.size==1:
 				indices = self._np.array([(self._np.abs(meshpoints-s)).argmin()])
 			elif s.size==2:
@@ -575,8 +571,7 @@ class Diagnostic(object):
 				if indices.size == 0:
 					indices = self._np.array([(self._np.abs(meshpoints-s.mean())).argmin()])
 			if indices.size == 0:
-				self._error += ["`"+operation+"` along "+axisname+" is out of range"]
-				raise
+				raise Exception("`"+operation+"` along "+axisname+" is out of range")
 			elif indices.size == 1:
 				info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
 				selection = slice(indices[0],indices[0]+1)
@@ -605,7 +600,7 @@ class Diagnostic(object):
 		# prepare the factors
 		self._xfactor = (self.options.xfactor or 1.) * self.units.xcoeff
 		self._yfactor = (self.options.yfactor or 1.) * self.units.ycoeff
-		self._vfactor = self.units.vcoeff
+		self._vfactor = (self.options.vfactor or 1.) * self.units.vcoeff
 		self._tfactor = (self.options.xfactor or 1.) * self.units.tcoeff * self.timestep
 	def _prepare2(self):
 		# prepare the animating function

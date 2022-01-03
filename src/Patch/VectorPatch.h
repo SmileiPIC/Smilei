@@ -148,7 +148,7 @@ public :
                                Timers &timers, int itime );
                                
     // compute rho only given by relativistic species which require initialization of the relativistic fields
-    void computeChargeRelativisticSpecies( double time_primal );
+    void computeChargeRelativisticSpecies( double time_primal, Params &params );
     
     // run particles ponderomptive dynamics, envelope's solver
     void runEnvelopeModule( Params &params,
@@ -426,9 +426,9 @@ private :
     std::vector<int> send_patch_id_;
     
     //! Current intensity of antennas
-    double antenna_intensity;
+    double antenna_intensity_;
     
-    std::vector<Timer *> diag_timers;
+    std::vector<Timer *> diag_timers_;
 };
 
 

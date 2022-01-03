@@ -78,12 +78,12 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
         charge_sq_over_mass_sq      = ( double )( charge[ipart] )*one_over_mass_*( charge[ipart] )*one_over_mass_;
         
         // compute initial ponderomotive gamma
-        gamma0_sq = 1.0 + momentum_x[ipart]*momentum_x[ipart] + momentum_y[ipart]*momentum_y[ipart] + momentum_z[ipart]*momentum_z[ipart] + ( *( Phi_m+ipart-ipart_buffer_offset ) )*charge_sq_over_mass_sq ;
+        gamma0_sq = 1.0 + momentum_x[ipart]*momentum_x[ipart] + momentum_y[ipart]*momentum_y[ipart] + momentum_z[ipart]*momentum_z[ipart] + ( Phi_m[ipart-ipart_buffer_offset] )*charge_sq_over_mass_sq ;
         gamma0    = sqrt( gamma0_sq ) ;
         // ponderomotive force for ponderomotive gamma advance (Grad Phi is interpolated in time, hence the division by 2)
-        pxsm = charge_sq_over_mass_dts4 * ( *( GradPhi_mx+ipart-ipart_buffer_offset ) ) / gamma0_sq ;
-        pysm = charge_sq_over_mass_dts4 * ( *( GradPhi_my+ipart-ipart_buffer_offset ) ) / gamma0_sq ;
-        pzsm = charge_sq_over_mass_dts4 * ( *( GradPhi_mz+ipart-ipart_buffer_offset ) ) / gamma0_sq ;
+        pxsm = charge_sq_over_mass_dts4 * ( GradPhi_mx[ipart-ipart_buffer_offset] ) / gamma0_sq ;
+        pysm = charge_sq_over_mass_dts4 * ( GradPhi_my[ipart-ipart_buffer_offset] ) / gamma0_sq ;
+        pzsm = charge_sq_over_mass_dts4 * ( GradPhi_mz[ipart-ipart_buffer_offset] ) / gamma0_sq ;
         
         // update of gamma ponderomotive
         gamma_ponderomotive = gamma0 + ( pxsm*momentum_x[ipart]+pysm*momentum_y[ipart]+pzsm*momentum_z[ipart] ) ;
