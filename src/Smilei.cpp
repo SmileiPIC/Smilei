@@ -79,10 +79,12 @@ int main( int argc, char *argv[] )
     // Simulation Initialization
     // -------------------------
 
-    // Create MPI environment :
-
+    // Create the OpenACC environment
+#ifdef _GPU
     initialisation_openacc();
+#endif
 
+    // Create MPI environment :
 #ifdef SMILEI_TESTMODE
     SmileiMPI_test smpi( &argc, &argv );
 #else
