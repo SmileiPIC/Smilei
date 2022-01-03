@@ -44,6 +44,7 @@ using namespace std;
 //                                                   MAIN CODE
 // ---------------------------------------------------------------------------------------------------------------------
 
+#ifdef _GPU
     #ifdef _OPENACC
     void initialisation_openacc()
     {
@@ -68,8 +69,7 @@ using namespace std;
         }
     }
     #endif
-
-
+#endif
 
 int main( int argc, char *argv[] )
 {
