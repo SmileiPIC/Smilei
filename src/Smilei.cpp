@@ -43,6 +43,34 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 //                                                   MAIN CODE
 // ---------------------------------------------------------------------------------------------------------------------
+
+    #ifdef _OPENACC
+    void initialisation_openacc()
+    {
+        char* local_rank_env;
+        int local_rank;
+     
+        /* Initialisation d'OpenACC */
+        #pragma acc init
+     
+        /* Récupération du rang local du processus via la variable d'environnement
+           positionnée par Slurm, l'utilisation de MPI_Comm_rank n'étant pas encore
+           possible puisque cette routine est utilisée AVANT l'initialisation de MPI */
+        local_rank_env = getenv("SLURM_LOCALID");
+     
+        if (local_rank_env) {
+            local_rank = atoi(local_rank_env);
+            /* Définition du GPU à utiliser via OpenACC */
+            acc_set_device_num(local_rank, acc_get_device_type());
+        } else {
+            printf("Erreur : impossible de déterminer le rang local du processus\n");
+            exit(1);
+        }
+    }
+    #endif
+
+
+
 int main( int argc, char *argv[] )
 {
     cout.setf( ios::fixed,  ios::floatfield ); // floatfield set to fixed
@@ -52,6 +80,8 @@ int main( int argc, char *argv[] )
     // -------------------------
 
     // Create MPI environment :
+
+    initialisation_openacc();
 
 #ifdef SMILEI_TESTMODE
     SmileiMPI_test smpi( &argc, &argv );
