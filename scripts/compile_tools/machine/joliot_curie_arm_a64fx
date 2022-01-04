@@ -4,7 +4,13 @@
 #
 # Load the correct modules:
 # module purge
-# module load module load arm-compiler/21.0.0 mpi/openmpi
+# module load arm-compiler
+# module load flavor/buildcompiler/armclang/21
+# module load licsrv/arm
+# module load c++/arm/21.0.0
+# module load c/arm/21.0.0
+# module load arm-compiler/21.0.0
+# module load mpi/openmpi
 # module load python3/3.8.10
 #
 # You have to install your own hdf5:
