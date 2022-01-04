@@ -33,6 +33,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                                            int * __restrict__ istart,
                                            int * __restrict__ iend,
                                            int ithread,
+                                           unsigned int scell,
                                            int ipart_ref )
 {
     if( istart[0] == iend[0] ) {

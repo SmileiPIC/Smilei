@@ -6,6 +6,7 @@
 #include <complex>
 #include "dcomplex.h"
 #include "Pragma.h"
+#include <iomanip>
 
 using namespace std;
 
@@ -45,6 +46,7 @@ private:
     inline void __attribute__((always_inline)) compute_distances(  double * __restrict__ position_x,
                                                                    double * __restrict__ position_y,
                                                                    double * __restrict__ position_z,
+                                                                   int * __restrict__ cell_keys,
                                                                    int npart_total, int ipart, int istart, int ipart_ref,
                                                                    double *deltaold, std::complex<double> *array_eitheta_old, int *iold,
                                                                    double *Sl0, double *Sr0, double *DSl, double *DSr,
@@ -75,7 +77,7 @@ private:
         // locate the particle on the primal grid at current time-step & calculate coeff. S1
         //                            L                                 //
         double pos = position_x[istart + ipart] * dl_inv_;
-        int cell = round( pos );
+        int cell = (cell_keys[istart+ipart]/nscellr_)+i_domain_begin_+oversize_[0];
         int cell_shift = cell-ipo-i_domain_begin_;
         delta  = pos - ( double )cell;
         delta2 = delta*delta;
@@ -91,10 +93,9 @@ private:
         DSl [3*vecSize+ipart] =               p1 * delta2 + c0* deltap  -  Sl0[2*vecSize+ipart];
         DSl [4*vecSize+ipart] =                             p1* deltap  ;
         
-        //                            R                                 //
         double rp = sqrt( position_y[istart+ipart]*position_y[istart+ipart] +  position_z[istart+ipart]*position_z[istart+ipart] );
         pos = rp * dr_inv_;
-        cell = round( pos );
+        cell = (cell_keys[istart+ipart]%nscellr_)+j_domain_begin_+oversize_[1];
         cell_shift = cell-jpo-j_domain_begin_;
         delta  = pos - ( double )cell;
         delta2 = delta*delta;
@@ -132,7 +133,7 @@ private:
         }
         
         //mode 0
-        double tmp( crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] );
+        double tmp = crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] ;
         UNROLL_S(4)
         for( unsigned int i=1 ; i<5 ; i++ ) {
             bJ [( i*5 )*vecSize+ipart] += sum[i] * tmp;
@@ -148,7 +149,7 @@ private:
         //mode > 0
         for (unsigned int imode=1; imode<Nmode_; imode++){ 
             C_m *= e_bar[ipart];
-            double tmp( crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] );
+            tmp = crl_p * ( 0.5*DSr[ipart] ) * invR_local[0] ;
             UNROLL_S(4)
             for( unsigned int i=1 ; i<5 ; i++ ) {
                 bJ [200*imode + (i*5 )*vecSize+ipart] += sum[i] * tmp * C_m;

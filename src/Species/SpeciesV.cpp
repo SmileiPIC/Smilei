@@ -177,7 +177,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
                 Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ),
                                        &( particles->last_index[ipack*packsize_+scell] ),
-                                       ithread, particles->first_index[ipack*packsize_] );
+                                       ithread, scell, particles->first_index[ipack*packsize_]);
             }
 
 #ifdef  __DETAILED_TIMERS
@@ -266,7 +266,6 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-
             // Push the particles and the photons
             ( *Push )( *particles, smpi, particles->first_index[ipack*packsize_],
                        particles->last_index[ipack*packsize_+packsize_-1],
@@ -337,7 +336,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     // }
 
                 }
-            }
+            } //end if mass == 0
 
             // Cell keys
             computeParticleCellKeys( params,
@@ -696,7 +695,7 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
                 cell_keys[iPart] *= length_[1];
                 cell_keys[iPart] += round( sqrt(position_y[iPart]*position_y[iPart]+position_z[iPart]*position_z[iPart]) * dx_inv_[1] ) - min_loc_r;
             }
-        }
+       }
 
     } else if (nDim_field == 3) {
 

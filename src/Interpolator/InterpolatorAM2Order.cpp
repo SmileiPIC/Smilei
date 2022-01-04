@@ -49,8 +49,13 @@ void InterpolatorAM2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
     complex<double> exp_mm_theta = 1. ;                                                          //exp(-i m theta)
     // Calculate coeffs
+
+
+
     coeffs( xpn, rpn );
-    
+   
+    //std::cout << "thetas = " << exp_m_theta_ << " " << 2.*std::real(exp_m_theta_) - exp_m_theta_ << std::endl;
+ 
     //Here we assume that mode 0 is real !!
     // Interpolation of El^(d,p)
     *( ELoc+0*nparts ) = std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ ) );
@@ -64,6 +69,7 @@ void InterpolatorAM2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     *( BLoc+1*nparts ) = std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_ ) );
     // Interpolation of Bt^(d,d)
     *( BLoc+2*nparts ) = std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_ ) );
+    //std::cout << "mode 0 " <<*( ELoc+0*nparts ) << " " <<*( ELoc+1*nparts )   << " " <<*( ELoc+2*nparts )<<" " <<*( BLoc+0*nparts ) << " " <<*( BLoc+1*nparts )   << " " <<*( BLoc+2*nparts ) << endl;
     
     for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
         El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
@@ -76,12 +82,15 @@ void InterpolatorAM2Order::fields( ElectroMagn *EMfields, Particles &particles, 
         exp_mm_theta *= exp_m_theta_ ;
         
         *( ELoc+0*nparts ) += std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ )* exp_mm_theta ) ;
+        //std::cout << " compute Er mode 1 " << endl;
         *( ELoc+1*nparts ) += std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, ip_, jd_ )* exp_mm_theta ) ;
+        //std::cout << " done compute Er mode 1 by adding " << std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, ip_, jd_ )* exp_mm_theta ) << " expmmtheta = " << exp_mm_theta << endl;
         *( ELoc+2*nparts ) += std::real( compute( &coeffxp_[1], &coeffyp_[1], Et, ip_, jp_ )* exp_mm_theta ) ;
         *( BLoc+0*nparts ) += std::real( compute( &coeffxp_[1], &coeffyd_[1], Bl, ip_, jd_ )* exp_mm_theta ) ;
         *( BLoc+1*nparts ) += std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_ )* exp_mm_theta ) ;
         *( BLoc+2*nparts ) += std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_ )* exp_mm_theta ) ;
     }
+    //std::cout << "mode 1 " <<*( ELoc+0*nparts ) << " " <<*( ELoc+1*nparts )   << " " <<*( ELoc+2*nparts )<<" " <<*( BLoc+0*nparts ) << " " <<*( BLoc+1*nparts )   << " " <<*( BLoc+2*nparts ) << endl; 
     
     //Translate field into the cartesian y,z coordinates
     double delta2 = std::real( exp_m_theta_ ) * *( ELoc+1*nparts ) + std::imag( exp_m_theta_ ) * *( ELoc+2*nparts );
@@ -90,6 +99,7 @@ void InterpolatorAM2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     delta2 = std::real( exp_m_theta_ ) * *( BLoc+1*nparts ) + std::imag( exp_m_theta_ ) * *( BLoc+2*nparts );
     *( BLoc+2*nparts ) = -std::imag( exp_m_theta_ ) * *( BLoc+1*nparts ) + std::real( exp_m_theta_ ) * *( BLoc+2*nparts );
     *( BLoc+1*nparts ) = delta2 ;
+    //std::cout << "standard final " <<  *( ELoc ) << " " <<  *( ELoc+nparts ) << " " <<  *( ELoc+2*nparts )<< " " <<  *( BLoc ) << " " <<  *( BLoc+nparts ) << " " <<  *( BLoc+2*nparts ) << std::endl;
     
 } // END InterpolatorAM2Order
 
@@ -226,7 +236,7 @@ void InterpolatorAM2Order::oneField( Field **field, Particles &particles, int *i
     }
 }
 
-void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );

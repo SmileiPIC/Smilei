@@ -100,6 +100,7 @@ void ProjectorAM2OrderV::currentsAndDensity( ElectroMagnAM *emAM,
     double * __restrict__ position_z = particles.getPtrPosition(2);
     double * __restrict__ weight     = particles.getPtrWeight();
     short  * __restrict__ charge     = particles.getPtrCharge();
+    int * __restrict__ cell_keys  = particles.getPtrCellKeys();
   
     #pragma omp simd
     for( unsigned int j=0; j<200*Nmode_; j++ ) {
@@ -117,7 +118,7 @@ void ProjectorAM2OrderV::currentsAndDensity( ElectroMagnAM *emAM,
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( position_x, position_y, position_z, npart_total, ipart, istart0, ipart_ref, deltaold, array_eitheta_old, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr, r_bar, e_bar, e_delta_m1 );
+            compute_distances( position_x, position_y, position_z, cell_keys, npart_total, ipart, istart0, ipart_ref, deltaold, array_eitheta_old, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr, r_bar, e_bar, e_delta_m1 );
             charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
         }
        
@@ -497,6 +498,7 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
     double * __restrict__ momentum_z = particles.getPtrMomentum(2);
     double * __restrict__ weight     = particles.getPtrWeight();
     short  * __restrict__ charge     = particles.getPtrCharge();
+    int * __restrict__ cell_keys  = particles.getPtrCellKeys();
   
     #pragma omp simd
     for( unsigned int j=0; j<200*Nmode_; j++ ) {
@@ -516,7 +518,7 @@ void ProjectorAM2OrderV::currents( ElectroMagnAM *emAM,
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( position_x, position_y, position_z, npart_total, ipart, istart0, ipart_ref, deltaold, array_eitheta_old, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr, r_bar, e_bar, e_delta_m1 );
+            compute_distances( position_x, position_y, position_z, cell_keys, npart_total, ipart, istart0, ipart_ref, deltaold, array_eitheta_old, iold, Sl0_buff_vect, Sr0_buff_vect, DSl, DSr, r_bar, e_bar, e_delta_m1 );
             charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
         }
        
