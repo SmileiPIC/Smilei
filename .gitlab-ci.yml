@@ -18,11 +18,11 @@ install:
     # Force workdir cleaning in case of retried
     - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
     - env
-    - if [ -d /sps/gitlab-runner/$CI_PIPELINE_ID ] ; then rm -rf /sps/gitlab-runner/$CI_PIPELINE_ID ; fi
+    - if [ -d /sps3/gitlab-runner/$CI_PIPELINE_ID ] ; then rm -rf /sps3/gitlab-runner/$CI_PIPELINE_ID ; fi
     # Move in test dir
-    - mkdir -p /sps/gitlab-runner/$CI_PIPELINE_ID
-    - cp -r $CI_PROJECT_DIR /sps/gitlab-runner/$CI_PIPELINE_ID
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - mkdir -p /sps3/gitlab-runner/$CI_PIPELINE_ID
+    - cp -r $CI_PROJECT_DIR /sps3/gitlab-runner/$CI_PIPELINE_ID
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     # Set the environment
     - make uninstall_happi
     - make happi
@@ -35,22 +35,22 @@ compile_default:
 
   script:
     # Move in test dir
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -c  -v -l "/sps/gitlab-runner/logs" -t "00:30:00"
+    - python validation.py -c  -v -l "/sps3/gitlab-runner/logs" -t "00:30:00"
 
 run1D:
   stage: run_default
   only:
     - develop
-#    - vectorization_AM
+    - vectorization_AM
 
   script:
     # Move in test dir
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
-    - python validation.py -b "tst_ionization_current_1d*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst1d_*_*.py" -m 4 -o 4 -v -r 1 -l "/sps3/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_1d*.py" -m 4 -o 4 -v -r 1 -l "/sps3/gitlab-runner/logs"
 
 run2D:
   stage: run_default
@@ -61,12 +61,12 @@ run2D:
 
   script:
     # Move in test dir
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1 -l "/sps/gitlab-runner/logs"
-    - python validation.py -b "tst2d_s_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
-    - python validation.py -b "tst2d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
-    - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1 -l "/sps3/gitlab-runner/logs"
+    - python validation.py -b "tst2d_s_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps3/gitlab-runner/logs"
+    - python validation.py -b "tst2d_v_??_*.py" -m 4 -o 4 -v -r 1 -l "/sps3/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_2d*.py" -m 4 -o 4 -v -r 1 -l "/sps3/gitlab-runner/logs"
 
 run3D:
   stage: run_default
@@ -76,13 +76,13 @@ run3D:
 
   script:
     # Move in test dir
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
-    - python validation.py -b "tst3d_s_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
-    - python validation.py -b "tst3d_v_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
-    - python validation.py -b "tst3d_a_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps/gitlab-runner/logs"
-    - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps3/gitlab-runner/logs"
+    - python validation.py -b "tst3d_s_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps3/gitlab-runner/logs"
+    - python validation.py -b "tst3d_v_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps3/gitlab-runner/logs"
+    - python validation.py -b "tst3d_a_??_*.py" -m 8 -o 12 -v -r 1 -l "/sps3/gitlab-runner/logs"
+    - python validation.py -b "tst_ionization_current_3d*.py" -m 4 -o 4 -v -r 1 -l "/sps3/gitlab-runner/logs"
 
 runAM:
   stage: run_default
@@ -92,9 +92,9 @@ runAM:
 
   script:
     # Move in test dir
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -t 00:30:00 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v -t 00:30:00 -l "/sps3/gitlab-runner/logs"
 
 runCollisions:
   stage: run_default
@@ -104,9 +104,9 @@ runCollisions:
 
   script:
     # Move in test dir
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
-    - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps/gitlab-runner/logs"
+    - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1 -l "/sps3/gitlab-runner/logs"
 
 compile_picsar:
   stage: compile_picsar
@@ -115,7 +115,7 @@ compile_picsar:
     - vectorization_AM
 
   script:
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
     - python validation/validation.py -k picsar -c -v
 
@@ -126,7 +126,7 @@ run_picsar:
     - vectorization_AM
 
   script:
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     - python validation.py -k picsar -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
 
 compile_debug:
@@ -136,7 +136,7 @@ compile_debug:
     - vectorization_AM
 
   script:
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
     - python validation/validation.py -k debug -c -v
 
@@ -147,7 +147,7 @@ compile_no_mpi_threadmultiple:
     - vectorization_AM
 
   script:
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
     - python validation/validation.py -k no_mpi_tm -c -v
 
@@ -159,6 +159,6 @@ compile_no_openmp:
 
 
   script:
-    - cd /sps/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
     - python validation/validation.py -k noopenmp -c -v
