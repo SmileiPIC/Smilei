@@ -77,7 +77,7 @@ private:
         // locate the particle on the primal grid at current time-step & calculate coeff. S1
         //                            L                                 //
         double pos = position_x[istart + ipart] * dl_inv_;
-        int cell = (cell_keys[istart+ipart]/nscellr_)+i_domain_begin_+oversize_[0];
+        int cell = round( pos );
         int cell_shift = cell-ipo-i_domain_begin_;
         delta  = pos - ( double )cell;
         delta2 = delta*delta;
@@ -95,7 +95,7 @@ private:
         
         double rp = sqrt( position_y[istart+ipart]*position_y[istart+ipart] +  position_z[istart+ipart]*position_z[istart+ipart] );
         pos = rp * dr_inv_;
-        cell = (cell_keys[istart+ipart]%nscellr_)+j_domain_begin_+oversize_[1];
+        cell = round( pos );
         cell_shift = cell-jpo-j_domain_begin_;
         delta  = pos - ( double )cell;
         delta2 = delta*delta;
