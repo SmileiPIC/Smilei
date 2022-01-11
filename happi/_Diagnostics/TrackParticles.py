@@ -678,10 +678,9 @@ class TrackParticles(Diagnostic):
 		if self._sort:
 			for axis, factor in zip(self.axes, self._factors):
 				if timestep is None:
-					data[axis] = self._rawData[axis]
+					data[axis] = self._rawData[axis] * factor
 				else:
-					data[axis] = self._rawData[axis][indexOfRequestedTime]
-				data[axis] *= factor
+					data[axis] = self._rawData[axis][indexOfRequestedTime]  * factor
 		else:
 			for t in ts:
 				data[t] = {}

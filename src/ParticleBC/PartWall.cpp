@@ -54,6 +54,7 @@ PartWalls::PartWalls( Params &params, Patch *patch )
     direction.resize( numpartwall );
     position .resize( numpartwall );
     kind     .resize( numpartwall );
+    dt_ = params.timestep;
     
     // Loop over each wall component and parse info
     for( unsigned int iwall = 0; iwall < numpartwall; iwall++ ) {
@@ -110,13 +111,14 @@ PartWalls::PartWalls( PartWalls *partWalls, Patch *patch )
     direction = partWalls->direction;
     position  = partWalls->position ;
     kind      = partWalls->kind     ;
+    dt_       = partWalls->dt_      ;
     
     // Create walls, but only those within the current domain
     unsigned int nwalls=direction.size();
     for( unsigned int iwall = 0; iwall < nwalls; iwall++ ) {
         if( position[iwall] >= patch->getDomainLocalMin( direction[iwall] )
                 && position[iwall] <= patch->getDomainLocalMax( direction[iwall] ) ) {
-            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall], partWalls->vecPartWall[iwall]->dt_ ) );
+            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall], partWalls->dt_ ) );
         }
     }
 

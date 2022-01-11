@@ -1,22 +1,25 @@
 #
-# Machine file for Irene Joliot-Curie using AVX512
+# Machine file for Irene Joliot-Curie A64FX using GNU compiler
 # __________________________________________________________
 #
 # Load the correct modules:
+# module purge
+# module load gnu mpi
+# module load python3/3.8.10
 #
 # You have to install your own hdf5:
 # export HDF5_ROOT=<path to your installation folder>
-# export HDF5_ROOT=/ccc/work/cont003/smilei/derouilj/hdf5-1.8.16-intelmpi2018.18
 # export PATH=${HDF5_ROOT}/bin:${PATH}
 # export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
 # export HDF5_ROOT_DIR=${HDF5_ROOT}
-
+#
+# List of GNU flags for optimization on A64FX
 # -fopenmp : Enable OpenMP and link in the OpenMP library, libomp.
 # -march=armv8.2-a+sve : Select which CPU architecture to optimize for. -mcpu=native causes the compiler to auto-detect the CPU architecture from the build computer.
 # -mtune=a64fx : Select which CPU architecture to optimize for.
 # -msve-vector-bits=512 : Specify the number of bits in an SVE vector register.
 
-CXXFLAGS += -march=armv8.2-a+sve -mtune=a64fx -msve-vector-bits=512
+CXXFLAGS += -march=armv8.2-a+sve -mtune=a64fx -msve-vector-bits=512 -ftree-vectorizer-verbose=2
 LDFLAGS += -march=armv8.2-a+sve -mtune=a64fx -msve-vector-bits=512 #-L/ccc/products/python3-3.8.10/system/default/install_tree/python/3.8.10/s2azw3pgbfzhfcf44tvnh652pju2vtyj/lib/
 
 LDFLAGS += -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/python/3.8.10/s2azw3pgbfzhfcf44tvnh652pju2vtyj/lib  -lcrypt -lpthread -ldl -L/ccc/products2/python3-3.8.10/Rhel_8__aarch64-a64fx/system/default/install_tree/gettext/0.21/i4aacmkl6pqxumiqfa36455yfhoojidl/lib -lintl -lutil -lm

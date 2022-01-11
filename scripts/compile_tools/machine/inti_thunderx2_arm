@@ -1,0 +1,12 @@
+#
+# Machine file for Irene Joliot-Curie A64FX using the ARM compiler
+# __________________________________________________________
+#
+# Load the correct modules:
+# module purge
+# module load arm-compiler/20.0.1 mpi flavor/hdf5/parallel hdf5
+#
+
+CXXFLAGS += -mcpu=thunderx2t99 -march=armv8-a -ffinite-math-only -fsimdmath -fopenmp-simd -ffp-contract=fast -ffast-math
+LDFLAGS += -march=armv8-a -mcpu=thunderx2t99
+

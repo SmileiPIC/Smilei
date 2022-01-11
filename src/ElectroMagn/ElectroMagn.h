@@ -62,16 +62,23 @@ struct Antenna {
     
     Profile *time_profile;
     Profile *space_profile;
+    Profile *space_time_profile;
     
     Field *field;
     
     unsigned int index;
+    
+    bool spacetime;
 };
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
 class ElectroMagn
 {
-
+    friend class SmileiMPI;
+    friend class SimWindow;
+    friend class Checkpoint;
+    friend class DiagnosticScalar;
+    
 public:
     //! Constructor for Electromagn
     ElectroMagn( Params &params, DomainDecomposition *domain_decomposition, std::vector<Species *> &vecSpecies, Patch *patch );
@@ -417,27 +424,7 @@ public:
     //! Method that fills the initial spatial profile of the antenna
     virtual void initAntennas( Patch *patch, Params& params ) {};
     
-    double computeNRJ();
-    double getLostNrjMW() const
-    {
-        return nrj_mw_lost;
-    }
-    
-    double getNewFieldsNRJ() const
-    {
-        return nrj_new_fields;
-    }
-    
-    void reinitDiags()
-    {
-        nrj_mw_lost = 0.;
-        nrj_new_fields = 0.;
-    }
-    
-    inline void storeNRJlost( double nrj )
-    {
-        nrj_mw_lost += nrj;
-    }
+    virtual double computeEnergy();
     
     inline int getMemFootPrint()
     {
@@ -495,14 +482,14 @@ public:
 protected :
     bool is_pxr;
     
-private:
-
-    //! Accumulate nrj lost with moving window
-    double nrj_mw_lost;
+    //! Accumulate nrj lost / gained with moving window
+    double nrj_mw_out;
     
     //! Accumulate nrj added with new fields
-    double nrj_new_fields;
+    double nrj_mw_inj;
     
+private:
+
     
 };
 

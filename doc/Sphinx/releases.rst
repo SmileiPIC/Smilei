@@ -20,16 +20,27 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* Improved performance for ARM-based processors including the Fujitsu A64FX
+* Improved performance for GNU, LLVM, arm-clang and Fujitsu compilers on all types of architectures
 * Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present 
-* Lasers can be injected from all boundaries
-* Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
-* Probes can be time-integrated
-* ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
-* Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
-* ``LaserOffset`` may be re-used from a previous simulation
-* ``LaserOffset`` available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
-* Screens may have a ``cylinder`` shape
 * Option to create neutrons for D-D fusion
+* Collisions can be done less often
+* Lasers can be injected from all boundaries
+* ``LaserOffset``:
+
+  * may be re-used from a previous simulation
+  * available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
+  * has new arguments ``fft_time_window`` and ``fft_time_step``
+
+* Diagnostics:
+
+  * Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
+  * Probes can be time-integrated
+  * ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
+  * Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
+  * Screens may have a ``cylinder`` shape
+  * Scalar diagnostics for AM geometry now available
+
 * Bugfixes:
 
   * Poynting scalars behaviour with several patches, or with checkpoints
@@ -38,6 +49,8 @@ Changes made in the repository (not released)
   * ``ellipticity = -1.`` was doing ``+1.``
   * Setting ``units`` in happi's ``TrackParticles`` was wrong (for plotting only)
   * Current communication correction for FIR filters
+  * Fix for particle merging segmentation fault in spherical and Cartesian modes
+  * Tracked particles with the vectorized mode
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 

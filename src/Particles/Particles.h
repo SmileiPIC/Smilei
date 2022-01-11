@@ -38,7 +38,7 @@ public:
 
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, unsigned int nDim );
-    
+
     //! Initialize like another particle, but only reserve space
     void initializeReserve( unsigned int n_part_max, Particles &part );
 
@@ -84,7 +84,7 @@ public:
 
     //! Insert nPart particles starting at ipart to dest_id in dest_parts
     void copyParticles( unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id );
-    
+
     //! Make a new particle at the position of another
     void makeParticleAt( Particles &source_particles, unsigned int ipart, double w, short q=0., double px=0., double py=0., double pz=0. );
 
@@ -129,11 +129,11 @@ public:
     //! Create new particle
     void createParticle();
 
-    //! Create nParticles new particles
-    void createParticles( int nAdditionalParticles );
-    
-    //! Create nParticles new particles at position pstart in the particles data structure
-    void createParticles( int nAdditionalParticles, int pstart );
+    //! Create n_additional_particles new particles
+    void createParticles( int n_additional_particles );
+
+    //! Create n_additional_particles new particles at position pstart in the particles data structure
+    void createParticles( int n_additional_particles, int pstart );
 
     //! Move ipart at new_pos in the particles data structure
     void moveParticles( int iPart, int new_pos );
@@ -237,7 +237,7 @@ public:
 
 
     //! Method used to get the Particle Lorentz factor
-    inline double LorentzFactor( unsigned int ipart )
+    inline  double LorentzFactor( unsigned int ipart )
     {
         return sqrt( 1.+pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
     }
@@ -245,7 +245,7 @@ public:
     //! Method used to get the inverse Particle Lorentz factor
     inline double inverseLorentzFactor( unsigned int ipart )
     {
-        return 1./sqrt( 1.+pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
+        return 1./sqrt( 1.+ momentum( 0, ipart )*momentum( 0, ipart ) + momentum( 1, ipart )*momentum( 1, ipart ) + momentum( 2, ipart )*momentum( 2, ipart ) );
     }
 
     //! Method used to get the momentum norm which is also the normalized photon energy
@@ -356,12 +356,22 @@ public:
     {
         return Tau;
     }
-    
+
+    //! Method to keep the positions for the next timesteps
     void savePositions();
-    
-    std::vector< std::vector<double  >*> double_prop;
-    std::vector< std::vector<short   >*> short_prop;
-    std::vector< std::vector<uint64_t>*> uint64_prop;
+
+    std::vector< std::vector<double  >*> double_prop_;
+    std::vector< std::vector<short   >*> short_prop_;
+    std::vector< std::vector<uint64_t>*> uint64_prop_;
+
+    //! Specific pointers
+    double * __restrict__ position_x;
+    double * __restrict__ position_y;
+    double * __restrict__ position_z;
+
+    double * __restrict__ momentum_x;
+    double * __restrict__ momentum_y;
+    double * __restrict__ momentum_z;
 
 #ifdef __DEBUG
     bool testMove( int iPartStart, int iPartEnd, Params &params );
@@ -384,18 +394,18 @@ public:
 
     Particle operator()( unsigned int iPart );
 
-    //! Methods to obtain any property, given its index in the arrays double_prop, uint64_prop, or short_prop
+    //! Methods to obtain any property, given its index in the arrays double_prop_, uint64_prop_, or short_prop_
     void getProperty( unsigned int iprop, std::vector<uint64_t> *&prop )
     {
-        prop = uint64_prop[iprop];
+        prop = uint64_prop_[iprop];
     }
     void getProperty( unsigned int iprop, std::vector<short> *&prop )
     {
-        prop = short_prop[iprop];
+        prop = short_prop_[iprop];
     }
     void getProperty( unsigned int iprop, std::vector<double> *&prop )
     {
-        prop = double_prop[iprop];
+        prop = double_prop_[iprop];
     }
 
     //! Indices of first and last particles in each bin/cell
