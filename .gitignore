@@ -31,3 +31,4 @@ exec_script.sh.*
 .vscode*
 .DS_Store
 tables/*
+*.stats*
