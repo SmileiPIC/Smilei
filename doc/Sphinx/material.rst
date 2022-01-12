@@ -47,6 +47,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here.
 
+.. [Singh2022]
+
+  P. K. Singh, F.-Y. Li, C.-K. Huang, A. Moreau, R. Hollinger, A. Junghans, A. Favalli, C. Calvi, S. Wang, Y. Wang, H. Song, J. J. Rocca, R. E. Reinovsky and S. Palaniyappan,
+  `Vacuum laser acceleration of super-ponderomotive electrons using relativistic transparency injection`,
+  `Nat Commun 13, 54 (2022) <http://dx.doi.org/10.1038/s41467-021-27691-w>`_
+  
 .. [Meinhold2021]
 
   Tim Arniko Meinhold and Naveen Kumar,
