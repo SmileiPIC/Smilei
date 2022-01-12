@@ -285,11 +285,11 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
 
 
             // Field buffers for vectorization (required on A64FX)
-            //for( int iloc=-1 ; iloc<3 ; iloc++ ) {
-            //    for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-            //        field_buffer[iloc+1][jloc+1] = ( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc );
-            //    }
-            //}
+            for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+                for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                    field_buffer[iloc+1][jloc+1] = ( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+                }
+            }
 
             #pragma omp simd private(interp_res)
             for( int ipart=0 ; ipart<np_computed; ipart++ ) {
@@ -302,21 +302,21 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                     UNROLL_S(3) 
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                         interp_res += std::real( coeffld[ipart + iloc*32] * coeffrp[ipart + jloc*32] *
-                                      ( ( 1.-dual[0][ipart] )*( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
-                                           + dual[0][ipart]  *( *El )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) 
-                                      //( ( 1.-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] 
-                                      //     + dual[0][ipart]  *field_buffer[2+iloc][1+jloc] ) 
+                                      //( ( 1.-dual[0][ipart] )*( *El )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
+                                      //     + dual[0][ipart]  *( *El )( idxO[0]+2+iloc, idxO[1]+1+jloc ) ) 
+                                      ( ( 1.-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] 
+                                           + dual[0][ipart]  *field_buffer[2+iloc][1+jloc] ) 
                                             * exp_mm_theta[ipart]) ; 
                     }
                 }
                 Epart[0][ipart] += interp_res;
            }
 
-           //for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-           //    for( int jloc=-1 ; jloc<3 ; jloc++ ) {
-           //        field_buffer[iloc+1][jloc+1] = ( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc );
-           //    }
-           //}
+           for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+               for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+                   field_buffer[iloc+1][jloc+1] = ( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+               }
+           }
                 
            #pragma omp simd private(interp_res)
            for( int ipart=0 ; ipart<np_computed; ipart++ ) {
@@ -327,21 +327,21 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                    UNROLL_S(3) 
                    for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                        interp_res +=  std::real (*( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
-                                     ( ( 1-dual[1][ipart] )*( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
-                                         + dual[1][ipart]  *( *Er )( idxO[0]+1+iloc, idxO[1]+2+jloc ) )
-                                     //( ( 1-dual[1][ipart] )*field_buffer[1+iloc][1+jloc] 
-                                     //    + dual[1][ipart]  *field_buffer[1+iloc][2+jloc] )
+                                     //( ( 1-dual[1][ipart] )*( *Er )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
+                                     //    + dual[1][ipart]  *( *Er )( idxO[0]+1+iloc, idxO[1]+2+jloc ) )
+                                     ( ( 1-dual[1][ipart] )*field_buffer[1+iloc][1+jloc] 
+                                         + dual[1][ipart]  *field_buffer[1+iloc][2+jloc] )
                                            * exp_mm_theta[ipart]);
                    }
                }
                Epart[1][ipart] += interp_res;
            }
                 
-           //for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-           //    for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-           //        field_buffer[iloc+1][jloc+1] = ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc );
-           //    }
-           //}
+           for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+               for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                   field_buffer[iloc+1][jloc+1] = ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+               }
+           }
                 
            #pragma omp simd private(interp_res)
            for( int ipart=0 ; ipart<np_computed; ipart++ ) {
@@ -352,19 +352,19 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                     UNROLL_S(3) 
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                         interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) * 
-                                                    ( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc )
-                                                    //field_buffer[1+iloc][1+jloc]  
+                                                    //( *Et )( idxO[0]+1+iloc, idxO[1]+1+jloc )
+                                                    field_buffer[1+iloc][1+jloc]  
                                                       * exp_mm_theta[ipart]);
                     }
                 }
                 Epart[2][ipart] += interp_res;
            }
                 
-           //for( int iloc=-1 ; iloc<2 ; iloc++ ) {
-           //    for( int jloc=-1 ; jloc<3 ; jloc++ ) {
-           //        field_buffer[iloc+1][jloc+1] = ( *Bl )( idxO[0]+1+iloc, idxO[1]+1+jloc );
-           //    }
-           //}
+           for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+               for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+                   field_buffer[iloc+1][jloc+1] = ( *Bl )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+               }
+           }
 
            #pragma omp simd private(interp_res)
            for( int ipart=0 ; ipart<np_computed; ipart++ ) {
@@ -375,21 +375,21 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                     UNROLL_S(3) 
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                         interp_res +=  std::real(  *( coefflp+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
-                                      ( ( ( 1-dual[1][ipart] )*( *Bl )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
-                                            + dual[1][ipart]  *( *Bl )( idxO[0]+1+iloc, idxO[1]+2+jloc ) )
-                                      //( ( ( 1-dual[1][ipart] ) * field_buffer[1+iloc][1+jloc] 
-                                      //      + dual[1][ipart]   * field_buffer[1+iloc][2+jloc] )
+                                      //( ( ( 1-dual[1][ipart] )*( *Bl )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
+                                      //      + dual[1][ipart]  *( *Bl )( idxO[0]+1+iloc, idxO[1]+2+jloc ) )
+                                      ( ( ( 1-dual[1][ipart] ) * field_buffer[1+iloc][1+jloc] 
+                                            + dual[1][ipart]   * field_buffer[1+iloc][2+jloc] )
                                                 )  * exp_mm_theta[ipart] );
                     }
                 }
                 Bpart[0][ipart] += interp_res;
            }
                 
-           //for( int iloc=-1 ; iloc<3 ; iloc++ ) {
-           //    for( int jloc=-1 ; jloc<2 ; jloc++ ) {
-           //        field_buffer[iloc+1][jloc+1] = ( *Br )( idxO[0]+1+iloc, idxO[1]+1+jloc );
-           //    }
-           //}
+           for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+               for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                   field_buffer[iloc+1][jloc+1] = ( *Br )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+               }
+           }
            #pragma omp simd private(interp_res)
            for( int ipart=0 ; ipart<np_computed; ipart++ ) {
                 //Br(dual, primal )
@@ -399,21 +399,21 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                     UNROLL_S(3) 
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                         interp_res +=  std::real(  *( coeffld+ipart+iloc*32 ) * *( coeffrp+ipart+jloc*32 ) *
-                                      ( ( ( 1-dual[0][ipart] )*( *Br )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
-                                            + dual[0][ipart] * ( *Br )( idxO[0]+2+iloc, idxO[1]+1+jloc ) )
-                                      //( ( ( 1-dual[0][ipart] )* field_buffer[ 1+iloc][1+jloc ] 
-                                      //      + dual[0][ipart]  * field_buffer[ 2+iloc][1+jloc ] )
+                                      //( ( ( 1-dual[0][ipart] )*( *Br )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
+                                      //      + dual[0][ipart] * ( *Br )( idxO[0]+2+iloc, idxO[1]+1+jloc ) )
+                                      ( ( ( 1-dual[0][ipart] )* field_buffer[ 1+iloc][1+jloc ] 
+                                            + dual[0][ipart]  * field_buffer[ 2+iloc][1+jloc ] )
                                                 )  * exp_mm_theta[ipart]);
                     }
                 }
                 Bpart[1][ipart] += interp_res;
            }
                 
-           //for( int iloc=-1 ; iloc<3 ; iloc++ ) {
-           //    for( int jloc=-1 ; jloc<3 ; jloc++ ) {
-           //        field_buffer[iloc+1][jloc+1] = ( *Bt )( idxO[0]+1+iloc, idxO[1]+1+jloc );
-           //    }
-           //}
+           for( int iloc=-1 ; iloc<3 ; iloc++ ) {
+               for( int jloc=-1 ; jloc<3 ; jloc++ ) {
+                   field_buffer[iloc+1][jloc+1] = ( *Bt )( idxO[0]+1+iloc, idxO[1]+1+jloc );
+               }
+           }
            #pragma omp simd private(interp_res)
            for( int ipart=0 ; ipart<np_computed; ipart++ ) {
                 //Bt(dual, dual)
@@ -423,14 +423,14 @@ void InterpolatorAM2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &par
                     UNROLL_S(3) 
                     for( int jloc=-1 ; jloc<2 ; jloc++ ) {
                         interp_res +=  std::real(  *( coeffld+ipart+iloc*32 ) * *( coeffrd+ipart+jloc*32 ) *
-                                      ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
-                                                                     + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+1+jloc ) )
-                                        +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+2+jloc ) 
-                                                                     + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+2+jloc ) )
-                                      //( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] 
-                                      //                               + dual[0][ipart]*field_buffer[2+iloc][1+jloc] )
-                                      //  +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*field_buffer[1+iloc][2+jloc] 
-                                      //                               + dual[0][ipart]*field_buffer[2+iloc][2+jloc] )
+                                      //( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+1+jloc ) 
+                                      //                               + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+1+jloc ) )
+                                      //  +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*( *Bt )( idxO[0]+1+iloc, idxO[1]+2+jloc ) 
+                                      //                               + dual[0][ipart]*( *Bt )( idxO[0]+2+iloc, idxO[1]+2+jloc ) )
+                                      ( ( 1-dual[1][ipart] ) * ( ( 1-dual[0][ipart] )*field_buffer[1+iloc][1+jloc] 
+                                                                     + dual[0][ipart]*field_buffer[2+iloc][1+jloc] )
+                                        +    dual[1][ipart]  * ( ( 1-dual[0][ipart] )*field_buffer[1+iloc][2+jloc] 
+                                                                     + dual[0][ipart]*field_buffer[2+iloc][2+jloc] )
                                                 ) * exp_mm_theta[ipart] );
                     }
                 }
