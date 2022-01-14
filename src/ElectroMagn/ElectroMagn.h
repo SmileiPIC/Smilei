@@ -62,10 +62,13 @@ struct Antenna {
     
     Profile *time_profile;
     Profile *space_profile;
+    Profile *space_time_profile;
     
     Field *field;
     
     unsigned int index;
+    
+    bool spacetime;
 };
 
 //! class ElectroMagn: generic class containing all information on the electromagnetic fields and currents
@@ -421,7 +424,7 @@ public:
     //! Method that fills the initial spatial profile of the antenna
     virtual void initAntennas( Patch *patch, Params& params ) {};
     
-    virtual double computeNRJ();
+    virtual double computeEnergy();
     
     inline int getMemFootPrint()
     {

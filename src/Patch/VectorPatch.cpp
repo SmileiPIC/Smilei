@@ -60,19 +60,19 @@ void VectorPatch::close( SmileiMPI *smpiData )
     // Close diagnostics
     closeAllDiags( smpiData );
     
-    if( diag_timers.size() ) {
+    if( diag_timers_.size() ) {
         MESSAGE( "\n\tDiagnostics profile :" );
     }
-    for( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
+    for( unsigned int idiag = 0 ;  idiag < diag_timers_.size() ; idiag++ ) {
         double sum( 0 );
-        MPI_Reduce( &diag_timers[idiag]->time_acc_, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-        MESSAGE( "\t\t" << setw( 20 ) << diag_timers[idiag]->name_ << "\t" << sum/( double )smpiData->getSize() );
+        MPI_Reduce( &diag_timers_[idiag]->time_acc_, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+        MESSAGE( "\t\t" << setw( 20 ) << diag_timers_[idiag]->name_ << "\t" << sum/( double )smpiData->getSize() );
     }
     
-    for( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
-        delete diag_timers[idiag];
+    for( unsigned int idiag = 0 ;  idiag < diag_timers_.size() ; idiag++ ) {
+        delete diag_timers_[idiag];
     }
-    diag_timers.clear();
+    diag_timers_.clear();
     
     for( unsigned int idiag=0 ; idiag<localDiags.size(); idiag++ ) {
         delete localDiags[idiag];
@@ -196,14 +196,14 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
     }
 
     for( unsigned int idiag = 0 ;  idiag < globalDiags.size() ; idiag++ ) {
-        diag_timers.push_back( new Timer( globalDiags[idiag]->filename ) );
+        diag_timers_.push_back( new Timer( globalDiags[idiag]->filename ) );
     }
     for( unsigned int idiag = 0 ;  idiag < localDiags.size() ; idiag++ ) {
-        diag_timers.push_back( new Timer( localDiags[idiag]->filename ) );
+        diag_timers_.push_back( new Timer( localDiags[idiag]->filename ) );
     }
 
-    for( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
-        diag_timers[idiag]->init( smpi );
+    for( unsigned int idiag = 0 ;  idiag < diag_timers_.size() ; idiag++ ) {
+        diag_timers_[idiag]->init( smpi );
     }
 
 }
@@ -1439,41 +1439,43 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     // Pre-process for binning diags with auto limits
     vector<double> MPI_mins, MPI_maxs;
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
-        diag_timers[idiag]->restart();
-
-        #pragma omp single
-        globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
-
+        diag_timers_[idiag]->restart();
+        
         // Get the mins and maxs from this diag, for the current MPI
         DiagnosticParticleBinningBase* binning = dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag] );
-        if( globalDiags[idiag]->theTimeIsNow && binning ) {
-            #pragma omp master
-            {
-                binning->patches_mins.resize( size() );
-                binning->patches_maxs.resize( size() );
-            }
-            #pragma omp barrier
-            // Calculate mins and maxs for each patch
-            #pragma omp for schedule(runtime)
-            for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
-                binning->calculate_auto_limits( patches_[ipatch], simWindow, ipatch );
-            }
-            // reduction of mins and maxs for all patches in this MPI
-            #pragma omp master
-            {
-                vector<double> mins = binning->patches_mins[0];
-                vector<double> maxs = binning->patches_maxs[0];
-                for( unsigned int i=0; i<mins.size(); i++ ) {
-                    for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
-                        mins[i] = min( mins[i], binning->patches_mins[ipatch][i] );
-                        maxs[i] = max( maxs[i], binning->patches_maxs[ipatch][i] );
-                    }
+        if( binning && binning->has_auto_limits_ ) {
+            #pragma omp single
+            binning->theTimeIsNow_ = binning->theTimeIsNow( itime );
+            
+            if( binning->theTimeIsNow_ ) {
+                #pragma omp master
+                {
+                    binning->patches_mins.resize( size() );
+                    binning->patches_maxs.resize( size() );
                 }
-                MPI_mins.insert( MPI_mins.end(), mins.begin(), mins.end() );
-                MPI_maxs.insert( MPI_maxs.end(), maxs.begin(), maxs.end() );
+                #pragma omp barrier
+                // Calculate mins and maxs for each patch
+                #pragma omp for schedule(runtime)
+                for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
+                    binning->calculate_auto_limits( patches_[ipatch], simWindow, ipatch );
+                }
+                // reduction of mins and maxs for all patches in this MPI
+                #pragma omp master
+                {
+                    vector<double> mins = binning->patches_mins[0];
+                    vector<double> maxs = binning->patches_maxs[0];
+                    for( unsigned int i=0; i<mins.size(); i++ ) {
+                        for( unsigned int ipatch=1; ipatch<size(); ipatch++ ) {
+                            mins[i] = min( mins[i], binning->patches_mins[ipatch][i] );
+                            maxs[i] = max( maxs[i], binning->patches_maxs[ipatch][i] );
+                        }
+                    }
+                    MPI_mins.insert( MPI_mins.end(), mins.begin(), mins.end() );
+                    MPI_maxs.insert( MPI_maxs.end(), maxs.begin(), maxs.end() );
+                }
             }
         }
-        diag_timers[idiag]->update();
+        diag_timers_[idiag]->update();
     }
     #pragma omp master
     {
@@ -1489,7 +1491,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
         unsigned int imin = 0, imax = 0;
         for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
             DiagnosticParticleBinningBase* binning = dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag] );
-            if( globalDiags[idiag]->theTimeIsNow && binning ) {
+            if( binning && binning->has_auto_limits_ && binning->theTimeIsNow_ ) {
                 for( unsigned int iaxis=0; iaxis<binning->histogram->axes.size(); iaxis++ ) {
                     HistogramAxis * axis = binning->histogram->axes[iaxis];
                     if( std::isnan( axis->min ) ) {
@@ -1506,9 +1508,12 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
 
     // Global diags: scalars + binnings
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
-        diag_timers[idiag]->restart();
-
-        if( globalDiags[idiag]->theTimeIsNow ) {
+        diag_timers_[idiag]->restart();
+        
+        #pragma omp single
+        globalDiags[idiag]->theTimeIsNow_ = globalDiags[idiag]->prepare( itime );
+        
+        if( globalDiags[idiag]->theTimeIsNow_ ) {
             // All patches run
             #pragma omp for schedule(runtime)
             for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
@@ -1522,21 +1527,21 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
             globalDiags[idiag]->write( itime, smpi );
         }
 
-        diag_timers[idiag]->update();
+        diag_timers_[idiag]->update();
     }
 
     // Local diags : fields, probes, tracks
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
-        diag_timers[globalDiags.size()+idiag]->restart();
+        diag_timers_[globalDiags.size()+idiag]->restart();
 
         #pragma omp single
-        localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
+        localDiags[idiag]->theTimeIsNow_ = localDiags[idiag]->prepare( itime );
         // All MPI run their stuff and write out
-        if( localDiags[idiag]->theTimeIsNow ) {
+        if( localDiags[idiag]->theTimeIsNow_ ) {
             localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
         }
 
-        diag_timers[globalDiags.size()+idiag]->update();
+        diag_timers_[globalDiags.size()+idiag]->update();
     }
 
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
@@ -1552,8 +1557,8 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     timers.diags.update();
 
     if( itime==0 ) {
-        for( unsigned int idiag = 0 ; idiag < diag_timers.size() ; idiag++ ) {
-            diag_timers[idiag]->reboot();
+        for( unsigned int idiag = 0 ; idiag < diag_timers_.size() ; idiag++ ) {
+            diag_timers_[idiag]->reboot();
         }
     }
 
@@ -3751,17 +3756,31 @@ void VectorPatch::applyAntennas( double time )
 
     // Loop antennas
     for( unsigned int iAntenna=0; iAntenna<nAntennas; iAntenna++ ) {
+        
+        // Space-time profile
+        if( patches_[0]->EMfields->antennas[iAntenna].spacetime ) {
+            
+            #pragma omp for schedule(static)
+            for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
+                Antenna * A = &( patches_[ipatch]->EMfields->antennas[iAntenna] );
+                Field *field = patches_[ipatch]->EMfields->allFields[A->index];
+                patches_[ipatch]->EMfields->applyPrescribedField( field, A->space_time_profile, patches_[ipatch], time );
+            }
+        
+        // Separated profiles for space & time
+        } else {
+            
+            // Get intensity from antenna of the first patch
+            #pragma omp single
+            antenna_intensity_ = patches_[0]->EMfields->antennas[iAntenna].time_profile->valueAt( time );
 
-        // Get intensity from antenna of the first patch
-        #pragma omp single
-        antenna_intensity = patches_[0]->EMfields->antennas[iAntenna].time_profile->valueAt( time );
-
-        // Loop patches to apply
-        #pragma omp for schedule(static)
-        for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-            patches_[ipatch]->EMfields->applyAntenna( iAntenna, antenna_intensity );
+            // Loop patches to apply
+            #pragma omp for schedule(static)
+            for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
+                patches_[ipatch]->EMfields->applyAntenna( iAntenna, antenna_intensity_ );
+            }
+            
         }
-
     }
 }
 
@@ -3931,8 +3950,6 @@ void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi, VectorPatch *region_v
 
 void VectorPatch::saveOldRho( Params &params )
 {
-
-    cout << "save old rho. Should not be called in this test" << endl;
 
     //Spectral methods need the old density. This function is not called in FDTD.
     int n=0;

@@ -567,7 +567,7 @@ Boris pusher for CPU
 
 The pusher implementation is one of the most simple algorithm of the PIC loop.
 In the initialization part of the functor, we use pointers to simplify the access to the different arrays.
-The core of the pusher is then composed of a single veectorized loop (``omp simd``) over a group of macro-particles.
+The core of the pusher is then composed of a single vectorized loop (``omp simd``) over a group of macro-particles.
 
 .. literalinclude:: ../../src/Pusher/PusherBoris.cpp
     :lines: 71-122

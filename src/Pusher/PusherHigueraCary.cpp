@@ -42,14 +42,14 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     } else {
         nparts = particles.size();
     }
-    double *Ex = &( ( *Epart )[0*nparts] );
-    double *Ey = &( ( *Epart )[1*nparts] );
-    double *Ez = &( ( *Epart )[2*nparts] );
-    double *Bx = &( ( *Bpart )[0*nparts] );
-    double *By = &( ( *Bpart )[1*nparts] );
-    double *Bz = &( ( *Bpart )[2*nparts] );
+    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
+    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
-    double *invgf = &( smpi->dynamics_invgf[ithread][0] );
+    double * __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
 
     double charge_over_mass_dts2;
     double umx, umy, umz, upx, upy, upz, gfm2;
@@ -58,29 +58,29 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
     double pxsm, pysm, pzsm;
     double local_invgf;
 
-    double* position_x = particles.getPtrPosition(0);
-    double* position_y = NULL;
-    double* position_z = NULL;
+    double* __restrict__ position_x = particles.getPtrPosition(0);
+    double* __restrict__ position_y = NULL;
+    double* __restrict__ position_z = NULL;
     if (nDim_>1) {
         position_y = particles.getPtrPosition(1);
         if (nDim_>2) {
             position_z = particles.getPtrPosition(2);
         }
     }
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
+    double* __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double* __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double* __restrict__ momentum_z = particles.getPtrMomentum(2);
 
-    short *charge = particles.getPtrCharge();
+    short * __restrict__ charge = particles.getPtrCharge();
 
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
 
         // init Half-acceleration in the electric field
-        pxsm = charge_over_mass_dts2*( *( Ex+ipart-ipart_buffer_offset ) );
-        pysm = charge_over_mass_dts2*( *( Ey+ipart-ipart_buffer_offset ) );
-        pzsm = charge_over_mass_dts2*( *( Ez+ipart-ipart_buffer_offset ) );
+        pxsm = charge_over_mass_dts2*( Ex[ipart-ipart_buffer_offset] );
+        pysm = charge_over_mass_dts2*( Ey[ipart-ipart_buffer_offset] );
+        pzsm = charge_over_mass_dts2*( Ez[ipart-ipart_buffer_offset] );
 
         //(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);
         umx = momentum_x[ipart] + pxsm;
@@ -92,9 +92,9 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         gfm2 = ( 1.0 + umx*umx + umy*umy + umz*umz );
 
         // Equivalent of betax,betay,betaz in the paper
-        Tx    = charge_over_mass_dts2 * ( *( Bx+ipart-ipart_buffer_offset ) );
-        Ty    = charge_over_mass_dts2 * ( *( By+ipart-ipart_buffer_offset ) );
-        Tz    = charge_over_mass_dts2 * ( *( Bz+ipart-ipart_buffer_offset ) );
+        Tx    = charge_over_mass_dts2 * ( Bx[ipart-ipart_buffer_offset] );
+        Ty    = charge_over_mass_dts2 * ( By[ipart-ipart_buffer_offset] );
+        Tz    = charge_over_mass_dts2 * ( Bz[ipart-ipart_buffer_offset] );
 
         // beta**2
         beta2 = Tx*Tx + Ty*Ty + Tz*Tz;
@@ -132,29 +132,29 @@ void PusherHigueraCary::operator()( Particles &particles, SmileiMPI *smpi, int i
         momentum_z[ipart] = pzsm;
 
         // Move the particle
-        local_invgf *= dt;
+        // local_invgf *= dt;
         position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart-ipart_buffer_offset];
-        // if (nDim_>1) {
-        //     position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart-ipart_buffer_offset];
-        //     if (nDim_>2) {
-        //         position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart-ipart_buffer_offset];
-        //     }
-        // }
+        if (nDim_>1) {
+            position_y[ipart] += dt*momentum_y[ipart]*invgf[ipart-ipart_buffer_offset];
+            if (nDim_>2) {
+                position_z[ipart] += dt*momentum_z[ipart]*invgf[ipart-ipart_buffer_offset];
+            }
+        }
     } // end ipart
 
-    if (nDim_>1) {
-        #pragma omp simd
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-            position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
-        }
-    }
-
-    if (nDim_>2) {
-        #pragma omp simd
-        for( int ipart=istart ; ipart<iend; ipart++ ) {
-            position_z[ipart] += momentum_z[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
-        }
-    }
+    // if (nDim_>1) {
+    //     #pragma omp simd
+    //     for( int ipart=istart ; ipart<iend; ipart++ ) {
+    //         position_y[ipart] += momentum_y[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
+    //     }
+    // }
+    // 
+    // if (nDim_>2) {
+    //     #pragma omp simd
+    //     for( int ipart=istart ; ipart<iend; ipart++ ) {
+    //         position_z[ipart] += momentum_z[ipart]*invgf[ipart-ipart_buffer_offset]*dt;
+    //     }
+    // }
 
     // if( vecto ) {
     //     int *cell_keys;

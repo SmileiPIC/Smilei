@@ -1950,6 +1950,18 @@ It is applied using an ``Antenna`` block::
 
   The temporal profile of the applied antenna. It multiplies ``space_profile``.
 
+.. py:data:: space_time_profile
+
+  :type: float or :doc:`profile <profiles>`
+  
+  A space & time profile for the antenna (not compatible with ``space_profile``
+  or ``time_profile``). It should have ``N+1``arguments, where ``N`` is the dimension
+  of the simulation. For instance ``(x,t)`` in 1D, ``(x,y,t)`` in 2D, etc.
+  
+  The function must accept ``x``, ``y`` and ``z`` either as floats or numpy arrays.
+  If it accepts floats, the return value must be a float.
+  If it accepts numpy arrays, these arrays will correspond to the coordinates of 1 patch,
+  and the return value must be a numpy array of the same size.
 
 ----
 
@@ -2041,6 +2053,14 @@ Collisions & reactions
   A constant, strictly positive factor that multiplies the Coulomb logarithm, regardless
   of :py:data:`coulomb_log` being automatically computed or set to a constant value.
   This can help, for example, to compensate artificially-reduced ion masses.
+
+.. py:data:: every
+
+  :default: 1
+
+  Number of timesteps between each computation of the collisions. Use a number higher than 1
+  only if you know the collision frequency is low with respect to the inverse of the timestep.
+
 
 .. py:data:: debug_every
 

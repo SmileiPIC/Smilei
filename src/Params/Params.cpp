@@ -755,9 +755,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 }
             }
         }
-	//Use cell sorting if merge is used.
+        //Use cell sorting if merge is used.
         PyTools::extract( "merging_method", merging_method, "Species", ispec );
-	if (merging_method != "none"){
+        if (merging_method != "none"){
             if (defined_cell_sort == true && cell_sorting == false){
                 ERROR(" Cell sorting must be allowed in order to use particle merge.")
             }
@@ -1175,6 +1175,10 @@ void Params::setDimensions()
 // ---------------------------------------------------------------------------------------------------------------------
 void Params::print_init()
 {
+    if( full_B_exchange ) {
+        MESSAGE( 1, "All components of B are exchanged at synchronization" );
+    }
+
     TITLE( "Geometry: " << geometry );
     MESSAGE( 1, "Interpolation order : " <<  interpolation_order );
     MESSAGE( 1, "Maxwell solver : " <<  maxwell_sol );
@@ -1233,9 +1237,19 @@ void Params::print_init()
         }
     }
 
-    if( full_B_exchange ) {
-        MESSAGE( 1, "All components of B are exchanged at synchronization" );
+    if ( Laser_Envelope_model ) {
+        TITLE( "Laser Envelope parameters" );
+        ostringstream info( "" );
+        info << "\tpolarization angle : " << envelope_polarization_phi << endl;
+        info << "\t\tellipticity        : " << envelope_ellipticity << endl;
+        info << "\t\tEnvelope solver    : " << envelope_solver << endl;
+        MESSAGE( 1, info.str() );
+        for( unsigned int i=0 ; i<grid_length.size() ; i++ ) {
+            MESSAGE( 1, "\tdimension " << i );
+            MESSAGE( 1, "\t- Envelope boundary conditions: " << "(" << Env_BCs[i][0] << ", " << Env_BCs[i][1] << ")" );
+        }
     }
+
 
     if( currentFilter_passes.size() > 0 ){
         TITLE( "Current filtering" );

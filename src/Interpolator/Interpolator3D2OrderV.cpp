@@ -229,7 +229,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                 for( int jloc=0 ; jloc<3 ; jloc++ ) {
                     UNROLL_S(3)
                     for( int kloc=0 ; kloc<3 ; kloc++ ) {
-                         interp_res += coeffxp[ipart+(iloc-1)*32] * coeffyp[ipart+(jloc-1)*32]  * coeffzp[ipart + (kloc-1)*32] *
+                         interp_res += coeffxd[ipart+(iloc-1)*32] * coeffyp[ipart+(jloc-1)*32]  * coeffzp[ipart + (kloc-1)*32] *
                                        ( ( 1-dual[0][ipart] )*field_buffer[iloc][jloc][kloc] +
                                        dual[0][ipart]*field_buffer[iloc+1][jloc][kloc] );
 
