@@ -35,11 +35,24 @@
 #ifdef _OMP
 #include <omp.h>
 
-#define __header(__msg,__txt) std::cout << "\t[" << __msg << "](" << omp_get_thread_num() << ") " __FILE__ << ":" << __LINE__ << " (" \
-<< __FUNCTION__ << ") " << __txt << std::endl
+#define __header(__msg,__txt) {std::cout << "\t[" << __msg << "](" << omp_get_thread_num() << ") " __FILE__ << ":" << __LINE__ << " (" \
+<< __FUNCTION__ << ") " << __txt << std::endl;}
+
+#define __header_custom_text_on_unix(__msg,__txt,__tc) {std::cout << "\033[;"<< __tc <<"m" << "\t[" << __msg << "](" << omp_get_thread_num() 
+<< ") " __FILE__ << ":" << __LINE__ << " (" \ << __FUNCTION__ << ") " << __txt << "\033[0m" << std::endl;}
+
+#define __header_error(__msg,__txt) {std::cerr << "\033[1;31m" << "\t[" << __msg << "](" << omp_get_thread_num() << ") " __FILE__ << ":" << __LINE__ << " (" \
+<< __FUNCTION__ << ") " << __txt << "\033[0m" << std::endl;}
+
 #else
 #define __header(__msg,__txt) std::cout << "\t[" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
 << __FUNCTION__ << ") " << __txt << std::endl
+
+#define __header_custom_text_on_unix(__msg,__txt,__tc) { std::cout << "\033[;"<< __tc <<"m" << "\t[" << __msg << "] " 
+<< __FILE__ << ":" << __LINE__ << " (" \ << __FUNCTION__ << ") " << __txt << "\033[0m" << std::endl; }
+
+#define __header_error(__msg,__txt) std::cerr << "\033[1;31m" << "\t[" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
+<< __FUNCTION__ << ") " << __txt << "\033[0m" << std::endl
 #endif
 
 #define MESSAGE1(__txt)  {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) { std::cout << " ";  std::cout << __txt << std::endl;};}
@@ -80,11 +93,13 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 
 #ifdef  __DEBUG
 
-#define WARNING(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {__header("WARNING", __txt);}}
+#define WARNING(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {__header_custom_text_on_unix("WARNING", __txt, 33);}}
 
 #define DEBUG(__txt) {__header("DEBUG", __txt);}
 
-#define ERROR(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); __header("ERROR proc "<<__rk, __txt); raise(SIGTERM);}
+#define ERRORWITHSIGNAL(__txt, __sig) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); __header("ERROR proc "<<__rk, __txt); raise(__sig);}
+
+#define ERROR(__txt) {ERRORWITHSIGNAL(__txt, SIGTERM);}
 
 #define DEBUGEXEC(...) __VA_ARGS__
 #define RELEASEEXEC(...)
@@ -93,13 +108,15 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 
 #else // not DEBUG
 
-#define WARNING(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {std::cout << "\t[WARNING] " << __txt << std::endl;}}
+#define WARNING(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {__header_custom_text_on_unix("WARNING", __txt, 33);}}
 
 #define DEBUG(...)
 #define DEBUGEXEC(...)
 #define RELEASEEXEC(...) __VA_ARGS__
 
-#define ERROR(__txt) {__header("ERROR", __txt); raise(SIGTERM);}
+#define ERRORWITHSIGNAL(__txt, __sig) {__header_error("ERROR", __txt); raise(__sig);}
+
+#define ERROR(__txt) {ERRORWITHSIGNAL(__txt, SIGTERM);}
 
 #define HEREIAM(...)
 
