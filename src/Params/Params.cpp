@@ -82,7 +82,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     if( namelistsFiles.size()==0 ) {
-        ERROR( "No namelists given!" );
+        ERROR_NAMELIST( "No namelists given!","" );
     }
 
     //string commandLineStr("");
@@ -185,7 +185,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Error if no block Main() exists
     if( PyTools::nComponents( "Main" ) == 0 ) {
-        ERROR( "Block Main() not defined" );
+        ERROR_NAMELIST( "Block Main() not defined","https://smileipic.github.io/Smilei/namelist.html#main-variables" );
     }
 
     // CHECK namelist on python side
@@ -244,7 +244,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     geometry = "";
     PyTools::extract( "geometry", geometry, "Main"  );
     if( geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="AMcylindrical" ) {
-        ERROR( "Main.geometry `" << geometry << "` invalid" );
+        ERROR_NAMELIST( "Main.geometry `" << geometry << "` invalid", "https://smileipic.github.io/Smilei/namelist.html#main-variables" );
     }
     setDimensions();
 
@@ -264,7 +264,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
 #ifndef _PICSAR
     if (is_pxr) {
-        ERROR( "Smilei not linked with picsar, use make config=picsar" );
+        ERROR_NAMELIST( "Smilei not linked with picsar, use make config=picsar", "https://smileipic.github.io/Smilei/install_PICSAR.html" );
     }
 #endif
 
@@ -272,13 +272,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "interpolation_order", interpolation_order, "Main"  );
     if( geometry=="AMcylindrical") {
         if( interpolation_order != 1 && is_spectral ) {
-            ERROR( "Main.interpolation_order " << interpolation_order << " should be 1 for PSATD solver" );
+            ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 1 for PSATD solver",
+            LINK_NAMELIST + std::string("#main-variables") );
         }
         if( interpolation_order != 2 && !is_spectral ){
-            ERROR( "Main.interpolation_order " << interpolation_order << " should be 2 for FDTD solver." );
+            ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 2 for FDTD solver.",
+            LINK_NAMELIST + std::string("#main-variables"));
         }
     } else if( interpolation_order!=2 && interpolation_order!=4 && !is_spectral ) {
-        ERROR( "Main.interpolation_order " << interpolation_order << " should be 2 or 4" );
+        ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 2 or 4",
+        LINK_NAMELIST + std::string("#particle-injector"));
     }
 
     //!\todo (MG to JD) Please check if this parameter should still appear here
@@ -296,7 +299,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     PyTools::extractV( "cell_length", cell_length, "Main" );
     if( cell_length.size()!=nDim_field ) {
-        ERROR( "Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry );
+        ERROR_NAMELIST( "Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry,
+        LINK_NAMELIST + std::string("#particle-injector"));
     }
     res_space.resize( nDim_field );
     for( unsigned int i=0; i<nDim_field; i++ ) {
@@ -311,7 +315,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // if not specified, it will be equal to 1
     PyTools::extract( "number_of_AM_relativistic_field_initialization", nmodes_rel_field_init, "Main"   );
     if (nmodes_rel_field_init>nmodes){
-        ERROR( "The number of AM modes computed in relativistic field initialization must be lower or equal than the number of modes of the simulation" );
+        ERROR_NAMELIST( "The number of AM modes computed in relativistic field initialization must be lower or equal than the number of modes of the simulation",
+                    LINK_NAMELIST + std::string("#particle-injector") );
     }
 
     nmodes_classical_Poisson_field_init = 1; // default value
@@ -320,7 +325,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // if not specified, it will be equal to 1
     PyTools::extract( "number_of_AM_classical_Poisson_solver", nmodes_classical_Poisson_field_init, "Main"   );
     if (nmodes_classical_Poisson_field_init>nmodes){
-        ERROR( "The number of AM modes computed in classical Poisson solver must be lower or equal than the number of modes of the simulation" );
+        ERROR_NAMELIST( "The number of AM modes computed in classical Poisson solver must be lower or equal than the number of modes of the simulation",
+                        LINK_NAMELIST + std::string("#particle-injector") );
     }
 
 
