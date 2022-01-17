@@ -281,7 +281,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
     } else if( interpolation_order!=2 && interpolation_order!=4 && !is_spectral ) {
         ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 2 or 4",
-        LINK_NAMELIST + std::string("#particle-injector"));
+        LINK_NAMELIST + std::string("#main-variables"));
     }
 
     //!\todo (MG to JD) Please check if this parameter should still appear here
@@ -300,7 +300,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extractV( "cell_length", cell_length, "Main" );
     if( cell_length.size()!=nDim_field ) {
         ERROR_NAMELIST( "Dimension of cell_length ("<< cell_length.size() << ") != " << nDim_field << " for geometry " << geometry,
-        LINK_NAMELIST + std::string("#particle-injector"));
+        LINK_NAMELIST + std::string("#main-variables"));
     }
     res_space.resize( nDim_field );
     for( unsigned int i=0; i<nDim_field; i++ ) {
@@ -316,7 +316,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "number_of_AM_relativistic_field_initialization", nmodes_rel_field_init, "Main"   );
     if (nmodes_rel_field_init>nmodes){
         ERROR_NAMELIST( "The number of AM modes computed in relativistic field initialization must be lower or equal than the number of modes of the simulation",
-                    LINK_NAMELIST + std::string("#particle-injector") );
+                    LINK_NAMELIST + std::string("#main-variables") );
     }
 
     nmodes_classical_Poisson_field_init = 1; // default value
@@ -326,7 +326,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "number_of_AM_classical_Poisson_solver", nmodes_classical_Poisson_field_init, "Main"   );
     if (nmodes_classical_Poisson_field_init>nmodes){
         ERROR_NAMELIST( "The number of AM modes computed in classical Poisson solver must be lower or equal than the number of modes of the simulation",
-                        LINK_NAMELIST + std::string("#particle-injector") );
+                        LINK_NAMELIST + std::string("#main-variables") );
     }
 
 
@@ -335,33 +335,39 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     PyTools::extractV( "grid_length", grid_length, "Main" );
     if( grid_length.size()!=nDim_field ) {
-        ERROR( "Dimension of grid_length ("<< grid_length.size() << ") != " << nDim_field << " for geometry " << geometry );
+        ERROR_NAMELIST( "Dimension of grid_length ("<< grid_length.size() << ") != " << nDim_field << " for geometry " << geometry,
+        LINK_NAMELIST + std::string("#main-variables"));
     }
 
 
     //! Boundary conditions for ElectroMagnetic Fields
     if( !PyTools::extractVV( "EM_boundary_conditions", EM_BCs, "Main" ) ) {
-        ERROR( "Electromagnetic boundary conditions (EM_boundary_conditions) not defined" );
+        ERROR_NAMELIST( "Electromagnetic boundary conditions (EM_boundary_conditions) not defined",
+                        LINK_NAMELIST + std::string("#main-variables"));
     }
 
     if( EM_BCs.size() == 0 ) {
-        ERROR( "EM_boundary_conditions cannot be empty" );
+        ERROR_NAMELIST( "EM_boundary_conditions cannot be empty",
+               LINK_NAMELIST + std::string("#main-variables") );
     } else if( EM_BCs.size() == 1 ) {
         while( EM_BCs.size() < nDim_field ) {
             EM_BCs.push_back( EM_BCs[0] );
         }
     } else if( EM_BCs.size() != nDim_field ) {
-        ERROR( "EM_boundary_conditions must be the same size as the number of dimensions" );
+        ERROR_NAMELIST( "EM_boundary_conditions must be the same size as the number of dimensions",
+                        LINK_NAMELIST + std::string("#main-variables") );
     }
 
     for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
         if( EM_BCs[iDim].size() == 1 ) { // if just one type is specified, then take the same bc type in a given dimension
             EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
         } else if( EM_BCs[iDim][0] != EM_BCs[iDim][1] && ( EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic" ) ) {
-            ERROR( "EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side" );
+            ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side",
+                            LINK_NAMELIST + std::string("#main-variables") );
         }
         if( is_spectral && geometry != "AMcylindrical" && ( EM_BCs[iDim][0] != "periodic" || EM_BCs[iDim][1] != "periodic" ) ) {
-            ERROR( "EM_boundary_conditions along "<<"xyz"[iDim]<<" must be periodic for spectral solver in cartesian geometry." );
+            ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" must be periodic for spectral solver in cartesian geometry.",
+                            LINK_NAMELIST + std::string("#main-variables") );
         }
     }
 
@@ -370,17 +376,20 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         Laser_Envelope_model = true;
         //! Boundary conditions for Envelope Field
         if( !PyTools::extractVV( "Envelope_boundary_conditions", Env_BCs, "LaserEnvelope" ) ) {
-            ERROR( "Envelope_boundary_conditions not defined" );
+            ERROR_NAMELIST( "Envelope_boundary_conditions not defined",
+                            LINK_NAMELIST + std::string("#laser-envelope-model") );
         }
 
         if( Env_BCs.size() == 0 ) {
-            ERROR( "Envelope_boundary_conditions cannot be empty" );
+            ERROR_NAMELIST( "Envelope_boundary_conditions cannot be empty",
+                            LINK_NAMELIST + std::string("#laser-envelope-model"));
         } else if( Env_BCs.size() == 1 ) {
             while( Env_BCs.size() < nDim_field ) {
                 Env_BCs.push_back( Env_BCs[0] );
             }
         } else if( Env_BCs.size() != nDim_field ) {
-            ERROR( "Envelope_boundary_conditions must be the same size as the number of dimensions" );
+            ERROR_NAMELIST( "Envelope_boundary_conditions must be the same size as the number of dimensions",
+                           LINK_NAMELIST + std::string("#laser-envelope-model") );
         }
 
         for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
@@ -406,7 +415,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         // Read envelope solver for the envelope equation
         PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" );
         if ( (envelope_solver != "explicit") && (envelope_solver != "explicit_reduced_dispersion") ){
-            ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
+            ERROR_NAMELIST("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ",
+                           LINK_NAMELIST + std::string("#laser-envelope-model"));
         }
         if ((envelope_solver == "explicit_reduced_dispersion") && (geometry!="1Dcartesian")){
             full_Envelope_exchange = true;
@@ -455,14 +465,17 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             EM_BCs_k.push_back( EM_BCs_k[0] );
         }
     } else if( EM_BCs_k.size() != nDim_field*2 ) {
-        ERROR( "EM_boundary_conditions_k must be the same size as the number of faces." );
+        ERROR_NAMELIST( "EM_boundary_conditions_k must be the same size as the number of faces.",
+                        LINK_NAMELIST + std::string("#main-variables"));
     }
     for( unsigned int iDim=0; iDim<nDim_field*2; iDim++ ) {
         if( EM_BCs_k[iDim].size() != nDim_field ) {
-            ERROR( "EM_boundary_conditions_k must have exactly " << nDim_field << " elements along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
+            ERROR_NAMELIST( "EM_boundary_conditions_k must have exactly " << nDim_field << " elements along dimension "<<"-+"[iDim%2]<<"012"[iDim/2],
+                   LINK_NAMELIST + std::string("#main-variables") );
         }
         if( EM_BCs_k[iDim][iDim/2] == 0. ) {
-            ERROR( "EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
+            ERROR_NAMELIST( "EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2],
+                           LINK_NAMELIST + std::string("#main-variables") );
         }
 
     }
@@ -490,13 +503,15 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     for( int ifilt = 0; ifilt < nCurrentFilter; ifilt++ ) {
         PyTools::extract( "model", currentFilter_model, "CurrentFilter", ifilt );
         if( (currentFilter_model != "binomial")&&(currentFilter_model != "customFIR") ) {
-            ERROR( "Currently, only the `binomial` and `customFIR` model is available in CurrentFilter()" );
+            ERROR_NAMELIST( "Currently, only the `binomial` and `customFIR` model is available in CurrentFilter()",
+            LINK_NAMELIST + std::string("#current-filtering") );
         }
 
         if(currentFilter_model == "customFIR") {
             PyTools::extractV( "kernelFIR", currentFilter_kernelFIR, "CurrentFilter", ifilt );
             if( currentFilter_kernelFIR.size() < 3 ) {
-                ERROR( "Kernel have to measure 3 taps at least. For example the binomial FIR kernel on three tapis [0.25,0.50,0.25]" );
+                ERROR_NAMELIST( "Kernel have to measure 3 taps at least. For example the binomial FIR kernel on three tapis [0.25,0.50,0.25]",
+                                LINK_NAMELIST + std::string("#current-filtering"));
             }
         }
 
