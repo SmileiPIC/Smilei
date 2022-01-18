@@ -181,7 +181,120 @@ Finally, the decomposition levels are summarized in :numref:`decomposition_summa
 
 --------------------------------------------------------------------------------
 
-IV. Data structures and main classes
+IV. Coding and community rules
+===================================================================
+
+Coding style rules 
+------------------------------------
+
+Line and indentation style
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- A line should be no more than 140 characters.
+- The code should not have some characters outside [0,127] in the ASCII table
+- There should be no more than 2 empty successive lines.
+- Only 1 statement per line is allowed.
+- An indentation block is only composed of 4 spaces, no tab is permitted.
+- If possible, keep trailing spaces in empty lines to respect indentation
+
+For instance, this line is not correct::
+
+    a1 = b1 + c1*d1; a2 = b2 + c2*d2;
+    
+and should be replaced by::
+
+    a1 = b1 + c1*d1;
+    a2 = b2 + c2*d2;
+
+Variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Variable names (public, protected, private, local) should be composed of lowercase and underscore between words.
+- The lowercase rule does not apply on acronyms and people names
+
+For instance::
+
+    int number_of_elements;
+    int lignes_of_Smilei;
+    int age_of_GNU;
+
+Classes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- A class name starts with a capital letter
+- A capital letter is used between each word that composes the class name
+- No underscore
+
+For instance::
+    
+    class MyClassIsGreat
+    {
+        public:
+        int public_integer_;
+        private:
+        int private_integer_;
+    }
+
+- A class variable respects the rules of variables previously described.
+- A variable member has an underscore at the end of the name
+
+Functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Functions and member functions should start with a lowercase letter.
+- No underscore.
+- Each word starts with a capital letter.
+
+For instance::
+
+    int myGreatFunction(...)
+    {
+    ...
+    }
+
+- Names should be explicit as much as possible.
+- Avoid using shortened expression.
+
+For instance::
+
+    void computeParticlePosition(...)
+    {
+    ...
+    }
+    
+instead of::
+
+    void computePartPos(...)
+    {
+    ...
+    }
+
+If-statement
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Any if-statement should have curly brackets.
+
+For instance::
+
+    if (condition) {
+        a = b + c*d;
+    }
+
+ERROR and OUTPUT management
+------------------------------------
+
+Developers should use the dedicated error our output macro definition 
+located in the file `src/Tools.h`.
+
+- `ERROR`: this function is the default one used to throw a SIGABRT error with a simple messages.
+- `ERROR_NAMELIST`: this function should be used for namelist error. It takes in argument a simple message and a link to the documentation. It throws as well a SIGABRT signal.
+- `MESSAGE`: this function should be used to output an information message (it uses `std::cout`).
+- `DEBUG` : should be used for debugging messages (for the so-called DEBUG mode)
+- `WARNING` : should be used to thrown a warning. A warning alerts the users of a possible issue or to be carreful with some parameters without stoping the program.
+
+--------------------------------------------------------------------------------
+
+V. Data structures and main classes
 =======================================
 
 This section describes the main classes and the tree-like smilei data structure.
@@ -353,7 +466,7 @@ The base class description (``SmileiMPI.h`` and ``SmileiMPI.cpp``) is located in
 
 -----------------------------------------------------------------
 
-V. The :program:`Smilei` PIC loop implementation
+VI. The :program:`Smilei` PIC loop implementation
 ==============================================================
 
 The initialization and the main loop are explicitely done in the main file ``Smilei.cpp``.
