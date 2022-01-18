@@ -518,13 +518,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         PyTools::extractV( "passes", currentFilter_passes, "CurrentFilter", ifilt );  //test list
 
         if( currentFilter_passes.size() == 0 ) {
-            ERROR( "passes cannot be empty" );
+            ERROR_NAMELIST( "passes in block 'CurrentFilter' cannot be empty",  LINK_NAMELIST + std::string("#current-filtering"));
         } else if( currentFilter_passes.size() == 1 ) {
             while( currentFilter_passes.size() < nDim_field ) {
                 currentFilter_passes.push_back( currentFilter_passes[0] );
             }
         } else if( currentFilter_passes.size() != nDim_field ) {
-            ERROR( "passes must be the same size as the number of field dimensions" );
+            ERROR_NAMELIST( "passes in block 'CurrentFilter' must be the same size as the number of field dimensions",  LINK_NAMELIST + std::string("#current-filtering") );
         }
     }
 
@@ -536,10 +536,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         string model;
         PyTools::extract( "model", model, "FieldFilter", ifilt );
         if( model != "Friedman" ) {
-            ERROR( "Currently, only the `Friedman` model is available in FieldFilter()" );
+            ERROR_NAMELIST( "Currently, only the `Friedman` model is available in FieldFilter()",  LINK_NAMELIST + std::string("#field-filtering"));
         }
         if( geometry != "2Dcartesian" ) {
-            ERROR( "Currently, the `Friedman` field filter is only availble in `2Dcartesian` geometry" );
+            ERROR_NAMELIST( "Currently, the `Friedman` field filter is only availble in `2Dcartesian` geometry",  LINK_NAMELIST + std::string("#field-filtering") );
         }
         Friedman_filter = true;
         PyTools::extract( "theta", Friedman_theta, "FieldFilter", ifilt );
@@ -547,7 +547,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             WARNING( "Friedman filter is applied but parameter theta is set to zero" );
         }
         if( ( Friedman_theta<0. ) || ( Friedman_theta>1. ) ) {
-            ERROR( "Friedman filter theta = " << Friedman_theta << " must be between 0 and 1" );
+            ERROR_NAMELIST( "Friedman filter theta = " << Friedman_theta << " must be between 0 and 1",  LINK_NAMELIST + std::string("#field-filtering") );
         }
     }
 
@@ -584,7 +584,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // Number of patches
     // --------------------
     if( !PyTools::extractV( "number_of_patches", number_of_patches, "Main" ) ) {
-        ERROR( "The parameter `number_of_patches` must be defined as a list of integers" );
+        ERROR_NAMELIST( "The parameter `number_of_patches` must be defined as a list of integers",  LINK_NAMELIST + std::string("#main-variables")  );
     }
 
     tot_number_of_patches = 1;
@@ -597,7 +597,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     } else {
         one_patch_per_MPI = false;
         if( tot_number_of_patches < ( unsigned int )( smpi->getSize() ) ) {
-            ERROR( "The total number of patches "<<tot_number_of_patches<<" must be greater or equal to the number of MPI processes "<<smpi->getSize() );
+            ERROR_NAMELIST( "The total number of patches "<<tot_number_of_patches<<" must be greater or equal to the number of MPI processes "<<smpi->getSize() );
         }
     }
 #ifdef _OPENMP
@@ -626,7 +626,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         for( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ) {
             total_number_of_hilbert_patches *= number_of_patches[iDim];
             if( ( number_of_patches[iDim] & ( number_of_patches[iDim]-1 ) ) != 0 ) {
-                ERROR( "Number of patches in each direction must be a power of 2" );
+                ERROR_NAMELIST( "Number of patches in each direction must be a power of 2",  LINK_NAMELIST + std::string("#main-variables")  );
             }
         }
     }
@@ -649,10 +649,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     has_load_balancing = ( smpi->getSize()>1 )  && ( ! load_balancing_time_selection->isEmpty() );
 
     if( has_load_balancing && patch_arrangement != "hilbertian" ) {
-        ERROR( "Dynamic load balancing is only available for Hilbert decomposition" );
+        ERROR_NAMELIST( "Dynamic load balancing is only available for Hilbert decomposition",  LINK_NAMELIST + std::string("#main-variables") );
     }
     if( has_load_balancing && total_number_of_hilbert_patches < 2*smpi->getSize() ) {
-        ERROR( "Dynamic load balancing requires to use at least 2 patches per MPI process." );
+        ERROR_NAMELIST( "Dynamic load balancing requires to use at least 2 patches per MPI process.",  LINK_NAMELIST + std::string("#main-variables") );
     }
 
     mi.resize( 3, 0 );
@@ -688,7 +688,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 vectorization_mode == "on" ||
                 vectorization_mode == "adaptive" ||
                 vectorization_mode == "adaptive_mixed_sort" ) ) {
-            ERROR( "In block `Vectorization`, parameter `mode` must be `off`, `on`, `adaptive`" );
+            ERROR_NAMELIST( "In block `Vectorization`, parameter `mode` must be `off`, `on`, `adaptive`",  LINK_NAMELIST + std::string("#vectorization") );
         } else if( vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive" ) {
             has_adaptive_vectorization = true;
         }
@@ -696,24 +696,24 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         // Check that we are in 3D, adaptive mode not possible in 2d
         if( vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive" ) {
             if (geometry!="3Dcartesian") {
-                ERROR("In block `Vectorization`, `adaptive` mode only available in 3D")
+                ERROR_NAMELIST("In block `Vectorization`, `adaptive` mode only available in 3D",  LINK_NAMELIST + std::string("#vectorization"))
             }
         }
 
         // Check cell sorting is allowed
         if( !( vectorization_mode == "off") ){
     	    if (defined_cell_sort == true && cell_sorting == false){
-                ERROR(" Cell sorting must be allowed in order to use vectorization.")
+                ERROR_NAMELIST(" Cell sorting must be allowed in order to use vectorization.",  LINK_NAMELIST + std::string("#vectorization"))
             }
             cell_sorting = true;
-	}
+        }
 
 
         // Default mode for the adaptive mode
         PyTools::extract( "initial_mode", adaptive_default_mode, "Vectorization"   );
         if( !( adaptive_default_mode == "off" ||
                 adaptive_default_mode == "on" ) ) {
-            ERROR( "In block `Vectorization`, parameter `default` must be `off` or `on`" );
+            ERROR_NAMELIST( "In block `Vectorization`, parameter `default` must be `off` or `on`",  LINK_NAMELIST + std::string("#vectorization") );
         }
 
         // get parameter "every" which describes a timestep selection
@@ -729,17 +729,17 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
         // collisions need sorting per cell
         if (defined_cell_sort == true && cell_sorting == false){
-            ERROR(" Cell sorting must be allowed in order to use collisions.")
+            ERROR_NAMELIST(" Cell sorting must be allowed in order to use collisions.",  LINK_NAMELIST + std::string("#collisions-reactions"));
         }
         cell_sorting = true;
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
                 && geometry!="3Dcartesian" ) {
-            ERROR( "Collisions only valid for cartesian geometries for the moment" )
+            ERROR_NAMELIST( "Collisions only valid for cartesian geometries for the moment",  LINK_NAMELIST + std::string("#collisions-reactions") );
         }
 
         if( vectorization_mode == "adaptive_mixed_sort" ) {
-            ERROR( "Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'." )
+            ERROR_NAMELIST( "Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'.",  LINK_NAMELIST + std::string("#collisions-reactions") );
         }
     }
 
@@ -772,7 +772,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             for( unsigned int ispec2 = ispec+1; ispec2 < tot_species_number; ispec2++ ) {
                 PyTools::extract( "mass", mass2, "Species", ispec2 );
                 if( mass2 > 0 ) {
-                    ERROR( "the photon species (mass==0) should be defined after the particle species (mass>0)" );
+                    ERROR_NAMELIST( "the photon species (mass==0) should be defined after the particle species (mass>0)",  LINK_NAMELIST + std::string("#species") );
                 }
             }
         }
@@ -780,7 +780,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         PyTools::extract( "merging_method", merging_method, "Species", ispec );
         if (merging_method != "none"){
             if (defined_cell_sort == true && cell_sorting == false){
-                ERROR(" Cell sorting must be allowed in order to use particle merge.")
+                ERROR_NAMELIST(" Cell sorting must be allowed in order to use particle merge.",  LINK_NAMELIST + std::string("#particle-merging"));
             }
             cell_sorting = true;
         }
@@ -910,11 +910,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             vector<PyObject *> profiles;
             vector<int> profiles_n = {1, 2};
             if( ! PyTools::py2pyvector( p, profiles ) ) {
-                ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile must be a list of 2 profiles" );
+                ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile must be a list of 2 profiles",  LINK_NAMELIST + std::string("#lasers") );
             }
             Py_DECREF( p );
             if( profiles.size()!=2 ) {
-                ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile needs 2 profiles." );
+                ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile needs 2 profiles.",  LINK_NAMELIST + std::string("#lasers") );
             }
             if( profiles[1] == Py_None ) {
                 profiles  .pop_back();
@@ -925,15 +925,15 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 profiles_n.erase( profiles_n.begin() );
             }
             if( profiles.size() == 0 ) {
-                ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile cannot be [None, None]" );
+                ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile cannot be [None, None]", LINK_NAMELIST + std::string("#lasers") );
             }
             for( unsigned int i=0; i<profiles.size(); i++ ) {
                 int nargs = PyTools::function_nargs( profiles[i] );
                 if( nargs == -2 ) {
-                    ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] not callable" );
+                    ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] not callable", LINK_NAMELIST + std::string("#lasers") );
                 }
                 if( nargs >= 0 && nargs != ( int ) nDim_field ) {
-                    ERROR( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs );
+                    ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs, LINK_NAMELIST + std::string("#lasers") );
                 }
             }
 
@@ -941,7 +941,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             int keep_n_strongest_modes=0;
             PyTools::extract( "_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser );
             if( keep_n_strongest_modes<1 ) {
-                ERROR( "For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer" );
+                ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer", LINK_NAMELIST + std::string("#lasers") );
             }
 
             // Extract box_side
@@ -952,16 +952,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 normal_axis = 0;
             } else if( box_side == "ymin" || box_side == "ymax" ) {
                 if( geometry != "2Dcartesian" && geometry != "3Dcartesian" ) {
-                    ERROR( "For LaserOffset #" << n_laser_offset << ": box_side `ymin` or `ymax` requires 2D or 3D geometry" );
+                    ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": box_side `ymin` or `ymax` requires 2D or 3D geometry", LINK_NAMELIST + std::string("#lasers") );
                 }
                 normal_axis = 1;
             } else if( box_side == "zmin" || box_side == "zmax" ) {
                 if( geometry != "3Dcartesian" ) {
-                    ERROR( "For LaserOffset #" << n_laser_offset << ": box_side `zmin` or `zmax` requires 3D geometry" );
+                    ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": box_side `zmin` or `zmax` requires 3D geometry", LINK_NAMELIST + std::string("#lasers") );
                 }
                 normal_axis = 2;
             } else {
-                ERROR( "For LaserOffset #" << n_laser_offset << ": box_side must be `xmin`, `xmax`, `ymin`, `ymax`, `zmin` or `zmax`" );
+                ERROR_NAMELIST( "For LaserOffset #" << n_laser_offset << ": box_side must be `xmin`, `xmax`, `ymin`, `ymax`, `zmin` or `zmax`", LINK_NAMELIST + std::string("#lasers") );
             }
 
             if( smpi->getRank() < number_of_processes && ! restart ) {
@@ -1052,7 +1052,7 @@ void Params::compute()
         if( ! multiple_decomposition ) {
             oversize[i]  = max( interpolation_order, max( ( unsigned int )( spectral_solver_order[i]/2+1 ),custom_oversize ) ) + ( exchange_particles_each-1 );
             if( currentFilter_model == "customFIR" && oversize[i] < (currentFilter_kernelFIR.size()-1)/2 ) {
-                ERROR( "With the `customFIR` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2" );
+                ERROR_NAMELIST( "With the `customFIR` current filter model, the ghost cell number (oversize) = " << oversize[i] << " have to be >= " << (currentFilter_kernelFIR.size()-1)/2 << ", the (kernelFIR size - 1)/2", LINK_NAMELIST + std::string("#current-filtering")  );
             }
         } else {
             oversize[i] = interpolation_order + ( exchange_particles_each-1 );
@@ -1060,10 +1060,10 @@ void Params::compute()
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if( n_space_global[i]%number_of_patches[i] !=0 ) {
-            ERROR( "ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i] );
+            ERROR_NAMELIST( "ERROR in dimension " << i <<". Number of patches = " << number_of_patches[i] << " must divide n_space_global = " << n_space_global[i], LINK_NAMELIST + std::string("#main-variables") );
         }
         if( n_space[i] <= 2*oversize[i]+1 ) {
-            ERROR( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +2 << " cells long. Increase number of cells or reduce number of patches in this direction. " );
+            ERROR_NAMELIST( "ERROR in dimension " << i <<". Patches length = "<<n_space[i] << " cells must be at least " << 2*oversize[i] +2 << " cells long. Increase number of cells or reduce number of patches in this direction. ",LINK_NAMELIST + std::string("#main-variables") );
         }
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
@@ -1133,7 +1133,7 @@ void Params::compute()
 
     // Verify that clrw divides n_space[0]
     if( n_space[0]%clrw != 0 ) {
-        ERROR( "The parameter clrw must divide the number of cells in one patch (in dimension x)" );
+        ERROR_NAMELIST( "The parameter clrw must divide the number of cells in one patch (in dimension x)", LINK_NAMELIST + std::string("#main-variables") );
     }
 
     // Define domain decomposition if double grids are used for particles and fields
@@ -1150,7 +1150,7 @@ void Params::check_consistency()
     if( vectorization_mode != "off" ) {
 
         if( ( geometry=="1Dcartesian" ) ) {
-            ERROR( "Vectorized algorithms not implemented for this geometry" );
+            ERROR_NAMELIST( "Vectorized algorithms not implemented for this geometry", LINK_NAMELIST + std::string("#vectorization") );
         }
 
         // if( ( geometry=="2Dcartesian" ) && ( interpolation_order==4 ) ) {
@@ -1185,7 +1185,7 @@ void Params::setDimensions()
         nDim_particle=3;
         nDim_field=2;
     } else {
-        ERROR( "Geometry: " << geometry << " not defined" );
+        ERROR_NAMELIST( "Geometry: " << geometry << " not defined", LINK_NAMELIST + std::string("#main-variables") );
     }
 }
 
@@ -1453,7 +1453,7 @@ void Params::runScript( string command, string name, PyObject *scope )
     PyObject *result = PyRun_String( command.c_str(), Py_file_input, scope, scope );
     PyTools::checkPyError();
     if( !result ) {
-        ERROR( "error parsing "<< name );
+        ERROR( "error parsing "<< name << "\n Check out the namelist options: " << LINK_NAMELIST );
     }
     Py_DECREF( result );
 }
@@ -1720,7 +1720,10 @@ void Params::multiple_decompose_3D()
         }
     }
     if ( (number_of_region[0]*number_of_region[1]*number_of_region[2] != (unsigned int)sz ) && (!rk) )
-        ERROR( "Decomposition à affiner : " << number_of_region[0] << " " << number_of_region[1] << " " << number_of_region[2] );
+        ERROR( "The total number of regions ("<< number_of_region[0]*number_of_region[1]*number_of_region[2] 
+                << ") is not equal to the number of MPI processes (" 
+                << number_of_region[0] << "*" << number_of_region[1] << "*" << number_of_region[2] 
+                << " != " << sz << ")" );
 
 
     map_rank.resize( number_of_region[0] );
