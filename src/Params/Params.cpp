@@ -584,7 +584,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // Number of patches
     // --------------------
     if( !PyTools::extractV( "number_of_patches", number_of_patches, "Main" ) ) {
-        ERROR_NAMELIST( "The parameter `number_of_patches` must be defined as a list of integers",  LINK_NAMELIST + std::string("#main-variables")  );
+        ERROR_NAMELIST( "The parameter `number_of_patches` must be defined as a list of integers",  
+        LINK_NAMELIST + std::string("#main-variables")  );
     }
 
     tot_number_of_patches = 1;
@@ -597,12 +598,15 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     } else {
         one_patch_per_MPI = false;
         if( tot_number_of_patches < ( unsigned int )( smpi->getSize() ) ) {
-            ERROR_NAMELIST( "The total number of patches "<<tot_number_of_patches<<" must be greater or equal to the number of MPI processes "<<smpi->getSize() );
+            ERROR_NAMELIST( "The total number of patches "<<tot_number_of_patches
+                          <<" must be greater or equal to the number of MPI processes "
+                          <<smpi->getSize(), LINK_NAMELIST + std::string("#main-variables"));
         }
     }
 #ifdef _OPENMP
     if( tot_number_of_patches < ( unsigned int )( smpi->getSize()*smpi->getOMPMaxThreads() ) ) {
-        WARNING( "Resources allocated "<<( smpi->getSize()*smpi->getOMPMaxThreads() )<<" underloaded regarding the total number of patches "<<tot_number_of_patches );
+        WARNING( "Resources allocated "<<( smpi->getSize()*smpi->getOMPMaxThreads() )
+               <<" underloaded regarding the total number of patches "<<tot_number_of_patches );
     }
 #endif
 
