@@ -59,8 +59,9 @@ public:
             }
         }
         if (!species_defined) {
-            ERROR( "For particle injector "<< injector_name
-            << " (# " << injector_index << "), the specified species does not exist (" << species_name << ")" );
+            ERROR_NAMELIST( "For particle injector "<< injector_name
+            << " (# " << injector_index << "), the specified species does not exist (" << species_name << ")",
+            "https://smileipic.github.io/Smilei/namelist.html#particle-injector");
         } else {
             MESSAGE( 2, "> Associated species: " << species_name << " (of index "<< species_number << ")");
         }
@@ -96,12 +97,21 @@ public:
         if ( this_particle_injector->position_initialization_=="species" || this_particle_injector->position_initialization_=="") {
             MESSAGE( 2, "> Position initialization defined as the species.");
             this_particle_injector->position_initialization_ = species->position_initialization_;
+            if (( this_particle_injector->position_initialization_!="regular" )
+                       &&( this_particle_injector->position_initialization_!="random" )
+                       &&( this_particle_injector->position_initialization_!="centered" )) {
+                ERROR_NAMELIST("For particle injector `" << injector_name 
+                << "`, position initialization from species `" << species->name_
+                << "` is not correct."
+                << "\n Note that position initilization with user-defined external postitions in species is not compatible with injectors.",
+                LINK_NAMELIST + std::string("#particle-injector"));
+            }
         } else if( ( this_particle_injector->position_initialization_!="regular" )
                    &&( this_particle_injector->position_initialization_!="random" )
                    &&( this_particle_injector->position_initialization_!="centered" ) ) {
             this_particle_injector->position_initialization_on_injector_=true;
             //ERROR("For particle injector " << injector_name << ", position initialization not or badly specified.");
-        }
+        } 
 
         if( patch->isMaster() ) {
             MESSAGE( 2, "> Position initialization: " << this_particle_injector->position_initialization_);
@@ -121,22 +131,25 @@ public:
             if( ( this_particle_injector->momentum_initialization_!="cold" )
                     && ( this_particle_injector->momentum_initialization_!="maxwell-juettner" )
                     && ( this_particle_injector->momentum_initialization_!="rectangular" ) ) {
-                ERROR( "For particle injector '" << injector_name
+                ERROR_NAMELIST( "For particle injector '" << injector_name
                        << "' unknown momentum_initialization: "
-                       <<this_particle_injector->momentum_initialization_ );
+                       <<this_particle_injector->momentum_initialization_,
+                    LINK_NAMELIST + std::string("#particle-injector") );
             }
         }
         // Photons
         else if( species_vector[this_particle_injector->species_number_]->mass_ == 0 ) {
             if ( this_particle_injector->momentum_initialization_ == "maxwell-juettner" ) {
-                ERROR( "For photon injector '" << injector_name
-                       << "' Maxwell-Juettner is not valid.");
+                ERROR_NAMELIST( "For photon injector '" << injector_name
+                       << "' Maxwell-Juettner is not valid.",
+                    LINK_NAMELIST + std::string("#particle-injector"));
             }
             if (( this_particle_injector->momentum_initialization_!="cold" )
                     && ( this_particle_injector->momentum_initialization_!="rectangular" ) ) {
-                ERROR( "For photon injector '" << injector_name
+                ERROR_NAMELIST( "For photon injector '" << injector_name
                        << "' unknown momentum_initialization: "
-                       <<this_particle_injector->momentum_initialization_ );
+                       <<this_particle_injector->momentum_initialization_,
+                    LINK_NAMELIST + std::string("#particle-injector"));
             }
         }
 
@@ -194,7 +207,9 @@ public:
             ok1 = PyTools::extract_pyProfile( "number_density", profile1, "ParticleInjector", injector_index );
             ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "ParticleInjector", injector_index );
             if (ok1 && ok2) {
-                ERROR( "For injector '" << this_particle_injector->name_ << "', cannot define both `number_density ` and `charge_density`." );
+                ERROR_NAMELIST( "For injector '" << this_particle_injector->name_ 
+                << "', cannot define both `number_density ` and `charge_density`.",
+            "https://smileipic.github.io/Smilei/namelist.html#particle-injector" );
             } else if( !ok1 && !ok2 ) {
                 this_particle_injector->density_profile_type_ = species->density_profile_type_;
                 if (species->density_profile_type_ == "nb") {
@@ -219,8 +234,8 @@ public:
             ok1 = PyTools::extract_pyProfile( "number_density", profile1, "ParticleInjector", injector_index );
             ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "ParticleInjector", injector_index );
             if( ok2 ) {
-                ERROR( "For photon injector '" << injector_name << "', `charge_density` has no meaning."
-                        << "You must use `number_density`." );
+                ERROR_NAMELIST( "For photon injector '" << injector_name << "', `charge_density` has no meaning."
+                        << "You must use `number_density`.", LINK_NAMELIST + std::string("#particle-injector") );
             }
             if( !ok1 ) {
                 species->density_profile_type_ = "nb";
@@ -251,10 +266,13 @@ public:
 
         if( PyTools::extractV( "regular_number", this_particle_injector->regular_number_array_, "ParticleInjector", injector_index )){
              if (this_particle_injector->position_initialization_ != "regular") {
-                 ERROR("regular_number may not be provided if species position_initialization is not set to 'regular'.");
+                 ERROR_NAMELIST("regular_number may not be provided if species position_initialization is not set to 'regular'.", 
+                 "https://smileipic.github.io/Smilei/namelist.html#particle-injector");
              }
              if (this_particle_injector->regular_number_array_.size() != species->nDim_particle) {
-                 ERROR("Please provide as many regular numbers of particles as there are particle dimensions in the domain ("<< species->nDim_particle <<").");
+                 ERROR_NAMELIST("Please provide as many regular numbers of particles as there are particle dimensions in the domain ("
+                 << species->nDim_particle <<").",
+                "https://smileipic.github.io/Smilei/namelist.html#particle-injector");
              }
             std::string  regular_positioning = " ";
             for (unsigned int idim= 0 ; idim < this_particle_injector->regular_number_array_.size() ; idim ++) {
@@ -288,7 +306,8 @@ public:
             // Verify the new injector does not have the same name as a previous one
             for( unsigned int i = 0; i < i_inj; i++ ) {
                 if( this_particle_injector->name_ == particle_injector_vector[i]->name_ ) {
-                    ERROR("Two particle injectors cannot have the same name `"<<this_particle_injector->name_<<"`");
+                    ERROR_NAMELIST("Two particle injectors cannot have the same name `"<<this_particle_injector->name_<<"`",
+                    LINK_NAMELIST + std::string("#particle-injector"));
                 }
             }
             // Put the newly created injector in the vector of injectors
@@ -300,15 +319,18 @@ public:
             // if we need another injector to initialize the positions...
             if (particle_injector_vector[i_inj]->position_initialization_on_injector_) {
                 if( particle_injector_vector[i_inj]->position_initialization_==particle_injector_vector[i_inj]->name_ ) {
-                    ERROR( "For injector '"<<particle_injector_vector[i_inj]->name_<<"' `position_initialization` can not be the same injector." );
+                    ERROR_NAMELIST( "For injector '"<<particle_injector_vector[i_inj]->name_
+                    <<"' `position_initialization` can not be the same injector.",
+                    LINK_NAMELIST + std::string("#particle-injector") );
                 }
                 // We look for this injector in the list
                 for( unsigned int i = 0; i < particle_injector_vector.size(); i++ ) {
                     if (particle_injector_vector[i]->name_ == particle_injector_vector[i_inj]->position_initialization_) {
                         if( particle_injector_vector[i]->position_initialization_on_injector_ ) {
-                            ERROR( "For injector '"<< particle_injector_vector[i]->name_
+                            ERROR_NAMELIST( "For injector '"<< particle_injector_vector[i]->name_
                                                    << "' position_initialization must be 'centered', 'regular' or 'random' (pre-defined position) in order to attach '"
-                                                   << particle_injector_vector[i]->name_<<"' to its initial position." );
+                                                   << particle_injector_vector[i]->name_<<"' to its initial position.",
+                                            LINK_NAMELIST + std::string("#particle-injector") );
                         }
                         // We copy ispec2 which is the index of the species, already created, on which initialize particle of the new created species
                         particle_injector_vector[i_inj]->position_initialization_on_injector_index_=i;
