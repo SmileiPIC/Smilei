@@ -108,7 +108,7 @@ public:
     std::vector<std::string> multiphoton_Breit_Wheeler_;
 
     //! Boundary conditions for particules
-    std::vector<std::vector<std::string> > boundary_conditions;
+    std::vector<std::vector<std::string> > boundary_conditions_;
 
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;
