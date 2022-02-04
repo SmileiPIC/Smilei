@@ -91,6 +91,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     //init Python
     PyTools::openPython();
+    // Print python version
+    MESSAGE( "Python version "<<PyTools::python_version() );
+    
 #ifdef SMILEI_USE_NUMPY
     smilei_import_array();
     // Workaround some numpy multithreading bug
@@ -101,10 +104,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     string sChar( "s" );
     Py_DECREF( PyObject_CallMethod( numpy, &seterr[0], &sChar[0], "ignore" ) );
     Py_DECREF( numpy );
+#else
+    WARNING("Numpy not found. Some options will not be available");
 #endif
 
-    // Print python version
-    MESSAGE( 1, "Python version "<<PyTools::python_version() );
 
     // First, we tell python to filter the ctrl-C kill command (or it would prevent to kill the code execution).
     // This is done separately from other scripts because we don't want it in the concatenated python namelist.

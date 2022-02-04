@@ -238,6 +238,10 @@ pre, code {
 	font-size: {{ theme_code_font_size }};
 }
 
+code span.pre {
+	white-space: pre-line;
+}
+
 img.screenshot {
 }
 

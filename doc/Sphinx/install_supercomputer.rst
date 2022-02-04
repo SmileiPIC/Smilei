@@ -11,7 +11,7 @@ and environment setup to optimize Smilei's performance.
 .. rst-class:: fancy
 
 +---------------------------------------------------------------------------+-----------------------------------------------------------------------+
-| `Archer2 <https://www.archer2.ac.uk/>`_                                   | | Archer2 (GNU compiler): ``archer2``                                               |
+| `Archer2 <https://www.archer2.ac.uk/>`_                                   | | Archer2 (GNU compiler): ``archer2``                                 |
 +---------------------------------------------------------------------------+-----------------------------------------------------------------------+
 | `Cori <http://docs.nersc.gov/systems/cori>`_                              | | Haswell: ``cori_hsw``                                               |
 |                                                                           | | KNL: ``cori_knl``                                                   |
