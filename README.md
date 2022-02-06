@@ -4,18 +4,13 @@
 
 Open-source, user-friendly and designed for high performances on super-computers, it is applied to a wide range of physics studies: from relativistic laser-plasma interaction to astrophysics.
 
-## Documentation
+## Documentation [![Build Status](https://travis-ci.com/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.com/SmileiPIC/Smilei)
 
-* [For last release](http://www.maisondelasimulation.fr/smilei)
-
-* [For current commit](https://smileipic.github.io/Smilei) [![Build Status](https://travis-ci.com/SmileiPIC/Smilei.svg?branch=master)](https://travis-ci.com/SmileiPIC/Smilei)
+* [General documentation](https://smileipic.github.io/Smilei) 
+* [Tutorials](https://smileipic.github.io/tutorials)
 
 ## Feedback
 
 * [Issues](https://github.com/SmileiPIC/Smilei/issues): bug reports, feature requests, reporting on bad doc or unexpected behaviour.
-
 * [Chat room](https://app.element.io/#/room/!LQrdVpOJEohPSWMlmf:matrix.org): general discussions, suggestions, remarks, sharing results & papers or just to say hi!
-
-## I want to contribute
-
-Read [this](https://smileipic.github.io/Smilei/contribute.html).
+* [Contribute](https://smileipic.github.io/Smilei/contribute.html).
