@@ -261,7 +261,7 @@ class Field(Diagnostic):
 				z = self._np.arange(*build3d[2])
 				if len(x)==0 or len(y)==0 or len(z)==0:
 					raise Exception("Error: The array shape to be constructed seems to be empty")
-				y2, z2 = self._np.meshgrid(y,z)
+				z2, y2 = self._np.meshgrid(z,y)
 				r2 = self._np.sqrt(y2**2 + z2**2)
 				self._theta = self._np.arctan2(z2, y2)
 				del y2, z2

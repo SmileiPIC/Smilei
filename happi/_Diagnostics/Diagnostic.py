@@ -866,8 +866,12 @@ class Diagnostic(object):
 
 		spacings = [self._np.linalg.norm(c[1]-c[0]) for c in self._centers]
 		extent = []
-		for i in range(self.dim): extent += [0,self._shape[i]-1]
-		origin = [0.] * self.dim
+		origin = []
+		for i in range(self.dim):
+			extent += [0,self._shape[i]-1]
+			origin += [self._centers[i][0]]
+			if type(origin[i]) is self._np.ndarray:
+				origin[i] = origin[i][i] # workaround for probes
 		ntimes = len(self._timesteps)
 
 		vtk = VTKfile()
