@@ -29,7 +29,7 @@ PeekAtSpecies::PeekAtSpecies( Params &p, unsigned int species_id ) :
                 density_profile_type = "charge";
             }
             if( ! ( ok1 ^ ok2 ) ) {
-                ERROR( "Species `" << species_name << "`: Missing density profile" );
+                ERROR( "Species `" << species_name << "`: Missing density profile (`charge_density` or `number_density` option)" );
             }
             density_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( density_profile_type, "_density ", species_name ), *params, false, true );
             PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", species_id );

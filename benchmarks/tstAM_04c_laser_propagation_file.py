@@ -47,6 +47,10 @@ def preprocess():
         f["position/y"] = y
         f["position/z"] = z
         f["weight"] = w
+    with File("momentum.h5","w") as f:
+        f["momentum/x"] = x*0.
+        f["momentum/y"] = y*0.
+        f["momentum/z"] = z*0.
 
 Main(
     geometry = "AMcylindrical",
@@ -74,12 +78,12 @@ MovingWindow(
 Species(
     name = "electron",
     position_initialization = "plasma.h5",
-    momentum_initialization = "cold",
+    momentum_initialization = "momentum.h5",
     ionization_model = "none",
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
-    mean_velocity = [0., 0., 0.],
+    # mean_velocity = [0., 0., 0.],
     time_frozen = 0.0,
     boundary_conditions = [
     	["remove", "remove"],

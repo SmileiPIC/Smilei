@@ -60,7 +60,8 @@ public:
         double clog_factor = 1.; // default
         PyTools::extract( "coulomb_log_factor", clog_factor, "Collisions", n_collisions );
         if( clog_factor <= 0. ) {
-            ERROR( "In collisions #" << n_collisions << ": coulomb_log_factor must be strictly positive");
+            ERROR_NAMELIST( "In collisions #" << n_collisions << ": coulomb_log_factor must be strictly positive",
+            "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions");
         }
         
         // Number of timesteps between each collisions
@@ -89,10 +90,12 @@ public:
                 }
             }
             if( ionization_electrons < 0 ) {
-                ERROR( "In collisions #" << n_collisions << ": ionizing in unknown species `" << ionization_electrons_name << "`" );
+                ERROR_NAMELIST( "In collisions #" << n_collisions << ": ionizing in unknown species `" << ionization_electrons_name << "`",
+                "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions");
             }
             if( vecSpecies[ionization_electrons]->atomic_number_ != 0 ) {
-                ERROR( "In collisions #" << n_collisions << ": ionization species are not electrons (atomic_number>0)" );
+                ERROR_NAMELIST( "In collisions #" << n_collisions << ": ionization species are not electrons (atomic_number>0)",
+                "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions");
             }
             ionization = true;
         
@@ -102,7 +105,8 @@ public:
         
         } else if( ionizing != Py_False ) {
             
-            ERROR( "In collisions #" << n_collisions << ": `ionizing` must be True, False, or the name of an electron species" );
+            ERROR_NAMELIST( "In collisions #" << n_collisions << ": `ionizing` must be True, False, or the name of an electron species",
+            "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions");
             
         }
         
@@ -110,7 +114,8 @@ public:
         if( ionization ) {
             
             if( intra ) {
-                ERROR( "In collisions #" << n_collisions << ": cannot ionize with intra-collisions" );
+                ERROR_NAMELIST( "In collisions #" << n_collisions << ": cannot ionize with intra-collisions",
+                "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions");
             }
             
             for( int g=0; g<2; g++ ) { // do sgroup[0], then sgroup[1]
@@ -118,16 +123,19 @@ public:
                 for( unsigned int i=1; i<sgroup[g].size(); i++ ) { // loop other species of same group
                     Species * s = vecSpecies[sgroup[g][i]]; // current species
                     if( s->mass_ != s0->mass_ )
-                        ERROR( "In collisions #" << n_collisions << ": species in group `species"
-                               << g+1 << "` must all have same masses for ionization" );
+                        ERROR_NAMELIST( "In collisions #" << n_collisions << ": species in group `species"
+                               << g+1 << "` must all have same masses for ionization",
+                           "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions" );
                                
                     if( s->atomic_number_ != s0->atomic_number_ ) {
                         if( s->atomic_number_ * s0->atomic_number_ ==0 ) {
-                            ERROR( "In collisions #" << n_collisions << ": species in group `species"
-                                   << g+1 << "` cannot be mixed electrons and ions for ionization" );
+                            ERROR_NAMELIST( "In collisions #" << n_collisions << ": species in group `species"
+                                   << g+1 << "` cannot be mixed electrons and ions for ionization",
+                               "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions" );
                         } else {
-                            ERROR( "In collisions #" << n_collisions << ": species in group `species"
-                                   << g+1 << "` must all have same atomic_number for ionization" );
+                            ERROR_NAMELIST( "In collisions #" << n_collisions << ": species in group `species"
+                                   << g+1 << "` must all have same atomic_number for ionization",
+                               "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions" );
                         }
                     }
                 }
@@ -137,10 +145,12 @@ public:
             unsigned int Z1 = vecSpecies[sgroup[1][0]]->atomic_number_;
             Z = ( int )( Z0>Z1 ? Z0 : Z1 );
             if( Z0*Z1!=0 ) {
-                ERROR( "In collisions #" << n_collisions << ": ionization requires electrons (no or null atomic_number)" );
+                ERROR_NAMELIST( "In collisions #" << n_collisions << ": ionization requires electrons (no or null atomic_number)",
+                "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions");
             }
             if( Z==0 ) {
-                ERROR( "In collisions #" << n_collisions << ": ionization requires ions (atomic_number>0)" );
+                ERROR_NAMELIST( "In collisions #" << n_collisions << ": ionization requires ions (atomic_number>0)",
+                "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions");
             }
             // If ionizing = True, then select ionization electrons as 1st electron species
             if( ionizing == Py_True ) {
@@ -174,14 +184,16 @@ public:
             // Extract the content of the list nuclear_reaction
             std::vector<std::string> nuclear_reaction( 0 );
             if( ! PyTools::py2vector( py_nuclear_reaction, nuclear_reaction ) ) {
-                ERROR( "In collisions #" << n_collisions << ": nuclear_reaction should be a list of strings" );
+                ERROR_NAMELIST( "In collisions #" << n_collisions << ": nuclear_reaction should be a list of strings",
+                "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions");
             }
             
             // Verify the atomic number has been set
             unsigned int Z0, Z1;
             if( ! PyTools::extractOrNone( "atomic_number", Z0, "Species", sgroup[0][0] )
              || ! PyTools::extractOrNone( "atomic_number", Z1, "Species", sgroup[1][0] ) ) {
-                ERROR( "In collisions #" << n_collisions << ": nuclear_reaction requires all species have an atomic_number" );
+                ERROR_NAMELIST( "In collisions #" << n_collisions << ": nuclear_reaction requires all species have an atomic_number",
+                "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions");
             }
             
             // Verify each group has consistent atomic number and mass number
@@ -190,12 +202,14 @@ public:
                 for( unsigned int i=1; i<sgroup[g].size(); i++ ) { // loop other species of same group
                     Species * s = vecSpecies[sgroup[g][i]]; // current species
                     if( s->mass_ != s0->mass_ ) {
-                        ERROR( "In collisions #" << n_collisions << ": nuclear_reaction requires all `species"
-                               << g+1 << "` to have equal masses" );
+                        ERROR_NAMELIST( "In collisions #" << n_collisions << ": nuclear_reaction requires all `species"
+                               << g+1 << "` to have equal masses",
+                           "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions" );
                     }
                     if( s->atomic_number_ != s0->atomic_number_ ) {
-                        ERROR( "In collisions #" << n_collisions << ": nuclear_reaction requires all `species"
-                               << g+1 << "` to have equal atomic_number" );
+                        ERROR_NAMELIST( "In collisions #" << n_collisions << ": nuclear_reaction requires all `species"
+                               << g+1 << "` to have equal atomic_number",
+                           "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions" );
                     }
                 }
             }
@@ -223,7 +237,8 @@ public:
                 
             // Unknown types
             } else {
-                ERROR( "In collisions #" << n_collisions << ": nuclear_reaction not available between (Z="<<Z0<<",A="<<A0<<") and (Z="<<Z1<<",A="<<A1<<")" );
+                ERROR_NAMELIST( "In collisions #" << n_collisions << ": nuclear_reaction not available between (Z="<<Z0<<",A="<<A0<<") and (Z="<<Z1<<",A="<<A1<<")",
+                "https://smileipic.github.io/Smilei/namelist.html#collisions-reactions" );
             }
             
         }
@@ -333,7 +348,8 @@ public:
         unsigned int numcollisions=PyTools::nComponents( "Collisions" );
         if( numcollisions > 0 )
             if( params.reference_angular_frequency_SI <= 0. ) {
-                ERROR( "The parameter `reference_angular_frequency_SI` needs to be defined and positive to compute collisions" );
+                ERROR_NAMELIST( "The parameter `reference_angular_frequency_SI` needs to be defined and positive to compute collisions",
+                "https://smileipic.github.io/Smilei/namelist.html#reference_angular_frequency_SI");
             }
             
         // Loop over each binary collisions group and parse info
@@ -398,14 +414,16 @@ public:
             for( unsigned int i=0; i<n; i++ ) {
                 if( Zj == Z[i] && Aj == A[i] ) {
                     if( product_species[i] ) {
-                        ERROR( "In collisions #" << n_coll << ", nuclear_reaction : should have only 1 "<<name[i]<<" species" );
+                        ERROR_NAMELIST( "In collisions #" << n_coll << ", nuclear_reaction : should have only 1 "<<name[i]<<" species",
+                        "https://smileipic.github.io/Smilei/namelist.html#nuclear_reaction" );
                     }
                     product_species[i] = s;
                     product_found = true;
                 }
             }
             if( ! product_found ) {
-                ERROR( "In collisions #" << n_coll << ", nuclear_reaction : species `"<<s->name_<<"` is not one of "<<list.str() );
+                ERROR_NAMELIST( "In collisions #" << n_coll << ", nuclear_reaction : species `"<<s->name_<<"` is not one of "<<list.str(),
+                "https://smileipic.github.io/Smilei/namelist.html#nuclear_reaction");
             }
         }
     }
