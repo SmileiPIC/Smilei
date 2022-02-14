@@ -104,7 +104,7 @@ class Scalar(Diagnostic):
 				"E":"E_r",
 				"B":"B_r",
 				"J":"J_r",
-				"R":"N_r",
+				"R":"Q_r * N_r",
 				"Z":"Q_r",
 				"N":"",
 				}[self._scalarname[0]]
