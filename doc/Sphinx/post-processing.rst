@@ -247,7 +247,7 @@ Open a Probe diagnostic
 Open a ParticleBinning diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, data_transform=None, **kwargs)
+.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
   * ``diagNumber``: number or ``name`` of the particle binning diagnostic (starts at 0).
@@ -259,18 +259,18 @@ Open a ParticleBinning diagnostic
 
      **WARNING:** With the syntax ``subset={axis:[start, stop, step]}``, the value of ``step``
      is a number of bins.
-  * ``sum``: a selection of coordinates on which to sum the data.
-     | Syntax 1: ``sum = { axis : "all", ... }``
-     | Syntax 2: ``sum = { axis : location, ... }``
-     | Syntax 3: ``sum = { axis : [begin, end] , ... }``
+  * ``average``: a selection of coordinates on which to average the data.
+     | Syntax 1: ``average = { axis : "all", ... }``
+     | Syntax 2: ``average = { axis : location, ... }``
+     | Syntax 3: ``average = { axis : [begin, end] , ... }``
 
      ``axis`` must be ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"p"``, ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"`` or ``"charge"``.
 
      | The chosen axes will be removed:
-     | - With syntax 1, a sum is performed over all the axis.
+     | - With syntax 1, an average is performed over all the axis.
      | - With syntax 2, only the bin closest to ``location`` is kept.
-     | - With syntax 3, a sum is performed between ``begin`` and ``end``.
-     | Example: ``sum={"x":[4,5]}`` will sum all the data for x within [4,5].
+     | - With syntax 3, an average is performed between ``begin`` and ``end``.
+     | Example: ``average={"x":[4,5]}`` will average all the data for x within [4,5].
   * See also :ref:`otherkwargs`
 
 **Example**::
@@ -297,10 +297,10 @@ Open a ParticleBinning diagnostic
 Open a Screen diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, data_transform=None, **kwargs)
+.. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
-  * ``diagNumber``, ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
+  * ``diagNumber``, ``subset`` and ``average``: identical to that of ParticleBinning diagnostics.
   * See also :ref:`otherkwargs`
 
 **Example**::
@@ -314,10 +314,10 @@ Open a Screen diagnostic
 Open a RadiationSpectrum diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, data_transform=None, **kwargs)
+.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
-  * ``diagNumber``, ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
+  * ``diagNumber``, ``subset`` and ``average``: identical to that of ParticleBinning diagnostics.
   * See also :ref:`otherkwargs`
 
 **Example**::
