@@ -100,7 +100,8 @@ public :
             
         return false;
     }
-    
+
+#  ifdef _PARTEVENTTRACING  
     // Write Output for "Task" tracing - this method must be called inside a pragma omp single construct
     void writeTaskTracingOutput(Params &params, SmileiMPI *smpi, int iteration){
         int rank(0);
@@ -122,7 +123,7 @@ public :
         smpi->task_tracing_event_name_[ithread].clear();
         } // end loop on threads
     } // end writeTaskTracingOutput
-
+#endif
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------
     
