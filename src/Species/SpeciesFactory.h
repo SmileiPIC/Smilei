@@ -691,25 +691,28 @@ public:
 
 
         bool has_thermalize = false;
-
+        std::ostringstream t;
         for( unsigned int iDim=0; iDim<number_of_boundaries; iDim++ ) {
             if( this_species->boundary_conditions_[iDim].size() == 1 ) {
                 this_species->boundary_conditions_[iDim].push_back( this_species->boundary_conditions_[iDim][0] );
             }
-            if( this_species->boundary_conditions_[iDim].size() != 2 )
-                ERROR( "For species '" << species_name << "', boundary_conditions["<<iDim<<"] must have one or two arguments" )
-            if( this_species->boundary_conditions_[iDim][0] == "thermalize"
-                    || this_species->boundary_conditions_[iDim][1] == "thermalize" ) {
-                has_thermalize = true;
-                if( this_species->mass_ == 0 ) {
-                    ERROR( "For photon species '" << species_name << "' Thermalizing BCs are not available." );
-                }
+            if( this_species->boundary_conditions_[iDim].size() != 2 ) {
+                ERROR( "For species '" << species_name << "', boundary_conditions["<<iDim<<"] must have one or two arguments" );
             }
-            if( this_species->boundary_conditions_[iDim][0] == "stop"
-                    || this_species->boundary_conditions_[iDim][1] == "stop" ) {
-                if( this_species->mass_ == 0 ) {
-                    ERROR( "For photon species '" << species_name << "' stop BCs are not physical." );
+            for( unsigned int ii=0; ii<2; ii++ ) {
+                if( this_species->boundary_conditions_[iDim][ii] == "thermalize" ) {
+                    has_thermalize = true;
+                    if( this_species->mass_ == 0 ) {
+                        ERROR( "For photon species '" << species_name << "' Thermalizing BCs are not available." );
+                    }
+                } else if( this_species->boundary_conditions_[iDim][ii] == "stop" ) {
+                    if( this_species->mass_ == 0 ) {
+                        ERROR( "For photon species '" << species_name << "' stop BCs are not physical." );
+                    }
+                } else if( this_species->boundary_conditions_[iDim][ii] == "periodic" && params.EM_BCs[iDim][ii] != "periodic" ) {
+                    ERROR( "For species '" << species_name << "',  boundary_conditions["<<iDim<<"] cannot be periodic as the EM boundary conditions are not periodic" );
                 }
+                t << " " << this_species->boundary_conditions_[iDim][ii];
             }
         }
         if( (params.geometry=="AMcylindrical") && ( this_species->boundary_conditions_[1][1] != "remove" ) && ( this_species->boundary_conditions_[1][1] != "stop" ) ) {
@@ -718,6 +721,7 @@ public:
         if( (params.hasWindow) && (( this_species->boundary_conditions_[0][1] != "remove" ) || ( this_species->boundary_conditions_[0][0] != "remove" ) )) {
             ERROR( " When MovingWindow is activated 'remove' boundary conditions along x is mandatory for all species. " );
         }
+        MESSAGE( 2, "> Boundary conditions:" << t.str() );
 
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
         bool has_temperature = PyTools::extractV( "thermal_boundary_temperature", this_species->thermal_boundary_temperature_, "Species", ispec ) > 0;
