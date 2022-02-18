@@ -41,7 +41,7 @@
 #define __header_custom_text_on_unix(__msg,__txt,__tc) { std::cout << "\033[;"<< __tc << "m" << "\n\t[" << __msg << "](" << omp_get_thread_num() \
 << ") " __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\033[0m" << std::endl;}
 
-#define __header_error(__msg,__txt) {std::string line = " "; for (int i=0; i < 80 ; i++) line += "-"; std::cerr << "\033[1;31m" << line << "\n [" << __msg << "](" << omp_get_thread_num() \
+#define __header_error(__msg,__txt) {std::string line = " "; for (int __i=0; __i < 80 ; __i++) line += "-"; std::cerr << "\033[1;31m" << line << "\n [" << __msg << "](" << omp_get_thread_num() \
 << ") " __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\n" << line << "\033[0m" << std::endl;}
 
 #else
@@ -51,7 +51,7 @@
 #define __header_custom_text_on_unix(__msg,__txt,__tc) { std::cout << "\033[;"<< __tc <<"m" << "\t[" << __msg << "] " \
 << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\033[0m" << std::endl; }
 
-#define __header_error(__msg,__txt) {std::string line = " "; for (int i=0; i < 80 ; i++) line += "-"; \
+#define __header_error(__msg,__txt) {std::string line = " "; for (int __i=0; __i < 80 ; __i++) line += "-"; \
 std::cerr << "\033[1;31m" << line << "\n [" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
 << __FUNCTION__ << ") " << __txt << "\n" << line << "\033[0m" << std::endl;}
 
