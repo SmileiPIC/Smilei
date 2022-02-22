@@ -247,7 +247,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     geometry = "";
     PyTools::extract( "geometry", geometry, "Main"  );
     if( geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="AMcylindrical" ) {
-        ERROR_NAMELIST( "Main.geometry `" << geometry << "` invalid", "https://smileipic.github.io/Smilei/namelist.html#main-variables" );
+        ERROR_NAMELIST( "Main.geometry `" << geometry << "` invalid", LINK_NAMELIST + std::string("#main-variables") );
     }
     setDimensions();
 
@@ -255,7 +255,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "maxwell_solver", maxwell_sol, "Main"   );
     is_spectral = false;
     is_pxr = false;
-    if( maxwell_sol == "Lehe" || maxwell_sol == "Bouchard" ) {
+    if( maxwell_sol == "Lehe" || maxwell_sol == "Bouchard" || maxwell_sol == "M4" ) {
         full_B_exchange=true;
     } else if( maxwell_sol == "spectral" ) {
         is_spectral = true;
@@ -286,6 +286,27 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 2 or 4",
         LINK_NAMELIST + std::string("#main-variables"));
     }
+
+    // Interpolation scheme
+    PyTools::extract( "interpolator", interpolator_, "Main"  );
+    
+    // Cancelation of the letter case
+    std::transform( interpolator_.begin(), interpolator_.end(), interpolator_.begin(), ::tolower );
+    
+    if (interpolator_ != "wt" && interpolator_ != "momentum-conserving") {
+        ERROR_NAMELIST( "Parameter `Main.interpolator` should be `momentum-conserving` or `wt`.",
+        LINK_NAMELIST + std::string("#main-variables"));
+    }
+
+    if( ( interpolator_  == "wt") && 
+        (geometry != "1Dcartesian")                &&  
+        (geometry != "2Dcartesian")                && 
+        (geometry != "3Dcartesian")               ) {
+        ERROR_NAMELIST( "Interpolator `wt` not implemented for geometry: " << geometry << ".",
+        LINK_NAMELIST + std::string("#main-variables") );
+    }
+
+
 
     //!\todo (MG to JD) Please check if this parameter should still appear here
     // Disabled, not compatible for now with particles sort
