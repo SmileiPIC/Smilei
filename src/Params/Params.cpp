@@ -185,7 +185,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Error if no block Main() exists
     if( PyTools::nComponents( "Main" ) == 0 ) {
-        ERROR_NAMELIST( "Block Main() not defined","https://smileipic.github.io/Smilei/namelist.html#main-variables" );
+        ERROR_NAMELIST( "Block Main() not defined",LINK_NAMELIST + std::string("#main-variables") );
     }
 
     // CHECK namelist on python side
@@ -244,7 +244,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     geometry = "";
     PyTools::extract( "geometry", geometry, "Main"  );
     if( geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="AMcylindrical" ) {
-        ERROR_NAMELIST( "Main.geometry `" << geometry << "` invalid", "https://smileipic.github.io/Smilei/namelist.html#main-variables" );
+        ERROR_NAMELIST( "Main.geometry `" << geometry << "` invalid", LINK_NAMELIST + std::string("#main-variables") );
     }
     setDimensions();
 
