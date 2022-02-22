@@ -129,11 +129,11 @@ public:
     //! Create new particle
     void createParticle();
 
-    //! Create nParticles new particles
-    void createParticles( int nAdditionalParticles );
+    //! Create n_additional_particles new particles
+    void createParticles( int n_additional_particles );
 
-    //! Create nParticles new particles at position pstart in the particles data structure
-    void createParticles( int nAdditionalParticles, int pstart );
+    //! Create n_additional_particles new particles at position pstart in the particles data structure
+    void createParticles( int n_additional_particles, int pstart );
 
     //! Move ipart at new_pos in the particles data structure
     void moveParticles( int iPart, int new_pos );
@@ -360,9 +360,9 @@ public:
     //! Method to keep the positions for the next timesteps
     void savePositions();
 
-    std::vector< std::vector<double  >*> double_prop;
-    std::vector< std::vector<short   >*> short_prop;
-    std::vector< std::vector<uint64_t>*> uint64_prop;
+    std::vector< std::vector<double  >*> double_prop_;
+    std::vector< std::vector<short   >*> short_prop_;
+    std::vector< std::vector<uint64_t>*> uint64_prop_;
 
     //! Specific pointers
     double * __restrict__ position_x;
@@ -394,18 +394,18 @@ public:
 
     Particle operator()( unsigned int iPart );
 
-    //! Methods to obtain any property, given its index in the arrays double_prop, uint64_prop, or short_prop
+    //! Methods to obtain any property, given its index in the arrays double_prop_, uint64_prop_, or short_prop_
     void getProperty( unsigned int iprop, std::vector<uint64_t> *&prop )
     {
-        prop = uint64_prop[iprop];
+        prop = uint64_prop_[iprop];
     }
     void getProperty( unsigned int iprop, std::vector<short> *&prop )
     {
-        prop = short_prop[iprop];
+        prop = short_prop_[iprop];
     }
     void getProperty( unsigned int iprop, std::vector<double> *&prop )
     {
-        prop = double_prop[iprop];
+        prop = double_prop_[iprop];
     }
 
     //! Indices of first and last particles in each bin/cell

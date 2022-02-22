@@ -612,17 +612,17 @@ int SmileiMPI::hrank( int h )
 // ----------------------------------------------------------------------
 MPI_Datatype SmileiMPI::createMPIparticles( Particles *particles )
 {
-    int nbrOfProp = particles->double_prop.size() + particles->short_prop.size() + particles->uint64_prop.size();
+    int nbrOfProp = particles->double_prop_.size() + particles->short_prop_.size() + particles->uint64_prop_.size();
 
     MPI_Aint address[nbrOfProp];
-    for( unsigned int iprop=0 ; iprop<particles->double_prop.size() ; iprop++ ) {
-        MPI_Get_address( &( ( *( particles->double_prop[iprop] ) )[0] ), &( address[iprop] ) );
+    for( unsigned int iprop=0 ; iprop<particles->double_prop_.size() ; iprop++ ) {
+        MPI_Get_address( &( ( *( particles->double_prop_[iprop] ) )[0] ), &( address[iprop] ) );
     }
-    for( unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ ) {
-        MPI_Get_address( &( ( *( particles->short_prop[iprop] ) )[0] ), &( address[particles->double_prop.size()+iprop] ) );
+    for( unsigned int iprop=0 ; iprop<particles->short_prop_.size() ; iprop++ ) {
+        MPI_Get_address( &( ( *( particles->short_prop_[iprop] ) )[0] ), &( address[particles->double_prop_.size()+iprop] ) );
     }
-    for( unsigned int iprop=0 ; iprop<particles->uint64_prop.size() ; iprop++ ) {
-        MPI_Get_address( &( ( *( particles->uint64_prop[iprop] ) )[0] ), &( address[particles->double_prop.size()+particles->short_prop.size()+iprop] ) );
+    for( unsigned int iprop=0 ; iprop<particles->uint64_prop_.size() ; iprop++ ) {
+        MPI_Get_address( &( ( *( particles->uint64_prop_[iprop] ) )[0] ), &( address[particles->double_prop_.size()+particles->short_prop_.size()+iprop] ) );
     }
 
     int nbr_parts[nbrOfProp];
@@ -640,14 +640,14 @@ MPI_Datatype SmileiMPI::createMPIparticles( Particles *particles )
 
     MPI_Datatype partDataType[nbrOfProp];
     // define MPI type of each property, default is DOUBLE
-    for( unsigned int i=0 ; i<particles->double_prop.size() ; i++ ) {
+    for( unsigned int i=0 ; i<particles->double_prop_.size() ; i++ ) {
         partDataType[i] = MPI_DOUBLE;
     }
-    for( unsigned int iprop=0 ; iprop<particles->short_prop.size() ; iprop++ ) {
-        partDataType[ particles->double_prop.size()+iprop] = MPI_SHORT;
+    for( unsigned int iprop=0 ; iprop<particles->short_prop_.size() ; iprop++ ) {
+        partDataType[ particles->double_prop_.size()+iprop] = MPI_SHORT;
     }
-    for( unsigned int iprop=0 ; iprop<particles->uint64_prop.size() ; iprop++ ) {
-        partDataType[ particles->double_prop.size()+particles->short_prop.size()+iprop] = MPI_UNSIGNED_LONG_LONG;
+    for( unsigned int iprop=0 ; iprop<particles->uint64_prop_.size() ; iprop++ ) {
+        partDataType[ particles->double_prop_.size()+particles->short_prop_.size()+iprop] = MPI_UNSIGNED_LONG_LONG;
     }
 
     MPI_Datatype typeParticlesMPI;

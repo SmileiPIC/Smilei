@@ -673,19 +673,19 @@ public:
         // iteration when the relativistic field initialization is applied, if enabled
         this_species->iter_relativistic_initialization_ = ( int )( this_species->time_frozen_/params.timestep );
 
-        if( !PyTools::extractVV( "boundary_conditions", this_species->boundary_conditions, "Species", ispec ) ) {
+        if( !PyTools::extractVV( "boundary_conditions", this_species->boundary_conditions_, "Species", ispec ) ) {
             ERROR( "For species '" << species_name << "', boundary_conditions not defined" );
         }
 
         unsigned int number_of_boundaries = (params.geometry=="AMcylindrical") ? 2 : params.nDim_particle;
 
-        if( this_species->boundary_conditions.size() == 0 ) {
+        if( this_species->boundary_conditions_.size() == 0 ) {
             ERROR( "For species '" << species_name << "', boundary_conditions cannot be empty" );
-        } else if( this_species->boundary_conditions.size() == 1 ) {
-            while( this_species->boundary_conditions.size() < number_of_boundaries ) {
-                this_species->boundary_conditions.push_back( this_species->boundary_conditions[0] );
+        } else if( this_species->boundary_conditions_.size() == 1 ) {
+            while( this_species->boundary_conditions_.size() < number_of_boundaries ) {
+                this_species->boundary_conditions_.push_back( this_species->boundary_conditions_[0] );
             }
-        } else if( this_species->boundary_conditions.size() != number_of_boundaries ) {
+        } else if( this_species->boundary_conditions_.size() != number_of_boundaries ) {
             ERROR( "For species '" << species_name << "', boundary_conditions must be of size "<< number_of_boundaries <<"." );
         }
 
@@ -693,29 +693,29 @@ public:
         bool has_thermalize = false;
 
         for( unsigned int iDim=0; iDim<number_of_boundaries; iDim++ ) {
-            if( this_species->boundary_conditions[iDim].size() == 1 ) {
-                this_species->boundary_conditions[iDim].push_back( this_species->boundary_conditions[iDim][0] );
+            if( this_species->boundary_conditions_[iDim].size() == 1 ) {
+                this_species->boundary_conditions_[iDim].push_back( this_species->boundary_conditions_[iDim][0] );
             }
-            if( this_species->boundary_conditions[iDim].size() != 2 )
+            if( this_species->boundary_conditions_[iDim].size() != 2 )
                 ERROR( "For species '" << species_name << "', boundary_conditions["<<iDim<<"] must have one or two arguments" )
-            if( this_species->boundary_conditions[iDim][0] == "thermalize"
-                    || this_species->boundary_conditions[iDim][1] == "thermalize" ) {
+            if( this_species->boundary_conditions_[iDim][0] == "thermalize"
+                    || this_species->boundary_conditions_[iDim][1] == "thermalize" ) {
                 has_thermalize = true;
                 if( this_species->mass_ == 0 ) {
                     ERROR( "For photon species '" << species_name << "' Thermalizing BCs are not available." );
                 }
             }
-            if( this_species->boundary_conditions[iDim][0] == "stop"
-                    || this_species->boundary_conditions[iDim][1] == "stop" ) {
+            if( this_species->boundary_conditions_[iDim][0] == "stop"
+                    || this_species->boundary_conditions_[iDim][1] == "stop" ) {
                 if( this_species->mass_ == 0 ) {
                     ERROR( "For photon species '" << species_name << "' stop BCs are not physical." );
                 }
             }
         }
-        if( (params.geometry=="AMcylindrical") && ( this_species->boundary_conditions[1][1] != "remove" ) && ( this_species->boundary_conditions[1][1] != "stop" ) ) {
+        if( (params.geometry=="AMcylindrical") && ( this_species->boundary_conditions_[1][1] != "remove" ) && ( this_species->boundary_conditions_[1][1] != "stop" ) ) {
             ERROR( " In AM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' " );
         }
-        if( (params.hasWindow) && (( this_species->boundary_conditions[0][1] != "remove" ) || ( this_species->boundary_conditions[0][0] != "remove" ) )) {
+        if( (params.hasWindow) && (( this_species->boundary_conditions_[0][1] != "remove" ) || ( this_species->boundary_conditions_[0][0] != "remove" ) )) {
             ERROR( " When MovingWindow is activated 'remove' boundary conditions along x is mandatory for all species. " );
         }
 
@@ -989,7 +989,7 @@ public:
         new_species->radiating_                                = species->radiating_;
         new_species->relativistic_field_initialization_        = species->relativistic_field_initialization_;
         new_species->iter_relativistic_initialization_         = species->iter_relativistic_initialization_;
-        new_species->boundary_conditions                      = species->boundary_conditions;
+        new_species->boundary_conditions_                      = species->boundary_conditions_;
         new_species->thermal_boundary_temperature_             = species->thermal_boundary_temperature_;
         new_species->thermal_boundary_velocity_                = species->thermal_boundary_velocity_;
         new_species->thermal_velocity_                          = species->thermal_velocity_;

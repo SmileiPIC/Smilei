@@ -560,10 +560,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     }
                 }
                 
-                energy_field_out += mypatch->EMfields->nrj_mw_out + mypatch->EMfields->computeNRJ();
+                energy_field_out += mypatch->EMfields->nrj_mw_out + mypatch->EMfields->computeEnergy();
                 energy_field_inj += mypatch->EMfields->nrj_mw_inj;
                 for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                    energy_part_out[ispec] += mypatch->vecSpecies[ispec]->nrj_mw_out + mypatch->vecSpecies[ispec]->computeNRJ();
+                    energy_part_out[ispec] += mypatch->vecSpecies[ispec]->nrj_mw_out + mypatch->vecSpecies[ispec]->computeEnergy();
                     energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->nrj_mw_inj;
                     ukin_new[ispec] += mypatch->vecSpecies[ispec]->nrj_new_part_;
                     ukin_bc [ispec] += mypatch->vecSpecies[ispec]->nrj_bc_lost;
@@ -579,9 +579,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             mypatch = vecPatches.patches_[patch_to_be_created[my_thread][j]];
             
             if( mypatch->isXmax() ) {
-                energy_field_inj += mypatch->EMfields->computeNRJ();
+                energy_field_inj += mypatch->EMfields->computeEnergy();
                 for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                    energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
+                    energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->computeEnergy();
                 }
             }
         }

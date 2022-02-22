@@ -263,8 +263,11 @@ void LaserPropagator::operator()( vector<PyObject *> profiles, vector<int> profi
         Py_DECREF( arrays[i] );
 
         // Call FFT along the first direction
-        arrays[i] = PyCall( fft, Py_BuildValue( "(O)", a ), Py_BuildValue( "{s:i}", "axis", 0 ) );
+        PyObject * b = PyCall( fft, Py_BuildValue( "(O)", a ), Py_BuildValue( "{s:i}", "axis", 0 ) );
         Py_DECREF( a );
+        // Ensure F contiguous (depends on numpy version)
+        arrays[i] = PyArray_FROM_OF( b, NPY_ARRAY_F_CONTIGUOUS );
+        Py_DECREF( b );
     }
     
     MESSAGE( 3, "Finished FFT at destination ... " << MPI_Wtime() - timer << " s" );

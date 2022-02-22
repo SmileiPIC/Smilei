@@ -179,7 +179,7 @@ void DiagnosticScreen::run( Patch *patch, int itime, SimWindow *simWindow )
     if( screen_type == 0 ) { // plane
         double distance_to_plane = 0.;
         for( unsigned int idim=0; idim<ndim; idim++ ) {
-            distance_to_plane += ( patch->center[idim] - screen_point[idim] ) * screen_unitvector[idim];
+            distance_to_plane += ( patch->center_[idim] - screen_point[idim] ) * screen_unitvector[idim];
         }
         if( abs( distance_to_plane ) > patch->radius ) {
             return;
@@ -187,7 +187,7 @@ void DiagnosticScreen::run( Patch *patch, int itime, SimWindow *simWindow )
     } else if( screen_type == 1 ) { // sphere
         double distance_to_center = 0.;
         for( unsigned int idim=0; idim<ndim; idim++ ) {
-            distance_to_center += pow( patch->center[idim] - screen_point[idim], 2 );
+            distance_to_center += pow( patch->center_[idim] - screen_point[idim], 2 );
         }
         distance_to_center = sqrt( distance_to_center );
         if( abs( screen_vectornorm - distance_to_center ) > patch->radius ) {
@@ -197,8 +197,8 @@ void DiagnosticScreen::run( Patch *patch, int itime, SimWindow *simWindow )
         double distance_to_axis = 0.;
         for( unsigned int idim=0; idim<ndim; idim++ ) {
             distance_to_axis += pow( 
-                 ( patch->center[(idim+1)%ndim] - screen_point[(idim+1)%ndim] ) * screen_unitvector[(idim+2)%ndim]
-                -( patch->center[(idim+2)%ndim] - screen_point[(idim+2)%ndim] ) * screen_unitvector[(idim+1)%ndim]
+                 ( patch->center_[(idim+1)%ndim] - screen_point[(idim+1)%ndim] ) * screen_unitvector[(idim+2)%ndim]
+                -( patch->center_[(idim+2)%ndim] - screen_point[(idim+2)%ndim] ) * screen_unitvector[(idim+1)%ndim]
                 , 2 );
         }
         distance_to_axis = sqrt( distance_to_axis );

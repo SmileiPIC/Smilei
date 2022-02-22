@@ -27,9 +27,9 @@ Particles::Particles():
     isQuantumParameter = false;
     isMonteCarlo = false;
 
-    double_prop.resize( 0 );
-    short_prop.resize( 0 );
-    uint64_prop.resize( 0 );
+    double_prop_.resize( 0 );
+    short_prop_.resize( 0 );
+    uint64_prop_.resize( 0 );
 }
 
 Particles::~Particles()
@@ -56,43 +56,43 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
     resize( nParticles, nDim, keep_position_old );
     //cell_keys.resize( nParticles );
 
-    if( double_prop.empty() ) {  // do this just once
+    if( double_prop_.empty() ) {  // do this just once
 
         Position.resize( nDim );
         for( unsigned int i=0 ; i< nDim ; i++ ) {
-            double_prop.push_back( &( Position[i] ) );
+            double_prop_.push_back( &( Position[i] ) );
         }
 
         for( unsigned int i=0 ; i< 3 ; i++ ) {
-            double_prop.push_back( &( Momentum[i] ) );
+            double_prop_.push_back( &( Momentum[i] ) );
         }
 
-        double_prop.push_back( &Weight );
+        double_prop_.push_back( &Weight );
 
         if( keep_position_old ) {
             Position_old.resize( nDim );
             for( unsigned int i=0 ; i< nDim ; i++ ) {
-                double_prop.push_back( &( Position_old[i] ) );
+                double_prop_.push_back( &( Position_old[i] ) );
             }
         }
 
-        short_prop.push_back( &Charge );
+        short_prop_.push_back( &Charge );
         if( tracked ) {
-            uint64_prop.push_back( &Id );
+            uint64_prop_.push_back( &Id );
         }
 
         // Quantum parameter (for QED effects):
         // - if radiation reaction (continuous or discontinuous)
         // - if multiphoton-Breit-Wheeler if photons
         if( isQuantumParameter ) {
-            double_prop.push_back( &Chi );
+            double_prop_.push_back( &Chi );
         }
 
         // Optical Depth for Monte-Carlo processes:
         // - if the discontinuous (Monte-Carlo) radiation reaction
         // are activated, tau is the incremental optical depth to emission
         if( isMonteCarlo ) {
-            double_prop.push_back( &Tau );
+            double_prop_.push_back( &Tau );
         }
 
     }
@@ -218,16 +218,16 @@ void Particles::resize( unsigned int nParticles, unsigned int nDim, bool keep_po
 void Particles::resize( unsigned int nParticles)
 {
 
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] ).resize( nParticles, 0. );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        ( *double_prop_[iprop] ).resize( nParticles, 0. );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] ).resize( nParticles, 0 );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        ( *short_prop_[iprop] ).resize( nParticles, 0 );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] ).resize( nParticles, 0 );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        ( *uint64_prop_[iprop] ).resize( nParticles, 0 );
     }
 
     cell_keys.resize( nParticles, 0. );
@@ -249,16 +249,16 @@ void Particles::resizeCellKeys(unsigned int nParticles)
 void Particles::shrinkToFit()
 {
 
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        std::vector<double>( *double_prop[iprop] ).swap( *double_prop[iprop] );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        std::vector<double>( *double_prop_[iprop] ).swap( *double_prop_[iprop] );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        std::vector<short>( *short_prop[iprop] ).swap( *short_prop[iprop] );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        std::vector<short>( *short_prop_[iprop] ).swap( *short_prop_[iprop] );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        std::vector<uint64_t>( *uint64_prop[iprop] ).swap( *uint64_prop[iprop] );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        std::vector<uint64_t>( *uint64_prop_[iprop] ).swap( *uint64_prop_[iprop] );
     }
 
     //cell_keys.swap(cell_keys);
@@ -272,16 +272,16 @@ void Particles::shrinkToFit()
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::clear()
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        double_prop[iprop]->clear();
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        double_prop_[iprop]->clear();
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        short_prop[iprop]->clear();
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        short_prop_[iprop]->clear();
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        uint64_prop[iprop]->clear();
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        uint64_prop_[iprop]->clear();
     }
 
     //cell_keys.clear();
@@ -292,16 +292,16 @@ void Particles::clear()
 //! cell keys not affected
 void Particles::copyParticle( unsigned int ipart )
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        double_prop[iprop]->push_back( ( *double_prop[iprop] )[ipart] );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        double_prop_[iprop]->push_back( ( *double_prop_[iprop] )[ipart] );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        short_prop[iprop]->push_back( ( *short_prop[iprop] )[ipart] );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        short_prop_[iprop]->push_back( ( *short_prop_[iprop] )[ipart] );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        uint64_prop[iprop]->push_back( ( *uint64_prop[iprop] )[ipart] );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        uint64_prop_[iprop]->push_back( ( *uint64_prop_[iprop] )[ipart] );
     }
 }
 
@@ -312,16 +312,16 @@ void Particles::copyParticle( unsigned int ipart )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::copyParticle( unsigned int ipart, Particles &dest_parts )
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        dest_parts.double_prop[iprop]->push_back( ( *double_prop[iprop] )[ipart] );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        dest_parts.double_prop_[iprop]->push_back( ( *double_prop_[iprop] )[ipart] );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        dest_parts.short_prop[iprop]->push_back( ( *short_prop[iprop] )[ipart] );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        dest_parts.short_prop_[iprop]->push_back( ( *short_prop_[iprop] )[ipart] );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        dest_parts.uint64_prop[iprop]->push_back( ( *uint64_prop[iprop] )[ipart] );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        dest_parts.uint64_prop_[iprop]->push_back( ( *uint64_prop_[iprop] )[ipart] );
     }
 }
 
@@ -331,16 +331,16 @@ void Particles::copyParticle( unsigned int ipart, Particles &dest_parts )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::copyParticle( unsigned int ipart, Particles &dest_parts, int dest_id )
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        dest_parts.double_prop[iprop]->insert( dest_parts.double_prop[iprop]->begin() + dest_id, ( *double_prop[iprop] )[ipart] );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        dest_parts.double_prop_[iprop]->insert( dest_parts.double_prop_[iprop]->begin() + dest_id, ( *double_prop_[iprop] )[ipart] );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        dest_parts.short_prop[iprop]->insert( dest_parts.short_prop[iprop]->begin() + dest_id, ( *short_prop[iprop] )[ipart] );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        dest_parts.short_prop_[iprop]->insert( dest_parts.short_prop_[iprop]->begin() + dest_id, ( *short_prop_[iprop] )[ipart] );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        dest_parts.uint64_prop[iprop]->insert( dest_parts.uint64_prop[iprop]->begin() + dest_id, ( *uint64_prop[iprop] )[ipart] );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        dest_parts.uint64_prop_[iprop]->insert( dest_parts.uint64_prop_[iprop]->begin() + dest_id, ( *uint64_prop_[iprop] )[ipart] );
     }
 
 }
@@ -351,16 +351,16 @@ void Particles::copyParticle( unsigned int ipart, Particles &dest_parts, int des
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::copyParticles( unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id )
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        dest_parts.double_prop[iprop]->insert( dest_parts.double_prop[iprop]->begin() + dest_id, double_prop[iprop]->begin()+iPart, double_prop[iprop]->begin()+iPart+nPart );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        dest_parts.double_prop_[iprop]->insert( dest_parts.double_prop_[iprop]->begin() + dest_id, double_prop_[iprop]->begin()+iPart, double_prop_[iprop]->begin()+iPart+nPart );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        dest_parts.short_prop[iprop]->insert( dest_parts.short_prop[iprop]->begin() + dest_id, short_prop[iprop]->begin()+iPart, short_prop[iprop]->begin()+iPart+nPart );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        dest_parts.short_prop_[iprop]->insert( dest_parts.short_prop_[iprop]->begin() + dest_id, short_prop_[iprop]->begin()+iPart, short_prop_[iprop]->begin()+iPart+nPart );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        dest_parts.uint64_prop[iprop]->insert( dest_parts.uint64_prop[iprop]->begin() + dest_id, uint64_prop[iprop]->begin()+iPart, uint64_prop[iprop]->begin()+iPart+nPart );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        dest_parts.uint64_prop_[iprop]->insert( dest_parts.uint64_prop_[iprop]->begin() + dest_id, uint64_prop_[iprop]->begin()+iPart, uint64_prop_[iprop]->begin()+iPart+nPart );
     }
 }
 
@@ -407,16 +407,16 @@ void Particles::makeParticleAt( Particles &source_particles, unsigned int ipart,
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::eraseParticle( unsigned int ipart )
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] ).erase( ( *double_prop[iprop] ).begin()+ipart );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        ( *double_prop_[iprop] ).erase( ( *double_prop_[iprop] ).begin()+ipart );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] ).erase( ( *short_prop[iprop] ).begin()+ipart );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        ( *short_prop_[iprop] ).erase( ( *short_prop_[iprop] ).begin()+ipart );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] ).erase( ( *uint64_prop[iprop] ).begin()+ipart );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        ( *uint64_prop_[iprop] ).erase( ( *uint64_prop_[iprop] ).begin()+ipart );
     }
 
     //cell_keys.erase(cell_keys.begin() + ipart);
@@ -429,16 +429,16 @@ void Particles::eraseParticle( unsigned int ipart )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::eraseParticleTrail( unsigned int ipart )
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] ).erase( ( *double_prop[iprop] ).begin()+ipart, ( *double_prop[iprop] ).end() );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        ( *double_prop_[iprop] ).erase( ( *double_prop_[iprop] ).begin()+ipart, ( *double_prop_[iprop] ).end() );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] ).erase( ( *short_prop[iprop] ).begin()+ipart, ( *short_prop[iprop] ).end() );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        ( *short_prop_[iprop] ).erase( ( *short_prop_[iprop] ).begin()+ipart, ( *short_prop_[iprop] ).end() );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] ).erase( ( *uint64_prop[iprop] ).begin()+ipart, ( *uint64_prop[iprop] ).end() );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        ( *uint64_prop_[iprop] ).erase( ( *uint64_prop_[iprop] ).begin()+ipart, ( *uint64_prop_[iprop] ).end() );
     }
 
 }
@@ -448,16 +448,16 @@ void Particles::eraseParticleTrail( unsigned int ipart )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::eraseParticle( unsigned int ipart, unsigned int npart )
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] ).erase( ( *double_prop[iprop] ).begin()+ipart, ( *double_prop[iprop] ).begin()+ipart+npart );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        ( *double_prop_[iprop] ).erase( ( *double_prop_[iprop] ).begin()+ipart, ( *double_prop_[iprop] ).begin()+ipart+npart );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] ).erase( ( *short_prop[iprop] ).begin()+ipart, ( *short_prop[iprop] ).begin()+ipart+npart );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        ( *short_prop_[iprop] ).erase( ( *short_prop_[iprop] ).begin()+ipart, ( *short_prop_[iprop] ).begin()+ipart+npart );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] ).erase( ( *uint64_prop[iprop] ).begin()+ipart, ( *uint64_prop[iprop] ).begin()+ipart+npart );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        ( *uint64_prop_[iprop] ).erase( ( *uint64_prop_[iprop] ).begin()+ipart, ( *uint64_prop_[iprop] ).begin()+ipart+npart );
     }
 
 }
@@ -530,16 +530,16 @@ ostream &operator << ( ostream &out, const Particles &particles )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::swapParticle( unsigned int part1, unsigned int part2 )
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        std::swap( ( *double_prop[iprop] )[part1], ( *double_prop[iprop] )[part2] );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        std::swap( ( *double_prop_[iprop] )[part1], ( *double_prop_[iprop] )[part2] );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        std::swap( ( *short_prop[iprop] )[part1], ( *short_prop[iprop] )[part2] );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        std::swap( ( *short_prop_[iprop] )[part1], ( *short_prop_[iprop] )[part2] );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        std::swap( ( *uint64_prop[iprop] )[part1], ( *uint64_prop[iprop] )[part2] );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        std::swap( ( *uint64_prop_[iprop] )[part1], ( *uint64_prop_[iprop] )[part2] );
     }
 }
 
@@ -548,27 +548,27 @@ void Particles::swapParticle3( unsigned int part1, unsigned int part2, unsigned 
 {
     // 1 ==> 2 ==> 3 ==> 1
     double temp;
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        temp = ( *double_prop[iprop] )[part1];
-        ( *double_prop[iprop] )[part1] = ( *double_prop[iprop] )[part3];
-        ( *double_prop[iprop] )[part3] = ( *double_prop[iprop] )[part2];
-        ( *double_prop[iprop] )[part2] = temp;
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        temp = ( *double_prop_[iprop] )[part1];
+        ( *double_prop_[iprop] )[part1] = ( *double_prop_[iprop] )[part3];
+        ( *double_prop_[iprop] )[part3] = ( *double_prop_[iprop] )[part2];
+        ( *double_prop_[iprop] )[part2] = temp;
     }
 
     short stemp;
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        stemp = ( *short_prop[iprop] )[part1];
-        ( *short_prop[iprop] )[part1] = ( *short_prop[iprop] )[part3];
-        ( *short_prop[iprop] )[part3] = ( *short_prop[iprop] )[part2];
-        ( *short_prop[iprop] )[part2] = stemp;
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        stemp = ( *short_prop_[iprop] )[part1];
+        ( *short_prop_[iprop] )[part1] = ( *short_prop_[iprop] )[part3];
+        ( *short_prop_[iprop] )[part3] = ( *short_prop_[iprop] )[part2];
+        ( *short_prop_[iprop] )[part2] = stemp;
     }
 
     unsigned int uitemp;
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        uitemp = ( *short_prop[iprop] )[part1];
-        ( *uint64_prop[iprop] )[part1] = ( *uint64_prop[iprop] )[part3];
-        ( *uint64_prop[iprop] )[part3] = ( *uint64_prop[iprop] )[part2];
-        ( *uint64_prop[iprop] )[part2] = uitemp;
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        uitemp = ( *short_prop_[iprop] )[part1];
+        ( *uint64_prop_[iprop] )[part1] = ( *uint64_prop_[iprop] )[part3];
+        ( *uint64_prop_[iprop] )[part3] = ( *uint64_prop_[iprop] )[part2];
+        ( *uint64_prop_[iprop] )[part2] = uitemp;
     }
 
 }
@@ -578,30 +578,30 @@ void Particles::swapParticle4( unsigned int part1, unsigned int part2, unsigned 
 {
     double temp;
     // 1 ==> 2 ==> 3 ==> 4 ==> 1
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        temp = ( *double_prop[iprop] )[part1];
-        ( *double_prop[iprop] )[part1] = ( *double_prop[iprop] )[part4];
-        ( *double_prop[iprop] )[part4] = ( *double_prop[iprop] )[part3];
-        ( *double_prop[iprop] )[part3] = ( *double_prop[iprop] )[part2];
-        ( *double_prop[iprop] )[part2] = temp;
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        temp = ( *double_prop_[iprop] )[part1];
+        ( *double_prop_[iprop] )[part1] = ( *double_prop_[iprop] )[part4];
+        ( *double_prop_[iprop] )[part4] = ( *double_prop_[iprop] )[part3];
+        ( *double_prop_[iprop] )[part3] = ( *double_prop_[iprop] )[part2];
+        ( *double_prop_[iprop] )[part2] = temp;
     }
 
     short stemp;
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        stemp = ( *short_prop[iprop] )[part1];
-        ( *short_prop[iprop] )[part1] = ( *short_prop[iprop] )[part4];
-        ( *short_prop[iprop] )[part4] = ( *short_prop[iprop] )[part3];
-        ( *short_prop[iprop] )[part3] = ( *short_prop[iprop] )[part2];
-        ( *short_prop[iprop] )[part2] = stemp;
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        stemp = ( *short_prop_[iprop] )[part1];
+        ( *short_prop_[iprop] )[part1] = ( *short_prop_[iprop] )[part4];
+        ( *short_prop_[iprop] )[part4] = ( *short_prop_[iprop] )[part3];
+        ( *short_prop_[iprop] )[part3] = ( *short_prop_[iprop] )[part2];
+        ( *short_prop_[iprop] )[part2] = stemp;
     }
 
     unsigned int uitemp;
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        uitemp = ( *short_prop[iprop] )[part1];
-        ( *uint64_prop[iprop] )[part1] = ( *uint64_prop[iprop] )[part4];
-        ( *uint64_prop[iprop] )[part4] = ( *uint64_prop[iprop] )[part3];
-        ( *uint64_prop[iprop] )[part3] = ( *uint64_prop[iprop] )[part2];
-        ( *uint64_prop[iprop] )[part2] = uitemp;
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        uitemp = ( *short_prop_[iprop] )[part1];
+        ( *uint64_prop_[iprop] )[part1] = ( *uint64_prop_[iprop] )[part4];
+        ( *uint64_prop_[iprop] )[part4] = ( *uint64_prop_[iprop] )[part3];
+        ( *uint64_prop_[iprop] )[part3] = ( *uint64_prop_[iprop] )[part2];
+        ( *uint64_prop_[iprop] )[part2] = uitemp;
     }
 
 }
@@ -635,16 +635,16 @@ void Particles::translateParticles( std::vector<unsigned int> parts )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_particle )
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] )[dest_particle] = ( *double_prop[iprop] )[src_particle];
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        ( *double_prop_[iprop] )[dest_particle] = ( *double_prop_[iprop] )[src_particle];
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] )[dest_particle] = ( *short_prop[iprop] )[src_particle];
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        ( *short_prop_[iprop] )[dest_particle] = ( *short_prop_[iprop] )[src_particle];
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] )[dest_particle] = ( *uint64_prop[iprop] )[src_particle];
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        ( *uint64_prop_[iprop] )[dest_particle] = ( *uint64_prop_[iprop] )[src_particle];
     }
 }
 
@@ -658,16 +658,16 @@ void Particles::overwriteParticle( unsigned int part1, unsigned int part2, unsig
     unsigned int sizecharge = N*sizeof( Charge[0] );
     unsigned int sizeid = N*sizeof( Id[0] );
 
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        memcpy( & ( *double_prop[iprop] )[part2],  &( *double_prop[iprop] )[part1], sizepart );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        memcpy( & ( *double_prop_[iprop] )[part2],  &( *double_prop_[iprop] )[part1], sizepart );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        memcpy( & ( *short_prop[iprop] )[part2],  &( *short_prop[iprop] )[part1], sizecharge );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        memcpy( & ( *short_prop_[iprop] )[part2],  &( *short_prop_[iprop] )[part1], sizecharge );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        memcpy( & ( *uint64_prop[iprop] )[part2],  &( *uint64_prop[iprop] )[part1], sizeid );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        memcpy( & ( *uint64_prop_[iprop] )[part2],  &( *uint64_prop_[iprop] )[part1], sizeid );
     }
 }
 
@@ -676,16 +676,16 @@ void Particles::overwriteParticle( unsigned int part1, unsigned int part2, unsig
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2 )
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *dest_parts.double_prop[iprop] )[part2] = ( *double_prop[iprop] )[part1];
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        ( *dest_parts.double_prop_[iprop] )[part2] = ( *double_prop_[iprop] )[part1];
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *dest_parts.short_prop[iprop] )[part2] = ( *short_prop[iprop] )[part1];
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        ( *dest_parts.short_prop_[iprop] )[part2] = ( *short_prop_[iprop] )[part1];
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *dest_parts.uint64_prop[iprop] )[part2] = ( *uint64_prop[iprop] )[part1];
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        ( *dest_parts.uint64_prop_[iprop] )[part2] = ( *uint64_prop_[iprop] )[part1];
     }
 }
 
@@ -698,16 +698,16 @@ void Particles::overwriteParticle( unsigned int part1, Particles &dest_parts, un
     unsigned int sizecharge = N*sizeof( Charge[0] );
     unsigned int sizeid = N*sizeof( Id[0] );
 
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        memcpy( & ( *dest_parts.double_prop[iprop] )[part2],  &( *double_prop[iprop] )[part1], sizepart );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        memcpy( & ( *dest_parts.double_prop_[iprop] )[part2],  &( *double_prop_[iprop] )[part1], sizepart );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        memcpy( & ( *dest_parts.short_prop[iprop] )[part2],  &( *short_prop[iprop] )[part1], sizecharge );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        memcpy( & ( *dest_parts.short_prop_[iprop] )[part2],  &( *short_prop_[iprop] )[part1], sizecharge );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        memcpy( & ( *dest_parts.uint64_prop[iprop] )[part2],  &( *uint64_prop[iprop] )[part1], sizeid );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        memcpy( & ( *dest_parts.uint64_prop_[iprop] )[part2],  &( *uint64_prop_[iprop] )[part1], sizeid );
     }
 
 }
@@ -724,22 +724,22 @@ void Particles::swapParticle( unsigned int part1, unsigned int part2, unsigned i
     unsigned int sizecharge = N*sizeof( Charge[0] );
     unsigned int sizeid = N*sizeof( Id[0] );
 
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        memcpy( buffer, &( ( *double_prop[iprop] )[part1] ), sizepart );
-        memcpy( &( ( *double_prop[iprop] )[part1] ), &( ( *double_prop[iprop] )[part2] ), sizepart );
-        memcpy( &( ( *double_prop[iprop] )[part2] ), buffer, sizepart );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        memcpy( buffer, &( ( *double_prop_[iprop] )[part1] ), sizepart );
+        memcpy( &( ( *double_prop_[iprop] )[part1] ), &( ( *double_prop_[iprop] )[part2] ), sizepart );
+        memcpy( &( ( *double_prop_[iprop] )[part2] ), buffer, sizepart );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        memcpy( buffer, &( ( *short_prop[iprop] )[part1] ), sizecharge );
-        memcpy( &( ( *short_prop[iprop] )[part1] ), &( ( *short_prop[iprop] )[part2] ), sizecharge );
-        memcpy( &( ( *short_prop[iprop] )[part2] ), buffer, sizecharge );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        memcpy( buffer, &( ( *short_prop_[iprop] )[part1] ), sizecharge );
+        memcpy( &( ( *short_prop_[iprop] )[part1] ), &( ( *short_prop_[iprop] )[part2] ), sizecharge );
+        memcpy( &( ( *short_prop_[iprop] )[part2] ), buffer, sizecharge );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        memcpy( buffer, &( ( *uint64_prop[iprop] )[part1] ), sizeid );
-        memcpy( &( ( *uint64_prop[iprop] )[part1] ), &( ( *uint64_prop[iprop] )[part2] ), sizeid );
-        memcpy( &( ( *uint64_prop[iprop] )[part2] ), buffer, sizeid );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        memcpy( buffer, &( ( *uint64_prop_[iprop] )[part1] ), sizeid );
+        memcpy( &( ( *uint64_prop_[iprop] )[part1] ), &( ( *uint64_prop_[iprop] )[part2] ), sizeid );
+        memcpy( &( ( *uint64_prop_[iprop] )[part2] ), buffer, sizeid );
     }
 
 }
@@ -757,41 +757,59 @@ void Particles::pushToEnd( unsigned int iPart )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::createParticle()
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] ).push_back( 0. );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        ( *double_prop_[iprop] ).push_back( 0. );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] ).push_back( 0 );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        ( *short_prop_[iprop] ).push_back( 0 );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] ).push_back( 0 );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        ( *uint64_prop_[iprop] ).push_back( 0 );
     }
 //MESSAGE("create1");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Create nParticles new particles at the end of vectors
+//! Create n_additional_particles new particles at the end of vectors
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::createParticles( int nAdditionalParticles )
+void Particles::createParticles( int n_additional_particles )
 {
     int nParticles = size();
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] ).resize( nParticles+nAdditionalParticles, 0. );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        ( *double_prop_[iprop] ).resize( nParticles+n_additional_particles, 0. );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] ).resize( nParticles+nAdditionalParticles, 0 );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        ( *short_prop_[iprop] ).resize( nParticles+n_additional_particles, 0 );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] ).resize( nParticles+nAdditionalParticles, 0 );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        ( *uint64_prop_[iprop] ).resize( nParticles+n_additional_particles, 0 );
     }
 
-    cell_keys.resize( nParticles+nAdditionalParticles, 0);
+    cell_keys.resize( nParticles+n_additional_particles, 0);
 
 //MESSAGE("create2");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Create n_additional_particles new particles at the position pstart
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::createParticles( int n_additional_particles, int pstart )
+{
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        ( *double_prop_[iprop] ).insert( ( *double_prop_[iprop] ).begin()+pstart, n_additional_particles, 0. );
+    }
+
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        ( *short_prop_[iprop] ).insert( ( *short_prop_[iprop] ).begin()+pstart, n_additional_particles, 0 );
+    }
+
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        ( *uint64_prop_[iprop] ).insert( ( *uint64_prop_[iprop] ).begin()+pstart, n_additional_particles, 0 );
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -893,38 +911,20 @@ void Particles::eraseParticlesWithMask( int istart, int iend) {
 // }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Create nParticles new particles at the end of vectors
-// ---------------------------------------------------------------------------------------------------------------------
-void Particles::createParticles( int nAdditionalParticles, int pstart )
-{
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0. );
-    }
-
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] ).insert( ( *short_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0 );
-    }
-
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0 );
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
 //! Move ipart at new_pos in the particles data structure
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::moveParticles( int iPart, int new_pos )
 {
-    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+new_pos,( *double_prop[iprop] )[iPart]  );
+    for( unsigned int iprop=0 ; iprop<double_prop_.size() ; iprop++ ) {
+        ( *double_prop_[iprop] ).insert( ( *double_prop_[iprop] ).begin()+new_pos,( *double_prop_[iprop] )[iPart]  );
     }
 
-    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] ).insert( ( *short_prop[iprop] ).begin()+new_pos, ( *short_prop[iprop] )[iPart] );
+    for( unsigned int iprop=0 ; iprop<short_prop_.size() ; iprop++ ) {
+        ( *short_prop_[iprop] ).insert( ( *short_prop_[iprop] ).begin()+new_pos, ( *short_prop_[iprop] )[iPart] );
     }
 
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+new_pos,( *uint64_prop[iprop] )[iPart]  );
+    for( unsigned int iprop=0 ; iprop<uint64_prop_.size() ; iprop++ ) {
+        ( *uint64_prop_[iprop] ).insert( ( *uint64_prop_[iprop] ).begin()+new_pos,( *uint64_prop_[iprop] )[iPart]  );
     }
 
     eraseParticle( iPart+1 );

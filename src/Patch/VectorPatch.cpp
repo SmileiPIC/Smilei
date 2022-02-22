@@ -60,19 +60,19 @@ void VectorPatch::close( SmileiMPI *smpiData )
     // Close diagnostics
     closeAllDiags( smpiData );
     
-    if( diag_timers.size() ) {
+    if( diag_timers_.size() ) {
         MESSAGE( "\n\tDiagnostics profile :" );
     }
-    for( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
+    for( unsigned int idiag = 0 ;  idiag < diag_timers_.size() ; idiag++ ) {
         double sum( 0 );
-        MPI_Reduce( &diag_timers[idiag]->time_acc_, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-        MESSAGE( "\t\t" << setw( 20 ) << diag_timers[idiag]->name_ << "\t" << sum/( double )smpiData->getSize() );
+        MPI_Reduce( &diag_timers_[idiag]->time_acc_, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+        MESSAGE( "\t\t" << setw( 20 ) << diag_timers_[idiag]->name_ << "\t" << sum/( double )smpiData->getSize() );
     }
     
-    for( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
-        delete diag_timers[idiag];
+    for( unsigned int idiag = 0 ;  idiag < diag_timers_.size() ; idiag++ ) {
+        delete diag_timers_[idiag];
     }
-    diag_timers.clear();
+    diag_timers_.clear();
     
     for( unsigned int idiag=0 ; idiag<localDiags.size(); idiag++ ) {
         delete localDiags[idiag];
@@ -196,14 +196,14 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
     }
 
     for( unsigned int idiag = 0 ;  idiag < globalDiags.size() ; idiag++ ) {
-        diag_timers.push_back( new Timer( globalDiags[idiag]->filename ) );
+        diag_timers_.push_back( new Timer( globalDiags[idiag]->filename ) );
     }
     for( unsigned int idiag = 0 ;  idiag < localDiags.size() ; idiag++ ) {
-        diag_timers.push_back( new Timer( localDiags[idiag]->filename ) );
+        diag_timers_.push_back( new Timer( localDiags[idiag]->filename ) );
     }
 
-    for( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
-        diag_timers[idiag]->init( smpi );
+    for( unsigned int idiag = 0 ;  idiag < diag_timers_.size() ; idiag++ ) {
+        diag_timers_[idiag]->init( smpi );
     }
 
 }
@@ -1439,7 +1439,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     // Pre-process for binning diags with auto limits
     vector<double> MPI_mins, MPI_maxs;
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
-        diag_timers[idiag]->restart();
+        diag_timers_[idiag]->restart();
         
         // Get the mins and maxs from this diag, for the current MPI
         DiagnosticParticleBinningBase* binning = dynamic_cast<DiagnosticParticleBinningBase*>( globalDiags[idiag] );
@@ -1475,7 +1475,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
                 }
             }
         }
-        diag_timers[idiag]->update();
+        diag_timers_[idiag]->update();
     }
     #pragma omp master
     {
@@ -1508,7 +1508,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
 
     // Global diags: scalars + binnings
     for( unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++ ) {
-        diag_timers[idiag]->restart();
+        diag_timers_[idiag]->restart();
         
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow_ = globalDiags[idiag]->prepare( itime );
@@ -1527,12 +1527,12 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
             globalDiags[idiag]->write( itime, smpi );
         }
 
-        diag_timers[idiag]->update();
+        diag_timers_[idiag]->update();
     }
 
     // Local diags : fields, probes, tracks
     for( unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++ ) {
-        diag_timers[globalDiags.size()+idiag]->restart();
+        diag_timers_[globalDiags.size()+idiag]->restart();
 
         #pragma omp single
         localDiags[idiag]->theTimeIsNow_ = localDiags[idiag]->prepare( itime );
@@ -1541,7 +1541,7 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
             localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
         }
 
-        diag_timers[globalDiags.size()+idiag]->update();
+        diag_timers_[globalDiags.size()+idiag]->update();
     }
 
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
@@ -1557,8 +1557,8 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     timers.diags.update();
 
     if( itime==0 ) {
-        for( unsigned int idiag = 0 ; idiag < diag_timers.size() ; idiag++ ) {
-            diag_timers[idiag]->reboot();
+        for( unsigned int idiag = 0 ; idiag < diag_timers_.size() ; idiag++ ) {
+            diag_timers_[idiag]->reboot();
         }
     }
 
@@ -3772,12 +3772,12 @@ void VectorPatch::applyAntennas( double time )
             
             // Get intensity from antenna of the first patch
             #pragma omp single
-            antenna_intensity = patches_[0]->EMfields->antennas[iAntenna].time_profile->valueAt( time );
+            antenna_intensity_ = patches_[0]->EMfields->antennas[iAntenna].time_profile->valueAt( time );
 
             // Loop patches to apply
             #pragma omp for schedule(static)
             for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-                patches_[ipatch]->EMfields->applyAntenna( iAntenna, antenna_intensity );
+                patches_[ipatch]->EMfields->applyAntenna( iAntenna, antenna_intensity_ );
             }
             
         }
@@ -3894,8 +3894,8 @@ string combineMemoryConsumption( SmileiMPI *smpi, long int data, string name )
     long int maxData( 0 );
     MPI_Reduce( &data, &maxData, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
 
-    long double globalData = ( double )data / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalData, &globalData, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    double globalData = ( double )data / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalData, &globalData, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
 
     ostringstream t("");
     t << setw(22) << name << ": "

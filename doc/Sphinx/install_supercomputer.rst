@@ -11,15 +11,15 @@ and environment setup to optimize Smilei's performance.
 .. rst-class:: fancy
 
 +---------------------------------------------------------------------------+-----------------------------------------------------------------------+
-| `Archer2 <https://www.archer2.ac.uk/>`_                                   | | Archer2 (GNU compiler): ``archer2``                                               |
+| `Archer2 <https://www.archer2.ac.uk/>`_                                   | | Archer2 (GNU compiler): ``archer2``                                 |
 +---------------------------------------------------------------------------+-----------------------------------------------------------------------+
 | `Cori <http://docs.nersc.gov/systems/cori>`_                              | | Haswell: ``cori_hsw``                                               |
 |                                                                           | | KNL: ``cori_knl``                                                   |
 +---------------------------------------------------------------------------+-----------------------------------------------------------------------+
 | `Frioul <http://frioul.int.univ-amu.fr>`_                                 | | ``frioul``                                                          |
 +---------------------------------------------------------------------------+-----------------------------------------------------------------------+
-| FUGAKU                                                                    | | Fujitsu compiler in trad mode :  ``fugaku_fujitsu_tm``              |
-|                                                                           | | Fujitsu compiler in trad mode :  ``fugaku_fujitsu_cm``              |
+| `FUGAKU <https://www.fugaku.r-ccs.riken.jp>`_                             | | Fujitsu compiler in trad mode :  ``fugaku_fujitsu_tm``              |
+|                                                                           | | Fujitsu compiler in clang mode :  ``fugaku_fujitsu_cm``             |
 +---------------------------------------------------------------------------+-----------------------------------------------------------------------+
 | `Joliot-Curie <http://www-hpc.cea.fr/en/complexe/tgcc-JoliotCurie.htm>`_  | | KNL (Intel compiler): ``joliot_curie_knl``                          |
 |                                                                           | | Skylake (Intel compiler): ``joliot_curie_skl``                      |

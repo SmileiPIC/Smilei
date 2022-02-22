@@ -68,15 +68,20 @@ OpenPMDparams::OpenPMDparams( Params &p ):
             unitSI[unit_type] = 1.5092041114e-14 * Wr*Wr; // e0 * me * c * Wr^2 / e
         } else if( unit_type == SMILEI_UNIT_DENSITY ) {
             unitDimension[unit_type][0] = -3.;
-            unitSI[unit_type] = 3.14207756427e-4 * Wr*Wr; // e0 * me * Wr^2 / e^2
+            unitDimension[unit_type][2] = 1.;
+            unitDimension[unit_type][3] = 1.;
+            unitSI[unit_type] = 5.034163 * Wr*Wr; // e0 * me * Wr^2 / e
         } else if( unit_type == SMILEI_UNIT_POSITION ) {
-            unitDimension[unit_type][0] = -3.;
+            unitDimension[unit_type][0] = 1.;
             unitSI[unit_type] = 299792458. / Wr; // c / Wr
         } else if( unit_type == SMILEI_UNIT_MOMENTUM ) {
-            unitDimension[unit_type][0] = -3.;
+            unitDimension[unit_type][0] = 1.;
+            unitDimension[unit_type][1] = 1.;
+            unitDimension[unit_type][2] = -1.;
             unitSI[unit_type] = 2.7309240656e-22; // me * c
         } else if( unit_type == SMILEI_UNIT_CHARGE ) {
-            unitDimension[unit_type][0] = -3.;
+            unitDimension[unit_type][2] = 1.;
+            unitDimension[unit_type][3] = 1.;
             unitSI[unit_type] = 1.602176565e-19; // e
         } else if( unit_type == SMILEI_UNIT_TIME ) {
             unitDimension[unit_type][2] = 1.;

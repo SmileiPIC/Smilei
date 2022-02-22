@@ -834,7 +834,8 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
     g.attr( "species", vecSpeciesSize );
 
     if( vecSpeciesSize != patch->vecSpecies.size() ) {
-        ERROR( "Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<patch->vecSpecies.size()<<")" );
+        ERROR_NAMELIST( "Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<patch->vecSpecies.size()<<")",
+        "https://smileipic.github.io/Smilei/namelist.html#checkpoints");
     }
 
 
