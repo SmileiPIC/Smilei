@@ -17,6 +17,9 @@
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
 #include "MF_Solver3D_Lehe.h"
+#include "MF_Solver1D_M4.h"
+#include "MF_Solver2D_M4.h"
+#include "MF_Solver3D_M4.h"
 
 #include "PXR_Solver2D_GPSTD.h"
 #include "PXR_Solver3D_FDTD.h"
@@ -96,6 +99,8 @@ public:
             
             if( params.maxwell_sol == "Yee" ) {
                 solver = new MF_Solver1D_Yee( params );
+            } else if( params.maxwell_sol == "M4" ) {
+                solver = new MF_Solver1D_M4( params );
             }
             
         } else if( params.geometry == "2Dcartesian" ) {
@@ -112,6 +117,8 @@ public:
                 solver = new MF_Solver2D_Cowan( params );
             } else if( params.maxwell_sol == "Lehe" ) {
                 solver = new MF_Solver2D_Lehe( params );
+            } else if( params.maxwell_sol == "M4" ) {
+                solver = new MF_Solver2D_M4( params );
             } else if( params.is_spectral ) {
                 solver = new NullSolver( params );
             }
@@ -124,6 +131,8 @@ public:
                 solver = new MF_Solver3D_Lehe( params );
             } else if( params.maxwell_sol == "Bouchard" ) {
                 solver = new MF_Solver3D_Bouchard( params );
+            } else if( params.maxwell_sol == "M4" ) {
+                solver = new MF_Solver3D_M4( params );
             } else if( params.is_pxr ) {
                 solver = new NullSolver( params );
             }
