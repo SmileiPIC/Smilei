@@ -6,15 +6,38 @@ class Display(object):
         
         from os import get_terminal_size
         
-        self.error_header_ = "\033[1;31m"
-        self.error_footer_ = "\033[0m\n"
-        self.positive_header_ = "\033[1;32m"
-        self.positive_footer_ = "\033[0m\n"
-        self.tab_ = " "
+        self.terminal_mode = True
         
         # terminal properties for custom display
-        self.term_size = get_terminal_size()
-        self.seperator_length = self.term_size[0];
+        try:
+            self.term_size = get_terminal_size()
+        except:
+            self.term_size = [0,0];
+            self.terminal_mode = False
+        
+        # Used in a terminal
+        if (self.terminal_mode):
+            
+            self.seperator_length = self.term_size[0];
+            
+            self.error_header_ = "\033[1;31m"
+            self.error_footer_ = "\033[0m\n"
+            self.positive_header_ = "\033[1;32m"
+            self.positive_footer_ = "\033[0m\n"
+            self.tab_ = " "
+        
+        # Not used in a terminal
+        else:
+            self.seperator_length = 80;
+
+            self.error_header_ = ""
+            self.error_footer_ = ""
+            self.positive_header_ = ""
+            self.positive_footer_ = ""
+            self.tab_ = " "
+
+        
+        # Seperator
         self.seperator_ = " "
         for i in range(self.seperator_length-1):
             self.seperator_ += "-"
