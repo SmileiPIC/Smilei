@@ -164,6 +164,7 @@ class Main(SmileiSingleton):
     simulation_time = None
     number_of_timesteps = None
     interpolation_order = 2
+    interpolator = "momentum-conserving"
     custom_oversize = 2
     number_of_patches = None
     patch_arrangement = "hilbertian"
@@ -242,9 +243,34 @@ class Main(SmileiSingleton):
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
 
+                # M4
+                elif Main.maxwell_solver == 'M4':
+                    if Main.geometry == '1Dcartesian':
+                        Main.timestep = Main.timestep_over_CFL * Main.cell_length[0];
+                    elif Main.geometry == '2Dcartesian':
+                        Main.timestep = Main.timestep_over_CFL * min(Main.cell_length[0:2])
+                    elif Main.geometry == '3Dcartesian':
+                        Main.timestep = Main.timestep_over_CFL * min(Main.cell_length)
+                    else:
+                        raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
+
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
+
+        # Constraint on timestep for WT interpolation
+        if Main.interpolator.lower() == "wt":
+            if Main.geometry == '1Dcartesian':
+                if Main.timestep > 0.5 * Main.cell_length[0]:
+                    raise Exception("timestep for WT cannot be larger than 0.5*dx")
+            elif Main.geometry == '2Dcartesian':
+                if Main.timestep > 0.5 * min(Main.cell_length[0:2]):
+                    raise Exception("timestep for WT cannot be larger than 0.5*min(dx,dy)")
+            elif Main.geometry == '3Dcartesian':
+                if Main.timestep > 0.5 * min(Main.cell_length):
+                    raise Exception("timestep for WT cannot be larger than 0.5*min(dx,dy,dz)")
+            else:
+                raise Exception("WT interpolation not implemented in geometry "+Main.geometry)
 
         # Initialize simulation_time if not defined by the user
         if Main.simulation_time is None:

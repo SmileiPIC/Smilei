@@ -143,6 +143,16 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``2``  : 3 points stencil, supported in all configurations.
   * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
 
+.. py:data:: interpolator
+
+  :default: ``"momentum-conserving"``
+
+  * ``"momentum-conserving"``
+  * ``"wt"`
+
+  The interpolation scheme to be used in the simulation.
+  ``"wt"`` is for the timestep dependent field interpolation scheme decribed in
+  `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_ .
 
 .. py:data:: grid_length
              number_of_cells
@@ -211,9 +221,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: 'Yee'
 
   The solver for Maxwell's equations.
-  Only ``"Yee"`` is available for all geometries at the moment.
+  Only ``"Yee"`` and ``"M4"`` are available for all geometries at the moment.
   ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``.
   ``"Lehe"`` and ``"Bouchard"`` is available for ``3DCartesian``.
+  The M4 solver is described in `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_.
   The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_.
   The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_
 
