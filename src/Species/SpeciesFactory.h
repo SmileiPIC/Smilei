@@ -57,11 +57,13 @@ public:
         }
 
         if( species_name.size() < 2 ) {
-            ERROR("For species #" << ispec << ", name cannot be only 1 character");
+            ERROR_NAMELIST("For species #" << ispec << ", name cannot be only 1 character",
+            LINK_NAMELIST + std::string("#name"));
         }
 
         if( species_name.substr(0,2) == "m_" ) {
-            ERROR("For species #" << ispec << ", name cannot start  with `m_`");
+            ERROR_NAMELIST("For species #" << ispec << ", name cannot start  with `m_`",
+            LINK_NAMELIST + std::string("#name"));
         }
 
         // Extract type of species dynamics from namelist
@@ -118,7 +120,8 @@ public:
                 }
 #endif
             } else {
-                ERROR( "For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'" );
+                ERROR_NAMELIST( "For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'",
+                LINK_NAMELIST + std::string("#pusher") );
             }
             this_species->pusher_name_ = pusher;
             MESSAGE( 2, "> Pusher: " << this_species->pusher_name_ );
@@ -140,11 +143,12 @@ public:
                     this_species->particles->isQuantumParameter = true;
                     this_species->radiating_ = true;
             } else if( radiation_model != "none" ) {
-                ERROR( "For species `" << species_name
+                ERROR_NAMELIST( "For species `" << species_name
                        << " radiation_model must be 'none',"
                        << " 'Landau-Lifshitz' ('ll'),"
                        << " 'corrected-Landau-Lifshitz' ('cll'),"
-                       << " 'Niel' ('niel') or 'Monte-Carlo' ('mc')" );
+                       << " 'Niel' ('niel') or 'Monte-Carlo' ('mc')",
+                       LINK_NAMELIST + std::string("#radiation_model") );
             }
 
             this_species->radiation_model_ = radiation_model;
@@ -170,11 +174,12 @@ public:
                          || radiation_model=="cll"
                          || radiation_model=="niel"
                          || radiation_model=="diagradiationspectrum") ) {
-                ERROR( "For species `" << species_name
+                ERROR_NAMELIST( "For species `" << species_name
                        << "` radiation_model `"
                        << radiation_model
                        << "` is not compatible with pusher "
-                       << pusher );
+                       << pusher,
+                   LINK_NAMELIST + std::string("#radiation_model") );
 
             }
 
@@ -185,10 +190,11 @@ public:
                          || radiation_model=="cll"
                          || radiation_model=="niel"
                          || radiation_model=="diagradiationspectrum") ) {
-                ERROR( "For species `" << species_name
+                ERROR_NAMELIST( "For species `" << species_name
                        << "` radiation_model `"
                        << radiation_model
-                       << "` is only compatible with electron and positron species (charge <= 1).");
+                       << "` is only compatible with electron and positron species (charge <= 1).",
+                    LINK_NAMELIST + std::string("#radiation_model"));
 
             }
 
@@ -241,15 +247,17 @@ public:
                     if( !this_species->radiation_photon_species.empty() ) {
                         MESSAGE( 3, "| Emitted photon species set to `" << this_species->radiation_photon_species << "`" );
                     } else {
-                        ERROR( " The radiation photon species is not specified." )
+                        ERROR_NAMELIST( " The radiation photon species (`radiation_photon_species`) is not specified.",
+                        LINK_NAMELIST + std::string("#radiation_photon_species"))
                     }
 
                     // Number of photons emitted per Monte-Carlo event
                     PyTools::extract( "radiation_photon_sampling",
                         this_species->radiation_photon_sampling_, "Species", ispec );
                     if( this_species->radiation_photon_sampling_ < 1 ) {
-                        ERROR( "For species '" << species_name
-                               << "' radiation_photon_sampling should be > 1" );
+                        ERROR_NAMELIST( "For species '" << species_name
+                               << "' radiation_photon_sampling should be > 1",
+                           LINK_NAMELIST + std::string("#radiation_photon_sampling") );
                     }
                     MESSAGE( 3, "| Number of macro-photons emitted per MC event: "
                              << this_species->radiation_photon_sampling_ );

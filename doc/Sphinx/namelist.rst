@@ -749,6 +749,7 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: name
 
   The name you want to give to this species.
+  It should be more than one character and can not start with ``"m_"``.
 
 .. py:data:: position_initialization
 
