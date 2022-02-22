@@ -164,7 +164,7 @@ class Main(SmileiSingleton):
     simulation_time = None
     number_of_timesteps = None
     interpolation_order = 2
-    interpolation_WT = False
+    interpolator = "momentum-conserving"
     custom_oversize = 2
     number_of_patches = None
     patch_arrangement = "hilbertian"
@@ -257,7 +257,7 @@ class Main(SmileiSingleton):
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
 
         # Constraint on timestep for WT interpolation
-        if Main.interpolation_WT:
+        if Main.interpolator.lower() == "wt":
             if Main.geometry == '1Dcartesian':
                 if Main.timestep > 0.5 * Main.cell_length[0]:
                     raise Exception("timestep for WT cannot be larger than 0.5*dx")

@@ -143,12 +143,16 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``2``  : 3 points stencil, supported in all configurations.
   * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
 
-.. py:data:: interpolation_WT
+.. py:data:: interpolator
 
-  :default: ``False``
+  :default: ``"momentum-conserving"``
 
-  Decides if the timestep dependent field interpolation scheme decribed in
-  `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_ is used or not.
+  * ``"momentum-conserving"``
+  * ``"wt"`
+
+  The interpolation scheme to be used in the simulation.
+  ``"wt"`` is for the timestep dependent field interpolation scheme decribed in
+  `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_ .
 
 .. py:data:: grid_length
              number_of_cells

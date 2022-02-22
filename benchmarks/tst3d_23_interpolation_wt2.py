@@ -24,7 +24,7 @@ beta = math.sqrt(1.0- 1.0 / gam**2)
 Main(
     geometry = "3Dcartesian",
     interpolation_order = 2,
-    interpolation_WT = True,
+    interpolator = "wt",
     timestep = dt,
     simulation_time = simtime,
     cell_length = [dx, dy, dz],

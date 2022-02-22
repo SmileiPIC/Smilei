@@ -18,7 +18,7 @@ beta = math.sqrt(1.0- 1.0 / gam**2)
 Main(
     geometry = "1Dcartesian",
     interpolation_order = 4,
-    interpolation_WT = True,
+    interpolator = "wt",
     timestep = dt,
     simulation_time = simtime,
     cell_length = [dx],

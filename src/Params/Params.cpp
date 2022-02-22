@@ -247,7 +247,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     geometry = "";
     PyTools::extract( "geometry", geometry, "Main"  );
     if( geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="AMcylindrical" ) {
-        ERROR_NAMELIST( "Main.geometry `" << geometry << "` invalid", "https://smileipic.github.io/Smilei/namelist.html#main-variables" );
+        ERROR_NAMELIST( "Main.geometry `" << geometry << "` invalid", LINK_NAMELIST + std::string("#main-variables") );
     }
     setDimensions();
 
@@ -287,8 +287,26 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         LINK_NAMELIST + std::string("#main-variables"));
     }
 
-    // WT interpolation
-    PyTools::extract( "interpolation_WT", interpolation_WT, "Main"  );
+    // Interpolation scheme
+    PyTools::extract( "interpolator", interpolator_, "Main"  );
+    
+    // Cancelation of the letter case
+    std::transform( interpolator_.begin(), interpolator_.end(), interpolator_.begin(), ::tolower );
+    
+    if (interpolator_ != "wt" && interpolator_ != "momentum-conserving") {
+        ERROR_NAMELIST( "Parameter `Main.interpolator` should be `momentum-conserving` or `wt`.",
+        LINK_NAMELIST + std::string("#main-variables"));
+    }
+
+    if( ( interpolator_  == "wt") && 
+        (geometry != "1Dcartesian")                &&  
+        (geometry != "2Dcartesian")                && 
+        (geometry != "3Dcartesian")               ) {
+        ERROR_NAMELIST( "Interpolator `wt` not implemented for geometry: " << geometry << ".",
+        LINK_NAMELIST + std::string("#main-variables") );
+    }
+
+
 
     //!\todo (MG to JD) Please check if this parameter should still appear here
     // Disabled, not compatible for now with particles sort

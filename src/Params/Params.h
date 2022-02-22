@@ -96,8 +96,8 @@ public:
     //! defines the interpolation/projection order
     unsigned int interpolation_order;
 
-    //! defines the WT interpolation is used
-    bool interpolation_WT;
+    //! defines the interpolation scheme
+    std::string interpolator_;
 
     //! number of space dimensions for the particles
     unsigned int nDim_particle;
@@ -147,7 +147,6 @@ public:
     double envelope_polarization_phi = 0.; // used only for envelope ionization; in radians, angle with the xy plane
     // define the solver for the envelope equation
     std::string envelope_solver;
-
     
     //Poisson solver
     //! Do we solve poisson
