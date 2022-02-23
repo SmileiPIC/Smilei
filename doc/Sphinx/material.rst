@@ -46,6 +46,12 @@ As of November 2021, 90 papers have been published covering a broad range of top
 .. READ THIS 
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here.
+   
+.. [Yao2022]
+
+  W. Yao, A. Fazzini, S. N. Chen, K. Burdonov, P. Antici, J. Béard, S. Bolaños, A. Ciardi, R. Diab, E. D. Filippov, S. Kisyov, V. Lelasseux, M. Miceli, Q. Moreno, V. Nastasa, S. Orlando, S. Pikuz, D. C. Popescu, G. Revet, X. Ribeyre, E. d’Humières and J. Fuchs,
+  `Detailed characterization of a laboratory magnetized supercritical collisionless shock and of the associated proton energization`,
+  `Matter and Radiation at Extremes 7, 014402 (2022) <http://dx.doi.org/10.1063/5.0055071>`_
 
 .. [Singh2022]
 
