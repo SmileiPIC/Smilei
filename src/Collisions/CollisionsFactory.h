@@ -284,7 +284,7 @@ public:
             mystream << "Collisions" << n_collisions << ".h5";
             filename = mystream.str();
             std::ifstream file( filename );
-            MESSAGE( "!" << filename << "!");
+            
             // Check if file exists
             if( ! file ) {
                 MPI_Comm comm = MPI_COMM_WORLD;

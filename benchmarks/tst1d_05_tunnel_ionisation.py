@@ -42,7 +42,7 @@ Species(
 	charge = 0.0,
 	number_density = 0.1,
 	boundary_conditions = [
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 )
 
@@ -58,7 +58,7 @@ Species(
 	charge = 0.0,
 	number_density = 0.1,
 	boundary_conditions = [
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 )
 
@@ -71,7 +71,7 @@ Species(
 	charge = -1.0,
 	charge_density = 0.0,
 	boundary_conditions = [
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 )
 
