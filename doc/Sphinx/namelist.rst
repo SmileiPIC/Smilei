@@ -90,6 +90,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Main(
       geometry = "1Dcartesian",
       interpolation_order = 2,
+      interpolator = "momentum-conserving",
       grid_length  = [16. ],
       cell_length = [0.01],
       simulation_time    = 15.,
@@ -148,7 +149,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``"momentum-conserving"``
 
   * ``"momentum-conserving"``
-  * ``"wt"`
+  * ``"wt"``
 
   The interpolation scheme to be used in the simulation.
   ``"wt"`` is for the timestep dependent field interpolation scheme decribed in
@@ -749,6 +750,7 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: name
 
   The name you want to give to this species.
+  It should be more than one character and can not start with ``"m_"``.
 
 .. py:data:: position_initialization
 

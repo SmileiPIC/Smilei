@@ -188,7 +188,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Error if no block Main() exists
     if( PyTools::nComponents( "Main" ) == 0 ) {
-        ERROR_NAMELIST( "Block Main() not defined","https://smileipic.github.io/Smilei/namelist.html#main-variables" );
+        ERROR_NAMELIST( "Block Main() not defined",LINK_NAMELIST + std::string("#main-variables") );
     }
 
     // CHECK namelist on python side

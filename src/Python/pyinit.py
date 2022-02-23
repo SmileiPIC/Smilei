@@ -205,6 +205,8 @@ class Main(SmileiSingleton):
     random_seed = None
     print_expected_disk_usage = True
 
+    terminal_mode = True
+
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
