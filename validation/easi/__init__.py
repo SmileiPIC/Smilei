@@ -504,14 +504,13 @@ class Validation(object):
             from os.path import getsize
             from os import remove
             from sys import exit
-            with open(reference_file, "wb") as f:
-                pickle.dump(data, f, protocol=2)
-            size = getsize(reference_file)
+            with open(self.reference_file, "wb") as f:
+                pickle.dump(self.data, f, protocol=2)
+            size = getsize(self.reference_file)
             if size > 1000000:
                 print("Reference file is too large ("+str(size)+"B) - suppressing ...")
-                remove(reference_file)
-            elif self.options.verbose:
-                print("Created reference file "+reference_file)
+                remove(self.reference_file)
+            print("Created reference file "+self.reference_file)
 
     # DEFINE A CLASS TO COMPARE A SIMULATION TO A REFERENCE
     class CompareToReference(object):
