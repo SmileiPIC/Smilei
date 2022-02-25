@@ -193,7 +193,7 @@ public:
     std::vector<int> mBW_pair_creation_sampling_;
 
     //! Cluster width in number of cells
-    unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.
+    unsigned int cluster_width_; //Should divide the number of cells in X of a single MPI domain.
     //! Array counting the occurence of each cell key
     std::vector<int> count;
     //! sub dimensions of buffers for dim > 1

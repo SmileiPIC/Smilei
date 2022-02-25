@@ -599,8 +599,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
 
 
-    // clrw
-    PyTools::extract( "cluster_width", clrw, "Main"   );
+    // cluster_width_
+    PyTools::extract( "cluster_width", cluster_width_, "Main"   );
 
 
 
@@ -867,8 +867,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // -------------------------------------------------------
     compute();
 
-    // add the read or computed value of clrw to the content of smilei.py
-    namelist += string( "Main.clrw= " ) + to_string( clrw ) + "\n";
+    // add the read or computed value of cluster_width_ to the content of smilei.py
+    namelist += string( "Main.cluster_width= " ) + to_string( cluster_width_ ) + "\n";
 
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
@@ -1120,11 +1120,11 @@ void Params::compute()
         }
     }
 
-    // Set clrw if not set by the user
-    if( clrw == -1 ) {
+    // Set cluster_width_ if not set by the user
+    if( cluster_width_ == -1 ) {
 
         // default value
-        clrw = n_space[0];
+        cluster_width_ = n_space[0];
 
         // check cache issue for interpolation/projection
         int cache_threshold( 3200 ); // sizeof( L2, Sandy Bridge-HASWELL ) / ( 10 * sizeof(double) )
@@ -1134,34 +1134,36 @@ void Params::compute()
             bin_size *= ( n_space[idim]+1+2*oversize[idim] );
         }
 
-        // IF Ionize or pair generation : clrw = n_space_x_pp ?
-        if( ( clrw+1+2*oversize[0] ) * bin_size > ( unsigned int ) cache_threshold ) {
+        // IF Ionize or pair generation : cluster_width_ = n_space_x_pp ?
+        if( ( cluster_width_+1+2*oversize[0] ) * bin_size > ( unsigned int ) cache_threshold ) {
             int clrw_max = cache_threshold / bin_size - 1 - 2*oversize[0];
             if( clrw_max > 0 ) {
-                for( clrw=clrw_max ; clrw > 0 ; clrw-- )
-                    if( ( ( clrw+1+2*oversize[0] ) * bin_size <= ( unsigned int ) cache_threshold ) && ( n_space[0]%clrw==0 ) ) {
+                for( cluster_width_=clrw_max ; cluster_width_ > 0 ; cluster_width_-- )
+                    if( ( ( cluster_width_+1+2*oversize[0] ) * bin_size <= ( unsigned int ) cache_threshold ) && ( n_space[0]%cluster_width_==0 ) ) {
                         break;
                     }
             } else {
-                clrw = 1;
+                cluster_width_ = 1;
             }
-            WARNING( "Particles cluster width set to : " << clrw );
+            WARNING( "Particles cluster width `cluster_width` set to : " << cluster_width_ );
         }
 
     }
 
-    // clrw != n_space[0] is not compatible
+    // cluster_width_ != n_space[0] is not compatible
     // with the adaptive vectorization for the moment
     if( vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive" ) {
-        if( clrw != ( int )( n_space[0] ) ) {
-            clrw = ( int )( n_space[0] );
-            WARNING( "Particles cluster width set to: " << clrw << " for the adaptive vectorization mode" );
+        if( cluster_width_ != ( int )( n_space[0] ) ) {
+            cluster_width_ = ( int )( n_space[0] );
+            WARNING( "Particles cluster width set to: " << cluster_width_ << " for the adaptive vectorization mode" );
         }
     }
 
-    // Verify that clrw divides n_space[0]
-    if( n_space[0]%clrw != 0 ) {
-        ERROR_NAMELIST( "The parameter clrw must divide the number of cells in one patch (in dimension x)", LINK_NAMELIST + std::string("#main-variables") );
+    // Verify that cluster_width_ divides n_space[0]
+    if( n_space[0]%cluster_width_ != 0 ) {
+        ERROR_NAMELIST(
+            "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)", 
+            LINK_NAMELIST + std::string("#main-variables") );
     }
 
     // Define domain decomposition if double grids are used for particles and fields

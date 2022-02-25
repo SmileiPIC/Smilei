@@ -184,8 +184,8 @@ public:
     double Friedman_theta;
 
     //! Clusters width
-    //unsigned int clrw;
-    int clrw;
+    //unsigned int cluster_width_;
+    int cluster_width_;
     //! Number of cells per cluster
     int n_cell_per_patch;
 

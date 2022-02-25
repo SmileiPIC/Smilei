@@ -55,7 +55,7 @@ if [ "$CLRW" != "1" ]
 fi
 #
 # Put CLRW into the input file  
-sed " 25a clrw=${CLRW} " ${INPUT_PATH} > ${INPUT_PATH_CLRW} 
+sed " 25a cluster_width=${CLRW} " ${INPUT_PATH} > ${INPUT_PATH_CLRW} 
 #
 # Build the job perf.ll                        
 cat > ${JOB_perf} << 'eof'
@@ -100,7 +100,7 @@ INPUT=input
 INPUT_PATH=${ROOT}/tests/${INPUT}
 OUTPUT_SEQ=/tmp/output_seq                         
 OUTPUT_PERF=/tmp/output_efficiency                         
-CLRW=`grep ^clrw ${INPUT_PATH} | awk -F "=" '{print $2}'`
+CLRW=`grep ^cluster_width ${INPUT_PATH} | awk -F "=" '{print $2}'`
 PERFS="./PERFS_"${INPUT}_${CLRW}
 echo ${PERFS}
 # 
