@@ -139,7 +139,7 @@ class Options(object):
 		self.ticklabels = {}
 		self.ticklabels_font = {}
 		self.plot = {}
-		self.image = {"interpolation":"nearest", "aspect":"auto"}
+		self.image = {"interpolation":"nearest", "aspect":"auto", "cmap":"smilei"}
 		self.colorbar = {}
 		self.colorbar_font = {}
 		self.cax = {"size": "5%", "pad": 0.15}
@@ -223,7 +223,8 @@ class Options(object):
 			self.colorbar["label"] = kwargs.pop("clabel")
 		self.cax['position'] = 'bottom' if ( 'orientation' in self.colorbar and self.colorbar['orientation'] == 'horizontal' ) else 'right'
 		if self.explicit_cmap is None:
-			self.image['cmap'] = 'smileiD' if self.vsym else 'smilei'
+			if self.vsym:
+				self.image['cmap'] = 'smileiD'
 		else:
 			self.image['cmap'] = self.explicit_cmap
 		return kwargs
