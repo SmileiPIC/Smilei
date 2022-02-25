@@ -7,7 +7,7 @@ class ParticleBinning(Diagnostic):
 	_diagType = "ParticleBinning"
 	hasComposite = False
 	
-	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, data_transform=None, include={}, **kwargs):
+	def _init(self, diagNumber=None, timesteps=None, subset=None, average=None, sum=None, data_log=False, data_transform=None, include={}, **kwargs):
 		
 		# Search available diags
 		diag_numbers, diag_names = self.simulation.getDiags(self._diagType)
@@ -82,11 +82,14 @@ class ParticleBinning(Diagnostic):
 		elif type(subset) is not dict:
 			raise Exception("Argument `subset` must be a dictionary")
 		
-		# Check sum
-		if sum is None:
-			sum = {}
-		elif type(sum) is not dict:
-			raise Exception("Argument `sum` must be a dictionary")
+		# Check average
+		if average is None:
+			if type(sum) is dict:
+				average = sum
+			else:
+				average = {}
+		elif type(average) is not dict:
+			raise Exception("Argument `average` must be a dictionary")
 		
 		# Put data_log as object's variable
 		self._data_log = data_log
@@ -186,11 +189,11 @@ class ParticleBinning(Diagnostic):
 				axis["units"] = ""
 				user_axes += [axis["type"]]
 			
-			# Store sum/subset info
-			if axis["type"] in sum:
+			# Store average/subset info
+			if axis["type"] in average:
 				if axis["type"] in subset:
-					raise Exception("`subset` not possible on the same axes as `sum`")
-				axis["sum"] = sum[axis["type"]]
+					raise Exception("`subset` not possible on the same axes as `average`")
+				axis["average"] = average[axis["type"]]
 			elif axis["type"] in subset:
 				axis["subset"] = subset[axis["type"]]
 			
@@ -202,7 +205,7 @@ class ParticleBinning(Diagnostic):
 				axis["auto_max"] = [it.attrs["max%d"%iaxis] for it in self._h5items[self._diags[0]]]
 				self.auto_axes =  True
 		
-		# Set all axes sum/subset
+		# Set all axes average/subset
 		self._updateAxes(self._timesteps[0])
 		
 		# Build units
@@ -352,7 +355,7 @@ class ParticleBinning(Diagnostic):
 			info += self._printInfo(self._myinfo[d])+"\n"
 		if len(self.operation)>2: info += "Operation : "+self.operation+"\n"
 		for ax in self._axes:
-			if "sumInfo" in ax: info += ax["sumInfo"]+"\n"
+			if "averageInfo" in ax: info += ax["averageInfo"]+"\n"
 			if "subsetInfo" in ax: info += ax["subsetInfo"]+"\n"
 		return info
 	
@@ -387,10 +390,10 @@ class ParticleBinning(Diagnostic):
 			axis["edges"  ] = edges
 			axis["centers"] = centers
 			
-			# if this axis has to be summed, then select the bounds
-			if "sum" in axis:
-				axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
-					= self._selectRange(axis["sum"], centers, axis["type"], axis["units"], "sum", axis["edges_included"])
+			# if this axis has to be averaged, then select the bounds
+			if "average" in axis:
+				axis["averageInfo"], self._selection[iaxis], self._finalShape[iaxis] \
+					= self._selectRange(axis["average"], centers, axis["type"], axis["units"], "average", axis["edges_included"])
 				
 				if axis["type"] in ["x","y","z","moving_x"]:
 					first_edge = edges[self._selection[iaxis].start or 0]
@@ -399,7 +402,7 @@ class ParticleBinning(Diagnostic):
 				
 				plot_diff.append( self._np.ones((self._finalShape[iaxis],)) )
 			
-			# if not summed
+			# if not averaged
 			else:
 				# If taking a subset of this axis
 				if "subset" in axis:
@@ -528,11 +531,11 @@ class ParticleBinning(Diagnostic):
 		for d in reversed(self._diags):
 			data_operation = data_operation.replace("#"+str(d),"A["+str(d)+"]")
 		A = eval(data_operation, self._include, locals())
-		# Apply the summing
+		# Apply the averaging
 		for iaxis in range(self._naxes):
-			if "sum" in self._axes[iaxis]:
+			if "average" in self._axes[iaxis]:
 				A = self._np.sum(A, axis=iaxis, keepdims=True)
-		# remove summed axes
+		# remove averaged axes
 		A = self._np.squeeze(A)
 		# transform if requested
 		if callable(self._data_transform): A = self._data_transform(A)

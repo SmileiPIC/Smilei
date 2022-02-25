@@ -586,12 +586,12 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 init_space.cell_index_[0] = 0;
                 init_space.box_size_[0]   = 1;
 
-                //index = (new_cell_idx)/params.clrw;
+                //index = (new_cell_idx)/params.cluster_width_;
             } else if ( patch->isXmax() ) {
 
                 init_space.cell_index_[0] = params.n_space[0]-1;
                 init_space.box_size_[0]   = 1;
-                //index = (new_cell_idx)/params.clrw;
+                //index = (new_cell_idx)/params.cluster_width_;
             }
 
             if (params.nDim_field > 1) {

@@ -259,7 +259,9 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
             }
         }
         else {
-            ERROR( "Only Remove and reflective boundary conditions can be applied to particles in AM geometry " );
+            ERROR_NAMELIST( 
+                "Only Remove and reflective boundary conditions can be applied to particles in AM geometry ",
+                LINK_NAMELIST + std::string("#species") );
         }
     }
 }

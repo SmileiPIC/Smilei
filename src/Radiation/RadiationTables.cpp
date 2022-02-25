@@ -57,8 +57,9 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
         // Preliminary checks
         if( params.reference_angular_frequency_SI <= 0. )
-            ERROR( "The parameter `reference_angular_frequency_SI` needs "
-                   << "to be defined and positive to compute radiation losses" );
+            ERROR_NAMELIST( "The parameter `reference_angular_frequency_SI` needs "
+                   << "to be defined and positive to compute radiation losses",
+                   LINK_NAMELIST + std::string("#radiation-reaction") );
 
     }
 
@@ -160,7 +161,10 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
                 niel_.computation_method_ == "ridgers" ) {
             MESSAGE( 1,"Niel h function computation method: " << niel_.computation_method_ );
         } else {
-            ERROR( " The parameter `Niel_computation_method` must be `table`, `fit5`, `fit10` or `ridgers`." );
+            ERROR_NAMELIST( 
+                " The parameter `Niel_computation_method` must be `table`, `fit5`, `fit10` or `ridgers`.",
+                LINK_NAMELIST + std::string("#radiation-reaction")
+            );
         }
 
         // Convert computational methods in index for GPUs
@@ -607,15 +611,17 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
             f.vect( "h", niel_.table_ );
         }
     } else {
-        ERROR("The table H could not be read from the provided path: `"
-              << table_path_<<"`. Please check that the path is correct.")
+        ERROR_NAMELIST("The table H could not be read from the provided path: `"
+              << table_path_<<"`. Please check that the path is correct.",
+              LINK_NAMELIST + std::string("#radiation-reaction"))
     }
 
     // checks
     if( minimum_chi_continuous_ < niel_.min_particle_chi_ ) {
-        ERROR( "Parameter `minimum_chi_continuous_` is below `niel_.min_particle_chi_`,"
+        ERROR_NAMELIST( "Parameter `minimum_chi_continuous_` is below `niel_.min_particle_chi_`,"
                << "the lower bound of the h table should be equal or below"
-               << "the radiation threshold on chi." )
+               << "the radiation threshold on chi.",
+               LINK_NAMELIST + std::string("#radiation-reaction") )
     }
 
     // Bcast the table to all MPI ranks
@@ -650,8 +656,9 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
     }
     // Else, the table can not be found, we throw an error
     else {
-        ERROR("The table `integfochi` could not be read from the provided path: `"
-              << table_path_<<"`. Please check that the path is correct.")
+        ERROR_NAMELIST("The table `integfochi` could not be read from the provided path: `"
+              << table_path_<<"`. Please check that the path is correct.",
+              LINK_NAMELIST + std::string("#radiation-reaction"))
     }
 
 }
@@ -688,8 +695,9 @@ void RadiationTables::readXiTable( SmileiMPI *smpi )
     }
     // Else, the table can not be found, we throw an error
     else {
-        ERROR("The table `xi` could not be read from the provided path: `"
-              << table_path_<<"`. Please check that the path is correct.")
+        ERROR_NAMELIST("The table `xi` could not be read from the provided path: `"
+              << table_path_<<"`. Please check that the path is correct.",
+              LINK_NAMELIST + std::string("#radiation-reaction"))
     }
 }
 

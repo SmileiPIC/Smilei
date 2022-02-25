@@ -32,28 +32,32 @@
 
 #include <mpi.h>
 
+#define ERROR_STYLE "\033[1;31m"
+#define FOOTER_STYLE "\033[0m"
+
 #ifdef _OMP
 #include <omp.h>
 
 #define __header(__msg,__txt) {std::cout << "\t[" << __msg << "](" << omp_get_thread_num() << ") " __FILE__ << ":" << __LINE__ << " (" \
 << __FUNCTION__ << ") " << __txt << std::endl;}
 
-#define __header_custom_text_on_unix(__msg,__txt,__tc) { std::cout << "\033[;"<< __tc << "m" << "\n\t[" << __msg << "](" << omp_get_thread_num() \
+#define __header_custom_text_on_unix(__msg,__txt,__tc) { std::cout << "\033[;"<< __tc << "m" << "\n[" << __msg << "](" << omp_get_thread_num() \
 << ") " __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\033[0m" << std::endl;}
 
-#define __header_error(__msg,__txt) {std::string line = " "; for (int i=0; i < 80 ; i++) line += "-"; std::cerr << "\033[1;31m" << line << "\n [" << __msg << "](" << omp_get_thread_num() \
-<< ") " __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\n" << line << "\033[0m" << std::endl;}
+#define __header_error(__msg,__txt) {std::string line = " "; for (int __ic=0; __ic < 80 ; __ic++) line += "-"; \
+std::cerr << ERROR_STYLE << line << "\n [" << __msg << "](" << omp_get_thread_num() \
+<< ") " __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\n" << line << FOOTER_STYLE << std::endl;}
 
 #else
 #define __header(__msg,__txt) std::cout << "\t[" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
 << __FUNCTION__ << ") " << __txt << std::endl
 
-#define __header_custom_text_on_unix(__msg,__txt,__tc) { std::cout << "\033[;"<< __tc <<"m" << "\t[" << __msg << "] " \
+#define __header_custom_text_on_unix(__msg,__txt,__tc) { std::cout << "\033[;"<< __tc <<"m" << "[" << __msg << "] " \
 << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\033[0m" << std::endl; }
 
-#define __header_error(__msg,__txt) {std::string line = " "; for (int i=0; i < 80 ; i++) line += "-"; \
-std::cerr << "\033[1;31m" << line << "\n [" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
-<< __FUNCTION__ << ") " << __txt << "\n" << line << "\033[0m" << std::endl;}
+#define __header_error(__msg,__txt) {std::string line = " "; for (int __ic =0; __ic < 80 ; __ic++) line += "-"; \
+std::cerr << ERROR_STYLE << line << "\n [" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
+<< __FUNCTION__ << ") " << __txt << "\n" << line << FOOTER_STYLE << std::endl;}
 
 #endif
 
@@ -121,7 +125,17 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 
 #define ERROR(__txt) {ERRORWITHCUSTOMSIGNAL(__txt, SIGABRT);}
 
-#define ERROR_NAMELIST(__txt,__link) {std::string __link_message = ""; if (std::string(__link) != "") { __link_message = "\n\n Find out more: " + std::string(__link); }; ERRORWITHCUSTOMSIGNAL("\n A probem was found in the namelist:\n > " << __txt << __link_message, SIGABRT);}
+#define ERROR_NAMELIST(__txt,__link) {      \
+    int __rk;                               \
+    MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); \
+    if (__rk==0) {                          \
+        std::string __link_message = "";    \
+        if (std::string(__link) != "") {    \
+            __link_message = "\n\n Find out more: " + std::string(__link); \
+        };                                  \
+        ERRORWITHCUSTOMSIGNAL("\n A probem was found in the namelist:\n > " << __txt << __link_message, SIGABRT); \
+    };                                      \
+}
 
 
 class Tools

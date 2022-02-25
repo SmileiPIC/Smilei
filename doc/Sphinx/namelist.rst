@@ -90,12 +90,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Main(
       geometry = "1Dcartesian",
       interpolation_order = 2,
+      interpolator = "momentum-conserving",
       grid_length  = [16. ],
       cell_length = [0.01],
       simulation_time    = 15.,
       timestep    = 0.005,
       number_of_patches = [64],
-      clrw = 5,
+      cluster_width = 5,
       maxwell_solver = 'Yee',
       EM_boundary_conditions = [
           ["silver-muller", "silver-muller"],
@@ -143,6 +144,16 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``2``  : 3 points stencil, supported in all configurations.
   * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
 
+.. py:data:: interpolator
+
+  :default: ``"momentum-conserving"``
+
+  * ``"momentum-conserving"``
+  * ``"wt"``
+
+  The interpolation scheme to be used in the simulation.
+  ``"wt"`` is for the timestep dependent field interpolation scheme described in
+  `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_ .
 
 .. py:data:: grid_length
              number_of_cells
@@ -196,14 +207,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
     column-major (fortran-style) ordering. This prevents the usage of
     :ref:`Fields diagnostics<DiagFields>` (see :doc:`parallelization`).
 
-.. py:data:: clrw
+.. py:data:: cluster_width
 
   :default: set to minimize the memory footprint of the particles pusher, especially interpolation and projection processes
 
   For advanced users. Integer specifying the cluster width along X direction in number of cells.
   The "cluster" is a sub-patch structure in which particles are sorted for cache improvement.
-  ``clrw`` must divide the number of cells in one patch (in dimension X).
-  The finest sorting is achieved with ``clrw=1`` and no sorting with ``clrw`` equal to the full size of a patch along dimension X.
+  ``cluster_width`` must divide the number of cells in one patch (in dimension X).
+  The finest sorting is achieved with ``cluster_width=1`` and no sorting with ``cluster_width`` equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
 
 .. py:data:: maxwell_solver
@@ -211,9 +222,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: 'Yee'
 
   The solver for Maxwell's equations.
-  Only ``"Yee"`` is available for all geometries at the moment.
+  Only ``"Yee"`` and ``"M4"`` are available for all geometries at the moment.
   ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``.
   ``"Lehe"`` and ``"Bouchard"`` is available for ``3DCartesian``.
+  The M4 solver is described in `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_.
   The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_.
   The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_
 
@@ -514,7 +526,7 @@ It requires :ref:`additional compilation options<vectorization_flags>` to be act
     (per patch and per species). For the moment this mode is only supported in ``3Dcartesian`` geometry.
     Particles are sorted per cell.
 
-  In the ``"adaptive"`` mode, :py:data:`clrw` is set to the maximum.
+  In the ``"adaptive"`` mode, :py:data:`cluster_width` is set to the maximum.
 
 .. py:data:: reconfigure_every
 
@@ -738,6 +750,7 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: name
 
   The name you want to give to this species.
+  It should be more than one character and can not start with ``"m_"``.
 
 .. py:data:: position_initialization
 

@@ -570,6 +570,23 @@ class _multiPlotUtil(object):
 		self.plt.draw()
 		self.plt.pause(0.00001)
 	
+	def twinOptions(self, Diag):
+		if self.sameAxes:
+			Diag._ax.set_xlim(self.xmin,self.xmax)
+			if Diag.dim<2 and self.bothsides:
+				color = Diag._plot.get_color()
+				Diag._ax.yaxis.label.set_color(color)
+				Diag._ax.tick_params(axis='y', colors=color)
+				if Diag.options.side == "right":
+					Diag._ax.spines['right'].set_color(color)
+					Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
+				else:
+					Diag._ax.spines['left'].set_color(color)
+		try:
+			Diag._ax.set_position(Diag._ax.twin.get_position())
+		except Exception as e:
+			pass
+	
 	def animate(self):
 		# Loop all times
 		mov = Movie(self.fig, self.movie, self.fps, self.dpi)
@@ -583,21 +600,7 @@ class _multiPlotUtil(object):
 						Diag._plotOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					else:
 						Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
-					if self.sameAxes:
-						Diag._ax.set_xlim(self.xmin,self.xmax)
-						if Diag.dim<2 and self.bothsides:
-							color = Diag._plot.get_color()
-							Diag._ax.yaxis.label.set_color(color)
-							Diag._ax.tick_params(axis='y', colors=color)
-							if Diag.options.side == "right":
-								Diag._ax.spines['right'].set_color(color)
-								Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
-							else:
-								Diag._ax.spines['left'].set_color(color)
-					try:
-						Diag._ax.set_position(Diag._ax.twin.get_position())
-					except Exception as e:
-						pass
+					self.twinOptions(Diag)
 			if self.nlegends > 0: self.plt.legend()
 			self.plt.draw()
 			self.plt.pause(0.00001)
@@ -610,11 +613,14 @@ class _multiPlotUtil(object):
 		for Diag in self.Diags:
 			i = self.np.argmin(self.np.abs(self.np.array(Diag._timesteps)-t))
 			Diag._animateOnAxes(Diag._ax, Diag._timesteps[i], cax_id = Diag._cax_id)
-			self.plt.draw()
+			self.twinOptions(Diag)
+		self.plt.draw()
 	
 	def slide(self):
 		for Diag in self.Diags:
 			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[0], cax_id = Diag._cax_id)
+			self.twinOptions(Diag)
+		if self.nlegends > 0: self.plt.legend()
 		self.plt.draw()
 		
 		from matplotlib.widgets import Slider

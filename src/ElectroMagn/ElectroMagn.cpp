@@ -162,9 +162,9 @@ void ElectroMagn::initElectroMagnQuantities()
     poynting_inst[0].resize( nDim_field, 0.0 );
     poynting_inst[1].resize( nDim_field, 0.0 );
     
-    if( n_space.size() != 3 ) {
-        ERROR( "this should not happen" );
-    }
+    // if( n_space.size() != 3 ) {
+    //     ERROR( "this should not happen" );
+    // }
     
     Ex_=NULL;
     Ey_=NULL;

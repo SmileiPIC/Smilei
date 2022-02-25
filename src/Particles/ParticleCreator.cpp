@@ -303,8 +303,8 @@ int ParticleCreator::create( struct SubSpace sub_space,
         unsigned int iPart = n_existing_particles;
         double *indexes = new double[species_->nDim_particle];
         for( unsigned int i=0; i< sub_space.box_size_[0]; i++ ) {
-            if(( !n_existing_particles )&&( i%species_->clrw == 0 )&&( initialized_in_species_ )) {
-                species_->particles->first_index[(sub_space.cell_index_[0]+i)/species_->clrw] = iPart;
+            if(( !n_existing_particles )&&( i%species_->cluster_width_ == 0 )&&( initialized_in_species_ )) {
+                species_->particles->first_index[(sub_space.cell_index_[0]+i)/species_->cluster_width_] = iPart;
             }
             for( unsigned int j=0; j<sub_space.box_size_[1]; j++ ) {
                 for( unsigned int k=0; k<sub_space.box_size_[2]; k++ ) {
@@ -339,8 +339,8 @@ int ParticleCreator::create( struct SubSpace sub_space,
                     }
                 }//k
             }//j
-            if((!n_existing_particles)&&( i%species_->clrw == species_->clrw -1 ) &&(initialized_in_species_)) {
-                 species_->particles->last_index[(sub_space.cell_index_[0]+i)/species_->clrw] = iPart;
+            if((!n_existing_particles)&&( i%species_->cluster_width_ == species_->cluster_width_ -1 ) &&(initialized_in_species_)) {
+                 species_->particles->last_index[(sub_space.cell_index_[0]+i)/species_->cluster_width_] = iPart;
             }
         }//i
         delete [] indexes;
@@ -448,7 +448,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
             // Prepare sorting
             int nbins = species_->particles->first_index.size();
             int indices[nbins];
-            double one_ov_dbin = 1. / ( species_->cell_length[0] * species_->clrw ) ;
+            double one_ov_dbin = 1. / ( species_->cell_length[0] * species_->cluster_width_ ) ;
             for( int ibin=0; ibin < nbins ; ibin++ ) {
                 indices[ibin] = 0 ;
             }

@@ -41,8 +41,9 @@ public:
             for( unsigned int i0=0; i0<sgroup[0].size(); i0++ ) {
                 for( unsigned int i1=0; i1<sgroup[1].size(); i1++ ) {
                     if( sgroup[0][i0] == sgroup[1][i1] ) {
-                        ERROR( "In collisions #" << n_collisions << ": species #" << sgroup[0][i0]
-                               << " cannot collide with itself" );
+                        ERROR_NAMELIST( "In collisions #" << n_collisions << ": species #" << sgroup[0][i0]
+                               << " cannot collide with itself",
+                            LINK_NAMELIST + std::string("#collisions-reactions") );
                     }
                 }
             }
@@ -283,7 +284,7 @@ public:
             mystream << "Collisions" << n_collisions << ".h5";
             filename = mystream.str();
             std::ifstream file( filename );
-            MESSAGE( "!" << filename << "!");
+            
             // Check if file exists
             if( ! file ) {
                 MPI_Comm comm = MPI_COMM_WORLD;

@@ -188,7 +188,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     // Error if no block Main() exists
     if( PyTools::nComponents( "Main" ) == 0 ) {
-        ERROR_NAMELIST( "Block Main() not defined","https://smileipic.github.io/Smilei/namelist.html#main-variables" );
+        ERROR_NAMELIST( "Block Main() not defined",LINK_NAMELIST + std::string("#main-variables") );
     }
 
     // CHECK namelist on python side
@@ -247,7 +247,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     geometry = "";
     PyTools::extract( "geometry", geometry, "Main"  );
     if( geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="AMcylindrical" ) {
-        ERROR_NAMELIST( "Main.geometry `" << geometry << "` invalid", "https://smileipic.github.io/Smilei/namelist.html#main-variables" );
+        ERROR_NAMELIST( "Main.geometry `" << geometry << "` invalid", LINK_NAMELIST + std::string("#main-variables") );
     }
     setDimensions();
 
@@ -255,7 +255,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "maxwell_solver", maxwell_sol, "Main"   );
     is_spectral = false;
     is_pxr = false;
-    if( maxwell_sol == "Lehe" || maxwell_sol == "Bouchard" ) {
+    if( maxwell_sol == "Lehe" || maxwell_sol == "Bouchard" || maxwell_sol == "M4" ) {
         full_B_exchange=true;
     } else if( maxwell_sol == "spectral" ) {
         is_spectral = true;
@@ -286,6 +286,27 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 2 or 4",
         LINK_NAMELIST + std::string("#main-variables"));
     }
+
+    // Interpolation scheme
+    PyTools::extract( "interpolator", interpolator_, "Main"  );
+    
+    // Cancelation of the letter case
+    std::transform( interpolator_.begin(), interpolator_.end(), interpolator_.begin(), ::tolower );
+    
+    if (interpolator_ != "wt" && interpolator_ != "momentum-conserving") {
+        ERROR_NAMELIST( "Parameter `Main.interpolator` should be `momentum-conserving` or `wt`.",
+        LINK_NAMELIST + std::string("#main-variables"));
+    }
+
+    if( ( interpolator_  == "wt") && 
+        (geometry != "1Dcartesian")                &&  
+        (geometry != "2Dcartesian")                && 
+        (geometry != "3Dcartesian")               ) {
+        ERROR_NAMELIST( "Interpolator `wt` not implemented for geometry: " << geometry << ".",
+        LINK_NAMELIST + std::string("#main-variables") );
+    }
+
+
 
     //!\todo (MG to JD) Please check if this parameter should still appear here
     // Disabled, not compatible for now with particles sort
@@ -578,8 +599,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
 
 
-    // clrw
-    PyTools::extract( "clrw", clrw, "Main"   );
+    // cluster_width_
+    PyTools::extract( "cluster_width", cluster_width_, "Main"   );
 
 
 
@@ -846,8 +867,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // -------------------------------------------------------
     compute();
 
-    // add the read or computed value of clrw to the content of smilei.py
-    namelist += string( "Main.clrw= " ) + to_string( clrw ) + "\n";
+    // add the read or computed value of cluster_width_ to the content of smilei.py
+    namelist += string( "Main.cluster_width= " ) + to_string( cluster_width_ ) + "\n";
 
     // Now the string "namelist" contains all the python files concatenated
     // It is written as a file: smilei.py
@@ -1099,11 +1120,11 @@ void Params::compute()
         }
     }
 
-    // Set clrw if not set by the user
-    if( clrw == -1 ) {
+    // Set cluster_width_ if not set by the user
+    if( cluster_width_ == -1 ) {
 
         // default value
-        clrw = n_space[0];
+        cluster_width_ = n_space[0];
 
         // check cache issue for interpolation/projection
         int cache_threshold( 3200 ); // sizeof( L2, Sandy Bridge-HASWELL ) / ( 10 * sizeof(double) )
@@ -1113,34 +1134,36 @@ void Params::compute()
             bin_size *= ( n_space[idim]+1+2*oversize[idim] );
         }
 
-        // IF Ionize or pair generation : clrw = n_space_x_pp ?
-        if( ( clrw+1+2*oversize[0] ) * bin_size > ( unsigned int ) cache_threshold ) {
+        // IF Ionize or pair generation : cluster_width_ = n_space_x_pp ?
+        if( ( cluster_width_+1+2*oversize[0] ) * bin_size > ( unsigned int ) cache_threshold ) {
             int clrw_max = cache_threshold / bin_size - 1 - 2*oversize[0];
             if( clrw_max > 0 ) {
-                for( clrw=clrw_max ; clrw > 0 ; clrw-- )
-                    if( ( ( clrw+1+2*oversize[0] ) * bin_size <= ( unsigned int ) cache_threshold ) && ( n_space[0]%clrw==0 ) ) {
+                for( cluster_width_=clrw_max ; cluster_width_ > 0 ; cluster_width_-- )
+                    if( ( ( cluster_width_+1+2*oversize[0] ) * bin_size <= ( unsigned int ) cache_threshold ) && ( n_space[0]%cluster_width_==0 ) ) {
                         break;
                     }
             } else {
-                clrw = 1;
+                cluster_width_ = 1;
             }
-            WARNING( "Particles cluster width set to : " << clrw );
+            WARNING( "Particles cluster width `cluster_width` set to : " << cluster_width_ );
         }
 
     }
 
-    // clrw != n_space[0] is not compatible
+    // cluster_width_ != n_space[0] is not compatible
     // with the adaptive vectorization for the moment
     if( vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive" ) {
-        if( clrw != ( int )( n_space[0] ) ) {
-            clrw = ( int )( n_space[0] );
-            WARNING( "Particles cluster width set to: " << clrw << " for the adaptive vectorization mode" );
+        if( cluster_width_ != ( int )( n_space[0] ) ) {
+            cluster_width_ = ( int )( n_space[0] );
+            WARNING( "Particles cluster width set to: " << cluster_width_ << " for the adaptive vectorization mode" );
         }
     }
 
-    // Verify that clrw divides n_space[0]
-    if( n_space[0]%clrw != 0 ) {
-        ERROR_NAMELIST( "The parameter clrw must divide the number of cells in one patch (in dimension x)", LINK_NAMELIST + std::string("#main-variables") );
+    // Verify that cluster_width_ divides n_space[0]
+    if( n_space[0]%cluster_width_ != 0 ) {
+        ERROR_NAMELIST(
+            "The parameter `cluster_width` must divide the number of cells in one patch (in dimension x)", 
+            LINK_NAMELIST + std::string("#main-variables") );
     }
 
     // Define domain decomposition if double grids are used for particles and fields

@@ -274,7 +274,7 @@ class Field(Diagnostic):
 		# Build units
 		units = {}
 		for f in self._fieldname:
-			units.update({ f:{"B":"B_r", "E":"E_r", "J":"J_r", "R":"N_r"}[f[0]] })
+			units.update({ f:{"B":"B_r", "E":"E_r", "J":"J_r", "R":"Q_r*N_r"}[f[0]] })
 		# Make total units and title
 		self._vunits = self.operation
 		self._title  = self.operation
