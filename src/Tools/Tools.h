@@ -44,7 +44,7 @@
 #define __header_custom_text_on_unix(__msg,__txt,__tc) { std::cout << "\033[;"<< __tc << "m" << "\n[" << __msg << "](" << omp_get_thread_num() \
 << ") " __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\033[0m" << std::endl;}
 
-#define __header_error(__msg,__txt) {std::string line = " "; for (int i=0; i < 80 ; i++) line += "-"; \
+#define __header_error(__msg,__txt) {std::string line = " "; for (int __ic=0; __ic < 80 ; __ic++) line += "-"; \
 std::cerr << ERROR_STYLE << line << "\n [" << __msg << "](" << omp_get_thread_num() \
 << ") " __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\n" << line << FOOTER_STYLE << std::endl;}
 
