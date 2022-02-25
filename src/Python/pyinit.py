@@ -83,6 +83,7 @@ class SmileiComponent(object):
         if kwargs is not None:
             deprecated = {
                 "output_format":"See documentation for radiation reaction",
+                "clrw":"See https://smileipic.github.io/Smilei/namelist.html#main-variables",
                 "h_chipa_min":"See documentation for radiation reaction",
                 "h_chipa_max":"See documentation for radiation reaction",
                 "h_dim":"See documentation for radiation reaction",
@@ -168,7 +169,7 @@ class Main(SmileiSingleton):
     custom_oversize = 2
     number_of_patches = None
     patch_arrangement = "hilbertian"
-    clrw = -1
+    cluster_width = -1
     every_clean_particles_overhead = 100
     timestep = None
     number_of_AM = 2

@@ -96,7 +96,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
       simulation_time    = 15.,
       timestep    = 0.005,
       number_of_patches = [64],
-      clrw = 5,
+      cluster_width = 5,
       maxwell_solver = 'Yee',
       EM_boundary_conditions = [
           ["silver-muller", "silver-muller"],
@@ -152,7 +152,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``"wt"``
 
   The interpolation scheme to be used in the simulation.
-  ``"wt"`` is for the timestep dependent field interpolation scheme decribed in
+  ``"wt"`` is for the timestep dependent field interpolation scheme described in
   `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_ .
 
 .. py:data:: grid_length
@@ -207,14 +207,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
     column-major (fortran-style) ordering. This prevents the usage of
     :ref:`Fields diagnostics<DiagFields>` (see :doc:`parallelization`).
 
-.. py:data:: clrw
+.. py:data:: cluster_width
 
   :default: set to minimize the memory footprint of the particles pusher, especially interpolation and projection processes
 
   For advanced users. Integer specifying the cluster width along X direction in number of cells.
   The "cluster" is a sub-patch structure in which particles are sorted for cache improvement.
-  ``clrw`` must divide the number of cells in one patch (in dimension X).
-  The finest sorting is achieved with ``clrw=1`` and no sorting with ``clrw`` equal to the full size of a patch along dimension X.
+  ``cluster_width`` must divide the number of cells in one patch (in dimension X).
+  The finest sorting is achieved with ``cluster_width=1`` and no sorting with ``cluster_width`` equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
 
 .. py:data:: maxwell_solver
@@ -526,7 +526,7 @@ It requires :ref:`additional compilation options<vectorization_flags>` to be act
     (per patch and per species). For the moment this mode is only supported in ``3Dcartesian`` geometry.
     Particles are sorted per cell.
 
-  In the ``"adaptive"`` mode, :py:data:`clrw` is set to the maximum.
+  In the ``"adaptive"`` mode, :py:data:`cluster_width` is set to the maximum.
 
 .. py:data:: reconfigure_every
 

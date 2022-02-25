@@ -91,7 +91,7 @@ Main(
     EM_boundary_conditions = EM_boundary_conditions,
     print_every = 100,
     random_seed = 0,
-    clrw = 1,
+    cluster_width = 1,
     patch_arrangement = 'linearized_XY',
     reference_angular_frequency_SI = angular_frequency,
 )

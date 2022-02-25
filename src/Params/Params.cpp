@@ -600,7 +600,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
 
     // clrw
-    PyTools::extract( "clrw", clrw, "Main"   );
+    PyTools::extract( "cluster_width", clrw, "Main"   );
 
 
 
