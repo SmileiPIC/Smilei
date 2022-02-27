@@ -109,7 +109,7 @@ void Interpolator1DWT2OrderV::oneField( Field **field, Particles &particles, int
 }
 
 void Interpolator1DWT2OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &particles,
-                                          SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+                                          SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
 {
     int    * __restrict__ iold  = &( smpi->dynamics_iold[ithread][0] );
     double * __restrict__ delta = &( smpi->dynamics_deltaold[ithread][0] );

@@ -11,7 +11,7 @@
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class for 2nd order interpolator for AM spectral simulations
 //  --------------------------------------------------------------------------------------------------------------------
-class InterpolatorAM2OrderV : public InterpolatorAM
+class InterpolatorAM2OrderV final : public InterpolatorAM
 {
 
 public:
