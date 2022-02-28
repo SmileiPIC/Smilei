@@ -19,6 +19,7 @@
 #include "MultiphotonBreitWheeler.h"
 #include "MultiphotonBreitWheelerTables.h"
 #include "Merging.h"
+#include "PartCompTime.h"
 
 class ElectroMagn;
 class Pusher;
@@ -31,6 +32,7 @@ class Patch;
 class SimWindow;
 class Radiation;
 class Merging;
+class PartCompTime;
 
 
 //! class Species
@@ -309,7 +311,6 @@ public:
     //! Particles position pusher (change change position)
     Pusher *Push_ponderomotive_position = NULL;
 
-
     //! Interpolator (used to push particles and for probes)
     Interpolator *Interp;
 
@@ -318,6 +319,9 @@ public:
 
     //! Merging
     Merging *Merge;
+    
+    //! Particle Computation time evaluation
+    PartCompTime * part_comp_time_;
 
     // -----------------------------------------------------------------------------
     //  5. Methods

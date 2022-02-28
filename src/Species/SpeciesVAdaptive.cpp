@@ -36,8 +36,6 @@
 
 #include "DiagnosticTrack.h"
 
-#include "SpeciesMetrics.h"
-
 using namespace std;
 
 
@@ -362,9 +360,9 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
 
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time( count,
-                                          vecto_time,
-                                          scalar_time );
+    (*part_comp_time_)( count,
+                    vecto_time,
+                    scalar_time );
 
     if( ( vecto_time <= scalar_time && this->vectorized_operators == false )
             || ( vecto_time > scalar_time && this->vectorized_operators == true ) ) {
@@ -422,9 +420,9 @@ void SpeciesVAdaptive::configuration( Params &params, Patch *patch )
 
         // --------------------------------------------------------------------
         // Metrics 2 - based on the evaluation of the computational time
-        SpeciesMetrics::get_computation_time( this->count,
-                                              vecto_time,
-                                              scalar_time );
+        (*part_comp_time_)( count,
+                        vecto_time,
+                        scalar_time );
 
         if( vecto_time <= scalar_time ) {
             this->vectorized_operators = true;

@@ -30,6 +30,7 @@
 #include "Projector.h"
 #include "ProjectorFactory.h"
 #include "ParticleCreator.h"
+#include "PartCompTimeFactory.h"
 
 #include "SimWindow.h"
 #include "Patch.h"
@@ -258,6 +259,12 @@ void Species::initOperators( Params &params, Patch *patch )
     // assign the correct Merging method to Merge
     Merge = MergingFactory::create( params, this, patch->rand_ );
 
+    // Evaluation of the particle computation time
+    if (params.vectorization_mode == "adaptive" || 
+        params.vectorization_mode == "adaptive_mixed_sort" ) {
+        part_comp_time_ = PartCompTimeFactory::create( params );
+    }
+
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, this, patch );
     for( unsigned int iDim=0 ; iDim < nDim_field ; iDim++ ) {
@@ -297,6 +304,9 @@ Species::~Species()
     }
     if( Radiate ) {
         delete Radiate;
+    }
+    if( part_comp_time_ ) {
+        delete part_comp_time_;
     }
     if( Multiphoton_Breit_Wheeler_process ) {
         delete Multiphoton_Breit_Wheeler_process;
