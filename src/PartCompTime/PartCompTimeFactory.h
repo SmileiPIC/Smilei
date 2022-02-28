@@ -4,6 +4,7 @@
 #include "PartCompTime.h"
 #include "PartCompTime3D2Order.h"
 #include "PartCompTime3D4Order.h"
+#include "PartCompTimeAM2Order.h"
 
 #include "Params.h"
 #include "Tools.h"
