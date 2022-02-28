@@ -321,7 +321,7 @@ public:
     Merging *Merge;
     
     //! Particle Computation time evaluation
-    PartCompTime * part_comp_time_;
+    PartCompTime *part_comp_time_ = NULL;
 
     // -----------------------------------------------------------------------------
     //  5. Methods
