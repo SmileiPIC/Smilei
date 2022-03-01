@@ -721,11 +721,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             has_adaptive_vectorization = true;
         }
 
-        // Check that we are in 3D, adaptive mode not possible in 2d
-        if( vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive" ) {
-            if (geometry!="3Dcartesian") {
-                ERROR_NAMELIST("In block `Vectorization`, `adaptive` mode only available in 3D",  LINK_NAMELIST + std::string("#vectorization"))
-            }
+        if (geometry=="1Dcartesian" && vectorization_mode != "off") {
+            vectorization_mode = "off";
+            WARNING("In 1D, the vectorization block does not apply. `vectorization back to `off`.")
         }
 
         // Check cell sorting is allowed
