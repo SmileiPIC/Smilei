@@ -461,8 +461,6 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 }
             }
         }
-
-
     } // End projection for frozen particles
 
 }//END dynamics
