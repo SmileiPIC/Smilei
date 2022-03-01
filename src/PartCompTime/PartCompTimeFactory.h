@@ -56,9 +56,10 @@ public:
         // AM simulation
         // ---------------
         else if( params.geometry == "AMcylindrical" ) {
+            
             if ( !params.is_spectral){
 
-                // part_comp_time = new PartCompTimeAM2Order( params );
+                part_comp_time = new PartCompTimeAM2Order();
 
             } else {
                 // part_comp_time = new PartCompTimeAM1Order( params );

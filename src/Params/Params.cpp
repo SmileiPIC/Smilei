@@ -723,6 +723,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
         if (geometry=="1Dcartesian" && vectorization_mode != "off") {
             vectorization_mode = "off";
+            has_adaptive_vectorization = false;
             WARNING("In 1D, the vectorization block does not apply. `vectorization back to `off`.")
         }
 

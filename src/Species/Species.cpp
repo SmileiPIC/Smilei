@@ -260,8 +260,7 @@ void Species::initOperators( Params &params, Patch *patch )
     Merge = MergingFactory::create( params, this, patch->rand_ );
 
     // Evaluation of the particle computation time
-    if (params.vectorization_mode == "adaptive" || 
-        params.vectorization_mode == "adaptive_mixed_sort" ) {
+    if (params.has_adaptive_vectorization ) {
         part_comp_time_ = PartCompTimeFactory::create( params );
     }
 

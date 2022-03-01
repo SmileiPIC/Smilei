@@ -106,12 +106,13 @@ public:
                 // Species with nonrelativistic Boris pusher == 'borisnr'
                 // Species with J.L. Vay pusher if == "vay"
                 // Species with Higuary Cary pusher if == "higueracary"
+                
                 if( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
                     this_species = new Species( params, patch );
                 }
 
 #ifdef _VECTO
-                else if( ( params.vectorization_mode == "on" ) || params.cell_sorting ) {
+                else if( params.vectorization_mode == "on" ) {
                     this_species = new SpeciesV( params, patch );
                 } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
                     this_species = new SpeciesVAdaptiveMixedSort( params, patch );

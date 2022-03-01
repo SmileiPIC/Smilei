@@ -23,7 +23,7 @@ public:
     //! @aram vecto_time time in vector mode
     //! @aram scalar_time time in scalar mode
     // -------------------------------------------------------------------------
-    void operator() (   const std::vector<int> &count,
+    virtual void operator() (   const std::vector<int> &count,
                         float &vecto_time,
                         float &scalar_time );
     
