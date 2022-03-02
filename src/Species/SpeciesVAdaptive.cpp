@@ -36,8 +36,6 @@
 
 #include "DiagnosticTrack.h"
 
-#include "SpeciesMetrics.h"
-
 using namespace std;
 
 
@@ -179,6 +177,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 // Suppression of the decayed photons into pairs
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                     *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
+                    
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
 #endif
@@ -209,18 +208,6 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                     partBoundCond->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
                     nrj_lost_per_thd[tid] += mass_ * energy_lost;
 
-                    for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                            //Compute cell_keys of remaining particles
-                            for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
-                                particles->cell_keys[iPart] *= this->length_[i];
-                                particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
-                            }
-                            //First reduction of the count sort algorithm. Lost particles are not included.
-                            count[particles->cell_keys[iPart]] ++;
-                        }
-                    }
-
                 } else if( mass_==0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         (*partWalls )[iwall]->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
@@ -231,19 +218,12 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                     partBoundCond->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
                     nrj_lost_per_thd[tid] += energy_lost;
 
-                    for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
-                        if ( particles->cell_keys[iPart] != -1 ) {
-                             //Compute cell_keys of remaining particles
-                            for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
-                                particles->cell_keys[iPart] *= this->length_[i];
-                                particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
-                            }
-                            //First reduction of the count sort algorithm. Lost particles are not included.
-                            count[particles->cell_keys[iPart]] ++;
-                        }
-                    }
                 } // end if mass_ > 0
+                
             } // end loop on cells
+
+            // Cell keys
+            computeParticleCellKeys( params );
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[3] += MPI_Wtime() - timer;
@@ -277,17 +257,30 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 
     }  // end if moving particle or ionize
 
-    if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+    if (time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
 
-        double *b_rho=nullptr;
-        for( unsigned int ibin = 0 ; ibin < particles->first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+        if( params.geometry != "AMcylindrical" ) {
+            double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+            for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                for( iPart=particles->first_index[scell] ; ( int )iPart<particles->last_index[scell]; iPart++ ) {
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                } //End loop on particles
+            }//End loop on scells
 
-            b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-            for( iPart=particles->first_index[ibin] ; ( int )iPart<particles->last_index[ibin]; iPart++ ) {
-                Proj->basic( b_rho, ( *particles ), iPart, 0 );
+        } else { // AM case
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            int n_species = patch->vecSpecies.size();
+            for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                int ifield = imode*n_species+ispec;
+                complex<double> *b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                    for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
+                        Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                    }
+                }
             }
         }
-    }
+    } // End projection for frozen particles
 
 }//END scalarDynamics
 
@@ -362,9 +355,9 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
 
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time( count,
-                                          vecto_time,
-                                          scalar_time );
+    (*part_comp_time_)( count,
+                    vecto_time,
+                    scalar_time );
 
     if( ( vecto_time <= scalar_time && this->vectorized_operators == false )
             || ( vecto_time > scalar_time && this->vectorized_operators == true ) ) {
@@ -422,9 +415,9 @@ void SpeciesVAdaptive::configuration( Params &params, Patch *patch )
 
         // --------------------------------------------------------------------
         // Metrics 2 - based on the evaluation of the computational time
-        SpeciesMetrics::get_computation_time( this->count,
-                                              vecto_time,
-                                              scalar_time );
+        (*part_comp_time_)( count,
+                        vecto_time,
+                        scalar_time );
 
         if( vecto_time <= scalar_time ) {
             this->vectorized_operators = true;

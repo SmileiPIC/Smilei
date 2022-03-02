@@ -199,7 +199,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
             if ( time_dual <= time_frozen_ ) continue;
 
-            //Prepare for sorting
+            // Reinitialize count for sorting and more
             for( unsigned int i=0; i<count.size(); i++ ) {
                 count[i] = 0;
             }
@@ -461,8 +461,6 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 }
             }
         }
-
-
     } // End projection for frozen particles
 
 }//END dynamics
@@ -751,8 +749,8 @@ void SpeciesV::computeParticleCellKeys( Params    & params,
     }
 }
 
-//Compute part_cell_keys at patch creation.
-// This operation is normally done in the pusher to avoid additional particles pass.
+//! Compute part_cell_keys at patch creation.
+//! This operation is normally done in the pusher to avoid additional particles pass.
 void SpeciesV::computeParticleCellKeys( Params &params )
 {
 
@@ -764,6 +762,11 @@ void SpeciesV::computeParticleCellKeys( Params &params )
     npart = particles->size(); //Number of particles
 
     int * __restrict__ cell_keys  = particles->getPtrCellKeys();
+
+    // Reinitialize count to 0
+    for( unsigned int ic=0; ic < count.size() ; ic++ ) {
+        count[ic] = 0 ;
+    }
 
     // #pragma omp simd
     // for( ip=0; ip < npart ; ip++ ) {
