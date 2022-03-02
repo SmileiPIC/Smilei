@@ -4,8 +4,8 @@ class MachineRuche(Machine):
     script = """\
 #!/bin/bash
 #SBATCH --job-name=smilei
-#SBATCH --nodes={NODES}
-#SBATCH --ntasks="+{mpi}
+#SBATCH --nodes={nodes}
+#SBATCH --ntasks={mpi}
 #SBATCH --cpus-per-task={omp}
 #SBATCH --output=output
 #SBATCH --error=error
@@ -24,7 +24,7 @@ export KMP_AFFINITY=verbose
 export I_MPI_CXX=icpc
 export HDF5_ROOT_DIR=/gpfs/softs/spack/opt/spack/linux-centos7-cascadelake/intel-19.0.3.199/hdf5-1.10.6-na3ilncuwbx2pdim2xaqwf23sgqza6qo
 ulimit -s unlimited
-cd ${SLURM_SUBMIT_DIR}
+cd $SLURM_SUBMIT_DIR
 #Specify the number of sockets per node in -mca orte_num_sockets
 #Specify the number of cores per sockets in -mca orte_num_cores
 cd {dir}
@@ -34,7 +34,6 @@ echo $? > exit_status_file"""
     
     def __init__(self, smilei_path, options):
         from math import ceil
-        from os import exit
         
         self.smilei_path = smilei_path
         self.options = options
@@ -44,7 +43,7 @@ echo $? > exit_status_file"""
         self.JOB = "sbatch "+self.smilei_path.exec_script
         
         self.ppn = 20
-        if ppn < self.options.omp :
+        if self.ppn < self.options.omp :
             print("Smilei cannot be run with "+str(self.options.omp)+" threads on Ruche and partition "+self.options.partition)
             exit(4)
         if self.options.nodes:

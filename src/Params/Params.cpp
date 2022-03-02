@@ -284,7 +284,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
     } else if( interpolation_order!=2 && interpolation_order!=4 && !is_spectral ) {
         ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 2 or 4",
-        LINK_NAMELIST + std::string("#main-variables"));geometry != "1Dcartesian" 
+        LINK_NAMELIST + std::string("#main-variables"));
     }
 
     // Interpolation scheme
