@@ -699,8 +699,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     bool defined_cell_sort = true;
     if (!PyTools::extractOrNone( "cell_sorting", cell_sorting, "Main"  )){
-    //cell_sorting is undefined by the user
+        //cell_sorting is undefined by the user
         defined_cell_sort = false;
+        // cell_sorting false by default then
         cell_sorting = false;
     }
 
