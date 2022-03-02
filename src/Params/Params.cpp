@@ -772,8 +772,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
 
         // collisions need sorting per cell
-        if (cell_sorting == false){
+        if (defined_cell_sort && cell_sorting == false){
             ERROR_NAMELIST(" Cell sorting or vectorization must be allowed in order to use collisions.",  LINK_NAMELIST + std::string("#collisions-reactions"));
+        }
+
+        if (!defined_cell_sort && !cell_sorting) {
+            if (vectorization_mode == "off") {
+                cell_sorting = true;
+                vectorization_mode = "on";
+                WARNING("For collisions, vectorization activated for cell sorting capability. Disabled vectorization not compatible with cell sorting for the moment.")
+            }
         }
         
         if( geometry!="1Dcartesian"
@@ -823,10 +831,24 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         //Use cell sorting if merge is used.
         PyTools::extract( "merging_method", merging_method, "Species", ispec );
         if (merging_method != "none"){
-            if (cell_sorting == false){
-                ERROR_NAMELIST(" Cell sorting or vectorization must be allowed in order to use particle merge.",  LINK_NAMELIST + std::string("#particle-merging"));
+
+            if (defined_cell_sort && !cell_sorting){
+                ERROR_NAMELIST(" Cell sorting or vectorization must be allowed in order to use particle merging.",  LINK_NAMELIST + std::string("#collisions-reactions"));
             }
+
+            if (!defined_cell_sort && !cell_sorting) {
+                if (vectorization_mode == "off") {
+                    cell_sorting = true;
+                    vectorization_mode = "on";
+                    if (geometry != "1Dcartesian" ) {
+                        WARNING("For particle merging, vectorization activated for cell sorting capability. Disabled vectorization not compatible with cell sorting for the moment.")
+                    }
+                }
+            }
+
         }
+
+
     }
 
     // -------------------------------------------------------

@@ -96,7 +96,7 @@ public:
 
         // Species type
         if ( params.vectorization_mode == "off" ) {
-            this_species = new Species( params, patch )
+            this_species = new Species( params, patch );
         } 
         #ifdef _VECTO
         else if( params.vectorization_mode == "on" ) {
