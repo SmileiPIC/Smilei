@@ -284,7 +284,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
     } else if( interpolation_order!=2 && interpolation_order!=4 && !is_spectral ) {
         ERROR_NAMELIST( "Main.interpolation_order " << interpolation_order << " should be 2 or 4",
-        LINK_NAMELIST + std::string("#main-variables"));
+        LINK_NAMELIST + std::string("#main-variables"));geometry != "1Dcartesian" 
     }
 
     // Interpolation scheme
@@ -1192,7 +1192,7 @@ void Params::check_consistency()
     if( vectorization_mode != "off" ) {
 
         if( ( geometry=="1Dcartesian" ) ) {
-            ERROR_NAMELIST( "Vectorized algorithms not implemented for this geometry", LINK_NAMELIST + std::string("#vectorization") );
+            WARNING( "Vectorized and scalar algorithms are the same in 1D Cartesian geometry." );
         }
 
         // if( ( geometry=="2Dcartesian" ) && ( interpolation_order==4 ) ) {
