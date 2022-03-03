@@ -258,6 +258,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                     params.is_spectral,
                     ispec
                 );
+                
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[2] += MPI_Wtime() - timer;
 #endif

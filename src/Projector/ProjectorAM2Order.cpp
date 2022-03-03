@@ -51,7 +51,14 @@ ProjectorAM2Order::~ProjectorAM2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for all modes
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, bool diag_flag, int ispec)
+void ProjectorAM2Order::currents(   ElectroMagnAM *emAM, 
+                                    Particles &particles, 
+                                    unsigned int ipart,
+                                    double invgf, 
+                                    int *iold, 
+                                    double *deltaold, 
+                                    std::complex<double> *array_eitheta_old, 
+                                    bool diag_flag, int ispec)
 {
 
     // -------------------------------------
