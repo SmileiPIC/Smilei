@@ -68,6 +68,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
         vector<Diagnostic *> &localDiags )
 {
+
     int ithread;
 #ifdef _OPENMP
     ithread = omp_get_thread_num();
@@ -90,7 +91,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
     if( time_dual>time_frozen_ || Ionize ) {
         // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_particle, particles->last_index.back() );
+        smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         //Point to local thread dedicated buffers
         //Still needed for ionization
@@ -106,7 +107,21 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #endif
 
         // Interpolate the fields at the particle position
-        Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[0] ), &( particles->last_index[particles->last_index.size()-1] ), ithread, particles->first_index[0] );
+        // Interp->fieldsWrapper( EMfields, *particles, smpi, 
+        //                         &( particles->first_index[0] ), 
+        //                         &( particles->last_index[particles->last_index.size()-1] ),
+        //                         ithread,
+        //                         particles->first_index[0] );
+
+        // Interpolate the fields at the particle position
+        Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[0] ), &( particles->last_index[particles->last_index.size()-1] ), ithread );
+
+        // Interpolate the fields at the particle position
+        // for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ){
+        //     Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ),
+        //                            &( particles->last_index[ipack*packsize_+scell] ),
+        //                            ithread, scell, particles->first_index[ipack*packsize_]);
+        // }
 
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -219,7 +234,6 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                     nrj_lost_per_thd[tid] += energy_lost;
 
                 } // end if mass_ > 0
-                
             } // end loop on cells
 
             // Cell keys
@@ -243,7 +257,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                     diag_flag,
                     params.is_spectral,
                     ispec
-            );
+                );
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[2] += MPI_Wtime() - timer;
 #endif

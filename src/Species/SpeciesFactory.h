@@ -1145,12 +1145,12 @@ public:
         // Create new species object
         Species *new_species = NULL;
 
-        // Boris, Vay or Higuera-Cary
-        if ( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
+        // Type of species
+        if ( params.vectorization_mode == "off" ) {
             new_species = new Species( params, patch );
         }
 #ifdef _VECTO
-        else if( ( params.vectorization_mode == "on" ) || params.cell_sorting  ) {
+        else if( params.vectorization_mode == "on" ) {
             new_species = new SpeciesV( params, patch );
         } else if( params.vectorization_mode == "adaptive" ) {
             new_species = new SpeciesVAdaptive( params, patch );

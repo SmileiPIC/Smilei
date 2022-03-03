@@ -236,8 +236,16 @@ void InterpolatorAM2Order::oneField( Field **field, Particles &particles, int *i
     }
 }
 
-void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
+void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, 
+                                          Particles &particles, 
+                                          SmileiMPI *smpi, 
+                                          int *istart, 
+                                          int *iend, 
+                                          int ithread, 
+                                          unsigned int scell, 
+                                          int ipart_ref )
 {
+
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
@@ -249,12 +257,16 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
         fields( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
+        
         //Buffering of iol and delta
         ( *iold )[ipart+0*nparts]  = ip_;
         ( *iold )[ipart+1*nparts]  = jp_;
+        
         ( *delta )[ipart+0*nparts] = deltax_;
         ( *delta )[ipart+1*nparts] = deltar_;
+        
         ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_) - exp_m_theta_ ;  //exp(i theta)
+        
     }
 }
 

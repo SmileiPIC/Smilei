@@ -124,6 +124,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                          MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                          vector<Diagnostic *> &localDiags )
 {
+    
     int ithread;
 #ifdef _OPENMP
     ithread = omp_get_thread_num();
