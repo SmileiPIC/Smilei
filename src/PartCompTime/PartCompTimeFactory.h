@@ -3,6 +3,7 @@
 
 #include "PartCompTime.h"
 #include "PartCompTime2D2Order.h"
+#include "PartCompTime2D4Order.h"
 #include "PartCompTime3D2Order.h"
 #include "PartCompTime3D4Order.h"
 #include "PartCompTimeAM2Order.h"
@@ -38,7 +39,7 @@ public:
 
         } else if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
 
-            // part_comp_time = new PartCompTime2D4Order( params, patch );
+            part_comp_time = new PartCompTime2D4Order();
 
         }
         // ---------------

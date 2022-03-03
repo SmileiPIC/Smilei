@@ -5,7 +5,7 @@
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class PartCompTimeAM2Order
-//! Evaluation du temps de calcul des macro-particules en mode AM Order 2
+//! Evaluation of the particle time in AM at Order 2
 //  --------------------------------------------------------------------------------------------------------------------
 class PartCompTimeAM2Order final : public PartCompTime
 {
