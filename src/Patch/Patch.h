@@ -134,7 +134,7 @@ public:
     virtual void finalizeSumField( Field *field, int iDim );
     
     //! init comm / exchange fields in direction iDim only
-    virtual void initExchange( Field *field, int iDim, SmileiMPI *smpi );
+    virtual void initExchange( Field *field, int iDim, SmileiMPI *smpi, bool devPtr = false );
     //! init comm / exchange complex fields in direction iDim only
     virtual void initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi );
     //! finalize comm / exchange fields

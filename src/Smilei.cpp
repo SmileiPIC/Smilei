@@ -46,25 +46,25 @@ using namespace std;
 
 #ifdef _GPU
     #ifdef _OPENACC
-    void initialisation_openacc()
+    void initialization_openacc()
     {
         char* local_rank_env;
         int local_rank;
-     
-        /* Initialisation d'OpenACC */
+
+        // Initialization of OpenACC
         #pragma acc init
-     
-        /* Récupération du rang local du processus via la variable d'environnement
-           positionnée par Slurm, l'utilisation de MPI_Comm_rank n'étant pas encore
-           possible puisque cette routine est utilisée AVANT l'initialisation de MPI */
+
+        /* Recovery of the local rank of the process via the environment variable
+           set by Slurm, as MPI_Comm_rank cannot be used here because this routine
+           is used BEFORE the initialisation of MPI*/
         local_rank_env = getenv("SLURM_LOCALID");
-     
+
         if (local_rank_env) {
             local_rank = atoi(local_rank_env);
-            /* Définition du GPU à utiliser via OpenACC */
+            // Define the GPU to use via OpenACC
             acc_set_device_num(local_rank, acc_get_device_type());
         } else {
-            printf("Erreur : impossible de déterminer le rang local du processus\n");
+            printf("Error : impossible to determine the local rank of MPI process.\n");
             exit(1);
         }
     }
@@ -81,7 +81,7 @@ int main( int argc, char *argv[] )
 
     // Create the OpenACC environment
 #ifdef _GPU
-    initialisation_openacc();
+    initialization_openacc();
 #endif
 
     // Create MPI environment :
@@ -105,14 +105,14 @@ int main( int argc, char *argv[] )
     OpenPMDparams openPMD( params );
     PyTools::setIteration( 0 );
 
-#ifdef _GPU
-    int ngpus = acc_get_num_devices( acc_device_nvidia );
-    if ( (ngpus>0) && (params.gpu_computing) ) {
-        int gpunum = smpi.getRank()%ngpus;
-        cout << gpunum << endl;
-        acc_set_device_num( gpunum, acc_device_nvidia );
-    }
-#endif
+//#ifdef _GPU
+//    int ngpus = acc_get_num_devices( acc_device_nvidia );
+//    if ( (ngpus>0) && (params.gpu_computing) ) {
+//        int gpunum = smpi.getRank()%ngpus;
+//        cout << gpunum << endl;
+//        acc_set_device_num( gpunum, acc_device_nvidia );
+//    }
+//#endif
 
     // Need to move it here because of domain decomposition need in smpi->init(_patch_count)
     //     abstraction of Hilbert curve
@@ -431,7 +431,6 @@ int main( int argc, char *argv[] )
                     PyTools::setIteration( itime ); // sets python variable "Main.iteration" for users
                 }
             }
-            #pragma omp barrier
 
             // Patch reconfiguration
             if( params.has_adaptive_vectorization && params.adaptive_vecto_time_selection->theTimeIsNow( itime ) ) {
