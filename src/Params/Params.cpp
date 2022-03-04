@@ -393,6 +393,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" must be periodic for spectral solver in cartesian geometry.",
                             LINK_NAMELIST + std::string("#main-variables") );
         }
+        //if ( ( (EM_BCs[0][0] == "PML") || (EM_BCs[0][1] == "PML") )
+        //     && ( (EM_BCs[iDim][0] != "PML") || (EM_BCs[iDim][1] != "PML") ) ) {
+        //    ERROR( "Either all PML, either none" );
+        //}
     }
 
     int n_envlaser = PyTools::nComponents( "LaserEnvelope" );
@@ -505,6 +509,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
     save_magnectic_fields_for_SM = true;
     PyTools::extract( "save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main"   );
+
+    PyTools::extractVV( "number_of_pml_cells", number_of_pml_cells, "Main" );
 
     // -----------------------------------
     // POISSON & FILTERING OPTIONS

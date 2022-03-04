@@ -13,6 +13,9 @@ MF_Solver2D_Bouchard::MF_Solver2D_Bouchard(Params &params)
     dx = params.cell_length[0];
     dy = params.cell_length[1];
     double dx_ov_dt  = dx/dt;
+    double dy_ov_dt  = dy/dt;
+    double dt_ov_dx  = dt/dx;
+    double dt_ov_dy  = dt/dy;
     if( dx!=dy ) {
         ERROR( "Bouchard solver requires the same cell-length in x and y directions" );
     }
@@ -108,7 +111,7 @@ void MF_Solver2D_Bouchard::operator() ( ElectroMagn* fields )
                           + Dx * ((*Ey2D)(i-2,j)-(*Ey2D)(i+1,j));
         }
     }
-    
+
     // at Xmin+dx - treat using simple discretization of the curl (will be overwritten if not at the xmin-border)
     for (unsigned int j=0 ; j<ny_p ; j++) {
         (*By2D)(1,j) += dt_ov_dx * ( (*Ez2D)(1,j) - (*Ez2D)(0,j) );
@@ -128,7 +131,27 @@ void MF_Solver2D_Bouchard::operator() ( ElectroMagn* fields )
         (*Bz2D)(nx_d-2,j) += dt_ov_dx * ( (*Ey2D)(nx_d-3,j) - (*Ey2D)(nx_d-2,j)   )
         +                    dt_ov_dy * ( (*Ex2D)(nx_d-2,j) - (*Ex2D)(nx_d-2,j-1) );
     }
-    
+
+    // at Ymin+dy - treat using simple discretization of the curl (will be overwritten if not at the ymin-border)
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+        (*Bx2D)(i,1) += dt_ov_dy * ( (*Ez2D)(i,0) - (*Ez2D)(i,1) );
+    }
+    // at Ymax-dy - treat using simple discretization of the curl (will be overwritten if not at the ymax-border)
+    for (unsigned int i=0 ; i<nx_p ; i++) {
+        (*Bx2D)(i,ny_d-2) += dt_ov_dy * ( (*Ez2D)(i,ny_d-3) - (*Ez2D)(i,ny_d-2) );
+    }
+    // at Ymin+dy - treat using simple discretization of the curl (will be overwritten if not at the ymin-border)
+    for (unsigned int i=2 ; i<nx_d-2 ; i++) {
+        (*Bz2D)(i,1) += dt_ov_dx * ( (*Ey2D)(i-1,1) - (*Ey2D)(i,1)   )
+        +               dt_ov_dy * ( (*Ex2D)(i,1) - (*Ex2D)(i,0) );
+    }
+    // at Ymax-dy - treat using simple discretization of the curl (will be overwritten if not at the ymax-border)
+    for (unsigned int i=2 ; i<nx_d-2 ; i++) {
+        (*Bz2D)(i,ny_d-2) += dt_ov_dx * ( (*Ey2D)(i-1,ny_d-2) - (*Ey2D)(i,ny_d-2)   )
+        +                    dt_ov_dy * ( (*Ex2D)(i,ny_d-2) - (*Ex2D)(i,ny_d-3) );
+    }
+  
+
 //}// end parallel
 }//END solveMaxwellFaraday
 
