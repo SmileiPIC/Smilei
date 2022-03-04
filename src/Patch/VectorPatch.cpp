@@ -21,6 +21,10 @@
 #include "ElectroMagnBC.h"
 #include "Laser.h"
 
+#include "ElectroMagnBC2D_PML.h"
+#include "ElectroMagnBC3D_PML.h"
+#include "ElectroMagnBCAM_PML.h"
+
 #include "SyncVectorPatch.h"
 #include "interface.h"
 #include "Timers.h"
@@ -1271,6 +1275,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
             ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
+        }
+        if ( params.EM_BCs[0][0] == "PML" ) { // If a PML on 1 border, then on all
+            SyncVectorPatch::exchangeForPML( params, (*this), smpi );
+        }
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Computes B at time n using B and B_m.
             if( !params.is_spectral ) {
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
@@ -1353,6 +1363,14 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
             // Applies boundary conditions on B
             if ( (!params.is_spectral) || (params.geometry!= "AMcylindrical") )
                 ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
+
+        }
+        if ( params.EM_BCs[0][0] == "PML" ) { // If a PML on 1 border, then on all
+            SyncVectorPatch::exchangeForPML( params, (*this), smpi );
+        }
+
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Computes B at time n using B and B_m.
             if( !params.is_spectral ) {
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
@@ -3742,6 +3760,123 @@ void VectorPatch::updateFieldList( int ispec, SmileiMPI *smpi )
 
 
 
+}
+
+
+void VectorPatch::buildPMLList( string fieldname, int idim, int min_or_max, SmileiMPI *smpi )
+{
+    // min_or_max = 0 : min
+    // min_or_max = 1 : max
+    int id_bc = 2*idim + min_or_max;
+
+    listForPML_.clear();
+    if ( fieldname == "Bx" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getBxPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "By" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getByPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Bz" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getBzPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Hx" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getHxPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Hy" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getHyPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Hz" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getHzPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+}
+
+
+void VectorPatch::buildPMLList( string fieldname, int idim, int min_or_max, SmileiMPI *smpi, int imode )
+{
+    // min_or_max = 0 : min
+    // min_or_max = 1 : max
+    int id_bc = 2*idim + min_or_max;
+
+    listForPML_.clear();
+    if ( fieldname == "Bl" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Bl_[imode] );
+            //After pushing back a pointer to PML fields, if this field is not NULL recompute the tags.
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Br" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Br_[imode] );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Bt" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Bt_[imode] );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Hl" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Hl_[imode] );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Hr" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Hr_[imode] );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Ht" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Ht_[imode] );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
 }
 
 
