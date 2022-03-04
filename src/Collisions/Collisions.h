@@ -10,8 +10,6 @@
 #include "CollisionalNuclearReaction.h"
 #include "CollisionalFusionDD.h"
 #include "Random.h"
-#include "BinaryProcessData.h"
-#include "NuclearReactionProducts.h"
 
 class Patch;
 class Params;
@@ -112,8 +110,6 @@ protected:
         Random* random
     )
     {
-        BinaryProcessData D;
-        
         double m12 = m1 / m2;
         
         // If one weight is zero, then skip. Can happen after nuclear reaction
@@ -129,59 +125,77 @@ protected:
         // Calculate the center-of-mass (COM) frame
         // Quantities starting with "COM" are those of the COM itself, expressed in the lab frame.
         // They are NOT quantities relative to the COM.
-        D.COM_vx = ( m12 * ( p1->momentum( 0, i1 ) ) + p2->momentum( 0, i2 ) ) * gamma12_inv;
-        D.COM_vy = ( m12 * ( p1->momentum( 1, i1 ) ) + p2->momentum( 1, i2 ) ) * gamma12_inv;
-        D.COM_vz = ( m12 * ( p1->momentum( 2, i1 ) ) + p2->momentum( 2, i2 ) ) * gamma12_inv;
-        double COM_vsquare = D.COM_vx*D.COM_vx + D.COM_vy*D.COM_vy + D.COM_vz*D.COM_vz;
+        double COM_vx = ( m12 * ( p1->momentum( 0, i1 ) ) + p2->momentum( 0, i2 ) ) * gamma12_inv;
+        double COM_vy = ( m12 * ( p1->momentum( 1, i1 ) ) + p2->momentum( 1, i2 ) ) * gamma12_inv;
+        double COM_vz = ( m12 * ( p1->momentum( 2, i1 ) ) + p2->momentum( 2, i2 ) ) * gamma12_inv;
+        double COM_vsquare = COM_vx*COM_vx + COM_vy*COM_vy + COM_vz*COM_vz;
         
         // Change the momentum to the COM frame (we work only on particle 1)
         // Quantities ending with "COM" are quantities of the particle expressed in the COM frame.
-        double term1, term2;
+        double COM_gamma, term1, term2, gamma1_COM, gamma2_COM;
         if( COM_vsquare < 1e-6 ) {
-            D.COM_gamma = 1. + 0.5 * COM_vsquare;
-            D.gamma1_COM = gamma1 * D.COM_gamma;
-            D.gamma2_COM = gamma2 * D.COM_gamma;
+            COM_gamma = 1. + 0.5 * COM_vsquare;
+            gamma1_COM = gamma1 * COM_gamma;
+            gamma2_COM = gamma2 * COM_gamma;
             term1 = 0.5;
-            term2 = -D.gamma1_COM;
+            term2 = -gamma1_COM;
         } else {
-            D.COM_gamma = 1./sqrt( 1.-COM_vsquare );
-            double vcv1g1  = D.COM_vx*( p1->momentum( 0, i1 ) ) + D.COM_vy*( p1->momentum( 1, i1 ) ) + D.COM_vz*( p1->momentum( 2, i1 ) );
-            double vcv2g2  = D.COM_vx*( p2->momentum( 0, i2 ) ) + D.COM_vy*( p2->momentum( 1, i2 ) ) + D.COM_vz*( p2->momentum( 2, i2 ) );
-            D.gamma1_COM = ( gamma1-vcv1g1 )*D.COM_gamma;
-            D.gamma2_COM = ( gamma2-vcv2g2 )*D.COM_gamma;
-            term1 = ( D.COM_gamma - 1. ) / COM_vsquare;
-            term2 = term1*vcv1g1 - D.COM_gamma * gamma1;
+            COM_gamma = 1./sqrt( 1.-COM_vsquare );
+            double vcv1g1  = COM_vx*( p1->momentum( 0, i1 ) ) + COM_vy*( p1->momentum( 1, i1 ) ) + COM_vz*( p1->momentum( 2, i1 ) );
+            double vcv2g2  = COM_vx*( p2->momentum( 0, i2 ) ) + COM_vy*( p2->momentum( 1, i2 ) ) + COM_vz*( p2->momentum( 2, i2 ) );
+            gamma1_COM = ( gamma1-vcv1g1 )*COM_gamma;
+            gamma2_COM = ( gamma2-vcv2g2 )*COM_gamma;
+            term1 = ( COM_gamma - 1. ) / COM_vsquare;
+            term2 = term1*vcv1g1 - COM_gamma * gamma1;
         }
-        D.px_COM = p1->momentum( 0, i1 ) + term2*D.COM_vx;
-        D.py_COM = p1->momentum( 1, i1 ) + term2*D.COM_vy;
-        D.pz_COM = p1->momentum( 2, i1 ) + term2*D.COM_vz;
-        double p2_COM = D.px_COM*D.px_COM + D.py_COM*D.py_COM + D.pz_COM*D.pz_COM;
-        D.p_COM  = sqrt( p2_COM );
+        double px_COM = p1->momentum( 0, i1 ) + term2*COM_vx;
+        double py_COM = p1->momentum( 1, i1 ) + term2*COM_vy;
+        double pz_COM = p1->momentum( 2, i1 ) + term2*COM_vz;
+        double p2_COM = px_COM*px_COM + py_COM*py_COM + pz_COM*pz_COM;
+        double p_COM  = sqrt( p2_COM );
         
         // Calculate some intermediate quantities
-        double term3 = D.COM_gamma * gamma12_inv;
-        double term4 = D.gamma1_COM * D.gamma2_COM;
+        double term3 = COM_gamma * gamma12_inv;
+        double term4 = gamma1_COM * gamma2_COM;
         double term5 = term4/p2_COM + m12;
-        double vrel = D.p_COM/term3/term4; // relative velocity
+        double vrel = p_COM/term3/term4; // relative velocity
         
         // We first try to do a nuclear reaction
         // If succesful, then no need to do a collision
-        double E = m1 * (D.gamma1_COM-1.) + m2 * (D.gamma2_COM-1.);
-        double logE;
-        if( NuclearReaction->occurs( random->uniform(), vrel*coeff3, E, logE, minW ) ) {
+        double E, logE;
+        if( NuclearReaction->occurs( random->uniform(), vrel*coeff3, m1, m2, gamma1_COM, gamma2_COM, E, logE, minW ) ) {
             // Reduce the weight of both reactants
             // If becomes zero, then the particle will be discarded later
             p1->weight(i1) -= minW;
             p2->weight(i2) -= minW;
             
             // Get the magnitude and the angle of the outgoing products in the COM frame
-            NuclearReactionProducts products;
+            std::vector<Particles*> particles;
+            std::vector<double> new_p_COM, sinX, cosX;
+            std::vector<short> q;
             double tot_charge = p1->charge( i1 ) + p2->charge( i2 );
-            NuclearReaction->makeProducts( random, E, logE, tot_charge, products );
+            NuclearReaction->makeProducts( random, E, logE, tot_charge, particles, new_p_COM, q, sinX, cosX );
             
+            // Calculate some quantities for rotating vectors
+            double phi = random->uniform_2pi();
+            double cosPhi = cos( phi );
+            double sinPhi = sin( phi );
+            double p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
+            // Prepare the deflection in the COM frame
+            double newpx_COM_0, newpy_COM_0, newpz_COM_0;
+            if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
+                double inv_p_perp = 1./p_perp;
+                newpx_COM_0 = ( px_COM * pz_COM * cosPhi - py_COM * p_COM * sinPhi ) * inv_p_perp;
+                newpy_COM_0 = ( py_COM * pz_COM * cosPhi + px_COM * p_COM * sinPhi ) * inv_p_perp;
+                newpz_COM_0 = -p_perp * cosPhi;
+            } else { // if p_perp is too small, we use the limit px->0, py=0
+                newpx_COM_0 = p_COM * cosPhi;
+                newpy_COM_0 = p_COM * sinPhi;
+                newpz_COM_0 = 0.;
+            }
             // Calculate new weights
             double newW1, newW2;
-            if( tot_charge != 0. ) {
+            if( p1->charge(i1) != 0. || p2->charge(i2) != 0. ) {
                 double weight_factor = minW / tot_charge;
                 newW1 = p1->charge( i1 ) * weight_factor;
                 newW2 = p2->charge( i2 ) * weight_factor;
@@ -191,40 +205,26 @@ protected:
             }
             
             // For each product
-            double p_perp = sqrt( D.px_COM*D.px_COM + D.py_COM*D.py_COM );
-            double newpx_COM=0, newpy_COM=0, newpz_COM=0;
-            for( unsigned int iproduct=0; iproduct<products.particles.size(); iproduct++ ){
+            for( unsigned int iproduct=0; iproduct<particles.size(); iproduct++ ){
                 // Calculate the deflection in the COM frame
-                if( iproduct < products.cosPhi.size() ) { // do not recalculate if all products have same axis
-                    if( p_perp > 1.e-10*D.p_COM ) { // make sure p_perp is not too small
-                        double inv_p_perp = 1./p_perp;
-                        newpx_COM = ( D.px_COM * D.pz_COM * products.cosPhi[iproduct] - D.py_COM * D.p_COM * products.sinPhi[iproduct] ) * inv_p_perp;
-                        newpy_COM = ( D.py_COM * D.pz_COM * products.cosPhi[iproduct] + D.px_COM * D.p_COM * products.sinPhi[iproduct] ) * inv_p_perp;
-                        newpz_COM = -p_perp * products.cosPhi[iproduct];
-                    } else { // if p_perp is too small, we use the limit px->0, py=0
-                        newpx_COM = D.p_COM * products.cosPhi[iproduct];
-                        newpy_COM = D.p_COM * products.sinPhi[iproduct];
-                        newpz_COM = 0.;
-                    }
-                    // Calculate the deflection in the COM frame
-                    newpx_COM = newpx_COM * products.sinX[iproduct] + D.px_COM *products.cosX[iproduct];
-                    newpy_COM = newpy_COM * products.sinX[iproduct] + D.py_COM *products.cosX[iproduct];
-                    newpz_COM = newpz_COM * products.sinX[iproduct] + D.pz_COM *products.cosX[iproduct];
-                }
+                double newpx_COM = newpx_COM_0 * sinX[iproduct] + px_COM *cosX[iproduct];
+                double newpy_COM = newpy_COM_0 * sinX[iproduct] + py_COM *cosX[iproduct];
+                double newpz_COM = newpz_COM_0 * sinX[iproduct] + pz_COM *cosX[iproduct];
+                
                 // Go back to the lab frame and store the results in the particle array
-                double vcp = D.COM_vx * newpx_COM + D.COM_vy * newpy_COM + D.COM_vz * newpz_COM;
-                double momentum_ratio = products.new_p_COM[iproduct] / D.p_COM;
-                double term6 = momentum_ratio*term1*vcp + sqrt( products.new_p_COM[iproduct]*products.new_p_COM[iproduct] + 1. ) * D.COM_gamma;
-                double newpx = momentum_ratio * newpx_COM + D.COM_vx * term6;
-                double newpy = momentum_ratio * newpy_COM + D.COM_vy * term6;
-                double newpz = momentum_ratio * newpz_COM + D.COM_vz * term6;
+                double vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
+                double momentum_ratio = new_p_COM[iproduct] / p_COM;
+                double term6 = momentum_ratio*term1*vcp + sqrt( new_p_COM[iproduct]*new_p_COM[iproduct] + 1. ) * COM_gamma;
+                double newpx = momentum_ratio * newpx_COM + COM_vx * term6;
+                double newpy = momentum_ratio * newpy_COM + COM_vy * term6;
+                double newpz = momentum_ratio * newpz_COM + COM_vz * term6;
                 // Make new particle at position of particle 1
                 if( newW1 > 0. ) {
-                    products.particles[iproduct]->makeParticleAt( *p1, i1, newW1, products.q[iproduct], newpx, newpy, newpz );
+                    particles[iproduct]->makeParticleAt( *p1, i1, newW1, q[iproduct], newpx, newpy, newpz );
                 }
                 // Make new particle at position of particle 2
                 if( newW2 > 0. ) {
-                    products.particles[iproduct]->makeParticleAt( *p2, i2, newW2, products.q[iproduct], newpx, newpy, newpz );
+                    particles[iproduct]->makeParticleAt( *p2, i2, newW2, q[iproduct], newpx, newpy, newpz );
                 }
             }
             
@@ -241,7 +241,7 @@ protected:
         // Calculate coulomb log if necessary
         if( logL <= 0. ) { // if auto-calculation requested
             // Note : 0.00232282 is coeff2 / coeff1
-            double bmin = coeff1 * std::max( 1./m1/D.p_COM, std::abs( 0.00232282*qqm*term3*term5 ) ); // min impact parameter
+            double bmin = coeff1 * std::max( 1./m1/p_COM, std::abs( 0.00232282*qqm*term3*term5 ) ); // min impact parameter
             logL = 0.5*log( 1.+debye2/( bmin*bmin ) );
             if( logL < 2. ) {
                 logL = 2.;
@@ -249,7 +249,7 @@ protected:
         }
         
         // Calculate the collision parameter s12 (similar to number of real collisions)
-        double s = coeff3 * logL * qqm2 * term3 * D.p_COM * term5*term5 / ( gamma1*gamma2 );
+        double s = coeff3 * logL * qqm2 * term3 * p_COM * term5*term5 / ( gamma1*gamma2 );
         
         // Low-temperature correction
         double smax = coeff4 * ( m12+1. ) * vrel / std::max( m12*n123, n223 );
@@ -280,33 +280,33 @@ protected:
         double sinXsinPhi = sinX*sin( phi );
         
         // Apply the deflection
-        double p_perp = sqrt( D.px_COM*D.px_COM + D.py_COM*D.py_COM );
+        double p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
         double newpx_COM, newpy_COM, newpz_COM;
-        if( p_perp > 1.e-10*D.p_COM ) { // make sure p_perp is not too small
+        if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
             double inv_p_perp = 1./p_perp;
-            newpx_COM = ( D.px_COM * D.pz_COM * sinXcosPhi - D.py_COM * D.p_COM * sinXsinPhi ) * inv_p_perp + D.px_COM * cosX;
-            newpy_COM = ( D.py_COM * D.pz_COM * sinXcosPhi + D.px_COM * D.p_COM * sinXsinPhi ) * inv_p_perp + D.py_COM * cosX;
-            newpz_COM = -p_perp * sinXcosPhi + D.pz_COM * cosX;
+            newpx_COM = ( px_COM * pz_COM * sinXcosPhi - py_COM * p_COM * sinXsinPhi ) * inv_p_perp + px_COM * cosX;
+            newpy_COM = ( py_COM * pz_COM * sinXcosPhi + px_COM * p_COM * sinXsinPhi ) * inv_p_perp + py_COM * cosX;
+            newpz_COM = -p_perp * sinXcosPhi  +  pz_COM * cosX;
         } else { // if p_perp is too small, we use the limit px->0, py=0
-            newpx_COM = D.p_COM * sinXcosPhi;
-            newpy_COM = D.p_COM * sinXsinPhi;
-            newpz_COM = D.p_COM * cosX;
+            newpx_COM = p_COM * sinXcosPhi;
+            newpy_COM = p_COM * sinXsinPhi;
+            newpz_COM = p_COM * cosX;
         }
         
         // Go back to the lab frame and store the results in the particle array
-        double vcp = D.COM_vx * newpx_COM + D.COM_vy * newpy_COM + D.COM_vz * newpz_COM;
+        double vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
         double U2 = random->uniform();
         if( U2 < p2->weight( i2 )/p1->weight( i1 ) ) { // deflect particle 1 only with some probability
-            double term6 = term1*vcp + D.gamma1_COM * D.COM_gamma;
-            p1->momentum( 0, i1 ) = newpx_COM + D.COM_vx * term6;
-            p1->momentum( 1, i1 ) = newpy_COM + D.COM_vy * term6;
-            p1->momentum( 2, i1 ) = newpz_COM + D.COM_vz * term6;
+            double term6 = term1*vcp + gamma1_COM * COM_gamma;
+            p1->momentum( 0, i1 ) = newpx_COM + COM_vx * term6;
+            p1->momentum( 1, i1 ) = newpy_COM + COM_vy * term6;
+            p1->momentum( 2, i1 ) = newpz_COM + COM_vz * term6;
         }
         if( U2 < p1->weight( i1 )/p2->weight( i2 ) ) { // deflect particle 2 only with some probability
-            double term6 = -m12 * term1*vcp + D.gamma2_COM * D.COM_gamma;
-            p2->momentum( 0, i2 ) = -m12 * newpx_COM + D.COM_vx * term6;
-            p2->momentum( 1, i2 ) = -m12 * newpy_COM + D.COM_vy * term6;
-            p2->momentum( 2, i2 ) = -m12 * newpz_COM + D.COM_vz * term6;
+            double term6 = -m12 * term1*vcp + gamma2_COM * COM_gamma;
+            p2->momentum( 0, i2 ) = -m12 * newpx_COM + COM_vx * term6;
+            p2->momentum( 1, i2 ) = -m12 * newpy_COM + COM_vy * term6;
+            p2->momentum( 2, i2 ) = -m12 * newpz_COM + COM_vz * term6;
         }
         
         return s;

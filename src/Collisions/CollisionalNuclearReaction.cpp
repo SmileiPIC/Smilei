@@ -62,9 +62,10 @@ CollisionalNuclearReaction::~CollisionalNuclearReaction()
 }
 
 
-bool CollisionalNuclearReaction::occurs( double U, double coeff, double ekin, double &log_ekin, double &W )
+bool CollisionalNuclearReaction::occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &ekin, double &log_ekin, double &W )
 {
     // Interpolate the total cross-section at some value of ekin = m1(g1-1) + m2(g2-1)
+    ekin = m1 * (g1-1.) + m2 * (g2-1.);
     log_ekin = log( ekin );
     double cs = crossSection( log_ekin );
     
