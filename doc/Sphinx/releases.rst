@@ -20,6 +20,7 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* ``Perfectly Matched Layers`` boundary conditions are available. Documentation is updated and a 2D Cartesian benchamrk is provided.
 * Improved performance for ARM-based processors including the Fujitsu A64FX
 * Improved performance for GNU, LLVM, arm-clang and Fujitsu compilers on all types of architectures
 * Lasers can be injected from all boundaries
