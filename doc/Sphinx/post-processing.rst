@@ -419,9 +419,9 @@ and only one mode between those three.
 
   * ``hindex``                     : the starting index of each proc in the hilbert curve
   * ``number_of_cells``            : the number of cells in each proc
-  * ``number_of_particles``        : the number of particles in each proc (except frozen ones)
+  * ``number_of_particles``        : the total number of non-frozen macro-particles in each proc (includes all species)
   * ``number_of_frozen_particles`` : the number of frozen particles in each proc
-  * ``total_load``                 : the `load` of each proc (number of particles and cells with cell_load coefficient)
+  * ``total_load``                 : the `load` of each proc (number of macro-particles and cells weighted by cell_load coefficients)
   * ``timer_global``               : global simulation time (only available for proc 0)
   * ``timer_particles``            : time spent computing particles by each proc
   * ``timer_maxwell``              : time spent solving maxwell by each proc

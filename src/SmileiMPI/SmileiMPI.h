@@ -68,12 +68,12 @@ public:
     //     - during load balancing process
     //     - during moving window
     // -----------------------------------
-    void isend( Patch *patch, int to, int tag, Params &params );
+    void isend( Patch *patch, int to, int tag, Params &params, bool send_xmax_bc = true );
     void waitall( Patch *patch );
-    void recv( Patch *patch, int from, int tag, Params &params );
+    void recv( Patch *patch, int from, int tag, Params &params, bool recv_xmin_bc = true);
 
-    void isend_fields( Patch *patch, int to, int &irequest, int tag, Params &params );
-    void recv_fields( Patch *patch, int from, int &tag, Params &params );
+    void isend_fields( Patch *patch, int to, int &irequest, int tag, Params &params, bool send_xmax_bc = true );
+    void recv_fields( Patch *patch, int from, int &tag, Params &params, bool recv_xmin_bc = true );
     void isend_species( Patch *patch, int to, int &irequest, int tag, Params &params );
     void recv_species( Patch *patch, int from, int &tag, Params &params );
 
@@ -85,10 +85,10 @@ public:
     void isend( std::vector<double> *vec, int to, int tag, MPI_Request &request );
     void recv( std::vector<double> *vec, int from, int tag );
 
-    void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag );
-    void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, unsigned int nmodes );
-    void recv( ElectroMagn *fields, int from, int &tag );
-    void recv( ElectroMagn *fields, int from, int &tag, unsigned int nmodes );
+    void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, bool send_xmax_bc );
+    void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, unsigned int nmodes, bool send_xmax_bc );
+    void recv( ElectroMagn *fields, int from, int &tag, bool recv_xmax_bc );
+    void recv( ElectroMagn *fields, int from, int &tag, unsigned int nmodes, bool recv_xmax_bc );
     void isend( Field *field, int to, int tag, MPI_Request &request );
     void isendComplex( Field *field, int to, int tag, MPI_Request &request );
     void recv( Field *field, int from, int tag );

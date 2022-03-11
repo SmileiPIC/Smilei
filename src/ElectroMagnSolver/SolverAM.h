@@ -13,7 +13,7 @@ public:
     //! Creator for Solver
     SolverAM( Params &params ) : Solver( params )
     {
-        std::vector<unsigned int> oversize(params.oversize);
+        oversize = params.oversize;
         if (params.multiple_decomposition)
             oversize = params.region_oversize;
         nl_p = params.n_space[0]+1+2*oversize[0];
@@ -33,6 +33,7 @@ public:
 
         Nmode= params.nmodes;
         dt = params.timestep;
+        dl = params.cell_length[0];
         dr = params.cell_length[1];
         dt_ov_dl = params.timestep / params.cell_length[0];
         dt_ov_dr = params.timestep / params.cell_length[1];
@@ -50,9 +51,11 @@ protected:
     unsigned int nr_d;
     unsigned int Nmode;
     double dt;
+    double dl;
     double dr;
     double dt_ov_dl;
     double dt_ov_dr;
+    std::vector<unsigned int> oversize;
     
 };//END class
 
