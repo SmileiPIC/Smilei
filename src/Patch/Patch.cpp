@@ -1371,7 +1371,7 @@ void Patch::finalizeExchange( Field *field, int iDim )
 // Initialize current patch sum Fields communications through MPI in direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch::initSumField( Field *field, int iDim, SmileiMPI *smpi )
+void Patch::initSumField( Field *field, int iDim, SmileiMPI *smpi, bool devPtr )
 {
     if( field->MPIbuff.srequest.size()==0 ) {
         field->MPIbuff.allocate( nDim_fields_ );
@@ -1402,16 +1402,32 @@ void Patch::initSumField( Field *field, int iDim, SmileiMPI *smpi )
 
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
             int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
-            MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
-                       MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
-                       MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
+            if (devPtr) {
+                double* sendField = field->sendFields_[iDim*2+iNeighbor]->data_;
+                #pragma acc host_data use_device(sendField)
+                MPI_Isend( sendField, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
+                          MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
+                          MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
+            }
+            else
+                MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
+                          MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
+                          MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
         } // END of Send
 
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
             int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
-            MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
-                       MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
-                       MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+            if (devPtr) {
+                double* recvField = field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
+                #pragma acc host_data use_device(recvField)
+                MPI_Irecv( recvField, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
+                          MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+                          MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+            }
+            else
+                MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
+                          MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+                          MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
         } // END of Recv
 
     } // END for iNeighbor

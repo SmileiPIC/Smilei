@@ -283,13 +283,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 field = vecPatches.densitiesMPIx[ifield+2*nPatchMPIx];
                 double*   Jz = field->sendFields_[iNeighbor]->data_;
                 int sizeofJz = field->sendFields_[iNeighbor]->globalDims_;
-                #pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
             }
         }
-        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield             ], 0, smpi ); // Jx
-        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+  nPatchMPIx], 0, smpi ); // Jy
-        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0, smpi ); // Jz
+        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield             ], 0, smpi, true ); // Jx
+        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+  nPatchMPIx], 0, smpi, true ); // Jy
+        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0, smpi, true ); // Jz
     }
     // iDim = 0, local
     int nFieldLocalx = vecPatches.densitiesLocalx.size()/3;
@@ -358,7 +358,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 field = vecPatches.densitiesMPIx[ifield+2*nPatchMPIx];
                 double*   Jz = field->recvFields_[(iNeighbor+1)%2]->data_;
                 int sizeofJz = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
-                #pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                 vecPatches.densitiesMPIx[ifield             ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
@@ -402,13 +402,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     field = vecPatches.densitiesMPIy[ifield+2*nPatchMPIy];
                     double*   Jz = field->sendFields_[iNeighbor+2]->data_;
                     int sizeofJz = field->sendFields_[iNeighbor+2]->globalDims_;
-                    #pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                    //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                 }
             }
-            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield             ], 1, smpi ); // Jx
-            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+nPatchMPIy  ], 1, smpi ); // Jy
-            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1, smpi ); // Jz
+            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield             ], 1, smpi, true ); // Jx
+            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+nPatchMPIy  ], 1, smpi, true ); // Jy
+            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1, smpi, true ); // Jz
         }
 
         // iDim = 1,
@@ -482,7 +482,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     field = vecPatches.densitiesMPIy[ifield+2*nPatchMPIy];
                     double*   Jz = field->recvFields_[(iNeighbor+1)%2+2]->data_;
                     int sizeofJz = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
-                    #pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                    //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                     vecPatches.densitiesMPIy[ifield             ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
@@ -524,13 +524,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         field = vecPatches.densitiesMPIz[ifield+2*nPatchMPIz];
                         double*   Jz = field->sendFields_[iNeighbor+4]->data_;
                         int sizeofJz = field->sendFields_[iNeighbor+4]->globalDims_;
-                        #pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                        //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                     }
                 }
-                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield             ], 2, smpi ); // Jx
-                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+nPatchMPIz  ], 2, smpi ); // Jy
-                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2, smpi ); // Jz
+                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield             ], 2, smpi, true ); // Jx
+                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+nPatchMPIz  ], 2, smpi, true ); // Jy
+                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2, smpi, true ); // Jz
             }
 
             // iDim = 2 local
@@ -604,7 +604,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         field = vecPatches.densitiesMPIz[ifield+2*nPatchMPIz ];
                         double*   Jz = field->recvFields_[(iNeighbor+1)%2+4]->data_;
                         int sizeofJz = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
-                        #pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                        //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                         vecPatches.densitiesMPIz[ifield             ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
