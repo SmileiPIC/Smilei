@@ -709,14 +709,15 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     PyTools::extract( "gpu_computing", gpu_computing, "Main"  );
     if (gpu_computing) {
-#if !(defined(_GPU) || defined(SMILEI_ACCELERATOR_GPU_OMP))
-        // If compiled for CPU and asking for GPU
-        ERROR( "Smilei is not compiled for GPU" );
+#if (defined(_GPU) && defined(_OPENACC)) || defined(SMILEI_ACCELERATOR_GPU_OMP)
+        // If compiled for GPU and asking for GPU
+        MESSAGE( "Smilei will run on GPU" );
 #else
-    #ifdef _OPENACC
+    #if !defined(_GPU) && defined(_OPENACC)
         MESSAGE( "Smilei will be exeecuted on CPU through Thrust" );
     #else
-        ERROR( "Smilei is not compiled with OpenACC/OpenMP" );
+        // If compiled for CPU and asking for GPU
+        ERROR( "Smilei is not compiled for GPU" );
     #endif
 #endif
     } else {
