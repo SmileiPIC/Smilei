@@ -241,12 +241,16 @@ endif
 CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
 
 ifneq (,$(call parse_config,gpu_amd))
+	# Note:
+	# This gpu_amd config is not production ready and is meant, as of 4th/03/22,
+	# to be used "only" on the cines gpu porting machines.
+
 	SMILEICXX.DEPS = $(SMILEICXX)
 	THRUSTCXX = hipcc
 
-	CXXFLAGS += -Wextra -pedantic
-	# There is just too much
-	CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
+	WARNING_FLAGS := -Wextra -pedantic
+	# There is just too many warnings, it clutters the screen
+	WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
 
 	# TODO(Etienne M): gfx908 should not be fixed! It would be great if we could get the gpu arch at runtime(in the makefile)
     ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908
@@ -255,12 +259,18 @@ ifneq (,$(call parse_config,gpu_amd))
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
 
-    ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%)
+	# TODO(Etienne M): It would be nice to specify which gpu we target, default arch is gfx803.
+    ACCELERATOR_GPU_KERNEL_FLAGS += -O3 -std=c++14 $(DIRS:%=-I%)
     ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
-	# TODO(Etienne M): Remove the full path pointing to rocrand/hiprand and co.
+	# TODO(Etienne M): Remove the full path pointing to rocrand/hiprand and co. mipcc does not not know mpi (we would need an "mpihipcc")
 	ACCELERATOR_GPU_KERNEL_FLAGS += -I/opt/cray/pe/mpich/8.1.13/ofi/cray/10.0/include
 
 	OBJS += $(GPU_KERNEL_OBJS)
+
+	CXXFLAGS                     += $(WARNING_FLAGS)
+	# TODO(Etienne M): It would be great if CXXFLAGS contained only the warning flags, 
+	# so we can use it with nvcc/hipcc too
+	ACCELERATOR_GPU_KERNEL_FLAGS += $(WARNING_FLAGS)
 
 	# Note that clang++/cray/aomp (on Lumi01, the pre adastra porting machine), does not link against the c++ lib
 	LDFLAGS += -lstdc++ -lomp
@@ -341,7 +351,7 @@ $(BUILD_DIR)/%.o : %.cpp
 # Compile cus
 $(BUILD_DIR)/%.o : %.cu
 	@echo "Compiling $<"
-	$(Q) $(THRUSTCXX) $(CXXFLAGS) $(ACCELERATOR_GPU_KERNEL_FLAGS) -c $< -o $@
+	$(Q) $(THRUSTCXX) $(ACCELERATOR_GPU_KERNEL_FLAGS) -c $< -o $@
 
 # Link the main program
 $(EXEC): $(OBJS)
