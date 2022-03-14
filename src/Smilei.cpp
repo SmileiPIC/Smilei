@@ -45,7 +45,6 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 #ifdef _GPU
-    #ifdef _OPENACC
     void initialisation_openacc()
     {
         char* local_rank_env;
@@ -68,7 +67,6 @@ using namespace std;
             exit(1);
         }
     }
-    #endif
 #endif
 
 int main( int argc, char *argv[] )

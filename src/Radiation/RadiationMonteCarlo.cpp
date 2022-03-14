@@ -14,6 +14,18 @@
 #include <cstring>
 #include <fstream>
 
+#if defined(_GPU)
+    #define __HIP_PLATFORM_NVCC__
+    #define __HIP_PLATFORM_NVIDIA__ // TODO(Etienne M): should not be AMD here
+#elif defined(SMILEI_ACCELERATOR_GPU_OMP)
+    #define __HIP_PLATFORM_HCC__
+    #define __HIP_PLATFORM_AMD__
+#endif
+
+#if defined(_GPU) || defined(SMILEI_ACCELERATOR_GPU_OMP)
+    #include <hiprand.hpp>
+#endif
+
 #include <cmath>
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -153,8 +165,8 @@ void RadiationMonteCarlo::operator()(
     unsigned long long seed; // Parameters for CUDA generator
     unsigned long long seq;
     unsigned long long offset;
-    curandState_t state_1;
-    curandState_t state_2;
+    hiprandState_t state_1;
+    hiprandState_t state_2;
     
     seed = 12345ULL;
     seq = 0ULL;
@@ -247,9 +259,9 @@ void RadiationMonteCarlo::operator()(
 			            seed_curand_1 = (int) (ipart+1)*(initial_seed_1+1); //Seed for linear generator
                 	    seed_curand_1 = (a * seed_curand_1 + c) % m; //Linear generator
                		
-			            curand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
+			            hiprand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
 			
-			            random_number = curand_uniform(&state_1); //Generating number
+			            random_number = hiprand_uniform(&state_1); //Generating number
                         
 			            tau[ipart] = -log( 1.- random_number );
 			            initial_seed_1 = random_number;
@@ -284,9 +296,9 @@ void RadiationMonteCarlo::operator()(
 			            seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
               		    seed_curand_2 = (a * seed_curand_2 + c) % m; //Linear generator
 
-        	            curand_init(seed_curand_2, seq, offset, &state_2); //Cuda generator initialization
+        	            hiprand_init(seed_curand_2, seq, offset, &state_2); //Cuda generator initialization
 	
-                        random_number = curand_uniform(&state_2); //Generating number
+                        random_number = hiprand_uniform(&state_2); //Generating number
                     #endif
 
                     // Emission of a photon

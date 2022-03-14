@@ -224,19 +224,47 @@ ifneq (,$(call parse_config,no_mpi_tm))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
-ifneq (,$(call parse_config,gpu))
+ifneq (,$(call parse_config,gpu_nvidia))
     SMILEICXX.DEPS = g++
-    ACCFLAGS += -D_GPU -w -Minfo=accel
+	THRUSTCXX = nvcc
 
-    CUSRCS := $(shell find src/* -name \*.cu)
-    CUOBJS := $(addprefix $(BUILD_DIR)/, $(CUSRCS:.cu=.o))
-    THRUSTCXX = nvcc
-    CUFLAGS += -O3 --std c++14 $(DIRS:%=-I%)
-    CUFLAGS += $(shell $(PYTHONCONFIG) --includes)
+	ACCELERATOR_GPU_FLAGS += -D_GPU -w -Minfo=accel
 
-    OBJS += $(CUOBJS)
+    GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
+    GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
+
+    ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%)
+    ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
+
+    OBJS += $(GPU_KERNEL_OBJS)
 endif
 CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
+
+ifneq (,$(call parse_config,gpu_amd))
+	SMILEICXX.DEPS = $(SMILEICXX)
+	THRUSTCXX = hipcc
+
+	CXXFLAGS += -Wextra -pedantic
+	# There is just too much
+	CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
+
+	# TODO(Etienne M): gfx908 should not be fixed! It would be great if we could get the gpu arch at runtime(in the makefile)
+    ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908
+	ACCELERATOR_GPU_FLAGS += -I/opt/rocm-4.5.0/hiprand/include -I/opt/rocm-4.5.0/rocrand/include
+
+    GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
+    GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
+
+    ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%)
+    ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
+	# TODO(Etienne M): Remove the full path pointing to rocrand/hiprand and co.
+	ACCELERATOR_GPU_KERNEL_FLAGS += -I/opt/cray/pe/mpich/8.1.13/ofi/cray/10.0/include
+
+	OBJS += $(GPU_KERNEL_OBJS)
+
+	# Note that clang++/cray/aomp (on Lumi01, the pre adastra porting machine), does not link against the c++ lib
+	LDFLAGS += -lstdc++ -lomp
+endif
 
 #-----------------------------------------------------
 # Set the verbosity prefix
@@ -290,8 +318,7 @@ ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
 
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCFLAGS) -O1 -c $< -o $@
-
+	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCELERATOR_GPU_FLAGS) -O1 -c $< -o $@
 endif
 
 $(BUILD_DIR)/src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.o : src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.cpp
@@ -309,12 +336,12 @@ $(BUILD_DIR)/src/Radiation/RadiationTablesDefault.o : src/Radiation/RadiationTab
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
 	@echo "Compiling $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS)  $(ACCFLAGS) -c $< -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCELERATOR_GPU_FLAGS) -c $< -o $@
 
 # Compile cus
 $(BUILD_DIR)/%.o : %.cu
 	@echo "Compiling $<"
-	$(Q) $(THRUSTCXX) $(CUFLAGS) -c $< -o $@
+	$(Q) $(THRUSTCXX) $(CXXFLAGS) $(ACCELERATOR_GPU_KERNEL_FLAGS) -c $< -o $@
 
 # Link the main program
 $(EXEC): $(OBJS)
@@ -325,7 +352,7 @@ $(EXEC): $(OBJS)
 # Compile the the main program again for test mode
 $(BUILD_DIR)/src/Smilei_test.o: src/Smilei.cpp $(EXEC)
 	@echo "Compiling src/Smilei.cpp for test mode"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCFLAGS) -DSMILEI_TESTMODE -c src/Smilei.cpp -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCELERATOR_GPU_FLAGS) -DSMILEI_TESTMODE -c src/Smilei.cpp -o $@
 
 # Link the main program for test mode
 $(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
@@ -452,7 +479,7 @@ help:
 	@echo '    advisor              : to compile for Intel Advisor analysis'
 	@echo '    vtune                : to compile for Intel Vtune analysis'
 	@echo '    inspector            : to compile for Intel Inspector analysis'
-	@echo '    gpu                  : to compile for GPU
+	@echo '    gpu                  : to compile for GPU'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'
