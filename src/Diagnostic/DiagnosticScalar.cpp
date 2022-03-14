@@ -252,6 +252,7 @@ void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
     Ukin_bnd     = newScalar_SUM( "Ukin_bnd" );
     Ukin_out_mvw = newScalar_SUM( "Ukin_out_mvw" );
     Ukin_inj_mvw = newScalar_SUM( "Ukin_inj_mvw" );
+    Ukin_new     = newScalar_SUM( "Ukin_new" );
     Uelm_bnd     = newScalar_SUM( "Uelm_bnd" );
     Uelm_out_mvw = newScalar_SUM( "Uelm_out_mvw" );
     Uelm_inj_mvw = newScalar_SUM( "Uelm_inj_mvw" );
@@ -411,6 +412,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
     double Ukin_bnd_=0.;         // total energy lost by particles due to boundary conditions
     double Ukin_out_mvw_=0.;     // total energy lost due to particles being suppressed by the moving-window
     double Ukin_inj_mvw_=0.;     // total energy added due to particles created by the moving-window
+    double Ukin_new_=0.;         // total energy added due to new particles (injector)
     
     // Compute scalars for each species
     for( unsigned int ispec=0; ispec<vecSpecies.size(); ispec++ ) {
@@ -455,27 +457,29 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
             
             // If radiation activated
             if( vecSpecies[ispec]->Radiate ) {
-                *sUrad[ispec] += vecSpecies[ispec]->getNrjRadiation();
-                Urad_         += vecSpecies[ispec]->getNrjRadiation();
+                *sUrad[ispec] += vecSpecies[ispec]->nrj_radiated_;
+                Urad_         += vecSpecies[ispec]->nrj_radiated_;
             }
             
             // If multiphoton Breit-Wheeler activated for photons
             // increment the total pair energy from this process
             if( vecSpecies[ispec]->Multiphoton_Breit_Wheeler_process ) {
-                UmBWpairs_ += vecSpecies[ispec]->getNrjRadiation();
+                UmBWpairs_ += vecSpecies[ispec]->nrj_radiated_;
             }
         }
         
         if( necessary_Ukin_BC ) {
             // particle energy lost due to boundary conditions
-            Ukin_bnd_     += vecSpecies[ispec]->getLostNrjBC();
+            Ukin_bnd_     += vecSpecies[ispec]->nrj_bc_lost;
             // particle energy lost due to moving window
-            Ukin_out_mvw_ += vecSpecies[ispec]->getLostNrjMW();
-            // particle energy added due to moving window
-            Ukin_inj_mvw_ += vecSpecies[ispec]->getNewParticlesNRJ();
+            Ukin_out_mvw_ += vecSpecies[ispec]->nrj_mw_out;
+            // particle energy added by moving window
+            Ukin_inj_mvw_ += vecSpecies[ispec]->nrj_mw_inj;
         }
         
-        vecSpecies[ispec]->reinitDiags();
+        // particle energy from new particles
+        Ukin_new_ += vecSpecies[ispec]->nrj_new_part_;
+        
     } // for ispec
     
     // Add the calculated energies to the data arrays
@@ -493,6 +497,7 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
         *Ukin_out_mvw += Ukin_out_mvw_ ;
         *Ukin_inj_mvw += Ukin_inj_mvw_ ;
     }
+    *Ukin_new += Ukin_new_;
     
     // --------------------------------
     // ELECTROMAGNETIC-related energies
@@ -565,18 +570,11 @@ void DiagnosticScalar::compute( Patch *patch, int itime )
     // Lost/added elm energies through the moving window
     if( necessary_Uelm_BC ) {
         // nrj lost with moving window (fields)
-        double Uelm_out_mvw_ = EMfields->getLostNrjMW();
-        Uelm_out_mvw_ *= 0.5*cell_volume;
+        *Uelm_out_mvw += EMfields->nrj_mw_out * 0.5*cell_volume;
         
         // nrj added due to moving window (fields)
-        double Uelm_inj_mvw_=EMfields->getNewFieldsNRJ();
-        Uelm_inj_mvw_ *= 0.5*cell_volume;
-        
-        *Uelm_out_mvw += Uelm_out_mvw_;
-        *Uelm_inj_mvw += Uelm_inj_mvw_ ;
+        *Uelm_inj_mvw += EMfields->nrj_mw_inj * 0.5*cell_volume;
     }
-    
-    EMfields->reinitDiags();
     
     
     // ---------------------------
@@ -752,7 +750,7 @@ uint64_t DiagnosticScalar::getDiskFootPrint( int istart, int istop, Patch *patch
     
     // Calculate the number of scalars
     // 1 - general scalars
-    vector<string> scalars = {"Ubal_norm", "Ubal", "Utot", "Uexp", "Ukin", "Urad", "UmBWpairs", "Uelm", "Ukin_bnd", "Ukin_out_mvw", "Ukin_inj_mvw", "Uelm_bnd", "Uelm_out_mvw", "Uelm_inj_mvw"};
+    vector<string> scalars = {"Ubal_norm", "Ubal", "Utot", "Uexp", "Ukin", "Urad", "UmBWpairs", "Uelm", "Ukin_bnd", "Ukin_out_mvw", "Ukin_inj_mvw", "Ukin_new", "Uelm_bnd", "Uelm_out_mvw", "Uelm_inj_mvw"};
     // 2 - species scalars
     unsigned int nspec = patch->vecSpecies.size();
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {

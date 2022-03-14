@@ -110,9 +110,7 @@ Main(
 
     print_every = 50,
 
-    random_seed = smilei_mpi_rank,
-
-    clrw = 1,
+    cluster_width = 1,
 
     reference_angular_frequency_SI = reference_angular_frequency_SI,
 

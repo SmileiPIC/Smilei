@@ -337,8 +337,8 @@ def tgaussian(start=0., duration=None, fwhm=None, center=None, order=2):
     if len(Main)==0:
         raise Exception("tgaussian profile has been defined before `Main()`")
     if duration is None: duration = Main.simulation_time-start
-    if fwhm     is None: fwhm     = (Main.simulation_time-start)/3.
-    if center   is None: center   = start + (Main.simulation_time-start)/2.
+    if fwhm     is None: fwhm     = duration/3.
+    if center   is None: center   = start + duration/2.
     sigma = (0.5*fwhm)**order/math.log(2.0)
     def f(t):
         if t < start: return 0.
@@ -456,13 +456,10 @@ def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
 
 
 def transformPolarization(polarization_phi, ellipticity):
-    from math import pi, sqrt, sin, cos, tan, atan
+    from math import pi, sqrt, sin, cos, tan, atan2
     e2 = ellipticity**2
     p = (1.-e2)*sin(2.*polarization_phi)/2.
-    if abs(p) < 1e-10:
-        dephasing = pi/2.
-    else:
-        dephasing = atan(ellipticity/p)
+    dephasing = atan2(ellipticity, p)
     amplitude = sqrt(1./(1.+e2))
     c2 = cos(polarization_phi)**2
     s2 = 1. - c2
@@ -738,7 +735,9 @@ try:
     
     _N_LaserOffset = 0
     
-    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., fft_time_window=None, extra_envelope=lambda *a:1., keep_n_strongest_modes=100, angle=0., number_of_processes=None, file=None):
+    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., angle=0., extra_envelope=lambda *a:1.,
+            fft_time_window=None, fft_time_step=None, keep_n_strongest_modes=100,
+            number_of_processes=None, file=None):
         global _N_LaserOffset
         
         file_ = file or ('LaserOffset'+str(_N_LaserOffset)+'.h5')
@@ -752,6 +751,7 @@ try:
         L._extra_envelope = extra_envelope
         L._profiles = space_time_profile
         L._fft_time_window = fft_time_window or Main.simulation_time
+        L._fft_time_step = fft_time_step or Main.timestep
         L._keep_n_strongest_modes = keep_n_strongest_modes
         L._angle = angle
         L._number_of_processes = number_of_processes

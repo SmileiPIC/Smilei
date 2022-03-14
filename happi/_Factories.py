@@ -249,11 +249,11 @@ class ParticleBinningFactory(object):
 		WARNING: THE VALUE OF `step` IS A NUMBER OF BINS.
 		Only the data within the chosen axes' selections is extracted.
 		Example: subset = {"y":[10, 80, 4]}
-	sum : a python dictionary of the form { axis:range, ... } (optional)
+	average : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
 		`range` may be "all", a float, or [float, float].
-		For instance, sum={"x":"all", "y":[2,3]}.
-		The sum of all values within the bounds is computed.
+		For instance, average={"x":"all", "y":[2,3]}.
+		The average of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
@@ -316,11 +316,11 @@ class RadiationSpectrumFactory(object):
 		WARNING: THE VALUE OF `step` IS A NUMBER OF BINS.
 		Only the data within the chosen axes' selections is extracted.
 		Example: subset = {"y":[10, 80, 4]}
-	sum : a python dictionary of the form { axis:range, ... } (optional)
+	average : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y", "z", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
 		`range` may be "all", a float, or [float, float].
-		For instance, sum={"x":"all", "y":[2,3]}.
-		The sum of all values within the bounds is computed.
+		For instance, average={"x":"all", "y":[2,3]}.
+		The average of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
@@ -451,11 +451,11 @@ class ScreenFactory(object):
 		WARNING: THE VALUE OF `step` IS A NUMBER OF BINS.
 		Only the data within the chosen axes' selections is extracted.
 		Example: subset = {"y":[10, 80, 4]}
-	sum : a python dictionary of the form { axis:range, ... } (optional)
+	average : a python dictionary of the form { axis:range, ... } (optional)
 		`axis` may be "x", "y", "z", "a", "b", "theta", "phi", "px", "py", "pz", "p", "gamma", "ekin", "vx", "vy", "vz", "v" or "charge".
 		`range` may be "all", a float, or [float, float].
-		For instance, sum={"x":"all", "y":[2,3]}.
-		The sum of all values within the bounds is computed.
+		For instance, average={"x":"all", "y":[2,3]}.
+		The average of all values within the bounds is computed.
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.

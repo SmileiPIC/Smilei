@@ -1,0 +1,8 @@
+#
+# Machine file for the LLVM compiler on a Linux system
+#
+# __________________________________________________________
+CXXFLAGS += -march=native -mfma -mllvm -inline-threshold=1000
+# -march=native
+# -mavx2
+# -mfma

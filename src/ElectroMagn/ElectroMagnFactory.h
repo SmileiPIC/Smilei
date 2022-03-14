@@ -154,33 +154,50 @@ public:
         // -----------------
         unsigned int antenna_number=PyTools::nComponents( "Antenna" );
         if( first_creation && antenna_number > 0) {
-            TITLE("Initializing Antenna" );
+            TITLE("Initializing Antennas" );
         }
         for( unsigned int n_antenna = 0; n_antenna < antenna_number; n_antenna++ ) {
             Antenna antenna;
-            PyObject *profile;
-            std::ostringstream name;
             antenna.field = NULL;
+            
+            // Extract the field name
             PyTools::extract( "field", antenna.fieldName, "Antenna", n_antenna );
             if( antenna.fieldName != "Jx" && antenna.fieldName != "Jy" && antenna.fieldName != "Jz" ) {
                 ERROR( "Antenna #"<<n_antenna<<": parameter 'field' must be one of Jx, Jy, Jz" );
             }
             
-            // Extract the space profile
-            name.str( "" );
-            name << "Antenna[" << n_antenna <<"].space_profile";
-            if( !PyTools::extract_pyProfile( "space_profile", profile, "Antenna", n_antenna ) ) {
-                ERROR( " Antenna #"<<n_antenna<<": parameter 'space_profile' not understood" );
+            // Extract space and time profiles
+            PyObject *space_profile, *time_profile, *space_time_profile;
+            bool has_space = PyTools::extract_pyProfile( "space_profile", space_profile, "Antenna", n_antenna );
+            bool has_time = PyTools::extract_pyProfile( "time_profile", time_profile, "Antenna", n_antenna );
+            antenna.spacetime = PyTools::extract_pyProfile( "space_time_profile" , space_time_profile, "Antenna", n_antenna );
+            if( antenna.spacetime ) {
+                if( has_space || has_time ) {
+                    ERROR( "Antenna #"<<n_antenna<<": `space_time_profile` not compatible with `space_profile` or `time_profile`" );
+                }
+            } else {
+                if( ! has_space ) {
+                    ERROR( " Antenna #"<<n_antenna<<": parameter 'space_profile' not understood" );
+                }
+                if( ! has_time ) {
+                    ERROR( " Antenna #"<<n_antenna<<": parameter 'time_profile' not understood" );
+                }
             }
-            antenna.space_profile = new Profile( profile, params.nDim_field, name.str(), params );
-            
-            // Extract the time profile
-            name.str( "" );
-            name << "Antenna[" << n_antenna <<"].time_profile";
-            if( !PyTools::extract_pyProfile( "time_profile", profile, "Antenna", n_antenna ) ) {
-                ERROR( " Antenna #"<<n_antenna<<": parameter 'time_profile' not understood" );
+            if( antenna.spacetime ) {
+                std::ostringstream name;
+                name << "Antenna[" << n_antenna <<"].space_time_profile";
+                antenna.space_time_profile = new Profile( space_time_profile, params.nDim_field+1, name.str(), params );
+                antenna.space_profile = NULL;
+                antenna.time_profile = NULL;
+            } else {
+                antenna.space_time_profile = NULL;
+                std::ostringstream name;
+                name << "Antenna[" << n_antenna <<"].space_profile";
+                antenna.space_profile = new Profile( space_profile, params.nDim_field, name.str(), params );
+                name.str( "" );
+                name << "Antenna[" << n_antenna <<"].time_profile";
+                antenna.time_profile =  new Profile( time_profile, 1, name.str(), params );
             }
-            antenna.time_profile =  new Profile( profile, 1, name.str(), params );
             
             // Find the index of the field in allFields
             antenna.index = 1000;
@@ -304,14 +321,14 @@ public:
         for( unsigned int n_antenna = 0; n_antenna < EMfields->antennas.size(); n_antenna++ ) {
             Antenna antenna;
             antenna.field = NULL;
-            antenna.fieldName     = EMfields->antennas[n_antenna].fieldName    ;
-            antenna.space_profile = EMfields->antennas[n_antenna].space_profile;
-            antenna.time_profile  = EMfields->antennas[n_antenna].time_profile ;
-            antenna.index         = EMfields->antennas[n_antenna].index        ;
+            antenna.fieldName          = EMfields->antennas[n_antenna].fieldName          ;
+            antenna.spacetime          = EMfields->antennas[n_antenna].spacetime          ;
+            antenna.space_profile      = EMfields->antennas[n_antenna].space_profile      ;
+            antenna.time_profile       = EMfields->antennas[n_antenna].time_profile       ;
+            antenna.space_time_profile = EMfields->antennas[n_antenna].space_time_profile ;
+            antenna.index              = EMfields->antennas[n_antenna].index              ;
             newEMfields->antennas.push_back( antenna );
         }
-        
-        //newEMfields->finishInitialization(vecSpecies.size(), patch);
         
         return newEMfields;
     }

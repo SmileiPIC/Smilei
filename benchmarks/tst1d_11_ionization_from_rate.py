@@ -59,7 +59,6 @@ Main(
 
 	reference_angular_frequency_SI = 6*math.pi*1e14,
 
-	random_seed = smilei_mpi_rank
 )
 
 Species(
@@ -74,7 +73,7 @@ Species(
 	mass = 1836.0*14.,
 	charge = 0.0,
 	number_density = carbon_density_profile,
-	boundary_conditions = [["periodic"]]
+	boundary_conditions = [["remove"]]
 )
 
 Species(
@@ -85,7 +84,7 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = 0.0,
-	boundary_conditions = [["periodic"]]
+	boundary_conditions = [["remove"]]
 )
 
 Species(
@@ -100,7 +99,7 @@ Species(
 	mass = 1836.0,
 	charge = 0.0,
 	number_density = 1.,
-	boundary_conditions = [["periodic"]]
+	boundary_conditions = [["remove"]]
 )
 
 Species(
@@ -111,7 +110,7 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = 0.0,
-	boundary_conditions = [["periodic"]]
+	boundary_conditions = [["remove"]]
 )
 
 ### DIAGNOSTICS

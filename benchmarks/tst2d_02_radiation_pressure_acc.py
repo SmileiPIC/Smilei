@@ -9,27 +9,26 @@ t0 = l0                # optical cycle
 Lsim = [6.*l0,10.*l0]  # length of the simulation
 Tsim = 10.*t0          # duration of the simulation
 resx = 100.            # nb of cells in on laser wavelength
-rest = 150.            # time of timestep in one optical cycle 
+rest = 150.            # time of timestep in one optical cycle
 
 Main(
     geometry = "2Dcartesian",
-    
+
     interpolation_order = 2 ,
-    
+
     cell_length = [l0/resx,l0/resx],
     grid_length  = Lsim,
-    
+
     number_of_patches = [ 8, 8 ],
-    
+
     timestep = t0/rest,
     simulation_time = Tsim,
-     
+
     EM_boundary_conditions = [
         ['silver-muller'],
         ['periodic'],
     ],
-    
-    random_seed = smilei_mpi_rank
+
 )
 
 
@@ -95,7 +94,7 @@ Species(
     boundary_conditions = [
         ["reflective", "reflective"],
         ["periodic", "periodic"],
-    ], 
+    ],
     time_frozen = 0.1
 )
 
@@ -137,4 +136,3 @@ DiagTrackParticles(
     species = "eon",
     every = 500,
 )
-

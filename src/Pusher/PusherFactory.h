@@ -55,7 +55,9 @@ public:
             
                 int n_envlaser = params.Laser_Envelope_model;
                 if( n_envlaser <1 ) {
-                    ERROR( "No Laser Envelope present. The pusher ponderomotive_boris can be used only in presence of a Laser Envelope." );
+                    ERROR_NAMELIST( "No Laser Envelope present." 
+                                <<  " The pusher ponderomotive_boris can be used only in presence of a Laser Envelope.",
+                    LINK_NAMELIST + std::string("#pusher"));
                 }
                 
                 Push = new PusherPonderomotiveBoris( params, species );
@@ -70,9 +72,10 @@ public:
             } else if( species->pusher_name_ == "higueracary" ) {
                 Push = new PusherHigueraCary( params, species );
             } else {
-                ERROR( "For species " << species->name_
+                ERROR_NAMELIST( "For species " << species->name_
                        << ": unknown pusher `"
-                       << species->pusher_name_ << "`" );
+                       << species->pusher_name_ << "`",
+                    LINK_NAMELIST + std::string("#pusher") );
             }
         }
         // Photon
@@ -80,15 +83,18 @@ public:
             if( species->pusher_name_ == "norm" ) {
                 Push = new PusherPhoton( params, species );
             } else {
-                ERROR( "For photon species " << species->name_
+                ERROR_NAMELIST( "For photon species " << species->name_
                        << ": unknown pusher `"
-                       << species->pusher_name_ << "`" );
+                       << species->pusher_name_ << "`",
+                   LINK_NAMELIST + std::string("#pusher") );
             }
         }
         
         if( params.Laser_Envelope_model ) {
             if( species->pusher_name_ != "ponderomotive_boris" ) {
-                ERROR( "For species " << species->name_ << " the only pusher available to interact with the envelope is ponderomotive_boris" );
+                ERROR_NAMELIST( "For species " << species->name_ 
+                << " the only pusher available to interact with the envelope is ponderomotive_boris",
+                LINK_NAMELIST + std::string("#pusher") );
             }
         }
         return Push;
@@ -106,12 +112,14 @@ public:
             }
             
             else {
-                ERROR( "For species " << species->name_
+                ERROR_NAMELIST( "For species " << species->name_
                        << ": unknown pusher `"
-                       << species->pusher_name_ << "`" );
+                       << species->pusher_name_ << "`",
+                   LINK_NAMELIST + std::string("#pusher") );
             }
         } else {
-            ERROR( "Ponderomotive pusher is not a valid choice for photons" );
+            ERROR_NAMELIST( "Ponderomotive pusher is not a valid choice for photons",
+            LINK_NAMELIST + std::string("#pusher"));
         }
         return Push_ponderomotive_position;
     }

@@ -31,7 +31,6 @@ Main(
 		['reflective'],
 	],
 
-	random_seed = smilei_mpi_rank
 )
 
 Vectorization(
@@ -60,7 +59,7 @@ Species(
 	time_frozen = Tsim,
 	boundary_conditions = [
 		["reflective", "reflective"],
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 )
 
@@ -77,7 +76,7 @@ Species(
 	time_frozen = 0.,
 	boundary_conditions = [
 		["reflective", "reflective"],
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 )
 

@@ -34,7 +34,7 @@ Main(
 
     number_of_patches =[npatch_x, 32],
     
-    clrw = nx/npatch_x,
+    cluster_width = nx/npatch_x,
 
     EM_boundary_conditions = [
        ["silver-muller","silver-muller"],
@@ -45,7 +45,6 @@ Main(
     print_every = 100,
     reference_angular_frequency_SI = 2.*math.pi * 3.e8/(Lmu*1.e-6),
 
-    random_seed = smilei_mpi_rank
 )
 
 

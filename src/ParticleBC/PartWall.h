@@ -80,6 +80,8 @@ public:
     }
     
 private:
+    double dt_;
+    
     //! The vector of partWall objects
     std::vector<PartWall *> vecPartWall;
     

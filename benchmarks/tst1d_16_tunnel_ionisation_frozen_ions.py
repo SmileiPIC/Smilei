@@ -28,7 +28,6 @@ Main(
 	
 	reference_angular_frequency_SI = 6*math.pi*1e14,
 	
-	random_seed = smilei_mpi_rank
 )
 
 Species(
@@ -43,7 +42,7 @@ Species(
 	charge = 0.0,
 	number_density = 0.1,
 	boundary_conditions = [
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 	time_frozen = 2.*Tsim,
 )
@@ -60,7 +59,7 @@ Species(
 	charge = 0.0,
 	number_density = 0.1,
 	boundary_conditions = [
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 	time_frozen = 2.*Tsim,
 )
@@ -74,7 +73,7 @@ Species(
 	charge = -1.0,
 	charge_density = 0.0,
 	boundary_conditions = [
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 )
 

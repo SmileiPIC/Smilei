@@ -58,7 +58,6 @@ Main(
     
     EM_boundary_conditions = [ ['silver-muller'] ],
     
-    random_seed = smilei_mpi_rank
 )
 
 LaserPlanar1D(
@@ -83,7 +82,7 @@ for pusher in pusher_list:
         mean_velocity = [0., 0.0, 0.0],
         temperature = [0.],
         pusher = pusher,
-	    boundary_conditions = [["periodic"]],
+	    boundary_conditions = [["remove"]],
         is_test = True
     )
     

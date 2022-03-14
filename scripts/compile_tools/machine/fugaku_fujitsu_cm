@@ -1,0 +1,77 @@
+#
+# Machine file for The Fugaku super-computer
+# using the Fujitsu compiler in clang mode
+# ______________________________________________________________________________
+#
+#
+# I. Compilation process on a compute node
+# ______________________________________________________________________________
+#
+# We recommend to use a compute node to compile.
+# The following environment has been tested successfully on the Fugaku super-computer.
+# For Python and HDF5 we use the Spack modules.
+#
+# ```bash
+# . /vol0004/apps/oss/spack/share/spack/setup-env.sh
+#  For python
+#  spack load /7sz6cn4
+#
+#  For Numpy
+#  spack load /q6rre3p
+#
+#  HDF5
+#  spack load /l53s4lp
+#
+#  export SMILEICXX=mpiFCCpx
+#  export HDF5_ROOT=/vol0004/apps/oss/spack-v0.16.2/opt/spack/linux-rhel8-a64fx/fj-4.6.1/hdf5-1.10.7-hza6f4rwqjon62z4q7a6vavtrkafvz35/
+# ```
+#
+# Note that the module names can change after system maintenance.
+# To get the latest module names, you can use the following commands:
+# ```
+# spack find -xl python
+# spack find -xl hdf5
+# spack find -xl py-numpy
+# ```
+# To get the path to the HDF5 installation, you can do:
+# ```
+# which h5c++
+# ```
+#
+# To compile, you can use the following job script:
+#
+# ```
+# #!/bin/sh -x
+# #PJM -N  "smilei"
+# #PJM -L  "node=1"                          # Assign node 1 node
+# #PJM -L  "rscgrp=small"                    # Specify resource group
+# #PJM -L  "elapse=00:30:00"                 # Elapsed time limit 1 hour
+# #PJM -x PJM_LLIO_GFSCACHE=/vol0004
+# #PJM -s
+#
+# source ~/env/smilei_env
+#
+# mpiFCC -show
+#
+# make -j 48 config="verbose" machine="fugaku_fujitsu_cm"
+# ```
+#
+# II. Interactive sessions
+# ______________________________________________________________________________
+#
+# pjsub --interact -L "node=1" -L "elapse=01:00:00" --sparam "wait-time=3600" -x PJM_LLIO_GFSCACHE=/vol0004
+#
+# III. Command memo
+# ______________________________________________________________________________
+#
+# - pjsub: job submission
+# - pjstat: display the state of the jobs
+# - pjdel: to kill a job
+#
+#
+# List of Fujitsu flags for optimization on A64FX
+# * `-Nlibomp`: LLVM OpenMP backend
+# * `-Nfjomplib`: Fujitsu OpenMP backend
+
+CXXFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp -ffj-zfill -msve-vector-bits=512 -D__AARCH64EL__="1"
+LDFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp -ffj-zfill -msve-vector-bits=512 -D__AARCH64EL__="1"

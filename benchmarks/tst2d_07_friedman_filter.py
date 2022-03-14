@@ -69,7 +69,7 @@ Main(
     maxwell_solver = 'Yee',
     
     number_of_patches = [16,16],
-    clrw = 1,
+    cluster_width = 1,
     
     # SIMULATION TIME
     # timestep: duration of the timestep
@@ -90,7 +90,6 @@ Main(
     
     # regular seed
     # this is used to regularize the regular number generator
-    random_seed = smilei_mpi_rank
 )
 
 CurrentFilter(

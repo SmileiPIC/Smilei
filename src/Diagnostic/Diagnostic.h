@@ -70,7 +70,7 @@ public :
     //! this is the file name
     std::string filename;
     
-    bool theTimeIsNow;
+    bool theTimeIsNow_;
     
     std::string name() {
         return diag_name_;

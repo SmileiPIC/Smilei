@@ -66,7 +66,7 @@ public:
     //! \param By y component of the particle magnetic field
     //! \param Bz z component of the particle magnetic field
     //#pragma omp declare simd
-    double inline computeParticleChi( double charge_over_mass2,
+    inline double __attribute__((always_inline)) computeParticleChi( double charge_over_mass2,
                                       double px, double py, double pz,
                                       double gamma,
                                       double Ex, double Ey, double Ez,

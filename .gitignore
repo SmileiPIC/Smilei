@@ -1,5 +1,6 @@
 build/*
 .*.swp
+*.lst
 *.d
 \#*\#
 *~
@@ -31,3 +32,4 @@ exec_script.sh.*
 .vscode*
 .DS_Store
 tables/*
+*.stats*

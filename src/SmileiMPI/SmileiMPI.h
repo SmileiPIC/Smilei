@@ -68,44 +68,44 @@ public:
     //     - during load balancing process
     //     - during moving window
     // -----------------------------------
-    void isend( Patch *patch, int to, int hindex, Params &params );
+    void isend( Patch *patch, int to, int tag, Params &params, bool send_xmax_bc = true );
     void waitall( Patch *patch );
-    void recv( Patch *patch, int from, int hindex, Params &params );
+    void recv( Patch *patch, int from, int tag, Params &params, bool recv_xmin_bc = true);
 
-    void isend_fields( Patch *patch, int to, int hindex, Params &params );
-    void recv_fields( Patch *patch, int from, int hindex, Params &params );
-    void isend_species( Patch *patch, int to, int &maxtag, int tag, Params &params );
+    void isend_fields( Patch *patch, int to, int &irequest, int tag, Params &params, bool send_xmax_bc = true );
+    void recv_fields( Patch *patch, int from, int &tag, Params &params, bool recv_xmin_bc = true );
+    void isend_species( Patch *patch, int to, int &irequest, int tag, Params &params );
     void recv_species( Patch *patch, int from, int &tag, Params &params );
 
-    void isend( Particles *particles, int to, int hindex, MPI_Datatype datatype, MPI_Request &request );
-    void recv( Particles *partictles, int from, int hindex, MPI_Datatype datatype );
-    void isend( std::vector<int> *vec, int to, int hindex, MPI_Request &request );
-    void recv( std::vector<int> *vec, int from, int hindex );
+    void isend( Particles *particles, int to, int tag, MPI_Datatype datatype, MPI_Request &request );
+    void recv( Particles *partictles, int from, int tag, MPI_Datatype datatype );
+    void isend( std::vector<int> *vec, int to, int tag, MPI_Request &request );
+    void recv( std::vector<int> *vec, int from, int tag );
 
-    void isend( std::vector<double> *vec, int to, int hindex, MPI_Request &request );
-    void recv( std::vector<double> *vec, int from, int hindex );
+    void isend( std::vector<double> *vec, int to, int tag, MPI_Request &request );
+    void recv( std::vector<double> *vec, int from, int tag );
 
-    void isend( ElectroMagn *fields, int to, int maxtag, std::vector<MPI_Request> &requests, int mpi_tag );
-    void isend( ElectroMagn *fields, int to, int maxtag, std::vector<MPI_Request> &requests, int mpi_tag, unsigned int nmodes );
-    void recv( ElectroMagn *fields, int from, int hindex );
-    void recv( ElectroMagn *fields, int from, int hindex, unsigned int nmodes );
-    void isend( Field *field, int to, int hindex, MPI_Request &request );
-    void isendComplex( Field *field, int to, int hindex, MPI_Request &request );
-    void recv( Field *field, int from, int hindex );
-    void recvComplex( Field *field, int from, int hindex );
+    void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, bool send_xmax_bc );
+    void isend( ElectroMagn *fields, int to, int &irequest, std::vector<MPI_Request> &requests, int tag, unsigned int nmodes, bool send_xmax_bc );
+    void recv( ElectroMagn *fields, int from, int &tag, bool recv_xmax_bc );
+    void recv( ElectroMagn *fields, int from, int &tag, unsigned int nmodes, bool recv_xmax_bc );
+    void isend( Field *field, int to, int tag, MPI_Request &request );
+    void isendComplex( Field *field, int to, int tag, MPI_Request &request );
+    void recv( Field *field, int from, int tag );
+    void recvComplex( Field *field, int from, int tag );
 
-    void sendComplex( Field *field, int to, int hindex );
-    void irecvComplex( Field *field, int from, int hindex, MPI_Request &request );
+    void sendComplex( Field *field, int to, int tag );
+    void irecvComplex( Field *field, int from, int tag, MPI_Request &request );
 
-    void isend( ProbeParticles *probe, int to, int hindex, unsigned int );
-    void recv( ProbeParticles *probe, int from, int hindex, unsigned int );
+    void isend( ProbeParticles *probe, int to, int tag, unsigned int );
+    void recv( ProbeParticles *probe, int from, int tag, unsigned int );
 
-    void isend( int *integer, int to, int hindex, unsigned int, MPI_Request &request );
-    void recv( int *integer, int from, int hindex, unsigned int );
+    void isend( int *integer, int to, int tag, unsigned int, MPI_Request &request );
+    void recv( int *integer, int from, int tag, unsigned int );
     
     // Functions for double grid exchange
-    void send( Field* field, int to  , int hindex );
-    void irecv( Field* field, int from, int hindex, MPI_Request& request );
+    void send( Field* field, int to  , int tag );
+    void irecv( Field* field, int from, int tag, MPI_Request& request );
 
     // DIAGS MPI SYNC
     // --------------

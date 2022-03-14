@@ -30,7 +30,6 @@ Main(
         ['silver-muller'],
     ],
     
-    random_seed = smilei_mpi_rank
 )
 
 angle = 25./180.*pi

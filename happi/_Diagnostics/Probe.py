@@ -259,7 +259,7 @@ class Probe(Diagnostic):
 		# Build units
 		titles = {}
 		fieldunits = {}
-		unitsForField = {"B":"B_r","E":"E_r","J":"J_r","R":"N_r","P":"V_r*K_r*N_r"}
+		unitsForField = {"B":"B_r","E":"E_r","J":"J_r","R":"Q_r*N_r","P":"V_r*K_r*N_r"}
 		self.time_integral = self._myinfo["time_integral"]
 		
 		for f in self._fieldname:
@@ -290,7 +290,10 @@ class Probe(Diagnostic):
 	def __del__(self):
 		if hasattr(self, "_h5probe"):
 			for file in self._h5probe:
-				file.close()
+				try:
+					file.close()
+				except Exception as e:
+					pass
 
 	# Method to print info previously obtained with getInfo
 	def _info(self, info=None):

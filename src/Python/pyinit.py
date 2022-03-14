@@ -83,6 +83,7 @@ class SmileiComponent(object):
         if kwargs is not None:
             deprecated = {
                 "output_format":"See documentation for radiation reaction",
+                "clrw":"See https://smileipic.github.io/Smilei/namelist.html#main-variables",
                 "h_chipa_min":"See documentation for radiation reaction",
                 "h_chipa_max":"See documentation for radiation reaction",
                 "h_dim":"See documentation for radiation reaction",
@@ -164,10 +165,11 @@ class Main(SmileiSingleton):
     simulation_time = None
     number_of_timesteps = None
     interpolation_order = 2
+    interpolator = "momentum-conserving"
     custom_oversize = 2
     number_of_patches = None
     patch_arrangement = "hilbertian"
-    clrw = -1
+    cluster_width = -1
     every_clean_particles_overhead = 100
     timestep = None
     number_of_AM = 2
@@ -195,6 +197,7 @@ class Main(SmileiSingleton):
     EM_boundary_conditions = [["periodic"]]
     EM_boundary_conditions_k = []
     save_magnectic_fields_for_SM = True
+    number_of_pml_cells = [[10,10],[10,10],[10,10]]
     time_fields_frozen = 0.
     Laser_Envelope_model = False
 
@@ -203,6 +206,8 @@ class Main(SmileiSingleton):
     print_every = None
     random_seed = None
     print_expected_disk_usage = True
+
+    terminal_mode = True
 
     def __init__(self, **kwargs):
         # Load all arguments to Main()
@@ -240,9 +245,34 @@ class Main(SmileiSingleton):
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
 
+                # M4
+                elif Main.maxwell_solver == 'M4':
+                    if Main.geometry == '1Dcartesian':
+                        Main.timestep = Main.timestep_over_CFL * Main.cell_length[0];
+                    elif Main.geometry == '2Dcartesian':
+                        Main.timestep = Main.timestep_over_CFL * min(Main.cell_length[0:2])
+                    elif Main.geometry == '3Dcartesian':
+                        Main.timestep = Main.timestep_over_CFL * min(Main.cell_length)
+                    else:
+                        raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
+
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
+
+        # Constraint on timestep for WT interpolation
+        if Main.interpolator.lower() == "wt":
+            if Main.geometry == '1Dcartesian':
+                if Main.timestep > 0.5 * Main.cell_length[0]:
+                    raise Exception("timestep for WT cannot be larger than 0.5*dx")
+            elif Main.geometry == '2Dcartesian':
+                if Main.timestep > 0.5 * min(Main.cell_length[0:2]):
+                    raise Exception("timestep for WT cannot be larger than 0.5*min(dx,dy)")
+            elif Main.geometry == '3Dcartesian':
+                if Main.timestep > 0.5 * min(Main.cell_length):
+                    raise Exception("timestep for WT cannot be larger than 0.5*min(dx,dy,dz)")
+            else:
+                raise Exception("WT interpolation not implemented in geometry "+Main.geometry)
 
         # Initialize simulation_time if not defined by the user
         if Main.simulation_time is None:
@@ -428,6 +458,7 @@ class Collisions(SmileiComponent):
     species2 = None
     coulomb_log = 0.
     coulomb_log_factor = 1.
+    every = 1
     debug_every = 0
     ionizing = False
     nuclear_reaction = None
@@ -529,6 +560,7 @@ class Antenna(SmileiComponent):
     field = None
     time_profile  = None
     space_profile = None
+    space_time_profile = None
 
 # Particle wall
 class PartWall(SmileiComponent):

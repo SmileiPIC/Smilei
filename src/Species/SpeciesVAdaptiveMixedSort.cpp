@@ -75,7 +75,7 @@ void SpeciesVAdaptiveMixedSort::resizeCluster( Params &params )
 
         // We keep the current number of particles
         // int npart = particles->last_index[particles->last_index.size()-1];
-        // int size = params.n_space[0]/clrw;
+        // int size = params.n_space[0]/cluster_width_;
 
         particles->last_index.resize( ncells, 0 );
         particles->first_index.resize( ncells, 0 );

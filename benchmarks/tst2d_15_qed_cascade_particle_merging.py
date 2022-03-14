@@ -72,16 +72,15 @@ EM_boundary_conditions = [["silver-muller","silver-muller"],["periodic","periodi
 
 # Density profile for inital location of the particles
 def n0_electron(x,y):
-    if (0.5*(Lx-dx)<x<0.5*(Lx+dx)): #and 0.49*Ly<y<0.51*Ly and 0.49*Lz<z<0.51*Lz
+    if 0.5*(Lx-dx)<x<0.5*(Lx+dx): #and 0.49*Ly<y<0.51*Ly and 0.49*Lz<z<0.51*Lz
       return n0
     else:
-      return 0;
+      return 0
 
 # _____________________________________________________________________________
 # Namelist
 
 Main(
-
     geometry = "2Dcartesian",
     interpolation_order = 2,
     cell_length = [dx,dy],
@@ -92,10 +91,9 @@ Main(
     EM_boundary_conditions = EM_boundary_conditions,
     print_every = 100,
     random_seed = 0,
-    clrw = 1,
+    cluster_width = 1,
     patch_arrangement = 'linearized_XY',
     reference_angular_frequency_SI = angular_frequency,
-
 )
 
 LaserPlanar1D(
@@ -107,8 +105,8 @@ LaserPlanar1D(
 #    incidence_angle = [0., 0.],
     polarization_phi = 0.,
     ellipticity     = 0,
-    time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=4)
-#    time_envelope  = tsin2plateau(start=start,plateau=duration,slope1=ramp,slope2=ramp)
+    time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=4),
+#    time_envelope  = tsin2plateau(start=start,plateau=duration,slope1=ramp,slope2=ramp),
 )
 
 LaserPlanar1D(
@@ -120,8 +118,8 @@ LaserPlanar1D(
 #    incidence_angle = [0., 0.],
     polarization_phi = 0.,
     ellipticity     = 0,
-    time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=4)
-#    time_envelope  = tsin2plateau(start=start,plateau=duration,slope1=ramp,slope2=ramp)
+    time_envelope  = tgaussian(start=start,duration=duration,fwhm=fwhm,center=center,order=4),
+#    time_envelope  = tsin2plateau(start=start,plateau=duration,slope1=ramp,slope2=ramp),
 )
 
 Species(

@@ -65,12 +65,12 @@ void RadiationCorrLandauLifshitz::operator()(
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
     int nparts = Epart->size()/3;
-    double *Ex = &( ( *Epart )[0*nparts] );
-    double *Ey = &( ( *Epart )[1*nparts] );
-    double *Ez = &( ( *Epart )[2*nparts] );
-    double *Bx = &( ( *Bpart )[0*nparts] );
-    double *By = &( ( *Bpart )[1*nparts] );
-    double *Bz = &( ( *Bpart )[2*nparts] );
+    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
+    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
     // Charge divided by the square of the mass
     double charge_over_mass_square;
@@ -88,21 +88,22 @@ void RadiationCorrLandauLifshitz::operator()(
     double temp;
 
     // Momentum shortcut
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
+    double * __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double * __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double * __restrict__ momentum_z = particles.getPtrMomentum(2);
 
     // Charge shortcut
-    short *charge = particles.getPtrCharge();
+    short * __restrict__ charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double *weight = particles.getPtrWeight();
+    double * __restrict__ weight = particles.getPtrWeight();
 
     // Optical depth for the Monte-Carlo process
-    double* chi = particles.getPtrChi();
+    double * __restrict__ chi = particles.getPtrChi();
 
     // Local vector to store the radiated energy
-    double * rad_norm_energy = new double [iend-istart];
+    // double * rad_norm_energy = new double [iend-istart];
+    double  * rad_norm_energy = (double*) aligned_alloc(64, (iend-istart)*sizeof(double));
     #pragma omp simd
     for( int ipart=0 ; ipart<iend-istart; ipart++ ) {
         rad_norm_energy[ipart] = 0;
@@ -126,8 +127,8 @@ void RadiationCorrLandauLifshitz::operator()(
         particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                        momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                        gamma,
-                       ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                       ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+                       Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref] ,
+                       Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
         // Effect on the momentum
         // (Should be vectorized with masked instructions)
@@ -178,8 +179,8 @@ void RadiationCorrLandauLifshitz::operator()(
         chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
                        momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                        gamma,
-                       ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                       ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+                       Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
+                       Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
     }
 
@@ -189,6 +190,6 @@ void RadiationCorrLandauLifshitz::operator()(
     // _______________________________________________________________
     // Cleaning
 
-    delete [] rad_norm_energy;
+    free(rad_norm_energy);
 
 }

@@ -238,6 +238,10 @@ pre, code {
 	font-size: {{ theme_code_font_size }};
 }
 
+code span.pre {
+	white-space: pre-line;
+}
+
 img.screenshot {
 }
 
@@ -245,7 +249,7 @@ img.screenshot {
 	margin:0
 }
 
-code.descname, code.descclassname {
+code.descname, code.descclassname, span.descname, span.descclassname {
 	font-size: 0.95em;
 	color: {{ theme_keyword_color }};
 }
@@ -944,7 +948,7 @@ div.toctree-smilei hr {
 }
 
 /* ---- MathJax display issues ------------*/
-.MathJax_Display {
+.MathJax_Display, .MathJax {
 	overflow-x: auto;
 	overflow-y: hidden;
 	z-index: 0;
@@ -992,6 +996,11 @@ div.toctree-smilei hr {
 	div.body {
 		min-height: 0;
 		padding: 0;
+	}
+	
+	div.body h1 {
+		padding: 0.1em 0.3em;
+		word-break: break-all;
 	}
 	
 	div.header {

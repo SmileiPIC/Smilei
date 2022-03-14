@@ -7,12 +7,15 @@
 #include "ElectroMagnBC1D_refl.h"
 #include "ElectroMagnBC2D_SM.h"
 #include "ElectroMagnBC2D_refl.h"
+#include "ElectroMagnBC2D_PML.h"
 #include "ElectroMagnBC3D_SM.h"
 #include "ElectroMagnBC3D_refl.h"
 #include "ElectroMagnBC3D_BM.h"
+#include "ElectroMagnBC3D_PML.h"
 #include "ElectroMagnBCAM_SM.h"
 #include "ElectroMagnBCAM_ramp.h"
 #include "ElectroMagnBCAM_BM.h"
+#include "ElectroMagnBCAM_PML.h"
 
 #include "Params.h"
 
@@ -74,6 +77,10 @@ public:
                 else if( params.EM_BCs[0][ii] == "reflective" ) {
                     emBoundCond[ii] = new ElectroMagnBC2D_refl( params, patch, ii );
                 }
+                // pml bcs
+                else if( params.EM_BCs[0][ii] == "PML" ) {
+                    emBoundCond[ii] = new ElectroMagnBC2D_PML( params, patch, ii );
+                }
                 // else: error
                 else if( params.EM_BCs[0][ii] != "periodic" ) {
                     ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`" );
@@ -87,6 +94,10 @@ public:
                 // reflective bcs
                 else if( params.EM_BCs[1][ii] == "reflective" ) {
                     emBoundCond[ii+2] = new ElectroMagnBC2D_refl( params, patch, ii+2 );
+                }
+                // pml bcs
+                else if( params.EM_BCs[1][ii] == "PML" ) {
+                    emBoundCond[ii+2] = new ElectroMagnBC2D_PML( params, patch, ii+2 );
                 }
                 // else: error
                 else if( params.EM_BCs[1][ii] != "periodic" ) {
@@ -115,6 +126,10 @@ public:
                 else if( params.EM_BCs[0][ii] == "buneman" ) {
                     emBoundCond[ii] = new ElectroMagnBC3D_BM( params, patch, ii );
                 }
+                // pml bcs (absorbing)
+                else if( params.EM_BCs[0][ii] == "PML" ) {
+                    emBoundCond[ii] = new ElectroMagnBC3D_PML( params, patch, ii );
+                }
                 // else: error
                 else if( params.EM_BCs[0][ii] != "periodic" ) {
                     ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`" );
@@ -133,6 +148,10 @@ public:
                 else if( params.EM_BCs[1][ii] == "buneman" ) {
                     emBoundCond[ii+2] = new ElectroMagnBC3D_BM( params, patch, ii+2 );
                 }
+                // pml bcs (absorbing)
+                else if( params.EM_BCs[1][ii] == "PML" ) {
+                    emBoundCond[ii+2] = new ElectroMagnBC3D_PML( params, patch, ii+2 );
+                }
                 // else: error
                 else if( params.EM_BCs[1][ii] != "periodic" ) {
                     ERROR( "Unknown EM y-boundary condition `" << params.EM_BCs[1][ii] << "`" );
@@ -150,6 +169,10 @@ public:
                 // Buneman bcs (absorbing)
                 else if( params.EM_BCs[2][ii] == "buneman" ) {
                     emBoundCond[ii+4] = new ElectroMagnBC3D_BM( params, patch, ii+4 );
+                }
+                // pml bcs (absorbing)
+                else if( params.EM_BCs[2][ii] == "PML" ) {
+                    emBoundCond[ii+4] = new ElectroMagnBC3D_PML( params, patch, ii+4 );
                 }
                 // else: error
                 else if( params.EM_BCs[2][ii] != "periodic" ) {
@@ -181,18 +204,28 @@ public:
                     }
                     emBoundCond[ii] = new ElectroMagnBCAM_ramp( params, patch, ii, ncells );
                 }
+                else if( params.EM_BCs[0][ii] == "PML" ) {
+                    emBoundCond[ii] = new ElectroMagnBCAM_PML( params, patch, ii );
+                }
                 else if( params.EM_BCs[0][ii] != "periodic" ) {
                     ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`" );
                 }
             }
             
             // R DIRECTION
-            emBoundCond[2] = NULL ; //Axis BC are handeled directly in solvers.
+            if( params.EM_BCs[1][0] == "PML" ) {
+                emBoundCond[2] = new ElectroMagnBCAM_PML( params, patch, 2 );
+            }
+            else {
+                emBoundCond[2] = NULL ; //Axis BC are handeled directly in solvers.
+            }
             if( params.EM_BCs[1][1] == "periodic" ) {
                 ERROR( "Periodic EM Rmax-boundary condition is not supported`" );
             } else if( params.EM_BCs[1][1] == "buneman" ) {
                 emBoundCond[3] = new ElectroMagnBCAM_BM( params, patch, 3 );
-            } else if( params.is_spectral ) {
+            } else if( params.EM_BCs[1][1] == "PML" ) {
+                emBoundCond[3] = new ElectroMagnBCAM_PML( params, patch, 3 );
+            } else if (params.is_spectral) {
                 emBoundCond[3] = NULL ;
             } else  {
                 ERROR( "Unknown EM Rmax-boundary condition `" << params.EM_BCs[1][1] << "`" );

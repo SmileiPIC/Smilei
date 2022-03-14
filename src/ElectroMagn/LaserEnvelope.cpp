@@ -38,11 +38,9 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     
     ostringstream name( "" );
     name << "Laser Envelope " << endl;
-    ostringstream info( "" );
     
     // extract laser frequency
     PyTools::extract( "omega", omega, "LaserEnvelope" );
-    info << "\t\tomega : " << omega << endl;
 
     // Read laser envelope parameters
     PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" );
@@ -51,11 +49,8 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
         ERROR("Unknown envelope_solver - only 'explicit' and 'explicit_reduced_dispersion' are available. ");
     }
 
-    
     PyTools::extract( "polarization_phi", polarization_phi, "LaserEnvelope" );
     PyTools::extract( "ellipticity", ellipticity, "LaserEnvelope" );
-    info << "\t\tpolarization angle : " << polarization_phi << endl;
-    info << "\t\tellipticity        : " << ellipticity << endl;
     if ((ellipticity != 0.) and (ellipticity != 1.)){
         ERROR("For the moment, only ellipticity = 0 (linear polarization) or ellipticity = 1 (circular polarization) are available");
     }
@@ -83,30 +78,8 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
 
     
     delta = ( 1.-pow((timestep/cell_length[0]),2)) / 3. ;
-
-    info << "\t Laser Envelope parameters: "<< endl;
-    // envelope solver
-    info << "\t\tEnvelope solver    : " << envelope_solver << endl;
-    
-    
-    // a0
-    //info << "\t\t\ta0                 : " << a0_laser << endl;
-    // waist
-    //info << "\t\t\twaist              : " << waist_laser << endl;
-    
-    // Display info
-    if( patch->isMaster() ) {
-        MESSAGE( info.str() );
-    }
     
     EnvBoundCond = EnvelopeBC_Factory::create( params, patch );
-    
-    if( patch->isMaster() ) {
-        for( unsigned int i=0 ; i<params.grid_length.size() ; i++ ) {
-            MESSAGE( 1, "\tdimension " << i );
-            MESSAGE( 1, "\t- Envelope boundary conditions: " << "(" << params.Env_BCs[i][0] << ", " << params.Env_BCs[i][1] << ")" );
-        }
-    }
 
     GradPhix_  = NULL;
     GradPhix_m = NULL;

@@ -20,21 +20,6 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present 
-* Lasers can be injected from all boundaries
-* Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
-* Probes can be time-integrated
-* ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
-* Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
-* ``LaserOffset`` may be re-used from a previous simulation
-* ``LaserOffset`` available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
-* Screens may have a ``cylinder`` shape
-* Option to create neutrons for D-D fusion
-* Bugfixes:
-
-  * Poynting scalars behaviour with several patches, or with checkpoints
-  * Densities too low are put to 0 to avoid underflow
-  * Prescribed fields in 2D
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
@@ -45,15 +30,62 @@ Projects
 
 * Already available, but experimental:
 
-  * Interface with the PICSAR library for AM spectral solver
   * :doc:`SDMD`
   * Particle merging
   * Nuclear reactions
+  * Interface with the PICSAR library for AM spectral solver
 
-* In the future:
+* In preparation:
 
+  * Perfectly-matched layers for the envelope model
   * More spectral solvers
   * GPU support
+
+
+----
+
+Release 4.7
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.7 <_downloads/smilei-v4.7.tar.gz>`_
+
+* **Perfectly Matched Layers** boundary conditions for EM fields (+2D Cartesian benchmark).
+* Improved performance for ARM-based processors including the Fujitsu A64FX
+* Improved performance for GNU, LLVM, arm-clang and Fujitsu compilers on all types of architectures
+* Lasers can be injected from all boundaries
+* Flag ``ponderomotive_dynamics`` removed from ``Species`` block. All ``Species`` interact with ``LaserEnvelope`` if present 
+* Option to create neutrons for D-D fusion
+* Collisions can be done less often
+* Lasers can be injected from all boundaries
+* New 4th-order non-standard FDTD solver ``M4``
+* Timestep dependent field interpolation scheme
+* ``LaserOffset``:
+
+  * may be re-used from a previous simulation
+  * available from ``ymin``, ``ymax``, ``zmin`` and ``zmax``
+  * has new arguments ``fft_time_window`` and ``fft_time_step``
+
+* Diagnostics:
+
+  * Probes can include components of the Poynting vector ``PoyX``, ``PoyY``, ``PoyZ``
+  * Probes can be time-integrated
+  * ``ParticleBinning`` diagnostics may accept ``"auto"`` as axis limits
+  * Particle IDs may be modified in the ``DiagTrackParticles.filter`` (8 available bits)
+  * Screens may have a ``cylinder`` shape
+  * Scalar diagnostics for AM geometry now available
+  * happi ``ParticleBinning`` now uses the keyword ``average`` instead of ``sum``
+
+* Bugfixes:
+
+  * Poynting scalars behaviour with several patches, or with checkpoints
+  * Densities too low are put to 0 to avoid underflow
+  * Prescribed fields in 2D
+  * ``ellipticity = -1.`` was doing ``+1.``
+  * Setting ``units`` in happi's ``TrackParticles`` was wrong (for plotting only)
+  * Current communication correction for FIR filters
+  * Fix for particle merging segmentation fault in spherical and Cartesian modes
+  * Tracked particles with the vectorized mode
+  * ``momentum_initialization`` from a file did not take the proper file
 
 ----
 
