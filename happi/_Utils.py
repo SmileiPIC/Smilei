@@ -275,7 +275,7 @@ class Units(object):
 	def _getUnits(self, units):
 		if self.UnitRegistry:
 			u = self.ureg(units)
-			try: u = u.units.format_babel()
+			try: u = u.units.format_babel(locale="en")
 			except Exception as e: u = ""
 			return u
 		else:

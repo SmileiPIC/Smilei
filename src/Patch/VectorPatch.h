@@ -74,7 +74,10 @@ public :
     //! Resize vector of field*
     void updateFieldList( SmileiMPI *smpi );
     void updateFieldList( int ispec, SmileiMPI *smpi );
-    
+
+    void buildPMLList( std::string fieldname, int idim, int min_or_max, SmileiMPI *smpi );
+    void buildPMLList( std::string fieldname, int idim, int min_or_max, SmileiMPI *smpi, int imode );
+
     //! Create the diagnostic list
     void createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &, RadiationTables * radiation_tables_ );
     
@@ -282,6 +285,7 @@ public :
     std::vector<Field *> listBx_;
     std::vector<Field *> listBy_;
     std::vector<Field *> listBz_;
+    std::vector<Field *> listForPML_;
     
     std::vector<Field *> listA_;
     std::vector<Field *> listA0_;

@@ -132,7 +132,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
     Boundary conditions must be set to ``"remove"`` for particles,
     ``"silver-muller"`` for longitudinal EM boundaries and
     ``"buneman"`` for transverse EM boundaries.
-    Vectorization, collisions, scalar diagnostics and
+    You can alternatively use ``"PML"`` for all boundaries.
+    Vectorization, collisions and
     order-4 interpolation are not supported yet.
 
 .. py:data:: interpolation_order
@@ -272,7 +273,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[["periodic"]]``
 
   The boundary conditions for the electromagnetic fields. Each boundary may have one of
-  the following conditions: ``"periodic"``, ``"silver-muller"``, ``"reflective"`` or ``"ramp??"``.
+  the following conditions: ``"periodic"``, ``"silver-muller"``, ``"reflective"``, ``"ramp??"`` or ``"PML"``.
 
   | **Syntax 1:** ``[[bc_all]]``, identical for all boundaries.
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
@@ -294,6 +295,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
     Over the first half, the fields remain untouched.
     Over the second half, all fields are progressively reduced down to zero.
 
+  * ``"PML"`` stands for Perfectly Matched Layer. It is an open boundary condition.
+    The number of cells in the layer is defined by ``"number_of_pml_cells"``.
+    It supports laser injection as in ``"silver-muller"``.
+
+  .. warning::
+
+    In the current release, in order to use PML all ``"EM_boundary_conditions"`` of the simulation must be ``"PML"``.
+
 .. py:data:: EM_boundary_conditions_k
 
   :type: list of lists of floats
@@ -310,6 +319,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
+
+.. py:data:: number_of_pml_cells
+
+  :type: list of lists of integer
+  :default: ``[[6,6],[6,6],[6,6]]``
+
+  Defines the number of cells in the ``"PML"`` layers using the same alternative syntaxes as ``"EM_boundary_conditions"``.
 
 .. py:data:: time_fields_frozen
 
@@ -2280,7 +2296,7 @@ This is done by including the block ``DiagScalar``::
 
 .. warning::
 
-  Scalars diagnostics are not yet supported in ``"AMcylindrical"`` geometry.
+  Scalars diagnostics min/max cell are not yet supported in ``"AMcylindrical"`` geometry.
 
 The full list of available scalars is given in the table below.
 
