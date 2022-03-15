@@ -255,7 +255,7 @@ ifneq (,$(call parse_config,gpu_amd))
 
 	# TODO(Etienne M): gfx908 should not be fixed! It would be great if we could get the gpu arch at runtime(in the makefile)
     ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908
-	ACCELERATOR_GPU_FLAGS += -I/opt/rocm-4.5.0/hiprand/include -I/opt/rocm-4.5.0/rocrand/include
+	ACCELERATOR_GPU_FLAGS += -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
 
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
@@ -264,7 +264,7 @@ ifneq (,$(call parse_config,gpu_amd))
     ACCELERATOR_GPU_KERNEL_FLAGS += -O3 -std=c++14 $(DIRS:%=-I%)
     ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
 	# TODO(Etienne M): Remove the full path pointing to rocrand/hiprand and co. mipcc does not not know mpi (we would need an "mpihipcc")
-	ACCELERATOR_GPU_KERNEL_FLAGS += -I/opt/cray/pe/mpich/8.1.13/ofi/cray/10.0/include
+	ACCELERATOR_GPU_KERNEL_FLAGS += -I$(CRAY_MPICH_DIR)/include
 
 	OBJS += $(GPU_KERNEL_OBJS)
 
