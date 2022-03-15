@@ -245,6 +245,7 @@ ifneq (,$(call parse_config,gpu_amd))
 	# This gpu_amd config is not production ready and is meant, as of 4th/03/22,
 	# to be used "only" on the cines gpu porting machines.
 
+	# As of 15/03/22, there is no mpicxx on the Adastra porting machine
 	SMILEICXX.DEPS = $(SMILEICXX)
 	THRUSTCXX = hipcc
 
