@@ -11,18 +11,20 @@ class CollisionalFusionDD : public CollisionalNuclearReaction
 
 public:
     //! Constructor
-    CollisionalFusionDD( Params*, std::vector<Species*>*, double );
+    CollisionalFusionDD( Params&, std::vector<Species*>&, double );
     //! Cloning Constructor
     CollisionalFusionDD( CollisionalNuclearReaction * );
     //! Destructor
     ~CollisionalFusionDD() {};
     
+    std::string name() {
+        return "Nuclear reaction: D-D fusion";
+    };
+    
     //! Method to apply the nuclear reaction
     double crossSection( double log_ekin ) override;
     //! Method to prepare the products of the reaction
     void makeProducts(  Random* random, double ekin, double log_ekin, double tot_charge, NuclearReactionProducts &products ) override;
-    
-    std::string name() override { return "D-D fusion"; };
     
     //! static parameters to read the database
     static const double a1, a2, a3, npointsm1;

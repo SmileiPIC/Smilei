@@ -27,25 +27,25 @@ const double CollisionalFusionDD::DB_log_crossSection[50] = {
 
 // Constructor
 CollisionalFusionDD::CollisionalFusionDD(
-    Params *params,
-    vector<Species *> *product_species,
+    Params &params,
+    vector<Species *> &product_species,
     double rate_multiplier
 )
 : CollisionalNuclearReaction(params, product_species, rate_multiplier)
 {
     // Find which product is helium / neutron
-    index_He_ = product_species->size();
-    index_n_ = product_species->size();
-    for( unsigned int iprod = 0; iprod < product_species->size(); iprod++ ) {
-        if( product_species->at(iprod) ) {
-            if( product_species->at(iprod)->atomic_number_ == 2 ) {
+    index_He_ = product_species.size();
+    index_n_ = product_species.size();
+    for( unsigned int iprod = 0; iprod < product_species.size(); iprod++ ) {
+        if( product_species[iprod] ) {
+            if( product_species[iprod]->atomic_number_ == 2 ) {
                 index_He_ = iprod;
-            } else if( product_species->at(iprod)->atomic_number_ == 0 ) {
+            } else if( product_species[iprod]->atomic_number_ == 0 ) {
                 index_n_ = iprod;
             }
         }
     }
-    if( index_He_ >= product_species->size() ) {
+    if( index_He_ >= product_species.size() ) {
         ERROR( "Missing helium product in D-D fusion reaction" );
     }
 }

@@ -8,7 +8,7 @@
 #include <math.h>
 //#include <string>
 
-#include "Collisions.h"
+#include "BinaryProcesses.h"
 #include "DomainDecompositionFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
@@ -51,9 +51,9 @@ VectorPatch::~VectorPatch()
 void VectorPatch::close( SmileiMPI *smpiData )
 {
     // Close collision debug files
-    for( unsigned int icoll = 0; icoll < patches_[0]->vecCollisions.size(); icoll++ ) {
-        if( patches_[0]->vecCollisions[icoll]->debug_file_ ) {
-            delete patches_[0]->vecCollisions[icoll]->debug_file_;
+    for( unsigned int icoll = 0; icoll < patches_[0]->vecBPs.size(); icoll++ ) {
+        if( patches_[0]->vecBPs[icoll]->debug_file_ ) {
+            delete patches_[0]->vecBPs[icoll]->debug_file_;
         }
     }
     
@@ -3784,30 +3784,30 @@ void VectorPatch::applyAntennas( double time )
     }
 }
 
-// For each patch, apply the collisions
-void VectorPatch::applyCollisions( Params &params, int itime, Timers &timers )
+// For each patch, apply the binary processes
+void VectorPatch::applyBinaryProcesses( Params &params, int itime, Timers &timers )
 {
     timers.collisions.restart();
 
-    if( Collisions::debye_length_required ) {
+    if( BinaryProcesses::debye_length_required_ ) {
         #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-            Collisions::calculate_debye_length( params, patches_[ipatch] );
+            BinaryProcesses::calculate_debye_length( params, patches_[ipatch] );
         }
     }
 
-    unsigned int ncoll = patches_[0]->vecCollisions.size();
+    unsigned int ncoll = patches_[0]->vecBPs.size();
 
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         for( unsigned int icoll=0 ; icoll<ncoll; icoll++ ) {
-            patches_[ipatch]->vecCollisions[icoll]->collide( params, patches_[ipatch], itime, localDiags );
+            patches_[ipatch]->vecBPs[icoll]->apply( params, patches_[ipatch], itime, localDiags );
         }
     }
 
     #pragma omp single
     for( unsigned int icoll=0 ; icoll<ncoll; icoll++ ) {
-        Collisions::debug( params, itime, icoll, *this );
+        BinaryProcesses::debug( params, itime, icoll, *this );
     }
     #pragma omp barrier
 
