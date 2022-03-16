@@ -244,9 +244,11 @@ ifneq (,$(call parse_config,gpu_amd))
 	# Note:
 	# This gpu_amd config is not production ready and is meant, as of 4th/03/22,
 	# to be used "only" on the cines gpu porting machines.
+	# It expects CCE (cray compiler).
 
 	# As of 15/03/22, there is no mpicxx on the Adastra porting machine
 	SMILEICXX.DEPS = $(SMILEICXX)
+	# THRUSTCXX = $(SMILEICXX)
 	THRUSTCXX = hipcc
 
 	WARNING_FLAGS := -Wextra -pedantic
@@ -263,8 +265,9 @@ ifneq (,$(call parse_config,gpu_amd))
 	# TODO(Etienne M): It would be nice to specify which gpu we target, default arch is gfx803.
     ACCELERATOR_GPU_KERNEL_FLAGS += -O3 -std=c++14 $(DIRS:%=-I%)
     ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
-	# TODO(Etienne M): Remove the full path pointing to rocrand/hiprand and co. mipcc does not not know mpi (we would need an "mpihipcc")
 	ACCELERATOR_GPU_KERNEL_FLAGS += -I$(CRAY_MPICH_DIR)/include
+	# ACCELERATOR_GPU_KERNEL_FLAGS += --hip-path=$(HIP_PATH) -x hip
+	# ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
 
 	OBJS += $(GPU_KERNEL_OBJS)
 
@@ -303,6 +306,8 @@ default: $(EXEC) $(EXEC)_test
 
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
+	$(Q) rm -rf $(EXEC)
+	$(Q) rm -rf $(EXEC)_test
 	$(Q) rm -rf $(BUILD_DIR)
 	$(Q) rm -rf $(EXEC)-$(VERSION).tgz
 

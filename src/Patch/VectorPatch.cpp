@@ -3912,6 +3912,8 @@ void VectorPatch::saveExternalFields( Params &params )
 // Combines info on memory from all MPI processes
 std::string combineMemoryConsumption(SmileiMPI *smpi, long int data, std::string name) {
     long int maxData = 0;
+    // CHECK(): Should it be MPI_INT or MPI_LONG ? Historically, it was MPI_INT 
+    // MPI_Reduce(&data, &maxData, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&data, &maxData, 1, MPI_LONG, MPI_MAX, 0, MPI_COMM_WORLD);
 
     double globalData = static_cast<double>(data) / (1024.0 * 1024.0 * 1024.0);
