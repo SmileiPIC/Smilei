@@ -4027,7 +4027,7 @@ void VectorPatch::saveExternalFields( Params &params )
 string combineMemoryConsumption( SmileiMPI *smpi, long int data, string name )
 {
     long int maxData( 0 );
-    MPI_Reduce( &data, &maxData, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    MPI_Reduce( &data, &maxData, 1, MPI_LONG, MPI_MAX, 0, MPI_COMM_WORLD );
 
     double globalData = ( double )data / 1024./1024./1024.;
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalData, &globalData, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
