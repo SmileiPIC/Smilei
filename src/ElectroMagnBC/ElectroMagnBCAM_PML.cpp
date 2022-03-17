@@ -513,300 +513,300 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         }
     }
     else if( i_boundary_ == 2 && patch->isYmin() ) {
-        // ERROR("PML not allow on the symetric axis")
+        // // ERROR("PML not allow on the symetric axis")
 
-        ElectroMagnBCAM_PML* pml_fields_lmin = NULL ;
-        ElectroMagnBCAM_PML* pml_fields_lmax = NULL ;
+        // ElectroMagnBCAM_PML* pml_fields_lmin = NULL ;
+        // ElectroMagnBCAM_PML* pml_fields_lmax = NULL ;
 
-        if(ncells_pml_lmin != 0){
-            pml_fields_lmin = static_cast<ElectroMagnBCAM_PML*>( EMfields->emBoundCond[0] );
-        }
-        if(ncells_pml_lmax != 0){
-            pml_fields_lmax = static_cast<ElectroMagnBCAM_PML*>( EMfields->emBoundCond[1] );
-        }
+        // if(ncells_pml_lmin != 0){
+        //     pml_fields_lmin = static_cast<ElectroMagnBCAM_PML*>( EMfields->emBoundCond[0] );
+        // }
+        // if(ncells_pml_lmax != 0){
+        //     pml_fields_lmax = static_cast<ElectroMagnBCAM_PML*>( EMfields->emBoundCond[1] );
+        // }
 
-        cField2D* El_pml_lmin = NULL;
-        cField2D* Er_pml_lmin = NULL;
-        cField2D* Et_pml_lmin = NULL;
-        cField2D* Hl_pml_lmin = NULL;
-        cField2D* Hr_pml_lmin = NULL;
-        cField2D* Ht_pml_lmin = NULL;
-        cField2D* Dl_pml_lmin = NULL;
-        cField2D* Dr_pml_lmin = NULL;
-        cField2D* Dt_pml_lmin = NULL;
-        cField2D* Bl_pml_lmin = NULL;
-        cField2D* Br_pml_lmin = NULL;
-        cField2D* Bt_pml_lmin = NULL;
+        // cField2D* El_pml_lmin = NULL;
+        // cField2D* Er_pml_lmin = NULL;
+        // cField2D* Et_pml_lmin = NULL;
+        // cField2D* Hl_pml_lmin = NULL;
+        // cField2D* Hr_pml_lmin = NULL;
+        // cField2D* Ht_pml_lmin = NULL;
+        // cField2D* Dl_pml_lmin = NULL;
+        // cField2D* Dr_pml_lmin = NULL;
+        // cField2D* Dt_pml_lmin = NULL;
+        // cField2D* Bl_pml_lmin = NULL;
+        // cField2D* Br_pml_lmin = NULL;
+        // cField2D* Bt_pml_lmin = NULL;
 
-        cField2D* El_pml_lmax = NULL;
-        cField2D* Er_pml_lmax = NULL;
-        cField2D* Et_pml_lmax = NULL;
-        cField2D* Hl_pml_lmax = NULL;
-        cField2D* Hr_pml_lmax = NULL;
-        cField2D* Ht_pml_lmax = NULL;
-        cField2D* Dl_pml_lmax = NULL;
-        cField2D* Dr_pml_lmax = NULL;
-        cField2D* Dt_pml_lmax = NULL;
-        cField2D* Bl_pml_lmax = NULL;
-        cField2D* Br_pml_lmax = NULL;
-        cField2D* Bt_pml_lmax = NULL;
+        // cField2D* El_pml_lmax = NULL;
+        // cField2D* Er_pml_lmax = NULL;
+        // cField2D* Et_pml_lmax = NULL;
+        // cField2D* Hl_pml_lmax = NULL;
+        // cField2D* Hr_pml_lmax = NULL;
+        // cField2D* Ht_pml_lmax = NULL;
+        // cField2D* Dl_pml_lmax = NULL;
+        // cField2D* Dr_pml_lmax = NULL;
+        // cField2D* Dt_pml_lmax = NULL;
+        // cField2D* Bl_pml_lmax = NULL;
+        // cField2D* Br_pml_lmax = NULL;
+        // cField2D* Bt_pml_lmax = NULL;
 
-        // 1. Solve Maxwell_PML for E-field :
-        // As if B-field isn't updated
-        pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
-        //pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
+        // // 1. Solve Maxwell_PML for E-field :
+        // // As if B-field isn't updated
+        // pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
+        // //pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
 
-        for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
-            cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
-            cField2D *Er_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
-            cField2D *Et_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
-            cField2D *Bl_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_[imode];
-            cField2D *Br_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
-            cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
+        // for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
+        //     cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
+        //     cField2D *Er_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
+        //     cField2D *Et_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
+        //     cField2D *Bl_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_[imode];
+        //     cField2D *Br_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
+        //     cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
 
-            if(ncells_pml_lmin != 0){
-                El_pml_lmin = pml_fields_lmin->El_[imode];
-                Er_pml_lmin = pml_fields_lmin->Er_[imode];
-                Et_pml_lmin = pml_fields_lmin->Et_[imode];
-                Hl_pml_lmin = pml_fields_lmin->Hl_[imode];
-                Hr_pml_lmin = pml_fields_lmin->Hr_[imode];
-                Ht_pml_lmin = pml_fields_lmin->Ht_[imode];
-                Dl_pml_lmin = pml_fields_lmin->Dl_[imode];
-                Dr_pml_lmin = pml_fields_lmin->Dr_[imode];
-                Dt_pml_lmin = pml_fields_lmin->Dt_[imode];
-                Bl_pml_lmin = pml_fields_lmin->Bl_[imode];
-                Br_pml_lmin = pml_fields_lmin->Br_[imode];
-                Bt_pml_lmin = pml_fields_lmin->Bt_[imode];
-            }
+        //     if(ncells_pml_lmin != 0){
+        //         El_pml_lmin = pml_fields_lmin->El_[imode];
+        //         Er_pml_lmin = pml_fields_lmin->Er_[imode];
+        //         Et_pml_lmin = pml_fields_lmin->Et_[imode];
+        //         Hl_pml_lmin = pml_fields_lmin->Hl_[imode];
+        //         Hr_pml_lmin = pml_fields_lmin->Hr_[imode];
+        //         Ht_pml_lmin = pml_fields_lmin->Ht_[imode];
+        //         Dl_pml_lmin = pml_fields_lmin->Dl_[imode];
+        //         Dr_pml_lmin = pml_fields_lmin->Dr_[imode];
+        //         Dt_pml_lmin = pml_fields_lmin->Dt_[imode];
+        //         Bl_pml_lmin = pml_fields_lmin->Bl_[imode];
+        //         Br_pml_lmin = pml_fields_lmin->Br_[imode];
+        //         Bt_pml_lmin = pml_fields_lmin->Bt_[imode];
+        //     }
 
-            if(ncells_pml_lmax != 0){
-                El_pml_lmax = pml_fields_lmax->El_[imode];
-                Er_pml_lmax = pml_fields_lmax->Er_[imode];
-                Et_pml_lmax = pml_fields_lmax->Et_[imode];
-                Hl_pml_lmax = pml_fields_lmax->Hl_[imode];
-                Hr_pml_lmax = pml_fields_lmax->Hr_[imode];
-                Ht_pml_lmax = pml_fields_lmax->Ht_[imode];
-                Dl_pml_lmax = pml_fields_lmax->Dl_[imode];
-                Dr_pml_lmax = pml_fields_lmax->Dr_[imode];
-                Dt_pml_lmax = pml_fields_lmax->Dt_[imode];
-                Bl_pml_lmax = pml_fields_lmax->Bl_[imode];
-                Br_pml_lmax = pml_fields_lmax->Br_[imode];
-                Bt_pml_lmax = pml_fields_lmax->Bt_[imode];
-            }
+        //     if(ncells_pml_lmax != 0){
+        //         El_pml_lmax = pml_fields_lmax->El_[imode];
+        //         Er_pml_lmax = pml_fields_lmax->Er_[imode];
+        //         Et_pml_lmax = pml_fields_lmax->Et_[imode];
+        //         Hl_pml_lmax = pml_fields_lmax->Hl_[imode];
+        //         Hr_pml_lmax = pml_fields_lmax->Hr_[imode];
+        //         Ht_pml_lmax = pml_fields_lmax->Ht_[imode];
+        //         Dl_pml_lmax = pml_fields_lmax->Dl_[imode];
+        //         Dr_pml_lmax = pml_fields_lmax->Dr_[imode];
+        //         Dt_pml_lmax = pml_fields_lmax->Dt_[imode];
+        //         Bl_pml_lmax = pml_fields_lmax->Bl_[imode];
+        //         Br_pml_lmax = pml_fields_lmax->Br_[imode];
+        //         Bt_pml_lmax = pml_fields_lmax->Bt_[imode];
+        //     }
 
-            // 2. Exchange field PML <- Domain
-            for ( int j=min2exchange ; j<max2exchange ; j++ ) {
-                if (patch->isXmin()) {
-                    if(ncells_pml_lmin != 0){
-                        for ( int i=0 ; i<ncells_pml_lmin ; i++ ) {
-                            int idl_start = 0;
-                            // Les qtes Primals
-                            (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_pml_lmin)(i,j);
-                            (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Hl_pml_lmin)(i,j);
-                            (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Er_pml_lmin)(i,j);
-                            (*Dr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dr_pml_lmin)(i,j);
-                            (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Et_pml_lmin)(i,j);
-                            (*Dt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dt_pml_lmin)(i,j);
-                            // Les qtes Duals
-                            (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_pml_lmin)(i,j);
-                            (*Dl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dl_pml_lmin)(i,j);
-                            (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Hr_pml_lmin)(i,j);
-                            (*Br_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Br_pml_lmin)(i,j);
-                            (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Ht_pml_lmin)(i,j);
-                            (*Bt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_pml_lmin)(i,j);
-                        }
-                    }
-                }
-                for ( int i=0 ; i<n_d[0] ; i++ ) {
-                    int idl_start = ncells_pml_lmin;
-                    (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_domain)(i,j);
-                    (*Dl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_domain)(i,j);
-                    (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Br_domain)(i,j);
-                    (*Br_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Br_domain)(i,j);
-                    (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_domain)(i,j);
-                    (*Bt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_domain)(i,j);
-                }
-                for ( int i=0 ; i<n_p[0] ; i++ ) {
-                    int idl_start = ncells_pml_lmin;
-                    (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_domain)(i,j);
-                    (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_domain)(i,j);
-                    (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Er_domain)(i,j);
-                    (*Dr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Er_domain)(i,j);
-                    (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Et_domain)(i,j);
-                    (*Dt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Et_domain)(i,j);
-                }
-                if (patch->isXmax()) {
-                    if(ncells_pml_lmax != 0){
-                        for ( int i=0 ; i<ncells_pml_lmax ; i++ ) {
-                            int idl_start = (rpml_size_in_l-1)-(ncells_pml_lmax-1) ;
-                            // Les qtes Primals commencent a (rpml_size_in_l+1)-(ncells_pml_lmax-1)
-                            (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
-                            (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Hl_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
-                            (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Er_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
-                            (*Dr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dr_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
-                            (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Et_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
-                            (*Dt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dt_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
-                            // Toutes les qtes Duals commence a +1
-                            (*El_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
-                            (*Dl_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dl_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
-                            (*Hr_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Hr_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
-                            (*Br_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Br_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
-                            (*Ht_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Ht_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
-                            (*Bt_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
-                        }
-                    }
-                }
-            }
-        }
+        //     // 2. Exchange field PML <- Domain
+        //     for ( int j=min2exchange ; j<max2exchange ; j++ ) {
+        //         if (patch->isXmin()) {
+        //             if(ncells_pml_lmin != 0){
+        //                 for ( int i=0 ; i<ncells_pml_lmin ; i++ ) {
+        //                     int idl_start = 0;
+        //                     // Les qtes Primals
+        //                     (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_pml_lmin)(i,j);
+        //                     (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Hl_pml_lmin)(i,j);
+        //                     (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Er_pml_lmin)(i,j);
+        //                     (*Dr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dr_pml_lmin)(i,j);
+        //                     (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Et_pml_lmin)(i,j);
+        //                     (*Dt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dt_pml_lmin)(i,j);
+        //                     // Les qtes Duals
+        //                     (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_pml_lmin)(i,j);
+        //                     (*Dl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dl_pml_lmin)(i,j);
+        //                     (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Hr_pml_lmin)(i,j);
+        //                     (*Br_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Br_pml_lmin)(i,j);
+        //                     (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Ht_pml_lmin)(i,j);
+        //                     (*Bt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_pml_lmin)(i,j);
+        //                 }
+        //             }
+        //         }
+        //         for ( int i=0 ; i<n_d[0] ; i++ ) {
+        //             int idl_start = ncells_pml_lmin;
+        //             (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_domain)(i,j);
+        //             (*Dl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_domain)(i,j);
+        //             (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Br_domain)(i,j);
+        //             (*Br_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Br_domain)(i,j);
+        //             (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_domain)(i,j);
+        //             (*Bt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_domain)(i,j);
+        //         }
+        //         for ( int i=0 ; i<n_p[0] ; i++ ) {
+        //             int idl_start = ncells_pml_lmin;
+        //             (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_domain)(i,j);
+        //             (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_domain)(i,j);
+        //             (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Er_domain)(i,j);
+        //             (*Dr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Er_domain)(i,j);
+        //             (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Et_domain)(i,j);
+        //             (*Dt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Et_domain)(i,j);
+        //         }
+        //         if (patch->isXmax()) {
+        //             if(ncells_pml_lmax != 0){
+        //                 for ( int i=0 ; i<ncells_pml_lmax ; i++ ) {
+        //                     int idl_start = (rpml_size_in_l-1)-(ncells_pml_lmax-1) ;
+        //                     // Les qtes Primals commencent a (rpml_size_in_l+1)-(ncells_pml_lmax-1)
+        //                     (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bl_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
+        //                     (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Hl_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
+        //                     (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Er_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
+        //                     (*Dr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dr_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
+        //                     (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Et_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
+        //                     (*Dt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dt_pml_lmax)(domain_oversize_l+nsolver/2+i,j);
+        //                     // Toutes les qtes Duals commence a +1
+        //                     (*El_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*El_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
+        //                     (*Dl_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Dl_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
+        //                     (*Hr_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Hr_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
+        //                     (*Br_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Br_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
+        //                     (*Ht_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Ht_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
+        //                     (*Bt_[imode])(idl_start+1+i,ncells_pml_domain-domain_oversize_r-nsolver/2+j) = (*Bt_pml_lmax)(domain_oversize_l+nsolver/2+1+i,j);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        // 3. Solve Maxwell_PML for B-field :
-        //pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
-        pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
+        // // 3. Solve Maxwell_PML for B-field :
+        // //pml_solver_->compute_E_from_D( EMfields, iDim, min_or_max, solvermin, solvermax);
+        // pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
 
-        for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
-            cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
-            cField2D *Er_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
-            cField2D *Et_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
-            cField2D *Bl_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_[imode];
-            cField2D *Br_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
-            cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
+        // for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
+        //     cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
+        //     cField2D *Er_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
+        //     cField2D *Et_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
+        //     cField2D *Bl_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_[imode];
+        //     cField2D *Br_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
+        //     cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
 
-            if (patch->isXmin()) {
-                if(ncells_pml_lmin != 0){
-                    El_pml_lmin = pml_fields_lmin->El_[imode];
-                    Er_pml_lmin = pml_fields_lmin->Er_[imode];
-                    Et_pml_lmin = pml_fields_lmin->Et_[imode];
-                    Hl_pml_lmin = pml_fields_lmin->Hl_[imode];
-                    Hr_pml_lmin = pml_fields_lmin->Hr_[imode];
-                    Ht_pml_lmin = pml_fields_lmin->Ht_[imode];
-                    Dl_pml_lmin = pml_fields_lmin->Dl_[imode];
-                    Dr_pml_lmin = pml_fields_lmin->Dr_[imode];
-                    Dt_pml_lmin = pml_fields_lmin->Dt_[imode];
-                    Bl_pml_lmin = pml_fields_lmin->Bl_[imode];
-                    Br_pml_lmin = pml_fields_lmin->Br_[imode];
-                    Bt_pml_lmin = pml_fields_lmin->Bt_[imode];
-                }
-            }
+        //     if (patch->isXmin()) {
+        //         if(ncells_pml_lmin != 0){
+        //             El_pml_lmin = pml_fields_lmin->El_[imode];
+        //             Er_pml_lmin = pml_fields_lmin->Er_[imode];
+        //             Et_pml_lmin = pml_fields_lmin->Et_[imode];
+        //             Hl_pml_lmin = pml_fields_lmin->Hl_[imode];
+        //             Hr_pml_lmin = pml_fields_lmin->Hr_[imode];
+        //             Ht_pml_lmin = pml_fields_lmin->Ht_[imode];
+        //             Dl_pml_lmin = pml_fields_lmin->Dl_[imode];
+        //             Dr_pml_lmin = pml_fields_lmin->Dr_[imode];
+        //             Dt_pml_lmin = pml_fields_lmin->Dt_[imode];
+        //             Bl_pml_lmin = pml_fields_lmin->Bl_[imode];
+        //             Br_pml_lmin = pml_fields_lmin->Br_[imode];
+        //             Bt_pml_lmin = pml_fields_lmin->Bt_[imode];
+        //         }
+        //     }
 
-            if (patch->isXmax()) {
-                if(ncells_pml_lmax != 0){
-                    El_pml_lmax = pml_fields_lmax->El_[imode];
-                    Er_pml_lmax = pml_fields_lmax->Er_[imode];
-                    Et_pml_lmax = pml_fields_lmax->Et_[imode];
-                    Hl_pml_lmax = pml_fields_lmax->Hl_[imode];
-                    Hr_pml_lmax = pml_fields_lmax->Hr_[imode];
-                    Ht_pml_lmax = pml_fields_lmax->Ht_[imode];
-                    Dl_pml_lmax = pml_fields_lmax->Dl_[imode];
-                    Dr_pml_lmax = pml_fields_lmax->Dr_[imode];
-                    Dt_pml_lmax = pml_fields_lmax->Dt_[imode];
-                    Bl_pml_lmax = pml_fields_lmax->Bl_[imode];
-                    Br_pml_lmax = pml_fields_lmax->Br_[imode];
-                    Bt_pml_lmax = pml_fields_lmax->Bt_[imode];
-                }
-            }
+        //     if (patch->isXmax()) {
+        //         if(ncells_pml_lmax != 0){
+        //             El_pml_lmax = pml_fields_lmax->El_[imode];
+        //             Er_pml_lmax = pml_fields_lmax->Er_[imode];
+        //             Et_pml_lmax = pml_fields_lmax->Et_[imode];
+        //             Hl_pml_lmax = pml_fields_lmax->Hl_[imode];
+        //             Hr_pml_lmax = pml_fields_lmax->Hr_[imode];
+        //             Ht_pml_lmax = pml_fields_lmax->Ht_[imode];
+        //             Dl_pml_lmax = pml_fields_lmax->Dl_[imode];
+        //             Dr_pml_lmax = pml_fields_lmax->Dr_[imode];
+        //             Dt_pml_lmax = pml_fields_lmax->Dt_[imode];
+        //             Bl_pml_lmax = pml_fields_lmax->Bl_[imode];
+        //             Br_pml_lmax = pml_fields_lmax->Br_[imode];
+        //             Bt_pml_lmax = pml_fields_lmax->Bt_[imode];
+        //         }
+        //     }
 
-            // 4. Exchange PML -> Domain
-            // Primals in y-direction
-            for (int j=0 ; j < nsolver/2 ; j++){
-                for ( int i=0 ; i<n_p[0] ; i++ ) {
-                    int idl_start = ncells_pml_lmin;
-                    (*Et_domain)(i,j) = (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                }
-                for ( int i=0 ; i<n_d[0] ; i++ ) {
-                    int idl_start = ncells_pml_lmin;
-                    (*El_domain)(i,j) = (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                    (*Br_domain)(i,j) = (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                }
-            }
-            // Duals in y-direction
-            for (int j=0 ; j < nsolver/2 ; j++){
-                for ( int i=0 ; i<n_p[0] ; i++ ) {
-                    int idl_start = ncells_pml_lmin;
-                    (*Er_domain)(i,j) = (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                    (*Bl_domain)(i,j) = (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                }
-                for ( int i=0 ; i<n_d[0] ; i++ ) {
-                    int idl_start = ncells_pml_lmin;
-                    (*Bt_domain)(i,j) = (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                }
-            }
+        //     // 4. Exchange PML -> Domain
+        //     // Primals in y-direction
+        //     for (int j=0 ; j < nsolver/2 ; j++){
+        //         for ( int i=0 ; i<n_p[0] ; i++ ) {
+        //             int idl_start = ncells_pml_lmin;
+        //             (*Et_domain)(i,j) = (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //         }
+        //         for ( int i=0 ; i<n_d[0] ; i++ ) {
+        //             int idl_start = ncells_pml_lmin;
+        //             (*El_domain)(i,j) = (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //             (*Br_domain)(i,j) = (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //         }
+        //     }
+        //     // Duals in y-direction
+        //     for (int j=0 ; j < nsolver/2 ; j++){
+        //         for ( int i=0 ; i<n_p[0] ; i++ ) {
+        //             int idl_start = ncells_pml_lmin;
+        //             (*Er_domain)(i,j) = (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //             (*Bl_domain)(i,j) = (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //         }
+        //         for ( int i=0 ; i<n_d[0] ; i++ ) {
+        //             int idl_start = ncells_pml_lmin;
+        //             (*Bt_domain)(i,j) = (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //         }
+        //     }
 
-            // 5. Exchange PML y -> PML x MIN
-            // Primal in y-direction
-            for (int j=0 ; j < nsolver/2 ; j++){
-                if (patch->isXmin()) {
-                    if(ncells_pml_lmin != 0){
-                        for ( int i=0 ; i<ncells_pml_domain_lmin ; i++ ) {
-                            int idl_start = 0;
-                            // Primals
-                            (*Et_pml_lmin)(i,j) = (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Dt_pml_lmin)(i,j) = (*Dt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            // Duals
-                            (*El_pml_lmin)(i,j) = (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Dl_pml_lmin)(i,j) = (*Dl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Hr_pml_lmin)(i,j) = (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Br_pml_lmin)(i,j) = (*Br_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                        }
-                    }
-                }
-            }
-            // Duals in y-direction
-            for (int j=0 ; j < nsolver/2 ; j++){
-                if (patch->isXmin()) {
-                    if(ncells_pml_lmin != 0){
-                        for ( int i=0 ; i<ncells_pml_domain_lmin ; i++ ) {
-                            int idl_start = 0;
-                            // Primals
-                            (*Er_pml_lmin)(i,j) = (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Dr_pml_lmin)(i,j) = (*Dr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Hl_pml_lmin)(i,j) = (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Bl_pml_lmin)(i,j) = (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            // Duals
-                            (*Ht_pml_lmin)(i,j) = (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Bt_pml_lmin)(i,j) = (*Bt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                        }
-                    }
-                }
-            }
+        //     // 5. Exchange PML y -> PML x MIN
+        //     // Primal in y-direction
+        //     for (int j=0 ; j < nsolver/2 ; j++){
+        //         if (patch->isXmin()) {
+        //             if(ncells_pml_lmin != 0){
+        //                 for ( int i=0 ; i<ncells_pml_domain_lmin ; i++ ) {
+        //                     int idl_start = 0;
+        //                     // Primals
+        //                     (*Et_pml_lmin)(i,j) = (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Dt_pml_lmin)(i,j) = (*Dt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     // Duals
+        //                     (*El_pml_lmin)(i,j) = (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Dl_pml_lmin)(i,j) = (*Dl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Hr_pml_lmin)(i,j) = (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Br_pml_lmin)(i,j) = (*Br_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     // Duals in y-direction
+        //     for (int j=0 ; j < nsolver/2 ; j++){
+        //         if (patch->isXmin()) {
+        //             if(ncells_pml_lmin != 0){
+        //                 for ( int i=0 ; i<ncells_pml_domain_lmin ; i++ ) {
+        //                     int idl_start = 0;
+        //                     // Primals
+        //                     (*Er_pml_lmin)(i,j) = (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Dr_pml_lmin)(i,j) = (*Dr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Hl_pml_lmin)(i,j) = (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Bl_pml_lmin)(i,j) = (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     // Duals
+        //                     (*Ht_pml_lmin)(i,j) = (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Bt_pml_lmin)(i,j) = (*Bt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                 }
+        //             }
+        //         }
+        //     }
 
-            // 6. Exchange PML y -> PML x MAX
-            // Primal in y-direction
-            for (int j=0 ; j < nsolver/2 ; j++){
-                if (patch->isXmax()) {
-                    if(ncells_pml_lmax != 0){
-                        for ( int i=0 ; i<ncells_pml_domain_lmax ; i++ ) {
-                            int idl_start = rpml_size_in_l-ncells_pml_domain_lmax ;
-                            // Primals
-                            (*Et_pml_lmax)(i,j) = (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Dt_pml_lmax)(i,j) = (*Dt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            // Dual
-                            (*El_pml_lmax)(i,j) = (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Dl_pml_lmax)(i,j) = (*Dl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Hr_pml_lmax)(i,j) = (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Br_pml_lmax)(i,j) = (*Br_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                        }
-                    }
-                }
-            }
-            // Dual in y-direction
-            for (int j=0 ; j < nsolver/2 ; j++){
-                if (patch->isXmax()) {
-                    if(ncells_pml_lmax != 0){
-                        for ( int i=0 ; i<ncells_pml_domain_lmax ; i++ ) {
-                            int idl_start = rpml_size_in_l-ncells_pml_domain_lmax ;
-                            // Primals
-                            (*Er_pml_lmax)(i,j) = (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Dr_pml_lmax)(i,j) = (*Dr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Hl_pml_lmax)(i,j) = (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Bl_pml_lmax)(i,j) = (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            // Dual
-                            (*Ht_pml_lmax)(i,j) = (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                            (*Bt_pml_lmax)(i,j) = (*Bt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
-                        }
-                    }
-                }
-            }
-        }
+        //     // 6. Exchange PML y -> PML x MAX
+        //     // Primal in y-direction
+        //     for (int j=0 ; j < nsolver/2 ; j++){
+        //         if (patch->isXmax()) {
+        //             if(ncells_pml_lmax != 0){
+        //                 for ( int i=0 ; i<ncells_pml_domain_lmax ; i++ ) {
+        //                     int idl_start = rpml_size_in_l-ncells_pml_domain_lmax ;
+        //                     // Primals
+        //                     (*Et_pml_lmax)(i,j) = (*Et_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Dt_pml_lmax)(i,j) = (*Dt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     // Dual
+        //                     (*El_pml_lmax)(i,j) = (*El_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Dl_pml_lmax)(i,j) = (*Dl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Hr_pml_lmax)(i,j) = (*Hr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Br_pml_lmax)(i,j) = (*Br_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     // Dual in y-direction
+        //     for (int j=0 ; j < nsolver/2 ; j++){
+        //         if (patch->isXmax()) {
+        //             if(ncells_pml_lmax != 0){
+        //                 for ( int i=0 ; i<ncells_pml_domain_lmax ; i++ ) {
+        //                     int idl_start = rpml_size_in_l-ncells_pml_domain_lmax ;
+        //                     // Primals
+        //                     (*Er_pml_lmax)(i,j) = (*Er_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Dr_pml_lmax)(i,j) = (*Dr_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Hl_pml_lmax)(i,j) = (*Hl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Bl_pml_lmax)(i,j) = (*Bl_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     // Dual
+        //                     (*Ht_pml_lmax)(i,j) = (*Ht_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                     (*Bt_pml_lmax)(i,j) = (*Bt_[imode])(idl_start+i,ncells_pml_domain-domain_oversize_l-nsolver/2+j);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
     else if( i_boundary_ == 3 && patch->isYmax() ) {
 
