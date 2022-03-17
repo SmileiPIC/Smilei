@@ -707,26 +707,26 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     //if (cell_sorting)
     //    vectorization_mode = "on";
 
-    PyTools::extract( "gpu_computing", gpu_computing, "Main"  );
-    if (gpu_computing) {
-#if (defined(_GPU) && defined(_OPENACC)) || defined(SMILEI_ACCELERATOR_GPU_OMP)
+    PyTools::extract("gpu_computing", gpu_computing, "Main");
+    if(gpu_computing) {
+#if(defined(_GPU) && defined(_OPENACC)) || defined(SMILEI_ACCELERATOR_GPU_OMP)
         // If compiled for GPU and asking for GPU
-        MESSAGE( "Smilei will run on GPU" );
+        MESSAGE(1, "Smilei will run on GPU");
 #else
     #if !defined(_GPU) && defined(_OPENACC)
-        MESSAGE( "Smilei will be exeecuted on CPU through Thrust" );
+        MESSAGE(1, "Smilei will be exeecuted on CPU through Thrust");
     #else
         // If compiled for CPU and asking for GPU
-        ERROR( "Smilei is not compiled for GPU" );
+        ERROR("Smilei is not compiled for GPU");
     #endif
 #endif
     } else {
 #if defined(_OPENACC) || defined(SMILEI_ACCELERATOR_GPU_OMP)
         // If compiled for GPU and asking for CPU
-        ERROR( "Smilei will be exeecuted on GPU,set Main.gpu_computing = True" );
+        ERROR("Smilei will be exeecuted on GPU,set Main.gpu_computing = True");
 #endif
     }
-    
+
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
 

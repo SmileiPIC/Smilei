@@ -246,34 +246,38 @@ ifneq (,$(call parse_config,gpu_amd))
 	# to be used "only" on the cines gpu porting machines.
 	# It expects CCE (cray compiler).
 
+	# TODO(Etienne M): gfx908 (MI-100) should not be fixed! It would be great if 
+	# we could get the gpu arch at runtime(in the makefile)
+	ACCELERATOR_GPU_ARCH := gfx908
+
 	# As of 15/03/22, there is no mpicxx on the Adastra porting machine
-	SMILEICXX.DEPS = $(SMILEICXX)
-	# THRUSTCXX = $(SMILEICXX)
-	THRUSTCXX = hipcc
+	SMILEICXX.DEPS := $(SMILEICXX)
+	# THRUSTCXX := $(SMILEICXX)
+	THRUSTCXX := hipcc
 
 	WARNING_FLAGS := -Wextra -pedantic
 	# There is just too many warnings, it clutters the screen
 	WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
 
-	# TODO(Etienne M): gfx908 should not be fixed! It would be great if we could get the gpu arch at runtime(in the makefile)
-    ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908
+    ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=$(ACCELERATOR_GPU_ARCH)
 	ACCELERATOR_GPU_FLAGS += -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
 
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
 
-	# TODO(Etienne M): It would be nice to specify which gpu we target, default arch is gfx803.
     ACCELERATOR_GPU_KERNEL_FLAGS += -O3 -std=c++14 $(DIRS:%=-I%)
     ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
 	ACCELERATOR_GPU_KERNEL_FLAGS += -I$(CRAY_MPICH_DIR)/include
+	ACCELERATOR_GPU_KERNEL_FLAGS += --offload-arch=$(ACCELERATOR_GPU_ARCH)
+	# ACCELERATOR_GPU_KERNEL_FLAGS += --amdgpu-target=$(ACCELERATOR_GPU_ARCH) # Same behavioir (apriori) than offload-arch
 	# ACCELERATOR_GPU_KERNEL_FLAGS += --hip-path=$(HIP_PATH) -x hip
 	# ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
 
 	OBJS += $(GPU_KERNEL_OBJS)
 
 	CXXFLAGS                     += $(WARNING_FLAGS)
-	# TODO(Etienne M): It would be great if CXXFLAGS contained only the warning flags, 
-	# so we can use it with nvcc/hipcc too
+	# It would be great if CXXFLAGS contained only the warning flags, so we can 
+	# use it with nvcc/hipcc too
 	ACCELERATOR_GPU_KERNEL_FLAGS += $(WARNING_FLAGS)
 
 	# Note that clang++/cray/aomp (on Lumi01, the pre adastra porting machine), does not link against the c++ lib
