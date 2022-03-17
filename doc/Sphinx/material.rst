@@ -58,6 +58,17 @@ As of November 2021, 90 papers have been published covering a broad range of top
   P. K. Singh, F.-Y. Li, C.-K. Huang, A. Moreau, R. Hollinger, A. Junghans, A. Favalli, C. Calvi, S. Wang, Y. Wang, H. Song, J. J. Rocca, R. E. Reinovsky and S. Palaniyappan,
   `Vacuum laser acceleration of super-ponderomotive electrons using relativistic transparency injection`,
   `Nat Commun 13, 54 (2022) <http://dx.doi.org/10.1038/s41467-021-27691-w>`_
+
+.. [Lobet2022]
+
+  M. Lobet, F. Massimo, A. Beck, G. Bouchard, F. Perez, T. Vinci, and M. Grech.
+  `Simple adaptations to speed-up the Particle-In-Cell code Smilei on the ARM-based Fujitsu A64FX processor.`,
+  `In International Conference on High Performance Computing in Asia-Pacific Region Workshops (HPCAsia 2022 Workshop). 
+  Association for Computing Machinery, New York, NY, USA, 40–48. (2022) <http://doi.org/10.1145/3503470.3503475>`_
+
+  P. K. Singh, F.-Y. Li, C.-K. Huang, A. Moreau, R. Hollinger, A. Junghans, A. Favalli, C. Calvi, S. Wang, Y. Wang, H. Song, J. J. Rocca, R. E. Reinovsky and S. Palaniyappan,
+  `Vacuum laser acceleration of super-ponderomotive electrons using relativistic transparency injection`,
+  `Nat Commun 13, 54 (2022) <http://dx.doi.org/10.1038/s41467-021-27691-w>`_
   
 .. [Meinhold2021]
 
