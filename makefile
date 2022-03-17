@@ -246,10 +246,6 @@ ifneq (,$(call parse_config,gpu_amd))
 	# to be used "only" on the cines gpu porting machines.
 	# It expects CCE (cray compiler).
 
-	# TODO(Etienne M): gfx908 (MI-100) should not be fixed! It would be great if 
-	# we could get the gpu arch at runtime(in the makefile)
-	ACCELERATOR_GPU_ARCH := gfx908
-
 	# As of 15/03/22, there is no mpicxx on the Adastra porting machine
 	SMILEICXX.DEPS := $(SMILEICXX)
 	# THRUSTCXX := $(SMILEICXX)

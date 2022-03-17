@@ -1,6 +1,6 @@
-ACCFLAGS	= -acc -Mcudalib=curand -ta=tesla:cc35 -Minfo=accel
+ACCELERATOR_GPU_FLAGS = -acc -Mcudalib=curand -ta=tesla:cc35 -Minfo=accel
 LDFLAGS += -ta=tesla:cc35 -L/usr/local/openmpi/lib/ -L/opt/nvidia/hpc_sdk/Linux_x86_64/21.2/cuda/11.2/lib64/ -lcudart 
-CUFLAGS  += -arch=sm_35 -I/usr/local/openmpi/include/ -I/opt/nvidia/hpc_sdk/Linux_x86_64/21.2/cuda/11.2/include/ 
+ACCELERATOR_GPU_KERNEL_FLAGS += -arch=sm_35 -I/usr/local/openmpi/include/ -I/opt/nvidia/hpc_sdk/Linux_x86_64/21.2/cuda/11.2/include/ 
 CXXFLAGS += -I/usr/local/hdf5/include/ -I/usr/local/openmpi/include/
 
 
