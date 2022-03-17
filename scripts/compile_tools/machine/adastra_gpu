@@ -1,1 +1,20 @@
+################################################################################
+# Machine file for the Adastra machine at CINES
+#
+# You'll want to compile smilei with the "gpu_amd" config flag enabled:
+# $ make machine="adastra_gpu" config="amd_gpu" -j
+#
+# Each node as 4 MI-200 gpu, you may want to associate one MI-200 to one MPI 
+# process.
+#
+# To compile you'll want these modules:
+# $ module load PrgEnv-cray cce/13.0.1 cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1 cray-mpich/8.1.13 rocm
+#
+#
+################################################################################
+
+# Use the cray compiler
+SMILEICXX := cc
+
+# Add mi100 amd gpu arch
 ACCELERATOR_GPU_ARCH := gfx908
