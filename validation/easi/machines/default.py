@@ -1,26 +1,34 @@
 class Machine(object):
     
     def __init__(self, smilei_path, options):
-        from subprocess import check_output
+        from subprocess import check_output, CalledProcessError
         import re
         
         self.smilei_path = smilei_path
         self.options = options
         
         self.MAKE = "make" + (" config=%s"%self.options.compile_mode if self.options.compile_mode else "")
-        
-        mpi_version = str(check_output("mpirun --version", shell=True))
-        if re.search("Open MPI", mpi_version, re.I):
-            v = re.search("\d\d?\.\d\d?\.\d\d?", mpi_version).group() # Full version number
-            v = int(v.split(".")[0]) # Major version number
-            if v > 1:
-                MPIRUN = "mpirun --oversubscribe -np "
+
+        try:
+            mpi_version = str(check_output("mpirun --version", shell=True))
+            if re.search("Open MPI", mpi_version, re.I):
+                v = re.search("\d\d?\.\d\d?\.\d\d?", mpi_version).group() # Full version number
+                v = int(v.split(".")[0]) # Major version number
+                if v > 1:
+                    MPIRUN = "mpirun --oversubscribe -np "
+                else:
+                    MPIRUN = "mpirun -mca btl tcp,sm,self -np "
             else:
-                MPIRUN = "mpirun -mca btl tcp,sm,self -np "
-        else:
-            MPIRUN = "mpirun -np "
-        
-        self.COMPILE_COMMAND = self.MAKE+' -j4 > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
+                MPIRUN = "mpirun -np "
+        except CalledProcessError as e:
+            print("Testing mpiexec")
+            mpi_version = str(check_output("mpiexec -help", shell=True))
+            if re.search("mpiexec.slurm -n 4", mpi_version, re.I):
+                MPIRUN = "mpiexec -n "
+            else:
+                raise e
+
+        self.COMPILE_COMMAND = self.MAKE+' -j 8 > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         # self.COMPILE_TOOLS_COMMAND = 'make tables > '+self.smilei_path.COMPILE_OUT+' 2>'+self.smilei_path.COMPILE_ERRORS
         self.CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
         self.RUN_COMMAND = "export OMP_NUM_THREADS="+str(self.options.omp)+"; "+MPIRUN+str(self.options.mpi)+" "+self.smilei_path.workdirs+"smilei %s >"+self.smilei_path.output_file
