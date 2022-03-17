@@ -73,16 +73,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     namelist( "" )
 {
 
-    MESSAGE( "HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE );
+    MESSAGE(1, "HDF5 version " << H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
 
-    if( ( H5_VERS_MAJOR< 1 ) ||
-            ( ( H5_VERS_MAJOR==1 ) && ( H5_VERS_MINOR< 8 ) ) ||
-            ( ( H5_VERS_MAJOR==1 ) && ( H5_VERS_MINOR==8 ) && ( H5_VERS_RELEASE<16 ) ) ) {
-        WARNING( "Smilei suggests using HDF5 version 1.8.16 or newer" );
+    if((H5_VERS_MAJOR < 1) ||
+       ((H5_VERS_MAJOR == 1) && (H5_VERS_MINOR < 8)) ||
+       ((H5_VERS_MAJOR == 1) && (H5_VERS_MINOR == 8) && (H5_VERS_RELEASE < 16))) {
+        WARNING("Smilei suggests using HDF5 version 1.8.16 or newer");
     }
 
-    if( namelistsFiles.size()==0 ) {
-        ERROR( "No namelists given!" );
+    if(namelistsFiles.size() == 0) {
+        ERROR("No namelists given!");
     }
 
     //string commandLineStr("");

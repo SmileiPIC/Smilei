@@ -1,8 +1,10 @@
 #include "ParticlesFactory.h"
 
-// TODO(Etienne M): find a way to put that in the function bodu, under the macro
+#if defined(_GPU) || defined(SMILEI_ACCELERATOR_GPU_OMP)
+// TODO(Etienne M): find a way to put that in the function body, under the macro
 // guards, where CreateGPUParticles is called.
 extern "C" void* CreateGPUParticles();
+#endif
 
 Particles* ParticlesFactory::create(const Params& params) {
     Particles* particles = nullptr;
