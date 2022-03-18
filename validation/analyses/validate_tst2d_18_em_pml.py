@@ -11,5 +11,5 @@ Validate("Ez field at iteration 300", Ez, 0.00002)
 
 # TEST THAT Ubal_norm STAYS OK
 uelm = S.Scalar.Uelm().getData(timestep=300)
-Validate("Uelm is below 0.00002 after absorption", uelm[0]<0.00002 )
+Validate("Uelm", uelm, 1e-6 )
 
