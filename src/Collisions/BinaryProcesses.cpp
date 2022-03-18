@@ -365,22 +365,18 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             
             // Change the momentum to the COM frame (we work only on particle 1)
             // Quantities ending with "COM" are quantities of the particle expressed in the COM frame.
-            double term2;
             if( COM_vsquare < 1e-6 ) {
-                D.COM_gamma = 1. + 0.5 * COM_vsquare;
-                D.gamma1_COM = D.gamma1 * D.COM_gamma;
-                D.gamma2_COM = D.gamma2 * D.COM_gamma;
+                D.COM_gamma = 1. +0.5 * COM_vsquare;
                 D.term1 = 0.5;
-                term2 = -D.gamma1_COM;
             } else {
                 D.COM_gamma = 1./sqrt( 1.-COM_vsquare );
-                double vcv1g1  = D.COM_vx*( D.p1->momentum( 0, D.i1 ) ) + D.COM_vy*( D.p1->momentum( 1, D.i1 ) ) + D.COM_vz*( D.p1->momentum( 2, D.i1 ) );
-                double vcv2g2  = D.COM_vx*( D.p2->momentum( 0, D.i2 ) ) + D.COM_vy*( D.p2->momentum( 1, D.i2 ) ) + D.COM_vz*( D.p2->momentum( 2, D.i2 ) );
-                D.gamma1_COM = ( D.gamma1-vcv1g1 )*D.COM_gamma;
-                D.gamma2_COM = ( D.gamma2-vcv2g2 )*D.COM_gamma;
                 D.term1 = ( D.COM_gamma - 1. ) / COM_vsquare;
-                term2 = D.term1*vcv1g1 - D.COM_gamma * D.gamma1;
             }
+            double vcv1g1  = D.COM_vx*( D.p1->momentum( 0, D.i1 ) ) + D.COM_vy*( D.p1->momentum( 1, D.i1 ) ) + D.COM_vz*( D.p1->momentum( 2, D.i1 ) );
+            double vcv2g2  = D.COM_vx*( D.p2->momentum( 0, D.i2 ) ) + D.COM_vy*( D.p2->momentum( 1, D.i2 ) ) + D.COM_vz*( D.p2->momentum( 2, D.i2 ) );
+            D.gamma1_COM = ( D.gamma1-vcv1g1 )*D.COM_gamma;
+            D.gamma2_COM = ( D.gamma2-vcv2g2 )*D.COM_gamma;
+            double term2 = D.term1*vcv1g1 - D.COM_gamma * D.gamma1;
             D.px_COM = D.p1->momentum( 0, D.i1 ) + term2*D.COM_vx;
             D.py_COM = D.p1->momentum( 1, D.i1 ) + term2*D.COM_vy;
             D.pz_COM = D.p1->momentum( 2, D.i1 ) + term2*D.COM_vz;

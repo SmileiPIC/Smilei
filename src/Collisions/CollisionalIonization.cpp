@@ -155,9 +155,9 @@ void CollisionalIonization::apply( Random *random, BinaryProcessData &D )
     D.gamma2 = D.p2->LorentzFactor( D.i2 );
     // Calculate lorentz factor in the frame of ion
     double gamma_s = D.gamma1*D.gamma2
-                     - D.p1->momentum( 0, D.i1 )*D.p2->momentum( 0, D.i2 )
-                     - D.p1->momentum( 1, D.i1 )*D.p2->momentum( 1, D.i2 )
-                     - D.p1->momentum( 2, D.i1 )*D.p2->momentum( 2, D.i2 );
+        - D.p1->momentum( 0, D.i1 )*D.p2->momentum( 0, D.i2 )
+        - D.p1->momentum( 1, D.i1 )*D.p2->momentum( 1, D.i2 )
+        - D.p1->momentum( 2, D.i1 )*D.p2->momentum( 2, D.i2 );
     // Random numbers
     double U1 = random->uniform();
     double U2 = random->uniform();

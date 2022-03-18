@@ -36,9 +36,6 @@ public:
     //! Assigns the correct databases
     virtual void assignDatabase( unsigned int );
     
-    //! Gets the k-th binding energy of any neutral or ionized atom with atomic number Z and charge Zstar
-    double binding_energy( int Zstar, int k );
-    
     //! Coefficients used for interpolating the energy over a given initial list
     static const double a1, a2, npointsm1;
     static const int npoints;

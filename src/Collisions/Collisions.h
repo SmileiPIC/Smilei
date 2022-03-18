@@ -45,7 +45,8 @@ public:
         return t.str();
     };
     
-    unsigned int npairs_tot_, smean_, logLmean_;
+    unsigned int npairs_tot_;
+    double smean_, logLmean_;
     
 protected:
     
