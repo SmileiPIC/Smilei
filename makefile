@@ -21,6 +21,12 @@ HDF5_ROOT_DIR ?= $(HDF5_ROOT)
 BOOST_ROOT_DIR ?= $(BOOST_ROOT)
 TABLES_BUILD_DIR ?= tools/tables/build
 
+# Machines scripts may need that
+my_config:=$(config)
+define parse_config
+$(findstring $(1),$(config))$(eval my_config:=$(filter-out $(1),$(my_config)))
+endef
+
 #-----------------------------------------------------
 # check whether to use a machine specific definitions
 ifneq ($(machine),)
@@ -116,11 +122,6 @@ LDFLAGS += $(PY_LDFLAGS)
 ifneq ($(strip $(PYTHONHOME)),)
     LDFLAGS += -L$(PYTHONHOME)/lib
 endif
-
-my_config:=$(config)
-define parse_config
-$(findstring $(1),$(config))$(eval my_config:=$(filter-out $(1),$(my_config)))
-endef
 
 # Manage options in the "config" parameter
 ifneq (,$(call parse_config,debug))
@@ -241,43 +242,17 @@ endif
 CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
 
 ifneq (,$(call parse_config,gpu_amd))
-	# Note:
-	# This gpu_amd config is not production ready and is meant, as of 4th/03/22,
-	# to be used "only" on the cines gpu porting machines.
-	# It expects CCE (cray compiler).
-
-	# As of 15/03/22, there is no mpicxx on the Adastra porting machine
-	SMILEICXX.DEPS := $(SMILEICXX)
-	# THRUSTCXX := $(SMILEICXX)
-	THRUSTCXX := hipcc
-
-	WARNING_FLAGS := -Wextra -pedantic
-	# There is just too many warnings, it clutters the screen
-	WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
-
-    ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=$(ACCELERATOR_GPU_ARCH)
-	ACCELERATOR_GPU_FLAGS += -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
-
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
 
     ACCELERATOR_GPU_KERNEL_FLAGS += -O3 -std=c++14 $(DIRS:%=-I%)
     ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
-	ACCELERATOR_GPU_KERNEL_FLAGS += -I$(CRAY_MPICH_DIR)/include
-	ACCELERATOR_GPU_KERNEL_FLAGS += --offload-arch=$(ACCELERATOR_GPU_ARCH)
-	# ACCELERATOR_GPU_KERNEL_FLAGS += --amdgpu-target=$(ACCELERATOR_GPU_ARCH) # Same behavioir (apriori) than offload-arch
-	# ACCELERATOR_GPU_KERNEL_FLAGS += --hip-path=$(HIP_PATH) -x hip
-	# ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
 
 	OBJS += $(GPU_KERNEL_OBJS)
 
-	CXXFLAGS                     += $(WARNING_FLAGS)
 	# It would be great if CXXFLAGS contained only the warning flags, so we can 
 	# use it with nvcc/hipcc too
 	ACCELERATOR_GPU_KERNEL_FLAGS += $(WARNING_FLAGS)
-
-	# Note that clang++/cray/aomp (on Lumi01, the pre adastra porting machine), does not link against the c++ lib
-	LDFLAGS += -lstdc++ -lomp
 endif
 
 #-----------------------------------------------------

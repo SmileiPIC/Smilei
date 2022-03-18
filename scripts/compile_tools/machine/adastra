@@ -1,0 +1,48 @@
+################################################################################
+# Machine file for the Adastra machine at CINES
+#
+# Note:
+# This gpu_amd config is not production ready and is meant, as of 4th/03/22,
+# to be used "only" on the cines gpu porting machines.
+# It expects CCE (cray compiler).
+#
+# You'll want to compile smilei with the "gpu_amd" config flag enabled:
+# $ make machine="adastra_gpu" config="amd_gpu" -j
+#
+# Each node as 4 MI-200 gpu, you may want to associate one MI-200 to one MPI 
+# process.
+#
+# To compile you'll want these modules:
+# $ module load PrgEnv-cray cce/13.0.1 cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1 cray-mpich/8.1.13 rocm
+#
+#
+################################################################################
+
+SMILEICXX := cc
+SMILEICXX.DEPS := $(SMILEICXX)
+
+WARNING_FLAGS := -Wextra -pedantic
+WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
+
+ifneq (,$(call parse_config,gpu_amd))
+	# Add mi100 amd gpu arch
+	ACCELERATOR_GPU_ARCH := gfx908
+
+	# THRUSTCXX := $(SMILEICXX)
+
+	THRUSTCXX := hipcc
+
+	ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=$(ACCELERATOR_GPU_ARCH)
+	ACCELERATOR_GPU_FLAGS += -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
+
+	ACCELERATOR_GPU_KERNEL_FLAGS += -I$(CRAY_MPICH_DIR)/include
+	ACCELERATOR_GPU_KERNEL_FLAGS += --offload-arch=$(ACCELERATOR_GPU_ARCH)
+
+	# ACCELERATOR_GPU_KERNEL_FLAGS += --amdgpu-target=$(ACCELERATOR_GPU_ARCH) # Same behavioir (apriori) than offload-arch
+	# ACCELERATOR_GPU_KERNEL_FLAGS += --hip-path=$(HIP_PATH) -x hip
+	# ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
+
+	LDFLAGS += -lstdc++ -lomp
+endif
+
+CXXFLAGS += $(WARNING_FLAGS)
