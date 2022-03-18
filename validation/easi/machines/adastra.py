@@ -36,6 +36,8 @@ module load rocm;
 # the same
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK;
 export OMP_SCHEDULE=dynamic;
+# You may want to change "cores", to "threads". But hyperthreading, for an well 
+# optimized apps is generally not something you want (ROB buffer should be full).
 export OMP_PLACES=cores;
 
 {a_task_command};
