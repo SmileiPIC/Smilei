@@ -1799,7 +1799,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
         MPI_Allreduce( &Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
         E_Add[0] = -Ex_avg/( ( params.n_space[0]+2 )*( params.n_space[1]+1 ) );
-        E_Add[1] = -Ey_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+2 ) );;
+        E_Add[1] = -Ey_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+2 ) );
 #endif
 
     } else if( Ex_[0]->dims_.size()==1 ) {
@@ -1838,7 +1838,6 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->centeringE( E_Add );
     }
-
 
     // Compute error on the Poisson equation
     double deltaPoisson_max = 0.0;
