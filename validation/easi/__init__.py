@@ -163,7 +163,7 @@ class Validation(object):
         
         # Define commands depending on host
         from socket import gethostname
-        from .machines import Machine, MachineLLR, MachinePoincare, MachineRuche, MachineIrene
+        from .machines import Machine, MachineLLR, MachinePoincare, MachineRuche, MachineIrene, MachineAdastra
         self.HOSTNAME = gethostname()
         if "llrlsi-gw" in self.HOSTNAME:
             self.machine_class = MachineLLR
@@ -173,6 +173,11 @@ class Validation(object):
             self.machine_class = MachineRuche
         elif "irene" in self.HOSTNAME:
             self.machine_class = MachineIrene
+        elif "CINES01" in self.HOSTNAME:
+            # TODO(Etienne M): For now, we use the Cines' porting machine,
+            # at some point yoy'll have to change that to the true Adastra
+            # hostname
+            self.machine_class = MachineAdastra
         else:
             self.machine_class = Machine
         self.machine = self.machine_class( self.smilei_path, self.options )
