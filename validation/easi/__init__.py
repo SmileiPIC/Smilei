@@ -432,7 +432,7 @@ class Validation(object):
                     print( '----------------------------------------------------')
                     print( 'Generating reference for '+BENCH)
                     print( '----------------------------------------------------')
-                Validate = self.CreateReference(self.smilei_path.references, BENCH)
+                Validate = self.CreateReference(self.smilei_path.references, BENCH, options)
                 execfile(validation_script, {"Validate":Validate})
                 Validate.write()
             
@@ -494,29 +494,31 @@ class Validation(object):
         
         return benchmarks
     
-    
     # DEFINE A CLASS TO CREATE A REFERENCE
     class CreateReference(object):
-        def __init__(self, references_path, bench_name):
+        def __init__(self, references_path, bench_name, options):
             self.reference_file = references_path+bench_name+".txt"
             self.data = {}
-        
+            self.options = options
+
         def __call__(self, data_name, data, precision=None, error_type="absolute_error"):
             self.data[data_name] = data
-        
+
         def write(self):
             import pickle
             from os.path import getsize
             from os import remove
             from sys import exit
-            with open(reference_file, "wb") as f:
-                pickle.dump(data, f, protocol=2)
-            size = getsize(reference_file)
+            with open(self.reference_file, "wb") as f:
+                pickle.dump(self.data, f, protocol=2)
+            size = getsize(self.reference_file)
             if size > 1000000:
-                print("Reference file is too large ("+str(size)+"B) - suppressing ...")
-                remove(reference_file)
-            elif self.options.verbose:
-                print("Created reference file "+reference_file)
+                print("Reference file is too large (" + str(size)+"B) - suppressing ...")
+                remove(self.reference_file)
+                return
+
+            if self.options.verbose:
+                print("Created reference file "+self.reference_file)
 
     # DEFINE A CLASS TO COMPARE A SIMULATION TO A REFERENCE
     class CompareToReference(object):
