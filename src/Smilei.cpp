@@ -314,6 +314,15 @@ int main( int argc, char *argv[] )
             }
             vecPatches.setMagneticFieldsForDiagnostic( params );
             region_global.clean();
+
+            if( params.multiple_decomposition ) {
+                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
+                    DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
+                    // Need to fill all ghost zones, not covered by patches ghost zones
+                    SyncVectorPatch::exchangeE( params, region.vecPatch_, imode, &smpi );
+                    SyncVectorPatch::exchangeB( params, region.vecPatch_, imode, &smpi );
+                }
+            }
         }
 
        
