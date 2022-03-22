@@ -20,7 +20,6 @@ class MachineAdastra(Machine):
 # # --feature=MI200
 # #SBATCH --gpus=mi100:1 or mi200:1
 
-
 echo "Date              = $(date)";
 echo "Hostname          = $(hostname -s)";
 echo "Working Directory = $(pwd)";
@@ -42,9 +41,12 @@ export OMP_PLACES=cores;
 
 {a_task_command};
 
+kRETVAL=$?;
+
 echo "The task ended at = $(date)";
 
-echo $? > exit_status_file;
+echo $kRETVAL > exit_status_file;
+exit $kRETVAL;
 """
 
     def __init__(self, smilei_path, options):

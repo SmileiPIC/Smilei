@@ -45,4 +45,4 @@ ifneq (,$(call parse_config,gpu_amd))
 	LDFLAGS += -lstdc++ -lomp
 endif
 
-CXXFLAGS += $(WARNING_FLAGS)
+CXXFLAGS += $(WARNING_FLAGS) -Ofast -g
