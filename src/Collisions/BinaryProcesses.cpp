@@ -27,6 +27,7 @@ BinaryProcesses::BinaryProcesses(
     vector<BinaryProcess*> processes,
     int every,
     int debug_every,
+    double time_frozen,
     string filename
 ) :
     species_group1_( species_group1 ),
@@ -37,6 +38,7 @@ BinaryProcesses::BinaryProcesses(
     debug_every_( debug_every ),
     filename_( filename )
 {
+    timesteps_frozen_ = time_frozen / params.timestep;
     // Open the HDF5 file
     debug_file_ = NULL;
     if( debug_every > 0 ) {
@@ -54,6 +56,7 @@ BinaryProcesses::BinaryProcesses( BinaryProcesses *BPs )
     intra_              = BPs->intra_             ;
     every_              = BPs->every_             ;
     debug_every_        = BPs->debug_every_       ;
+    timesteps_frozen_   = BPs->timesteps_frozen_  ;
     filename_           = BPs->filename_          ;
     debug_file_         = BPs->debug_file_        ;
     
@@ -175,7 +178,7 @@ void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
 // Make the pairing and launch the processes
 void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Diagnostic *> &localDiags )
 {
-    if( itime % every_ != 0 ) {
+    if( itime < timesteps_frozen_ || itime % every_ != 0 ) {
         return;
     }
     

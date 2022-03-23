@@ -18,6 +18,7 @@ public:
         std::vector<BinaryProcess*> processes,
         int every,
         int debug_every,
+        double time_frozen,
         std::string filename
     );
     
@@ -58,6 +59,9 @@ private:
     
     //! Number of timesteps between each debugging file output
     unsigned int debug_every_;
+    
+    //! Time before which binary processes do not happen
+    double timesteps_frozen_;
     
     //! Debugging file name
     std::string filename_;

@@ -20,6 +20,7 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* Collisions: new parameter ``time_frozen``
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 

@@ -51,13 +51,17 @@ public:
             intra = false;
         }
         
-        // Number of timesteps between each collisions
+        // Number of timesteps between each binary processes
         int every = 1; // default
         PyTools::extract( "every", every, "Collisions", n_binary_processes );
         
         // Number of timesteps between each debug output (if 0 or unset, no debug)
         int debug_every = 0; // default
         PyTools::extract( "debug_every", debug_every, "Collisions", n_binary_processes );
+        
+        // Time before which binary processes do not happen
+        double time_frozen = 0.; // default
+        PyTools::extract( "time_frozen", time_frozen, "Collisions", n_binary_processes );
         
         // Now make all the binary processes
         std::vector<BinaryProcess*> processes;
@@ -312,6 +316,7 @@ public:
             processes,
             every,
             debug_every,
+            time_frozen,
             filename
         );
     }

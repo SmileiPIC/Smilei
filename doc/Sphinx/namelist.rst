@@ -2049,7 +2049,7 @@ They are specified by one or several ``Collisions`` blocks::
 
   Lists of species' :py:data:`name`.
 
-  The collisions will occur between all species under the group ``species1``
+  The collisions and reactions will occur between all species under the group ``species1``
   and all species under the group ``species2``. For example, to collide all
   electrons with ions::
 
@@ -2076,18 +2076,24 @@ They are specified by one or several ``Collisions`` blocks::
 
   :default: 1
 
-  Number of timesteps between each computation of the collisions. Use a number higher than 1
-  only if you know the collision frequency is low with respect to the inverse of the timestep.
+  Number of timesteps between each computation of the collisions or reactions.
+  Use a number higher than 1 only if you know the collision frequency is low
+  with respect to the inverse of the timestep.
 
 
 .. py:data:: debug_every
 
   :default: 0
 
-  Number of timesteps between each output of information about collisions.
+  Number of timesteps between each output of information about collisions or reactions.
   If 0, there will be no outputs.
 
+.. py:data:: time_frozen
 
+  :default: 0.
+
+  The time during which no collisions or reactions happen, in units of :math:`T_r`.
+  
 .. py:data:: coulomb_log
 
   :default: 0.
@@ -2096,7 +2102,7 @@ They are specified by one or several ``Collisions`` blocks::
 
   * If :math:`= 0`, the Coulomb logarithm is automatically computed for each collision.
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
-  * If :math:`< 0`, collisions are not treated.
+  * If :math:`< 0`, collisions are not treated (but other reactions may happen).
 
 
 .. py:data:: coulomb_log_factor
