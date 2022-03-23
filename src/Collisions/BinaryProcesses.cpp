@@ -89,7 +89,6 @@ bool BinaryProcesses::debye_length_required_;
 // The formula for the inverse debye length squared is sumOverSpecies(density*charge^2/temperature)
 void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
 {
-    double p2, density, density_max, charge, temperature, rmin2;
     Species    *s;
     Particles *p;
     double coeff = 299792458./( 3.*params.reference_angular_frequency_SI*2.8179403267e-15 ); // c / (3 omega re)
@@ -100,11 +99,11 @@ void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
     }
     unsigned int nbin = patch->vecSpecies[0]->particles->first_index.size();
     
-    patch->debye_length_squared.resize( nbin, 0. );
+    patch->debye_length_squared.resize( nbin );
     double mean_debye_length = 0.;
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
-        density_max = 0.;
-        
+        double density_max = 0.;
+        double inv_D2 = 0.;
         double inv_cell_volume = 0.;
         
         for( unsigned int ispec=0 ; ispec<nspec ; ispec++ ) { // loop all species
@@ -112,52 +111,55 @@ void BinaryProcesses::calculate_debye_length( Params &params, Patch *patch )
             p  = s->particles;
             
             // Skip when no particles
-            if( s->particles->last_index[ibin] <= s->particles->first_index[ibin] ) continue;
+            if( p->last_index[ibin] <= p->first_index[ibin] ) continue;
             
             if( inv_cell_volume == 0. ) {
-                inv_cell_volume = 1. / patch->getPrimalCellVolume( p, s->particles->first_index[ibin], params );
+                inv_cell_volume = 1. / patch->getPrimalCellVolume( p, p->first_index[ibin], params );
             }
             
             // Calculation of particles density, mean charge, and temperature
             // Density is the sum of weights
             // Temperature definition is the average <v*p> divided by 3
-            density     = 0.;
-            charge      = 0.;
-            temperature = 0.;
+            double density     = 0.;
+            double charge      = 0.;
+            double temperature = 0.;
             // loop particles to calculate average quantities
-            for( unsigned int iPart=s->particles->first_index[ibin]; iPart<( unsigned int )s->particles->last_index[ibin] ; iPart++ ) {
-                p2 = p->momentum( 0, iPart ) * p->momentum( 0, iPart )
+            for( unsigned int iPart=p->first_index[ibin]; iPart<( unsigned int )p->last_index[ibin] ; iPart++ ) {
+                double p2 = p->momentum( 0, iPart ) * p->momentum( 0, iPart )
                      +p->momentum( 1, iPart ) * p->momentum( 1, iPart )
                      +p->momentum( 2, iPart ) * p->momentum( 2, iPart );
                 density     += p->weight( iPart );
                 charge      += p->weight( iPart ) * p->charge( iPart );
                 temperature += p->weight( iPart ) * p2/sqrt( 1.+p2 );
             }
-            if( density <= 0. ) {
-                continue;
-            }
-            charge /= density; // average charge
-            temperature *= s->mass_ / ( 3.*density ); // Te in units of me*c^2
-            density *= inv_cell_volume; // density in units of critical density
-            // compute inverse debye length squared
-            if( temperature>0. ) {
-                patch->debye_length_squared[ibin] += density*charge*charge/temperature;
-            }
-            // compute maximum density of species
-            if( density>density_max ) {
-                density_max = density;
+            if( density > 0. ) {
+                charge /= density; // average charge
+                temperature *= s->mass_ / ( 3.*density ); // Te in units of me*c^2
+                density *= inv_cell_volume; // density in units of critical density
+                // compute inverse debye length squared
+                if( temperature == 0. ) {
+                    inv_D2 += 1e100; // infinite
+                } else {
+                    inv_D2 += density*charge*charge/temperature;
+                }
+                // compute maximum density of species
+                if( density>density_max ) {
+                    density_max = density;
+                }
             }
         }
         
         // if there were particles,
-        if( patch->debye_length_squared[ibin] > 0. ) {
+        if( inv_D2 > 0. ) {
             // compute debye length squared in code units
-            patch->debye_length_squared[ibin] = 1./( patch->debye_length_squared[ibin] );
+            patch->debye_length_squared[ibin] = 1./inv_D2;
             // apply lower limit to the debye length (minimum interatomic distance)
-            rmin2 = pow( coeff*density_max, -2./3. );
+            double rmin2 = pow( coeff*density_max, -2./3. );
             if( patch->debye_length_squared[ibin] < rmin2 ) {
                 patch->debye_length_squared[ibin] = rmin2;
             }
+        } else {
+            patch->debye_length_squared[ibin] = 0.;
         }
         
         mean_debye_length += sqrt( patch->debye_length_squared[ibin] );
@@ -339,7 +341,7 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             }
             
             // If one weight is zero, then skip. Can happen after nuclear reaction
-            if( D.minW <= 0. ) return;
+            if( D.minW <= 0. ) continue;
             
             D.dt_correction = D.maxW * dt_corr;
             if( i % N2max <= (npairs-1) % N2max ) {

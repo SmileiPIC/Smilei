@@ -3931,18 +3931,18 @@ void VectorPatch::applyBinaryProcesses( Params &params, int itime, Timers &timer
         }
     }
 
-    unsigned int ncoll = patches_[0]->vecBPs.size();
+    unsigned int nBPs = patches_[0]->vecBPs.size();
 
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-        for( unsigned int icoll=0 ; icoll<ncoll; icoll++ ) {
-            patches_[ipatch]->vecBPs[icoll]->apply( params, patches_[ipatch], itime, localDiags );
+        for( unsigned int iBPs=0 ; iBPs<nBPs; iBPs++ ) {
+            patches_[ipatch]->vecBPs[iBPs]->apply( params, patches_[ipatch], itime, localDiags );
         }
     }
 
     #pragma omp single
-    for( unsigned int icoll=0 ; icoll<ncoll; icoll++ ) {
-        BinaryProcesses::debug( params, itime, icoll, *this );
+    for( unsigned int iBPs=0 ; iBPs<nBPs; iBPs++ ) {
+        BinaryProcesses::debug( params, itime, iBPs, *this );
     }
     #pragma omp barrier
 
