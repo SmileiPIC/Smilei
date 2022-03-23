@@ -1,4 +1,3 @@
-
 #ifndef ENVELOPEBC_FACTORY_H
 #define ENVELOPEBC_FACTORY_H
 
@@ -53,6 +52,10 @@ public:
                 if( params.Env_BCs[0][ii] == "reflective" ) {
                     EnvBoundCond[ii] = new EnvelopeBC2D_refl( params, patch, ii );
                 }
+                // pml bcs
+                else if( params.Env_BCs[0][ii] == "PML" ) {
+                    EnvBoundCond[ii] = new EnvelopeBC2D_PML( params, patch, ii );
+                }
                 // else: error
                 else {
                     ERROR( "Unknown Envelope x-boundary condition `" << params.Env_BCs[0][ii] << "`" );
@@ -62,6 +65,10 @@ public:
                 // reflective bcs
                 if( params.Env_BCs[1][ii] == "reflective" ) {
                     EnvBoundCond[ii+2] = new EnvelopeBC2D_refl( params, patch, ii+2 );
+                }
+                // pml bcs
+                else if( params.Env_BCs[1][ii] == "PML" ) {
+                    EnvBoundCond[ii+2] = new EnvelopeBC2D_PML( params, patch, ii+2 );
                 }
                 // else: error
                 else {
