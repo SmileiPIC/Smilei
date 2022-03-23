@@ -31,6 +31,7 @@
 #include "PML_Solver3D_Bouchard.h"
 #include "PML_Solver3D_Yee.h"
 #include "PML_SolverAM.h"
+#include "PML_Solver2D_Envelope.h"
 
 #include "Params.h"
 
@@ -184,6 +185,59 @@ public:
         }
         else if( params.geometry == "AMcylindrical" ) {
             solver = new PML_SolverAM( params );
+        }
+        else {
+            ERROR( "PML configuration not implemented" );
+        }
+
+        return solver;
+    }
+
+    // create PML solver for envelope
+    // -----------------------------
+    static Solver *createPMLenvelope( Params &params )
+    {
+        Solver *solver = NULL;
+        if( params.geometry == "2Dcartesian" ) {
+            if (params.Laser_Envelope_model){
+                if (params.envelope_solver == "explicit") {
+                    solver = new PML_Solver2D_Envelope( params );
+                }
+                else if (params.envelope_solver == "explicit_reduced_dispersion") {
+                    ERROR( "PML configuration not implemented yet" );
+                }
+                else {
+                    ERROR( "PML configuration not implemented" );
+                }
+            }
+        }
+        else if( params.geometry == "3Dcartesian" ) {
+            if (params.Laser_Envelope_model) {
+                if (params.envelope_solver == "explicit") {
+                    ERROR( "PML configuration not implemented yet" );
+                    // solver = new PML_Solver3D_Envelope( params );
+                }
+                else if (params.envelope_solver == "explicit_reduced_dispersion") {
+                    ERROR( "PML configuration not implemented yet" );
+                }
+                else {
+                    ERROR( "PML configuration not implemented" );
+                }
+            }
+        }
+        else if( params.geometry == "AMcylindrical" ) {
+            if (params.Laser_Envelope_model){
+                if (params.envelope_solver == "explicit") {
+                    ERROR( "PML configuration not implemented yet" );
+                    //solver = new PML_SolverAM_Envelope( params );
+                }
+                else if (params.envelope_solver == "explicit_reduced_dispersion") {
+                    ERROR( "PML configuration not implemented yet" );
+                }
+                else {
+                    ERROR( "PML configuration not implemented" );
+                }
+            }
         }
         else {
             ERROR( "PML configuration not implemented" );

@@ -57,7 +57,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
     // for min and max PML
 
     double alpha_cx = 1.01 ; // Try to use a more practical timestep !
-    double alpha_cy = 0.25 ; // 0.8 for transverse is ok
+    double alpha_cy = 0.10 ; // 0.25 ; // 0.8 for transverse is ok
 
     // Best parameter
     // for kappa_max = 1.2 ; sigma_max = 2 (in reality 1.59) in order to have dt = 0.8 dt_cfl
@@ -303,7 +303,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         }
         // Params for other cells (PML Media) when i>=3
         kappa_y_max = 1. ;
-        sigma_y_max = 2.32 ; // 2.32 for 10 cells ; // 2.72 for 10 cells ;
+        sigma_y_max = 4. ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
         alpha_y_max = 0.0 ;
         power_pml_kappa_y = 3.;
         power_pml_sigma_y = 2.;

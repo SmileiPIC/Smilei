@@ -1912,6 +1912,27 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
 
                 SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
                 SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                if( params.Laser_Envelope_model ) {
+                    #pragma omp single
+                    vecPatches.buildPMLList( "A_np1_pml", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "A_nm1_pml", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "A_n_pml", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+                }
+
             }
             if (params.nDim_field>2) {
                 // In 3D, distributed PML on Xmin and Xmax require synchronization along Z
@@ -1991,6 +2012,27 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
 
                 SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
                 SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                if( params.Laser_Envelope_model ) {
+                    #pragma omp single
+                    vecPatches.buildPMLList( "A_np1_pml", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "A_nm1_pml", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "A_n_pml", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                }
             } 
             if (params.nDim_field>2) {
                 // In 3D, distributed PML on Ymin and Ymax require synchronization along Z
