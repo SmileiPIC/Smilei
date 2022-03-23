@@ -19,11 +19,11 @@ EnvelopeBC::EnvelopeBC( Params &params, Patch *patch, unsigned int i_boundary ) 
     dt = params.timestep;
 
     std::vector<unsigned int> n_space(params.n_space);
-    if (params.uncoupled_grids)
+    if (params.multiple_decomposition)
         n_space = params.n_space_region;
 
     std::vector<unsigned int> oversize(params.oversize);
-    if (params.uncoupled_grids)
+    if (params.multiple_decomposition)
         oversize = params.region_oversize;
 
     // number of nodes of the primal and dual grid in the x-direction

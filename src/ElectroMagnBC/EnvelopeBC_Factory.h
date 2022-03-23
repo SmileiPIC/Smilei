@@ -6,6 +6,7 @@
 #include "EnvelopeBCAM_refl.h"
 #include "EnvelopeBC3D_refl.h"
 #include "EnvelopeBC2D_refl.h"
+#include "EnvelopeBC2D_PML.h"
 #include "EnvelopeBC1D_refl.h"
 
 #include "Params.h"

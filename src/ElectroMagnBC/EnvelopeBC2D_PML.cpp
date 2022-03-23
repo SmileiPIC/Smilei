@@ -23,7 +23,7 @@ EnvelopeBC2D_PML::EnvelopeBC2D_PML( Params &params, Patch *patch, unsigned int i
 
     std::vector<unsigned int> n_space(params.n_space);
     std::vector<unsigned int> oversize(params.oversize);
-    if (params.uncoupled_grids) {
+    if (params.multiple_decomposition) {
         n_space = params.n_space_region;
         oversize = params.region_oversize;
     }
