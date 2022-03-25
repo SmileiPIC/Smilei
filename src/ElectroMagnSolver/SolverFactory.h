@@ -32,6 +32,7 @@
 #include "PML_Solver3D_Yee.h"
 #include "PML_SolverAM.h"
 #include "PML_Solver2D_Envelope.h"
+#include "PML_SolverAM_Envelope.h"
 
 #include "Params.h"
 
@@ -227,9 +228,8 @@ public:
         }
         else if( params.geometry == "AMcylindrical" ) {
             if (params.Laser_Envelope_model){
-                if (params.envelope_solver == "explicit") {
-                    ERROR( "PML configuration not implemented yet" );
-                    //solver = new PML_SolverAM_Envelope( params );
+                if (params.envelope_solver == "explicit") { 
+                    solver = new PML_SolverAM_Envelope( params );
                 }
                 else if (params.envelope_solver == "explicit_reduced_dispersion") {
                     ERROR( "PML configuration not implemented yet" );
