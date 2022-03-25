@@ -232,12 +232,12 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
             for ( int j=1 ; j<nr_p-1 ; j++ ) {
                 (*A2D_n_)(ncells_pml_domain-1-domain_oversize_l-nsolver/2+i,j) = (*A2D_n_domain)(i,j);
-                (*G2D_n_)(ncells_pml_domain-1-domain_oversize_l-nsolver/2+i,j) = (*A2D_n_domain)(i,j)*( j_glob_pml+j )*dr;
+                (*G2D_n_)(ncells_pml_domain-1-domain_oversize_l-nsolver/2+i,j) = (*A2D_n_domain)(i,j)*( (double) (j_glob_pml+j)*dr );
             }
         }
 
         // 3. Solve Maxwell_PML for A-field :
-        pml_solver_envelope_->compute_A_from_G( envelope, iDim, min_or_max, solvermin, solvermax);
+        // pml_solver_envelope_->compute_A_from_G( envelope, iDim, min_or_max, solvermin, solvermax);
 
         // 4. Exchange PML -> Domain
         // Primals in x-direction
@@ -256,12 +256,12 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         for ( int i=min2exchange ; i<max2exchange ; i++ ) {
             for ( int j=1 ; j<nr_p-1 ; j++ ) {
                 (*A2D_n_)(domain_oversize_l+nsolver/2-i,j) = (*A2D_n_domain)(nl_p-1-i,j);
-                (*G2D_n_)(domain_oversize_l+nsolver/2-i,j) = (*A2D_n_domain)(nl_p-1-i,j)*( j_glob_pml+j )*dr;
+                (*G2D_n_)(domain_oversize_l+nsolver/2-i,j) = (*A2D_n_domain)(nl_p-1-i,j)*( (double) (j_glob_pml+j)*dr );
             }
         }
 
         // 3. Solve Maxwell_PML for A-field :
-        pml_solver_envelope_->compute_A_from_G( envelope, iDim, min_or_max, solvermin, solvermax);
+        // pml_solver_envelope_->compute_A_from_G( envelope, iDim, min_or_max, solvermin, solvermax);
 
         // 4. Exchange Domain -> PML
         // Primals in x-direction
@@ -332,7 +332,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
             for ( int i=1 ; i<nl_p-1 ; i++ ) {
                 int idx_start = ncells_pml_lmin-1*(patch->isXmin());
                 (*A2D_n_)(idx_start+i,domain_oversize_r+nsolver/2-j) = (*A2D_n_domain)(i,nr_p-1-j);
-                (*G2D_n_)(idx_start+i,domain_oversize_r+nsolver/2-j) = (*A2D_n_domain)(i,nr_p-1-j)*( j_glob_pml+j )*dr;
+                (*G2D_n_)(idx_start+i,domain_oversize_r+nsolver/2-j) = (*A2D_n_domain)(i,nr_p-1-j)*( (double) (j_glob_pml+nr_p-1-j)*dr );
             }
             if (patch->isXmax()) {
                 if(ncells_pml_lmax != 0){
