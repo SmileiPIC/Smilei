@@ -1799,7 +1799,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
         MPI_Allreduce( &Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
         E_Add[0] = -Ex_avg/( ( params.n_space[0]+2 )*( params.n_space[1]+1 ) );
-        E_Add[1] = -Ey_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+2 ) );;
+        E_Add[1] = -Ey_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+2 ) );
 #endif
 
     } else if( Ex_[0]->dims_.size()==1 ) {
@@ -1838,7 +1838,6 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->centeringE( E_Add );
     }
-
 
     // Compute error on the Poisson equation
     double deltaPoisson_max = 0.0;
@@ -4027,7 +4026,7 @@ void VectorPatch::saveExternalFields( Params &params )
 string combineMemoryConsumption( SmileiMPI *smpi, long int data, string name )
 {
     long int maxData( 0 );
-    MPI_Reduce( &data, &maxData, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+    MPI_Reduce( &data, &maxData, 1, MPI_LONG, MPI_MAX, 0, MPI_COMM_WORLD );
 
     double globalData = ( double )data / 1024./1024./1024.;
     MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalData, &globalData, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );

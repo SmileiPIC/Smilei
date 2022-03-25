@@ -1061,57 +1061,57 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
             if( dynamic_cast<ElectroMagnBC2D_PML *>( EM->emBoundCond[bcId] )){
                 ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( EM->emBoundCond[bcId] );
                 if (embc->Hx_) {
-                    isend( embc->Hx_, to, tag + irequest, requests[tag] );
+                    isend( embc->Hx_, to, tag + irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Hy_, to, tag + irequest, requests[tag] );
+                    isend( embc->Hy_, to, tag + irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Hz_, to, tag + irequest, requests[tag] );
+                    isend( embc->Hz_, to, tag + irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Bx_, to, tag + irequest, requests[tag] );
+                    isend( embc->Bx_, to, tag + irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->By_, to, tag + irequest, requests[tag] );
+                    isend( embc->By_, to, tag + irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Bz_, to, tag + irequest, requests[tag] );
+                    isend( embc->Bz_, to, tag + irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Ex_, to, tag + irequest, requests[tag] );
+                    isend( embc->Ex_, to, tag + irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Ey_, to, tag + irequest, requests[tag] );
+                    isend( embc->Ey_, to, tag + irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Ez_, to, tag + irequest, requests[tag] );
+                    isend( embc->Ez_, to, tag + irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Dx_, to, tag + irequest, requests[tag] );
+                    isend( embc->Dx_, to, tag + irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Dy_, to, tag + irequest, requests[tag] );
+                    isend( embc->Dy_, to, tag + irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Dz_, to, tag + irequest, requests[tag] );
+                    isend( embc->Dz_, to, tag + irequest, requests[irequest] );
                     irequest++;
                 }
             } else {
                 ElectroMagnBC3D_PML *embc = static_cast<ElectroMagnBC3D_PML *>( EM->emBoundCond[bcId] );
                 if (embc->Hx_) {
-                    isend( embc->Hx_, to, tag+irequest, requests[tag] );
+                    isend( embc->Hx_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Hy_, to, tag+irequest, requests[tag] );
+                    isend( embc->Hy_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Hz_, to, tag+irequest, requests[tag] );
+                    isend( embc->Hz_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Bx_, to, tag+irequest, requests[tag] );
+                    isend( embc->Bx_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->By_, to, tag+irequest, requests[tag] );
+                    isend( embc->By_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Bz_, to, tag+irequest, requests[tag] );
+                    isend( embc->Bz_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Ex_, to, tag+irequest, requests[tag] );
+                    isend( embc->Ex_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Ey_, to, tag+irequest, requests[tag] );
+                    isend( embc->Ey_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Ez_, to, tag+irequest, requests[tag] );
+                    isend( embc->Ez_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Dx_, to, tag+irequest, requests[tag] );
+                    isend( embc->Dx_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Dy_, to, tag+irequest, requests[tag] );
+                    isend( embc->Dy_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isend( embc->Dz_, to, tag+irequest, requests[tag] );
+                    isend( embc->Dz_, to, tag+irequest, requests[irequest] );
                     irequest++;
                 }
             }
