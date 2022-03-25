@@ -1,5 +1,5 @@
-#ifndef PML_SOLVER2D_ENVELOPE_H
-#define PML_SOLVER2D_ENVELOPE_H
+#ifndef PML_SOLVERAM_ENVELOPE_H
+#define PML_SOLVERAM_ENVELOPE_H
 
 #include "SolverAM.h"
 class ElectroMagn;
@@ -59,8 +59,12 @@ protected:
 
     double length_l_pml;
     double length_r_pml;
-    double length_l_pml_xmin;
-    double length_l_pml_xmax;
+    double length_l_pml_lmin;
+    double length_l_pml_lmax;
+
+    int j_glob_pml;
+    double rmax;
+    double r0;
 
 };//END class
 

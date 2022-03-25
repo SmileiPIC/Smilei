@@ -169,7 +169,7 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
 }
 
 
-EnvelopeBCAM_PML::~EnvelopeBC2D_PML()
+EnvelopeBCAM_PML::~EnvelopeBCAM_PML()
 {
     delete A2D_np1_;
     delete A2D_n_;
@@ -277,6 +277,8 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
     else if( i_boundary_ == 2 && patch->isYmin() ) {
 
         // NO BC on axis here
+    
+    }
 
     else if( i_boundary_ == 3 && patch->isYmax() ) {
 
@@ -285,21 +287,29 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
 
         cField2D* A2D_np1_pml_lmin = NULL;
         cField2D* A2D_n_pml_lmin   = NULL;
+        cField2D* G2D_np1_pml_lmin = NULL;
+        cField2D* G2D_n_pml_lmin   = NULL;
         Field2D*  Phi2D_pml_lmin   = NULL;
 
         cField2D* A2D_np1_pml_lmax = NULL;
         cField2D* A2D_n_pml_lmax   = NULL;
+        cField2D* G2D_np1_pml_lmax = NULL;
+        cField2D* G2D_n_pml_lmax   = NULL;
         Field2D*  Phi2D_pml_lmax   = NULL;
 
         if(ncells_pml_lmin != 0){
             A2D_np1_pml_lmin = pml_fields_lmin->A2D_n_;
             A2D_n_pml_lmin   = pml_fields_lmin->A2D_nm1_;
+            G2D_np1_pml_lmin = pml_fields_lmin->G2D_n_;
+            G2D_n_pml_lmin   = pml_fields_lmin->G2D_nm1_;
             Phi2D_pml_lmin   = pml_fields_lmin->Phi2D_;
         }
 
         if(ncells_pml_lmax != 0){
             A2D_np1_pml_lmax = pml_fields_lmax->A2D_n_;
             A2D_n_pml_lmax   = pml_fields_lmax->A2D_nm1_;
+            G2D_np1_pml_lmax = pml_fields_lmax->G2D_n_;
+            G2D_n_pml_lmax   = pml_fields_lmax->G2D_nm1_;
             Phi2D_pml_lmax   = pml_fields_lmax->Phi2D_;
         }
 
