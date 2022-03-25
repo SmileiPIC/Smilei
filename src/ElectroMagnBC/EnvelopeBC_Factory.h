@@ -4,6 +4,7 @@
 #include "EnvelopeBC.h"
 #include "EnvelopeBCAM_Axis.h"
 #include "EnvelopeBCAM_refl.h"
+#include "EnvelopeBCAM_PML.h"
 #include "EnvelopeBC3D_refl.h"
 #include "EnvelopeBC2D_refl.h"
 #include "EnvelopeBC2D_PML.h"
@@ -119,8 +120,12 @@ public:
                 // X DIRECTION
                 if( params.Env_BCs[0][ii] == "reflective" ) {
                     EnvBoundCond[ii] = new EnvelopeBCAM_refl( params, patch, ii );
-                    
-                } else {
+                }
+                // pml bcs
+                else if( params.Env_BCs[0][ii] == "PML" ) {
+                    EnvBoundCond[ii] = new EnvelopeBCAM_PML( params, patch, ii );
+                } 
+                else {
                     ERROR( "Unknown Envelope x-boundary condition `" << params.Env_BCs[0][ii] << "`" );
                 }
             }
@@ -130,13 +135,15 @@ public:
             
           
             if( params.Env_BCs[1][1] == "reflective" ) {
-                EnvBoundCond[3] = new EnvelopeBCAM_refl( params, patch, 3 );
-              
-            } else  {
+                EnvBoundCond[3] = new EnvelopeBCAM_refl( params, patch, 3 );  
+            }
+            // pml bcs
+            else if( params.Env_BCs[1][1] == "PML" ) {
+                EnvBoundCond[3] = new EnvelopeBCAM_PML( params, patch, 3 );
+            }
+            else  {
                 ERROR( "Unknown Envelope r-boundary condition `" << params.Env_BCs[1][1] << "`" );
             }
-          
-
         }
         
         
