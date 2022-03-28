@@ -1,12 +1,18 @@
-import os, re, numpy as np, math 
 import happi
+
+def Avg(an_array):
+    return sum(an_array) / len(an_array)
 
 S = happi.Open(["./restart*"], verbose=False)
 
+# from pprint import pprint
+# pprint(vars(S.namelist.DiagScreen))
 
+# Scalars, M. Lobet recommended to first check the energy
+ukin = S.Scalar("Ukin").getData()
+uelm = S.Scalar("Uelm").getData()
+utot = S.Scalar("Utot").getData()
 
-# 3D SCREEN DIAGS
-precision = [0.02, 0.06, 0.01, 0.06, 0.03, 0.1, 0.02, 0.1]
-for i,d in enumerate(S.namelist.DiagScreen):
-	last_data = S.Screen(i, timesteps=160).getData()[-1]
-	Validate("Screen "+d.shape+" diag with "+d.direction+" direction", last_data, precision[i])
+Validate("Ukinetic energy evolution: ", ukin / Avg(ukin), 1e-3)
+Validate("Uelectromag evolution: ", uelm / Avg(uelm), 1e-3)
+Validate("Total energy evolution: ", utot / Avg(utot), 1e-3)

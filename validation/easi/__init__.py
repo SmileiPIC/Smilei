@@ -562,6 +562,8 @@ class Validation(object):
             # First, check whether the data matches
             if not matchesWithReference(data, expected_data, data_name, precision, error_type):
                 _dataNotMatching = True
+            else:
+                print('The simulation\'s output matches the reference (good).')
             # try to convert to array
             try:
                 data_float = array(data, dtype=float)
