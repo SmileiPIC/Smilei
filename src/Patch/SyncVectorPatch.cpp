@@ -2193,11 +2193,51 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
 
                 SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
                 SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                if (imode == 0){
+                    if( params.Laser_Envelope_model ) {
+                        #pragma omp single
+                        vecPatches.buildPMLList( "A_np1_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                        #pragma omp single
+                        vecPatches.buildPMLList( "A_nm1_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                        #pragma omp single
+                        vecPatches.buildPMLList( "A_n_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                        #pragma omp single
+                        vecPatches.buildPMLList( "G_np1_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                        #pragma omp single
+                        vecPatches.buildPMLList( "G_nm1_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                        #pragma omp single
+                        vecPatches.buildPMLList( "G_n_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+                    }
+                }
             }
 
             // Testing implementation of distributed PML on Ymin and Ymax
             iDim = 1;
-            for ( int min_max=0 ; min_max<2 ; min_max++ ) {
+            for ( int min_max=1 ; min_max<2 ; min_max++ ) {
                 #pragma omp single
                 vecPatches.buildPMLList( "Bl", iDim, min_max, smpi, imode );
 
@@ -2233,6 +2273,46 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
 
                 SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
                 SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                if (imode == 0){
+                    if( params.Laser_Envelope_model ) {
+                        #pragma omp single
+                        vecPatches.buildPMLList( "A_np1_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                        #pragma omp single
+                        vecPatches.buildPMLList( "A_nm1_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                        #pragma omp single
+                        vecPatches.buildPMLList( "A_n_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                        #pragma omp single
+                        vecPatches.buildPMLList( "G_np1_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                        #pragma omp single
+                        vecPatches.buildPMLList( "G_nm1_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                        #pragma omp single
+                        vecPatches.buildPMLList( "G_n_pml", iDim, min_max, smpi, imode );
+
+                        SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                        SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+                    }
+                }
             }
         } // End for( imode )
     } // End else( AM )

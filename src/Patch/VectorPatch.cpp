@@ -25,6 +25,7 @@
 #include "ElectroMagnBC3D_PML.h"
 #include "ElectroMagnBCAM_PML.h"
 #include "EnvelopeBC2D_PML.h"
+#include "EnvelopeBCAM_PML.h"
 
 #include "SyncVectorPatch.h"
 #include "interface.h"
@@ -3899,6 +3900,60 @@ void VectorPatch::buildPMLList( string fieldname, int idim, int min_or_max, Smil
     else if ( fieldname == "Ht" ) {
         for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Ht_[imode] );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "A_np1_pml" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            //emfields(ipatch) and not envelope(ipatch) ?
+            listForPML_.push_back( static_cast<EnvelopeBCAM_PML*>( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getA2Dnp1PML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "A_nm1_pml" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            //emfields(ipatch) and not envelope(ipatch) ?
+            listForPML_.push_back( static_cast<EnvelopeBCAM_PML*>( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getA2Dnm1PML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "A_n_pml" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            //emfields(ipatch) and not envelope(ipatch) ?
+            listForPML_.push_back( static_cast<EnvelopeBCAM_PML*>( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getA2DnPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "G_np1_pml" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            //emfields(ipatch) and not envelope(ipatch) ?
+            listForPML_.push_back( static_cast<EnvelopeBCAM_PML*>( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getG2Dnp1PML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "G_nm1_pml" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            //emfields(ipatch) and not envelope(ipatch) ?
+            listForPML_.push_back( static_cast<EnvelopeBCAM_PML*>( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getG2Dnm1PML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "G_n_pml" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            //emfields(ipatch) and not envelope(ipatch) ?
+            listForPML_.push_back( static_cast<EnvelopeBCAM_PML*>( emfields(ipatch)->envelope->EnvBoundCond[id_bc] )->getG2DnPML() );
             if(listForPML_.back()){
                 listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
             }
