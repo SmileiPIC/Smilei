@@ -61,12 +61,14 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             j_glob_pml = patch->getCellStartingGlobalIndex( 1 )-ncells_pml_domain+oversize[iDim]+1;
         }
         else if (min_or_max==1) {
-            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-1;
+            j_glob_pml = patch->getCellStartingGlobalIndex( 1 )+nr_p-oversize[iDim]-2;
         }
         // Redifine length of pml region
         nr_p = ncells_pml_domain;
         nl_p += ncells_pml_min[0]-1*(patch->isXmin()) + ncells_pml_max[0]-1*(patch->isXmax());
     }
+
+    isYmin = (patch->isYmin());
 
     //PML Coeffs Kappa,Sigma ...
     //Primal
@@ -358,11 +360,10 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
     std::complex<double> source_term_y ;
 
     if (iDim == 0) {
-        //
         for( unsigned int k=0 ; k<1 ; k++ ) {
             // explicit solver
             for( unsigned int i=solvermin ; i<solvermax; i++ ) { // x loop
-                for( unsigned int j=1 ; j < nr_p-1 ; j++ ) { // y loop
+                for( unsigned int j=std::max(3*isYmin,1) ; j < nr_p-1 ; j++ ) { // y loop
                     // dA/dx = dA/dx + ik0 A
                     // r dA/dx = r dA/dx + ik0 rA <=> dG/dx = dG/dx + ik0 G
                     std::complex<double> dG_over_dx_fdtd = ( ( *G2D_n_pml )( i+1, j )-( *G2D_n_pml )( i-1, j ) )/(2.*dl) ;
@@ -382,19 +383,49 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // ====
                     // STD Solver for propagation in vacuum
                     // ====
+                    // ( *A2D_np1_pml )( i, j ) = 0. ;
+                    // ( *A2D_np1_pml )( i, j ) += d2A_over_dy2;
+                    // ( *A2D_np1_pml )( i, j ) += dA_over_dy/( (double) ( j_glob_pml+j )*dr );
+                    // ( *A2D_np1_pml )( i, j ) += d2A_over_dx2_fdtd;
+                    // ( *A2D_np1_pml )( i, j ) += 2.*i1*k0*dA_over_dx_fdtd;
+                    // ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j )*dt*dt;
+                    // ( *A2D_np1_pml )( i, j ) += 2.*( *A2D_n_pml )( i, j )-(1.+i1*k0*dt)*( *A2D_nm1_pml )( i, j );
+                    // ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j )*(1.+i1*k0*dt)/(1.+k0*k0*dt*dt);
+                    // Test ADE Scheme
                     ( *G2D_np1_pml )( i, j ) = 0. ;
                     // 4.b Envelope FDTD with intermediate variable
                     ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) + dt*dt*d2G_over_dy2 ;
-                    ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) + dt*dt*d2G_over_dx2 ;
                     ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) - dt*dt*dA_over_dy ;
+                    ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) + dt*dt*d2G_over_dx2 ;
                     ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) + dt*dt*k0*k0*( *G2D_n_pml )( i, j ) ;
                     ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) - (1.+i1*k0*dt) * ( *G2D_nm1_pml )( i, j ) ;
-                    ( *G2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + 2.*( *G2D_n_pml )( i, j ) ;
+                    ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) + 2.*( *G2D_n_pml )( i, j ) ;
                     ( *G2D_np1_pml )( i, j ) = ( ( 1.+i1*k0*dt) / (1.+k0*k0*dt*dt) )*( *G2D_np1_pml )( i, j );
                     // ----
-                    ( *A2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) / ( ( j_glob_pml+j )*dr ) ;
+                    ( *A2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) / ( (double) ( j_glob_pml+j )*dr ) ; 
                 } // end y loop
             } // end x loop
+
+            if (isYmin){
+                for( unsigned int i=solvermin ; i<solvermax; i++ ) {
+                    unsigned int j = 2; // j_p = 2 corresponds to r=0
+                    // At r = 0 we have dG/dr = A + r dA/dr = A. This is the new relation between A and G. In FDTD : A = 2*G(i,j+1)/dr
+                    // Moreover = d2G/dr2 = dA/dr and it simplify with previous dA/dr which 0 anyway on axis.
+                    // Equation for G is only d2G/dx2 = d2G/dt2 on axis
+                    std::complex<double> d2G_over_dx2_fdtd = ( ( *G2D_n_pml )( i-1, j )-2.*( *G2D_n_pml )( i, j )+( *G2D_n_pml )( i+1, j ) )/(dl*dl) ;
+                    std::complex<double> d2G_over_dx2 = d2G_over_dx2_fdtd
+                                                        + 2.*i1*k0*( ( *G2D_n_pml )( i+1, j )-( *G2D_n_pml )( i-1, j ) )/(2.*dl)
+                                                        - k0*k0*( *G2D_n_pml )( i, j ) ;
+                    ( *G2D_np1_pml )( i, j ) = 0. ;
+                    ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) + dt*dt*d2G_over_dx2 ;
+                    ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) + dt*dt*k0*k0*( *G2D_n_pml )( i, j ) ;
+                    ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) - (1.+i1*k0*dt) * ( *G2D_nm1_pml )( i, j ) ;
+                    ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) + 2.*( *G2D_n_pml )( i, j ) ;
+                    ( *G2D_np1_pml )( i, j ) = ( ( 1.+i1*k0*dt) / (1.+k0*k0*dt*dt) )*( *G2D_np1_pml )( i, j );
+                    // ----
+                    ( *A2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j+1 )/dr;
+                }
+            }
 
             for( unsigned int i=0 ; i<nl_p ; i++ ) { // x loop
                 for( unsigned int j=0 ; j < nr_p ; j++ ) { // y loop

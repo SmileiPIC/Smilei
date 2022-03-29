@@ -56,9 +56,9 @@ public:
     cField* getA2DnPML() override { return A2D_n_; };
     cField* getA2Dnm1PML() override { return A2D_nm1_; };
 
-    cField* getG2Dnp1PML() override { return A2D_np1_; };
-    cField* getG2DnPML() override { return A2D_n_; };
-    cField* getG2Dnm1PML() override { return A2D_nm1_; };
+    cField* getG2Dnp1PML() override { return G2D_np1_; };
+    cField* getG2DnPML() override { return G2D_n_; };
+    cField* getG2Dnm1PML() override { return G2D_nm1_; };
 
     cField* getu1np1lPML() override { return u1_np1_l_; };
     cField* getu2np1lPML() override { return u2_np1_l_; };

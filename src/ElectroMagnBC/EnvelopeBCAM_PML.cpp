@@ -237,7 +237,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         }
 
         // 3. Solve Maxwell_PML for A-field :
-        // pml_solver_envelope_->compute_A_from_G( envelope, iDim, min_or_max, solvermin, solvermax);
+        pml_solver_envelope_->compute_A_from_G( envelope, iDim, min_or_max, solvermin, solvermax);
 
         // 4. Exchange PML -> Domain
         // Primals in x-direction
@@ -261,7 +261,7 @@ void EnvelopeBCAM_PML::apply( LaserEnvelope *envelope, ElectroMagn *EMfields, do
         }
 
         // 3. Solve Maxwell_PML for A-field :
-        // pml_solver_envelope_->compute_A_from_G( envelope, iDim, min_or_max, solvermin, solvermax);
+        pml_solver_envelope_->compute_A_from_G( envelope, iDim, min_or_max, solvermin, solvermax);
 
         // 4. Exchange Domain -> PML
         // Primals in x-direction

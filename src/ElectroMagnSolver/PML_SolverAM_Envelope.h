@@ -63,6 +63,7 @@ protected:
     double length_l_pml_lmax;
 
     int j_glob_pml;
+    bool isYmin; 
     double rmax;
     double r0;
 
