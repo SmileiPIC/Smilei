@@ -21,6 +21,12 @@ HDF5_ROOT_DIR ?= $(HDF5_ROOT)
 BOOST_ROOT_DIR ?= $(BOOST_ROOT)
 TABLES_BUILD_DIR ?= tools/tables/build
 
+# Machines scripts may need that
+my_config:=$(config)
+define parse_config
+$(findstring $(1),$(config))$(eval my_config:=$(filter-out $(1),$(my_config)))
+endef
+
 #-----------------------------------------------------
 # check whether to use a machine specific definitions
 ifneq ($(machine),)
@@ -116,11 +122,6 @@ LDFLAGS += $(PY_LDFLAGS)
 ifneq ($(strip $(PYTHONHOME)),)
     LDFLAGS += -L$(PYTHONHOME)/lib
 endif
-
-my_config:=$(config)
-define parse_config
-$(findstring $(1),$(config))$(eval my_config:=$(filter-out $(1),$(my_config)))
-endef
 
 # Manage options in the "config" parameter
 ifneq (,$(call parse_config,debug))
@@ -224,19 +225,35 @@ ifneq (,$(call parse_config,no_mpi_tm))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
-ifneq (,$(call parse_config,gpu))
+ifneq (,$(call parse_config,gpu_nvidia))
     SMILEICXX.DEPS = g++
-    ACCFLAGS += -D_GPU -w -Minfo=accel
+	THRUSTCXX = nvcc
 
-    CUSRCS := $(shell find src/* -name \*.cu)
-    CUOBJS := $(addprefix $(BUILD_DIR)/, $(CUSRCS:.cu=.o))
-    THRUSTCXX = nvcc
-    CUFLAGS += -O3 --std c++14 $(DIRS:%=-I%)
-    CUFLAGS += $(shell $(PYTHONCONFIG) --includes)
+	ACCELERATOR_GPU_FLAGS += -D_GPU -w -Minfo=accel
 
-    OBJS += $(CUOBJS)
+    GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
+    GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
+
+    ACCELERATOR_GPU_KERNEL_FLAGS += -O3 --std c++14 $(DIRS:%=-I%)
+    ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
+
+    OBJS += $(GPU_KERNEL_OBJS)
 endif
 CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
+
+ifneq (,$(call parse_config,gpu_amd))
+    GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
+    GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
+
+    ACCELERATOR_GPU_KERNEL_FLAGS += -O3 -std=c++14 $(DIRS:%=-I%)
+    ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
+
+	OBJS += $(GPU_KERNEL_OBJS)
+
+	# It would be great if CXXFLAGS contained only the warning flags, so we can 
+	# use it with nvcc/hipcc too
+	ACCELERATOR_GPU_KERNEL_FLAGS += $(WARNING_FLAGS)
+endif
 
 #-----------------------------------------------------
 # Set the verbosity prefix
@@ -264,6 +281,8 @@ default: $(EXEC) $(EXEC)_test
 
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
+	$(Q) rm -rf $(EXEC)
+	$(Q) rm -rf $(EXEC)_test
 	$(Q) rm -rf $(BUILD_DIR)
 	$(Q) rm -rf $(EXEC)-$(VERSION).tgz
 
@@ -290,8 +309,7 @@ ifeq ($(findstring icpc, $(COMPILER_INFO)), icpc)
 
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCFLAGS) -O1 -c $< -o $@
-
+	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCELERATOR_GPU_FLAGS) -O1 -c $< -o $@
 endif
 
 $(BUILD_DIR)/src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.o : src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.cpp
@@ -309,12 +327,12 @@ $(BUILD_DIR)/src/Radiation/RadiationTablesDefault.o : src/Radiation/RadiationTab
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
 	@echo "Compiling $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS)  $(ACCFLAGS) -c $< -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCELERATOR_GPU_FLAGS) -c $< -o $@
 
 # Compile cus
 $(BUILD_DIR)/%.o : %.cu
 	@echo "Compiling $<"
-	$(Q) $(THRUSTCXX) $(CUFLAGS) -c $< -o $@
+	$(Q) $(THRUSTCXX) $(ACCELERATOR_GPU_KERNEL_FLAGS) -c $< -o $@
 
 # Link the main program
 $(EXEC): $(OBJS)
@@ -325,7 +343,7 @@ $(EXEC): $(OBJS)
 # Compile the the main program again for test mode
 $(BUILD_DIR)/src/Smilei_test.o: src/Smilei.cpp $(EXEC)
 	@echo "Compiling src/Smilei.cpp for test mode"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCFLAGS) -DSMILEI_TESTMODE -c src/Smilei.cpp -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS) $(ACCELERATOR_GPU_FLAGS) -DSMILEI_TESTMODE -c src/Smilei.cpp -o $@
 
 # Link the main program for test mode
 $(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
@@ -452,7 +470,7 @@ help:
 	@echo '    advisor              : to compile for Intel Advisor analysis'
 	@echo '    vtune                : to compile for Intel Vtune analysis'
 	@echo '    inspector            : to compile for Intel Inspector analysis'
-	@echo '    gpu                  : to compile for GPU
+	@echo '    gpu                  : to compile for GPU'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'

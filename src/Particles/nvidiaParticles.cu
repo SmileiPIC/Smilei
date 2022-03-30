@@ -1,7 +1,7 @@
 
 #include <iostream>
 
-#include <nvidiaParticles.h>
+#include "nvidiaParticles.h"
 
 //! Structure with specific function count_if_out for thrust::tuple operator
 //! Return True if the entry is -1 as in the cell keys vector for instance
@@ -398,4 +398,11 @@ void nvidiaParticles::createParticles( int n_additional_particles )
     nvidia_cell_keys_.resize( n_particles+n_additional_particles);
     thrust::fill(nvidia_cell_keys_.begin() + n_particles, nvidia_cell_keys_.begin() + new_size, 0);
 
+}
+
+
+extern "C" {
+void* CreateGPUParticles() {
+    return new nvidiaParticles();
+}
 }

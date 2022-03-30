@@ -73,16 +73,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     namelist( "" )
 {
 
-    MESSAGE( "HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE );
+    MESSAGE(1, "HDF5 version " << H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
 
-    if( ( H5_VERS_MAJOR< 1 ) ||
-            ( ( H5_VERS_MAJOR==1 ) && ( H5_VERS_MINOR< 8 ) ) ||
-            ( ( H5_VERS_MAJOR==1 ) && ( H5_VERS_MINOR==8 ) && ( H5_VERS_RELEASE<16 ) ) ) {
-        WARNING( "Smilei suggests using HDF5 version 1.8.16 or newer" );
+    if((H5_VERS_MAJOR < 1) ||
+       ((H5_VERS_MAJOR == 1) && (H5_VERS_MINOR < 8)) ||
+       ((H5_VERS_MAJOR == 1) && (H5_VERS_MINOR == 8) && (H5_VERS_RELEASE < 16))) {
+        WARNING("Smilei suggests using HDF5 version 1.8.16 or newer");
     }
 
-    if( namelistsFiles.size()==0 ) {
-        ERROR( "No namelists given!" );
+    if(namelistsFiles.size() == 0) {
+        ERROR("No namelists given!");
     }
 
     //string commandLineStr("");
@@ -707,24 +707,26 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     //if (cell_sorting)
     //    vectorization_mode = "on";
 
-    PyTools::extract( "gpu_computing", gpu_computing, "Main"  );
-    if (gpu_computing) {
-#ifndef _GPU
-        ERROR( "Smilei is not compiled for GPU" );
+    PyTools::extract("gpu_computing", gpu_computing, "Main");
+    if(gpu_computing) {
+#if(defined(_GPU) && defined(_OPENACC)) || defined(SMILEI_ACCELERATOR_GPU_OMP)
+        // If compiled for GPU and asking for GPU
+        MESSAGE(1, "Smilei will run on GPU");
 #else
-#ifdef _OPENACC
-        MESSAGE( "Smilei will be exeecuted on CPU through Thrust" );
-#else
-        ERROR( "Smilei is not compiled with OpenACC" );
+    #if !defined(_GPU) && defined(_OPENACC)
+        MESSAGE(1, "Smilei will be exeecuted on CPU through Thrust");
+    #else
+        // If compiled for CPU and asking for GPU
+        ERROR("Smilei is not compiled for GPU");
+    #endif
 #endif
+    } else {
+#if defined(_OPENACC) || defined(SMILEI_ACCELERATOR_GPU_OMP)
+        // If compiled for GPU and asking for CPU
+        ERROR("Smilei will be exeecuted on GPU,set Main.gpu_computing = True");
 #endif
     }
-    else {
-#ifdef _OPENACC
-        ERROR( "Smilei will be exeecuted on GPU,set Main.gpu_computing = True" );
-#endif
-    }
-    
+
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
 

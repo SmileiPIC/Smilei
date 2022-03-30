@@ -16,6 +16,18 @@
 
 #include "RadiationNiel.h"
 
+#if defined(_GPU)
+    #define __HIP_PLATFORM_NVCC__
+    #define __HIP_PLATFORM_NVIDIA__
+#elif defined(SMILEI_ACCELERATOR_GPU_OMP)
+    #define __HIP_PLATFORM_HCC__
+    #define __HIP_PLATFORM_AMD__
+#endif
+
+#if defined(_GPU) || defined(SMILEI_ACCELERATOR_GPU_OMP)
+    #include <hiprand.hpp>
+#endif
+
 // -----------------------------------------------------------------------------
 //! Constructor for RadiationNLL
 //! Inherited from Radiation
@@ -160,7 +172,7 @@ void RadiationNiel::operator()(
             unsigned long long seed; // Parameters for CUDA generator
             unsigned long long seq;
             unsigned long long offset;
-            curandState_t state;
+            hiprandState_t state;
 
             seed = 12345ULL;
             seq = 0ULL;
@@ -196,9 +208,9 @@ void RadiationNiel::operator()(
 		        seed_curand = (int) (ipart+1)*(initial_seed+1); //Seed for linear generator
 		        seed_curand = (a * seed_curand + c) % m; //Linear generator
     
-                curand_init(seed_curand, seq, offset, &state); //Cuda generator initialization     
+                hiprand_init(seed_curand, seq, offset, &state); //Cuda generator initialization     
     
-                random_numbers[ipart - istart] = 2*curand_uniform(&state) - 1; //Generating number
+                random_numbers[ipart - istart] = 2*hiprand_uniform(&state) - 1; //Generating number
 
                 temp = -std::log( ( 1.0-random_numbers[ipart - istart] )*( 1.0+random_numbers[ipart - istart] ) );
 

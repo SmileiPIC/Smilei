@@ -1,29 +1,12 @@
+#ifndef PARTICLES_PARTICLESFACTORY_H
+#define PARTICLES_PARTICLESFACTORY_H
 
-#ifndef PARTICLESFACTORY_H
-#define PARTICLESFACTORY_H
-
-#include "Particles.h"
-#ifdef _GPU
-#include "nvidiaParticles.h"
-#endif
 #include "Params.h"
+#include "Particles.h"
 
-class ParticlesFactory
-{
+class ParticlesFactory {
 public:
-    static Particles *create( Params &params )
-    {
-        Particles *particles = NULL;
-        if( !params.gpu_computing ) {
-            particles = new Particles();
-        }
-#ifdef _GPU
-        else {
-            particles = new nvidiaParticles();
-        }
-#endif
-        return particles;
-    }
+    static Particles* create(const Params& params);
 };
 
 #endif

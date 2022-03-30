@@ -3910,19 +3910,20 @@ void VectorPatch::saveExternalFields( Params &params )
 }
 
 // Combines info on memory from all MPI processes
-string combineMemoryConsumption( SmileiMPI *smpi, long int data, string name )
-{
-    long int maxData( 0 );
-    MPI_Reduce( &data, &maxData, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD );
+std::string combineMemoryConsumption(SmileiMPI *smpi, long int data, std::string name) {
+    long int maxData = 0;
+    // CHECK(): Should it be MPI_INT or MPI_LONG ? Historically, it was MPI_INT 
+    // MPI_Reduce(&data, &maxData, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&data, &maxData, 1, MPI_LONG, MPI_MAX, 0, MPI_COMM_WORLD);
 
-    long double globalData = ( double )data / 1024./1024./1024.;
-    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalData, &globalData, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+    double globalData = static_cast<double>(data) / (1024.0 * 1024.0 * 1024.0);
+    MPI_Reduce(smpi->isMaster() ? MPI_IN_PLACE : &globalData, &globalData, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    ostringstream t("");
-    t << setw(22) << name << ": "
-      << "Master " << ( int )( ( double )data / 1024./1024. ) << " MB;   "
-      << "Max " << ( int )( ( double )maxData / 1024./1024. ) << " MB;   "
-      << "Global " << setprecision( 3 ) << globalData << " GB";
+    std::ostringstream t{};
+    t << std::setw(22) << name << ": "
+      << "Master " << static_cast<int>(static_cast<double>(data) / (1024.0 * 1024.0)) << " MB;   "
+      << "Max " << static_cast<int>(static_cast<double>(maxData) / (1024.0 * 1024.0)) << " MB;   "
+      << "Global " << std::setprecision(3) << globalData << " GB";
     return t.str();
 }
 

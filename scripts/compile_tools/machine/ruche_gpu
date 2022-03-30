@@ -17,8 +17,8 @@
 # For HDF5 (Intel compiled) compatibility in this PGI environment
 LDFLAGS  += -L/gpfs/softs/spack/opt/spack/linux-centos7-haswell/gcc-4.8.5/intel-19.0.3-k6ro4ofsaw2mzxakwhkygta3ihg5e4aj/lib/intel64 -lintlc -lsvml -lz
 
-ACCFLAGS += -ta=tesla:cc70
+ACCELERATOR_GPU_FLAGS += -ta=tesla:cc70
 LDFLAGS  += -ta=tesla:cc70 -L/gpfs/softs/spack/opt/spack/linux-centos7-haswell/gcc-4.8.5/pgi-20.1-5qavttbng2gxzgsoq6jujyocczsvlc2o/linux86-64-llvm/2020/cuda/10.1/lib64 -lcudart
 
-CUFLAGS  += -arch=sm_70
+ACCELERATOR_GPU_KERNEL_FLAGS += -arch=sm_70
 

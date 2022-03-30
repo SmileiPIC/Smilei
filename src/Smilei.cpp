@@ -45,7 +45,6 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 #ifdef _GPU
-    #ifdef _OPENACC
     void initialisation_openacc()
     {
         char* local_rank_env;
@@ -68,7 +67,6 @@ using namespace std;
             exit(1);
         }
     }
-    #endif
 #endif
 
 int main( int argc, char *argv[] )
@@ -112,6 +110,8 @@ int main( int argc, char *argv[] )
         cout << gpunum << endl;
         acc_set_device_num( gpunum, acc_device_nvidia );
     }
+#elif defined(SMILEI_ACCELERATOR_GPU_OMP)
+    ERROR("TODO(Etienne M): Implement");
 #endif
 
     // Need to move it here because of domain decomposition need in smpi->init(_patch_count)

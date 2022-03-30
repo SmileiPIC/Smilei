@@ -24,7 +24,6 @@
 
 #ifdef _GPU
 #include <openacc.h>
-#include <openacc_curand.h>
 #endif
 
 #include <cstring>
