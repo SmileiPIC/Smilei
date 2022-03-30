@@ -474,7 +474,7 @@ void VectorPatch::dynamics( Params &params,
         // using the same out dependency will ensure that 
         // for each patch the reduction of the species densities 
         // is performed sequentially (ispec=0,1,2,...)
-        #pragma omp task firstprivate(ipatch,ispec,clrw) depend(in:has_done_dynamics[ipatch][ispec]) depend(out:has_reduced_densities[ipatch])
+        #pragma omp task shared(params) firstprivate(ipatch,ispec,clrw) depend(in:has_done_dynamics[ipatch][ispec]) depend(out:has_reduced_densities[ipatch])
         { 
         #ifdef  __DETAILED_TIMERS
         int ithread = omp_get_thread_num();
@@ -499,7 +499,7 @@ void VectorPatch::dynamics( Params &params,
 
         if( species( ipatch, ispec )->Ionize ) {
 
-            #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
+            #pragma omp task shared(params) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
             {            
     #ifdef  __DETAILED_TIMERS
             int ithread = omp_get_thread_num();
@@ -525,7 +525,7 @@ void VectorPatch::dynamics( Params &params,
         // Radiation
         if( species( ipatch, ispec )->Radiate ) {
 
-            #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
+            #pragma omp task shared(params) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
             {
 #ifdef  __DETAILED_TIMERS
             int ithread = omp_get_thread_num();
@@ -549,7 +549,7 @@ void VectorPatch::dynamics( Params &params,
 
         // Multiphoton Breit Wheeler
         if( species( ipatch, ispec )->Multiphoton_Breit_Wheeler_process ) {
-            #pragma omp task firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
+            #pragma omp task shared(params) firstprivate(ipatch,ispec) depend(in:has_done_dynamics[ipatch][ispec])
             {
 #ifdef  __DETAILED_TIMERS
             int ithread = omp_get_thread_num();
