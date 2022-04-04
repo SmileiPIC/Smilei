@@ -113,7 +113,9 @@ int main( int argc, char *argv[] )
 #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
     const int the_gpu_count = ::omp_get_num_devices();
 
-    if(the_gpu_count != 1) {
+    if(the_gpu_count < 1) {
+        ERROR("Simlei needs one accelerator, none detected.");
+    } else if(the_gpu_count > 1) {
         WARNINGALL("Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 in your slurm script.");
         WARNINGALL("Smilei will fallback to round robin GPU binding using it's MPI rank.");
 
