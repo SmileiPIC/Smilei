@@ -111,7 +111,20 @@ int main( int argc, char *argv[] )
         acc_set_device_num( gpunum, acc_device_nvidia );
     }
 #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
-    ERROR("TODO(Etienne M): Implement");
+    const int the_gpu_count = ::omp_get_num_devices();
+
+    if(the_gpu_count != 1) {
+        WARNINGALL("Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 in your slurm script.");
+        WARNINGALL("Smilei will fallback to round robin GPU binding using it's MPI rank.");
+
+        const int this_process_gpu = smpi.getRank() % the_gpu_count;
+
+        std::cout << "Using GPU id " << this_process_gpu << "\n";
+
+        ::omp_set_default_device(this_process_gpu);
+    } else {
+        // ::omp_set_default_device(0);
+    }
 #endif
 
     // Need to move it here because of domain decomposition need in smpi->init(_patch_count)

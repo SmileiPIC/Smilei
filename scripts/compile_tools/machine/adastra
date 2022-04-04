@@ -9,7 +9,7 @@
 # You'll want to compile smilei with the "gpu_amd" config flag enabled:
 # $ make machine="adastra_gpu" config="amd_gpu" -j
 #
-# Each node as 4 MI-200 gpu, you may want to associate one MI-200 to one MPI 
+# Each node has 4 MI-200 gpu, you may want to associate one MI-200 to one MPI 
 # process.
 #
 # To compile you'll want these modules:

@@ -16,7 +16,7 @@ kNodeDimensionInPatch = 8
 kGridDimensionInNode  = 2
 
 # Smilei conf 2022 recommands cell length < 4 * Debye length
-kCellLengthFactor = 1.0 / 2.0
+kCellLengthFactor = 1.0 / 2.0 # / 4.0
 
 ###############################
 # Physics settings
