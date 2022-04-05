@@ -26,23 +26,29 @@ WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
 
 ifneq (,$(call parse_config,gpu_amd))
 	# Add mi100 amd gpu arch
-	ACCELERATOR_GPU_ARCH := gfx908
+	ACCELERATOR_GPU_TARGET_ARCH=amdgcn-amd-amdhsa
+	ACCELERATOR_GPU_TARGET=gfx908
+
+	ACCELERATOR_GPU_OMP_FLAGS=-fopenmp -fopenmp-targets=$(ACCELERATOR_GPU_TARGET_ARCH) -Xopenmp-target=$(ACCELERATOR_GPU_TARGET_ARCH) -march=$(ACCELERATOR_GPU_TARGET)
 
 	# THRUSTCXX := $(SMILEICXX)
 
 	THRUSTCXX := hipcc
 
-	ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=$(ACCELERATOR_GPU_ARCH)
+	ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP $(ACCELERATOR_GPU_OMP_FLAGS)
 	ACCELERATOR_GPU_FLAGS += -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
 
 	ACCELERATOR_GPU_KERNEL_FLAGS += -I$(CRAY_MPICH_DIR)/include
-	ACCELERATOR_GPU_KERNEL_FLAGS += --offload-arch=$(ACCELERATOR_GPU_ARCH)
+	ACCELERATOR_GPU_KERNEL_FLAGS += --offload-arch=$(ACCELERATOR_GPU_TARGET)
 
-	# ACCELERATOR_GPU_KERNEL_FLAGS += --amdgpu-target=$(ACCELERATOR_GPU_ARCH) # Same behavioir (apriori) than offload-arch
+	# ACCELERATOR_GPU_KERNEL_FLAGS += --amdgpu-target=$(ACCELERATOR_GPU_TARGET) # Same behaviour (apriori) than offload-arch
 	# ACCELERATOR_GPU_KERNEL_FLAGS += --hip-path=$(HIP_PATH) -x hip
 	# ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
 
-	LDFLAGS += -lstdc++ -lomp
+	# We need to link with the appropriate "First-Party Tool" (as OpenMP calls them)
+	LDFLAGS += $(WARNING_FLAGS) $(ACCELERATOR_GPU_OMP_FLAGS)
+	# LDFLAGS += -static-openmp
 endif
 
+# Smilei is setup to use Ofast when clang is used. CCE is clang based.
 CXXFLAGS += $(WARNING_FLAGS) -Ofast -g

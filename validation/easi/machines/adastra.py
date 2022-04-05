@@ -40,6 +40,8 @@ export OMP_SCHEDULE=dynamic;
 # optimized apps is generally not something you want (ROB buffer should be full).
 export OMP_PLACES=cores;
 
+rocm-smi;
+
 {a_task_command} > {the_output_file} 2>&1;
 
 kRETVAL=$?;
