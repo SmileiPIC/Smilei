@@ -29,13 +29,13 @@ PML_SolverAM_Envelope::PML_SolverAM_Envelope( Params &params )
     // power_pml_alpha_r = 1.;
     // alpha_cr = 0.00 ;
     // Abs
-    kappa_r_max = 1.0 ;
-    sigma_r_max = 2.8 ;
+    kappa_r_max = 1. ;
+    sigma_r_max = 1.8 ;
     alpha_r_max = 0.0 ;
     power_pml_kappa_r = 3.;
     power_pml_sigma_r = 2.;
     power_pml_alpha_r = 1.;
-    alpha_cr = 0.05 ;
+    alpha_cr = 0.25 ;
 }
 
 PML_SolverAM_Envelope::~PML_SolverAM_Envelope()
