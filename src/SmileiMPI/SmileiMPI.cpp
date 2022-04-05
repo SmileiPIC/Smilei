@@ -1247,7 +1247,7 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
                     irequest++;
                     isendComplex( embcenv->G2D_nm1_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    if (EMAM->isXmin || EMAM->isXmax){ //Sending Longitudinal PML
+                    if (EMAM->isXmin || EMAM->isXmax){ //Sending Longitudinal PML even for bcId=3
                         isendComplex( embcenv->u1_nm1_l_, to, tag+irequest, requests[irequest] );
                         irequest++;
                         isendComplex( embcenv->u2_nm1_l_, to, tag+irequest, requests[irequest] );
@@ -1579,14 +1579,15 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, unsigned int nmodes, 
                     tag++;
                     recvComplex( embcenv->G2D_nm1_, from, tag );
                     tag++;
-                    if (bcId < 2 || EMAM->isYmin || EMAM->isYmax){ //Sending Longitudinal PML
+                    if (EMAM->isXmin || EMAM->isXmax){ //Receiving Longitudinal PML even for bcId=3 if on xmin or xmax 
                         recvComplex( embcenv->u1_nm1_l_, from, tag );
                         tag++;
                         recvComplex( embcenv->u2_nm1_l_, from, tag );
                         tag++;
                         recvComplex( embcenv->u3_nm1_l_, from, tag );
                         tag++;
-                    } else { //Sending Radial PML
+                    } 
+                    if (bcId == 3) { //Receiving Radial PML
                         recvComplex( embcenv->u1_nm1_r_, from, tag );
                         tag++;
                         recvComplex( embcenv->u2_nm1_r_, from, tag );
