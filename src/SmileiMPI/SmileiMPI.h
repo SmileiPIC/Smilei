@@ -91,6 +91,7 @@ public:
     void recv( ElectroMagn *fields, int from, int &tag, unsigned int nmodes, bool recv_xmax_bc );
     void isend( Field *field, int to, int tag, MPI_Request &request );
     void isendComplex( Field *field, int to, int tag, MPI_Request &request );
+    void isendComplex( Field *field, int to, int tag, MPI_Request &request, int size );
     void recv( Field *field, int from, int tag );
     void recvComplex( Field *field, int from, int tag );
 

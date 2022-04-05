@@ -1211,6 +1211,7 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
             // if I have PML && if the receiver also have PMLs <=> the hindex I send to touches the same boundary I am dealing with now
             if (embc->Hl_[0] ) {
                 for( unsigned int imode =0; imode < nmodes; imode++ ) {
+                    if(imode ==0) cout << "bcId = " << bcId << " sending size = " << 2*embc->Hl_[imode]->globalDims_ << " to " << to << endl;
                     isendComplex( embc->Hl_[imode], to, tag+irequest, requests[irequest] );
                     irequest++;
                     isendComplex( embc->Hr_[imode], to, tag+irequest, requests[irequest] );
@@ -1246,21 +1247,22 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
                     irequest++;
                     isendComplex( embcenv->G2D_nm1_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    if (bcId < 2 || EMAM->isYmin || EMAM->isYmax){ //Sending Longitudinal PML
+                    if (EMAM->isXmin || EMAM->isXmax){ //Sending Longitudinal PML
                         isendComplex( embcenv->u1_nm1_l_, to, tag+irequest, requests[irequest] );
                         irequest++;
                         isendComplex( embcenv->u2_nm1_l_, to, tag+irequest, requests[irequest] );
                         irequest++;
                         isendComplex( embcenv->u3_nm1_l_, to, tag+irequest, requests[irequest] );
                         irequest++;
-                    } else { //Sending Radial PML
+                    } 
+                    if (bcId == 3) { //Sending Radial PML
                         isendComplex( embcenv->u1_nm1_r_, to, tag+irequest, requests[irequest] );
                         irequest++;
                         isendComplex( embcenv->u2_nm1_r_, to, tag+irequest, requests[irequest] );
                         irequest++;
                         isendComplex( embcenv->u3_nm1_r_, to, tag+irequest, requests[irequest] );
                         irequest++;
-                    }
+                   }
                 }
             }
         }
@@ -1541,6 +1543,7 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, unsigned int nmodes, 
             ElectroMagnBCAM_PML *embc = static_cast<ElectroMagnBCAM_PML *>( EM->emBoundCond[bcId] );
             if (embc->Hl_[0]) {
                 for( unsigned int imode =0; imode < nmodes; imode++ ) {
+                    if(imode ==0) cout << "bcId = " << bcId << " receiving size = " << 2*embc->Hl_[imode]->globalDims_ << " from " << from << endl;
                     recvComplex( embc->Hl_[imode], from, tag );
                     tag++;
                     recvComplex( embc->Hr_[imode], from, tag );
@@ -1611,6 +1614,13 @@ void SmileiMPI::isendComplex( Field *field, int to, int tag, MPI_Request &reques
 {
     cField *cf = static_cast<cField *>( field );
     MPI_Isend( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
+
+} // End isendComplex ( Field )
+
+void SmileiMPI::isendComplex( Field *field, int to, int tag, MPI_Request &request, int size )
+{
+    cField *cf = static_cast<cField *>( field );
+    MPI_Isend( &( ( *cf )( 0 ) ), size, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
 } // End isendComplex ( Field )
 
