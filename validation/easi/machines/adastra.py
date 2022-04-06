@@ -41,6 +41,7 @@ export OMP_SCHEDULE=dynamic;
 export OMP_PLACES=cores;
 
 rocm-smi;
+rocminfo;
 
 {a_task_command} > {the_output_file} 2>&1;
 
