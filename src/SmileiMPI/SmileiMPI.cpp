@@ -1210,32 +1210,61 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
             ElectroMagnBCAM_PML *embc = static_cast<ElectroMagnBCAM_PML *>( EM->emBoundCond[bcId] );
             // if I have PML && if the receiver also have PMLs <=> the hindex I send to touches the same boundary I am dealing with now
             if (embc->Hl_[0] ) {
-                for( unsigned int imode =0; imode < nmodes; imode++ ) {
-                    if(imode ==0) cout << "bcId = " << bcId << " sending size = " << 2*embc->Hl_[imode]->globalDims_ << " to " << to << endl;
-                    isendComplex( embc->Hl_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
-                    isendComplex( embc->Hr_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
-                    isendComplex( embc->Ht_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
-                    isendComplex( embc->Bl_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
-                    isendComplex( embc->Br_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
-                    isendComplex( embc->Bt_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
-                    isendComplex( embc->El_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
-                    isendComplex( embc->Er_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
-                    isendComplex( embc->Et_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
-                    isendComplex( embc->Dl_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
-                    isendComplex( embc->Dr_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
-                    isendComplex( embc->Dt_[imode], to, tag+irequest, requests[irequest] );
-                    irequest++;
+
+                if(!send_xmax_bc && bcId>1 && EMAM->isXmax){ //When not sending xmax_bc (MovingWindow), the size of the non longitudinal pml sent must be tailored on corner cases.
+                    for( unsigned int imode =0; imode < nmodes; imode++ ) {
+                        isendComplex( embc->Hl_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0) * (embc->ncells_pml_domain_rmax+1) );
+                        irequest++;
+                        isendComplex( embc->Hr_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1) * (embc->ncells_pml_domain_rmax+0)  );
+                        irequest++;
+                        isendComplex( embc->Ht_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1) * (embc->ncells_pml_domain_rmax+1)  );
+                        irequest++;
+                        isendComplex( embc->Bl_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0) * (embc->ncells_pml_domain_rmax+1)  );
+                        irequest++;
+                        isendComplex( embc->Br_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1) * (embc->ncells_pml_domain_rmax+0)  );
+                        irequest++;
+                        isendComplex( embc->Bt_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1) * (embc->ncells_pml_domain_rmax+1)  );
+                        irequest++;
+                        isendComplex( embc->El_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1) * (embc->ncells_pml_domain_rmax+0)  );
+                        irequest++;
+                        isendComplex( embc->Er_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0) * (embc->ncells_pml_domain_rmax+1)  );
+                        irequest++;
+                        isendComplex( embc->Et_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0) * (embc->ncells_pml_domain_rmax+0)  );
+                        irequest++;
+                        isendComplex( embc->Dl_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1) * (embc->ncells_pml_domain_rmax+0)  );
+                        irequest++;
+                        isendComplex( embc->Dr_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0) * (embc->ncells_pml_domain_rmax+1)  );
+                        irequest++;
+                        isendComplex( embc->Dt_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0) * (embc->ncells_pml_domain_rmax+0)  );
+                        irequest++;
+                    }
+                } else {
+                    for( unsigned int imode =0; imode < nmodes; imode++ ) {
+                        isendComplex( embc->Hl_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                        isendComplex( embc->Hr_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                        isendComplex( embc->Ht_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                        isendComplex( embc->Bl_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                        isendComplex( embc->Br_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                        isendComplex( embc->Bt_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                        isendComplex( embc->El_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                        isendComplex( embc->Er_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                        isendComplex( embc->Et_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                        isendComplex( embc->Dl_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                        isendComplex( embc->Dr_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                        isendComplex( embc->Dt_[imode], to, tag+irequest, requests[irequest] );
+                        irequest++;
+                    }
                 }
                 if( EM->envelope!=NULL ) {
                     EnvelopeBCAM_PML *embcenv = static_cast<EnvelopeBCAM_PML *>( EM->envelope->EnvBoundCond[bcId] );
@@ -1542,32 +1571,60 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, unsigned int nmodes, 
         if( dynamic_cast<ElectroMagnBCAM_PML *>( EM->emBoundCond[bcId] ) && (bcId != 0 || recv_xmin_bc)){
             ElectroMagnBCAM_PML *embc = static_cast<ElectroMagnBCAM_PML *>( EM->emBoundCond[bcId] );
             if (embc->Hl_[0]) {
-                for( unsigned int imode =0; imode < nmodes; imode++ ) {
-                    if(imode ==0) cout << "bcId = " << bcId << " receiving size = " << 2*embc->Hl_[imode]->globalDims_ << " from " << from << endl;
-                    recvComplex( embc->Hl_[imode], from, tag );
-                    tag++;
-                    recvComplex( embc->Hr_[imode], from, tag );
-                    tag++;
-                    recvComplex( embc->Ht_[imode], from, tag );
-                    tag++;
-                    recvComplex( embc->Bl_[imode], from, tag );
-                    tag++;
-                    recvComplex( embc->Br_[imode], from, tag );
-                    tag++;
-                    recvComplex( embc->Bt_[imode], from, tag );
-                    tag++;
-                    recvComplex( embc->El_[imode], from, tag );
-                    tag++;
-                    recvComplex( embc->Er_[imode], from, tag );
-                    tag++;
-                    recvComplex( embc->Et_[imode], from, tag );
-                    tag++;
-                    recvComplex( embc->Dl_[imode], from, tag );
-                    tag++;
-                    recvComplex( embc->Dr_[imode], from, tag );
-                    tag++;
-                    recvComplex( embc->Dt_[imode], from, tag );
-                    tag++;
+                if(!recv_xmin_bc && bcId>1 && EMAM->isXmin){ //When not receiving xmin_bc (MovingWindow), the position of the pml received must be tailored on xmin for non longitudinal PML corner array.
+                    for( unsigned int imode =0; imode < nmodes; imode++ ) {
+                        recvComplex( embc->Hl_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+1) );
+                        tag++;
+                        recvComplex( embc->Hr_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+0) );
+                        tag++;
+                        recvComplex( embc->Ht_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+1) );
+                        tag++;
+                        recvComplex( embc->Bl_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+1) );
+                        tag++;
+                        recvComplex( embc->Br_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+0) );
+                        tag++;
+                        recvComplex( embc->Bt_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+1) );
+                        tag++;
+                        recvComplex( embc->El_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+0) );
+                        tag++;
+                        recvComplex( embc->Er_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+1) );
+                        tag++;
+                        recvComplex( embc->Et_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+0) );
+                        tag++;
+                        recvComplex( embc->Dl_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+0) );
+                        tag++;
+                        recvComplex( embc->Dr_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+1) );
+                        tag++;
+                        recvComplex( embc->Dt_[imode], from, tag, embc->ncells_pml_lmin * (embc->ncells_pml_domain_rmax+0) );
+                        tag++;
+                    }
+                } else {
+                    for( unsigned int imode =0; imode < nmodes; imode++ ) {
+                        recvComplex( embc->Hl_[imode], from, tag );
+                        tag++;
+                        recvComplex( embc->Hr_[imode], from, tag );
+                        tag++;
+                        recvComplex( embc->Ht_[imode], from, tag );
+                        tag++;
+                        recvComplex( embc->Bl_[imode], from, tag );
+                        tag++;
+                        recvComplex( embc->Br_[imode], from, tag );
+                        tag++;
+                        recvComplex( embc->Bt_[imode], from, tag );
+                        tag++;
+                        recvComplex( embc->El_[imode], from, tag );
+                        tag++;
+                        recvComplex( embc->Er_[imode], from, tag );
+                        tag++;
+                        recvComplex( embc->Et_[imode], from, tag );
+                        tag++;
+                        recvComplex( embc->Dl_[imode], from, tag );
+                        tag++;
+                        recvComplex( embc->Dr_[imode], from, tag );
+                        tag++;
+                        recvComplex( embc->Dt_[imode], from, tag );
+                        tag++;
+                    }
                 }
                 if( EM->envelope!=NULL ) {
                     EnvelopeBCAM_PML *embcenv = static_cast<EnvelopeBCAM_PML *>( EM->envelope->EnvBoundCond[bcId] );
@@ -1614,14 +1671,15 @@ void SmileiMPI::isend( Field *field, int to, int tag, MPI_Request &request )
 void SmileiMPI::isendComplex( Field *field, int to, int tag, MPI_Request &request )
 {
     cField *cf = static_cast<cField *>( field );
+    //This version of isendComplex(Field) sends the whole array
     MPI_Isend( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
-} // End isendComplex ( Field )
-
+} 
 void SmileiMPI::isendComplex( Field *field, int to, int tag, MPI_Request &request, int size )
 {
     cField *cf = static_cast<cField *>( field );
-    MPI_Isend( &( ( *cf )( 0 ) ), size, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
+    //This version of isendComplex(Field) sends only the first "size" elements of the array
+    MPI_Isend( &( ( *cf )( 0 ) ), 2*size, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
 } // End isendComplex ( Field )
 
@@ -1647,11 +1705,12 @@ void SmileiMPI::recv( Field *field, int from, int tag )
 
 } // End recv ( Field )
 
-void SmileiMPI::recvComplex( Field *field, int from, int tag )
+void SmileiMPI::recvComplex( Field *field, int from, int tag, int origin )
 {
     MPI_Status status;
     cField *cf = static_cast<cField *>( field );
-    MPI_Recv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
+    //origin shifts the reception position in the array and reduce the received buffer size.
+    MPI_Recv( &( ( *cf )( origin ) ), 2*(field->globalDims_ - origin), MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 
