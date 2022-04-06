@@ -90,10 +90,11 @@ public:
     void recv( ElectroMagn *fields, int from, int &tag, bool recv_xmax_bc );
     void recv( ElectroMagn *fields, int from, int &tag, unsigned int nmodes, bool recv_xmax_bc );
 
-    void isend( Field *field, int to, int tag, MPI_Request &request );
-    void isendComplex( Field *field, int to, int tag, MPI_Request &request );// Sends the whole array
+    void isend( Field *field, int to, int tag, MPI_Request &request );                 // Sends the whole array
+    void isend( Field *field, int to, int tag, MPI_Request &request, int size );       // Sends the first "size" elements of the array
+    void isendComplex( Field *field, int to, int tag, MPI_Request &request );          // Sends the whole array
     void isendComplex( Field *field, int to, int tag, MPI_Request &request, int size );// Sends the first "size" elements of the array
-    void recv( Field *field, int from, int tag );
+    void recv( Field *field, int from, int tag, int origin = 0 );
     void recvComplex( Field *field, int from, int tag, int origin = 0 ); //origin shifts the reception adress and reduces the reception buffer size
 
     void sendComplex( Field *field, int to, int tag );
