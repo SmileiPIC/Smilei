@@ -27,15 +27,15 @@ PML_SolverAM_Envelope::PML_SolverAM_Envelope( Params &params )
     // power_pml_kappa_r = 1.;
     // power_pml_sigma_r = 1.;
     // power_pml_alpha_r = 1.;
-    alpha_cr = 0.00 ;
+    // alpha_cr = 0.00 ;
     // Abs
     kappa_r_max = 1. ;
-    sigma_r_max = 4. ;
+    sigma_r_max = 1.8 ;
     alpha_r_max = 0.0 ;
     power_pml_kappa_r = 3.;
     power_pml_sigma_r = 2.;
     power_pml_alpha_r = 1.;
-    alpha_cr = 0.10 ;
+    alpha_cr = 0.25 ;
 }
 
 PML_SolverAM_Envelope::~PML_SolverAM_Envelope()
@@ -268,7 +268,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             sigma_prime_r_p[j] = sigma_r_max * power_pml_sigma_r * pow( (j-startpml)*dr , power_pml_sigma_r-1 ) / pow( length_r_pml , power_pml_sigma_r ) ;
             alpha_prime_r_p[j] = -alpha_r_max * power_pml_alpha_r * pow( (j-startpml)*dr , power_pml_alpha_r-1 ) / pow( length_r_pml , power_pml_alpha_r ) ;
             // Integrates
-            integrate_kappa_r_p[j] = ( rmax + j*dr - r0 ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ;
+            integrate_kappa_r_p[j] = ( rmax + j*dr - r0 - 1.*dr ) + (kappa_r_max - 1.) / pow( length_r_pml , power_pml_kappa_r ) * pow( (j-startpml)*dr , power_pml_kappa_r+1 ) / (power_pml_kappa_r+1) ;
             integrate_sigma_r_p[j] = sigma_r_max / pow( length_r_pml , power_pml_sigma_r ) * pow( (j-startpml)*dr , power_pml_sigma_r+1 ) / ( power_pml_sigma_r+1 ) ;
             integrate_alpha_r_p[j] = 1*alpha_r_p[j] ;
         }
@@ -638,13 +638,17 @@ void PML_SolverAM_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     ( *G2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) + 2.*( *G2D_n_pml )( i, j ) ;
                     ( *G2D_np1_pml )( i, j ) = ( ( 1.+i1*k0*dt) / (1.+k0*k0*dt*dt) )*( *G2D_np1_pml )( i, j );
                     // ----
-                    //( *A2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) / ( (double) ( j_glob_pml+j )*dr ) ;
-                    // ( *A2D_np1_pml )( i, j ) = ( *A2D_nm1_pml )( i, j ) * (rmax + j*dr + dt*i1*k0)/(rmax + j*dr - dt*i1*k0)
-                    //     + ( ( *G2D_np1_pml )( i, j )*(1.-i1*k0*dt) - ( *G2D_nm1_pml )( i, j )*(1+i1*k0*dt) ) / (rmax + j*dr - dt*i1*k0);
+                    // ( *A2D_np1_pml )( i, j ) = ( *G2D_np1_pml )( i, j ) / ( (double) ( j_glob_pml+j )*dr ) ;
+                    // ( *A2D_np1_pml )( i, j ) = (
+                    //         ( ( (double) ( j_glob_pml+j )*dr ) + dt*( i1*k0*( (double) ( j_glob_pml+j )*dr) ) )*( *A2D_nm1_pml )( i, j )
+                    //         + ( *G2D_np1_pml )( i, j ) * ( 1. - dt*( i1*k0 ) )
+                    //         - ( *G2D_nm1_pml )( i, j ) * ( 1. + dt*( i1*k0 ) )
+                    //     ) / ( ( (double) ( j_glob_pml+j )*dr ) - dt*( i1*k0*( (double) ( j_glob_pml+j )*dr ) ) ) ;
+                    // std::cout << ( (double) ( j_glob_pml+j )*dr ) - (r0 + integrate_kappa_r_p[j]) << std::endl;
                     ( *A2D_np1_pml )( i, j ) = (
                             ( (r0 + integrate_kappa_r_p[j]) + dt*( alpha_r_p[j]*(r0 + integrate_kappa_r_p[j]) + integrate_sigma_r_p[j] + i1*k0*(r0 + integrate_kappa_r_p[j]) ) )*( *A2D_nm1_pml )( i, j )
-                            + ( *G2D_np1_pml )( i, j ) * ( 1. - dt*(alpha_r_p[j]+ i1*k0 ) )
-                            - ( *G2D_nm1_pml )( i, j ) * ( 1. + dt*(alpha_r_p[j]+ i1*k0 ) )
+                            + ( *G2D_np1_pml )( i, j ) * ( 1. - dt*(alpha_r_p[j] + i1*k0 ) )
+                            - ( *G2D_nm1_pml )( i, j ) * ( 1. + dt*(alpha_r_p[j] + i1*k0 ) )
                         ) / ( (r0 + integrate_kappa_r_p[j]) - dt*( alpha_r_p[j]*(r0 + integrate_kappa_r_p[j]) + integrate_sigma_r_p[j] + i1*k0*(r0 + integrate_kappa_r_p[j]) ) ) ;
                 } // end y loop
             } // end x loop
