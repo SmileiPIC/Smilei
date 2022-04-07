@@ -29,12 +29,14 @@ protected:
     double power_pml_kappa_x ;
     double power_pml_sigma_x ;
     double power_pml_alpha_x ;
+    double alpha_cx ;
     double alpha_y_max ;
     double sigma_y_max ;
     double kappa_y_max ;
     double power_pml_kappa_y ;
     double power_pml_sigma_y ;
     double power_pml_alpha_y ;
+    double alpha_cy ;
 
     std::vector<double> kappa_x_p;
     std::vector<double> sigma_x_p;
