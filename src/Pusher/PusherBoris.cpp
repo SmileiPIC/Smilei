@@ -71,31 +71,45 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
 #if defined(SMILEI_ACCELERATOR_GPU_OMP)
-    const std::size_t the_first_offseted = istart - ipart_buffer_offset;
-    const std::size_t the_distance       = iend - istart;
+    const std::size_t istart_offset   = istart - ipart_buffer_offset;
+    const std::size_t particle_number = iend - istart;
 
-    // TODO(Etienne M): Memory ops optimization
-    #pragma omp target map(to                                         \
-                           : Ex [the_first_offseted:the_distance],    \
-                             Ey [the_first_offseted:the_distance],    \
-                             Ez [the_first_offseted:the_distance],    \
-                             Bx [the_first_offseted:the_distance],    \
-                             By [the_first_offseted:the_distance],    \
-                             Bz [the_first_offseted:the_distance],    \
-                             invgf [the_first_offseted:the_distance]) \
-        map(to                                                        \
-            : position_x [istart:the_distance],                       \
-              position_y [istart:the_distance],                       \
-              position_z [istart:the_distance],                       \
-              momentum_x [istart:the_distance],                       \
-              momentum_y [istart:the_distance],                       \
-              momentum_z [istart:the_distance],                       \
-              charge [istart:the_distance])
+    TODO(Etienne M): Memory ops optimization
+    #pragma omp target          map(to                          \
+                                    : Ex [istart_offset:particle_number],    \
+                                      Ey [istart_offset:particle_number],    \
+                                      Ez [istart_offset:particle_number],    \
+                                      Bx [istart_offset:particle_number],    \
+                                      By [istart_offset:particle_number],    \
+                                      Bz [istart_offset:particle_number],    \
+                                      invgf [istart_offset:particle_number], \
+                                      position_x [istart:particle_number],   \
+                                      position_y [istart:particle_number],   \
+                                      position_z [istart:particle_number],   \
+                                      momentum_x [istart:particle_number],   \
+                                      momentum_y [istart:particle_number],   \
+                                      momentum_z [istart:particle_number],   \
+                                      charge [istart:particle_number])
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning 
     #pragma omp distribute parallel for
 #elif defined(_GPU)
-    int np = iend-istart;
-    #pragma acc parallel present(Ex[istart:np],Ey[istart:np],Ez[istart:np],Bx[istart:np],By[istart:np],Bz[istart:np],invgf[0:nparts]) deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z,charge)
+    const std::size_t istart_offset   = istart - ipart_buffer_offset;
+    const std::size_t particle_number = iend - istart;
+
+    #pragma acc parallel present(Ex [istart_offset:particle_number],    \
+                                 Ey [istart_offset:particle_number],    \
+                                 Ez [istart_offset:particle_number],    \
+                                 Bx [istart_offset:particle_number],    \
+                                 By [istart_offset:particle_number],    \
+                                 Bz [istart_offset:particle_number],    \
+                                 invgf [istart_offset:particle_number]) \
+        deviceptr(position_x,                                           \
+                  position_y,                                           \
+                  position_z,                                           \
+                  momentum_x,                                           \
+                  momentum_y,                                           \ 
+                  momentum_z,                                           \
+                  charge)
     #pragma acc loop gang worker vector
 #else
     #pragma omp simd
