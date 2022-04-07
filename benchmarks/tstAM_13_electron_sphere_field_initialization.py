@@ -43,7 +43,7 @@ Main(
 
     number_of_patches = [npatch_x,npatch_r ],
     
-    clrw = nx/npatch_x,
+    cluster_width = nx/npatch_x,
 
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],

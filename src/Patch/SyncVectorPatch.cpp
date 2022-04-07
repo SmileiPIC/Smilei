@@ -283,13 +283,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 field = vecPatches.densitiesMPIx[ifield+2*nPatchMPIx];
                 double*   Jz = field->sendFields_[iNeighbor]->data_;
                 int sizeofJz = field->sendFields_[iNeighbor]->globalDims_;
-                #pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
             }
         }
-        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield             ], 0, smpi ); // Jx
-        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+  nPatchMPIx], 0, smpi ); // Jy
-        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0, smpi ); // Jz
+        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield             ], 0, smpi, true ); // Jx
+        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+  nPatchMPIx], 0, smpi, true ); // Jy
+        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0, smpi, true ); // Jz
     }
     // iDim = 0, local
     int nFieldLocalx = vecPatches.densitiesLocalx.size()/3;
@@ -358,7 +358,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 field = vecPatches.densitiesMPIx[ifield+2*nPatchMPIx];
                 double*   Jz = field->recvFields_[(iNeighbor+1)%2]->data_;
                 int sizeofJz = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
-                #pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                 vecPatches.densitiesMPIx[ifield             ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
@@ -402,13 +402,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     field = vecPatches.densitiesMPIy[ifield+2*nPatchMPIy];
                     double*   Jz = field->sendFields_[iNeighbor+2]->data_;
                     int sizeofJz = field->sendFields_[iNeighbor+2]->globalDims_;
-                    #pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                    //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                 }
             }
-            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield             ], 1, smpi ); // Jx
-            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+nPatchMPIy  ], 1, smpi ); // Jy
-            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1, smpi ); // Jz
+            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield             ], 1, smpi, true ); // Jx
+            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+nPatchMPIy  ], 1, smpi, true ); // Jy
+            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1, smpi, true ); // Jz
         }
 
         // iDim = 1,
@@ -482,7 +482,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     field = vecPatches.densitiesMPIy[ifield+2*nPatchMPIy];
                     double*   Jz = field->recvFields_[(iNeighbor+1)%2+2]->data_;
                     int sizeofJz = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
-                    #pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                    //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                     vecPatches.densitiesMPIy[ifield             ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
@@ -524,13 +524,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         field = vecPatches.densitiesMPIz[ifield+2*nPatchMPIz];
                         double*   Jz = field->sendFields_[iNeighbor+4]->data_;
                         int sizeofJz = field->sendFields_[iNeighbor+4]->globalDims_;
-                        #pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                        //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                     }
                 }
-                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield             ], 2, smpi ); // Jx
-                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+nPatchMPIz  ], 2, smpi ); // Jy
-                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2, smpi ); // Jz
+                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield             ], 2, smpi, true ); // Jx
+                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+nPatchMPIz  ], 2, smpi, true ); // Jy
+                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2, smpi, true ); // Jz
             }
 
             // iDim = 2 local
@@ -604,7 +604,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         field = vecPatches.densitiesMPIz[ifield+2*nPatchMPIz ];
                         double*   Jz = field->recvFields_[(iNeighbor+1)%2+4]->data_;
                         int sizeofJz = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
-                        #pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                        //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                         vecPatches.densitiesMPIz[ifield             ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
@@ -1415,12 +1415,12 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 field        = vecPatches.B_MPIx[ifield+nMPIx];
                 double* Bz   = field->sendFields_[iNeighbor]->data_;
                 int sizeofBz = field->sendFields_[iNeighbor]->globalDims_;
-                #pragma acc update host(By[0:sizeofBy],Bz[0:sizeofBz])
+                //#pragma acc update host(By[0:sizeofBy],Bz[0:sizeofBz])
 #endif
             }
         }
-        vecPatches( ipatch )->initExchange( vecPatches.B_MPIx[ifield      ], 0, smpi ); // By
-        vecPatches( ipatch )->initExchange( vecPatches.B_MPIx[ifield+nMPIx], 0, smpi ); // Bz
+        vecPatches( ipatch )->initExchange( vecPatches.B_MPIx[ifield      ], 0, smpi, true ); // By
+        vecPatches( ipatch )->initExchange( vecPatches.B_MPIx[ifield+nMPIx], 0, smpi, true ); // Bz
     }
 
     unsigned int h0, n_space;
@@ -1505,7 +1505,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongX( std::vector<Field *> 
                 field        = vecPatches.B_MPIx[ifield+nMPIx];
                 double* Bz   = field->recvFields_[(iNeighbor+1)%2]->data_;
                 int sizeofBz = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
-                #pragma acc update device(By[0:sizeofBy],Bz[0:sizeofBz])
+                //#pragma acc update device(By[0:sizeofBy],Bz[0:sizeofBz])
 #endif
                 vecPatches.B_MPIx[ifield      ]->inject_fields_exch( 0, iNeighbor, oversize );
                 vecPatches.B_MPIx[ifield+nMPIx]->inject_fields_exch( 0, iNeighbor, oversize );
@@ -1548,12 +1548,12 @@ void SyncVectorPatch::exchangeAllComponentsAlongY( std::vector<Field *> &fields,
                 field        = vecPatches.B1_MPIy[ifield+nMPIy];
                 double* Bz   = field->sendFields_[iNeighbor+2]->data_;
                 int sizeofBz = field->sendFields_[iNeighbor+2]->globalDims_;
-                #pragma acc update host(Bx[0:sizeofBx],Bz[0:sizeofBz])
+                //#pragma acc update host(Bx[0:sizeofBx],Bz[0:sizeofBz])
 #endif
             }
         }
-        vecPatches( ipatch )->initExchange( vecPatches.B1_MPIy[ifield      ], 1, smpi ); // Bx
-        vecPatches( ipatch )->initExchange( vecPatches.B1_MPIy[ifield+nMPIy], 1, smpi ); // Bz
+        vecPatches( ipatch )->initExchange( vecPatches.B1_MPIy[ifield      ], 1, smpi, true ); // Bx
+        vecPatches( ipatch )->initExchange( vecPatches.B1_MPIy[ifield+nMPIy], 1, smpi, true ); // Bz
     }
 
     unsigned int h0, n_space;
@@ -1632,7 +1632,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongY( std::vector<Field *> 
                 field        = vecPatches.B1_MPIy[ifield+nMPIy];
                 double* Bz   = field->recvFields_[(iNeighbor+1)%2+2]->data_;
                 int sizeofBz = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
-                #pragma acc update device(Bx[0:sizeofBx],Bz[0:sizeofBz])
+                //#pragma acc update device(Bx[0:sizeofBx],Bz[0:sizeofBz])
 #endif
                 vecPatches.B1_MPIy[ifield      ]->inject_fields_exch( 1, iNeighbor, oversize );
                 vecPatches.B1_MPIy[ifield+nMPIy]->inject_fields_exch( 1, iNeighbor, oversize );
@@ -1675,12 +1675,12 @@ void SyncVectorPatch::exchangeAllComponentsAlongZ( std::vector<Field *> fields, 
                 field        = vecPatches.B2_MPIz[ifield+nMPIz];
                 double* By   = field->sendFields_[iNeighbor+4]->data_;
                 int sizeofBy = field->sendFields_[iNeighbor+4]->globalDims_;
-                #pragma acc update host(Bx[0:sizeofBx],By[0:sizeofBy])
+                //#pragma acc update host(Bx[0:sizeofBx],By[0:sizeofBy])
 #endif
             }
         }
-        vecPatches( ipatch )->initExchange( vecPatches.B2_MPIz[ifield],       2, smpi ); // Bx
-        vecPatches( ipatch )->initExchange( vecPatches.B2_MPIz[ifield+nMPIz], 2, smpi ); // By
+        vecPatches( ipatch )->initExchange( vecPatches.B2_MPIz[ifield],       2, smpi, true ); // Bx
+        vecPatches( ipatch )->initExchange( vecPatches.B2_MPIz[ifield+nMPIz], 2, smpi, true ); // By
     }
 
     unsigned int h0, n_space;
@@ -1756,7 +1756,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongZ( std::vector<Field *> 
                 field        = vecPatches.B2_MPIz[ifield+nMPIz];
                 double* By   = field->recvFields_[(iNeighbor+1)%2+4]->data_;
                 int sizeofBy = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
-                #pragma acc update device(Bx[0:sizeofBx],By[0:sizeofBy])
+                //#pragma acc update device(Bx[0:sizeofBx],By[0:sizeofBy])
 #endif
                 vecPatches.B2_MPIz[ifield      ]->inject_fields_exch( 2, iNeighbor, oversize );
                 vecPatches.B2_MPIz[ifield+nMPIz]->inject_fields_exch( 2, iNeighbor, oversize );
@@ -1766,3 +1766,606 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongZ( std::vector<Field *> 
 
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------  DEPRECATED FIELD FUNCTIONS  --------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+
+template<typename T, typename F>
+void SyncVectorPatch::exchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+{
+    unsigned oversize = vecPatches( 0 )->EMfields->oversize[0];
+
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
+        if (fields[ipatch]!=NULL) {
+            for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, iNeighbor ) ) {
+                    fields[ipatch]->create_sub_fields  ( 0, iNeighbor, oversize );
+                    fields[ipatch]->extract_fields_exch( 0, iNeighbor, oversize );
+                }
+            }
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                vecPatches( ipatch )->initExchange( fields[ipatch], 0, smpi );
+            else
+                vecPatches( ipatch )->initExchangeComplex( fields[ipatch], 0, smpi );
+        }
+    }
+
+    unsigned int ny_( 1 ), nz_( 1 ), h0, neighbour_n_space, gsp;
+    T *pt1, *pt2;
+    h0 = vecPatches( 0 )->hindex;
+
+    // fields[0] can be NULL, look for the 1st non null field
+    int IPATCH = 0;
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ )
+        if (fields[ipatch]!=NULL) {
+            IPATCH = ipatch;
+            break;
+        }
+
+    if( fields[IPATCH]==NULL ) return;
+
+    gsp = ( oversize + 1 + fields[IPATCH]->isDual_[0] ); //Ghost size primal
+
+    #pragma omp for schedule(static) private(pt1,pt2)
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
+
+        if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[0][0] ) {
+            if (fields[ipatch]!=NULL) {
+                Field* f = fields[vecPatches( ipatch )->neighbor_[0][0]-h0];
+                neighbour_n_space = f->dims_[0] - 1 - 2*oversize - f->isDual_[0]; // define here to be applied on usual or PML fields
+                if( fields[IPATCH]->dims_.size()>1 ) {
+                    ny_ = f->dims_[1]; // Some can have ny, other ny+npml, but neighboors along X have the same number
+                    if( fields[IPATCH]->dims_.size()>2 ) {
+                        nz_ = f->dims_[2]; // Some can have nz, other nz+npml, but neighboors along X have the same number
+                    }
+                }
+                pt1 = &( *static_cast<F*>( f              ) )( neighbour_n_space*ny_*nz_ ); //my Xmin neighbour
+                pt2 = &( *static_cast<F*>( fields[ipatch] ) )( 0 ); // me
+
+                memcpy( pt2, pt1, oversize*ny_*nz_*sizeof( T ) ); //me <= my neighbour
+                memcpy( pt1+gsp*ny_*nz_, pt2+gsp*ny_*nz_, oversize*ny_*nz_*sizeof( T ) );// my neighbour <= me
+
+
+            } // End if ( MPI_me_ == MPI_neighbor_[0][0] )
+        }
+    } // End for( ipatch )
+
+}
+
+void SyncVectorPatch::finalizeExchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches )
+{
+    unsigned oversize = vecPatches( 0 )->EMfields->oversize[0];
+
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
+        if (fields[ipatch]!=NULL) {
+            vecPatches( ipatch )->finalizeExchange( fields[ipatch], 0 );
+            for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 0, ( iNeighbor+1 )%2 ) ) {
+                    fields[ipatch]->inject_fields_exch( 0, iNeighbor, oversize );
+                }
+            }
+        }
+    }
+
+}
+
+template<typename T, typename F>
+void SyncVectorPatch::exchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+{
+    unsigned oversize = vecPatches( 0 )->EMfields->oversize[1];
+
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
+        if (fields[ipatch]!=NULL) {
+            for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, iNeighbor ) ) {
+                    fields[ipatch]->create_sub_fields  ( 1, iNeighbor, oversize );
+                    fields[ipatch]->extract_fields_exch( 1, iNeighbor, oversize );
+                }
+            }
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                vecPatches( ipatch )->initExchange( fields[ipatch], 1, smpi );
+            else
+                vecPatches( ipatch )->initExchangeComplex( fields[ipatch], 1, smpi );
+        }
+    }
+
+    unsigned int nx_, ny_, nz_( 1 ), h0, gsp, neighbour_n_space, my_ny;
+    T *pt1, *pt2;
+    h0 = vecPatches( 0 )->hindex;
+
+    // fields[0] can be NULL, look for the 1st non null field
+    int IPATCH = 0;
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ )
+        if (fields[ipatch]!=NULL) {
+            IPATCH = ipatch;
+            break;
+        }
+
+    if( fields[IPATCH]==NULL ) return;
+
+    gsp = ( oversize + 1 + fields[IPATCH]->isDual_[1] ); //Ghost size primal
+
+    #pragma omp for schedule(static) private(pt1,pt2)
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
+
+        if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[1][0] ) {
+            if (fields[ipatch]!=NULL) {
+                Field* f = fields[vecPatches( ipatch )->neighbor_[1][0]-h0];
+                // In case of PML, ny can be different from e and my neighbour
+                nx_ = f->dims_[0]; // Some can have nx, other nx+npml, but neighbours along Y have the same number
+                ny_ =                       f->dims_[1]; // Neighbour ny_
+                my_ny        = fields[ipatch]->dims_[1];
+                neighbour_n_space = ny_ - 1 - 2*oversize - f->isDual_[1]; // define here to be applied on usual or PML fields
+                if( f->dims_.size()>2 ) {
+                    nz_ = f->dims_[2]; // Some can have nz, other nz+npml, but neighboors along Y have the same number
+                }
+                pt1 = &( *static_cast<F*>( f              ) )( neighbour_n_space * nz_ );//my Ymin neighbour
+                pt2 = &( *static_cast<F*>( fields[ipatch] ) )( 0 );//me
+                for( unsigned int i = 0 ; i < nx_ ; i ++ ) {
+                    for( unsigned int j = 0 ; j < oversize*nz_ ; j++ ) {
+                        pt2[i*my_ny*nz_ + j] = pt1[i*ny_*nz_ + j] ; // me <= my_neighbour
+                        pt1[i*ny_*nz_ + j + gsp*nz_] = pt2[i*my_ny*nz_ + j + gsp*nz_] ; //my_neighbour <= me
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+void SyncVectorPatch::finalizeExchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches )
+{
+    unsigned oversize = vecPatches( 0 )->EMfields->oversize[1];
+
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
+        if (fields[ipatch]!=NULL) {
+            vecPatches( ipatch )->finalizeExchange( fields[ipatch], 1 );
+            for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 1, ( iNeighbor+1 )%2 ) ) {
+                    fields[ipatch]->inject_fields_exch( 1, iNeighbor, oversize );
+                }
+            }
+        }
+    }
+
+}
+
+template<typename T, typename F>
+void SyncVectorPatch::exchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+{
+    unsigned oversize = vecPatches( 0 )->EMfields->oversize[2];
+
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
+        if (fields[ipatch]!=NULL) {
+            for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, iNeighbor ) ) {
+                    fields[ipatch]->create_sub_fields  ( 2, iNeighbor, oversize );
+                    fields[ipatch]->extract_fields_exch( 2, iNeighbor, oversize );
+                }
+            }
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                vecPatches( ipatch )->initExchange( fields[ipatch], 2, smpi );
+            else
+                vecPatches( ipatch )->initExchangeComplex( fields[ipatch], 2, smpi );
+        }
+    }
+    
+    unsigned int nx_, ny_, nz_, h0, gsp;
+    T *pt1, *pt2;
+    h0 = vecPatches( 0 )->hindex;
+
+    // fields[0] can be NULL, look for the 1st non null field
+    int IPATCH = 0;
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ )
+        if (fields[ipatch]!=NULL) {
+            IPATCH = ipatch;
+            break;
+        }
+
+    if( fields[IPATCH]==NULL ) return;
+
+    gsp = ( oversize + 1 + fields[IPATCH]->isDual_[2] ); //Ghost size primal
+
+    #pragma omp for schedule(static) private(pt1,pt2)
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
+
+        if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[2][0] ) {
+            if (fields[ipatch]!=NULL) {
+                Field* f = fields[vecPatches( ipatch )->neighbor_[2][0]-h0];
+                nx_ = f->dims_[0]; // Some can have nx, other nx+npml, but neighboors along Z have the same number
+                ny_ = f->dims_[1]; // Some can have ny, other ny+npml, but neighboors along Z have the same number
+                nz_ = f->dims_[2]; // nz is same for all PML
+                pt1 = &( *static_cast<F*>( f              ) )( nz_ - 1 - 2*oversize - f->isDual_[2] ); //my neighbour
+                pt2 = &( *static_cast<F*>( fields[ipatch] ) )( 0 ); //me
+                for( unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_ ) {
+                    for( unsigned int j = 0 ; j < ny_*nz_ ; j += nz_ ) {
+                        for( unsigned int k = 0 ; k < oversize ; k++ ) {
+                            pt2[i+j+k] = pt1[i+j+k] ; //me <= my neighbour
+                            pt1[i+j+k+gsp] = pt2[i+j+k+gsp] ; // my_neighbour <= me
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+void SyncVectorPatch::finalizeExchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches )
+{
+    unsigned oversize = vecPatches( 0 )->EMfields->oversize[2];
+
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
+    for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
+        if (fields[ipatch]!=NULL) {
+            vecPatches( ipatch )->finalizeExchange( fields[ipatch], 2 );
+            for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
+                if ( vecPatches( ipatch )->is_a_MPI_neighbor( 2, ( iNeighbor+1 )%2 ) ) {
+                    fields[ipatch]->inject_fields_exch( 2, iNeighbor, oversize );
+                }
+            }
+        }
+    }
+
+}
+
+void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
+{
+    if ( ( params.geometry != "AMcylindrical" ) ) {
+        if (params.nDim_field==1) {
+            return;
+        }
+        else {
+            // Testing implementation of distributed PML on Xmin and Xmax
+            int iDim = 0;
+            for ( int min_max=0 ; min_max<2 ; min_max++ ) {
+                #pragma omp single
+                vecPatches.buildPMLList( "Bx", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "By", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Bz", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Hx", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Hy", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Hz", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+            }
+            if (params.nDim_field>2) {
+                // In 3D, distributed PML on Xmin and Xmax require synchronization along Z
+                for ( int min_max=0 ; min_max<2 ; min_max++ ) {
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Bx", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "By", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Bz", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hx", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hy", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hz", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+                }
+            }
+          // Testing implementation of distributed PML on Ymin and Ymax
+            iDim = 1;
+            for ( int min_max=0 ; min_max<2 ; min_max++ ) {
+                #pragma omp single
+                vecPatches.buildPMLList( "Bx", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "By", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Bz", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Hx", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Hy", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Hz", iDim, min_max, smpi  );
+
+                SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+            } 
+            if (params.nDim_field>2) {
+                // In 3D, distributed PML on Ymin and Ymax require synchronization along Z
+                for ( int min_max=0 ; min_max<2 ; min_max++ ) {
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Bx", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "By", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Bz", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hx", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hy", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hz", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
+                }
+            }
+            
+            if (params.nDim_field>2) {
+                int iDim = 2;
+                for ( int min_max=0 ; min_max<2 ; min_max++ ) {
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Bx", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "By", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Bz", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hx", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hy", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hz", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Bx", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "By", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Bz", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hx", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hy", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                    #pragma omp single
+                    vecPatches.buildPMLList( "Hz", iDim, min_max, smpi  );
+
+                    SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
+                    SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+                }
+            } // End if (ndim_field==1)
+        } // End if (ndim_field>1)
+    } // End if (cartesian)
+    else { // AM
+        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++) {
+            // Testing implementation of distributed PML on Xmin and Xmax
+            int iDim = 0;
+            for ( int min_max=0 ; min_max<2 ; min_max++ ) {
+                #pragma omp single
+                vecPatches.buildPMLList( "Bl", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Br", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Bt", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Hl", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Hr", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Ht", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongY<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
+            }
+
+            // Testing implementation of distributed PML on Ymin and Ymax
+            iDim = 1;
+            for ( int min_max=0 ; min_max<2 ; min_max++ ) {
+                #pragma omp single
+                vecPatches.buildPMLList( "Bl", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Br", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Bt", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Hl", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Hr", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+
+                #pragma omp single
+                vecPatches.buildPMLList( "Ht", iDim, min_max, smpi, imode );
+
+                SyncVectorPatch::exchangeAlongX<complex<double>,cField>( vecPatches.listForPML_, vecPatches, smpi );
+                SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
+            }
+        } // End for( imode )
+    } // End else( AM )
+}

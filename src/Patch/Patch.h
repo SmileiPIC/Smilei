@@ -16,9 +16,9 @@
 #include "Projector.h"
 
 class DomainDecomposition;
-class Collisions;
 class Diagnostic;
 class SimWindow;
+class BinaryProcesses;
 
 //! Class Patch :
 //!   - data container
@@ -66,8 +66,8 @@ public:
     
     //! Optional internal boundary condifion on Particles
     PartWalls *partWalls;
-    //! Optional binary collisions operators
-    std::vector<Collisions *> vecCollisions;
+    //! Optional binary processes operators
+    std::vector<BinaryProcesses *> vecBPs;
     
     //! Injectors of the current patch
     std::vector<ParticleInjector *> particle_injector_vector_;
@@ -127,14 +127,14 @@ public:
     void cleanupSentParticles( int ispec, std::vector<int> *indexes_of_particles_to_exchange );
     
     //! init comm / sum densities
-    virtual void initSumField( Field *field, int iDim, SmileiMPI *smpi );
+    virtual void initSumField( Field *field, int iDim, SmileiMPI *smpi, bool devPtr = false );
     //! init comm / sum densities
     virtual void initSumFieldComplex( Field *field, int iDim, SmileiMPI *smpi ) {};
     //! finalize comm / sum densities
     virtual void finalizeSumField( Field *field, int iDim );
     
     //! init comm / exchange fields in direction iDim only
-    virtual void initExchange( Field *field, int iDim, SmileiMPI *smpi );
+    virtual void initExchange( Field *field, int iDim, SmileiMPI *smpi, bool devPtr = false );
     //! init comm / exchange complex fields in direction iDim only
     virtual void initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi );
     //! finalize comm / exchange fields

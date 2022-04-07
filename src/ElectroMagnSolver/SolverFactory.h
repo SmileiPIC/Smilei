@@ -17,11 +17,20 @@
 #include "MF_Solver2D_Cowan.h"
 #include "MF_Solver2D_Lehe.h"
 #include "MF_Solver3D_Lehe.h"
+#include "MF_Solver1D_M4.h"
+#include "MF_Solver2D_M4.h"
+#include "MF_Solver3D_M4.h"
 
 #include "PXR_Solver2D_GPSTD.h"
 #include "PXR_Solver3D_FDTD.h"
 #include "PXR_Solver3D_GPSTD.h"
 #include "PXR_SolverAM_GPSTD.h"
+
+#include "PML_Solver2D_Bouchard.h"
+#include "PML_Solver2D_Yee.h"
+#include "PML_Solver3D_Bouchard.h"
+#include "PML_Solver3D_Yee.h"
+#include "PML_SolverAM.h"
 
 #include "Params.h"
 
@@ -96,6 +105,8 @@ public:
             
             if( params.maxwell_sol == "Yee" ) {
                 solver = new MF_Solver1D_Yee( params );
+            } else if( params.maxwell_sol == "M4" ) {
+                solver = new MF_Solver1D_M4( params );
             }
             
         } else if( params.geometry == "2Dcartesian" ) {
@@ -112,6 +123,8 @@ public:
                 solver = new MF_Solver2D_Cowan( params );
             } else if( params.maxwell_sol == "Lehe" ) {
                 solver = new MF_Solver2D_Lehe( params );
+            } else if( params.maxwell_sol == "M4" ) {
+                solver = new MF_Solver2D_M4( params );
             } else if( params.is_spectral ) {
                 solver = new NullSolver( params );
             }
@@ -124,6 +137,8 @@ public:
                 solver = new MF_Solver3D_Lehe( params );
             } else if( params.maxwell_sol == "Bouchard" ) {
                 solver = new MF_Solver3D_Bouchard( params );
+            } else if( params.maxwell_sol == "M4" ) {
+                solver = new MF_Solver3D_M4( params );
             } else if( params.is_pxr ) {
                 solver = new NullSolver( params );
             }
@@ -144,7 +159,39 @@ public:
         
         return solver;
     };
-    
+
+
+    // Create PML solver
+    // -----------------------------
+    static Solver *createPML( Params &params )
+    {
+        Solver *solver = NULL;
+        if( params.geometry == "2Dcartesian" ) {
+            if (params.maxwell_sol=="Bouchard"){
+                solver = new PML_Solver2D_Bouchard( params );
+            }
+            else {//(params.maxwell_sol=="Yee")
+                solver = new PML_Solver2D_Yee( params );
+            }
+        }
+        else if( params.geometry == "3Dcartesian" ) {
+            if (params.maxwell_sol=="Bouchard"){
+                solver = new PML_Solver3D_Bouchard( params );
+            }
+            else {
+                solver = new PML_Solver3D_Yee( params );
+            }
+        }
+        else if( params.geometry == "AMcylindrical" ) {
+            solver = new PML_SolverAM( params );
+        }
+        else {
+            ERROR( "PML configuration not implemented" );
+        }
+
+        return solver;
+    }
+
 };
 
 #endif

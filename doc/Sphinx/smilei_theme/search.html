@@ -11,6 +11,7 @@
 {% set title = _('Search') %}
 {% block extrahead %}
   <script type="text/javascript" src="_static/searchtools.js"></script>
+  <script type="text/javascript" src="_static/language_data.js"></script>
   <script type="text/javascript">
     jQuery(function() { Search.loadIndex("{{ pathto('searchindex.js', 1) }}"); });
   </script>

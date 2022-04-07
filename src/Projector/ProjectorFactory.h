@@ -98,7 +98,9 @@ public:
                 Proj = new ProjectorAM2Order( params, patch );
             }
         } else {
-            ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
+            ERROR_NAMELIST( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order,
+                LINK_NAMELIST + std::string("#interpolation_order")
+            );
         }
 
         return Proj;

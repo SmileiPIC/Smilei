@@ -617,7 +617,8 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
                 }
 
             } else if( mass_==0 ) {
-                ERROR( "Particles with zero mass cannot interact with envelope" );
+                ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
+                LINK_NAMELIST + std::string("#laser-envelope-model"));
             } // end mass_ = 0? condition
         }
 

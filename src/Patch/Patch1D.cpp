@@ -91,7 +91,7 @@ void Patch1D::createType2( Params &params )
         return;
     }
     
-    unsigned int clrw = params.clrw;
+    unsigned int clrw = params.cluster_width_;
     
     // int ny = oversize[0];
     

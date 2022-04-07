@@ -28,7 +28,7 @@ Main(
     cell_length  = [dx, dtrans],
     grid_length = [ Lx,  Ltrans],
     number_of_patches = [npatch_x, npatch_trans],
-    #clrw = 5,
+    #cluster_width = 5,
     EM_boundary_conditions = [
         ["ramp44","ramp44"],
         ["silver-muller","buneman"],

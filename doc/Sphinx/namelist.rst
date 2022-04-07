@@ -90,12 +90,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Main(
       geometry = "1Dcartesian",
       interpolation_order = 2,
+      interpolator = "momentum-conserving",
       grid_length  = [16. ],
       cell_length = [0.01],
       simulation_time    = 15.,
       timestep    = 0.005,
       number_of_patches = [64],
-      clrw = 5,
+      cluster_width = 5,
       maxwell_solver = 'Yee',
       EM_boundary_conditions = [
           ["silver-muller", "silver-muller"],
@@ -131,7 +132,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
     Boundary conditions must be set to ``"remove"`` for particles,
     ``"silver-muller"`` for longitudinal EM boundaries and
     ``"buneman"`` for transverse EM boundaries.
-    Vectorization, collisions, scalar diagnostics and
+    You can alternatively use ``"PML"`` for all boundaries.
+    Vectorization, collisions and
     order-4 interpolation are not supported yet.
 
 .. py:data:: interpolation_order
@@ -143,6 +145,16 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``2``  : 3 points stencil, supported in all configurations.
   * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
 
+.. py:data:: interpolator
+
+  :default: ``"momentum-conserving"``
+
+  * ``"momentum-conserving"``
+  * ``"wt"``
+
+  The interpolation scheme to be used in the simulation.
+  ``"wt"`` is for the timestep dependent field interpolation scheme described in
+  `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_ .
 
 .. py:data:: grid_length
              number_of_cells
@@ -196,14 +208,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
     column-major (fortran-style) ordering. This prevents the usage of
     :ref:`Fields diagnostics<DiagFields>` (see :doc:`parallelization`).
 
-.. py:data:: clrw
+.. py:data:: cluster_width
 
   :default: set to minimize the memory footprint of the particles pusher, especially interpolation and projection processes
 
   For advanced users. Integer specifying the cluster width along X direction in number of cells.
   The "cluster" is a sub-patch structure in which particles are sorted for cache improvement.
-  ``clrw`` must divide the number of cells in one patch (in dimension X).
-  The finest sorting is achieved with ``clrw=1`` and no sorting with ``clrw`` equal to the full size of a patch along dimension X.
+  ``cluster_width`` must divide the number of cells in one patch (in dimension X).
+  The finest sorting is achieved with ``cluster_width=1`` and no sorting with ``cluster_width`` equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
 
 .. py:data:: maxwell_solver
@@ -211,9 +223,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: 'Yee'
 
   The solver for Maxwell's equations.
-  Only ``"Yee"`` is available for all geometries at the moment.
+  Only ``"Yee"`` and ``"M4"`` are available for all geometries at the moment.
   ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``.
   ``"Lehe"`` and ``"Bouchard"`` is available for ``3DCartesian``.
+  The M4 solver is described in `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_.
   The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_.
   The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_
 
@@ -260,7 +273,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[["periodic"]]``
 
   The boundary conditions for the electromagnetic fields. Each boundary may have one of
-  the following conditions: ``"periodic"``, ``"silver-muller"``, ``"reflective"`` or ``"ramp??"``.
+  the following conditions: ``"periodic"``, ``"silver-muller"``, ``"reflective"``, ``"ramp??"`` or ``"PML"``.
 
   | **Syntax 1:** ``[[bc_all]]``, identical for all boundaries.
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
@@ -282,6 +295,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
     Over the first half, the fields remain untouched.
     Over the second half, all fields are progressively reduced down to zero.
 
+  * ``"PML"`` stands for Perfectly Matched Layer. It is an open boundary condition.
+    The number of cells in the layer is defined by ``"number_of_pml_cells"``.
+    It supports laser injection as in ``"silver-muller"``.
+
+  .. warning::
+
+    In the current release, in order to use PML all ``"EM_boundary_conditions"`` of the simulation must be ``"PML"``.
+
 .. py:data:: EM_boundary_conditions_k
 
   :type: list of lists of floats
@@ -298,6 +319,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
+
+.. py:data:: number_of_pml_cells
+
+  :type: list of lists of integer
+  :default: ``[[6,6],[6,6],[6,6]]``
+
+  Defines the number of cells in the ``"PML"`` layers using the same alternative syntaxes as ``"EM_boundary_conditions"``.
 
 .. py:data:: time_fields_frozen
 
@@ -397,7 +425,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
     :default: ``False``
 
-    If ``True``, forces the use of cell sorting for particles. This flag is automatically set to true if any feature requiring cell sorting is requested (vectorization, collisions or
+    If ``True``, forces the use of cell sorting for particles. This flag is
+    automatically set to true if any feature requiring cell sorting is requested
+    (vectorization, collisions or
     particle merging) so it is mainly a convenience for developers.
 
 ----
@@ -514,7 +544,7 @@ It requires :ref:`additional compilation options<vectorization_flags>` to be act
     (per patch and per species). For the moment this mode is only supported in ``3Dcartesian`` geometry.
     Particles are sorted per cell.
 
-  In the ``"adaptive"`` mode, :py:data:`clrw` is set to the maximum.
+  In the ``"adaptive"`` mode, :py:data:`cluster_width` is set to the maximum.
 
 .. py:data:: reconfigure_every
 
@@ -738,6 +768,7 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: name
 
   The name you want to give to this species.
+  It should be more than one character and can not start with ``"m_"``.
 
 .. py:data:: position_initialization
 
@@ -1995,14 +2026,19 @@ reflect, stop, thermalize or kill particles which reach it::
 Collisions & reactions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:doc:`collisions` are specified by one or several ``Collisions`` blocks::
+:doc:`collisions` account for short-range Coulomb interactions of particles (shorter than the 
+cell size), but also include other effects such as impact ionization and nuclear reactions.
+These are gathered under this section because they are treated as *binary processes* (meaning
+they happen during the encounter of two macro-particles).
+
+They are specified by one or several ``Collisions`` blocks::
 
   Collisions(
       species1 = ["electrons1",  "electrons2"],
       species2 = ["ions1"],
+      debug_every = 1000,
       coulomb_log = 0.,
       coulomb_log_factor = 1.,
-      debug_every = 1000,
       ionizing = False,
   #      nuclear_reaction = [],
   )
@@ -2013,7 +2049,7 @@ Collisions & reactions
 
   Lists of species' :py:data:`name`.
 
-  The collisions will occur between all species under the group ``species1``
+  The collisions and reactions will occur between all species under the group ``species1``
   and all species under the group ``species2``. For example, to collide all
   electrons with ions::
 
@@ -2036,6 +2072,28 @@ Collisions & reactions
     machine accepts SIMD vectorization.
 
 
+.. py:data:: every
+
+  :default: 1
+
+  Number of timesteps between each computation of the collisions or reactions.
+  Use a number higher than 1 only if you know the collision frequency is low
+  with respect to the inverse of the timestep.
+
+
+.. py:data:: debug_every
+
+  :default: 0
+
+  Number of timesteps between each output of information about collisions or reactions.
+  If 0, there will be no outputs.
+
+.. py:data:: time_frozen
+
+  :default: 0.
+
+  The time during which no collisions or reactions happen, in units of :math:`T_r`.
+  
 .. py:data:: coulomb_log
 
   :default: 0.
@@ -2044,6 +2102,7 @@ Collisions & reactions
 
   * If :math:`= 0`, the Coulomb logarithm is automatically computed for each collision.
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
+  * If :math:`< 0`, collisions are not treated (but other reactions may happen).
 
 
 .. py:data:: coulomb_log_factor
@@ -2053,22 +2112,6 @@ Collisions & reactions
   A constant, strictly positive factor that multiplies the Coulomb logarithm, regardless
   of :py:data:`coulomb_log` being automatically computed or set to a constant value.
   This can help, for example, to compensate artificially-reduced ion masses.
-
-.. py:data:: every
-
-  :default: 1
-
-  Number of timesteps between each computation of the collisions. Use a number higher than 1
-  only if you know the collision frequency is low with respect to the inverse of the timestep.
-
-
-.. py:data:: debug_every
-
-  :default: 0
-
-  Number of timesteps between each output of information about collisions.
-  If 0, there will be no outputs.
-
 
 .. _CollisionalIonization:
 
@@ -2259,7 +2302,7 @@ This is done by including the block ``DiagScalar``::
 
 .. warning::
 
-  Scalars diagnostics are not yet supported in ``"AMcylindrical"`` geometry.
+  Scalars diagnostics min/max cell are not yet supported in ``"AMcylindrical"`` geometry.
 
 The full list of available scalars is given in the table below.
 

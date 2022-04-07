@@ -55,8 +55,6 @@ void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     vecPatch_.nrequests = vecPatches( 0 )->requests_.size();
     vecPatch_.nAntennas = vecPatch_( 0 )->EMfields->antennas.size();
     vecPatch_.initExternals( params );
-    if (!params.initial_rotational_cleaning)
-        vecPatch_.applyExternalFields();
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, n_moved, false);
     if (params.is_spectral)
         patch_->EMfields->saveMagneticFields( true );

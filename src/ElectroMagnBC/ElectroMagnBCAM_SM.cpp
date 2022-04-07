@@ -168,7 +168,7 @@ void ElectroMagnBCAM_SM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-
+    //ERROR( "Test SM" )
     // Loop on imode
     for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
         // Static cast of the fields

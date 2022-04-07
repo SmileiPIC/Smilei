@@ -221,9 +221,7 @@ void RadiationLandauLifshitz::operator()(
     #ifndef _GPU
         // _______________________________________________________________
         // Cleaning
-
-        delete [] rad_norm_energy;
+    free(rad_norm_energy);
     #endif
-
 }
             

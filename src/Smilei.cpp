@@ -45,28 +45,30 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 #ifdef _GPU
-    void initialisation_openacc()
+    #ifdef _OPENACC
+    void initialization_openacc()
     {
         char* local_rank_env;
         int local_rank;
-     
-        /* Initialisation d'OpenACC */
+
+        // Initialization of OpenACC
         #pragma acc init
-     
-        /* Récupération du rang local du processus via la variable d'environnement
-           positionnée par Slurm, l'utilisation de MPI_Comm_rank n'étant pas encore
-           possible puisque cette routine est utilisée AVANT l'initialisation de MPI */
+
+        /* Recovery of the local rank of the process via the environment variable
+           set by Slurm, as MPI_Comm_rank cannot be used here because this routine
+           is used BEFORE the initialisation of MPI*/
         local_rank_env = getenv("SLURM_LOCALID");
-     
+
         if (local_rank_env) {
             local_rank = atoi(local_rank_env);
-            /* Définition du GPU à utiliser via OpenACC */
+            // Define the GPU to use via OpenACC
             acc_set_device_num(local_rank, acc_get_device_type());
         } else {
-            printf("Erreur : impossible de déterminer le rang local du processus\n");
+            printf("Error : impossible to determine the local rank of MPI process.\n");
             exit(1);
         }
     }
+    #endif
 #endif
 
 int main( int argc, char *argv[] )
@@ -79,7 +81,7 @@ int main( int argc, char *argv[] )
 
     // Create the OpenACC environment
 #ifdef _GPU
-    initialisation_openacc();
+    initialization_openacc();
 #endif
 
     // Create MPI environment :
@@ -103,14 +105,15 @@ int main( int argc, char *argv[] )
     OpenPMDparams openPMD( params );
     PyTools::setIteration( 0 );
 
-#ifdef _GPU
-    int ngpus = acc_get_num_devices( acc_device_nvidia );
-    if ( (ngpus>0) && (params.gpu_computing) ) {
-        int gpunum = smpi.getRank()%ngpus;
-        cout << gpunum << endl;
-        acc_set_device_num( gpunum, acc_device_nvidia );
-    }
-#elif defined(SMILEI_ACCELERATOR_GPU_OMP)
+//#ifdef _GPU
+//    int ngpus = acc_get_num_devices( acc_device_nvidia );
+//    if ( (ngpus>0) && (params.gpu_computing) ) {
+//        int gpunum = smpi.getRank()%ngpus;
+//        cout << gpunum << endl;
+//        acc_set_device_num( gpunum, acc_device_nvidia );
+//    }
+//#endif
+#if defined(SMILEI_ACCELERATOR_GPU_OMP)
     ERROR("TODO(Etienne M): Implement");
 #endif
 
@@ -333,8 +336,26 @@ int main( int argc, char *argv[] )
         
         // Comm and synch charge and current densities
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
+
+        // Upload corrected data on Regions
+        if( params.multiple_decomposition ) {
+            if ( params.geometry != "AMcylindrical" ) {
+                DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, &smpi );
+                SyncVectorPatch::exchangeE( params, region.vecPatch_, &smpi );
+                SyncVectorPatch::finalizeexchangeE( params, region.vecPatch_);
+                SyncVectorPatch::exchangeB( params, region.vecPatch_, &smpi );
+                SyncVectorPatch::finalizeexchangeB( params, region.vecPatch_);
+            } else {
+                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
+                    DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
+                    // Need to fill all ghost zones, not covered by patches ghost zones
+                    SyncVectorPatch::exchangeE( params, region.vecPatch_, imode, &smpi );
+                    SyncVectorPatch::exchangeB( params, region.vecPatch_, imode, &smpi );
+                }
+            }
+        }
         
-        // rotational cleaning on a single global region
+        // rotational cleaning on a single global region for AM spectral
         if( params.initial_rotational_cleaning ) {
             TITLE( "Rotational cleaning" );
             Region region_global( params );
@@ -352,9 +373,8 @@ int main( int argc, char *argv[] )
             }
             vecPatches.setMagneticFieldsForDiagnostic( params );
             region_global.clean();
-            
+
             if( params.multiple_decomposition ) {
-                // Need to upload corrected data on Region
                 for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                     DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
                     // Need to fill all ghost zones, not covered by patches ghost zones
@@ -363,7 +383,8 @@ int main( int argc, char *argv[] )
                 }
             }
         }
-        
+
+       
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
@@ -431,7 +452,6 @@ int main( int argc, char *argv[] )
                     PyTools::setIteration( itime ); // sets python variable "Main.iteration" for users
                 }
             }
-            #pragma omp barrier
 
             // Patch reconfiguration
             if( params.has_adaptive_vectorization && params.adaptive_vecto_time_selection->theTimeIsNow( itime ) ) {
@@ -439,7 +459,7 @@ int main( int argc, char *argv[] )
             }
 
             // apply collisions if requested
-            vecPatches.applyCollisions( params, itime, timers );
+            vecPatches.applyBinaryProcesses( params, itime, timers );
 
             // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen

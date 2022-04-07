@@ -87,7 +87,12 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch
             }
         }
         if( ! hasfield ) {
-            ERROR( "Diagnostic Fields #"<<ndiag<<": field `"<<fieldsToDump[j]<<"` does not exist" );
+            ERROR_NAMELIST( 
+                "Diagnostic Fields #"<<ndiag
+                <<": field `"<<fieldsToDump[j]
+                <<"` does not exist",
+                LINK_NAMELIST + std::string("#particle-merging")
+            );
         }
     }
     

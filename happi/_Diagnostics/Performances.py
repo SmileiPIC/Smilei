@@ -159,7 +159,7 @@ class Performances(Diagnostic):
 		for index_in_file, q in enumerate(self._availableQuantities_uint):
 			if self._re.search(r"\b%s\b"%q,self._operation):
 				self._operation = self._re.sub(r"\b%s\b"%q,"C["+str(index_in_output)+"]",self._operation)
-				units = {"t":"seconds", "h":"1", "n":"1"}[q[0]]
+				units = "seconds" if q.startswith("timer") else "1"
 				self._operationunits = self._operationunits.replace(q, units)
 				self._quantities_uint.append(index_in_file)
 				used_quantities.append( q )
@@ -168,7 +168,7 @@ class Performances(Diagnostic):
 		for index_in_file, q in enumerate(self._availableQuantities_double):
 			if self._re.search(r"\b%s\b"%q,self._operation):
 				self._operation = self._re.sub(r"\b%s\b"%q,"C["+str(index_in_output)+"]",self._operation)
-				units = {"t":"seconds", "h":"1", "n":"1", "m":"1"}[q[0]]
+				units = "seconds" if q.startswith("timer") else "1"
 				self._operationunits = self._operationunits.replace(q, units)
 				self._quantities_double.append(index_in_file)
 				used_quantities.append( q )
@@ -492,7 +492,8 @@ class Performances(Diagnostic):
 		# Display the data
 		self._plot.set_data( self._np.flipud(A))
 		vlines_i, vlines_jmin, vlines_jmax, hlines_j, hlines_imin, hlines_imax = self._calculateMPIcontours_2D()
-		ax.collections = [c for c in ax.collections if c not in [self._vlines,self._hlines]]
+		ax.collections.remove(self._vlines)
+		ax.collections.remove(self._hlines)
 		self._vlines = ax.vlines( vlines_i, vlines_jmin, vlines_jmax, **self.options.plot)
 		self._hlines = ax.hlines( hlines_j, hlines_imin, hlines_imax, **self.options.plot)
 		return self._plot

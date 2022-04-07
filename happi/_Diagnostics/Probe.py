@@ -259,7 +259,7 @@ class Probe(Diagnostic):
 		# Build units
 		titles = {}
 		fieldunits = {}
-		unitsForField = {"B":"B_r","E":"E_r","J":"J_r","R":"N_r","P":"V_r*K_r*N_r"}
+		unitsForField = {"B":"B_r","E":"E_r","J":"J_r","R":"Q_r*N_r","P":"V_r*K_r*N_r"}
 		self.time_integral = self._myinfo["time_integral"]
 		
 		for f in self._fieldname:

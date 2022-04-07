@@ -8,7 +8,7 @@
 #include <math.h>
 //#include <string>
 
-#include "Collisions.h"
+#include "BinaryProcesses.h"
 #include "DomainDecompositionFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
@@ -20,6 +20,10 @@
 #include "LaserEnvelope.h"
 #include "ElectroMagnBC.h"
 #include "Laser.h"
+
+#include "ElectroMagnBC2D_PML.h"
+#include "ElectroMagnBC3D_PML.h"
+#include "ElectroMagnBCAM_PML.h"
 
 #include "SyncVectorPatch.h"
 #include "interface.h"
@@ -51,9 +55,9 @@ VectorPatch::~VectorPatch()
 void VectorPatch::close( SmileiMPI *smpiData )
 {
     // Close collision debug files
-    for( unsigned int icoll = 0; icoll < patches_[0]->vecCollisions.size(); icoll++ ) {
-        if( patches_[0]->vecCollisions[icoll]->debug_file_ ) {
-            delete patches_[0]->vecCollisions[icoll]->debug_file_;
+    for( unsigned int icoll = 0; icoll < patches_[0]->vecBPs.size(); icoll++ ) {
+        if( patches_[0]->vecBPs[icoll]->debug_file_ ) {
+            delete patches_[0]->vecBPs[icoll]->debug_file_;
         }
     }
     
@@ -586,12 +590,12 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 init_space.cell_index_[0] = 0;
                 init_space.box_size_[0]   = 1;
 
-                //index = (new_cell_idx)/params.clrw;
+                //index = (new_cell_idx)/params.cluster_width_;
             } else if ( patch->isXmax() ) {
 
                 init_space.cell_index_[0] = params.n_space[0]-1;
                 init_space.box_size_[0]   = 1;
-                //index = (new_cell_idx)/params.clrw;
+                //index = (new_cell_idx)/params.cluster_width_;
             }
 
             if (params.nDim_field > 1) {
@@ -1272,6 +1276,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
             ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
+        }
+        if ( params.EM_BCs[0][0] == "PML" ) { // If a PML on 1 border, then on all
+            SyncVectorPatch::exchangeForPML( params, (*this), smpi );
+        }
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Computes B at time n using B and B_m.
             if( !params.is_spectral ) {
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
@@ -1357,6 +1367,14 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
             // Applies boundary conditions on B
             if ( (!params.is_spectral) || (params.geometry!= "AMcylindrical") )
                 ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
+
+        }
+        if ( params.EM_BCs[0][0] == "PML" ) { // If a PML on 1 border, then on all
+            SyncVectorPatch::exchangeForPML( params, (*this), smpi );
+        }
+
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Computes B at time n using B and B_m.
             if( !params.is_spectral ) {
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
@@ -1802,7 +1820,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
         MPI_Allreduce( &Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
         E_Add[0] = -Ex_avg/( ( params.n_space[0]+2 )*( params.n_space[1]+1 ) );
-        E_Add[1] = -Ey_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+2 ) );;
+        E_Add[1] = -Ey_avg/( ( params.n_space[0]+1 )*( params.n_space[1]+2 ) );
 #endif
 
     } else if( Ex_[0]->dims_.size()==1 ) {
@@ -1841,7 +1859,6 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->centeringE( E_Add );
     }
-
 
     // Compute error on the Poisson equation
     double deltaPoisson_max = 0.0;
@@ -3766,6 +3783,123 @@ void VectorPatch::updateFieldList( int ispec, SmileiMPI *smpi )
 }
 
 
+void VectorPatch::buildPMLList( string fieldname, int idim, int min_or_max, SmileiMPI *smpi )
+{
+    // min_or_max = 0 : min
+    // min_or_max = 1 : max
+    int id_bc = 2*idim + min_or_max;
+
+    listForPML_.clear();
+    if ( fieldname == "Bx" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getBxPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "By" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getByPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Bz" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getBzPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Hx" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getHxPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Hy" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getHyPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Hz" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( ( emfields(ipatch)->emBoundCond[id_bc] )->getHzPML() );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+}
+
+
+void VectorPatch::buildPMLList( string fieldname, int idim, int min_or_max, SmileiMPI *smpi, int imode )
+{
+    // min_or_max = 0 : min
+    // min_or_max = 1 : max
+    int id_bc = 2*idim + min_or_max;
+
+    listForPML_.clear();
+    if ( fieldname == "Bl" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Bl_[imode] );
+            //After pushing back a pointer to PML fields, if this field is not NULL recompute the tags.
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Br" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Br_[imode] );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Bt" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Bt_[imode] );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Hl" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Hl_[imode] );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Hr" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Hr_[imode] );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+    else if ( fieldname == "Ht" ) {
+        for ( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            listForPML_.push_back( static_cast<ElectroMagnBCAM_PML*>( emfields(ipatch)->emBoundCond[id_bc] )->Ht_[imode] );
+            if(listForPML_.back()){
+                listForPML_.back()->MPIbuff.defineTags(patches_[ipatch], smpi, 0);
+            }
+        }
+    }
+}
+
+
 void VectorPatch::applyAntennas( double time )
 {
 #ifdef  __DEBUG
@@ -3805,30 +3939,30 @@ void VectorPatch::applyAntennas( double time )
     }
 }
 
-// For each patch, apply the collisions
-void VectorPatch::applyCollisions( Params &params, int itime, Timers &timers )
+// For each patch, apply the binary processes
+void VectorPatch::applyBinaryProcesses( Params &params, int itime, Timers &timers )
 {
     timers.collisions.restart();
 
-    if( Collisions::debye_length_required ) {
+    if( BinaryProcesses::debye_length_required_ ) {
         #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-            Collisions::calculate_debye_length( params, patches_[ipatch] );
+            BinaryProcesses::calculate_debye_length( params, patches_[ipatch] );
         }
     }
 
-    unsigned int ncoll = patches_[0]->vecCollisions.size();
+    unsigned int nBPs = patches_[0]->vecBPs.size();
 
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-        for( unsigned int icoll=0 ; icoll<ncoll; icoll++ ) {
-            patches_[ipatch]->vecCollisions[icoll]->collide( params, patches_[ipatch], itime, localDiags );
+        for( unsigned int iBPs=0 ; iBPs<nBPs; iBPs++ ) {
+            patches_[ipatch]->vecBPs[iBPs]->apply( params, patches_[ipatch], itime, localDiags );
         }
     }
 
     #pragma omp single
-    for( unsigned int icoll=0 ; icoll<ncoll; icoll++ ) {
-        Collisions::debug( params, itime, icoll, *this );
+    for( unsigned int iBPs=0 ; iBPs<nBPs; iBPs++ ) {
+        BinaryProcesses::debug( params, itime, iBPs, *this );
     }
     #pragma omp barrier
 
@@ -3910,20 +4044,19 @@ void VectorPatch::saveExternalFields( Params &params )
 }
 
 // Combines info on memory from all MPI processes
-std::string combineMemoryConsumption(SmileiMPI *smpi, long int data, std::string name) {
-    long int maxData = 0;
-    // CHECK(): Should it be MPI_INT or MPI_LONG ? Historically, it was MPI_INT 
-    // MPI_Reduce(&data, &maxData, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&data, &maxData, 1, MPI_LONG, MPI_MAX, 0, MPI_COMM_WORLD);
+string combineMemoryConsumption( SmileiMPI *smpi, long int data, string name )
+{
+    long int maxData( 0 );
+    MPI_Reduce( &data, &maxData, 1, MPI_LONG, MPI_MAX, 0, MPI_COMM_WORLD );
 
-    double globalData = static_cast<double>(data) / (1024.0 * 1024.0 * 1024.0);
-    MPI_Reduce(smpi->isMaster() ? MPI_IN_PLACE : &globalData, &globalData, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    double globalData = ( double )data / 1024./1024./1024.;
+    MPI_Reduce( smpi->isMaster()?MPI_IN_PLACE:&globalData, &globalData, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
 
-    std::ostringstream t{};
-    t << std::setw(22) << name << ": "
-      << "Master " << static_cast<int>(static_cast<double>(data) / (1024.0 * 1024.0)) << " MB;   "
-      << "Max " << static_cast<int>(static_cast<double>(maxData) / (1024.0 * 1024.0)) << " MB;   "
-      << "Global " << std::setprecision(3) << globalData << " GB";
+    ostringstream t("");
+    t << setw(22) << name << ": "
+      << "Master " << ( int )( ( double )data / 1024./1024. ) << " MB;   "
+      << "Max " << ( int )( ( double )maxData / 1024./1024. ) << " MB;   "
+      << "Global " << setprecision( 3 ) << globalData << " GB";
     return t.str();
 }
 

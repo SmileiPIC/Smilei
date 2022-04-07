@@ -108,7 +108,7 @@ public:
     std::vector<std::string> multiphoton_Breit_Wheeler_;
 
     //! Boundary conditions for particules
-    std::vector<std::vector<std::string> > boundary_conditions;
+    std::vector<std::vector<std::string> > boundary_conditions_;
 
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;
@@ -193,7 +193,7 @@ public:
     std::vector<int> mBW_pair_creation_sampling_;
 
     //! Cluster width in number of cells
-    unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.
+    unsigned int cluster_width_; //Should divide the number of cells in X of a single MPI domain.
     //! Array counting the occurence of each cell key
     std::vector<int> count;
     //! sub dimensions of buffers for dim > 1
@@ -467,7 +467,7 @@ public:
     //! Method to know if we have to project this species or not.
     bool  isProj( double time_dual, SimWindow *simWindow );
     
-    inline double computeNRJ()
+    inline double computeEnergy()
     {
         double nrj( 0. );
         if( mass_ > 0 ) {
@@ -490,9 +490,9 @@ public:
             speciesSize += sizeof ( unsigned int );*/
         //speciesSize *= getNbrOfParticles();
         int speciesSize( 0 );
-        speciesSize += particles->double_prop.size()*sizeof( double );
-        speciesSize += particles->short_prop.size()*sizeof( short );
-        speciesSize += particles->uint64_prop.size()*sizeof( uint64_t );
+        speciesSize += particles->double_prop_.size()*sizeof( double );
+        speciesSize += particles->short_prop_.size()*sizeof( short );
+        speciesSize += particles->uint64_prop_.size()*sizeof( uint64_t );
         speciesSize *= getParticlesCapacity();
         return speciesSize;
     }

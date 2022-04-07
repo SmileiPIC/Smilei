@@ -146,7 +146,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         
         
 #ifndef _NO_MPI_TM
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(static) private(mypatch)
 #endif
         for( unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++ ) {
             mypatch = vecPatches_old[ipatch];
@@ -172,7 +172,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         int Href_receiver = 0;
                         for (int irk = 0; irk < mypatch->MPI_neighbor_[0][0]; irk++) Href_receiver += smpi->patch_count[irk];
                         // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
-                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] - Href_receiver ) * nmessage, params );
+                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] - Href_receiver ) * nmessage, params, false );
                     }
                 }
             } else { //In case my left neighbor belongs to me:
@@ -226,7 +226,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             if( mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL ) {
                 if ( mypatch->Pcoordinates[0]!=params.number_of_patches[0]-1 ) {
                     // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
-                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex - vecPatches.refHindex_ )*nmessage, params );
+                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex - vecPatches.refHindex_ )*nmessage, params, false );
                     patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
                 }
             }
@@ -560,10 +560,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     }
                 }
                 
-                energy_field_out += mypatch->EMfields->nrj_mw_out + mypatch->EMfields->computeNRJ();
+                energy_field_out += mypatch->EMfields->nrj_mw_out + mypatch->EMfields->computeEnergy();
                 energy_field_inj += mypatch->EMfields->nrj_mw_inj;
                 for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                    energy_part_out[ispec] += mypatch->vecSpecies[ispec]->nrj_mw_out + mypatch->vecSpecies[ispec]->computeNRJ();
+                    energy_part_out[ispec] += mypatch->vecSpecies[ispec]->nrj_mw_out + mypatch->vecSpecies[ispec]->computeEnergy();
                     energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->nrj_mw_inj;
                     ukin_new[ispec] += mypatch->vecSpecies[ispec]->nrj_new_part_;
                     ukin_bc [ispec] += mypatch->vecSpecies[ispec]->nrj_bc_lost;
@@ -579,9 +579,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             mypatch = vecPatches.patches_[patch_to_be_created[my_thread][j]];
             
             if( mypatch->isXmax() ) {
-                energy_field_inj += mypatch->EMfields->computeNRJ();
+                energy_field_inj += mypatch->EMfields->computeEnergy();
                 for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                    energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
+                    energy_part_inj[ispec] += mypatch->vecSpecies[ispec]->computeEnergy();
                 }
             }
         }

@@ -25,19 +25,23 @@ Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
         i_boundary_ = 0;
         normal_axis = 0;
     } else if( params.geometry == "1Dcartesian" ) {
-        ERROR( errorPrefix << ": in 1Dcartesian geometry, box_side must be `xmin` or `xmax`" );
+        ERROR_NAMELIST( errorPrefix << ": in 1Dcartesian geometry, box_side must be `xmin` or `xmax`",
+        LINK_NAMELIST + std::string("#laser"));
     } else if( params.geometry == "AMcylindrical" ) {
-        ERROR( errorPrefix << ": in AMcylindrical geometry, box_side must be `xmin` or `xmax`" );
+        ERROR_NAMELIST( errorPrefix << ": in AMcylindrical geometry, box_side must be `xmin` or `xmax`",
+        LINK_NAMELIST + std::string("#laser"));
     } else if( box_side == "ymin" || box_side == "ymax" ) {
         i_boundary_ = 2;
         normal_axis = 1;
     } else if( params.geometry == "2Dcartesian" ) {
-        ERROR( errorPrefix << ": in 2Dcartesian geometry, box_side must be `xmin`, `xmax`, `ymin` or `ymax`" );
+        ERROR_NAMELIST( errorPrefix << ": in 2Dcartesian geometry, box_side must be `xmin`, `xmax`, `ymin` or `ymax`",
+        LINK_NAMELIST + std::string("#laser"));
     } else if( box_side == "zmin" || box_side == "zmax" ) {
         i_boundary_ = 4;
         normal_axis = 2;
     } else {
-        ERROR( errorPrefix << ": box_side must be `xmin`, `xmax`, `ymin`, `ymax`, `zmin` or `zmax`" );
+        ERROR_NAMELIST( errorPrefix << ": box_side must be `xmin`, `xmax`, `ymin`, `ymax`, `zmin` or `zmax`",
+        LINK_NAMELIST + std::string("#laser"));
     }
     
     if( box_side.substr(1) == "max" ) {
@@ -60,11 +64,13 @@ Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
     bool has_file          = PyTools::extractOrNone( "file", file, "Laser", ilaser );
 
     if( (has_space_time ||  has_space_time_AM) && has_file ) {
-        ERROR( errorPrefix << ": `space_time_profile` and `file` cannot both be set" );
+        ERROR_NAMELIST( errorPrefix << ": `space_time_profile` and `file` cannot both be set",
+        LINK_NAMELIST + std::string("#laser"));
     }
 
     if(( has_space_time_AM) && params.geometry!="AMcylindrical"){
-        ERROR( errorPrefix << ": AM profiles can only be used in `AMcylindrical` geometry" );
+        ERROR_NAMELIST( errorPrefix << ": AM profiles can only be used in `AMcylindrical` geometry",
+        LINK_NAMELIST + std::string("#laser"));
     }
 
     unsigned int space_dims     = ( params.geometry=="3Dcartesian" ? 2 : 1 );
@@ -142,7 +148,8 @@ Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
             ptime2 = new Profile( time_profile, space_dims+1, name.str(), params );
             info << "\t\t\tExtra envelope: " << ptime1->getInfo();
         } else {
-            ERROR( errorPrefix << ": `extra_envelope` missing or not understood" );
+            ERROR_NAMELIST( errorPrefix << ": `extra_envelope` missing or not understood",
+            LINK_NAMELIST + std::string("#laser"));
         }
 
         profiles.push_back( new LaserProfileFile( file, ptime1, true , normal_axis ) );
@@ -151,16 +158,20 @@ Laser::Laser( Params &params, int ilaser, Patch *patch, bool verbose )
     } else {
 
         if( ! has_time ) {
-            ERROR( errorPrefix << ": missing `time_envelope`" );
+            ERROR_NAMELIST( errorPrefix << ": missing `time_envelope`",
+            LINK_NAMELIST + std::string("#laser"));
         }
         if( ! has_space ) {
-            ERROR( errorPrefix << ": missing `space_envelope`" );
+            ERROR_NAMELIST( errorPrefix << ": missing `space_envelope`",
+            LINK_NAMELIST + std::string("#laser"));
         }
         if( ! has_chirp ) {
-            ERROR( errorPrefix << ": missing `chirp_profile`" );
+            ERROR_NAMELIST( errorPrefix << ": missing `chirp_profile`",
+            LINK_NAMELIST + std::string("#laser") );
         }
         if( ! has_phase ) {
-            ERROR( errorPrefix << ": missing `phase`" );
+            ERROR_NAMELIST( errorPrefix << ": missing `phase`",
+            LINK_NAMELIST + std::string("#laser"));
         }
 
         info << "\t\t" << errorPrefix << ": separable profile" << endl;
@@ -340,7 +351,8 @@ void LaserProfileSeparable::createFields( Params &params, Patch *patch )
     vector<unsigned int> dim = { 1, 1 };
     
     if( params.geometry!="1Dcartesian" && params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" && params.geometry!="AMcylindrical" ) {
-        ERROR( "Unknown geometry in laser" );
+        ERROR_NAMELIST( "Unknown geometry in laser",
+        LINK_NAMELIST + std::string("#laser"));
     }
     
     // Size in first direction
@@ -471,7 +483,8 @@ LaserProfileNonSeparable::~LaserProfileNonSeparable()
 void LaserProfileFile::createFields( Params &params, Patch *patch )
 {
     if( params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" ) {
-        ERROR( "Unknown geometry in LaserOffset (cartesian 2D or 3D only)" );
+        ERROR_NAMELIST( "Unknown geometry in LaserOffset (cartesian 2D or 3D only)",
+        LINK_NAMELIST + std::string("#laser") );
     }
     
     magnitude = new Field3D();
@@ -523,7 +536,8 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
     if( f.has( "omega" ) ) {
         f.vect( "omega", omega, true );
     } else {
-        ERROR( "File " << file << " does not contain the `omega` dataset" );
+        ERROR_NAMELIST( "File " << file << " does not contain the `omega` dataset",
+        LINK_NAMELIST + std::string("#laser"));
     }
     
     // Allocate the fields

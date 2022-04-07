@@ -4,15 +4,17 @@
 #
 # Load the correct modules:
 #
-# module unload mpi 
-# module load flavor/openmpi/test mpi/openmpi/4.0.3
-# module load hdf5
-# module switch flavor/hdf5/serial flavor/hdf5/parallel
-# export HDF5_ROOT_DIR=${HDF5_ROOT}
-# export PYTHONHOME=/ccc/work/cont003/smilei/derouilj/anaconda2
-# export PATH=$PYTHONHOME/bin:$PATH
-# export LD_LIBRARY_PATH=$PYTHONHOME/lib:$LD_LIBRARY_PATH
-# export OMPI_MCA_btl_portals4_use_rdma=0
+
+#module load hdf5
+#module switch flavor/hdf5/serial flavor/hdf5/parallel
+#export HDF5_ROOT_DIR=${HDF5_ROOT}
+#export OMPI_MCA_btl_portals4_use_rdma=0
+#module load python3/3.7.5
+#export PYTHONEXE=python3
+#export PYTHONHOME=$PYTHON3_ROOT
+#export PATH=$PYTHONHOME/bin:$PATH
+#export LD_LIBRARY_PATH=$PYTHONHOME/lib:$LD_LIBRARY_PATH
+
 #
 # Then compile with:
 #

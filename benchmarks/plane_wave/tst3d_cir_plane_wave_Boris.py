@@ -97,7 +97,7 @@ Species(
     temperature = [0.],
     pusher = pusher,
     boundary_conditions = [
-    	["periodic", "periodic"],
+    	["remove", "remove"],
     	["periodic", "periodic"],
     	["periodic", "periodic"],
     ],

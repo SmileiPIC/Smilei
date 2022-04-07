@@ -88,17 +88,17 @@ void SpeciesV::initCluster( Params &params )
 
     b_dim.resize( params.nDim_field, 1 );
     if( nDim_field == 1 ) {
-        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0];
+        b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0];
         f_dim1 = 1;
         f_dim2 = 1;
     }
     if( nDim_field == 2 ) {
-        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] =  f_dim1;
         f_dim2 = 1;
     }
     if( nDim_field == 3 ) {
-        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] = f_dim1;
         b_dim[2] = f_dim2;
     }
@@ -1287,7 +1287,8 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                         }
                     }
                 } else if( mass_==0 ) { // condition mass_=0
-                    ERROR( "Particles with zero mass cannot interact with envelope" );
+                    ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
+                    LINK_NAMELIST + std::string("#laser-envelope-model"));
                 }
             }
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
