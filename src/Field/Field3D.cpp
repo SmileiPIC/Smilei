@@ -467,7 +467,8 @@ void Field3D::extract_fields_sum ( int iDim, int iNeighbor, int ghost_size )
     int subSize = sendFields_[iDim*2+iNeighbor]->globalDims_;
     int fSize = globalDims_;
     bool fieldName( (name.substr(0,1) == "J") );
-    #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
+    #pragma acc parallel copy(field[0:fSize]) present(  sub[0:subSize] ) if (fieldName)
+    //#pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<(unsigned int)NX; i++ ) {
@@ -510,7 +511,8 @@ void Field3D::inject_fields_sum  ( int iDim, int iNeighbor, int ghost_size )
     int subSize = recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_;
     int fSize = globalDims_;
     bool fieldName( name.substr(0,1) == "J" );
-    #pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
+    #pragma acc parallel copy(field[0:fSize]) present(  sub[0:subSize] ) if (fieldName)
+    //#pragma acc parallel present( field[0:fSize], sub[0:subSize] ) if (fieldName)
     #pragma acc loop gang
 #endif
     for( unsigned int i=0; i<(unsigned int)NX; i++ ) {

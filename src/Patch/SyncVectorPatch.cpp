@@ -283,13 +283,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 field = vecPatches.densitiesMPIx[ifield+2*nPatchMPIx];
                 double*   Jz = field->sendFields_[iNeighbor]->data_;
                 int sizeofJz = field->sendFields_[iNeighbor]->globalDims_;
-                #pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
             }
         }
-        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield             ], 0, smpi ); // Jx
-        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+  nPatchMPIx], 0, smpi ); // Jy
-        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0, smpi ); // Jz
+        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield             ], 0, smpi, true ); // Jx
+        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+  nPatchMPIx], 0, smpi, true ); // Jy
+        vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIx[ifield+2*nPatchMPIx], 0, smpi, true ); // Jz
     }
     // iDim = 0, local
     int nFieldLocalx = vecPatches.densitiesLocalx.size()/3;
@@ -358,7 +358,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 field = vecPatches.densitiesMPIx[ifield+2*nPatchMPIx];
                 double*   Jz = field->recvFields_[(iNeighbor+1)%2]->data_;
                 int sizeofJz = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
-                #pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                 vecPatches.densitiesMPIx[ifield             ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
                 vecPatches.densitiesMPIx[ifield+nPatchMPIx  ]->inject_fields_sum( 0, iNeighbor, oversize[0] );
@@ -402,13 +402,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     field = vecPatches.densitiesMPIy[ifield+2*nPatchMPIy];
                     double*   Jz = field->sendFields_[iNeighbor+2]->data_;
                     int sizeofJz = field->sendFields_[iNeighbor+2]->globalDims_;
-                    #pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                    //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                 }
             }
-            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield             ], 1, smpi ); // Jx
-            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+nPatchMPIy  ], 1, smpi ); // Jy
-            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1, smpi ); // Jz
+            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield             ], 1, smpi, true ); // Jx
+            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+nPatchMPIy  ], 1, smpi, true ); // Jy
+            vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIy[ifield+2*nPatchMPIy], 1, smpi, true ); // Jz
         }
 
         // iDim = 1,
@@ -482,7 +482,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     field = vecPatches.densitiesMPIy[ifield+2*nPatchMPIy];
                     double*   Jz = field->recvFields_[(iNeighbor+1)%2+2]->data_;
                     int sizeofJz = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
-                    #pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                    //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                     vecPatches.densitiesMPIy[ifield             ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
                     vecPatches.densitiesMPIy[ifield+nPatchMPIy  ]->inject_fields_sum( 1, iNeighbor, oversize[1] );
@@ -524,13 +524,13 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         field = vecPatches.densitiesMPIz[ifield+2*nPatchMPIz];
                         double*   Jz = field->sendFields_[iNeighbor+4]->data_;
                         int sizeofJz = field->sendFields_[iNeighbor+4]->globalDims_;
-                        #pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                        //#pragma acc update host( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                     }
                 }
-                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield             ], 2, smpi ); // Jx
-                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+nPatchMPIz  ], 2, smpi ); // Jy
-                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2, smpi ); // Jz
+                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield             ], 2, smpi, true ); // Jx
+                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+nPatchMPIz  ], 2, smpi, true ); // Jy
+                vecPatches( ipatch )->initSumField( vecPatches.densitiesMPIz[ifield+2*nPatchMPIz], 2, smpi, true ); // Jz
             }
 
             // iDim = 2 local
@@ -604,7 +604,7 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         field = vecPatches.densitiesMPIz[ifield+2*nPatchMPIz ];
                         double*   Jz = field->recvFields_[(iNeighbor+1)%2+4]->data_;
                         int sizeofJz = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
-                        #pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
+                        //#pragma acc update device( Jx[0:sizeofJx], Jy[0:sizeofJy], Jz[0:sizeofJz] )
 #endif
                         vecPatches.densitiesMPIz[ifield             ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
                         vecPatches.densitiesMPIz[ifield+nPatchMPIz  ]->inject_fields_sum( 2, iNeighbor, oversize[2] );
@@ -1415,12 +1415,12 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 field        = vecPatches.B_MPIx[ifield+nMPIx];
                 double* Bz   = field->sendFields_[iNeighbor]->data_;
                 int sizeofBz = field->sendFields_[iNeighbor]->globalDims_;
-                #pragma acc update host(By[0:sizeofBy],Bz[0:sizeofBz])
+                //#pragma acc update host(By[0:sizeofBy],Bz[0:sizeofBz])
 #endif
             }
         }
-        vecPatches( ipatch )->initExchange( vecPatches.B_MPIx[ifield      ], 0, smpi ); // By
-        vecPatches( ipatch )->initExchange( vecPatches.B_MPIx[ifield+nMPIx], 0, smpi ); // Bz
+        vecPatches( ipatch )->initExchange( vecPatches.B_MPIx[ifield      ], 0, smpi, true ); // By
+        vecPatches( ipatch )->initExchange( vecPatches.B_MPIx[ifield+nMPIx], 0, smpi, true ); // Bz
     }
 
     unsigned int h0, n_space;
@@ -1505,7 +1505,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongX( std::vector<Field *> 
                 field        = vecPatches.B_MPIx[ifield+nMPIx];
                 double* Bz   = field->recvFields_[(iNeighbor+1)%2]->data_;
                 int sizeofBz = field->recvFields_[(iNeighbor+1)%2]->globalDims_;
-                #pragma acc update device(By[0:sizeofBy],Bz[0:sizeofBz])
+                //#pragma acc update device(By[0:sizeofBy],Bz[0:sizeofBz])
 #endif
                 vecPatches.B_MPIx[ifield      ]->inject_fields_exch( 0, iNeighbor, oversize );
                 vecPatches.B_MPIx[ifield+nMPIx]->inject_fields_exch( 0, iNeighbor, oversize );
@@ -1548,12 +1548,12 @@ void SyncVectorPatch::exchangeAllComponentsAlongY( std::vector<Field *> &fields,
                 field        = vecPatches.B1_MPIy[ifield+nMPIy];
                 double* Bz   = field->sendFields_[iNeighbor+2]->data_;
                 int sizeofBz = field->sendFields_[iNeighbor+2]->globalDims_;
-                #pragma acc update host(Bx[0:sizeofBx],Bz[0:sizeofBz])
+                //#pragma acc update host(Bx[0:sizeofBx],Bz[0:sizeofBz])
 #endif
             }
         }
-        vecPatches( ipatch )->initExchange( vecPatches.B1_MPIy[ifield      ], 1, smpi ); // Bx
-        vecPatches( ipatch )->initExchange( vecPatches.B1_MPIy[ifield+nMPIy], 1, smpi ); // Bz
+        vecPatches( ipatch )->initExchange( vecPatches.B1_MPIy[ifield      ], 1, smpi, true ); // Bx
+        vecPatches( ipatch )->initExchange( vecPatches.B1_MPIy[ifield+nMPIy], 1, smpi, true ); // Bz
     }
 
     unsigned int h0, n_space;
@@ -1632,7 +1632,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongY( std::vector<Field *> 
                 field        = vecPatches.B1_MPIy[ifield+nMPIy];
                 double* Bz   = field->recvFields_[(iNeighbor+1)%2+2]->data_;
                 int sizeofBz = field->recvFields_[(iNeighbor+1)%2+2]->globalDims_;
-                #pragma acc update device(Bx[0:sizeofBx],Bz[0:sizeofBz])
+                //#pragma acc update device(Bx[0:sizeofBx],Bz[0:sizeofBz])
 #endif
                 vecPatches.B1_MPIy[ifield      ]->inject_fields_exch( 1, iNeighbor, oversize );
                 vecPatches.B1_MPIy[ifield+nMPIy]->inject_fields_exch( 1, iNeighbor, oversize );
@@ -1675,12 +1675,12 @@ void SyncVectorPatch::exchangeAllComponentsAlongZ( std::vector<Field *> fields, 
                 field        = vecPatches.B2_MPIz[ifield+nMPIz];
                 double* By   = field->sendFields_[iNeighbor+4]->data_;
                 int sizeofBy = field->sendFields_[iNeighbor+4]->globalDims_;
-                #pragma acc update host(Bx[0:sizeofBx],By[0:sizeofBy])
+                //#pragma acc update host(Bx[0:sizeofBx],By[0:sizeofBy])
 #endif
             }
         }
-        vecPatches( ipatch )->initExchange( vecPatches.B2_MPIz[ifield],       2, smpi ); // Bx
-        vecPatches( ipatch )->initExchange( vecPatches.B2_MPIz[ifield+nMPIz], 2, smpi ); // By
+        vecPatches( ipatch )->initExchange( vecPatches.B2_MPIz[ifield],       2, smpi, true ); // Bx
+        vecPatches( ipatch )->initExchange( vecPatches.B2_MPIz[ifield+nMPIz], 2, smpi, true ); // By
     }
 
     unsigned int h0, n_space;
@@ -1756,7 +1756,7 @@ void SyncVectorPatch::finalizeExchangeAllComponentsAlongZ( std::vector<Field *> 
                 field        = vecPatches.B2_MPIz[ifield+nMPIz];
                 double* By   = field->recvFields_[(iNeighbor+1)%2+4]->data_;
                 int sizeofBy = field->recvFields_[(iNeighbor+1)%2+4]->globalDims_;
-                #pragma acc update device(Bx[0:sizeofBx],By[0:sizeofBy])
+                //#pragma acc update device(Bx[0:sizeofBx],By[0:sizeofBy])
 #endif
                 vecPatches.B2_MPIz[ifield      ]->inject_fields_exch( 2, iNeighbor, oversize );
                 vecPatches.B2_MPIz[ifield+nMPIz]->inject_fields_exch( 2, iNeighbor, oversize );
