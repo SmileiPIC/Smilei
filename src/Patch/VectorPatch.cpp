@@ -8,7 +8,7 @@
 #include <math.h>
 //#include <string>
 
-#include "Collisions.h"
+#include "BinaryProcesses.h"
 #include "DomainDecompositionFactory.h"
 #include "PatchesFactory.h"
 #include "Species.h"
@@ -58,9 +58,9 @@ VectorPatch::~VectorPatch()
 void VectorPatch::close( SmileiMPI *smpiData )
 {
     // Close collision debug files
-    for( unsigned int icoll = 0; icoll < patches_[0]->vecCollisions.size(); icoll++ ) {
-        if( patches_[0]->vecCollisions[icoll]->debug_file_ ) {
-            delete patches_[0]->vecCollisions[icoll]->debug_file_;
+    for( unsigned int icoll = 0; icoll < patches_[0]->vecBPs.size(); icoll++ ) {
+        if( patches_[0]->vecBPs[icoll]->debug_file_ ) {
+            delete patches_[0]->vecBPs[icoll]->debug_file_;
         }
     }
     
@@ -308,7 +308,7 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 void VectorPatch::sortAllParticles( Params &params )
 {
 #ifdef _VECTO
-    if((  params.vectorization_mode != "off" ) || (params.cell_sorting) ) {
+    if((  params.vectorization_mode != "off" ) || (params.cell_sorting_) ) {
         //Need to sort because particles are not well sorted at creation
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++ ) {
@@ -354,7 +354,7 @@ void VectorPatch::dynamics( Params &params,
 
             if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
                 // Dynamics with vectorized operators
-                if( spec->vectorized_operators || params.cell_sorting ) {
+                if( spec->vectorized_operators || params.cell_sorting_ ) {
                     spec->dynamics( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag, partwalls( ipatch ),
@@ -3147,7 +3147,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
     }
 
 #ifdef _VECTO
-    if( params.vectorization_mode == "on" || ( params.cell_sorting ) ) {
+    if( params.vectorization_mode == "on" || ( params.cell_sorting_ ) ) {
         // vectorization or cell sorting
         // Recompute the cell keys and sort  frozen particles
         for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
@@ -4002,30 +4002,30 @@ void VectorPatch::applyAntennas( double time )
     }
 }
 
-// For each patch, apply the collisions
-void VectorPatch::applyCollisions( Params &params, int itime, Timers &timers )
+// For each patch, apply the binary processes
+void VectorPatch::applyBinaryProcesses( Params &params, int itime, Timers &timers )
 {
     timers.collisions.restart();
 
-    if( Collisions::debye_length_required ) {
+    if( BinaryProcesses::debye_length_required_ ) {
         #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-            Collisions::calculate_debye_length( params, patches_[ipatch] );
+            BinaryProcesses::calculate_debye_length( params, patches_[ipatch] );
         }
     }
 
-    unsigned int ncoll = patches_[0]->vecCollisions.size();
+    unsigned int nBPs = patches_[0]->vecBPs.size();
 
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-        for( unsigned int icoll=0 ; icoll<ncoll; icoll++ ) {
-            patches_[ipatch]->vecCollisions[icoll]->collide( params, patches_[ipatch], itime, localDiags );
+        for( unsigned int iBPs=0 ; iBPs<nBPs; iBPs++ ) {
+            patches_[ipatch]->vecBPs[iBPs]->apply( params, patches_[ipatch], itime, localDiags );
         }
     }
 
     #pragma omp single
-    for( unsigned int icoll=0 ; icoll<ncoll; icoll++ ) {
-        Collisions::debug( params, itime, icoll, *this );
+    for( unsigned int iBPs=0 ; iBPs<nBPs; iBPs++ ) {
+        BinaryProcesses::debug( params, itime, iBPs, *this );
     }
     #pragma omp barrier
 
@@ -4376,7 +4376,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
         ( *this )( ipatch )->EMfields->restartEnvChi();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting )
+                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting_ )
                     species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag,
@@ -4425,7 +4425,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting ){
+                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting_ ){
                     species( ipatch, ispec )->ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
                            emfields( ipatch ),
                            params, diag_flag, partwalls( ipatch ),

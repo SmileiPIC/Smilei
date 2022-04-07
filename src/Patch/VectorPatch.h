@@ -208,7 +208,7 @@ public :
     void applyAntennas( double time );
     
     //! For all patches, apply collisions
-    void applyCollisions( Params &params, int itime, Timers &timer );
+    void applyBinaryProcesses( Params &params, int itime, Timers &timer );
     
     //! For all patches, allocate a field if not allocated
     void allocateField( unsigned int ifield, Params &params );
