@@ -44,7 +44,7 @@ Species(
 	number_density = 0.0001,
 	mean_velocity = [0.,0.,0.],
 	boundary_conditions = [
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 	is_test = True
 )

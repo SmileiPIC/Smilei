@@ -29,7 +29,8 @@ ulimit -s unlimited
 cd {dir}
 module list 2> module.log
 {command}
-echo $? > exit_status_file"""
+echo $? > exit_status_file
+sync"""
     
     def __init__(self, smilei_path, options):
         from math import ceil

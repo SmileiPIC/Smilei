@@ -303,8 +303,8 @@ int ParticleCreator::create( struct SubSpace sub_space,
         unsigned int iPart = n_existing_particles;
         double *indexes = new double[species_->nDim_particle];
         for( unsigned int i=0; i< sub_space.box_size_[0]; i++ ) {
-            if(( !n_existing_particles )&&( i%species_->clrw == 0 )&&( initialized_in_species_ )) {
-                species_->particles->first_index[(sub_space.cell_index_[0]+i)/species_->clrw] = iPart;
+            if(( !n_existing_particles )&&( i%species_->cluster_width_ == 0 )&&( initialized_in_species_ )) {
+                species_->particles->first_index[(sub_space.cell_index_[0]+i)/species_->cluster_width_] = iPart;
             }
             for( unsigned int j=0; j<sub_space.box_size_[1]; j++ ) {
                 for( unsigned int k=0; k<sub_space.box_size_[2]; k++ ) {
@@ -339,8 +339,8 @@ int ParticleCreator::create( struct SubSpace sub_space,
                     }
                 }//k
             }//j
-            if((!n_existing_particles)&&( i%species_->clrw == species_->clrw -1 ) &&(initialized_in_species_)) {
-                 species_->particles->last_index[(sub_space.cell_index_[0]+i)/species_->clrw] = iPart;
+            if((!n_existing_particles)&&( i%species_->cluster_width_ == species_->cluster_width_ -1 ) &&(initialized_in_species_)) {
+                 species_->particles->last_index[(sub_space.cell_index_[0]+i)/species_->cluster_width_] = iPart;
             }
         }//i
         delete [] indexes;
@@ -374,8 +374,13 @@ int ParticleCreator::create( struct SubSpace sub_space,
             
         // Case of HDF5 file
         } else if( ! species_->position_initialization_.empty() ) {
-            // Open file
-            H5Read f( species_->position_initialization_ );
+            // Open files
+            H5Read fp( species_->position_initialization_ );
+            H5Read fm;
+            if( init_momentum ) {
+                fm.init( species_->momentum_initialization_ );
+            }
+            
             // Loop in chunks
             unsigned int chunksize = 10000000;
             std::vector<double> buffer[species_->nDim_particle];
@@ -384,7 +389,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                 std::vector<std::string> ax = {"position/x", "position/y", "position/z"};
                 hsize_t npart  = min( chunksize, species_->file_position_npart_ - i );
                 for( unsigned int idim = 0; idim < species_->nDim_particle; idim++ ) {
-                   f.vect( ax[idim], buffer[idim], true, i, npart );
+                   fp.vect( ax[idim], buffer[idim], true, i, npart );
                    position[idim] = &buffer[idim][0];
                 }
                 // Find particles in the patch
@@ -402,20 +407,25 @@ int ParticleCreator::create( struct SubSpace sub_space,
                             arrays[4+idim][nprev+ip] = buffer[idim][index_buffer[ip]];
                         }
                     }
+                    // Read and copy weight
+                    ax = { "weight" };
+                    fp.vect( ax[0], buffer[0], true, i, npart );
+                    for( unsigned int ip=0; ip<index_buffer.size(); ip++ ) {
+                        arrays[0][nprev+ip] = buffer[0][index_buffer[ip]];
+                    }
                     // Read and copy momenta + weight
                     if( init_momentum ) {
-                        ax = { "weight", "momentum/x", "momentum/y", "momentum/z" };
-                    } else {
-                        ax = { "weight" };
-                    }
-                    for( unsigned int k = 0; k < ax.size(); k++ ) {
-                        f.vect( ax[k], buffer[0], true, i, npart );
-                        for( unsigned int ip=0; ip<index_buffer.size(); ip++ ) {
-                           arrays[k][nprev+ip] = buffer[0][index_buffer[ip]];
+                        ax = { "momentum/x", "momentum/y", "momentum/z" };
+                        for( unsigned int k = 0; k < ax.size(); k++ ) {
+                            fm.vect( ax[k], buffer[0], true, i, npart );
+                            for( unsigned int ip=0; ip<index_buffer.size(); ip++ ) {
+                                arrays[k][nprev+ip] = buffer[0][index_buffer[ip]];
+                            }
                         }
                     }
                 }
             }
+            
             // Set pointers to arrays
             weight      = &arrays[0][0];
             momentum[0] = &arrays[1][0];
@@ -430,7 +440,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
                 my_particles_indices[ip] = ip;
             }
         }
-        
+
         // Create new particles
         n_new_particles = my_particles_indices.size();
         particles_->initialize( n_existing_particles + n_new_particles, species_->nDim_particle, params.keep_position_old );
@@ -438,7 +448,7 @@ int ParticleCreator::create( struct SubSpace sub_space,
             // Prepare sorting
             int nbins = species_->particles->first_index.size();
             int indices[nbins];
-            double one_ov_dbin = 1. / ( species_->cell_length[0] * species_->clrw ) ;
+            double one_ov_dbin = 1. / ( species_->cell_length[0] * species_->cluster_width_ ) ;
             for( int ibin=0; ibin < nbins ; ibin++ ) {
                 indices[ibin] = 0 ;
             }

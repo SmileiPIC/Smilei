@@ -29,6 +29,9 @@ public:
 	nz_d = n_space[2] +2+2*oversize[2]-(params.is_pxr);
         
         dt = params.timestep;
+        dx = params.cell_length[0];
+        dy = params.cell_length[1];
+        dz = params.cell_length[2];
         dt_ov_dx = params.timestep / params.cell_length[0];
         dt_ov_dy = params.timestep / params.cell_length[1];
         dt_ov_dz = params.timestep / params.cell_length[2];
@@ -47,6 +50,9 @@ protected:
     unsigned int nz_p;
     unsigned int nz_d;
     double dt;
+    double dx;
+    double dy;
+    double dz;
     double dt_ov_dx;
     double dt_ov_dy;
     double dt_ov_dz;

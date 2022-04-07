@@ -29,7 +29,7 @@ Main(
         ['periodic'],
     ],
     #print_every = 1,
-    clrw = 1,
+    cluster_width = 1,
 )
 
 

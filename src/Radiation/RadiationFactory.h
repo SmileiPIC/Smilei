@@ -59,14 +59,16 @@ public:
         else if( species->radiation_model_ == "diagradiationspectrum" ) {
             Radiate = new RadiationDiagRadiationSpectrum( params, species, rand );
         } else if( species->radiation_model_ != "none" ) {
-            ERROR( "For species " << species->name_
+            ERROR_NAMELIST( "For species " << species->name_
                    << ": unknown radiation_model `"
-                   << species->radiation_model_ << "`" );
+                   << species->radiation_model_ << "`",
+                LINK_NAMELIST + std::string("#species") );
         }
 
         int n_envlaser = params.Laser_Envelope_model;
         if( ( n_envlaser >=1 ) & ( species->radiation_model_ != "none" ) ) {
-            ERROR( "Radiation model is not yet implemented for species interacting with Laser Envelope model." );
+            ERROR_NAMELIST( "Radiation model is not yet implemented for species interacting with Laser Envelope model.",
+            LINK_NAMELIST + std::string("#species"));
         }
 
 

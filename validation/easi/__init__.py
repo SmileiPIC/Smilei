@@ -1,3 +1,61 @@
+class Display(object):
+    """
+    Class that contains printing functions with adapted style
+    """
+    def __init__(self):
+        
+        from os import get_terminal_size
+        
+        self.terminal_mode_ = True
+        
+        # terminal properties for custom display
+        try:
+            self.term_size_ = get_terminal_size()
+        except:
+            self.term_size_ = [0,0];
+            self.terminal_mode_ = False
+        
+        # Used in a terminal
+        if (self.terminal_mode_):
+            
+            self.seperator_length_ = self.term_size_[0];
+            
+            self.error_header_ = "\033[1;31m"
+            self.error_footer_ = "\033[0m\n"
+            self.positive_header_ = "\033[1;32m"
+            self.positive_footer_ = "\033[0m\n"
+            self.tab_ = " "
+        
+        # Not used in a terminal
+        else:
+            self.seperator_length_ = 80;
+
+            self.error_header_ = ""
+            self.error_footer_ = ""
+            self.positive_header_ = ""
+            self.positive_footer_ = ""
+            self.tab_ = " "
+
+        
+        # Seperator
+        self.seperator_ = " "
+        for i in range(self.seperator_length_-1):
+            self.seperator_ += "-"
+            
+    def message(self,txt):
+        print(self.tab_ + txt)
+
+    def error(self,txt):
+        print(self.error_header_ + self.tab_ + txt + self.error_footer_)
+
+    def positive(self,txt):
+        print(self.positive_header_ + self.tab_ + txt + self.positive_footer_)
+        
+    def seperator(self):
+        print(self.seperator_)
+
+
+display = Display()
 
 class SmileiPath(object):
     def __init__(self):
@@ -48,7 +106,7 @@ class ValidationOptions(object):
         self.account       = kwargs.pop( "account"      , ""            )
         
         if kwargs:
-            raise Exception("Unknown options for validation: "+", ".join(kwargs))
+            raise Exception(diplay.error("Unknown options for validation: "+", ".join(kwargs)))
         
         from numpy import array, sum
         self.max_time_seconds = sum(array(self.max_time.split(":"),dtype=int)*array([3600,60,1]))
@@ -69,7 +127,7 @@ def loadReference(references_path, bench_name):
             with open(references_path + bench_name + ".txt", 'r') as f:
                 return pickle.load(f)
     except:
-        print("Unable to find the reference data for "+bench_name)
+        display.error("Unable to find the reference data for "+bench_name)
         exit(1)
 
 def matchesWithReference(data, expected_data, data_name, precision, error_type="absolute_error"):
@@ -93,7 +151,7 @@ def matchesWithReference(data, expected_data, data_name, precision, error_type="
                     if isnan( error ).any():
                         raise
                 except Exception as e:
-                    print( "Error in comparing with reference: division by zero (relative error)" )
+                    display.error( "Error in comparing with reference: division by zero (relative error)" )
                     return False
             else:
                 print( "Unknown error_type = `"+error_type+"`" )
@@ -128,10 +186,9 @@ def matchesWithReference(data, expected_data, data_name, precision, error_type="
         print( e )
     return False
 
+_dataNotMatching = False
 
 class Validation(object):
-    
-    _dataNotMatching = False
     
     def __init__(self, **kwargs):
         # Obtain options
@@ -194,9 +251,9 @@ class Validation(object):
         from subprocess import CalledProcessError
         
         if self.options.verbose:
-            print("---------------------------")
-            print("Compiling Smilei")
-            print("---------------------------")
+            display.seperator()
+            print(" Compiling Smilei")
+            display.seperator()
         
         SMILEI_W = self.smilei_path.workdirs + "smilei"
         SMILEI_R = self.smilei_path.root + "smilei"
@@ -237,17 +294,17 @@ class Validation(object):
                 copy2(SMILEI_R, SMILEI_W)
                 #copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
                 if self.options.verbose:
-                    print("Smilei compilation succeed.")
+                    print(" Smilei compilation succeed.")
             else:
                 if self.options.verbose:
-                    print("Smilei compilation not needed.")
+                    print(" Smilei compilation not needed.")
         
         except CalledProcessError as e:
             # if compiling errors, archive the workdir (if it contains a smilei bin),
             # create a new one with compilation_errors inside and exit with error code
             workdir_archiv()
             if self.options.verbose:
-                print("Smilei compilation failed. " + str(e.returncode))
+                print(" Smilei compilation failed. " + str(e.returncode))
             exit(3)
         
         if self.options.verbose:
@@ -270,6 +327,7 @@ class Validation(object):
         self.sync()
         INITIAL_DIRECTORY = getcwd()
         
+        global _dataNotMatching
         _dataNotMatching = False
         for BENCH in self.list_benchmarks():
             SMILEI_BENCH = self.smilei_path.benchmarks + BENCH
@@ -379,13 +437,13 @@ class Validation(object):
                 if execution:
                     if options.verbose:
                         print("")
-                        print("---------------------------")
-                        print("Running " + BENCH + " on " + self.HOSTNAME)
-                        print("Resources: " + str(options.mpi) + " MPI processes x " + str(options.omp) +" openMP threads on " + str(options.nodes) + " nodes"
+                        display.seperator()
+                        print(" Running " + BENCH + " on " + self.HOSTNAME)
+                        print(" Resources: " + str(options.mpi) + " MPI processes x " + str(options.omp) +" openMP threads on " + str(options.nodes) + " nodes"
                             + ( " (overridden by --resource-file)" if BENCH in self.resources else "" ))
                         if options.nb_restarts > 0:
-                            print("Restart #" + str(irestart))
-                        print("---------------------------")
+                            print(" Restart #" + str(irestart))
+                        display.seperator()
                     machine.run( arguments, RESTART_WORKDIR )
                     self.sync()
                 
@@ -397,8 +455,8 @@ class Validation(object):
                 if errors:
                     if options.verbose:
                         print("")
-                        print("Errors appeared while running the simulation:")
-                        print("---------------------------------------------")
+                        display.error(" Errors appeared while running the simulation:")
+                        display.seperator()
                         for error in errors:
                             print(error)
                     exit(2)
@@ -416,7 +474,7 @@ class Validation(object):
             if options.verbose:
                 print("")
             if not exists(validation_script):
-                print("Unable to find the validation script "+validation_script)
+                display.error(" Unable to find the validation script "+validation_script)
                 exit(1)
             
             chdir(WORKDIR)
@@ -424,9 +482,9 @@ class Validation(object):
             # If required, generate the references
             if options.generate:
                 if options.verbose:
-                    print( '----------------------------------------------------')
-                    print( 'Generating reference for '+BENCH)
-                    print( '----------------------------------------------------')
+                    display.seperator()
+                    print( ' Generating reference for '+BENCH)
+                    display.seperator()
                 Validate = self.CreateReference(self.smilei_path.references, BENCH)
                 execfile(validation_script, {"Validate":Validate})
                 Validate.write()
@@ -434,25 +492,24 @@ class Validation(object):
             # Or plot differences with respect to existing references
             elif options.showdiff:
                 if options.verbose:
-                    print( '----------------------------------------------------')
-                    print( 'Viewing differences for '+BENCH)
-                    print( '----------------------------------------------------')
+                    display.seperator()
+                    print( ' Viewing differences for '+BENCH)
+                    display.seperator()
                 Validate = self.ShowDiffWithReference(self.smilei_path.references, BENCH)
                 execfile(validation_script, {"Validate":Validate})
                 if _dataNotMatching:
-                    print("Benchmark "+BENCH+" did NOT pass")
+                    display.error(" Benchmark "+BENCH+" did NOT pass")
             
             # Otherwise, compare to the existing references
             else:
                 if options.verbose:
-                    print( '----------------------------------------------------')
-                    print( 'Validating '+BENCH)
-                    print( '----------------------------------------------------')
+                    display.seperator()
+                    print( ' Validating '+BENCH)
+                    display.seperator()
                 Validate = self.CompareToReference(self.smilei_path.references, BENCH)
                 execfile(validation_script, {"Validate":Validate})
                 if _dataNotMatching:
-                    chdir(INITIAL_DIRECTORY)
-                    exit(1)
+                    break
             
             # Clean workdirs, goes here only if succeeded
             chdir(self.smilei_path.workdirs)
@@ -460,11 +517,12 @@ class Validation(object):
             if options.verbose:
                 print( "")
         
-        if _dataNotMatching:
-            print( "Errors detected")
-        else:
-            print( "Everything passed")
         chdir(INITIAL_DIRECTORY)
+        if _dataNotMatching:
+            display.error( "Errors detected")
+            exit(1)
+        else:
+            display.positive( "Everything passed")
     
     
     def list_benchmarks(self):
@@ -480,11 +538,11 @@ class Validation(object):
             benchmarks = [b.replace(self.smilei_path.benchmarks,'') for b in benchmarks]
         benchmarks = [b for b in benchmarks if "validate_"+b in list_validation]
         if not benchmarks:
-            raise Exception("Input file(s) "+self.options.bench+" not found, or without validation file")
+            raise Exception(display.error("Input file(s) "+self.options.bench+" not found, or without validation file"))
         
         if self.options.verbose:
             print("")
-            print("The list of input files to be validated is:\n\t"+"\n\t".join(benchmarks))
+            print(" The list of input files to be validated is:\n\t"+"\n\t".join(benchmarks))
             print("")
         
         return benchmarks
@@ -503,15 +561,13 @@ class Validation(object):
             import pickle
             from os.path import getsize
             from os import remove
-            from sys import exit
-            with open(reference_file, "wb") as f:
-                pickle.dump(data, f, protocol=2)
-            size = getsize(reference_file)
+            with open(self.reference_file, "wb") as f:
+                pickle.dump(self.data, f, protocol=2)
+            size = getsize(self.reference_file)
             if size > 1000000:
                 print("Reference file is too large ("+str(size)+"B) - suppressing ...")
-                remove(reference_file)
-            elif self.options.verbose:
-                print("Created reference file "+reference_file)
+                remove(self.reference_file)
+            print("Created reference file "+self.reference_file)
 
     # DEFINE A CLASS TO COMPARE A SIMULATION TO A REFERENCE
     class CompareToReference(object):
@@ -519,17 +575,18 @@ class Validation(object):
             self.ref_data = loadReference(references_path, bench_name)
         
         def __call__(self, data_name, data, precision=None, error_type="absolute_error"):
+            global _dataNotMatching
             from sys import exit
             # verify the name is in the reference
             if data_name not in self.ref_data.keys():
-                print("Reference quantity '"+data_name+"' not found")
+                print(" Reference quantity '"+data_name+"' not found")
                 _dataNotMatching = True
                 return
             expected_data = self.ref_data[data_name]
             if not matchesWithReference(data, expected_data, data_name, precision, error_type):
-                print("Reference data:")
+                print(" Reference data:")
                 print(expected_data)
-                print("New data:")
+                print(" New data:")
                 print(data)
                 print("")
                 _dataNotMatching = True
@@ -540,11 +597,12 @@ class Validation(object):
             self.ref_data = loadReference(references_path, bench_name)
         
         def __call__(self, data_name, data, precision=None, error_type="absolute_error"):
+            global _dataNotMatching
             import matplotlib.pyplot as plt
             from numpy import array
             plt.ion()
-            print("Showing differences about '"+data_name+"'")
-            print("--------------------------")
+            print(" Showing differences about '"+data_name+"'")
+            display.seperator()
             # verify the name is in the reference
             if data_name not in self.ref_data.keys():
                 print("\tReference quantity not found")

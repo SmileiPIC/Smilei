@@ -221,7 +221,7 @@ public:
     }
     
     //! Compute total energy in fields
-    double computeNRJ() override
+    double computeEnergy() override
     {
         double nrj( 0. );
         

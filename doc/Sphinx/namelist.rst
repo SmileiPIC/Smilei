@@ -90,12 +90,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Main(
       geometry = "1Dcartesian",
       interpolation_order = 2,
+      interpolator = "momentum-conserving",
       grid_length  = [16. ],
       cell_length = [0.01],
       simulation_time    = 15.,
       timestep    = 0.005,
       number_of_patches = [64],
-      clrw = 5,
+      cluster_width = 5,
       maxwell_solver = 'Yee',
       EM_boundary_conditions = [
           ["silver-muller", "silver-muller"],
@@ -131,7 +132,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
     Boundary conditions must be set to ``"remove"`` for particles,
     ``"silver-muller"`` for longitudinal EM boundaries and
     ``"buneman"`` for transverse EM boundaries.
-    Vectorization, collisions, scalar diagnostics and
+    You can alternatively use ``"PML"`` for all boundaries.
+    Vectorization, collisions and
     order-4 interpolation are not supported yet.
 
 .. py:data:: interpolation_order
@@ -143,6 +145,16 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``2``  : 3 points stencil, supported in all configurations.
   * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
 
+.. py:data:: interpolator
+
+  :default: ``"momentum-conserving"``
+
+  * ``"momentum-conserving"``
+  * ``"wt"``
+
+  The interpolation scheme to be used in the simulation.
+  ``"wt"`` is for the timestep dependent field interpolation scheme described in
+  `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_ .
 
 .. py:data:: grid_length
              number_of_cells
@@ -196,14 +208,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
     column-major (fortran-style) ordering. This prevents the usage of
     :ref:`Fields diagnostics<DiagFields>` (see :doc:`parallelization`).
 
-.. py:data:: clrw
+.. py:data:: cluster_width
 
   :default: set to minimize the memory footprint of the particles pusher, especially interpolation and projection processes
 
   For advanced users. Integer specifying the cluster width along X direction in number of cells.
   The "cluster" is a sub-patch structure in which particles are sorted for cache improvement.
-  ``clrw`` must divide the number of cells in one patch (in dimension X).
-  The finest sorting is achieved with ``clrw=1`` and no sorting with ``clrw`` equal to the full size of a patch along dimension X.
+  ``cluster_width`` must divide the number of cells in one patch (in dimension X).
+  The finest sorting is achieved with ``cluster_width=1`` and no sorting with ``cluster_width`` equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
 
 .. py:data:: maxwell_solver
@@ -211,9 +223,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: 'Yee'
 
   The solver for Maxwell's equations.
-  Only ``"Yee"`` is available for all geometries at the moment.
+  Only ``"Yee"`` and ``"M4"`` are available for all geometries at the moment.
   ``"Cowan"``, ``"Grassi"``, ``"Lehe"`` and ``"Bouchard"`` are available for ``2DCartesian``.
   ``"Lehe"`` and ``"Bouchard"`` is available for ``3DCartesian``.
+  The M4 solver is described in `this paper <https://doi.org/10.1016/j.jcp.2020.109388>`_.
   The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_.
   The Bouchard solver is described in `this thesis p. 109 <https://tel.archives-ouvertes.fr/tel-02967252>`_
 
@@ -260,7 +273,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[["periodic"]]``
 
   The boundary conditions for the electromagnetic fields. Each boundary may have one of
-  the following conditions: ``"periodic"``, ``"silver-muller"``, ``"reflective"`` or ``"ramp??"``.
+  the following conditions: ``"periodic"``, ``"silver-muller"``, ``"reflective"``, ``"ramp??"`` or ``"PML"``.
 
   | **Syntax 1:** ``[[bc_all]]``, identical for all boundaries.
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
@@ -282,6 +295,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
     Over the first half, the fields remain untouched.
     Over the second half, all fields are progressively reduced down to zero.
 
+  * ``"PML"`` stands for Perfectly Matched Layer. It is an open boundary condition.
+    The number of cells in the layer is defined by ``"number_of_pml_cells"``.
+    It supports laser injection as in ``"silver-muller"``.
+
+  .. warning::
+
+    In the current release, in order to use PML all ``"EM_boundary_conditions"`` of the simulation must be ``"PML"``.
+
 .. py:data:: EM_boundary_conditions_k
 
   :type: list of lists of floats
@@ -298,6 +319,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
+
+.. py:data:: number_of_pml_cells
+
+  :type: list of lists of integer
+  :default: ``[[6,6],[6,6],[6,6]]``
+
+  Defines the number of cells in the ``"PML"`` layers using the same alternative syntaxes as ``"EM_boundary_conditions"``.
 
 .. py:data:: time_fields_frozen
 
@@ -514,7 +542,7 @@ It requires :ref:`additional compilation options<vectorization_flags>` to be act
     (per patch and per species). For the moment this mode is only supported in ``3Dcartesian`` geometry.
     Particles are sorted per cell.
 
-  In the ``"adaptive"`` mode, :py:data:`clrw` is set to the maximum.
+  In the ``"adaptive"`` mode, :py:data:`cluster_width` is set to the maximum.
 
 .. py:data:: reconfigure_every
 
@@ -738,6 +766,7 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: name
 
   The name you want to give to this species.
+  It should be more than one character and can not start with ``"m_"``.
 
 .. py:data:: position_initialization
 
@@ -2259,7 +2288,7 @@ This is done by including the block ``DiagScalar``::
 
 .. warning::
 
-  Scalars diagnostics are not yet supported in ``"AMcylindrical"`` geometry.
+  Scalars diagnostics min/max cell are not yet supported in ``"AMcylindrical"`` geometry.
 
 The full list of available scalars is given in the table below.
 

@@ -81,7 +81,7 @@ Species::Species( Params &params, Patch *patch ) :
     //photon_species_index(-1),
     radiation_photon_species( "" ),
     mBW_pair_creation_sampling_( 2, 1 ),
-    clrw( params.clrw ),
+    cluster_width_( params.cluster_width_ ),
     oversize( params.oversize ),
     cell_length( params.cell_length ),
     min_loc_vec( patch->getDomainLocalMin() ),
@@ -122,8 +122,8 @@ Species::Species( Params &params, Patch *patch ) :
 void Species::initCluster( Params &params )
 {
     // Arrays of the min and max indices of the particle bins
-    particles->first_index.resize( params.n_space[0]/clrw );
-    particles->last_index.resize( params.n_space[0]/clrw );
+    particles->first_index.resize( params.n_space[0]/cluster_width_ );
+    particles->last_index.resize( params.n_space[0]/cluster_width_ );
 
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
@@ -135,17 +135,17 @@ void Species::initCluster( Params &params )
 
     b_dim.resize( params.nDim_field, 1 );
     if( nDim_particle == 1 ) {
-        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0];
+        b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0];
         f_dim1 = 1;
         f_dim2 = 1;
     }
     if( nDim_particle == 2 ) {
-        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] =  f_dim1;
         f_dim2 = 1;
     }
     if( nDim_particle == 3 ) {
-        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
+        b_dim[0] = ( 1 + cluster_width_ ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] = f_dim1;
         b_dim[2] = f_dim2;
     }
@@ -170,7 +170,7 @@ void Species::resizeCluster( Params &params )
 
     // We keep the current number of particles
     int npart = particles->size();
-    int size = params.n_space[0]/clrw;
+    int size = params.n_space[0]/cluster_width_;
 
     // Arrays of the min and max indices of the particle bins
     particles->first_index.resize( size );
@@ -894,7 +894,7 @@ void Species::sortParticles( Params &params, Patch * patch )
     int shift[particles->last_index.size()+1];//how much we need to shift each bin in order to leave room for the new particle
     double dbin;
 
-    dbin = params.cell_length[0]*params.clrw; //width of a bin.
+    dbin = params.cell_length[0]*params.cluster_width_; //width of a bin.
     for( unsigned int j=0; j<particles->last_index.size()+1 ; j++ ) {
         shift[j]=0;
     }
@@ -975,7 +975,7 @@ void Species::sortParticles( Params &params, Patch * patch )
     }
 
 
-    //The width of one bin is cell_length[0] * clrw.
+    //The width of one bin is cell_length[0] * cluster_width_.
 
     int p1, p2, first_index_init;
     unsigned int bin;
@@ -984,7 +984,7 @@ void Species::sortParticles( Params &params, Patch * patch )
 
     //Backward pass
     for( bin=0; bin<particles->first_index.size()-1; bin++ ) { //Loop on the bins.
-        limit = min_loc + ( bin+1 )*cell_length[0]*clrw;
+        limit = min_loc + ( bin+1 )*cell_length[0]*cluster_width_;
         p1 = particles->last_index[bin]-1;
         //If first particles change bin, they do not need to be swapped.
         while( p1 == particles->last_index[bin]-1 && p1 >= particles->first_index[bin] ) {
@@ -1004,7 +1004,7 @@ void Species::sortParticles( Params &params, Patch * patch )
     }
     //Forward pass + Rebracketting
     for( bin=1; bin<particles->first_index.size(); bin++ ) { //Loop on the bins.
-        limit = min_loc + bin*cell_length[0]*clrw;
+        limit = min_loc + bin*cell_length[0]*cluster_width_;
         first_index_init = particles->first_index[bin];
         p1 = particles->first_index[bin];
         while( p1 == particles->first_index[bin] && p1 < particles->last_index[bin] ) {
@@ -1136,7 +1136,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     for( unsigned int i=0; i<npart; i++ ) {
         // Copy particle to the correct bin
         src_bin_keys[i] = source_particles.position( 0, i )*inv_cell_length - ( patch->getCellStartingGlobalIndex( 0 ) + params.oversize[0] );
-        src_bin_keys[i] /= params.clrw;
+        src_bin_keys[i] /= params.cluster_width_;
     }
 
     vector<int> bin_count( nbin, 0 );

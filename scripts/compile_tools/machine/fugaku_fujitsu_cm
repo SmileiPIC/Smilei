@@ -1,10 +1,11 @@
 #
 # Machine file for The Fugaku super-computer
 # using the Fujitsu compiler in clang mode
-# __________________________________________________________
+# ______________________________________________________________________________
 #
 #
 # I. Compilation process on a compute node
+# ______________________________________________________________________________
 #
 # We recommend to use a compute node to compile.
 # The following environment has been tested successfully on the Fugaku super-computer.
@@ -24,7 +25,7 @@
 #  export SMILEICXX=mpiFCCpx
 #  export HDF5_ROOT=/vol0004/apps/oss/spack-v0.16.2/opt/spack/linux-rhel8-a64fx/fj-4.6.1/hdf5-1.10.7-hza6f4rwqjon62z4q7a6vavtrkafvz35/
 # ```
-# 
+#
 # Note that the module names can change after system maintenance.
 # To get the latest module names, you can use the following commands:
 # ```
@@ -36,7 +37,7 @@
 # ```
 # which h5c++
 # ```
-# 
+#
 # To compile, you can use the following job script:
 #
 # ```
@@ -51,15 +52,17 @@
 # source ~/env/smilei_env
 #
 # mpiFCC -show
-# 
+#
 # make -j 48 config="verbose" machine="fugaku_fujitsu_cm"
 # ```
 #
 # II. Interactive sessions
+# ______________________________________________________________________________
 #
 # pjsub --interact -L "node=1" -L "elapse=01:00:00" --sparam "wait-time=3600" -x PJM_LLIO_GFSCACHE=/vol0004
 #
 # III. Command memo
+# ______________________________________________________________________________
 #
 # - pjsub: job submission
 # - pjstat: display the state of the jobs
@@ -72,4 +75,3 @@
 
 CXXFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp -ffj-zfill -msve-vector-bits=512 -D__AARCH64EL__="1"
 LDFLAGS += -Nclang -Ofast -fopenmp -ffj-ocl -mcpu=a64fx -Nlibomp -ffj-zfill -msve-vector-bits=512 -D__AARCH64EL__="1"
-

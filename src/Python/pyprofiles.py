@@ -337,8 +337,8 @@ def tgaussian(start=0., duration=None, fwhm=None, center=None, order=2):
     if len(Main)==0:
         raise Exception("tgaussian profile has been defined before `Main()`")
     if duration is None: duration = Main.simulation_time-start
-    if fwhm     is None: fwhm     = (Main.simulation_time-start)/3.
-    if center   is None: center   = start + (Main.simulation_time-start)/2.
+    if fwhm     is None: fwhm     = duration/3.
+    if center   is None: center   = start + duration/2.
     sigma = (0.5*fwhm)**order/math.log(2.0)
     def f(t):
         if t < start: return 0.

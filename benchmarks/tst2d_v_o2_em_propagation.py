@@ -60,7 +60,7 @@ Species(
 	number_density = 1.,
 	mean_velocity = [0.,0.,0.],
 	boundary_conditions = [
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 	is_test = True
 )

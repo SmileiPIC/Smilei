@@ -49,7 +49,7 @@ containing the following datasets, all 1-dimensional of equal size:
 
 * ``momentum/x``, list of `px` 
 * ``momentum/y``, list of `py` 
-* ``momentum/z``, list of `pz` 
+* ``momentum/z``, list of `pz`
 
 .. note::
   

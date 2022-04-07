@@ -29,11 +29,12 @@ PeekAtSpecies::PeekAtSpecies( Params &p, unsigned int species_id ) :
                 density_profile_type = "charge";
             }
             if( ! ( ok1 ^ ok2 ) ) {
-                ERROR( "Species `" << species_name << "`: Missing density profile" );
+                ERROR( "Species `" << species_name << "`: Missing density profile (`charge_density` or `number_density` option)" );
             }
-            density_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( density_profile_type, "_density ", species_name ), *params, false, true );
+            density_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( density_profile_type, "_density ", species_name ), *params, true, true );
             PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", species_id );
-            particles_per_cell_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( "particles_per_cell ", species_name ), *params, false, true );
+            particles_per_cell_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( "particles_per_cell ", species_name ), *params, true, true );
+            MESSAGE(particles_per_cell_profile_->getInfo());
         }
     }
     Py_DECREF( py_pos_init );
@@ -49,17 +50,24 @@ PeekAtSpecies::~PeekAtSpecies()
 
 double PeekAtSpecies::numberOfParticlesInPatch( unsigned int hindex )
 {
-    // Get the patch coordinates
-    unsigned int Pcoordinates[3];
-    vector<double> x_cell( params->nDim_field, 0. );
-    generalhilbertindexinv( params->mi[0], params->mi[1], params->mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex );
-    for( unsigned int i=0 ; i<params->nDim_field ; i++ ) {
-        x_cell[i] = ( ( double )( Pcoordinates[i] )+0.5 ) * params->patch_dimensions[i];
-    }
-    // Evaluate the profile at that location
     if( particles_per_cell_profile_ ) {
-        double n_part_in_cell = floor( particles_per_cell_profile_->valueAt( x_cell ) );
-        if( n_part_in_cell<=0. || density_profile_->valueAt( x_cell )==0. ) {
+        // Get the patch x_cell
+        unsigned int Px_cell[3];
+        generalhilbertindexinv( params->mi[0], params->mi[1], params->mi[2], &Px_cell[0], &Px_cell[1], &Px_cell[2], hindex );
+        // Get the patch center
+        vector<Field *> x_cell( params->nDim_field );
+        vector<unsigned int> n = {1, 1, 1};
+        for( unsigned int i=0 ; i<params->nDim_field ; i++ ) {
+            x_cell[i] = new Field3D( n );
+            (*x_cell[i])(0) = ( ( double )( Px_cell[i] )+0.5 ) * params->patch_dimensions[i];
+        }
+        // Evaluate profile
+        vector<double> global_origin( 3, 0. );
+        Field3D nppc( n ), dens( n );
+        particles_per_cell_profile_->valuesAt( x_cell, global_origin, nppc );
+        density_profile_->valuesAt( x_cell, global_origin, dens );
+        double n_part_in_cell = floor( nppc( 0, 0, 0 ) );
+        if( n_part_in_cell<=0. || dens( 0, 0, 0 )==0. ) {
             n_part_in_cell = 0.;
         }
         return n_part_in_cell * params->n_cell_per_patch;
@@ -69,12 +77,22 @@ double PeekAtSpecies::numberOfParticlesInPatch( unsigned int hindex )
 }
 
 
-double PeekAtSpecies::numberOfParticlesInPatch( vector<double> x_cell )
+double PeekAtSpecies::numberOfParticlesInPatch( vector<double> x )
 {
     // Evaluate the profile at that location
     if( particles_per_cell_profile_ ) {
-        double n_part_in_cell = floor( particles_per_cell_profile_->valueAt( x_cell ) );
-        if( n_part_in_cell<=0. || density_profile_->valueAt( x_cell )==0. ) {
+        vector<Field *> x_cell( params->nDim_field );
+        vector<unsigned int> n = {1, 1, 1};
+        for( unsigned int i=0 ; i<params->nDim_field ; i++ ) {
+            x_cell[i] = new Field3D( n );
+            (*x_cell[i])(0) = x[i];
+        }
+        vector<double> global_origin( 3, 0. );
+        Field3D nppc( n ), dens( n );
+        particles_per_cell_profile_->valuesAt( x_cell, global_origin, nppc );
+        density_profile_->valuesAt( x_cell, global_origin, dens );
+        double n_part_in_cell = floor( nppc( 0, 0, 0 ) );
+        if( n_part_in_cell<=0. || dens( 0, 0, 0 )==0. ) {
             n_part_in_cell = 0.;
         }
         return n_part_in_cell * params->n_cell_per_patch;
@@ -87,30 +105,37 @@ double PeekAtSpecies::numberOfParticlesInPatch( vector<double> x_cell )
 double PeekAtSpecies::totalNumberofParticles()
 {
     // Loop over the box to obtain an approximate number of particles
-    vector<unsigned int> i_cell( params->nDim_field, 0 );
     vector<double> x_cell( params->nDim_field, 0. );
     if( particles_per_cell_profile_ ) {
+        vector<unsigned int> i_cell( params->nDim_field, 0 );
+        vector<Field *> x_cell( params->nDim_field );
+        vector<unsigned int> n = {1, 1, 1};
+        vector<double> global_origin( 3, 0. );
+        Field3D nppc( n ), dens( n );
         for( unsigned int idim=0; idim<params->nDim_field; idim++ ) {
             i_cell[idim] = 0;
-            x_cell[idim] = params->patch_dimensions[idim] * 0.5;
+            x_cell[idim] = new Field3D( n );
+            (*x_cell[idim])(0) = params->patch_dimensions[idim] * 0.5;
         }
         // Loop patches
         double npart_total = 0.;
         for( unsigned int k=0; k<params->tot_number_of_patches; k++ ) {
             // Find the approximate number of particles in this patch
-            double n_part_in_cell = floor( particles_per_cell_profile_->valueAt( x_cell ) );
-            if( n_part_in_cell>0. && density_profile_->valueAt( x_cell )!=0. ) {
+            particles_per_cell_profile_->valuesAt( x_cell, global_origin, nppc );
+            density_profile_->valuesAt( x_cell, global_origin, dens );
+            double n_part_in_cell = floor( nppc( 0, 0, 0 ) );
+            if( n_part_in_cell>0. && dens( 0, 0, 0 )!=0. ) {
                 npart_total += n_part_in_cell * params->n_cell_per_patch;
             }
             // Find next patch position
             for( unsigned int idim=0; idim<params->nDim_field; idim++ ) {
                 if( i_cell[idim] < params->number_of_patches[idim]-1 ) {
                     i_cell[idim]++;
-                    x_cell[idim] += params->patch_dimensions[idim];
+                    (*x_cell[idim])(0) += params->patch_dimensions[idim];
                     break;
                 } else if( idim < params->nDim_field-1 ) {
                     i_cell[idim] = 0;
-                    x_cell[idim] = params->patch_dimensions[idim] * 0.5;
+                    (*x_cell[idim])(0) = params->patch_dimensions[idim] * 0.5;
                 }
             }
         }

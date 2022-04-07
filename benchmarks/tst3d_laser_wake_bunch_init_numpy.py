@@ -50,8 +50,8 @@ Main(
 
     number_of_patches = [npatch_x, 4, 4],
 
-    clrw = nx/npatch_x,
-    #clrw = 1,
+    cluster_width = nx/npatch_x,
+    #cluster_width = 1,
 
     solve_relativistic_poisson = True,
     
