@@ -74,7 +74,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     const std::size_t istart_offset   = istart - ipart_buffer_offset;
     const std::size_t particle_number = iend - istart;
 
-    TODO(Etienne M): Memory ops optimization
+    // TODO(Etienne M): Memory ops optimization
     #pragma omp target          map(to                          \
                                     : Ex [istart_offset:particle_number],    \
                                       Ey [istart_offset:particle_number],    \
