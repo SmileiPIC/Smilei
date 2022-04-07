@@ -177,7 +177,8 @@ class Main(SmileiSingleton):
     number_of_AM_classical_Poisson_solver = 1
     timestep_over_CFL = None
     cell_sorting = None
-
+    gpu_computing = False                      # Activate the computation on GPU
+    
     # PXR tuning
     spectral_solver_order = []
     initial_rotational_cleaning = False
