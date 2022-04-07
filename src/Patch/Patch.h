@@ -16,9 +16,9 @@
 #include "Projector.h"
 
 class DomainDecomposition;
-class Collisions;
 class Diagnostic;
 class SimWindow;
+class BinaryProcesses;
 
 //! Class Patch :
 //!   - data container
@@ -66,8 +66,8 @@ public:
     
     //! Optional internal boundary condifion on Particles
     PartWalls *partWalls;
-    //! Optional binary collisions operators
-    std::vector<Collisions *> vecCollisions;
+    //! Optional binary processes operators
+    std::vector<BinaryProcesses *> vecBPs;
     
     //! Injectors of the current patch
     std::vector<ParticleInjector *> particle_injector_vector_;

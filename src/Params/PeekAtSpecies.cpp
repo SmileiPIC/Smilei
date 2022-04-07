@@ -34,7 +34,6 @@ PeekAtSpecies::PeekAtSpecies( Params &p, unsigned int species_id ) :
             density_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( density_profile_type, "_density ", species_name ), *params, true, true );
             PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", species_id );
             particles_per_cell_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( "particles_per_cell ", species_name ), *params, true, true );
-            MESSAGE(particles_per_cell_profile_->getInfo());
         }
     }
     Py_DECREF( py_pos_init );

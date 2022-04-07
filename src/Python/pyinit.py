@@ -463,6 +463,7 @@ class Collisions(SmileiComponent):
     coulomb_log_factor = 1.
     every = 1
     debug_every = 0
+    time_frozen = 0
     ionizing = False
     nuclear_reaction = None
     nuclear_reaction_multiplier = 0.

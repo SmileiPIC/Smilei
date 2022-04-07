@@ -82,7 +82,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     if( namelistsFiles.size()==0 ) {
-        ERROR_NAMELIST( "No namelists given!","" );
+        ERROR_NAMELIST( "No namelist (input file) given!","" );
     }
 
     //string commandLineStr("");

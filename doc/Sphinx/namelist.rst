@@ -425,7 +425,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
     :default: ``False``
 
-    If ``True``, forces the use of cell sorting for particles. This flag is automatically set to true if any feature requiring cell sorting is requested (vectorization, collisions or
+    If ``True``, forces the use of cell sorting for particles. This flag is
+    automatically set to true if any feature requiring cell sorting is requested
+    (vectorization, collisions or
     particle merging) so it is mainly a convenience for developers.
 
 ----
@@ -2024,14 +2026,19 @@ reflect, stop, thermalize or kill particles which reach it::
 Collisions & reactions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:doc:`collisions` are specified by one or several ``Collisions`` blocks::
+:doc:`collisions` account for short-range Coulomb interactions of particles (shorter than the 
+cell size), but also include other effects such as impact ionization and nuclear reactions.
+These are gathered under this section because they are treated as *binary processes* (meaning
+they happen during the encounter of two macro-particles).
+
+They are specified by one or several ``Collisions`` blocks::
 
   Collisions(
       species1 = ["electrons1",  "electrons2"],
       species2 = ["ions1"],
+      debug_every = 1000,
       coulomb_log = 0.,
       coulomb_log_factor = 1.,
-      debug_every = 1000,
       ionizing = False,
   #      nuclear_reaction = [],
   )
@@ -2042,7 +2049,7 @@ Collisions & reactions
 
   Lists of species' :py:data:`name`.
 
-  The collisions will occur between all species under the group ``species1``
+  The collisions and reactions will occur between all species under the group ``species1``
   and all species under the group ``species2``. For example, to collide all
   electrons with ions::
 
@@ -2065,6 +2072,28 @@ Collisions & reactions
     machine accepts SIMD vectorization.
 
 
+.. py:data:: every
+
+  :default: 1
+
+  Number of timesteps between each computation of the collisions or reactions.
+  Use a number higher than 1 only if you know the collision frequency is low
+  with respect to the inverse of the timestep.
+
+
+.. py:data:: debug_every
+
+  :default: 0
+
+  Number of timesteps between each output of information about collisions or reactions.
+  If 0, there will be no outputs.
+
+.. py:data:: time_frozen
+
+  :default: 0.
+
+  The time during which no collisions or reactions happen, in units of :math:`T_r`.
+  
 .. py:data:: coulomb_log
 
   :default: 0.
@@ -2073,6 +2102,7 @@ Collisions & reactions
 
   * If :math:`= 0`, the Coulomb logarithm is automatically computed for each collision.
   * If :math:`> 0`, the Coulomb logarithm is equal to this value.
+  * If :math:`< 0`, collisions are not treated (but other reactions may happen).
 
 
 .. py:data:: coulomb_log_factor
@@ -2082,22 +2112,6 @@ Collisions & reactions
   A constant, strictly positive factor that multiplies the Coulomb logarithm, regardless
   of :py:data:`coulomb_log` being automatically computed or set to a constant value.
   This can help, for example, to compensate artificially-reduced ion masses.
-
-.. py:data:: every
-
-  :default: 1
-
-  Number of timesteps between each computation of the collisions. Use a number higher than 1
-  only if you know the collision frequency is low with respect to the inverse of the timestep.
-
-
-.. py:data:: debug_every
-
-  :default: 0
-
-  Number of timesteps between each output of information about collisions.
-  If 0, there will be no outputs.
-
 
 .. _CollisionalIonization:
 

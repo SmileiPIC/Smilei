@@ -146,7 +146,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         
         
 #ifndef _NO_MPI_TM
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(static) private(mypatch)
 #endif
         for( unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++ ) {
             mypatch = vecPatches_old[ipatch];

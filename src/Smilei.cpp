@@ -333,8 +333,26 @@ int main( int argc, char *argv[] )
         
         // Comm and synch charge and current densities
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
+
+        // Upload corrected data on Regions
+        if( params.multiple_decomposition ) {
+            if ( params.geometry != "AMcylindrical" ) {
+                DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, &smpi );
+                SyncVectorPatch::exchangeE( params, region.vecPatch_, &smpi );
+                SyncVectorPatch::finalizeexchangeE( params, region.vecPatch_);
+                SyncVectorPatch::exchangeB( params, region.vecPatch_, &smpi );
+                SyncVectorPatch::finalizeexchangeB( params, region.vecPatch_);
+            } else {
+                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
+                    DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
+                    // Need to fill all ghost zones, not covered by patches ghost zones
+                    SyncVectorPatch::exchangeE( params, region.vecPatch_, imode, &smpi );
+                    SyncVectorPatch::exchangeB( params, region.vecPatch_, imode, &smpi );
+                }
+            }
+        }
         
-        // rotational cleaning on a single global region
+        // rotational cleaning on a single global region for AM spectral
         if( params.initial_rotational_cleaning ) {
             TITLE( "Rotational cleaning" );
             Region region_global( params );
@@ -352,9 +370,8 @@ int main( int argc, char *argv[] )
             }
             vecPatches.setMagneticFieldsForDiagnostic( params );
             region_global.clean();
-            
+
             if( params.multiple_decomposition ) {
-                // Need to upload corrected data on Region
                 for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                     DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
                     // Need to fill all ghost zones, not covered by patches ghost zones
@@ -363,7 +380,8 @@ int main( int argc, char *argv[] )
                 }
             }
         }
-        
+
+       
         TITLE( "Open files & initialize diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         TITLE( "Running diags at time t = 0" );
@@ -438,7 +456,7 @@ int main( int argc, char *argv[] )
             }
 
             // apply collisions if requested
-            vecPatches.applyCollisions( params, itime, timers );
+            vecPatches.applyBinaryProcesses( params, itime, timers );
 
             // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen

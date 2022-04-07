@@ -28,7 +28,8 @@
 #include "DiagnosticScreen.h"
 #include "DiagnosticTrack.h"
 #include "LaserEnvelope.h"
-#include "Collisions.h"
+#include "BinaryProcesses.h"
+#include "CollisionalNuclearReaction.h"
 
 using namespace std;
 
@@ -510,12 +511,16 @@ void Checkpoint::dumpPatch( Patch *patch, Params &params, H5Write &g )
     g.attr( "nrj_mw_inj", EMfields->nrj_mw_inj );
     g.attr( "nrj_mw_out", EMfields->nrj_mw_out );
     // Manage some collisions parameters
-    std::vector<double> rate_multiplier(  patch->vecCollisions.size() );
-    for( unsigned int icoll = 0; icoll< patch->vecCollisions.size(); icoll++ ) {
-        rate_multiplier[icoll] =  patch->vecCollisions[icoll]->NuclearReaction->rate_multiplier_;
+    std::vector<double> rate_multiplier( patch->vecBPs.size() );
+    for( unsigned int icoll = 0; icoll < patch->vecBPs.size(); icoll++ ) {
+        for( unsigned int iBP = 0; iBP < patch->vecBPs[icoll]->processes_.size(); iBP++ ) {
+            if( CollisionalNuclearReaction * NR = dynamic_cast<CollisionalNuclearReaction*>(patch->vecBPs[icoll]->processes_[iBP]) ) {
+                rate_multiplier[icoll] =  NR->rate_multiplier_;
+            }
+        }
     }
-    g.vect( "collisions_rate_multiplier", rate_multiplier );
-
+    g.vect( "nuclear_reaction_multiplier", rate_multiplier );
+    
     // Save data for LaserProfileFile (i.e. LaserOffset)
     for( unsigned int ii = 0; ii < 2; ii++ ) {
         if( ! EMfields->emBoundCond[ii] ) continue;
@@ -896,14 +901,18 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
     g.attr( "nrj_mw_inj", EMfields->nrj_mw_inj );
     g.attr( "nrj_mw_out", EMfields->nrj_mw_out );
     // Manage some collisions parameters
-    if( g.vectSize( "collisions_rate_multiplier" ) > 0 ) {
+    if( g.vectSize( "nuclear_reaction_multiplier" ) > 0 ) {
         std::vector<double> rate_multiplier;
-        g.vect( "collisions_rate_multiplier", rate_multiplier, true );
+        g.vect( "nuclear_reaction_multiplier", rate_multiplier, true );
         for( unsigned int icoll = 0; icoll<rate_multiplier.size(); icoll++ ) {
-            patch->vecCollisions[icoll]->NuclearReaction->rate_multiplier_ = rate_multiplier[icoll];
+            for( unsigned int iBP = 0; iBP < patch->vecBPs[icoll]->processes_.size(); iBP++ ) {
+                if( CollisionalNuclearReaction * NR = dynamic_cast<CollisionalNuclearReaction*>(patch->vecBPs[icoll]->processes_[iBP]) ) {
+                    NR->rate_multiplier_ = rate_multiplier[icoll];
+                }
+            }
         }
     }
-
+    
     // Load data for LaserProfileFile (i.e. LaserOffset)
     for( unsigned int ii = 0; ii < 2; ii++ ) {
         if( ! EMfields->emBoundCond[ii] ) continue;
