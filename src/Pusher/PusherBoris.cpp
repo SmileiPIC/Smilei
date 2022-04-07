@@ -74,7 +74,11 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     #pragma omp simd
 #else
     int np = iend-istart;
-    #pragma acc parallel present(Ex[istart:np],Ey[istart:np],Ez[istart:np],Bx[istart:np],By[istart:np],Bz[istart:np],invgf[0:nparts]) deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z,charge)
+    int i_start_offset = istart - ipart_buffer_offset;
+    #pragma acc parallel present(Ex[i_start_offset:np],Ey[i_start_offset:np],Ez[i_start_offset:np], \
+                                 Bx[i_start_offset:np],By[i_start_offset:np],Bz[i_start_offset:np], \
+                                 invgf[0:nparts]) \
+                        deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z,charge)
     #pragma acc loop gang worker vector
 #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
