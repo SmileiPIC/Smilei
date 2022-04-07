@@ -19,7 +19,7 @@ PML_Solver2D_Envelope::PML_Solver2D_Envelope( Params &params )
     power_pml_sigma_x = 2.;
     power_pml_alpha_x = 1.;
     alpha_cx = 1.01 ; // Try to use a more practical timestep !
-    // Y-PML    
+    // Y-PML
     kappa_y_max = 1. ;
     sigma_y_max = 1.8 ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
     alpha_y_max = 0.0 ;
@@ -37,8 +37,8 @@ void PML_Solver2D_Envelope::operator()( ElectroMagn *fields )
 {
     ERROR( "This is not a solver for the main domain" );
 
-    //cField2D *A2D_n        = static_cast<cField2D *>( envelope->A_ );   // the envelope at timestep n
-    //cField2D *A2D_nm1      = static_cast<cField2D *>( envelope->A0_ );  // the envelope at timestep n-1
+    //cField2D *A_n        = static_cast<cField2D *>( envelope->A_ );   // the envelope at timestep n
+    //cField2D *A_nm1      = static_cast<cField2D *>( envelope->A0_ );  // the envelope at timestep n-1
 }
 
 void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_max, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch )
@@ -381,7 +381,7 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
 {
     EnvelopeBC2D_PML* pml_fields = static_cast<EnvelopeBC2D_PML*>( envelope->EnvBoundCond[iDim*2+min_or_max] );
 
-    cField2D* A2D_nm1_pml = NULL;
+    cField2D* A_nm1_pml = NULL;
     cField2D* u1_nm1_x_pml = NULL;
     cField2D* u2_nm1_x_pml = NULL;
     cField2D* u3_nm1_x_pml = NULL;
@@ -389,9 +389,9 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
     cField2D* u2_nm1_y_pml = NULL;
     cField2D* u3_nm1_y_pml = NULL;
 
-    cField2D* A2D_n_pml = NULL;
+    cField2D* A_n_pml = NULL;
 
-    cField2D* A2D_np1_pml = NULL;
+    cField2D* A_np1_pml = NULL;
     cField2D* u1_np1_x_pml = NULL;
     cField2D* u2_np1_x_pml = NULL;
     cField2D* u3_np1_x_pml = NULL;
@@ -399,7 +399,7 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
     cField2D* u2_np1_y_pml = NULL;
     cField2D* u3_np1_y_pml = NULL;
 
-    A2D_nm1_pml = pml_fields->A2D_nm1_;
+    A_nm1_pml = pml_fields->A_nm1_;
     u1_nm1_x_pml = pml_fields->u1_nm1_x_;
     u2_nm1_x_pml = pml_fields->u2_nm1_x_;
     u3_nm1_x_pml = pml_fields->u3_nm1_x_;
@@ -407,9 +407,9 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
     u2_nm1_y_pml = pml_fields->u2_nm1_y_;
     u3_nm1_y_pml = pml_fields->u3_nm1_y_;
 
-    A2D_n_pml = pml_fields->A2D_n_;
+    A_n_pml = pml_fields->A_n_;
 
-    A2D_np1_pml = pml_fields->A2D_np1_;
+    A_np1_pml = pml_fields->A_np1_;
     u1_np1_x_pml = pml_fields->u1_np1_x_;
     u2_np1_x_pml = pml_fields->u2_np1_x_;
     u3_np1_x_pml = pml_fields->u3_np1_x_;
@@ -435,12 +435,12 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // ====
                     // STD Solver for propagation in vacuum
                     // ====
-                    // ( *A2D_np1_pml )( i, j ) = - (1+i1*k0*dt) * ( *A2D_nm1_pml )( i, j ) ;
-                    // ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + 2. * ( *A2D_n_pml )( i, j ) ;
-                    // ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + 2.*i1*k0*dt*dt*( ( *A2D_n_pml )( i+1, j )-( *A2D_n_pml )( i-1, j ) )/(2.*dx) ;
-                    // ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*( ( *A2D_n_pml )( i-1, j )-2.*( *A2D_n_pml )( i, j )+( *A2D_n_pml )( i+1, j ) )/(dx*dx) ;
-                    // ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*( ( *A2D_n_pml )( i, j-1 )-2.*( *A2D_n_pml )( i, j )+( *A2D_n_pml )( i, j+1 ) )/(dy*dy) ;
-                    // ( *A2D_np1_pml )( i, j ) = ( ( 1+i1*k0*dt) / (1+k0*k0*dt*dt) )*( *A2D_np1_pml )( i, j );
+                    // ( *A_np1_pml )( i, j ) = - (1+i1*k0*dt) * ( *A_nm1_pml )( i, j ) ;
+                    // ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + 2. * ( *A_n_pml )( i, j ) ;
+                    // ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + 2.*i1*k0*dt*dt*( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dx) ;
+                    // ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*( ( *A_n_pml )( i-1, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+1, j ) )/(dx*dx) ;
+                    // ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*( ( *A_n_pml )( i, j-1 )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i, j+1 ) )/(dy*dy) ;
+                    // ( *A_np1_pml )( i, j ) = ( ( 1+i1*k0*dt) / (1+k0*k0*dt*dt) )*( *A_np1_pml )( i, j );
                     // ====
                     // ADE-CFS-PML
                     // ====
@@ -452,16 +452,16 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // Envelope hypothesis with the carrier wave which propagate along x :
                     // ----
                     // dA/dx = dA/dx + ik0 A
-                    std::complex<double> dA_over_dx_fdtd = ( ( *A2D_n_pml )( i+1, j )-( *A2D_n_pml )( i-1, j ) )/(2.*dx) ;
+                    std::complex<double> dA_over_dx_fdtd = ( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dx) ;
                     std::complex<double> dA_over_dx = dA_over_dx_fdtd
-                                                      + i1*k0*( *A2D_n_pml )( i, j ) ;
+                                                      + i1*k0*( *A_n_pml )( i, j ) ;
                     // d2A/dx^2 = d2A/dx^2 + 2ik0 dA/dx - k0^2 A
-                    std::complex<double> d2A_over_dx2_fdtd = ( ( *A2D_n_pml )( i-1, j )-2.*( *A2D_n_pml )( i, j )+( *A2D_n_pml )( i+1, j ) )/(dx*dx) ;
+                    std::complex<double> d2A_over_dx2_fdtd = ( ( *A_n_pml )( i-1, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+1, j ) )/(dx*dx) ;
                     std::complex<double> d2A_over_dx2 = d2A_over_dx2_fdtd
-                                                        + 2.*i1*k0*( ( *A2D_n_pml )( i+1, j )-( *A2D_n_pml )( i-1, j ) )/(2.*dx)
-                                                        - k0*k0*( *A2D_n_pml )( i, j ) ;
+                                                        + 2.*i1*k0*( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dx)
+                                                        - k0*k0*( *A_n_pml )( i, j ) ;
                     // d2A/dy^2 = d2A/dy^2
-                    std::complex<double> d2A_over_dy2 = ( ( *A2D_n_pml )( i, j-1 )-2.*( *A2D_n_pml )( i, j )+( *A2D_n_pml )( i, j+1 ) )/(dy*dy) ;
+                    std::complex<double> d2A_over_dy2 = ( ( *A_n_pml )( i, j-1 )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i, j+1 ) )/(dy*dy) ;
                     // ====
                     // ADE update
                     // ----
@@ -521,15 +521,15 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // source_term_y = source_term_y - pow(c_yx_kappa*kappa_x_p[i],2)*0.5*( ( *u1_np1_y_pml )( i, j ) + ( *u1_nm1_y_pml )( i, j ) ) ;
                     // source_term_y = dt*dt*source_term_y / pow(c_yx_kappa*kappa_x_p[i],2) ;
                     // ----
-                    ( *A2D_np1_pml )( i, j ) = 1.*source_term_x ; // + 1.*source_term_y ;
-                    //( *A2D_np1_pml )( i, j ) = 0;
+                    ( *A_np1_pml )( i, j ) = 1.*source_term_x ; // + 1.*source_term_y ;
+                    //( *A_np1_pml )( i, j ) = 0;
                     // 4.b standard envelope FDTD
-                    ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;
-                    ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*d2A_over_dx2 ;
-                    ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*k0*k0*( *A2D_n_pml )( i, j ) ;
-                    ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) - (1.+i1*k0*dt) * ( *A2D_nm1_pml )( i, j ) ;
-                    ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + 2.*( *A2D_n_pml )( i, j ) ;
-                    ( *A2D_np1_pml )( i, j ) = ( ( 1.+i1*k0*dt) / (1.+k0*k0*dt*dt) )*( *A2D_np1_pml )( i, j );
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dx2 ;
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*k0*k0*( *A_n_pml )( i, j ) ;
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) - (1.+i1*k0*dt) * ( *A_nm1_pml )( i, j ) ;
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + 2.*( *A_n_pml )( i, j ) ;
+                    ( *A_np1_pml )( i, j ) = ( ( 1.+i1*k0*dt) / (1.+k0*k0*dt*dt) )*( *A_np1_pml )( i, j );
                 } // end y loop
             } // end x loop
 
@@ -545,8 +545,8 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     ( *u2_nm1_y_pml )( i, j )        = 1.*( *u2_np1_y_pml )( i, j );
                     ( *u1_nm1_y_pml )( i, j )        = 1.*( *u1_np1_y_pml )( i, j );
                     // A-field
-                    ( *A2D_nm1_pml )( i, j )       = 1.*( *A2D_n_pml )( i, j );
-                    ( *A2D_n_pml )( i, j )         = 1.*( *A2D_np1_pml )( i, j );
+                    ( *A_nm1_pml )( i, j )       = 1.*( *A_n_pml )( i, j );
+                    ( *A_n_pml )( i, j )         = 1.*( *A_np1_pml )( i, j );
                 } // end y loop
             } // end x loop
         }
@@ -561,12 +561,12 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // ====
                     // STD Solver for propagation in vacuum
                     // ====
-                    // ( *A2D_np1_pml )( i, j ) = - (1+i1*k0*dt) * ( *A2D_nm1_pml )( i, j ) ;
-                    // ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + 2. * ( *A2D_n_pml )( i, j ) ;
-                    // ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + 2.*i1*k0*dt*dt*( ( *A2D_n_pml )( i+1, j )-( *A2D_n_pml )( i-1, j ) )/(2.*dx) ;
-                    // ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*( ( *A2D_n_pml )( i-1, j )-2.*( *A2D_n_pml )( i, j )+( *A2D_n_pml )( i+1, j ) )/(dx*dx) ;
-                    // ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*( ( *A2D_n_pml )( i, j-1 )-2.*( *A2D_n_pml )( i, j )+( *A2D_n_pml )( i, j+1 ) )/(dy*dy) ;
-                    // ( *A2D_np1_pml )( i, j ) = ( ( 1+i1*k0*dt) / (1+k0*k0*dt*dt) )*( *A2D_np1_pml )( i, j );
+                    // ( *A_np1_pml )( i, j ) = - (1+i1*k0*dt) * ( *A_nm1_pml )( i, j ) ;
+                    // ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + 2. * ( *A_n_pml )( i, j ) ;
+                    // ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + 2.*i1*k0*dt*dt*( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dx) ;
+                    // ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*( ( *A_n_pml )( i-1, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+1, j ) )/(dx*dx) ;
+                    // ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*( ( *A_n_pml )( i, j-1 )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i, j+1 ) )/(dy*dy) ;
+                    // ( *A_np1_pml )( i, j ) = ( ( 1+i1*k0*dt) / (1+k0*k0*dt*dt) )*( *A_np1_pml )( i, j );
                     // ====
                     // ADE-CFS-PML
                     // ====
@@ -578,18 +578,18 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // Envelope hypothesis with the carrier wave which propagate along x :
                     // ----
                     // dA/dx = dA/dx + ik0 A
-                    std::complex<double> dA_over_dx_fdtd = ( ( *A2D_n_pml )( i+1, j )-( *A2D_n_pml )( i-1, j ) )/(2.*dx) ;
+                    std::complex<double> dA_over_dx_fdtd = ( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dx) ;
                     std::complex<double> dA_over_dx = dA_over_dx_fdtd
-                                                      + i1*k0*( *A2D_n_pml )( i, j ) ;
+                                                      + i1*k0*( *A_n_pml )( i, j ) ;
                     // d2A/dx^2 = d2A/dx^2 + 2ik0 dA/dx - k0^2 A
-                    std::complex<double> d2A_over_dx2_fdtd = ( ( *A2D_n_pml )( i-1, j )-2.*( *A2D_n_pml )( i, j )+( *A2D_n_pml )( i+1, j ) )/(dx*dx) ;
+                    std::complex<double> d2A_over_dx2_fdtd = ( ( *A_n_pml )( i-1, j )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i+1, j ) )/(dx*dx) ;
                     std::complex<double> d2A_over_dx2 = d2A_over_dx2_fdtd
-                                                        + 2.*i1*k0*( ( *A2D_n_pml )( i+1, j )-( *A2D_n_pml )( i-1, j ) )/(2.*dx)
-                                                        - k0*k0*( *A2D_n_pml )( i, j ) ;
+                                                        + 2.*i1*k0*( ( *A_n_pml )( i+1, j )-( *A_n_pml )( i-1, j ) )/(2.*dx)
+                                                        - k0*k0*( *A_n_pml )( i, j ) ;
                     // dA/dy = dA/dy
-                    std::complex<double> dA_over_dy = ( ( *A2D_n_pml )( i, j+1 )-( *A2D_n_pml )( i, j-1 ) )/(2.*dy) ;
+                    std::complex<double> dA_over_dy = ( ( *A_n_pml )( i, j+1 )-( *A_n_pml )( i, j-1 ) )/(2.*dy) ;
                     // d2A/dy^2 = d2A/dy^2
-                    std::complex<double> d2A_over_dy2 = ( ( *A2D_n_pml )( i, j-1 )-2.*( *A2D_n_pml )( i, j )+( *A2D_n_pml )( i, j+1 ) )/(dy*dy) ;
+                    std::complex<double> d2A_over_dy2 = ( ( *A_n_pml )( i, j-1 )-2.*( *A_n_pml )( i, j )+( *A_n_pml )( i, j+1 ) )/(dy*dy) ;
                     // ====
                     // ADE update
                     // ----
@@ -657,15 +657,15 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     source_term_y = source_term_y - pow(kappa_y_p[j],3)*0.5*( ( *u1_np1_y_pml )( i, j ) + ( *u1_nm1_y_pml )( i, j ) ) ;
                     source_term_y = dt*dt*source_term_y / pow(kappa_y_p[j],3) ;
                     // ----
-                    ( *A2D_np1_pml )( i, j ) = 1*source_term_x + 1.*source_term_y ;
-                    // ( *A2D_np1_pml )( i, j ) = 0;
+                    ( *A_np1_pml )( i, j ) = 1*source_term_x + 1.*source_term_y ;
+                    // ( *A_np1_pml )( i, j ) = 0;
                     // 4.b standard envelope FDTD
-                    ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;
-                    ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*d2A_over_dx2 ;
-                    ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*k0*k0*( *A2D_n_pml )( i, j ) ;
-                    ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) - (1.+i1*k0*dt) * ( *A2D_nm1_pml )( i, j ) ;
-                    ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + 2.*( *A2D_n_pml )( i, j ) ;
-                    ( *A2D_np1_pml )( i, j ) = ( ( 1.+i1*k0*dt) / (1.+k0*k0*dt*dt) )*( *A2D_np1_pml )( i, j );
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*d2A_over_dx2 ;
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + dt*dt*k0*k0*( *A_n_pml )( i, j ) ;
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) - (1.+i1*k0*dt) * ( *A_nm1_pml )( i, j ) ;
+                    ( *A_np1_pml )( i, j ) = ( *A_np1_pml )( i, j ) + 2.*( *A_n_pml )( i, j ) ;
+                    ( *A_np1_pml )( i, j ) = ( ( 1.+i1*k0*dt) / (1.+k0*k0*dt*dt) )*( *A_np1_pml )( i, j );
                 } // end y loop
             } // end x loop
 
@@ -680,8 +680,8 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     ( *u2_nm1_y_pml )( i, j )        = 1.*( *u2_np1_y_pml )( i, j );
                     ( *u1_nm1_y_pml )( i, j )        = 1.*( *u1_np1_y_pml )( i, j );
                     // A-field
-                    ( *A2D_nm1_pml )( i, j )       = 1.*( *A2D_n_pml )( i, j );
-                    ( *A2D_n_pml )( i, j )         = 1.*( *A2D_np1_pml )( i, j );
+                    ( *A_nm1_pml )( i, j )       = 1.*( *A_n_pml )( i, j );
+                    ( *A_n_pml )( i, j )         = 1.*( *A_np1_pml )( i, j );
                 } // end y loop
             } // end x loop
         }

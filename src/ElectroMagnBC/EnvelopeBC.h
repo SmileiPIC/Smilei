@@ -21,20 +21,15 @@ public:
 
     virtual void apply( LaserEnvelope *envelope, ElectroMagn *EMfields, double time_dual, Patch *patch ) = 0;
 
-    virtual cField* getA2Dnp1PML() { ERROR("Not using PML");return NULL;}
-    virtual cField* getA2DnPML() { ERROR("Not using PML");return NULL;}
-    virtual cField* getA2Dnm1PML() { ERROR("Not using PML");return NULL;}
+    virtual cField* getAnp1PML() { ERROR("Not using PML");return NULL;}
+    virtual cField* getAnPML() { ERROR("Not using PML");return NULL;}
+    virtual cField* getAnm1PML() { ERROR("Not using PML");return NULL;}
 
-    virtual cField* getA3Dnp1PML() { ERROR("Not using PML");return NULL;}
-    virtual cField* getA3DnPML() { ERROR("Not using PML");return NULL;}
-    virtual cField* getA3Dnm1PML() { ERROR("Not using PML");return NULL;}
+    virtual cField* getGnp1PML() { ERROR("Not using PML");return NULL;}
+    virtual cField* getGnPML() { ERROR("Not using PML");return NULL;}
+    virtual cField* getGnm1PML() { ERROR("Not using PML");return NULL;}
 
-    virtual cField* getG2Dnp1PML() { ERROR("Not using PML");return NULL;}
-    virtual cField* getG2DnPML() { ERROR("Not using PML");return NULL;}
-    virtual cField* getG2Dnm1PML() { ERROR("Not using PML");return NULL;}
-
-    virtual Field* getPhi2DPML() { ERROR("Not using PML");return NULL;}
-    virtual Field* getPhi3DPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getPhiPML() { ERROR("Not using PML");return NULL;}
 
     virtual cField* getu1np1xPML() { ERROR("Not using PML");return NULL;}
     virtual cField* getu2np1xPML() { ERROR("Not using PML");return NULL;}

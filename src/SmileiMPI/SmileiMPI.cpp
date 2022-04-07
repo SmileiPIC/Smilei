@@ -713,7 +713,7 @@ void SmileiMPI::isend_species( Patch *patch, int to, int &irequest, int tag, Par
         }
     }
     irequest += 2*nspec;
-    
+
     // Send some scalars
     unsigned int nscalars = 4 + ( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation );
     patch->buffer_scalars_particles.resize( nscalars*nspec );
@@ -739,7 +739,7 @@ void SmileiMPI::isend_fields( Patch *patch, int to, int &irequest, int tag, Para
     } else {
         isend( patch->EMfields, to, irequest, patch->requests_, tag, static_cast<ElectroMagnAM *>( patch->EMfields )->El_.size(), send_xmax_bc );
     }
-    
+
     // Send some scalars
     unsigned int nscalars = 2 + 2*params.nDim_field;
     patch->buffer_scalars_fields.resize( nscalars );
@@ -785,7 +785,7 @@ void SmileiMPI::recv( Patch *patch, int from, int tag, Params &params, bool recv
 
     // Receive EM fields
     recv_fields( patch, from, tag, params, recv_xmin_bc );
-    
+
 } // END recv ( Patch )
 
 
@@ -839,7 +839,7 @@ void SmileiMPI::recv_species( Patch *patch, int from, int &tag, Params &params )
                   << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
     }
     tag += 2*nspec;
-    
+
     // Receive some scalars
     unsigned int nscalars = 4 + ( params.hasMCRadiation || params.hasLLRadiation || params.hasNielRadiation );
     patch->buffer_scalars_particles.resize( nscalars*nspec );
@@ -867,7 +867,7 @@ void SmileiMPI::recv_fields( Patch *patch, int from, int &tag, Params &params, b
     } else {
         recv( patch->EMfields, from, tag, static_cast<ElectroMagnAM *>( patch->EMfields )->El_.size(), recv_xmin_bc );
     }
-    
+
     // Receive some scalars
     unsigned int nscalars = 2 + 2*params.nDim_field;
     patch->buffer_scalars_fields.resize( nscalars );
@@ -931,7 +931,7 @@ template <typename Tpml>
 void  SmileiMPI::send_PML(ElectroMagn *EM, Tpml embc, int bcId, int to, int &irequest, vector<MPI_Request> &requests, int tag, bool send_xmax_bc){
                 if (embc->Hx_) {
                     if(!send_xmax_bc && bcId>1 && EM->isXmax){ //When not sending xmax_bc (MovingWindow), the size of the non longitudinal pml sent must be tailored on corner cases.
-                        
+
                         isend( embc->Hx_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+1) );
                         irequest++;
                         isend( embc->Hy_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+0)  );
@@ -1276,13 +1276,13 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
                 }
                 if( EM->envelope!=NULL ) {
                     EnvelopeBCAM_PML *embcenv = static_cast<EnvelopeBCAM_PML *>( EM->envelope->EnvBoundCond[bcId] );
-                    isendComplex( embcenv->A2D_n_, to, tag+irequest, requests[irequest] );
+                    isendComplex( embcenv->A_n_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isendComplex( embcenv->A2D_nm1_, to, tag+irequest, requests[irequest] );
+                    isendComplex( embcenv->A_nm1_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isendComplex( embcenv->G2D_n_, to, tag+irequest, requests[irequest] );
+                    isendComplex( embcenv->G_n_, to, tag+irequest, requests[irequest] );
                     irequest++;
-                    isendComplex( embcenv->G2D_nm1_, to, tag+irequest, requests[irequest] );
+                    isendComplex( embcenv->G_nm1_, to, tag+irequest, requests[irequest] );
                     irequest++;
                     if (EMAM->isXmin || EMAM->isXmax){ //Sending Longitudinal PML even for bcId=3
                         isendComplex( embcenv->u1_nm1_l_, to, tag+irequest, requests[irequest] );
@@ -1291,7 +1291,7 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
                         irequest++;
                         isendComplex( embcenv->u3_nm1_l_, to, tag+irequest, requests[irequest] );
                         irequest++;
-                    } 
+                    }
                     if (bcId == 3) { //Sending Radial PML
                         isendComplex( embcenv->u1_nm1_r_, to, tag+irequest, requests[irequest] );
                         irequest++;
@@ -1312,27 +1312,27 @@ int  SmileiMPI::recv_PML(ElectroMagn *EM, Tpml embc, int bcId, int from, int tag
     if (embc->Hx_) {
             if(!recv_xmin_bc && bcId>1 && EM->isXmin){ //When not receiving xmin_bc (MovingWindow), the position of the pml received must be tailored on xmin for non longitudinal PML corner array.
                 recvShifted( embc->Hx_, from, tag, embc->ncells_pml_xmin );
-                tag++;                                                   
+                tag++;
                 recvShifted( embc->Hy_, from, tag, embc->ncells_pml_xmin );
-                tag++;                                                   
+                tag++;
                 recvShifted( embc->Hz_, from, tag, embc->ncells_pml_xmin );
-                tag++;                                                   
+                tag++;
                 recvShifted( embc->Bx_, from, tag, embc->ncells_pml_xmin );
-                tag++;                                                   
+                tag++;
                 recvShifted( embc->By_, from, tag, embc->ncells_pml_xmin );
-                tag++;                                                   
+                tag++;
                 recvShifted( embc->Bz_, from, tag, embc->ncells_pml_xmin );
-                tag++;                                                   
+                tag++;
                 recvShifted( embc->Ex_, from, tag, embc->ncells_pml_xmin );
-                tag++;                                                   
+                tag++;
                 recvShifted( embc->Ey_, from, tag, embc->ncells_pml_xmin );
-                tag++;                                                   
+                tag++;
                 recvShifted( embc->Ez_, from, tag, embc->ncells_pml_xmin );
-                tag++;                                                   
+                tag++;
                 recvShifted( embc->Dx_, from, tag, embc->ncells_pml_xmin );
-                tag++;                                                   
+                tag++;
                 recvShifted( embc->Dy_, from, tag, embc->ncells_pml_xmin );
-                tag++;                                                   
+                tag++;
                 recvShifted( embc->Dz_, from, tag, embc->ncells_pml_xmin );
                 tag++;
             } else {
@@ -1646,22 +1646,22 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, unsigned int nmodes, 
                 }
                 if( EM->envelope!=NULL ) {
                     EnvelopeBCAM_PML *embcenv = static_cast<EnvelopeBCAM_PML *>( EM->envelope->EnvBoundCond[bcId] );
-                    recvComplex( embcenv->A2D_n_, from, tag );
+                    recvComplex( embcenv->A_n_, from, tag );
                     tag++;
-                    recvComplex( embcenv->A2D_nm1_, from, tag );
+                    recvComplex( embcenv->A_nm1_, from, tag );
                     tag++;
-                    recvComplex( embcenv->G2D_n_, from, tag );
+                    recvComplex( embcenv->G_n_, from, tag );
                     tag++;
-                    recvComplex( embcenv->G2D_nm1_, from, tag );
+                    recvComplex( embcenv->G_nm1_, from, tag );
                     tag++;
-                    if (EMAM->isXmin || EMAM->isXmax){ //Receiving Longitudinal PML even for bcId=3 if on xmin or xmax 
+                    if (EMAM->isXmin || EMAM->isXmax){ //Receiving Longitudinal PML even for bcId=3 if on xmin or xmax
                         recvComplex( embcenv->u1_nm1_l_, from, tag );
                         tag++;
                         recvComplex( embcenv->u2_nm1_l_, from, tag );
                         tag++;
                         recvComplex( embcenv->u3_nm1_l_, from, tag );
                         tag++;
-                    } 
+                    }
                     if (bcId == 3) { //Receiving Radial PML
                         recvComplex( embcenv->u1_nm1_r_, from, tag );
                         tag++;
@@ -1704,7 +1704,7 @@ void SmileiMPI::isendComplex( Field *field, int to, int tag, MPI_Request &reques
     //This version of isendComplex(Field) sends the whole array
     MPI_Isend( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
-} 
+}
 void SmileiMPI::isendComplex( Field *field, int to, int tag, MPI_Request &request, int x_first )
 {
     cField *cf = static_cast<cField *>( field );

@@ -28,9 +28,9 @@ public:
     //void save_fields( Field *, Patch *patch ) override;
     //void disableExternalFields() override;
 
-    cField2D* A2D_np1_ = NULL;
-    cField2D* A2D_n_ = NULL;
-    cField2D* A2D_nm1_ = NULL;
+    cField2D* A_np1_ = NULL;
+    cField2D* A_n_ = NULL;
+    cField2D* A_nm1_ = NULL;
 
     cField2D* u1_np1_x_ = NULL;
     cField2D* u2_np1_x_ = NULL;
@@ -46,11 +46,11 @@ public:
     cField2D* u2_nm1_y_ = NULL;
     cField2D* u3_nm1_y_ = NULL;
 
-    Field2D* Phi2D_ = NULL;
+    Field2D* Phi_ = NULL;
 
-    cField* getA2Dnp1PML() override { return A2D_np1_; };
-    cField* getA2DnPML() override { return A2D_n_; };
-    cField* getA2Dnm1PML() override { return A2D_nm1_; };
+    cField* getAnp1PML() override { return A_np1_; };
+    cField* getAnPML() override { return A_n_; };
+    cField* getAnm1PML() override { return A_nm1_; };
 
     cField* getu1np1xPML() override { return u1_np1_x_; };
     cField* getu2np1xPML() override { return u2_np1_x_; };
@@ -66,7 +66,7 @@ public:
     cField* getu2nm1yPML() override { return u2_nm1_y_; };
     cField* getu3nm1yPML() override { return u3_nm1_y_; };
 
-    Field* getPhi2DPML() override { return Phi2D_; };
+    Field* getPhiPML() override { return Phi_; };
 
     int domain_oversize_x;
     int domain_oversize_y;
