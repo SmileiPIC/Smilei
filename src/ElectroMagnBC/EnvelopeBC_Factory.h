@@ -6,6 +6,7 @@
 #include "EnvelopeBCAM_refl.h"
 #include "EnvelopeBCAM_PML.h"
 #include "EnvelopeBC3D_refl.h"
+#include "EnvelopeBC3D_PML.h"
 #include "EnvelopeBC2D_refl.h"
 #include "EnvelopeBC2D_PML.h"
 #include "EnvelopeBC1D_refl.h"
@@ -87,6 +88,10 @@ public:
                 if( params.Env_BCs[0][ii] == "reflective" ) {
                     EnvBoundCond[ii] = new EnvelopeBC3D_refl( params, patch, ii );
                 }
+                // pml bcs
+                else if( params.Env_BCs[0][ii] == "PML" ) {
+                    EnvBoundCond[ii] = new EnvelopeBC3D_PML( params, patch, ii );
+                }
                 // else: error
                 else {
                     ERROR( "Unknown Envelope x-boundary condition `" << params.Env_BCs[0][ii] << "`" );
@@ -97,6 +102,10 @@ public:
                 if( params.Env_BCs[1][ii] == "reflective" ) {
                     EnvBoundCond[ii+2] = new EnvelopeBC3D_refl( params, patch, ii+2 );
                 }
+                // pml bcs
+                else if( params.Env_BCs[1][ii] == "PML" ) {
+                    EnvBoundCond[ii+2] = new EnvelopeBC3D_PML( params, patch, ii+2 );
+                }
                 // else: error
                 else {
                     ERROR( "Unknown Envelope y-boundary condition `" << params.Env_BCs[1][ii] << "`" );
@@ -106,6 +115,10 @@ public:
                 // reflective bcs
                 if( params.Env_BCs[2][ii] == "reflective" ) {
                     EnvBoundCond[ii+4] = new EnvelopeBC3D_refl( params, patch, ii+4 );
+                }
+                // pml bcs
+                else if( params.Env_BCs[2][ii] == "PML" ) {
+                    EnvBoundCond[ii+4] = new EnvelopeBC3D_PML( params, patch, ii+4 );
                 }
                 // else: error
                 else  {

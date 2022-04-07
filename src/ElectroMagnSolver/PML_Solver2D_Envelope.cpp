@@ -11,6 +11,22 @@
 PML_Solver2D_Envelope::PML_Solver2D_Envelope( Params &params )
     : Solver2D( params )
 {
+    // X-PML
+    kappa_x_max = 1.0 ;
+    sigma_x_max = 1.36 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
+    alpha_x_max = 0.0 ;
+    power_pml_kappa_x = 3.;
+    power_pml_sigma_x = 2.;
+    power_pml_alpha_x = 1.;
+    alpha_cx = 1.01 ; // Try to use a more practical timestep !
+    // Y-PML    
+    kappa_y_max = 1. ;
+    sigma_y_max = 1.8 ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
+    alpha_y_max = 0.0 ;
+    power_pml_kappa_y = 3.;
+    power_pml_sigma_y = 2.;
+    power_pml_alpha_y = 1.;
+    alpha_cy = 0.10 ; // 0.25 ; // 0.8 for transverse is ok
 }
 
 PML_Solver2D_Envelope::~PML_Solver2D_Envelope()
@@ -56,9 +72,6 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
     // While min and max of each dim have got the same ncells_pml, coefficient are the same
     // for min and max PML
 
-    double alpha_cx = 1.01 ; // Try to use a more practical timestep !
-    double alpha_cy = 0.10 ; // 0.25 ; // 0.8 for transverse is ok
-
     // Best parameter
     // for kappa_max = 1.2 ; sigma_max = 2 (in reality 1.59) in order to have dt = 0.8 dt_cfl
     // for kappa_max = 1.0 ; sigma_max = 2 (in reality 1.59) dt = 0.7 dt_cfl in order to not diverge (magical timestep approx)
@@ -96,13 +109,6 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             sigma_prime_x_p[i] = 0. ;
             alpha_prime_x_p[i] = 0. ;
         }
-        // Params for other cells (PML Media) when i>=3
-        kappa_x_max = 1.0 ;
-        sigma_x_max = 1.36 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
-        alpha_x_max = 0.0 ;
-        power_pml_kappa_x = 3.;
-        power_pml_sigma_x = 2.;
-        power_pml_alpha_x = 1.;
         for ( int i=startpml; i<nx_p ; i++ ) {
             // Parameters
             kappa_x_p[i] = 1. - (kappa_x_max - 1.) * pow( (i-startpml)*dx , power_pml_kappa_x ) / pow( length_x_pml , power_pml_kappa_x ) ;
@@ -151,7 +157,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         /*
         Here is to check all the PML Parameters !
         Have to be comment or suppress at the end
-        */ 
+        */
         // std::cout << "iDim/MinMax : " << iDim <<"/"<< min_or_max << std::endl ;
         // std::cout << "kappa : " << std::endl << "[";
         // for(double x: kappa_x_p) {
@@ -204,12 +210,6 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             alpha_prime_x_p[i] = 0. ;
         }
         if (ncells_pml_min[0] != 0 ){
-            kappa_x_max = 1. ;
-            sigma_x_max = 1.36 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
-            alpha_x_max = 0.0 ;
-            power_pml_kappa_x = 3.;
-            power_pml_sigma_x = 2.;
-            power_pml_alpha_x = 1.;
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
                 // Parameters
                 kappa_x_p[i] = 1. - (kappa_x_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dx , power_pml_kappa_x ) / pow( length_x_pml_xmin , power_pml_kappa_x ) ;
@@ -232,12 +232,6 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         if (ncells_pml_max[0] != 0 ){
-            kappa_x_max = 1. ;
-            sigma_x_max = 1.36 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
-            alpha_x_max = 0.0 ;
-            power_pml_kappa_x = 3.;
-            power_pml_sigma_x = 2. ;
-            power_pml_alpha_x = 1.;
             for ( int i=(nx_p-1)-(ncells_pml_max[0]-1) ; i<nx_p ; i++ ) { // La aussi, il y a 2 cellules de trop pour les pml xmax avec 1 seul patch
                 // Parameters
                 kappa_x_p[i] = 1. - (kappa_x_max - 1.) * pow( ( i - ( (nx_p-1)-(ncells_pml_max[0]-1) ) )*dx , power_pml_kappa_x ) / pow( length_x_pml_xmax , power_pml_kappa_x ) ;
@@ -259,7 +253,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         /*
         Here is to check all the PML Parameters !
         Have to be comment or suppress at the end
-        */ 
+        */
         // std::cout << "iDim/MinMax (x along y): " << iDim <<"/"<< min_or_max << std::endl ;
         // std::cout << "kappa : " << std::endl << "[";
         // for(double x: kappa_x_p) {
@@ -302,12 +296,6 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             alpha_prime_y_p[j] = 0. ;
         }
         // Params for other cells (PML Media) when i>=3
-        kappa_y_max = 1. ;
-        sigma_y_max = 4. ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
-        alpha_y_max = 0.0 ;
-        power_pml_kappa_y = 3.;
-        power_pml_sigma_y = 2.;
-        power_pml_alpha_y = 1.;
         for ( int j=startpml; j<ny_p ; j++ ) {
             // Parameters
             kappa_y_p[j] = 1. + (kappa_y_max - 1.) * pow( (j-startpml)*dy , power_pml_kappa_y ) / pow( length_y_pml , power_pml_kappa_y ) ;
@@ -354,7 +342,7 @@ void PML_Solver2D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         /*
         Here is to check all the PML Parameters !
         Have to be comment or suppress at the end
-        */ 
+        */
         // std::cout << "iDim/MinMax : " << iDim <<"/"<< min_or_max << std::endl ;
         // std::cout << "kappa : " << std::endl << "[";
         // for(double x: kappa_y_p) {
@@ -535,7 +523,7 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // ----
                     ( *A2D_np1_pml )( i, j ) = 1.*source_term_x ; // + 1.*source_term_y ;
                     //( *A2D_np1_pml )( i, j ) = 0;
-                    // 4.b standard envelope FDTD 
+                    // 4.b standard envelope FDTD
                     ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;
                     ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*d2A_over_dx2 ;
                     ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*k0*k0*( *A2D_n_pml )( i, j ) ;
@@ -671,7 +659,7 @@ void PML_Solver2D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     // ----
                     ( *A2D_np1_pml )( i, j ) = 1*source_term_x + 1.*source_term_y ;
                     // ( *A2D_np1_pml )( i, j ) = 0;
-                    // 4.b standard envelope FDTD 
+                    // 4.b standard envelope FDTD
                     ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*d2A_over_dy2 ;
                     ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*d2A_over_dx2 ;
                     ( *A2D_np1_pml )( i, j ) = ( *A2D_np1_pml )( i, j ) + dt*dt*k0*k0*( *A2D_n_pml )( i, j ) ;
