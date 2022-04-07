@@ -704,10 +704,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     bool defined_cell_sort = true;
-    if (!PyTools::extractOrNone( "cell_sorting", cell_sorting, "Main"  )){
+    if (!PyTools::extractOrNone( "cell_sorting", cell_sorting_, "Main"  )){
     //cell_sorting is undefined by the user
         defined_cell_sort = false;
-        cell_sorting = false;
+        cell_sorting_ = false;
     }
 
     // Activation of the vectorized subroutines
@@ -736,10 +736,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
         // Check cell sorting is allowed
         if( !( vectorization_mode == "off") ){
-    	    if (defined_cell_sort == true && cell_sorting == false){
+    	    if (defined_cell_sort == true && cell_sorting_ == false){
                 ERROR_NAMELIST(" Cell sorting must be allowed in order to use vectorization.",  LINK_NAMELIST + std::string("#vectorization"))
             }
-            cell_sorting = true;
+            cell_sorting_ = true;
         }
 
 
@@ -756,16 +756,18 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 PyTools::extract_py( "reconfigure_every", "Vectorization" ), "Adaptive vectorization"
             );
     }
-
+    
+    // Not used, just for compatibility with the GPU branch
+    PyTools::extract( "gpu_computing", gpu_computing, "Main"  );
 
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
 
         // collisions need sorting per cell
-        if (defined_cell_sort == true && cell_sorting == false){
+        if (defined_cell_sort == true && cell_sorting_ == false){
             ERROR_NAMELIST(" Cell sorting must be allowed in order to use collisions.",  LINK_NAMELIST + std::string("#collisions-reactions"));
         }
-        cell_sorting = true;
+        cell_sorting_ = true;
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
                 && geometry!="3Dcartesian" ) {
@@ -813,15 +815,15 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         //Use cell sorting if merge is used.
         PyTools::extract( "merging_method", merging_method, "Species", ispec );
         if (merging_method != "none"){
-            if (defined_cell_sort == true && cell_sorting == false){
+            if (defined_cell_sort == true && cell_sorting_ == false){
                 ERROR_NAMELIST(" Cell sorting must be allowed in order to use particle merge.",  LINK_NAMELIST + std::string("#particle-merging"));
             }
-            cell_sorting = true;
+            cell_sorting_ = true;
         }
     }
 
     //Set final value of cell_sort
-    if (!cell_sorting) cell_sorting = false;
+    if (!cell_sorting_) cell_sorting_ = false;
 
     // -------------------------------------------------------
     // Parameters for the synchrotron-like radiation losses
@@ -1272,7 +1274,7 @@ void Params::print_init()
 
     ostringstream cs;
     cs << "cell sorting: ";
-    if (cell_sorting) {
+    if (cell_sorting_) {
         cs << "Activated";
         MESSAGE( 1, cs.str() );
     }

@@ -20,7 +20,8 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* bug correction: Poisson Solver correction is not properly accounted for with SDMD.
+* Collisions: new parameter ``time_frozen``
+* Bugfixes: Poisson Solver correction was not properly accounted for with SDMD.
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 

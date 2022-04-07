@@ -494,7 +494,7 @@ file ``Smilei.cpp`` thought calls to different ``vecPatches`` methods.
 
 .. code-block:: c++
 
-    vecPatches.applyCollisions( params, itime, timers );
+    vecPatches.applyBinaryProcesses( params, itime, timers );
 
 * **Relativistic poisson solver**: ...
 

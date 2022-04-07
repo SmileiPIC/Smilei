@@ -27,25 +27,25 @@ const double CollisionalFusionDD::DB_log_crossSection[50] = {
 
 // Constructor
 CollisionalFusionDD::CollisionalFusionDD(
-    Params *params,
-    vector<Species *> *product_species,
+    Params &params,
+    vector<Species *> &product_species,
     double rate_multiplier
 )
 : CollisionalNuclearReaction(params, product_species, rate_multiplier)
 {
     // Find which product is helium / neutron
-    index_He_ = product_species->size();
-    index_n_ = product_species->size();
-    for( unsigned int iprod = 0; iprod < product_species->size(); iprod++ ) {
-        if( product_species->at(iprod) ) {
-            if( product_species->at(iprod)->atomic_number_ == 2 ) {
+    index_He_ = product_species.size();
+    index_n_ = product_species.size();
+    for( unsigned int iprod = 0; iprod < product_species.size(); iprod++ ) {
+        if( product_species[iprod] ) {
+            if( product_species[iprod]->atomic_number_ == 2 ) {
                 index_He_ = iprod;
-            } else if( product_species->at(iprod)->atomic_number_ == 0 ) {
+            } else if( product_species[iprod]->atomic_number_ == 0 ) {
                 index_n_ = iprod;
             }
         }
     }
-    if( index_He_ >= product_species->size() ) {
+    if( index_He_ >= product_species.size() ) {
         ERROR( "Missing helium product in D-D fusion reaction" );
     }
 }
@@ -91,11 +91,7 @@ void CollisionalFusionDD::makeProducts(
     Random* random, // Access to random numbers
     double ekin, double log_ekin, // total kinetic energy and its natural log
     double tot_charge, //  total charge
-    std::vector<Particles*> &particles, // List of Particles objects to store the reaction products
-    std::vector<double> &new_p_COM, // List of gamma*v of reaction products in COM frame
-    std::vector<short> &q, // List of charges of reaction products
-    std::vector<double> &sinX, // List of sin of outgoing angle of reaction products
-    std::vector<double> &cosX // List of cos of outgoing angle of reaction products
+    NuclearReactionProducts &products
 ) {
     double U = random->uniform2(); // random number ]-1,1]
     double U1 = abs( U );
@@ -105,33 +101,33 @@ void CollisionalFusionDD::makeProducts(
     double lnE = a3 + log_ekin;
     double alpha = lnE < 0. ? 1. : exp(-0.024*lnE*lnE);
     double one_m_cosX = alpha*U1 / sqrt( (1.-U1) + alpha*alpha*U1 );
-    cosX = { 1. - one_m_cosX };
-    sinX = { sqrt( one_m_cosX * (1.+cosX[0]) ) };
+    products.cosX = { 1. - one_m_cosX };
+    products.sinX = { sqrt( one_m_cosX * (1.+products.cosX[0]) ) };
+    double phi = random->uniform_2pi();
+    products.cosPhi = { cos( phi ) };
+    products.sinPhi = { sin( phi ) };
     
     // Calculate the resulting momenta from energy / momentum conservation
     const double Q = 6.397; // Qvalue
     const double m_n = 1838.7;
     const double m_He = 5497.9;
-    double p_COM = {
-        sqrt( (ekin+Q) * (ekin+Q+2.*m_n) * (ekin+Q+2.*m_He) * (ekin+Q+2.*m_n+2.*m_He) )
-        / ( 2.* ( ekin+Q+m_n+m_He ) )
-    };
+    double p_COM = sqrt( (ekin+Q) * (ekin+Q+2.*m_n) * (ekin+Q+2.*m_He) * (ekin+Q+2.*m_n+2.*m_He) ) / ( 2.* ( ekin+Q+m_n+m_He ) );
     if( ! up ) {
         p_COM = -p_COM;
     }
     
     // Set particle properties
-    q.resize( product_particles_.size() );
-    particles.resize( product_particles_.size() );
-    new_p_COM.resize( product_particles_.size() );
+    products.q.resize( product_particles_.size() );
+    products.particles.resize( product_particles_.size() );
+    products.new_p_COM.resize( product_particles_.size() );
     // helium3
-    q[index_He_] = (short) tot_charge;
-    particles[index_He_] = product_particles_[index_He_];
-    new_p_COM[index_He_] = p_COM / m_He;
-    // neutron
+    products.q[index_He_] = (short) tot_charge;
+    products.particles[index_He_] = product_particles_[index_He_];
+    products.new_p_COM[index_He_] = p_COM / m_He; 
+   // neutron
     if( index_n_ <  product_particles_.size() ) {
-        q[index_n_] = (short) 0.;
-        particles[index_n_] = product_particles_[index_n_];
-        new_p_COM[index_n_] = - p_COM / m_n;
+        products.q[index_n_] = (short) 0.;
+        products.particles[index_n_] = product_particles_[index_n_];
+        products.new_p_COM[index_n_] = - p_COM / m_n;
     }
 }

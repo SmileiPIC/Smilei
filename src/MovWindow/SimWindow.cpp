@@ -414,7 +414,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         
         //Fill necessary patches with particles
 #ifdef _VECTO
-        if( ( params.vectorization_mode == "on" ) || ( params.cell_sorting ) ) {
+        if( ( params.vectorization_mode == "on" ) || ( params.cell_sorting_ ) ) {
             //#pragma omp master
             //{
 #ifndef _NO_MPI_TM

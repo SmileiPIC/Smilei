@@ -401,7 +401,7 @@ int main( int argc, char *argv[] )
             }
 
             // apply collisions if requested
-            vecPatches.applyCollisions( params, itime, timers );
+            vecPatches.applyBinaryProcesses( params, itime, timers );
 
             // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen
