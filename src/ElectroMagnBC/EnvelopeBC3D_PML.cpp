@@ -43,7 +43,7 @@ EnvelopeBC3D_PML::EnvelopeBC3D_PML( Params &params, Patch *patch, unsigned int i
     if ( ( i_boundary_ == 0 && patch->isXmin() )
          || ( i_boundary_ == 1 && patch->isXmax() )
          || ( i_boundary_ == 2 && patch->isYmin() )
-         || ( i_boundary_ == 3 && patch->isYmax()
+         || ( i_boundary_ == 3 && patch->isYmax() )
          || ( i_boundary_ == 4 && patch->isZmin() )
          || ( i_boundary_ == 5 && patch->isZmax() ) ) {
 

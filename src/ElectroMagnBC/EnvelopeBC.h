@@ -96,7 +96,7 @@ protected:
     double dr;
 
     //! Spatial step dy for 3D3V cartesian simulations
-    double dz
+    double dz;
 
     //! Ratio of the time-step by the spatial-step dt/dx for 2D3V cartesian simulations
     double dt_ov_dx;
