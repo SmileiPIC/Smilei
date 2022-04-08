@@ -46,7 +46,7 @@ path = os.path.abspath("./").split("/")
 directory = path[-1]
 options = directory.split("_")
 
-vectorization = "on"
+vectorization = "off"
 
 interpolation_WT = False,
 

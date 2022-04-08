@@ -14,5 +14,5 @@ uelm = S.Scalar("Uelm").getData()
 utot = S.Scalar("Utot").getData()
 
 Validate("Ukinetic energy evolution: ", ukin / Avg(ukin), 1e-3)
-Validate("Uelectromag evolution: ", uelm / Avg(uelm), 1e-3)
+Validate("Uelectromag evolution: ", uelm / Avg(uelm), 0.02)
 Validate("Total energy evolution: ", utot / Avg(utot), 1e-3)

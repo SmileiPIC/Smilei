@@ -52,7 +52,7 @@ LoadBalancing(
 )
 
 Vectorization(
-    mode = "on",
+    mode = "off",
 )
 
 Species(

@@ -12,13 +12,13 @@ class Display(object):
         try:
             self.term_size_ = get_terminal_size()
         except:
-            self.term_size_ = [0,0];
+            self.term_size_ = [0,0]
             self.terminal_mode_ = False
         
         # Used in a terminal
         if (self.terminal_mode_):
             
-            self.seperator_length_ = self.term_size_[0];
+            self.seperator_length_ = self.term_size_[0]
             
             self.error_header_ = "\033[1;31m"
             self.error_footer_ = "\033[0m\n"
@@ -28,7 +28,7 @@ class Display(object):
         
         # Not used in a terminal
         else:
-            self.seperator_length_ = 80;
+            self.seperator_length_ = 80
 
             self.error_header_ = ""
             self.error_footer_ = ""
@@ -617,6 +617,7 @@ class Validation(object):
             print_data = False
             # First, check whether the data matches
             if not matchesWithReference(data, expected_data, data_name, precision, error_type):
+                print('The simulation\'s output DOES NOT matches the reference (bad).')
                 _dataNotMatching = True
             else:
                 print('The simulation\'s output matches the reference (good).')
@@ -654,6 +655,9 @@ class Validation(object):
                         ax2 = fig.add_subplot(nplots,1,2)
                         ax2.plot( data_float-expected_data_float )
                         ax2.set_title("difference")
+                    plt.draw()
+                    plt.savefig('discrepancies_' + str(fig.number) + '.png')
+                    plt.show()
                 elif data_float.ndim == 2:
                     nplots = 3
                     if expected_data is None:
@@ -678,6 +682,7 @@ class Validation(object):
                         ax3.set_title("difference")
                         plt.colorbar( im )
                     plt.draw()
+                    plt.savefig('discrepancies_' + str(fig.number) + '.png')
                     plt.show()
                 else:
                     print("\t"+str(data_float.ndim)+"D quantity cannot be plotted")

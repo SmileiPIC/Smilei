@@ -84,7 +84,7 @@ Main(gpu_computing = True,
      print_every = 10,
      random_seed = smilei_mpi_rank)
 
-Vectorization(mode = "on")
+Vectorization(mode = "off")
 
 LoadBalancing(every = 20,
               initial_balance = False,

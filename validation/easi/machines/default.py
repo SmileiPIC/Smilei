@@ -120,15 +120,24 @@ class Machine(object):
             # if current_time > options['max_time_seconds']:
             #     print("Max time exceeded for command `"+command+"`")
             #     exit(2)
+
         # Check that the run succeeded
-        if int(EXIT_STATUS) != 0:
-            if self.options.verbose:
-                print("")
-                print("Execution failed for command `"+base_command+"`")
-                COMMAND = "cat "+error_file
-                try:
-                    check_call(COMMAND, shell=True)
-                except CalledProcessError:
-                    print("")
-                    print("Failed to print file `%s`"%error_file)
-            exit(2)
+        while True:
+            # On some file system, EXIT_STATUS for a while (few ms) before containing a valid return code.
+            # We loop until we get a successful read. 
+            try:
+                print('Exited with "' + EXIT_STATUS + '"')
+                if int(EXIT_STATUS) != 0:
+                    if self.options.verbose:
+                        print("")
+                        print("Execution failed for command `"+base_command+"`")
+                        COMMAND = "cat "+error_file
+                        try:
+                            check_call(COMMAND, shell=True)
+                        except CalledProcessError:
+                            print("")
+                            print("Failed to print file `%s`"%error_file)
+                    exit(2)
+                break
+            except ValueError as err:
+                continue

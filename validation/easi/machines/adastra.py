@@ -52,7 +52,7 @@ cat {the_output_file};
 
 echo "The task ended at = $(date)";
 
-echo $kRETVAL > exit_status_file;
+echo -n $kRETVAL > exit_status_file;
 exit $kRETVAL;
 """
 
