@@ -169,8 +169,41 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
 
     //Loop on bin particles
     int nparts = particles.last_index.back();
-#ifdef _GPU
-    #pragma acc parallel present(ELoc[0:3*nparts],BLoc[0:3*nparts],iold[0:3*nparts],delta[0:3*nparts],Ex3D[0:sizeofEx],Ey3D[0:sizeofEy],Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],Bz3D[0:sizeofBz]) deviceptr(position_x,position_y,position_z)
+
+#if defined(SMILEI_ACCELERATOR_GPU_OMP)
+    const std::size_t irange_size  = *iend - *istart;
+
+    // // TODO(Etienne M): Memory ops optimization
+    #pragma omp target     map(tofrom                              \
+                               : ELoc [0:2 * nparts + *iend],      \
+                                 BLoc [0:2 * nparts + *iend],      \
+                                 iold [0:2 * nparts + *iend],      \
+                                 delta [0:2 * nparts + *iend],     \
+                                 Ex3D [0:sizeofEx],                \
+                                 Ey3D [0:sizeofEy],                \
+                                 Ez3D [0:sizeofEz],                \
+                                 Bx3D [0:sizeofBx],                \
+                                 By3D [0:sizeofBy],                \
+                                 Bz3D [0:sizeofBz],                \
+                                 position_x [*istart:irange_size], \
+                                 position_y [*istart:irange_size], \
+                                 position_z [*istart:irange_size])
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
+#elif defined(_GPU)
+    #pragma acc parallel present(ELoc [0:2 * nparts + *iend],  \
+                                 BLoc [0:2 * nparts + *iend],  \
+                                 iold [0:2 * nparts + *iend],  \
+                                 delta [0:2 * nparts + *iend], \
+                                 Ex3D [0:sizeofEx],            \
+                                 Ey3D [0:sizeofEy],            \
+                                 Ez3D [0:sizeofEz],            \
+                                 Bx3D [0:sizeofBx],            \
+                                 By3D [0:sizeofBy],            \
+                                 Bz3D [0:sizeofBz])            \
+        deviceptr(position_x,                                  \
+                  position_y,                                  \
+                  position_z)
     #pragma acc loop gang worker vector
 #endif
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
