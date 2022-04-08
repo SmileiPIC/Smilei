@@ -22,6 +22,7 @@
 #include <fstream>
 #include <limits>
 #include "ElectroMagnBC_Factory.h"
+#include "EnvelopeBC_Factory.h"
 #include "DoubleGrids.h"
 #include "SyncVectorPatch.h"
 
@@ -239,9 +240,20 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     }
                 }
                 mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+                if (mypatch->EMfields->envelope){
+                    for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
+                        if( embc ) {
+                            delete embc;
+                        }
+                    }
+                    mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
+                }
+
                 mypatch->EMfields->laserDisabled();
-                if (!params.multiple_decomposition)
+                if (!params.multiple_decomposition){
                     mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
+                    if (mypatch->EMfields->envelope) mypatch->EMfields->envelope->EnvBoundCond[0]->apply(mypatch->EMfields->envelope, mypatch->EMfields, time_dual, mypatch);
+                }
             }
             
             mypatch->EMfields->laserDisabled();
@@ -285,9 +297,20 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     }
                 }
                 mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+                if (mypatch->EMfields->envelope){
+                    for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
+                        if( embc ) {
+                            delete embc;
+                        }
+                    }
+                    mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
+                }
+
                 mypatch->EMfields->laserDisabled();
-                if (!params.multiple_decomposition)
+                if (!params.multiple_decomposition){
                     mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
+                    if (mypatch->EMfields->envelope) mypatch->EMfields->envelope->EnvBoundCond[0]->apply(mypatch->EMfields->envelope, mypatch->EMfields, time_dual, mypatch);
+                }
             }
             if( mypatch->wasXmax( params ) ) {
                 for( auto &embc:mypatch->EMfields->emBoundCond ) {
@@ -296,6 +319,16 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     }
                 }
                 mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
+
+                if (mypatch->EMfields->envelope){
+                    for( auto &embc:mypatch->EMfields->envelope->EnvBoundCond ) {
+                        if( embc ) {
+                            delete embc;
+                        }
+                    }
+                    mypatch->EMfields->envelope->EnvBoundCond = EnvelopeBC_Factory::create( params, mypatch );
+                }
+
                 mypatch->EMfields->laserDisabled();
                 mypatch->EMfields->updateGridSize( params, mypatch );
                 
