@@ -11,55 +11,55 @@
 PML_Solver3D_Envelope::PML_Solver3D_Envelope( Params &params )
     : Solver3D( params )
 {
-    // X-PML
-    kappa_x_max = 1.0 ;
-    sigma_x_max = 0.0 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
-    alpha_x_max = 0.0 ;
-    power_pml_kappa_x = 3.;
-    power_pml_sigma_x = 2.;
-    power_pml_alpha_x = 1.;
-    alpha_cx = 0. ; // Try to use a more practical timestep !
-    // Y-PML
-    kappa_y_max = 1.0 ;
-    sigma_y_max = 0.0 ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
-    alpha_y_max = 0.0 ;
-    power_pml_kappa_y = 3.;
-    power_pml_sigma_y = 2.;
-    power_pml_alpha_y = 1.;
-    alpha_cy = 0. ; // 0.25 ; // 0.8 for transverse is ok
-    // Z-PML
-    kappa_z_max = 1.0 ;
-    sigma_z_max = 0.0 ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
-    alpha_z_max = 0.0 ;
-    power_pml_kappa_z = 3.;
-    power_pml_sigma_z = 2.;
-    power_pml_alpha_z = 1.;
-    alpha_cz = 0. ; // 0.25 ; // 0.8 for transverse is ok
-
     // // X-PML
     // kappa_x_max = 1.0 ;
-    // sigma_x_max = 1.36 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
+    // sigma_x_max = 0.0 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
     // alpha_x_max = 0.0 ;
     // power_pml_kappa_x = 3.;
     // power_pml_sigma_x = 2.;
     // power_pml_alpha_x = 1.;
-    // alpha_cx = 1.01 ; // Try to use a more practical timestep !
+    // alpha_cx = 0. ; // Try to use a more practical timestep !
     // // Y-PML
-    // kappa_y_max = 1. ;
-    // sigma_y_max = 1.8 ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
+    // kappa_y_max = 1.0 ;
+    // sigma_y_max = 0.0 ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
     // alpha_y_max = 0.0 ;
     // power_pml_kappa_y = 3.;
     // power_pml_sigma_y = 2.;
     // power_pml_alpha_y = 1.;
-    // alpha_cy = 0.10 ; // 0.25 ; // 0.8 for transverse is ok
+    // alpha_cy = 0. ; // 0.25 ; // 0.8 for transverse is ok
     // // Z-PML
-    // kappa_z_max = 1. ;
-    // sigma_z_max = 1.8 ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
+    // kappa_z_max = 1.0 ;
+    // sigma_z_max = 0.0 ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
     // alpha_z_max = 0.0 ;
     // power_pml_kappa_z = 3.;
     // power_pml_sigma_z = 2.;
     // power_pml_alpha_z = 1.;
-    // alpha_cz = 0.10 ; // 0.25 ; // 0.8 for transverse is ok
+    // alpha_cz = 0. ; // 0.25 ; // 0.8 for transverse is ok
+
+    // X-PML
+    kappa_x_max = 1.0 ;
+    sigma_x_max = 1.36 ; // 1.16 for 20 cells ; // 1.36 for 10 cells ;
+    alpha_x_max = 0.0 ;
+    power_pml_kappa_x = 3.;
+    power_pml_sigma_x = 2.;
+    power_pml_alpha_x = 1.;
+    alpha_cx = 1.01 ; // Try to use a more practical timestep !
+    // Y-PML
+    kappa_y_max = 1. ;
+    sigma_y_max = 1.8 ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
+    alpha_y_max = 0.0 ;
+    power_pml_kappa_y = 3.;
+    power_pml_sigma_y = 2.;
+    power_pml_alpha_y = 1.;
+    alpha_cy = 0.10 ; // 0.25 ; // 0.8 for transverse is ok
+    // Z-PML
+    kappa_z_max = 1. ;
+    sigma_z_max = 1.8 ; // 2.32 ; // 2.32 for 20 cells ; // 2.72 for 10 cells ;
+    alpha_z_max = 0.0 ;
+    power_pml_kappa_z = 3.;
+    power_pml_sigma_z = 2.;
+    power_pml_alpha_z = 1.;
+    alpha_cz = 0.10 ; // 0.25 ; // 0.8 for transverse is ok
 }
 
 PML_Solver3D_Envelope::~PML_Solver3D_Envelope()
@@ -305,8 +305,8 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         length_z_pml = (ncells_pml_domain-startpml+0.5)*dz ;
         length_x_pml_xmax = (ncells_pml_max[0]+0.5)*dx ;
         length_x_pml_xmin = (ncells_pml_min[0]+0.5)*dx ;
-        length_y_pml_ymax = (ncells_pml_max[0]+0.5)*dy ;
-        length_y_pml_ymin = (ncells_pml_min[0]+0.5)*dy ;
+        length_y_pml_ymax = (ncells_pml_max[1]+0.5)*dy ;
+        length_y_pml_ymin = (ncells_pml_min[1]+0.5)*dy ;
         for ( int i=0 ; i<nx_p ; i++ ) {
             kappa_x_p[i] = 1. ;
             sigma_x_p[i] = 0. ;
@@ -357,7 +357,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             }
         }
         // Y-direction
-        for ( int j=0 ; j<startpml ; j++ ) {
+        for ( int j=0 ; j<ny_p ; j++ ) {
             // Coeffs for the first cell
             kappa_y_p[j] = 1. ;
             sigma_y_p[j] = 0. ;
@@ -366,7 +366,7 @@ void PML_Solver3D_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
             sigma_prime_y_p[j] = 0. ;
             alpha_prime_y_p[j] = 0. ;
         }
-        // Params for other cells (PML Media) when i>=3
+        //Params for other cells (PML Media) when i>=3
         if (ncells_pml_min[1] != 0 ){
             for ( int j=0 ; j<ncells_pml_min[1] ; j++ ) {
                 // Parameters
@@ -492,7 +492,7 @@ void PML_Solver3D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
     cField3D* u1_np1_z_pml = NULL;
     cField3D* u2_np1_z_pml = NULL;
     cField3D* u3_np1_z_pml = NULL;
-    
+
 
     A_nm1_pml = pml_fields->A_nm1_;
     u1_nm1_x_pml = pml_fields->u1_nm1_x_;
@@ -741,7 +741,7 @@ void PML_Solver3D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     source_term_y = source_term_y - pow(kappa_y_p[j],3)*0.5*( ( *u1_np1_y_pml )( i, j, k ) + ( *u1_nm1_y_pml )( i, j, k ) ) ;
                     source_term_y = dt*dt*source_term_y / pow(kappa_y_p[j],3) ;
                     // ----
-                    ( *A_np1_pml )( i, j, k ) = 1*source_term_x + 1.*source_term_y ;
+                    ( *A_np1_pml )( i, j, k ) = 1.*source_term_x + 1.*source_term_y ;
                     // ( *A_np1_pml )( i, j, k ) = 0;
                     // 4.b standard envelope FDTD
                     ( *A_np1_pml )( i, j, k ) = ( *A_np1_pml )( i, j, k ) + dt*dt*d2A_over_dz2 ;
@@ -909,7 +909,7 @@ void PML_Solver3D_Envelope::compute_A_from_G( LaserEnvelope *envelope, int iDim,
                     source_term_z = source_term_z - pow(kappa_z_p[k],3)*0.5*( ( *u1_np1_z_pml )( i, j, k ) + ( *u1_nm1_z_pml )( i, j, k ) ) ;
                     source_term_z = dt*dt*source_term_z / pow(kappa_z_p[k],3) ;
                     // ----
-                    ( *A_np1_pml )( i, j, k ) = 1*source_term_x + 1.*source_term_y + 1.*source_term_z ;
+                    ( *A_np1_pml )( i, j, k ) = 1.*source_term_x + 1.*source_term_y + 1.*source_term_z ;
                     // ( *A_np1_pml )( i, j, k ) = 0;
                     // 4.b standard envelope FDTD
                     ( *A_np1_pml )( i, j, k ) = ( *A_np1_pml )( i, j, k ) + dt*dt*d2A_over_dz2 ;
