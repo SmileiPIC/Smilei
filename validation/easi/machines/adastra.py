@@ -12,6 +12,7 @@ class MachineAdastra(Machine):
 #SBATCH --nodes={the_node_count}               # Number of nodes
 #SBATCH --ntasks={the_mpi_process_count}       # Number of MPI ranks
 #SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank 
+#SBATCH --gpus-per-task={the_gpu_count}        # Number of cores per MPI rank 
 #SBATCH --output=output
 #SBATCH --error=error
 #SBATCH --time={the_maximum_task_duration}
@@ -39,9 +40,15 @@ export OMP_SCHEDULE=dynamic;
 # optimized apps is generally not something you want (ROB buffer should be full).
 export OMP_PLACES=cores;
 
-{a_task_command};
+rocm-smi;
+rocminfo;
+
+{a_task_command} > {the_output_file} 2>&1;
 
 kRETVAL=$?;
+
+# Put the result in the slurm output file.
+cat {the_output_file};
 
 echo "The task ended at = $(date)";
 
@@ -67,7 +74,7 @@ exit $kRETVAL;
         # This will describe and schedule the tasks
         self.JOB = 'sbatch ' + self.smilei_path.exec_script
         # This'll start the tasks
-        self.RUN_COMMAND = 'srun ' + self.smilei_path.workdirs + '/smilei %s > ' + self.smilei_path.output_file + ' 2>&1'
+        self.RUN_COMMAND = 'srun ' + self.smilei_path.workdirs + '/smilei {the_arguments}'
         
         if self.options.nodes:
             self.NODES = self.options.nodes
@@ -79,7 +86,7 @@ exit $kRETVAL;
         Run a simulation
         """
 
-        the_command = self.RUN_COMMAND % arguments
+        the_command = self.RUN_COMMAND.format(the_arguments=arguments)
 
         # Write the slurm script
         with open(self.smilei_path.exec_script, 'w') as f:
@@ -87,7 +94,9 @@ exit $kRETVAL;
                                                  the_node_count=self.NODES, 
                                                  the_mpi_process_count=self.options.mpi, 
                                                  the_maximum_task_duration=self.options.max_time, 
-                                                 the_omp_thread_count=self.options.omp))
+                                                 the_omp_thread_count=self.options.omp,
+                                                 the_output_file=self.smilei_path.output_file,
+                                                 the_gpu_count='1' if 'gpu_amd' in self.options.compile_mode else '0'))
 
         # Schedule the task(s)
         self.launch_job(the_command, 

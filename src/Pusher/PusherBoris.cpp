@@ -70,16 +70,49 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     double * __restrict__ By = &( ( *Bpart )[1*nparts] );
     double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
-#ifndef _GPU
-    #pragma omp simd
-#else
-    int np = iend-istart;
-    int i_start_offset = istart - ipart_buffer_offset;
-    #pragma acc parallel present(Ex[i_start_offset:np],Ey[i_start_offset:np],Ez[i_start_offset:np], \
-                                 Bx[i_start_offset:np],By[i_start_offset:np],Bz[i_start_offset:np], \
-                                 invgf[0:nparts]) \
-                        deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z,charge)
+#if defined(SMILEI_ACCELERATOR_GPU_OMP)
+    const std::size_t istart_offset   = istart - ipart_buffer_offset;
+    const std::size_t particle_number = iend - istart;
+
+    // TODO(Etienne M): Memory ops optimization
+    #pragma omp target     map(tofrom                                   \
+                               : Ex [istart_offset:particle_number],    \
+                                 Ey [istart_offset:particle_number],    \
+                                 Ez [istart_offset:particle_number],    \
+                                 Bx [istart_offset:particle_number],    \
+                                 By [istart_offset:particle_number],    \
+                                 Bz [istart_offset:particle_number],    \
+                                 invgf [istart_offset:particle_number], \
+                                 position_x [istart:particle_number],   \
+                                 position_y [istart:particle_number],   \
+                                 position_z [istart:particle_number],   \
+                                 momentum_x [istart:particle_number],   \
+                                 momentum_y [istart:particle_number],   \
+                                 momentum_z [istart:particle_number],   \
+                                 charge [istart:particle_number])
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
+#elif defined(_GPU)
+    const std::size_t istart_offset   = istart - ipart_buffer_offset;
+    const std::size_t particle_number = iend - istart;
+
+    #pragma acc parallel present(Ex [istart_offset:particle_number],    \
+                                 Ey [istart_offset:particle_number],    \
+                                 Ez [istart_offset:particle_number],    \
+                                 Bx [istart_offset:particle_number],    \
+                                 By [istart_offset:particle_number],    \
+                                 Bz [istart_offset:particle_number],    \
+                                 invgf [istart_offset:particle_number]) \
+        deviceptr(position_x,                                           \
+                  position_y,                                           \
+                  position_z,                                           \
+                  momentum_x,                                           \
+                  momentum_y,                                           \ 
+                  momentum_z,                                           \
+                  charge)
     #pragma acc loop gang worker vector
+#else
+    #pragma omp simd
 #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
