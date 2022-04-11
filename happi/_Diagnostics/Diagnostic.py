@@ -663,13 +663,25 @@ class Diagnostic(object):
 				self._tmpdata[i] = self._dataAtTime(t)
 		# prepare the colormap if 2d plot
 		if self.dim == 2 and self.options.transparent:
+			from copy import deepcopy
 			cmap = self.options.image["cmap"]
-			if type(cmap)==str: cmap = self._plt.matplotlib.cm.get_cmap(cmap)
-			new_cmap = cmap.__copy__()
-			if self.options.transparent in ["both", "under"]:
-				new_cmap.set_under(color="white", alpha="0")
-			if self.options.transparent in ["both", "over"]:
-				new_cmap.set_over (color="white", alpha="0")
+			if type(cmap)==str:
+				cmap = self._plt.matplotlib.cm.get_cmap(cmap)
+			new_cmap = self._plt.matplotlib.colors.LinearSegmentedColormap("tmp", deepcopy(cmap._segmentdata))
+			if callable(self.options.transparent):
+				if "alpha" in cmap._segmentdata:
+					X = cmap._segmentdata["alpha"]
+				else:
+					X = self._np.unique(self._np.hstack([self._np.array(cmap._segmentdata[c])[:,0] for c in ["red","green","blue"]]))
+				new_cmap._segmentdata["alpha"] = tuple()
+				for x in X:
+					a = self.options.transparent(x)
+					new_cmap._segmentdata["alpha"] += ((x, a, a),)
+			else:
+				if self.options.transparent in ["both", "under"]:
+					new_cmap.set_under(color="white", alpha="0")
+				if self.options.transparent in ["both", "over"]:
+					new_cmap.set_over (color="white", alpha="0")
 			self.options.image["cmap"] = new_cmap
 		return True
 
