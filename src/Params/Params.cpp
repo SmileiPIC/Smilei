@@ -82,7 +82,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     if( namelistsFiles.size()==0 ) {
-        ERROR_NAMELIST( "No namelists given!","" );
+        ERROR_NAMELIST( "No namelist (input file) given!","" );
     }
 
     //string commandLineStr("");
@@ -393,6 +393,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             ERROR_NAMELIST( "EM_boundary_conditions along "<<"xyz"[iDim]<<" must be periodic for spectral solver in cartesian geometry.",
                             LINK_NAMELIST + std::string("#main-variables") );
         }
+        //if ( ( (EM_BCs[0][0] == "PML") || (EM_BCs[0][1] == "PML") )
+        //     && ( (EM_BCs[iDim][0] != "PML") || (EM_BCs[iDim][1] != "PML") ) ) {
+        //    ERROR( "Either all PML, either none" );
+        //}
     }
 
     int n_envlaser = PyTools::nComponents( "LaserEnvelope" );
@@ -505,6 +509,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
     save_magnectic_fields_for_SM = true;
     PyTools::extract( "save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main"   );
+
+    PyTools::extractVV( "number_of_pml_cells", number_of_pml_cells, "Main" );
 
     // -----------------------------------
     // POISSON & FILTERING OPTIONS
@@ -698,11 +704,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     bool defined_cell_sort = true;
-    if (!PyTools::extractOrNone( "cell_sorting", cell_sorting, "Main"  )){
-        //cell_sorting is undefined by the user
+    if (!PyTools::extractOrNone( "cell_sorting", cell_sorting_, "Main"  )){
+    //cell_sorting is undefined by the user
         defined_cell_sort = false;
-        // cell_sorting false by default then
-        cell_sorting = false;
+        cell_sorting_ = false;
     }
 
     // Activation of the vectorized subroutines
@@ -731,16 +736,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         // Cell sorting not defined by the user
         if (!defined_cell_sort) {
             if (vectorization_mode == "off") {
-                cell_sorting = false;
+                cell_sorting_ = false;
             } else {
-                cell_sorting = true;
+                cell_sorting_ = true;
             }
         }
 
         // Cell sorting explicitely defined by the user
 	    if (defined_cell_sort){
             // cell sorting explicitely set on
-            if (cell_sorting) {
+            if (cell_sorting_) {
                 if (vectorization_mode == "off") {
                     WARNING(" Cell sorting `cell_sorting` cannot be used when vectorization is off for the moment. Vectorization is automatically activated.")
                 }
@@ -767,18 +772,21 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 PyTools::extract_py( "reconfigure_every", "Vectorization" ), "Adaptive vectorization"
             );
     }
+    
+    // Not used, just for compatibility with the GPU branch
+    PyTools::extract( "gpu_computing", gpu_computing, "Main"  );
 
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
 
         // collisions need sorting per cell
-        if (defined_cell_sort && cell_sorting == false){
+        if (defined_cell_sort && cell_sorting_ == false){
             ERROR_NAMELIST(" Cell sorting or vectorization must be allowed in order to use collisions.",  LINK_NAMELIST + std::string("#collisions-reactions"));
         }
 
-        if (!defined_cell_sort && !cell_sorting) {
+        if (!defined_cell_sort && !cell_sorting_) {
             if (vectorization_mode == "off") {
-                cell_sorting = true;
+                cell_sorting_ = true;
                 vectorization_mode = "on";
                 WARNING("For collisions, vectorization activated for cell sorting capability. Disabled vectorization not compatible with cell sorting for the moment.")
             }
@@ -832,23 +840,20 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         PyTools::extract( "merging_method", merging_method, "Species", ispec );
         if (merging_method != "none"){
 
-            if (defined_cell_sort && !cell_sorting){
+            if (defined_cell_sort && !cell_sorting_){
                 ERROR_NAMELIST(" Cell sorting or vectorization must be allowed in order to use particle merging.",  LINK_NAMELIST + std::string("#collisions-reactions"));
             }
 
-            if (!defined_cell_sort && !cell_sorting) {
+            if (!defined_cell_sort && !cell_sorting_) {
                 if (vectorization_mode == "off") {
-                    cell_sorting = true;
+                    cell_sorting_ = true;
                     vectorization_mode = "on";
                     if (geometry != "1Dcartesian" ) {
                         WARNING("For particle merging, vectorization activated for cell sorting capability. Disabled vectorization not compatible with cell sorting for the moment.")
                     }
                 }
             }
-
         }
-
-
     }
 
     // -------------------------------------------------------
@@ -1300,7 +1305,7 @@ void Params::print_init()
 
     ostringstream cs;
     cs << "cell sorting: ";
-    if (cell_sorting) {
+    if (cell_sorting_) {
         cs << "Activated";
         MESSAGE( 1, cs.str() );
     }

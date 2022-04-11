@@ -108,7 +108,7 @@ OpenPMDparams::OpenPMDparams( Params &p ):
                 fieldBoundary          .addString( "open" );
                 fieldBoundaryParameters.addString( params->EM_BCs[i][j] );
             } else {
-                ERROR( " impossible boundary condition " );
+                //ERROR( " impossible boundary condition " );
             }
             particleBoundary          .addString( "" );
             particleBoundaryParameters.addString( "" );

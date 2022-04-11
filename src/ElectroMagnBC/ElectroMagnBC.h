@@ -11,6 +11,7 @@ class Patch;
 class ElectroMagn;
 class Laser;
 class Field;
+class Solver;
 
 class ElectroMagnBC
 {
@@ -28,6 +29,19 @@ public:
     
     //! Vector for the various lasers
     std::vector<Laser *> vecLaser;
+
+    virtual Field* getExPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getEyPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getEzPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getBxPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getByPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getBzPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getDxPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getDyPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getDzPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getHxPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getHyPML() { ERROR("Not using PML");return NULL;}
+    virtual Field* getHzPML() { ERROR("Not using PML");return NULL;}
     
 protected:
     
@@ -48,6 +62,7 @@ protected:
     
     //! Ratio of the time-step by the spatial-step
     std::vector<double> dt_ov_d;
+    Solver* pml_solver_;
 };
 
 #endif

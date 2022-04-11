@@ -444,6 +444,8 @@ void ElectroMagn::boundaryConditions( int itime, double time_dual, Patch *patch,
     if( emBoundCond.size()>2 ) {
         if( emBoundCond[2]!=NULL ) { // <=> if !periodic
             emBoundCond[2]->apply( this, time_dual, patch );
+        }
+        if( emBoundCond[3]!=NULL ) { // <=> if !periodic
             emBoundCond[3]->apply( this, time_dual, patch );
         }
     }

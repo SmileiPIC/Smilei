@@ -20,6 +20,38 @@ Get Smilei
 Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* Collisions: new parameter ``time_frozen``
+* Bugfixes: Poisson Solver correction was not properly accounted for with SDMD.
+
+**Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
+
+----
+
+Projects
+^^^^^^^^^^^^^^^^
+
+* Already available, but experimental:
+
+  * :doc:`SDMD`
+  * Particle merging
+  * Nuclear reactions
+  * Interface with the PICSAR library for AM spectral solver
+
+* In preparation:
+
+  * Perfectly-matched layers for the envelope model
+  * More spectral solvers
+  * GPU support
+
+
+----
+
+Release 4.7
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.7 <_downloads/smilei-v4.7.tar.gz>`_
+
+* **Perfectly Matched Layers** boundary conditions for EM fields (+2D Cartesian benchmark).
 * Improved performance for ARM-based processors including the Fujitsu A64FX
 * Improved performance for GNU, LLVM, arm-clang and Fujitsu compilers on all types of architectures
 * Lasers can be injected from all boundaries
@@ -56,26 +88,6 @@ Changes made in the repository (not released)
   * Fix for particle merging segmentation fault in spherical and Cartesian modes
   * Tracked particles with the vectorized mode
   * ``momentum_initialization`` from a file did not take the proper file
-
-**Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
-
-----
-
-Projects
-^^^^^^^^^^^^^^^^
-
-* Already available, but experimental:
-
-  * Interface with the PICSAR library for AM spectral solver
-  * :doc:`SDMD`
-  * Particle merging
-  * Nuclear reactions
-
-* In the future:
-
-  * More spectral solvers
-  * GPU support
-  * Perfectly-matched layers
 
 ----
 

@@ -46,12 +46,25 @@ As of November 2021, 90 papers have been published covering a broad range of top
 .. READ THIS 
    There is now a utility to add new entries to this list.
    Use the python script doc/doi2publications.py to generate entries from a DOI number, and paste them here.
+   
+.. [Yao2022]
+
+  W. Yao, A. Fazzini, S. N. Chen, K. Burdonov, P. Antici, J. Béard, S. Bolaños, A. Ciardi, R. Diab, E. D. Filippov, S. Kisyov, V. Lelasseux, M. Miceli, Q. Moreno, V. Nastasa, S. Orlando, S. Pikuz, D. C. Popescu, G. Revet, X. Ribeyre, E. d’Humières and J. Fuchs,
+  `Detailed characterization of a laboratory magnetized supercritical collisionless shock and of the associated proton energization`,
+  `Matter and Radiation at Extremes 7, 014402 (2022) <http://dx.doi.org/10.1063/5.0055071>`_
 
 .. [Singh2022]
 
   P. K. Singh, F.-Y. Li, C.-K. Huang, A. Moreau, R. Hollinger, A. Junghans, A. Favalli, C. Calvi, S. Wang, Y. Wang, H. Song, J. J. Rocca, R. E. Reinovsky and S. Palaniyappan,
   `Vacuum laser acceleration of super-ponderomotive electrons using relativistic transparency injection`,
   `Nat Commun 13, 54 (2022) <http://dx.doi.org/10.1038/s41467-021-27691-w>`_
+
+.. [Lobet2022]
+
+  M. Lobet, F. Massimo, A. Beck, G. Bouchard, F. Perez, T. Vinci, and M. Grech.
+  `Simple adaptations to speed-up the Particle-In-Cell code Smilei on the ARM-based Fujitsu A64FX processor.`,
+  `In International Conference on High Performance Computing in Asia-Pacific Region Workshops (HPCAsia 2022 Workshop). 
+  Association for Computing Machinery, New York, NY, USA, 40–48. (2022) <http://doi.org/10.1145/3503470.3503475>`_
   
 .. [Meinhold2021]
 

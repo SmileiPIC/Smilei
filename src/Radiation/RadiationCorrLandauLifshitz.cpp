@@ -190,6 +190,6 @@ void RadiationCorrLandauLifshitz::operator()(
     // _______________________________________________________________
     // Cleaning
 
-    delete [] rad_norm_energy;
+    free(rad_norm_energy);
 
 }

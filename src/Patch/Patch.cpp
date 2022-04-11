@@ -30,7 +30,7 @@
 #include "ElectroMagnFactory.h"
 #include "ElectroMagnBC_Factory.h"
 #include "DiagnosticFactory.h"
-#include "CollisionsFactory.h"
+#include "BinaryProcessesFactory.h"
 
 using namespace std;
 
@@ -162,8 +162,8 @@ void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create( params, domain_decomposition, vecSpecies, this );
 
-    // Initialize the collisions
-    vecCollisions = CollisionsFactory::create( params, this, vecSpecies );
+    // Initialize the binary processes
+    vecBPs = BinaryProcessesFactory::createVector( params, vecSpecies );
 
     // Initialize the particle injector
     particle_injector_vector_ = ParticleInjectorFactory::createVector( params, this, vecSpecies );
@@ -187,8 +187,8 @@ void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsign
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone( patch->EMfields, params, vecSpecies, this, n_moved );
 
-    // clone the collisions
-    vecCollisions = CollisionsFactory::clone( patch->vecCollisions );
+    // clone the binary processes
+    vecBPs = BinaryProcessesFactory::cloneVector( patch->vecBPs );
 
     // Clone the particle injector
     particle_injector_vector_ = ParticleInjectorFactory::cloneVector( patch->particle_injector_vector_, params, patch);
@@ -248,6 +248,15 @@ void Patch::finalizeMPIenvironment( Params &params )
             } else if( dynamic_cast<ElectroMagnBC3D_SM *>( EMfields->emBoundCond[bcId] ) ) {
                 nb_comms += 18;
             }
+        }
+        if ( (dynamic_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] ))// && dynamic_cast<ElectroMagnBC2D_PML *>( EMfields->emBoundCond[bcId] )->Hx_    )
+             ||
+             (dynamic_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] ))) //&& dynamic_cast<ElectroMagnBC3D_PML *>( EMfields->emBoundCond[bcId] )->Hx_    ))
+        {
+            nb_comms += 12;
+        } else if (dynamic_cast<ElectroMagnBCAM_PML *>( EMfields->emBoundCond[bcId] ))// && dynamic_cast<ElectroMagnBCAM_PML *>( EMfields->emBoundCond[bcId] )->Hl_[0] ){
+        {
+            nb_comms += 12*( params.nmodes );
         }
     }
     requests_.resize( nb_comms, MPI_REQUEST_NULL );
@@ -361,7 +370,6 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             Pcoordinates[0] =xDom ;
                             Pcoordinates[1] =yDom;
 
-                            //cout << "coords = " << Pcoordinates[0] << " " << Pcoordinates[1] <<endl;
 
                             min_local_[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
                             max_local_[0] = (params.offset_map[0][xDom]+params.n_space_region[0]) * params.cell_length[0];
@@ -418,7 +426,6 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                     }
                 }
 
-            //cout << "HERE - " <<Pcoordinates[0] << " " << Pcoordinates[1]<< endl; 
             std::vector<int> xcall( 2, 0 );
             // 1st direction
             xcall[0] = Pcoordinates[0]-1;
@@ -448,14 +455,6 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             }
             neighbor_[1][1] = domain_decomposition->getDomainId( xcall );
 
-            //cout << "\t"<< neighbor_[1][1] << endl;
-            //cout << neighbor_[0][0] << "\t h_me \t" << neighbor_[0][1] << endl;
-            //cout << "\t"<< neighbor_[1][0] << endl;
-            //
-            //cout << "\t"<< MPI_neighbor_[1][1] << endl;
-            //cout << MPI_neighbor_[0][0] << "\t mpi_me \t" << MPI_neighbor_[0][1] << endl;
-            //cout << "\t"<< MPI_neighbor_[1][0] << endl;
-
             cell_starting_global_index[0] -= oversize[0];
             cell_starting_global_index[1] -= oversize[1];
         } // Fin 2D
@@ -471,7 +470,6 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             Pcoordinates[0] = xDom;
                             Pcoordinates[1] = yDom;
                             Pcoordinates[2] = zDom;
-                            //cout << hindex << " - coords = " << xDom << " " << yDom << " " << zDom << endl;
 
                             min_local_[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
                             max_local_[0] = (params.offset_map[0][xDom]+params.n_space_region[0]) * params.cell_length[0];
@@ -509,7 +507,6 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                                 MPI_neighbor_[0][1] = MPI_PROC_NULL;
 
 
-                            //cout << MPI_neighbor_[0][0] << " " << " me "  << " "  << MPI_neighbor_[0][1] << endl;
                                
                             // ---------------- Y ----------------
                             if (yDom>0)
@@ -664,15 +661,10 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
         }
     }*/
     
-    
-    //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][1] << endl;
-    //cout << "MPI Nei\t"  << MPI_neighbor_[0][0] << "\t" << MPI_me_ << "\t" << MPI_neighbor_[0][1] << endl;
-    //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][0] << endl;
-    
     EMfields   = ElectroMagnFactory::create( params, domain_decomposition, vecPatch( 0 )->vecSpecies, this );
 
     vecSpecies.resize( 0 );
-    vecCollisions.resize( 0 );
+    vecBPs.resize( 0 );
     partWalls = NULL;
     probes.resize( 0 );
     probesInterp = NULL;
@@ -698,10 +690,10 @@ Patch::~Patch()
         delete probes[i];
     }
 
-    for( unsigned int i=0; i<vecCollisions.size(); i++ ) {
-        delete vecCollisions[i];
+    for( unsigned int i=0; i<vecBPs.size(); i++ ) {
+        delete vecBPs[i];
     }
-    vecCollisions.clear();
+    vecBPs.clear();
 
     if( partWalls!=NULL ) {
         delete partWalls;
@@ -1338,7 +1330,6 @@ void Patch::finalizeExchange( Field *field, int iDim )
 {
     MPI_Status sstat    [nDim_fields_][2];
     MPI_Status rstat    [nDim_fields_][2];
-
     for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
             MPI_Wait( &( field->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );

@@ -146,7 +146,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         
         
 #ifndef _NO_MPI_TM
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(static) private(mypatch)
 #endif
         for( unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++ ) {
             mypatch = vecPatches_old[ipatch];
@@ -172,7 +172,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         int Href_receiver = 0;
                         for (int irk = 0; irk < mypatch->MPI_neighbor_[0][0]; irk++) Href_receiver += smpi->patch_count[irk];
                         // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
-                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] - Href_receiver ) * nmessage, params );
+                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] - Href_receiver ) * nmessage, params, false );
                     }
                 }
             } else { //In case my left neighbor belongs to me:
@@ -226,7 +226,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             if( mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL ) {
                 if ( mypatch->Pcoordinates[0]!=params.number_of_patches[0]-1 ) {
                     // The tag is the patch number in the receiver vector of patches in order to avoid too large tags not supported by some MPI versions.
-                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex - vecPatches.refHindex_ )*nmessage, params );
+                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex - vecPatches.refHindex_ )*nmessage, params, false );
                     patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
                 }
             }
@@ -414,7 +414,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         
         //Fill necessary patches with particles
 #ifdef _VECTO
+
         if( ( params.vectorization_mode == "on" ) ) {
+
             //#pragma omp master
             //{
 #ifndef _NO_MPI_TM

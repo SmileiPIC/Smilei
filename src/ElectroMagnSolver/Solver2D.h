@@ -27,6 +27,8 @@ public:
         ny_d = n_space[1] +2+2*oversize[1];
 
         dt = params.timestep;
+        dx = params.cell_length[0];
+        dy = params.cell_length[1];
         dt_ov_dx = params.timestep / params.cell_length[0];
         dt_ov_dy = params.timestep / params.cell_length[1];
     };
@@ -41,6 +43,8 @@ protected:
     unsigned int ny_p;
     unsigned int ny_d;
     double dt;
+    double dx;
+    double dy;
     double dt_ov_dy;
     double dt_ov_dx;
     

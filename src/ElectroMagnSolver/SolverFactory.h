@@ -26,6 +26,12 @@
 #include "PXR_Solver3D_GPSTD.h"
 #include "PXR_SolverAM_GPSTD.h"
 
+#include "PML_Solver2D_Bouchard.h"
+#include "PML_Solver2D_Yee.h"
+#include "PML_Solver3D_Bouchard.h"
+#include "PML_Solver3D_Yee.h"
+#include "PML_SolverAM.h"
+
 #include "Params.h"
 
 #include "Tools.h"
@@ -153,7 +159,39 @@ public:
         
         return solver;
     };
-    
+
+
+    // Create PML solver
+    // -----------------------------
+    static Solver *createPML( Params &params )
+    {
+        Solver *solver = NULL;
+        if( params.geometry == "2Dcartesian" ) {
+            if (params.maxwell_sol=="Bouchard"){
+                solver = new PML_Solver2D_Bouchard( params );
+            }
+            else {//(params.maxwell_sol=="Yee")
+                solver = new PML_Solver2D_Yee( params );
+            }
+        }
+        else if( params.geometry == "3Dcartesian" ) {
+            if (params.maxwell_sol=="Bouchard"){
+                solver = new PML_Solver3D_Bouchard( params );
+            }
+            else {
+                solver = new PML_Solver3D_Yee( params );
+            }
+        }
+        else if( params.geometry == "AMcylindrical" ) {
+            solver = new PML_SolverAM( params );
+        }
+        else {
+            ERROR( "PML configuration not implemented" );
+        }
+
+        return solver;
+    }
+
 };
 
 #endif

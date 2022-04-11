@@ -120,7 +120,6 @@ public:
                 // Species with nonrelativistic Boris pusher == 'borisnr'
                 // Species with J.L. Vay pusher if == "vay"
                 // Species with Higuary Cary pusher if == "higueracary"
-                
             } else {
                 ERROR_NAMELIST( "For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'",
                 LINK_NAMELIST + std::string("#pusher") );
@@ -204,7 +203,6 @@ public:
 
         // Photon species
         else if( mass == 0 ) {
-
             // Photon can not radiate
             this_species->radiation_model_ = "none";
             this_species-> pusher_name_ = "norm";
@@ -1144,6 +1142,7 @@ public:
 
         // Create new species object
         Species *new_species = NULL;
+
 
         // Type of species
         if ( params.vectorization_mode == "off" ) {

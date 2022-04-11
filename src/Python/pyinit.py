@@ -177,7 +177,8 @@ class Main(SmileiSingleton):
     number_of_AM_classical_Poisson_solver = 1
     timestep_over_CFL = None
     cell_sorting = None
-
+    gpu_computing = False                      # Activate the computation on GPU
+    
     # PXR tuning
     spectral_solver_order = []
     initial_rotational_cleaning = False
@@ -197,6 +198,7 @@ class Main(SmileiSingleton):
     EM_boundary_conditions = [["periodic"]]
     EM_boundary_conditions_k = []
     save_magnectic_fields_for_SM = True
+    number_of_pml_cells = [[10,10],[10,10],[10,10]]
     time_fields_frozen = 0.
     Laser_Envelope_model = False
 
@@ -459,6 +461,7 @@ class Collisions(SmileiComponent):
     coulomb_log_factor = 1.
     every = 1
     debug_every = 0
+    time_frozen = 0
     ionizing = False
     nuclear_reaction = None
     nuclear_reaction_multiplier = 0.
