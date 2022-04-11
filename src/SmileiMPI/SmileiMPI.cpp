@@ -1119,7 +1119,7 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
         if( (dynamic_cast<ElectroMagnBC2D_PML *>( EM->emBoundCond[bcId] ) || dynamic_cast<ElectroMagnBC3D_PML *>( EM->emBoundCond[bcId] )) && (bcId != 1 || send_xmax_bc) ){
             if( dynamic_cast<ElectroMagnBC2D_PML *>( EM->emBoundCond[bcId] )){
                 ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( EM->emBoundCond[bcId] );
-                //send_PML(EM, embc, bcId, to, irequest,requests, tag, send_xmax_bc);
+                send_PML(EM, embc, bcId, to, irequest,requests, tag, send_xmax_bc);
             } else {
                 ElectroMagnBC3D_PML *embc = static_cast<ElectroMagnBC3D_PML *>( EM->emBoundCond[bcId] );
                 send_PML(EM, embc, bcId, to, irequest,requests, tag, send_xmax_bc);
