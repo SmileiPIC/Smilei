@@ -121,7 +121,7 @@ int main( int argc, char *argv[] )
     } else {
 
         if(::omp_get_max_threads() != 1) {
-            // TODO(Etienne M): We should be able to work around this "problem"
+            // TODO(Etienne M): We should be able to work around this "problem" cf 4.13.1 in Omp Exemple 5.0.1
             ERROR("Runing Smilei on GPU using more than one OpenMP thread is not supported when offloading using OpenMP.");
         }
 

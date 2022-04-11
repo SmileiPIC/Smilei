@@ -168,45 +168,54 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     int nz_d = nz_p+1;
 
     //Loop on bin particles
-    int nparts = particles.last_index.back();
+    const std::size_t nparts = particles.last_index.back();
+
+    // CCE 13 implementation of OpenMP (as of 2022/04/07) does not like 
+    // dereferenced ptrs in the for loop's condition.
+    const std::size_t first_index = *istart;
+    const std::size_t last_index  = *iend;
 
 #if defined(SMILEI_ACCELERATOR_GPU_OMP)
-    const std::size_t irange_size  = *iend - *istart;
+    const std::size_t npart_range_size         = last_index - first_index;
+    const std::size_t interpolation_range_size = (last_index + 2 * nparts) - first_index;
 
-    // // TODO(Etienne M): Memory ops optimization
-    #pragma omp target     map(tofrom                              \
-                               : ELoc [0:2 * nparts + *iend],      \
-                                 BLoc [0:2 * nparts + *iend],      \
-                                 iold [0:2 * nparts + *iend],      \
-                                 delta [0:2 * nparts + *iend],     \
-                                 Ex3D [0:sizeofEx],                \
-                                 Ey3D [0:sizeofEy],                \
-                                 Ez3D [0:sizeofEz],                \
-                                 Bx3D [0:sizeofBx],                \
-                                 By3D [0:sizeofBy],                \
-                                 Bz3D [0:sizeofBz],                \
-                                 position_x [*istart:irange_size], \
-                                 position_y [*istart:irange_size], \
-                                 position_z [*istart:irange_size])
+    // TODO(Etienne M): Memory ops optimization
+    #pragma omp target map(to                                           \
+                           : Ex3D [0:sizeofEx],                         \
+                             Ey3D [0:sizeofEy],                         \
+                             Ez3D [0:sizeofEz],                         \
+                             Bx3D [0:sizeofBx],                         \
+                             By3D [0:sizeofBy],                         \
+                             Bz3D [0:sizeofBz],                         \
+                             position_x [first_index:npart_range_size], \
+                             position_y [first_index:npart_range_size], \
+                             position_z [first_index:npart_range_size]) \
+        map(from                                                        \
+            : ELoc [first_index:interpolation_range_size],              \
+              BLoc [first_index:interpolation_range_size],              \
+              iold [first_index:interpolation_range_size],              \
+              delta [first_index:interpolation_range_size])             \
+            map(to                                                      \
+                : i_domain_begin, j_domain_begin, k_domain_begin)
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined(_GPU)
-    #pragma acc parallel present(ELoc [0:2 * nparts + *iend],  \
-                                 BLoc [0:2 * nparts + *iend],  \
-                                 iold [0:2 * nparts + *iend],  \
-                                 delta [0:2 * nparts + *iend], \
-                                 Ex3D [0:sizeofEx],            \
-                                 Ey3D [0:sizeofEy],            \
-                                 Ez3D [0:sizeofEz],            \
-                                 Bx3D [0:sizeofBx],            \
-                                 By3D [0:sizeofBy],            \
-                                 Bz3D [0:sizeofBz])            \
-        deviceptr(position_x,                                  \
-                  position_y,                                  \
+    #pragma acc parallel present(ELoc [0:3 * nparts],  \
+                                 BLoc [0:3 * nparts],  \
+                                 iold [0:3 * nparts],  \
+                                 delta [0:3 * nparts], \
+                                 Ex3D [0:sizeofEx],    \
+                                 Ey3D [0:sizeofEy],    \
+                                 Ez3D [0:sizeofEz],    \
+                                 Bx3D [0:sizeofBx],    \
+                                 By3D [0:sizeofBy],    \
+                                 Bz3D [0:sizeofBz])    \
+        deviceptr(position_x,                          \
+                  position_y,                          \
                   position_z)
     #pragma acc loop gang worker vector
 #endif
-    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+    for( std::size_t ipart=first_index ; ipart<last_index; ipart++ ) {
 
         //Interpolation on current particle
 
@@ -214,8 +223,8 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         double xpn = position_x[ ipart ]*d_inv_[0];
         double ypn = position_y[ ipart ]*d_inv_[1];
         double zpn = position_z[ ipart ]*d_inv_[2];
-        // Calculate coeffs
 
+        // Calculate coeffs
         int idx_p[3], idx_d[3];
         double delta_p[3];
         double coeffxp[3], coeffyp[3], coeffzp[3];

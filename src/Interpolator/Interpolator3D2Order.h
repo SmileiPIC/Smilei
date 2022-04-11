@@ -2,9 +2,8 @@
 #define INTERPOLATOR3D2ORDER_H
 
 
-#include "Interpolator3D.h"
 #include "Field3D.h"
-
+#include "Interpolator3D.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class for 2nd order interpolator for 3Dcartesian simulations
@@ -48,10 +47,10 @@ public:
             }
         }
         return interp_res;
-    };
+    }
 
     //! Computation of a field from provided coefficients
-    inline double __attribute__((always_inline)) compute( double *coeffx, double *coeffy, double *coeffz, double *f, int idx, int idy, int idz, int nx, int ny, int nz )
+    static inline double __attribute__((always_inline)) compute( const double *coeffx, const double *coeffy, const double *coeffz, const double *f, int idx, int idy, int idz, int nx, int ny, int nz )
     {
         double interp_res( 0. );
         //unroll ?
@@ -63,7 +62,7 @@ public:
             }
         }
         return interp_res;
-    };
+    }
 
     //! Interpolator specific to the envelope model
     void fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override ;
@@ -142,7 +141,7 @@ private:
     //! Compuation of coefficients for interpolation using particle normalized positions xpn, ypn, zpn
     inline void __attribute__((always_inline)) coeffs( double xpn, double ypn, double zpn, int* idx_p, int* idx_d,
                         double *coeffxp, double *coeffyp, double *coeffzp,
-                        double *coeffxd, double *coeffyd, double *coeffzd, double* delta_p )
+                        double *coeffxd, double *coeffyd, double *coeffzd, double* delta_p ) const
     {
         // Indexes of the central nodes
         idx_p[0] = round( xpn );
