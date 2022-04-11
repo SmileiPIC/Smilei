@@ -76,6 +76,23 @@ float PartCompTime3D4Order::getParticleComputationTimeVecto( const float log_par
         x = x * log_particle_number;
         r += -6.185088771475547e-04 * x;
 
+    // ROME 7H12 (Ex: Irene Joliot-Curie)
+    #elif defined __AMD_ROME_7H12
+
+        r = 2.508868526399503e+00;
+        x = log_particle_number;
+        r += -7.787402412090076e-01 * x;
+        x = x * log_particle_number;
+        r += -7.883203999087399e-02 * x;
+        x = x * log_particle_number;
+        r += 6.079319281638636e-02 * x;
+        x = x * log_particle_number;
+        r += -2.305414648546000e-03 * x;
+        x = x * log_particle_number;
+        r += -1.531666039929121e-03 * x;
+        x = x * log_particle_number;
+        r += 1.554952540298972e-04 * x;
+
     // Knight Landings Intel Xeon Phi 7250 (Ex: Frioul)
     #elif defined __INTEL_KNL_7250
     
@@ -146,7 +163,12 @@ float PartCompTime3D4Order::getParticleComputationTimeScalar( const float log_pa
     #elif defined __INTEL_SKYLAKE_8168
     
         r = 9.991643443383363e-01 + -1.708070776510193e-02*log_particle_number;
-        
+
+    // ROME 7H12 (Ex: Irene Joliot-Curie)
+    #elif defined __AMD_ROME_7H12
+
+        r = 9.425657134077982e-01 + -2.842764507693196e-02*log_particle_number;
+
     // Knight Landings Intel Xeon Phi 7250 (Ex: Frioul)
     #elif defined __INTEL_KNL_7250
 
