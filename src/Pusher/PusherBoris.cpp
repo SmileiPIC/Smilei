@@ -1,16 +1,14 @@
 #include "PusherBoris.h"
 
-#include <iostream>
 #include <cmath>
+#include <iostream>
 #ifdef _GPU
-#include <accelmath.h>
+    #include <accelmath.h>
 #endif
 
+#include "Particles.h"
 #include "Species.h"
 
-#include "Particles.h"
-
-using namespace std;
 
 PusherBoris::PusherBoris( Params &params, Species *species )
     : Pusher( params, species )
@@ -28,47 +26,45 @@ PusherBoris::~PusherBoris()
 void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset )
 {
 
-    std::vector<double> * Epart = &( smpi->dynamics_Epart[ithread] );
-    std::vector<double> * Bpart = &( smpi->dynamics_Bpart[ithread] );
-    double * __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
+    const std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+    const std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
+    double *__restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
 
     double pxsm, pysm, pzsm;
     double local_invgf;
-    double umx, umy, umz; //upx, upy, upz;
+    double umx, umy, umz; // upx, upy, upz;
     double charge_over_mass_dts2;
     double inv_det_T, Tx, Ty, Tz;
-    //double Tx2, Ty2, Tz2;
-    //double TxTy, TyTz, TzTx;
-    //double alpha;
+    // double Tx2, Ty2, Tz2;
+    // double TxTy, TyTz, TzTx;
+    // double alpha;
 
-    double * __restrict__ position_x = particles.getPtrPosition(0);
-    double * __restrict__ position_y = NULL;
-    double * __restrict__ position_z = NULL;
-    if (nDim_>1) {
-        position_y = particles.getPtrPosition(1);
-        if (nDim_>2) {
-            position_z = particles.getPtrPosition(2);
+    double *__restrict__ position_x = particles.getPtrPosition( 0 );
+    double *__restrict__ position_y = nullptr;
+    double *__restrict__ position_z = nullptr;
+
+    if( nDim_ > 1 ) {
+        position_y = particles.getPtrPosition( 1 );
+        if( nDim_ > 2 ) {
+            position_z = particles.getPtrPosition( 2 );
         }
     }
-    double * __restrict__ momentum_x = particles.getPtrMomentum(0);
-    double * __restrict__ momentum_y = particles.getPtrMomentum(1);
-    double * __restrict__ momentum_z = particles.getPtrMomentum(2);
 
-    short * __restrict__ charge = particles.getPtrCharge();
+    double *__restrict__ momentum_x = particles.getPtrMomentum( 0 );
+    double *__restrict__ momentum_y = particles.getPtrMomentum( 1 );
+    double *__restrict__ momentum_z = particles.getPtrMomentum( 2 );
 
-    int nparts;
-    if (vecto) {
-        nparts = Epart->size()/3;
-    } else {
-        //nparts = particles.size();
-        nparts = particles.last_index.back();
-    }
-    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
-    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
-    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
-    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
-    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
-    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
+    const short *__restrict__ charge = particles.getPtrCharge();
+
+    const int nparts = vecto ? Epart->size() / 3 :
+                               particles.last_index.back(); // particles.size()
+
+    const double *__restrict__ Ex = &( ( *Epart )[0*nparts] );
+    const double *__restrict__ Ey = &( ( *Epart )[1*nparts] );
+    const double *__restrict__ Ez = &( ( *Epart )[2*nparts] );
+    const double *__restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    const double *__restrict__ By = &( ( *Bpart )[1*nparts] );
+    const double *__restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
 #if defined(SMILEI_ACCELERATOR_GPU_OMP)
     const int istart_offset   = istart - ipart_buffer_offset;
@@ -118,7 +114,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
-        int ipart2 = ipart - ipart_buffer_offset;
+        const int ipart2 = ipart - ipart_buffer_offset;
 
         charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
 
@@ -153,11 +149,11 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
 
         // Move the particle
         local_invgf *= dt;
-        //position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart2];
+        // position_x[ipart] += dt*momentum_x[ipart]*invgf[ipart2];
         position_x[ipart] += pxsm*local_invgf;
-        if (nDim_>1) {
+        if( nDim_ > 1 ) {
             position_y[ipart] += pysm*local_invgf;
-            if (nDim_>2) {
+            if( nDim_ > 2 ) {
                 position_z[ipart] += pzsm*local_invgf;
             }
         }

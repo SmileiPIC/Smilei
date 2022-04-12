@@ -3,15 +3,13 @@
 #include <cmath>
 #include <iostream>
 #ifdef _GPU
-#include <accelmath.h>
+    #include <accelmath.h>
 #endif
 
 #include "ElectroMagn.h"
 #include "Field3D.h"
-#include "Particles.h"
 #include "LaserEnvelope.h"
-
-using namespace std;
+#include "Particles.h"
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -135,49 +133,49 @@ void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *i
 
 void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
-    double *ELoc = &( smpi->dynamics_Epart[ithread][0] );
-    double *BLoc = &( smpi->dynamics_Bpart[ithread][0] );
+    double *__restrict__ ELoc = &( smpi->dynamics_Epart[ithread][0] );
+    double *__restrict__ BLoc = &( smpi->dynamics_Bpart[ithread][0] );
 
-    int*     iold = &( smpi->dynamics_iold    [ithread][0] );
-    double* delta = &( smpi->dynamics_deltaold[ithread][0] );
+    int *iold                  = &( smpi->dynamics_iold[ithread][0] );
+    double *__restrict__ delta = &( smpi->dynamics_deltaold[ithread][0] );
 
-    double* position_x = particles.getPtrPosition(0);
-    double* position_y = particles.getPtrPosition(1);
-    double* position_z = particles.getPtrPosition(2);
+    const double *__restrict__ position_x = particles.getPtrPosition( 0 );
+    const double *__restrict__ position_y = particles.getPtrPosition( 1 );
+    const double *__restrict__ position_z = particles.getPtrPosition( 2 );
 
     // Static cast of the electromagnetic fields
-    double* Ex3D = EMfields->Ex_->data_;
-    double* Ey3D = EMfields->Ey_->data_;
-    double* Ez3D = EMfields->Ez_->data_;
-    double* Bx3D = EMfields->Bx_m->data_;
-    double* By3D = EMfields->By_m->data_;
-    double* Bz3D = EMfields->Bz_m->data_;
+    const double *__restrict__ Ex3D = EMfields->Ex_->data_;
+    const double *__restrict__ Ey3D = EMfields->Ey_->data_;
+    const double *__restrict__ Ez3D = EMfields->Ez_->data_;
+    const double *__restrict__ Bx3D = EMfields->Bx_m->data_;
+    const double *__restrict__ By3D = EMfields->By_m->data_;
+    const double *__restrict__ Bz3D = EMfields->Bz_m->data_;
 
-    int sizeofEx = EMfields->Ex_->globalDims_;
-    int sizeofEy = EMfields->Ey_->globalDims_;
-    int sizeofEz = EMfields->Ez_->globalDims_;
-    int sizeofBx = EMfields->Bx_m->globalDims_;
-    int sizeofBy = EMfields->By_m->globalDims_;
-    int sizeofBz = EMfields->Bz_m->globalDims_;
+    const int sizeofEx = EMfields->Ex_->globalDims_;
+    const int sizeofEy = EMfields->Ey_->globalDims_;
+    const int sizeofEz = EMfields->Ez_->globalDims_;
+    const int sizeofBx = EMfields->Bx_m->globalDims_;
+    const int sizeofBy = EMfields->By_m->globalDims_;
+    const int sizeofBz = EMfields->Bz_m->globalDims_;
 
-    int nx_p = EMfields->Bx_m->dims_[0];
-    int ny_p = EMfields->By_m->dims_[1];
-    int nz_p = EMfields->Bz_m->dims_[2];
-    int nx_d = nx_p+1;
-    int ny_d = ny_p+1;
-    int nz_d = nz_p+1;
+    const int nx_p = EMfields->Bx_m->dims_[0];
+    const int ny_p = EMfields->By_m->dims_[1];
+    const int nz_p = EMfields->Bz_m->dims_[2];
+    const int nx_d = nx_p + 1;
+    const int ny_d = ny_p + 1;
+    const int nz_d = nz_p + 1;
 
-    //Loop on bin particles
+    // Loop on bin particles
     const int nparts = particles.last_index.back();
 
-    // CCE 13 implementation of OpenMP (as of 2022/04/07) does not like 
+    // CCE 13 implementation of OpenMP (as of 2022/04/07) does not like
     // dereferenced ptrs in the for loop's condition.
     const int first_index = *istart;
     const int last_index  = *iend;
 
 #if defined(SMILEI_ACCELERATOR_GPU_OMP)
     const int npart_range_size         = last_index - first_index;
-    const int interpolation_range_size = (last_index + 2 * nparts) - first_index;
+    const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
 
     // TODO(Etienne M): Memory ops optimization
     #pragma omp target map(to                                           \
@@ -200,7 +198,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined(_GPU)
-    const int interpolation_range_size = (last_index + 2 * nparts) - first_index;
+    const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
 
     #pragma acc parallel present(ELoc [first_index:interpolation_range_size],  \
                                  BLoc [first_index:interpolation_range_size],  \
@@ -219,15 +217,15 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
 #endif
     for( int ipart=first_index ; ipart<last_index; ipart++ ) {
 
-        //Interpolation on current particle
+        // Interpolation on current particle
 
         // Normalized particle position
-        double xpn = position_x[ ipart ]*d_inv_[0];
-        double ypn = position_y[ ipart ]*d_inv_[1];
-        double zpn = position_z[ ipart ]*d_inv_[2];
+        double xpn = position_x[ipart]*d_inv_[0];
+        double ypn = position_y[ipart]*d_inv_[1];
+        double zpn = position_z[ipart]*d_inv_[2];
 
         // Calculate coeffs
-        int idx_p[3], idx_d[3];
+        int    idx_p[3], idx_d[3];
         double delta_p[3];
         double coeffxp[3], coeffyp[3], coeffzp[3];
         double coeffxd[3], coeffyd[3], coeffzd[3];
@@ -255,12 +253,11 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         delta[1*nparts+ipart] = delta_p[1];
         delta[2*nparts+ipart] = delta_p[2];
     }
-
 }
 
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
-void Interpolator3D2Order::fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> *selection )
+void Interpolator3D2Order::fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> *selection )
 {
     if( selection ) {
 
