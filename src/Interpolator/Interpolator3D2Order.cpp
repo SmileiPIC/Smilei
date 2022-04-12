@@ -168,16 +168,16 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     int nz_d = nz_p+1;
 
     //Loop on bin particles
-    const std::size_t nparts = particles.last_index.back();
+    const int nparts = particles.last_index.back();
 
     // CCE 13 implementation of OpenMP (as of 2022/04/07) does not like 
     // dereferenced ptrs in the for loop's condition.
-    const std::size_t first_index = *istart;
-    const std::size_t last_index  = *iend;
+    const int first_index = *istart;
+    const int last_index  = *iend;
 
 #if defined(SMILEI_ACCELERATOR_GPU_OMP)
-    const std::size_t npart_range_size         = last_index - first_index;
-    const std::size_t interpolation_range_size = (last_index + 2 * nparts) - first_index;
+    const int npart_range_size         = last_index - first_index;
+    const int interpolation_range_size = (last_index + 2 * nparts) - first_index;
 
     // TODO(Etienne M): Memory ops optimization
     #pragma omp target map(to                                           \
@@ -215,7 +215,7 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
                   position_z)
     #pragma acc loop gang worker vector
 #endif
-    for( std::size_t ipart=first_index ; ipart<last_index; ipart++ ) {
+    for( int ipart=first_index ; ipart<last_index; ipart++ ) {
 
         //Interpolation on current particle
 
