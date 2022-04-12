@@ -28,5 +28,15 @@
     #define UNROLL_S(n)
 #endif
 
+#if defined(SMILEI_ACCELERATOR_GPU_OMP)
+    #define SMILEI_ACCELERATOR_DECLARE_ROUTINE     _Pragma("omp declare target")
+    #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END _Pragma("omp end declare target")
+#elif defined(_GPU)
+    #define SMILEI_ACCELERATOR_DECLARE_ROUTINE _Pragma("acc routine seq")
+    #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
+#else
+    #define SMILEI_ACCELERATOR_DECLARE_ROUTINE
+    #define SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
+#endif
 
 #endif

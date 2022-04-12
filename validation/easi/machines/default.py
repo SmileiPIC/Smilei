@@ -113,15 +113,31 @@ class Machine(object):
         # Wait for the exit status to be set
         # current_time = 0
         while EXIT_STATUS == "100":# and current_time < options['max_time_seconds']):
-            sleep(5)
+            sleep(1)
             # current_time += 5
             with open(dir+sep+"exit_status_file", "r+") as f:
                 EXIT_STATUS = f.readline()
             # if current_time > options['max_time_seconds']:
             #     print("Max time exceeded for command `"+command+"`")
             #     exit(2)
+
         # Check that the run succeeded
-        if int(EXIT_STATUS) != 0:
+        for i in range(5):
+            # On some file system, EXIT_STATUS will not contain the correct return code for a while (few ms).
+            # We loop until we get a successful read.
+            sleep(i)
+            with open(dir+sep+"exit_status_file", "r+") as f:
+                EXIT_STATUS = f.readline()
+            print('Exited with "' + EXIT_STATUS + '"')
+            try:
+                # throws if it can't parse the EXIT_STATUS
+                if int(EXIT_STATUS) == 0:
+                    # Good return code, leave the loop
+                    return
+            except ValueError as err:
+                # Sleep and retry
+                continue
+            # Bad return code
             if self.options.verbose:
                 print("")
                 print("Execution failed for command `"+base_command+"`")

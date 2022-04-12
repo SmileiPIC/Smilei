@@ -24,6 +24,8 @@ SMILEICXX.DEPS := $(SMILEICXX)
 WARNING_FLAGS := -Wextra -pedantic
 WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
 
+# DEBUG_SANITIZER_FLAGS := -fsanitize=address
+
 ifneq (,$(call parse_config,gpu_amd))
 	# Add mi100 amd gpu arch
 	ACCELERATOR_GPU_TARGET_ARCH=amdgcn-amd-amdhsa
@@ -35,7 +37,7 @@ ifneq (,$(call parse_config,gpu_amd))
 
 	THRUSTCXX := hipcc
 
-	ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP $(ACCELERATOR_GPU_OMP_FLAGS)
+	ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP $(ACCELERATOR_GPU_OMP_FLAGS) $(DEBUG_SANITIZER_FLAGS)
 	ACCELERATOR_GPU_FLAGS += -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
 
 	ACCELERATOR_GPU_KERNEL_FLAGS += -I$(CRAY_MPICH_DIR)/include
@@ -46,7 +48,7 @@ ifneq (,$(call parse_config,gpu_amd))
 	# ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
 
 	# We need to link with the appropriate "First-Party Tool" (as OpenMP calls them)
-	LDFLAGS += $(WARNING_FLAGS) $(ACCELERATOR_GPU_OMP_FLAGS)
+	LDFLAGS += $(WARNING_FLAGS) $(ACCELERATOR_GPU_OMP_FLAGS) $(DEBUG_SANITIZER_FLAGS)
 	# LDFLAGS += -static-openmp
 	# May help resolve some linker issue
 	# LDFLAGS += -foffload=-lm
