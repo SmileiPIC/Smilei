@@ -60,6 +60,9 @@ float PartCompTime2D4Order::getParticleComputationTimeVecto( const float log_par
         x = x * log_particle_number;
         r += -3.030723303015333e-04 * x;
 
+    // ROME 7H12 (Ex: Irene Joliot-Curie)
+    #elif defined __AMD_ROME_7H12
+
     // General fit
     #else
         r = 2.509868911348321e+00;
@@ -84,6 +87,10 @@ float PartCompTime2D4Order::getParticleComputationTimeScalar( const float log_pa
     // Skylake 8168 (Ex: Irene)
     #if defined __INTEL_SKYLAKE_8168
         r = 9.531254360097559e-01 + -1.651330924686195e-02*log_particle_number;
+        
+    // ROME 7H12 (Ex: Irene Joliot-Curie)
+    #elif defined __AMD_ROME_7H12
+        
     // General fit
     #else
         r = 9.531254360097559e-01 + -1.651330924686195e-02*log_particle_number;
