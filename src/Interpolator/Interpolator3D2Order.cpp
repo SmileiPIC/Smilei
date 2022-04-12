@@ -200,18 +200,20 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined(_GPU)
-    #pragma acc parallel present(ELoc [0:3 * nparts],  \
-                                 BLoc [0:3 * nparts],  \
-                                 iold [0:3 * nparts],  \
-                                 delta [0:3 * nparts], \
-                                 Ex3D [0:sizeofEx],    \
-                                 Ey3D [0:sizeofEy],    \
-                                 Ez3D [0:sizeofEz],    \
-                                 Bx3D [0:sizeofBx],    \
-                                 By3D [0:sizeofBy],    \
-                                 Bz3D [0:sizeofBz])    \
-        deviceptr(position_x,                          \
-                  position_y,                          \
+    const int interpolation_range_size = (last_index + 2 * nparts) - first_index;
+
+    #pragma acc parallel present(ELoc [first_index:interpolation_range_size],  \
+                                 BLoc [first_index:interpolation_range_size],  \
+                                 iold [first_index:interpolation_range_size],  \
+                                 delta [first_index:interpolation_range_size], \
+                                 Ex3D [0:sizeofEx],                            \
+                                 Ey3D [0:sizeofEy],                            \
+                                 Ez3D [0:sizeofEz],                            \
+                                 Bx3D [0:sizeofBx],                            \
+                                 By3D [0:sizeofBy],                            \
+                                 Bz3D [0:sizeofBz])                            \
+        deviceptr(position_x,                                                  \
+                  position_y,                                                  \
                   position_z)
     #pragma acc loop gang worker vector
 #endif
@@ -233,25 +235,25 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         coeffs( xpn, ypn, zpn, idx_p, idx_d, coeffxp, coeffyp, coeffzp, coeffxd, coeffyd, coeffzd, delta_p );
 
         // Interpolation of Ex^(d,p,p)
-        *( ELoc+0*nparts+ipart ) = compute( &coeffxd[1], &coeffyp[1], &coeffzp[1], Ex3D, idx_d[0], idx_p[1], idx_p[2], nx_d, ny_p, nz_p );
+        ELoc[0*nparts+ipart] = compute( &coeffxd[1], &coeffyp[1], &coeffzp[1], Ex3D, idx_d[0], idx_p[1], idx_p[2], nx_d, ny_p, nz_p );
         // Interpolation of Ey^(p,d,p)
-        *( ELoc+1*nparts+ipart ) = compute( &coeffxp[1], &coeffyd[1], &coeffzp[1], Ey3D, idx_p[0], idx_d[1], idx_p[2], nx_p, ny_d, nz_p );
+        ELoc[1*nparts+ipart] = compute( &coeffxp[1], &coeffyd[1], &coeffzp[1], Ey3D, idx_p[0], idx_d[1], idx_p[2], nx_p, ny_d, nz_p );
         // Interpolation of Ez^(p,p,d)
-        *( ELoc+2*nparts+ipart ) = compute( &coeffxp[1], &coeffyp[1], &coeffzd[1], Ez3D, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d );
+        ELoc[2*nparts+ipart] = compute( &coeffxp[1], &coeffyp[1], &coeffzd[1], Ez3D, idx_p[0], idx_p[1], idx_d[2], nx_p, ny_p, nz_d );
         // Interpolation of Bx^(p,d,d)
-        *( BLoc+0*nparts+ipart ) = compute( &coeffxp[1], &coeffyd[1], &coeffzd[1], Bx3D, idx_p[0], idx_d[1], idx_d[2], nx_p, ny_d, nz_d );
+        BLoc[0*nparts+ipart] = compute( &coeffxp[1], &coeffyd[1], &coeffzd[1], Bx3D, idx_p[0], idx_d[1], idx_d[2], nx_p, ny_d, nz_d );
         // Interpolation of By^(d,p,d)
-        *( BLoc+1*nparts+ipart ) = compute( &coeffxd[1], &coeffyp[1], &coeffzd[1], By3D, idx_d[0], idx_p[1], idx_d[2], nx_d, ny_p, nz_d );
+        BLoc[1*nparts+ipart] = compute( &coeffxd[1], &coeffyp[1], &coeffzd[1], By3D, idx_d[0], idx_p[1], idx_d[2], nx_d, ny_p, nz_d );
         // Interpolation of Bz^(d,d,p)
-        *( BLoc+2*nparts+ipart ) = compute( &coeffxd[1], &coeffyd[1], &coeffzp[1], Bz3D, idx_d[0], idx_d[1], idx_p[2], nx_d, ny_d, nz_p );
+        BLoc[2*nparts+ipart] = compute( &coeffxd[1], &coeffyd[1], &coeffzp[1], Bz3D, idx_d[0], idx_d[1], idx_p[2], nx_d, ny_d, nz_p );
 
         //Buffering of iol and delta
-        iold[ipart+0*nparts]  = idx_p[0];
-        iold[ipart+1*nparts]  = idx_p[1];
-        iold[ipart+2*nparts]  = idx_p[2];
-        delta[ipart+0*nparts] = delta_p[0];
-        delta[ipart+1*nparts] = delta_p[1];
-        delta[ipart+2*nparts] = delta_p[2];
+        iold[0*nparts+ipart]  = idx_p[0];
+        iold[1*nparts+ipart]  = idx_p[1];
+        iold[2*nparts+ipart]  = idx_p[2];
+        delta[0*nparts+ipart] = delta_p[0];
+        delta[1*nparts+ipart] = delta_p[1];
+        delta[2*nparts+ipart] = delta_p[2];
     }
 
 }
