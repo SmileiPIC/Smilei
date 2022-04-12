@@ -101,19 +101,19 @@ float PartCompTimeAM2Order::getParticleComputationTimeVecto( const float log_par
     
     // General fit
     #else
-        r = 3.429175824327019e+00;
+        r = 3.562061671184216e+00;
         x = log_particle_number;
-        r +=  -1.082984887450181e+00 * x;
+        r += -1.104209179152063e+00 * x;
         x = x * log_particle_number;
-        r +=  -5.343864432268729e-01 * x;
+        r += -5.262022909482892e-01 * x;
         x = x * log_particle_number;
-        r += + 3.926641303143978e-01 * x;
+        r += 3.985374024978240e-01 * x;
         x = x * log_particle_number;
-        r +=  -9.002576768396432e-02 * x;
+        r += -9.580833134861022e-02 * x;
         x = x * log_particle_number;
-        r += + 8.923748953271823e-03 * x;
+        r += 1.038743187318360e-02 * x;
         x = x * log_particle_number;
-        r +=  -3.168138264378548e-04 * x;
+        r += -4.323215852458617e-04 * x;
     #endif
     return r;
 };
@@ -138,7 +138,7 @@ float PartCompTimeAM2Order::getParticleComputationTimeScalar( const float log_pa
         
     // General fit
     #else
-        r = 9.795834451761070e-01 + -1.627755115838038e-02*log_particle_number;
+        r = 9.537271325394608e-01 + -1.381355421429730e-02*log_particle_number;
     #endif
     
     return r;

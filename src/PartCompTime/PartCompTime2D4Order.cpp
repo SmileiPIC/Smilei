@@ -46,8 +46,25 @@ float PartCompTime2D4Order::getParticleComputationTimeVecto( const float log_par
     float r = 0;
     float x;
     
+    // Cascade lake 6248 (Ex: Jean Zay)
+    #if defined __INTEL_CASCADELAKE_6248
+    
+        r = 2.658124758863325e+00;
+        x = log_particle_number;
+        r += -1.893034035458020e+00 * x;
+        x = x * log_particle_number;
+        r += 5.458991963612114e-01 * x;
+        x = x * log_particle_number;
+        r += -3.560915318115766e-02 * x;
+        x = x * log_particle_number;
+        r += -1.174561799335996e-02 * x;
+        x = x * log_particle_number;
+        r += 2.303412111162243e-03 * x;
+        x = x * log_particle_number;
+        r += -1.198816917227847e-04 * x;
+
     // Skylake 8168 (Ex: Irene Joliot-Curie)
-    #if defined __INTEL_SKYLAKE_8168
+    #elif defined __INTEL_SKYLAKE_8168
         r = 2.509868911348321e+00;
         x = log_particle_number;
         r += -1.903918423339746e+00 * x;
@@ -84,10 +101,12 @@ float PartCompTime2D4Order::getParticleComputationTimeScalar( const float log_pa
     
     float r = 0;
     
+    // Cascade lake 6248 (Ex: Jean Zay)
+    #if defined __INTEL_CASCADELAKE_6248
+        r = 9.976139677305942e-01 + 6.641675014248384e-03*log_particle_number;
     // Skylake 8168 (Ex: Irene)
-    #if defined __INTEL_SKYLAKE_8168
+    #elif defined __INTEL_SKYLAKE_8168
         r = 9.531254360097559e-01 + -1.651330924686195e-02*log_particle_number;
-        
     // ROME 7H12 (Ex: Irene Joliot-Curie)
     #elif defined __AMD_ROME_7H12
         
