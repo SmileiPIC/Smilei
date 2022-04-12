@@ -123,7 +123,7 @@ class Machine(object):
 
         # Check that the run succeeded
         for i in range(5):
-            # On some file system, EXIT_STATUS for a while (few ms) before containing a valid return code.
+            # On some file system, EXIT_STATUS will not contain the correct return code for a while (few ms).
             # We loop until we get a successful read.
             sleep(i)
             with open(dir+sep+"exit_status_file", "r+") as f:
@@ -146,5 +146,5 @@ class Machine(object):
                     check_call(COMMAND, shell=True)
                 except CalledProcessError:
                     print("")
-                    print("Failed to print file `%s`" % error_file)
+                    print("Failed to print file `%s`"%error_file)
             exit(2)
