@@ -1913,7 +1913,7 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
                 SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
                 SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
 
-                if( params.Laser_Envelope_model ) {
+                if( params.Env_BCs[iDim][min_max] == "PML" /* params.Laser_Envelope_model */ ) {
                     #pragma omp single
                     vecPatches.buildPMLList( "A_np1_pml", iDim, min_max, smpi  );
 
@@ -1972,7 +1972,7 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
                     SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
                     SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
 
-                    if( params.Laser_Envelope_model ) {
+                    if( params.Env_BCs[iDim][min_max] == "PML" /* params.Laser_Envelope_model */ ) {
                         #pragma omp single
                         vecPatches.buildPMLList( "A_np1_pml", iDim, min_max, smpi  );
 
@@ -2032,7 +2032,7 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
                 SyncVectorPatch::exchangeAlongX<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
                 SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
 
-                if( params.Laser_Envelope_model ) {
+                if( params.Env_BCs[iDim][min_max] == "PML" /* params.Laser_Envelope_model */ ) {
                     #pragma omp single
                     vecPatches.buildPMLList( "A_np1_pml", iDim, min_max, smpi  );
 
@@ -2092,7 +2092,7 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
                     SyncVectorPatch::exchangeAlongZ<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
                     SyncVectorPatch::finalizeExchangeAlongZ( vecPatches.listForPML_, vecPatches );
 
-                    if( params.Laser_Envelope_model ) {
+                    if( params.Env_BCs[iDim][min_max] == "PML" /* params.Laser_Envelope_model */ ) {
                         #pragma omp single
                         vecPatches.buildPMLList( "A_np1_pml", iDim, min_max, smpi  );
 
@@ -2189,7 +2189,7 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
                     SyncVectorPatch::exchangeAlongY<double,Field>( vecPatches.listForPML_, vecPatches, smpi );
                     SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
 
-                    if( params.Laser_Envelope_model ) {
+                    if( params.Env_BCs[iDim][min_max] == "PML" /* params.Laser_Envelope_model */ ) {
                         #pragma omp single
                         vecPatches.buildPMLList( "A_np1_pml", iDim, min_max, smpi  );
 
@@ -2272,7 +2272,7 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
                 SyncVectorPatch::finalizeExchangeAlongY( vecPatches.listForPML_, vecPatches );
 
                 if (imode == 0){
-                    if( params.Laser_Envelope_model ) {
+                    if( params.Env_BCs[iDim][min_max] == "PML" /* params.Laser_Envelope_model */ ) {
                         #pragma omp single
                         vecPatches.buildPMLList( "A_np1_pml", iDim, min_max, smpi, imode );
 
@@ -2352,7 +2352,7 @@ void SyncVectorPatch::exchangeForPML( Params &params, VectorPatch &vecPatches, S
                 SyncVectorPatch::finalizeExchangeAlongX( vecPatches.listForPML_, vecPatches );
 
                 if (imode == 0){
-                    if( params.Laser_Envelope_model ) {
+                    if( params.Env_BCs[iDim][min_max] == "PML" /* params.Laser_Envelope_model */ ) {
                         #pragma omp single
                         vecPatches.buildPMLList( "A_np1_pml", iDim, min_max, smpi, imode );
 

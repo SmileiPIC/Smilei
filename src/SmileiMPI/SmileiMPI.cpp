@@ -1214,11 +1214,10 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
         }
 
 
-        if( dynamic_cast<ElectroMagnBCAM_PML *>( EM->emBoundCond[bcId] )  && (bcId != 1 || send_xmax_bc)  ){
+        if( dynamic_cast<ElectroMagnBCAM_PML *>( EM->emBoundCond[bcId] ) && (bcId != 1 || send_xmax_bc)  ){
             ElectroMagnBCAM_PML *embc = static_cast<ElectroMagnBCAM_PML *>( EM->emBoundCond[bcId] );
             // if I have PML && if the receiver also have PMLs <=> the hindex I send to touches the same boundary I am dealing with now
             if (embc->Hl_[0] ) {
-
                 if(!send_xmax_bc && bcId>1 && EMAM->isXmax){ //When not sending xmax_bc (MovingWindow), the size of the non longitudinal pml sent must be tailored on corner cases.
                     for( unsigned int imode =0; imode < nmodes; imode++ ) {
                         isendComplex( embc->Hl_[imode], to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0) );
@@ -1274,7 +1273,7 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Reques
                         irequest++;
                     }
                 }
-                if( EM->envelope!=NULL ) {
+                if( dynamic_cast<EnvelopeBCAM_PML *>( EM->envelope->EnvBoundCond[bcId] ) /* EM->envelope!=NULL */ ) {
                     EnvelopeBCAM_PML *embcenv = static_cast<EnvelopeBCAM_PML *>( EM->envelope->EnvBoundCond[bcId] );
                     isendComplex( embcenv->A_n_, to, tag+irequest, requests[irequest] );
                     irequest++;
@@ -1644,7 +1643,7 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int &tag, unsigned int nmodes, 
                         tag++;
                     }
                 }
-                if( EM->envelope!=NULL ) {
+                if( dynamic_cast<EnvelopeBCAM_PML *>( EM->envelope->EnvBoundCond[bcId] )  /* EM->envelope!=NULL*/  ) {
                     EnvelopeBCAM_PML *embcenv = static_cast<EnvelopeBCAM_PML *>( EM->envelope->EnvBoundCond[bcId] );
                     recvComplex( embcenv->A_n_, from, tag );
                     tag++;
