@@ -1279,9 +1279,8 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             // Applies boundary conditions on B
             ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
         }
-        if ( params.EM_BCs[0][0] == "PML" ) { // If a PML on 1 border, then on all
-            SyncVectorPatch::exchangeForPML( params, (*this), smpi );
-        }
+        SyncVectorPatch::exchangeForPML( params, (*this), smpi );
+
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Computes B at time n using B and B_m.
@@ -1368,9 +1367,7 @@ void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimW
                 ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
 
         }
-        if ( params.EM_BCs[0][0] == "PML" ) { // If a PML on 1 border, then on all
-            SyncVectorPatch::exchangeForPML( params, (*this), smpi );
-        }
+        SyncVectorPatch::exchangeForPML( params, (*this), smpi );
 
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
