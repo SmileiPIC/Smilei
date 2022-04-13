@@ -13,11 +13,11 @@ PML_Solver3D_Bouchard::PML_Solver3D_Bouchard( Params &params )
     dy = params.cell_length[1];
     dz = params.cell_length[2];
     double dx_ov_dt  = dx/dt;
-    double dy_ov_dt  = dy/dt;
-    double dz_ov_dt  = dz/dt;
-    double dt_ov_dx  = dt/dx;
-    double dt_ov_dy  = dt/dy;
-    double dt_ov_dz  = dt/dz;
+    //double dy_ov_dt  = dy/dt;
+    //double dz_ov_dt  = dz/dt;
+    //double dt_ov_dx  = dt/dx;
+    //double dt_ov_dy  = dt/dy;
+    //double dt_ov_dz  = dt/dz;
     //Not necessary to have dx=dy=dz, but dispersion law are modify
     //In particular if dz >> dx,dy then solver become like the 2d solver
     //if( (dx!=dy)||(dx!=dz)||(dy!=dz) ) {

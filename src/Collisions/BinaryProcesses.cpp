@@ -30,10 +30,10 @@ BinaryProcesses::BinaryProcesses(
     double time_frozen,
     string filename
 ) :
+    processes_( processes ),
     species_group1_( species_group1 ),
     species_group2_( species_group2 ),
     intra_( intra ),
-    processes_( processes ),
     every_( every ),
     debug_every_( debug_every ),
     filename_( filename )

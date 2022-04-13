@@ -12,7 +12,7 @@ install:
   stage: install
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,7 +31,7 @@ compile_default:
   stage: compile_default
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
   script:
     # Move in test dir
@@ -43,7 +43,7 @@ run1D:
   stage: run_default
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
   script:
     # Move in test dir
@@ -56,7 +56,7 @@ run2D:
   stage: run_default
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
 
   script:
@@ -72,7 +72,7 @@ run3D:
   stage: run_default
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
   script:
     # Move in test dir
@@ -88,7 +88,7 @@ runAM:
   stage: run_default
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
   script:
     # Move in test dir
@@ -100,7 +100,7 @@ runCollisions:
   stage: run_default
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
   script:
     # Move in test dir
@@ -112,7 +112,7 @@ compile_picsar:
   stage: compile_picsar
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -123,7 +123,7 @@ run_picsar:
   stage: run_picsar
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -133,7 +133,7 @@ compile_debug:
   stage: compile_debug
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -144,7 +144,7 @@ compile_no_mpi_threadmultiple:
   stage: compile_no_mpi_threadmultiple
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
   script:
     - cd /sps3/gitlab-runner/$CI_PIPELINE_ID/smilei
@@ -155,7 +155,7 @@ compile_no_openmp:
   stage: compile_no_openmp
   only:
     - develop
-    - mergingPML
+    - vectorization_AM
 
 
   script:

@@ -36,8 +36,6 @@
 
 #include "DiagnosticTrack.h"
 
-#include "SpeciesMetrics.h"
-
 using namespace std;
 
 
@@ -102,40 +100,40 @@ void SpeciesVAdaptiveMixedSort::resizeCluster( Params &params )
 //! Compute part_cell_keys at patch creation.
 //! This operation is normally done in the pusher to avoid additional particles pass.
 // -----------------------------------------------------------------------------
-void SpeciesVAdaptiveMixedSort::computeParticleCellKeys( Params &params )
-{
-
-    unsigned int ip, nparts;
-    int IX;
-    double X;
-
-    //Number of particles before exchange
-    nparts = particles->size();
-
-    // Cell_keys is resized at the current number of particles
-    particles->resizeCellKeys( nparts );
-
-    // Reinitialize count to 0
-    for( unsigned int ic=0; ic < count.size() ; ic++ ) {
-        count[ic] = 0 ;
-    }
-
-    #pragma omp simd
-    for( ip=0; ip < nparts ; ip++ ) {
-        // Counts the # of particles in each cell (or sub_cell) and store it in sparticles->last_index.
-        for( unsigned int ipos=0; ipos < nDim_particle ; ipos++ ) {
-            X = particles->position( ipos, ip )-min_loc_vec[ipos];
-            IX = round( X * dx_inv_[ipos] );
-            particles->cell_keys[ip] = particles->cell_keys[ip] * this->length_[ipos] + IX;
-        }
-    }
-
-    // Reduction of the number of particles per cell in count
-    for( ip=0; ip < nparts ; ip++ ) {
-        count[particles->cell_keys[ip]] ++ ;
-    }
-
-}
+// void SpeciesVAdaptiveMixedSort::computeParticleCellKeys( Params &params )
+// {
+// 
+//     unsigned int ip, nparts;
+//     int IX;
+//     double X;
+// 
+//     //Number of particles before exchange
+//     nparts = particles->size();
+// 
+//     // Cell_keys is resized at the current number of particles
+//     particles->resizeCellKeys( nparts );
+// 
+//     // Reinitialize count to 0
+//     for( unsigned int ic=0; ic < count.size() ; ic++ ) {
+//         count[ic] = 0 ;
+//     }
+// 
+//     #pragma omp simd
+//     for( ip=0; ip < nparts ; ip++ ) {
+//         // Counts the # of particles in each cell (or sub_cell) and store it in sparticles->last_index.
+//         for( unsigned int ipos=0; ipos < nDim_particle ; ipos++ ) {
+//             X = particles->position( ipos, ip )-min_loc_vec[ipos];
+//             IX = round( X * dx_inv_[ipos] );
+//             particles->cell_keys[ip] = particles->cell_keys[ip] * this->length_[ipos] + IX;
+//         }
+//     }
+// 
+//     // Reduction of the number of particles per cell in count
+//     for( ip=0; ip < nparts ; ip++ ) {
+//         count[particles->cell_keys[ip]] ++ ;
+//     }
+// 
+// }
 
 void SpeciesVAdaptiveMixedSort::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
@@ -197,7 +195,7 @@ void SpeciesVAdaptiveMixedSort::configuration( Params &params, Patch *patch )
     float vecto_time = 0.;
     float scalar_time = 0.;
 
-    // We first compute cell_keys: the number of particles per cell
+    // We first compute cell_keys and the number of particles per cell
     this->computeParticleCellKeys( params );
 
     // Species with particles
@@ -205,9 +203,9 @@ void SpeciesVAdaptiveMixedSort::configuration( Params &params, Patch *patch )
 
         // --------------------------------------------------------------------
         // Metrics 2 - based on the evaluation of the computational time
-        SpeciesMetrics::get_computation_time( this->count,
-                                              vecto_time,
-                                              scalar_time );
+        (*part_comp_time_)( count,
+                        vecto_time,
+                        scalar_time );
 
         if( vecto_time <= scalar_time ) {
             this->vectorized_operators = true;
@@ -290,9 +288,9 @@ void SpeciesVAdaptiveMixedSort::reconfiguration( Params &params, Patch *patch )
     
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time( count,
-                                          vecto_time,
-                                          scalar_time );
+    (*part_comp_time_)( count,
+                    vecto_time,
+                    scalar_time );
 
     if( ( vecto_time < scalar_time && this->vectorized_operators == false )
             || ( vecto_time > scalar_time && this->vectorized_operators == true ) ) {

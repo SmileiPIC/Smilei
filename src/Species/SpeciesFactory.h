@@ -94,6 +94,20 @@ public:
         // Create species object
         Species *this_species = NULL;
 
+        // Species type
+        if ( params.vectorization_mode == "off" ) {
+            this_species = new Species( params, patch );
+        } 
+        #ifdef _VECTO
+        else if( params.vectorization_mode == "on" ) {
+            this_species = new SpeciesV( params, patch );
+        } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
+            this_species = new SpeciesVAdaptiveMixedSort( params, patch );
+        } else if( params.vectorization_mode == "adaptive" ) {
+            this_species = new SpeciesVAdaptive( params, patch );
+        }
+        #endif
+
         // Particles
         if( mass > 0. ) {
             // Dynamics of the species
@@ -106,19 +120,6 @@ public:
                 // Species with nonrelativistic Boris pusher == 'borisnr'
                 // Species with J.L. Vay pusher if == "vay"
                 // Species with Higuary Cary pusher if == "higueracary"
-                if( ( params.vectorization_mode == "off" ) && !params.cell_sorting_ ) {
-                    this_species = new Species( params, patch );
-                }
-
-#ifdef _VECTO
-                else if( ( params.vectorization_mode == "on" ) || params.cell_sorting_ ) {
-                    this_species = new SpeciesV( params, patch );
-                } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
-                    this_species = new SpeciesVAdaptiveMixedSort( params, patch );
-                } else if( params.vectorization_mode == "adaptive" ) {
-                    this_species = new SpeciesVAdaptive( params, patch );
-                }
-#endif
             } else {
                 ERROR_NAMELIST( "For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'",
                 LINK_NAMELIST + std::string("#pusher") );
@@ -202,18 +203,6 @@ public:
 
         // Photon species
         else if( mass == 0 ) {
-            if( ( params.vectorization_mode == "off" ) && !params.cell_sorting_ ) {
-                this_species = new Species( params, patch );
-            }
-#ifdef _VECTO
-            else if( ( params.vectorization_mode == "on" ) || params.cell_sorting_ ) {
-                this_species = new SpeciesV( params, patch );
-            } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
-                this_species = new SpeciesVAdaptiveMixedSort( params, patch );
-            } else if( params.vectorization_mode == "adaptive" ) {
-                this_species = new SpeciesVAdaptive( params, patch );
-            }
-#endif
             // Photon can not radiate
             this_species->radiation_model_ = "none";
             this_species-> pusher_name_ = "norm";
@@ -1154,12 +1143,13 @@ public:
         // Create new species object
         Species *new_species = NULL;
 
-        // Boris, Vay or Higuera-Cary
-        if ( ( params.vectorization_mode == "off" ) && !params.cell_sorting_ ) {
+
+        // Type of species
+        if ( params.vectorization_mode == "off" ) {
             new_species = new Species( params, patch );
         }
 #ifdef _VECTO
-        else if( ( params.vectorization_mode == "on" ) || params.cell_sorting_  ) {
+        else if( params.vectorization_mode == "on" ) {
             new_species = new SpeciesV( params, patch );
         } else if( params.vectorization_mode == "adaptive" ) {
             new_species = new SpeciesVAdaptive( params, patch );
