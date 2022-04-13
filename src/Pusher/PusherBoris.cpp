@@ -129,7 +129,7 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         umz = momentum_z[ipart] + pzsm;
 
         // Rotation in the magnetic field
-        local_invgf = charge_over_mass_dts2 / sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
+        local_invgf = charge_over_mass_dts2 / std::sqrt( 1.0 + umx*umx + umy*umy + umz*umz );
         Tx    = local_invgf * ( Bx[ipart2] );
         Ty    = local_invgf * ( By[ipart2] );
         Tz    = local_invgf * ( Bz[ipart2] );
@@ -140,8 +140,8 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
         pzsm += ( 2.0*( Tz*Tx+Ty )* umx  +      2.0*( Ty*Tz-Tx )* umy  + ( 1.0-Tx*Tx-Ty*Ty+Tz*Tz )* umz )*inv_det_T;
 
         // finalize Half-acceleration in the electric field
-        local_invgf = 1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
-        invgf[ipart2] = local_invgf; //1. / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        local_invgf = 1. / std::sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        invgf[ipart2] = local_invgf; //1. / std::sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
 
         momentum_x[ipart] = pxsm;
         momentum_y[ipart] = pysm;

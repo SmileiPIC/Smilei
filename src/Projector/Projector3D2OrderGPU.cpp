@@ -3,17 +3,14 @@
 #include <cmath>
 #include <iostream>
 #ifdef _GPU
-#include <accelmath.h>
-#include <openacc.h>
+    #include <accelmath.h>
+    #include <openacc.h>
 #endif
 #include "ElectroMagn.h"
 #include "Field3D.h"
 #include "Particles.h"
-#include "Tools.h"
 #include "Patch.h"
-
-using namespace std;
-
+#include "Tools.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Projector3D2OrderGPU
@@ -101,7 +98,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     for (int ipack=0 ; ipack<npack ; ipack++) {
         int istart_pack = istart+ipack*packsize;
         int iend_pack = (ipack+1)*packsize;
-        iend_pack = istart + min( iend-istart, iend_pack );
+        iend_pack = istart + std::min( iend-istart, iend_pack );
 #ifdef _GPU
         #pragma acc parallel present( iold[0:3*nparts], deltaold[0:3*nparts] ) deviceptr( position_x, position_y, position_z, Sx0, Sy0, Sz0, DSx, DSy, DSz )
         #pragma acc loop gang worker vector
