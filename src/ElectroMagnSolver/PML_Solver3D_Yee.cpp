@@ -32,12 +32,12 @@ void PML_Solver3D_Yee::operator()( ElectroMagn *fields )
 {
     ERROR( "This is not a solver for the main domain" );
 
-    Field3D *Ex3D = static_cast<Field3D *>( fields->Ex_ );
-    Field3D *Ey3D = static_cast<Field3D *>( fields->Ey_ );
-    Field3D *Ez3D = static_cast<Field3D *>( fields->Ez_ );
-    Field3D *Bx3D = static_cast<Field3D *>( fields->Bx_ );
-    Field3D *By3D = static_cast<Field3D *>( fields->By_ );
-    Field3D *Bz3D = static_cast<Field3D *>( fields->Bz_ );
+    // Field3D *Ex3D = static_cast<Field3D *>( fields->Ex_ );
+    // Field3D *Ey3D = static_cast<Field3D *>( fields->Ey_ );
+    // Field3D *Ez3D = static_cast<Field3D *>( fields->Ez_ );
+    // Field3D *Bx3D = static_cast<Field3D *>( fields->Bx_ );
+    // Field3D *By3D = static_cast<Field3D *>( fields->By_ );
+    // Field3D *Bz3D = static_cast<Field3D *>( fields->Bz_ );
 
 }
 

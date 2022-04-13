@@ -19,10 +19,10 @@ export OMP_NUM_THREADS={omp}
 export OMP_SCHEDULE=DYNAMIC
 export KMP_AFFINITY=verbose
 export PATH=$PATH:/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck
-export LIBPXR=/home/llr/galop/derouil/applications.ompi216.Py3/picsar/lib
+export LIBPXR=/opt/exp_soft/vo.llr.in2p3.fr/GALOP/beck/picsar_for_CI/lib
 export LD_LIBRARY_PATH=$LIBPXR:$LD_LIBRARY_PATH
-export FFTW3_LIB=/opt/exp_soft/vo.llr.in2p3.fr/fftw/3.3.10/opm-4.1.1-intel-19-el7/lib
-export FFTW3_INC=/opt/exp_soft/vo.llr.in2p3.fr/fftw/3.3.10/opm-4.1.1-intel-19-el7/include
+export FFTW3_LIB=/opt/exp_soft/vo.llr.in2p3.fr/fftw/3.3.10/omp-4.1.1-intel-19-el7/lib
+export FFTW3_INC=/opt/exp_soft/vo.llr.in2p3.fr/fftw/3.3.10/omp-4.1.1-intel-19-el7/include
 ulimit -s unlimited
 #Specify the number of sockets per node in -mca orte_num_sockets
 #Specify the number of cores per sockets in -mca orte_num_cores

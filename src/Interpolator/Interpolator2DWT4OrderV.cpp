@@ -37,7 +37,9 @@ Interpolator2DWT4OrderV::Interpolator2DWT4OrderV( Params &params, Patch *patch )
 void Interpolator2DWT4OrderV::fieldsWrapper(  ElectroMagn *EMfields,
                                               Particles &particles,
                                               SmileiMPI *smpi,
-                                              int *istart, int *iend, int ithread, int ipart_ref )
+                                              int *istart, int *iend, int ithread, 
+                                              unsigned int scell,
+                                              int ipart_ref )
 {
     // std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     // std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );

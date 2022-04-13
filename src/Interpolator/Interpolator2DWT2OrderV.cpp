@@ -33,6 +33,7 @@ void Interpolator2DWT2OrderV::fieldsWrapper( ElectroMagn *EMfields,
                                              int *istart,
                                              int *iend,
                                              int ithread,
+                                             unsigned int scell,
                                              int ipart_ref )
 {
     if( istart[0] == iend[0] ) {

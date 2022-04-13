@@ -30,7 +30,7 @@
 #include "ElectroMagnFactory.h"
 #include "ElectroMagnBC_Factory.h"
 #include "DiagnosticFactory.h"
-#include "CollisionsFactory.h"
+#include "BinaryProcessesFactory.h"
 
 using namespace std;
 
@@ -162,8 +162,8 @@ void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create( params, domain_decomposition, vecSpecies, this );
 
-    // Initialize the collisions
-    vecCollisions = CollisionsFactory::create( params, this, vecSpecies );
+    // Initialize the binary processes
+    vecBPs = BinaryProcessesFactory::createVector( params, vecSpecies );
 
     // Initialize the particle injector
     particle_injector_vector_ = ParticleInjectorFactory::createVector( params, this, vecSpecies );
@@ -187,8 +187,8 @@ void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsign
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone( patch->EMfields, params, vecSpecies, this, n_moved );
 
-    // clone the collisions
-    vecCollisions = CollisionsFactory::clone( patch->vecCollisions );
+    // clone the binary processes
+    vecBPs = BinaryProcessesFactory::cloneVector( patch->vecBPs );
 
     // Clone the particle injector
     particle_injector_vector_ = ParticleInjectorFactory::cloneVector( patch->particle_injector_vector_, params, patch);
@@ -664,7 +664,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
     EMfields   = ElectroMagnFactory::create( params, domain_decomposition, vecPatch( 0 )->vecSpecies, this );
 
     vecSpecies.resize( 0 );
-    vecCollisions.resize( 0 );
+    vecBPs.resize( 0 );
     partWalls = NULL;
     probes.resize( 0 );
     probesInterp = NULL;
@@ -690,10 +690,10 @@ Patch::~Patch()
         delete probes[i];
     }
 
-    for( unsigned int i=0; i<vecCollisions.size(); i++ ) {
-        delete vecCollisions[i];
+    for( unsigned int i=0; i<vecBPs.size(); i++ ) {
+        delete vecBPs[i];
     }
-    vecCollisions.clear();
+    vecBPs.clear();
 
     if( partWalls!=NULL ) {
         delete partWalls;

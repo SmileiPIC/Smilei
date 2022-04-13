@@ -82,7 +82,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     if( namelistsFiles.size()==0 ) {
-        ERROR_NAMELIST( "No namelists given!","" );
+        ERROR_NAMELIST( "No namelist (input file) given!","" );
     }
 
     //string commandLineStr("");
@@ -704,10 +704,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
 
     bool defined_cell_sort = true;
-    if (!PyTools::extractOrNone( "cell_sorting", cell_sorting, "Main"  )){
+    if (!PyTools::extractOrNone( "cell_sorting", cell_sorting_, "Main"  )){
     //cell_sorting is undefined by the user
         defined_cell_sort = false;
-        cell_sorting = false;
+        cell_sorting_ = false;
     }
 
     // Activation of the vectorized subroutines
@@ -727,19 +727,35 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             has_adaptive_vectorization = true;
         }
 
-        // Check that we are in 3D, adaptive mode not possible in 2d
-        if( vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive" ) {
-            if (geometry!="3Dcartesian") {
-                ERROR_NAMELIST("In block `Vectorization`, `adaptive` mode only available in 3D",  LINK_NAMELIST + std::string("#vectorization"))
+        if (geometry=="1Dcartesian" && vectorization_mode != "off") {
+            vectorization_mode = "off";
+            has_adaptive_vectorization = false;
+            WARNING("In 1D, the vectorization block does not apply. `vectorization back to `off`.")
+        }
+
+        // Cell sorting not defined by the user
+        if (!defined_cell_sort) {
+            if (vectorization_mode == "off") {
+                cell_sorting_ = false;
+            } else {
+                cell_sorting_ = true;
             }
         }
 
-        // Check cell sorting is allowed
-        if( !( vectorization_mode == "off") ){
-    	    if (defined_cell_sort == true && cell_sorting == false){
-                ERROR_NAMELIST(" Cell sorting must be allowed in order to use vectorization.",  LINK_NAMELIST + std::string("#vectorization"))
+        // Cell sorting explicitely defined by the user
+	    if (defined_cell_sort){
+            // cell sorting explicitely set on
+            if (cell_sorting_) {
+                if (vectorization_mode == "off") {
+                    WARNING(" Cell sorting `cell_sorting` cannot be used when vectorization is off for the moment. Vectorization is automatically activated.")
+                }
+            // cell sorting explicitely set off
+            } else {
+                if (!( vectorization_mode == "off")) {
+                    ERROR_NAMELIST(" Cell sorting `cell_sorting` must be allowed in order to use vectorization.",  
+                        LINK_NAMELIST + std::string("#vectorization"))
+                }
             }
-            cell_sorting = true;
         }
 
 
@@ -756,16 +772,26 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 PyTools::extract_py( "reconfigure_every", "Vectorization" ), "Adaptive vectorization"
             );
     }
-
+    
+    // Not used, just for compatibility with the GPU branch
+    PyTools::extract( "gpu_computing", gpu_computing, "Main"  );
 
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
 
         // collisions need sorting per cell
-        if (defined_cell_sort == true && cell_sorting == false){
-            ERROR_NAMELIST(" Cell sorting must be allowed in order to use collisions.",  LINK_NAMELIST + std::string("#collisions-reactions"));
+        if (defined_cell_sort && cell_sorting_ == false){
+            ERROR_NAMELIST(" Cell sorting or vectorization must be allowed in order to use collisions.",  LINK_NAMELIST + std::string("#collisions-reactions"));
         }
-        cell_sorting = true;
+
+        if (!defined_cell_sort && !cell_sorting_) {
+            if (vectorization_mode == "off") {
+                cell_sorting_ = true;
+                vectorization_mode = "on";
+                WARNING("For collisions, vectorization activated for cell sorting capability. Disabled vectorization not compatible with cell sorting for the moment.")
+            }
+        }
+        
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
                 && geometry!="3Dcartesian" ) {
@@ -813,15 +839,22 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         //Use cell sorting if merge is used.
         PyTools::extract( "merging_method", merging_method, "Species", ispec );
         if (merging_method != "none"){
-            if (defined_cell_sort == true && cell_sorting == false){
-                ERROR_NAMELIST(" Cell sorting must be allowed in order to use particle merge.",  LINK_NAMELIST + std::string("#particle-merging"));
+
+            if (defined_cell_sort && !cell_sorting_){
+                ERROR_NAMELIST(" Cell sorting or vectorization must be allowed in order to use particle merging.",  LINK_NAMELIST + std::string("#collisions-reactions"));
             }
-            cell_sorting = true;
+
+            if (!defined_cell_sort && !cell_sorting_) {
+                if (vectorization_mode == "off") {
+                    cell_sorting_ = true;
+                    vectorization_mode = "on";
+                    if (geometry != "1Dcartesian" ) {
+                        WARNING("For particle merging, vectorization activated for cell sorting capability. Disabled vectorization not compatible with cell sorting for the moment.")
+                    }
+                }
+            }
         }
     }
-
-    //Set final value of cell_sort
-    if (!cell_sorting) cell_sorting = false;
 
     // -------------------------------------------------------
     // Parameters for the synchrotron-like radiation losses
@@ -1186,7 +1219,7 @@ void Params::check_consistency()
     if( vectorization_mode != "off" ) {
 
         if( ( geometry=="1Dcartesian" ) ) {
-            ERROR_NAMELIST( "Vectorized algorithms not implemented for this geometry", LINK_NAMELIST + std::string("#vectorization") );
+            WARNING( "Vectorized and scalar algorithms are the same in 1D Cartesian geometry." );
         }
 
         // if( ( geometry=="2Dcartesian" ) && ( interpolation_order==4 ) ) {
@@ -1272,7 +1305,7 @@ void Params::print_init()
 
     ostringstream cs;
     cs << "cell sorting: ";
-    if (cell_sorting) {
+    if (cell_sorting_) {
         cs << "Activated";
         MESSAGE( 1, cs.str() );
     }

@@ -21,7 +21,8 @@ Changes made in the repository (not released)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * In ``AMcylindrical`` geometry, using the ``LaserEnvelope`` model, the number of azimuthal modes can be greater than 1. This concerns only the electromagnetic fields and the densities. The envelope and the susceptibility will still be described by only one mode.
-
+* Collisions: new parameter ``time_frozen``
+* Bugfixes: Poisson Solver correction was not properly accounted for with SDMD.
 
 **Download**: `Smilei (not released) <_downloads/Smilei.tar.gz>`_
 
