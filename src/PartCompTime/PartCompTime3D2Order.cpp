@@ -73,7 +73,7 @@ float PartCompTime3D2Order::getParticleComputationTimeVecto( const float log_par
         r +=  -5.500324176161280e-03 * x;
 
     // ROME 7H12 (Ex: Irene Joliot-Curie)
-    #elif defined __AMD_ROME_7H12
+    // #elif defined __AMD_ROME_7H12
 
     // Knight Landings Intel Xeon Phi 7250 (Ex: Frioul)
     #elif defined __INTEL_KNL_7250
