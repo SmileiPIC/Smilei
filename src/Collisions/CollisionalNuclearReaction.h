@@ -7,37 +7,37 @@
 #include "Species.h"
 #include "Params.h"
 #include "Random.h"
+#include "BinaryProcess.h"
+#include "NuclearReactionProducts.h"
 
 class Patch;
 
-class CollisionalNuclearReaction
+class CollisionalNuclearReaction : public BinaryProcess
 {
 
 public:
     //! Constructor
-    CollisionalNuclearReaction( Params *, std::vector<Particles*>*, std::vector<unsigned int>*, double );
+    CollisionalNuclearReaction( Params &, std::vector<Species *>&, double );
     //! Cloning Constructor
     CollisionalNuclearReaction( CollisionalNuclearReaction * );
     //! Destructor
     virtual ~CollisionalNuclearReaction();
     
     //! Prepare the nuclear reaction
-    virtual void prepare() {
+    void prepare() {
         tot_probability_ = 0.;
+        npairs_tot_ = 0;
     };
-    //! Calculates the cross-section vs energy
-    virtual double crossSection( double log_ekin ) = 0;
-    //! Test the occurence of the nuclear reaction
-    virtual bool occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &etot, double &log_ekin, double &W );
-    //! Prepare the products of the reaction
-    virtual void makeProducts( Random* random, double ekin, double log_ekin, double tot_charge, std::vector<Particles *> &particles, std::vector<double> &p_COM, std::vector<short> &q, std::vector<double> &sinX, std::vector<double> &cosX ) = 0;
-    //! Finish the nuclear reaction and put new electrons in place
-    virtual void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool, std::vector<unsigned int>, std::vector<unsigned int>, double npairs, int itime );
-    
-    //! Get the name of the reaction
+    void apply( Random *random, BinaryProcessData &D );
+    void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime );
     virtual std::string name() = 0;
     
-    //! New electrons temporary species
+    //! Calculates the cross-section vs energy
+    virtual double crossSection( double log_ekin ) = 0;
+    //! Prepare the products of the reaction
+    virtual void makeProducts( Random* random, double ekin, double log_ekin, double tot_charge, NuclearReactionProducts &products ) = 0;
+    
+    //! Temporary species for reaction products
     std::vector<Particles *> product_particles_;
     
     //! Coefficient to adapt the rate of create of new particles
@@ -49,28 +49,17 @@ public:
     //! sum of probabilities in this patch
     double tot_probability_;
     
+    unsigned int npairs_tot_;
 private:
     
     //! Species where products are sent
-    std::vector<unsigned int> product_species_;
+    std::vector<unsigned int> product_ispecies_;
     
-};
-
-//! Class to make empty reaction objects
-class CollisionalNoNuclearReaction : public CollisionalNuclearReaction
-{
-public:
-    CollisionalNoNuclearReaction() : CollisionalNuclearReaction( NULL, NULL, NULL, 0. ) {};
-    ~CollisionalNoNuclearReaction() {};
+    //! Mass of reaction products
+    std::vector<double> product_mass_;
     
-    void prepare() override {};
-    double crossSection( double log_ekin ) override { return 0.; };
-    bool occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &etot, double &log_ekin, double &W ) override {
-        return false;
-    };
-    void makeProducts( Random* random, double ekin, double log_ekin, double tot_charge, std::vector<Particles *> &particles, std::vector<double> &p_COM, std::vector<short> &q, std::vector<double> &sinX, std::vector<double> &cosX ) override {};
-    void finish( Params &params, Patch *patch, std::vector<Diagnostic *> &diags, bool, std::vector<unsigned int>, std::vector<unsigned int>, double npairs, int itime ) override {};
-    std::string name() override { return ""; }
+    double coeff2_;
+    
 };
 
 

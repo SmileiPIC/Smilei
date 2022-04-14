@@ -19,6 +19,7 @@
 #include "MultiphotonBreitWheeler.h"
 #include "MultiphotonBreitWheelerTables.h"
 #include "Merging.h"
+#include "PartCompTime.h"
 
 class ElectroMagn;
 class Pusher;
@@ -31,6 +32,7 @@ class Patch;
 class SimWindow;
 class Radiation;
 class Merging;
+class PartCompTime;
 
 
 //! class Species
@@ -101,14 +103,14 @@ public:
     //! logical true if particles are relativistic and require proper electromagnetic field initialization
     bool relativistic_field_initialization_;
 
-    //! Time for which the species field is initialized in case of relativistic initialization
+    //! Iteration for which the species field is initialized in case of relativistic initialization
     int iter_relativistic_initialization_;
 
     //! electron and positron Species for the multiphoton Breit-Wheeler
     std::vector<std::string> multiphoton_Breit_Wheeler_;
 
     //! Boundary conditions for particules
-    std::vector<std::vector<std::string> > boundary_conditions;
+    std::vector<std::vector<std::string> > boundary_conditions_;
 
     //! Ionization model per Specie (tunnel)
     std::string ionization_model;
@@ -193,7 +195,7 @@ public:
     std::vector<int> mBW_pair_creation_sampling_;
 
     //! Cluster width in number of cells
-    unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.
+    unsigned int cluster_width_; //Should divide the number of cells in X of a single MPI domain.
     //! Array counting the occurence of each cell key
     std::vector<int> count;
     //! sub dimensions of buffers for dim > 1
@@ -238,11 +240,13 @@ public:
     //! Accumulate energy lost with bc
     double nrj_bc_lost;
     //! Accumulate energy lost with moving window
-    double nrj_mw_lost;
+    double nrj_mw_out;
+    //! Accumulate energy gained with moving window
+    double nrj_mw_inj;
     //! Accumulate energy added with new particles
-    double new_particles_energy_;
+    double nrj_new_part_;
     //! Accumulate energy lost by the particle with the radiation
-    double radiated_energy_;
+    double nrj_radiated_;
 
     //! whether to choose vectorized operators with respective sorting methods
     int vectorized_operators;
@@ -310,7 +314,6 @@ public:
     //! Particles position pusher (change change position)
     Pusher *Push_ponderomotive_position = NULL;
 
-
     //! Interpolator (used to push particles and for probes)
     Interpolator *Interp;
 
@@ -319,6 +322,9 @@ public:
 
     //! Merging
     Merging *Merge;
+    
+    //! Particle Computation time evaluation
+    PartCompTime *part_comp_time_ = NULL;
 
     // -----------------------------------------------------------------------------
     //  5. Methods
@@ -482,6 +488,13 @@ public:
     //! Method used to sort particles
     virtual void sortParticles( Params &param, Patch * patch );
 
+    virtual void computeParticleCellKeys(   Params    & params,
+                                            Particles * particles,
+                                            int       * __restrict__ cell_keys,
+                                            int       * __restrict__ count,
+                                            unsigned int istart,
+                                            unsigned int iend ) {};
+
     virtual void computeParticleCellKeys( Params &params ) {};
 
     //! This function configures the type of species according to the default mode
@@ -506,70 +519,8 @@ public:
 
     //! Method to know if we have to project this species or not.
     bool  isProj( double time_dual, SimWindow *simWindow );
-
-    //! Set the energy lost in the boundary conditions
-    void setLostNrjBC( double value )
-    {
-        nrj_bc_lost = value;
-    }
-
-    //! Get the energy lost in the boundary conditions
-    double getLostNrjBC() const
-    {
-        return nrj_bc_lost;
-    }
-
-    //! Get energy lost with moving window (fields)
-    double getLostNrjMW() const
-    {
-        return nrj_mw_lost;
-    }
-
-    //! Get the energy radiated away by the particles
-    double getNrjRadiation() const
-    {
-        return radiated_energy_;
-    }
-
-    //! Set the energy radiated away by the particles
-    void setNrjRadiation( double value )
-    {
-        radiated_energy_ = value;
-    }
-
-    //! Add the energy radiated away by the particles
-    void addNrjRadiation( double value )
-    {
-        radiated_energy_ += value;
-    }
-
-    //! Set gained via new particles
-    void setNewParticlesNRJ( double value )
-    {
-        new_particles_energy_ = value;
-    }
-
-    //! Get energy gained via new particles
-    double getNewParticlesNRJ() const
-    {
-        return new_particles_energy_;
-    }
-
-    //! Reinitialize the scalar diagnostics buffer
-    void reinitDiags()
-    {
-        //nrj_bc_lost = 0;
-        nrj_mw_lost = 0;
-        //new_particles_energy_ = 0;
-        //radiated_energy_ = 0;
-    }
-
-    inline void storeNRJlost( double nrj )
-    {
-        nrj_mw_lost += nrj;
-    };
-
-    inline double computeNRJ()
+    
+    inline double computeEnergy()
     {
         double nrj( 0. );
         if( mass_ > 0 ) {
@@ -592,9 +543,9 @@ public:
             speciesSize += sizeof ( unsigned int );*/
         //speciesSize *= getNbrOfParticles();
         int speciesSize( 0 );
-        speciesSize += particles->double_prop.size()*sizeof( double );
-        speciesSize += particles->short_prop.size()*sizeof( short );
-        speciesSize += particles->uint64_prop.size()*sizeof( uint64_t );
+        speciesSize += particles->double_prop_.size()*sizeof( double );
+        speciesSize += particles->short_prop_.size()*sizeof( short );
+        speciesSize += particles->uint64_prop_.size()*sizeof( uint64_t );
         speciesSize *= getParticlesCapacity();
         return speciesSize;
     }

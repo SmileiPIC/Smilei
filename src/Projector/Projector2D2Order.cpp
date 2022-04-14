@@ -18,12 +18,12 @@ using namespace std;
 Projector2D2Order::Projector2D2Order( Params &params, Patch *patch ) : Projector2D( params, patch )
 {
     dx_inv_   = 1.0/params.cell_length[0];
-    dx_ov_dt  = params.cell_length[0] / params.timestep;
+    dx_ov_dt_  = params.cell_length[0] / params.timestep;
     dy_inv_   = 1.0/params.cell_length[1];
-    dy_ov_dt  = params.cell_length[1] / params.timestep;
+    dy_ov_dt_  = params.cell_length[1] / params.timestep;
     
-    i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
-    j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
+    i_domain_begin_ = patch->getCellStartingGlobalIndex( 0 );
+    j_domain_begin_ = patch->getCellStartingGlobalIndex( 1 );
     
     nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
     
@@ -58,8 +58,8 @@ void Projector2D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     int iloc;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double crx_p = charge_weight*dx_ov_dt;
-    double cry_p = charge_weight*dy_ov_dt;
+    double crx_p = charge_weight*dx_ov_dt_;
+    double cry_p = charge_weight*dy_ov_dt_;
     double crz_p = charge_weight*one_third*particles.momentum( 2, ipart )*invgf;
     
     
@@ -101,7 +101,7 @@ void Projector2D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     xpn = particles.position( 0, ipart ) * dx_inv_;
     int ip = round( xpn );
     int ipo = iold[0*nparts];
-    int ip_m_ipo = ip-ipo-i_domain_begin;
+    int ip_m_ipo = ip-ipo-i_domain_begin_;
     delta  = xpn - ( double )ip;
     delta2 = delta*delta;
     Sx1[ip_m_ipo+1] = 0.5 * ( delta2-delta+0.25 );
@@ -111,7 +111,7 @@ void Projector2D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     ypn = particles.position( 1, ipart ) * dy_inv_;
     int jp = round( ypn );
     int jpo = iold[1*nparts];
-    int jp_m_jpo = jp-jpo-j_domain_begin;
+    int jp_m_jpo = jp-jpo-j_domain_begin_;
     delta  = ypn - ( double )jp;
     delta2 = delta*delta;
     // cerr << " ipart: " << ipart
@@ -201,8 +201,8 @@ void Projector2D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     int iloc;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double crx_p = charge_weight*dx_ov_dt;
-    double cry_p = charge_weight*dy_ov_dt;
+    double crx_p = charge_weight*dx_ov_dt_;
+    double cry_p = charge_weight*dy_ov_dt_;
     double crz_p = charge_weight*one_third*particles.momentum( 2, ipart )*invgf;
     
     
@@ -245,7 +245,7 @@ void Projector2D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     xpn = particles.position( 0, ipart ) * dx_inv_;
     int ip = round( xpn );
     int ipo = iold[0*nparts];
-    int ip_m_ipo = ip-ipo-i_domain_begin;
+    int ip_m_ipo = ip-ipo-i_domain_begin_;
     delta  = xpn - ( double )ip;
     delta2 = delta*delta;
     Sx1[ip_m_ipo+1] = 0.5 * ( delta2-delta+0.25 );
@@ -255,7 +255,7 @@ void Projector2D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
     ypn = particles.position( 1, ipart ) * dy_inv_;
     int jp = round( ypn );
     int jpo = iold[1*nparts];
-    int jp_m_jpo = jp-jpo-j_domain_begin;
+    int jp_m_jpo = jp-jpo-j_domain_begin_;
     delta  = ypn - ( double )jp;
     delta2 = delta*delta;
     Sy1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
@@ -461,10 +461,10 @@ void Projector2D2Order::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Par
     Syd[1] = ( 0.75-ypmyjd2 );
     Syd[2] = 0.5 * ( ypmyjd2+ypmyjd+0.25 );
     
-    ip  -= i_domain_begin;
-    id  -= i_domain_begin;
-    jp  -= j_domain_begin;
-    jd  -= j_domain_begin;
+    ip  -= i_domain_begin_;
+    id  -= i_domain_begin_;
+    jp  -= j_domain_begin_;
+    jd  -= j_domain_begin_;
     
     for( unsigned int i=0 ; i<3 ; i++ ) {
         int iploc=ip+i-1;
@@ -617,8 +617,8 @@ void Projector2D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
         // ---------------------------
         // Calculate the total susceptibility
         // ---------------------------
-        ip -= i_domain_begin + 2;
-        jp -= j_domain_begin + 2;
+        ip -= i_domain_begin_ + 2;
+        jp -= j_domain_begin_ + 2;
         
         for( unsigned int i=0 ; i<5 ; i++ ) {
             iloc = ( i+ip )*nprimy+jp;

@@ -139,7 +139,7 @@ class Options(object):
 		self.ticklabels = {}
 		self.ticklabels_font = {}
 		self.plot = {}
-		self.image = {"interpolation":"nearest", "aspect":"auto"}
+		self.image = {"interpolation":"nearest", "aspect":"auto", "cmap":"smilei"}
 		self.colorbar = {}
 		self.colorbar_font = {}
 		self.cax = {"size": "5%", "pad": 0.15}
@@ -223,7 +223,8 @@ class Options(object):
 			self.colorbar["label"] = kwargs.pop("clabel")
 		self.cax['position'] = 'bottom' if ( 'orientation' in self.colorbar and self.colorbar['orientation'] == 'horizontal' ) else 'right'
 		if self.explicit_cmap is None:
-			self.image['cmap'] = 'smileiD' if self.vsym else 'smilei'
+			if self.vsym:
+				self.image['cmap'] = 'smileiD'
 		else:
 			self.image['cmap'] = self.explicit_cmap
 		return kwargs
@@ -274,7 +275,7 @@ class Units(object):
 	def _getUnits(self, units):
 		if self.UnitRegistry:
 			u = self.ureg(units)
-			try: u = u.units.format_babel()
+			try: u = u.units.format_babel(locale="en")
 			except Exception as e: u = ""
 			return u
 		else:
@@ -570,6 +571,23 @@ class _multiPlotUtil(object):
 		self.plt.draw()
 		self.plt.pause(0.00001)
 	
+	def twinOptions(self, Diag):
+		if self.sameAxes:
+			Diag._ax.set_xlim(self.xmin,self.xmax)
+			if Diag.dim<2 and self.bothsides:
+				color = Diag._plot.get_color()
+				Diag._ax.yaxis.label.set_color(color)
+				Diag._ax.tick_params(axis='y', colors=color)
+				if Diag.options.side == "right":
+					Diag._ax.spines['right'].set_color(color)
+					Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
+				else:
+					Diag._ax.spines['left'].set_color(color)
+		try:
+			Diag._ax.set_position(Diag._ax.twin.get_position())
+		except Exception as e:
+			pass
+	
 	def animate(self):
 		# Loop all times
 		mov = Movie(self.fig, self.movie, self.fps, self.dpi)
@@ -583,21 +601,7 @@ class _multiPlotUtil(object):
 						Diag._plotOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					else:
 						Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
-					if self.sameAxes:
-						Diag._ax.set_xlim(self.xmin,self.xmax)
-						if Diag.dim<2 and self.bothsides:
-							color = Diag._plot.get_color()
-							Diag._ax.yaxis.label.set_color(color)
-							Diag._ax.tick_params(axis='y', colors=color)
-							if Diag.options.side == "right":
-								Diag._ax.spines['right'].set_color(color)
-								Diag._ax.spines['left'].set_color((1.,1.,1.,0.))
-							else:
-								Diag._ax.spines['left'].set_color(color)
-					try:
-						Diag._ax.set_position(Diag._ax.twin.get_position())
-					except Exception as e:
-						pass
+					self.twinOptions(Diag)
 			if self.nlegends > 0: self.plt.legend()
 			self.plt.draw()
 			self.plt.pause(0.00001)
@@ -610,11 +614,14 @@ class _multiPlotUtil(object):
 		for Diag in self.Diags:
 			i = self.np.argmin(self.np.abs(self.np.array(Diag._timesteps)-t))
 			Diag._animateOnAxes(Diag._ax, Diag._timesteps[i], cax_id = Diag._cax_id)
-			self.plt.draw()
+			self.twinOptions(Diag)
+		self.plt.draw()
 	
 	def slide(self):
 		for Diag in self.Diags:
 			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[0], cax_id = Diag._cax_id)
+			self.twinOptions(Diag)
+		if self.nlegends > 0: self.plt.legend()
 		self.plt.draw()
 		
 		from matplotlib.widgets import Slider

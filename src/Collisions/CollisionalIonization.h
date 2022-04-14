@@ -7,10 +7,11 @@
 #include "Tools.h"
 #include "Species.h"
 #include "Params.h"
+#include "BinaryProcess.h"
 
 class Patch;
 
-class CollisionalIonization
+class CollisionalIonization : public BinaryProcess
 {
 
 public:
@@ -18,30 +19,26 @@ public:
     CollisionalIonization( int, Params*, int, Particles* );
     //! Cloning Constructor
     CollisionalIonization( CollisionalIonization * );
-    //! Destructor
-    virtual ~CollisionalIonization() {};
+    //! destructor
+    ~CollisionalIonization() {};
+    
+    void prepare() {};
+    void apply( Random *random, BinaryProcessData &D );
+    void finish( Params &, Patch *, std::vector<Diagnostic *> &, bool intra, std::vector<unsigned int> sg1, std::vector<unsigned int> sg2, int itime );
+    std::string name() {
+        std:: ostringstream t;
+        t << "Collisional ionization with atomic number "<<atomic_number<<" towards species #"<<ionization_electrons_;
+        return t.str();
+    };
     
     //! Initializes the arrays in the database and returns the index of these arrays in the DB
     virtual unsigned int createDatabase( double );
     //! Assigns the correct databases
     virtual void assignDatabase( unsigned int );
     
-    //! Gets the k-th binding energy of any neutral or ionized atom with atomic number Z and charge Zstar
-    double binding_energy( int Zstar, int k );
-    
     //! Coefficients used for interpolating the energy over a given initial list
     static const double a1, a2, npointsm1;
     static const int npoints;
-    
-    //! Methods to prepare the ionization
-    inline void prepare1( int Z_firstgroup )
-    {
-        electronFirst = Z_firstgroup==0 ? true : false;
-    };
-    //! Method to apply the ionization
-    virtual void apply( Patch *patch, Particles *p1, int i1, Particles *p2, int i2, double coeff );
-    //! Method to finish the ionization and put new electrons in place
-    virtual void finish( Params &, Patch *, std::vector<Diagnostic *> & );
     
     //! Local table of integrated cross-section
     std::vector<std::vector<double> > *crossSection;
@@ -74,7 +71,7 @@ private:
     static std::vector<std::vector<std::vector<double> > > DB_lostEnergy;
     
     //! True if first group of species is the electron
-    bool electronFirst;
+    // bool electronFirst;
     
     //! Current ionization rate array (one cell per number of ionization events)
     std::vector<double> rate;
@@ -86,24 +83,5 @@ private:
     void calculate( double, double, double, Particles *pe, int ie, Particles *pi, int ii, double U1, double U2, double coeff );
     
 };
-
-//! Class to make empty ionization objects
-class CollisionalNoIonization : public CollisionalIonization
-{
-public:
-    CollisionalNoIonization() : CollisionalIonization( 0, NULL, -1, NULL ) {};
-    ~CollisionalNoIonization() {};
-    
-    unsigned int createDatabase( double ) override
-    {
-        return 0;
-    };
-    void assignDatabase( unsigned int ) override {};
-    
-    void apply( Patch *, Particles *, int, Particles *, int, double ) override {};
-    //void finish(Species*, Species*, Params&, Patch*) override {};
-    void finish( Params &, Patch *, std::vector<Diagnostic *> & ) override {};
-};
-
 
 #endif

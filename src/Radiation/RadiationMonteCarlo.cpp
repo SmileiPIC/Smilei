@@ -70,13 +70,13 @@ void RadiationMonteCarlo::operator()(
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
     
     int nparts = Epart->size()/3;
-    double *Ex = &( ( *Epart )[0*nparts] );
-    double *Ey = &( ( *Epart )[1*nparts] );
-    double *Ez = &( ( *Epart )[2*nparts] );
-    double *Bx = &( ( *Bpart )[0*nparts] );
-    double *By = &( ( *Bpart )[1*nparts] );
-    double *Bz = &( ( *Bpart )[2*nparts] );
-    
+    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
+    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
+
     // Charge divided by the square of the mass
     double charge_over_mass_square;
     
@@ -104,14 +104,14 @@ void RadiationMonteCarlo::operator()(
     int mc_it_nb;
     
     // Momentum shortcut
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
+    double* __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double* __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double* __restrict__ momentum_z = particles.getPtrMomentum(2);
 
     // Position shortcut
-    double* position_x = particles.getPtrPosition(0);
-    double* position_y = NULL;
-    double* position_z = NULL;
+    double* __restrict__ position_x = particles.getPtrPosition(0);
+    double* __restrict__ position_y = NULL;
+    double* __restrict__ position_z = NULL;
     if (nDim_>1) {
         position_y = particles.getPtrPosition(1);
         if (nDim_>2) {
@@ -120,17 +120,17 @@ void RadiationMonteCarlo::operator()(
     }
     
     // Charge shortcut
-    short *charge = particles.getPtrCharge();
+    short * __restrict__ charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double *weight = &( particles.weight( 0 ) );
-    
+    double * __restrict__ weight = &( particles.weight( 0 ) );
+
     // Optical depth for the Monte-Carlo process
-    double *tau = &( particles.tau( 0 ) );
-    
+    double * __restrict__ tau = &( particles.tau( 0 ) );
+
     // Optical depth for the Monte-Carlo process
-    double* chi = &( particles.chi(0));
-    
+    double * __restrict__ chi = &( particles.chi(0));
+
     // _______________________________________________________________
     // Computation
     
@@ -159,9 +159,9 @@ void RadiationMonteCarlo::operator()(
             particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                            momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                            gamma,
-                           ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                           ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
-    
+                           Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
+                           Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
+
             // Update the quantum parameter in species
             // chi[ipart] = particle_chi;
     
@@ -298,11 +298,10 @@ void RadiationMonteCarlo::operator()(
         chi[ipart] = Radiation::computeParticleChi( charge_over_mass_square,
                      momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                      gamma,
-                     ( *( Ex+ipart-ipart_ref ) ), ( *( Ey+ipart-ipart_ref ) ), ( *( Ez+ipart-ipart_ref ) ),
-                     ( *( Bx+ipart-ipart_ref ) ), ( *( By+ipart-ipart_ref ) ), ( *( Bz+ipart-ipart_ref ) ) );
+                     Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref],
+                     Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
     }
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -36,8 +36,6 @@
 
 #include "DiagnosticTrack.h"
 
-#include "SpeciesMetrics.h"
-
 using namespace std;
 
 
@@ -70,6 +68,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
         vector<Diagnostic *> &localDiags )
 {
+
     int ithread;
 #ifdef _OPENMP
     ithread = omp_get_thread_num();
@@ -98,7 +97,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
     if( time_dual>time_frozen_ || Ionize ) {
         // moving particle
 
-        smpi->dynamics_resize( ithread, nDim_particle, particles->last_index.back() );
+        smpi->dynamics_resize( ithread, nDim_field, particles->last_index.back(), params.geometry=="AMcylindrical" );
 
         //Point to local thread dedicated buffers
         //Still needed for ionization
@@ -163,20 +162,20 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                     timer = MPI_Wtime();
 #endif
-                    // Radiation process
-                    ( *Radiate )( *particles, this->photon_species_, smpi,
-                                  RadiationTables, radiated_energy_,
-                                  particles->first_index[scell], particles->last_index[scell], ithread );
+                // Radiation process
+                ( *Radiate )( *particles, this->photon_species_, smpi,
+                              RadiationTables, nrj_radiated_,
+                              particles->first_index[scell], particles->last_index[scell], ithread );
 
-                    // // Update scalar variable for diagnostics
-                    // radiated_energy_ += Radiate->getRadiatedEnergy();
-                    //
-                    // // Update the quantum parameter chi
-                    // Radiate->computeParticlesChi( *particles,
-                    //                               smpi,
-                    //                               first_index[scell],
-                    //                               last_index[scell],
-                    //                               ithread );
+                // // Update scalar variable for diagnostics
+                // nrj_radiated_ += Radiate->getRadiatedEnergy();
+                //
+                // // Update the quantum parameter chi
+                // Radiate->computeParticlesChi( *particles,
+                //                               smpi,
+                //                               first_index[scell],
+                //                               last_index[scell],
+                //                               ithread );
 #ifdef  __DETAILED_TIMERS
                     patch->patch_timers_[5] += MPI_Wtime() - timer;
 #endif
@@ -199,11 +198,11 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 timer = MPI_Wtime();
 #endif
                 // Pair generation process
-                // We reuse radiated_energy_ for the pairs
+                // We reuse nrj_radiated_ for the pairs
                 ( *Multiphoton_Breit_Wheeler_process )( *particles,
                                                         smpi,
                                                         MultiphotonBreitWheelerTables,
-                                                        radiated_energy_,
+                                                        nrj_radiated_,
                                                         particles->first_index[scell], particles->last_index[scell], ithread );
 
                 // Update the photon quantum parameter chi of all photons
@@ -216,6 +215,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
                 // Suppression of the decayed photons into pairs
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                     *particles, smpi, scell, particles->first_index.size(), &particles->first_index[0], &particles->last_index[0], ithread );
+
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[6] += MPI_Wtime() - timer;
 #endif
@@ -246,12 +246,12 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,2);
             #  endif
             for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
-                double ener_iPart( 0. );
+                double energy_lost( 0. );
                 // Apply wall and boundary conditions
                 if( mass_>0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        (*partWalls )[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
-                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                        (*partWalls )[iwall]->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                        nrj_lost_per_thd[tid] += mass_ * energy_lost;
                     }
 
                     partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
@@ -353,7 +353,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 
     }  // end if moving particle or ionize
 
-    if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+    if (time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
 
         double *b_rho=nullptr;
         #  ifdef _PARTEVENTTRACING                
@@ -1063,9 +1063,9 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
 
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time( count,
-                                          vecto_time,
-                                          scalar_time );
+    (*part_comp_time_)( count,
+                    vecto_time,
+                    scalar_time );
 
     if( ( vecto_time <= scalar_time && this->vectorized_operators == false )
             || ( vecto_time > scalar_time && this->vectorized_operators == true ) ) {
@@ -1123,9 +1123,9 @@ void SpeciesVAdaptive::configuration( Params &params, Patch *patch )
 
         // --------------------------------------------------------------------
         // Metrics 2 - based on the evaluation of the computational time
-        SpeciesMetrics::get_computation_time( this->count,
-                                              vecto_time,
-                                              scalar_time );
+        (*part_comp_time_)( count,
+                        vecto_time,
+                        scalar_time );
 
         if( vecto_time <= scalar_time ) {
             this->vectorized_operators = true;
@@ -1512,19 +1512,17 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
         if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,2);
         #  endif
         for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell++ ) {
-            double ener_iPart( 0. );
+            double energy_lost( 0. );
             // Apply wall and boundary conditions
             if( mass_>0 ) {
                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                    (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                    (*partWalls)[iwall]->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                    nrj_lost_per_thd[tid] += mass_ * energy_lost;
                 }
 
                 // Boundary Condition may be physical or due to domain decomposition
-                // apply returns 0 if iPart is not in the local domain anymore
-                //        if omp, create a list per thread
-                partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, ithread, ener_iPart );
-                nrj_lost_per_thd[tid] += mass_ * ener_iPart;
+                partBoundCond->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                nrj_lost_per_thd[tid] += mass_ * energy_lost;
 
             } else if( mass_==0 ) {
                 ERROR( "Particles with zero mass cannot interact with envelope" );
@@ -1555,7 +1553,8 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
                 }
 
             } else if( mass_==0 ) {
-                ERROR( "Particles with zero mass cannot interact with envelope" );
+                ERROR_NAMELIST( "Particles with zero mass cannot interact with envelope",
+                LINK_NAMELIST + std::string("#laser-envelope-model"));
             } // end mass_ = 0? condition
         }
         #  ifdef _PARTEVENTTRACING

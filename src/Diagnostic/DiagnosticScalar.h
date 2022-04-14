@@ -200,7 +200,7 @@ private :
     //! Pointers to the various scalars
     Scalar_value *Utot, *Uexp, *Ubal, *Ubal_norm;
     Scalar_value *Uelm, *Ukin, *Uelm_bnd, *Ukin_bnd;
-    Scalar_value *Ukin_out_mvw, *Ukin_inj_mvw, *Uelm_out_mvw, *Uelm_inj_mvw;
+    Scalar_value *Ukin_out_mvw, *Ukin_inj_mvw, *Ukin_new, *Uelm_out_mvw, *Uelm_inj_mvw;
     // For the radiated energy
     Scalar_value *Urad;
     // Energy of the pairs created via the multiphoton Breit-Wheeler process

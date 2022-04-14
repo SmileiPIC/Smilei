@@ -844,13 +844,23 @@ void ElectroMagn1D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
     
     vector<double> pos( 1 );
     pos[0] = dx * ( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field1D->isDual( 0 )?-0.5:0. ) );
-    int N = ( int )field1D->dims()[0];
     
-    // USING UNSIGNED INT CREATES PB WITH PERIODIC BCs
-    for( int i=0 ; i<N ; i++ ) {
-        ( *field1D )( i ) += profile->valueAt( pos, time ); 
+    // Create the x,y,z maps where profiles will be evaluated
+    vector<Field*> xyz(1);
+    vector<unsigned int> dims = { field1D->dims_[0] };
+    xyz[0] = new Field1D( dims );
+    
+    for( unsigned int i=0 ; i<dims[0] ; i++ ) {
+        ( *xyz[0] )( i ) = pos[0];
         pos[0] += dx;
     }
+    
+    vector<double> global_origin = { 
+        dx * ( ( field1D->isDual( 0 )?-0.5:0. ) - oversize[0] )
+    };
+    profile->valuesAt( xyz, global_origin, *field1D, 3, time );
+    
+    delete xyz[0];
     
 }
 
@@ -867,9 +877,11 @@ void ElectroMagn1D::initAntennas( Patch *patch, Params& params )
             antennas[i].field = new Field1D( dimPrim, 1, false, "Jy" );
         } else if( antennas[i].fieldName == "Jz" ) {
             antennas[i].field = new Field1D( dimPrim, 2, false, "Jz" );
+        } else {
+            ERROR("Antenna cannot be applied to field "<<antennas[i].fieldName);
         }
         
-        if( antennas[i].field ) {
+        if( ! antennas[i].spacetime && antennas[i].field ) {
             applyExternalField( antennas[i].field, antennas[i].space_profile, patch );
         }
     }

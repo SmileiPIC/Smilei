@@ -47,6 +47,10 @@ def preprocess():
         f["position/y"] = y
         f["position/z"] = z
         f["weight"] = w
+    with File("momentum.h5","w") as f:
+        f["momentum/x"] = x*0.
+        f["momentum/y"] = y*0.
+        f["momentum/z"] = z*0.
 
 Main(
     geometry = "AMcylindrical",
@@ -57,12 +61,11 @@ Main(
     cell_length  = [dx, dtrans],
     grid_length = [ Lx,  Ltrans],
     number_of_patches = [npatch_x, npatch_trans],
-    clrw = 5,
+    cluster_width = 5,
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
         ["buneman","buneman"],
     ],
-    random_seed = smilei_mpi_rank,
     solve_poisson = False,
     print_every = 100
 )
@@ -75,12 +78,12 @@ MovingWindow(
 Species(
     name = "electron",
     position_initialization = "plasma.h5",
-    momentum_initialization = "cold",
+    momentum_initialization = "momentum.h5",
     ionization_model = "none",
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
-    mean_velocity = [0., 0., 0.],
+    # mean_velocity = [0., 0., 0.],
     time_frozen = 0.0,
     boundary_conditions = [
     	["remove", "remove"],

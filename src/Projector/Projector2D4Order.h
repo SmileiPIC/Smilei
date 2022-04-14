@@ -9,11 +9,11 @@ class Projector2D4Order : public Projector2D
 public:
     Projector2D4Order( Params &, Patch *patch );
     ~Projector2D4Order();
-    
+
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-    inline void currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold );
+    inline void __attribute__((always_inline)) currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold );
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    inline void currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold );
+    inline void __attribute__((always_inline)) currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold );
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
     inline void currentsForTasks( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift );
@@ -37,7 +37,7 @@ public:
     
     // Project susceptibility
     void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell = 0, int ipart_ref = 0 ) override final;
-    
+
 private:
     static constexpr double dble_1_ov_384   = 1.0/384.0;
     static constexpr double dble_1_ov_48    = 1.0/48.0;
@@ -53,4 +53,3 @@ private:
 };
 
 #endif
-

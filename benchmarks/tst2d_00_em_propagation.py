@@ -33,7 +33,6 @@ Main(
     
     EM_boundary_conditions_k = [[cos(ang), sin(ang)],[-1.,0.],[0.,1.],[0.,-1.]],
     
-    random_seed = smilei_mpi_rank
 )
 
 LaserGaussian2D(
@@ -56,7 +55,7 @@ Species(
 	number_density = 1.,
 	mean_velocity = [0.,0.,0.],
 	boundary_conditions = [
-		["periodic", "periodic"],
+		["remove", "remove"],
 	],
 	is_test = True
 )

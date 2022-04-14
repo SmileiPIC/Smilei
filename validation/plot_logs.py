@@ -36,7 +36,7 @@ if len(sys.argv) > 1:
     except:
         raise Exception("\n Please, provide a valid path to the logs.\n")
 else:
-    path = "/sps2/gitlab-runner/logs/*.log"
+    path = "/sps3/gitlab-runner/logs/*.log"
     
 cases = sorted(glob(path))
 if len(cases) ==0:

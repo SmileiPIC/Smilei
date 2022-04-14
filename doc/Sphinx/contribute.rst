@@ -107,7 +107,7 @@ Usage:
   
   .. code-block:: bash
   
-    python validation.py [-c] [-h] [-v] [-o <nOMP>] [-m <nMPI>] [-b <bench> [-g | -s]] [-r <nRestarts>]
+    python validation.py [-c] [-h] [-v] [-o <nOMP>] [-m <nMPI>] [-b <bench> [-g | -s]] [-r <nRestarts>] [-t <max_time>]
   
   * | Option ``-b <bench>``:  
     | ``<bench>`` : benchmark(s) to validate. Accepts wildcards.  
@@ -125,9 +125,10 @@ Usage:
   * Option ``-g``: Generation of references only (no validation)
   * Option ``-s``: Plot differences with references only (no validation)
   * Option ``-c``: Compilation only (no run, no validation)
-  * Option ``-r <nRrestarts>``: Force the simulation to be broken in several restarts.
+  * Option ``-r <nRrestarts>``: Force the simulation to be broken in several restarts
   * Option ``-v``: Verbose
   * Option ``-h``: Help
+  * Option ``-t <max_time>``: maximum wall time (format ``"hh:mm:ss"``)
 
 
 Exit status of the script:

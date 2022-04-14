@@ -62,7 +62,6 @@ Main(
     timestep = dt,
     simulation_time = Tsim,
     EM_boundary_conditions = [['periodic']],
-    random_seed = smilei_mpi_rank,
     reference_angular_frequency_SI = wr,
     solve_poisson = False,
     time_fields_frozen = 2.*Tsim,

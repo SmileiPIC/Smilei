@@ -18,7 +18,6 @@ Main(
     
     EM_boundary_conditions = [ ['silver-muller'] ],
     
-    random_seed = smilei_mpi_rank,
     
     print_every = int(rest/2.0)
 )

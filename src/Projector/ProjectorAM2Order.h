@@ -13,9 +13,9 @@ public:
     ProjectorAM2Order( Params &, Patch *patch );
     ~ProjectorAM2Order();
     
-    inline void currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, bool diag_flag, int ispec);
+    inline void currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, bool diag_flag, int ispec);
 
-    inline void currentsForTasks( ElectroMagnAM *emAM, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, int bin_shift, int bdim0, bool diag_flag );
+    inline void currentsForTasks( ElectroMagnAM *emAM, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, int bin_shift, int bdim0, bool diag_flag );
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) override final;
@@ -26,7 +26,7 @@ public:
     //! Apply boundary conditions on Rho and J
     void axisBC( ElectroMagnAM *emAM, bool diag_flag ) override final;
     void apply_axisBC(std::complex<double> *rhoj,std::complex<double> *Jl, std::complex<double> *Jr, std::complex<double> *Jt, unsigned int imode, bool diag_flag );
-    
+
     //! Apply boundary conditions on Env_Chi
     void axisBCEnvChi( double *EnvChi ) override final;
 
@@ -56,4 +56,3 @@ private:
 };
 
 #endif
-

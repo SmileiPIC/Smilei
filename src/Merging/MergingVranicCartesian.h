@@ -68,15 +68,18 @@ protected:
 
     // Minimum and maximum number of particles per packet to merge
     double min_momentum_cell_length_[3];
-    
+
     // Active the accumultion correction
     bool accumulation_correction_;
 
     // Discretization scale
     bool log_scale_;
-    
+
     // Minimum momentum value in log scale
     double min_momentum_log_scale_;
+
+    // Factor to extend the maximal momentum value
+    const double momentum_max_factor_ = 0.01;
 
 private:
 

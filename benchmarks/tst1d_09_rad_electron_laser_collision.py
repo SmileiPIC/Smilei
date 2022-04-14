@@ -131,7 +131,7 @@ for i,radiation in enumerate(radiation_list):
         radiation_model = radiation,
         time_frozen = 29*t0,
         boundary_conditions = [
-            ["periodic", "periodic"],
+            ["remove", "remove"],
         ],
     )
 

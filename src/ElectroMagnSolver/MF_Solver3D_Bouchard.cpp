@@ -15,9 +15,16 @@ MF_Solver3D_Bouchard::MF_Solver3D_Bouchard( Params &params )
     dy = params.cell_length[1];
     dz = params.cell_length[2];
     double dx_ov_dt  = dx/dt;
-    if( (dx!=dy)||(dx!=dz)||(dy!=dz) ) {
-        ERROR( "Bouchard solver requires the same cell-length in x, y and z directions" );
-    }
+    //double dy_ov_dt  = dy/dt;
+    //double dz_ov_dt  = dz/dt;
+    //double dt_ov_dx  = dt/dx;
+    //double dt_ov_dy  = dt/dy;
+    //double dt_ov_dz  = dt/dz;
+    //Not necessary to have dx=dy=dz, but dispersion law are modify
+    //In particular if dz >> dx,dy then solver become like the 2d solver
+    //if( (dx!=dy)||(dx!=dz)||(dy!=dz) ) {
+    //    ERROR( "Bouchard solver requires the same cell-length in x, y and z directions" );
+    //}
     if( dx_ov_dt!=2 ) {
         WARNING( "Bouchard solver requires dx/dt = 2 (Magical Timestep)" );
     }
@@ -166,8 +173,7 @@ void MF_Solver3D_Bouchard::operator()( ElectroMagn *fields )
                 ( *Bz3D )( nx_d-2, j, k ) += dt_ov_dx * ( ( *Ey3D )( nx_d-3, j, k ) - ( *Ey3D )( nx_d-2, j, k ) )
                                              +  dt_ov_dy * ( ( *Ex3D )( nx_d-2, j, k ) - ( *Ex3D )( nx_d-2, j-1, k ) );
             }
-        }
-        
+        }        
     }
     
     if( EM3D->isYmin ) {

@@ -1904,29 +1904,19 @@ void ElectroMagn3D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
     pos[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field3D->isDual( 0 )?-0.5:0. ) );
     double pos1 = dy*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field3D->isDual( 1 )?-0.5:0. ) );
     double pos2 = dz*( ( double )( patch->getCellStartingGlobalIndex( 2 ) )+( field3D->isDual( 2 )?-0.5:0. ) );
-    int N0 = ( int )field3D->dims()[0];
-    int N1 = ( int )field3D->dims()[1];
-    int N2 = ( int )field3D->dims()[2];
     
-    /* MG/2021/01/08 --- This section doesn't work; I rewrite it as done for 2D
-    // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
     // Create the x,y,z maps where profiles will be evaluated
     vector<Field *> xyz( 3 );
-    vector<unsigned int> n_space_to_create( 3 );
-    n_space_to_create[0] = N0;
-    n_space_to_create[1] = N1;
-    n_space_to_create[2] = N2;
-    
+    vector<unsigned int> dims = { field3D->dims_[0], field3D->dims_[1], field3D->dims_[2] };
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
-        xyz[idim] = new Field3D( n_space_to_create );
+        xyz[idim] = new Field3D( dims );
     }
     
-    for( int i=0 ; i<N0 ; i++ ) {
+    for( unsigned int i=0 ; i<dims[0] ; i++ ) {
         pos[1] = pos1;
-        for( int j=0 ; j<N1 ; j++ ) {
+        for( unsigned int j=0 ; j<dims[1] ; j++ ) {
             pos[2] = pos2;
-            for( int k=0 ; k<N2 ; k++ ) {
-                //(*field3D)(i,j,k) += profile->valueAt(pos);
+            for( unsigned int k=0 ; k<dims[2] ; k++ ) {
                 for( unsigned int idim=0 ; idim<3 ; idim++ ) {
                     ( *xyz[idim] )( i, j, k ) = pos[idim];
                 }
@@ -1937,29 +1927,17 @@ void ElectroMagn3D::applyPrescribedField( Field *my_field,  Profile *profile, Pa
         pos[0] += dx;
     }
     
-    profile->valuesAtTime( xyz, *field3D, 3, time );
+    vector<double> global_origin = { 
+        dx * ( ( field3D->isDual( 0 )?-0.5:0. ) - oversize[0] ),
+        dy * ( ( field3D->isDual( 1 )?-0.5:0. ) - oversize[1] ),
+        dz * ( ( field3D->isDual( 2 )?-0.5:0. ) - oversize[2] )
+    };
+    profile->valuesAt( xyz, global_origin, *field3D, 3, time );
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];
     }
-    MG/2021/0108 */
-
-    // MG/2021/01/08 --- doing like in 2D works
     
-    // Unsigned int lead to pbs with periodic boundary conditions
-    for( int i=0 ; i<N0 ; i++ ) {
-        pos[1] = pos1;
-        for( int j=0 ; j<N1 ; j++ ) {
-            pos[2] = pos2;
-            for( int k=0 ; k<N2 ; k++ ) {
-                (*field3D)(i,j,k) += profile->valueAt(pos,time);
-                pos[2] += dz;
-            }
-            pos[1] += dy;
-        }
-        pos[0] += dx;
-    }
-
 }
 
 
@@ -1969,17 +1947,17 @@ void ElectroMagn3D::initAntennas( Patch *patch, Params& params )
 
     // Filling the space profiles of antennas
     for( unsigned int i=0; i<antennas.size(); i++ ) {
-        if      (antennas[i].fieldName == "Jx")
-            antennas[i].field = FieldFactory::create(dimPrim, 0, false, "Jx", params);
-        else if (antennas[i].fieldName == "Jy")
-            antennas[i].field = FieldFactory::create(dimPrim, 1, false, "Jy", params);
-        else if (antennas[i].fieldName == "Jz")
-            antennas[i].field = FieldFactory::create(dimPrim, 2, false, "Jz", params);
-        else {
+        if( antennas[i].fieldName == "Jx" ) {
+            antennas[i].field = FieldFactory::create( dimPrim, 0, false, "Jx", params );
+        } else if( antennas[i].fieldName == "Jy" ) {
+            antennas[i].field = FieldFactory::create( dimPrim, 1, false, "Jy", params );
+        } else if( antennas[i].fieldName == "Jz" ) {
+            antennas[i].field = FieldFactory::create( dimPrim, 2, false, "Jz", params );
+        } else {
             ERROR("Antenna cannot be applied to field "<<antennas[i].fieldName);
         }
         
-        if( antennas[i].field ) {
+        if( ! antennas[i].spacetime && antennas[i].field ) {
             applyExternalField( antennas[i].field, antennas[i].space_profile, patch );
         }
     }

@@ -60,7 +60,7 @@ Main(
 
     number_of_patches = [npatch_x,npatch_r ],
     
-    clrw = nx/npatch_x,
+    cluster_width = nx/npatch_x,
 
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
@@ -73,7 +73,6 @@ Main(
     relativistic_poisson_max_iteration = 50000,    
     print_every = 100,
 
-    random_seed = smilei_mpi_rank
 )
 
 #MovingWindow(

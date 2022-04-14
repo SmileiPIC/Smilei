@@ -34,8 +34,8 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
     isXmin( patch->isXmin() ),
     isXmax( patch->isXmax() ),
     is_pxr( params.is_pxr ),
-    nrj_mw_lost( 0. ),
-    nrj_new_fields( 0. )
+    nrj_mw_out( 0. ),
+    nrj_mw_inj( 0. )
 {
     n_space.resize( params.n_space.size() );
     // Test if the patch is a small patch (Hilbert or Linearized are for VectorPatch)
@@ -108,8 +108,8 @@ ElectroMagn::ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch ) 
     isXmin( patch->isXmin() ),
     isXmax( patch->isXmax() ),
     is_pxr( emFields->is_pxr ),
-    nrj_mw_lost( 0. ),
-    nrj_new_fields( 0. )
+    nrj_mw_out( 0. ),
+    nrj_mw_inj( 0. )
 {
 
     if ( dynamic_cast<PatchAM *>( patch ) ) {
@@ -162,9 +162,9 @@ void ElectroMagn::initElectroMagnQuantities()
     poynting_inst[0].resize( nDim_field, 0.0 );
     poynting_inst[1].resize( nDim_field, 0.0 );
     
-    if( n_space.size() != 3 ) {
-        ERROR( "this should not happen" );
-    }
+    // if( n_space.size() != 3 ) {
+    //     ERROR( "this should not happen" );
+    // }
     
     Ex_=NULL;
     Ey_=NULL;
@@ -444,6 +444,8 @@ void ElectroMagn::boundaryConditions( int itime, double time_dual, Patch *patch,
     if( emBoundCond.size()>2 ) {
         if( emBoundCond[2]!=NULL ) { // <=> if !periodic
             emBoundCond[2]->apply( this, time_dual, patch );
+        }
+        if( emBoundCond[3]!=NULL ) { // <=> if !periodic
             emBoundCond[3]->apply( this, time_dual, patch );
         }
     }
@@ -529,7 +531,7 @@ void ElectroMagn::laserDisabled()
     }
 }
 
-double ElectroMagn::computeNRJ()
+double ElectroMagn::computeEnergy()
 {
     double nrj( 0. );
     

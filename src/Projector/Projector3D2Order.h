@@ -9,11 +9,12 @@ class Projector3D2Order : public Projector3D
 public:
     Projector3D2Order( Params &, Patch *patch );
     ~Projector3D2Order();
-    
+
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-    inline void currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold );
+    inline void __attribute__((always_inline)) currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold );
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    inline void currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold );
+    inline void __attribute__((always_inline)) currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold );
+
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
     inline void currentsForTasks( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int bin_shift );
@@ -46,4 +47,3 @@ private:
 };
 
 #endif
-

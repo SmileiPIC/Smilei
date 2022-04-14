@@ -66,10 +66,20 @@ public:
 class H5
 {
 public:
+    //! Empty HDF5 object
+    H5() {
+        fid_ = -1;
+        id_ = -1;
+        dxpl_ = -1;
+        dcr_ = -1;
+    };
+    
     //! Open HDF5 file + location
     H5( std::string file, unsigned access, MPI_Comm * comm, bool _raise );
     
     ~H5();
+    
+    void init( std::string file, unsigned access, MPI_Comm * comm, bool _raise );
     
     bool valid() {
         return id_ >= 0;
@@ -405,6 +415,8 @@ public:
 class H5Read : public H5
 {
 public:
+    H5Read() : H5() {};
+    
     //! Open HDF5 file + location
     H5Read( std::string file, MPI_Comm * comm = NULL, bool _raise = true )
      : H5( file, H5F_ACC_RDONLY, comm, _raise ) {};
@@ -413,6 +425,11 @@ public:
     H5Read( hid_t id, hid_t dcr, hid_t dxpl ) : H5( id, dcr, dxpl ) {};
     
     ~H5Read() {};
+    
+    void init( std::string file, MPI_Comm * comm = NULL, bool _raise = true )
+    {
+        H5::init( file, H5F_ACC_RDONLY, comm, _raise );
+    }
     
     //! Open group
     H5Read group( std::string group_name )

@@ -134,6 +134,7 @@ about the corresponding diagnostics in the simulation.
   * ``"quantities_uint"``: a list of the available integer quantities
   * ``"quantities_double"``: a list of the available float quantities
   * ``"patch_arrangement"``: the type of patch arrangement
+  * ``"timesteps"``: the list of timesteps
 
 ----
 
@@ -246,7 +247,7 @@ Open a Probe diagnostic
 Open a ParticleBinning diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, data_transform=None, **kwargs)
+.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
   * ``diagNumber``: number or ``name`` of the particle binning diagnostic (starts at 0).
@@ -258,18 +259,18 @@ Open a ParticleBinning diagnostic
 
      **WARNING:** With the syntax ``subset={axis:[start, stop, step]}``, the value of ``step``
      is a number of bins.
-  * ``sum``: a selection of coordinates on which to sum the data.
-     | Syntax 1: ``sum = { axis : "all", ... }``
-     | Syntax 2: ``sum = { axis : location, ... }``
-     | Syntax 3: ``sum = { axis : [begin, end] , ... }``
+  * ``average``: a selection of coordinates on which to average the data.
+     | Syntax 1: ``average = { axis : "all", ... }``
+     | Syntax 2: ``average = { axis : location, ... }``
+     | Syntax 3: ``average = { axis : [begin, end] , ... }``
 
      ``axis`` must be ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"p"``, ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"`` or ``"charge"``.
 
      | The chosen axes will be removed:
-     | - With syntax 1, a sum is performed over all the axis.
+     | - With syntax 1, an average is performed over all the axis.
      | - With syntax 2, only the bin closest to ``location`` is kept.
-     | - With syntax 3, a sum is performed between ``begin`` and ``end``.
-     | Example: ``sum={"x":[4,5]}`` will sum all the data for x within [4,5].
+     | - With syntax 3, an average is performed between ``begin`` and ``end``.
+     | Example: ``average={"x":[4,5]}`` will average all the data for x within [4,5].
   * See also :ref:`otherkwargs`
 
 **Example**::
@@ -277,13 +278,18 @@ Open a ParticleBinning diagnostic
   S = happi.Open("path/to/my/results")
   Diag = S.ParticleBinning(1)
 
-.. note::
 
-  The :ref:`macro-particle weights<Weights>` are not in units of density,
-  but of density multiplied by hypervolume.
-  In the ``ParticleBinning`` post-processing, this is accounted for: the
-  results are divided by the hypervolume corresponding to the diagnostic's
-  definition.
+**Units of the results:**
+
+  The raw quantity stored in the output file has the units of the :py:data:`deposited_quantity`.
+  Generally, this is a sum of :ref:`macro-particle weights<Weights>`. As those weights
+  are not in units of density (but of density multiplied by hypervolume), a correction
+  is applied in *happi*: it divides the data by an hypervolume. More precisely,
+  for each direction ``x``, ``y`` or ``z``, if this direction is not included in one of 
+  the diagnostic's axes, *happi* divides by the length of the box in that direction.
+  
+  In addition, in order to make the units relative to the bin size, *happi* divides the data
+  in each bin by the bin size.
 
 
 ----
@@ -291,10 +297,10 @@ Open a ParticleBinning diagnostic
 Open a Screen diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, data_transform=None, **kwargs)
+.. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
-  * ``diagNumber``, ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
+  * ``diagNumber``, ``subset`` and ``average``: identical to that of ParticleBinning diagnostics.
   * See also :ref:`otherkwargs`
 
 **Example**::
@@ -308,10 +314,10 @@ Open a Screen diagnostic
 Open a RadiationSpectrum diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, data_transform=None, **kwargs)
+.. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, data_transform=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``, ``data_transform``, ``export_dir``: same as before.
-  * ``diagNumber``, ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
+  * ``diagNumber``, ``subset`` and ``average``: identical to that of ParticleBinning diagnostics.
   * See also :ref:`otherkwargs`
 
 **Example**::
@@ -413,9 +419,9 @@ and only one mode between those three.
 
   * ``hindex``                     : the starting index of each proc in the hilbert curve
   * ``number_of_cells``            : the number of cells in each proc
-  * ``number_of_particles``        : the number of particles in each proc (except frozen ones)
+  * ``number_of_particles``        : the total number of non-frozen macro-particles in each proc (includes all species)
   * ``number_of_frozen_particles`` : the number of frozen particles in each proc
-  * ``total_load``                 : the `load` of each proc (number of particles and cells with cell_load coefficient)
+  * ``total_load``                 : the `load` of each proc (number of macro-particles and cells weighted by cell_load coefficients)
   * ``timer_global``               : global simulation time (only available for proc 0)
   * ``timer_particles``            : time spent computing particles by each proc
   * ``timer_maxwell``              : time spent solving maxwell by each proc
@@ -518,9 +524,11 @@ to manipulate the plotting options:
 * ``xfactor``, ``yfactor``: factors to rescale axes.
 * ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left-
   or the right-hand-side.
-* ``transparent``: ``None`` (by default), ``"over"``, ``"under"`` or ``"both"``.
+* ``transparent``: ``None`` (by default), ``"over"``, ``"under"``, ``"both"``, or a *function*.
   The colormap becomes transparent *over*, *under*, or *outside both* the boundaries
   set by ``vmin`` and ``vmax``.
+  This argument may be set instead to a function mapping the data value :math:`\in [0,1]` to the
+  transparency :math:`\in [0,1]`. For instance ``lambda x: 1-x``.
 * Many Matplotlib arguments listed in :ref:`advancedOptions`.
 
 ----

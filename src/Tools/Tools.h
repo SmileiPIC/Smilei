@@ -32,14 +32,33 @@
 
 #include <mpi.h>
 
+#define ERROR_STYLE "\033[1;31m"
+#define FOOTER_STYLE "\033[0m"
+
 #ifdef _OMP
 #include <omp.h>
 
-#define __header(__msg,__txt) std::cout << "\t[" << __msg << "](" << omp_get_thread_num() << ") " __FILE__ << ":" << __LINE__ << " (" \
-<< __FUNCTION__ << ") " << __txt << std::endl
+#define __header(__msg,__txt) {std::cout << "\t[" << __msg << "](" << omp_get_thread_num() << ") " __FILE__ << ":" << __LINE__ << " (" \
+<< __FUNCTION__ << ") " << __txt << std::endl;}
+
+#define __header_custom_text_on_unix(__msg,__txt,__tc) { std::cout << "\033[;"<< __tc << "m" << "\n[" << __msg << "](" << omp_get_thread_num() \
+<< ") " __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\033[0m" << std::endl;}
+
+#define __header_error(__msg,__txt) {std::string line = " "; for (int __ic=0; __ic < 80 ; __ic++) line += "-"; \
+std::cerr << ERROR_STYLE << line << "\n [" << __msg << "](" << omp_get_thread_num() \
+<< ") " __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\n" << line << FOOTER_STYLE << std::endl;}
+
 #else
 #define __header(__msg,__txt) std::cout << "\t[" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
 << __FUNCTION__ << ") " << __txt << std::endl
+
+#define __header_custom_text_on_unix(__msg,__txt,__tc) { std::cout << "\033[;"<< __tc <<"m" << "[" << __msg << "] " \
+<< __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << ") " << __txt << "\033[0m" << std::endl; }
+
+#define __header_error(__msg,__txt) {std::string line = " "; for (int __ic =0; __ic < 80 ; __ic++) line += "-"; \
+std::cerr << ERROR_STYLE << line << "\n [" << __msg << "] " << __FILE__ << ":" << __LINE__ << " (" \
+<< __FUNCTION__ << ") " << __txt << "\n" << line << FOOTER_STYLE << std::endl;}
+
 #endif
 
 #define MESSAGE1(__txt)  {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) { std::cout << " ";  std::cout << __txt << std::endl;};}
@@ -77,14 +96,13 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 #define PMESSAGE4(...) PMESSAGE3(__VA_ARGS__,PMESSAGE2,PMESSAGE1,)
 #define PMESSAGE(...) PMESSAGE4(__VA_ARGS__)(__VA_ARGS__)
 
-
 #ifdef  __DEBUG
 
-#define WARNING(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {__header("WARNING", __txt);}}
+#define WARNING(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {__header_custom_text_on_unix("WARNING", __txt, 33);}}
 
 #define DEBUG(__txt) {__header("DEBUG", __txt);}
 
-#define ERROR(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); __header("ERROR proc "<<__rk, __txt); raise(SIGSEGV);}
+#define ERRORWITHCUSTOMSIGNAL(__txt, __sig) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); __header("ERROR proc "<<__rk, __txt); raise(__sig);}
 
 #define DEBUGEXEC(...) __VA_ARGS__
 #define RELEASEEXEC(...)
@@ -93,33 +111,48 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 
 #else // not DEBUG
 
-#define WARNING(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {std::cout << "\t[WARNING] " << __txt << std::endl;}}
+#define WARNING(__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {__header_custom_text_on_unix("WARNING", __txt, 33);}}
 
 #define DEBUG(...)
 #define DEBUGEXEC(...)
 #define RELEASEEXEC(...) __VA_ARGS__
 
-#define ERROR(__txt) {__header("ERROR", __txt); raise(SIGSEGV);}
+#define ERRORWITHCUSTOMSIGNAL(__txt, __sig) {__header_error("ERROR", __txt); raise(__sig);}
 
 #define HEREIAM(...)
 
 #endif // __DEBUG
+
+#define ERROR(__txt) {ERRORWITHCUSTOMSIGNAL(__txt, SIGABRT);}
+
+#define ERROR_NAMELIST(__txt,__link) {      \
+    int __rk;                               \
+    MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); \
+    if (__rk==0) {                          \
+        std::string __link_message = "";    \
+        if (std::string(__link) != "") {    \
+            __link_message = "\n\n Find out more: " + std::string(__link); \
+        };                                  \
+        ERRORWITHCUSTOMSIGNAL("\n A probem was found in the namelist:\n > " << __txt << __link_message, SIGABRT); \
+    };                                      \
+}
+
 
 class Tools
 {
 public:
     static void printMemFootPrint( std::string tag );
     static double getMemFootPrint(int type_of_memory);
-    
+
     //! Converts a number of Bytes in a readable string in KiB, MiB, GiB or TiB
     static std::string printBytes( uint64_t nbytes );
-    
+
     //! This function returns true/flase whether the file exists or not
     //! \param file file name to test
     static bool fileExists( const std::string &filename ) ;
-    
+
     static std::string xyz;
-    
+
     //! Concatenate several strings
     template<class T1, class T2, class T3=std::string, class T4=std::string>
     static std::string merge( T1 s1, T2 s2, T3 s3="", T4 s4="" )
@@ -127,10 +160,10 @@ public:
         std::ostringstream tot( "" );
         tot << s1 << s2 << s3 << s4;
         return tot.str();
-    };
+    }
 };
 
-
+#define LINK_NAMELIST "https://smileipic.github.io/Smilei/namelist.html" 
 
 #if defined(WIN32) || defined(_WIN32)
 #define PATH_SEPARATOR "\\"

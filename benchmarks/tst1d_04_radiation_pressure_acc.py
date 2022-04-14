@@ -33,8 +33,7 @@ Main(
      
     EM_boundary_conditions = [ ['silver-muller'] ],
      
-    random_seed = smilei_mpi_rank,
-    clrw = 1
+    cluster_width = 1
 )
 
 Species(

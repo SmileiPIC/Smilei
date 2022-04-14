@@ -363,7 +363,7 @@ class TrackParticles(Diagnostic):
 							elif seltype[k] == "all(": selection *= selectionAtTimeT * existing
 						stack.append(selection)
 					# Merge all stack items according to the operations
-					selectedParticles = self._np.union1d( selectedParticles, eval(operation).nonzero()[0] )
+					selectedParticles = self._np.union1d( selectedParticles, eval(operation).nonzero()[0].astype("uint64") )
 			else:
 				# Execute the selector item
 				selectedParticles = self._np.array([], dtype="uint64")
@@ -678,10 +678,9 @@ class TrackParticles(Diagnostic):
 		if self._sort:
 			for axis, factor in zip(self.axes, self._factors):
 				if timestep is None:
-					data[axis] = self._rawData[axis]
+					data[axis] = self._rawData[axis] * factor
 				else:
-					data[axis] = self._rawData[axis][indexOfRequestedTime]
-				data[axis] *= factor
+					data[axis] = self._rawData[axis][indexOfRequestedTime]  * factor
 		else:
 			for t in ts:
 				data[t] = {}
@@ -766,7 +765,7 @@ class TrackParticles(Diagnostic):
 			A = self._np.double([A, A]).squeeze()
 		try   : ax.set_prop_cycle (None)
 		except:	ax.set_color_cycle(None)
-		self._plot = ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
+		self._plot = ax.plot(self._tfactor*times, (self.options.vfactor or 1.)*A, **self.options.plot)
 		ax.set_xlabel(self._tlabel)
 		ax.set_ylabel(self.axes[0]+" ("+self.units.vname+")")
 		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
@@ -788,12 +787,14 @@ class TrackParticles(Diagnostic):
 		selected_times = self._np.flatnonzero(timeSelection)
 		itmin = selected_times[0]
 		itmax = selected_times[-1]
+		xfactor = self.options.xfactor or 1.
+		yfactor = self.options.yfactor or 1.
 		# Plot first the non-broken lines
 		x = self._tmpdata[0][timeSelection,:][:,~self._rawData["brokenLine"]]
 		y = self._tmpdata[1][timeSelection,:][:,~self._rawData["brokenLine"]]
 		try   : ax.set_prop_cycle (None)
 		except:	ax.set_color_cycle(None)
-		ax._lines[self] = ax.plot(self._xfactor*x, self._yfactor*y, **self.options.plot)
+		ax._lines[self] = ax.plot(xfactor*x,yfactor*y, **self.options.plot)
 		# Then plot the broken lines
 		try   : ax.hold("on")
 		except: pass
@@ -807,9 +808,9 @@ class TrackParticles(Diagnostic):
 				if ibrk>0: iti = max(itmin, breaks[ibrk-1])
 				itf = min( itmax, breaks[ibrk] )
 				if prevline:
-					ax._lines[self] += ax.plot(self._xfactor*x[iti:itf], self._yfactor*y[iti:itf], color=prevline.get_color(), **self.options.plot)
+					ax._lines[self] += ax.plot(xfactor*x[iti:itf], yfactor*y[iti:itf], color=prevline.get_color(), **self.options.plot)
 				else:
-					prevline, = ax.plot(self._xfactor*x[iti:itf], self._yfactor*y[iti:itf], **self.options.plot)
+					prevline, = ax.plot(xfactor*x[iti:itf], factor*y[iti:itf], **self.options.plot)
 				ax._lines[self] += [prevline]
 				if breaks[ibrk] > itmax: break
 		try   : ax.hold("off")

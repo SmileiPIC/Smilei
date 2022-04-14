@@ -1,0 +1,6 @@
+#
+# Machine file for Intel Broadwell processors
+# Compilation with the Intel compiler
+# __________________________________________________________
+
+CXXFLAGS +=  -xCORE-AVX2 -O3 -inline-factor=1000 -ip -D__INTEL_BDW_E5_2697_V4 -fno-alias #-ipo

@@ -96,6 +96,9 @@ public:
     //! defines the interpolation/projection order
     unsigned int interpolation_order;
 
+    //! defines the interpolation scheme
+    std::string interpolator_;
+
     //! number of space dimensions for the particles
     unsigned int nDim_particle;
 
@@ -128,6 +131,7 @@ public:
     //! Are open boundaries used ?
     std::vector< std::vector<bool> > open_boundaries;
     bool save_magnectic_fields_for_SM;
+    std::vector< std::vector<int> > number_of_pml_cells;
 
     //! Boundary conditions for Envelope Field
     std::vector< std::vector<std::string> > Env_BCs;
@@ -144,7 +148,6 @@ public:
     double envelope_polarization_phi = 0.; // used only for envelope ionization; in radians, angle with the xy plane
     // define the solver for the envelope equation
     std::string envelope_solver;
-
     
     //Poisson solver
     //! Do we solve poisson
@@ -184,8 +187,8 @@ public:
     // mark if OpenMP tasks are used or not
     bool omptasks;
     //! Clusters width
-    //unsigned int clrw;
-    int clrw;
+    //unsigned int cluster_width_;
+    int cluster_width_;
     //! Number of cells per cluster
     int n_cell_per_patch;
 
@@ -366,7 +369,10 @@ public:
     //! Characters width for timestep output
     unsigned int timestep_width;
 
-    bool cell_sorting;
+    bool cell_sorting_;
+    
+    //! For gpu branch compatibility, not used for the moment
+    bool gpu_computing;
 };
 
 #endif

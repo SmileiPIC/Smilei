@@ -30,6 +30,8 @@ public :
     
     void closeFile() override;
     
+    bool theTimeIsNow( int itime );
+    
     bool prepare( int itime ) override;
     
     void calculate_auto_limits( Patch *patch, SimWindow *simWindow, unsigned int ipatch );
@@ -78,6 +80,10 @@ protected:
     
     int total_axes;
     std::vector<hsize_t> dims;
+    
+    int previousTime_;
+    
+    bool has_auto_limits_;
     
 //    //! Minimum and maximum spatial coordinates that are useful for this diag
 //    std::vector<double> spatial_min, spatial_max;

@@ -53,7 +53,7 @@ Main(
 
     number_of_patches = [npatch_x, 4, 4],
     
-    clrw = nx/npatch_x,
+    cluster_width = nx/npatch_x,
 
     EM_boundary_conditions = [ ["silver-muller"] ],
 
@@ -63,7 +63,6 @@ Main(
     
     print_every = 100,
 
-    random_seed = smilei_mpi_rank
 )
 
 MovingWindow(

@@ -29,8 +29,7 @@ Main(
         ['periodic'],
     ],
     #print_every = 1,
-    clrw = 1,
-    random_seed = smilei_mpi_rank
+    cluster_width = 1,
 )
 
 

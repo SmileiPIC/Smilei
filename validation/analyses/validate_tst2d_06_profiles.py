@@ -61,9 +61,12 @@ Validate("Maxwell-Juttner Momentum distribution", p_filt, p_filt.max()*1e-2)
 
 
 # Verify external fields
-#for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
 for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
-	F = S.Field.Field0(field, timesteps=0).getData()[0][::4,::4]
+	F = S.Field.Field0(field, timesteps=0).getData()[0][::8,::8]
 	Validate(field+" field", F, 0.01)
 
+# Verify prescribed fields
+for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
+	F = S.Field.Field0(field, timesteps=4).getData()[0][::8,::8]
+	Validate("prescribed "+field+" field", F, 0.01)
 
