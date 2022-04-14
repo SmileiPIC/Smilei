@@ -905,7 +905,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                 }
 
                 vector<double> *Epart = &( smpi->dynamics_Epart[buffer_id] );
-                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, patch, Proj, ibin, ibin*clrw, bJx, bJy, bJz );
+                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[ibin], particles->last_index[ibin], Epart, patch, Proj, ibin, ibin*cluster_width_, bJx, bJy, bJz );
                 #  ifdef _PARTEVENTTRACING
                 if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,5);
                 #  endif
@@ -1142,12 +1142,12 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
             if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
                 if (params.geometry != "AMcylindrical"){
                     Proj->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
-                                                              ibin*clrw, *particles, smpi, 
+                                                              ibin*cluster_width_, *particles, smpi, 
                                                               particles->first_index[ibin], particles->last_index[ibin], 
                                                               buffer_id, diag_flag, params.is_spectral, ispec );
                 } else {
                     Proj->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
-                                                                ibin*clrw, bin_size0, *particles, smpi, 
+                                                                ibin*cluster_width_, bin_size0, *particles, smpi, 
                                                                 particles->first_index[ibin], particles->last_index[ibin], 
                                                                 buffer_id, diag_flag);
                 } // end if AM
@@ -1213,7 +1213,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         #  endif
                         for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
                         for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-                            Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                            Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                         }
                         #  ifdef _PARTEVENTTRACING
                         if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
@@ -1242,7 +1242,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
                         for( int imode = 0; imode<params.nmodes; imode++ ) {
                             for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-                                Proj->basicForComplexOnBuffer( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, bin_size0, ibin*clrw );
+                                Proj->basicForComplexOnBuffer( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, bin_size0, ibin*cluster_width_ );
                             } // end loop on particles
                         } // end imode loop
                         #  ifdef _PARTEVENTTRACING
@@ -1277,7 +1277,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
 
                         for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
                         for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-                            Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                            Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                         }
 
                         #  ifdef _PARTEVENTTRACING
@@ -1309,7 +1309,7 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                         for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
                         for( int imode = 0; imode<params.nmodes; imode++ ) {
                             for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-                                Proj->basicForComplexOnBuffer( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, bin_size0, ibin*clrw );
+                                Proj->basicForComplexOnBuffer( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, bin_size0, ibin*cluster_width_ );
                             } // end loop on particles
                         } // end imode loop
 
@@ -2236,13 +2236,13 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_dua
                 #  endif
                 if (params.geometry != "AMcylindrical"){
                     Proj->susceptibilityOnBuffer( EMfields, b_Chi[ibin], 
-                                                  ibin*clrw, bin_size0, 
+                                                  ibin*cluster_width_, bin_size0, 
                                                   *particles, mass_, smpi, 
                                                   particles->first_index[ibin], particles->last_index[ibin], 
                                                   buffer_id );
                 } else {
                     Proj->susceptibilityOnBuffer( EMfields, b_ChiAM[ibin], 
-                                                  ibin*clrw, bin_size0,
+                                                  ibin*cluster_width_, bin_size0,
                                                   *particles, mass_, smpi, 
                                                   particles->first_index[ibin], particles->last_index[ibin], 
                                                   buffer_id );
@@ -2667,12 +2667,12 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
             if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
                 if (params.geometry != "AMcylindrical"){
                     Proj->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
-                                                              ibin*clrw, *particles, smpi, 
+                                                              ibin*cluster_width_, *particles, smpi, 
                                                               particles->first_index[ibin], particles->last_index[ibin], 
                                                               buffer_id, diag_flag, params.is_spectral, ispec );
                   } else {
                     Proj->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
-                                                                ibin*clrw, bin_size0, *particles, smpi, 
+                                                                ibin*cluster_width_, bin_size0, *particles, smpi, 
                                                                 particles->first_index[ibin], particles->last_index[ibin], 
                                                                 buffer_id, diag_flag);
                   } // end if AM
@@ -2718,7 +2718,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
                     #  endif
                     for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
                     for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                     }
                     #  ifdef _PARTEVENTTRACING
                     if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
@@ -2747,7 +2747,7 @@ void Species::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, uns
                     for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
                     int imode = 0; // only mode 0 is used with envelope
                     for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-                        Proj->basicForComplexOnBuffer( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, bin_size0, ibin*clrw );
+                        Proj->basicForComplexOnBuffer( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, bin_size0, ibin*cluster_width_ );
                     } // end loop on particles
                     #  ifdef _PARTEVENTTRACING
                     if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);

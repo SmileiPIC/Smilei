@@ -70,10 +70,10 @@ SpeciesV::SpeciesV( Params &params, Patch *patch ) :
 
         if (ibin == 0){
             first_cell_of_bin[ibin]     = 0;
-            last_cell_of_bin[ibin]      = (clrw+1)*bin_ncells_transverse-1;
+            last_cell_of_bin[ibin]      = (cluster_width_+1)*bin_ncells_transverse-1;
         } else {
             first_cell_of_bin[ibin]     = last_cell_of_bin[ibin-1]+1;
-            last_cell_of_bin[ibin]      = first_cell_of_bin[ibin]+clrw*bin_ncells_transverse-1;
+            last_cell_of_bin[ibin]      = first_cell_of_bin[ibin]+cluster_width_*bin_ncells_transverse-1;
         }
         
     }
@@ -119,7 +119,7 @@ void SpeciesV::initCluster( Params &params )
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
     
-    Nbins = (params.n_space[0]/clrw); // Nbins is not equal to first_index.size() for SpeciesV
+    Nbins = (params.n_space[0]/cluster_width_); // Nbins is not equal to first_index.size() for SpeciesV
     
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
@@ -762,12 +762,12 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                 // Loop over scell is not performed since ionization operator is not vectorized
                 // Instead, it is applied to all particles in the cells pertaining to ibin
                 // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
-                //     Ionize->ionizationTunnelWithTasks( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj, ibin, ibin*clrw, bJx, bJy, bJz );
+                //     Ionize->ionizationTunnelWithTasks( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj, ibin, ibin*cluster_width_, bJx, bJy, bJz );
                 // } // end cell loop for Interpolator
                 #  ifdef _PARTEVENTTRACING                    
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,5);
                 #  endif
-                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, patch, Proj, ibin, ibin*clrw, bJx, bJy, bJz );
+                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, patch, Proj, ibin, ibin*cluster_width_, bJx, bJy, bJz );
                 #  ifdef _PARTEVENTTRACING                      
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,5);
                 #  endif
@@ -1068,14 +1068,14 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
                         Proj->currentsAndDensityWrapperOnBuffers(
                             b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
-                            ibin*clrw, *particles, smpi, 
+                            ibin*cluster_width_, *particles, smpi, 
                             particles->first_index[scell], particles->last_index[scell], 
                             buffer_id, diag_flag, params.is_spectral, ispec, scell );
                     } // end scell loop
                 } else {
                     // for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
                     // Proj->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
-                    //                                             ibin*clrw, bin_size0, *particles, smpi, 
+                    //                                             ibin*cluster_width_, bin_size0, *particles, smpi, 
                     //                                             particles->first_index[scell], particles->last_index[scell], 
                     //                                             buffer_id, diag_flag);
                     // } // end scell loop
@@ -1148,7 +1148,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
                     // basic projector is not vectorized, no need to make a loop on scell
                     for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; ( int )iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
-                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                     } //End loop on particles
                     #  ifdef _PARTEVENTTRACING                       
                     if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,5);
@@ -1170,7 +1170,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                 //     int ifield = imode*n_species+ispec;
                 //     for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
                 //         for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
-                //             Proj->basicForComplex( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, ibin*clrw );
+                //             Proj->basicForComplex( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, ibin*cluster_width_ );
                 //         }
                 //     }
                 // }
@@ -1199,7 +1199,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                     #  endif
                     // basic projector is not vectorized, no need to make a loop on scell
                     for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; ( int )iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
-                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                     } //End loop on particles
                     #  ifdef _PARTEVENTTRACING                         
                     if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
@@ -1221,7 +1221,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
                 //     int ifield = imode*n_species+ispec;
                 //     for( unsigned int scell = 0 ; scell < particles->first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
                 //         for( int iPart=particles->first_index[scell] ; iPart<particles->last_index[scell]; iPart++ ) {
-                //             Proj->basicForComplex( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, ibin*clrw );
+                //             Proj->basicForComplex( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, ibin*cluster_width_ );
                 //         }
                 //     }
                 // }
@@ -2078,14 +2078,14 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentumTasks( double time_du
                 if (params.geometry != "AMcylindrical"){
                     for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                         Proj->susceptibilityOnBuffer( EMfields, b_Chi[ibin], 
-                                                      ibin*clrw, bin_size0, 
+                                                      ibin*cluster_width_, bin_size0, 
                                                       *particles, mass_, smpi, 
                                                       particles->first_index[scell], particles->last_index[scell] ,
                                                       buffer_id );
                     }
                 } else { // AM geometry with envelope is not vectorized for the moment
                     // Proj->susceptibilityOnBuffer( EMfields, b_ChiAM[ibin], 
-                    //                               ibin*clrw, bin_size0,
+                    //                               ibin*cluster_width_, bin_size0,
                     //                               *particles, mass_, smpi, 
                     //                               particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]] ,
                     //                               buffer_id );
@@ -2604,13 +2604,13 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
                 if (params.geometry != "AMcylindrical"){
                     for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
                         Proj->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
-                                                                  ibin*clrw, *particles, smpi, 
+                                                                  ibin*cluster_width_, *particles, smpi, 
                                                                   particles->first_index[scell], particles->last_index[scell], 
                                                                   buffer_id, diag_flag, params.is_spectral, ispec );
                     }
                   } else { // vectorized envelope not implemented in AM
                     // Proj->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
-                    //                                             ibin*clrw, bin_size0, *particles, smpi, 
+                    //                                             ibin*cluster_width_, bin_size0, *particles, smpi, 
                     //                                             particles->first_index[ibin], particles->last_index[ibin], 
                     //                                             buffer_id, diag_flag);
                   } // end if AM
@@ -2657,7 +2657,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
                     #  endif
                     for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
                     for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
-                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                     }
                     #  ifdef _PARTEVENTTRACING                       
                     if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
@@ -2683,7 +2683,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
 //                     for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
 //                     int imode = 0; // only mode 0 is used with envelope
 //                     for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-//                         Proj->basicForComplexOnBuffer( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, bin_size0, ibin*clrw );
+//                         Proj->basicForComplexOnBuffer( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, bin_size0, ibin*cluster_width_ );
 //                     } // end loop on particles
 // #ifdef  __DETAILED_TIMERS
 //                     patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;

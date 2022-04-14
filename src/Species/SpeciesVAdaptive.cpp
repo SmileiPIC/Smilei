@@ -525,13 +525,13 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 // Loop over scell is not performed since ionization operator is not vectorized
                 // Instead, it is applied to all particles in the cells pertaining to ibin
                 // for( unsigned int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
-                //     Ionize->ionizationTunnelWithTasks( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj, ibin, ibin*clrw, bJx, bJy, bJz );
+                //     Ionize->ionizationTunnelWithTasks( particles, particles->first_index[scell], particles->last_index[scell], Epart, patch, Proj, ibin, ibin*cluster_width_, bJx, bJy, bJz );
                 // } // end cell loop for Interpolator
 
                 #  ifdef _PARTEVENTTRACING                 
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,5);
                 #  endif
-                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, patch, Proj, ibin, ibin*clrw, bJx, bJy, bJz );
+                Ionize->ionizationTunnelWithTasks( particles, particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], Epart, patch, Proj, ibin, ibin*cluster_width_, bJx, bJy, bJz );
                 #  ifdef _PARTEVENTTRACING                      
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,5);
                 #  endif
@@ -835,13 +835,13 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 if (params.geometry != "AMcylindrical"){
                     Proj->currentsAndDensityWrapperOnBuffers(
                           b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
-                          ibin*clrw, *particles, smpi, 
+                          ibin*cluster_width_, *particles, smpi, 
                           particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], 
                           buffer_id, diag_flag, params.is_spectral, ispec, 0 );
                 } else {
                     // for( unsigned int scell = first_cell_of_bin[ibin] ; scell < last_cell_of_bin[ibin] ; scell++ ) {
                     // Proj->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
-                    //                                             ibin*clrw, bin_size0, *particles, smpi, 
+                    //                                             ibin*cluster_width_, bin_size0, *particles, smpi, 
                     //                                             particles->first_index[scell], particles->last_index[scell], 
                     //                                             buffer_id, diag_flag);
                     // } // end scell loop
@@ -911,7 +911,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 timer = MPI_Wtime();
 #endif
                 for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
-                    Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                    Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                 }
                 #  ifdef _PARTEVENTTRACING                       
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
@@ -939,7 +939,7 @@ void SpeciesVAdaptive::scalarDynamicsTasks( double time_dual, unsigned int ispec
                 timer = MPI_Wtime();
 #endif
                 for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
-                    Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                    Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                 }
                 #  ifdef _PARTEVENTTRACING                 
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
@@ -1382,13 +1382,13 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentumTasks( 
                 #  endif
                 if (params.geometry != "AMcylindrical"){
                     Proj->susceptibilityOnBuffer( EMfields, b_Chi[ibin], 
-                                                  ibin*clrw, bin_size0, 
+                                                  ibin*cluster_width_, bin_size0, 
                                                   *particles, mass_, smpi, 
                                                   particles->first_index[ibin], particles->last_index[ibin], 
                                                   buffer_id );
                 } else { // vectorized envelope not implemente in AM
                     // Proj->susceptibilityOnBuffer( EMfields, b_ChiAM[ibin], 
-                    //                               ibin*clrw, bin_size0,
+                    //                               ibin*cluster_width_, bin_size0,
                     //                               *particles, mass_, smpi, 
                     //                               particles->first_index[ibin], particles->last_index[ibin], 
                     //                               buffer_id );
@@ -1798,12 +1798,12 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrentsTasks( double
             if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
                 if (params.geometry != "AMcylindrical"){
                     Proj->currentsAndDensityWrapperOnBuffers( b_Jx[ibin], b_Jy[ibin], b_Jz[ibin], b_rho[ibin], 
-                                                              ibin*clrw, *particles, smpi, 
+                                                              ibin*cluster_width_, *particles, smpi, 
                                                               particles->first_index[first_cell_of_bin[ibin]], particles->last_index[last_cell_of_bin[ibin]], 
                                                               buffer_id, diag_flag, params.is_spectral, ispec );
                   } else { // vectorized envelope not implemented in AM
                     // Proj->currentsAndDensityWrapperOnAMBuffers( EMfields, b_Jl[ibin], b_Jr[ibin], b_Jt[ibin], b_rhoAM[ibin], 
-                    //                                             ibin*clrw, bin_size0, *particles, smpi, 
+                    //                                             ibin*cluster_width_, bin_size0, *particles, smpi, 
                     //                                             particles->first_index[ibin], particles->last_index[ibin], 
                     //                                             buffer_id, diag_flag);
                   } // end if AM
@@ -1852,7 +1852,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrentsTasks( double
                     #  endif
                     for (unsigned int i = 0; i < size_proj_buffer_rho; i++) b_rho[ibin][i]   = 0.0;
                     for( int iPart=particles->first_index[first_cell_of_bin[ibin]] ; iPart<particles->last_index[last_cell_of_bin[ibin]]; iPart++ ) {
-                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*clrw );
+                        Proj->basic( b_rho[ibin], ( *particles ), iPart, 0, ibin*cluster_width_ );
                     }
                     #  ifdef _PARTEVENTTRACING
                     if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,3);
@@ -1878,7 +1878,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrentsTasks( double
 //                     for (unsigned int i = 0; i < size_proj_buffer_rhoAM; i++) b_rhoAM[ibin][i] = 0.0;
 //                     int imode = 0; // only mode 0 is used with envelope
 //                     for( int iPart=particles->first_index[ibin] ; iPart<particles->last_index[ibin]; iPart++ ) {
-//                         Proj->basicForComplexOnBuffer( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, bin_size0, ibin*clrw );
+//                         Proj->basicForComplexOnBuffer( b_rhoAM[ibin], ( *particles ), iPart, 0, imode, bin_size0, ibin*cluster_width_ );
 //                     } // end loop on particles
 // #ifdef  __DETAILED_TIMERS
 //                     patch->patch_timers_[3*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
