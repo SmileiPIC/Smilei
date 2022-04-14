@@ -1,5 +1,0 @@
-# module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu 
-# unset LD_PRELOAD 
-# export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0
-
-CXXFLAGS += -xAVX   -inline-factor=1000 # -qopt-report=5 #-ip  -ipo -inline-forceinline -qopt-report=5 #-ipo
