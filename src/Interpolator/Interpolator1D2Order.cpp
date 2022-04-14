@@ -602,7 +602,3 @@ void Interpolator1D2Order::envelopeFieldForIonizationTasks( ElectroMagn *EMfield
     }    
     
 } // END Interpolator1D2Order
-
-    }
-
-} // END Interpolator1D2Order

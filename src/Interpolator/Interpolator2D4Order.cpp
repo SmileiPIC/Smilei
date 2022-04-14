@@ -83,8 +83,8 @@ void Interpolator2D4Order::fieldsForTasks( ElectroMagn *EMfields, Particles &par
     Field2D *Bz2D = static_cast<Field2D *>( EMfields->Bz_m );
     
     // Normalized particle position
-    double xpn = particles.position( 0, ipart )*dx_inv_;
-    double ypn = particles.position( 1, ipart )*dy_inv_;
+    double xpn = particles.position( 0, ipart )*d_inv_[0];
+    double ypn = particles.position( 1, ipart )*d_inv_[1];
 
     // Coeffs
     int idx_p[2], idx_d[2];

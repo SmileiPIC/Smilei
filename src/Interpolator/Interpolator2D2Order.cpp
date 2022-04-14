@@ -72,8 +72,8 @@ void Interpolator2D2Order::fieldsForTasks( ElectroMagn *EMfields, Particles &par
     
     
     // Normalized particle position
-    double xpn = particles.position( 0, ipart )*dx_inv_;
-    double ypn = particles.position( 1, ipart )*dy_inv_;
+    double xpn = particles.position( 0, ipart )*d_inv_[0];
+    double ypn = particles.position( 1, ipart )*d_inv_[1];
    
     // Calculate coeffs
 
@@ -331,8 +331,8 @@ void Interpolator2D2Order::fieldsAndEnvelopeForTasks( ElectroMagn *EMfields, Par
         //fieldsForTasks( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart] );
         
         // Normalized particle position
-        double xpn = particles.position( 0, ipart )*dx_inv_;
-        double ypn = particles.position( 1, ipart )*dy_inv_;
+        double xpn = particles.position( 0, ipart )*d_inv_[0];
+        double ypn = particles.position( 1, ipart )*d_inv_[1];
        
         // Calculate coeffs
 
@@ -499,8 +499,8 @@ void Interpolator2D2Order::timeCenteredEnvelopeForTasks( ElectroMagn *EMfields, 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
     
         // Normalized particle position
-        double xpn = particles.position( 0, ipart )*dx_inv_;
-        double ypn = particles.position( 1, ipart )*dy_inv_;
+        double xpn = particles.position( 0, ipart )*d_inv_[0];
+        double ypn = particles.position( 1, ipart )*d_inv_[1];
         
         
         // Calculate coeffs
@@ -704,8 +704,8 @@ void Interpolator2D2Order::envelopeFieldForIonizationTasks( ElectroMagn *EMfield
         double coeffxp[3], coeffyp[3];
 
         // Normalized particle position
-        double xpn = particles.position( 0, ipart )*dx_inv_;
-        double ypn = particles.position( 1, ipart )*dy_inv_;
+        double xpn = particles.position( 0, ipart )*d_inv_[0];
+        double ypn = particles.position( 1, ipart )*d_inv_[1];
 
         // Indexes of the central nodes
         idx_p[0] = round( xpn );

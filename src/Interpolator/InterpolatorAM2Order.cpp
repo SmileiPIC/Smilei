@@ -23,7 +23,7 @@ InterpolatorAM2Order::InterpolatorAM2Order( Params &params, Patch *patch ) : Int
     D_inv_[0] = 1.0/params.cell_length[0];
     D_inv_[1] = 1.0/params.cell_length[1];
     nmodes_ = params.nmodes;
-    dr =  params.cell_length[1];
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -50,9 +50,6 @@ void InterpolatorAM2Order::fields( ElectroMagn *EMfields, Particles &particles, 
     exp_m_theta_ = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
     complex<double> exp_mm_theta = 1. ;                                                          //exp(-i m theta)
     // Calculate coeffs
-
-
-
     coeffs( xpn, rpn );
 
     //std::cout << "thetas = " << exp_m_theta_ << " " << 2.*std::real(exp_m_theta_) - exp_m_theta_ << std::endl;
@@ -107,7 +104,7 @@ void InterpolatorAM2Order::fields( ElectroMagn *EMfields, Particles &particles, 
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used) - task safe
 // ---------------------------------------------------------------------------------------------------------------------
-void InterpolatorAM2Order::fieldsForTasks( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc, int *iold, double *delta, double *theta_old  )
+void InterpolatorAM2Order::fieldsForTasks( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc, int *iold, double *delta, std::complex<double> *eitheta_old  )
 {
 
     //Treat mode 0 first
@@ -124,9 +121,9 @@ void InterpolatorAM2Order::fieldsForTasks( ElectroMagn *EMfields, Particles &par
     complex<double> exp_mm_theta_task = 1. ; 
  
     // Normalized particle position
-    double xpn = particles.position( 0, ipart ) * dl_inv_;
+    double xpn = particles.position( 0, ipart ) * D_inv_[0];
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-    double rpn = r * dr_inv_;
+    double rpn = r * D_inv_[1];
     exp_m_theta_task = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
                                                              //exp(-i m theta)
 
@@ -151,7 +148,7 @@ void InterpolatorAM2Order::fieldsForTasks( ElectroMagn *EMfields, Particles &par
     // Interpolation of Bt^(d,d)
     *( BLoc+2*nparts ) = std::real( compute( &coeffxd[1], &coeffyd[1], Bt, idx_d[0], idx_d[1] ) );
     
-    for( unsigned int imode = 1; imode < nmodes ; imode++ ) {
+    for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
         El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
         Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
         Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
@@ -182,7 +179,7 @@ void InterpolatorAM2Order::fieldsForTasks( ElectroMagn *EMfields, Particles &par
     *( iold+1*nparts)  = idx_p[1];
     *( delta+0*nparts) = delta_p[0];
     *( delta+1*nparts) = delta_p[1];
-    *( theta_old )     = atan2( particles.position( 2, ipart ), particles.position( 1, ipart ));
+    *( eitheta_old )     = 2.*std::real(exp_m_theta_task) - exp_m_theta_ ;  //exp(i theta)
     
 } // END InterpolatorAM2Order
 
@@ -357,7 +354,7 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields,
     // with tasks
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle with locally defined variables to avoid data races between threads
-        fieldsForTasks( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart], &( *iold )[ipart] , &( *delta )[ipart], &( *theta_old )[ipart] );
+        fieldsForTasks( EMfields, particles, ipart, nparts, &( *Epart )[ipart], &( *Bpart )[ipart], &( *iold )[ipart] , &( *delta )[ipart], &( *eitheta_old )[ipart] );
     }
 #endif
 }
@@ -507,9 +504,9 @@ void InterpolatorAM2Order::fieldsAndEnvelopeForTasks( ElectroMagn *EMfields, Par
     
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
         // Normalized particle position
-        double xpn = particles.position( 0, ipart ) * dl_inv_;
+        double xpn = particles.position( 0, ipart ) * D_inv_[0];
         double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-        double rpn = r * dr_inv_;
+        double rpn = r * D_inv_[1];
         // exp_m_theta_task = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
                                                              //exp(-i m theta)
         int idx_p[2], idx_d[2];
@@ -667,9 +664,9 @@ void InterpolatorAM2Order::timeCenteredEnvelopeForTasks( ElectroMagn *EMfields, 
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
     
         // Normalized particle position
-        xpn = particles.position( 0, ipart ) * dl_inv_;
+        xpn = particles.position( 0, ipart ) * D_inv_[0];
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-        rpn = r * dr_inv_;
+        rpn = r * D_inv_[1];
 
         int idx_p[2], idx_d[2];
         double delta_p[2];
@@ -819,9 +816,9 @@ void InterpolatorAM2Order::envelopeFieldForIonizationTasks( ElectroMagn *EMfield
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
 
         // Normalized particle position
-        xpn = particles.position( 0, ipart ) * dl_inv_;
+        xpn = particles.position( 0, ipart ) * D_inv_[0];
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-        rpn = r * dr_inv_;
+        rpn = r * D_inv_[1];
         
         int idx_p[2], idx_d[2];
         double delta_p[2];
