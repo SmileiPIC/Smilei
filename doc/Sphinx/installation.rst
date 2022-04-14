@@ -195,7 +195,7 @@ All Intel compiler flags are listed on this  `page <https://www.intel.com/conten
 
 More examples:
 
-* For AMD EPY ROME processors:
+* For AMD EPYC ROME processors:
 
 .. code-block:: bash
 
@@ -232,9 +232,9 @@ More examples:
     * ``knl``
     * ``broadwell``
     * ``znver2`` for 2nd generation AMD EPYC processors
+    * ``znver2`` for 3rd generation AMD EPYC processors
     
-* ``-march=cpu-type``: This flag does additional tuning for specific processor types. 
-    Specifying -march=cpu-type implies -mtune=cpu-type, except where noted otherwise.
+* ``-march=cpu-type``: This flag does additional tuning for specific processor types. Specifying -march=cpu-type implies -mtune=cpu-type, except where noted otherwise.
     
     * ``cascadelake``
     * ``skylake-avx512``
@@ -243,6 +243,7 @@ More examples:
     * ``knl``
     * ``broadwell``
     * ``znver2`` for 2nd generation AMD EPYC processors
+    * ``znver3`` for 3rd generation AMD EPYC processors
     
 * ``-msve-vector-bits=512``: Specify the number of bits in an SVE vector register on ARM architecture using SVE (useful for A64FX).
 
@@ -254,6 +255,86 @@ Find out more information:
 * `g++ man page <https://linux.die.net/man/1/g++>`_.
 * `list of architecture options <https://gcc.gnu.org/onlinedocs/gcc/Submodel-Options.html#Submodel-Options/>`_.
 * `AMD quick reference guide <https://developer.amd.com/wordpress/media/2020/04/Compiler%20Options%20Quick%20Ref%20Guide%20for%20AMD%20EPYC%207xx2%20Series%20Processors.pdf>`_.
+
+.. rubric:: LLVM compiler flags for optimization and vectorization
+
+The LLVM compiler shares many flags with the GNU one.
+
+* ``-O3``: this option directly integrated in the makefile tells the compiler to use agressive optimization at compilation
+
+* ``-Ofast``: Disregard strict standards compliance. -Ofast enables all -O3 optimizations. It also enables optimizations that are not valid for all standard-compliant programs.It can result in incorrect output for programs that depend on an exact implementation of IEEE or ISO rules/specifications for math functions. It may, however, yield faster code for programs that do not require the guarantees of these specifications. 
+
+* ``-mtune=cpu-type``: This option specifies that LLVM should tune the performance of the code as if the target were of the type specified in this option, here ``cpu-type``.For some ARM implementations better performance can be obtained by using this option. Possible common cpu types are
+     
+    * ``cascadelake``
+    * ``skylake-avx512``
+    * ``a64fx`` for A64FX Fujitsu processor
+    * ``knl``
+    * ``broadwell``
+    * ``znver2`` for 2nd generation AMD EPYC processors
+    * ``znver2`` for 3rd generation AMD EPYC processors
+    
+* ``-march=cpu-type``: This flag does additional tuning for specific processor types. Specifying ``-march=cpu-type`` implies ``-mtune=cpu-type``, except where noted otherwise.
+    
+    * ``cascadelake``
+    * ``skylake-avx512``
+    * ``sve`` to generate SVE instructions (vectorization on ARM like A64FX)
+    * ``armv8.2-a`` to generate armv8 instructions (like A64FX)
+    * ``knl``
+    * ``broadwell``
+    * ``znver2`` for 2nd generation AMD EPYC processors
+    * ``znver3`` for 3rd generation AMD EPYC processors
+
+* ``-ffast-math``: Enable fast-math mode. This option lets the compiler make aggressive, potentially-lossy assumptions about floating-point math.
+
+* ``-ffinite-math-only``: Allow floating-point optimizations that assume arguments and results are not NaNs or +-Inf.
+
+* ``-ffp-contract=off|on|fast|fast-honor-pragmas``: Specify when the compiler is permitted to form fused floating-point operations, such as fused multiply-add (FMA). Fused operations are permitted to produce more precise results than performing the same operations separately.
+
+Some examples:
+
+* For Intel Cascade processors:
+
+.. code-block:: bash
+
+  -mtune=cascadelake -march=cascadelake -ffinite-math-only -ffp-contract=fast
+
+* For the A64FX processor:
+
+.. code-block:: bash
+
+  -march=armv8.2-a+sve -ffinite-math-only -fsimdmath -fopenmp-simd -ffp-contract=fast #-ffast-math
+
+Find out more information:
+
+* `LLVM Clang user manual <https://clang.llvm.org/docs/UsersManual.html>`_.
+
+.. rubric:: Fujitsu compiler flags for optimization and vectorization
+
+Fujitsu compiler is only used or the A64FX processor so far.
+The compiler can work in two differents modes called Trad and Clang mode.
+The Clang mode uses the Clang compilation flags.
+The Trad moe is usually the default one, the Clang mode an be activated using the flag ``-Nclang``.
+
+* ``-O3`` (bothy in Trad and clang mode): by default in the makefile
+
+* ``-Kfast`` (in Trad mode) / ``-Ofast`` (in Clang mode)
+
+* ``-KA64FX`` (in Trad mode)
+
+* ``-KSVE`` (in Trad mode) / ``-march=sve`` (in Clang mode)
+
+* ``-KSSL2`` (in Trad mode)
+
+* ``-Kparallel`` (in Trad mode)
+
+* ``-Kunroll`` (in Trad mode)
+
+* ``-Ksimd=2`` (in Trad mode)
+
+* ``-Kassume=notime_saving_compilation`` (in Trad mode)
+
+* ``-Kocl`` (in Trad mode) / ``-ffj-ocl`` (in Clang mode)
 
 .. rubric:: Smilei compiler flags for adaptive vectorization
 
