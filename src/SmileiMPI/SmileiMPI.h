@@ -241,7 +241,7 @@ public:
         dynamics_iold.resize( n_buffers );
         dynamics_deltaold.resize( n_buffers );
         if( isAM ) {
-            dynamics_thetaold.resize( n_buffers );
+            dynamics_eithetaold.resize( n_buffers );
         }
 
         if( dynamics_GradPHIpart.size() > 0 ) {
@@ -266,7 +266,7 @@ public:
         dynamics_iold[buffer_id].resize( 1 );
         dynamics_deltaold[buffer_id].resize( 1 );
         if( isAM ) {
-            dynamics_thetaold[buffer_id].resize( 1 );
+            dynamics_eithetaold[buffer_id].resize( 1 );
         }
 
         if( dynamics_GradPHIpart.size() > 0 ) {

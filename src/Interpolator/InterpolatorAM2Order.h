@@ -199,10 +199,10 @@ private:
 
         //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
-        idx_p[0]   = idx_p[0] - i_domain_begin;
-        idx_d[0]   = idx_d[0] - i_domain_begin;
-        idx_p[1]   = idx_p[1] - j_domain_begin;
-        idx_d[1]   = idx_d[1] - j_domain_begin;
+        idx_p[0]   = idx_p[0] - i_domain_begin_;
+        idx_d[0]   = idx_d[0] - i_domain_begin_;
+        idx_p[1]   = idx_p[1] - j_domain_begin_;
+        idx_d[1]   = idx_d[1] - j_domain_begin_;
         
     }
 
