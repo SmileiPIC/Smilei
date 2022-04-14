@@ -701,6 +701,18 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
         region.patch_->exchangeField_movewin( region.patch_->EMfields->rhoold_, params.n_space[0] );
     }
 
+    for(int bcId=2; bcId<2*params.nDim_field; bcId++){
+        if( (dynamic_cast<ElectroMagnBC2D_PML *>( region.patch_->EMfields->emBoundCond[bcId] ) || dynamic_cast<ElectroMagnBC3D_PML *>( region.patch_->EMfields->emBoundCond[bcId] )) ){
+            if( dynamic_cast<ElectroMagnBC2D_PML *>( region.patch_->EMfields->emBoundCond[bcId] )){
+                ElectroMagnBC2D_PML *embc = static_cast<ElectroMagnBC2D_PML *>( region.patch_->EMfields->emBoundCond[bcId] );
+                exchangePML_movewin( region, embc, params.n_space[0] );
+            } else {
+                ElectroMagnBC3D_PML *embc = static_cast<ElectroMagnBC3D_PML *>( region.patch_->EMfields->emBoundCond[bcId] );
+                exchangePML_movewin( region, embc, params.n_space[0] );
+            }
+        }
+    }
+
     //DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, smpi );
 
     region.patch_->EMfields->laserDisabled();
@@ -745,6 +757,25 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
             region.patch_->exchangeField_movewin( region_fields->rho_AM_[imode], params.n_space[0] );
             region.patch_->exchangeField_movewin( region_fields->rho_old_AM_[imode], params.n_space[0] );
         }
+
+        if( dynamic_cast<ElectroMagnBCAM_PML *>( region.patch_->EMfields->emBoundCond[3] )){
+            ElectroMagnBCAM_PML *embc = static_cast<ElectroMagnBCAM_PML *>( region_fields->emBoundCond[3] );
+            if (embc->Hl_[imode]) {
+                region.patch_->exchangeField_movewin( embc->Hl_[imode], params.n_space[0] );
+                region.patch_->exchangeField_movewin( embc->Hr_[imode], params.n_space[0] );
+                region.patch_->exchangeField_movewin( embc->Ht_[imode], params.n_space[0] );
+                region.patch_->exchangeField_movewin( embc->Bl_[imode], params.n_space[0] );
+                region.patch_->exchangeField_movewin( embc->Br_[imode], params.n_space[0] );
+                region.patch_->exchangeField_movewin( embc->Bt_[imode], params.n_space[0] );
+                region.patch_->exchangeField_movewin( embc->El_[imode], params.n_space[0] );
+                region.patch_->exchangeField_movewin( embc->Er_[imode], params.n_space[0] );
+                region.patch_->exchangeField_movewin( embc->Et_[imode], params.n_space[0] );
+                region.patch_->exchangeField_movewin( embc->Dl_[imode], params.n_space[0] );
+                region.patch_->exchangeField_movewin( embc->Dr_[imode], params.n_space[0] );
+                region.patch_->exchangeField_movewin( embc->Dt_[imode], params.n_space[0] );
+            }
+
+        }
     }
 
     //DoubleGrids::syncFieldsOnRegion( vecPatches, region, params, smpi );
@@ -764,3 +795,22 @@ void SimWindow::operate(Region& region,  VectorPatch& vecPatches, SmileiMPI* smp
     //    region.identify_missing_patches( smpi, vecPatches, params );
     //}
 }
+
+template <typename Tpml>
+void  SimWindow::exchangePML_movewin( Region& region, Tpml embc, int clrw ) {
+                if (embc->Hx_) {
+                    region.patch_->exchangeField_movewin( embc->Hx_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Hy_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Hz_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Bx_, clrw );
+                    region.patch_->exchangeField_movewin( embc->By_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Bz_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Ex_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Ey_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Ez_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Dx_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Dy_, clrw );
+                    region.patch_->exchangeField_movewin( embc->Dz_, clrw );
+                }
+}
+
