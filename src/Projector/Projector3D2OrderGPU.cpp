@@ -79,21 +79,21 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     if ( npack*packsize!=iend-istart )
         npack++;
 #ifndef _GPU
-    double* Sx0 = (double*) malloc( 5*packsize*sizeof(double) ); //acc_malloc
-    double* Sy0 = (double*) malloc( 5*packsize*sizeof(double) ); // "
-    double* Sz0 = (double*) malloc( 5*packsize*sizeof(double) );
-    double* DSx = (double*) malloc( 5*packsize*sizeof(double) );
-    double* DSy = (double*) malloc( 5*packsize*sizeof(double) );
-    double* DSz = (double*) malloc( 5*packsize*sizeof(double) );
-    double* sumX = (double*) malloc( 5*packsize*sizeof(double) ); 
+    double* Sx0 = (double*) std::malloc( 5*packsize*sizeof(double) ); //acc_malloc
+    double* Sy0 = (double*) std::malloc( 5*packsize*sizeof(double) ); // "
+    double* Sz0 = (double*) std::malloc( 5*packsize*sizeof(double) );
+    double* DSx = (double*) std::malloc( 5*packsize*sizeof(double) );
+    double* DSy = (double*) std::malloc( 5*packsize*sizeof(double) );
+    double* DSz = (double*) std::malloc( 5*packsize*sizeof(double) );
+    double* sumX = (double*) std::malloc( 5*packsize*sizeof(double) ); 
 #else
-    double* Sx0 = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* Sy0 = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* Sz0 = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* DSx = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* DSy = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* DSz = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* sumX = (double*) acc_malloc( 5*packsize*sizeof(double) );
+    double* Sx0 = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
+    double* Sy0 = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
+    double* Sz0 = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
+    double* DSx = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
+    double* DSy = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
+    double* DSz = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
+    double* sumX = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
 #endif
     for (int ipack=0 ; ipack<npack ; ipack++) {
         int istart_pack = istart+ipack*packsize;
@@ -347,21 +347,21 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
     } // End for ipack
 #ifndef _GPU
-    free( Sx0 ); // acc_free
-    free( Sy0 );
-    free( Sz0 );
-    free( DSx );
-    free( DSy );
-    free( DSz );
-    free( sumX );
+    std::free( Sx0 ); // acc_free
+    std::free( Sy0 );
+    std::free( Sz0 );
+    std::free( DSx );
+    std::free( DSy );
+    std::free( DSz );
+    std::free( sumX );
 #else
-    acc_free( Sx0 ); // acc_free
-    acc_free( Sy0 );
-    acc_free( Sz0 );
-    acc_free( DSx );
-    acc_free( DSy );
-    acc_free( DSz );
-    acc_free( sumX );
+    ::acc_free( Sx0 ); // acc_free
+    ::acc_free( Sy0 );
+    ::acc_free( Sz0 );
+    ::acc_free( DSx );
+    ::acc_free( DSy );
+    ::acc_free( DSz );
+    ::acc_free( sumX );
 #endif
 
 } // END Project local current densities (Jx, Jy, Jz, sort)
@@ -832,7 +832,7 @@ void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &par
         
         // compute initial ponderomotive gamma
         gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *( Phi+ipart )*charge_sq_over_mass_sq ;
-        gamma0    = sqrt( gamma0_sq ) ;
+        gamma0    = std::sqrt( gamma0_sq ) ;
         
         // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
         pxsm = ( gamma0 * charge_over_mass_dts2*( *( Ex+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhix+ipart ) ) ) * momentum[0] / gamma0_sq;
@@ -865,7 +865,7 @@ void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &par
         
         // locate the particle on the primal grid at current time-step & calculate coeff. S1
         xpn = particles.position( 0, ipart ) * dx_inv_;
-        int ip = round( xpn );
+        int ip = std::round( xpn );
         delta  = xpn - ( double )ip;
         delta2 = delta*delta;
         Sx1[1] = 0.5 * ( delta2-delta+0.25 );
@@ -873,7 +873,7 @@ void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &par
         Sx1[3] = 0.5 * ( delta2+delta+0.25 );
         
         ypn = particles.position( 1, ipart ) * dy_inv_;
-        int jp = round( ypn );
+        int jp = std::round( ypn );
         delta  = ypn - ( double )jp;
         delta2 = delta*delta;
         Sy1[1] = 0.5 * ( delta2-delta+0.25 );
@@ -881,7 +881,7 @@ void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &par
         Sy1[3] = 0.5 * ( delta2+delta+0.25 );
         
         zpn = particles.position( 2, ipart ) * dz_inv_;
-        int kp = round( zpn );
+        int kp = std::round( zpn );
         delta  = zpn - ( double )kp;
         delta2 = delta*delta;
         Sz1[1] = 0.5 * ( delta2-delta+0.25 );

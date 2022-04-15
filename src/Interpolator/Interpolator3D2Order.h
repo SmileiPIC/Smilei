@@ -85,12 +85,12 @@ private:
     inline void __attribute__((always_inline)) coeffs( double xpn, double ypn, double zpn )
     {
         // Indexes of the central nodes
-        ip_ = round( xpn );
-        id_ = round( xpn+0.5 );
-        jp_ = round( ypn );
-        jd_ = round( ypn+0.5 );
-        kp_ = round( zpn );
-        kd_ = round( zpn+0.5 );
+        ip_ = std::round( xpn );
+        id_ = std::round( xpn+0.5 );
+        jp_ = std::round( ypn );
+        jd_ = std::round( ypn+0.5 );
+        kp_ = std::round( zpn );
+        kd_ = std::round( zpn+0.5 );
 
         // Declaration and calculation of the coefficient for interpolation
         double delta2;

@@ -43,6 +43,8 @@ export OMP_PLACES=cores;
 rocm-smi;
 rocminfo;
 
+# export CRAY_ACC_DEBUG=0
+
 {a_task_command} > {the_output_file} 2>&1;
 
 kRETVAL=$?;

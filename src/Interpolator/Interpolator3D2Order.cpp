@@ -178,23 +178,23 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
 
     // TODO(Etienne M): Memory ops optimization
-    #pragma omp target map(to                                           \
-                           : Ex3D [0:sizeofEx],                         \
-                             Ey3D [0:sizeofEy],                         \
-                             Ez3D [0:sizeofEz],                         \
-                             Bx3D [0:sizeofBx],                         \
-                             By3D [0:sizeofBy],                         \
-                             Bz3D [0:sizeofBz],                         \
-                             position_x [first_index:npart_range_size], \
-                             position_y [first_index:npart_range_size], \
-                             position_z [first_index:npart_range_size]) \
-        map(from                                                        \
-            : ELoc [first_index:interpolation_range_size],              \
-              BLoc [first_index:interpolation_range_size],              \
-              iold [first_index:interpolation_range_size],              \
-              delta [first_index:interpolation_range_size])             \
-            map(to                                                      \
-                : i_domain_begin, j_domain_begin, k_domain_begin)
+    #pragma omp target map( to                                            \
+                            : Ex3D [0:sizeofEx],                          \
+                              Ey3D [0:sizeofEy],                          \
+                              Ez3D [0:sizeofEz],                          \
+                              Bx3D [0:sizeofBx],                          \
+                              By3D [0:sizeofBy],                          \
+                              Bz3D [0:sizeofBz],                          \
+                              position_x [first_index:npart_range_size],  \
+                              position_y [first_index:npart_range_size],  \
+                              position_z [first_index:npart_range_size] ) \
+        map( from                                                         \
+             : ELoc [first_index:interpolation_range_size],               \
+               BLoc [first_index:interpolation_range_size],               \
+               iold [first_index:interpolation_range_size],               \
+               delta [first_index:interpolation_range_size] )             \
+            map( to                                                       \
+                 : i_domain_begin, j_domain_begin, k_domain_begin )
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined(_GPU)
@@ -408,9 +408,9 @@ void Interpolator3D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
 
 
     // Indexes of the central nodes
-    ip_ = round( xpn );
-    jp_ = round( ypn );
-    kp_ = round( zpn );
+    ip_ = std::round( xpn );
+    jp_ = std::round( ypn );
+    kp_ = std::round( zpn );
 
 
     // Declaration and calculation of the coefficient for interpolation
@@ -488,9 +488,9 @@ void Interpolator3D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
 
 
         // Indexes of the central nodes
-        ip_ = round( xpn );
-        jp_ = round( ypn );
-        kp_ = round( zpn );
+        ip_ = std::round( xpn );
+        jp_ = std::round( ypn );
+        kp_ = std::round( zpn );
 
 
         // Declaration and calculation of the coefficient for interpolation
