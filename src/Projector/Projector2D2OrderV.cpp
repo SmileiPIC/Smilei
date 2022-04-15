@@ -249,8 +249,8 @@ void Projector2D2OrderV::basic( double *rhoj, Particles &particles, unsigned int
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ip -= i_domain_begin + 2 + bin_shift;
-    jp -= j_domain_begin + 2;
+    ip -= i_domain_begin_ + 2 + bin_shift;
+    jp -= j_domain_begin_ + 2;
     
     for( unsigned int i=0 ; i<5 ; i++ ) {
         iloc = ( i+ip )*ny+jp;
@@ -677,8 +677,8 @@ void Projector2D2OrderV::currentsAndDensityWrapperOnBuffers( double *b_Jx, doubl
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
     //}
     int iold[2];
-    iold[0] = scell/nscelly+oversize[0];
-    iold[1] = ( scell%nscelly )+oversize[1];
+    iold[0] = scell/nscelly_+oversize[0];
+    iold[1] = ( scell%nscelly_ )+oversize[1];
     
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
@@ -751,7 +751,7 @@ void Projector2D2OrderV::currentsAndDensityForTasks( double *Jx, double *Jy, dou
             //                            X                                 //
             double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
             int cell = round( pos );
-            int cell_shift = cell-ipo-i_domain_begin;
+            int cell_shift = cell-ipo-i_domain_begin_;
             double delta  = pos - ( double )cell;
             double delta2 = delta*delta;
             double deltam =  0.5 * ( delta2-delta+0.25 );
@@ -768,7 +768,7 @@ void Projector2D2OrderV::currentsAndDensityForTasks( double *Jx, double *Jy, dou
             //                            Y                                 //
             pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
             cell = round( pos );
-            cell_shift = cell-jpo-j_domain_begin;
+            cell_shift = cell-jpo-j_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             deltam =  0.5 * ( delta2-delta+0.25 );
@@ -865,7 +865,7 @@ void Projector2D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
             //                            X                                 //
             double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
             int cell = round( pos );
-            int cell_shift = cell-ipo-i_domain_begin;
+            int cell_shift = cell-ipo-i_domain_begin_;
             double delta  = pos - ( double )cell;
             double delta2 = delta*delta;
             double deltam =  0.5 * ( delta2-delta+0.25 );
@@ -896,7 +896,7 @@ void Projector2D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
             //                            Y                                 //
             pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
             cell = round( pos );
-            cell_shift = cell-jpo-j_domain_begin;
+            cell_shift = cell-jpo-j_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             deltam =  0.5 * ( delta2-delta+0.25 );
@@ -929,7 +929,7 @@ void Projector2D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            double crx_p = charge_weight[ipart]*dx_ov_dt;
+            double crx_p = charge_weight[ipart]*dx_ov_dt_;
             
             double sum[5];
             sum[0] = 0.;
@@ -984,7 +984,7 @@ void Projector2D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
             //                            X                                 //
             double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
             int cell = round( pos );
-            int cell_shift = cell-ipo-i_domain_begin;
+            int cell_shift = cell-ipo-i_domain_begin_;
             double delta  = pos - ( double )cell;
             double delta2 = delta*delta;
             double deltam =  0.5 * ( delta2-delta+0.25 );
@@ -1015,7 +1015,7 @@ void Projector2D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
             //                            Y                                 //
             pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
             cell = round( pos );
-            cell_shift = cell-jpo-j_domain_begin;
+            cell_shift = cell-jpo-j_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             deltam =  0.5 * ( delta2-delta+0.25 );
@@ -1048,7 +1048,7 @@ void Projector2D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
         
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            double cry_p = charge_weight[ipart]*dy_ov_dt;
+            double cry_p = charge_weight[ipart]*dy_ov_dt_;
             
             double sum[5];
             sum[0] = 0.;
@@ -1102,7 +1102,7 @@ void Projector2D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
             //                            X                                 //
             double pos = particles.position( 0, ivect+ipart+istart ) * dx_inv_;
             int cell = round( pos );
-            int cell_shift = cell-ipo-i_domain_begin;
+            int cell_shift = cell-ipo-i_domain_begin_;
             double delta  = pos - ( double )cell;
             double delta2 = delta*delta;
             double deltam =  0.5 * ( delta2-delta+0.25 );
@@ -1133,7 +1133,7 @@ void Projector2D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
             //                            Y                                 //
             pos = particles.position( 1, ivect+ipart+istart ) * dy_inv_;
             cell = round( pos );
-            cell_shift = cell-jpo-j_domain_begin;
+            cell_shift = cell-jpo-j_domain_begin_;
             delta  = pos - ( double )cell;
             delta2 = delta*delta;
             deltam =  0.5 * ( delta2-delta+0.25 );

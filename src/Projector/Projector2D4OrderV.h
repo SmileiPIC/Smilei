@@ -38,7 +38,7 @@ public:
                                                                    int ipart_ref = 0 );
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
-    void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int bin, int bin_shift = 0 ) override final;
+    void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift = 0 ) override final;
 
     //! Project global current densities if Ionization in Species::dynamics,
     void ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion ) override final;

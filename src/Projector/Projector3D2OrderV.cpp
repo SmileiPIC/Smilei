@@ -1075,10 +1075,17 @@ void Projector3D2OrderV::susceptibilityOnBuffer( ElectroMagn *EMfields, double *
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection for Tasks
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, 
-        int bin_shift, Particles &particles, SmileiMPI *smpi, 
-        int istart, int iend, int ithread, bool diag_flag, 
-        bool is_spectral, int ispec, int scell, int ipart_ref )
+void Projector3D2OrderV::currentsAndDensityWrapperOnBuffers( double *b_Jx, 
+                                                             double *b_Jy, 
+                                                             double *b_Jz, 
+                                                             double *b_rho, 
+                                                             int bin_shift, 
+                                                             Particles &particles, 
+                                                             SmileiMPI *smpi, 
+                                                             int istart, int iend, 
+                                                             int ithread, bool diag_flag, 
+                                                             bool is_spectral, int ispec, 
+                                                             int scell, int ipart_ref )
 {
     if( istart == iend ) {
         return;    //Don't treat empty cells.
@@ -1100,91 +1107,102 @@ void Projector3D2OrderV::currentsAndDensityWrapperOnBuffers( double *b_Jx, doubl
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
         if( !is_spectral ) {
-            currentsForTasks( b_Jx, b_Jy, b_Jz, bin_shift, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
+            currentsForTasks( b_Jx, b_Jy, b_Jz, bin_shift, particles,  istart, iend, invgf->data(), iold, &( *delta )[0], invgf->size(), ipart_ref );
         } else {
             ERROR( "TO DO with rho" );
         }
         
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        currentsAndDensityForTasks( b_Jx, b_Jy, b_Jz, b_rho, bin_shift, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
+        currentsAndDensityForTasks( b_Jx, b_Jy, b_Jz, b_rho, bin_shift, particles,  istart, iend, invgf->data(), iold, &( *delta )[0], invgf->size(), ipart_ref );
     }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized) for tasks
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::currentsAndDensityForTasks( double *Jx, double *Jy, double *Jz, double *rho, int bin_shift, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
+void Projector3D2OrderV::currentsAndDensityForTasks( double * __restrict__ b_Jx,
+                                double * __restrict__ b_Jy,
+                                double * __restrict__ b_Jz,
+                                double * __restrict__ b_rho,
+                                int bin_shift,
+                                Particles &particles,
+                                unsigned int istart,
+                                unsigned int iend,
+                                double * __restrict__ invgf,
+                                int    * __restrict__ iold,
+                                double * __restrict__ deltaold,
+                                unsigned int buffer_size,
+                                int ipart_ref )
 {
 
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
-    
-    int npart_total = invgf->size();
+
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
     int ipom2 = ipo-2;
     int jpom2 = jpo-2;
     int kpom2 = kpo-2;
-    
+
     int vecSize = 8;
     unsigned int bsize = 5*5*5*vecSize;
-    
+
     double bJx[bsize] __attribute__( ( aligned( 64 ) ) );
-    
+
     double DSx[40] __attribute__( ( aligned( 64 ) ) );
     double DSy[40] __attribute__( ( aligned( 64 ) ) );
     double DSz[40] __attribute__( ( aligned( 64 ) ) );
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
-    
+
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
-    int nbVec = ( iend-istart+( cell_nparts-1 )-( ( iend-istart-1 )&( cell_nparts-1 ) ) ) / vecSize;
-    if( nbVec*vecSize != cell_nparts ) {
-        nbVec++;
-    }
-    
-    
     // Jx, Jy, Jz
-    currentsForTasks( Jx, Jy, Jz, bin_shift, particles, istart, iend, invgf, iold, deltaold, ipart_ref );
-    
-    
+    currents( b_Jx, b_Jy, b_Jz, particles, istart, iend, invgf, iold, deltaold, buffer_size, ipart_ref );
+
+
     // rho^(p,p,d)
     cell_nparts = ( int )iend-( int )istart;
     #pragma omp simd
     for( unsigned int j=0; j<1000; j++ ) {
         bJx[j] = 0.;
     }
-    
+
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
-    
+
         int np_computed( min( cell_nparts-ivect, vecSize ) );
         int istart0 = ( int )istart + ivect;
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, DSx, DSy, DSz );
+            compute_distances( particles, buffer_size, ipart, istart0, ipart_ref, deltaold, iold, DSx, DSy, DSz );
             charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
         }
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+
+            UNROLL_S(5)
             for( unsigned int i=0 ; i<5 ; i++ ) {
+
+                UNROLL_S(5)
                 for( unsigned int j=0 ; j<5 ; j++ ) {
                     int index( ( i*25 + j*5 )*vecSize+ipart );
+
+                    UNROLL_S(5)
                     for( unsigned int k=0 ; k<5 ; k++ ) {
                         bJx [ index+k*vecSize ] +=  charge_weight[ipart] * DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart];
                     }
                 }
             }//i
-            
-            
+
+
         } // END ipart (compute coeffs)
-        
+
     }
-    
+
     int iloc0 = (ipom2-bin_shift)*nprimy*nprimz+jpom2*nprimz+kpom2;
     int iloc = iloc0;
     for( unsigned int i=0 ; i<5 ; i++ ) {
@@ -1193,28 +1211,38 @@ void Projector3D2OrderV::currentsAndDensityForTasks( double *Jx, double *Jy, dou
             for( unsigned int k=0 ; k<5 ; k++ ) {
                 double tmpRho = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
-#pragma unroll(8)
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpRho +=  bJx[ilocal+ipart];
                 }
-                rho [iloc + ( j )*( nprimz ) + k] +=  tmpRho;
+                b_rho [iloc + ( j )*( nprimz ) + k] +=  tmpRho;
             }
         }
         iloc += nprimy*( nprimz );
     }
-    
+
 } // END Project local current densities at diagFields timestep, for tasks
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized for tasks
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, int bin_shift, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
+void Projector3D2OrderV::currentsForTasks( double * __restrict__ b_Jx,
+                      double * __restrict__ b_Jy,
+                      double * __restrict__ b_Jz,
+                      int bin_shift,
+                      Particles &particles,
+                      unsigned int istart,
+                      unsigned int iend,
+                      double * __restrict__ invgf,
+                      int    * __restrict__ iold,
+                      double * __restrict__ deltaold,
+                      unsigned int buffer_size,
+                      int ipart_ref )
 {
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
-    
-    int npart_total = invgf->size();
+
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
@@ -1222,12 +1250,14 @@ void Projector3D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
     int jpom2 = jpo-2;
     int kpom2 = kpo-2;
     int nyz = nprimy*nprimz;
-    
+
     int vecSize = 8;
     unsigned int bsize = 5*5*5*vecSize;
-    
+
     double bJx[bsize] __attribute__( ( aligned( 64 ) ) );
-    
+    double bJy[bsize] __attribute__( ( aligned( 64 ) ) );
+    double bJz[bsize] __attribute__( ( aligned( 64 ) ) );
+
     double Sx0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
     double Sy0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
     double Sz0_buff_vect[32] __attribute__( ( aligned( 64 ) ) );
@@ -1235,40 +1265,60 @@ void Projector3D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
     double DSy[40] __attribute__( ( aligned( 64 ) ) );
     double DSz[40] __attribute__( ( aligned( 64 ) ) );
     double charge_weight[8] __attribute__( ( aligned( 64 ) ) );
-    
+
+    // Pointer for GPU and vectorization on ARM processors
+    double * __restrict__ position_x = particles.getPtrPosition(0);
+    double * __restrict__ position_y = particles.getPtrPosition(1);
+    double * __restrict__ position_z = particles.getPtrPosition(2);
+    double * __restrict__ weight     = particles.getPtrWeight();
+    short  * __restrict__ charge     = particles.getPtrCharge();
+
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
-    int nbVec = ( iend-istart+( cell_nparts-1 )-( ( iend-istart-1 )&( cell_nparts-1 ) ) ) / vecSize;
-    if( nbVec*vecSize != cell_nparts ) {
-        nbVec++;
-    }
-    
     // Jx^(d,p,p)
+    // Jy^(p,d,p)
+    // Jz^(p,p,d)
+
+
     #pragma omp simd
-    for( unsigned int j=0; j<1000; j++ ) {
+    for( unsigned int j=0; j<bsize; j++ ) {
         bJx[j] = 0.;
+        bJy[j] = 0.;
+        bJz[j] = 0.;
     }
-    
+
     for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
-    
+
         int np_computed( min( cell_nparts-ivect, vecSize ) );
         int istart0 = ( int )istart + ivect;
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
+            compute_distances( position_x, position_y, position_z,
+                               (int)(buffer_size), ipart, istart0, ipart_ref, deltaold, iold,
+                               Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
+            charge_weight[ipart] = inv_cell_volume * ( double )( charge[istart0+ipart] )*weight[istart0+ipart];
         }
-        
+
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             computeJ( ipart, charge_weight, DSx, DSy, DSz, Sy0_buff_vect, Sz0_buff_vect, bJx, dx_ov_dt, 25, 5, 1 );
         } // END ipart (compute coeffs)
-        
+
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJy, dy_ov_dt, 5, 25, 1 );
+        } // END ipart (compute coeffs)
+
+        #pragma omp simd
+        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
+            computeJ( ipart, charge_weight, DSz, DSx, DSy, Sx0_buff_vect, Sy0_buff_vect, bJz, dz_ov_dt, 1, 25, 5 );
+        } // END ipart (compute coeffs)
+
     } // END ivect
-    
-    int iglobal0 = (ipom2-bin_shift)*nyz+jpom2*nprimz+kpom2; 
-    
+
+    int iglobal0 = (ipom2-bin_shift)*nyz+jpom2*nprimz+kpom2;
+
     int iglobal  = iglobal0;
     for( unsigned int i=1 ; i<5 ; i++ ) {
         iglobal += nyz;
@@ -1277,41 +1327,15 @@ void Projector3D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
             for( unsigned int k=0 ; k<5 ; k++ ) {
                 double tmpJx = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
-#pragma unroll(8)
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpJx += bJx [ilocal+ipart];
                 }
-                Jx[iglobal+j*nprimz+k]         += tmpJx;
+                b_Jx[iglobal+j*nprimz+k]         += tmpJx;
             }
         }
     }
-    
-    
-    // Jy^(p,d,p)
-    #pragma omp simd
-    for( unsigned int j=0; j<1000; j++ ) {
-        bJx[j] = 0.;
-    }
-    
-    
-    cell_nparts = ( int )iend-( int )istart;
-    for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
-    
-        int np_computed( min( cell_nparts-ivect, vecSize ) );
-        int istart0 = ( int )istart + ivect;
-        
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
-        }
-        
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJx, dy_ov_dt, 5, 25, 1 );
-        } // END ipart (compute coeffs)
-    }
-    
+
     iglobal = iglobal0+(ipom2-bin_shift)*nprimz;
     for( unsigned int i=0 ; i<5 ; i++ ) {
         for( unsigned int j=1 ; j<5 ; j++ ) {
@@ -1319,58 +1343,32 @@ void Projector3D2OrderV::currentsForTasks( double *Jx, double *Jy, double *Jz, i
             for( unsigned int k=0 ; k<5 ; k++ ) {
                 double tmpJy = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
-#pragma unroll(8)
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
-                    tmpJy += bJx [ilocal+ipart];
+                    tmpJy += bJy [ilocal+ipart];
                 }
-                Jy[iglobal+j*nprimz+k] += tmpJy;
+                b_Jy[iglobal+j*nprimz+k] += tmpJy;
             }
         }
         iglobal += ( nprimy+1 )*nprimz;
     }
-    
-    
-    // Jz^(p,p,d)
-    cell_nparts = ( int )iend-( int )istart;
-    #pragma omp simd
-    for( unsigned int j=0; j<1000; j++ ) {
-        bJx[j] = 0.;
-    }
-    
-    for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
-    
-        int np_computed( min( cell_nparts-ivect, vecSize ) );
-        int istart0 = ( int )istart + ivect;
-        
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * ( double )( particles.charge( istart0+ipart ) )*particles.weight( istart0+ipart );
-        }
-        
-        #pragma omp simd
-        for( int ipart=0 ; ipart<np_computed; ipart++ ) {
-            computeJ( ipart, charge_weight, DSz, DSx, DSy, Sx0_buff_vect, Sy0_buff_vect, bJx, dz_ov_dt, 1, 25, 5 );
-        } // END ipart (compute coeffs)
-        
-    }
-    
-    iglobal = iglobal0  + jpom2 +(ipom2-bin_shift)*nprimy;
+
+    iglobal = iglobal0  + jpom2 +ipom2*nprimy;
     for( unsigned int i=0 ; i<5 ; i++ ) {
         for( unsigned int j=0 ; j<5 ; j++ ) {
             #pragma omp simd
             for( unsigned int k=1 ; k<5 ; k++ ) {
                 double tmpJz = 0.;
                 int ilocal = ( ( i )*25+j*5+k )*vecSize;
-#pragma unroll(8)
+                UNROLL(8)
                 for( int ipart=0 ; ipart<8; ipart++ ) {
-                    tmpJz +=  bJx[ilocal+ipart];
+                    tmpJz +=  bJz[ilocal+ipart];
                 }
-                Jz [iglobal + ( j )*( nprimz+1 ) + k] +=  tmpJz;
+                b_Jz [iglobal + ( j )*( nprimz+1 ) + k] +=  tmpJz;
             }
         }
         iglobal += nprimy*( nprimz+1 );
     }
-    
-    
+
+
 } // END Project vectorized for tasks

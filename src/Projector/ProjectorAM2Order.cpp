@@ -361,7 +361,7 @@ void ProjectorAM2Order::basicForComplexOnBuffer( complex<double> *rhoj, Particle
     // Variable declaration & initialization
     // -------------------------------------
     
-    int iloc, nr( nprimr );
+    int iloc, nr( nprimr_ );
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
     
@@ -416,8 +416,8 @@ void ProjectorAM2Order::basicForComplexOnBuffer( complex<double> *rhoj, Particle
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + 2 + bin_shift;
-    jp -= j_domain_begin + 2;
+    ip -= i_domain_begin_ + 2 + bin_shift;
+    jp -= j_domain_begin_ + 2;
 
     // complex<double> *rho = &(rhoj[ imode*(bdim0*nr ) ] ) ;
     
@@ -425,7 +425,7 @@ void ProjectorAM2Order::basicForComplexOnBuffer( complex<double> *rhoj, Particle
     for( unsigned int i=1 ; i<4 ; i++ ) {
         iloc = ( i+ip )*nr+jp;
         for( unsigned int j=1 ; j<4 ; j++ ) {
-            rhoj [mode_shift+iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
+            rhoj [mode_shift+iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR_[j+jp];
         }
     }//i
 } // END Project for diags local current densities
@@ -683,10 +683,10 @@ void ProjectorAM2Order::ionizationCurrentsForTasks( double *b_Jx, double *b_Jy, 
     // Srd[1] = ( 0.75-ypmyjd2 );
     // Srd[2] = 0.5 * ( ypmyjd2+ypmyjd+0.25 );
     // 
-    // ip  -= i_domain_begin;
-    // id  -= i_domain_begin;
-    // jp  -= j_domain_begin;
-    // jd  -= j_domain_begin;
+    // ip  -= i_domain_begin_;
+    // id  -= i_domain_begin_;
+    // jp  -= j_domain_begin_;
+    // jd  -= j_domain_begin_;
     // 
     // for( unsigned int i=0 ; i<3 ; i++ ) {
     //     //int iploc=ip+i-1;
@@ -735,7 +735,7 @@ void ProjectorAM2Order::currentsAndDensityWrapperOnAMBuffers( ElectroMagn *EMfie
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
-    std::vector<double> *array_theta_old = &( smpi->dynamics_thetaold[ithread] );
+    std::vector<std::complex<double>> *array_eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
     ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
     
     
@@ -747,7 +747,7 @@ void ProjectorAM2Order::currentsAndDensityWrapperOnAMBuffers( ElectroMagn *EMfie
         // Jx is used for Jl
         // Jy is used fot Jr
         // Jt is used for Jt
-        currentsForTasks( emAM, b_Jl, b_Jr, b_Jt, b_rhoAM, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], bin_shift, bdim0, diag_flag );
+        currentsForTasks( emAM, b_Jl, b_Jr, b_Jt, b_rhoAM, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_eitheta_old )[ipart], bin_shift, bdim0, diag_flag );
     }
     
 }
@@ -755,7 +755,7 @@ void ProjectorAM2Order::currentsAndDensityWrapperOnAMBuffers( ElectroMagn *EMfie
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for all modes on bin sub-grid
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, int bin_shift, int bdim0, bool diag_flag )
+void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<double> *b_Jl, std::complex<double> *b_Jr, std::complex<double> *b_Jt, std::complex<double> *b_rhoAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, std::complex<double> *array_eitheta_old, int bin_shift, int bdim0, bool diag_flag )
 {
    
     // -------------------------------------
@@ -765,7 +765,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
     int iloc, jloc, linindex;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double crl_p = charge_weight*dl_ov_dt;
+    double crl_p = charge_weight*dl_ov_dt_;
     double crr_p = charge_weight*one_ov_dt;
    
     // variable declaration
@@ -805,15 +805,15 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
     double yp = particles.position( 1, ipart );
     double zp = particles.position( 2, ipart );
     double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
-    double theta_old = array_theta_old[0];
-    double theta = atan2( zp, yp );
+    std::complex<double> theta_old = array_eitheta_old[0];
+    std::complex<double> eitheta = ( particles.position( 1, ipart ) + Icpx * particles.position( 2, ipart ) ) / rp ; //exp(i theta)
     e_delta = 1.;
     e_bar = 1.;
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position( 0, ipart ) * dl_inv_;
     int ip = round( xpn );
     int ipo = iold[0*nparts];
-    int ip_m_ipo = ip-ipo-i_domain_begin;
+    int ip_m_ipo = ip-ipo-i_domain_begin_;
     delta  = xpn - ( double )ip;
     delta2 = delta*delta;
     Sl1[ip_m_ipo+1] = 0.5 * ( delta2-delta+0.25 );
@@ -823,7 +823,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
     ypn = rp *dr_inv_ ;
     int jp = round( ypn );
     int jpo = iold[1*nparts];
-    int jp_m_jpo = jp-jpo-j_domain_begin;
+    int jp_m_jpo = jp-jpo-j_domain_begin_;
     delta  = ypn - ( double )jp;
     delta2 = delta*delta;
     Sr1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
@@ -835,18 +835,19 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
         DSr[i] = Sr1[i] - Sr0[i];
     }
    
-    double r_bar = ((jpo + j_domain_begin)*dr + deltaold[1*nparts] + rp) * 0.5; // r at t = t0 - dt/2
-    double dtheta = std::remainder( theta-theta_old, 2*M_PI )/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
-    double theta_bar = theta_old+dtheta; // theta at t = t0 - dt/2
-    e_delta_m1 = std::polar( 1.0, dtheta );
-    e_bar_m1 = std::polar( 1.0, theta_bar );
+    double r_bar = ((jpo + j_domain_begin_)*dr + deltaold[1*nparts] + rp) * 0.5; // r at t = t0 - dt/2
+    e_delta_m1 = std::sqrt(eitheta * (2.*std::real(theta_old) - theta_old)); // std::sqrt keeps the root with positive real part which is what we need here.
+    e_bar_m1 = theta_old * e_delta_m1;
    
     ipo -= 2 + bin_shift;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 2;
    
-    double *invR_local = &(invR[jpo]);
+    double *invR_local = &(invR_[jpo]);
    
+    //initial value of crt_p for imode = 0.
+    complex<double> crt_p= charge_weight*( particles.momentum( 2, ipart )* real(e_bar_m1) - particles.momentum( 1, ipart )*imag(e_bar_m1) ) * invgf;
+
     // ------------------------------------------------
     // Local current created by the particle
     // calculate using the charge conservation equation
@@ -862,9 +863,6 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
     // Calculate the total current
     // ---------------------------
    
-    //initial value of crt_p for imode = 0.
-    complex<double> crt_p= charge_weight*( particles.momentum( 2, ipart )* real(e_bar_m1) - particles.momentum( 1, ipart )*imag(e_bar_m1) ) * invgf;
-   
     // Compute everything independent of theta
     for( unsigned int j=0 ; j<5 ; j++ ) {
         double tmp = crl_p * ( Sr0[j] + 0.5*DSr[j] )* invR_local[j];
@@ -875,8 +873,8 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
    
     for( int j=3 ; j>=0 ; j-- ) {
         jloc = j+jpo+1;
-        double Vd = abs( jloc + j_domain_begin + 0.5 )* invRd[jloc]*dr ;
-        double tmp = crr_p * DSr[j+1] * invRd[jpo+j+1]*dr;
+        double Vd = abs( jloc + j_domain_begin_ + 0.5 )* invRd_[jloc]*dr ;
+        double tmp = crr_p * DSr[j+1] * invRd_[jpo+j+1]*dr;
         for( unsigned int i=0 ; i<5 ; i++ ) {
             Jr_p[i][j] =  Jr_p[i][j+1] * Vd + ( Sl0[i] + 0.5*DSl[i] ) * tmp;
         }
@@ -891,10 +889,10 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
         Sr1[j] *= invR_local[j];
     }
     
-    int factor_shift_JlJtRho = (bdim0*nprimr    );
-    int factor_shift_Jr      = (bdim0*(nprimr+1));
+    int factor_shift_JlJtRho = (bdim0*nprimr_    );
+    int factor_shift_Jr      = (bdim0*(nprimr_+1));
 
-    for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
+    for( unsigned int imode=0; imode<( unsigned int )Nmode_; imode++ ) {
    
         if (imode > 0){
             e_delta *= e_delta_m1;
@@ -909,7 +907,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
         // Add contribution J_p to global array
         if (diag_flag){
             for( unsigned int i=0 ; i<5 ; i++ ) {
-                iloc = ( i+ipo )*nprimr;
+                iloc = ( i+ipo )*nprimr_;
                 for( unsigned int j=0 ; j<5 ; j++ ) {
                     jloc = j+jpo;
                     linindex = iloc+jloc;
@@ -920,7 +918,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
    
         // Jl^(d,p)
         for( unsigned int i=1 ; i<5 ; i++ ) {
-            iloc = ( i+ipo )*nprimr+jpo;
+            iloc = ( i+ipo )*nprimr_+jpo;
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 linindex = iloc+j;
                 b_Jl [mode_shift_JlJtRho+linindex] += C_m * Jl_p[i][j] ;
@@ -929,7 +927,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
    
         // Jr^(p,d)
         for( unsigned int i=0 ; i<5 ; i++ ) {
-            iloc = ( i+ipo )*( nprimr+1 )+jpo+1;
+            iloc = ( i+ipo )*( nprimr_+1 )+jpo+1;
             for( unsigned int j=0 ; j<4 ; j++ ) {
                 linindex = iloc+j;
                 b_Jr [mode_shift_Jr+linindex] += C_m * Jr_p[i][j] ;
@@ -938,7 +936,7 @@ void ProjectorAM2Order::currentsForTasks( ElectroMagnAM *emAM, std::complex<doub
    
         // Jt^(p,p)
         for( unsigned int i=0 ; i<5 ; i++ ) {
-            iloc = ( i+ipo )*nprimr + jpo;
+            iloc = ( i+ipo )*nprimr_ + jpo;
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 linindex = iloc+j;
                 b_Jt [mode_shift_JlJtRho+linindex] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0[j]*Sl0[i]*( e_delta-1. )); 
@@ -1094,7 +1092,7 @@ void ProjectorAM2Order::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b
         // (charge over mass)^2
         charge_sq_over_mass_sq      = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*one_over_mass*one_over_mass;
 
-        int iloc, nr( nprimr );
+        int iloc, nr( nprimr_ );
     
         double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
     
@@ -1147,14 +1145,14 @@ void ProjectorAM2Order::susceptibilityOnBuffer( ElectroMagn *EMfields, double *b
         // ---------------------------
         // Calculate the total charge
         // ---------------------------
-        ip -= i_domain_begin + 2 + bin_shift;
-        jp -= j_domain_begin + 2;
+        ip -= i_domain_begin_ + 2 + bin_shift;
+        jp -= j_domain_begin_ + 2;
     
     
         for( unsigned int i=1 ; i<4 ; i++ ) {
             iloc = ( i+ip )*nr+jp;
             for( unsigned int j=1 ; j<4 ; j++ ) {
-                    b_ChiAM [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
+                    b_ChiAM [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR_[j+jp];
             }
         }//i
     

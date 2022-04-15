@@ -201,7 +201,7 @@ void Projector2D4OrderV::currentsAndDensity( double * __restrict__ Jx,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector2D4OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int bin_shift )
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0

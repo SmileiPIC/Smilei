@@ -38,9 +38,32 @@ public:
                                     int ipart_ref = 0 );
     
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-    inline void currentsForTasks( double *Jx, double *Jy, double *Jz, int bin_shift, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
+    inline void currentsForTasks( double * __restrict__ b_Jx,
+                          double * __restrict__ b_Jy,
+                          double * __restrict__ b_Jz,
+                          int bin_shift,
+                          Particles &particles,
+                          unsigned int istart,
+                          unsigned int iend,
+                          double * __restrict__ invgf,
+                          int    * __restrict__ iold,
+                          double * __restrict__ deltaold,
+                          unsigned int buffer_size,
+                          int ipart_ref = 0 );
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    inline void currentsAndDensityForTasks( double *Jx, double *Jy, double *Jz, double *rho, int bin_shift, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
+    inline void currentsAndDensityForTasks( double * __restrict__ b_Jx,
+                                    double * __restrict__ b_Jy,
+                                    double * __restrict__ b_Jz,
+                                    double * __restrict__ b_rho,
+                                    int bin_shift,
+                                    Particles &particles,
+                                    unsigned int istart,
+                                    unsigned int iend,
+                                    double * __restrict__ invgf,
+                                    int    * __restrict__ iold,
+                                    double * __restrict__ deltaold,
+                                    unsigned int buffer_size,
+                                    int ipart_ref = 0 );
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int bin, int bin_shift = 0 ) override final;
@@ -55,7 +78,7 @@ public:
     void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell,  int ipart_ref ) override final;
     
     //!Wrapper for projection on buffers
-    void currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_width, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref = 0 ) override final;
+    void currentsAndDensityWrapperOnBuffers( double *b_Jx, double *b_Jy, double *b_Jz, double *b_rho, int bin_shift, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int scell, int ipart_ref = 0 ) override final;
 
     void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref ) override;
 
