@@ -11,6 +11,7 @@
 #include "Particles.h"
 #include "Patch.h"
 #include "Tools.h"
+#include "gpu.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Projector3D2OrderGPU
@@ -55,46 +56,57 @@ Projector3D2OrderGPU::~Projector3D2OrderGPU()
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles, int istart, int iend, double *invgf, int *iold, double *deltaold )
 {
-    double* Jx =  &( *EMfields->Jx_ )( 0 );
-    double* Jy =  &( *EMfields->Jy_ )( 0 );
-    double* Jz =  &( *EMfields->Jz_ )( 0 );
+    double *const __restrict__ Jx = &( *EMfields->Jx_ )( 0 );
+    double *const __restrict__ Jy = &( *EMfields->Jy_ )( 0 );
+    double *const __restrict__ Jz = &( *EMfields->Jz_ )( 0 );
 
-    double* position_x = particles.getPtrPosition(0);
-    double* position_y = particles.getPtrPosition(1);
-    double* position_z = particles.getPtrPosition(2);
-    short  *charge = particles.getPtrCharge();
-    double *weight = particles.getPtrWeight();
+    const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
+    const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
+    const short *const __restrict__ charge      = particles.getPtrCharge();
+    const double *const __restrict__ weight     = particles.getPtrWeight();
 
-    int nparts = particles.last_index.back();
+    const int nparts = particles.last_index.back();
 
-    int sizeofEx = EMfields->Jx_->globalDims_;
-    int sizeofEy = EMfields->Jy_->globalDims_;
-    int sizeofEz = EMfields->Jz_->globalDims_;
+    const int sizeofEx = EMfields->Jx_->globalDims_;
+    const int sizeofEy = EMfields->Jy_->globalDims_;
+    const int sizeofEz = EMfields->Jz_->globalDims_;
 
-    if (iend==istart)
+    if( iend == istart ) {
         return;
+    }
 
-    int packsize = nparts;
-    int npack = (iend-istart)/packsize;
-    if ( npack*packsize!=iend-istart )
-        npack++;
-#ifndef _GPU
-    double* Sx0 = (double*) std::malloc( 5*packsize*sizeof(double) ); //acc_malloc
-    double* Sy0 = (double*) std::malloc( 5*packsize*sizeof(double) ); // "
-    double* Sz0 = (double*) std::malloc( 5*packsize*sizeof(double) );
-    double* DSx = (double*) std::malloc( 5*packsize*sizeof(double) );
-    double* DSy = (double*) std::malloc( 5*packsize*sizeof(double) );
-    double* DSz = (double*) std::malloc( 5*packsize*sizeof(double) );
-    double* sumX = (double*) std::malloc( 5*packsize*sizeof(double) ); 
-#else
-    double* Sx0 = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
-    double* Sy0 = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
-    double* Sz0 = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
-    double* DSx = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
-    double* DSy = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
-    double* DSz = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
-    double* sumX = (double*) ::acc_malloc( 5*packsize*sizeof(double) );
+    const int packsize = nparts;
+    const int npack    = ( ( iend - istart ) + ( packsize - 1 ) ) / packsize; // divide + floor npack.
+
+#if defined(_GPU)
+    double *const __restrict__ Sx0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ Sy0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ Sz0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ DSx  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ DSy  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ DSz  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ sumX = static_cast< double * >(::acc_malloc( 5 * packsize * sizeof( double ) ));
+#else // #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
+    static constexpr bool kShouldDoDeviceAlloc = true;
+
+    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_Sx0{ static_cast<std::size_t>( 5 ) * packsize };
+    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_Sy0{ static_cast<std::size_t>( 5 ) * packsize };
+    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_Sz0{ static_cast<std::size_t>( 5 ) * packsize };
+    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_DSx{ static_cast<std::size_t>( 5 ) * packsize };
+    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_DSy{ static_cast<std::size_t>( 5 ) * packsize };
+    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_DSz{ static_cast<std::size_t>( 5 ) * packsize };
+    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_sumX{ static_cast<std::size_t>( 5 ) * packsize };
+
+    double *const __restrict__ Sx0  = host_device_Sx0.data();
+    double *const __restrict__ Sy0  = host_device_Sy0.data();
+    double *const __restrict__ Sz0  = host_device_Sz0.data();
+    double *const __restrict__ DSx  = host_device_DSx.data();
+    double *const __restrict__ DSy  = host_device_DSy.data();
+    double *const __restrict__ DSz  = host_device_DSz.data();
+    double *const __restrict__ sumX = host_device_sumX.data();
 #endif
+
     for (int ipack=0 ; ipack<npack ; ipack++) {
         int istart_pack = istart+ipack*packsize;
         int iend_pack = (ipack+1)*packsize;
@@ -110,17 +122,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             // Variable declaration & initialization
             // -------------------------------------
     
-            // (x,y,z) components of the current density for the macro-particle
-            double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
-            double crx_p = charge_weight*dx_ov_dt;
-            double cry_p = charge_weight*dy_ov_dt;
-            double crz_p = charge_weight*dz_ov_dt;
-    
-            // variable declaration
-            double xpn, ypn, zpn;
-            double delta, delta2;
             // arrays used for the Esirkepov projection method
-    
             for( unsigned int i=0; i<5; i++ ) {
                 DSx[ipart_pack+i*packsize] = 0.;
                 DSy[ipart_pack+i*packsize] = 0.;
@@ -132,8 +134,8 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             // --------------------------------------------------------
     
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
-            delta = deltaold[0*nparts+ipart];
-            delta2 = delta*delta;
+            double delta = deltaold[0*nparts+ipart];
+            double delta2 = delta*delta;
             Sx0[ipart_pack+0*packsize] = 0.;
             Sx0[ipart_pack+1*packsize] = 0.5 * ( delta2-delta+0.25 );
             Sx0[ipart_pack+2*packsize] = 0.75-delta2;
@@ -157,7 +159,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             Sz0[ipart_pack+4*packsize] = 0.;
     
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
-            xpn = position_x[ ipart ] * dx_inv_;
+            const double xpn = position_x[ ipart ] * dx_inv_;
             int ip = round( xpn );
             int ipo = iold[0*nparts+ipart];
             int ip_m_ipo = ip-ipo-i_domain_begin;
@@ -167,7 +169,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             DSx[ipart_pack+(ip_m_ipo+2)*packsize] = 0.75-delta2;
             DSx[ipart_pack+(ip_m_ipo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
     
-            ypn = position_y[ ipart ] * dy_inv_;
+            const double ypn = position_y[ ipart ] * dy_inv_;
             int jp = round( ypn );
             int jpo = iold[1*nparts+ipart];
             int jp_m_jpo = jp-jpo-j_domain_begin;
@@ -177,7 +179,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             DSy[ipart_pack+(jp_m_jpo+2)*packsize] = 0.75-delta2;
             DSy[ipart_pack+(jp_m_jpo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
     
-            zpn = position_z[ ipart ] * dz_inv_;
+            const double zpn = position_z[ ipart ] * dz_inv_;
             int kp = round( zpn );
             int kpo = iold[2*nparts+ipart];
             int kp_m_kpo = kp-kpo-k_domain_begin;
@@ -346,15 +348,8 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         } // End for ipart
 
     } // End for ipack
-#ifndef _GPU
-    std::free( Sx0 ); // acc_free
-    std::free( Sy0 );
-    std::free( Sz0 );
-    std::free( DSx );
-    std::free( DSy );
-    std::free( DSz );
-    std::free( sumX );
-#else
+
+#if defined( _GPU )
     ::acc_free( Sx0 ); // acc_free
     ::acc_free( Sy0 );
     ::acc_free( Sz0 );
@@ -776,10 +771,10 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
         }
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
-        double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
-        double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
-        double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+        // double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
+        // double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
+        // double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
+        // double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
         currents( EMfields, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
         //for( int ipart=istart ; ipart<iend; ipart++ ) {
         //    currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
