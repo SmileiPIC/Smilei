@@ -133,23 +133,23 @@ void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *i
 
 void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
-    double *__restrict__ ELoc = &( smpi->dynamics_Epart[ithread][0] );
-    double *__restrict__ BLoc = &( smpi->dynamics_Bpart[ithread][0] );
+    double *const __restrict__ ELoc = &( smpi->dynamics_Epart[ithread][0] );
+    double *const __restrict__ BLoc = &( smpi->dynamics_Bpart[ithread][0] );
 
-    int *iold                  = &( smpi->dynamics_iold[ithread][0] );
-    double *__restrict__ delta = &( smpi->dynamics_deltaold[ithread][0] );
+    int *const __restrict__ iold     = &( smpi->dynamics_iold[ithread][0] );
+    double *const __restrict__ delta = &( smpi->dynamics_deltaold[ithread][0] );
 
-    const double *__restrict__ position_x = particles.getPtrPosition( 0 );
-    const double *__restrict__ position_y = particles.getPtrPosition( 1 );
-    const double *__restrict__ position_z = particles.getPtrPosition( 2 );
+    const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
+    const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
 
     // Static cast of the electromagnetic fields
-    const double *__restrict__ Ex3D = EMfields->Ex_->data_;
-    const double *__restrict__ Ey3D = EMfields->Ey_->data_;
-    const double *__restrict__ Ez3D = EMfields->Ez_->data_;
-    const double *__restrict__ Bx3D = EMfields->Bx_m->data_;
-    const double *__restrict__ By3D = EMfields->By_m->data_;
-    const double *__restrict__ Bz3D = EMfields->Bz_m->data_;
+    const double *const __restrict__ Ex3D = EMfields->Ex_->data_;
+    const double *const __restrict__ Ey3D = EMfields->Ey_->data_;
+    const double *const __restrict__ Ez3D = EMfields->Ez_->data_;
+    const double *const __restrict__ Bx3D = EMfields->Bx_m->data_;
+    const double *const __restrict__ By3D = EMfields->By_m->data_;
+    const double *const __restrict__ Bz3D = EMfields->Bz_m->data_;
 
     const int sizeofEx = EMfields->Ex_->globalDims_;
     const int sizeofEy = EMfields->Ey_->globalDims_;
@@ -178,23 +178,25 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
 
     // TODO(Etienne M): Memory ops optimization
-    #pragma omp target map( to                                            \
-                            : Ex3D [0:sizeofEx],                          \
-                              Ey3D [0:sizeofEy],                          \
-                              Ez3D [0:sizeofEz],                          \
-                              Bx3D [0:sizeofBx],                          \
-                              By3D [0:sizeofBy],                          \
-                              Bz3D [0:sizeofBz],                          \
-                              position_x [first_index:npart_range_size],  \
-                              position_y [first_index:npart_range_size],  \
-                              position_z [first_index:npart_range_size] ) \
-        map( from                                                         \
-             : ELoc [first_index:interpolation_range_size],               \
-               BLoc [first_index:interpolation_range_size],               \
-               iold [first_index:interpolation_range_size],               \
-               delta [first_index:interpolation_range_size] )             \
-            map( to                                                       \
-                 : i_domain_begin, j_domain_begin, k_domain_begin )
+    #pragma omp target defaultmap( none ) map( to                                            \
+                                               : Ex3D [0:sizeofEx],                          \
+                                                 Ey3D [0:sizeofEy],                          \
+                                                 Ez3D [0:sizeofEz],                          \
+                                                 Bx3D [0:sizeofBx],                          \
+                                                 By3D [0:sizeofBy],                          \
+                                                 Bz3D [0:sizeofBz],                          \
+                                                 position_x [first_index:npart_range_size],  \
+                                                 position_y [first_index:npart_range_size],  \
+                                                 position_z [first_index:npart_range_size] ) \
+        map( from                                                                            \
+             : ELoc [first_index:interpolation_range_size],                                  \
+               BLoc [first_index:interpolation_range_size],                                  \
+               iold [first_index:interpolation_range_size],                                  \
+               delta [first_index:interpolation_range_size] )                                \
+            map( to                                                                          \
+                 : i_domain_begin, j_domain_begin, k_domain_begin,                           \
+                   nx_d, ny_d, nz_d, nx_p, ny_p, nz_p, d_inv_,                               \
+                   nparts, first_index, last_index )
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined(_GPU)
