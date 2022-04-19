@@ -308,6 +308,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 Interp->fieldsWrapper( EMfields, *particles, smpi, &( particles->first_index[ipack*packsize_+scell] ),
                                        &( particles->last_index[ipack*packsize_+scell] ),
                                        ithread, particles->first_index[ipack*packsize_] );
+            } // end interpolation
             #  ifdef _PARTEVENTTRACING                      
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,0);
             #  endif
@@ -315,6 +316,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[0] += MPI_Wtime() - timer;
 #endif
+            
 
             // Ionization
             if( Ionize ) {
@@ -335,7 +337,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[4] += MPI_Wtime() - timer;
 #endif
-            }
+            } // end ionization
 
             if ( time_dual <= time_frozen_ ) continue;
 
@@ -378,7 +380,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[5] += MPI_Wtime() - timer;
 #endif
-            }
+            } // end radiation
 
             // Multiphoton Breit-Wheeler
             if( Multiphoton_Breit_Wheeler_process ) {
@@ -418,7 +420,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers_[6] += MPI_Wtime() - timer;
 #endif
-            }
+            } // end Multiphoton Breit Wheeler
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -449,9 +451,11 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             #  endif
 
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
-                double ener_iPart( 0. );
+
+                double energy_lost = 0;
                 // Apply wall and boundary conditions
                 if( mass_>0 ) {
+
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         ( *partWalls )[iwall]->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
                         nrj_lost_per_thd[tid] += mass_ * energy_lost;
@@ -472,23 +476,21 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     //     }
                     // }
 
-                }
-
                 } else if( mass_==0 ) {
 
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, ithread, ener_iPart );
-                        nrj_lost_per_thd[tid] += ener_iPart;
+                        ( *partWalls )[iwall]->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                        nrj_lost_per_thd[tid] += energy_lost;
                     }
 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
 
-                    partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, ithread, ener_iPart );
-                    nrj_lost_per_thd[tid] += ener_iPart;
+                    partBoundCond->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[ithread], patch->rand_, energy_lost );
+                    nrj_lost_per_thd[tid] += energy_lost;
 
                 }
-            }
+            } // end scell for BC
 
             #  ifdef _PARTEVENTTRACING                       
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,2);
@@ -499,6 +501,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             #  endif
 
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
+
                 if( mass_>0 ) {
 
                     for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
@@ -513,20 +516,18 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                         }
                     }
 
-                    energy_lost = 0;
-
                     for( iPart=particles->first_index[ipack*packsize_+scell] ; iPart<particles->last_index[ipack*packsize_+scell]; iPart++ ) {
                         if ( particles->cell_keys[iPart] != -1 ) {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
-                                particles->cell_keys[iPart] *= length[i];
+                                particles->cell_keys[iPart] *= this->length_[i];
                                 particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
                             }
                             count[particles->cell_keys[iPart]] ++;
                         }
                     }
                 }
-            }
+            } // end scell
 
             #  ifdef _PARTEVENTTRACING                   
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,11);
@@ -613,7 +614,6 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             #  endif
         }
     } // End projection for frozen particles
-
 }//END dynamics
 
 void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
@@ -967,34 +967,34 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
             #  ifdef _PARTEVENTTRACING                     
             if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,2);
             #  endif
-            double ener_iPart( 0. );
+            double energy_lost( 0. );
             // Apply wall and boundary conditions
             if( mass_>0 ) {
                 for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
-                        nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+                        ( *partWalls )[iwall]->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+                        nrj_lost_per_bin[ibin] += mass_ * energy_lost;
                     }
 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
 
-                    partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
-                    nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+                    partBoundCond->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+                    nrj_lost_per_bin[ibin] += mass_ * energy_lost;
 
                 } // end scell loop
             } else if( mass_==0 ) {
                 for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                        ( *partWalls )[iwall]->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
-                        nrj_lost_per_bin[ibin] += ener_iPart;
+                        ( *partWalls )[iwall]->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+                        nrj_lost_per_bin[ibin] += energy_lost;
                     }
 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
 
-                    partBoundCond->apply( *particles, smpi, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], this, buffer_id, ener_iPart );
-                    nrj_lost_per_bin[ibin] += ener_iPart;
+                    partBoundCond->apply( this, particles->first_index[ipack*packsize_+scell], particles->last_index[ipack*packsize_+scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+                    nrj_lost_per_bin[ibin] += energy_lost;
                     
                 } // end scell loop
             } // end if condition on mass
@@ -1263,7 +1263,7 @@ void SpeciesV::dynamicsTasks( double time_dual, unsigned int ispec,
 #endif
 
             for( unsigned int ibin=0 ; ibin < Nbins ; ibin++ ) {
-               radiated_energy_ += radiated_energy_per_bin[ibin];
+               nrj_radiated_ += radiated_energy_per_bin[ibin];
             }
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers_[5*patch->thread_number_ + ithread] += MPI_Wtime() - timer;
@@ -2535,23 +2535,25 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrentsTasks( double time_dual, un
             ithread = omp_get_thread_num();
             timer = MPI_Wtime();
 #endif
+            double energy_lost( 0. );
             // Apply wall and boundary conditions
             if( mass_>0 ) {
                 #  ifdef _PARTEVENTTRACING                       
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),0,2);
                 #  endif
                 for( int scell = first_cell_of_bin[ibin] ; scell <= last_cell_of_bin[ibin] ; scell++ ){
-                double ener_iPart;
+                energy_lost = 0;
                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
-                    (*partWalls)[iwall]->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
-                    nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+                    ( *partWalls )[iwall]->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+                    nrj_lost_per_bin[ibin] += mass_ * energy_lost;
                 }
             
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is not in the local domain anymore
                 //        if omp, create a list per thread
-                partBoundCond->apply( *particles, smpi, particles->first_index[scell], particles->last_index[scell], this, buffer_id, ener_iPart );
-                nrj_lost_per_bin[ibin] += mass_ * ener_iPart;
+                partBoundCond->apply( this, particles->first_index[scell], particles->last_index[scell], smpi->dynamics_invgf[buffer_id], patch->rand_, energy_lost );
+
+                nrj_lost_per_bin[ibin] += mass_ * energy_lost;
                 #  ifdef _PARTEVENTTRACING                       
                 if (diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,2);
                 #  endif
