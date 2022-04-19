@@ -148,13 +148,13 @@ namespace smilei {
                   bool do_device_alloc>
         void NonInitializingVector<T, do_device_alloc>::Alloc( std::size_t size )
         {
-            if( size_ == 0 || data_ == nullptr ) {
-                ERROR( "bad alloc" );
+            if( size_ != 0 || data_ != nullptr ) {
+                ERROR( "NonInitializingVector::Alloc, allocation before dealloc" );
             }
 
             data_ = static_cast<T*>( std::malloc( sizeof( T ) * size ) );
             if( data_ == nullptr ) {
-                ERROR( "bad alloc" );
+                ERROR( "NonInitializingVector::Alloc, std::malloc() out of memory." );
             }
 
             size_ = size;
@@ -257,7 +257,7 @@ namespace smilei {
         template <typename T>
         void HostDeviceMemoryManagment::DeviceAlloc( const T* a_pointer, std::size_t a_size )
         {
-#if defined( ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target enter data map( alloc \
                                        : a_pointer [0:a_size] )
 // #elif defined( _GPU )
@@ -276,7 +276,7 @@ namespace smilei {
         template <typename T>
         void HostDeviceMemoryManagment::DeviceAllocAndCopyHostToDevice( const T* a_pointer, std::size_t a_size )
         {
-#if defined( ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target enter data map( to \
                                        : a_pointer [0:a_size] )
 #elif defined( _GPU )
@@ -296,7 +296,7 @@ namespace smilei {
         template <typename T>
         void HostDeviceMemoryManagment::CopyHostToDevice( const T* a_pointer, std::size_t a_size )
         {
-#if defined( ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target update to( a_pointer [0:a_size] )
 #elif defined( _GPU )
     #pragma acc update device( a_pointer [0:a_size] )
@@ -315,7 +315,7 @@ namespace smilei {
         template <typename T>
         void HostDeviceMemoryManagment::CopyDeviceToHost( T* a_pointer, std::size_t a_size )
         {
-#if defined( ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target update from( a_pointer [0:a_size] )
 #elif defined( _GPU )
     #pragma acc update host( a_pointer [0:a_size] )
@@ -334,7 +334,7 @@ namespace smilei {
         template <typename T>
         void HostDeviceMemoryManagment::CopyDeviceToHostAndDeviceFree( T* a_pointer, std::size_t a_size )
         {
-#if defined( ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target exit data map( from \
                                       : a_pointer [0:a_size] )
 #elif defined( _GPU )
@@ -354,7 +354,7 @@ namespace smilei {
         template <typename T>
         void HostDeviceMemoryManagment::DeviceFree( T* a_pointer, std::size_t a_size )
         {
-#if defined( ACCELERATOR_GPU_OMP )
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target exit data map( delete \
                                       : a_pointer [0:a_size] )
 // #elif defined( _GPU )
