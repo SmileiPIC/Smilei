@@ -102,9 +102,6 @@ void RadiationNiel::operator()(
     // Random Number
     double random_numbers[nbparticles];
 
-    // Lorentz factor
-    double gamma[nbparticles];
-
     // Momentum shortcut
     double* __restrict__ momentum_x = particles.getPtrMomentum(0);
     double* __restrict__ momentum_y = particles.getPtrMomentum(1);
