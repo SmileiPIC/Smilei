@@ -1,10 +1,9 @@
 #ifndef INTERPOLATOR3D2ORDER_H
 #define INTERPOLATOR3D2ORDER_H
 
-
 #include "Field3D.h"
 #include "Interpolator3D.h"
-#include "Pragma.h"
+#include "gpu.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class for 2nd order interpolator for 3Dcartesian simulations
