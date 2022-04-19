@@ -7,16 +7,17 @@ for plasma simulation.
 
 To face the diverse needs of the Smilei community, the code is developed in C++,
 based on an object-oriented architecture. Its modularity and user-friendly Python
-interface allows to run simulations in various dimensions (Cartesian 1D, 2D, 3D),
-to chose between various Maxwell solvers, particle pushers, interpolators, projectors, etc.
-A whole set of run-time diagnostics (based on HDF5) and user-friendly (Python)
+interface allows to run simulations in various geometries (Cartesian 1D, 2D, 3D or cylindrical with decomposition into azimuthal modes),
+to implement laser or plasma profile with any python function, 
+to chose between various Maxwell solvers, particle pushers, interpolators, projectors and more !
+A whole set of run-time diagnostics (outputs in HDF5) and user-friendly (Python)
 :doc:`post-processing <post-processing>` tools complements the code.
 
 Co-developed by HPC specialists and physicists, Smilei is designed for high performances
 on massively-parallel super-computers. It benefits from a state-of-the-art hybrid
 MPI/OpenMP parallelization, dynamic load balancing and SIMD vectorization.
 It has been successfully tested on various architectures among which the most recent
-Intel Skylake (SKL) & Knigths Landing (KNL).
+Intel Cascadelake (CSL) & Fujitsu A64FX (ARM).
 
 In Smilei, Maxwell’s equations are solved using a Yee mesh with centered
 electric and magnetic fields following the finite-difference time-domain (FDTD)
@@ -35,3 +36,4 @@ process, are also included.
 
 A detailed account of Smilei's capabilities is given in
 `this article <https://doi.org/10.1016/j.cpc.2017.09.024>`_.
+For publications on more advanced features, please refer to the :doc:`material` section of this documentation. 
