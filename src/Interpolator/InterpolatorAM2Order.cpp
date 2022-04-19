@@ -263,8 +263,7 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields,
         ( *iold )[ipart+1*nparts]  = jp_;
         
         ( *delta )[ipart+0*nparts] = deltax_;
-        ( *delta )[ipart+1*nparts] = deltar_;
-        
+        ( *delta )[ipart+1*nparts] = deltar_;    
         ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_) - exp_m_theta_ ;  //exp(i theta)
         
     }
@@ -302,7 +301,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 
     std::vector<int>    *iold  = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
-    std::vector<double> *theta_old = &( smpi->dynamics_thetaold[ithread] );
+    std::vector<std::complex<double>> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
 
     // Static cast of the envelope fields
     Field2D *Phi = static_cast<Field2D *>( EMfields->envelope->Phi_ );
@@ -319,6 +318,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
         xpn = particles.position( 0, ipart ) * D_inv_[0];
         r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
         rpn = r * D_inv_[1];
+        complex<double> exp_mm_theta = 1.;
     
         // Calculate coeffs
         coeffs( xpn, rpn );
@@ -360,7 +360,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
         } else {
             exp_m_theta_ = 1. ;
         }
-        for( unsigned int imode = 1; imode < nmodes ; imode++ ) {
+        for( unsigned int imode = 1; imode < nmodes_ ; imode++ ) {
             El = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
             Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
             Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
@@ -368,7 +368,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
             Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_m[imode];
             Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_m[imode];
             
-            exp_mm_theta *= exp_m_theta ;
+            exp_mm_theta *= exp_m_theta_ ;
             
             ( *Epart ) [ 0*nparts+ipart ] += std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ )* exp_mm_theta ) ;
             ( *Epart ) [ 1*nparts+ipart ] += std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, ip_, jd_ )* exp_mm_theta ) ;
@@ -395,6 +395,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
         ( *iold )[ipart+1*nparts]  = jp_;
         ( *delta )[ipart+0*nparts] = deltax_;
         ( *delta )[ipart+1*nparts] = deltar_;
+        ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_) - exp_m_theta_ ;  //exp(i theta)
 
 
     }
@@ -415,7 +416,7 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
     
     std::vector<int>    *iold  = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
-    std::vector<double> *theta_old = &( smpi->dynamics_thetaold[ithread] );
+    std::vector<std::complex<double>> *eitheta_old = &( smpi->dynamics_eithetaold[ithread] );
     
     double r, delta2, xpn, rpn;
     //Loop on bin particles
@@ -471,6 +472,7 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
       
         ( *delta )[ipart+0*nparts] = deltax_;
         ( *delta )[ipart+1*nparts] = deltar_;
+        ( *eitheta_old)[ipart] =  2.*std::real(exp_m_theta_) - exp_m_theta_ ;  //exp(i theta)
       
     
     }
@@ -554,7 +556,3 @@ void InterpolatorAM2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
     
     
 } // END InterpolatorAM2Order
-
-
-
-
