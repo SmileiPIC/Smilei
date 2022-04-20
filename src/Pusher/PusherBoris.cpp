@@ -76,7 +76,8 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
                position_y [istart:particle_number],                                     \
                position_z [istart:particle_number] )                                    \
             map( to                                                                     \
-                 : istart, iend, ipart_buffer_offset )
+                 : istart, iend, ipart_buffer_offset,                                   \
+                   one_over_mass_, nDim_, dt, dts2 )
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined(_GPU)
