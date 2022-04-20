@@ -179,7 +179,7 @@ void InterpolatorAM2Order::fieldsForTasks( ElectroMagn *EMfields, Particles &par
     *( iold+1*nparts)  = idx_p[1];
     *( delta+0*nparts) = delta_p[0];
     *( delta+1*nparts) = delta_p[1];
-    *( eitheta_old )     = 2.*std::real(exp_m_theta_task) - exp_m_theta_ ;  //exp(i theta)
+    *( eitheta_old )     = 2.*std::real(exp_m_theta_task) - exp_m_theta_task ;  //exp(i theta)
     
 } // END InterpolatorAM2Order
 
