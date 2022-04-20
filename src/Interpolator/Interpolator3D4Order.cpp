@@ -201,9 +201,6 @@ void Interpolator3D4Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
 
     //Loop on bin particles
     int nparts( particles.size() );
-    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-        
-    }
 
 #ifndef _OMPTASKS
     // without tasks
