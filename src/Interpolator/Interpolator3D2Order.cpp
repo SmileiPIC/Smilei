@@ -178,25 +178,26 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
 
     // TODO(Etienne M): Memory ops optimization
-    #pragma omp target defaultmap( none ) map( to                                            \
-                                               : Ex3D [0:sizeofEx],                          \
-                                                 Ey3D [0:sizeofEy],                          \
-                                                 Ez3D [0:sizeofEz],                          \
-                                                 Bx3D [0:sizeofBx],                          \
-                                                 By3D [0:sizeofBy],                          \
-                                                 Bz3D [0:sizeofBz],                          \
-                                                 position_x [first_index:npart_range_size],  \
-                                                 position_y [first_index:npart_range_size],  \
-                                                 position_z [first_index:npart_range_size] ) \
-        map( from                                                                            \
-             : ELoc [first_index:interpolation_range_size],                                  \
-               BLoc [first_index:interpolation_range_size],                                  \
-               iold [first_index:interpolation_range_size],                                  \
-               delta [first_index:interpolation_range_size] )                                \
-            map( to                                                                          \
-                 : i_domain_begin, j_domain_begin, k_domain_begin,                           \
-                   nx_d, ny_d, nz_d, nx_p, ny_p, nz_p, d_inv_,                               \
-                   nparts, first_index, last_index )
+    #pragma omp target defaultmap( none )                              \
+        map( to                                                        \
+             : Ex3D [0:sizeofEx],                                      \
+               Ey3D [0:sizeofEy],                                      \
+               Ez3D [0:sizeofEz],                                      \
+               Bx3D [0:sizeofBx],                                      \
+               By3D [0:sizeofBy],                                      \
+               Bz3D [0:sizeofBz],                                      \
+               position_x [first_index:npart_range_size],              \
+               position_y [first_index:npart_range_size],              \
+               position_z [first_index:npart_range_size] )             \
+            map( from                                                  \
+                 : ELoc [first_index:interpolation_range_size],        \
+                   BLoc [first_index:interpolation_range_size],        \
+                   iold [first_index:interpolation_range_size],        \
+                   delta [first_index:interpolation_range_size] )      \
+                map( to                                                \
+                     : i_domain_begin, j_domain_begin, k_domain_begin, \
+                       nx_d, ny_d, nz_d, nx_p, ny_p, nz_p, d_inv_,     \
+                       nparts, first_index, last_index )
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined(_GPU)
@@ -222,9 +223,9 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         // Interpolation on current particle
 
         // Normalized particle position
-        double xpn = position_x[ipart]*d_inv_[0];
-        double ypn = position_y[ipart]*d_inv_[1];
-        double zpn = position_z[ipart]*d_inv_[2];
+        const double xpn = position_x[ipart]*d_inv_[0];
+        const double ypn = position_y[ipart]*d_inv_[1];
+        const double zpn = position_z[ipart]*d_inv_[2];
 
         // Calculate coeffs
         int    idx_p[3], idx_d[3];

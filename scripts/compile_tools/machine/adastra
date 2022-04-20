@@ -13,7 +13,7 @@
 # process.
 #
 # To compile you'll want these modules:
-# $ module load PrgEnv-cray cce/13.0.1 cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1 cray-mpich/8.1.13 rocm
+# $ module load PrgEnv-cray cce/13.0.1 cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1 cray-mpich/8.1.13 rocm/4.5.0
 #
 #
 ################################################################################
