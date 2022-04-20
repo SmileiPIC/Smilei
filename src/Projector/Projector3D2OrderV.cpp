@@ -1353,7 +1353,7 @@ void Projector3D2OrderV::currentsForTasks( double * __restrict__ b_Jx,
         iglobal += ( nprimy+1 )*nprimz;
     }
 
-    iglobal = iglobal0  + jpom2 +ipom2*nprimy;
+    iglobal = iglobal0  + jpom2 +(ipom2-bin_shift)*nprimy;
     for( unsigned int i=0 ; i<5 ; i++ ) {
         for( unsigned int j=0 ; j<5 ; j++ ) {
             #pragma omp simd
