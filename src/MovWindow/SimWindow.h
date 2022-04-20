@@ -30,6 +30,8 @@ public:
     
     void operate( Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual );
     void operate( Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual, unsigned int nmodes );
+    template <typename Tpml>
+    void  exchangePML_movewin( Region& region, Tpml embc, int clrw );
 
     //! Tells whether there is a moving window or not
     inline bool isActive()

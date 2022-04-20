@@ -1,12 +1,14 @@
-
 #ifndef ENVELOPEBC_FACTORY_H
 #define ENVELOPEBC_FACTORY_H
 
 #include "EnvelopeBC.h"
 #include "EnvelopeBCAM_Axis.h"
 #include "EnvelopeBCAM_refl.h"
+#include "EnvelopeBCAM_PML.h"
 #include "EnvelopeBC3D_refl.h"
+#include "EnvelopeBC3D_PML.h"
 #include "EnvelopeBC2D_refl.h"
+#include "EnvelopeBC2D_PML.h"
 #include "EnvelopeBC1D_refl.h"
 
 #include "Params.h"
@@ -53,6 +55,10 @@ public:
                 if( params.Env_BCs[0][ii] == "reflective" ) {
                     EnvBoundCond[ii] = new EnvelopeBC2D_refl( params, patch, ii );
                 }
+                // pml bcs
+                else if( params.Env_BCs[0][ii] == "PML" ) {
+                    EnvBoundCond[ii] = new EnvelopeBC2D_PML( params, patch, ii );
+                }
                 // else: error
                 else {
                     ERROR( "Unknown Envelope x-boundary condition `" << params.Env_BCs[0][ii] << "`" );
@@ -62,6 +68,10 @@ public:
                 // reflective bcs
                 if( params.Env_BCs[1][ii] == "reflective" ) {
                     EnvBoundCond[ii+2] = new EnvelopeBC2D_refl( params, patch, ii+2 );
+                }
+                // pml bcs
+                else if( params.Env_BCs[1][ii] == "PML" ) {
+                    EnvBoundCond[ii+2] = new EnvelopeBC2D_PML( params, patch, ii+2 );
                 }
                 // else: error
                 else {
@@ -78,6 +88,10 @@ public:
                 if( params.Env_BCs[0][ii] == "reflective" ) {
                     EnvBoundCond[ii] = new EnvelopeBC3D_refl( params, patch, ii );
                 }
+                // pml bcs
+                else if( params.Env_BCs[0][ii] == "PML" ) {
+                    EnvBoundCond[ii] = new EnvelopeBC3D_PML( params, patch, ii );
+                }
                 // else: error
                 else {
                     ERROR( "Unknown Envelope x-boundary condition `" << params.Env_BCs[0][ii] << "`" );
@@ -88,6 +102,10 @@ public:
                 if( params.Env_BCs[1][ii] == "reflective" ) {
                     EnvBoundCond[ii+2] = new EnvelopeBC3D_refl( params, patch, ii+2 );
                 }
+                // pml bcs
+                else if( params.Env_BCs[1][ii] == "PML" ) {
+                    EnvBoundCond[ii+2] = new EnvelopeBC3D_PML( params, patch, ii+2 );
+                }
                 // else: error
                 else {
                     ERROR( "Unknown Envelope y-boundary condition `" << params.Env_BCs[1][ii] << "`" );
@@ -97,6 +115,10 @@ public:
                 // reflective bcs
                 if( params.Env_BCs[2][ii] == "reflective" ) {
                     EnvBoundCond[ii+4] = new EnvelopeBC3D_refl( params, patch, ii+4 );
+                }
+                // pml bcs
+                else if( params.Env_BCs[2][ii] == "PML" ) {
+                    EnvBoundCond[ii+4] = new EnvelopeBC3D_PML( params, patch, ii+4 );
                 }
                 // else: error
                 else  {
@@ -111,8 +133,12 @@ public:
                 // X DIRECTION
                 if( params.Env_BCs[0][ii] == "reflective" ) {
                     EnvBoundCond[ii] = new EnvelopeBCAM_refl( params, patch, ii );
-                    
-                } else {
+                }
+                // pml bcs
+                else if( params.Env_BCs[0][ii] == "PML" ) {
+                    EnvBoundCond[ii] = new EnvelopeBCAM_PML( params, patch, ii );
+                } 
+                else {
                     ERROR( "Unknown Envelope x-boundary condition `" << params.Env_BCs[0][ii] << "`" );
                 }
             }
@@ -122,13 +148,15 @@ public:
             
           
             if( params.Env_BCs[1][1] == "reflective" ) {
-                EnvBoundCond[3] = new EnvelopeBCAM_refl( params, patch, 3 );
-              
-            } else  {
+                EnvBoundCond[3] = new EnvelopeBCAM_refl( params, patch, 3 );  
+            }
+            // pml bcs
+            else if( params.Env_BCs[1][1] == "PML" ) {
+                EnvBoundCond[3] = new EnvelopeBCAM_PML( params, patch, 3 );
+            }
+            else  {
                 ERROR( "Unknown Envelope r-boundary condition `" << params.Env_BCs[1][1] << "`" );
             }
-          
-
         }
         
         
