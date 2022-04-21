@@ -400,7 +400,6 @@ void nvidiaParticles::createParticles( int n_additional_particles )
 
 }
 
-
 extern "C" {
 void* CreateGPUParticles() {
     return new nvidiaParticles();

@@ -230,7 +230,7 @@ class Validation(object):
             self.machine_class = MachineRuche
         elif "irene" in self.HOSTNAME:
             self.machine_class = MachineIrene
-        elif "CINES01" in self.HOSTNAME:
+        elif self.HOSTNAME in ["CINES01", "lumi01"]:
             # TODO(Etienne M): For now, we use the Cines' porting machine,
             # at some point yoy'll have to change that to the true Adastra
             # hostname
