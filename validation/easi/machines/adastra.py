@@ -30,7 +30,7 @@ echo "Number of Tasks Allocated      = $SLURM_NTASKS";
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK";
 
 # We should need only that to run the rest is loaded by default
-module load rocm; # TODO(Etienne M): When the Adastra env is ready, specify a module version
+module load rocm/4.5.0;
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK;
 export OMP_SCHEDULE=dynamic;
