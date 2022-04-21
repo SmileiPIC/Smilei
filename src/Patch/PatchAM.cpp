@@ -222,17 +222,14 @@ void PatchAM::exchangeField_movewin( Field* field, int nshift )
     iDim = 0; // We exchange only in the X direction for movewin.
     iNeighbor = 0; // We send only towards the West and receive from the East.
 
-    MPI_Datatype ntype = ntype_complex_[isDual[0]][isDual[1]]; //ntype_[2] is clrw columns.
     MPI_Status rstat    ;
     MPI_Request rrequest;
 
 
     if (MPI_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-
-        istart =  2*oversize[iDim] + 1 + isDual[iDim] ;
-        ix = istart;
+        ix = 2*oversize[iDim] + 1 + isDual[iDim];
         iy =   0;
-        MPI_Bsend(  &( ( *f2D )( ix, iy ) ), 1, ntype, MPI_neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
+        MPI_Bsend(  &( ( *f2D )( ix, iy ) ), 2*nshift*n_elem[1], MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
     } // END of Send
 
     //Once the message is in the buffer we can safely shift the field in memory.
@@ -240,11 +237,9 @@ void PatchAM::exchangeField_movewin( Field* field, int nshift )
     // and then receive the complementary field from the East.
 
     if (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-
-        istart = n_elem[iDim] - nshift    ;
-        ix = istart;
+        ix = n_elem[iDim] - nshift;
         iy =   0 ;
-        MPI_Irecv(  &( ( *f2D )( ix, iy ) ), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest);
+        MPI_Irecv(  &( ( *f2D )( ix, iy ) ), 2*nshift*n_elem[1], MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest);
     } // END of Recv
 
 
