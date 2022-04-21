@@ -26,8 +26,21 @@ namespace smilei {
         // NonInitializingVector
         ////////////////////////////////////////////////////////////////////////////////
 
+        /// Trivial container that does not initialize the memory after allocating.
+        /// This differ from the traditionnal std::vector which does initialize the memory,
+        /// leading to a significant overhead (at initialization time).
+        /// This NonInitializingVector can thus better make use of the virtual memory
+        /// when used in cunjunction with the openMP/OpenACC device offloading.
+        ///
+        /// Note: 
+        /// When seeking performance, more control often means more potential performance.
+        /// This NonInitializingVector provides a way to automatically free the memory
+        /// allocated on the device (avoid leaks) but requires the user to explicicly to
+        /// the initial device allocation which, when done correctly, often source of 
+        /// speedup (async host<->device copies for instance).
+        ///
         template <typename T,
-                  bool do_device_alloc = false>
+                  bool do_device_free = false>
         class NonInitializingVector
         {
         public:
@@ -36,9 +49,20 @@ namespace smilei {
         public:
             NonInitializingVector();
 
+            /// Check HostAlloc() for more info
+            ///
             explicit NonInitializingVector( std::size_t size );
 
-            void Alloc( std::size_t size );
+            /// Named HostAlloc instead of just Alloc so that the user knows
+            /// that it does nothing on the device!
+            ///
+            /// Note: 
+            /// Does not initialize memory, meaning, due to how the virtual 
+            /// memory works, that only when the memory is "touched"/set will the
+            /// process' true memory usage increase. If you map to the device and never
+            /// touch the host memory, the host memory usage not physically increase.
+            ///
+            void HostAlloc( std::size_t size );
             void Free();
 
             T*       begin();
@@ -87,6 +111,10 @@ namespace smilei {
         /// If fact, you could say that malloc can be used as an excuse to get
         /// a unique value, that is, the returned pointer (as long as it's not freed).
         /// This unique value can be mapped to a valid memory chunk allocated on the GPU.
+        /// - Does not support async operation. If you need that it's probably
+        /// better if you do it yourself (not using HostDeviceMemoryManagment) as it can be
+        /// quite tricky. HostDeviceMemoryManagment is best for allocating/copying big chunks
+        /// at the start of the program.
         ///
         struct HostDeviceMemoryManagment
         {
@@ -128,8 +156,8 @@ namespace smilei {
         ////////////////////////////////////////////////////////////////////////////////
 
         template <typename T,
-                  bool do_device_alloc>
-        NonInitializingVector<T, do_device_alloc>::NonInitializingVector()
+                  bool do_device_free>
+        NonInitializingVector<T, do_device_free>::NonInitializingVector()
             : size_{}
             , data_{ nullptr }
         {
@@ -137,16 +165,16 @@ namespace smilei {
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        NonInitializingVector<T, do_device_alloc>::NonInitializingVector( std::size_t size )
+                  bool do_device_free>
+        NonInitializingVector<T, do_device_free>::NonInitializingVector( std::size_t size )
             : NonInitializingVector{}
         {
-            Alloc( size );
+            HostAlloc( size );
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        void NonInitializingVector<T, do_device_alloc>::Alloc( std::size_t size )
+                  bool do_device_free>
+        void NonInitializingVector<T, do_device_free>::HostAlloc( std::size_t size )
         {
             if( size_ != 0 || data_ != nullptr ) {
                 ERROR( "NonInitializingVector::Alloc, allocation before dealloc" );
@@ -158,19 +186,18 @@ namespace smilei {
             }
 
             size_ = size;
-
-            if( do_device_alloc ) {
-                HostDeviceMemoryManagment::DeviceAlloc( *this );
-            }
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        void NonInitializingVector<T, do_device_alloc>::Free()
+                  bool do_device_free>
+        void NonInitializingVector<T, do_device_free>::Free()
         {
+            // According to the C++ standard, if data_ == nullptr, the function does nothing
             std::free( data_ );
 
-            if( do_device_alloc ) {
+            if( do_device_free &&
+                // Unlike std::free, we check to avoid nullptr freeing
+                data_ != nullptr ) {
                 HostDeviceMemoryManagment::DeviceFree( *this );
             }
 
@@ -179,72 +206,72 @@ namespace smilei {
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        T* NonInitializingVector<T, do_device_alloc>::begin()
+                  bool do_device_free>
+        T* NonInitializingVector<T, do_device_free>::begin()
         {
             return data_;
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        const T* NonInitializingVector<T, do_device_alloc>::cbegin() const
+                  bool do_device_free>
+        const T* NonInitializingVector<T, do_device_free>::cbegin() const
         {
             return data_;
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        T* NonInitializingVector<T, do_device_alloc>::end()
+                  bool do_device_free>
+        T* NonInitializingVector<T, do_device_free>::end()
         {
             return data_ + size_;
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        const T* NonInitializingVector<T, do_device_alloc>::cend() const
+                  bool do_device_free>
+        const T* NonInitializingVector<T, do_device_free>::cend() const
         {
             return data_ + size_;
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        T* NonInitializingVector<T, do_device_alloc>::data()
+                  bool do_device_free>
+        T* NonInitializingVector<T, do_device_free>::data()
         {
             return data_;
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        const T* NonInitializingVector<T, do_device_alloc>::data() const
+                  bool do_device_free>
+        const T* NonInitializingVector<T, do_device_free>::data() const
         {
             return data_;
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        T& NonInitializingVector<T, do_device_alloc>::operator[]( std::size_t index )
+                  bool do_device_free>
+        T& NonInitializingVector<T, do_device_free>::operator[]( std::size_t index )
         {
             return data()[index];
         }
 
         template <typename T,
-                  bool do_device_alloc>
+                  bool do_device_free>
         const T&
-        NonInitializingVector<T, do_device_alloc>::operator[]( std::size_t index ) const
+        NonInitializingVector<T, do_device_free>::operator[]( std::size_t index ) const
         {
             return data()[index];
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        std::size_t NonInitializingVector<T, do_device_alloc>::size() const
+                  bool do_device_free>
+        std::size_t NonInitializingVector<T, do_device_free>::size() const
         {
             return size_;
         }
 
         template <typename T,
-                  bool do_device_alloc>
-        NonInitializingVector<T, do_device_alloc>::~NonInitializingVector()
+                  bool do_device_free>
+        NonInitializingVector<T, do_device_free>::~NonInitializingVector()
         {
             Free();
         }
@@ -260,7 +287,10 @@ namespace smilei {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target enter data map( alloc \
                                        : a_pointer [0:a_size] )
-// #elif defined( _GPU )
+#elif defined( _GPU )
+            SMILEI_UNUSED( a_pointer );
+            SMILEI_UNUSED( a_size );
+            ERROR( "Not implemented" );
 #else
             SMILEI_UNUSED( a_pointer );
             SMILEI_UNUSED( a_size );
@@ -357,7 +387,10 @@ namespace smilei {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target exit data map( delete \
                                       : a_pointer [0:a_size] )
-// #elif defined( _GPU )
+#elif defined( _GPU )
+            SMILEI_UNUSED( a_pointer );
+            SMILEI_UNUSED( a_size );
+            ERROR( "Not implemented" );
 #else
             SMILEI_UNUSED( a_pointer );
             SMILEI_UNUSED( a_size );

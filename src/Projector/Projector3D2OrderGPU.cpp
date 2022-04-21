@@ -90,16 +90,31 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     double *const __restrict__ DSz  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
     double *const __restrict__ sumX = static_cast< double * >(::acc_malloc( 5 * packsize * sizeof( double ) ));
 #else // #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
-    static constexpr bool kShouldDoDeviceAlloc = true;
-    const std::size_t     kTmpArraySize        = 5 * packsize;
+    static constexpr bool kAutoFree     = true;
+    const std::size_t     kTmpArraySize = 5 * packsize;
 
-    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_Sx0{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_Sy0{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_Sz0{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_DSx{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_DSy{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_DSz{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kShouldDoDeviceAlloc> host_device_sumX{ kTmpArraySize };
+    // TODO(Etienne M): using more buffers (not a big deal, they are smalls), we could run multiple kernel at
+    // the same time in an async manner:
+    //
+    // init  -> Jx^(d,p,p) : sumX -> Jx
+    //      |-> Jy^(p,d,p) : sumX -> Jy
+    //      |-> Jz^(p,p,d) : sumX -> Jz
+
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_Sx0{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_Sy0{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_Sz0{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_DSx{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_DSy{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_DSz{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_sumX{ kTmpArraySize };
+
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_Sx0 );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_Sy0 );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_Sz0 );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_DSx );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_DSy );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_DSz );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_sumX );
 
     double *const __restrict__ Sx0  = host_device_Sx0.data();
     double *const __restrict__ Sy0  = host_device_Sy0.data();

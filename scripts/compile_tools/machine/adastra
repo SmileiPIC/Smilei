@@ -50,7 +50,7 @@ ifneq (,$(call parse_config,gpu_amd))
 	# We need to link with the appropriate "First-Party Tool" (as OpenMP calls them)
 	LDFLAGS += $(WARNING_FLAGS) $(ACCELERATOR_GPU_OMP_FLAGS) $(DEBUG_SANITIZER_FLAGS)
 	# LDFLAGS += -static-openmp
-    # LDFLAGS += -mcmodel=large -static-openmp
+	# LDFLAGS += -mcmodel=large -static-openmp
 	# May help resolve some linker issue
 	# LDFLAGS += -foffload=-lm
 endif
