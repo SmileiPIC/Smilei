@@ -1,10 +1,9 @@
 #ifndef INTERPOLATOR3D2ORDER_H
 #define INTERPOLATOR3D2ORDER_H
 
-
 #include "Field3D.h"
 #include "Interpolator3D.h"
-#include "Pragma.h"
+#include "gpu.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class for 2nd order interpolator for 3Dcartesian simulations
@@ -50,7 +49,7 @@ public:
         return interp_res;
     }
 
-SMILEI_ACCELERATOR_DECLARE_ROUTINE
+    SMILEI_ACCELERATOR_DECLARE_ROUTINE
     //! Computation of a field from provided coefficients
     static inline double __attribute__((always_inline)) compute( const double *coeffx, const double *coeffy, const double *coeffz, const double *f, int idx, int idy, int idz, int nx, int ny, int nz )
     {
@@ -65,7 +64,7 @@ SMILEI_ACCELERATOR_DECLARE_ROUTINE
         }
         return interp_res;
     }
-SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
+    SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
 
     //! Interpolator specific to the envelope model
     void fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override ;
@@ -85,12 +84,12 @@ private:
     inline void __attribute__((always_inline)) coeffs( double xpn, double ypn, double zpn )
     {
         // Indexes of the central nodes
-        ip_ = round( xpn );
-        id_ = round( xpn+0.5 );
-        jp_ = round( ypn );
-        jd_ = round( ypn+0.5 );
-        kp_ = round( zpn );
-        kd_ = round( zpn+0.5 );
+        ip_ = std::round( xpn );
+        id_ = std::round( xpn+0.5 );
+        jp_ = std::round( ypn );
+        jd_ = std::round( ypn+0.5 );
+        kp_ = std::round( zpn );
+        kd_ = std::round( zpn+0.5 );
 
         // Declaration and calculation of the coefficient for interpolation
         double delta2;
@@ -141,19 +140,19 @@ private:
         kd_ = kd_ - k_domain_begin;
     }
 
-SMILEI_ACCELERATOR_DECLARE_ROUTINE
+    SMILEI_ACCELERATOR_DECLARE_ROUTINE
     //! Compuation of coefficients for interpolation using particle normalized positions xpn, ypn, zpn
     inline void __attribute__((always_inline)) coeffs( double xpn, double ypn, double zpn, int* idx_p, int* idx_d,
                         double *coeffxp, double *coeffyp, double *coeffzp,
                         double *coeffxd, double *coeffyd, double *coeffzd, double* delta_p ) const
     {
         // Indexes of the central nodes
-        idx_p[0] = round( xpn );
-        idx_d[0] = round( xpn+0.5 );
-        idx_p[1] = round( ypn );
-        idx_d[1] = round( ypn+0.5 );
-        idx_p[2] = round( zpn );
-        idx_d[2] = round( zpn+0.5 );
+        idx_p[0] = std::round( xpn );
+        idx_d[0] = std::round( xpn+0.5 );
+        idx_p[1] = std::round( ypn );
+        idx_d[1] = std::round( ypn+0.5 );
+        idx_p[2] = std::round( zpn );
+        idx_d[2] = std::round( zpn+0.5 );
 
         // Declaration and calculation of the coefficient for interpolation
         double delta, delta2;
@@ -203,7 +202,7 @@ SMILEI_ACCELERATOR_DECLARE_ROUTINE
         idx_p[2] = idx_p[2] - k_domain_begin;
         idx_d[2] = idx_d[2] - k_domain_begin;
     }
-SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
+    SMILEI_ACCELERATOR_DECLARE_ROUTINE_END
 
     // Last prim index computed
     int ip_, jp_, kp_;

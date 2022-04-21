@@ -3,17 +3,15 @@
 #include <cmath>
 #include <iostream>
 #ifdef _GPU
-#include <accelmath.h>
-#include <openacc.h>
+    #include <accelmath.h>
+    #include <openacc.h>
 #endif
 #include "ElectroMagn.h"
 #include "Field3D.h"
 #include "Particles.h"
-#include "Tools.h"
 #include "Patch.h"
-
-using namespace std;
-
+#include "Tools.h"
+#include "gpu.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Projector3D2OrderGPU
@@ -44,7 +42,6 @@ Projector3D2OrderGPU::Projector3D2OrderGPU( Params &params, Patch *patch ) : Pro
     
 }
 
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Projector3D2OrderGPU
 // ---------------------------------------------------------------------------------------------------------------------
@@ -52,138 +49,193 @@ Projector3D2OrderGPU::~Projector3D2OrderGPU()
 {
 }
 
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents (sort)
 // ---------------------------------------------------------------------------------------------------------------------
 void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles, int istart, int iend, double *invgf, int *iold, double *deltaold )
 {
-    double* Jx =  &( *EMfields->Jx_ )( 0 );
-    double* Jy =  &( *EMfields->Jy_ )( 0 );
-    double* Jz =  &( *EMfields->Jz_ )( 0 );
+    double *const __restrict__ Jx = &( *EMfields->Jx_ )( 0 );
+    double *const __restrict__ Jy = &( *EMfields->Jy_ )( 0 );
+    double *const __restrict__ Jz = &( *EMfields->Jz_ )( 0 );
 
-    double* position_x = particles.getPtrPosition(0);
-    double* position_y = particles.getPtrPosition(1);
-    double* position_z = particles.getPtrPosition(2);
-    short  *charge = particles.getPtrCharge();
-    double *weight = particles.getPtrWeight();
+    const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
+    const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
+    const short *const __restrict__ charge      = particles.getPtrCharge();
+    const double *const __restrict__ weight     = particles.getPtrWeight();
 
-    int nparts = particles.last_index.back();
+    const int nparts = particles.last_index.back();
 
-    int sizeofEx = EMfields->Jx_->globalDims_;
-    int sizeofEy = EMfields->Jy_->globalDims_;
-    int sizeofEz = EMfields->Jz_->globalDims_;
+    const int sizeofEx = EMfields->Jx_->globalDims_;
+    const int sizeofEy = EMfields->Jy_->globalDims_;
+    const int sizeofEz = EMfields->Jz_->globalDims_;
 
-    if (iend==istart)
+    SMILEI_UNUSED( sizeofEx );
+    SMILEI_UNUSED( sizeofEy );
+    SMILEI_UNUSED( sizeofEz );
+
+    if( iend == istart ) {
         return;
+    }
 
-    int packsize = nparts;
-    int npack = (iend-istart)/packsize;
-    if ( npack*packsize!=iend-istart )
-        npack++;
-#ifndef _GPU
-    double* Sx0 = (double*) malloc( 5*packsize*sizeof(double) ); //acc_malloc
-    double* Sy0 = (double*) malloc( 5*packsize*sizeof(double) ); // "
-    double* Sz0 = (double*) malloc( 5*packsize*sizeof(double) );
-    double* DSx = (double*) malloc( 5*packsize*sizeof(double) );
-    double* DSy = (double*) malloc( 5*packsize*sizeof(double) );
-    double* DSz = (double*) malloc( 5*packsize*sizeof(double) );
-    double* sumX = (double*) malloc( 5*packsize*sizeof(double) ); 
-#else
-    double* Sx0 = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* Sy0 = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* Sz0 = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* DSx = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* DSy = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* DSz = (double*) acc_malloc( 5*packsize*sizeof(double) );
-    double* sumX = (double*) acc_malloc( 5*packsize*sizeof(double) );
+    const int packsize = nparts;
+    const int npack    = ( ( iend - istart ) + ( packsize - 1 ) ) / packsize; // divide + ceil npack.
+
+#if defined(_GPU)
+    double *const __restrict__ Sx0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ Sy0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ Sz0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ DSx  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ DSy  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ DSz  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+    double *const __restrict__ sumX = static_cast< double * >(::acc_malloc( 5 * packsize * sizeof( double ) ));
+#else // #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
+    static constexpr bool kAutoFree     = true;
+    const std::size_t     kTmpArraySize = 5 * packsize;
+
+    // TODO(Etienne M): using more buffers (not a big deal, they are smalls), we could run multiple kernel at
+    // the same time in an async manner:
+    //
+    // init  -> Jx^(d,p,p) : sumX -> Jx
+    //      |-> Jy^(p,d,p) : sumX -> Jy
+    //      |-> Jz^(p,p,d) : sumX -> Jz
+
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_Sx0{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_Sy0{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_Sz0{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_DSx{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_DSy{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_DSz{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_sumX{ kTmpArraySize };
+
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_Sx0 );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_Sy0 );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_Sz0 );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_DSx );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_DSy );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_DSz );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_sumX );
+
+    double *const __restrict__ Sx0  = host_device_Sx0.data();
+    double *const __restrict__ Sy0  = host_device_Sy0.data();
+    double *const __restrict__ Sz0  = host_device_Sz0.data();
+    double *const __restrict__ DSx  = host_device_DSx.data();
+    double *const __restrict__ DSy  = host_device_DSy.data();
+    double *const __restrict__ DSz  = host_device_DSz.data();
+    double *const __restrict__ sumX = host_device_sumX.data();
 #endif
+
     for (int ipack=0 ; ipack<npack ; ipack++) {
-        int istart_pack = istart+ipack*packsize;
-        int iend_pack = (ipack+1)*packsize;
-        iend_pack = istart + min( iend-istart, iend_pack );
-#ifdef _GPU
-        #pragma acc parallel present( iold[0:3*nparts], deltaold[0:3*nparts] ) deviceptr( position_x, position_y, position_z, Sx0, Sy0, Sz0, DSx, DSy, DSz )
-        #pragma acc loop gang worker vector
+        const int istart_pack = istart + ipack * packsize;
+        const int iend_pack   = std::min( iend - istart,
+                                          istart_pack + packsize );
+        const int current_pack_size   = iend_pack - istart_pack;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )                                                 \
+        map( to                                                                           \
+             : position_x [istart_pack:current_pack_size],                                \
+               position_y [istart_pack:current_pack_size],                                \
+               position_z [istart_pack:current_pack_size] )                               \
+            map( tofrom                                                                   \
+                 : iold [istart_pack:2 * packsize + current_pack_size - istart_pack],     \
+                   deltaold [istart_pack:2 * packsize + current_pack_size - istart_pack], \
+                   Sx0 [0:4 * packsize + current_pack_size],                              \
+                   Sy0 [0:4 * packsize + current_pack_size],                              \
+                   Sz0 [0:4 * packsize + current_pack_size],                              \
+                   DSx [0:4 * packsize + current_pack_size],                              \
+                   DSy [0:4 * packsize + current_pack_size],                              \
+                   DSz [0:4 * packsize + current_pack_size],                              \
+                   sumX [0:4 * packsize + current_pack_size] )                            \
+                map( to                                                                   \
+                     : packsize, istart_pack, iend_pack,                                  \
+                       i_domain_begin, j_domain_begin, k_domain_begin,                    \
+                       dx_inv_, dy_inv_, dz_inv_ )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
+#elif defined( _GPU )
+    #pragma acc parallel present( iold [0:3 * nparts],      \
+                                  deltaold [0:3 * nparts] ) \
+        deviceptr( position_x,                              \
+                   position_y,                              \
+                   position_z,                              \
+                   Sx0,                                     \
+                   Sy0,                                     \
+                   Sz0,                                     \ 
+                   DSx,                                     \
+                   DSy,                                     \
+                   DSz )
+    #pragma acc loop gang worker vector
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
-            int ipart_pack = ipart - (istart+ipack*packsize);
+            // Offset ipart to map [0, current_pack_size)
+            const int ipart_pack = ipart - istart_pack;
 
             // -------------------------------------
             // Variable declaration & initialization
             // -------------------------------------
-    
-            // (x,y,z) components of the current density for the macro-particle
-            double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
-            double crx_p = charge_weight*dx_ov_dt;
-            double cry_p = charge_weight*dy_ov_dt;
-            double crz_p = charge_weight*dz_ov_dt;
-    
-            // variable declaration
-            double xpn, ypn, zpn;
-            double delta, delta2;
+
             // arrays used for the Esirkepov projection method
-    
-            for( unsigned int i=0; i<5; i++ ) {
+            for( int i=0; i<5; i++ ) {
                 DSx[ipart_pack+i*packsize] = 0.;
                 DSy[ipart_pack+i*packsize] = 0.;
                 DSz[ipart_pack+i*packsize] = 0.;
             }
-        
+
             // --------------------------------------------------------
             // Locate particles & Calculate Esirkepov coef. S, DS and W
             // --------------------------------------------------------
-    
+
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
-            delta = deltaold[0*nparts+ipart];
-            delta2 = delta*delta;
+            double delta = deltaold[0*packsize+ipart];
+            double delta2 = delta*delta;
             Sx0[ipart_pack+0*packsize] = 0.;
             Sx0[ipart_pack+1*packsize] = 0.5 * ( delta2-delta+0.25 );
             Sx0[ipart_pack+2*packsize] = 0.75-delta2;
             Sx0[ipart_pack+3*packsize] = 0.5 * ( delta2+delta+0.25 );
             Sx0[ipart_pack+4*packsize] = 0.;
-    
-            delta = deltaold[1*nparts+ipart];
+
+            delta = deltaold[1*packsize+ipart];
             delta2 = delta*delta;
             Sy0[ipart_pack+0*packsize] = 0.;
             Sy0[ipart_pack+1*packsize] = 0.5 * ( delta2-delta+0.25 );
             Sy0[ipart_pack+2*packsize] = 0.75-delta2;
             Sy0[ipart_pack+3*packsize] = 0.5 * ( delta2+delta+0.25 );
             Sy0[ipart_pack+4*packsize] = 0.;
-    
-            delta = deltaold[2*nparts+ipart];
+
+            delta = deltaold[2*packsize+ipart];
             delta2 = delta*delta;
             Sz0[ipart_pack+0*packsize] = 0.;
             Sz0[ipart_pack+1*packsize] = 0.5 * ( delta2-delta+0.25 );
             Sz0[ipart_pack+2*packsize] = 0.75-delta2;
             Sz0[ipart_pack+3*packsize] = 0.5 * ( delta2+delta+0.25 );
             Sz0[ipart_pack+4*packsize] = 0.;
-    
+
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
-            xpn = position_x[ ipart ] * dx_inv_;
-            int ip = round( xpn );
-            int ipo = iold[0*nparts+ipart];
-            int ip_m_ipo = ip-ipo-i_domain_begin;
+            const double xpn = position_x[ ipart ] * dx_inv_;
+            const int ip = std::round( xpn );
+            const int ipo = iold[0*packsize+ipart];
+            const int ip_m_ipo = ip-ipo-i_domain_begin;
             delta  = xpn - ( double )ip;
             delta2 = delta*delta;
             DSx[ipart_pack+(ip_m_ipo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
             DSx[ipart_pack+(ip_m_ipo+2)*packsize] = 0.75-delta2;
             DSx[ipart_pack+(ip_m_ipo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
-    
-            ypn = position_y[ ipart ] * dy_inv_;
-            int jp = round( ypn );
-            int jpo = iold[1*nparts+ipart];
-            int jp_m_jpo = jp-jpo-j_domain_begin;
+
+            const double ypn = position_y[ ipart ] * dy_inv_;
+            const int jp = std::round( ypn );
+            const int jpo = iold[1*packsize+ipart];
+            const int jp_m_jpo = jp-jpo-j_domain_begin;
             delta  = ypn - ( double )jp;
             delta2 = delta*delta;
             DSy[ipart_pack+(jp_m_jpo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
             DSy[ipart_pack+(jp_m_jpo+2)*packsize] = 0.75-delta2;
             DSy[ipart_pack+(jp_m_jpo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
-    
-            zpn = position_z[ ipart ] * dz_inv_;
-            int kp = round( zpn );
-            int kpo = iold[2*nparts+ipart];
-            int kp_m_kpo = kp-kpo-k_domain_begin;
+
+            const double zpn = position_z[ ipart ] * dz_inv_;
+            const int kp = std::round( zpn );
+            const int kpo = iold[2*packsize+ipart];
+            const int kp_m_kpo = kp-kpo-k_domain_begin;
             delta  = zpn - ( double )kp;
             delta2 = delta*delta;
             DSz[ipart_pack+(kp_m_kpo+1)*packsize] = 0.5 * ( delta2-delta+0.25 );
@@ -191,7 +243,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             DSz[ipart_pack+(kp_m_kpo+3)*packsize] = 0.5 * ( delta2+delta+0.25 );
     
             // computes Esirkepov coefficients
-            for( unsigned int i=0; i < 5; i++ ) {
+            for( int i=0; i < 5; i++ ) {
                 DSx[ipart_pack+i*packsize] -= Sx0[ipart_pack+i*packsize];
                 DSy[ipart_pack+i*packsize] -= Sy0[ipart_pack+i*packsize];
                 DSz[ipart_pack+i*packsize] -= Sz0[ipart_pack+i*packsize];
@@ -201,51 +253,87 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
             // Calculate the total current
             // ---------------------------
     
-            iold[ipart+0*nparts] -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+            iold[ipart+0*packsize] -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
             // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-            iold[ipart+1*nparts] -= 2;
-            iold[ipart+2*nparts] -= 2;
+            iold[ipart+1*packsize] -= 2;
+            iold[ipart+2*packsize] -= 2;
         }
-    
+
         // Jx^(d,p,p)
-#ifdef _GPU
-        #pragma acc parallel deviceptr( DSx, sumX )
-        #pragma acc loop gang worker vector
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )                  \
+        map( tofrom                                        \
+             : DSx [0:3 * packsize + current_pack_size],   \
+               sumX [0:4 * packsize + current_pack_size] ) \
+            map( to                                        \
+                 : istart_pack, iend_pack, packsize )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
+#elif defined( _GPU )
+    #pragma acc parallel         deviceptr( DSx, sumX )
+    #pragma acc loop gang worker vector
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
-            int ipart_pack = ipart - ipack*packsize;
+            const int ipart_pack = ipart - istart_pack;
 
             sumX[ipart_pack+0*packsize] = 0.;
-            for( unsigned int k=1 ; k<5 ; k++ ) {
+            for( int k=1 ; k<5 ; k++ ) {
                 sumX[ipart_pack+k*packsize] = sumX[ipart_pack+(k-1)*packsize]-DSx[ ipart_pack+(k-1)*packsize ];
             }
         }
 
-#ifdef _GPU
-        #pragma acc parallel present( iold[0:3*nparts], Jx[0:sizeofEx] ) deviceptr( charge, weight, Sy0, Sz0, DSy, DSz, sumX ) vector_length(8)
-        #pragma acc loop gang worker
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )                                         \
+        map( to                                                                   \
+             : charge [istart_pack:current_pack_size],                            \
+               weight [istart_pack:current_pack_size],                            \
+               iold [istart_pack:2 * packsize + current_pack_size - istart_pack], \
+               Sy0 [0:4 * packsize + current_pack_size],                          \
+               Sz0 [0:4 * packsize + current_pack_size],                          \
+               DSy [0:4 * packsize + current_pack_size],                          \
+               DSz [0:4 * packsize + current_pack_size],                          \
+               sumX [packsize:3 * packsize + current_pack_size] )                 \
+            map( tofrom                                                           \
+                 : Jx [0:sizeofEx] )                                              \
+                map( to                                                           \
+                     : istart_pack, iend_pack, packsize,                          \
+                       inv_cell_volume, dx_ov_dt, nprimz, nprimy /*, one_third */ )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
+#elif defined( _GPU )
+    #pragma acc parallel present( iold [0:3 * nparts], \
+                                  Jx [0:sizeofEx] )    \
+        deviceptr( charge, weight, Sy0,                \
+                   Sz0, DSy, DSz, sumX ) vector_length( 8 )
+    #pragma acc loop gang worker
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
-            int ipart_pack = ipart - ipack*packsize;
+            const int ipart_pack = ipart - istart_pack;
 
-            double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
-            double crx_p = charge_weight*dx_ov_dt;
+            const double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
+            const double crx_p = charge_weight*dx_ov_dt;
 
-            int  z_size0 = nprimz;
-            int yz_size0 = nprimz*nprimy;
-            int linindex0 = iold[ipart+0*nparts]*yz_size0+iold[ipart+1*nparts]*z_size0+iold[ipart+2*nparts];
+            const int  z_size0 = nprimz;
+            const int yz_size0 = nprimz*nprimy;
+            const int linindex0 = iold[ipart+0*packsize]*yz_size0+iold[ipart+1*packsize]*z_size0+iold[ipart+2*packsize];
 #ifdef _GPU
             #pragma acc loop vector
 #endif
             for( int k=0 ; k<5 ; k++ ) {
                 for( int j=0 ; j<5 ; j++ ) {
-                    double tmp = crx_p * ( Sy0[ipart_pack+j*packsize]*Sz0[ipart_pack+k*packsize] + 0.5*DSy[ipart_pack+j*packsize]*Sz0[ipart_pack+k*packsize] + 0.5*DSz[ipart_pack+k*packsize]*Sy0[ipart_pack+j*packsize] + one_third*DSy[ipart_pack+j*packsize]*DSz[ipart_pack+k*packsize] );
-                    int idx = linindex0 + j*z_size0 + k;
+                    const double tmp = crx_p * ( Sy0[ipart_pack+j*packsize]*Sz0[ipart_pack+k*packsize] + 
+                                                 0.5*DSy[ipart_pack+j*packsize]*Sz0[ipart_pack+k*packsize] +
+                                                 0.5*DSz[ipart_pack+k*packsize]*Sy0[ipart_pack+j*packsize] +
+                                                 one_third*DSy[ipart_pack+j*packsize]*DSz[ipart_pack+k*packsize] );
+                    const int idx = linindex0 + j*z_size0 + k;
                     for( int i=1 ; i<5 ; i++ ) {
-                        double val = sumX[ipart_pack+(i)*packsize] * tmp;
-                        int jdx = idx + i*yz_size0;
-#ifdef _GPU
-                        #pragma acc atomic
+                        const double val = sumX[ipart_pack+(i)*packsize] * tmp;
+                        const int jdx = idx + i*yz_size0;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp atomic update // TODO(Etienne M): replace with reduction(+: Jx[0:sizeofEx]) when CCE supports them, % perf benefit
+#elif defined( _GPU )
+    #pragma acc atomic
 #endif
                         Jx [ jdx ] += val;
                     }
@@ -254,45 +342,80 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         }
 
         // Jy^(p,d,p)
-#ifdef _GPU
-        #pragma acc parallel deviceptr( DSy, sumX )
-        #pragma acc loop gang worker vector
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )                  \
+        map( tofrom                                        \
+             : DSy [0:3 * packsize + current_pack_size],   \
+               sumX [0:4 * packsize + current_pack_size] ) \
+            map( to                                        \
+                 : istart_pack, iend_pack, packsize )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
+#elif defined( _GPU )
+    #pragma acc parallel         deviceptr( DSy, sumX )
+    #pragma acc loop gang worker vector
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
-            int ipart_pack = ipart - ipack*packsize;
+            const int ipart_pack = ipart - istart_pack;
 
             sumX[ipart_pack+0*packsize] = 0.;
-            for( unsigned int k=1 ; k<5 ; k++ ) {
+            for( int k=1 ; k<5 ; k++ ) {
                 sumX[ipart_pack+k*packsize] = sumX[ipart_pack+(k-1)*packsize]-DSy[ ipart_pack+(k-1)*packsize ];
             }
         }
 
-#ifdef _GPU
-        #pragma acc parallel present( iold[0:3*nparts], Jy[0:sizeofEy] ) deviceptr( charge, weight, Sx0, Sz0, DSx, DSz, sumX ) vector_length(8)
-        #pragma acc loop gang worker
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )                                         \
+        map( to                                                                   \
+             : charge [istart_pack:current_pack_size],                            \
+               weight [istart_pack:current_pack_size],                            \
+               iold [istart_pack:2 * packsize + current_pack_size - istart_pack], \
+               Sx0 [0:4 * packsize + current_pack_size],                          \
+               Sz0 [0:4 * packsize + current_pack_size],                          \
+               DSx [0:4 * packsize + current_pack_size],                          \
+               DSz [0:4 * packsize + current_pack_size],                          \
+               sumX [packsize:3 * packsize + current_pack_size] )                 \
+            map( tofrom                                                           \
+                 : Jy [0:sizeofEy] )                                              \
+                map( to                                                           \
+                     : istart_pack, iend_pack, packsize,                          \
+                       inv_cell_volume, dy_ov_dt, nprimz, nprimy /*, one_third */ )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
+#elif defined( _GPU )
+    #pragma acc parallel present( iold [0:3 * nparts], \
+                                  Jy [0:sizeofEy] )    \
+        deviceptr( charge, weight, Sx0,                \
+                   Sz0, DSx, DSz, sumX ) vector_length( 8 )
+    #pragma acc loop gang worker
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
-            int ipart_pack = ipart - ipack*packsize;
+            const int ipart_pack = ipart - istart_pack;
 
+            const double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
+            const double cry_p = charge_weight*dy_ov_dt;
 
-            double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
-            double cry_p = charge_weight*dy_ov_dt;
-
-            int  z_size1 = nprimz;
-            int yz_size1 = nprimz*( nprimy+1 );
-            int linindex1 = iold[ipart+0*nparts]*yz_size1+iold[ipart+1*nparts]*z_size1+iold[ipart+2*nparts];
+            const int  z_size1 = nprimz;
+            const int yz_size1 = nprimz*( nprimy+1 );
+            const int linindex1 = iold[ipart+0*packsize]*yz_size1+iold[ipart+1*packsize]*z_size1+iold[ipart+2*packsize];
 #ifdef _GPU
             #pragma acc loop vector
 #endif
             for( int k=0 ; k<5 ; k++ ) {
                 for( int i=0 ; i<5 ; i++ ) {
-                    double tmp = cry_p * ( Sz0[ipart_pack+k*packsize]*Sx0[ipart_pack+i*packsize] + 0.5*DSz[ipart_pack+k*packsize]*Sx0[ipart_pack+i*packsize] + 0.5*DSx[ipart_pack+i*packsize]*Sz0[ipart_pack+k*packsize] + one_third*DSz[ipart_pack+k*packsize]*DSx[ipart_pack+i*packsize] );
-                    int idx = linindex1 + k + i*yz_size1;
+                    const double tmp = cry_p * ( Sz0[ipart_pack+k*packsize]*Sx0[ipart_pack+i*packsize] + 
+                                                 0.5*DSz[ipart_pack+k*packsize]*Sx0[ipart_pack+i*packsize] + 
+                                                 0.5*DSx[ipart_pack+i*packsize]*Sz0[ipart_pack+k*packsize] + 
+                                                 one_third*DSz[ipart_pack+k*packsize]*DSx[ipart_pack+i*packsize] );
+                    const int idx = linindex1 + i*yz_size1 + k;
                     for( int j=1 ; j<5 ; j++ ) {
-                        double val = sumX[ipart_pack+(j)*packsize] * tmp;
-                        int jdx = idx + j*z_size1;
-#ifdef _GPU
-                        #pragma acc atomic
+                        const double val = sumX[ipart_pack+(j)*packsize] * tmp;
+                        const int jdx = idx + j*z_size1;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp atomic update // TODO(Etienne M): replace with reduction(+: Jy[0:sizeofEy]) when CCE supports them, % perf benefit
+#elif defined( _GPU )
+    #pragma acc atomic
 #endif
                         Jy [ jdx ] += val;
                     }
@@ -301,74 +424,101 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         }
 
         // Jz^(p,p,d)
-#ifdef _GPU
-        #pragma acc parallel deviceptr( DSz, sumX )
-        #pragma acc loop gang worker vector 
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )                  \
+        map( tofrom                                        \
+             : DSz [0:3 * packsize + current_pack_size],   \
+               sumX [0:4 * packsize + current_pack_size] ) \
+            map( to                                        \
+                 : istart_pack, iend_pack, packsize )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
+#elif defined( _GPU )
+    #pragma acc parallel         deviceptr( DSz, sumX )
+    #pragma acc loop gang worker vector
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
-            int ipart_pack = ipart - ipack*packsize;
+            const int ipart_pack = ipart - istart_pack;
 
             sumX[ipart_pack+0*packsize] = 0.;
-            for( unsigned int k=1 ; k<5 ; k++ ) {
+            for( int k=1 ; k<5 ; k++ ) {
                 sumX[ipart_pack+k*packsize] = sumX[ipart_pack+(k-1)*packsize]-DSz[ ipart_pack+(k-1)*packsize ];
             }
         }
 
-#ifdef _GPU
-        #pragma acc parallel present( iold[0:3*nparts], Jz[0:sizeofEz] ) deviceptr( charge, weight, Sx0, Sy0, DSx, DSy, sumX ) vector_length(4)
-        #pragma acc loop gang worker
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )                                         \
+        map( to                                                                   \
+             : charge [istart_pack:current_pack_size],                            \
+               weight [istart_pack:current_pack_size],                            \
+               iold [istart_pack:2 * packsize + current_pack_size - istart_pack], \
+               Sx0 [0:4 * packsize + current_pack_size],                          \
+               Sy0 [0:4 * packsize + current_pack_size],                          \
+               DSx [0:4 * packsize + current_pack_size],                          \
+               DSy [0:4 * packsize + current_pack_size],                          \
+               sumX [packsize:3 * packsize + current_pack_size] )                 \
+            map( tofrom                                                           \
+                 : Jz [0:sizeofEy] )                                              \
+                map( to                                                           \
+                     : istart_pack, iend_pack, packsize,                          \
+                       inv_cell_volume, dz_ov_dt, nprimz, nprimy /*, one_third */ )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
+#elif defined( _GPU )
+    #pragma acc parallel present( iold [0:3 * nparts], \
+                                  Jz [0:sizeofEz] )    \
+        deviceptr( charge, weight, Sx0,                \
+                   Sy0, DSx, DSy, sumX ) vector_length( 8 )
+    #pragma acc loop gang worker
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
-            int ipart_pack = ipart - ipack*packsize;
+            const int ipart_pack = ipart - istart_pack;
 
-            double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
-            double crz_p = charge_weight*dz_ov_dt;
+            const double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
+            const double crz_p = charge_weight*dz_ov_dt;
 
-            int z_size2 =  nprimz+1;
-            int yz_size2 = ( nprimz+1 )*nprimy;
-            int linindex2 = iold[ipart+0*nparts]*yz_size2+iold[ipart+1*nparts]*z_size2+iold[ipart+2*nparts];
+            const int z_size2 =  nprimz+1;
+            const int yz_size2 = ( nprimz+1 )*nprimy;
+            const int linindex2 = iold[ipart+0*packsize]*yz_size2+iold[ipart+1*packsize]*z_size2+iold[ipart+2*packsize];
 #ifdef _GPU
             #pragma acc loop vector
 #endif
             for( int k=1 ; k<5 ; k++ ) {
                 for( int i=0 ; i<5 ; i++ ) {
                     for( int j=0 ; j<5 ; j++ ) {
-                        double tmp = crz_p*( Sx0[ipart_pack+i*packsize]*Sy0[ipart_pack+j*packsize] + 0.5*DSx[ipart_pack+i*packsize]*Sy0[ipart_pack+j*packsize] + 0.5*DSy[ipart_pack+j*packsize]*Sx0[ipart_pack+i*packsize] + one_third*DSx[ipart_pack+i*packsize]*DSy[ipart_pack+j*packsize] );
-                        int idx = linindex2 + j*z_size2 + i*yz_size2;
-                        double val = sumX[ipart_pack+(k)*packsize] * tmp;
-                        int jdx = idx + k;
-#ifdef _GPU
-                        #pragma acc atomic
+                       const double tmp = crz_p * ( Sx0[ipart_pack+i*packsize]*Sy0[ipart_pack+j*packsize] + 
+                                                    0.5*DSx[ipart_pack+i*packsize]*Sy0[ipart_pack+j*packsize] + 
+                                                    0.5*DSy[ipart_pack+j*packsize]*Sx0[ipart_pack+i*packsize] + 
+                                                    one_third*DSx[ipart_pack+i*packsize]*DSy[ipart_pack+j*packsize] );
+                       const int idx = linindex2 + j*z_size2 + i*yz_size2;
+                       const double val = sumX[ipart_pack+(k)*packsize] * tmp;
+                       const int jdx = idx + k;
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp atomic update // TODO(Etienne M): replace with reduction(+: Jz[0:sizeofEz]) when CCE supports them, % perf benefit
+#elif defined( _GPU )
+    #pragma acc atomic
 #endif
                         Jz[ jdx ] += val;
                     }
                 }
             }//i
 
-
         } // End for ipart
 
     } // End for ipack
-#ifndef _GPU
-    free( Sx0 ); // acc_free
-    free( Sy0 );
-    free( Sz0 );
-    free( DSx );
-    free( DSy );
-    free( DSz );
-    free( sumX );
-#else
-    acc_free( Sx0 ); // acc_free
-    acc_free( Sy0 );
-    acc_free( Sz0 );
-    acc_free( DSx );
-    acc_free( DSy );
-    acc_free( DSz );
-    acc_free( sumX );
+
+#if defined( _GPU )
+    ::acc_free( Sx0 ); // acc_free
+    ::acc_free( Sy0 );
+    ::acc_free( Sz0 );
+    ::acc_free( DSx );
+    ::acc_free( DSy );
+    ::acc_free( DSz );
+    ::acc_free( sumX );
 #endif
 
 } // END Project local current densities (Jx, Jy, Jz, sort)
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
@@ -779,10 +929,10 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
         }
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
-        double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
-        double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
-        double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+        // double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
+        // double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
+        // double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
+        // double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
         currents( EMfields, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
         //for( int ipart=istart ; ipart<iend; ipart++ ) {
         //    currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
@@ -790,6 +940,7 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
     }
     
 }
+
 // Projector for susceptibility used as source term in envelope equation
 void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 
@@ -835,7 +986,7 @@ void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &par
         
         // compute initial ponderomotive gamma
         gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *( Phi+ipart )*charge_sq_over_mass_sq ;
-        gamma0    = sqrt( gamma0_sq ) ;
+        gamma0    = std::sqrt( gamma0_sq ) ;
         
         // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
         pxsm = ( gamma0 * charge_over_mass_dts2*( *( Ex+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhix+ipart ) ) ) * momentum[0] / gamma0_sq;
@@ -868,7 +1019,7 @@ void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &par
         
         // locate the particle on the primal grid at current time-step & calculate coeff. S1
         xpn = particles.position( 0, ipart ) * dx_inv_;
-        int ip = round( xpn );
+        int ip = std::round( xpn );
         delta  = xpn - ( double )ip;
         delta2 = delta*delta;
         Sx1[1] = 0.5 * ( delta2-delta+0.25 );
@@ -876,7 +1027,7 @@ void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &par
         Sx1[3] = 0.5 * ( delta2+delta+0.25 );
         
         ypn = particles.position( 1, ipart ) * dy_inv_;
-        int jp = round( ypn );
+        int jp = std::round( ypn );
         delta  = ypn - ( double )jp;
         delta2 = delta*delta;
         Sy1[1] = 0.5 * ( delta2-delta+0.25 );
@@ -884,7 +1035,7 @@ void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &par
         Sy1[3] = 0.5 * ( delta2+delta+0.25 );
         
         zpn = particles.position( 2, ipart ) * dz_inv_;
-        int kp = round( zpn );
+        int kp = std::round( zpn );
         delta  = zpn - ( double )kp;
         delta2 = delta*delta;
         Sz1[1] = 0.5 * ( delta2-delta+0.25 );

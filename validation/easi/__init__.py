@@ -236,6 +236,7 @@ class Validation(object):
             # hostname
             self.machine_class = MachineAdastra
         else:
+            print("Unknown machine hostname '" + self.HOSTNAME + "'. Using default settings !")
             self.machine_class = Machine
         self.machine = self.machine_class( self.smilei_path, self.options )
         

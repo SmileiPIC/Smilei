@@ -30,10 +30,8 @@ echo "Number of Tasks Allocated      = $SLURM_NTASKS";
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK";
 
 # We should need only that to run the rest is loaded by default
-module load rocm;
+module load rocm/4.5.0;
 
-# OMP_NUM_THREADS could also be set to the_mpi_process_count but it should be 
-# the same
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK;
 export OMP_SCHEDULE=dynamic;
 # You may want to change "cores", to "threads". But hyperthreading, for an well 
@@ -42,6 +40,9 @@ export OMP_PLACES=cores;
 
 rocm-smi;
 rocminfo;
+
+export CRAY_ACC_DEBUG=0;
+
 
 {a_task_command} > {the_output_file} 2>&1;
 

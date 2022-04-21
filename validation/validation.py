@@ -156,11 +156,12 @@ Options:
        <max time>: format hh:mm:ss
   -p <partition name>
        <partition name>: partition name on super-computers
+                           - adastra
+                           - irene_a64fx
+                           - irene_skylake
+                           - jollyjumper
                            - ruche
                            - tornado
-                           - jollyjumper
-                           - irene_skylake
-                           - irene_a64fx
   -a <account id>
   --account <account id>
        <account id>: account/project id given by some super-computer facilities

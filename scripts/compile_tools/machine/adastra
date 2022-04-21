@@ -13,7 +13,7 @@
 # process.
 #
 # To compile you'll want these modules:
-# $ module load PrgEnv-cray cce/13.0.1 cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1 cray-mpich/8.1.13 rocm
+# $ module load PrgEnv-cray cce/13.0.1 cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1 cray-mpich/8.1.13 rocm/4.5.0
 #
 #
 ################################################################################
@@ -50,9 +50,11 @@ ifneq (,$(call parse_config,gpu_amd))
 	# We need to link with the appropriate "First-Party Tool" (as OpenMP calls them)
 	LDFLAGS += $(WARNING_FLAGS) $(ACCELERATOR_GPU_OMP_FLAGS) $(DEBUG_SANITIZER_FLAGS)
 	# LDFLAGS += -static-openmp
+	# LDFLAGS += -mcmodel=large -static-openmp
 	# May help resolve some linker issue
 	# LDFLAGS += -foffload=-lm
 endif
 
 # Smilei is setup to use Ofast when clang is used. CCE is clang based.
 CXXFLAGS += $(WARNING_FLAGS) -Ofast -g
+# CXXFLAGS += -mcmodel=large -static-openmp
