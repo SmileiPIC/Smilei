@@ -27,6 +27,13 @@ def mkdir(dir):
             dir = os.readlink(dir)
         os.mkdir(dir)
 
+def rename(old, new):
+    old = os.path.abspath(old)
+    if os.path.islink(old):
+        old = os.readlink(old)
+    import shutil
+    shutil.move(old, new)
+
 def date(BIN_NAME):
     return os.stat(BIN_NAME).st_ctime
 
