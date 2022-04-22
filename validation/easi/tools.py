@@ -18,7 +18,13 @@ except: # python3
     raw_input = input
 
 def mkdir(dir):
+    # /xxx/ is not
+    # /xxx
+    dir = os.path.abspath(dir)
+
     if not os.path.exists(dir):
+        if os.path.islink(dir):
+            dir = os.readlink(dir)
         os.mkdir(dir)
 
 def date(BIN_NAME):

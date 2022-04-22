@@ -11,8 +11,8 @@ class MachineAdastra(Machine):
 #SBATCH --job-name=smilei_validation
 #SBATCH --nodes={the_node_count}               # Number of nodes
 #SBATCH --ntasks={the_mpi_process_count}       # Number of MPI ranks
-#SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank 
-#SBATCH --gpus-per-task={the_gpu_count}        # Number of cores per MPI rank 
+#SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank
+#SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank
 #SBATCH --output=output
 #SBATCH --error=error
 #SBATCH --time={the_maximum_task_duration}
