@@ -35,7 +35,7 @@ PML_SolverAM_Envelope::PML_SolverAM_Envelope( Params &params )
     power_pml_kappa_r = 3.;
     power_pml_sigma_r = 2.;
     power_pml_alpha_r = 1.;
-    alpha_cr = 0.25 ;
+    alpha_cr = 0.5 ;
 }
 
 PML_SolverAM_Envelope::~PML_SolverAM_Envelope()
@@ -130,7 +130,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         // Params for other cells (PML Media) when i>=3
         for ( int i=startpml; i<nl_p ; i++ ) {
             // Parameters
-            kappa_l_p[i] = 1. - (kappa_l_max - 1.) * pow( (i-startpml)*dl , power_pml_kappa_l ) / pow( length_l_pml , power_pml_kappa_l ) ;
+            kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( (i-startpml)*dl , power_pml_kappa_l ) / pow( length_l_pml , power_pml_kappa_l ) ;
             sigma_l_p[i] = sigma_l_max * pow( (i-startpml)*dl , power_pml_sigma_l ) / pow( length_l_pml , power_pml_sigma_l ) ;
             alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( (i-startpml)*dl , power_pml_alpha_l ) / pow( length_l_pml , power_pml_alpha_l ) );
             // Derivatives
@@ -206,7 +206,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         if (ncells_pml_min[0] != 0 ){
             for ( int i=0 ; i<ncells_pml_min[0] ; i++ ) {
                 // Parameters
-                kappa_l_p[i] = 1. - (kappa_l_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmin , power_pml_kappa_l ) ;
+                kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmin , power_pml_kappa_l ) ;
                 sigma_l_p[i] = sigma_l_max * pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_sigma_l ) / pow( length_l_pml_lmin , power_pml_sigma_l ) ;
                 alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( ( ncells_pml_min[0] - 1 - i )*dl , power_pml_alpha_l ) / pow( length_l_pml_lmin , power_pml_alpha_l ) );
                 // Derivatives
@@ -228,7 +228,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         if (ncells_pml_max[0] != 0 ){
             for ( int i=(nl_p-1)-(ncells_pml_max[0]-1) ; i<nl_p ; i++ ) {
                 // Parameters
-                kappa_l_p[i] = 1. - (kappa_l_max - 1.) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
+                kappa_l_p[i] = 1. + (kappa_l_max - 1.) * pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_kappa_l ) / pow( length_l_pml_lmax , power_pml_kappa_l ) ;
                 sigma_l_p[i] = sigma_l_max * pow( (i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_sigma_l ) / pow( length_l_pml_lmax, power_pml_sigma_l ) ;
                 alpha_l_p[i] = alpha_cl + alpha_l_max * (1. - pow( ( i - ( (nl_p-1)-(ncells_pml_max[0]-1) ) )*dl , power_pml_alpha_l ) / pow( length_l_pml_lmin , power_pml_alpha_l ) );
                 // Derivatives
@@ -247,7 +247,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         // R-direction
         for ( int j=0 ; j<startpml ; j++ ) {
             // Coeffs for the first cell
-            kappa_r_p[j] = 1. ;
+            kappa_r_p[j] = 0.7 ;
             sigma_r_p[j] = 0. ;
             alpha_r_p[j] = 0. ;
             kappa_prime_r_p[j] = 0. ;
@@ -260,7 +260,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         // Params for other cells (PML Media) when i>=3
         for ( int j=startpml; j<nr_p ; j++ ) {
             // Parameters
-            kappa_r_p[j] = 1. + (kappa_r_max - 1.) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
+            kappa_r_p[j] = 0.7 + (kappa_r_max - 1.) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
             sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , power_pml_sigma_r ) / pow( length_r_pml , power_pml_sigma_r ) ;
             alpha_r_p[j] = alpha_cr + alpha_r_max * (1. - pow( (j-startpml)*dr , power_pml_alpha_r ) / pow( length_r_pml , power_pml_alpha_r ) );
             // Derivatives

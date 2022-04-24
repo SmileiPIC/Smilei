@@ -32,7 +32,7 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
 
     pml_solver_envelope_ = SolverFactory::createPMLenvelope( params );
     if (params.envelope_solver == "explicit"){
-        nsolver=2;
+        nsolver=4;
     }
     else if (params.envelope_solver == "explicit_reduced_dispersion"){
         nsolver=2;
