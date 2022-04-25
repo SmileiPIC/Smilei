@@ -178,9 +178,7 @@ class Main(SmileiSingleton):
     timestep_over_CFL = None
     cell_sorting = None
     gpu_computing = False                      # Activate the computation on GPU
-    number_of_damping_cells = [0]
-
-
+    
     # PXR tuning
     spectral_solver_order = []
     initial_rotational_cleaning = False

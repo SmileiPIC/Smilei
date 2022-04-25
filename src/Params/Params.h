@@ -367,7 +367,9 @@ public:
     //! Characters width for timestep output
     unsigned int timestep_width;
 
-    bool cell_sorting;
+    bool cell_sorting_;
+    
+    //! For gpu branch compatibility, not used for the moment
     bool gpu_computing;
 };
 

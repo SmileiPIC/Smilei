@@ -19,27 +19,27 @@ void PML_SolverAM::operator()( ElectroMagn *fields )
 {
     ERROR( "This is not a solver for the main domain" );
 
-    for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
-
-        // Static-cast of the fields_SolverAM_norm.cpp
-        //cField2D *Dl = ( static_cast<ElectroMagnAM *>( fields ) )->Dl_[imode];
-        //cField2D *Dr = ( static_cast<ElectroMagnAM *>( fields ) )->Dr_[imode];
-        //cField2D *Dt = ( static_cast<ElectroMagnAM *>( fields ) )->Dt_[imode];
-        cField2D *El = ( static_cast<ElectroMagnAM *>( fields ) )->El_[imode];
-        cField2D *Er = ( static_cast<ElectroMagnAM *>( fields ) )->Er_[imode];
-        cField2D *Et = ( static_cast<ElectroMagnAM *>( fields ) )->Et_[imode];
-        cField2D *Bl = ( static_cast<ElectroMagnAM *>( fields ) )->Bl_[imode];
-        cField2D *Br = ( static_cast<ElectroMagnAM *>( fields ) )->Br_[imode];
-        cField2D *Bt = ( static_cast<ElectroMagnAM *>( fields ) )->Bt_[imode];
-        //cField2D *Hl = ( static_cast<ElectroMagnAM *>( fields ) )->Hl_[imode];
-        //cField2D *Hr = ( static_cast<ElectroMagnAM *>( fields ) )->Hr_[imode];
-        //cField2D *Ht = ( static_cast<ElectroMagnAM *>( fields ) )->Ht_[imode];
-        cField2D *Jl = ( static_cast<ElectroMagnAM *>( fields ) )->Jl_[imode];
-        cField2D *Jr = ( static_cast<ElectroMagnAM *>( fields ) )->Jr_[imode];
-        cField2D *Jt = ( static_cast<ElectroMagnAM *>( fields ) )->Jt_[imode];
-        int j_glob    = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
-        bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
-    }
+    // for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
+    // 
+    //     // Static-cast of the fields_SolverAM_norm.cpp
+    //     //cField2D *Dl = ( static_cast<ElectroMagnAM *>( fields ) )->Dl_[imode];
+    //     //cField2D *Dr = ( static_cast<ElectroMagnAM *>( fields ) )->Dr_[imode];
+    //     //cField2D *Dt = ( static_cast<ElectroMagnAM *>( fields ) )->Dt_[imode];
+    //     cField2D *El = ( static_cast<ElectroMagnAM *>( fields ) )->El_[imode];
+    //     cField2D *Er = ( static_cast<ElectroMagnAM *>( fields ) )->Er_[imode];
+    //     cField2D *Et = ( static_cast<ElectroMagnAM *>( fields ) )->Et_[imode];
+    //     cField2D *Bl = ( static_cast<ElectroMagnAM *>( fields ) )->Bl_[imode];
+    //     cField2D *Br = ( static_cast<ElectroMagnAM *>( fields ) )->Br_[imode];
+    //     cField2D *Bt = ( static_cast<ElectroMagnAM *>( fields ) )->Bt_[imode];
+    //     //cField2D *Hl = ( static_cast<ElectroMagnAM *>( fields ) )->Hl_[imode];
+    //     //cField2D *Hr = ( static_cast<ElectroMagnAM *>( fields ) )->Hr_[imode];
+    //     //cField2D *Ht = ( static_cast<ElectroMagnAM *>( fields ) )->Ht_[imode];
+    //     cField2D *Jl = ( static_cast<ElectroMagnAM *>( fields ) )->Jl_[imode];
+    //     cField2D *Jr = ( static_cast<ElectroMagnAM *>( fields ) )->Jr_[imode];
+    //     cField2D *Jt = ( static_cast<ElectroMagnAM *>( fields ) )->Jt_[imode];
+    //     int j_glob    = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
+    //     bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
+    // }
 }
 
 void PML_SolverAM::setDomainSizeAndCoefficients( int iDim, int min_or_max, int ncells_pml_domain, int startpml, int* ncells_pml_min, int* ncells_pml_max, Patch* patch )

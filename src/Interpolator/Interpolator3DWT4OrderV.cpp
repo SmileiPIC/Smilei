@@ -43,7 +43,7 @@ Interpolator3DWT4OrderV::Interpolator3DWT4OrderV( Params &params, Patch *patch )
 // {
 // }
 
-void Interpolator3DWT4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3DWT4OrderV::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
 {
     if( istart[0] == iend[0] ) {
         return;    //Don't treat empty cells.

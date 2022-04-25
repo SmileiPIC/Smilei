@@ -1,0 +1,6 @@
+#
+# Machine file for AMD Rome EPYC processors using Intel
+# __________________________________________________________
+
+
+CXXFLAGS += -march=core-avx2 -xCORE-AVX2 -ip -inline-factor=1000 -fno-alias #-ipo

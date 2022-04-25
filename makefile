@@ -50,7 +50,7 @@ COMPILER_INFO := $(shell $(SMILEICXX) -show | cut -d' ' -f1)
 ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
     CXXFLAGS += -Wno-reorder
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    CXXFLAGS += -Wdeprecated-register
+    CXXFLAGS += -Wdeprecated-register 
 endif
 
 
@@ -81,7 +81,7 @@ CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
 ifeq ($(findstring g++, $(COMPILER_INFO)), g++)
     CXXFLAGS += -std=c++11 -Wall
 else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
-    CXXFLAGS += -std=c++11 -Wall
+    CXXFLAGS += -std=c++11 -Wall -Wextra
 else ifeq ($(findstring armclang++, $(COMPILER_INFO)), armclang++)
     CXXFLAGS += -std=c++11 -Wall
 else ifeq ($(findstring FCC, $(COMPILER_INFO)), FCC)

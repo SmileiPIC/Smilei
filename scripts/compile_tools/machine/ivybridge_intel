@@ -1,0 +1,6 @@
+#
+# Machine file for Intel Ivy Bridge processors
+# Compilation with the Intel compiler
+# __________________________________________________________
+
+CXXFLAGS +=  -xAVX -O3 -ip -inline-factor=1000 -fno-alias
