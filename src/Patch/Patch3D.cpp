@@ -196,8 +196,6 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
     MPI_Status rstat    ;
     MPI_Request rrequest;
 
-    int patch_ndims_(3);
-
     if (MPI_neighbor_[0][iNeighbor]!=MPI_PROC_NULL) {
         ix = 2*oversize[0] + 1 + isDual[0];
         iy = 0;
