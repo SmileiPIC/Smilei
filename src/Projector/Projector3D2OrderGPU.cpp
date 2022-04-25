@@ -89,7 +89,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     double *const __restrict__ DSy  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
     double *const __restrict__ DSz  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
     double *const __restrict__ sumX = static_cast< double * >(::acc_malloc( 5 * packsize * sizeof( double ) ));
-#else // #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
+#else // #elif defined(SMILEI_ACCELERATOR_GPU_OMP) // Works for both device and host
     static constexpr bool kAutoFree     = true;
     const std::size_t     kTmpArraySize = 5 * packsize;
 
@@ -108,13 +108,13 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     smilei::tools::NonInitializingVector<double, kAutoFree> host_device_DSz{ kTmpArraySize };
     smilei::tools::NonInitializingVector<double, kAutoFree> host_device_sumX{ kTmpArraySize };
 
-    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_Sx0 );
-    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_Sy0 );
-    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_Sz0 );
-    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_DSx );
-    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_DSy );
-    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_DSz );
-    smilei::tools::HostDeviceMemoryManagment::DeviceAlloc( host_device_sumX );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( host_device_Sx0 );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( host_device_Sy0 );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( host_device_Sz0 );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( host_device_DSx );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( host_device_DSy );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( host_device_DSz );
+    smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( host_device_sumX );
 
     double *const __restrict__ Sx0  = host_device_Sx0.data();
     double *const __restrict__ Sy0  = host_device_Sy0.data();
@@ -943,7 +943,6 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
 
 // Projector for susceptibility used as source term in envelope equation
 void Projector3D2OrderGPU::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
-
 {
     double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 );
     

@@ -16,11 +16,20 @@
 void internal_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during exchange
-    double* position = species->particles->getPtrPosition(direction);
-    int* cell_keys = species->particles->getPtrCellKeys();
-#ifdef _GPU
+    const double* const position  = species->particles->getPtrPosition( direction );
+    int* const          cell_keys = species->particles->getPtrCellKeys();
+#if defined( _GPU )
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )    \
+        map( to                              \
+             : imin, imax, limit_inf,        \
+               position [imin:imax - imin] ) \
+            map( tofrom                      \
+                 : cell_keys [imin:imax - imin] )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] < limit_inf) {
@@ -32,11 +41,20 @@ void internal_inf( Species *species, int imin, int imax, int direction, double l
 void internal_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
 {
     energy_change = 0.;     // no energy loss during exchange
-    double* position = species->particles->getPtrPosition(direction);
-    int* cell_keys = species->particles->getPtrCellKeys();
-#ifdef _GPU
+    const double* const position  = species->particles->getPtrPosition( direction );
+    int* const          cell_keys = species->particles->getPtrCellKeys();
+#if defined( _GPU )
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )    \
+        map( to                              \
+             : imin, imax, limit_sup,        \
+               position [imin:imax - imin] ) \
+            map( tofrom                      \
+                 : cell_keys [imin:imax - imin] )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
         if ( position[ ipart ] >= limit_sup) {
@@ -74,7 +92,7 @@ void internal_sup_AM( Species *species, int imin, int imax, int direction, doubl
 }
 
 void reflect_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
-{
+{ERROR("Not implemented");
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);
@@ -91,7 +109,7 @@ void reflect_particle_inf( Species *species, int imin, int imax, int direction, 
 }
 
 void reflect_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
-{
+{ERROR("Not implemented");
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);

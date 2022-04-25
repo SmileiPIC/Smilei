@@ -120,14 +120,14 @@ namespace smilei {
         {
         public:
             template <typename T>
-            static void DeviceAlloc( const T* a_pointer, std::size_t a_size );
+            static void DeviceAllocate( const T* a_pointer, std::size_t a_size );
             template <typename Container>
-            static void DeviceAlloc( const Container& a_vector );
+            static void DeviceAllocate( const Container& a_vector );
 
             template <typename T>
-            static void DeviceAllocAndCopyHostToDevice( const T* a_pointer, std::size_t a_size );
+            static void DeviceAllocateAndCopyHostToDevice( const T* a_pointer, std::size_t a_size );
             template <typename Container>
-            static void DeviceAllocAndCopyHostToDevice( const Container& a_vector );
+            static void DeviceAllocateAndCopyHostToDevice( const Container& a_vector );
 
             template <typename T>
             static void CopyHostToDevice( const T* a_pointer, std::size_t a_size );
@@ -148,6 +148,12 @@ namespace smilei {
             static void DeviceFree( T* a_pointer, std::size_t a_size );
             template <typename Container>
             static void DeviceFree( Container& a_vector );
+
+            template<typename T>
+            static T* GetDevicePointer(T* a_pointer);
+
+            template <typename T>
+            static bool IsHostPointerMappedOnDevice(T* a_pointer);
         };
 
 
@@ -282,7 +288,7 @@ namespace smilei {
         ////////////////////////////////////////////////////////////////////////////////
 
         template <typename T>
-        void HostDeviceMemoryManagment::DeviceAlloc( const T* a_pointer, std::size_t a_size )
+        void HostDeviceMemoryManagment::DeviceAllocate( const T* a_pointer, std::size_t a_size )
         {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target enter data map( alloc \
@@ -298,13 +304,13 @@ namespace smilei {
         }
 
         template <typename Container>
-        void HostDeviceMemoryManagment::DeviceAlloc( const Container& a_vector )
+        void HostDeviceMemoryManagment::DeviceAllocate( const Container& a_vector )
         {
-            DeviceAlloc( a_vector.data(), a_vector.size() );
+            DeviceAllocate( a_vector.data(), a_vector.size() );
         }
 
         template <typename T>
-        void HostDeviceMemoryManagment::DeviceAllocAndCopyHostToDevice( const T* a_pointer, std::size_t a_size )
+        void HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( const T* a_pointer, std::size_t a_size )
         {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target enter data map( to \
@@ -318,7 +324,7 @@ namespace smilei {
         }
 
         template <typename Container>
-        void HostDeviceMemoryManagment::DeviceAllocAndCopyHostToDevice( const Container& a_vector )
+        void HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( const Container& a_vector )
         {
             DeviceAllocAndCopyHostToDevice( a_vector.data(), a_vector.size() );
         }
@@ -401,6 +407,31 @@ namespace smilei {
         void HostDeviceMemoryManagment::DeviceFree( Container& a_vector )
         {
             DeviceFree( a_vector.data(), a_vector.size() );
+        }
+
+        template <typename T>
+        T* HostDeviceMemoryManagment::GetDevicePointer( T* a_host_pointer )
+        {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+            T* a_device_pointer = nullptr;
+    #pragma omp target data use_device_ptr( a_host_pointer )
+            {
+                a_device_pointer = a_host_pointer;
+            }
+            return a_device_pointer;
+#elif defined( _GPU )
+            return ::acc_deviceptr( a_host_pointer );
+#else
+            // TODO(Etienne M): Should we return nullptr or a_host_pointer ?
+            SMILEI_UNUSED( a_host_pointer );
+            return nullptr;
+#endif
+        }
+
+        template <typename T>
+        bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( T* a_pointer )
+        {
+            return GetDevicePointer( a_pointer ) != nullptr;
         }
 
     } // namespace tools

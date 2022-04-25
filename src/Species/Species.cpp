@@ -1,47 +1,38 @@
-
 #include "Species.h"
-
-#include <cmath>
-#include <ctime>
-#include <cstdlib>
-
-#include <iostream>
 
 #include <omp.h>
 
-// IDRIS
+#include <cmath>
+#include <cstdlib>
 #include <cstring>
-// IDRIS
-#include "PusherFactory.h"
-#include "IonizationFactory.h"
-#include "RadiationFactory.h"
-#include "MultiphotonBreitWheelerFactory.h"
-#include "MergingFactory.h"
-#include "ParticlesFactory.h"
-#include "PartBoundCond.h"
-#include "PartWall.h"
+#include <ctime>
+#include <iostream>
+
 #include "BoundaryConditionType.h"
-
+#include "DiagnosticTrack.h"
 #include "ElectroMagn.h"
-#include "Interpolator.h"
-#include "InterpolatorFactory.h"
-#include "ProjectorFactory.h"
-#include "Profile.h"
 #include "ElectroMagnAM.h"
-#include "Projector.h"
-#include "ProjectorFactory.h"
-#include "ParticleCreator.h"
-
-#include "SimWindow.h"
-#include "Patch.h"
-
-// #include "Field.h"
 #include "Field1D.h"
 #include "Field2D.h"
 #include "Field3D.h"
+#include "Interpolator.h"
+#include "InterpolatorFactory.h"
+#include "IonizationFactory.h"
+#include "MergingFactory.h"
+#include "MultiphotonBreitWheelerFactory.h"
+#include "PartBoundCond.h"
+#include "PartWall.h"
+#include "ParticleCreator.h"
+#include "ParticlesFactory.h"
+#include "Patch.h"
+#include "Profile.h"
+#include "Projector.h"
+#include "ProjectorFactory.h"
+#include "PusherFactory.h"
+#include "RadiationFactory.h"
+#include "SimWindow.h"
 #include "Tools.h"
-
-#include "DiagnosticTrack.h"
+#include "gpu.h"
 
 using namespace std;
 
@@ -372,14 +363,14 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
-#ifdef _GPU
-        int np = particles->last_index.back();
-        double* E = &(smpi->dynamics_Epart[0][0]);
-        double* B = &(smpi->dynamics_Bpart[0][0]);
-        double* gf = &(smpi->dynamics_invgf[0][0]);
-        int* iold = &(smpi->dynamics_iold[0][0]);
-        double* deltaold = &(smpi->dynamics_deltaold[0][0]);
-        #pragma acc data create(E[0:3*np],B[0:3*np],gf[0:np],iold[0:3*np],deltaold[0:3*np])
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+        const int array_size = particles->last_index.back() * 3;
+        // #pragma acc data create(E[0:3*np],B[0:3*np],gf[0:np],iold[0:3*np],deltaold[0:3*np])
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_Epart[0][0] ), array_size );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_Bpart[0][0] ), array_size );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_invgf[0][0] ), array_size );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_iold[0][0] ), array_size );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_deltaold[0][0] ), array_size );
         {
 
 #endif
@@ -581,9 +572,14 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 //            }
 //        }
 
-#ifdef _GPU
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         }
-        #pragma acc exit data delete(E[0:3*np],B[0:3*np],gf[0:np],iold[0:3*np],deltaold[0:3*np])
+        smilei::tools::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_Epart[0][0] ), array_size );
+        smilei::tools::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_Bpart[0][0] ), array_size );
+        smilei::tools::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_invgf[0][0] ), array_size );
+        smilei::tools::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_iold[0][0] ), array_size );
+        smilei::tools::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_deltaold[0][0] ), array_size );
+        // #pragma acc exit data delete(E[0:3*np],B[0:3*np],gf[0:np],iold[0:3*np],deltaold[0:3*np])
 #endif
     } //End if moving or ionized particles
 

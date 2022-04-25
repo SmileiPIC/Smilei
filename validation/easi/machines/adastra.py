@@ -43,6 +43,7 @@ rocminfo;
 
 export CRAY_ACC_DEBUG=0;
 
+# rocprof --hip-trace {a_task_command} > {the_output_file} 2>&1;
 
 {a_task_command} > {the_output_file} 2>&1;
 

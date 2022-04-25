@@ -1,36 +1,34 @@
 #include "VectorPatch.h"
 
+#include <cmath>
+
 #include <cstdlib>
-#include <iostream>
-#include <iomanip>
-#include <fstream>
 #include <cstring>
-#include <math.h>
-//#include <string>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
 
 #include "BinaryProcesses.h"
-#include "DomainDecompositionFactory.h"
-#include "PatchesFactory.h"
-#include "Species.h"
-#include "Particles.h"
-#include "PeekAtSpecies.h"
-#include "SimWindow.h"
-#include "SolverFactory.h"
 #include "DiagnosticFactory.h"
-#include "LaserEnvelope.h"
+#include "DomainDecompositionFactory.h"
 #include "ElectroMagnBC.h"
-#include "Laser.h"
-
 #include "ElectroMagnBC2D_PML.h"
 #include "ElectroMagnBC3D_PML.h"
 #include "ElectroMagnBCAM_PML.h"
-
+#include "Laser.h"
+#include "LaserEnvelope.h"
+#include "Particles.h"
+#include "PatchesFactory.h"
+#include "PeekAtSpecies.h"
+#include "SimWindow.h"
+#include "SolverFactory.h"
+#include "Species.h"
 #include "SyncVectorPatch.h"
-#include "interface.h"
 #include "Timers.h"
+#include "gpu.h"
+#include "interface.h"
 
 using namespace std;
-
 
 VectorPatch::VectorPatch()
 {
@@ -4421,25 +4419,25 @@ void VectorPatch::initNewEnvelope( Params &params )
 
 void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables * radiation_tables_ )
 {
-#ifdef _GPU
-    int npatches = this->size();
-    int nspecies =  patches_[0]->vecSpecies.size();
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // TODO(Etienne M): Check if we can get better throughput by using async calls
 
-    int sizeofJx = patches_[0]->EMfields->Jx_->globalDims_;
-    int sizeofJy = patches_[0]->EMfields->Jy_->globalDims_;
-    int sizeofJz = patches_[0]->EMfields->Jz_->globalDims_;
-    int sizeofRho = patches_[0]->EMfields->rho_->globalDims_;
+    const int npatches = this->size();
 
-    int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
-    int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
-    int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
+    const int sizeofJx  = patches_[0]->EMfields->Jx_->globalDims_;
+    const int sizeofJy  = patches_[0]->EMfields->Jy_->globalDims_;
+    const int sizeofJz  = patches_[0]->EMfields->Jz_->globalDims_;
+    const int sizeofRho = patches_[0]->EMfields->rho_->globalDims_;
 
-    int size_of_Table_Niel = radiation_tables_->niel_.size_particle_chi_;
-    int size_of_Table_integfochi = radiation_tables_->integfochi_.size_particle_chi_;
-    int size_of_Table_xi = (radiation_tables_->xi_.size_particle_chi_)*
-                            (radiation_tables_->xi_.size_photon_chi_);
-    int size_of_Table_min_photon_chi = radiation_tables_->xi_.size_particle_chi_;
-    
+    const int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
+    const int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
+    const int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
+
+    const int size_of_table_niel           = radiation_tables_->niel_.size_particle_chi_;
+    const int size_of_table_integfochi     = radiation_tables_->integfochi_.size_particle_chi_;
+    const int size_of_table_min_photon_chi = radiation_tables_->xi_.size_particle_chi_;
+    const int size_of_table_xi             = radiation_tables_->xi_.size_particle_chi_ * radiation_tables_->xi_.size_photon_chi_;
+
     for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
 
         // Initialize  particles data structures on GPU, and synchronize it
@@ -4451,46 +4449,58 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
         }
 
         // Initialize field data strucures on GPU and synchronize it
-        double* Jx = &(patches_[ipatch]->EMfields->Jx_->data_[0]);
-        double* Jy = &(patches_[ipatch]->EMfields->Jy_->data_[0]);
-        double* Jz = &(patches_[ipatch]->EMfields->Jz_->data_[0]);
-        double* Rho = &(patches_[ipatch]->EMfields->rho_->data_[0]);
-        double* Ex = &(patches_[ipatch]->EMfields->Ex_->data_[0]);
-        double* Ey = &(patches_[ipatch]->EMfields->Ey_->data_[0]);
-        double* Ez = &(patches_[ipatch]->EMfields->Ez_->data_[0]);
-        double* Bxm = &(patches_[ipatch]->EMfields->Bx_m->data_[0]);
-        double* Bym = &(patches_[ipatch]->EMfields->By_m->data_[0]);
-        double* Bzm = &(patches_[ipatch]->EMfields->Bz_m->data_[0]);
+        const double *const Jx  = &( patches_[ipatch]->EMfields->Jx_->data_[0] );
+        const double *const Jy  = &( patches_[ipatch]->EMfields->Jy_->data_[0] );
+        const double *const Jz  = &( patches_[ipatch]->EMfields->Jz_->data_[0] );
+        const double *const Rho = &( patches_[ipatch]->EMfields->rho_->data_[0] );
 
-        #pragma acc enter data copyin(Jx[0:sizeofJx],Jy[0:sizeofJy],Jz[0:sizeofJz],Rho[0:sizeofRho])
-        #pragma acc enter data copyin(Ex[0:sizeofJx],Ey[0:sizeofJy],Ez[0:sizeofJz])
-        #pragma acc enter data copyin(Bxm[0:sizeofBx],Bym[0:sizeofBy],Bzm[0:sizeofBz])
+        const double *const Ex = &( patches_[ipatch]->EMfields->Ex_->data_[0] );
+        const double *const Ey = &( patches_[ipatch]->EMfields->Ey_->data_[0] );
+        const double *const Ez = &( patches_[ipatch]->EMfields->Ez_->data_[0] );
 
-        double* Bx = &(patches_[ipatch]->EMfields->Bx_->data_[0]);
-        double* By = &(patches_[ipatch]->EMfields->By_->data_[0]);
-        double* Bz = &(patches_[ipatch]->EMfields->Bz_->data_[0]);
+        const double *const Bmx = &( patches_[ipatch]->EMfields->Bx_m->data_[0] );
+        const double *const Bmy = &( patches_[ipatch]->EMfields->By_m->data_[0] );
+        const double *const Bmz = &( patches_[ipatch]->EMfields->Bz_m->data_[0] );
 
-        #pragma acc enter data copyin(Bx[0:sizeofBx],By[0:sizeofBy],Bz[0:sizeofBz])
+        const double *const Bx = &( patches_[ipatch]->EMfields->Bx_->data_[0] );
+        const double *const By = &( patches_[ipatch]->EMfields->By_->data_[0] );
+        const double *const Bz = &( patches_[ipatch]->EMfields->Bz_->data_[0] );
 
-        if ( params.hasNielRadiation ) {
-        
-            double * table = &(radiation_tables_->niel_.table_[0]);
-            #pragma acc enter data copyin(table[0:size_of_Table_Niel])
-        
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Jx, sizeofJx );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Jy, sizeofJy );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Jz, sizeofJz );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Rho, sizeofRho );
+
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Ex, sizeofJx );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Ey, sizeofJy );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Ez, sizeofJz );
+
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Bmx, sizeofBx );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Bmy, sizeofBy );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Bmz, sizeofBz );
+
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Bx, sizeofBx );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( By, sizeofBy );
+        smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( Bz, sizeofBz );
+
+        if( params.hasNielRadiation ) {
+
+            const double *const table = &( radiation_tables_->niel_.table_[0] );
+            smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( table, size_of_table_niel );
+
         }
-        if (params.hasMCRadiation ) {
-            
-            double * table_integfochi = &(radiation_tables_->integfochi_.table_[0]);
-            #pragma acc enter data copyin(table_integfochi[0:size_of_Table_integfochi])
 
-            double * table_min_photon_chi = &(radiation_tables_->xi_.min_photon_chi_table_[0]);
-            #pragma acc enter data copyin(table_min_photon_chi[0:size_of_Table_min_photon_chi])
+        if( params.hasMCRadiation ) {
 
-            double * table_xi = &(radiation_tables_->xi_.table_[0]);
-            #pragma acc enter data copyin(table_xi[0:size_of_Table_xi])
-        
+            const double *const table_integfochi     = &( radiation_tables_->integfochi_.table_[0] );
+            const double *const table_min_photon_chi = &( radiation_tables_->xi_.min_photon_chi_table_[0] );
+            const double *const table_xi             = &( radiation_tables_->xi_.table_[0] );
+
+            smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( table_integfochi, size_of_table_integfochi );
+            smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( table_min_photon_chi, size_of_table_min_photon_chi );
+            smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( table_xi, size_of_table_xi );
+
         }
-
     }
 #endif
 }
@@ -4499,49 +4509,64 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
 //! This function updates the data on the host from the data located on the device
 void VectorPatch::syncFieldFromHostToDevice()
 {
-    #ifdef _GPU
-        int npatches = this->size();
-        int nspecies =  patches_[0]->vecSpecies.size();
+#if defined( _GPU ) // || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // TODO(Etienne M): Check if we can get better throughput by using async calls
 
-        int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
-        int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
-        int sizeofEz = patches_[0]->EMfields->Ez_->globalDims_;
-        int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
-        int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
-        int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
+    const int npatches = this->size();
 
-        for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+    const int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
+    const int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
+    const int sizeofEz = patches_[0]->EMfields->Ez_->globalDims_;
 
-            double* Ex = &(patches_[ipatch]->EMfields->Ex_->data_[0]);
-            double* Ey = &(patches_[ipatch]->EMfields->Ey_->data_[0]);
-            double* Ez = &(patches_[ipatch]->EMfields->Ez_->data_[0]);
-            double* Bx = &(patches_[ipatch]->EMfields->Bx_->data_[0]);
-            double* By = &(patches_[ipatch]->EMfields->By_->data_[0]);
-            double* Bz = &(patches_[ipatch]->EMfields->Bz_->data_[0]);
-            double* Bmx = &(patches_[ipatch]->EMfields->Bx_m->data_[0]);
-            double* Bmy = &(patches_[ipatch]->EMfields->By_m->data_[0]);
-            double* Bmz = &(patches_[ipatch]->EMfields->Bz_m->data_[0]);
+    const int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
+    const int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
+    const int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
 
-            #pragma acc update device(Ex[0:sizeofEx],Ey[0:sizeofEy],Ez[0:sizeofEz],\
-                                      Bmx[0:sizeofBx],Bmy[0:sizeofBy],Bmz[0:sizeofBz], \
-                                      Bx[0:sizeofBx],By[0:sizeofBy],Bz[0:sizeofBz],)
-        }
-    #endif
+    for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
+
+        const double *const Ex  = &( patches_[ipatch]->EMfields->Ex_->data_[0] );
+        const double *const Ey  = &( patches_[ipatch]->EMfields->Ey_->data_[0] );
+        const double *const Ez  = &( patches_[ipatch]->EMfields->Ez_->data_[0] );
+
+        const double *const Bmx = &( patches_[ipatch]->EMfields->Bx_m->data_[0] );
+        const double *const Bmy = &( patches_[ipatch]->EMfields->By_m->data_[0] );
+        const double *const Bmz = &( patches_[ipatch]->EMfields->Bz_m->data_[0] );
+
+        const double *const Bx = &( patches_[ipatch]->EMfields->Bx_->data_[0] );
+        const double *const By = &( patches_[ipatch]->EMfields->By_->data_[0] );
+        const double *const Bz = &( patches_[ipatch]->EMfields->Bz_->data_[0] );
+
+        smilei::tools::HostDeviceMemoryManagment::CopyHostToDevice( Ex, sizeofEx );
+        smilei::tools::HostDeviceMemoryManagment::CopyHostToDevice( Ey, sizeofEy );
+        smilei::tools::HostDeviceMemoryManagment::CopyHostToDevice( Ez, sizeofEz );
+    
+        smilei::tools::HostDeviceMemoryManagment::CopyHostToDevice( Bmx, sizeofBx );
+        smilei::tools::HostDeviceMemoryManagment::CopyHostToDevice( Bmy, sizeofBy );
+        smilei::tools::HostDeviceMemoryManagment::CopyHostToDevice( Bmz, sizeofBz );
+    
+        smilei::tools::HostDeviceMemoryManagment::CopyHostToDevice( Bx, sizeofBx );
+        smilei::tools::HostDeviceMemoryManagment::CopyHostToDevice( By, sizeofBy );
+        smilei::tools::HostDeviceMemoryManagment::CopyHostToDevice( Bz, sizeofBz );
+
+    }
+#endif
 }
 
 //! Sync all data (fields and particles) from device to host
 void VectorPatch::syncDataFromDeviceToHost()
 {
-#ifdef _GPU
-    int npatches = this->size();
-    int nspecies =  patches_[0]->vecSpecies.size();
+#if defined( _GPU ) // || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // TODO(Etienne M): Check if we can get better throughput by using async calls
 
-    int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
-    int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
-    int sizeofEz = patches_[0]->EMfields->Ez_->globalDims_;
-    int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
-    int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
-    int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
+    const int npatches = this->size();
+
+    const int sizeofEx = patches_[0]->EMfields->Ex_->globalDims_;
+    const int sizeofEy = patches_[0]->EMfields->Ey_->globalDims_;
+    const int sizeofEz = patches_[0]->EMfields->Ez_->globalDims_;
+
+    const int sizeofBx = patches_[0]->EMfields->Bx_m->globalDims_;
+    const int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
+    const int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
 
     for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
@@ -4549,20 +4574,21 @@ void VectorPatch::syncDataFromDeviceToHost()
             spec->particles->syncCPU();
         }
 
-        double* Ex = &(patches_[ipatch]->EMfields->Ex_->data_[0]);
-        double* Ey = &(patches_[ipatch]->EMfields->Ey_->data_[0]);
-        double* Ez = &(patches_[ipatch]->EMfields->Ez_->data_[0]);
-        double* Bx = &(patches_[ipatch]->EMfields->Bx_->data_[0]);
-        double* By = &(patches_[ipatch]->EMfields->By_->data_[0]);
-        double* Bz = &(patches_[ipatch]->EMfields->Bz_->data_[0]);
-        double* Bmx = &(patches_[ipatch]->EMfields->Bx_m->data_[0]);
-        double* Bmy = &(patches_[ipatch]->EMfields->By_m->data_[0]);
-        double* Bmz = &(patches_[ipatch]->EMfields->Bz_m->data_[0]);
-        double* Jx = &(patches_[ipatch]->EMfields->Jx_->data_[0]);
-        double* Jy = &(patches_[ipatch]->EMfields->Jy_->data_[0]);
-        double* Jz = &(patches_[ipatch]->EMfields->Jz_->data_[0]);
+        const double *const Ex = &( patches_[ipatch]->EMfields->Ex_->data_[0] );
+        const double *const Ey = &( patches_[ipatch]->EMfields->Ey_->data_[0] );
+        const double *const Ez = &( patches_[ipatch]->EMfields->Ez_->data_[0] );
 
-        #pragma acc update host(Ex[0:sizeofEx],Ey[0:sizeofEy],Ez[0:sizeofEz],Bmx[0:sizeofBx],Bmy[0:sizeofBy],Bmz[0:sizeofBz])
+        const double *const Bmx = &( patches_[ipatch]->EMfields->Bx_m->data_[0] );
+        const double *const Bmy = &( patches_[ipatch]->EMfields->By_m->data_[0] );
+        const double *const Bmz = &( patches_[ipatch]->EMfields->Bz_m->data_[0] );
+
+        smilei::tools::HostDeviceMemoryManagment::CopyDeviceToHost( Ex, sizeofEx );
+        smilei::tools::HostDeviceMemoryManagment::CopyDeviceToHost( Ey, sizeofEy );
+        smilei::tools::HostDeviceMemoryManagment::CopyDeviceToHost( Ez, sizeofEz );
+
+        smilei::tools::HostDeviceMemoryManagment::CopyDeviceToHost( Bmx, sizeofBx );
+        smilei::tools::HostDeviceMemoryManagment::CopyDeviceToHost( Bmy, sizeofBy );
+        smilei::tools::HostDeviceMemoryManagment::CopyDeviceToHost( Bmz, sizeofBz );
     }
 #endif
 }
