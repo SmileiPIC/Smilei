@@ -165,30 +165,28 @@ void Patch2D::exchangeField_movewin( Field* field, int clrw )
     bufsize = clrw*n_elem[1]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
     b=(void *)malloc(bufsize);
     MPI_Buffer_attach( b, bufsize);
-    iDim = 0; // We exchange only in the X direction for movewin.
-    iNeighbor = 0; // We send only towards the West and receive from the East.
 
     MPI_Status rstat    ;
     MPI_Request rrequest;
 
-    if (MPI_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-        ix = 2*oversize[iDim] + 1 + isDual[iDim];
+    if (MPI_neighbor_[0][iNeighbor]!=MPI_PROC_NULL) {
+        ix = 2*oversize[0] + 1 + isDual[0];
         iy =  0 ;
-        MPI_Bsend( &(f2D->data_2D[ix][iy]), clrw*n_elem[1], MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
+        MPI_Bsend( &(f2D->data_2D[ix][iy]), clrw*n_elem[1], MPI_DOUBLE, MPI_neighbor_[0][0], 0, MPI_COMM_WORLD);
     } // END of Send
 
     //Once the message is in the buffer we can safely shift the field in memory.
     field->shift_x(clrw);
     // and then receive the complementary field from the East.
 
-    if (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-        ix = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+    if (MPI_neighbor_[0][1]!=MPI_PROC_NULL) {
+        ix = n_elem[0] - clrw  ;
         iy =  0 ;
-        MPI_Irecv( &(f2D->data_2D[ix][iy]), clrw*n_elem[1], MPI_DOUBLE, MPI_neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest);
+        MPI_Irecv( &(f2D->data_2D[ix][iy]), clrw*n_elem[1], MPI_DOUBLE, MPI_neighbor_[0][1], 0, MPI_COMM_WORLD, &rrequest);
     } // END of Recv
 
 
-    if (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[0][1]!=MPI_PROC_NULL) {
         MPI_Wait( &rrequest, &rstat);
     }
     MPI_Buffer_detach( &b, &bufsize);
