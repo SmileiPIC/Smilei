@@ -123,7 +123,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     double *const __restrict__ DSy  = host_device_DSy.data();
     double *const __restrict__ DSz  = host_device_DSz.data();
     double *const __restrict__ sumX = host_device_sumX.data();
-// #endif
+#endif
 
     for (int ipack=0 ; ipack<npack ; ipack++) {
         const int istart_pack = istart + ipack * packsize;
