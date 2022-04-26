@@ -92,7 +92,7 @@ void internal_sup_AM( Species *species, int imin, int imax, int direction, doubl
 }
 
 void reflect_particle_inf( Species *species, int imin, int imax, int direction, double limit_inf, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
-{ERROR("Not implemented");
+{
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);
@@ -109,7 +109,7 @@ void reflect_particle_inf( Species *species, int imin, int imax, int direction, 
 }
 
 void reflect_particle_sup( Species *species, int imin, int imax, int direction, double limit_sup, double dt, std::vector<double> &invgf, Random * rand, double &energy_change )
-{ERROR("Not implemented");
+{
     energy_change = 0.;     // no energy loss during reflection
     double* position = species->particles->getPtrPosition(direction);
     double* momentum = species->particles->getPtrMomentum(direction);

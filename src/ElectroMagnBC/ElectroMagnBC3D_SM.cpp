@@ -200,7 +200,6 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             #pragma acc enter data copyin(B_ext2[0:B_ext_size2])
         }
     #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-        ERROR("Not implemented yet");
     //     // TODO(Etienne M): Do we realy need to copy, couldnt we just alloc and init on GPU ?
     //     // In anycase, the expensive copy will be done only once
     //     smilei::tools::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( B_ext0, B_ext_size0 );

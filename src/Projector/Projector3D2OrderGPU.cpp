@@ -90,7 +90,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     double *const __restrict__ DSz  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
     double *const __restrict__ sumX = static_cast< double * >(::acc_malloc( 5 * packsize * sizeof( double ) ));
 #else // #elif defined(SMILEI_ACCELERATOR_GPU_OMP) // Works for both device and host
-    static constexpr bool kAutoFree     = true;
+    static constexpr bool kAutoDeviceFree = true;
     const std::size_t     kTmpArraySize = 5 * packsize;
 
     // TODO(Etienne M): using more buffers (not a big deal, they are smalls), we could run multiple kernel at
@@ -100,13 +100,13 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     //      |-> Jy^(p,d,p) : sumX -> Jy
     //      |-> Jz^(p,p,d) : sumX -> Jz
 
-    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_Sx0{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_Sy0{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_Sz0{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_DSx{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_DSy{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_DSz{ kTmpArraySize };
-    smilei::tools::NonInitializingVector<double, kAutoFree> host_device_sumX{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoDeviceFree> host_device_Sx0{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoDeviceFree> host_device_Sy0{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoDeviceFree> host_device_Sz0{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoDeviceFree> host_device_DSx{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoDeviceFree> host_device_DSy{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoDeviceFree> host_device_DSz{ kTmpArraySize };
+    smilei::tools::NonInitializingVector<double, kAutoDeviceFree> host_device_sumX{ kTmpArraySize };
 
     smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( host_device_Sx0 );
     smilei::tools::HostDeviceMemoryManagment::DeviceAllocate( host_device_Sy0 );

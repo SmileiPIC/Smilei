@@ -149,6 +149,10 @@ namespace smilei {
             template <typename Container>
             static void DeviceFree( Container& a_vector );
 
+            /// Try not to use this function if you want to stay fully independent 
+            /// of the use of OpenACC/OpenMP. Or wrap it in conditional compilation
+            /// preprocessor macros (#if defined() ... #endif).
+            ///
             template<typename T>
             static T* GetDevicePointer(T* a_pointer);
 
