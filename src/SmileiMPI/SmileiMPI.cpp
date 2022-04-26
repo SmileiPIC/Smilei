@@ -231,7 +231,7 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
 
     unsigned int tot_species_number = PyTools::nComponents( "Species" );
     unsigned int Npatches           = params.tot_number_of_patches;
-    unsigned int Nbins              = params.n_space[0]/params.clrw;
+    unsigned int Nbins              = params.n_space[0]/params.cluster_width_;
     // estimate of the number of tasks
     unsigned int Ntasks             = Npatches*Nbins*tot_species_number;
     if (!params.Laser_Envelope_model){
