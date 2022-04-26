@@ -1473,7 +1473,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
     }
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
     gpu_computing = vecPatches.B_localx.size() > 0 &&
-                    smilei::tools::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
+                    smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
 #endif
 
     int nFieldLocalx = vecPatches.B_localx.size()/2;
@@ -1506,27 +1506,30 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 acc_memcpy_device( acc_deviceptr( pt2 ), acc_deviceptr( pt1 ), oversize*ny_*nz_*sizeof( double ) );
                 acc_memcpy_device( acc_deviceptr( pt1+gsp*ny_*nz_ ), acc_deviceptr( pt2+gsp*ny_*nz_ ), oversize*ny_*nz_*sizeof( double ) );
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-                // std::cout << "IsHostPointerMappedOnDevice(pt2) "
-                //           << smilei::tools::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice(pt2) << "\n";
+                if( gpu_computing ) {
+                    ERROR( "" );
+                }
 
-                #pragma omp target data use_device_ptr(pt2, pt1)
-                {
-                    const int device_num = ::omp_get_default_device();
+                if( gpu_computing ) {
+    #pragma omp target data use_device_ptr( pt2, pt1 )
+                    {
+                        const int device_num = ::omp_get_default_device();
 
-                    ::omp_target_memcpy( pt2,
-                                         pt1,
-                                         oversize * ny_ * nz_ * sizeof( double ),
-                                         0,
-                                         0,
-                                         device_num,
-                                         device_num );
-                    ::omp_target_memcpy( pt1,
-                                         pt2,
-                                         oversize * ny_ * nz_ * sizeof( double ),
-                                         gsp * ny_ * nz_,
-                                         gsp * ny_ * nz_,
-                                         device_num,
-                                         device_num );
+                        ::omp_target_memcpy( pt2,
+                                             pt1,
+                                             oversize * ny_ * nz_ * sizeof( double ),
+                                             0,
+                                             0,
+                                             device_num,
+                                             device_num );
+                        ::omp_target_memcpy( pt1,
+                                             pt2,
+                                             oversize * ny_ * nz_ * sizeof( double ),
+                                             gsp * ny_ * nz_,
+                                             gsp * ny_ * nz_,
+                                             device_num,
+                                             device_num );
+                    }
                 }
 #endif
 

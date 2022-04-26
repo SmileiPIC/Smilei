@@ -1047,8 +1047,8 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
         }
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
         // TODO(Etienne M): Find a way to get params.gpu_computing that would be arguably better
-        gpu_computing = smilei::tools::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx3D );
-
+        gpu_computing = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx3D );
+if(gpu_computing) {ERROR("");}
         if( gpu_computing ) {
     #pragma omp target data use_device_ptr( Bx3D, By3D, Bz3D, Bx3D_m, By3D_m, Bz3D_m )
             {
