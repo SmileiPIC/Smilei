@@ -1033,6 +1033,8 @@ void Species::dynamicsTasks( double time_dual, unsigned int ispec,
                     #  ifdef _PARTEVENTTRACING
                     if(diag_TaskTracing) smpi->trace_event(omp_get_thread_num(),(MPI_Wtime()-smpi->reference_time),1,7);
                     #  endif
+
+                    #pragma omp taskwait
                 }// end if Multiphoton_Breit_Wheeler_process
 
                 for( unsigned int ibin = 0 ; ibin < Nbins ; ibin++ ) {
