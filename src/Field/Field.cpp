@@ -16,8 +16,6 @@ void Field::put_to( double val )
         #pragma acc  parallel present(hostptr[0:globalDims_]) if (dataptr!=NULL)
         #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    std::cout << "IsHostPointerMappedOnDevice( hostptr ) "
-              << smilei::tools::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( hostptr ) << "\n";
     #pragma omp target if( smilei::tools::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( hostptr ) ) \
         defaultmap( none )                                                                                    \
             map( to                                                                                           \
