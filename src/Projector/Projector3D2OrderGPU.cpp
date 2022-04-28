@@ -91,7 +91,8 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     double *const __restrict__ sumX = static_cast< double * >(::acc_malloc( 5 * packsize * sizeof( double ) ));
 
     // If HostDeviceMemoryManagment ends up being used for the openacc part too,
-    // be sure to remove the "deviceptr()" clauses in the openacc pragmas.
+    // be sure to remove the "deviceptr()" clauses in the openacc pragmas and replace them 
+    // with present clauses.
 #else // #elif defined(SMILEI_ACCELERATOR_GPU_OMP) // Works for both device and host
     static constexpr bool kAutoDeviceFree = true;
     const std::size_t     kTmpArraySize = 5 * packsize;
