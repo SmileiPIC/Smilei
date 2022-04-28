@@ -81,15 +81,15 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     const int packsize = nparts;
     const int npack    = ( ( iend - istart ) + ( packsize - 1 ) ) / packsize; // divide + ceil npack.
 
-#if defined(_GPU)
-    double *const __restrict__ Sx0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ Sy0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ Sz0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ DSx  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ DSy  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ DSz  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ sumX = static_cast< double * >(::acc_malloc( 5 * packsize * sizeof( double ) ));
-#else // #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
+// #if defined(_GPU)
+//     double *const __restrict__ Sx0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ Sy0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ Sz0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ DSx  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ DSy  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ DSz  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ sumX = static_cast< double * >(::acc_malloc( 5 * packsize * sizeof( double ) ));
+// #else // #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
     static constexpr bool kAutoFree     = true;
     const std::size_t     kTmpArraySize = 5 * packsize;
 
@@ -123,7 +123,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     double *const __restrict__ DSy  = host_device_DSy.data();
     double *const __restrict__ DSz  = host_device_DSz.data();
     double *const __restrict__ sumX = host_device_sumX.data();
-#endif
+// #endif
 
     for (int ipack=0 ; ipack<npack ; ipack++) {
         const int istart_pack = istart + ipack * packsize;
