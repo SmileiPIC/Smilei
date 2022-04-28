@@ -1,5 +1,5 @@
 #
-# Machine file for Irene Joliot-Curie A64FX using the ARM compiler
+# Machine file for the ThunderX2 processor on Inti using the ARM compiler
 # __________________________________________________________
 #
 # Load the correct modules:

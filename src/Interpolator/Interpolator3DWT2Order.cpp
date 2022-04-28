@@ -136,7 +136,7 @@ void Interpolator3DWT2Order::oneField( Field **field, Particles &particles, int 
     }
 }
 
-void Interpolator3DWT2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3DWT2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
 {
     double *ELoc = &( smpi->dynamics_Epart[ithread][0] );
     double *BLoc = &( smpi->dynamics_Bpart[ithread][0] );

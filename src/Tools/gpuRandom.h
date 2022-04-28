@@ -35,6 +35,16 @@ namespace smilei {
 #endif
             };
                 
+            // Initialization
+            template <typename T>
+            static inline void uniform (T * state) {
+#if defined(_GPU)
+                curand_uniform(state); //Cuda generator
+#elif defined(SMILEI_ACCELERATOR_GPU_OMP)
+                hiprand_uniform(state); //Cuda generator initialization 
+#endif
+            };
+                
         }; // end Random class definition
     
     } // end namespace gpu

@@ -131,7 +131,7 @@ void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *i
     }
 }
 
-void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
 {
     double *const __restrict__ ELoc = &( smpi->dynamics_Epart[ithread][0] );
     double *const __restrict__ BLoc = &( smpi->dynamics_Bpart[ithread][0] );

@@ -71,7 +71,7 @@ private:
     static std::vector<std::vector<std::vector<double> > > DB_lostEnergy;
     
     //! True if first group of species is the electron
-    bool electronFirst;
+    // bool electronFirst;
     
     //! Current ionization rate array (one cell per number of ionization events)
     std::vector<double> rate;

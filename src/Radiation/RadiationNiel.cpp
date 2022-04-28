@@ -216,7 +216,7 @@ void RadiationNiel::operator()(
                 smilei::gpu::Random::init(seed_curand, seq, offset, &rand.state); //Cuda generator
                 //hiprand_init(seed_curand, seq, offset, &state); //Cuda generator initialization     
     
-                random_numbers[ipart - istart] = 2*curand_uniform(&rand.state) - 1; //Generating number
+                random_numbers[ipart - istart] = 2*smilei::gpu::Random::uniform(&rand.state) - 1; //Generating number
                 //random_numbers[ipart - istart] = 2*hiprand_uniform(&state) - 1; //Generating number
 
                 temp = -std::log( ( 1.0-random_numbers[ipart - istart] )*( 1.0+random_numbers[ipart - istart] ) );
