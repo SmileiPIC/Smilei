@@ -36,7 +36,7 @@ public:
     void oneField( Field **field, Particles &particles, int *istart, int *iend, double *FieldLoc, double *l1=NULL, double *l2=NULL, double *l3=NULL ) override ;
 
     //! Computation of a field from provided coefficients
-    inline double __attribute__((always_inline)) compute( double *coeffx, double *coeffy, double *coeffz, Field3D *f, int idx, int idy, int idz )
+    inline double __attribute__((always_inline)) compute( double *coeffx, double *coeffy, double *coeffz, const Field3D *const f, int idx, int idy, int idz )
     {
         double interp_res( 0. );
         //unroll ?
@@ -51,7 +51,7 @@ public:
     };
 
     //! Computation of a field from provided coefficients
-    inline double __attribute__((always_inline)) compute( double *coeffx, double *coeffy, double *coeffz, double *f, int idx, int idy, int idz, int nx, int ny, int nz )
+    inline double __attribute__((always_inline)) compute( const double *coeffx, const double *coeffy, const double *coeffz, const double *const f, int idx, int idy, int idz, int nx, int ny, int nz )
     {
         double interp_res( 0. );
         //unroll ?

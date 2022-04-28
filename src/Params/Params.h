@@ -12,7 +12,6 @@
 #undef _XOPEN_SOURCE
 
 #include "Timer.h"
-#include "codeConstants.h"
 
 #include <vector>
 #include <string>
