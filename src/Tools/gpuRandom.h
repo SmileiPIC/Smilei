@@ -37,11 +37,11 @@ namespace smilei {
                 
             // Initialization
             template <typename T>
-            static inline void uniform (T * state) {
+            static inline double uniform (T * state) {
 #if defined(_GPU)
-                curand_uniform(state); //Cuda generator
+                return curand_uniform(state); //Cuda generator
 #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
-                hiprand_uniform(state); //Cuda generator initialization 
+                return hiprand_uniform(state); //Cuda generator initialization 
 #endif
             };
                 
