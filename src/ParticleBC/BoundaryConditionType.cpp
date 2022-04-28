@@ -22,13 +22,22 @@ void internal_inf( Species *species, int imin, int imax, int direction, double l
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // #pragma omp target defaultmap( none )                      \
+    //     map( to                                                \
+    //          : imin, imax, limit_inf )                         \
+    //         is_device_ptr( /* to: */                           \
+    //                        position /* [imin:imax - imin] */ ) \
+    //             is_device_ptr( /* tofrom: */                   \
+    //                            cell_keys /* [imin:imax - imin] */ )
+    // #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    // #pragma omp distribute parallel for
     #pragma omp target defaultmap( none )    \
         map( to                              \
              : imin, imax, limit_inf,        \
                position [imin:imax - imin] ) \
             map( tofrom                      \
                  : cell_keys [imin:imax - imin] )
-    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {
@@ -47,13 +56,22 @@ void internal_sup( Species *species, int imin, int imax, int direction, double l
     #pragma acc parallel deviceptr(position,cell_keys)
     #pragma acc loop gang worker vector
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // #pragma omp target defaultmap( none )                      \
+    //     map( to                                                \
+    //          : imin, imax, limit_sup )                         \
+    //         is_device_ptr( /* to: */                           \
+    //                        position /* [imin:imax - imin] */ ) \
+    //             is_device_ptr( /* tofrom: */                   \
+    //                            cell_keys /* [imin:imax - imin] */ )
+    // #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    // #pragma omp distribute parallel for
     #pragma omp target defaultmap( none )    \
         map( to                              \
              : imin, imax, limit_sup,        \
                position [imin:imax - imin] ) \
             map( tofrom                      \
                  : cell_keys [imin:imax - imin] )
-    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #endif
     for (int ipart=imin ; ipart<imax ; ipart++ ) {

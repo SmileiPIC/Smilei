@@ -4417,10 +4417,11 @@ void VectorPatch::initNewEnvelope( Params &params )
     }
 } // END initNewEnvelope
 
-void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables * radiation_tables_ )
+void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables_ )
 {
-#if defined( _GPU ) // || defined( SMILEI_ACCELERATOR_GPU_OMP )
-    // TODO(Etienne M): Check if we can get better throughput by using async calls
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    // TODO(Etienne M): Maybe we could just alloc the memory here and initialize 
+    // it on the GPU instead of CPU initializing then copying to the GPU
 
     const int npatches = this->size();
 
@@ -4466,28 +4467,27 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
         const double *const By = &( patches_[ipatch]->EMfields->By_->data_[0] );
         const double *const Bz = &( patches_[ipatch]->EMfields->Bz_->data_[0] );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Jx, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Jy, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Jz, sizeofJz );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Rho, sizeofRho );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jx, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jy, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Jz, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Rho, sizeofRho );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Ex, sizeofJx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Ey, sizeofJy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Ez, sizeofJz );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ex, sizeofJx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ey, sizeofJy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Ez, sizeofJz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bmx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bmy, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bmz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmy, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bmz, sizeofBz );
 
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bx, sizeofBx );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( By, sizeofBy );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( Bz, sizeofBz );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bx, sizeofBx );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
 
         if( params.hasNielRadiation ) {
 
             const double *const table = &( radiation_tables_->niel_.table_[0] );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( table, size_of_table_niel );
-
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table, size_of_table_niel );
         }
 
         if( params.hasMCRadiation ) {
@@ -4496,10 +4496,9 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
             const double *const table_min_photon_chi = &( radiation_tables_->xi_.min_photon_chi_table_[0] );
             const double *const table_xi             = &( radiation_tables_->xi_.table_[0] );
 
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( table_integfochi, size_of_table_integfochi );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( table_min_photon_chi, size_of_table_min_photon_chi );
-            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( table_xi, size_of_table_xi );
-
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_integfochi, size_of_table_integfochi );
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_min_photon_chi, size_of_table_min_photon_chi );
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_xi, size_of_table_xi );
         }
     }
 #endif
@@ -4509,7 +4508,7 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
 //! This function updates the data on the host from the data located on the device
 void VectorPatch::syncFieldFromHostToDevice()
 {
-#if defined( _GPU ) // || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Check if we can get better throughput by using async calls
 
     const int npatches = this->size();
@@ -4524,9 +4523,9 @@ void VectorPatch::syncFieldFromHostToDevice()
 
     for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
 
-        const double *const Ex  = &( patches_[ipatch]->EMfields->Ex_->data_[0] );
-        const double *const Ey  = &( patches_[ipatch]->EMfields->Ey_->data_[0] );
-        const double *const Ez  = &( patches_[ipatch]->EMfields->Ez_->data_[0] );
+        const double *const Ex = &( patches_[ipatch]->EMfields->Ex_->data_[0] );
+        const double *const Ey = &( patches_[ipatch]->EMfields->Ey_->data_[0] );
+        const double *const Ez = &( patches_[ipatch]->EMfields->Ez_->data_[0] );
 
         const double *const Bmx = &( patches_[ipatch]->EMfields->Bx_m->data_[0] );
         const double *const Bmy = &( patches_[ipatch]->EMfields->By_m->data_[0] );
@@ -4539,15 +4538,14 @@ void VectorPatch::syncFieldFromHostToDevice()
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ex, sizeofEx );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ey, sizeofEy );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Ez, sizeofEz );
-    
+
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmx, sizeofBx );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmy, sizeofBy );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bmz, sizeofBz );
-    
+
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bx, sizeofBx );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( By, sizeofBy );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyHostToDevice( Bz, sizeofBz );
-
     }
 #endif
 }
@@ -4555,7 +4553,7 @@ void VectorPatch::syncFieldFromHostToDevice()
 //! Sync all data (fields and particles) from device to host
 void VectorPatch::syncDataFromDeviceToHost()
 {
-#if defined( _GPU ) // || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Check if we can get better throughput by using async calls
 
     const int npatches = this->size();

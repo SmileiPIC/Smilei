@@ -363,14 +363,16 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         //Still needed for ionization
         vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
-#if defined( _GPU ) // || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        const int array_size = particles->last_index.back() * 3;
-        // #pragma acc data create(E[0:3*np],B[0:3*np],gf[0:np],iold[0:3*np],deltaold[0:3*np])
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_Epart[0][0] ), array_size );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_Bpart[0][0] ), array_size );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_invgf[0][0] ), array_size );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_iold[0][0] ), array_size );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_deltaold[0][0] ), array_size );
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+        const int particule_count = particles->last_index.back();
+
+        // smpi->dynamics_*'s pointer stability is guaranteed during the loop and may change only after dynamics_resize()
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_Epart[0][0] ), particule_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_Bpart[0][0] ), particule_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_invgf[0][0] ), particule_count * 1 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_iold[0][0] ), particule_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocate( &( smpi->dynamics_deltaold[0][0] ), particule_count * nDim_field );
+
         {
 
 #endif
@@ -572,14 +574,14 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 //            }
 //        }
 
-#if defined( _GPU ) // || defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         }
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_Epart[0][0] ), array_size );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_Bpart[0][0] ), array_size );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_invgf[0][0] ), array_size );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_iold[0][0] ), array_size );
-        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_deltaold[0][0] ), array_size );
-        // #pragma acc exit data delete(E[0:3*np],B[0:3*np],gf[0:np],iold[0:3*np],deltaold[0:3*np])
+
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_Epart[0][0] ), particule_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_Bpart[0][0] ), particule_count * 3 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_invgf[0][0] ), particule_count * 1 );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_iold[0][0] ), particule_count * nDim_field );
+        smilei::tools::gpu::HostDeviceMemoryManagment::DeviceFree( &( smpi->dynamics_deltaold[0][0] ), particule_count * nDim_field );
 #endif
     } //End if moving or ionized particles
 

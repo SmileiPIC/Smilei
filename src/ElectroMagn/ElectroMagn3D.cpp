@@ -1021,7 +1021,7 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 {
     // Static cast of the fields
     if( !is_spectral ) {
-        // It seems that the interface of ::acc_memcpy_device does not accept ptr to const array !
+        // It seems that the interface of ::acc_memcpy_device does not accept ptr to array of const type !
         /* const */ double *const Bx3D   = &(Bx_->data_[0]);
         /* const */ double *const By3D   = &(By_->data_[0]);
         /* const */ double *const Bz3D   = &(Bz_->data_[0]);
@@ -1048,34 +1048,19 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
         // TODO(Etienne M): Find a way to get params.gpu_computing that would be arguably better
         gpu_computing = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx3D );
-if(gpu_computing) {ERROR("");}
-        if( gpu_computing ) {
-    #pragma omp target data use_device_ptr( Bx3D, By3D, Bz3D, Bx3D_m, By3D_m, Bz3D_m )
-            {
-                const int device_num = ::omp_get_default_device();
 
-                ::omp_target_memcpy( Bx3D_m,
-                                     Bx3D,
-                                     nx_p * ny_d * nz_d * sizeof( double ),
-                                     0,
-                                     0,
-                                     device_num,
-                                     device_num );
-                ::omp_target_memcpy( By3D_m,
-                                     By3D,
-                                     nx_d * ny_p * nz_d * sizeof( double ),
-                                     0,
-                                     0,
-                                     device_num,
-                                     device_num );
-                ::omp_target_memcpy( Bz3D_m,
-                                     Bz3D,
-                                     nx_d * ny_d * nz_p * sizeof( double ),
-                                     0,
-                                     0,
-                                     device_num,
-                                     device_num );
-            }
+        if( gpu_computing ) {
+            const int device_num = ::omp_get_default_device();
+
+            ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D_m ),
+                                 smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D ),
+                                 nx_p * ny_d * nz_d * sizeof( double ), 0, 0, device_num, device_num );
+            ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By3D_m ),
+                                 smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By3D ),
+                                 nx_d * ny_p * nz_d * sizeof( double ), 0, 0, device_num, device_num );
+            ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D_m ),
+                                 smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D ),
+                                 nx_d * ny_d * nz_p * sizeof( double ), 0, 0, device_num, device_num );
         }
 #endif
         if (!gpu_computing) {

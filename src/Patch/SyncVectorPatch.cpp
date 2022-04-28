@@ -1507,29 +1507,18 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 acc_memcpy_device( acc_deviceptr( pt1+gsp*ny_*nz_ ), acc_deviceptr( pt2+gsp*ny_*nz_ ), oversize*ny_*nz_*sizeof( double ) );
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
                 if( gpu_computing ) {
-                    ERROR( "" );
-                }
+                    const int device_num = ::omp_get_default_device();
 
-                if( gpu_computing ) {
-    #pragma omp target data use_device_ptr( pt2, pt1 )
-                    {
-                        const int device_num = ::omp_get_default_device();
-
-                        ::omp_target_memcpy( pt2,
-                                             pt1,
-                                             oversize * ny_ * nz_ * sizeof( double ),
-                                             0,
-                                             0,
-                                             device_num,
-                                             device_num );
-                        ::omp_target_memcpy( pt1,
-                                             pt2,
-                                             oversize * ny_ * nz_ * sizeof( double ),
-                                             gsp * ny_ * nz_,
-                                             gsp * ny_ * nz_,
-                                             device_num,
-                                             device_num );
-                    }
+                    ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ),
+                                         smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ),
+                                         oversize * ny_ * nz_ * sizeof( double ),
+                                         0, 0,
+                                         device_num, device_num );
+                    ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ),
+                                         smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ),
+                                         oversize * ny_ * nz_ * sizeof( double ),
+                                         gsp * ny_ * nz_, gsp * ny_ * nz_,
+                                         device_num, device_num );
                 }
 #endif
 
