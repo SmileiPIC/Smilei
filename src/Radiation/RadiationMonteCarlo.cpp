@@ -262,10 +262,10 @@ void RadiationMonteCarlo::operator()(
 			            seed_curand_1 = (int) (ipart+1)*(initial_seed_1+1); //Seed for linear generator
                 	    seed_curand_1 = (a * seed_curand_1 + c) % m; //Linear generator
                		
-			            curand_init(seed_curand_1, seq, offset, &rand_1.state); //Cuda generator initialization
+			            smilei::gpu::Random::init(seed_curand_1, seq, offset, &rand_1.state); //Cuda generator initialization
 			            // hiprand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
                         
-                        random_number = curand_uniform(&rand_1.state); //Generating number
+                        random_number = smilei::gpu::Random::uniform(&rand_1.state); //Generating number
 			            // random_number = hiprand_uniform(&state_1); //Generating number
                         
 			            tau[ipart] = -log( 1.- random_number );
@@ -305,9 +305,9 @@ void RadiationMonteCarlo::operator()(
                         // 
                         // random_number = hiprand_uniform(&state_2); //Generating number
                         
-        	            curand_init(seed_curand_2, seq, offset, &rand_2.state); //Cuda generator initialization
+        	            smilei::gpu::Random::init(seed_curand_2, seq, offset, &rand_2.state); //Cuda generator initialization
 	
-                        random_number = curand_uniform(&rand_2.state); //Generating number
+                        random_number = smilei::gpu::Random::uniform(&rand_2.state); //Generating number
                         
                     #endif
 
