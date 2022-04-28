@@ -169,13 +169,14 @@ void RadiationNiel::operator()(
             Bx[istart:np],By[istart:np],Bz[istart:np],gamma[istart:np], \
             table[0:size_of_table_Niel], niel_computation_method_ ) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi) \
-            private(temp,rad_energy,new_gamma, state, p, seed_curand ) reduction(+:radiated_energy_loc)
+            private(temp,rad_energy,new_gamma, p, seed_curand ) reduction(+:radiated_energy_loc)
         {
             unsigned long long seed; // Parameters for CUDA generator
             unsigned long long seq;
             unsigned long long offset;
             
-            curandState_t state;
+            Smilei::gpu::Random rand;
+            //curandState_t state;
             //hiprandState_t state;
 
             seed = 12345ULL;
@@ -212,10 +213,10 @@ void RadiationNiel::operator()(
 		        seed_curand = (int) (ipart+1)*(initial_seed+1); //Seed for linear generator
 		        seed_curand = (a * seed_curand + c) % m; //Linear generator
     
-                curand_init(seed_curand, seq, offset, &state); //Cuda generator
+                curand_init(seed_curand, seq, offset, &rand.state); //Cuda generator
                 //hiprand_init(seed_curand, seq, offset, &state); //Cuda generator initialization     
     
-                random_numbers[ipart - istart] = 2*curand_uniform(&state) - 1; //Generating number
+                random_numbers[ipart - istart] = 2*curand_uniform(&rand.state) - 1; //Generating number
                 //random_numbers[ipart - istart] = 2*hiprand_uniform(&state) - 1; //Generating number
 
                 temp = -std::log( ( 1.0-random_numbers[ipart - istart] )*( 1.0+random_numbers[ipart - istart] ) );

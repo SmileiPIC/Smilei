@@ -11,18 +11,18 @@ namespace smilei {
             #include <hiprand.hpp>
 #endif
 
-        class NonInitializingVector
+        class Random
         {
             public:
                 
 #if defined(_GPU)
-            curandState_t state
+            curandState_t state;
 #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
-            hiprandState_t state
+            hiprandState_t state;
 #endif
                 
-        }
-
+        }; // end Random class definition
+    
     } // end namespace gpu
 } // end namespace smilei
 
