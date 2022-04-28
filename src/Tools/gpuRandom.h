@@ -27,11 +27,11 @@ namespace smilei {
             static inline void init (unsigned long long seed,
                               unsigned long long seq,
                               unsigned long long offset,
-                              T state) {
+                              T * state) {
 #if defined(_GPU)
-                curand_init(seed, seq, offset, &state); //Cuda generator
+                curand_init(seed, seq, offset, state); //Cuda generator
 #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
-                hiprand_init(seed, seq, offset, &state); //Cuda generator initialization 
+                hiprand_init(seed, seq, offset, state); //Cuda generator initialization 
 #endif
             };
                 

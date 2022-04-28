@@ -213,7 +213,7 @@ void RadiationNiel::operator()(
 		        seed_curand = (int) (ipart+1)*(initial_seed+1); //Seed for linear generator
 		        seed_curand = (a * seed_curand + c) % m; //Linear generator
     
-                curand_init(seed_curand, seq, offset, &rand.state); //Cuda generator
+                smilei::gpu::Random::init(seed_curand, seq, offset, &rand.state); //Cuda generator
                 //hiprand_init(seed_curand, seq, offset, &state); //Cuda generator initialization     
     
                 random_numbers[ipart - istart] = 2*curand_uniform(&rand.state) - 1; //Generating number
