@@ -129,9 +129,11 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         const int istart_pack = istart + ipack * packsize;
         const int iend_pack   = std::min( iend - istart,
                                           istart_pack + packsize );
-        const int current_pack_size   = iend_pack - istart_pack;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+
+        const int current_pack_size   = iend_pack - istart_pack;
+
     #pragma omp target defaultmap( none )                                                 \
         map( to                                                                           \
              : position_x [istart_pack:current_pack_size],                                \
@@ -156,23 +158,28 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts],      \
                                   deltaold [0:3 * nparts],   \
-		                  Sx0[0:4 * packsize + current_pack_size], \
-		                  Sy0[0:4 * packsize + current_pack_size], \
-		                  Sz0[0:4 * packsize + current_pack_size], \
-		                  DSx[0:4 * packsize + current_pack_size], \
-		                  DSy[0:4 * packsize + current_pack_size], \
-		                  DSz[0:4 * packsize + current_pack_size], \
-				  sumX[0:4 * packsize + current_pack_size] \
-		    ) \
+		                  Sx0[0:kTmpArraySize], \
+		                  Sy0[0:kTmpArraySize], \
+		                  Sz0[0:kTmpArraySize], \
+		                  DSx[0:kTmpArraySize], \
+		                  DSy[0:kTmpArraySize], \
+		                  DSz[0:kTmpArraySize]) \
         deviceptr( position_x,                              \
                    position_y,                              \
-                   position_z )
-//                   Sx0,                                     \
-//                   Sy0,                                     \
-//                   Sz0,                                     \ 
-//                   DSx,                                     \
-//                   DSy,                                     \
-//                   DSz \
+                   position_z)
+              
+    // #pragma acc parallel present( iold [0:3 * nparts],      \
+    //                               deltaold [0:3 * nparts] ) \
+    //     deviceptr( position_x,                              \
+    //                position_y,                              \
+    //                position_z,                              \
+    //                Sx0,                                     \
+    //                Sy0,                                     \
+    //                Sz0,                                     \ 
+    //                DSx,                                     \
+    //                DSy,                                     \
+    //                DSz )
+              
     #pragma acc loop gang worker vector
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
@@ -277,9 +284,12 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                  : istart_pack, iend_pack, packsize )
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
+    
+// NVIDIA GPU
 #elif defined( _GPU )
-    #pragma acc parallel present(DSx[0:3 * packsize + current_pack_size], sumX[0:4 * packsize + current_pack_size])   
-    //deviceptr( DSx, sumX )
+    #pragma acc parallel present(DSx[0:kTmpArraySize], sumX[0:kTmpArraySize])       
+    // #pragma acc parallel deviceptr( DSx, sumX )
+    
     #pragma acc loop gang worker vector
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
@@ -309,15 +319,23 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                        inv_cell_volume, dx_ov_dt, nprimz, nprimy /*, one_third */ )
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
+    
+// NVIDIA GPU
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts], \
                                   Jx [0:sizeofEx], \
-				  Sy0[0:4 * packsize + current_pack_size], \
-				  Sz0[0:4 * packsize + current_pack_size], \
-				  DSy[0:4 * packsize + current_pack_size], \
-				  DSz[0:4 * packsize + current_pack_size], \
-				  sumX[packsize:3 * packsize + current_pack_size] )    \
-        deviceptr( charge, weight ) vector_length( 8 )
+				  Sy0[0:kTmpArraySize], \
+				  Sz0[0:kTmpArraySize], \
+				  DSy[0:kTmpArraySize], \
+				  DSz[0:kTmpArraySize], \
+				  sumX[0:kTmpArraySize] \
+              ) deviceptr( charge, weight ) vector_length( 8 )
+         
+    // #pragma acc parallel present( iold [0:3 * nparts], \
+    //                               Jx [0:sizeofEx] )    \
+    //     deviceptr( charge, weight, Sy0,                \
+    //                Sz0, DSy, DSz, sumX ) vector_length( 8 )
+         
     #pragma acc loop gang worker
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
@@ -365,9 +383,12 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined( _GPU )
-    #pragma acc parallel present(DSy[0:3 * packsize + current_pack_size], \
-                                 sumX[0:4 * packsize + current_pack_size])
-    //deviceptr( DSy, sumX )
+    #pragma acc parallel \
+    present(DSy[0:kTmpArraySize], \
+            sumX[0:kTmpArraySize])
+    
+    // #pragma acc parallel deviceptr( DSy, sumX )
+    
     #pragma acc loop gang worker vector
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
@@ -397,15 +418,23 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                        inv_cell_volume, dy_ov_dt, nprimz, nprimy /*, one_third */ )
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
+
+// NVIDIA GPU
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts], \
                                   Jy [0:sizeofEy], \
-				  Sx0[0:4 * packsize + current_pack_size], \
-				  Sz0[0:4 * packsize + current_pack_size], \
-				  DSx[0:4 * packsize + current_pack_size], \
-				  DSz[0:4 * packsize + current_pack_size], \
-				  sumX[packsize:3 * packsize + current_pack_size] )    \
+				  Sx0[0:kTmpArraySize], \
+				  Sz0[0:kTmpArraySize], \
+				  DSx[0:kTmpArraySize], \
+				  DSz[0:kTmpArraySize], \
+				  sumX[0:kTmpArraySize] )    \
         deviceptr( charge, weight ) vector_length( 8 )
+         
+    // #pragma acc parallel present( iold [0:3 * nparts], \
+    //                               Jy [0:sizeofEy] )    \
+    //     deviceptr( charge, weight, Sx0,                \
+    //                Sz0, DSx, DSz, sumX ) vector_length( 8 )
+         
     #pragma acc loop gang worker
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
@@ -452,9 +481,14 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
                  : istart_pack, iend_pack, packsize )
     #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
+    
+// NVIDIA GPUs
 #elif defined( _GPU )
-    #pragma acc parallel present( DSz[0:3 * packsize + current_pack_size], \
-		    sumX[0:4 * packsize + current_pack_size] )
+    #pragma acc parallel present( DSz[0:kTmpArraySize], \
+		    sumX[0:kTmpArraySize] )
+            
+    // #pragma acc parallel deviceptr( DSz, sumX )
+            
     #pragma acc loop gang worker vector
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
@@ -487,12 +521,18 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts], \
                                   Jz [0:sizeofEz], \
-				  Sx0[0:4 * packsize + current_pack_size], \
-				  Sy0[0:4 * packsize + current_pack_size], \
-				  DSx[0:4 * packsize + current_pack_size], \
-				  DSy[0:4 * packsize + current_pack_size], \
-				  sumX[packsize:3 * packsize + current_pack_size] )    \
+				  Sx0[0:kTmpArraySize], \
+				  Sy0[0:kTmpArraySize], \
+				  DSx[0:kTmpArraySize], \
+				  DSy[0:kTmpArraySize], \
+				  sumX[0:kTmpArraySize] )    \
         deviceptr( charge, weight) vector_length( 8 )
+        
+    // #pragma acc parallel present( iold [0:3 * nparts], \
+    //                               Jz [0:sizeofEz] )    \
+    //     deviceptr( charge, weight, Sx0,                \
+    //                Sy0, DSx, DSy, sumX ) vector_length( 8 )
+        
     #pragma acc loop gang worker
 #endif
         for( int ipart=istart_pack ; ipart<iend_pack; ipart++ ) {
@@ -532,7 +572,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
     } // End for ipack
 
-//#if defined( _GPU )
+// #if defined( _GPU )
 //    ::acc_free( Sx0 ); // acc_free
 //    ::acc_free( Sy0 );
 //    ::acc_free( Sz0 );
@@ -540,7 +580,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 //    ::acc_free( DSy );
 //    ::acc_free( DSz );
 //    ::acc_free( sumX );
-//#endif
+// #endif
 
 } // END Project local current densities (Jx, Jy, Jz, sort)
 
