@@ -1,15 +1,15 @@
 #ifndef GPU_RANDOM
 #define GPU_RANDOM
 
-namespace smilei {
-
-    namespace gpu {
-
 #if defined(_GPU)
             #include <openacc_curand.h>
 #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
             #include <hiprand.hpp>
 #endif
+
+namespace smilei {
+
+    namespace gpu {
 
         class Random
         {

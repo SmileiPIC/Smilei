@@ -175,7 +175,7 @@ void RadiationNiel::operator()(
             unsigned long long seq;
             unsigned long long offset;
             
-            Smilei::gpu::Random rand;
+            smilei::gpu::Random rand;
             //curandState_t state;
             //hiprandState_t state;
 
