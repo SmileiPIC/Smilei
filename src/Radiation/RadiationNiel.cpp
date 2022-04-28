@@ -19,12 +19,13 @@
 #if defined(_GPU)
     #define __HIP_PLATFORM_NVCC__
     #define __HIP_PLATFORM_NVIDIA__
+    #include "gpuRandom.h"
 #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
     #define __HIP_PLATFORM_HCC__
     #define __HIP_PLATFORM_AMD__
+    #include "gpuRandom.h"
 #endif
 
-#include "gpu_rand.h"
 
 // -----------------------------------------------------------------------------
 //! Constructor for RadiationNLL
@@ -141,15 +142,18 @@ void RadiationNiel::operator()(
     
     // Management of the data on GPU though this data region
     int np = iend-istart;
-    
-    // Initialize initial seed for linear generator
-    double initial_seed = rand_->uniform();
-    int seed_curand;
 
     // Parameters for linear alleatory number generator
-    const int a = 1664525;
-    const int c = 1013904223;
-    const int m = pow(2,32);
+    #ifdef _GPU
+    
+        // Initialize initial seed for linear generator
+        double initial_seed = rand_->uniform();
+        int seed_curand;
+    
+        const int a = 1664525;
+        const int c = 1013904223;
+        const int m = std::pow(2,32);
+    #endif
     
     // _______________________________________________________________
     // Computation

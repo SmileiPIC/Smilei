@@ -17,14 +17,15 @@
 #if defined(_GPU)
     #define __HIP_PLATFORM_NVCC__
     #define __HIP_PLATFORM_NVIDIA__
+    #include "gpuRandom.h"
 #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
     #define __HIP_PLATFORM_HCC__
     #define __HIP_PLATFORM_AMD__
+    #include "gpuRandom.h"
 #endif
 
 #include <cmath>
 
-#include "gpu_rand.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Constructor for RadiationMonteCarlo
