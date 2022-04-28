@@ -24,8 +24,6 @@
     #include "gpuRandom.h"
 #endif
 
-#include <cmath>
-
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Constructor for RadiationMonteCarlo
