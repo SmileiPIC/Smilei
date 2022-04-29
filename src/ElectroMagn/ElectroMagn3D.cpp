@@ -1021,7 +1021,6 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 {
     // Static cast of the fields
     if( !is_spectral ) {
-        // It seems that the interface of ::acc_memcpy_device does not accept ptr to array of const type !
         /* const */ double *const Bx3D   = &( Bx_->data_[0] );
         /* const */ double *const By3D   = &( By_->data_[0] );
         /* const */ double *const Bz3D   = &( Bz_->data_[0] );
@@ -1031,35 +1030,22 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 
         bool is_memory_on_device = false;
 
-#if defined( _GPU )
-        if( acc_deviceptr( Bx3D ) != NULL ) {
-            is_memory_on_device = true;
-
-            // Magnetic field Bx^(p,d,d)
-            acc_memcpy_device( acc_deviceptr( Bx3D_m ), acc_deviceptr( Bx3D ), nx_p*ny_d*nz_d*sizeof( double ) );
-
-            // Magnetic field By^(d,p,d)
-            acc_memcpy_device( acc_deviceptr( By3D_m ), acc_deviceptr( By3D ), nx_d*ny_p*nz_d*sizeof( double ) );
-
-            // Magnetic field Bz^(d,d,p)
-            acc_memcpy_device( acc_deviceptr( Bz3D_m ), acc_deviceptr( Bz3D ), nx_d*ny_d*nz_p*sizeof( double ) );
-        }
-#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
         // TODO(Etienne M): Find a way to get params.gpu_computing that would be arguably better
         is_memory_on_device = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx3D );
 
         if( is_memory_on_device ) {
-            const int device_num = ::omp_get_default_device();
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D_m ),
+                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D ),
+                                                                             nx_p * ny_d * nz_d );
 
-            ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D_m ),
-                                 smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D ),
-                                 nx_p * ny_d * nz_d * sizeof( double ), 0, 0, device_num, device_num );
-            ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By3D_m ),
-                                 smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By3D ),
-                                 nx_d * ny_p * nz_d * sizeof( double ), 0, 0, device_num, device_num );
-            ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D_m ),
-                                 smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D ),
-                                 nx_d * ny_d * nz_p * sizeof( double ), 0, 0, device_num, device_num );
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By3D_m ),
+                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By3D ),
+                                                                             nx_d * ny_p * nz_d );
+
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D_m ),
+                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D ),
+                                                                             nx_d * ny_d * nz_p );
         }
 #endif
         if( !is_memory_on_device ) {

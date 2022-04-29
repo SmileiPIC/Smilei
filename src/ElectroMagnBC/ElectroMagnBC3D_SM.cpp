@@ -1,19 +1,19 @@
 #include "ElectroMagnBC3D_SM.h"
 
 #include <cstdlib>
+
 #include <iostream>
 #include <string>
 #ifdef _GPU
-    #include <openacc.h>
+#include <openacc.h>
 #endif
 
-#include "ElectroMagn.h"
-#include "Field3D.h"
-#include "Laser.h"
 #include "Params.h"
 #include "Patch.h"
+#include "ElectroMagn.h"
+#include "Field3D.h"
 #include "Tools.h"
-#include "gpu.h"
+#include "Laser.h"
 
 using namespace std;
 
@@ -176,20 +176,19 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         int isBoundary1max = patch->isBoundary(axis1_,1);
         int isBoundary2min = patch->isBoundary(axis2_,0);
         int isBoundary2max = patch->isBoundary(axis2_,1);
-
-#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
-        const int sizeofE0 = E[axis0_]->globalDims_;
-        const int sizeofE1 = E[axis1_]->globalDims_;
-        const int sizeofE2 = E[axis2_]->globalDims_;
-        const int sizeofB0 = B[axis0_]->globalDims_;
-        const int sizeofB1 = B[axis1_]->globalDims_;
-        const int sizeofB2 = B[axis2_]->globalDims_;
         
-        const int B_ext_size0 = B_val[axis0_]->globalDims_;
-        const int B_ext_size1 = B_val[axis1_]->globalDims_;
-        const int B_ext_size2 = B_val[axis2_]->globalDims_;
-
-    #if defined( _GPU )
+#ifdef _GPU
+        int sizeofE0 = E[axis0_]->globalDims_;
+        int sizeofE1 = E[axis1_]->globalDims_;
+        int sizeofE2 = E[axis2_]->globalDims_;
+        int sizeofB0 = B[axis0_]->globalDims_;
+        int sizeofB1 = B[axis1_]->globalDims_;
+        int sizeofB2 = B[axis2_]->globalDims_;
+        
+        int B_ext_size0 = B_val[axis0_]->globalDims_;
+        int B_ext_size1 = B_val[axis1_]->globalDims_;
+        int B_ext_size2 = B_val[axis2_]->globalDims_;
+        
         if( !acc_deviceptr( B_ext0 ) ) {
             #pragma acc enter data copyin(B_ext0[0:B_ext_size0])
         }
@@ -199,19 +198,11 @@ void ElectroMagnBC3D_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         if( !acc_deviceptr( B_ext2 ) ) {
             #pragma acc enter data copyin(B_ext2[0:B_ext_size2])
         }
-    #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-        // // ERROR("Not implemented yet");
-        // // TODO(Etienne M): Do we realy need to copy, couldnt we just alloc and init on GPU ?
-        // // In anycase, the expensive copy will be done only once
-        // smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( B_ext0, B_ext_size0 );
-        // smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( B_ext1, B_ext_size1 );
-        // smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( B_ext2, B_ext_size2 );
-    #endif
-
+        
         int b1_size = n1p*n2d;
         int b2_size = n1d*n2p;
 #endif
-       
+        
         // Component along axis 1
         // Lasers
         if( ! vecLaser.empty() ) {

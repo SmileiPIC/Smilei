@@ -1,6 +1,7 @@
 #ifndef SMILEI_TOOLS_GPU_H
 #define SMILEI_TOOLS_GPU_H
 
+#include <cstring>
 #include <type_traits>
 
 #include "Tools.h"
@@ -152,15 +153,24 @@ namespace smilei {
                 template <typename Container>
                 static void DeviceFree( Container& a_vector );
 
-                /// Try not to use this function if you want to stay fully independent
-                /// of the use of OpenACC/OpenMP. Or wrap it in conditional compilation
-                /// preprocessor macros (#if defined() ... #endif).
+                /// If OpenMP or OpenACC are enabled and if a_pointer is mapped, returns the pointer on the device.
+                ///                                      else return nullptr
+                /// else return a_pointer (untouched)
                 ///
                 template <typename T>
                 static T* GetDevicePointer( T* a_pointer );
 
                 template <typename T>
                 static bool IsHostPointerMappedOnDevice( const T* a_pointer );
+
+                /// Expects host pointers passed through GetDevicePointer. a_count T's are copied (dont specify the byte
+                /// count only object count).
+                ///
+                /// ie:
+                /// DeviceMemoryCopy(GetDevicePointer(a + 5), GetDevicePointer(b) + 10, 10);
+                ///
+                template <typename T>
+                static void DeviceMemoryCopy( T* a_destination, const T* a_source, std::size_t a_count );
             };
 
 
@@ -432,9 +442,7 @@ namespace smilei {
 #elif defined( _GPU )
                 return ::acc_deviceptr( a_host_pointer );
 #else
-                // TODO(Etienne M): Should we return nullptr or a_host_pointer ?
-                SMILEI_UNUSED( a_host_pointer );
-                return nullptr;
+                return a_host_pointer;
 #endif
             }
 
@@ -442,6 +450,26 @@ namespace smilei {
             bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( const T* a_pointer )
             {
                 return GetDevicePointer( a_pointer ) != nullptr;
+            }
+
+            template <typename T>
+            void HostDeviceMemoryManagment::DeviceMemoryCopy( T* a_destination, const T* a_source, std::size_t a_count )
+            {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+                const int device_num = ::omp_get_default_device();
+                if( ::omp_target_memcpy( a_destination,
+                                         a_source,
+                                         a_count * sizeof( T ), 0, 0, device_num, device_num ) != 0 ) {
+                    ERROR( "omp_target_memcpy failed" );
+                }
+#elif defined( _GPU )
+                // It seems that the interface of ::acc_memcpy_device does not accept ptr to array of const type !
+                // https://www.openacc.org/sites/default/files/inline-files/OpenACC.2.7.pdf
+                // void acc_memcpy_device( d_void* dest, d_void* src, size_t bytes );
+                ::acc_memcpy_device( a_destination, const_cast<T*>( a_source ), a_count * sizeof( T ) );
+#else
+                std::memcpy( a_destination, a_source, a_count * sizeof( T ) );
+#endif
             }
 
         } // namespace gpu
