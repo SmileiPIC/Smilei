@@ -4572,13 +4572,13 @@ void VectorPatch::syncDataFromDeviceToHost()
             spec->particles->syncCPU();
         }
 
-        const double *const Ex = &( patches_[ipatch]->EMfields->Ex_->data_[0] );
-        const double *const Ey = &( patches_[ipatch]->EMfields->Ey_->data_[0] );
-        const double *const Ez = &( patches_[ipatch]->EMfields->Ez_->data_[0] );
+        double *const Ex = &( patches_[ipatch]->EMfields->Ex_->data_[0] );
+        double *const Ey = &( patches_[ipatch]->EMfields->Ey_->data_[0] );
+        double *const Ez = &( patches_[ipatch]->EMfields->Ez_->data_[0] );
 
-        const double *const Bmx = &( patches_[ipatch]->EMfields->Bx_m->data_[0] );
-        const double *const Bmy = &( patches_[ipatch]->EMfields->By_m->data_[0] );
-        const double *const Bmz = &( patches_[ipatch]->EMfields->Bz_m->data_[0] );
+        double *const Bmx = &( patches_[ipatch]->EMfields->Bx_m->data_[0] );
+        double *const Bmy = &( patches_[ipatch]->EMfields->By_m->data_[0] );
+        double *const Bmz = &( patches_[ipatch]->EMfields->Bz_m->data_[0] );
 
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ex, sizeofEx );
         smilei::tools::gpu::HostDeviceMemoryManagment::CopyDeviceToHost( Ey, sizeofEy );

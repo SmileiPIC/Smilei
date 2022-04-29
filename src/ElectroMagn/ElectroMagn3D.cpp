@@ -1022,18 +1022,18 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
     // Static cast of the fields
     if( !is_spectral ) {
         // It seems that the interface of ::acc_memcpy_device does not accept ptr to array of const type !
-        /* const */ double *const Bx3D   = &(Bx_->data_[0]);
-        /* const */ double *const By3D   = &(By_->data_[0]);
-        /* const */ double *const Bz3D   = &(Bz_->data_[0]);
-        double *const Bx3D_m = &(Bx_m->data_[0]);
-        double *const By3D_m = &(By_m->data_[0]);
-        double *const Bz3D_m = &(Bz_m->data_[0]);
+        /* const */ double *const Bx3D   = &( Bx_->data_[0] );
+        /* const */ double *const By3D   = &( By_->data_[0] );
+        /* const */ double *const Bz3D   = &( Bz_->data_[0] );
+        double *const             Bx3D_m = &( Bx_m->data_[0] );
+        double *const             By3D_m = &( By_m->data_[0] );
+        double *const             Bz3D_m = &( Bz_m->data_[0] );
 
-        bool gpu_computing = false;
+        bool is_memory_on_device = false;
 
 #if defined( _GPU )
-        if ( acc_deviceptr( Bx3D )!=NULL ) {
-            gpu_computing = true;
+        if( acc_deviceptr( Bx3D ) != NULL ) {
+            is_memory_on_device = true;
 
             // Magnetic field Bx^(p,d,d)
             acc_memcpy_device( acc_deviceptr( Bx3D_m ), acc_deviceptr( Bx3D ), nx_p*ny_d*nz_d*sizeof( double ) );
@@ -1043,13 +1043,12 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 
             // Magnetic field Bz^(d,d,p)
             acc_memcpy_device( acc_deviceptr( Bz3D_m ), acc_deviceptr( Bz3D ), nx_d*ny_d*nz_p*sizeof( double ) );
-
         }
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
         // TODO(Etienne M): Find a way to get params.gpu_computing that would be arguably better
-        gpu_computing = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx3D );
+        is_memory_on_device = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx3D );
 
-        if( gpu_computing ) {
+        if( is_memory_on_device ) {
             const int device_num = ::omp_get_default_device();
 
             ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D_m ),
@@ -1063,7 +1062,7 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
                                  nx_d * ny_d * nz_p * sizeof( double ), 0, 0, device_num, device_num );
         }
 #endif
-        if (!gpu_computing) {
+        if( !is_memory_on_device ) {
             // Magnetic field Bx^(p,d,d)
             memcpy( Bx3D_m, Bx3D, nx_p*ny_d*nz_d*sizeof( double ) );
 
@@ -1073,14 +1072,12 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
             // Magnetic field Bz^(d,d,p)
             memcpy( Bz3D_m, Bz3D, nx_d*ny_d*nz_p*sizeof( double ) );
         }
-        
     } else {
         Bx_m->deallocateDataAndSetTo( Bx_ );
         By_m->deallocateDataAndSetTo( By_ );
         Bz_m->deallocateDataAndSetTo( Bz_ );
     }
-}//END saveMagneticFields
-
+} // END saveMagneticFields
 
 
 //// ---------------------------------------------------------------------------------------------------------------------

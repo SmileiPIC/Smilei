@@ -1463,17 +1463,17 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
     int nPatches( vecPatches.size() );
     int nDim = vecPatches( 0 )->EMfields->Bx_->dims_.size();
 
-    bool gpu_computing = false;
+    bool is_memory_on_device = false;
 
 #if defined( _GPU )
     if ( vecPatches.B_localx.size() ) {
         if ( acc_deviceptr( &(vecPatches.B_localx[0]->data_[0]) )!=NULL ) {
-            gpu_computing = true;
+            is_memory_on_device = true;
         }
     }
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    gpu_computing = vecPatches.B_localx.size() > 0 &&
-                    smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
+    is_memory_on_device = vecPatches.B_localx.size() > 0 &&
+                          smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
 #endif
 
     int nFieldLocalx = vecPatches.B_localx.size()/2;
@@ -1506,7 +1506,7 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 acc_memcpy_device( acc_deviceptr( pt2 ), acc_deviceptr( pt1 ), oversize*ny_*nz_*sizeof( double ) );
                 acc_memcpy_device( acc_deviceptr( pt1+gsp*ny_*nz_ ), acc_deviceptr( pt2+gsp*ny_*nz_ ), oversize*ny_*nz_*sizeof( double ) );
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-                if( gpu_computing ) {
+                if( is_memory_on_device ) {
                     const int device_num = ::omp_get_default_device();
 
                     ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ),
@@ -1514,15 +1514,15 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                                          oversize * ny_ * nz_ * sizeof( double ),
                                          0, 0,
                                          device_num, device_num );
-                    ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ),
-                                         smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ),
+                    ::omp_target_memcpy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ) + gsp * ny_ * nz_,
+                                         smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ) + gsp * ny_ * nz_,
                                          oversize * ny_ * nz_ * sizeof( double ),
-                                         gsp * ny_ * nz_, gsp * ny_ * nz_,
+                                         0, 0, // gsp * ny_ * nz_, gsp * ny_ * nz_,
                                          device_num, device_num );
                 }
 #endif
 
-                if (!gpu_computing) {
+                if (!is_memory_on_device) {
                     memcpy( pt2, pt1, oversize*ny_*nz_*sizeof( double ) );
                     memcpy( pt1+gsp*ny_*nz_, pt2+gsp*ny_*nz_, oversize*ny_*nz_*sizeof( double ) );
                 }
