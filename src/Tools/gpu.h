@@ -1,6 +1,8 @@
 #ifndef SMILEI_TOOLS_GPU_H
 #define SMILEI_TOOLS_GPU_H
 
+#include <type_traits>
+
 #include "Tools.h"
 
 namespace smilei {
@@ -158,7 +160,7 @@ namespace smilei {
                 static T* GetDevicePointer( T* a_pointer );
 
                 template <typename T>
-                static bool IsHostPointerMappedOnDevice( T* a_pointer );
+                static bool IsHostPointerMappedOnDevice( const T* a_pointer );
             };
 
 
@@ -356,6 +358,7 @@ namespace smilei {
             template <typename T>
             void HostDeviceMemoryManagment::CopyDeviceToHost( T* a_pointer, std::size_t a_size )
             {
+                static_assert( !std::is_const<T>::value, "" );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target update from( a_pointer [0:a_size] )
 #elif defined( _GPU )
@@ -375,6 +378,7 @@ namespace smilei {
             template <typename T>
             void HostDeviceMemoryManagment::CopyDeviceToHostAndDeviceFree( T* a_pointer, std::size_t a_size )
             {
+                static_assert( !std::is_const<T>::value, "" );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target exit data map( from \
                                       : a_pointer [0:a_size] )
@@ -395,6 +399,7 @@ namespace smilei {
             template <typename T>
             void HostDeviceMemoryManagment::DeviceFree( T* a_pointer, std::size_t a_size )
             {
+                static_assert( !std::is_const<T>::value, "" );
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
     #pragma omp target exit data map( delete \
                                       : a_pointer [0:a_size] )
@@ -434,7 +439,7 @@ namespace smilei {
             }
 
             template <typename T>
-            bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( T* a_pointer )
+            bool HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( const T* a_pointer )
             {
                 return GetDevicePointer( a_pointer ) != nullptr;
             }
