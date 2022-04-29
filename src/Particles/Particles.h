@@ -411,9 +411,10 @@ public:
     //! Indices of first and last particles in each bin/cell
     std::vector<int> first_index, last_index;
 
-    virtual void initializeDataOnDevice() { std::cout << "Should not have came here" << std::endl; };
-    virtual void syncGPU() { std::cout << "Should not have came here" << std::endl; };
-    virtual void syncCPU() { std::cout << "Should not have came here" << std::endl; };
+    virtual void initializeDataOnDevice() { ERROR( "Should not have come here" ); };
+    virtual void syncGPU() { ERROR( "Should not have come here" ); };
+    virtual void syncCPU() { ERROR( "Should not have come here" ); };
+
     virtual double* getPtrPosition( int idim ) {
         return &(Position[idim][0]);
     };
@@ -440,9 +441,9 @@ public:
     };
 
     virtual void extractParticles( Particles* particles_to_move );
-    virtual int injectParticles( Particles* particles_to_move ) {  std::cout << "Managed in sortParticles" << std::endl; return 0;};
+    virtual int injectParticles( Particles* particles_to_move ) {  ERROR( "On CPU: managed in sortPatciles. Should not have come here" ); return 0;};
 
-    virtual unsigned int gpu_size() const {  std::cout << "Should not have came here" << std::endl; return 0;};
+    virtual unsigned int gpu_size() const { ERROR( "Should not have come here" ); return 0; };
 
 
 private:

@@ -16,25 +16,35 @@ MF_Solver3D_Yee::~MF_Solver3D_Yee()
 void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
 {
     // Static-cast of the fields
-    double *Ex3D = &(fields->Ex_->data_[0]);
-    double *Ey3D = &(fields->Ey_->data_[0]);
-    double *Ez3D = &(fields->Ez_->data_[0]);
-    double *Bx3D = &(fields->Bx_->data_[0]);
-    double *By3D = &(fields->By_->data_[0]);
-    double *Bz3D = &(fields->Bz_->data_[0]);
+    const double *const __restrict__ Ex3D = &( fields->Ex_->data_[0] );
+    const double *const __restrict__ Ey3D = &( fields->Ey_->data_[0] );
+    const double *const __restrict__ Ez3D = &( fields->Ez_->data_[0] );
+    double *const __restrict__ Bx3D       = &( fields->Bx_->data_[0] );
+    double *const __restrict__ By3D       = &( fields->By_->data_[0] );
+    double *const __restrict__ Bz3D       = &( fields->Bz_->data_[0] );
 
-    int sizeofEx = fields->Ex_->globalDims_;
-    int sizeofEy = fields->Ey_->globalDims_;
-    int sizeofEz = fields->Ez_->globalDims_;
-    int sizeofBx = fields->Bx_->globalDims_;
-    int sizeofBy = fields->By_->globalDims_;
-    int sizeofBz = fields->Bz_->globalDims_;
+    const int sizeofEx = fields->Ex_->globalDims_;
+    const int sizeofEy = fields->Ey_->globalDims_;
+    const int sizeofEz = fields->Ez_->globalDims_;
+    const int sizeofBx = fields->Bx_->globalDims_;
+    const int sizeofBy = fields->By_->globalDims_;
+    const int sizeofBz = fields->Bz_->globalDims_;
 
-    
     // Magnetic field Bx^(p,d,d)
-#ifdef _GPU
+#if defined( _GPU )
     #pragma acc parallel present( Bx3D[0:sizeofBx], Ey3D[0:sizeofEy], Ez3D[0:sizeofEz] )
     #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )             \
+        map( to                                       \
+             : Ey3D [0:sizeofEy], Ez3D [0:sizeofEz] ) \
+            map( tofrom                               \
+                 : Bx3D [0:sizeofBx] )                \
+                map( to                               \
+                     : nx_p, ny_d, nz_d, ny_p, nz_p,  \
+                       dt_ov_dy, dt_ov_dz )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_p;  i++ ) {
 #ifdef _GPU
@@ -52,9 +62,20 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     }
     
     // Magnetic field By^(d,p,d)
-#ifdef _GPU
+#if defined( _GPU )
     #pragma acc parallel present( By3D[0:sizeofBy], Ex3D[0:sizeofEx], Ez3D[0:sizeofEz] )
     #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )             \
+        map( to                                       \
+             : Ex3D [0:sizeofEx], Ez3D [0:sizeofEz] ) \
+            map( tofrom                               \
+                 : By3D [0:sizeofBy] )                \
+                map( to                               \
+                     : nx_d, ny_p, nz_d, nz_p,        \
+                       dt_ov_dx, dt_ov_dz )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
 #ifdef _GPU
@@ -72,9 +93,20 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     }
     
     // Magnetic field Bz^(d,d,p)
-#ifdef _GPU
+#if defined( _GPU )
     #pragma acc parallel present( Bz3D[0:sizeofBz], Ex3D[0:sizeofEx], Ey3D[0:sizeofEy] )
     #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none )             \
+        map( to                                       \
+             : Ex3D [0:sizeofEx], Ey3D [0:sizeofEy] ) \
+            map( tofrom                               \
+                 : Bz3D [0:sizeofBz] )                \
+                map( to                               \
+                     : nx_d, ny_d, nz_p, ny_p,        \
+                       dt_ov_dx, dt_ov_dy )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=1 ; i<nx_d-1 ; i++ ) {
 #ifdef _GPU

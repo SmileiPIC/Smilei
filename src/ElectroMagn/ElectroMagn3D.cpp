@@ -1,24 +1,22 @@
 #include "ElectroMagn3D.h"
 
 #include <cmath>
-
 #include <iostream>
 #include <sstream>
 
 #ifdef _GPU
-#include <openacc.h>
+    #include <openacc.h>
 #endif
 
-#include "Params.h"
-#include "Field3D.h"
-#include "FieldFactory.h"
-
-#include "Patch.h"
 #include <cstring>
 
-#include "Profile.h"
-
 #include "ElectroMagnBC.h"
+#include "Field3D.h"
+#include "FieldFactory.h"
+#include "Params.h"
+#include "Patch.h"
+#include "Profile.h"
+#include "gpu.h"
 
 using namespace std;
 
@@ -1023,31 +1021,34 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
 {
     // Static cast of the fields
     if( !is_spectral ) {
-        double *Bx3D   = &(Bx_->data_[0]);
-        double *By3D   = &(By_->data_[0]);
-        double *Bz3D   = &(Bz_->data_[0]);
-        double *Bx3D_m = &(Bx_m->data_[0]);
-        double *By3D_m = &(By_m->data_[0]);
-        double *Bz3D_m = &(Bz_m->data_[0]);
+        /* const */ double *const Bx3D   = &( Bx_->data_[0] );
+        /* const */ double *const By3D   = &( By_->data_[0] );
+        /* const */ double *const Bz3D   = &( Bz_->data_[0] );
+        double *const             Bx3D_m = &( Bx_m->data_[0] );
+        double *const             By3D_m = &( By_m->data_[0] );
+        double *const             Bz3D_m = &( Bz_m->data_[0] );
 
-        bool gpu_computing( false );
+        bool is_memory_on_device = false;
 
-#ifdef _GPU
-        if ( acc_deviceptr( Bx3D )!=NULL ) {
-            gpu_computing = true;
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+        // TODO(Etienne M): Find a way to get params.gpu_computing that would be arguably better
+        is_memory_on_device = smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( Bx3D );
 
-            // Magnetic field Bx^(p,d,d)
-            acc_memcpy_device( acc_deviceptr( Bx3D_m ), acc_deviceptr( Bx3D ), nx_p*ny_d*nz_d*sizeof( double ) );
+        if( is_memory_on_device ) {
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D_m ),
+                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bx3D ),
+                                                                             nx_p * ny_d * nz_d );
 
-            // Magnetic field By^(d,p,d)
-            acc_memcpy_device( acc_deviceptr( By3D_m ), acc_deviceptr( By3D ), nx_d*ny_p*nz_d*sizeof( double ) );
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By3D_m ),
+                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( By3D ),
+                                                                             nx_d * ny_p * nz_d );
 
-            // Magnetic field Bz^(d,d,p)
-            acc_memcpy_device( acc_deviceptr( Bz3D_m ), acc_deviceptr( Bz3D ), nx_d*ny_d*nz_p*sizeof( double ) );
-
+            smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D_m ),
+                                                                             smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( Bz3D ),
+                                                                             nx_d * ny_d * nz_p );
         }
 #endif
-        if (!gpu_computing) {
+        if( !is_memory_on_device ) {
             // Magnetic field Bx^(p,d,d)
             memcpy( Bx3D_m, Bx3D, nx_p*ny_d*nz_d*sizeof( double ) );
 
@@ -1057,14 +1058,12 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
             // Magnetic field Bz^(d,d,p)
             memcpy( Bz3D_m, Bz3D, nx_d*ny_d*nz_p*sizeof( double ) );
         }
-        
     } else {
         Bx_m->deallocateDataAndSetTo( Bx_ );
         By_m->deallocateDataAndSetTo( By_ );
         Bz_m->deallocateDataAndSetTo( Bz_ );
     }
-}//END saveMagneticFields
-
+} // END saveMagneticFields
 
 
 //// ---------------------------------------------------------------------------------------------------------------------
@@ -1140,21 +1139,31 @@ Field *ElectroMagn3D::createField( string fieldname, Params& params )
 void ElectroMagn3D::centerMagneticFields()
 {
     // Static cast of the fields
-    double *Bx3D   = &(Bx_->data_[0]);
-    double *By3D   = &(By_->data_[0]);
-    double *Bz3D   = &(Bz_->data_[0]);
-    double *Bx3D_m = &(Bx_m->data_[0]);
-    double *By3D_m = &(By_m->data_[0]);
-    double *Bz3D_m = &(Bz_m->data_[0]);
+    const double *const __restrict__ Bx3D   = &( Bx_->data_[0] );
+    const double *const __restrict__ By3D   = &( By_->data_[0] );
+    const double *const __restrict__ Bz3D   = &( Bz_->data_[0] );
+    double *const __restrict__ Bx3D_m = &( Bx_m->data_[0] );
+    double *const __restrict__ By3D_m = &( By_m->data_[0] );
+    double *const __restrict__ Bz3D_m = &( Bz_m->data_[0] );
 
-    int sizeofBx = Bx_->globalDims_;
-    int sizeofBy = By_->globalDims_;
-    int sizeofBz = Bz_->globalDims_;
-    
+    const int sizeofBx = Bx_->globalDims_;
+    const int sizeofBy = By_->globalDims_;
+    const int sizeofBz = Bz_->globalDims_;
+
     // Magnetic field Bx^(p,d,d)
-#ifdef _GPU
+#if defined( _GPU )
     #pragma acc parallel present(Bx3D[0:sizeofBx],Bx3D_m[0:sizeofBx])
     #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none ) \
+        map( to                           \
+             : Bx3D [0:sizeofBx] )        \
+            map( tofrom                   \
+                 : Bx3D_m [0:sizeofBx] )  \
+                map( to                   \
+                     : nx_p, ny_d, nz_d )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
 #ifdef _GPU
@@ -1171,9 +1180,19 @@ void ElectroMagn3D::centerMagneticFields()
     }
 
     // Magnetic field By^(d,p,d)
-#ifdef _GPU
+#if defined( _GPU )
     #pragma acc parallel present(By3D[0:sizeofBy],By3D_m[0:sizeofBy])
     #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none ) \
+        map( to                           \
+             : By3D [0:sizeofBy] )        \
+            map( tofrom                   \
+                 : By3D_m [0:sizeofBy] )  \
+                map( to                   \
+                     : nx_d, ny_p, nz_d )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
 #ifdef _GPU
@@ -1190,9 +1209,19 @@ void ElectroMagn3D::centerMagneticFields()
     }
     
     // Magnetic field Bz^(d,d,p)
-#ifdef _GPU
+#if defined( _GPU )
     #pragma acc parallel present(Bz3D[0:sizeofBz],Bz3D_m[0:sizeofBz])
     #pragma acc loop gang
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none ) \
+        map( to                           \
+             : Bz3D [0:sizeofBz] )        \
+            map( tofrom                   \
+                 : Bz3D_m [0:sizeofBz] )  \
+                map( to                   \
+                     : nx_d, ny_d, nz_d, nz_p )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_d ; i++ ) {
 #ifdef _GPU

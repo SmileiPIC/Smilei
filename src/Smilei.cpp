@@ -113,34 +113,42 @@ int main( int argc, char *argv[] )
 //        acc_set_device_num( gpunum, acc_device_nvidia );
 //    }
 //#endif
-#if defined(SMILEI_ACCELERATOR_GPU_OMP)
-    if(!params.gpu_computing) {
-        // TODO(Etienne M): We may not need that check. When the GPU implementation is complete, a user should be able
-        // to turn the GPU offloading on/off without recompiling, right ?
-        ERROR("Smilei was compiled to offload computation to a GPU. Please enable the GPU mode in the Python input file.");
-    } else {
-
-        if(::omp_get_max_threads() != 1) {
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    if( params.gpu_computing ) {
+        if( ::omp_get_max_threads() != 1 ) {
             // TODO(Etienne M): We should be able to work around this "problem" cf 4.13.1 in Omp Exemple 5.0.1
-            ERROR("Runing Smilei on GPU using more than one OpenMP thread is not supported when offloading using OpenMP.");
+            ERROR( "Runing Smilei on GPU using more than one OpenMP thread is not supported when offloading using OpenMP." );
         }
 
         const int gpu_count = ::omp_get_num_devices();
 
-        if(gpu_count < 1) {
-            ERROR("Simlei needs one accelerator, none detected.");
-        } else if(gpu_count > 1) {
-            WARNINGALL("Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 in your slurm script.");
-            WARNINGALL("Smilei will fallback to round robin GPU binding using it's MPI rank.");
+        if( gpu_count < 1 ) {
+            ERROR( "Simlei needs one accelerator, none detected." );
+        } else if( gpu_count > 1 ) {
+            WARNINGALL( "Simlei needs only one accelerator (GPU). You could use --gpu-bind=per_task:1 or --gpus-per-task=1 in your slurm script." );
+            WARNINGALL( "Smilei will fallback to round robin GPU binding using it's MPI rank." );
 
             const int this_process_gpu = smpi.getRank() % gpu_count;
 
             // std::cout << "Using GPU id: " << this_process_gpu << "\n";
 
-            ::omp_set_default_device(this_process_gpu);
+            ::omp_set_default_device( this_process_gpu );
         } else {
             // ::omp_set_default_device(0);
         }
+
+        ::omp_sched_t a_scheduling_strategy{};
+        int           a_chunk_size = 0;
+        ::omp_get_schedule( &a_scheduling_strategy, &a_chunk_size );
+
+        if( a_scheduling_strategy != ::omp_sched_t::omp_sched_dynamic ) {
+            // As of CCE 13, 2022/04/22
+            WARNING( "Smilei can break if dynamic is not used." );
+        }
+    } else {
+        // TODO(Etienne M): We may not need that check. When the GPU implementation is complete, a user should be able
+        // to turn the GPU offloading on/off without recompiling, right ?
+        ERROR( "Smilei was compiled to offload computation to a GPU. Please enable the GPU mode in the Python input file." );
     }
 #endif
 

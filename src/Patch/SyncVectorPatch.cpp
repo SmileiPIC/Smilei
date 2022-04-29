@@ -3,11 +3,12 @@
 
 #include <vector>
 #ifdef _GPU
-#include <openacc.h>
+    #include <openacc.h>
 #endif
-#include "VectorPatch.h"
 #include "Params.h"
 #include "SmileiMPI.h"
+#include "VectorPatch.h"
+#include "gpu.h"
 
 using namespace std;
 
@@ -319,11 +320,21 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                 pt1 = &( fields[ vecPatches( ipatch )->neighbor_[0][0]-h0+icomp*nPatches ]->data_[n_space[0]*ny_*nz_] );
                 pt2 = &( vecPatches.densitiesLocalx[ifield]->data_[0] );
                 //Sum 2 ==> 1
-#ifdef _GPU
+#if defined( _GPU )
                 int ptsize = vecPatches.densitiesLocalx[ifield]->globalDims_;
                 int blabla = n_space[0];
                 #pragma acc parallel present(pt1[0-blabla*ny_*nz_:ptsize],pt2[0:ptsize]) 
                 #pragma acc loop worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                const int ptsize = gsp[0] * ny_ * nz_;
+    #pragma omp target defaultmap( none ) \
+        map( tofrom                       \
+             : pt1 [0:ptsize],            \
+               pt2 [0:ptsize] )           \
+            map( to                       \
+                 : gsp [0:1], ny_, nz_ )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for
 #endif
                 for( unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++ ) {
                     pt1[i] += pt2[i];
@@ -440,11 +451,21 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                     //The patch to the south belongs to the same MPI process than I.
                     pt1 = &( fields[vecPatches( ipatch )->neighbor_[1][0]-h0+icomp*nPatches]->data_[n_space[1]*nz_] );
                     pt2 = &( vecPatches.densitiesLocaly[ifield]->data_[0] );
-#ifdef _GPU
+#if defined( _GPU )
                     int ptsize = vecPatches.densitiesLocaly[ifield]->globalDims_;
                     int blabla = n_space[1];
                     #pragma acc parallel present(pt1[0-blabla*nz_:ptsize],pt2[0:ptsize])
                     #pragma acc loop worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                    const int ptsize = ( nx_ * ny_ * nz_ ) - ( ny_ * nz_ ) + (gsp[1] * nz_);
+    #pragma omp target defaultmap( none ) \
+        map( tofrom                       \
+             : pt1 [0:ptsize],            \
+               pt2 [0:ptsize] )           \
+            map( to                       \
+                 : gsp [1:1], nx_, ny_, nz_ )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for collapse(2)
 #endif
                     for( unsigned int j = 0; j < nx_*ny_*nz_ ; j += ny_*nz_ ) {
                         for( unsigned int i = 0; i < gsp[1]*nz_ ; i++ ) {
@@ -568,6 +589,16 @@ void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatc
                         int blabla = n_space[2];
                         #pragma acc parallel present(pt1[0-blabla:ptsize],pt2[0:ptsize])
                         #pragma acc loop worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                        const int ptsize = ( nx_ * ny_ * nz_ ) - nz_ + gsp[2];
+    #pragma omp target defaultmap( none ) \
+        map( tofrom                       \
+             : pt1 [0:ptsize],            \
+               pt2 [0:ptsize] )           \
+            map( to                       \
+                 : gsp [2:1], nx_, ny_, nz_ )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for collapse( 2 )
 #endif
                         for( unsigned int j = 0; j < nx_*ny_*nz_ ; j += nz_ ) {
                             for( unsigned int i = 0; i < gsp[2] ; i++ ) {
@@ -1432,13 +1463,11 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
     int nPatches( vecPatches.size() );
     int nDim = vecPatches( 0 )->EMfields->Bx_->dims_.size();
 
-    bool gpu_computing( false );
-#ifdef _GPU
-    if ( vecPatches.B_localx.size() ) {
-        if ( acc_deviceptr( &(vecPatches.B_localx[0]->data_[0]) )!=NULL ) {
-            gpu_computing = true;
-        }
-    }
+    bool is_memory_on_device = false;
+
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+    is_memory_on_device = vecPatches.B_localx.size() > 0 &&
+                          smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( &( vecPatches.B_localx[0]->data_[0] ) );
 #endif
 
     int nFieldLocalx = vecPatches.B_localx.size()/2;
@@ -1466,11 +1495,20 @@ void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields,
                 pt1 = &( fields[vecPatches( ipatch )->neighbor_[0][0]-h0+icomp*nPatches]->data_[n_space*ny_*nz_] );
                 pt2 = &( vecPatches.B_localx[ifield]->data_[0] );
                 //for filter
-#ifdef _GPU
-                acc_memcpy_device( acc_deviceptr( pt2 ), acc_deviceptr( pt1 ), oversize*ny_*nz_*sizeof( double ) );
-                acc_memcpy_device( acc_deviceptr( pt1+gsp*ny_*nz_ ), acc_deviceptr( pt2+gsp*ny_*nz_ ), oversize*ny_*nz_*sizeof( double ) );
+
+#if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
+                if( is_memory_on_device ) {
+                    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ),
+                                                                                     smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ),
+                                                                                     oversize * ny_ * nz_ );
+
+                    smilei::tools::gpu::HostDeviceMemoryManagment::DeviceMemoryCopy( smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt1 ) + gsp * ny_ * nz_,
+                                                                                     smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( pt2 ) + gsp * ny_ * nz_,
+                                                                                     oversize * ny_ * nz_ );
+                }
 #endif
-                if (!gpu_computing) {
+
+                if (!is_memory_on_device) {
                     memcpy( pt2, pt1, oversize*ny_*nz_*sizeof( double ) );
                     memcpy( pt1+gsp*ny_*nz_, pt2+gsp*ny_*nz_, oversize*ny_*nz_*sizeof( double ) );
                 }
@@ -1593,6 +1631,16 @@ void SyncVectorPatch::exchangeAllComponentsAlongY( std::vector<Field *> &fields,
                 int ptsize = vecPatches.B1_localy[ifield]->globalDims_;
                 #pragma acc parallel present(pt1[0-n_space*nz_:ptsize],pt2[0:ptsize])
                 #pragma acc loop gang worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                const int ptsize = ( nx_ * ny_ * nz_ ) - ( ny_ * nz_ ) + oversize * nz_ + gsp * nz_;
+    #pragma omp target defaultmap( none ) \
+        map( tofrom                       \
+             : pt1 [0:ptsize],            \
+               pt2 [0:ptsize] )           \
+            map( to                       \
+                 : gsp, nx_, ny_, nz_, oversize )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for collapse( 2 )
 #endif
                 for( unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_ ) {
                     // for filter
@@ -1717,6 +1765,16 @@ void SyncVectorPatch::exchangeAllComponentsAlongZ( std::vector<Field *> fields, 
                 int ptsize = vecPatches.B2_localz[ifield]->globalDims_;
                 #pragma acc parallel present(pt1[0-n_space:ptsize],pt2[0:ptsize])
                 #pragma acc loop gang worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+                const int ptsize = ( nx_ * ny_ * nz_ ) - ( ny_ * nz_ ) + ( ny_ * nz_ ) - nz_ + oversize;
+    #pragma omp target defaultmap( none ) \
+        map( tofrom                       \
+             : pt1 [0:ptsize],            \
+               pt2 [0:ptsize] )           \
+            map( to                       \
+                 : gsp, nx_, ny_, nz_, oversize )
+    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp distribute parallel for collapse( 3 )
 #endif
                 for( unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_ ) {
                     for( unsigned int j = 0 ; j < ny_*nz_ ; j += nz_ ) {

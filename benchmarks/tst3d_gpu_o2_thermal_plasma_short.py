@@ -38,20 +38,7 @@ number_of_patches = [4,4,4]
 
 position_initialization = 'random'
 
-def n0_(x,y,z):
-   return n0
-
-
-path = os.path.abspath("./").split("/")
-directory = path[-1]
-options = directory.split("_")
-
 vectorization = "off"
-
-interpolation_WT = False,
-
-if "wp" in options:
-    interpolation_WT = True,
 
 Main(
     geometry = "3Dcartesian",

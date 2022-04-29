@@ -18,8 +18,21 @@ except: # python3
     raw_input = input
 
 def mkdir(dir):
+    # /xxx/ is not
+    # /xxx
+    dir = os.path.abspath(dir)
+
     if not os.path.exists(dir):
+        if os.path.islink(dir):
+            dir = os.readlink(dir)
         os.mkdir(dir)
+
+def rename(old, new):
+    old = os.path.abspath(old)
+    if os.path.islink(old):
+        old = os.readlink(old)
+    import shutil
+    shutil.move(old, new)
 
 def date(BIN_NAME):
     return os.stat(BIN_NAME).st_ctime
