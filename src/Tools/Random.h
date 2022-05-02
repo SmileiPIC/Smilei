@@ -15,10 +15,8 @@ public:
         if( xorshift32_state==0 ) {
             xorshift32_state = 1073741824;
         }
-    };
-    
-    ~Random() {};
-    
+    }
+
     //! random integer
     inline uint32_t integer() {
         return xorshift32();
