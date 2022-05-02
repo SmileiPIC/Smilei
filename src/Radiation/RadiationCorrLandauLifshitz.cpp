@@ -120,19 +120,49 @@ void RadiationCorrLandauLifshitz::operator()(
     // _______________________________________________________________
     // Computation
 
-    #ifndef _GPU
-        #pragma omp simd
-    #else
-        int np = iend-istart;
+    // NVIDIA GPUs
+    #if defined (_GPU)
+        const int istart_offset   = istart - ipart_ref;
+        const int np = iend-istart;
         #pragma acc parallel \
-            present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
-            Bx[istart:np],By[istart:np],Bz[istart:np]) \
+            present(Ex[istart_offset:np], \
+                    Ey[istart_offset:np], \
+                    Ez[istart_offset:np], \
+                    Bx[istart_offset:np], \
+                    By[istart_offset:np], \
+                    Bz[istart_offset:np]) \
             deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,chi)
     {
         #pragma acc loop reduction(+:radiated_energy_loc) gang worker vector private(rad_norm_energy)
+    // Other GPUS
+    #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+        #pragma omp target defaultmap( none )                                     \
+            map( to                                                               \
+                 : Ex [istart_offset:np],                            \
+                   Ey [istart_offset:np],                            \
+                   Ez [istart_offset:np],                            \
+                   Bx [istart_offset:np],                            \
+                   By [istart_offset:np],                            \
+                   Bz [istart_offset:np],                            \
+                map( to                                                           \
+                     : istart, iend, ipart_ref,                         \
+                       one_over_mass_square, dt_ )                          \
+                    is_device_ptr( /* to: */                                      \
+                                   charge /* [istart:np] */ )        \
+                        is_device_ptr( /* tofrom: */                              \
+                                       momentum_x /* [istart:np] */, \
+                                       momentum_y /* [istart:np] */, \
+                                       momentum_z /* [istart:np] */, \
+                                       weight /* [istart:np] */, \
+                                       chi /* [istart:np] */ )
+        #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+        #pragma omp distribute parallel for
+    // CPU
+    #else 
+        #pragma omp simd
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+        const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
         gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
