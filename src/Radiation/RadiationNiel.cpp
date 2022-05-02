@@ -204,8 +204,8 @@ void RadiationNiel::operator()(
 		        seed_curand = (int) (ipart+1)*(initial_seed+1); //Seed for linear generator
 		        seed_curand = (a * seed_curand + c) % m; //Linear generator
 
-                rand.init( seed_curand, seq, offset );                         // Cuda generator
-                random_numbers[ipart - istart] = 2 * rand.uniform( rand ) - 1; // Generating number
+                rand.init( seed_curand, seq, offset );                   // Cuda generator
+                random_numbers[ipart - istart] = 2 * rand.uniform() - 1; // Generating number
 
                 temp = -std::log( ( 1.0-random_numbers[ipart - istart] )*( 1.0+random_numbers[ipart - istart] ) );
 

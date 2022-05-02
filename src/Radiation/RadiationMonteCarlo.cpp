@@ -287,8 +287,8 @@ void RadiationMonteCarlo::operator()(
 			            seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
               		    seed_curand_2 = (a * seed_curand_2 + c) % m; //Linear generator
 
-                        prng_state_2.init( seed_curand_2, seq, offset );      // Cuda generator initialization
-                        random_number = prng_state_2.uniform( prng_state_2 ); // Generating number
+                        prng_state_2.init( seed_curand_2, seq, offset ); // Cuda generator initialization
+                        random_number = prng_state_2.uniform();          // Generating number
 
                     #endif
 
