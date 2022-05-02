@@ -41,15 +41,10 @@ void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart,
     //double TxTy, TyTz, TzTx;
     //double alpha;
 
-    double * __restrict__ position_x = particles.getPtrPosition(0);
-    double * __restrict__ position_y = NULL;
-    double * __restrict__ position_z = NULL;
-    if (nDim_>1) {
-        position_y = particles.getPtrPosition(1);
-        if (nDim_>2) {
-            position_z = particles.getPtrPosition(2);
-        }
-    }
+    double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
+    double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
+    
     double * __restrict__ momentum_x = particles.getPtrMomentum(0);
     double * __restrict__ momentum_y = particles.getPtrMomentum(1);
     double * __restrict__ momentum_z = particles.getPtrMomentum(2);

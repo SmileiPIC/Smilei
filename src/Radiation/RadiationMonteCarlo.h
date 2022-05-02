@@ -69,15 +69,15 @@ public:
     //                        for nonlinear inverse Compton scattering
     // ---------------------------------------------------------------------
     double photonEmission( int ipart,
-                         double &particle_chi,
-                         double &particle_gamma,
-                         double *position_x,
-                         double *position_y,
-                         double *position_z,
-                         double *momentum_x,
-                         double *momentum_y,
-                         double *momentum_z,
-                         double *weight,
+                         const double particle_chi,
+                         const double particle_gamma,
+                         const double *const __restrict__ position_x,
+                         const double *const __restrict__ position_y,
+                         const double *const __restrict__ position_z,
+                         double *const __restrict__ momentum_x,
+                         double *const __restrict__ momentum_y,
+                         double *const __restrict__ momentum_z,
+                         const double *const __restrict__ weight,
                          Species *photon_species,
                          RadiationTables &RadiationTables );
 
