@@ -12,8 +12,13 @@
 # Each node has 4 MI-200 gpu, you may want to associate one MI-200 to one MPI 
 # process.
 #
-# To compile you'll want these modules:
-# $ module load PrgEnv-cray cce/13.0.1 cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1 cray-mpich/8.1.13 rocm/4.5.0
+# To compile you may want these modules:
+# module load craype-network-ofi craype-x86-rome libfabric/1.13.1
+# module load PrgEnv-cray/8.1.0 cce/13.0.1
+# module load cray-mpich/8.1.13
+# module load rocm/4.5.0
+# module load cray-hdf5-parallel/1.12.0.6 cray-python/3.9.7.1
+# module load perftools-base/21.12.0
 #
 #
 ################################################################################

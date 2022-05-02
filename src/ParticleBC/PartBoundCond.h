@@ -38,13 +38,20 @@ public:
     //! Conditions along X are applied first, then Y, then Z.
     inline void apply( Species *species, int imin, int imax, std::vector<double> &invgf, Random * rand, double &energy_tot )
     {
-        int* cell_keys = species->particles->getPtrCellKeys();
-#ifdef _GPU
+        int *const cell_keys = species->particles->getPtrCellKeys();
+#if defined( _GPU )
         #pragma acc parallel deviceptr(cell_keys)
         #pragma acc loop gang worker vector
+#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #pragma omp target defaultmap( none ) \
+        map( to                           \
+             : imin, imax )               \
+            is_device_ptr( /* tofrom */   \
+                           cell_keys /* [imin:imax - imin] */ )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp parallel for
 #endif
         for (int ipart=imin ; ipart<imax ; ipart++ ) {
-
             cell_keys[ipart] = 0;
         }
 

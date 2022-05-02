@@ -250,9 +250,9 @@ class Validation(object):
     
     def compile(self):
         from sys import exit
-        from os import chdir, sep, stat, remove, rename
+        from os import chdir, stat, remove
         from os.path import exists
-        from .tools import mkdir, date, date_string
+        from .tools import mkdir, date, date_string, rename
         from shutil import copy2
         from subprocess import CalledProcessError
         
@@ -273,9 +273,10 @@ class Validation(object):
         # clean to force compilation
         mkdir(self.smilei_path.workdirs)
         self.sync()
-        if exists(SMILEI_R) and (not exists(SMILEI_W) or date(SMILEI_W)<date(SMILEI_R)):
-            self.machine.clean()
-            self.sync()
+        # # Why "make clean" ? Should we always "make" and let make decide wether it needs to recompile.
+        # if exists(SMILEI_R) and (not exists(SMILEI_W) or date(SMILEI_W)<date(SMILEI_R)):
+        #     self.machine.clean()
+        #     self.sync()
         
         def workdir_archiv() :
             # Creates an archives of the workdir directory
@@ -292,19 +293,23 @@ class Validation(object):
             # Compile
             self.machine.compile( self.smilei_path.root )
             self.sync()
-            if STAT_SMILEI_R_OLD!=stat(SMILEI_R) or date(SMILEI_W)<date(SMILEI_R): # or date(SMILEI_TOOLS_W)<date(SMILEI_TOOLS_R) :
-                # if new bin, archive the workdir (if it contains a smilei bin)
-                # and create a new one with new smilei and compilation_out inside
-                if exists(SMILEI_W): # and path.exists(SMILEI_TOOLS_W):
+
+            if exists(SMILEI_W):
+                if date(SMILEI_W) < date(SMILEI_R):
+                    # The workdir smilei bin is outdated (recompilation occured), archive the workdir
+                    if self.options.verbose:
+                        print(" Achiving the old workdir.")
                     workdir_archiv()
+
+            if not exists(SMILEI_W):
+                # There is no smilei copy in the workdir (after archiving or first launch)
                 copy2(SMILEI_R, SMILEI_W)
                 #copy2(SMILEI_TOOLS_R,SMILEI_TOOLS_W)
                 if self.options.verbose:
-                    print(" Smilei compilation succeed.")
-            else:
-                if self.options.verbose:
-                    print(" Smilei compilation not needed.")
-        
+                    print(" Initialized a new workdir with a new smilei binary.")
+
+            if self.options.verbose:
+                print(" Workdir ready.")
         except CalledProcessError as e:
             # if compiling errors, archive the workdir (if it contains a smilei bin),
             # create a new one with compilation_errors inside and exit with error code
