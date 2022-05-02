@@ -1263,47 +1263,34 @@ void Patch::initExchange( Field *field, int iDim, SmileiMPI *smpi, bool devPtr )
     for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
 
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-
             int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
             if (devPtr) {
-                double* sendField = field->sendFields_[iDim*2+iNeighbor]->data_ ;
-#if defined( _GPU )
-    #pragma acc host_data use_device( sendField )
-#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-                sendField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( sendField );
-#endif
+                double* sendField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( field->sendFields_[iDim*2+iNeighbor]->data_ );
+                // Assumes a GPU compatible MPI implementation
                 MPI_Isend( sendField, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
                            MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
                            MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
-            }
-            else
+            } else {
                 MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
                            MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
                            MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
-
+            }
         } // END of Send
 
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-
             int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
             if (devPtr) {
-                double* recvField = field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
-#if defined( _GPU )
-    #pragma acc host_data use_device( recvField )
-#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-                recvField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( recvField );
-#endif
+                double* recvField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_ );
+                // Assumes a GPU compatible MPI implementation
                 MPI_Irecv( recvField, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
                            MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
                            MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
-            }
-            else
+            } else {
                 MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
                            MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
                            MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
-
+            }
         } // END of Recv
-
     } // END for iNeighbor
 
 } // END initExchange( Field* field, int iDim )
@@ -1402,41 +1389,32 @@ void Patch::initSumField( Field *field, int iDim, SmileiMPI *smpi, bool devPtr )
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
             int tag = field->MPIbuff.send_tags_[iDim][iNeighbor];
             if (devPtr) {
-                double* sendField = field->sendFields_[iDim*2+iNeighbor]->data_;
-#if defined( _GPU )
-    #pragma acc host_data use_device( sendField )
-#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-                sendField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( sendField );
-#endif
+                double* sendField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( field->sendFields_[iDim*2+iNeighbor]->data_ );
+                // Assumes a GPU compatible MPI implementation
                 MPI_Isend( sendField, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
                           MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
                           MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
-            }
-            else
+            } else {
                 MPI_Isend( field->sendFields_[iDim*2+iNeighbor]->data_, field->sendFields_[iDim*2+iNeighbor]->globalDims_,
                           MPI_DOUBLE, MPI_neighbor_[iDim][iNeighbor], tag,
                           MPI_COMM_WORLD, &( field->MPIbuff.srequest[iDim][iNeighbor] ) );
+            }
         } // END of Send
 
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
             int tag = field->MPIbuff.recv_tags_[iDim][iNeighbor];
             if (devPtr) {
-                double* recvField = field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_;
-#if defined( _GPU )
-    #pragma acc host_data use_device( recvField )
-#elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-                recvField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( recvField );
-#endif
+                double* recvField = smilei::tools::gpu::HostDeviceMemoryManagment::GetDevicePointer( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_ );
+                // Assumes a GPU compatible MPI implementation
                 MPI_Irecv( recvField, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
                           MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
                           MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
-            }
-            else
+            } else {
                 MPI_Irecv( field->recvFields_[iDim*2+(iNeighbor+1)%2]->data_, field->recvFields_[iDim*2+(iNeighbor+1)%2]->globalDims_,
                           MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
                           MPI_COMM_WORLD, &( field->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+            }
         } // END of Recv
-
     } // END for iNeighbor
 
 } // END initSumField
