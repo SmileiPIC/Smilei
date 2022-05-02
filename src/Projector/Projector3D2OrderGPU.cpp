@@ -81,21 +81,17 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     const int packsize = nparts;
     const int npack    = ( ( iend - istart ) + ( packsize - 1 ) ) / packsize; // divide + ceil npack.
 
-#if defined(_GPU)
-    double *const __restrict__ Sx0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ Sy0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ Sz0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ DSx  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ DSy  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ DSz  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
-    double *const __restrict__ sumX = static_cast< double * >(::acc_malloc( 5 * packsize * sizeof( double ) ));
-
-    // If HostDeviceMemoryManagment ends up being used for the openacc part too,
-    // be sure to remove the "deviceptr()" clauses in the openacc pragmas and replace them 
-    // with present clauses.
-#else // #elif defined(SMILEI_ACCELERATOR_GPU_OMP) // Works for both device and host
+// #if defined(_GPU)
+//     double *const __restrict__ Sx0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ Sy0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ Sz0  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ DSx  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ DSy  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ DSz  = static_cast< double  *>(::acc_malloc( 5 * packsize * sizeof( double ) ));
+//     double *const __restrict__ sumX = static_cast< double * >(::acc_malloc( 5 * packsize * sizeof( double ) ));
+// #else // #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
     static constexpr bool kAutoDeviceFree = true;
-    const std::size_t     kTmpArraySize = 5 * packsize;
+    const std::size_t     kTmpArraySize   = 5 * packsize;
 
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sx0{ kTmpArraySize };
     smilei::tools::gpu::NonInitializingVector<double, kAutoDeviceFree> host_device_Sy0{ kTmpArraySize };
@@ -120,7 +116,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     double *const __restrict__ DSy  = host_device_DSy.data();
     double *const __restrict__ DSz  = host_device_DSz.data();
     double *const __restrict__ sumX = host_device_sumX.data();
-#endif
+// #endif
 
     for (int ipack=0 ; ipack<npack ; ipack++) {
         const int istart_pack       = istart + ipack * packsize;
