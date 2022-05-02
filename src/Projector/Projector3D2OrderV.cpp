@@ -95,12 +95,6 @@ void Projector3D2OrderV::currentsAndDensity( double * __restrict__ Jx,
 
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
-    int nbVec = ( iend-istart+( cell_nparts-1 )-( ( iend-istart-1 )&( cell_nparts-1 ) ) ) / vecSize;
-    if( nbVec*vecSize != cell_nparts ) {
-        nbVec++;
-    }
-
-
     // Jx, Jy, Jz
     currents( Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, buffer_size, ipart_ref );
 
@@ -426,11 +420,6 @@ void Projector3D2OrderV::currents( double * __restrict__ Jx,
 
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
-    int nbVec = ( iend-istart+( cell_nparts-1 )-( ( iend-istart-1 )&( cell_nparts-1 ) ) ) / vecSize;
-    if( nbVec*vecSize != cell_nparts ) {
-        nbVec++;
-    }
-
     // Jx^(d,p,p)
     // Jy^(p,d,p)
     // Jz^(p,p,d)
@@ -627,10 +616,6 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
 
     // Closest multiple of 8 higher or equal than npart = iend-istart.
     int cell_nparts( ( int )iend-( int )istart );
-    int nbVec = ( iend-istart+( cell_nparts-1 )-( ( iend-istart-1 )&( cell_nparts-1 ) ) ) / vecSize;
-    if( nbVec*vecSize != cell_nparts ) {
-        nbVec++;
-    }
     double one_over_mass=1./species_mass;
 
     #pragma omp simd

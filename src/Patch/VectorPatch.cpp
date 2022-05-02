@@ -303,7 +303,7 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 void VectorPatch::sortAllParticles( Params &params )
 {
 #ifdef _VECTO
-    if((  params.vectorization_mode != "off" ) || (params.cell_sorting) ) {
+    if( params.cell_sorting_ ) {
         //Need to sort because particles are not well sorted at creation
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++ ) {
@@ -349,7 +349,7 @@ void VectorPatch::dynamics( Params &params,
 
             if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
                 // Dynamics with vectorized operators
-                if( spec->vectorized_operators || params.cell_sorting ) {
+                if( spec->vectorized_operators ) {
                     spec->dynamics( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag, partwalls( ipatch ),
@@ -3163,7 +3163,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
     }
 
 #ifdef _VECTO
-    if( params.vectorization_mode == "on" || ( params.cell_sorting ) ) {
+    if( params.vectorization_mode == "on" ) {
         // vectorization or cell sorting
         // Recompute the cell keys and sort  frozen particles
         for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
@@ -4311,7 +4311,7 @@ void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
         ( *this )( ipatch )->EMfields->restartEnvChi();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting )
+                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators )
                     species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag,
@@ -4360,7 +4360,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting ){
+                if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ){
                     species( ipatch, ispec )->ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
                            emfields( ipatch ),
                            params, diag_flag, partwalls( ipatch ),

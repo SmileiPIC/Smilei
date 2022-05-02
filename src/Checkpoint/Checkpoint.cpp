@@ -887,7 +887,7 @@ void Checkpoint::restartPatch( Patch *patch, Params &params, H5Read &g )
                 s.vect( "Id", spec->particles->Id, H5T_NATIVE_UINT64 );
             }
 
-            if( params.vectorization_mode == "off" || params.vectorization_mode == "on" || params.cell_sorting ) {
+            if( params.vectorization_mode == "off" || params.vectorization_mode == "on" || params.cell_sorting_ ) {
                 s.vect( "first_index", spec->particles->first_index, true );
                 s.vect( "last_index", spec->particles->last_index, true );
             }

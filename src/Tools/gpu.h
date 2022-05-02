@@ -311,9 +311,7 @@ namespace smilei {
     #pragma omp target enter data map( alloc \
                                        : a_pointer [0:a_size] )
 #elif defined( _GPU )
-                SMILEI_UNUSED( a_pointer );
-                SMILEI_UNUSED( a_size );
-                ERROR( "Not implemented" );
+    #pragma acc enter data create( a_pointer [0:a_size] )
 #else
                 SMILEI_UNUSED( a_pointer );
                 SMILEI_UNUSED( a_size );
@@ -393,7 +391,7 @@ namespace smilei {
     #pragma omp target exit data map( from \
                                       : a_pointer [0:a_size] )
 #elif defined( _GPU )
-    #pragma acc exit data delete( a_pointer [0:a_size] )
+    #pragma acc exit data copyout( a_pointer [0:a_size] )
 #else
                 SMILEI_UNUSED( a_pointer );
                 SMILEI_UNUSED( a_size );
@@ -414,12 +412,7 @@ namespace smilei {
     #pragma omp target exit data map( delete \
                                       : a_pointer [0:a_size] )
 #elif defined( _GPU )
-                SMILEI_UNUSED( a_pointer );
-                SMILEI_UNUSED( a_size );
-                ERROR( "Not implemented" );
-#else
-                SMILEI_UNUSED( a_pointer );
-                SMILEI_UNUSED( a_size );
+    #pragma acc exit data delete( a_pointer [0:a_size] )
 #endif
             }
 

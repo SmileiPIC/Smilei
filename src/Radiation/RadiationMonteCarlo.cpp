@@ -17,16 +17,13 @@
 #if defined(_GPU)
     #define __HIP_PLATFORM_NVCC__
     #define __HIP_PLATFORM_NVIDIA__
+    #include "gpuRandom.h"
 #elif defined(SMILEI_ACCELERATOR_GPU_OMP)
     #define __HIP_PLATFORM_HCC__
     #define __HIP_PLATFORM_AMD__
+    #include "gpuRandom.h"
 #endif
 
-#if defined(_GPU) || defined(SMILEI_ACCELERATOR_GPU_OMP)
-    #include <hiprand.hpp>
-#endif
-
-#include <cmath>
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Constructor for RadiationMonteCarlo
@@ -165,8 +162,10 @@ void RadiationMonteCarlo::operator()(
     unsigned long long seed; // Parameters for CUDA generator
     unsigned long long seq;
     unsigned long long offset;
-    hiprandState_t state_1;
-    hiprandState_t state_2;
+    // curandState_t state_1;
+    // curandState_t state_2;
+    // hiprandState_t state_1;
+    // hiprandState_t state_2;
     
     seed = 12345ULL;
     seq = 0ULL;
@@ -210,8 +209,12 @@ void RadiationMonteCarlo::operator()(
         table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
         deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi,tau) 
         {
-            #pragma acc loop gang worker vector private(emission_time, local_it_time, mc_it_nb, particle_chi, gamma, state_1, state_2, random_number, seed_curand_1, seed_curand_2) \
+            #pragma acc loop gang worker vector private(emission_time, local_it_time, mc_it_nb, particle_chi, gamma,  random_number, seed_curand_1, seed_curand_2) \
         reduction(+:radiated_energy_loc) 
+        
+        smilei::gpu::Random rand_1;
+        smilei::gpu::Random rand_2;
+        
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
@@ -259,9 +262,11 @@ void RadiationMonteCarlo::operator()(
 			            seed_curand_1 = (int) (ipart+1)*(initial_seed_1+1); //Seed for linear generator
                 	    seed_curand_1 = (a * seed_curand_1 + c) % m; //Linear generator
                		
-			            hiprand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
-			
-			            random_number = hiprand_uniform(&state_1); //Generating number
+			            smilei::gpu::Random::init(seed_curand_1, seq, offset, &rand_1.state); //Cuda generator initialization
+			            // hiprand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
+                        
+                        random_number = smilei::gpu::Random::uniform(&rand_1.state); //Generating number
+			            // random_number = hiprand_uniform(&state_1); //Generating number
                         
 			            tau[ipart] = -log( 1.- random_number );
 			            initial_seed_1 = random_number;
@@ -296,9 +301,14 @@ void RadiationMonteCarlo::operator()(
 			            seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
               		    seed_curand_2 = (a * seed_curand_2 + c) % m; //Linear generator
 
-        	            hiprand_init(seed_curand_2, seq, offset, &state_2); //Cuda generator initialization
+                        // hiprand_init(seed_curand_2, seq, offset, &state_2); //Cuda generator initialization
+                        // 
+                        // random_number = hiprand_uniform(&state_2); //Generating number
+                        
+        	            smilei::gpu::Random::init(seed_curand_2, seq, offset, &rand_2.state); //Cuda generator initialization
 	
-                        random_number = hiprand_uniform(&state_2); //Generating number
+                        random_number = smilei::gpu::Random::uniform(&rand_2.state); //Generating number
+                        
                     #endif
 
                     // Emission of a photon

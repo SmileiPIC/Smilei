@@ -3,4 +3,4 @@
 # Compilation with the Intel compiler
 # __________________________________________________________
 
-CXXFLAGS += -xMIC-AVX512 -ip -inline-factor=1000 -D__INTEL_KNL_7250 -qopt-zmm-usage=high -fno-alias #-ipo
+CXXFLAGS += -march=knl -xMIC-AVX512 -ip -inline-factor=1000 -D__INTEL_KNL_7250 -qopt-zmm-usage=high -fno-alias #-ipo

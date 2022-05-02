@@ -141,6 +141,7 @@ void Interpolator2D2Order::fieldsWrapper(   ElectroMagn *EMfields,
                                             int *istart,
                                             int *iend,
                                             int ithread,
+                                            unsigned int scell,
                                             int ipart_ref )
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
