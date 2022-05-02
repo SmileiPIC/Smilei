@@ -133,7 +133,6 @@ void RadiationNiel::operator()(
     const double minimum_chi_continuous = RadiationTables.getMinimumChiContinuous();
     const double factor_classical_radiated_power      = RadiationTables.getFactorClassicalRadiatedPower();
     const int niel_computation_method = RadiationTables.getNielHComputationMethodIndex();
-    const int size_of_table_Niel = RadiationTables.niel_.size_particle_chi_;
 
     // Parameter to store the local radiated energy
     double radiated_energy_loc = 0;
@@ -141,6 +140,9 @@ void RadiationNiel::operator()(
     
     // Parameters for linear alleatory number generator
     #ifdef _GPU
+    
+        // Size of Niel table
+        const int size_of_table_Niel = RadiationTables.niel_.size_particle_chi_;
     
         // Initialize initial seed for linear generator
         double initial_seed = rand_->uniform();
