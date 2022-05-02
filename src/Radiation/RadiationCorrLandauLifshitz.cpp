@@ -72,11 +72,8 @@ void RadiationCorrLandauLifshitz::operator()(
     double * __restrict__ By = &( ( *Bpart )[1*nparts] );
     double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
-    // Charge divided by the square of the mass
-    double charge_over_mass_square;
-
     // 1/mass^2
-    const double one_over_mass_square = one_over_mass_*one_over_mass_;
+    const double one_over_mass_square = one_over_mass_ * one_over_mass_;
 
     // Temporary quantum parameter
     double particle_chi;
@@ -223,8 +220,8 @@ void RadiationCorrLandauLifshitz::operator()(
     #pragma omp simd private(gamma)
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 #endif
-    
-        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+        // Charge divided by the square of the mass
+        const double charge_over_mass_square = ( double )( charge[ipart] ) * one_over_mass_square;
 
         // Gamma
         gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
