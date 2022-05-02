@@ -25,76 +25,61 @@ void PusherBorisNR::operator()( Particles &particles, SmileiMPI *smpi, int istar
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
+    const int nparts = vecto ? Epart->size() / 3 :
+                               particles.last_index.back(); // particles.size()
 
-    int nparts;
-    if (vecto) {
-        nparts = Epart->size()/3;
-    } else {
-        nparts = particles.size();
-    }
-    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
-    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
-    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
-    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
-    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
-    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
+    const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    const double *const __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
+    const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
-    double* __restrict__ position_x = particles.getPtrPosition(0);
-    double* __restrict__ position_y = NULL;
-    double* __restrict__ position_z = NULL;
-    if (nDim_>1) {
-        position_y = particles.getPtrPosition(1);
-        if (nDim_>2) {
-            position_z = particles.getPtrPosition(2);
-        }
-    }
+    double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
+    double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
 
-    double* __restrict__ momentum_x = particles.getPtrMomentum(0);
-    double* __restrict__ momentum_y = particles.getPtrMomentum(1);
-    double* __restrict__ momentum_z = particles.getPtrMomentum(2);
+    double *const __restrict__ momentum_x = particles.getPtrMomentum( 0 );
+    double *const __restrict__ momentum_y = particles.getPtrMomentum( 1 );
+    double *const __restrict__ momentum_z = particles.getPtrMomentum( 2 );
 
-    short * __restrict__ charge = particles.getPtrCharge();
-
-    double charge_over_mass ;
-    double umx, umy, umz;
-    double upx, upy, upz;
-    double alpha;
-    double Tx, Ty, Tz;
-    double T2;
-    double Sx, Sy, Sz;
+    const short *__restrict__ charge = particles.getPtrCharge();
 
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
-        charge_over_mass = (double)( charge[ipart] ) *one_over_mass_;
-        alpha = charge_over_mass*dts2;
+        const int ipart2 = ipart - ipart_buffer_offset;
+
+        const double charge_over_mass = ( double )( charge[ipart] )*one_over_mass_;
+        
+        double alpha = charge_over_mass*dts2;
 
         // uminus = v + q/m * dt/2 * E
-        umx = momentum_x[ipart] * one_over_mass_ + alpha * ( Ex[ipart-ipart_buffer_offset] );
-        umy = momentum_y[ipart] * one_over_mass_ + alpha * ( Ey[ipart-ipart_buffer_offset] );
-        umz = momentum_z[ipart] * one_over_mass_ + alpha * ( Ez[ipart-ipart_buffer_offset] );
+        const double umx = momentum_x[ipart] * one_over_mass_ + alpha * ( Ex[ipart2] );
+        const double umy = momentum_y[ipart] * one_over_mass_ + alpha * ( Ey[ipart2] );
+        const double umz = momentum_z[ipart] * one_over_mass_ + alpha * ( Ez[ipart2] );
 
         // Rotation in the magnetic field
 
-        Tx    = alpha * ( Bx[ipart-ipart_buffer_offset] );
-        Ty    = alpha * ( By[ipart-ipart_buffer_offset] );
-        Tz    = alpha * ( Bz[ipart-ipart_buffer_offset] );
+        const double Tx    = alpha * ( Bx[ipart2] );
+        const double Ty    = alpha * ( By[ipart2] );
+        const double Tz    = alpha * ( Bz[ipart2] );
 
-        T2 = Tx*Tx + Ty*Ty + Tz*Tz;
+        const double T2 = Tx*Tx + Ty*Ty + Tz*Tz;
 
-        Sx = 2*Tx/( 1.+T2 );
-        Sy = 2*Ty/( 1.+T2 );
-        Sz = 2*Tz/( 1.+T2 );
+        const double Sx = 2*Tx/( 1.+T2 );
+        const double Sy = 2*Ty/( 1.+T2 );
+        const double Sz = 2*Tz/( 1.+T2 );
 
         // uplus = uminus + uprims x S
-        upx = umx + umy*Sz - umz*Sy;
-        upy = umy + umz*Sx - umx*Sz;
-        upz = umz + umx*Sy - umy*Sx;
+        const double upx = umx + umy*Sz - umz*Sy;
+        const double upy = umy + umz*Sx - umx*Sz;
+        const double upz = umz + umx*Sy - umy*Sx;
 
 
-        momentum_x[ipart] = mass_ * ( upx + alpha*( Ex[ipart-ipart_buffer_offset] ) );
-        momentum_y[ipart] = mass_ * ( upy + alpha*( Ey[ipart-ipart_buffer_offset] ) );
-        momentum_z[ipart] = mass_ * ( upz + alpha*( Ez[ipart-ipart_buffer_offset] ) );
+        momentum_x[ipart] = mass_ * ( upx + alpha*( Ex[ipart2] ) );
+        momentum_y[ipart] = mass_ * ( upy + alpha*( Ey[ipart2] ) );
+        momentum_z[ipart] = mass_ * ( upz + alpha*( Ez[ipart2] ) );
 
         // Move the particle
         position_x[ipart] += dt * momentum_x[ipart];
