@@ -433,7 +433,7 @@ namespace smilei {
                 }
                 return a_device_pointer;
 #elif defined( _GPU )
-                return ::acc_deviceptr( a_host_pointer );
+                return static_cast<T*>( ::acc_deviceptr( a_host_pointer ) );
 #else
                 return a_host_pointer;
 #endif

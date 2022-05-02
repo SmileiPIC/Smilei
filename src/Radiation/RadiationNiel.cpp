@@ -16,16 +16,7 @@
 
 #include "RadiationNiel.h"
 
-#if defined(_GPU)
-    #define __HIP_PLATFORM_NVCC__
-    #define __HIP_PLATFORM_NVIDIA__
-    #include "gpuRandom.h"
-#elif defined(SMILEI_ACCELERATOR_GPU_OMP)
-    #define __HIP_PLATFORM_HCC__
-    #define __HIP_PLATFORM_AMD__
-    #include "gpuRandom.h"
-#endif
-
+#include "gpuRandom.h"
 
 // -----------------------------------------------------------------------------
 //! Constructor for RadiationNLL
@@ -140,17 +131,17 @@ void RadiationNiel::operator()(
     
     // Parameters for linear alleatory number generator
     #ifdef _GPU
-    
+
         // Size of Niel table
         const int size_of_table_Niel = RadiationTables.niel_.size_particle_chi_;
-    
+
         // Initialize initial seed for linear generator
         double initial_seed = rand_->uniform();
-        int seed_curand;
-    
+        int    seed_curand;
+
         const int a = 1664525;
         const int c = 1013904223;
-        const int m = std::pow(2,32);
+        const int m = std::pow( 2, 32 );
     #endif
     
     // _______________________________________________________________
@@ -177,9 +168,7 @@ void RadiationNiel::operator()(
             unsigned long long seq;
             unsigned long long offset;
             
-            smilei::gpu::Random rand;
-            //curandState_t state;
-            //hiprandState_t state;
+            smilei::tools::gpu::Random rand;
 
             seed = 12345ULL;
             seq = 0ULL;
@@ -214,12 +203,9 @@ void RadiationNiel::operator()(
 
 		        seed_curand = (int) (ipart+1)*(initial_seed+1); //Seed for linear generator
 		        seed_curand = (a * seed_curand + c) % m; //Linear generator
-    
-                smilei::gpu::Random::init(seed_curand, seq, offset, &rand.state); //Cuda generator
-                //hiprand_init(seed_curand, seq, offset, &state); //Cuda generator initialization     
-    
-                random_numbers[ipart - istart] = 2*smilei::gpu::Random::uniform(&rand.state) - 1; //Generating number
-                //random_numbers[ipart - istart] = 2*hiprand_uniform(&state) - 1; //Generating number
+
+                rand.init( seed_curand, seq, offset );                         // Cuda generator
+                random_numbers[ipart - istart] = 2 * rand.uniform( rand ) - 1; // Generating number
 
                 temp = -std::log( ( 1.0-random_numbers[ipart - istart] )*( 1.0+random_numbers[ipart - istart] ) );
 
