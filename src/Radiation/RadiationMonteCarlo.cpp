@@ -166,7 +166,7 @@ void RadiationMonteCarlo::operator()(
                 // New final optical depth to reach for emision
                 while( tau[ipart] <= epsilon_tau_ ) {
                     //tau[ipart] = -log( 1.-Rand::uniform() );
-                    tau[ipart] = -log( 1.-rand_->uniform() );
+                    tau[ipart] = -std::log( 1.-rand_->uniform() );
                 }
 
             }
