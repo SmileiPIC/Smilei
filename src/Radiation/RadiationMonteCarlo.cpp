@@ -154,7 +154,7 @@ void RadiationMonteCarlo::operator()(
             // If tau[ipart] <= 0, this is a new emission
             // We also check that particle_chi > chipa_threshold,
             // else particle_chi is too low to induce a discontinuous emission
-            if( ( particle_chi > minimum_chi_continuous )
+            if( ( particle_chi > minimum_chi_discontinuous )
                     && ( tau[ipart] <= epsilon_tau_ ) ) {
                 // New final optical depth to reach for emision
                 while( tau[ipart] <= epsilon_tau_ ) {
