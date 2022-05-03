@@ -1,8 +1,15 @@
 #ifndef SMILEI_TOOLS_GPU_H
 #define SMILEI_TOOLS_GPU_H
 
+#include <cstdlib>
 #include <cstring>
 #include <type_traits>
+
+#if defined( SMILEI_ACCELERATOR_GPU_OMP )
+    #include <omp.h>
+#elif defined( _GPU )
+    #include <openacc.h>
+#endif
 
 #include "Tools.h"
 
