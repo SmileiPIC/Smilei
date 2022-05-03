@@ -25,7 +25,7 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler( Params &params, Species *speci
     dt_    = params.timestep;
 
     // Normalized Schwinger Electric Field
-    norm_E_Schwinger_ = params.electron_mass*params.c_vacuum*params.c_vacuum
+    norm_E_Schwinger_ = params.electron_mass*params.c_vacuum_*params.c_vacuum_
                         / ( params.red_planck_cst*params.reference_angular_frequency_SI );
 
     // Inverse of norm_E_Schwinger_

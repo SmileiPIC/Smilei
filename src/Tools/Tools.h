@@ -171,5 +171,20 @@ public:
 #define PATH_SEPARATOR "/"
 #endif
 
+//////////////////////////////////////
+/// @def SMILEI_UNUSED
+///
+/// Prevent a compiler warning for an unused variable.
+/// It is usefull when a lot of conditional compilation is used (#if XXX then compile code for ARM #else for x86 #endif).
+/// This has no performance overhead.
+///
+/// Example usage:
+///
+///     int a;
+///     SMILEI_UNUSED(a); // Without this macro, it would trigger a "variable unused" warning
+///     return;
+///
+//////////////////////////////////////
+#define SMILEI_UNUSED( an_arg ) static_cast<void>( an_arg )
 
 #endif

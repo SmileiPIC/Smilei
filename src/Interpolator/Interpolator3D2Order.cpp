@@ -135,52 +135,64 @@ void Interpolator3D2Order::oneField( Field **field, Particles &particles, int *i
 
 void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, unsigned int scell, int ipart_ref )
 {
-    double *ELoc = &( smpi->dynamics_Epart[ithread][0] );
-    double *BLoc = &( smpi->dynamics_Bpart[ithread][0] );
+    double *const __restrict__ ELoc = &( smpi->dynamics_Epart[ithread][0] );
+    double *const __restrict__ BLoc = &( smpi->dynamics_Bpart[ithread][0] );
 
-    int*     iold = &( smpi->dynamics_iold    [ithread][0] );
-    double* delta = &( smpi->dynamics_deltaold[ithread][0] );
+    int    *const __restrict__ iold     = &( smpi->dynamics_iold[ithread][0] );
+    double *const __restrict__ delta = &( smpi->dynamics_deltaold[ithread][0] );
 
-    double* position_x = particles.getPtrPosition(0);
-    double* position_y = particles.getPtrPosition(1);
-    double* position_z = particles.getPtrPosition(2);
+    const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
+    const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
 
     // Static cast of the electromagnetic fields
-    double* Ex3D = EMfields->Ex_->data_;
-    double* Ey3D = EMfields->Ey_->data_;
-    double* Ez3D = EMfields->Ez_->data_;
-    double* Bx3D = EMfields->Bx_m->data_;
-    double* By3D = EMfields->By_m->data_;
-    double* Bz3D = EMfields->Bz_m->data_;
+    const double *const __restrict__ Ex3D = EMfields->Ex_->data_;
+    const double *const __restrict__ Ey3D = EMfields->Ey_->data_;
+    const double *const __restrict__ Ez3D = EMfields->Ez_->data_;
+    const double *const __restrict__ Bx3D = EMfields->Bx_m->data_;
+    const double *const __restrict__ By3D = EMfields->By_m->data_;
+    const double *const __restrict__ Bz3D = EMfields->Bz_m->data_;
 
-    int sizeofEx = EMfields->Ex_->globalDims_;
-    int sizeofEy = EMfields->Ey_->globalDims_;
-    int sizeofEz = EMfields->Ez_->globalDims_;
-    int sizeofBx = EMfields->Bx_m->globalDims_;
-    int sizeofBy = EMfields->By_m->globalDims_;
-    int sizeofBz = EMfields->Bz_m->globalDims_;
+#ifdef _GPU
+    const int sizeofEx = EMfields->Ex_->globalDims_;
+    const int sizeofEy = EMfields->Ey_->globalDims_;
+    const int sizeofEz = EMfields->Ez_->globalDims_;
+    const int sizeofBx = EMfields->Bx_m->globalDims_;
+    const int sizeofBy = EMfields->By_m->globalDims_;
+    const int sizeofBz = EMfields->Bz_m->globalDims_;
+#endif
 
-    int nx_p = EMfields->Bx_m->dims_[0];
-    int ny_p = EMfields->By_m->dims_[1];
-    int nz_p = EMfields->Bz_m->dims_[2];
-    int nx_d = nx_p+1;
-    int ny_d = ny_p+1;
-    int nz_d = nz_p+1;
+    const int nx_p = EMfields->Bx_m->dims_[0];
+    const int ny_p = EMfields->By_m->dims_[1];
+    const int nz_p = EMfields->Bz_m->dims_[2];
+    const int nx_d = nx_p + 1;
+    const int ny_d = ny_p + 1;
+    const int nz_d = nz_p + 1;
 
-    //Loop on bin particles
-    int nparts = particles.last_index.back();
+    // Number of particles
+    // const int nparts( particles.size() );
+    const int nparts = particles.last_index.back();
+    
+    // CCE 13 implementation of OpenMP (as of 2022/04/07) does not like
+    // dereferenced ptrs in the for loop's condition.
+    const int first_index = *istart;
+    const int last_index  = *iend;
+    
 #ifdef _GPU
     #pragma acc parallel present(ELoc[0:3*nparts],BLoc[0:3*nparts],iold[0:3*nparts],delta[0:3*nparts],Ex3D[0:sizeofEx],Ey3D[0:sizeofEy],Ez3D[0:sizeofEz],Bx3D[0:sizeofBx],By3D[0:sizeofBy],Bz3D[0:sizeofBz]) deviceptr(position_x,position_y,position_z)
     #pragma acc loop gang worker vector
 #endif
-    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+    
+    // loop on particles from istart to iend
+    for( int ipart=first_index ; ipart<last_index; ipart++ ) {
+
 
         //Interpolation on current particle
 
         // Normalized particle position
-        double xpn = position_x[ ipart ]*d_inv_[0];
-        double ypn = position_y[ ipart ]*d_inv_[1];
-        double zpn = position_z[ ipart ]*d_inv_[2];
+        const double xpn = position_x[ ipart ]*d_inv_[0];
+        const double ypn = position_y[ ipart ]*d_inv_[1];
+        const double zpn = position_z[ ipart ]*d_inv_[2];
         // Calculate coeffs
 
         int idx_p[3], idx_d[3];

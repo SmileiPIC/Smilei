@@ -69,10 +69,11 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     double *weight = particles.getPtrWeight();
 
     int nparts = particles.last_index.back();
-
+#ifndef _GPU
     int sizeofEx = EMfields->Jx_->globalDims_;
     int sizeofEy = EMfields->Jy_->globalDims_;
     int sizeofEz = EMfields->Jz_->globalDims_;
+#endif
 
     if (iend==istart)
         return;
@@ -115,9 +116,9 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     
             // (x,y,z) components of the current density for the macro-particle
             double charge_weight = inv_cell_volume * ( double )( charge[ ipart ] )*weight[ ipart ];
-            double crx_p = charge_weight*dx_ov_dt;
-            double cry_p = charge_weight*dy_ov_dt;
-            double crz_p = charge_weight*dz_ov_dt;
+            // double crx_p = charge_weight*dx_ov_dt;
+            // double cry_p = charge_weight*dy_ov_dt;
+            // double crz_p = charge_weight*dz_ov_dt;
     
             // variable declaration
             double xpn, ypn, zpn;
@@ -779,10 +780,10 @@ void Projector3D2OrderGPU::currentsAndDensityWrapper( ElectroMagn *EMfields, Par
         }
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
-        double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
-        double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
-        double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+        // double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
+        // double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
+        // double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
+        // double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
         currents( EMfields, particles, istart, iend, &( *invgf )[0], &( *iold )[0], &( *delta )[0] );
         //for( int ipart=istart ; ipart<iend; ipart++ ) {
         //    currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
