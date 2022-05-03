@@ -232,7 +232,7 @@ public:
                     solver = new PML_SolverAM_Envelope( params );
                 }
                 else if (params.envelope_solver == "explicit_reduced_dispersion") {
-                    ERROR( "PML configuration not implemented yet" );
+                    solver = new PML_SolverAM_Envelope( params ); // Be carefull for now, it's not the explicit solver in PML
                 }
                 else {
                     ERROR( "PML configuration not implemented" );

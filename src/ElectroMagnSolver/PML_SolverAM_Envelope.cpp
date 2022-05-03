@@ -247,9 +247,9 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         // R-direction
         for ( int j=0 ; j<startpml ; j++ ) {
             // Coeffs for the first cell
-            kappa_r_p[j] = 0.7 ;
+            kappa_r_p[j] = 0.90 ;
             sigma_r_p[j] = 0. ;
-            alpha_r_p[j] = 0. ;
+            alpha_r_p[j] = alpha_cr ;
             kappa_prime_r_p[j] = 0. ;
             sigma_prime_r_p[j] = 0. ;
             alpha_prime_r_p[j] = 0. ;
@@ -260,7 +260,7 @@ void PML_SolverAM_Envelope::setDomainSizeAndCoefficients( int iDim, int min_or_m
         // Params for other cells (PML Media) when i>=3
         for ( int j=startpml; j<nr_p ; j++ ) {
             // Parameters
-            kappa_r_p[j] = 0.7 + (kappa_r_max - 1.) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
+            kappa_r_p[j] = 0.90 + (kappa_r_max - 1.) * pow( (j-startpml)*dr , power_pml_kappa_r ) / pow( length_r_pml , power_pml_kappa_r ) ;
             sigma_r_p[j] = sigma_r_max * pow( (j-startpml)*dr , power_pml_sigma_r ) / pow( length_r_pml , power_pml_sigma_r ) ;
             alpha_r_p[j] = alpha_cr + alpha_r_max * (1. - pow( (j-startpml)*dr , power_pml_alpha_r ) / pow( length_r_pml , power_pml_alpha_r ) );
             // Derivatives

@@ -35,7 +35,7 @@ EnvelopeBCAM_PML::EnvelopeBCAM_PML( Params &params, Patch *patch, unsigned int i
         nsolver=4;
     }
     else if (params.envelope_solver == "explicit_reduced_dispersion"){
-        nsolver=2;
+        nsolver=4;
     }
     else {
         WARNING("The solver you use in the main domain for envelope is not the same as in the PML region.");
