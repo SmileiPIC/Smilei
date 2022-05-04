@@ -7,6 +7,8 @@ class MachineAdastra(Machine):
     Adastra porting machines. The real Adastra environment should not change much.
     """
 
+    # If you are editing this file, be carful with the python format brackets '{' '}'.
+    # You may need to escape some.
     the_slurm_script = """#!/bin/bash
 #SBATCH --job-name=smilei_validation
 #SBATCH --nodes={the_node_count}               # Number of nodes
@@ -21,41 +23,67 @@ class MachineAdastra(Machine):
 # # --feature=MI200
 # #SBATCH --gpus=mi100:1 or mi200:1
 
-echo "Date              = $(date)";
-echo "Hostname          = $(hostname -s)";
-echo "Working Directory = $(pwd)";
-echo "";
-echo "Number of Nodes Allocated      = $SLURM_JOB_NUM_NODES";
-echo "Number of Tasks Allocated      = $SLURM_NTASKS";
-echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK";
+echo "Date              = $(date)"
+echo "Hostname          = $(hostname -s)"
+echo "Working Directory = $(pwd)"
+echo ""
+echo "Number of Nodes Allocated      = $SLURM_JOB_NUM_NODES"
+echo "Number of Tasks Allocated      = $SLURM_NTASKS"
+echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 
 # We should need only that to run the rest is loaded by default
-module load rocm/4.5.0;
+module load rocm/4.5.0
 
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK;
-export OMP_SCHEDULE=dynamic;
+# Info on the node
+rocm-smi
+rocminfo
+
+# Omp tuning
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export OMP_SCHEDULE=dynamic
 # You may want to change "cores", to "threads". But hyperthreading, for an well 
 # optimized apps is generally not something you want (ROB buffer should be full).
-export OMP_PLACES=cores;
+export OMP_PLACES=cores
 
-rocm-smi;
-rocminfo;
+# Omp target debug
+export CRAY_ACC_DEBUG=0
 
-export CRAY_ACC_DEBUG=0;
+LaunchSRun() {{
+    module list
 
-# rocprof --hip-trace {a_task_command} > {the_output_file} 2>&1;
+    srun $1 ${{@:2}} > {the_output_file} 2>&1
+}}
 
-{a_task_command} > {the_output_file} 2>&1;
+# You must have built smilei with the 'perftools' module loaded!
+LaunchSRunPatProfile() {{
+    module load perftools-base/21.12.0
+    module load perftools
 
-kRETVAL=$?;
+    export PAT_RT_MPI_THREAD_REQUIRED=3
+
+    # Assuming "$1" is an executable
+    pat_build -g hip,io,mpi,cuda $1 -o instrumented_executable
+
+    LaunchSRun instrumented_executable ${{@:2}}
+}}
+
+LaunchRocmProfile() {{
+    exit 42
+}}
+
+# LaunchSRun {a_task_command} {a_task_command_arguments}
+LaunchSRunPatProfile {a_task_command} {a_task_command_arguments}
+# LaunchRocmProfile
+
+kRETVAL=$?
 
 # Put the result in the slurm output file.
-cat {the_output_file};
+cat {the_output_file}
 
-echo "The task ended at = $(date)";
+echo "The task ended at = $(date)"
 
-echo -n $kRETVAL > exit_status_file;
-exit $kRETVAL;
+echo -n $kRETVAL > exit_status_file
+exit $kRETVAL
 """
 
     def __init__(self, smilei_path, options):
