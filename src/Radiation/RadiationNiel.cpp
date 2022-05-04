@@ -66,18 +66,15 @@ void RadiationNiel::operator()(
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
     int nparts = Epart->size()/3;
-    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
-    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
-    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
-    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
-    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
-    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
+    const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    const double *const __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
+    const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
     // Used to store gamma directly
-    double * __restrict__ gamma = &( smpi->dynamics_invgf[ithread][0] );
-
-    // Charge divided by the square of the mass
-    double charge_over_mass_square = 0.;
+    double *const __restrict__ gamma = &( smpi->dynamics_invgf[ithread][0] );
 
     // 1/mass^2
     const double one_over_mass_square = one_over_mass_*one_over_mass_;
@@ -98,25 +95,25 @@ void RadiationNiel::operator()(
     // Radiated energy
     double rad_energy;
 
-    // Stochastic diffusive term fo Niel et al.
+    // Stochastic diffusive term for Niel et al.
     double diffusion[nbparticles];
 
     // Random Number
     double random_numbers[nbparticles];
 
     // Momentum shortcut
-    double* __restrict__ momentum_x = particles.getPtrMomentum(0);
-    double* __restrict__ momentum_y = particles.getPtrMomentum(1);
-    double* __restrict__ momentum_z = particles.getPtrMomentum(2);
+    double*const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double*const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double*const __restrict__ momentum_z = particles.getPtrMomentum(2);
 
     // Charge shortcut
-    short* __restrict__ charge = particles.getPtrCharge();
+    const short*const __restrict__ charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double* __restrict__ weight = particles.getPtrWeight();
+    const double*const __restrict__ weight = particles.getPtrWeight();
 
     // Quantum parameter
-    double* __restrict__ particle_chi = particles.getPtrChi();
+    double*const __restrict__ particle_chi = particles.getPtrChi();
 
     // Niel table
     double* table = &(RadiationTables.niel_.table_[0]);
@@ -179,7 +176,7 @@ void RadiationNiel::operator()(
    	 #endif
         for( ipart=istart ; ipart< iend; ipart++ ) {
 
-            charge_over_mass_square = (double)charge[ipart]*one_over_mass_square;
+        const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
             // Gamma
             gamma[ipart-ipart_ref] = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
@@ -413,16 +410,14 @@ void RadiationNiel::operator()(
     // Vectorized computation of the thread radiated energy
     // and update of the quantum parameter
 
-    new_gamma = 0;
-
     #ifndef _GPU
         #pragma omp simd private(new_gamma) reduction(+:radiated_energy_loc)
         for( int ipart=istart ; ipart<iend; ipart++ ) {
     #endif
 
-            charge_over_mass_square = (double)charge[ipart]*one_over_mass_square;
+            const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
-            new_gamma = std::sqrt( 1.0
+            const double new_gamma = std::sqrt( 1.0
                            + momentum_x[ipart]*momentum_x[ipart]
                            + momentum_y[ipart]*momentum_y[ipart]
                            + momentum_z[ipart]*momentum_z[ipart] );

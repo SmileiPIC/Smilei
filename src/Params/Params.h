@@ -12,7 +12,6 @@
 #undef _XOPEN_SOURCE
 
 #include "Timer.h"
-#include "codeConstants.h"
 
 #include <vector>
 #include <string>
@@ -359,7 +358,7 @@ public:
     const double electron_mass = 9.109382616e-31;
 
     //! Speed of light in vacuum (m/s)
-    const double c_vacuum = 299792458;
+    const double c_vacuum_ = 299792458;
 
     //! passing named command to python
     void runScript( std::string command, std::string name, PyObject * );
@@ -367,6 +366,7 @@ public:
     //! Characters width for timestep output
     unsigned int timestep_width;
 
+    //! flag that tells if cell_sorting is activated
     bool cell_sorting_;
     
     //! For gpu branch compatibility, not used for the moment
