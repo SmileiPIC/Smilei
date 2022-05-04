@@ -69,7 +69,7 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
     double *weight = particles.getPtrWeight();
 
     int nparts = particles.last_index.back();
-#ifndef _GPU
+#ifdef _GPU
     int sizeofEx = EMfields->Jx_->globalDims_;
     int sizeofEy = EMfields->Jy_->globalDims_;
     int sizeofEz = EMfields->Jz_->globalDims_;
