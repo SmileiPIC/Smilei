@@ -182,6 +182,26 @@ namespace smilei {
 
 
             ////////////////////////////////////////////////////////////////////////////////
+            // Macros
+            ////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////
+/// @def SMILEI_GPU_ASSERT_MEMORY_ON_DEVICE
+///
+/// Makes sure the host pointer is mapped on the device through OpenACC/OpenMP.
+/// This can be used to simulate the present() clause of OpenACC in an OpenMP
+/// context. There is not present() clause in OpenMP
+///
+/// Example usage:
+///
+///    #pragma omp target teams distribute parallel for
+///    for(...) { ... }
+///
+//////////////////////////////////////
+#define SMILEI_GPU_ASSERT_MEMORY_ON_DEVICE( a_host_pointer ) SMILEI_ASSERT( smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( a_host_pointer ) )
+
+
+            ////////////////////////////////////////////////////////////////////////////////
             // NonInitializingVector methods definition
             ////////////////////////////////////////////////////////////////////////////////
 
@@ -206,14 +226,13 @@ namespace smilei {
                       bool do_device_free>
             void NonInitializingVector<T, do_device_free>::HostAlloc( std::size_t size )
             {
-                if( size_ != 0 || data_ != nullptr ) {
-                    ERROR( "NonInitializingVector::Alloc, allocation before dealloc" );
-                }
+                SMILEI_ASSERT_VERBOSE( size_ == 0 && data_ == nullptr,
+                                       "NonInitializingVector::Alloc, allocation before deallocating." );
 
                 data_ = static_cast<T*>( std::malloc( sizeof( T ) * size ) );
-                if( data_ == nullptr ) {
-                    ERROR( "NonInitializingVector::Alloc, std::malloc() out of memory." );
-                }
+
+                SMILEI_ASSERT_VERBOSE( data_ != nullptr,
+                                       "NonInitializingVector::Alloc, std::malloc() out of memory." );
 
                 size_ = size;
             }

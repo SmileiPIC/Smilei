@@ -16,8 +16,11 @@ class MachineAdastra(Machine):
 #SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank
 #SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank
 #SBATCH --output=output
-#SBATCH --error=error
+#SBATCH --error=output                         # stderr and stdout in the same file
 #SBATCH --time={the_maximum_task_duration}
+
+# Dump all executed commands (very, VERY verbose)
+# set +x
 
 # TODO(Etienne M): dunno the partition/feature/constraints for adastra yet
 # # --feature=MI200
@@ -104,23 +107,24 @@ exit $kRETVAL
         # This will describe and schedule the tasks
         self.JOB = 'sbatch ' + self.smilei_path.exec_script
         # This'll start the tasks
-        self.RUN_COMMAND = 'srun ' + self.smilei_path.workdirs + '/smilei {the_arguments}'
+        self.RUN_COMMAND = self.smilei_path.workdirs + '/smilei'
         
         if self.options.nodes:
             self.NODES = self.options.nodes
         else:
-            self.NODES = int(ceil(self.options.mpi / 4))
+            # 4 MI200~GPUs per node. Each GPU contains 2 GCD
+            kGPUPerNode = 4 * 2
+            self.NODES = int(ceil(self.options.mpi / kGPUPerNode))
 
     def run(self, arguments, dir):
         """
         Run a simulation
         """
 
-        the_command = self.RUN_COMMAND.format(the_arguments=arguments)
-
         # Write the slurm script
         with open(self.smilei_path.exec_script, 'w') as f:
-            f.write(self.the_slurm_script.format(a_task_command=the_command, 
+            f.write(self.the_slurm_script.format(a_task_command=self.RUN_COMMAND, 
+                                                 a_task_command_arguments=arguments, 
                                                  the_node_count=self.NODES, 
                                                  the_mpi_process_count=self.options.mpi, 
                                                  the_maximum_task_duration=self.options.max_time, 
@@ -129,7 +133,7 @@ exit $kRETVAL
                                                  the_gpu_count='1' if 'gpu_amd' in self.options.compile_mode else '0'))
 
         # Schedule the task(s)
-        self.launch_job(the_command, 
+        self.launch_job(self.RUN_COMMAND + ' ' + arguments, 
                         self.JOB, 
                         dir, 
                         self.options.max_time_seconds, 

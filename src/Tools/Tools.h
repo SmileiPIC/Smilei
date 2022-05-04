@@ -188,4 +188,47 @@ public:
 //////////////////////////////////////
 #define SMILEI_UNUSED( an_arg ) static_cast<void>( an_arg )
 
+
+//////////////////////////////////////
+/// @def SMILEI_ASSERT
+/// @def SMILEI_ASSERT_VERBOSE
+///
+/// Use this macro to assert a condition.
+/// One amy disable assertions by defining SMILEI_NO_ASSERTION before including
+/// this header (generaly you do that before any include). ie:
+/// #define SMILEI_NO_ASSERTION 1
+/// #include <XX.h>
+/// <all my other includes>...
+///
+/// Example usage:
+///
+///     SMILEI_ASSERT(x > 10);
+///     SMILEI_ASSERT_VERBOSE(<someyhing that should always be true>,
+///                           "Something is not true !");
+///
+//////////////////////////////////////
+#if defined( SMILEI_NO_ASSERTION )
+    #define SMILEI_ASSERT( an_expression ) \
+        do {                               \
+        } while( false )
+
+    #define SMILEI_ASSERT2( an_expression, a_comment ) \
+        do {                                           \
+        } while( false )
+#else
+    #define SMILEI_ASSERT( an_expression ) \
+        do {                               \
+            if( !( an_expression ) ) {     \
+                ERROR( #an_expression );   \
+            }                              \
+        } while( false )
+
+    #define SMILEI_ASSERT_VERBOSE( an_expression, a_comment ) \
+        do {                                                  \
+            if( !( an_expression ) ) {                        \
+                ERROR( #an_expression " " a_comment );        \
+            }                                                 \
+        } while( false )
+#endif
+
 #endif
