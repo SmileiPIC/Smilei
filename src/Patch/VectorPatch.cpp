@@ -4446,6 +4446,12 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
             Species *spec = species( ipatch, ispec );
             spec->particles->initializeDataOnDevice();
             spec->particles_to_move->initializeDataOnDevice();
+            
+            // Create photon species on the device
+            if ( species->radiation_model_ == "mc" && photon_species_) {
+                spec->Radiate->new_photons_->initializeDataOnDevice();
+            }
+            
             //#pragma acc enter data copyin(spec->nrj_radiation)
         }
 

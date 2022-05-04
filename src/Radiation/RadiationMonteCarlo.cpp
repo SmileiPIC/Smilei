@@ -512,7 +512,7 @@ double RadiationMonteCarlo::photonEmission( int ipart,
         int npart = new_photons_.size();
 
         // Inverse of the momentum norm
-        inv_old_norm_p = 1./sqrt( momentum_x[ipart]*momentum_x[ipart]
+        inv_old_norm_p = 1./std::sqrt( momentum_x[ipart]*momentum_x[ipart]
                                   + momentum_y[ipart]*momentum_y[ipart]
                                   + momentum_z[ipart]*momentum_z[ipart] );
 
@@ -554,7 +554,7 @@ double RadiationMonteCarlo::photonEmission( int ipart,
     // Addition of the emitted energy in the cumulating parameter
     // for the scalar diagnostics
     else {
-        gammaph = particle_gamma - sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+        gammaph = particle_gamma - std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                                          + momentum_y[ipart]*momentum_y[ipart]
                                          + momentum_z[ipart]*momentum_z[ipart] );
         radiated_energy += weight[ipart]*gammaph;
