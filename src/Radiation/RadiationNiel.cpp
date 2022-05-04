@@ -176,7 +176,8 @@ void RadiationNiel::operator()(
    	 #endif
         for( ipart=istart ; ipart< iend; ipart++ ) {
 
-        const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+
+            double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
             // Gamma
             gamma[ipart-ipart_ref] = std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
@@ -411,12 +412,12 @@ void RadiationNiel::operator()(
     // and update of the quantum parameter
 
     #ifndef _GPU
-        #pragma omp simd private(new_gamma) reduction(+:radiated_energy_loc)
+        #pragma omp simd reduction(+:radiated_energy_loc)
         for( int ipart=istart ; ipart<iend; ipart++ ) {
-    #endif
 
-            const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
-
+            const double
+#endif
+            charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
             const double new_gamma = std::sqrt( 1.0
                            + momentum_x[ipart]*momentum_x[ipart]
                            + momentum_y[ipart]*momentum_y[ipart]
