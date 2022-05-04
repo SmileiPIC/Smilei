@@ -71,8 +71,8 @@ LaunchRocmProfile() {{
     exit 42
 }}
 
-# LaunchSRun {a_task_command} {a_task_command_arguments}
-LaunchSRunPatProfile {a_task_command} {a_task_command_arguments}
+LaunchSRun {a_task_command} {a_task_command_arguments}
+# LaunchSRunPatProfile {a_task_command} {a_task_command_arguments}
 # LaunchRocmProfile
 
 kRETVAL=$?
