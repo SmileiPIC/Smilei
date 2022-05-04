@@ -19,6 +19,8 @@
 #include "ElectroMagnBC3D_PML.h"
 #include "ElectroMagnBCAM_PML.h"
 #include "EnvelopeBCAM_PML.h"
+#include "EnvelopeBC2D_PML.h"
+#include "EnvelopeBC3D_PML.h"
 #include "Field.h"
 
 #include "Species.h"
@@ -927,63 +929,103 @@ void SmileiMPI::recv( std::vector<double> *vec, int from, int tag )
 
 } // End recv
 
-template <typename Tpml>
+template <typename Tpml> //ElectroMagnBC2D_PML or ElectroMagnBC3D_PML
 void  SmileiMPI::send_PML(ElectroMagn *EM, Tpml embc, int bcId, int to, int &irequest, vector<MPI_Request> &requests, int tag, bool send_xmax_bc){
-                if (embc->Hx_) {
-                    if(!send_xmax_bc && bcId>1 && EM->isXmax){ //When not sending xmax_bc (MovingWindow), the size of the non longitudinal pml sent must be tailored on corner cases.
+    if (embc->Hx_) {
+        if(!send_xmax_bc && bcId>1 && EM->isXmax){ //When not sending xmax_bc (MovingWindow), the size of the non longitudinal pml sent must be tailored on corner cases.
 
-                        isend( embc->Hx_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+1) );
-                        irequest++;
-                        isend( embc->Hy_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+0)  );
-                        irequest++;
-                        isend( embc->Hz_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+1)  );
-                        irequest++;
-                        isend( embc->Bx_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+1)  );
-                        irequest++;
-                        isend( embc->By_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+0)  );
-                        irequest++;
-                        isend( embc->Bz_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+1)  );
-                        irequest++;
-                        isend( embc->Ex_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+0)  );
-                        irequest++;
-                        isend( embc->Ey_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+1)  );
-                        irequest++;
-                        isend( embc->Ez_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+0)  );
-                        irequest++;
-                        isend( embc->Dx_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+0)  );
-                        irequest++;
-                        isend( embc->Dy_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+1)  );
-                        irequest++;
-                        isend( embc->Dz_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+0)  );
-                        irequest++;
-                    } else {
-                        isend( embc->Hx_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                        isend( embc->Hy_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                        isend( embc->Hz_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                        isend( embc->Bx_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                        isend( embc->By_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                        isend( embc->Bz_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                        isend( embc->Ex_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                        isend( embc->Ey_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                        isend( embc->Ez_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                        isend( embc->Dx_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                        isend( embc->Dy_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                        isend( embc->Dz_, to, tag + irequest, requests[irequest] );
-                        irequest++;
-                    }
+            isend( embc->Hx_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+1) );
+            irequest++;
+            isend( embc->Hy_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+0)  );
+            irequest++;
+            isend( embc->Hz_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+1)  );
+            irequest++;
+            isend( embc->Bx_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+1)  );
+            irequest++;
+            isend( embc->By_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+0)  );
+            irequest++;
+            isend( embc->Bz_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+1)  );
+            irequest++;
+            isend( embc->Ex_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+0)  );
+            irequest++;
+            isend( embc->Ey_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+1)  );
+            irequest++;
+            isend( embc->Ez_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+0)  );
+            irequest++;
+            isend( embc->Dx_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+1));// * (ncells_pml_domain_yminmax+0)  );
+            irequest++;
+            isend( embc->Dy_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+1)  );
+            irequest++;
+            isend( embc->Dz_, to, tag+irequest, requests[irequest], (EM->dimPrim[0]+0));// * (ncells_pml_domain_yminmax+0)  );
+            irequest++;
+        } else {
+            isend( embc->Hx_, to, tag + irequest, requests[irequest] );
+            irequest++;
+            isend( embc->Hy_, to, tag + irequest, requests[irequest] );
+            irequest++;
+            isend( embc->Hz_, to, tag + irequest, requests[irequest] );
+            irequest++;
+            isend( embc->Bx_, to, tag + irequest, requests[irequest] );
+            irequest++;
+            isend( embc->By_, to, tag + irequest, requests[irequest] );
+            irequest++;
+            isend( embc->Bz_, to, tag + irequest, requests[irequest] );
+            irequest++;
+            isend( embc->Ex_, to, tag + irequest, requests[irequest] );
+            irequest++;
+            isend( embc->Ey_, to, tag + irequest, requests[irequest] );
+            irequest++;
+            isend( embc->Ez_, to, tag + irequest, requests[irequest] );
+            irequest++;
+            isend( embc->Dx_, to, tag + irequest, requests[irequest] );
+            irequest++;
+            isend( embc->Dy_, to, tag + irequest, requests[irequest] );
+            irequest++;
+            isend( embc->Dz_, to, tag + irequest, requests[irequest] );
+            irequest++;
+        }
+    }
+    // Envelope communication
+    if( dynamic_cast<EnvelopeBC2D_PML *>( EM->envelope->EnvBoundCond[bcId] ) /* EM->envelope!=NULL */ ) {
+        EnvelopeBC2D_PML *embcenv = static_cast<EnvelopeBC2D_PML *>( EM->envelope->EnvBoundCond[bcId] );
+
+        if (embcenv->A_n_ ) {
+            if(!send_xmax_bc && bcId>1 && EM->isXmax){ //When not sending xmax_bc (MovingWindow), the size of the non longitudinal pml sent must be tailored on corner cases.
+                isendComplex( embcenv->A_n_, to, tag+irequest, requests[irequest], EM->dimPrim[0] );
+                irequest++;
+                isendComplex( embcenv->A_nm1_, to, tag+irequest, requests[irequest], EM->dimPrim[0] );
+                irequest++;
+
+                isendComplex( embcenv->u1_nm1_y_, to, tag+irequest, requests[irequest], EM->dimPrim[0] );
+                irequest++;
+                isendComplex( embcenv->u2_nm1_y_, to, tag+irequest, requests[irequest], EM->dimPrim[0] );
+                irequest++;
+                isendComplex( embcenv->u3_nm1_y_, to, tag+irequest, requests[irequest], EM->dimPrim[0] );
+                irequest++;
+            } else {
+                isendComplex( embcenv->A_n_, to, tag+irequest, requests[irequest] );
+                irequest++;
+                isendComplex( embcenv->A_nm1_, to, tag+irequest, requests[irequest] );
+                irequest++;
+                if ((EM->isXmin || EM->isXmax) && send_xmax_bc){ //Sending Longitudinal PML in corners even for all bcId (except during Moving Window)
+                    isendComplex( embcenv->u1_nm1_x_, to, tag+irequest, requests[irequest] );
+                    irequest++;
+                    isendComplex( embcenv->u2_nm1_x_, to, tag+irequest, requests[irequest] );
+                    irequest++;
+                    isendComplex( embcenv->u3_nm1_x_, to, tag+irequest, requests[irequest] );
+                    irequest++;
                 }
-
+                if (bcId > 1) { //Sending Transverse PML
+                    isendComplex( embcenv->u1_nm1_y_, to, tag+irequest, requests[irequest] );
+                    irequest++;
+                    isendComplex( embcenv->u2_nm1_y_, to, tag+irequest, requests[irequest] );
+                    irequest++;
+                    isendComplex( embcenv->u3_nm1_y_, to, tag+irequest, requests[irequest] );
+                    irequest++;
+                }
+            }
+        }
+    }
 }
 
 void SmileiMPI::isend( ElectroMagn *EM, int to, int &irequest, vector<MPI_Request> &requests, int tag, bool send_xmax_bc )
@@ -1380,6 +1422,47 @@ int  SmileiMPI::recv_PML(ElectroMagn *EM, Tpml embc, int bcId, int from, int tag
                 recv( embc->Dz_, from, tag );
                 tag++;
             }
+    }
+    // Receive envelope communication
+    if( dynamic_cast<EnvelopeBC2D_PML *>( EM->envelope->EnvBoundCond[bcId] )  /* EM->envelope!=NULL*/  ) {
+        EnvelopeBC2D_PML *embcenv = static_cast<EnvelopeBC2D_PML *>( EM->envelope->EnvBoundCond[bcId] );
+        if (embcenv->A_n_) {
+            if(!recv_xmin_bc && bcId>1 && EM->isXmin){ //When not receiving xmin_bc (MovingWindow), the position of the pml received must be tailored on xmin for non longitudinal PML corner array.
+                recvComplexShifted( embcenv->A_n_, from, tag, embc->ncells_pml_xmin );
+                tag++;
+                recvComplexShifted( embcenv->A_nm1_, from, tag, embc->ncells_pml_xmin );
+                tag++;
+
+                recvComplexShifted( embcenv->u1_nm1_y_, from, tag, embc->ncells_pml_xmin );
+                tag++;
+                recvComplexShifted( embcenv->u2_nm1_y_, from, tag, embc->ncells_pml_xmin );
+                tag++;
+                recvComplexShifted( embcenv->u3_nm1_y_, from, tag, embc->ncells_pml_xmin );
+                tag++;
+
+            } else {
+                recvComplex( embcenv->A_n_, from, tag );
+                tag++;
+                recvComplex( embcenv->A_nm1_, from, tag );
+                tag++;
+                if ((EM->isXmin || EM->isXmax) && recv_xmin_bc){ //Receiving Longitudinal PML even for bcId=3 if on xmin or xmax except during Moving Window
+                    recvComplex( embcenv->u1_nm1_x_, from, tag );
+                    tag++;
+                    recvComplex( embcenv->u2_nm1_x_, from, tag );
+                    tag++;
+                    recvComplex( embcenv->u3_nm1_x_, from, tag );
+                    tag++;
+                }
+                if (bcId > 1) { //Receiving Transverse PML
+                    recvComplex( embcenv->u1_nm1_y_, from, tag );
+                    tag++;
+                    recvComplex( embcenv->u2_nm1_y_, from, tag );
+                    tag++;
+                    recvComplex( embcenv->u3_nm1_y_, from, tag );
+                    tag++;
+                }
+            }
+        }
     }
     return tag;
 }
