@@ -49,7 +49,7 @@ export OMP_SCHEDULE=dynamic
 export OMP_PLACES=cores
 
 # Omp target debug
-export CRAY_ACC_DEBUG=0
+# export CRAY_ACC_DEBUG=3
 
 LaunchSRun() {{
     module list
@@ -70,13 +70,21 @@ LaunchSRunPatProfile() {{
     LaunchSRun instrumented_executable ${{@:2}}
 }}
 
+# Try to use this profiling on only one GPU
 LaunchRocmProfile() {{
-    exit 42
+    # Kernel stats
+    echo 'pmc : VALUUtilization VALUBusy SALUBusy MemUnitBusy MemUnitStalled L2CacheHit Wavefronts' > hw_counters.txt
+    LaunchSRun rocprof -i hw_counters.txt      $1 ${{@:2}}
+    #            rocprof -i hw_counters.txt srun $1 ${{@:2}} > {the_output_file} 2>&1
+
+    # hip RT tracing
+    # LaunchSRun rocprof --hip-trace --trace-period 30s:30s:1m      $1 ${{@:2}}
+    #            rocprof --hip-trace --trace-period 30s:30s:1m srun $1 ${{@:2}} > {the_output_file} 2>&1
 }}
 
 LaunchSRun {a_task_command} {a_task_command_arguments}
 # LaunchSRunPatProfile {a_task_command} {a_task_command_arguments}
-# LaunchRocmProfile
+# LaunchRocmProfile {a_task_command} {a_task_command_arguments}
 
 kRETVAL=$?
 

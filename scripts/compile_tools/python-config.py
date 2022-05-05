@@ -75,6 +75,7 @@ for opt in opt_flags:
         # add the prefix/lib/pythonX.Y/config dir, but only if there is no
         # shared library in prefix/lib/.
         if opt == '--ldflags':
+            libs.insert(0, '-L' + getvar('LIBDIR'))
             if not getvar('Py_ENABLE_SHARED'):
                 libs.insert(0, '-L' + getvar('LIBPL'))
             if not getvar('PYTHONFRAMEWORK'):

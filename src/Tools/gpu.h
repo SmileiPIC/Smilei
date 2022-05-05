@@ -198,7 +198,7 @@ namespace smilei {
 ///    for(...) { ... }
 ///
 //////////////////////////////////////
-#define SMILEI_GPU_ASSERT_MEMORY_ON_DEVICE( a_host_pointer ) SMILEI_ASSERT( smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( a_host_pointer ) )
+#define SMILEI_GPU_ASSERT_MEMORY_IS_ON_DEVICE( a_host_pointer ) SMILEI_ASSERT( smilei::tools::gpu::HostDeviceMemoryManagment::IsHostPointerMappedOnDevice( a_host_pointer ) )
 
 
             ////////////////////////////////////////////////////////////////////////////////

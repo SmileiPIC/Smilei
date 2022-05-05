@@ -21,26 +21,12 @@ HDF5_ROOT_DIR ?= $(HDF5_ROOT)
 BOOST_ROOT_DIR ?= $(BOOST_ROOT)
 TABLES_BUILD_DIR ?= tools/tables/build
 
+#-----------------------------------------------------
 # Machines scripts may need that
 my_config:=$(config)
 define parse_config
 $(findstring $(1),$(config))$(eval my_config:=$(filter-out $(1),$(my_config)))
 endef
-
-#-----------------------------------------------------
-# check whether to use a machine specific definitions
-ifneq ($(machine),)
-    ifneq ($(wildcard scripts/compile_tools/machine/$(machine)),)
-    -include scripts/compile_tools/machine/$(machine)
-    else
-define errormsg
-ERROR: Cannot find machine file for "$(machine)"
-Available machines are:
-$(shell ls -1 scripts/compile_tools/machine)
-endef
-    $(error $(errormsg))
-    endif
-endif
 
 PYTHONCONFIG := $(PYTHONEXE) scripts/compile_tools/python-config.py
 
@@ -59,7 +45,6 @@ else ifeq ($(findstring clang++, $(COMPILER_INFO)), clang++)
     CXXFLAGS += -Wdeprecated-register 
 endif
 
-
 #-----------------------------------------------------
 # Directories and files
 
@@ -77,6 +62,20 @@ TABLES_DEPS := $(addprefix $(TABLES_BUILD_DIR)/, $(SRCS:.cpp=.d))
 TABLES_OBJS := $(addprefix $(TABLES_BUILD_DIR)/, $(TABLES_SRCS:.cpp=.o))
 TABLES_SRCS := $(shell find tools/tables/* -name \*.cpp)
 
+#-----------------------------------------------------
+# check whether to use a machine specific definitions
+ifneq ($(machine),)
+    ifneq ($(wildcard scripts/compile_tools/machine/$(machine)),)
+    -include scripts/compile_tools/machine/$(machine)
+    else
+define errormsg
+ERROR: Cannot find machine file for "$(machine)"
+Available machines are:
+$(shell ls -1 scripts/compile_tools/machine)
+endef
+    $(error $(errormsg))
+    endif
+endif
 
 #-----------------------------------------------------
 # Flags
@@ -239,21 +238,15 @@ ifneq (,$(call parse_config,gpu_nvidia))
 
     OBJS += $(GPU_KERNEL_OBJS)
 endif
-CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
 
 ifneq (,$(call parse_config,gpu_amd))
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
 
-    ACCELERATOR_GPU_KERNEL_FLAGS += -O3 -std=c++14 $(DIRS:%=-I%)
-    ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes)
-
 	OBJS += $(GPU_KERNEL_OBJS)
-
-	# It would be great if CXXFLAGS contained only the warning flags, so we can 
-	# use it with nvcc/hipcc too
-	ACCELERATOR_GPU_KERNEL_FLAGS += $(WARNING_FLAGS)
 endif
+
+CXXFLAGS0 = $(shell echo $(CXXFLAGS)| sed "s/O3/O0/g" )
 
 #-----------------------------------------------------
 # Set the verbosity prefix
@@ -314,11 +307,11 @@ endif
 
 $(BUILD_DIR)/src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.o : src/MultiphotonBreitWheeler/MultiphotonBreitWheelerTablesDefault.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS0) -c $< -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS0) $(ACCELERATOR_GPU_FLAGS) -c $< -o $@
 
 $(BUILD_DIR)/src/Radiation/RadiationTablesDefault.o : src/Radiation/RadiationTablesDefault.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS0) -c $< -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS0) $(ACCELERATOR_GPU_FLAGS) -c $< -o $@
 
 #$(BUILD_DIR)src/Radiation/RadiationNiel.o: src/Radiation/RadiationNiel.cpp
 #	@echo "SPECIAL COMPILATION FOR $<"

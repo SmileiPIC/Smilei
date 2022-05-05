@@ -23,43 +23,111 @@
 #
 ################################################################################
 
-SMILEICXX := cc
+################################################################################
+# Compilers
+################################################################################
+
+# SMILEICXX := ~/aomp_stuff/usr/lib/aomp_15.0-1/bin/clang++
+SMILEICXX := CC
 SMILEICXX.DEPS := $(SMILEICXX)
+THRUSTCXX := $(SMILEICXX)
 
-WARNING_FLAGS := -Wextra -pedantic
-WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
+################################################################################
+# Warning flags
+################################################################################
 
-# DEBUG_SANITIZER_FLAGS := -fsanitize=address
+ADASTRA_WARNING_FLAGS := -Wextra -pedantic
+ADASTRA_WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown-pragmas
+
+################################################################################
+# Optimization flags
+################################################################################
+
+# ADASTRA_OPTIMIZATION_LTO_FLAGS   += -flto=thin
+# ADASTRA_OPTIMIZATION_OTHER_FLAGS += -mcmodel=large
+ADASTRA_OPTIMIZATION_FLAGS       := -Ofast $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADASTRA_OPTIMIZATION_OTHERS)
+
+################################################################################
+# Debug flags
+################################################################################
+
+# To check for leaks, use this feature
+# ADASTRA_DEBUG_SANITIZER_FLAGS := -fsanitize=address
+ADASTRA_DEBUG_FLAGS           := -g $(ADASTRA_DEBUG_SANITIZER_FLAGS)
+
+################################################################################
+# Omp flags
+################################################################################
+
+# ADASTRA_OMP_STATIC := -static-openmp
+ADASTRA_OMP_FLAGS := -fopenmp
+
+################################################################################
+# OMP GPU offloading support flags
+################################################################################
 
 ifneq (,$(call parse_config,gpu_amd))
 	# Add mi100 amd gpu arch
-	ACCELERATOR_GPU_TARGET_ARCH=amdgcn-amd-amdhsa
-	ACCELERATOR_GPU_TARGET=gfx908
+	ADASTRA_ACCELERATOR_GPU_TARGET_ARCH := amdgcn-amd-amdhsa
+	ADASTRA_ACCELERATOR_GPU_TARGET      := gfx908
 
-	ACCELERATOR_GPU_OMP_FLAGS=-fopenmp -fopenmp-targets=$(ACCELERATOR_GPU_TARGET_ARCH) -Xopenmp-target=$(ACCELERATOR_GPU_TARGET_ARCH) -march=$(ACCELERATOR_GPU_TARGET)
+    # when using OMP
+	ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS := -DSMILEI_ACCELERATOR_GPU_OMP
+    ADASTRA_ACCELERATOR_GPU_OMP_FLAGS        := -fopenmp-targets=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -Xopenmp-target=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -march=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 
-	# THRUSTCXX := $(SMILEICXX)
-
-	THRUSTCXX := hipcc
-
-	ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP $(ACCELERATOR_GPU_OMP_FLAGS) $(DEBUG_SANITIZER_FLAGS)
-	ACCELERATOR_GPU_FLAGS += -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
-
-	ACCELERATOR_GPU_KERNEL_FLAGS += -I$(CRAY_MPICH_DIR)/include
-	ACCELERATOR_GPU_KERNEL_FLAGS += --offload-arch=$(ACCELERATOR_GPU_TARGET)
-
-	# ACCELERATOR_GPU_KERNEL_FLAGS += --amdgpu-target=$(ACCELERATOR_GPU_TARGET) # Same behaviour (apriori) than offload-arch
-	# ACCELERATOR_GPU_KERNEL_FLAGS += --hip-path=$(HIP_PATH) -x hip
-	# ACCELERATOR_GPU_KERNEL_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
-
-	# We need to link with the appropriate "First-Party Tool" (as OpenMP calls them)
-	LDFLAGS += $(WARNING_FLAGS) $(ACCELERATOR_GPU_OMP_FLAGS) $(DEBUG_SANITIZER_FLAGS)
-	# LDFLAGS += -static-openmp
-	# LDFLAGS += -mcmodel=large -static-openmp
-	# May help resolve some linker issue
-	# LDFLAGS += -foffload=-lm
+    # When using hip/cuda to build kernels
+    ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS := -x hip --offload-arch=$(ADASTRA_ACCELERATOR_GPU_TARGET)
+    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --amdgpu-target=$(ACCELERATOR_GPU_TARGET) # Same behaviour (a priori) than offload-arch
+    # ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS += --hip-path=$(HIP_PATH) -x hip
 endif
 
-# Smilei is setup to use Ofast when clang is used. CCE is clang based.
-CXXFLAGS += $(WARNING_FLAGS) -Ofast -g
-# CXXFLAGS += -mcmodel=large -static-openmp
+################################################################################
+# Includes
+################################################################################
+
+ADASTRA_INCLUDES := -I$(CRAY_MPICH_DIR)/include -I$(ROCM_PATH)/hiprand/include -I$(ROCM_PATH)/rocrand/include
+
+################################################################################
+# Libs
+################################################################################
+
+# May help resolve some linker issue
+# -foffload=-lm
+
+# ADASTRA_OMP_STATIC := -static-openmp
+ADASTRA_MPI_gfx908_LIB := $(PE_MPICH_GTL_DIR_amd_gfx908) $(PE_MPICH_GTL_LIBS_amd_gfx908)
+ADASTRA_MPI            := -L$(CRAY_MPICH_DIR)/lib -lmpi  $(ADASTRA_MPI_gfx908_LIB)
+
+ADASTRA_HIP := -L$(HIP_LIB_PATH) -lamdhip64
+
+# ADASTRA_LIBS := $(ADASTRA_MPI) $(ADASTRA_HIP)
+
+################################################################################
+#
+################################################################################
+
+# Inherit of all the typical *.cpp compilation options
+# ACCELERATOR_GPU_KERNEL_FLAGS := $(CXXFLAGS) # This command is soo weird, it doesnt work as expected
+ACCELERATOR_GPU_KERNEL_FLAGS += $(shell $(PYTHONCONFIG) --includes) $(DIRS:%=-I%)
+ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_WARNING_FLAGS)
+ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
+ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_DEBUG_FLAGS)
+ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_OMP_FLAGS)
+ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
+# ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS)
+ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_ACCELERATOR_GPU_KERNEL_FLAGS)
+ACCELERATOR_GPU_KERNEL_FLAGS += $(ADASTRA_INCLUDES)
+
+CXXFLAGS += $(ADASTRA_WARNING_FLAGS)
+CXXFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
+CXXFLAGS += $(ADASTRA_DEBUG_FLAGS)
+CXXFLAGS += $(ADASTRA_OMP_FLAGS)
+CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
+# CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
+CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS) # if gpu_amd is set, adds the appropriate flags, else nothing is added contained
+CXXFLAGS += $(ADASTRA_INCLUDES)
+
+LDFLAGS += $(ADASTRA_DEBUG_FLAGS) $(ADASTRA_OMP_FLAGS)
+LDFLAGS += $(ADASTRA_LIBS)
+# We need to link with the appropriate "First-Party Tool" (as OpenMP calls them)
+LDFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS)
