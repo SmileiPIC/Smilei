@@ -281,7 +281,7 @@ void RadiationMonteCarlo::operator()(
                         // 
                         // random_number = hiprand_uniform(&state_2); //Generating number
                         
-        	        prng_state_2.init( seed_curand_2, seq, offset ); //Cuda generator initialization
+                        prng_state_2.init( seed_curand_2, seq, offset ); //Cuda generator initialization
 	
                         random_number = prng_state_2.uniform(); //Generating number
                         
