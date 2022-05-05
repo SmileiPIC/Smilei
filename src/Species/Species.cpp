@@ -16,6 +16,7 @@
 #include "IonizationFactory.h"
 #include "RadiationFactory.h"
 #include "MultiphotonBreitWheelerFactory.h"
+#include "ParticlesFactory.h"
 #include "MergingFactory.h"
 #include "PartBoundCond.h"
 #include "PartWall.h"
@@ -68,7 +69,7 @@ Species::Species( Params &params, Patch *patch ) :
     temperature_profile_( 3, NULL ),
     particles_per_cell_profile_( NULL ),
     max_charge_( 0. ),
-    particles( &particles_sorted[0] ),
+    // particles( &particles_sorted[0] ),
     file_position_npart_( 0 ),
     file_momentum_npart_( 0 ),
     position_initialization_array_( NULL ),
@@ -91,6 +92,10 @@ Species::Species( Params &params, Patch *patch ) :
     nDim_field(    params.nDim_field  ),
     merging_time_selection_( 0 )
 {
+    
+    particles         = ParticlesFactory::create( params );
+    particles_to_move = ParticlesFactory::create( params );
+    
     regular_number_array_.clear();
     partBoundCond = NULL;
     min_loc = patch->getDomainLocalMin( 0 );
@@ -114,7 +119,7 @@ Species::Species( Params &params, Patch *patch ) :
 
     merge_min_momentum_cell_length_.resize(3);
 
-    particles_to_move = new Particles();
+    // particles_to_move = new Particles();
 
 }//END Species creator
 

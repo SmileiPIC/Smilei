@@ -19,6 +19,7 @@
 #include "SpeciesVAdaptive.h"
 #endif
 
+#include "ParticlesFactory.h"
 #include "PusherFactory.h"
 #include "IonizationFactory.h"
 #include "PartBoundCond.h"
@@ -257,6 +258,11 @@ public:
 
                     MESSAGE( 3, "| Photon energy threshold for macro-photon emission: "
                              << this_species->radiation_photon_gamma_threshold_ );
+                             
+                    // Creation of the photon particles object to receive the emitted photons
+                    this_species->radiated_photons_ = ParticlesFactory::create( params );
+                             
+                    
                 } else {
                     MESSAGE( 3, "| Macro-photon emission not activated" );
                 }

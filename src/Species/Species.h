@@ -184,6 +184,8 @@ public:
     //! is not generated but directly added to the energy scalar diags
     //! This enable to limit emission of useless low-energy photons
     double radiation_photon_gamma_threshold_;
+    //! Particle object to store emitted photons by radiation at each time step
+    Particles * radiated_photons_;
 
     //! Pointer to the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go
