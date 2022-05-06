@@ -463,7 +463,8 @@ help:
 	@echo '    advisor              : to compile for Intel Advisor analysis'
 	@echo '    vtune                : to compile for Intel Vtune analysis'
 	@echo '    inspector            : to compile for Intel Inspector analysis'
-	@echo '    gpu                  : to compile for GPU'
+	@echo '    gpu_nidia            : to compile for GPU (uses OpenACC)'
+    @echo '    gpu_amd              : to compile for GPU (uses OpenMP)'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'

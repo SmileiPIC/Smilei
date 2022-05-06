@@ -452,7 +452,19 @@ namespace smilei {
             T* HostDeviceMemoryManagment::GetDevicePointer( T* a_host_pointer )
             {
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
+                const int device_num = ::omp_get_default_device();
+
+                // Omp Std 5.0: A list item in a use_device_ptr clause must hold
+                // the address of an object that has a corresponding list item
+                // in the device data environment.
+                // To be fully compliant we need to use ::omp_target_is_present
+
+                if( ::omp_target_is_present( a_host_pointer, device_num ) == 0 ) {
+                    return nullptr;
+                }
+
                 T* a_device_pointer = nullptr;
+
     #pragma omp target data use_device_ptr( a_host_pointer )
                 {
                     a_device_pointer = a_host_pointer;

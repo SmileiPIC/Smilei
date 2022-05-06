@@ -59,7 +59,6 @@ ADASTRA_DEBUG_FLAGS           := -g $(ADASTRA_DEBUG_SANITIZER_FLAGS)
 # Omp flags
 ################################################################################
 
-# ADASTRA_OMP_STATIC := -static-openmp
 ADASTRA_OMP_FLAGS := -fopenmp
 
 ################################################################################
@@ -94,13 +93,14 @@ ADASTRA_INCLUDES := -I$(CRAY_MPICH_DIR)/include -I$(ROCM_PATH)/hiprand/include -
 # May help resolve some linker issue
 # -foffload=-lm
 
+# Small perf increase but causes ABI problems when cray-pat is used
 # ADASTRA_OMP_STATIC := -static-openmp
-ADASTRA_MPI_gfx908_LIB := $(PE_MPICH_GTL_DIR_amd_gfx908) $(PE_MPICH_GTL_LIBS_amd_gfx908)
-ADASTRA_MPI            := -L$(CRAY_MPICH_DIR)/lib -lmpi  $(ADASTRA_MPI_gfx908_LIB)
+# ADASTRA_MPI_gfx908_LIB := $(PE_MPICH_GTL_DIR_amd_gfx908) $(PE_MPICH_GTL_LIBS_amd_gfx908)
+# ADASTRA_MPI            := -L$(CRAY_MPICH_DIR)/lib -lmpi  $(ADASTRA_MPI_gfx908_LIB)
 
-ADASTRA_HIP := -L$(HIP_LIB_PATH) -lamdhip64
+# ADASTRA_HIP := -L$(HIP_LIB_PATH) -lamdhip64
 
-# ADASTRA_LIBS := $(ADASTRA_MPI) $(ADASTRA_HIP)
+ADASTRA_LIBS := $(ADASTRA_MPI) $(ADASTRA_HIP) $(ADASTRA_OMP_STATIC)
 
 ################################################################################
 #
