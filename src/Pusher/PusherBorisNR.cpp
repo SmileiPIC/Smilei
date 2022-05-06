@@ -5,8 +5,6 @@
 #include "PusherBorisNR.h"
 #include "Particles.h"
 
-using namespace std;
-
 PusherBorisNR::PusherBorisNR( Params &params, Species *species )
     : Pusher( params, species )
 {

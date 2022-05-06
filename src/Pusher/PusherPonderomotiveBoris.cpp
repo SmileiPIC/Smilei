@@ -7,7 +7,6 @@
 
 #include "Particles.h"
 
-using namespace std;
 // Pushes only momentum of particles interacting with envelope, not their position
 PusherPonderomotiveBoris::PusherPonderomotiveBoris( Params &params, Species *species )
     : Pusher( params, species )

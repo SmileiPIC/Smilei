@@ -16,8 +16,6 @@
 
 #include "Particles.h"
 
-using namespace std;
-
 PusherVay::PusherVay( Params &params, Species *species )
     : Pusher( params, species )
 {
@@ -35,9 +33,8 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
 {
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
-    double *invgf = &( smpi->dynamics_invgf[ithread][0] );
+    double *const invgf = &( smpi->dynamics_invgf[ithread][0] );
 
-    double charge_over_mass_dts2;
     double upx, upy, upz, us2;
     double alpha, s, T2 ;
     double Tx, Ty, Tz;
@@ -65,13 +62,14 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
 
     #pragma omp simd private(s,us2,alpha,upx,upy,upz,Tx,Ty,Tz,pxsm,pysm,pzsm)
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
+        
+        const double charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
 
         // ____________________________________________
         // Part I: Computation of uprime
 
         // For unknown reason, this has to be computed again
-        invgf[ipart-ipart_buffer_offset] = 1./sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+        invgf[ipart-ipart_buffer_offset] = 1./std::sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                                      + momentum_y[ipart]*momentum_y[ipart]
                                      + momentum_z[ipart]*momentum_z[ipart] );
 
@@ -102,7 +100,7 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
         us2   = us2*us2;
 
         // alpha becomes 1/gamma^{i+1}
-        alpha = 1.0/sqrt( 0.5*( s + sqrt( s*s + 4.0*( T2 + us2 ) ) ) );
+        alpha = 1.0/std::sqrt( 0.5*( s + std::sqrt( s*s + 4.0*( T2 + us2 ) ) ) );
 
         Tx *= alpha;
         Ty *= alpha;
@@ -129,7 +127,7 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
         //pzsm = ((TzTx+Ty)* upx  + (TyTz-Tx)* upy + (1.0+Tz2)* upz)*s;
 
         // Inverse Gamma factor
-        invgf[ipart-ipart_buffer_offset] = 1.0 / sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
+        invgf[ipart-ipart_buffer_offset] = 1.0 / std::sqrt( 1.0 + pxsm*pxsm + pysm*pysm + pzsm*pzsm );
 
         momentum_x[ipart] = pxsm;
         momentum_y[ipart] = pysm;
