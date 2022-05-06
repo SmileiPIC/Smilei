@@ -36,7 +36,6 @@ public:
     //! \param array array in which to find the value
     //! \param elem element to be found
     //! \param nb_elem number of elements
-    
 #ifdef _GPU
     #pragma acc routine seq
 #endif
