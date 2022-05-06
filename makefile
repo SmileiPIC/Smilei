@@ -226,9 +226,18 @@ endif
 
 ifneq (,$(call parse_config,gpu_nvidia))
     SMILEICXX.DEPS = g++
-	THRUSTCXX = nvcc
+    THRUSTCXX = nvcc
 
-	ACCELERATOR_GPU_FLAGS += -D_GPU -w -Minfo=accel
+    ACCELERATOR_GPU_FLAGS += -w
+
+    # To enable OpenMP support, comment _GPU and uncomment SMILEI_ACCELERATOR_GPU_OMP.
+    # Note: the nvidia GPU OpenMP implementation does not handle well the defaultmap(none) 
+    # and explicit mapping "map(<..>)". You will probably get errors at compile time
+    # such as "Unexpected name table type" or "Unexpected defaultmap behavior".
+    # Remove the "defaultmap( none )"/"map(<xxx>)" in the code where it causes problems.
+
+    ACCELERATOR_GPU_FLAGS += -D_GPU -Minfo=accel
+    # ACCELERATOR_GPU_FLAGS += -DSMILEI_ACCELERATOR_GPU_OMP
 
     GPU_KERNEL_SRCS := $(shell find src/* -name \*.cu)
     GPU_KERNEL_OBJS := $(addprefix $(BUILD_DIR)/, $(GPU_KERNEL_SRCS:.cu=.o))
