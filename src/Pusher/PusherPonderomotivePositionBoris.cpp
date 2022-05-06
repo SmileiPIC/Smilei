@@ -34,34 +34,23 @@ void PusherPonderomotivePositionBoris::operator()( Particles &particles, SmileiM
     double gamma0, gamma0_sq, gamma_ponderomotive;
     double pxsm, pysm, pzsm;
     
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
+    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
     
-    double* position_x = particles.getPtrPosition(0);
-    double* position_y = NULL;
-    double* position_z = NULL;
-    if (nDim_>1) {
-        position_y = particles.getPtrPosition(1);
-        if (nDim_>2) {
-            position_z = particles.getPtrPosition(2);
-        }
-    }
+    double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
+    double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
     
-    short *charge = particles.getPtrCharge( ) ;
+    const short *const charge = particles.getPtrCharge( ) ;
     
-    int nparts;
-    if (vecto) {
-        nparts = GradPhi_mpart->size()/3;
-    } else {
-        //nparts = particles.size();
-        nparts = particles.last_index.back();
-    }
+    const int nparts = vecto ? GradPhi_mpart->size()/3 :
+                               particles.size(); // particles.size()
     
-    double *Phi_m      = &( ( *Phi_mpart )[0*nparts] );
-    double *GradPhi_mx = &( ( *GradPhi_mpart )[0*nparts] );
-    double *GradPhi_my = &( ( *GradPhi_mpart )[1*nparts] );
-    double *GradPhi_mz = &( ( *GradPhi_mpart )[2*nparts] );
+    const double *const __restrict__ Phi_m      = &( ( *Phi_mpart )[0*nparts] );
+    const double *const __restrict__ GradPhi_mx = &( ( *GradPhi_mpart )[0*nparts] );
+    const double *const __restrict__ GradPhi_my = &( ( *GradPhi_mpart )[1*nparts] );
+    const double *const __restrict__ GradPhi_mz = &( ( *GradPhi_mpart )[2*nparts] );
     
     #ifndef _GPU
         #pragma omp simd

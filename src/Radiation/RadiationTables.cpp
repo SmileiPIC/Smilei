@@ -337,7 +337,8 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 //! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
 double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi, double xi,
-                                                double * table_min_photon_chi, double * table_xi)
+                                                double * table_min_photon_chi, 
+                                                double * table_xi)
 {
     // Log10 of particle_chi
     double log10_particle_chi;

@@ -147,6 +147,7 @@ void nvidiaParticles::syncCPU()
 
 }
 
+//! Send the particles from host to device
 void nvidiaParticles::syncGPU()
 {
     for (int idim=0;idim<Position.size();idim++) {
@@ -241,7 +242,14 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
     particles_to_move->syncCPU();
 }
 
+// -----------------------------------------------------------------------------
+//! Remove Particles leaving the patch
+// -----------------------------------------------------------------------------
 
+// -----------------------------------------------------------------------------
+//! Inject particles from particles_to_move object and put 
+//! them in the Particles object
+// -----------------------------------------------------------------------------
 int nvidiaParticles::injectParticles( Particles* particles_to_move )
 {
     int nparts = gpu_nparts_;

@@ -45,7 +45,7 @@ RadiationLandauLifshitz::~RadiationLandauLifshitz()
 // -----------------------------------------------------------------------------
 void RadiationLandauLifshitz::operator()(
     Particles       &particles,
-    Species         *photon_species,
+    Particles       &photons,
     SmileiMPI       *smpi,
     RadiationTables &RadiationTables,
     double          &radiated_energy,

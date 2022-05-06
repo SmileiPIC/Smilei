@@ -61,6 +61,7 @@ Species::Species( Params &params, Patch *patch ) :
     temperature_profile_( 3, NULL ),
     particles_per_cell_profile_( NULL ),
     max_charge_( 0. ),
+    // particles( &particles_sorted[0] ),
     file_position_npart_( 0 ),
     file_momentum_npart_( 0 ),
     position_initialization_array_( NULL ),
@@ -73,6 +74,7 @@ Species::Species( Params &params, Patch *patch ) :
     photon_species_( NULL ),
     //photon_species_index(-1),
     radiation_photon_species( "" ),
+    radiated_photons_( NULL ),
     mBW_pair_creation_sampling_( 2, 1 ),
     cluster_width_( params.cluster_width_ ),
     oversize( params.oversize ),
@@ -327,6 +329,10 @@ Species::~Species()
         Py_DECREF( ionization_rate_ );
     }
 
+    if (radiated_photons_) {
+        delete radiated_photons_;
+    }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -423,7 +429,9 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
                 // Radiation process
-                ( *Radiate )( *particles, photon_species_, smpi,
+                ( *Radiate )( *particles,
+                              *radiated_photons_,
+                              smpi,
                               RadiationTables,
                               nrj_radiated_,
                               particles->first_index[ibin],
@@ -720,7 +728,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
             if( photon_species_ ) {
                 photon_species_->importParticles( params,
                                                  patch,
-                                                 Radiate->new_photons_,
+                                                 *radiated_photons_,
                                                  localDiags );
             }
         }

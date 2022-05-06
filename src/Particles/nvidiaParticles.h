@@ -26,7 +26,11 @@ public:
     virtual ~nvidiaParticles() {};
 
     void initializeDataOnDevice() override;
+    
+    //! Send the particles from host to device
     void syncGPU() override;
+    
+    //! Update the particles from device to host
     void syncCPU() override;
 
     //! Position vector on device
@@ -89,6 +93,11 @@ public:
     //! them in the Particles object `particles_to_move`
     // -----------------------------------------------------------------------------
     void extractParticles( Particles* particles_to_move ) override;
+    
+    // -----------------------------------------------------------------------------
+    //! Erase particles leaving the patch object on device
+    // -----------------------------------------------------------------------------
+    int eraseLeavingParticles() override;
     
     // -----------------------------------------------------------------------------
     //! Inject particles from particles_to_move object and put 

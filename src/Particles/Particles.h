@@ -440,7 +440,13 @@ public:
         return &(cell_keys[0]);
     };
 
+    // --------------------------------------------------------------------------------------------
+    // Accelerator specific virtual functions
+
     virtual void extractParticles( Particles* particles_to_move );
+    
+    virtual int eraseLeavingParticles() { ERROR( "Should not have come here" ); return 0; };
+    
     virtual int injectParticles( Particles* particles_to_move ) {  ERROR( "On CPU: managed in sortPatciles. Should not have come here" ); return 0;};
 
     virtual unsigned int gpu_size() const { ERROR( "Should not have come here" ); return 0; };

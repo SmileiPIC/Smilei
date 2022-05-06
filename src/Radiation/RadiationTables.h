@@ -73,8 +73,10 @@ public:
 #ifdef _GPU
     #pragma acc routine seq
 #endif
-    double computeRandomPhotonChiWithInterpolation( double particle_chi, double xi,
-                                 double * table_min_photon_chi, double * table_xi);
+    double computeRandomPhotonChiWithInterpolation( double particle_chi, 
+                                                    double xi,
+                                                    double * table_min_photon_chi, 
+                                                    double * table_xi);
 
     //! Return the value of the function h(particle_chi) of Niel et al.
     //! Use an integration of Gauss-Legendre

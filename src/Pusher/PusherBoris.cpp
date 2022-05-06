@@ -26,23 +26,20 @@ PusherBoris::~PusherBoris()
 void PusherBoris::operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_buffer_offset )
 {
 
-    const std::vector<double> *const Epart = &( smpi->dynamics_Epart[ithread] );
-    const std::vector<double> *const Bpart = &( smpi->dynamics_Bpart[ithread] );
-    double *const __restrict__ invgf       = &( smpi->dynamics_invgf[ithread][0] );
 
-    // double Tx2, Ty2, Tz2;
-    // double TxTy, TyTz, TzTx;
-    // double alpha;
+    std::vector<double> * Epart = &( smpi->dynamics_Epart[ithread] );
+    std::vector<double> * Bpart = &( smpi->dynamics_Bpart[ithread] );
+    double *const __restrict__ invgf = &( smpi->dynamics_invgf[ithread][0] );
 
     double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
     double *const __restrict__ position_z = nDim_ > 2 ? particles.getPtrPosition( 2 ) : nullptr;
+    
+    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
 
-    double *const __restrict__ momentum_x = particles.getPtrMomentum( 0 );
-    double *const __restrict__ momentum_y = particles.getPtrMomentum( 1 );
-    double *const __restrict__ momentum_z = particles.getPtrMomentum( 2 );
-
-    const short *__restrict__ charge = particles.getPtrCharge();
+    const short *const __restrict__ charge = particles.getPtrCharge();
 
     const int nparts = vecto ? Epart->size() / 3 :
                                particles.last_index.back(); // particles.size()

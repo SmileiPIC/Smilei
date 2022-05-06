@@ -51,7 +51,7 @@ public:
     // ---------------------------------------------------------------------
     virtual void operator()(
         Particles &particles,
-        Species *photon_species,
+        Particles &photons,
         SmileiMPI *smpi,
         RadiationTables &RadiationTables,
         double          &radiated_energy,
@@ -74,8 +74,8 @@ public:
     // ---------------------------------------------------------------------
     //#pragma acc routine seq
     double photonEmission( int ipart,
-                         double particle_chi,
-                         double particle_gamma,
+                         const double particle_chi,
+                         const double particle_gamma,
                          double *position_x,
                          double *position_y,
                          double *position_z,
@@ -84,10 +84,11 @@ public:
                          double *momentum_z,
                          const double *const weight,
                          double random_number,
-                         double * table_min_photon_chi,
-                         double * table_xi,
-                         Species *photon_species,
+                         double *table_min_photon_chi,
+                         double *table_xi,
+                         Particles * photons,
                          RadiationTables &RadiationTables);
+
 
 protected:
 

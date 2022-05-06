@@ -36,29 +36,24 @@ void PusherPonderomotiveBoris::operator()( Particles &particles, SmileiMPI *smpi
     double pxsm, pysm, pzsm;
     //double one_ov_gamma_ponderomotive;
     
-    double* momentum_x = particles.getPtrMomentum(0);
-    double* momentum_y = particles.getPtrMomentum(1);
-    double* momentum_z = particles.getPtrMomentum(2);
+    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
     
     short *charge = particles.getPtrCharge();
     
-    int nparts;
-    if (vecto) {
-        nparts = Epart->size()/3;
-    } else {
-        //nparts = particles.size();
-        nparts = particles.last_index.back();
-    }
+    const int nparts = vecto ? Epart->size() / 3 :
+                               particles.size(); // particles.size()
     
-    double *Ex       = &( ( *Epart )[0*nparts] );
-    double *Ey       = &( ( *Epart )[1*nparts] );
-    double *Ez       = &( ( *Epart )[2*nparts] );
-    double *Bx       = &( ( *Bpart )[0*nparts] );
-    double *By       = &( ( *Bpart )[1*nparts] );
-    double *Bz       = &( ( *Bpart )[2*nparts] );
-    double *GradPhix = &( ( *GradPhipart )[0*nparts] );
-    double *GradPhiy = &( ( *GradPhipart )[1*nparts] );
-    double *GradPhiz = &( ( *GradPhipart )[2*nparts] );
+    const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    const double *const __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
+    const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
+    const double *const __restrict__ GradPhix = &( ( *GradPhipart )[0*nparts] );
+    const double *const __restrict__ GradPhiy = &( ( *GradPhipart )[1*nparts] );
+    const double *const __restrict__ GradPhiz = &( ( *GradPhipart )[2*nparts] );
     //double *inv_gamma_ponderomotive = &( ( *dynamics_inv_gamma_ponderomotive )[0*nparts] );
     
     #ifndef _GPU

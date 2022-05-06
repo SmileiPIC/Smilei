@@ -1,3 +1,10 @@
+// -----------------------------------------------------------------------------
+//
+//! \file ParticleCreator.cpp
+//
+//! \brief Factory to select the right Particles type
+//
+// -----------------------------------------------------------------------------
 #include "ParticlesFactory.h"
 
 #if defined(_GPU) || defined(SMILEI_ACCELERATOR_GPU_OMP)
