@@ -262,7 +262,7 @@ public:
                     // Creation of the photon Particles object to receive the emitted photons
                     if( !this_species->radiation_photon_species.empty() ) {
                         this_species->radiated_photons_ = ParticlesFactory::create( params );
-                        this_species->radiated_photons_->initialize( 0, params.nDim_particle, params.keep_position_old);
+                        //this_species->radiated_photons_->initialize( 0, params.nDim_particle, params.keep_position_old);
                     }
                              
                     

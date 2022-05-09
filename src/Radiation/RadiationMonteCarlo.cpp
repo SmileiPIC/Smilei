@@ -183,22 +183,24 @@ void RadiationMonteCarlo::operator()(
     #endif
 
 
-    #ifdef _GPU
+#ifdef _GPU
     #pragma acc parallel \
     present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
     Bx[istart:np],By[istart:np],Bz[istart:np], \
     table_integfochi[0:size_of_Table_integfochi], table_xi[0:size_of_Table_xi], \
     table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
-    deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,particle_chi,tau) 
+    deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,tau) 
     {
-        #pragma acc loop gang worker vector private(random_number, seed_curand_1, seed_curand_2) \
+        #pragma acc loop gang worker vector private(random_number, seed_curand_1, seed_curand_2,particle_chi, gamma) \
     reduction(+:radiated_energy_loc) 
     
     smilei::tools::gpu::Random prng_state_1;
     smilei::tools::gpu::Random prng_state_2;
+    //curandState_t state_1;
+    //curandState_t state_2;
 
+#endif
 
-    #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         
         // charge / mass^2
@@ -250,10 +252,12 @@ void RadiationMonteCarlo::operator()(
                         seed_curand_1 = (a * seed_curand_1 + c) % m; //Linear generator
                		
                         prng_state_1.init( seed_curand_1, seq, offset ); //Cuda generator initialization
-                        // hiprand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
+                        //hiprand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
+                        //curand_init(seed_curand_1, seq, offset, &state_1); //Cuda generator initialization
                         
                         random_number = prng_state_1.uniform(); //Generating number
-                        // random_number = hiprand_uniform(&state_1); //Generating number
+                        //random_number = hiprand_uniform(&state_1); //Generating number
+                        //random_number = curand_uniform(&state_1); //Generating number
                         
                         tau[ipart] = -std::log( 1.- random_number );
                         initial_seed_1 = random_number;
@@ -288,13 +292,13 @@ void RadiationMonteCarlo::operator()(
                         seed_curand_2 = (int) (ipart + 1)*(initial_seed_2 + 1); //Seed for linear generator
                         seed_curand_2 = (a * seed_curand_2 + c) % m; //Linear generator
 
-                        // hiprand_init(seed_curand_2, seq, offset, &state_2); //Cuda generator initialization
-                        // 
-                        // random_number = hiprand_uniform(&state_2); //Generating number
                         
         	        prng_state_2.init( seed_curand_2, seq, offset ); //Cuda generator initialization
+                        // hiprand_init(seed_curand_2, seq, offset, &state_2); //Cuda generator initialization
+                        // curand_init(seed_curand_2, seq, offset, &state_2); //Cuda generator initialization
 	
                         random_number = prng_state_2.uniform(); //Generating number
+                        //random_number = curand_uniform(&state_2); //Generating number
                         
                     #endif
 
@@ -313,7 +317,7 @@ void RadiationMonteCarlo::operator()(
                                                          table_min_photon_chi,
                                                          table_xi,
                                                          &photons,
-                                                         RadiationTables);                  
+                                                         RadiationTables);
                     // Optical depth becomes negative meaning
                     // that a new drawing is possible
                     // at the next Monte-Carlo iteration
@@ -383,7 +387,8 @@ void RadiationMonteCarlo::operator()(
         int np = iend-istart;
         #pragma acc parallel present(Ex[istart:np],Ey[istart:np],Ez[istart:np],\
         Bx[istart:np],By[istart:np],Bz[istart:np]) \
-        deviceptr(momentum_x,momentum_y,momentum_z, charge,weight,chi) 
+        deviceptr(momentum_x,momentum_y,momentum_z, charge,weight,chi) \
+        private(gamma)
     {
 
         #pragma acc loop gang worker vector
