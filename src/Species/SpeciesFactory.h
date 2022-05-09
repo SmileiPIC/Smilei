@@ -259,9 +259,10 @@ public:
                     MESSAGE( 3, "| Photon energy threshold for macro-photon emission: "
                              << this_species->radiation_photon_gamma_threshold_ );
                     
-                    // Creation of the photon particles object to receive the emitted photons
+                    // Creation of the photon Particles object to receive the emitted photons
                     if( !this_species->radiation_photon_species.empty() ) {
                         this_species->radiated_photons_ = ParticlesFactory::create( params );
+                        this_species->radiated_photons_->initialize( 0, params.nDim_particle, params.keep_position_old);
                     }
                              
                     

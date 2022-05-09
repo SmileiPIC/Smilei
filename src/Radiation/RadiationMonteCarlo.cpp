@@ -114,11 +114,13 @@ void RadiationMonteCarlo::operator()(
     double * table_min_photon_chi = &(RadiationTables.xi_.min_photon_chi_table_[0]);
     double * table_xi = &(RadiationTables.xi_.table_[0]);
 
+#if defined(_GPU)
     // Size of tables
     int size_of_Table_integfochi = RadiationTables.integfochi_.size_particle_chi_;
     int size_of_Table_min_photon_chi = RadiationTables.xi_.size_particle_chi_;
     int size_of_Table_xi = RadiationTables.xi_.size_particle_chi_*
                            RadiationTables.xi_.size_photon_chi_;
+#endif 
 
     // Charge shortcut
     const short *const __restrict__ charge = particles.getPtrCharge();
@@ -165,7 +167,7 @@ void RadiationMonteCarlo::operator()(
     // Parameters for linear alleatory number generator
     const int a = 1664525;
     const int c = 1013904223;
-    const int m = pow(2,32);
+    const int m = std::pow(2,32);
 
     // Variable to save seed for CUDA generators
     int seed_curand_1;
