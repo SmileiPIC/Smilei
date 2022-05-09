@@ -796,11 +796,11 @@ void Species::injectParticles( Params &params )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Sort particles
+//! Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sortParticles( Params &params, Patch * patch )
 {
-// GPU version
+    // GPU version
     if (params.gpu_computing) {
         // particles_to_move contains, up to here, send particles
         //   clean it to manage recv particles
@@ -1139,6 +1139,13 @@ void Species::countSortParticles( Params &params )
 // Move all particles from another species to this one
 void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
+
+// GPU version    
+#if defined(SMILEI_ACCELERATOR_GPU_OMP) or (_GPU)
+    
+// CPU version
+#else
+    
     unsigned int npart = source_particles.size(), nbin=particles->first_index.size();
     double inv_cell_length = 1./ params.cell_length[0];
 
@@ -1202,6 +1209,9 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     particles->resizeCellKeys( particles->size() );
 
     source_particles.clear();
+    
+#endif
+    
 }
 
 

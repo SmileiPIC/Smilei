@@ -1,3 +1,11 @@
+// -----------------------------------------------------------------------------
+//
+//! \file nvidiaParticles.cpp
+//
+//! \brief contains the nvidiaParticles class methods
+//
+// -----------------------------------------------------------------------------
+// #if defined _GPU
 
 #include <iostream>
 
@@ -33,6 +41,9 @@ nvidiaParticles::nvidiaParticles() : Particles()
 
 }
 
+// -----------------------------------------------------------------------------
+//! Initialize the particle properties on devide as a mirror of the host definition
+// -----------------------------------------------------------------------------
 void nvidiaParticles::initializeDataOnDevice()
 {
     if (!Position.size()) {
@@ -243,8 +254,62 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
 }
 
 // -----------------------------------------------------------------------------
-//! Remove Particles leaving the patch
+//! Erase particles leaving the patch object on device
 // -----------------------------------------------------------------------------
+int eraseLeavingParticles() {
+    int nparts = gpu_nparts_;
+    // Remove particles which leaves current patch
+    thrust::remove_if(thrust::device,
+                      thrust::make_zip_iterator(thrust::make_tuple(
+                                                                   nvidia_position_[0].begin(),
+                                                                   nvidia_position_[1].begin(),
+                                                                   nvidia_position_[2].begin(),
+                                                                   nvidia_momentum_[0].begin(),
+                                                                   nvidia_momentum_[1].begin(),
+                                                                   nvidia_momentum_[2].begin(),
+                                                                   nvidia_weight_.begin(),
+                                                                   nvidia_charge_.begin()
+                                                                  // , nvidia_cell_keys_.begin()
+                                                                   )
+                                                ),
+                      thrust::make_zip_iterator(thrust::make_tuple(
+                                                                   nvidia_position_[0].begin()+nparts,
+                                                                   nvidia_position_[1].begin()+nparts,
+                                                                   nvidia_position_[2].begin()+nparts,
+                                                                   nvidia_momentum_[0].begin()+nparts,
+                                                                   nvidia_momentum_[1].begin()+nparts,
+                                                                   nvidia_momentum_[2].begin()+nparts,
+                                                                   nvidia_weight_.begin()+nparts,
+                                                                   nvidia_charge_.begin()+nparts
+                                                                //,   nvidia_cell_keys_.begin()+nparts
+                                                                   )
+                                                ),
+                      nvidia_cell_keys_.begin(),
+                      count_if_out()
+                      );
+                      
+    if (isQuantumParameter) {
+        thrust::remove_if(thrust::device,
+                          nvidia_chi_.begin(),
+                          nvidia_chi_.begin()+nparts,
+                          nvidia_cell_keys_.begin(),
+                          count_if_out()
+        );
+    }
+    if (isMonteCarlo) {
+        thrust::remove_if(thrust::device,
+                          nvidia_tau_.begin(),
+                          nvidia_tau_.begin()+nparts,
+                          nvidia_cell_keys_.begin(),
+                          count_if_out()
+        );
+    }
+    
+    // Update current number of particles
+    gpu_nparts_ -= nparts_to_move_;
+    nparts = gpu_nparts_;
+}
+
 
 // -----------------------------------------------------------------------------
 //! Inject particles from particles_to_move object and put 
@@ -413,3 +478,5 @@ void* CreateGPUParticles() {
     return new nvidiaParticles();
 }
 }
+
+// #endif

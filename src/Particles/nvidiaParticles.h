@@ -1,3 +1,14 @@
+// -----------------------------------------------------------------------------
+//
+//! \file nvidiaParticles.h
+//
+//! \brief contains the nvidiaParticles class description
+//
+//! The nvidiaParticles inherits from the Particles class to deal with NVIDIA GPUs.
+//! It uses CUDA Thrust instead of std::vector
+//
+// -----------------------------------------------------------------------------
+// #if defined _GPU
 
 #ifndef NVIDIAPARTICLES_H
 #define NVIDIAPARTICLES_H
@@ -11,20 +22,26 @@
 
 typedef thrust::device_vector<double>::iterator Diter;
 typedef thrust::device_vector<short>::iterator  Siter;
-// typedef a tuple of these iterators
+//! typedef a tuple of these iterators
 typedef thrust::tuple<Diter, Diter, Diter, Diter, Diter, Diter, Diter, Siter> IteratorParticles;
-// typedef the zip_iterator of this tuple
+//! typedef the zip_iterator of this tuple
 typedef thrust::zip_iterator<IteratorParticles> ZipIterParts;
 
+/*! \class nvidiaParticles
+    \brief Particle class for NVIDIA GPU
+*/
 class nvidiaParticles : public Particles
 {
 public:
-    //! Constructor for Particle
+    //! Constructor for nvidiaParticles
     nvidiaParticles();
 
-    //! Destructor for Particle
+    //! Destructor for nvidiaParticles
     virtual ~nvidiaParticles() {};
 
+    // -----------------------------------------------------------------------------
+    //! Initialize the particle properties on devide as a mirror of the host definition
+    // -----------------------------------------------------------------------------
     void initializeDataOnDevice() override;
     
     //! Send the particles from host to device
@@ -117,3 +134,5 @@ public:
 };
 
 #endif
+
+// #endif
