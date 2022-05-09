@@ -256,7 +256,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
 // -----------------------------------------------------------------------------
 //! Erase particles leaving the patch object on device
 // -----------------------------------------------------------------------------
-int eraseLeavingParticles() {
+int nvidiaParticles::eraseLeavingParticles() {
     int nparts = gpu_nparts_;
     // Remove particles which leaves current patch
     thrust::remove_if(thrust::device,

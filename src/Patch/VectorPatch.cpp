@@ -4417,7 +4417,7 @@ void VectorPatch::initNewEnvelope( Params &params )
     }
 } // END initNewEnvelope
 
-void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables_ )
+void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, RadiationTables *radiation_tables )
 {
 #if defined( _GPU ) || defined( SMILEI_ACCELERATOR_GPU_OMP )
     // TODO(Etienne M): Maybe we could just alloc the memory here and initialize 
@@ -4434,10 +4434,10 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
     const int sizeofBy = patches_[0]->EMfields->By_m->globalDims_;
     const int sizeofBz = patches_[0]->EMfields->Bz_m->globalDims_;
 
-    const int size_of_table_niel           = radiation_tables_->niel_.size_particle_chi_;
-    const int size_of_table_integfochi     = radiation_tables_->integfochi_.size_particle_chi_;
-    const int size_of_table_min_photon_chi = radiation_tables_->xi_.size_particle_chi_;
-    const int size_of_table_xi             = radiation_tables_->xi_.size_particle_chi_ * radiation_tables_->xi_.size_photon_chi_;
+    const int size_of_table_niel           = radiation_tables->niel_.size_particle_chi_;
+    const int size_of_table_integfochi     = radiation_tables->integfochi_.size_particle_chi_;
+    const int size_of_table_min_photon_chi = radiation_tables->xi_.size_particle_chi_;
+    const int size_of_table_xi             = radiation_tables->xi_.size_particle_chi_ * radiation_tables->xi_.size_photon_chi_;
 
     for( int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
 
@@ -4448,7 +4448,7 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
             spec->particles_to_move->initializeDataOnDevice();
             
             // Create photon species on the device
-            if ( species->radiation_model_ == "mc" && photon_species_) {
+            if ( spec->radiation_model_ == "mc" && spec->photon_species_) {
                 spec->radiated_photons_->initializeDataOnDevice();
             }
             
@@ -4492,15 +4492,15 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
 
         if( params.hasNielRadiation ) {
 
-            const double *const table = &( radiation_tables_->niel_.table_[0] );
+            const double *const table = &( radiation_tables->niel_.table_[0] );
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table, size_of_table_niel );
         }
 
         if( params.hasMCRadiation ) {
 
-            const double *const table_integfochi     = &( radiation_tables_->integfochi_.table_[0] );
-            const double *const table_min_photon_chi = &( radiation_tables_->xi_.min_photon_chi_table_[0] );
-            const double *const table_xi             = &( radiation_tables_->xi_.table_[0] );
+            const double *const table_integfochi     = &( radiation_tables->integfochi_.table_[0] );
+            const double *const table_min_photon_chi = &( radiation_tables->xi_.min_photon_chi_table_[0] );
+            const double *const table_xi             = &( radiation_tables->xi_.table_[0] );
 
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_integfochi, size_of_table_integfochi );
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table_min_photon_chi, size_of_table_min_photon_chi );
