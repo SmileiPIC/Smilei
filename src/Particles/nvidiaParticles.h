@@ -120,7 +120,7 @@ public:
     //! Inject particles from particles_to_move object and put 
     //! them in the Particles object
     // -----------------------------------------------------------------------------
-    int injectParticles( Particles* particles_to_move ) override;
+    int injectParticles( Particles* particles_to_inject ) override;
 
     // ---------------------------------------------------------------------------------------------------------------------
     //! Create n_additional_particles new particles at the end of vectors

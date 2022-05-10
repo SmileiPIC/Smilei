@@ -257,6 +257,7 @@ void nvidiaParticles::extractParticles( Particles* particles_to_move )
 //! Erase particles leaving the patch object on device
 // -----------------------------------------------------------------------------
 int nvidiaParticles::eraseLeavingParticles() {
+    
     int nparts = gpu_nparts_;
     // Remove particles which leaves current patch
     thrust::remove_if(thrust::device,
@@ -308,6 +309,9 @@ int nvidiaParticles::eraseLeavingParticles() {
     // Update current number of particles
     gpu_nparts_ -= nparts_to_move_;
     nparts = gpu_nparts_;
+    
+    return nparts;
+    
 }
 
 
@@ -315,65 +319,65 @@ int nvidiaParticles::eraseLeavingParticles() {
 //! Inject particles from particles_to_move object and put 
 //! them in the Particles object
 // -----------------------------------------------------------------------------
-int nvidiaParticles::injectParticles( Particles* particles_to_move )
+int nvidiaParticles::injectParticles( Particles* particles_to_inject )
 {
-    int nparts = gpu_nparts_;
     // Remove particles which leaves current patch
-    thrust::remove_if(thrust::device,
-                      thrust::make_zip_iterator(thrust::make_tuple(
-                                                                   nvidia_position_[0].begin(),
-                                                                   nvidia_position_[1].begin(),
-                                                                   nvidia_position_[2].begin(),
-                                                                   nvidia_momentum_[0].begin(),
-                                                                   nvidia_momentum_[1].begin(),
-                                                                   nvidia_momentum_[2].begin(),
-                                                                   nvidia_weight_.begin(),
-                                                                   nvidia_charge_.begin()
-                                                                  // , nvidia_cell_keys_.begin()
-                                                                   )
-                                                ),
-                      thrust::make_zip_iterator(thrust::make_tuple(
-                                                                   nvidia_position_[0].begin()+nparts,
-                                                                   nvidia_position_[1].begin()+nparts,
-                                                                   nvidia_position_[2].begin()+nparts,
-                                                                   nvidia_momentum_[0].begin()+nparts,
-                                                                   nvidia_momentum_[1].begin()+nparts,
-                                                                   nvidia_momentum_[2].begin()+nparts,
-                                                                   nvidia_weight_.begin()+nparts,
-                                                                   nvidia_charge_.begin()+nparts
-                                                                //,   nvidia_cell_keys_.begin()+nparts
-                                                                   )
-                                                ),
-                      nvidia_cell_keys_.begin(),
-                      count_if_out()
-                      );
+    // thrust::remove_if(thrust::device,
+    //                   thrust::make_zip_iterator(thrust::make_tuple(
+    //                                                                nvidia_position_[0].begin(),
+    //                                                                nvidia_position_[1].begin(),
+    //                                                                nvidia_position_[2].begin(),
+    //                                                                nvidia_momentum_[0].begin(),
+    //                                                                nvidia_momentum_[1].begin(),
+    //                                                                nvidia_momentum_[2].begin(),
+    //                                                                nvidia_weight_.begin(),
+    //                                                                nvidia_charge_.begin()
+    //                                                               // , nvidia_cell_keys_.begin()
+    //                                                                )
+    //                                             ),
+    //                   thrust::make_zip_iterator(thrust::make_tuple(
+    //                                                                nvidia_position_[0].begin()+nparts,
+    //                                                                nvidia_position_[1].begin()+nparts,
+    //                                                                nvidia_position_[2].begin()+nparts,
+    //                                                                nvidia_momentum_[0].begin()+nparts,
+    //                                                                nvidia_momentum_[1].begin()+nparts,
+    //                                                                nvidia_momentum_[2].begin()+nparts,
+    //                                                                nvidia_weight_.begin()+nparts,
+    //                                                                nvidia_charge_.begin()+nparts
+    //                                                             //,   nvidia_cell_keys_.begin()+nparts
+    //                                                                )
+    //                                             ),
+    //                   nvidia_cell_keys_.begin(),
+    //                   count_if_out()
+    //                   );
                       
-    if (isQuantumParameter) {
-        thrust::remove_if(thrust::device,
-                          nvidia_chi_.begin(),
-                          nvidia_chi_.begin()+nparts,
-                          nvidia_cell_keys_.begin(),
-                          count_if_out()
-        );
-    }
-    if (isMonteCarlo) {
-        thrust::remove_if(thrust::device,
-                          nvidia_tau_.begin(),
-                          nvidia_tau_.begin()+nparts,
-                          nvidia_cell_keys_.begin(),
-                          count_if_out()
-        );
-    }
+    // if (isQuantumParameter) {
+    //     thrust::remove_if(thrust::device,
+    //                       nvidia_chi_.begin(),
+    //                       nvidia_chi_.begin()+nparts,
+    //                       nvidia_cell_keys_.begin(),
+    //                       count_if_out()
+    //     );
+    // }
+    // if (isMonteCarlo) {
+    //     thrust::remove_if(thrust::device,
+    //                       nvidia_tau_.begin(),
+    //                       nvidia_tau_.begin()+nparts,
+    //                       nvidia_cell_keys_.begin(),
+    //                       count_if_out()
+    //     );
+    // }
     
     // Update current number of particles
-    gpu_nparts_ -= nparts_to_move_;
-    nparts = gpu_nparts_;
+    // gpu_nparts_ -= nparts_to_move_;
+    
+    int nparts = gpu_nparts_;
 
     // Just resize cell keys, no need to remove
     // nvidia_cell_keys_.resize(gpu_nparts_);
 
     // Manage the recv data structure
-    nvidiaParticles* cp_parts = static_cast<nvidiaParticles*>( particles_to_move );
+    nvidiaParticles* cp_parts = static_cast<nvidiaParticles*>( particles_to_inject );
 
     ZipIterParts iter_copy(thrust::make_tuple(cp_parts->nvidia_position_[0].begin(),
                                               cp_parts->nvidia_position_[1].begin(),

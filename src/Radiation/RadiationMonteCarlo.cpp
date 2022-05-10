@@ -513,7 +513,7 @@ double RadiationMonteCarlo::photonEmission( int ipart,
         // Second method: emission of several photons for statistics following
         // the parameter radiation_photon_sampling_
 
-#ifndef _GPU
+// #ifndef _GPU
 
         // Creation of new photons in the temporary array photons
         photons->createParticles( radiation_photon_sampling_ );
@@ -558,7 +558,7 @@ double RadiationMonteCarlo::photonEmission( int ipart,
             }
 
         }
-#endif
+// #endif
 
     }
     // Addition of the emitted energy in the cumulating parameter

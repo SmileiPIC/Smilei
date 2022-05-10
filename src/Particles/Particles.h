@@ -447,7 +447,11 @@ public:
     
     virtual int eraseLeavingParticles() { ERROR( "Should not have come here" ); return 0; };
     
-    virtual int injectParticles( Particles* particles_to_move ) {  ERROR( "On CPU: managed in sortPatciles. Should not have come here" ); return 0;};
+    // -----------------------------------------------------------------------------
+    //! Inject particles from particles_to_move object and put 
+    //! them in the Particles object
+    //! \param[in,out] particles_to_inject Particles object containing particles to inject
+    virtual int injectParticles( Particles* particles_to_inject ) {  ERROR( "On CPU: managed in sortPatciles. Should not have come here" ); return 0;};
 
     virtual unsigned int gpu_size() const { ERROR( "Should not have come here" ); return 0; };
 

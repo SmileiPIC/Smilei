@@ -800,7 +800,9 @@ void Species::injectParticles( Params &params )
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sortParticles( Params &params, Patch * patch )
 {
+    // -----------------------------
     // GPU version
+    
     if (params.gpu_computing) {
         // particles_to_move contains, up to here, send particles
         //   clean it to manage recv particles
@@ -816,16 +818,22 @@ void Species::sortParticles( Params &params, Patch * patch )
             }
         }
         particles_to_move->syncGPU();
+        
+        // Erase particles that leaves this patch
+        particles->last_index[0] = particles->eraseLeavingParticles();
+        
+        // Inject newly arrived particles in particles_to_move
         particles->last_index[0] += particles->injectParticles( particles_to_move );
 
         return;
         
+    // --------------------------
     // CPU version
     } else {
         injectParticles( params );
 
         int ndim = params.nDim_field;
-        int idim;
+        //int idim;
 
         int total_number_part_recv = 0;
         //Merge all MPI_buffer_.partRecv in particles_to_move
@@ -1136,81 +1144,90 @@ void Species::countSortParticles( Params &params )
 
 }
 
-// Move all particles from another species to this one
+//! Move all particles from another species to this one
 void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
 
-// GPU version    
-#if defined(SMILEI_ACCELERATOR_GPU_OMP) or (_GPU)
-    
+// ---------------------------------------------------
+// GPU version 
+// Warning: the GPU version does not handle bin and sorting
+// Warning: the current GPU version does not handle tracked particles
+   
+    if (params.gpu_computing) {
+
+        // Inject paticles from source_particles
+        particles->last_index[0] += particles->injectParticles( &source_particles );
+
+// ---------------------------------------------------
 // CPU version
-#else
+
+    } else {
     
-    unsigned int npart = source_particles.size(), nbin=particles->first_index.size();
-    double inv_cell_length = 1./ params.cell_length[0];
+        unsigned int npart = source_particles.size(), nbin=particles->first_index.size();
+        double inv_cell_length = 1./ params.cell_length[0];
 
-    // If this species is tracked, set the particle IDs
-    if( particles->tracked ) {
-        dynamic_cast<DiagnosticTrack *>( localDiags[tracking_diagnostic] )->setIDs( source_particles );
-    }
-
-    // Move particles
-    vector<int> src_bin_keys( npart, 0 );
-    for( unsigned int i=0; i<npart; i++ ) {
-        // Copy particle to the correct bin
-        src_bin_keys[i] = source_particles.position( 0, i )*inv_cell_length - ( patch->getCellStartingGlobalIndex( 0 ) + params.oversize[0] );
-        src_bin_keys[i] /= params.cluster_width_;
-    }
-
-    vector<int> bin_count( nbin, 0 );
-    for( unsigned int ip=0; ip < npart ; ip++ )
-        bin_count[src_bin_keys[ip]] ++;
-
-    // sort new parts par bins
-    int istart = 0;
-    int istop  = bin_count[0];
-
-    for ( int ibin = 0 ; ibin < (int)nbin ; ibin++ ) {
-        if (bin_count[ibin]!=0) {
-            for( int ip=istart; ip < istop ; ip++ ) {
-                if ( src_bin_keys[ip] == ibin )
-                    continue;
-                else { // rearrange particles
-                    int ip_swap = istop;
-                    while (( src_bin_keys[ip_swap] != ibin ) && (ip_swap<(int)npart))
-                        ip_swap++;
-                    source_particles.swapParticle(ip, ip_swap);
-                    int tmp = src_bin_keys[ip];
-                    src_bin_keys[ip] = src_bin_keys[ip_swap];
-                    src_bin_keys[ip_swap] = tmp;
-                } // rearrange particles
-            } // end loop on particles of a cell
-
-            // inject in main data structure per cell
-            source_particles.copyParticles( istart, bin_count[ibin],
-                                        *particles,
-                                        particles->first_index[ibin] );
-            particles->last_index[ibin] += bin_count[ibin];
-            for ( unsigned int idx=ibin+1 ; idx<particles->last_index.size() ; idx++ ) {
-                particles->first_index[idx] += bin_count[ibin];
-                particles->last_index[idx]  += bin_count[ibin];
-            }
-
+        // If this species is tracked, set the particle IDs
+        if( particles->tracked ) {
+            dynamic_cast<DiagnosticTrack *>( localDiags[tracking_diagnostic] )->setIDs( source_particles );
         }
-        // update istart/istop fot the next cell
-        istart += bin_count[ibin];
-        if ( ibin != (int)nbin-1  )
-            istop  += bin_count[ibin+1];
-        else
-            istop = npart;
 
-    } // End cell loop
-    //particles->cell_keys.resize( particles->size() );
-    particles->resizeCellKeys( particles->size() );
+        // Move particles
+        vector<int> src_bin_keys( npart, 0 );
+        for( unsigned int i=0; i<npart; i++ ) {
+            // Copy particle to the correct bin
+            src_bin_keys[i] = source_particles.position( 0, i )*inv_cell_length - ( patch->getCellStartingGlobalIndex( 0 ) + params.oversize[0] );
+            src_bin_keys[i] /= params.cluster_width_;
+        }
 
-    source_particles.clear();
+        vector<int> bin_count( nbin, 0 );
+        for( unsigned int ip=0; ip < npart ; ip++ )
+            bin_count[src_bin_keys[ip]] ++;
+
+        // sort new parts par bins
+        int istart = 0;
+        int istop  = bin_count[0];
+
+        for ( int ibin = 0 ; ibin < (int)nbin ; ibin++ ) {
+            if (bin_count[ibin]!=0) {
+                for( int ip=istart; ip < istop ; ip++ ) {
+                    if ( src_bin_keys[ip] == ibin )
+                        continue;
+                    else { // rearrange particles
+                        int ip_swap = istop;
+                        while (( src_bin_keys[ip_swap] != ibin ) && (ip_swap<(int)npart))
+                            ip_swap++;
+                        source_particles.swapParticle(ip, ip_swap);
+                        int tmp = src_bin_keys[ip];
+                        src_bin_keys[ip] = src_bin_keys[ip_swap];
+                        src_bin_keys[ip_swap] = tmp;
+                    } // rearrange particles
+                } // end loop on particles of a cell
+
+                // inject in main data structure per cell
+                source_particles.copyParticles( istart, bin_count[ibin],
+                                            *particles,
+                                            particles->first_index[ibin] );
+                particles->last_index[ibin] += bin_count[ibin];
+                for ( unsigned int idx=ibin+1 ; idx<particles->last_index.size() ; idx++ ) {
+                    particles->first_index[idx] += bin_count[ibin];
+                    particles->last_index[idx]  += bin_count[ibin];
+                }
+
+            }
+            // update istart/istop fot the next cell
+            istart += bin_count[ibin];
+            if ( ibin != (int)nbin-1  )
+                istop  += bin_count[ibin+1];
+            else
+                istop = npart;
+
+        } // End cell loop
+        //particles->cell_keys.resize( particles->size() );
+        particles->resizeCellKeys( particles->size() );
+
+        source_particles.clear();
     
-#endif
+    }
     
 }
 

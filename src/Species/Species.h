@@ -504,7 +504,11 @@ public:
     }
 
     //! Method to import particles in this species while conserving the sorting among bins
-    virtual void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & );
+    //! \param[in] Params the main Smilei parameters
+    //! \param[in,out] Patch current patch
+    //! \param[in,out] source_particles Particles object containing the particles to import 
+    //! \param[in,out] localDiags vector of diags for tracked particles
+    virtual void importParticles( Params &, Patch *, Particles & source_particles, std::vector<Diagnostic *> & );
 
     //! Moving window boundary conditions managment
     void disableXmax();
