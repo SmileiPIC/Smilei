@@ -72,7 +72,7 @@ public:
     //! \param RadiationTables    Cross-section data tables and useful functions
     //                        for nonlinear inverse Compton scattering
     // ---------------------------------------------------------------------
-    //#pragma acc routine seq
+    #pragma acc routine seq
     double photonEmission( int ipart,
                          const double particle_chi,
                          const double particle_gamma,

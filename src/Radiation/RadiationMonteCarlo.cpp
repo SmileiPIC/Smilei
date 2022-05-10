@@ -519,42 +519,45 @@ double RadiationMonteCarlo::photonEmission( int ipart,
         photons->createParticles( radiation_photon_sampling_ );
 
         // Final size
-        int npart = photons->size();
-
+#ifdef _GPU
+        int nphotons = photons->gpu_size();
+#else
+        int nphotons = photons->size();
+#endif
         // Inverse of the momentum norm
         inv_old_norm_p = 1./std::sqrt( momentum_x[ipart]*momentum_x[ipart]
                                   + momentum_y[ipart]*momentum_y[ipart]
                                   + momentum_z[ipart]*momentum_z[ipart] );
 
         // For all new photons
-        for( int idNew=npart-radiation_photon_sampling_; idNew<npart; idNew++ ) {
+        for( int iphoton=nphotons-radiation_photon_sampling_; iphoton<nphotons; iphoton++ ) {
 
 
-            photons->position( 0, idNew )=position_x[ipart];
+            photons->position( 0, iphoton )=position_x[ipart];
             if (nDim_>1) {
-                photons->position( 1, idNew )=position_y[ipart];
+                photons->position( 1, iphoton )=position_y[ipart];
                 if (nDim_>2) {
-                    photons->position( 2, idNew )=position_z[ipart];
+                    photons->position( 2, iphoton )=position_z[ipart];
                 }
             }
 
-            photons->momentum( 0, idNew ) =
+            photons->momentum( 0, iphoton ) =
                 photon_gamma*momentum_x[ipart]*inv_old_norm_p;
-            photons->momentum( 1, idNew ) =
+            photons->momentum( 1, iphoton ) =
                 photon_gamma*momentum_y[ipart]*inv_old_norm_p;
-            photons->momentum( 2, idNew ) =
+            photons->momentum( 2, iphoton ) =
                 photon_gamma*momentum_z[ipart]*inv_old_norm_p;
 
 
-            photons->weight( idNew )=weight[ipart]*inv_radiation_photon_sampling_;
-            photons->charge( idNew )=0;
+            photons->weight( iphoton )=weight[ipart]*inv_radiation_photon_sampling_;
+            photons->charge( iphoton )=0;
 
             if( photons->isQuantumParameter ) {
-                photons->chi( idNew ) = photon_chi;
+                photons->chi( iphoton ) = photon_chi;
             }
 
             if( photons->isMonteCarlo ) {
-                photons->tau( idNew ) = -1.;
+                photons->tau( iphoton ) = -1.;
             }
 
         }
