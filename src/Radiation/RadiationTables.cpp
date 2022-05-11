@@ -334,10 +334,13 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 //! Computation of the photon quantum parameter photon_chi for emission
 //! ramdomly and using the tables xi and chiphmin
 //
-//! \param particle_chi particle quantum parameter
+//! \param[in] particle_chi particle quantum parameter
+//! \param[in] xi
+//! \param[in] table_min_photon_chi
+//! \param[in] table_xi
 // -----------------------------------------------------------------------------
 double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi, double xi,
-                                                double * table_min_photon_chi, 
+                                                const double *const table_min_photon_chi, 
                                                 double * table_xi)
 {
     // Log10 of particle_chi
@@ -462,7 +465,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     // For integration reasons, we can have table_xi[ixip+1] = table_xi[ixip]
     // In this case, no interpolation
     {
-        photon_chi_1 = ichiph_1*chiph_xip_delta_1;
+        photon_chi_1 = ichiph_1*chiph_xip_delta_1
                           + table_min_photon_chi[ichipa] ;
     }
 
@@ -495,11 +498,12 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
 //! Computation of the Cross Section dNph/dt which is also
 //! the number of photons generated per time unit.
 //
-//! \param particle_chi particle quantum parameter
-//! \param particle_gamma particle gamma factor
+//! param[in] particle_chi particle quantum parameter
+//! param[in] particle_gamma particle Lorentz factor
+//! param[in] integfochi_table table of the discretized integrated f/chi function for Photon production yield computation
 // ---------------------------------------------------------------------------------------------------------------------
 double RadiationTables::computePhotonProductionYield( double particle_chi, double particle_gamma, 
-    double * integfochi_table)
+                                                        const double *const integfochi_table)
 {
 
     // Log of the particle quantum parameter particle_chi

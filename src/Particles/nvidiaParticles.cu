@@ -42,6 +42,33 @@ nvidiaParticles::nvidiaParticles() : Particles()
 }
 
 // -----------------------------------------------------------------------------
+//! Set capacity of Particles vectors
+void nvidiaParticles::reserve( unsigned int reserved_particles, unsigned int n_dim )
+{
+    for (int idim=0;idim<n_dim;idim++)
+        nvidia_position_[idim].reserve( reserved_particles );
+    for (int idim=0;idim<3;idim++) {
+        nvidia_momentum_[idim].reserve( reserved_particles );
+    }
+    nvidia_weight_.reserve( reserved_particles );
+    nvidia_charge_.reserve( reserved_particles );
+    if( isQuantumParameter ) {
+        nvidia_chi_.reserve( reserved_particles );
+    }
+    if( isMonteCarlo ) {
+        nvidia_tau_.reserve( reserved_particles );
+    }
+    nvidia_cell_keys_.reserve( reserved_particles );
+}
+
+// -----------------------------------------------------------------------------
+//! Set capacity of Particles vectors based on already used dimension on CPU
+void nvidiaParticles::reserve( unsigned int reserved_particles )
+{
+    reserve(reserved_particles, (unsigned int) (Position.size()));
+}
+
+// -----------------------------------------------------------------------------
 //! Initialize the particle properties on devide as a mirror of the host definition
 // -----------------------------------------------------------------------------
 void nvidiaParticles::initializeDataOnDevice()

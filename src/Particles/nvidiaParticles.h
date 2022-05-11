@@ -39,9 +39,14 @@ public:
     //! Destructor for nvidiaParticles
     virtual ~nvidiaParticles() {};
 
-    // -----------------------------------------------------------------------------
+    //! Set capacity of Particles vectors on GPU
+    void reserve( unsigned int reserved_particles, unsigned int n_dim ) override;
+
+    //! Set capacity of Particles vectors based on already used dimension on CPU
+    void reserve( unsigned int reserved_particles ) override;
+
     //! Initialize the particle properties on devide as a mirror of the host definition
-    // -----------------------------------------------------------------------------
+    // 
     void initializeDataOnDevice() override;
     
     //! Send the particles from host to device

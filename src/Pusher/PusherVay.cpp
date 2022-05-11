@@ -34,11 +34,8 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     double *const invgf = &( smpi->dynamics_invgf[ithread][0] );
-
-    double charge_over_mass_dts2;
-    double upx, upy, upz, us2;
-    double alpha, s, T2 ;
-    double Tx, Ty, Tz;
+    
+    double alpha, s ;
     double pxsm, pysm, pzsm;
 
     double *const __restrict__ position_x = particles.getPtrPosition( 0 );
@@ -62,14 +59,15 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
     const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
     #ifndef _GPU
-        #pragma omp simd private(s,us2,alpha,upx,upy,upz,Tx,Ty,Tz,pxsm,pysm,pzsm)
+        #pragma omp simd private(s,alpha,pxsm,pysm,pzsm)
     #else
         int np = iend-istart;
         #pragma acc parallel present(Ex[istart:np],Ey[istart:np],Ez[istart:np],Bx[istart:np],By[istart:np],Bz[istart:np],invgf[0:nparts]) deviceptr(position_x,position_y,position_z,momentum_x,momentum_y,momentum_z,charge)
         #pragma acc loop gang worker vector
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
+        
+        const double charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
 
         // ____________________________________________
         // Part I: Computation of uprime
@@ -80,14 +78,14 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
                                      + momentum_z[ipart]*momentum_z[ipart] );
 
         // Add Electric field
-        upx = momentum_x[ipart] + 2.*charge_over_mass_dts2*( Ex[ipart-ipart_buffer_offset] );
-        upy = momentum_y[ipart] + 2.*charge_over_mass_dts2*( Ey[ipart-ipart_buffer_offset] );
-        upz = momentum_z[ipart] + 2.*charge_over_mass_dts2*( Ez[ipart-ipart_buffer_offset] );
+        double upx = momentum_x[ipart] + 2.*charge_over_mass_dts2*( Ex[ipart-ipart_buffer_offset] );
+        double upy = momentum_y[ipart] + 2.*charge_over_mass_dts2*( Ey[ipart-ipart_buffer_offset] );
+        double upz = momentum_z[ipart] + 2.*charge_over_mass_dts2*( Ez[ipart-ipart_buffer_offset] );
 
         // Add magnetic field
-        Tx  = charge_over_mass_dts2* ( Bx[ipart-ipart_buffer_offset] );
-        Ty  = charge_over_mass_dts2* ( By[ipart-ipart_buffer_offset] );
-        Tz  = charge_over_mass_dts2* ( Bz[ipart-ipart_buffer_offset] );
+        double Tx  = charge_over_mass_dts2* ( Bx[ipart-ipart_buffer_offset] );
+        double Ty  = charge_over_mass_dts2* ( By[ipart-ipart_buffer_offset] );
+        double Tz  = charge_over_mass_dts2* ( Bz[ipart-ipart_buffer_offset] );
 
         upx += invgf[ipart-ipart_buffer_offset]*( momentum_y[ipart]*Tz - momentum_z[ipart]*Ty );
         upy += invgf[ipart-ipart_buffer_offset]*( momentum_z[ipart]*Tx - momentum_x[ipart]*Tz );
@@ -95,14 +93,14 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
 
         // alpha is gamma^2
         alpha = 1.0 + upx*upx + upy*upy + upz*upz;
-        T2    = Tx*Tx + Ty*Ty + Tz*Tz;
+        const double T2    = Tx*Tx + Ty*Ty + Tz*Tz;
 
         // ___________________________________________
         // Part II: Computation of Gamma^{i+1}
 
         // s is sigma
         s     = alpha - T2;
-        us2   = upx*Tx + upy*Ty + upz*Tz;
+        double us2   = upx*Tx + upy*Ty + upz*Tz;
         us2   = us2*us2;
 
         // alpha becomes 1/gamma^{i+1}

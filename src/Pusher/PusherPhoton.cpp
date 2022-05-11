@@ -14,8 +14,6 @@
 #include "Species.h"
 #include "Particles.h"
 
-using namespace std;
-
 PusherPhoton::PusherPhoton( Params &params, Species *species )
     : Pusher( params, species )
 {
@@ -54,7 +52,7 @@ void PusherPhoton::operator()( Particles &particles, SmileiMPI *smpi,
     #endif
     for( int ipart=istart ; ipart<iend; ipart++ ) {
 
-        invgf[ipart] = 1. / sqrt( momentum_x[ipart]*momentum_x[ipart] +
+        invgf[ipart] = 1. / std::sqrt( momentum_x[ipart]*momentum_x[ipart] +
                                        momentum_y[ipart]*momentum_y[ipart] +
                                        momentum_z[ipart]*momentum_z[ipart] );
 

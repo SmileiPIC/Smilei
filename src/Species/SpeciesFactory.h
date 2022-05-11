@@ -281,6 +281,7 @@ public:
             
             //Photons can not radiate
             this_species->radiated_photons_ = NULL;
+            this_species->photon_species_   = NULL;
             
             // If this_species->multiphoton_Breit_Wheeler
             if( PyTools::extractV( "multiphoton_Breit_Wheeler", this_species->multiphoton_Breit_Wheeler_, "Species", ispec ) ) {
@@ -1360,6 +1361,7 @@ public:
                                 patch->vecSpecies[ispec1]->getNbrOfParticles(),
                                 *patch->vecSpecies[ispec1]->photon_species_->particles
                             );
+                            // patch->vecSpecies[ispec1]->radiated_photons_->reserve( 10, params.nDim_particle );
                             break;
                         }
                     }
@@ -1457,6 +1459,7 @@ public:
                     patch->vecSpecies[i]->radiated_photons_->isQuantumParameter = patch->vecSpecies[i]->photon_species_->particles->isQuantumParameter;
                     patch->vecSpecies[i]->radiated_photons_->isMonteCarlo = patch->vecSpecies[i]->photon_species_->particles->isMonteCarlo;
                     patch->vecSpecies[i]->radiated_photons_->initialize( 0, params.nDim_particle, params.keep_position_old );
+                    // patch->vecSpecies[i]->radiated_photons_->initializeReserve( 0, *patch->vecSpecies[i]->photon_species_->particles );
                 } else {
                     patch->vecSpecies[i]->photon_species_ = NULL;
                     patch->vecSpecies[i]->radiated_photons_ = NULL;

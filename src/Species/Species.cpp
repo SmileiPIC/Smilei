@@ -430,7 +430,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
                 // Radiation process
                 ( *Radiate )( *particles,
-                              *radiated_photons_,
+                              radiated_photons_,
                               smpi,
                               RadiationTables,
                               nrj_radiated_,

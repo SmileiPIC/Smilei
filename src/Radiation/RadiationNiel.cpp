@@ -50,7 +50,7 @@ RadiationNiel::~RadiationNiel()
 // -----------------------------------------------------------------------------
 void RadiationNiel::operator()(
     Particles       &particles,
-    Particles       &photons,
+    Particles       *photons,
     SmileiMPI       *smpi,
     RadiationTables &RadiationTables,
     double          &radiated_energy,

@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 //
-//! \file ParticleCreator.h
+//! \file ParticleFactory.h
 //
 //! \brief Factory to select the right Particles type
 //
