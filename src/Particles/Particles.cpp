@@ -1,3 +1,11 @@
+// -----------------------------------------------------------------------------
+//
+//! \file Particles.cpp
+//
+//! \brief contains the Particles class methods
+//
+// -----------------------------------------------------------------------------
+
 #include "Particles.h"
 
 #include <cstring>
@@ -50,7 +58,7 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
         float c_part_max =1.2;
         //float c_part_max = part.c_part_max;
         //float c_part_max = params.species_param[0].c_part_max;
-        reserve( round( c_part_max * nParticles ), nDim );
+        //reserve( round( c_part_max * nParticles ), nDim );
     }
 
     resize( nParticles, nDim, keep_position_old );
@@ -97,16 +105,6 @@ void Particles::initialize( unsigned int nParticles, unsigned int nDim, bool kee
 
     }
 
-    // Position quick pointers
-    position_x = &Position[0][0];
-    position_y = &Position[1][0];
-    position_z = &Position[2][0];
-
-    // Momentum quick pointers
-    momentum_x = &Momentum[0][0];
-    momentum_y = &Momentum[1][0];
-    momentum_z = &Momentum[2][0];
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -132,7 +130,7 @@ void Particles::initialize( unsigned int nParticles, Particles &part )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
 {
-    return;
+    //return;
 
     Position.resize( nDim );
     Position_old.resize( nDim );
@@ -163,17 +161,18 @@ void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
 
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! Initialize like Particles object part with 0 particles and reserve space for n_part_max particles
+//
 void Particles::initializeReserve( unsigned int npart_max, Particles &part )
 {
     initialize( 0, part );
-    reserve( npart_max, part.dimension() );
+    //reserve( npart_max, part.dimension() );
 }
 
-
-
 // ---------------------------------------------------------------------------------------------------------------------
-//Resize Particle vectors
-// ---------------------------------------------------------------------------------------------------------------------
+//! Resize Particle vectors
+// 
 void Particles::resize( unsigned int nParticles, unsigned int nDim, bool keep_position_old )
 {
     Position.resize( nDim );

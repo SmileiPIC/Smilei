@@ -47,7 +47,7 @@ public:
     // ---------------------------------------------------------------------
     virtual void operator()(
         Particles &particles,
-        Particles &photons,
+        Particles *photons,
         SmileiMPI *smpi,
         RadiationTables &RadiationTables,
         double          &radiated_energy,
@@ -56,32 +56,6 @@ public:
         int             ithread,
         int             ipart_ref = 0
        );
-
-    // ---------------------------------------------------------------------
-    //! Perform the phoon emission (creation of a super-photon
-    //! and slow down of the emitting particle)
-    //! \param ipart              particle index
-    //! \param particle_chi          particle quantum parameter
-    //! \param particle_gamma          particle gamma factor
-    //! \param position           particle position
-    //! \param momentum           particle momentum
-    //! \param RadiationTables    Cross-section data tables and useful functions
-    //                        for nonlinear inverse Compton scattering
-    // ---------------------------------------------------------------------
-    double photonEmission( int ipart,
-        const double particle_chi,
-        const double particle_gamma,
-        double * position_x,
-        double * position_y,
-        double * position_z,
-        double * momentum_x,
-        double * momentum_y,
-        double * momentum_z,
-        const double *const weight,
-        const double *const table_min_photon_chi,
-        const double *const table_xi,
-        Particles * photons,
-        RadiationTables &RadiationTables);
 
 protected:
 

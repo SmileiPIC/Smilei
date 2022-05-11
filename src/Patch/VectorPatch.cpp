@@ -758,13 +758,13 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
 
                         unsigned int number_of_particles = particles->size();
 
-                        position_x = particles->position_x;
-                        position_y = particles->position_y;
-                        position_z = particles->position_z;
+                        position_x = particles->getPtrPosition( 0 );
+                        position_y = particles->getPtrPosition( 1 );
+                        position_z = particles->getPtrPosition( 2 );
 
-                        momentum_x = particles->momentum_x;
-                        momentum_y = particles->momentum_y;
-                        momentum_z = particles->momentum_z;
+                        momentum_x = particles->getPtrMomentum( 0 );
+                        momentum_y = particles->getPtrMomentum( 1 );
+                        momentum_z = particles->getPtrMomentum( 2 );
 
                         #pragma omp simd
                         for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
@@ -792,12 +792,12 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         // Pointer to simplify the code
                         particles = &local_particles_vector[i_injector];
 
-                        position_x = particles->position_x;
-                        position_y = particles->position_y;
+                        position_x = particles->getPtrPosition( 0 );
+                        position_y = particles->getPtrPosition( 1 );
 
-                        momentum_x = particles->momentum_x;
-                        momentum_y = particles->momentum_y;
-                        momentum_z = particles->momentum_z;;
+                        momentum_x = particles->getPtrMomentum( 0 );
+                        momentum_y = particles->getPtrMomentum( 1 );
+                        momentum_z = particles->getPtrMomentum( 2 );
 
                         unsigned int number_of_particles = particles->size();
 
@@ -825,17 +825,17 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         // Pointer to simplify the code
                         particles = &local_particles_vector[i_injector];
 
-                        position_x = particles->position_x;
+                        position_x = particles->getPtrPosition( 0 );
 
-                        momentum_x = particles->momentum_x;
-                        momentum_y = particles->momentum_y;
-                        momentum_z = particles->momentum_z;
+                        momentum_x = particles->getPtrMomentum( 0 );
+                        momentum_y = particles->getPtrMomentum( 1 );
+                        momentum_z = particles->getPtrMomentum( 2 );
 
                         unsigned int number_of_particles = particles->size();
 
                         #pragma omp simd
                         for ( unsigned int ip = 0; ip < number_of_particles ; ip++ ) {
-                            double inverse_gamma = params.timestep/sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
+                            double inverse_gamma = params.timestep/std::sqrt(1. + momentum_x[ip]*momentum_x[ip] + momentum_y[ip]*momentum_y[ip]
                             + momentum_z[ip]*momentum_z[ip]);
 
                             position_x[ip] += ( momentum_x[ip]
@@ -860,34 +860,38 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     // Pointer to simplify the code
                     particles = &local_particles_vector[i_injector];
 
+                    double *const __restrict__ px = particles->getPtrPosition(0);
+                    double *const __restrict__ py = params.nDim_field > 1 ? particles->getPtrPosition(1) : nullptr;
+                    double *const __restrict__ pz = params.nDim_field > 2 ? particles->getPtrPosition(2) : nullptr;
+
                     if (params.nDim_field == 3) {
 
                         #pragma omp simd
                         for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
-                            particles->position_x[ip] =
-                            local_particles_vector[i_injector_2].position_x[ip];
-                            particles->position_y[ip] =
-                            local_particles_vector[i_injector_2].position_y[ip];
-                            particles->position_z[ip] =
-                            local_particles_vector[i_injector_2].position_z[ip];
+                            px[ip] =
+                            local_particles_vector[i_injector_2].Position[0][ip];
+                            py[ip] =
+                            local_particles_vector[i_injector_2].Position[1][ip];
+                            pz[ip] =
+                            local_particles_vector[i_injector_2].Position[2][ip];
                         }
                     }
                     if (params.nDim_field == 2) {
 
                         #pragma omp simd
                         for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
-                            particles->position_x[ip] =
-                            local_particles_vector[i_injector_2].position_x[ip];
-                            particles->position_y[ip] =
-                            local_particles_vector[i_injector_2].position_y[ip];
+                            px[ip] =
+                            local_particles_vector[i_injector_2].Position[0][ip];
+                            py[ip] =
+                            local_particles_vector[i_injector_2].Position[1][ip];
                         }
                     }
                     if (params.nDim_field == 1) {
 
                         #pragma omp simd
                         for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
-                            particles->position_x[ip] =
-                            local_particles_vector[i_injector_2].position_x[ip];
+                            px[ip] =
+                            local_particles_vector[i_injector_2].Position[0][ip];
                         }
                     }
                 }

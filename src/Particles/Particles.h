@@ -1,3 +1,22 @@
+// -----------------------------------------------------------------------------
+//
+//! \file Particles.cpp
+//
+//! \brief contains the Particles class description
+//
+//! The Particles Class is the main data structure for handling particle list. 
+//! It contains the main particles properties:
+//! - positions 
+//! - momentums 
+//! - charge 
+//! - weight
+//! - quantum parameter (chi) for QED effects
+//! - optical depth for Monte-Carlo processes
+//! - tag id for tracked particles
+//
+//! The class also contains many functions to manage particles. 
+// -----------------------------------------------------------------------------
+
 #ifndef PARTICLES_H
 #define PARTICLES_H
 
@@ -14,8 +33,6 @@ class Particle;
 
 class Params;
 class Patch;
-
-
 
 //----------------------------------------------------------------------------------------------------------------------
 //! Particle class: holds the basic properties of a particle
@@ -39,7 +56,7 @@ public:
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, unsigned int nDim );
 
-    //! Initialize like another particle, but only reserve space
+    //! Initialize like Particles object part with 0 particles and reserve space for n_part_max particles
     void initializeReserve( unsigned int n_part_max, Particles &part );
 
     //! Resize Particles vectors
@@ -364,15 +381,6 @@ public:
     std::vector< std::vector<short   >*> short_prop_;
     std::vector< std::vector<uint64_t>*> uint64_prop_;
 
-    //! Specific pointers
-    double * __restrict__ position_x;
-    double * __restrict__ position_y;
-    double * __restrict__ position_z;
-
-    double * __restrict__ momentum_x;
-    double * __restrict__ momentum_y;
-    double * __restrict__ momentum_z;
-
 #ifdef __DEBUG
     bool testMove( int iPartStart, int iPartEnd, Params &params );
 
@@ -415,7 +423,7 @@ public:
     virtual void syncGPU() { std::cout << "Should not came here" << std::endl; };
     virtual void syncCPU() { std::cout << "Should not came here" << std::endl; };
     virtual double* getPtrPosition( int idim ) {
-        return &(Position[idim][0]);
+        return Position[idim].data();
     };
     virtual double* getPtrMomentum( int idim ) {
         return &(Momentum[idim][0]);

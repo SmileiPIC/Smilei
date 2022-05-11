@@ -336,6 +336,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 //! ramdomly and using the tables xi and chiphmin
 //
 //! \param particle_chi particle quantum parameter
+//! \param[in] xi xi value to look for the photon chi
 // -----------------------------------------------------------------------------
 double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi, Random * rand)
 {
