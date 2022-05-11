@@ -53,7 +53,11 @@ public:
 
     //! Computation of the photon production yield dNph/dt which is
     //! also the cross-section for the Monte-Carlo
-    double computePhotonProductionYield( double particle_chi, double particle_gamma );
+    //! param[in] particle_chi particle quantum parameter
+    //! param[in] particle_gamma particle Lorentz factor
+    //! param[in] integfochi_table table of the discretized integrated f/chi function for Photon production yield computation
+    double computePhotonProductionYield( double particle_chi, double particle_gamma, 
+                                         const double *const integfochi_table );
 
     //! Determine randomly a photon quantum parameter photon_chi
     //! for an emission process
@@ -64,8 +68,14 @@ public:
 
     //! Computation of the photon quantum parameter photon_chi for emission
     //! ramdomly and using the tables xi and chiphmin
-    //! \param particle_chi particle quantum parameter
-    double computeRandomPhotonChiWithInterpolation( double particle_chi, Random * rand);
+    //! \param[in] particle_chi particle quantum parameter
+    //! \param[in] xi
+    //! \param[in] table_min_photon_chi
+    //! \param[in] table_xi
+    double computeRandomPhotonChiWithInterpolation( double particle_chi, 
+                                                    double xi,
+                                                    const double *const table_min_photon_chi, 
+                                                    double * table_xi);
 
     //! Return the value of the function h(particle_chi) of Niel et al.
     //! Use an integration of Gauss-Legendre

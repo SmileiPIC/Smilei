@@ -335,10 +335,14 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 //! Computation of the photon quantum parameter photon_chi for emission
 //! ramdomly and using the tables xi and chiphmin
 //
-//! \param particle_chi particle quantum parameter
-//! \param[in] xi xi value to look for the photon chi
+//! \param[in] particle_chi particle quantum parameter
+//! \param[in] xi
+//! \param[in] table_min_photon_chi
+//! \param[in] table_xi
 // -----------------------------------------------------------------------------
-double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi, Random * rand)
+double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle_chi, double xi,
+                                                const double *const table_min_photon_chi, 
+                                                double * table_xi)
 {
     // Log10 of particle_chi
     double log10_particle_chi;
@@ -349,7 +353,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     double photon_chi_2;
 
     // Random xi
-    double xi;
+    //double xi;
 
     //double chiph_xip_delta;
     double chiph_xip_delta_1;
@@ -388,28 +392,28 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     // Search of the index ichiph for photon_chi
     // ---------------------------------------
 
-    xi = rand->uniform();
+    //xi = rand->uniform();
 
     // If the randomly computed xi if below the first one of the row,
     // we take the first one which corresponds to the minimal photon photon_chi
-    if( xi <= xi_.table_[ichipa*xi_.size_photon_chi_] ) {
+    if( xi <= table_xi[ichipa*xi_.size_photon_chi_] ) {
         ichiph_1 = 0;
         ichiph_2 = 0;
-        xi = xi_.table_[ichipa*xi_.size_photon_chi_];
+        xi = table_xi[ichipa*xi_.size_photon_chi_];
     }
     // Above the last xi of the row, the last one corresponds
     // to the maximal photon photon_chi
-    // else if( xi > xi_.table_[( ichipa+1 )*xi_.size_photon_chi_-2] ) {
+    // else if( xi > table_xi[( ichipa+1 )*xi_.size_photon_chi_-2] ) {
     //     ichiph = xi_.size_photon_chi_-2;
-    //     xi = xi_.table_[( ichipa+1 )*xi_.size_photon_chi_-1];
+    //     xi = table_xi[( ichipa+1 )*xi_.size_photon_chi_-1];
     // If nearest point: ichiph = xi_.size_photon_chi_-1
     // }
     else {
         // Search for the corresponding index ichiph for xi
         ichiph_1 = userFunctions::searchValuesInMonotonicArray(
-                     &xi_.table_[ichipa*xi_.size_photon_chi_], xi, xi_.size_photon_chi_ );
+                     &table_xi[ichipa*xi_.size_photon_chi_], xi, xi_.size_photon_chi_ );
         ichiph_2 = userFunctions::searchValuesInMonotonicArray(
-                  &xi_.table_[(ichipa+1)*xi_.size_photon_chi_], xi, xi_.size_photon_chi_ );
+                  &table_xi[(ichipa+1)*xi_.size_photon_chi_], xi, xi_.size_photon_chi_ );
     }
 
     // Corresponding particle_chi for ichipa
@@ -417,25 +421,25 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     d_particle_chi = (log10_particle_chi - (ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_))
                        * xi_.inv_particle_chi_delta_;
 
-    // std::cerr << " " << log10_particle_chi
-    //           << " " <<  ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_
-    //           << " " << xi_.inv_particle_chi_delta_
-    //           << " " << xi_.particle_chi_delta_
-    //           << " " << xi_.log10_min_particle_chi_
-    //           << " " << ichipa
-    //           << " " << d_particle_chi
-    //           << " " << (log10_particle_chi - ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_)
-    //           << std::endl;
+     /*std::cerr << " " << log10_particle_chi
+               << " " <<  ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_
+               << " " << xi_.inv_particle_chi_delta_
+               << " " << xi_.particle_chi_delta_
+               << " " << xi_.log10_min_particle_chi_
+               << " " << ichipa
+               << " " << d_particle_chi
+               << " " << (log10_particle_chi - ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_)
+               << std::endl;*/
 
-    // double log10_min_photon_chi =  xi_.min_photon_chi_table_[ichipa] * (d_particle_chi - 1.0)
-    //                             + d_particle_chi*xi_.min_photon_chi_table_[ichipa+1];
+    // double log10_min_photon_chi =  table_min_photon_chi[ichipa] * (d_particle_chi - 1.0)
+    //                             + d_particle_chi*table_min_photon_chi[ichipa+1];
 
     // Chi gap for the corresponding particle_chi
 
-    chiph_xip_delta_1 = ( ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_ - xi_.min_photon_chi_table_[ichipa])
+    chiph_xip_delta_1 = ( ichipa*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_ - table_min_photon_chi[ichipa])
                       *xi_.inv_size_photon_chi_minus_one_;
 
-    chiph_xip_delta_2 = ( (ichipa+1)*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_ - xi_.min_photon_chi_table_[ichipa+1])
+    chiph_xip_delta_2 = ( (ichipa+1)*xi_.particle_chi_delta_+xi_.log10_min_particle_chi_ - table_min_photon_chi[ichipa+1])
                       *xi_.inv_size_photon_chi_minus_one_;
 
     // --------------------------------------------------------------------
@@ -447,44 +451,47 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     ixip_2 = (ichipa+1)*xi_.size_photon_chi_ + ichiph_2;
 
     // Computation of the final photon_chi by interpolation
-    if( (xi_.table_[ixip_1] < 1.0) && (xi_.table_[ixip_1+1] - xi_.table_[ixip_1] > 1e-15) ) {
+    if( (table_xi[ixip_1] < 1.0) && (table_xi[ixip_1+1] - table_xi[ixip_1] > 1e-15) ) {
+
         log10_chiphm = ichiph_1*chiph_xip_delta_1
-                       + xi_.min_photon_chi_table_[ichipa];
+                       + table_min_photon_chi[ichipa];
+
         log10_chiphp = log10_chiphm + chiph_xip_delta_1;
 
-        d_photon_chi = ( xi - xi_.table_[ixip_1] ) / ( xi_.table_[ixip_1+1] - xi_.table_[ixip_1] );
+        d_photon_chi = ( xi - table_xi[ixip_1] ) / ( table_xi[ixip_1+1] - table_xi[ixip_1] );
 
         // Chiph after linear interpolation in the logarithmic scale
         photon_chi_1 = log10_chiphm*( 1.0-d_photon_chi ) + log10_chiphp*( d_photon_chi ) ;
     } else
-    // For integration reasons, we can have xi_.table_[ixip+1] = xi_.table_[ixip]
+    // For integration reasons, we can have table_xi[ixip+1] = table_xi[ixip]
     // In this case, no interpolation
     {
-        photon_chi_1 =   ichiph_1*chiph_xip_delta_1
-                          + xi_.min_photon_chi_table_[ichipa] ;
+        photon_chi_1 = ichiph_1*chiph_xip_delta_1;
+                          + table_min_photon_chi[ichipa] ;
     }
 
     // Computation of the final photon_chi by interpolation
-    if( (xi_.table_[ixip_2] < 1.0) && (xi_.table_[ixip_2+1] - xi_.table_[ixip_2] > 1e-15) ) {
+    if( (table_xi[ixip_2] < 1.0) && (table_xi[ixip_2+1] - table_xi[ixip_2] > 1e-15) ) {
         log10_chiphm = ichiph_2*chiph_xip_delta_2
-                       + xi_.min_photon_chi_table_[ichipa+1];
+                       + table_min_photon_chi[ichipa+1];
         log10_chiphp = log10_chiphm + chiph_xip_delta_2;
 
-        d_photon_chi = ( xi - xi_.table_[ixip_2] ) / ( xi_.table_[ixip_2+1] - xi_.table_[ixip_2] );
+        d_photon_chi = ( xi - table_xi[ixip_2] ) / ( table_xi[ixip_2+1] - table_xi[ixip_2] );
 
         // Chiph after linear interpolation in the logarithmic scale
         photon_chi_2 = log10_chiphm*( 1.0-d_photon_chi ) + log10_chiphp*( d_photon_chi ) ;
     } else
-    // For integration reasons, we can have xi_.table_[ixip+1] = xi_.table_[ixip]
+    // For integration reasons, we can have table_xi[ixip+1] = table_xi[ixip]
     // In this case, no interpolation
     {
         photon_chi_2 = ichiph_2*chiph_xip_delta_2
-                          + xi_.min_photon_chi_table_[ichipa+1] ;
+                          + table_min_photon_chi[ichipa+1] ;
     }
 
     // Chiph after linear interpolation in the logarithmic scale
     photon_chi = std::pow( 10.0, photon_chi_1*(1 - d_particle_chi) + photon_chi_2*d_particle_chi);
-
+    //photon_chi = std::pow( 10.0, photon_chi_1*(1));
+    //photon_chi = 0;
     return photon_chi;
 }
 
@@ -492,10 +499,12 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
 //! Computation of the Cross Section dNph/dt which is also
 //! the number of photons generated per time unit.
 //
-//! \param particle_chi particle quantum parameter
-//! \param particle_gamma particle gamma factor
+//! param[in] particle_chi particle quantum parameter
+//! param[in] particle_gamma particle Lorentz factor
+//! param[in] integfochi_table table of the discretized integrated f/chi function for Photon production yield computation
 // ---------------------------------------------------------------------------------------------------------------------
-double RadiationTables::computePhotonProductionYield( double particle_chi, double particle_gamma )
+double RadiationTables::computePhotonProductionYield( double particle_chi, double particle_gamma, 
+    const double *const integfochi_table)
 {
 
     // Log of the particle quantum parameter particle_chi
@@ -516,18 +525,18 @@ double RadiationTables::computePhotonProductionYield( double particle_chi, doubl
     // If we are not in the table...
     if( ichipa < 0 ) {
         ichipa = 0;
-        dNphdt = integfochi_.table_[ichipa];
+        dNphdt = integfochi_table[ichipa];
     } else if( ichipa >= integfochi_.size_particle_chi_-1 ) {
         ichipa = integfochi_.size_particle_chi_-2;
-        dNphdt = integfochi_.table_[ichipa];
+        dNphdt = integfochi_table[ichipa];
     } else {
         // Upper and lower values for linear interpolation
         logchipam = ichipa*integfochi_.particle_chi_delta_ + integfochi_.log10_min_particle_chi_;
         logchipap = logchipam + integfochi_.particle_chi_delta_;
 
         // Interpolation
-        dNphdt = ( integfochi_.table_[ichipa+1]*fabs( logchipa-logchipam ) +
-                   integfochi_.table_[ichipa]*fabs( logchipap - logchipa ) )*integfochi_.inv_particle_chi_delta_;
+        dNphdt = ( integfochi_table[ichipa+1]*fabs( logchipa-logchipam ) +
+                   integfochi_table[ichipa]*fabs( logchipap - logchipa ) )*integfochi_.inv_particle_chi_delta_;
     }
 
     return factor_dNph_dt_*dNphdt*particle_chi/particle_gamma;
