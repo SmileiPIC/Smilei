@@ -466,7 +466,7 @@ double RadiationTables::computeRandomPhotonChiWithInterpolation( double particle
     // For integration reasons, we can have table_xi[ixip+1] = table_xi[ixip]
     // In this case, no interpolation
     {
-        photon_chi_1 = ichiph_1*chiph_xip_delta_1;
+        photon_chi_1 = ichiph_1*chiph_xip_delta_1
                           + table_min_photon_chi[ichipa] ;
     }
 
