@@ -252,6 +252,17 @@ public:
                     MESSAGE( 3, "| Number of macro-photons emitted per MC event: "
                              << this_species->radiation_photon_sampling_ );
 
+                    // Number of photons emitted per Monte-Carlo event
+                    PyTools::extract( "radiation_max_emissions",
+                        this_species->radiation_max_emissions_, "Species", ispec );
+                    if( this_species->radiation_max_emissions_ < 1 ) {
+                        ERROR_NAMELIST( "For species '" << species_name
+                               << "' radiation_max_emissions should be > 1",
+                           LINK_NAMELIST + std::string("#radiation_max_emissions") );
+                    }
+                    MESSAGE( 3, "| Number of macro-photons emitted per MC event: "
+                             << this_species->radiation_photon_sampling_ );
+
                     // Photon energy threshold
                     PyTools::extract( "radiation_photon_gamma_threshold",
                         this_species->radiation_photon_gamma_threshold_, "Species", ispec );
@@ -1181,6 +1192,7 @@ public:
         new_species->radiation_model_                          = species->radiation_model_;
         new_species->radiation_photon_species                  = species->radiation_photon_species;
         new_species->radiation_photon_sampling_                = species->radiation_photon_sampling_;
+        new_species->radiation_max_emissions_                  = species->radiation_max_emissions_;
         new_species->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
         new_species->photon_species_                           = species->photon_species_;
         new_species->species_number_                           = species->species_number_;

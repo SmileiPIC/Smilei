@@ -23,9 +23,10 @@
 RadiationMonteCarlo::RadiationMonteCarlo( Params &params, Species *species, Random * rand  )
     : Radiation( params, species, rand )
 {
-    radiation_photon_sampling_ = species->radiation_photon_sampling_;
+    radiation_photon_sampling_        = species->radiation_photon_sampling_;
+    max_photon_emissions_             = species->radiation_max_emissions_;
     radiation_photon_gamma_threshold_ = species->radiation_photon_gamma_threshold_;
-    inv_radiation_photon_sampling_ = 1. / radiation_photon_sampling_;
+    inv_radiation_photon_sampling_    = 1. / radiation_photon_sampling_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -119,16 +120,13 @@ void RadiationMonteCarlo::operator()(
     
     // Photon properties ----------------------------------------------------------------
     
-    // Maximum number of emission per particle per iteration
-    const int max_photon_emissions = 10;
-    
     // Number of photons
     int nphotons;
     
     if (photons) {
         nphotons = photons->size();
         // We reserve a large number of potential particles since we can't reallocate on device
-        photons->reserve( nphotons + radiation_photon_sampling_ * (iend - istart) * max_photon_emissions );
+        photons->reserve( nphotons + radiation_photon_sampling_ * (iend - istart) * max_photon_emissions_ );
     } else {
         nphotons = 0;
     }
@@ -271,7 +269,7 @@ void RadiationMonteCarlo::operator()(
                     // Check that the photon_species is defined and the threshold on the energy
                     if(          photons
                             && ( photon_gamma >= radiation_photon_gamma_threshold_ ) 
-                            && ( i_photon_emission < max_photon_emissions)) {
+                            && ( i_photon_emission < max_photon_emissions_)) {
                                 
                         // Creation of new photons in the temporary array photons
                         photons->createParticles( radiation_photon_sampling_ );

@@ -65,6 +65,9 @@ protected:
     //! Number of photons emitted per event for statisctics purposes
     int radiation_photon_sampling_;
 
+    // Maximum number of emission per particle per iteration
+    int max_photon_emissions_;
+
     //! Threshold on the photon Lorentz factor under which the macro-photon
     //! is not generated but directly added to the energy scalar diags
     //! This enable to limit emission of useless low-energy photons

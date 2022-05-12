@@ -748,6 +748,7 @@ Each species has to be defined in a ``Species`` block::
       radiation_photon_species = "photon",
       radiation_photon_sampling = 1,
       radiation_photon_gamma_threshold = 2,
+      radiation_max_emissions = 10,
 
       # Relativistic field initialization:
       relativistic_field_initialization = "False",
@@ -1007,6 +1008,15 @@ Each species has to be defined in a ``Species`` block::
   is still conserved.
 
   A large number may rapidly slow down the performances and lead to memory saturation.
+
+  This parameter cannot be assigned to photons (mass = 0).
+  
+.. py:data:: radiation_max_emissions
+
+  :default: ``10``
+
+  The maximum number of emission Monte-Carlo event a macro-particle can undergo during a timestep.
+  Since this value is used to allocate some buffers, a high value can saturate memory.
 
   This parameter cannot be assigned to photons (mass = 0).
 
