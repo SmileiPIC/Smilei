@@ -40,7 +40,7 @@ public:
     virtual ~nvidiaParticles() {};
 
     //! Set capacity of Particles vectors on GPU
-    void reserve( unsigned int reserved_particles, unsigned int n_dim ) override;
+    void reserve( unsigned int reserved_particles, unsigned int nDim ) ;
 
     //! Set capacity of Particles vectors based on already used dimension on CPU
     void reserve( unsigned int reserved_particles ) override;

@@ -57,7 +57,7 @@ public:
     void reserve( unsigned int n_part_max, unsigned int nDim, bool keep_position_old  );
 
     //! Set capacity of Particles vectors and keep dimensionality
-    void reserve( unsigned int n_part_max );
+    virtual void reserve( unsigned int reserved_particles );
 
     //! Initialize like Particles object part with 0 particles and reserve space for n_part_max particles
     void initializeReserve( unsigned int n_part_max, Particles &part );
