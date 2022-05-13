@@ -38,7 +38,6 @@ struct remove_if_out
 nvidiaParticles::nvidiaParticles() : Particles()
 {
     gpu_nparts_ = 0;
-
 }
 
 // -----------------------------------------------------------------------------
@@ -446,7 +445,7 @@ int nvidiaParticles::injectParticles( Particles* particles_to_inject )
                                          nvidia_charge_.begin() ) );
  
  
-    // Copy recv particles in main data structure
+    // Copy injected particles in main data structure
     thrust::copy_n(thrust::device, iter_copy, nparts_add, iter+nparts);
     
     if (isQuantumParameter) {
