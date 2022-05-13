@@ -167,7 +167,7 @@ void Particles::reserve( unsigned int n_part_max, unsigned int nDim, bool keep_p
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-    //! Set capacity of Particles vectors and keep dimensionality
+//! Set capacity of Particles vectors and keep dimensionality
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::reserve( unsigned int reserved_particles)
 {

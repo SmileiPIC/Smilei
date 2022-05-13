@@ -43,7 +43,7 @@ nvidiaParticles::nvidiaParticles() : Particles()
 
 // -----------------------------------------------------------------------------
 //! Set capacity of Particles vectors
-void nvidiaParticles::reserve( unsigned int reserved_particles, unsigned int nDim)
+void nvidiaParticles::device_reserve( unsigned int reserved_particles, unsigned int nDim)
 {
     for (int idim=0;idim<nvidia_position_.size();idim++)
         nvidia_position_[idim].reserve( reserved_particles );
@@ -63,9 +63,27 @@ void nvidiaParticles::reserve( unsigned int reserved_particles, unsigned int nDi
 
 // -----------------------------------------------------------------------------
 //! Set capacity of Particles vectors based on already used dimension on CPU
-void nvidiaParticles::reserve( unsigned int reserved_particles )
+void nvidiaParticles::device_reserve( unsigned int reserved_particles )
 {
-    reserve(reserved_particles, (unsigned int) (Position.size()));
+    device_reserve(reserved_particles, (unsigned int) (Position.size()));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Reset of Particles vectors
+// Cell keys not affected
+// ---------------------------------------------------------------------------------------------------------------------
+void nvidiaParticles::device_clear()
+{
+    for( unsigned int iprop=0 ; iprop<nvidia_double_prop_.size() ; iprop++ ) {
+        nvidia_double_prop_[iprop]->clear();
+    }
+
+    for( unsigned int iprop=0 ; iprop<nvidia_short_prop_.size() ; iprop++ ) {
+        nvidia_short_prop_[iprop]->clear();
+    }
+
+    //cell_keys.clear();
+    gpu_nparts_ = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -113,7 +131,9 @@ void nvidiaParticles::initializeDataOnDevice()
     if (gpu_nparts_!=0)
         syncGPU();
     else {
-        for (int idim=0;idim<Position.size();idim++)
+        device_reserve(100);
+
+        /*for (int idim=0;idim<Position.size();idim++)
             nvidia_position_[idim].reserve( 100 );
         for (int idim=0;idim<Momentum.size();idim++)
             nvidia_momentum_[idim].reserve( 100 );
@@ -125,7 +145,7 @@ void nvidiaParticles::initializeDataOnDevice()
         if( isMonteCarlo ) {
             nvidia_tau_.reserve( 100 );
         }
-        nvidia_cell_keys_.reserve( 100 );
+        nvidia_cell_keys_.reserve( 100 );*/
     }
 
     // Initialize the list of pointers
