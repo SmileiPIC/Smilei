@@ -187,6 +187,14 @@ void RadiationMonteCarlo::operator()(
     double *const __restrict__ photon_tau = photons ? (photons->isMonteCarlo ? photons->getPtrTau() : nullptr) : nullptr;
 
     // Table properties ----------------------------------------------------------------
+#ifdef _GPU
+    // Size of tables
+    int size_of_Table_integfochi = RadiationTables.integfochi_.size_particle_chi_;
+    int size_of_Table_min_photon_chi = RadiationTables.xi_.size_particle_chi_;
+    int size_of_Table_xi = RadiationTables.xi_.size_particle_chi_*
+                           RadiationTables.xi_.size_photon_chi_;
+#endif
+
 
     // Tables for MC
     const double *const table_integfochi = &(RadiationTables.integfochi_.table_[0]);
@@ -217,7 +225,18 @@ void RadiationMonteCarlo::operator()(
             table_integfochi[0:size_of_Table_integfochi], table_xi[0:size_of_Table_xi], \
             table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
             deviceptr(momentum_x,momentum_y,momentum_z,position_x, \
-            position_y,position_z,charge,weight,tau,chi) 
+            position_y,position_z,charge,weight,tau,chi, \
+            photon_position_x, \
+            photon_position_y, \
+            photon_position_z, \
+            photon_momentum_x, \
+            photon_momentum_y, \
+            photon_momentum_z, \
+            photon_weight, \
+            photon_charge, \
+            photon_chi, \
+            photon_tau, \
+            ) 
     {
     #endif
 
@@ -228,9 +247,20 @@ void RadiationMonteCarlo::operator()(
     Bx[istart:np],By[istart:np],Bz[istart:np], \
     table_integfochi[0:size_of_Table_integfochi], table_xi[0:size_of_Table_xi], \
     table_min_photon_chi[0:size_of_Table_min_photon_chi]) \
-    deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,tau) 
+    deviceptr(momentum_x,momentum_y,momentum_z,charge,weight,tau,chi, \
+            photon_position_x, \
+            photon_position_y, \
+            photon_position_z, \
+            photon_momentum_x, \
+            photon_momentum_y, \
+            photon_momentum_z, \
+            photon_weight, \
+            photon_charge, \
+            photon_chi, \
+            photon_tau, \
+    ) 
     {
-        #pragma acc loop gang worker vector private(random_number, seed_curand_1, seed_curand_2,particle_chi, gamma) \
+        #pragma acc loop gang worker vector private(random_number, seed_curand_1, seed_curand_2,particle_chi, particle_gamma) \
     reduction(+:radiated_energy_loc) 
     
     smilei::tools::gpu::Random prng_state_1;
@@ -373,6 +403,7 @@ void RadiationMonteCarlo::operator()(
                             && ( photon_gamma >= radiation_photon_gamma_threshold_ ) 
                             && ( i_photon_emission < max_photon_emissions_)) {
                                 
+#ifndef _GPU                                 
                         // Creation of new photons in the temporary array photons
                         photons->createParticles( radiation_photon_sampling_ );
                         
@@ -427,7 +458,7 @@ void RadiationMonteCarlo::operator()(
                         
                         // Number of emitted photons
                         i_photon_emission += 1;
-                        
+#endif                        
                     }
                     // If no emiision of a macro-photon:
                     // Addition of the emitted energy in the cumulating parameter

@@ -4456,13 +4456,13 @@ void VectorPatch::initializeDataOnDevice( Params &params, SmileiMPI *smpi, Radia
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( By, sizeofBy );
         smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( Bz, sizeofBz );
 
-        if( params.hasNielRadiation ) {
+        if( params.has_Niel_radiation_ ) {
 
             const double *const table = &( radiation_tables->niel_.table_[0] );
             smilei::tools::gpu::HostDeviceMemoryManagment::DeviceAllocateAndCopyHostToDevice( table, size_of_table_niel );
         }
 
-        if( params.hasMCRadiation ) {
+        if( params.has_MC_radiation_ ) {
 
             const double *const table_integfochi     = &( radiation_tables->integfochi_.table_[0] );
             const double *const table_min_photon_chi = &( radiation_tables->xi_.min_photon_chi_table_[0] );

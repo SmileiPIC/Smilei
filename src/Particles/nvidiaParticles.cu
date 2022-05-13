@@ -42,9 +42,9 @@ nvidiaParticles::nvidiaParticles() : Particles()
 
 // -----------------------------------------------------------------------------
 //! Set capacity of Particles vectors
-void nvidiaParticles::reserve( unsigned int reserved_particles, unsigned int n_dim )
+void nvidiaParticles::reserve( unsigned int reserved_particles, unsigned int nDim)
 {
-    for (int idim=0;idim<n_dim;idim++)
+    for (int idim=0;idim<nvidia_position_.size();idim++)
         nvidia_position_[idim].reserve( reserved_particles );
     for (int idim=0;idim<3;idim++) {
         nvidia_momentum_[idim].reserve( reserved_particles );
