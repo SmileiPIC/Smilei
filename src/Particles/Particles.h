@@ -53,13 +53,16 @@ public:
     //! Create nParticles null particles of nDim size
     void initialize( unsigned int nParticles, Particles &part );
 
-    //! Set capacity of Particles vectors
-    void reserve( unsigned int n_part_max, unsigned int nDim );
+    //! Set capacity of Particles vectors and change dimensionality
+    void reserve( unsigned int n_part_max, unsigned int nDim, bool keep_position_old  );
+
+    //! Set capacity of Particles vectors and keep dimensionality
+    void reserve( unsigned int n_part_max );
 
     //! Initialize like Particles object part with 0 particles and reserve space for n_part_max particles
     void initializeReserve( unsigned int n_part_max, Particles &part );
 
-    //! Resize Particles vectors
+    //! //! Resize Particle vectors and change dimensionality according to nDim
     void resize( unsigned int nParticles, unsigned int nDim, bool keep_position_old );
 
     //! Resize Particles vectors

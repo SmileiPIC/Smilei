@@ -252,6 +252,17 @@ public:
                     MESSAGE( 3, "| Number of macro-photons emitted per MC event: "
                              << this_species->radiation_photon_sampling_ );
 
+                    // Number of photons emitted per Monte-Carlo event
+                    PyTools::extract( "radiation_max_emissions",
+                        this_species->radiation_max_emissions_, "Species", ispec );
+                    if( this_species->radiation_max_emissions_ < 1 ) {
+                        ERROR_NAMELIST( "For species '" << species_name
+                               << "' radiation_max_emissions should be > 1",
+                           LINK_NAMELIST + std::string("#radiation_max_emissions") );
+                    }
+                    MESSAGE( 3, "| Number of macro-photons emitted per MC event: "
+                             << this_species->radiation_photon_sampling_ );
+
                     // Photon energy threshold
                     PyTools::extract( "radiation_photon_gamma_threshold",
                         this_species->radiation_photon_gamma_threshold_, "Species", ispec );
@@ -259,11 +270,11 @@ public:
                     MESSAGE( 3, "| Photon energy threshold for macro-photon emission: "
                              << this_species->radiation_photon_gamma_threshold_ );
                     
-                    // Creation of the photon Particles object to receive the emitted photons
-                    if( !this_species->radiation_photon_species.empty() ) {
-                        this_species->radiated_photons_ = ParticlesFactory::create( params );
-                        //this_species->radiated_photons_->initialize( 0, params.nDim_particle, params.keep_position_old);
-                    }
+                    // Creation of the photon particles object to receive the emitted photons
+                    // if( !this_species->radiation_photon_species.empty() ) {
+                    //     this_species->radiated_photons_ = ParticlesFactory::create( params );
+                    //     //this_species->radiated_photons_->initialize( 0, params.nDim_particle, params.keep_position_old);
+                    // }
                              
                     
                 // else, no emitted macro-photons
@@ -1181,6 +1192,7 @@ public:
         new_species->radiation_model_                          = species->radiation_model_;
         new_species->radiation_photon_species                  = species->radiation_photon_species;
         new_species->radiation_photon_sampling_                = species->radiation_photon_sampling_;
+        new_species->radiation_max_emissions_                  = species->radiation_max_emissions_;
         new_species->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
         new_species->photon_species_                           = species->photon_species_;
         new_species->species_number_                           = species->species_number_;
@@ -1337,8 +1349,8 @@ public:
                 // No emission of discrete photon, only scalar diagnostics are updated
                 if( patch->vecSpecies[ispec1]->radiation_photon_species.empty() ) {
                     patch->vecSpecies[ispec1]->photon_species_index = -1;
-                    patch->vecSpecies[ispec1]->photon_species_ = NULL;
-                    patch->vecSpecies[ispec1]->radiated_photons_ = NULL;
+                    patch->vecSpecies[ispec1]->photon_species_ = nullptr;
+                    patch->vecSpecies[ispec1]->radiated_photons_ = nullptr;
                 }
                 // Else, there will be emission of macro-photons.
                 else {
@@ -1357,11 +1369,14 @@ public:
                             }
                             patch->vecSpecies[ispec1]->photon_species_index = ispec2;
                             patch->vecSpecies[ispec1]->photon_species_ = patch->vecSpecies[ispec2];
+                            patch->vecSpecies[ispec1]->radiated_photons_ = ParticlesFactory::create( params );
                             patch->vecSpecies[ispec1]->radiated_photons_->initializeReserve(
                                 patch->vecSpecies[ispec1]->getNbrOfParticles(),
                                 *patch->vecSpecies[ispec1]->photon_species_->particles
                             );
-                            // patch->vecSpecies[ispec1]->radiated_photons_->reserve( 10, params.nDim_particle );
+                            // patch->vecSpecies[ispec1]->radiated_photons_->initialize(
+                            //     0,params.keep_position_old);
+                            //patch->vecSpecies[ispec1]->radiated_photons_->reserve( 10, params.nDim_particle );
                             break;
                         }
                     }
@@ -1459,6 +1474,7 @@ public:
                     patch->vecSpecies[i]->radiated_photons_->isQuantumParameter = patch->vecSpecies[i]->photon_species_->particles->isQuantumParameter;
                     patch->vecSpecies[i]->radiated_photons_->isMonteCarlo = patch->vecSpecies[i]->photon_species_->particles->isMonteCarlo;
                     patch->vecSpecies[i]->radiated_photons_->initialize( 0, params.nDim_particle, params.keep_position_old );
+                    //patch->vecSpecies[i]->radiated_photons_->reserve( 10, params.nDim_particle );
                     // patch->vecSpecies[i]->radiated_photons_->initializeReserve( 0, *patch->vecSpecies[i]->photon_species_->particles );
                 } else {
                     patch->vecSpecies[i]->photon_species_ = NULL;

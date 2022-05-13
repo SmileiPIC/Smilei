@@ -289,12 +289,12 @@ public:
     bool hasWindow;
 
     //! Tells whether there is a species with Monte-Carlo Compton radiation
-    bool hasMCRadiation;
+    bool has_MC_radiation_;
     //! Tells whether there is a species with Continuous radiation loss.
-    bool hasLLRadiation;
+    bool has_LL_radiation_;
     //! Tells whether there is a species with the stochastic radiation loss
     //! of Niel et al.
-    bool hasNielRadiation;
+    bool has_Niel_radiation_;
     //! Tells whether there is w/out radiation reaction but for which a RadiationSpectrum diag is called
     bool hasDiagRadiationSpectrum;
 

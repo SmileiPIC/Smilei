@@ -32,9 +32,10 @@
 RadiationMonteCarlo::RadiationMonteCarlo( Params &params, Species *species, Random * rand  )
     : Radiation( params, species, rand )
 {
-    radiation_photon_sampling_ = species->radiation_photon_sampling_;
+    radiation_photon_sampling_        = species->radiation_photon_sampling_;
+    max_photon_emissions_             = species->radiation_max_emissions_;
     radiation_photon_gamma_threshold_ = species->radiation_photon_gamma_threshold_;
-    inv_radiation_photon_sampling_ = 1. / radiation_photon_sampling_;
+    inv_radiation_photon_sampling_    = 1. / radiation_photon_sampling_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -76,7 +77,9 @@ void RadiationMonteCarlo::operator()(
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
+    // Total number of particles
     const int nparts = Epart->size()/3;
+    
     const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
     const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
     const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
@@ -157,21 +160,10 @@ void RadiationMonteCarlo::operator()(
             nphotons = photons->size();
 #endif
         // We reserve a large number of potential particles since we can't reallocate on device
-        photons->reserve( nphotons + radiation_photon_sampling_ * nparts , nDim_);
+        photons->reserve( nphotons + radiation_photon_sampling_ * (iend - istart) * max_photon_emissions_ );
     } else {
         nphotons = 0;
     }
-    
-    // photons->createParticles( radiation_photon_sampling_ );
-    // photons->resize(0);
-    // photons->reserve( 100, nDim_);
-    // std::cerr << photons->Weight.capacity() << std::endl;
-    // 
-    // std::vector<int> foo;
-    // foo.reserve(10);
-    // std::cerr << foo.capacity() << std::endl;
-    
-    // std::cerr << photons << std::endl;
     
     // Photon position shortcut
     double *const __restrict__ photon_position_x = photons ? photons->getPtrPosition( 0 ) : nullptr;
@@ -259,6 +251,9 @@ void RadiationMonteCarlo::operator()(
         double local_it_time = 0;
         // Number of Monte-Carlo iterations
         int mc_it_nb = 0;
+        
+        // Number of emitted photons per particles
+        int i_photon_emission = 0;
 
         // Monte-Carlo Manager inside the time step
         while( ( local_it_time < dt_ )
@@ -374,8 +369,9 @@ void RadiationMonteCarlo::operator()(
 
                     // Creation of macro-photons if requested
                     // Check that the photon_species is defined and the threshold on the energy
-                    if( photons
-                            && ( photon_gamma >= radiation_photon_gamma_threshold_ ) ) {
+                    if(          photons
+                            && ( photon_gamma >= radiation_photon_gamma_threshold_ ) 
+                            && ( i_photon_emission < max_photon_emissions_)) {
                                 
                         // Creation of new photons in the temporary array photons
                         photons->createParticles( radiation_photon_sampling_ );
@@ -428,6 +424,10 @@ void RadiationMonteCarlo::operator()(
                             }
 
                         } // end for iphoton
+                        
+                        // Number of emitted photons
+                        i_photon_emission += 1;
+                        
                     }
                     // If no emiision of a macro-photon:
                     // Addition of the emitted energy in the cumulating parameter

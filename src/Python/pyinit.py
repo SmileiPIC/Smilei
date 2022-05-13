@@ -382,6 +382,7 @@ class Species(SmileiComponent):
     radiation_photon_species = None
     radiation_photon_sampling = 1
     radiation_photon_gamma_threshold = 2.
+    radiation_max_emissions = 10
 
     # Multiphoton Breit-Wheeler parameters
     multiphoton_Breit_Wheeler = [None,None]
