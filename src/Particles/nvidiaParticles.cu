@@ -334,9 +334,8 @@ int nvidiaParticles::eraseLeavingParticles() {
     
     // Update current number of particles
     gpu_nparts_ -= nparts_to_move_;
-    nparts = gpu_nparts_;
     
-    return nparts;
+    return gpu_nparts_;
     
 }
 
