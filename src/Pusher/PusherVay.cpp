@@ -34,9 +34,6 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
     std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     double *const invgf = &( smpi->dynamics_invgf[ithread][0] );
-    
-    double alpha, s ;
-    double pxsm, pysm, pzsm;
 
     double *const __restrict__ position_x = particles.getPtrPosition( 0 );
     double *const __restrict__ position_y = nDim_ > 1 ? particles.getPtrPosition( 1 ) : nullptr;
@@ -58,7 +55,7 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
     const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
     const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
-    #pragma omp simd private(s,alpha,pxsm,pysm,pzsm)
+    #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         
         const double charge_over_mass_dts2 = ( double )( charge[ipart] )*one_over_mass_*dts2;
@@ -86,14 +83,14 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
         upz += invgf[ipart-ipart_buffer_offset]*( momentum_x[ipart]*Ty - momentum_y[ipart]*Tx );
 
         // alpha is gamma^2
-        alpha = 1.0 + upx*upx + upy*upy + upz*upz;
+        double alpha = 1.0 + upx*upx + upy*upy + upz*upz;
         const double T2    = Tx*Tx + Ty*Ty + Tz*Tz;
 
         // ___________________________________________
         // Part II: Computation of Gamma^{i+1}
 
         // s is sigma
-        s     = alpha - T2;
+        double s     = alpha - T2;
         double us2   = upx*Tx + upy*Ty + upz*Tz;
         us2   = us2*us2;
 
@@ -107,9 +104,9 @@ void PusherVay::operator()( Particles &particles, SmileiMPI *smpi, int istart, i
         s = 1.0/( 1.0+Tx*Tx+Ty*Ty+Tz*Tz );
         alpha   = upx*Tx + upy*Ty + upz*Tz;
 
-        pxsm = s*( upx + alpha*Tx + Tz*upy - Ty*upz );
-        pysm = s*( upy + alpha*Ty + Tx*upz - Tz*upx );
-        pzsm = s*( upz + alpha*Tz + Ty*upx - Tx*upy );
+        const double pxsm = s*( upx + alpha*Tx + Tz*upy - Ty*upz );
+        const double pysm = s*( upy + alpha*Ty + Tx*upz - Tz*upx );
+        const double pzsm = s*( upz + alpha*Tz + Ty*upx - Tx*upy );
 
         // Second way of doing it like in the Boris pusher
         //Tx2   = Tx*Tx;

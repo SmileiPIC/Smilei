@@ -859,9 +859,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // -------------------------------------------------------
     // Parameters for the synchrotron-like radiation losses
     // -------------------------------------------------------
-    hasMCRadiation = false ;// Default value
-    hasLLRadiation = false ;// Default value
-    hasNielRadiation = false ;// Default value
+    has_MC_radiation_ = false ;// Default value
+    has_LL_radiation_ = false ;// Default value
+    has_Niel_radiation_ = false ;// Default value
     hasDiagRadiationSpectrum = false; // Default value
 
     // Loop over all species to check if the radiation losses are activated
@@ -874,14 +874,14 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         std::transform( radiation_model.begin(), radiation_model.end(), radiation_model.begin(), ::tolower );
 
         if( radiation_model=="monte-carlo" || radiation_model=="mc" ) {
-            hasMCRadiation = true;
+            has_MC_radiation_ = true;
         } else if( radiation_model=="landau-lifshitz"
                    || radiation_model=="ll"
                    || radiation_model=="corrected-landau-lifshitz"
                    || radiation_model=="cll" ) {
-            hasLLRadiation = true;
+            has_LL_radiation_ = true;
         } else if( radiation_model=="niel" ) {
-            hasNielRadiation = true;
+            has_Niel_radiation_ = true;
         }
         else if (radiation_model=="diagradiationspectrum")
         {

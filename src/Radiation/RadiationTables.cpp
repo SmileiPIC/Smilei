@@ -49,9 +49,9 @@ RadiationTables::~RadiationTables()
 void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 {
 
-    if( params.hasMCRadiation ||
-        params.hasLLRadiation ||
-        params.hasNielRadiation||
+    if( params.has_MC_radiation_ ||
+        params.has_LL_radiation_ ||
+        params.has_Niel_radiation_||
         params.hasDiagRadiationSpectrum) {
         TITLE( "Initializing radiation reaction (or RadiationSpectrum parameters)" )
 
@@ -63,7 +63,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
     }
 
-    if( params.hasLLRadiation || params.hasDiagRadiationSpectrum ) {
+    if( params.has_LL_radiation_ || params.hasDiagRadiationSpectrum ) {
         MESSAGE( 1,"A continuous radiation reaction module"
                  << " is requested by some species:" );
         PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction"  );
@@ -71,7 +71,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
                 <<std::setprecision(6)<<minimum_chi_continuous_<<".\n");
     }
 
-    if( params.hasNielRadiation ) {
+    if( params.has_Niel_radiation_ ) {
         MESSAGE( 1,"The Fokker-Planck radiation reaction module 'Niel'"
                  << " is requested by some species:" );
         PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction"  );
@@ -79,7 +79,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
                 <<std::setprecision(6)<<minimum_chi_continuous_<<".\n");
     }
 
-    if( params.hasMCRadiation ) {
+    if( params.has_MC_radiation_ ) {
         MESSAGE( 1,"The Monte-Carlo Compton radiation module"
                  << " is requested by some species:" );
         PyTools::extract( "minimum_chi_discontinuous", minimum_chi_discontinuous_, "RadiationReaction"  );
@@ -92,13 +92,13 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
     // We read the properties
     if( PyTools::nComponents( "RadiationReaction" ) != 0 ) {
 
-        if( params.hasNielRadiation ) {
+        if( params.has_Niel_radiation_ ) {
             // How to handle the h function (table or fit)
             PyTools::extract( "Niel_computation_method", niel_.computation_method_, "RadiationReaction" );
         }
 
         // If Monte-Carlo radiation loss is requested
-        if( params.hasMCRadiation ) {
+        if( params.has_MC_radiation_ ) {
 
             // Discontinuous minimum threshold
             PyTools::extract( "minimum_chi_discontinuous",
@@ -106,7 +106,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
         }
 
         // With any radiation model whatever the table computation
-        if( params.hasNielRadiation || params.hasMCRadiation ) {
+        if( params.has_Niel_radiation_ || params.has_MC_radiation_ ) {
 
             // Path to the databases
             PyTools::extract( "table_path", table_path_, "RadiationReaction"  );
@@ -119,9 +119,9 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
     }
 
     // Computation of some parameters
-    if( params.hasMCRadiation ||
-            params.hasLLRadiation ||
-            params.hasNielRadiation ) {
+    if( params.has_MC_radiation_ ||
+            params.has_LL_radiation_ ||
+            params.has_Niel_radiation_ ) {
 
         // Computation of the normalized Compton wavelength
         normalized_Compton_wavelength_ = params.red_planck_cst*params.reference_angular_frequency_SI
@@ -139,22 +139,22 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
     // Messages...
     // Computation of some parameters
-    if( params.hasMCRadiation ||
-            params.hasLLRadiation ||
-            params.hasNielRadiation ) {
+    if( params.has_MC_radiation_ ||
+            params.has_LL_radiation_ ||
+            params.has_Niel_radiation_ ) {
         MESSAGE( 1, "Minimum quantum parameter for continuous radiation: "
                  << std::setprecision( 5 ) << minimum_chi_continuous_ );
     }
-    if( params.hasMCRadiation ) {
+    if( params.has_MC_radiation_ ) {
         MESSAGE( 1,"Minimum quantum parameter for discontinuous radiation: "
                  << std::setprecision( 5 ) << minimum_chi_discontinuous_ );
     }
-    if( params.hasMCRadiation || params.hasNielRadiation ) {
+    if( params.has_MC_radiation_ || params.has_Niel_radiation_ ) {
         if (table_path_.size() > 0) {
             MESSAGE( 1,"Table path: " << table_path_ );
         }
     }
-    if( params.hasNielRadiation ) {
+    if( params.has_Niel_radiation_ ) {
         if( niel_.computation_method_ == "table" ||
                 niel_.computation_method_ == "fit5"  ||
                 niel_.computation_method_ == "fit10" ||
@@ -183,7 +183,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
     MESSAGE( "" );
 
     // We read the table only if specified
-    if( params.hasMCRadiation || params.hasNielRadiation ) {
+    if( params.has_MC_radiation_ || params.has_Niel_radiation_ ) {
         if (table_path_.size() > 0) {
             MESSAGE( 1,"Reading of the external database" );
             readTables( params, smpi );
@@ -192,7 +192,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
         }
     }
 
-    if( params.hasMCRadiation ) {
+    if( params.has_MC_radiation_ ) {
         MESSAGE( "" );
         MESSAGE( 1,"--- Integration F/particle_chi table:" );
         MESSAGE( 2,"Dimension quantum parameter: " << integfochi_.size_particle_chi_ );
@@ -206,7 +206,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
         MESSAGE( 2,"Maximum particle chi: " << xi_.max_particle_chi_ );
     }
 
-    if( params.hasNielRadiation ) {
+    if( params.has_Niel_radiation_ ) {
         MESSAGE( "" );
         MESSAGE( 1, "--- `h` table for the model of Niel et al.:" );
         MESSAGE( 2,"Dimension quantum parameter: "
@@ -721,10 +721,10 @@ void RadiationTables::readTables( Params &params, SmileiMPI *smpi )
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
     // And if the h values are not computed from a numerical fit
-    if( params.hasNielRadiation && this->niel_.computation_method_ == "table" ) {
+    if( params.has_Niel_radiation_ && this->niel_.computation_method_ == "table" ) {
         RadiationTables::readHTable( smpi );
     }
-    if( params.hasMCRadiation ) {
+    if( params.has_MC_radiation_ ) {
         RadiationTables::readIntegfochiTable( smpi );
         RadiationTables::readXiTable( smpi );
     }
