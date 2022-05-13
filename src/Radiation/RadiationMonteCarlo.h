@@ -15,6 +15,7 @@
 #include "RadiationTables.h"
 #include "Radiation.h"
 #include "userFunctions.h"
+#include "nvidiaParticles.h"
 
 #ifdef _GPU
 #include <openacc.h>

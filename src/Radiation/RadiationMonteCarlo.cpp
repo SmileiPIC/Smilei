@@ -156,11 +156,13 @@ void RadiationMonteCarlo::operator()(
     if (photons) {
 #ifdef _GPU
             nphotons = photons->gpu_size();
+            // We reserve a large number of potential photons on device since we can't reallocate
+            static_cast<nvidiaParticles*>(photons)->device_reserve( nphotons + radiation_photon_sampling_ * (iend - istart) * max_photon_emissions_ );
 #else 
             nphotons = photons->size();
+            // We reserve a large number of photons
+            photons->reserve( nphotons + radiation_photon_sampling_ * (iend - istart) * max_photon_emissions_ );
 #endif
-        // We reserve a large number of potential particles since we can't reallocate on device
-        photons->reserve( nphotons + radiation_photon_sampling_ * (iend - istart) * max_photon_emissions_ );
     } else {
         nphotons = 0;
     }

@@ -724,12 +724,23 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
 
         // Radiation losses
         if( Radiate ) {
+
             // If creation of macro-photon, we add them to photon_species
             if( photon_species_ ) {
+
+#ifdef _GPU
+                // We first erase empty slots in the buffer of photons
+                static_cast<nvidiaParticles*>(radiated_photons_)->eraseLeavingParticles();
+#endif
+
                 photon_species_->importParticles( params,
                                                  patch,
                                                  *radiated_photons_,
                                                  localDiags );
+#ifdef _GPU
+                // We explicitely clear the device Particles
+                static_cast<nvidiaParticles*>(radiated_photons_)->device_clear();
+#endif
             }
         }
 
