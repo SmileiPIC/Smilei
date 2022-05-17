@@ -277,12 +277,12 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
         pml_solver_->compute_H_from_B( EMfields, iDim, min_or_max, solvermin, solvermax);
 
         for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
-            cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
-            cField2D *Er_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
-            cField2D *Et_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
-            cField2D *Bl_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_[imode];
-            cField2D *Br_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
-            cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
+            //cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
+            //cField2D *Er_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
+            //cField2D *Et_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
+            //cField2D *Bl_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_[imode];
+            //cField2D *Br_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
+            //cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
             // for Br^(d,p)
             vector<double> yp( 1 );
             for( unsigned int j=3*( patch->isYmin() ) ; j<n_p[1]-patch->isYmax() ; j++ ) {
@@ -415,12 +415,12 @@ void ElectroMagnBCAM_PML::apply( ElectroMagn *EMfields, double time_dual, Patch 
 
         //Injecting a laser
         for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
-            cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
-            cField2D *Er_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
-            cField2D *Et_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
-            cField2D *Bl_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_[imode];
-            cField2D *Br_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
-            cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
+            //cField2D *El_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->El_[imode];
+            //cField2D *Er_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
+            //cField2D *Et_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
+            //cField2D *Bl_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_[imode];
+            //cField2D *Br_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
+            //cField2D *Bt_domain = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
             // for Br^(d,p)
             vector<double> yp( 1 );
             for( unsigned int j=3*( patch->isYmin() ) ; j<n_p[1] ; j++ ) {

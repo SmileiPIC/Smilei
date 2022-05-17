@@ -30,10 +30,10 @@ BinaryProcesses::BinaryProcesses(
     double time_frozen,
     string filename
 ) :
+    processes_( processes ),
     species_group1_( species_group1 ),
     species_group2_( species_group2 ),
     intra_( intra ),
-    processes_( processes ),
     every_( every ),
     debug_every_( debug_every ),
     filename_( filename )
@@ -392,7 +392,8 @@ void BinaryProcesses::apply( Params &params, Patch *patch, int itime, vector<Dia
             D.term3 = D.COM_gamma * gamma12_inv;
             double term4 = D.gamma1_COM * D.gamma2_COM;
             D.term5 = term4/p2_COM + D.m12;
-            D.vrel = D.p_COM/D.term3/term4; // relative velocity
+            D.vrel = D.p_COM / ( D.term3 * term4 ); // | v2_COM - v1_COM |
+            D.vrel_corr = D.p_COM / ( D.term3 * D.gamma1 * D.gamma2 );
             
             for( unsigned int i=0; i<processes_.size(); i++ ) {
                 processes_[i]->apply( patch->rand_, D );

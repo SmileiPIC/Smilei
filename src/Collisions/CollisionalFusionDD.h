@@ -17,7 +17,7 @@ public:
     //! Destructor
     ~CollisionalFusionDD() {};
     
-    std::string name() {
+    std::string name() override {
         return "Nuclear reaction: D-D fusion";
     };
     

@@ -19,6 +19,7 @@
 #include "MultiphotonBreitWheeler.h"
 #include "MultiphotonBreitWheelerTables.h"
 #include "Merging.h"
+#include "PartCompTime.h"
 
 class ElectroMagn;
 class Pusher;
@@ -31,6 +32,7 @@ class Patch;
 class SimWindow;
 class Radiation;
 class Merging;
+class PartCompTime;
 
 
 //! class Species
@@ -182,6 +184,8 @@ public:
     //! is not generated but directly added to the energy scalar diags
     //! This enable to limit emission of useless low-energy photons
     double radiation_photon_gamma_threshold_;
+    //! Particle object to store emitted photons by radiation at each time step
+    Particles * radiated_photons_ = NULL;
 
     //! Pointer to the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go
@@ -309,7 +313,6 @@ public:
     //! Particles position pusher (change change position)
     Pusher *Push_ponderomotive_position = NULL;
 
-
     //! Interpolator (used to push particles and for probes)
     Interpolator *Interp;
 
@@ -318,6 +321,9 @@ public:
 
     //! Merging
     Merging *Merge;
+    
+    //! Particle Computation time evaluation
+    PartCompTime *part_comp_time_ = NULL;
 
     // -----------------------------------------------------------------------------
     //  5. Methods

@@ -125,7 +125,7 @@ void RadiationTables::initialization( Params &params , SmileiMPI *smpi )
 
         // Computation of the normalized Compton wavelength
         normalized_Compton_wavelength_ = params.red_planck_cst*params.reference_angular_frequency_SI
-                                         / ( params.electron_mass*params.c_vacuum*params.c_vacuum );
+                                         / ( params.electron_mass*params.c_vacuum_*params.c_vacuum_ );
 
         // Computation of the factor factor_dNph_dt_
         factor_dNph_dt_ = sqrt( 3. )*params.fine_struct_cst/( 2.*M_PI*normalized_Compton_wavelength_ );

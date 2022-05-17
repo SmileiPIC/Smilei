@@ -45,7 +45,7 @@ RadiationLandauLifshitz::~RadiationLandauLifshitz()
 // -----------------------------------------------------------------------------
 void RadiationLandauLifshitz::operator()(
     Particles       &particles,
-    Species         *photon_species,
+    Particles       &photons,
     SmileiMPI       *smpi,
     RadiationTables &RadiationTables,
     double          &radiated_energy,
@@ -62,41 +62,32 @@ void RadiationLandauLifshitz::operator()(
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
     int nparts = Epart->size()/3;
-    double * __restrict__ Ex = &( ( *Epart )[0*nparts] );
-    double * __restrict__ Ey = &( ( *Epart )[1*nparts] );
-    double * __restrict__ Ez = &( ( *Epart )[2*nparts] );
-    double * __restrict__ Bx = &( ( *Bpart )[0*nparts] );
-    double * __restrict__ By = &( ( *Bpart )[1*nparts] );
-    double * __restrict__ Bz = &( ( *Bpart )[2*nparts] );
-
-    // Charge divided by the square of the mass
-    double charge_over_mass_square;
+    const double *const __restrict__ Ex = &( ( *Epart )[0*nparts] );
+    const double *const __restrict__ Ey = &( ( *Epart )[1*nparts] );
+    const double *const __restrict__ Ez = &( ( *Epart )[2*nparts] );
+    const double *const __restrict__ Bx = &( ( *Bpart )[0*nparts] );
+    const double *const __restrict__ By = &( ( *Bpart )[1*nparts] );
+    const double *const __restrict__ Bz = &( ( *Bpart )[2*nparts] );
 
     // 1/mass^2
     const double one_over_mass_square = one_over_mass_*one_over_mass_;
 
-    // Temporary quantum parameter
-    double particle_chi;
-
-    // Temporary Lorentz factor
-    double gamma;
-
-    // Temporary double parameter
-    double temp;
+    // Minimum value of chi for the radiation
+    const double minimum_chi_continuous = RadiationTables.getMinimumChiContinuous();
 
     // Momentum shortcut
-    double * __restrict__ momentum_x = particles.getPtrMomentum(0);
-    double * __restrict__ momentum_y = particles.getPtrMomentum(1);
-    double * __restrict__ momentum_z = particles.getPtrMomentum(2);
+    double *const __restrict__ momentum_x = particles.getPtrMomentum(0);
+    double *const __restrict__ momentum_y = particles.getPtrMomentum(1);
+    double *const __restrict__ momentum_z = particles.getPtrMomentum(2);
 
     // Charge shortcut
-    short * __restrict__ charge = particles.getPtrCharge();
+    const short  *const __restrict__ charge = particles.getPtrCharge();
 
     // Weight shortcut
-    double * __restrict__ weight = particles.getPtrWeight();
+    const double *const __restrict__ weight = particles.getPtrWeight();
 
     // Optical depth for the Monte-Carlo process
-    double * __restrict__ chi = particles.getPtrChi();
+    double *const __restrict__ chi = particles.getPtrChi();
 
     // Local vector to store the radiated energy
     // double * rad_norm_energy = new double [iend-istart];
@@ -112,30 +103,28 @@ void RadiationLandauLifshitz::operator()(
 
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+        
+        // charge / m^2
+        const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
-        gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+        const double gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                       + momentum_y[ipart]*momentum_y[ipart]
                       + momentum_z[ipart]*momentum_z[ipart] );
 
         // Computation of the Lorentz invariant quantum parameter
-        particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
+        const double particle_chi = Radiation::computeParticleChi( charge_over_mass_square,
                        momentum_x[ipart], momentum_y[ipart], momentum_z[ipart],
                        gamma,
                        Ex[ipart-ipart_ref], Ey[ipart-ipart_ref], Ez[ipart-ipart_ref] ,
                        Bx[ipart-ipart_ref], By[ipart-ipart_ref], Bz[ipart-ipart_ref] );
 
         // Effect on the momentum
-        if( (gamma>1.) && (particle_chi >= RadiationTables.getMinimumChiContinuous()) ) {
+        if( (gamma>1.) && (particle_chi >= minimum_chi_continuous) ) {
 
             // Radiated energy during the time step
-            temp =
-                RadiationTables.getClassicalRadiatedEnergy( particle_chi, dt_ );
-
-            // Effect on the momentum
-            // Temporary factor
-            temp *= gamma/( gamma*gamma-1. );
+            const double temp =
+                RadiationTables.getClassicalRadiatedEnergy( particle_chi, dt_ ) * gamma / ( gamma*gamma-1. );
 
             // Update of the momentum
             momentum_x[ipart] -= temp*momentum_x[ipart];
@@ -165,10 +154,12 @@ void RadiationLandauLifshitz::operator()(
 
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
+        
+        // charge / m^2
+        const double charge_over_mass_square = ( double )( charge[ipart] )*one_over_mass_square;
 
         // Gamma
-        gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
+        const double gamma = sqrt( 1.0 + momentum_x[ipart]*momentum_x[ipart]
                       + momentum_y[ipart]*momentum_y[ipart]
                       + momentum_z[ipart]*momentum_z[ipart] );
 

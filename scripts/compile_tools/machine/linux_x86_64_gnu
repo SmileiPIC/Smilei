@@ -2,8 +2,5 @@
 # Machine file for the GNU compiler on a Linux system
 # 
 # __________________________________________________________
-# -march=native
-# -mavx2
-# -mfma
 
 CXXFLAGS += -march=native -mfma

@@ -33,6 +33,7 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
                                            int * __restrict__ istart,
                                            int * __restrict__ iend,
                                            int ithread,
+                                           unsigned int scell,
                                            int ipart_ref )
 {
     if( istart[0] == iend[0] ) {
@@ -49,21 +50,21 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
     idx[2]  = round( particles.position( 2, *istart ) * d_inv_[2] );
     idxO[2] = ( int )idx[2] - k_domain_begin ;
 
-    Field3D * __restrict__ Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
-    Field3D * __restrict__ Ey3D = static_cast<Field3D *>( EMfields->Ey_ );
-    Field3D * __restrict__ Ez3D = static_cast<Field3D *>( EMfields->Ez_ );
-    Field3D * __restrict__ Bx3D = static_cast<Field3D *>( EMfields->Bx_m );
-    Field3D * __restrict__ By3D = static_cast<Field3D *>( EMfields->By_m );
-    Field3D * __restrict__ Bz3D = static_cast<Field3D *>( EMfields->Bz_m );
+    const Field3D *const __restrict__ Ex3D = static_cast<Field3D *>( EMfields->Ex_ );
+    const Field3D *const __restrict__ Ey3D = static_cast<Field3D *>( EMfields->Ey_ );
+    const Field3D *const __restrict__ Ez3D = static_cast<Field3D *>( EMfields->Ez_ );
+    const Field3D *const __restrict__ Bx3D = static_cast<Field3D *>( EMfields->Bx_m );
+    const Field3D *const __restrict__ By3D = static_cast<Field3D *>( EMfields->By_m );
+    const Field3D *const __restrict__ Bz3D = static_cast<Field3D *>( EMfields->Bz_m );
 
     int nparts( ( smpi->dynamics_invgf[ithread] ).size() );
 
     double * __restrict__ Epart[3];
     double * __restrict__ Bpart[3];
 
-    double * __restrict__ position_x = particles.getPtrPosition(0);
-    double * __restrict__ position_y = particles.getPtrPosition(1);
-    double * __restrict__ position_z = particles.getPtrPosition(2);
+    const double *const __restrict__ position_x = particles.getPtrPosition( 0 );
+    const double *const __restrict__ position_y = particles.getPtrPosition( 1 );
+    const double *const __restrict__ position_z = particles.getPtrPosition( 2 );
 
     // double * __restrict__ Ex = &Ex3D->data_[0];
     // double * __restrict__ Ey = &Ey3D->data_[0];
@@ -75,25 +76,15 @@ void Interpolator3D2OrderV::fieldsWrapper( ElectroMagn * __restrict__ EMfields,
     double coeff[3][2][3][32];
     int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0, delta_primal < 0) or if it is +1 (dual=1, delta_primal>=0).
 
-    int vecSize = 32;
+    // vector size for vector block division
+    const int vecSize = 32;
 
-    int cell_nparts( ( int )iend[0]-( int )istart[0] );
-    int nbVec = ( iend[0]-istart[0]+( cell_nparts-1 )-( ( iend[0]-istart[0]-1 )&( cell_nparts-1 ) ) ) / vecSize;
+    // number of paticles per cell
+    const int cell_nparts( ( int )iend[0]-( int )istart[0] );
 
-    if( nbVec*vecSize != cell_nparts ) {
-        nbVec++;
-    }
+    for( int ivect=0 ; ivect < cell_nparts; ivect += vecSize ) {
 
-    for( int iivect=0 ; iivect<nbVec; iivect++ ) {
-        int ivect = vecSize*iivect;
-
-        int np_computed( 0 );
-        if( cell_nparts > vecSize ) {
-            np_computed = vecSize;
-            cell_nparts -= vecSize;
-        } else {
-            np_computed = cell_nparts;
-        }
+        int np_computed( min( cell_nparts-ivect, vecSize ) );
 
         double * __restrict__ deltaO[3]; //Delta is the distance of the particle from its primal node in cell size. Delta is in [-0.5, +0.5[
         deltaO[0] = &( smpi->dynamics_deltaold[ithread][0        + ivect + istart[0] - ipart_ref] );

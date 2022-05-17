@@ -14,9 +14,9 @@ PML_Solver2D_Bouchard::PML_Solver2D_Bouchard(Params &params)
     dx = params.cell_length[0];
     dy = params.cell_length[1];
     double dx_ov_dt  = dx/dt;
-    double dy_ov_dt  = dy/dt;
-    double dt_ov_dx  = dt/dx;
-    double dt_ov_dy  = dt/dy;
+    //double dy_ov_dt  = dy/dt;
+    //double dt_ov_dx  = dt/dx;
+    //double dt_ov_dy  = dt/dy;
     if( dx!=dy ) {
         ERROR( "Bouchard solver requires the same cell-length in x and y directions" );
     }

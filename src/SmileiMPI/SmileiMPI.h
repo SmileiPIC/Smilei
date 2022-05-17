@@ -206,7 +206,7 @@ public:
     //! delta_old_pos
     std::vector<std::vector<double>> dynamics_deltaold;
     //! theta old
-    std::vector<std::vector<double>> dynamics_thetaold;
+    std::vector<std::vector<std::complex<double>>> dynamics_eithetaold;
 
     //! value of the grad(AA*) at itime and itime-1
     std::vector<std::vector<double>> dynamics_GradPHIpart;
@@ -230,7 +230,7 @@ public:
         dynamics_iold[ithread].resize( ndim_field*npart );
         dynamics_deltaold[ithread].resize( ndim_field*npart );
         if( isAM ) {
-            dynamics_thetaold[ithread].resize( npart );
+            dynamics_eithetaold[ithread].resize( npart );
         }
 
         if( dynamics_GradPHIpart.size() > 0 ) {
@@ -252,7 +252,7 @@ public:
         dynamics_iold[ithread].resize( ndim_field*npart );
         dynamics_deltaold[ithread].resize( ndim_field*npart );
         if( isAM ) {
-            dynamics_thetaold[ithread].resize( npart );
+            dynamics_eithetaold[ithread].resize( npart );
         }
     }
     

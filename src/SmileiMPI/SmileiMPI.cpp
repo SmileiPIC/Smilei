@@ -156,7 +156,7 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
     dynamics_iold.resize( omp_get_max_threads() );
     dynamics_deltaold.resize( omp_get_max_threads() );
     if( params.geometry == "AMcylindrical" ) {
-        dynamics_thetaold.resize( omp_get_max_threads() );
+        dynamics_eithetaold.resize( omp_get_max_threads() );
     }
 
     if( n_envlaser > 0 ) {
@@ -180,7 +180,7 @@ void SmileiMPI::init( Params &params, DomainDecomposition *domain_decomposition 
     dynamics_iold.resize( 1 );
     dynamics_deltaold.resize( 1 );
     if( params.geometry == "AMcylindrical" ) {
-        dynamics_thetaold.resize( 1 );
+        dynamics_eithetaold.resize( 1 );
     }
 
     if( n_envlaser > 0 ) {
