@@ -65,7 +65,7 @@ LaunchSRunPatProfile() {{
     export PAT_RT_MPI_THREAD_REQUIRED=3
 
     # Assuming "$1" is an executable
-    pat_build -g hip,io,mpi,cuda $1 -o instrumented_executable
+    pat_build -g hip,io,mpi,cuda -w -f $1 -o instrumented_executable
 
     LaunchSRun instrumented_executable ${{@:2}}
 }}

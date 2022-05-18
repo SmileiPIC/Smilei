@@ -2,15 +2,16 @@
 # Machine file for the Adastra machine at CINES
 #
 # Note:
-# This gpu_amd config is not production ready and is meant, as of 4th/03/22,
-# to be used "only" on the cines gpu porting machines.
-# It expects CCE (cray compiler).
+# TODO(Etienne M): This gpu_amd config is not production ready and is meant, as
+# of 4th/03/22, to be used "only" on the cines GPU porting machines.
+# It expects the CCE (cray compiler).
 #
 # You'll want to compile smilei with the "gpu_amd" config flag enabled:
 # $ make machine="adastra_gpu" config="amd_gpu" -j
 #
-# Each node has 4 MI-200 gpu, you may want to associate one MI-200 to one MPI 
-# process.
+# Each node has 4 MI250X accelerators. An MI250X is made of 2 GCDs which are to 
+# be used as if it was an individual GPU.
+# You'll want to associate one MPI proc per GCD (2 MPI/MI250X).
 #
 # To compile you may want these modules:
 # module load craype-network-ofi craype-x86-rome libfabric/1.13.1
@@ -45,7 +46,7 @@ ADASTRA_WARNING_FLAGS += -Wno-unused-variable -Wno-unused-parameter -Wno-unknown
 
 # ADASTRA_OPTIMIZATION_LTO_FLAGS   += -flto=thin
 # ADASTRA_OPTIMIZATION_OTHER_FLAGS += -mcmodel=large
-ADASTRA_OPTIMIZATION_FLAGS       := -Ofast $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADASTRA_OPTIMIZATION_OTHERS)
+ADASTRA_OPTIMIZATION_FLAGS       := -Ofast $(ADASTRA_OPTIMIZATION_LTO_FLAGS) $(ADASTRA_OPTIMIZATION_OTHER_FLAGS)
 
 ################################################################################
 # Debug flags
@@ -66,11 +67,12 @@ ADASTRA_OMP_FLAGS := -fopenmp
 ################################################################################
 
 ifneq (,$(call parse_config,gpu_amd))
-	# Add mi100 amd gpu arch
+	# Add mi100/250x amd gpu arch
 	ADASTRA_ACCELERATOR_GPU_TARGET_ARCH := amdgcn-amd-amdhsa
 	ADASTRA_ACCELERATOR_GPU_TARGET      := gfx908
+    # ADASTRA_ACCELERATOR_GPU_TARGET      := gfx90a
 
-    # when using OMP
+    # When using OMP
 	ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS := -DSMILEI_ACCELERATOR_GPU_OMP
     ADASTRA_ACCELERATOR_GPU_OMP_FLAGS        := -fopenmp-targets=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -Xopenmp-target=$(ADASTRA_ACCELERATOR_GPU_TARGET_ARCH) -march=$(ADASTRA_ACCELERATOR_GPU_TARGET)
 
@@ -96,7 +98,8 @@ ADASTRA_INCLUDES := -I$(CRAY_MPICH_DIR)/include -I$(ROCM_PATH)/hiprand/include -
 # Small perf increase but causes ABI problems when cray-pat is used
 # ADASTRA_OMP_STATIC := -static-openmp
 # ADASTRA_MPI_gfx908_LIB := $(PE_MPICH_GTL_DIR_amd_gfx908) $(PE_MPICH_GTL_LIBS_amd_gfx908)
-# ADASTRA_MPI            := -L$(CRAY_MPICH_DIR)/lib -lmpi  $(ADASTRA_MPI_gfx908_LIB)
+# ADASTRA_MPI_gfx90a_LIB := $(PE_MPICH_GTL_DIR_amd_gfx90a) $(PE_MPICH_GTL_LIBS_amd_gfx90a)
+# ADASTRA_MPI            := -L$(CRAY_MPICH_DIR)/lib -lmpi $(ADASTRA_MPI_gfx908_LIB) $(ADASTRA_MPI_gfx90a_LIB)
 
 # ADASTRA_HIP := -L$(HIP_LIB_PATH) -lamdhip64
 
@@ -123,8 +126,7 @@ CXXFLAGS += $(ADASTRA_OPTIMIZATION_FLAGS)
 CXXFLAGS += $(ADASTRA_DEBUG_FLAGS)
 CXXFLAGS += $(ADASTRA_OMP_FLAGS)
 CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
-# CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_DEFINE_FLAGS)
-CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS) # if gpu_amd is set, adds the appropriate flags, else nothing is added contained
+CXXFLAGS += $(ADASTRA_ACCELERATOR_GPU_OMP_FLAGS) # if gpu_amd is set, adds the appropriate flags, else nothing is added
 CXXFLAGS += $(ADASTRA_INCLUDES)
 
 LDFLAGS += $(ADASTRA_DEBUG_FLAGS) $(ADASTRA_OMP_FLAGS)
