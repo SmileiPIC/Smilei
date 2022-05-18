@@ -38,15 +38,7 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     #pragma acc parallel present( Ex3D[0:sizeofEx], Jx3D[0:sizeofEx], By3D[0:sizeofBy], Bz3D[0:sizeofBz] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )                \
-        map( to                                          \
-             : Jx3D [0:sizeofEx],                        \
-               By3D [0:sizeofBy], Bz3D [0:sizeofBz] )    \
-            map( tofrom                                  \
-                 : Ex3D [0:sizeofEx] )                   \
-                map( to                                  \
-                     : nx_d, ny_p, nz_p, ny_d, nz_d, dt, \
-                       dt_ov_dy, dt_ov_dz )
+    #pragma omp target
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
@@ -71,16 +63,8 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     #pragma acc parallel present( Ey3D[0:sizeofEy], Jy3D[0:sizeofEy], Bx3D[0:sizeofBx], Bz3D[0:sizeofBz] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )             \
-        map( to                                       \
-             : Jy3D [0:sizeofEy],                     \
-               Bx3D [0:sizeofBx], Bz3D [0:sizeofBz] ) \
-            map( tofrom                               \
-                 : Ey3D [0:sizeofEy] )                \
-                map( to                               \
-                     : nx_p, ny_d, nz_p, nz_d, dt,    \
-                       dt_ov_dx, dt_ov_dz )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ; i<nx_p ; i++ ) {
@@ -104,16 +88,8 @@ void MA_Solver3D_norm::operator()( ElectroMagn *fields )
     #pragma acc parallel present( Ez3D[0:sizeofEz], Jz3D[0:sizeofEz], Bx3D[0:sizeofBx], By3D[0:sizeofBy] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )             \
-        map( to                                       \
-             : Jz3D [0:sizeofEz],                     \
-               Bx3D [0:sizeofBx], By3D [0:sizeofBy] ) \
-            map( tofrom                               \
-                 : Ez3D [0:sizeofEz] )                \
-                map( to                               \
-                     : nx_p, ny_p, nz_d, ny_d, dt,    \
-                       dt_ov_dx, dt_ov_dy )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
     for( unsigned int i=0 ;  i<nx_p ; i++ ) {

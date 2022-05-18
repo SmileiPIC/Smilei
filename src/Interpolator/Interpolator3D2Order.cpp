@@ -177,28 +177,13 @@ void Interpolator3D2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     const int npart_range_size         = last_index - first_index;
     const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;
 
-    #pragma omp target defaultmap( none )                                           \
-        map( to                                                                     \
-             : Ex3D [0:sizeofEx],                                                   \
-               Ey3D [0:sizeofEy],                                                   \
-               Ez3D [0:sizeofEz],                                                   \
-               Bx3D [0:sizeofBx],                                                   \
-               By3D [0:sizeofBy],                                                   \
-               Bz3D [0:sizeofBz] )                                                  \
-            map( from                                                               \
-                 : ELoc [first_index:interpolation_range_size],                     \
-                   BLoc [first_index:interpolation_range_size],                     \
-                   iold [first_index:interpolation_range_size],                     \
-                   delta [first_index:interpolation_range_size] )                   \
-                map( to                                                             \
-                     : i_domain_begin, j_domain_begin, k_domain_begin,              \
-                       nx_d, ny_d, nz_d, nx_p, ny_p, nz_p, d_inv_,                  \
-                       nparts, first_index, last_index )                            \
-                    is_device_ptr( /* to: */                                        \
-                                   position_x /* [first_index:npart_range_size] */, \
-                                   position_y /* [first_index:npart_range_size] */, \
-                                   position_z /* [first_index:npart_range_size] */ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target map( to                                                 \
+                            : i_domain_begin, j_domain_begin, k_domain_begin ) \
+        is_device_ptr( /* to: */                                               \
+                       position_x /* [first_index:npart_range_size] */,        \
+                       position_y /* [first_index:npart_range_size] */,        \
+                       position_z /* [first_index:npart_range_size] */ )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined(_GPU)
     const int interpolation_range_size = ( last_index + 2 * nparts ) - first_index;

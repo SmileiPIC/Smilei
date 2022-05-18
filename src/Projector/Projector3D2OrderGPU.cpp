@@ -125,26 +125,11 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         const int current_pack_size = iend_pack - istart_pack;
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )                                             \
-        map( tofrom                                                                   \
-             : iold [istart_pack:2 * packsize + current_pack_size - istart_pack],     \
-               deltaold [istart_pack:2 * packsize + current_pack_size - istart_pack], \
-               Sx0 [0:4 * packsize + current_pack_size],                              \
-               Sy0 [0:4 * packsize + current_pack_size],                              \
-               Sz0 [0:4 * packsize + current_pack_size],                              \
-               DSx [0:4 * packsize + current_pack_size],                              \
-               DSy [0:4 * packsize + current_pack_size],                              \
-               DSz [0:4 * packsize + current_pack_size],                              \
-               sumX [0:4 * packsize + current_pack_size] )                            \
-            map( to                                                                   \
-                 : packsize, istart_pack, iend_pack,                                  \
-                   i_domain_begin, j_domain_begin, k_domain_begin,                    \
-                   dx_inv_, dy_inv_, dz_inv_ )                                        \
-                is_device_ptr( /* to: */                                              \
-                               position_x /* [istart_pack:current_pack_size] */,      \
-                               position_y /* [istart_pack:current_pack_size] */,      \
-                               position_z /* [istart_pack:current_pack_size] */ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target is_device_ptr( /* to: */                                         \
+                                      position_x /* [istart_pack:current_pack_size] */, \
+                                      position_y /* [istart_pack:current_pack_size] */, \
+                                      position_z /* [istart_pack:current_pack_size] */ )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts],     \
@@ -267,13 +252,8 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
         // Jx^(d,p,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )                  \
-        map( tofrom                                        \
-             : DSx [0:3 * packsize + current_pack_size],   \
-               sumX [0:4 * packsize + current_pack_size] ) \
-            map( to                                        \
-                 : istart_pack, iend_pack, packsize )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
     
 // NVIDIA GPU
@@ -294,24 +274,10 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         }
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )                                         \
-        map( to                                                                   \
-             : iold [istart_pack:2 * packsize + current_pack_size - istart_pack], \
-               Sy0 [0:4 * packsize + current_pack_size],                          \
-               Sz0 [0:4 * packsize + current_pack_size],                          \
-               DSy [0:4 * packsize + current_pack_size],                          \
-               DSz [0:4 * packsize + current_pack_size],                          \
-               sumX [packsize:3 * packsize + current_pack_size] )                 \
-            map( tofrom                                                           \
-                 : Jx [0:sizeofEx] )                                              \
-                map( to                                                           \
-                     : istart_pack, iend_pack, packsize,                          \
-                       inv_cell_volume, dx_ov_dt,                                 \
-                       nprimz, nprimy /*, one_third */ )                          \
-                    is_device_ptr( /* to: */                                      \
-                                   charge /* [istart_pack:current_pack_size] */,  \
-                                   weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target is_device_ptr( /* to: */                                     \
+                                      charge /* [istart_pack:current_pack_size] */, \
+                                      weight /* [istart_pack:current_pack_size] */ )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
     
 // NVIDIA GPU
@@ -368,13 +334,8 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
         // Jy^(p,d,p)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )                  \
-        map( tofrom                                        \
-             : DSy [0:3 * packsize + current_pack_size],   \
-               sumX [0:4 * packsize + current_pack_size] ) \
-            map( to                                        \
-                 : istart_pack, iend_pack, packsize )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( DSy [0:kTmpArraySize], \
@@ -394,24 +355,10 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         }
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )                                         \
-        map( to                                                                   \
-             : iold [istart_pack:2 * packsize + current_pack_size - istart_pack], \
-               Sx0 [0:4 * packsize + current_pack_size],                          \
-               Sz0 [0:4 * packsize + current_pack_size],                          \
-               DSx [0:4 * packsize + current_pack_size],                          \
-               DSz [0:4 * packsize + current_pack_size],                          \
-               sumX [packsize:3 * packsize + current_pack_size] )                 \
-            map( tofrom                                                           \
-                 : Jy [0:sizeofEy] )                                              \
-                map( to                                                           \
-                     : istart_pack, iend_pack, packsize,                          \
-                       inv_cell_volume, dy_ov_dt, nprimz,                         \
-                       nprimy /*, one_third */ )                                  \
-                    is_device_ptr( /* to: */                                      \
-                                   charge /* [istart_pack:current_pack_size] */,  \
-                                   weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target is_device_ptr( /* to: */                                     \
+                                      charge /* [istart_pack:current_pack_size] */, \
+                                      weight /* [istart_pack:current_pack_size] */ )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 
 // NVIDIA GPU
@@ -468,13 +415,8 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
 
         // Jz^(p,p,d)
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )                  \
-        map( tofrom                                        \
-             : DSz [0:3 * packsize + current_pack_size],   \
-               sumX [0:4 * packsize + current_pack_size] ) \
-            map( to                                        \
-                 : istart_pack, iend_pack, packsize )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
     
 // NVIDIA GPUs
@@ -496,24 +438,10 @@ void Projector3D2OrderGPU::currents( ElectroMagn *EMfields, Particles &particles
         }
 
 #if defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )                                         \
-        map( to                                                                   \
-             : iold [istart_pack:2 * packsize + current_pack_size - istart_pack], \
-               Sx0 [0:4 * packsize + current_pack_size],                          \
-               Sy0 [0:4 * packsize + current_pack_size],                          \
-               DSx [0:4 * packsize + current_pack_size],                          \
-               DSy [0:4 * packsize + current_pack_size],                          \
-               sumX [packsize:3 * packsize + current_pack_size] )                 \
-            map( tofrom                                                           \
-                 : Jz [0:sizeofEz] )                                              \
-                map( to                                                           \
-                     : istart_pack, iend_pack, packsize,                          \
-                       inv_cell_volume, dz_ov_dt, nprimz,                         \
-                       nprimy /*, one_third */ )                                  \
-                    is_device_ptr( /* to: */                                      \
-                                   charge /* [istart_pack:current_pack_size] */,  \
-                                   weight /* [istart_pack:current_pack_size] */ )
-    #pragma omp            teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
+    #pragma omp target is_device_ptr( /* to: */                                     \
+                                      charge /* [istart_pack:current_pack_size] */, \
+                                      weight /* [istart_pack:current_pack_size] */ )
+    #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for
 #elif defined( _GPU )
     #pragma acc parallel present( iold [0:3 * nparts],     \

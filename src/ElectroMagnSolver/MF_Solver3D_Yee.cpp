@@ -35,14 +35,7 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     #pragma acc parallel present( Bx3D[0:sizeofBx], Ey3D[0:sizeofEy], Ez3D[0:sizeofEz] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )             \
-        map( to                                       \
-             : Ey3D [0:sizeofEy], Ez3D [0:sizeofEz] ) \
-            map( tofrom                               \
-                 : Bx3D [0:sizeofBx] )                \
-                map( to                               \
-                     : nx_p, ny_d, nz_d, ny_p, nz_p,  \
-                       dt_ov_dy, dt_ov_dz )
+    #pragma omp target
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
@@ -66,14 +59,7 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     #pragma acc parallel present( By3D[0:sizeofBy], Ex3D[0:sizeofEx], Ez3D[0:sizeofEz] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )             \
-        map( to                                       \
-             : Ex3D [0:sizeofEx], Ez3D [0:sizeofEz] ) \
-            map( tofrom                               \
-                 : By3D [0:sizeofBy] )                \
-                map( to                               \
-                     : nx_d, ny_p, nz_d, nz_p,        \
-                       dt_ov_dx, dt_ov_dz )
+    #pragma omp target
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
@@ -97,14 +83,7 @@ void MF_Solver3D_Yee::operator()( ElectroMagn *fields )
     #pragma acc parallel present( Bz3D[0:sizeofBz], Ex3D[0:sizeofEx], Ey3D[0:sizeofEy] )
     #pragma acc loop gang
 #elif defined( SMILEI_ACCELERATOR_GPU_OMP )
-    #pragma omp target defaultmap( none )             \
-        map( to                                       \
-             : Ex3D [0:sizeofEx], Ey3D [0:sizeofEy] ) \
-            map( tofrom                               \
-                 : Bz3D [0:sizeofBz] )                \
-                map( to                               \
-                     : nx_d, ny_d, nz_p, ny_p,        \
-                       dt_ov_dx, dt_ov_dy )
+    #pragma omp target
     #pragma omp teams /* num_teams(xxx) thread_limit(xxx) */ // TODO(Etienne M): WG/WF tuning
     #pragma omp distribute parallel for collapse( 3 )
 #endif
