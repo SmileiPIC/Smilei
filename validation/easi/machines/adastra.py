@@ -13,6 +13,7 @@ class MachineAdastra(Machine):
 #SBATCH --job-name=smilei_validation
 #SBATCH --nodes={the_node_count}               # Number of nodes
 #SBATCH --ntasks={the_mpi_process_count}       # Number of MPI ranks
+# #SBATCH --ntasks-per-node=8
 #SBATCH --cpus-per-task={the_omp_thread_count} # Number of cores per MPI rank
 #SBATCH --gpus-per-task={the_gpu_count}        # Number of gpu per MPI rank
 #SBATCH --output=output
@@ -74,12 +75,12 @@ LaunchSRunPatProfile() {{
 LaunchRocmProfile() {{
     # Kernel stats
     echo 'pmc : VALUUtilization VALUBusy SALUBusy MemUnitBusy MemUnitStalled L2CacheHit Wavefronts' > hw_counters.txt
-    LaunchSRun rocprof -i hw_counters.txt      $1 ${{@:2}}
-    #            rocprof -i hw_counters.txt srun $1 ${{@:2}} > {the_output_file} 2>&1
+    LaunchSRun bash –c "rocprof -i hw_counters.txt --stat $1 ${{@:2}}"
+    # LaunchSRun          rocprof -i hw_counters.txt --stat $1 ${{@:2}}
 
-    # hip RT tracing
-    # LaunchSRun rocprof --hip-trace --trace-period 30s:30s:1m      $1 ${{@:2}}
-    #            rocprof --hip-trace --trace-period 30s:30s:1m srun $1 ${{@:2}} > {the_output_file} 2>&1
+    # hip RT tracing, --trace-period 30s:30s:1m is bugged
+    # LaunchSRun bash –c "rocprof --hip-trace --stat -o \${SLURM_JOBID}-\${SLURM_PROCID}.csv $1 ${{@:2}}"
+    # LaunchSRun          rocprof --hip-trace --stat -o ${SLURM_JOBID}-${SLURM_PROCID}.csv   $1 ${{@:2}}
 }}
 
 LaunchSRun {a_task_command} {a_task_command_arguments}
