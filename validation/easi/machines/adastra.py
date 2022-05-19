@@ -42,6 +42,21 @@ module load rocm/4.5.0
 rocm-smi
 rocminfo
 
+# MPICH Gpu support
+export MPICH_GPU_SUPPORT_ENABLED=1
+export MPICH_GPU_IPC_ENABLED=1
+# export MPICH_OPTIMIZED_MEMCPY=2
+
+# MPI to GPU binding
+# #!/bin/bash
+# # The following script could be useful to bind a mpiproc to a given gpu on a given node https://slurm.schedmd.com/sbatch.html
+# # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#gpu-enumeration
+# # One may check that it works: $ ROCR_VISIBLE_DEVICES=none rocminfo
+# # rocm-smi ignores the env variable
+#
+# export ROCR_VISIBLE_DEVICES=$SLURM_LOCALID
+# exec $*
+
 # Omp tuning
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export OMP_SCHEDULE=dynamic
@@ -63,6 +78,8 @@ LaunchSRunPatProfile() {{
     module load perftools-base/21.12.0
     module load perftools
 
+    # # Enable extra verbose tracing, can be very useful, produces a lot of data
+    # export PAT_RT_SUMMARY=0
     export PAT_RT_MPI_THREAD_REQUIRED=3
 
     # Assuming "$1" is an executable

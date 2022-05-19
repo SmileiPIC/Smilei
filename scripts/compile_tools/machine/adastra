@@ -29,7 +29,7 @@
 ################################################################################
 
 # SMILEICXX := ~/aomp_stuff/usr/lib/aomp_15.0-1/bin/clang++
-SMILEICXX := CC
+SMILEICXX := $(CC)
 SMILEICXX.DEPS := $(SMILEICXX)
 THRUSTCXX := $(SMILEICXX)
 
