@@ -95,21 +95,10 @@ diag_every = 2*int(t0 / dt)
 
 print("diag_every: {}".format(diag_every))
 
-datetime = datetime.datetime.now()
-random_seed = datetime.microsecond
+random_seed = 0xDEADBEEF
 
-# We get the name of the simulation directory
-
-if ("gpu" in os.path.abspath("./")):
-    
-    gpu_computing = True
-    vectorization = "off"
-    
-else:
-
-    gpu_computing = False
-    vectorization = "on"
-
+gpu_computing = True
+vectorization = "off"
 
 # FUNCTIONS
 # ----------------------------------------
